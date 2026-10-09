@@ -11,15 +11,15 @@
 | --- | --- |
 | 1–4: orb, header inset and control materials | Implemented 2026-09-28. Orb default/glyph and broader control/popup live acceptance remain open. |
 | 5: customization pages | Implemented 2026-09-30. Broader page appearance review remains open; scrollbar review is covered by slice 7. |
-| 6: QAT, message bars and application menu | Bounded light/dark live review complete 2026-09-30. Includes placement/overflow, notice dismissal/restoration, menu commands/reset, narrow/minimized/RTL states, visible footer at 200%, keyboard/focus and native scrolling. [Evidence §3.197–§3.203](history/01-library.md#3197-shared-crystal-qat-drawer--2026-09-30). |
-| 7: utility buttons and scrollbars | Bounded live review complete 2026-10-01 in both reviewed themes: utility/arrows, modal/merged-caption controls, customization spacing, native scrolling/focus/RTL and 125% → 200% → 125% return. [Final acceptance §3.207](history/01-library.md#3207-slice-7-bounded-live-review-complete--2026-10-01). |
-| 8: contextual material and tint | Bounded live review, separate dropdown DPI-return recheck and vertical Paste hover-width review passed 2026-10-01. [Slice evidence §3.208](history/01-library.md#3208-shared-crystal-contextual-material-and-scoped-palettes--2026-10-01), [popup correction §3.210](history/01-library.md#3210-popup-margins-follow-the-dpi-pixel-grid--2026-10-01), [hover correction §3.211](history/01-library.md#3211-vertical-split-hover-width-and-diagnostic-cleanup--2026-10-01). |
-| 9: optional host effects | Bounded captured-surface and Glass look live review accepted 2026-10-01 on the normal Debug build, per the user's overall confirmation that everything seems okay. Broader motion, open-menu scaling and mixed-monitor gates remain open. [Evidence §3.212](history/01-library.md#3212-optional-captured-backdrops-and-scoped-glass-overlays--2026-10-01). |
-| 10: Showcase consolidation | Bounded functional live review confirmed 2026-10-01: the user reports the consolidated demonstrations work as before. Document fade and QAT underlay also work, with a different visual result because the main Showcase uses a padded editable document card rather than the former preview's scrolling page; the supplied comparison screenshots document that host-layout difference. The separate preview and launch path are retired. Broader motion, open-menu scaling and mixed-monitor gates remain open. [Evidence §3.213](history/01-library.md#3213-main-showcase-consolidation--2026-10-01). |
-| Deferred layout and hover checks | Corrected and verified automatically 2026-10-01: Theme gallery selected-edge clipping, the constrained RTL fixture and the excluded Office 2010 hover contract. Native 200% Theme gallery visual acceptance remains open. [Evidence §3.214](history/01-library.md#3214-theme-gallery-clipping-and-deferred-test-corrections--2026-10-01). |
-| Gallery selected-row retention | Bounded live review confirmed 2026-10-01: the user changed tabs for 25 seconds and the selected tile stayed visible, confirming the reported reset is fixed. Shared RibbonKit also has automated coverage for tab reload and template replacement. Native DPI/monitor transitions and broader motion gates retain their separate scope. [Evidence §3.215](history/01-library.md#3215-gallery-selected-row-retention-after-tab-reload--2026-10-01). |
+| 6: QAT, message bars and application menu | Bounded light/dark live review complete 2026-09-30. Includes placement/overflow, notice dismissal/restoration, menu commands/reset, narrow/minimized/RTL states, visible footer at 200%, keyboard/focus and native scrolling. [Evidence §3.197–§3.203](history/library/08-crystal-integration-and-shared-materials.md#3197-shared-crystal-qat-drawer--2026-09-30). |
+| 7: utility buttons and scrollbars | Bounded live review complete 2026-10-01 in both reviewed themes: utility/arrows, modal/merged-caption controls, customization spacing, native scrolling/focus/RTL and 125% → 200% → 125% return. [Final acceptance §3.207](history/library/09-crystal-menus-scrollbars-and-dpi.md#3207-slice-7-bounded-live-review-complete--2026-10-01). |
+| 8: contextual material and tint | Bounded live review, separate dropdown DPI-return recheck and vertical Paste hover-width review passed 2026-10-01. [Slice evidence §3.208](history/library/09-crystal-menus-scrollbars-and-dpi.md#3208-shared-crystal-contextual-material-and-scoped-palettes--2026-10-01), [popup correction §3.210](history/library/09-crystal-menus-scrollbars-and-dpi.md#3210-popup-margins-follow-the-dpi-pixel-grid--2026-10-01), [hover correction §3.211](history/library/09-crystal-menus-scrollbars-and-dpi.md#3211-vertical-split-hover-width-and-diagnostic-cleanup--2026-10-01). |
+| 9: optional host effects | Bounded captured-surface and Glass look live review accepted 2026-10-01 on the normal Debug build, per the user's overall confirmation that everything seems okay. Broader motion, open-menu scaling and mixed-monitor gates remain open. [Evidence §3.212](history/library/10-host-effects-and-keyboard-focus.md#3212-optional-captured-backdrops-and-scoped-glass-overlays--2026-10-01). |
+| 10: Showcase consolidation | Bounded functional live review confirmed 2026-10-01: the user reports the consolidated demonstrations work as before. Document fade and QAT underlay also work, with a different visual result because the main Showcase uses a padded editable document card rather than the former preview's scrolling page; the supplied comparison screenshots document that host-layout difference. The separate preview and launch path are retired. Broader motion, open-menu scaling and mixed-monitor gates remain open. [Evidence §3.213](history/library/10-host-effects-and-keyboard-focus.md#3213-main-showcase-consolidation--2026-10-01). |
+| Deferred layout and hover checks | Corrected and verified automatically 2026-10-01: Theme gallery selected-edge clipping, the constrained RTL fixture and the excluded Office 2010 hover contract. Native 200% Theme gallery visual acceptance remains open. [Evidence §3.214](history/library/10-host-effects-and-keyboard-focus.md#3214-theme-gallery-clipping-and-deferred-test-corrections--2026-10-01). |
+| Gallery selected-row retention | Bounded live review confirmed 2026-10-01: the user changed tabs for 25 seconds and the selected tile stayed visible, confirming the reported reset is fixed. Shared RibbonKit also has automated coverage for tab reload and template replacement. Native DPI/monitor transitions and broader motion gates retain their separate scope. [Evidence §3.215](history/library/10-host-effects-and-keyboard-focus.md#3215-gallery-selected-row-retention-after-tab-reload--2026-10-01). |
 | Writer integration and deferred automated gates | Complete at the agreed integration scope; the user confirmed final Writer visual acceptance 2026-10-04. Implemented Crystal light/dark, Sidebar/Floating, scoped tint, Settings preview/persistence/rollback, W glyph hook and optional shared effects. The accepted appearance includes the Crystal workspace/ruler treatment, conditional paper/QAT fade, solid paper outline, Print Preview and status-bar glass, and two-column Appearance layout; ruler/guide choices persist. Recorded unfiltered Release solution tests pass, including Writer and Office 2010 hover; visual approvals/tolerances are unchanged. Synthetic 100/125/150/175/200% rendering, DPI returns and open surfaces have automated coverage. Native 200% Theme gallery review, Windows reduced-motion switching, native open-popup scaling, mixed monitors, genuine IME/production RTL and physical printing remain separately deferred live gates. [Evidence §3.216](history/02-writer-foundation.md#3216-writer-crystal-integration-and-deferred-validation--2026-10-02). |
-| Project-wide pre-merge cleanup | Implemented 2026-10-04: scoped QAT surface policy, dynamic Showcase capture lifecycle, shared action chrome and tokenized Crystal Backstage geometry without fixed branding. Unfiltered Release tests and normal Debug/Release builds pass; see [evidence §3.217](history/01-library.md#3217-crystal-pre-merge-scope-and-resource-cleanup--2026-10-04). Bounded Backstage appearance review passed 2026-10-04: Crystal light/dark, Sidebar/Floating and Back-button appearance. Bounded QAT/capture appearance review passed 2026-10-04. Supplied screenshots also confirm disabled Enable Content appearance in Crystal light and Office 2024, and Crystal-to-Office-2024 appearance cleanup: the open Try layouts popup becomes opaque and the action buttons return to flat Office paint with no residual Crystal glass. Accepted for merge 2026-10-04: the user considers the current theme working and passable. Message-action hover/pressed/keyboard-focus visual review and broader native DPI, motion and mixed-monitor checks are explicitly deferred for later review. Document edge fade remains host-owned. |
+| Project-wide pre-merge cleanup | Implemented 2026-10-04: scoped QAT surface policy, dynamic Showcase capture lifecycle, shared action chrome and tokenized Crystal Backstage geometry without fixed branding. Unfiltered Release tests and normal Debug/Release builds pass; see [evidence §3.217](history/library/10-host-effects-and-keyboard-focus.md#3217-crystal-pre-merge-scope-and-resource-cleanup--2026-10-04). Bounded Backstage appearance review passed 2026-10-04: Crystal light/dark, Sidebar/Floating and Back-button appearance. Bounded QAT/capture appearance review passed 2026-10-04. Supplied screenshots also confirm disabled Enable Content appearance in Crystal light and Office 2024, and Crystal-to-Office-2024 appearance cleanup: the open Try layouts popup becomes opaque and the action buttons return to flat Office paint with no residual Crystal glass. Accepted for merge 2026-10-04: the user considers the current theme working and passable. Message-action hover/pressed/keyboard-focus visual review and broader native DPI, motion and mixed-monitor checks are explicitly deferred for later review. Document edge fade remains host-owned. |
 
 ### Slice 8 live review
 
@@ -47,7 +47,7 @@ Vertical Paste hover — **Passed 2026-10-01.** The user confirmed the primary/a
 hover-width correction after the requested 125% Office light/dark and Crystal rim
 review. The temporary DPI logger is retired. Future local review uses the normal
 Debug configuration and output folder. See [implementation and automated
-evidence §3.211](history/01-library.md#3211-vertical-split-hover-width-and-diagnostic-cleanup--2026-10-01).
+evidence §3.211](history/library/09-crystal-menus-scrollbars-and-dpi.md#3211-vertical-split-hover-width-and-diagnostic-cleanup--2026-10-01).
 
 Broader reduced-motion, open-menu scaling and mixed-monitor gates remain open.
 The [two 200% observations](#deferred-layout-observations-at-200) remain deferred,
@@ -168,7 +168,7 @@ shipped baseline is unchanged.
    `CrystalApplicationMenuPresentation` and `CrystalMenuShadow` were retired
    after RibbonKit-only proof. Host document/capture integration remains for
    slice 9. Detailed implementation and checks are in
-   [§3.197–§3.203](history/01-library.md#3197-shared-crystal-qat-drawer--2026-09-30);
+   [§3.197–§3.203](history/library/08-crystal-integration-and-shared-materials.md#3197-shared-crystal-qat-drawer--2026-09-30);
    current live acceptance is in the table above.
 7. **Utility chrome and scrollbars (implemented).** Shared templates supply
    idle/hover/pressed/checked rims for minimize, modal close, QAT overflow,
@@ -184,7 +184,7 @@ shipped baseline is unchanged.
    retired after consumer proof; the designer-safe scrollbar adapter remains.
    Host tint policy stays in Showcase for slice 8; capture is slice 9.
    Detailed implementation and checks are in
-   [§3.204–§3.207](history/01-library.md#3204-shared-crystal-utility-buttons-and-scrollbars--2026-09-30);
+   [§3.204–§3.207](history/library/09-crystal-menus-scrollbars-and-dpi.md#3204-shared-crystal-utility-buttons-and-scrollbars--2026-09-30);
    current live acceptance is in the table above.
 
 8. **Contextual material and tint (implemented).** Ordinary `RibbonTab` now
@@ -282,7 +282,7 @@ five-consumer threshold, and verifies equivalent glass in light/dark. It ran
 in the current runtime suite without the former hover exclusion.
 
 Bounds, rendered diagnostics, test results and scope are recorded in
-[§3.214](history/01-library.md#3214-theme-gallery-clipping-and-deferred-test-corrections--2026-10-01).
+[§3.214](history/library/10-host-effects-and-keyboard-focus.md#3214-theme-gallery-clipping-and-deferred-test-corrections--2026-10-01).
 Synthetic visual DPI checks do not establish native popup DPI transitions,
 reduced-motion behavior or mixed-monitor acceptance.
 
@@ -325,8 +325,8 @@ review scope; current acceptance is recorded in the status table.
 Detailed dated results are retained in history, rather than copied into this
 plan on each confirmation:
 
-- [Slice 6 QAT through menu checks, §3.197–§3.203](history/01-library.md#3197-shared-crystal-qat-drawer--2026-09-30).
-- [Slice 7 implementation and spacing checks, §3.204–§3.207](history/01-library.md#3204-shared-crystal-utility-buttons-and-scrollbars--2026-09-30).
+- [Slice 6 QAT through menu checks, §3.197–§3.203](history/library/08-crystal-integration-and-shared-materials.md#3197-shared-crystal-qat-drawer--2026-09-30).
+- [Slice 7 implementation and spacing checks, §3.204–§3.207](history/library/09-crystal-menus-scrollbars-and-dpi.md#3204-shared-crystal-utility-buttons-and-scrollbars--2026-09-30).
   The final pixel-gap build recorded zero warnings/errors, 418 eligible runtime
   passes, the RibbonKit-only consumer's 96-variant gap matrix and all 105 visual
   scenes. Existing approvals/tolerances were preserved. These are dated results,

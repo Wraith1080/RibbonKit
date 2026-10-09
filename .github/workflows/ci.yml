@@ -27,6 +27,11 @@ jobs:
         run: dotnet build RibbonKit.sln --no-restore --configuration Release
 
       - name: Test
+        env:
+          RIBBONKIT_VISUAL_SCENES: ''
+          RIBBONKIT_PORTABILITY_SCOPE: ''
+          RIBBONKIT_CAPTURE_SNAPSHOTS: ''
+          RIBBONKIT_UPDATE_SNAPSHOTS: ''
         run: dotnet test RibbonKit.sln --no-build --configuration Release --verbosity normal
 
       - name: Upload visual snapshot diagnostics

@@ -401,7 +401,7 @@ option-indicator test failure. On 2026-10-01 the user clarified that only the
 View-tab Theme gallery was affected: its selected tile was clipped at the
 edges at 200%; other galleries did not show the difference. The subsequent
 Showcase content-height correction and RTL fixture correction are recorded in
-[§3.214](history/01-library.md#3214-theme-gallery-clipping-and-deferred-test-corrections--2026-10-01).
+[§3.214](history/library/10-host-effects-and-keyboard-focus.md#3214-theme-gallery-clipping-and-deferred-test-corrections--2026-10-01).
 Current review scope is maintained in the
 [deferred layout list](13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md#deferred-layout-observations-at-200).
 

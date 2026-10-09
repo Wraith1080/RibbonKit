@@ -17,6 +17,7 @@ and `samples/RibbonKit.Writer`. Releases use GitHub Releases; NuGet.org publicat
 
 - Start with `git status --short`. Before code changes, read the relevant part of `04-DESIGN-NOTES.md` §5 and the matching §3 subsystem entry. Search by feature name and follow the matching index link into `docs/history/`; read bounded sections rather than the entire history.
 - Use `README.md` for public features and `CONTRIBUTING.md` for API compatibility and validation. Plans under `docs/` are design records unless their status banner says otherwise. Historical test counts and acceptance checkpoints are not current evidence.
+- Keep `docs/history/01-library.md` as a compact directory. Put concise implementation records in the matching `docs/history/library/` archive; start another bounded file when one approaches 800 lines. Keep decisions, regression pitfalls and verification limits; remove superseded next-step instructions, repeated status recaps and investigation narration. Link directly to the record from the design index. Current acceptance belongs in the active plan.
 - For WPF implementation, debugging, or verification, use `.agents/skills/ribbonkit-wpf-workflow/SKILL.md`. For documentation-only work, inspect the changed instructions, links, and diff; a WPF build is unnecessary unless the edit changes build behavior.
 - Read `docs/06-MERGE-AND-MODAL-PLAN.md`, `docs/05-MDI-EMULATION-PLAN.md`, or `src/RibbonKit.Design/SETUP-DESIGNTOOLS.md` only for the corresponding subsystem.
 
@@ -51,6 +52,8 @@ and `samples/RibbonKit.Writer`. Releases use GitHub Releases; NuGet.org publicat
 ## Evidence required for completion
 
 Run the applicable checks in `CONTRIBUTING.md`; satisfy explicit task gates. Add meaningful regression coverage for behavior changes where appropriate. Once checks pass, repeat or broaden only for new changes, failures, or unresolved risk.
+
+Use focused local validation by default for bounded changes, including small shared-template/token adjustments. Select affected regressions, visual scenes and independent-consumer scopes with `eng/Test-Focused.ps1` or the documented direct commands. Reserve the full local suite for broad shared behavior/template contracts, API/build changes, release readiness or an explicit gate; CI retains full validation. Clear local selection and capture/update variables before a full run.
 
 Separate build, focused tests, full-suite results, live UI/IME/DPI checks, and target-machine acceptance. Report which actually ran. For visual snapshot failures, inspect the `visual-snapshot-diagnostics` actual/diff PNGs before changing approvals or tolerances; an early failure does not establish that later scenes passed.
 

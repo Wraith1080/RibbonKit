@@ -5,8 +5,8 @@ already works in a `RibbonGroup`; `IRibbonSizeAware` is an optional reduction ho
 The proposal below adds customization/QAT participation without changing that baseline.
 
 Built-in combo and gallery dropdown copies are now implemented separately
-([library history §3.229](history/01-library.md#3229-combo-box-dropdown-copies-for-qat-and-customization--2026-10-08),
-[§3.230](history/01-library.md#3230-gallery-dropdown-copies-for-qat-and-customization--2026-10-08)).
+([library history §3.229](history/library/11-touch-density-and-gallery-projections.md#3229-combo-box-dropdown-copies-for-qat-and-customization--2026-10-08),
+[§3.230](history/library/11-touch-density-and-gallery-projections.md#3230-gallery-dropdown-copies-for-qat-and-customization--2026-10-08)).
 They do not introduce the generic provider API proposed below. Gallery copies
 retain the native source presenter, borrowing it between separate permanent
 viewports as `InRibbonGallery` already does for its own expansion. The generic

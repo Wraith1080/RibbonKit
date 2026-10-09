@@ -14,6 +14,7 @@ using RibbonKit.Animation;
 using RibbonKit.Controls;
 using RibbonKit.Theming;
 using Xunit;
+using Xunit.Abstractions;
 using Xunit.Sdk;
 
 namespace RibbonKit.VisualTests;
@@ -27,6 +28,17 @@ public sealed class VisualSnapshotTests
     private const int Width = 760;
     private const int Height = 170;
     private const double BaseDpi = 96d;
+    private readonly ITestOutputHelper _output;
+    private readonly SnapshotSelection _selection;
+
+    public VisualSnapshotTests(ITestOutputHelper output)
+    {
+        _output = output;
+        string? filter = Environment.GetEnvironmentVariable("RIBBONKIT_VISUAL_SCENES");
+        _selection = new SnapshotSelection(filter);
+        _output.WriteLine("Visual scene selection: {0}",
+            string.IsNullOrWhiteSpace(filter) ? "full matrix" : filter);
+    }
 
     private static readonly (RibbonTheme Theme, bool Dark, string Name)[] Themes =
     {
@@ -238,6 +250,11 @@ public sealed class VisualSnapshotTests
                 // Library-only Crystal QAT scenes; no Showcase palette or part patching.
                 foreach (bool dark in new[] { false, true })
                 {
+                    // The full matrix initializes a native window in Crystal light scenes.
+                    // Disconnected dark fixtures need the same WPF window/DPI initialization
+                    // when a focused selection omits those earlier connected scenes.
+                    if (dark && _selection.IsFocused)
+                        InitializeWindowRendering();
                     ThemeManager.Apply(application, RibbonTheme.CrystalLight);
                     ThemeManager.SetDarkMode(application, dark);
                     string palette = dark ? "crystal-dark" : "crystal-light";
@@ -285,6 +302,9 @@ public sealed class VisualSnapshotTests
                     AssertSnapshot($"{palette}-tint-purple-100", 1d,
                         sceneFactory: direction => CreateCrystalContextualScene(direction, dark, Colors.Purple), height: 270);
                 }
+                _selection.EnsureAllPatternsMatched();
+                _output.WriteLine("Completed {0} selected visual scenes: {1}",
+                    _selection.SelectedScenes.Count, string.Join(", ", _selection.SelectedScenes));
             }
             finally
             {
@@ -292,6 +312,21 @@ public sealed class VisualSnapshotTests
                 application.Shutdown();
             }
         });
+
+    private static void InitializeWindowRendering()
+    {
+        var window = new Window
+        {
+            Width = 1, Height = 1, Left = -10000, Top = -10000,
+            ShowActivated = false, ShowInTaskbar = false,
+        };
+        try
+        {
+            window.Show();
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+        }
+        finally { window.Close(); }
+    }
 
     private static void AssertDarkBackdropRoundTrip(Application application)
     {
@@ -311,13 +346,16 @@ public sealed class VisualSnapshotTests
     private static Color ResourceColor(Application application, string key) =>
         Assert.IsType<SolidColorBrush>(application.TryFindResource(key)).Color;
 
-    private static void AssertSnapshot(
+    private void AssertSnapshot(
         string snapshotName,
         double dpiScale,
         FlowDirection flowDirection = FlowDirection.LeftToRight,
         Func<FlowDirection, FrameworkElement>? sceneFactory = null,
         int height = Height)
     {
+        if (!_selection.Includes(snapshotName))
+            return;
+
         BitmapSource actual = RenderScene(dpiScale, flowDirection, sceneFactory, height);
         BitmapSource repeated = RenderScene(dpiScale, flowDirection, sceneFactory, height);
 

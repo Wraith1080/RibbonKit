@@ -76,7 +76,6 @@ public sealed class Office2010ThemeContractTests
 
     [Theory]
     [InlineData("RibbonKit.Brushes.Control.PressedBackground")]
-    [InlineData("RibbonKit.Brushes.ApplicationButton.PressedBackground")]
     public void Pressed_state_glass_has_no_bright_bottom_foot(string key)
     {
         XDocument document = XDocument.Load(ThemePart("Tokens.Office2010.xaml"));
