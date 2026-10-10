@@ -54,6 +54,9 @@ internal static class DropDownHeaderPortabilityChecks
                     var surface = Part<Border>(button, "PART_MenuHost");
                     Assert.Equal(Visibility.Visible, header.Visibility);
                     Assert.Equal(button.DropDownHeader, title.Text);
+                    Assert.Same(button.FindResource("RibbonKit.Brushes.ApplicationMenu.Foreground"), title.Foreground);
+                    if (dark && theme is RibbonTheme.Office2007 or RibbonTheme.Office2010)
+                        Assert.True(Assert.IsType<SolidColorBrush>(title.Foreground).Color.R >= 200);
                     Assert.False(header.IsHitTestVisible); Assert.False(title.Focusable);
                     Assert.Same(Brushes.Transparent, header.Background);
                     Assert.Equal(surface.CornerRadius, header.CornerRadius);
@@ -132,6 +135,8 @@ internal static class DropDownHeaderPortabilityChecks
             Assert.Empty(source.Items); Assert.Equal(3, proxy.Items.Count);
             source.DropDownHeader = "Choose a density"; Layout(window);
             Assert.Equal(source.DropDownHeader, Part<TextBlock>(proxy, "DropDownHeaderText").Text);
+            Assert.Same(proxy.FindResource("RibbonKit.Brushes.ApplicationMenu.Foreground"),
+                Part<TextBlock>(proxy, "DropDownHeaderText").Foreground);
             first.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); Layout(window);
             Assert.Equal(RibbonDensity.Touch, ribbon.Density);
             Assert.False(proxy.IsDropDownOpen);

@@ -1060,7 +1060,7 @@
                                            Checked="OnToggleGlassTreatment"
                                            Unchecked="OnToggleGlassTreatment"
                                            ScreenTipTitle="Glass treatment"
-                                           ScreenTipText="When Acrylic is active, soften the ribbon surfaces and strengthen tab, button, and split-button hovers. Crystal uses this look by default; other themes can opt in." />
+                                           ScreenTipText="When Acrylic is active, soften the ribbon surfaces and strengthen tab, button, and split-button hovers. Office 2013, 2019 and 2024 can opt in; Crystal uses this look by default. Office 2007 and 2010 use their Aero options." />
                     <rk:RibbonToggleButton x:Name="ApplicationMenuToggle"
                                            Header="2007 Menu"
                                            Size="Large"

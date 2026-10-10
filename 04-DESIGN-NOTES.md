@@ -912,6 +912,14 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Remove superseded smoke checks and reuse fixtures for related assertions](docs/history/library/12-keytips-layout-and-validation.md#3239-test-suite-redundancy-review--2026-10-09).
 
+### 3.240 Modern Office glass surfaces and legacy Aero choices — 2026-10-11
+
+[Separate the tab band from the translucent body and retain modern choices across legacy themes](docs/history/library/12-keytips-layout-and-validation.md#3240-modern-office-glass-surfaces-and-legacy-aero-choices--2026-10-11).
+
+### 3.241 Gallery header contrast and balanced section spacing — 2026-10-11
+
+[Pair heading paint, balance section gaps and verify one scrollbar across grouped content](docs/history/library/12-keytips-layout-and-validation.md#3241-gallery-header-contrast-and-balanced-section-spacing--2026-10-11).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
@@ -970,6 +978,10 @@ technical evidence warrants them; preserve existing dated records.
   future themes. Complete Windows contrast-theme support is not claimed.
 - **Touch density:** shared implementation and current verification/acceptance
   are tracked in the [active touch plan](docs/14-TOUCH-DENSITY-PLAN.md#verification-and-acceptance).
+- **Modern Office glass:** current scope, evidence and live review are in the
+  [glass iteration status](docs/09-FUTURE-THEMES-PLAN.md#office-glass-iteration).
+- **Gallery headers and spacing:** current evidence and native review are in the
+  [gallery header status](docs/09-FUTURE-THEMES-PLAN.md#gallery-header-and-section-layout).
 - **Crystal portability and Office 2007 orb defaults:** use the
   [active plan's status and acceptance table](docs/13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md#current-status-and-acceptance)
   for slice progress, remaining live review and deferred issues. Shared work

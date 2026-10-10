@@ -9,6 +9,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using RibbonKit.Animation;
 using RibbonKit.Controls;
+using RibbonKit.Interop;
 using RibbonKit.Showcase;
 using RibbonKit.Theming;
 using Xunit;
@@ -17,6 +18,51 @@ namespace RibbonKit.Tests;
 
 public sealed class ShowcaseViewChoiceTests
 {
+    [Theory]
+    [InlineData(RibbonTheme.Office2007)]
+    [InlineData(RibbonTheme.Office2010)]
+    public void Legacy_aero_themes_suspend_glass_without_losing_the_modern_choice(RibbonTheme legacy) => Sta.Run(() =>
+    {
+        var application = Sta.UseApplication(showcaseResources: true);
+        ThemeManager.Apply(application, RibbonTheme.Office2024);
+        var window = new MainWindow();
+        try
+        {
+            typeof(MainWindow).GetField("_restoringAppearance", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .SetValue(window, true);
+            // Inject derived runtime state to exercise the real selector handlers
+            // without depending on native DWM availability in this regression.
+            var backdropKey = (DependencyPropertyKey)typeof(RibbonWindow).GetField("ActiveBackdropPropertyKey",
+                BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+            window.SetValue(backdropKey, RibbonBackdrop.Acrylic);
+            window.GlassTreatmentToggle.IsChecked = true;
+            Assert.Equal(0.44, ((Brush)window.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground")).Opacity, 5);
+
+            void Select(RibbonTheme theme) => window.ThemeGallery.SelectedItem = window.ThemeGallery.Items
+                .Cast<RibbonGalleryItem>().Single(item => item.Tag!.ToString() == theme.ToString());
+
+            Select(legacy);
+            Assert.False(window.GlassTreatmentToggle.IsEnabled);
+            Assert.False(window.GlassTreatmentToggle.IsChecked);
+            Assert.True(window.AeroFrameGroup.IsEnabled);
+            Assert.Equal(1, ((Brush)window.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground")).Opacity);
+            Assert.Equal(true, typeof(MainWindow).GetField("_glassTreatmentOverride",
+                BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(window));
+            Select(RibbonTheme.Office2013);
+            Assert.True(window.GlassTreatmentToggle.IsEnabled);
+            Assert.True(window.GlassTreatmentToggle.IsChecked);
+            Assert.Equal(0.44, ((Brush)window.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground")).Opacity, 5);
+
+            window.GlassTreatmentToggle.IsChecked = false;
+            Select(legacy);
+            Select(RibbonTheme.Office2019);
+            Assert.True(window.GlassTreatmentToggle.IsEnabled);
+            Assert.False(window.GlassTreatmentToggle.IsChecked);
+            Assert.Equal(1, ((Brush)window.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground")).Opacity);
+        }
+        finally { window.Close(); Sta.ResetApplication(); }
+    });
+
     [Fact]
     public void Theme_gallery_qat_preserves_authored_visuals_and_the_real_selection_handler() => Sta.Run(() =>
     {

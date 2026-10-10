@@ -18,6 +18,10 @@
          ============================================================ -->
     <!-- Tab strip is white in the 2013 White theme (title bar is the only colored band). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Background" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.TabStripBackground" Color="Transparent" />
+    <!-- Match the title bar's glass translucency when the optional overlay is active. -->
+    <system:Double x:Key="RibbonKit.Metrics.Ribbon.TabStripGlassOpacity">0.48</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.Ribbon.BodyGlassOpacity">0.44</system:Double>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.QatExtender.Background" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.BodyBackground" Color="#FFFFFF" />
@@ -576,6 +580,7 @@
     <system:Double x:Key="RibbonKit.Metrics.Touch.MenuTopBandHeight">4</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.Touch.ClassicRailPadding">0,16,0,0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.InRibbonGalleryMargin">4,0,4,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.GallerySectionPadding">0,4,0,4</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.Touch.MessageRowHeight">52</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.Touch.MessageActionPadding">12,6</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.Touch.TitleBarHeight">46</system:Double>

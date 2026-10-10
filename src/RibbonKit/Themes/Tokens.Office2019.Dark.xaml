@@ -10,6 +10,8 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" Color="#1E1E1E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.QatExtender.Background" Color="#1E1E1E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.BodyBackground" Color="#1E1E1E" />
+    <!-- The two dark fills merge over gray Acrylic at the default 0.44 body opacity. -->
+    <system:Double x:Key="RibbonKit.Metrics.Ribbon.BodyGlassOpacity">0.64</system:Double>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.SurfaceBackground" Color="#1E1E1E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#454545" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.QatExtender.Border" Color="#454545" />

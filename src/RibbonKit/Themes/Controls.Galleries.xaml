@@ -21,15 +21,16 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type GroupItem}">
                     <StackPanel>
-                        <Border x:Name="GroupHeaderHost" Padding="8,6" Margin="0,0,0,2"
+                        <Border x:Name="GroupHeaderHost" Padding="8,6"
                                 IsHitTestVisible="False"
                                 Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.HeaderBackground}"
                                 CornerRadius="{DynamicResource RibbonKit.Metrics.DropDownHeaderCornerRadius}">
                             <TextBlock Text="{Binding Content.Name, RelativeSource={RelativeSource TemplatedParent}}"
                                        FontWeight="SemiBold"
-                                       Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+                                       Foreground="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Foreground}" />
                         </Border>
-                        <ItemsPresenter />
+                        <ItemsPresenter x:Name="GroupItemsHost"
+                                        Margin="{DynamicResource RibbonKit.Metrics.GallerySectionPadding}" />
                     </StackPanel>
                     <ControlTemplate.Triggers>
                         <MultiDataTrigger>
@@ -38,6 +39,7 @@
                                 <Condition Binding="{Binding TemplatedParent.IsQuickAccessOpen, RelativeSource={RelativeSource AncestorType={x:Type ItemsPresenter}}}" Value="False" />
                             </MultiDataTrigger.Conditions>
                             <Setter TargetName="GroupHeaderHost" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="GroupItemsHost" Property="Margin" Value="0" />
                         </MultiDataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -359,12 +361,13 @@
                                             IsHitTestVisible="False">
                                         <TextBlock x:Name="DropDownHeaderText"
                                                    Text="{TemplateBinding DropDownHeader}"
-                                                   Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                                   Foreground="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Foreground}"
                                                    FontWeight="SemiBold" TextWrapping="Wrap" />
                                     </Border>
                                     <!-- This viewport remains owned by the popup HWND. The single
                                          ItemsPresenter is attached here only while the popup is open. -->
                                     <ScrollViewer Grid.Row="1" PanningMode="VerticalOnly" x:Name="PART_PopupScrollViewer"
+                                                  Margin="{DynamicResource RibbonKit.Metrics.GallerySectionPadding}"
                                                   VerticalScrollBarVisibility="Auto"
                                                   HorizontalScrollBarVisibility="Disabled"
                                                   Focusable="False">
@@ -380,9 +383,14 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="DropDownHeader" Value="{x:Null}">
                             <Setter TargetName="DropDownHeaderHost" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_PopupScrollViewer" Property="Margin" Value="0" />
                         </Trigger>
                         <Trigger Property="DropDownHeader" Value="">
                             <Setter TargetName="DropDownHeaderHost" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_PopupScrollViewer" Property="Margin" Value="0" />
+                        </Trigger>
+                        <Trigger Property="IsGrouping" Value="True">
+                            <Setter TargetName="PART_PopupScrollViewer" Property="Margin" Value="0" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />

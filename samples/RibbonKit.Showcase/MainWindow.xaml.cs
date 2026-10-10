@@ -498,7 +498,7 @@ public partial class MainWindow : RibbonWindow
 
     private void OnToggleGlassTreatment(object sender, RoutedEventArgs e)
     {
-        if (_glassTreatmentSync || GlassTreatmentToggle is null) return;
+        if (_glassTreatmentSync || GlassTreatmentToggle is null || !GlassTreatmentToggle.IsEnabled) return;
         _glassTreatmentOverride = GlassTreatmentToggle.IsChecked == true;
         RefreshGlassTreatment();
         SaveAppearancePreferences();
@@ -517,8 +517,10 @@ public partial class MainWindow : RibbonWindow
         _glassTreatmentSync = true;
         try
         {
-            GlassTreatmentToggle.IsChecked = _glassTreatmentOverride
-                ?? ThemeManager.CurrentTheme == RibbonTheme.CrystalLight;
+            bool supported = SupportsGlassTreatment(ThemeManager.CurrentTheme);
+            GlassTreatmentToggle.IsEnabled = supported;
+            GlassTreatmentToggle.IsChecked = supported && (_glassTreatmentOverride
+                ?? ThemeManager.CurrentTheme == RibbonTheme.CrystalLight);
         }
         finally { _glassTreatmentSync = false; }
     }
@@ -526,11 +528,17 @@ public partial class MainWindow : RibbonWindow
     private void RefreshGlassTreatment()
     {
         bool enabled = ActiveBackdrop == RibbonBackdrop.Acrylic
+            && SupportsGlassTreatment(ThemeManager.CurrentTheme)
             && (_glassTreatmentOverride
                 ?? ThemeManager.CurrentTheme == RibbonTheme.CrystalLight);
         (_acrylicGlassPresentation ??= new AcrylicGlassPresentation(this))
             .Apply(enabled, ThemeManager.IsDarkMode);
     }
+
+    // The legacy generations already expose their own optional Aero treatment.
+    // Keep the saved modern Glass choice while those themes are active.
+    private static bool SupportsGlassTreatment(RibbonTheme? theme) =>
+        theme is not (RibbonTheme.Office2007 or RibbonTheme.Office2010);
 
     private void OnAnimationOff(object sender, RoutedEventArgs e) =>
         RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;

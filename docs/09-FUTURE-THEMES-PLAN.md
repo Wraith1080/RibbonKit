@@ -914,15 +914,11 @@ dedicated shared active-hover token: Crystal gives the hovered half a stronger w
 while each Office palette supplies its existing ordinary hover appearance. No
 Showcase split-button override is needed.
 
-**Planned Office glass iteration:** The separate Glass look switch can opt Office
-themes into the Acrylic glass treatment, but their appearance has not had a live
-theme-by-theme review. Iterate through Office 2007, 2010, 2013, 2019 and 2024,
-including dark variants, with Acrylic and Glass look enabled. Compare each with
-its Acrylic appearance when Glass look is off, and review the title/status bars,
-ribbon body, tab markers, command and split-button states, and Backstage at normal
-and narrow widths. Use screenshots to identify any theme-specific contrast or
-readability adjustments. Keep the switch opt-in for Office themes and preserve
-their current Glass look-off appearance and the accepted Crystal treatment.
+**Office glass iteration:** The user narrowed this work to Office 2013, 2019 and
+2024 on 2026-10-11; Office 2007 and 2010 already have their own Aero options.
+The [current glass iteration status](#office-glass-iteration) tracks the first
+shared-paint slice and the remaining live review. Glass remains opt-in for Office;
+the accepted Crystal treatment and Glass look-off paint remain the reference.
 
 **Deferred View-tab overflow after leaving Crystal Light (user screenshots, 2026-09-27):**
 At the shown window width, Crystal Light hid the then-unsupported Dark Mode button.
@@ -1040,6 +1036,52 @@ if distinct from Aurora/2024.
 Windows contrast themes are separate accessibility work based on system colors,
 not an aesthetic preset. Current gallery/scrollbar fallbacks do not establish
 whole-ribbon contrast-theme support.
+
+## Office glass iteration
+
+Scope: Office 2013, 2019 and 2024, including dark variants. Showcase disables and
+unchecks Glass look in Office 2007/2010 while preserving the saved choice for
+supported themes. Native Acrylic activation and Aero remain host choices.
+
+| Review item | Current status |
+| --- | --- |
+| Selector and restoration | Implemented 2026-10-11. Legacy themes cannot activate the overlay; returning to a supported theme restores the saved on/off choice. Focused Release selector, preference and Crystal presentation checks passed 35/35. |
+| Shared ribbon paint | Implemented 2026-10-11. A neutral shared tab-strip token separates the native band from the translucent body. Office 2013/2019 use the title bar's 0.48 glass-opacity multiplier in both light and dark modes. After the user's Office 2019 dark screenshot showed the surfaces blending, its body now uses 0.64 through a scoped theme metric; other bodies retain 0.44. Office 2013's white File label keeps its colored hover. Independent consumer checks passed across 12 palettes, scoped Office 2013 light/2019 dark inside Crystal, and rendered gray-backdrop separation. |
+| Deterministic visual evidence | Latest body adjustment passed 35 selected scenes on 2026-10-11: 14 glass light/dark scenes at 100% and narrow RTL at 200%, including two new Office 2019 dark gray-backdrop cases, plus 21 existing Office and Crystal comparisons. The two affected dark captures and diffs and two new gray captures were inspected before refreshing/creating baselines; existing non-glass approvals, other glass baselines and tolerances were retained. These fixtures use authored WPF paint. |
+| Native appearance acceptance | Office 2019 dark header/body separation confirmed by the user on 2026-10-11 after the body-opacity adjustment. Other review remains open: on the normal Debug Showcase build, compare Acrylic with Glass look on/off in each supported Office theme and dark variant. Review title/status bars, ribbon body, tab markers, command and split-button states, and Backstage at normal/narrow widths; check repeated switches through legacy Aero and Crystal. Open-surface DPI/mixed-monitor and broader motion acceptance are separate gates. |
+
+The normal Debug Showcase build and both normal Release runtime targets passed
+with zero warnings/errors. The full solution suite and package gate were not rerun
+for this bounded appearance slice. [Implementation and rendering pitfalls](history/library/12-keytips-layout-and-validation.md#3240-modern-office-glass-surfaces-and-legacy-aero-choices--2026-10-11).
+
+## Gallery header and section layout
+
+Implemented 2026-10-11 after the user's legacy dark gallery screenshots. Shared
+gallery and dropdown headings now pair `ApplicationMenu.HeaderBackground` with
+`ApplicationMenu.Foreground`; Office 2007/2010 dark headings use light text while
+their pale tiles retain dark text. The dropdown change also covers gallery QAT
+captions. No public API symbols or Showcase presentation helpers were added.
+
+`RibbonKit.Metrics.GallerySectionPadding` supplies four DIP above and below each
+section's tiles, and around the tile viewport under a single caption. Section
+headings and tiles share one native scroll viewport and scrollbar. The optional
+overall caption remains fixed above that viewport. Grouped strips suppress both
+section headings and the new gaps while collapsed; custom GroupStyle precedence
+and the existing presenter/selection ownership are retained.
+
+Verification: 54 focused Release gallery/QAT/row/popup tests, 27 selected visual
+scenes and three independent consumer scopes passed. Grouped and single-caption
+gallery consumers each cover 96 theme/light-dark/density/LTR-RTL/simulated
+125%-200% combinations; dropdown/split headings cover 48 combinations plus QAT.
+The grouped overflow checks verify one rail, scrolling headings and last-item
+reachability. Targeted popup captures were inspected; snapshot approvals and
+tolerances were retained. Normal Debug Showcase and both Release runtime targets
+built with zero warnings/errors. Full-suite/package checks were not rerun.
+
+Native appearance acceptance remains open for the updated Theme/Accent galleries,
+including legacy dark header contrast, balanced section spacing, multiple-section
+overflow and actual scrollbar interaction. Physical touch and native mixed-monitor
+DPI checks remain separate. [Implementation record](history/library/12-keytips-layout-and-validation.md#3241-gallery-header-contrast-and-balanced-section-spacing--2026-10-11).
 
 ## Acceptance
 

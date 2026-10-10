@@ -8,6 +8,9 @@
         <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Office2024.xaml" />
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.ScrollBars.xaml" />
     </ResourceDictionary.MergedDictionaries>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.TabStripBackground" Color="Transparent" />
+    <sys:Double x:Key="RibbonKit.Metrics.Ribbon.TabStripGlassOpacity">0.88</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.Ribbon.BodyGlassOpacity">0.44</sys:Double>
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Window.Background" StartPoint="0,0" EndPoint="1,1">
         <GradientStop Color="#DCEAF4" Offset="0" />
         <GradientStop Color="#EBE8F5" Offset="0.48" />
@@ -1042,6 +1045,7 @@
     <sys:Double x:Key="RibbonKit.Metrics.Touch.MenuTopBandHeight">8</sys:Double>
     <Thickness x:Key="RibbonKit.Metrics.Touch.ClassicRailPadding">0,16,0,0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.InRibbonGalleryMargin">4,0,4,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.GallerySectionPadding">0,4,0,4</Thickness>
     <sys:Double x:Key="RibbonKit.Metrics.Touch.MessageRowHeight">52</sys:Double>
     <Thickness x:Key="RibbonKit.Metrics.Touch.MessageActionPadding">12,6</Thickness>
     <sys:Double x:Key="RibbonKit.Metrics.Touch.TitleBarHeight">46</sys:Double>

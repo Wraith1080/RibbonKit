@@ -344,6 +344,7 @@
                              the tab must paint OVER the body's top border to connect into it. -->
                         <Grid x:Name="PART_TabHeaderHost"
                               Grid.Row="0"
+                              Background="{DynamicResource RibbonKit.Brushes.Ribbon.TabStripBackground}"
                               KeyboardNavigation.TabNavigation="Local"
                               KeyboardNavigation.TabIndex="0"
                               Panel.ZIndex="1">

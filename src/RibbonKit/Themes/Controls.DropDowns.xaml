@@ -200,7 +200,7 @@
                                                 IsHitTestVisible="False">
                                             <TextBlock x:Name="DropDownHeaderText"
                                                        Text="{TemplateBinding DropDownHeader}"
-                                                       Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                                       Foreground="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Foreground}"
                                                        FontWeight="SemiBold" TextWrapping="Wrap" />
                                         </Border>
                                         <ScrollViewer x:Name="PART_PopupScrollViewer" Grid.Row="1" PanningMode="VerticalOnly"
@@ -643,7 +643,7 @@
                                                 IsHitTestVisible="False">
                                             <TextBlock x:Name="DropDownHeaderText"
                                                        Text="{TemplateBinding DropDownHeader}"
-                                                       Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                                       Foreground="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Foreground}"
                                                        FontWeight="SemiBold" TextWrapping="Wrap" />
                                         </Border>
                                         <ScrollViewer x:Name="PART_PopupScrollViewer" Grid.Row="1" PanningMode="VerticalOnly"

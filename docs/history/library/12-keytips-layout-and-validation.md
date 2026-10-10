@@ -218,3 +218,103 @@ The consumer reproduced the previously recorded Touch gallery-selection failure
 so later consumer scenarios did not run. That failure remains unresolved; the
 test was not removed or weakened. Diff checks passed. No package gate or new
 live/native monitor acceptance was performed for this test-only pruning.
+
+### 3.240 Modern Office glass surfaces and legacy Aero choices — 2026-10-11
+
+Showcase's Glass look now targets Office 2013/2019/2024 and Crystal. By user
+direction, Office 2007/2010 retain their separate Aero path. Their switch is
+disabled and unchecked without overwriting the saved glass override; the real
+refresh handler also prevents an overlay from surviving a switch into a legacy
+theme. Returning to a supported theme restores the saved on/off choice. The
+preference schema and native backdrop activation are unchanged.
+
+Office 2013/2019 had an opaque ribbon-wide background behind the translucent
+body, so reducing BodyBackground opacity could not reveal the host backdrop.
+The shared template now reads `RibbonKit.Brushes.Ribbon.TabStripBackground` on
+PART_TabHeaderHost. Every base palette supplies transparent neutral paint and
+dark overlays inherit it. The optional glass factory clones the effective ribbon
+band using `RibbonKit.Metrics.Ribbon.TabStripGlassOpacity` and clears the
+ribbon-wide brush opacity. Body opacity defaults to its established 0.44. Office
+2013/2019 use 0.48, matching the title bar's glass translucency in light and dark
+modes following user review; other palettes retain 0.88. The metric resolves from
+the scope rather than the global theme. Glass-off paint is unchanged. Light palettes whose File
+button uses white text on a colored block keep the original File hover brush;
+the pale tab hover otherwise washed out Office 2013's label.
+
+Native Office 2019 dark review showed the two bands blending over gray Acrylic:
+the #252525 header at 0.48 and #1E1E1E body at 0.44 converge over a mid-gray
+backdrop. `RibbonKit.Metrics.Ribbon.BodyGlassOpacity` now defaults to 0.44 in all
+base palettes and overrides to 0.64 only in Office 2019 dark. This deepens the
+body while retaining the header's title-bar treatment and 36% backdrop contribution.
+The independent consumer renders both surfaces over #959595 and requires a
+header/body shade difference of at least 16; gray-backdrop fixtures also cover
+100% and narrow RTL at 200%. These checks reproduce the paint issue without
+establishing native DWM acceptance.
+
+These are shared tokens/templates and the existing scoped overlay API. Host theme
+eligibility remains separate from the generic factory; it still works for scoped
+palettes independently of the global theme. No public API or Writer source changed.
+
+New glass fixtures cover File hover, the active split half, selected tabs, QAT
+and body paint over a fixed light/dark WPF backdrop at 100% and narrow RTL at 200%.
+They use synthetic hover state, not native pointer input or DWM Acrylic. Place
+these scenes after the established matrix: native-window initialization changes
+WPF's disconnected text rendering. An early insertion altered Crystal text/edge
+pixels; actual/diff inspection led to restoring scene order, without replacing
+an existing approval or relaxing determinism/tolerances.
+
+Verification: both normal Release runtime targets and normal Debug Showcase built
+with zero warnings/errors. Focused selector/preferences/Crystal checks passed
+35/35. The RibbonKit-only GlassOverlay scope passed one aggregate covering all
+12 palettes, realized tab-band/body resource resolution, removal/local precedence
+and an Office 2013 palette scoped inside Crystal. The selected visual aggregate
+passed 36 scenes: 12 inspected new glass baselines and 24 unchanged Office/Crystal
+comparisons. Subsequent tab-band/body adjustments rebuilt both Release runtime
+targets and the normal Debug Showcase with zero warnings/errors. The independent
+consumer passed matching tab-band/title-bar translucency, rendered gray separation
+and scoped Office 2013 light/2019 dark palettes inside global Crystal light. The
+latest selected visual run passed 35 scenes: 14 glass (including two gray cases)
+and 21 existing comparisons. Affected new glass baselines were refreshed only
+after inspecting actual/diff paint: the latest change affects the Office 2019
+dark body, with other glass and non-glass approvals retained. The
+full solution suite and package gate were not rerun. The active
+[glass iteration status](../../09-FUTURE-THEMES-PLAN.md#office-glass-iteration)
+owns native appearance acceptance and remaining live gates.
+
+### 3.241 Gallery header contrast and balanced section spacing — 2026-10-11
+
+Office 2007/2010 dark keeps dark primary text on its pale ribbon/gallery body,
+but gallery headings used that same text over a #444444/#464646 fill. Shared
+group headers and the overall gallery caption now pair the existing
+`ApplicationMenu.HeaderBackground` with `ApplicationMenu.Foreground`. Shared
+dropdown/split headings use the same pair so gallery QAT captions retain parity.
+Tile foreground and palette-wide primary text are unchanged; scoped overrides
+still resolve normally. No public API symbols or Showcase glue were added.
+
+The old group heading had a two-DIP lower margin and no matching gap after its
+tiles. `RibbonKit.Metrics.GallerySectionPadding` now supplies 0,4,0,4 in all six
+base palettes, inherited by dark overlays. The group items presenter applies it
+while expanded; the strip collapses both the heading and the gap. A non-grouped
+popup with an overall caption applies the same spacing to its viewport. Empty
+captions and grouped popups retain the original outer viewport geometry.
+
+Keep the two heading roles distinct: the optional overall caption is fixed above
+the viewport; every collection-view section heading scrolls with its tiles.
+One native scrollbar serves all sections, with no nested per-section rail.
+The existing direct ItemsPresenter-to-ScrollViewer ownership and permanent
+strip/popup viewports were retained, preserving the native/QAT handoff contract.
+Overflow coverage runs after the original six-item selection/width checks so its
+larger dataset does not replace those cases. Consumer tile content centers its
+label inside the authored box, making vertical gap previews representative.
+
+Verification: normal Debug Showcase and both Release runtime targets built with
+zero warnings/errors; 54 focused runtime tests and 27 unchanged visual scenes
+passed. Three independent scopes passed: grouped and caption galleries each
+cover 96 theme/light-dark/density/LTR-RTL/simulated 125%-200% combinations;
+dropdown/split headings cover 48 combinations plus QAT. Tests check light legacy
+heading text, scoped foreground precedence, equal section gaps, one overflow
+rail, scrolling section headings and last-tile reachability. Targeted legacy
+dark, modern, Crystal, Touch and overflow captures were inspected. Snapshot
+approvals/tolerances and the public API baseline were retained. Full-suite and
+package checks were not rerun. Current native review belongs to the
+[gallery header status](../../09-FUTURE-THEMES-PLAN.md#gallery-header-and-section-layout).
