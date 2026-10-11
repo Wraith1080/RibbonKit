@@ -15,17 +15,17 @@ internal sealed class RibbonDensityTransition : IDisposable
     private readonly TranslateTransform? _translate;
     private bool _disposed;
 
-    internal RibbonDensityTransition(FrameworkElement surface, double offsetY = 0d)
+    internal RibbonDensityTransition(FrameworkElement surface, double offsetY = 0d,
+        RibbonAnimationAction action = RibbonAnimationAction.DensityChange, double offsetX = 0d)
     {
         _surface = surface;
-        const RibbonAnimationAction action = RibbonAnimationAction.DensityChange;
         Duration duration = RibbonAnimation.GetDuration(action);
         IEasingFunction ease = RibbonAnimation.GetEase(action);
 
-        if (offsetY != 0d)
+        if (offsetY != 0d || offsetX != 0d)
         {
             _originalTransform = surface.RenderTransform;
-            _translate = new TranslateTransform(0d, offsetY);
+            _translate = new TranslateTransform(offsetX, offsetY);
             _transforms = new TransformGroup();
             _transforms.Children.Add(_originalTransform);
             _transforms.Children.Add(_translate);
@@ -33,6 +33,8 @@ internal sealed class RibbonDensityTransition : IDisposable
             surface.SetCurrentValue(UIElement.RenderTransformProperty, _transforms);
             _translate.BeginAnimation(TranslateTransform.YProperty,
                 new DoubleAnimation(offsetY, 0d, duration) { EasingFunction = ease });
+            _translate.BeginAnimation(TranslateTransform.XProperty,
+                new DoubleAnimation(offsetX, 0d, duration) { EasingFunction = ease });
         }
 
         // Start from a gentle dip, never transparency. No opacity seed is needed on
@@ -45,11 +47,17 @@ internal sealed class RibbonDensityTransition : IDisposable
         }.CreateClock();
         _fade.Completed += OnCompleted;
         surface.Unloaded += OnUnloaded;
+        RibbonAnimation.Changed += OnCompleted;
+        SystemParameters.StaticPropertyChanged += OnSystemParametersChanged;
         surface.ApplyAnimationClock(UIElement.OpacityProperty, _fade);
     }
 
     private void OnCompleted(object? sender, EventArgs e) => Dispose();
     private void OnUnloaded(object sender, RoutedEventArgs e) => Dispose();
+    private void OnSystemParametersChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SystemParameters.ClientAreaAnimation)) Dispose();
+    }
 
     public void Dispose()
     {
@@ -57,11 +65,15 @@ internal sealed class RibbonDensityTransition : IDisposable
         _disposed = true;
         _fade.Completed -= OnCompleted;
         _surface.Unloaded -= OnUnloaded;
+        RibbonAnimation.Changed -= OnCompleted;
+        SystemParameters.StaticPropertyChanged -= OnSystemParametersChanged;
         _surface.ApplyAnimationClock(UIElement.OpacityProperty, null);
         if (_translate is not null)
         {
             _translate.Y = 0d;
+            _translate.X = 0d;
             _translate.BeginAnimation(TranslateTransform.YProperty, null);
+            _translate.BeginAnimation(TranslateTransform.XProperty, null);
             // A consumer may have replaced its transform during the transition.
             if (ReferenceEquals(_surface.RenderTransform, _transforms))
                 _surface.SetCurrentValue(UIElement.RenderTransformProperty, _originalTransform);

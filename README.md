@@ -47,7 +47,7 @@ below describes the current checkout, including post-release additions; see
 - File tab or Office 2007 orb, two-pane application menu, and Backstage with Modern,
   Classic, Classic2010, Glass2007, Classic2007, CrystalSidebar and CrystalFloating designs.
 - Repeatable message bars with actions/dismissal; Backstage page/footer/recent patterns.
-- Three QAT placements, overflow and source-linked button/toggle/split/dropdown/combo/gallery proxies.
+- Three QAT placements, overflow and source-linked button/toggle/split/dropdown/combo/gallery/group proxies.
 - Contextual tabs, tab/group merging and modal-tab lifetimes.
 - Ribbon/QAT customization with JSON Import/Export/Reset and application-controlled storage.
 
@@ -256,6 +256,7 @@ Custom ribbon groups use the same dropdown representation.
 
 ```xml
 <rk:InRibbonGallery Header="Styles" Icon="{StaticResource StylesIcon}"
+                    ScreenTipTitle="Styles" ScreenTipText="Choose a text style."
                     rk:Ribbon.CommandId="command.styles" PopupWidth="320"
                     ItemsSource="{Binding Styles}"
                     ItemTemplate="{StaticResource StylePreviewTemplate}"
@@ -269,6 +270,12 @@ also apply to its copies. It works from inactive tabs and QAT overflow, across
 all three placements. Arrows navigate tiles; Enter/Space picks and closes; Escape
 closes. Mouse picks close after release, and closing cancels an active preview.
 
+`RibbonGallery.ScreenTipTitle` and `ScreenTipText` create the shared rich tooltip
+for either gallery type. QAT, overflow and custom-group copies follow both values
+as they change; a copy falls back to `Header` when the tip title is null. Individual
+tiles retain their own tooltips. Gallery choices use keyboard navigation rather
+than individual KeyTip badges.
+
 The source gallery keeps its items and ownership. Its existing items presenter
 temporarily moves into the copy's separate popup viewport and returns on close,
 removal or template replacement. A temporary vector preview keeps the visible
@@ -280,6 +287,33 @@ opening another copy or the source's native flyout closes the previous copy.
 Custom gallery templates must keep their items presenter inside a `ScrollViewer`.
 The shared `InRibbonGallery` template also has a noninteractive
 `PART_StripPreviewHost` decorator beside its viewport for this frozen strip view.
+
+### Groups in QAT
+
+Right-click a group caption, use **Customize QAT**, or call
+`Ribbon.AddToQuickAccess(group)` to add its compact dropdown button. Group entries
+appear only in Customize QAT; individual commands remain available in both
+customization pages. Supply `RibbonGroup.Icon` for the QAT image and a stable
+`Ribbon.CommandId` for saved customization.
+
+The source group stays collapsed while it belongs to QAT. Its ribbon slot uses
+the normal collapsed width, and opening or dismissing either opener leaves that
+layout stable. Removing it from QAT releases the collapse and lets current
+adaptive sizing choose its size, including remaining collapsed in a narrow window.
+Hiding QAT preserves its membership and the source group's collapsed state.
+
+The QAT button opens the group's existing full-content flyout at its own anchor,
+including from an inactive tab or overflow. Native commands, editors, galleries,
+resources and bindings retain their source ownership. KeyTips descend into the
+flyout's controls; arrows, Home/End, nested Escape and UI Automation use the native
+controls. Collapse and removal animate only the committed visible layout through
+the existing dropdown motion policy, honoring global and reduced-motion settings.
+Toggle, checkbox and radio options keep a collapsed group flyout open for further
+changes; ordinary command buttons close it after invocation.
+
+While a QAT popup is open, ribbon hover effects and ScreenTips are suppressed.
+QAT and popup controls remain interactive, and outside presses dismiss the popup
+without consuming the clicked ribbon command or File button's input.
 
 ### Theming & rendering
 

@@ -62,13 +62,16 @@
                 <Setter TargetName="DefaultOrbGlyph" Property="Visibility" Value="Visible" />
                 <Setter TargetName="CustomOrbGlyph" Property="Visibility" Value="Collapsed" />
             </DataTrigger>
-            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type primitives:ButtonBase}}}"
-                         Value="True">
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type primitives:ButtonBase}}}" Value="True" />
+                    <Condition Binding="{Binding (controls:RibbonPopupInteraction.SuppressHover), RelativeSource={RelativeSource AncestorType={x:Type primitives:ButtonBase}}}" Value="False" />
+                </MultiDataTrigger.Conditions>
                 <Setter TargetName="OrbFill" Property="Fill"
                         Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverBackground}" />
                 <Setter TargetName="OrbFill" Property="Stroke"
                         Value="{DynamicResource RibbonKit.Brushes.ApplicationOrb.HoverRing}" />
-            </DataTrigger>
+            </MultiDataTrigger>
             <DataTrigger Binding="{Binding IsPressed, RelativeSource={RelativeSource AncestorType={x:Type primitives:ButtonBase}}}"
                          Value="True">
                 <Setter TargetName="OrbFill" Property="Fill"
@@ -494,16 +497,21 @@
                                                                           VerticalAlignment="Top" />
                                                     </Grid>
                                                     <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                        <MultiTrigger>
+                                                            <MultiTrigger.Conditions>
+                                                                <Condition Property="IsMouseOver" Value="True" />
+                                                                <Condition Property="controls:RibbonPopupInteraction.SuppressHover" Value="False" />
+                                                            </MultiTrigger.Conditions>
                                                             <Setter TargetName="Chrome" Property="Background"
                                                                     Value="{DynamicResource RibbonKit.Brushes.ApplicationButton.HoverBackground}" />
                                                             <Setter TargetName="HoverUnderline" Property="Visibility" Value="Visible" />
-                                                        </Trigger>
+                                                        </MultiTrigger>
                                                         <!-- Crystal reveals its glass rim only on idle hover. Office
                                                              palettes retain their existing inner-rim opacity. -->
                                                         <MultiTrigger>
                                                             <MultiTrigger.Conditions>
                                                                 <Condition Property="IsMouseOver" Value="True" />
+                                                                <Condition Property="controls:RibbonPopupInteraction.SuppressHover" Value="False" />
                                                                 <Condition Property="IsPressed" Value="False" />
                                                                 <Condition Property="IsChecked" Value="False" />
                                                             </MultiTrigger.Conditions>
@@ -720,10 +728,14 @@
                                                                 CornerRadius="{Binding CornerRadius, ElementName=Chrome}" />
                                                     </Grid>
                                                     <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                        <MultiTrigger>
+                                                            <MultiTrigger.Conditions>
+                                                                <Condition Property="IsMouseOver" Value="True" />
+                                                                <Condition Property="controls:RibbonPopupInteraction.SuppressHover" Value="False" />
+                                                            </MultiTrigger.Conditions>
                                                             <Setter TargetName="Chrome" Property="Background"
                                                                     Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
-                                                        </Trigger>
+                                                        </MultiTrigger>
                                                         <!-- Pressed comes AFTER hover on purpose: the
                                                              pointer is always over the button while it
                                                              is held, so the later trigger must be the
@@ -789,10 +801,14 @@
                                                                 CornerRadius="{Binding CornerRadius, ElementName=Chrome}" />
                                                     </Grid>
                                                     <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                        <MultiTrigger>
+                                                            <MultiTrigger.Conditions>
+                                                                <Condition Property="IsMouseOver" Value="True" />
+                                                                <Condition Property="controls:RibbonPopupInteraction.SuppressHover" Value="False" />
+                                                            </MultiTrigger.Conditions>
                                                             <Setter TargetName="Chrome" Property="Background"
                                                                     Value="{DynamicResource RibbonKit.Brushes.TabStrip.ControlHoverBackground}" />
-                                                        </Trigger>
+                                                        </MultiTrigger>
                                                         <Trigger Property="IsChecked" Value="True">
                                                             <Setter TargetName="ChevronUp" Property="Visibility" Value="Collapsed" />
                                                             <Setter TargetName="ChevronDown" Property="Visibility" Value="Visible" />

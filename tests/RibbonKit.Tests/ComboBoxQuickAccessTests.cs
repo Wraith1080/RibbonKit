@@ -85,12 +85,15 @@ public sealed class ComboBoxQuickAccessTests
         var ribbon = RibbonFor(original);
         var entry = Assert.Single(RibbonCommandCatalog.CollectAvailable(ribbon));
         Assert.Same(original, entry.Control); Assert.Same(original.Icon, entry.Icon);
-        ribbon.AddToQuickAccess(original);
         var custom = new RibbonGroup { Header = "Custom" }; Ribbon.SetIsCustom(custom, true);
         Ribbon.SetCommandId(custom, "custom:group"); ribbon.Tabs[0].Groups.Add(custom);
         var copy = Assert.IsAssignableFrom<RibbonDropDownButton>(ribbon.CreateCommandProxy(original, RibbonControlSize.Medium));
         copy.Header = "My size"; custom.Items.Add(copy);
         Assert.Equal("My size", RibbonCommandCatalog.Describe(copy).DisplayName);
+        Assert.True(ribbon.AddToQuickAccess(copy));
+        Assert.IsType<RibbonComboBoxQuickAccessProxy>(Assert.Single(ribbon.QuickAccessItems));
+        Assert.False(ribbon.AddToQuickAccess(original));
+        Assert.True(ribbon.IsInQuickAccess(copy));
         string json = RibbonCustomizationSerializer.Serialize(ribbon);
         var fresh = new RibbonComboBox { Header = "Size", Icon = Icon() }; fresh.Items.Add("10"); fresh.Items.Add("14");
         Ribbon.SetCommandId(fresh, "command.size"); var restored = RibbonFor(fresh);

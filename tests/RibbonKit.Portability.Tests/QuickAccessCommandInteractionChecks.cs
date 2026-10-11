@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
@@ -99,6 +100,8 @@ internal static class QuickAccessCommandInteractionChecks
         }
         finally { window.Close(); Layout(); }
 
+        VerifyCustomCommandMenus(icon);
+
         void Layout()
         {
             CommandManager.InvalidateRequerySuggested();
@@ -128,6 +131,97 @@ internal static class QuickAccessCommandInteractionChecks
                 }
             }
         }
+    }
+
+    private static void VerifyCustomCommandMenus(ImageSource icon)
+    {
+        int cases = 0;
+        foreach (bool split in new[] { false, true })
+        {
+            RibbonDropDownButton source = split ? new RibbonSplitButton() : new RibbonDropDownButton();
+            source.Header = "Touch/Mouse Mode"; source.Icon = icon;
+            source.DropDownHeader = "Optimize spacing between commands";
+            Ribbon.SetCommandId(source, "command.mode");
+            var mouse = new RibbonMenuItem { Header = "Mouse" };
+            var touch = new RibbonMenuItem { Header = "Touch" };
+            int clicks = 0; touch.Click += (_, _) => clicks++;
+            source.Items.Add(mouse); source.Items.Add(touch);
+            var home = new RibbonTab { Header = "Home" };
+            var originalGroup = new RibbonGroup { Header = "Mode" }; originalGroup.Items.Add(source); home.Groups.Add(originalGroup);
+            var customTab = new RibbonTab { Header = "Custom Tab" }; Ribbon.SetIsCustom(customTab, true);
+            var customGroup = new RibbonGroup { Header = "Custom Group" }; Ribbon.SetIsCustom(customGroup, true);
+            customTab.Groups.Add(customGroup);
+            var ribbon = new Ribbon(); ribbon.Tabs.Add(home); ribbon.Tabs.Add(customTab); ribbon.SelectedTab = customTab;
+            var customize = new RibbonCustomizePage { Ribbon = ribbon, Height = 200 };
+            var qatPage = new RibbonQuickAccessPage { Ribbon = ribbon, Height = 200 };
+            var window = new RibbonWindow { Content = new StackPanel { Children = { ribbon, customize, qatPage } },
+                Width = 900, Height = 650, Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+            try
+            {
+                window.Show(); Layout();
+                var available = Part<ListBox>(customize, "PART_AvailableList");
+                available.SelectedItem = available.Items.Cast<RibbonCommandEntry>().Single(entry => ReferenceEquals(entry.Control, source));
+                var node = Part<TreeView>(customize, "PART_Tree").Items.Cast<RibbonCustomizeNode>()
+                    .Single(item => item.IsCustom);
+                node.Children.Single().IsSelected = true; Layout();
+                Part<ButtonBase>(customize, "PART_AddButton").RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); Layout();
+                var copy = Assert.IsAssignableFrom<RibbonDropDownButton>(Assert.Single(customGroup.Items));
+                var qatAvailable = Part<ListBox>(qatPage, "PART_AvailableList");
+                qatAvailable.SelectedItem = qatAvailable.Items.Cast<RibbonCommandEntry>().Single(entry => ReferenceEquals(entry.Control, source));
+                foreach (FlowDirection flow in Enum.GetValues<FlowDirection>())
+                foreach (RibbonQuickAccessPosition placement in Enum.GetValues<RibbonQuickAccessPosition>())
+                {
+                    window.FlowDirection = flow; ribbon.QuickAccessPosition = placement;
+                    ribbon.QuickAccessItems.Clear(); Layout();
+                    Assert.True(Part<ButtonBase>(qatPage, "PART_AddButton").IsEnabled);
+                    var menu = OpenCommandMenu(Part<ToggleButton>(copy, "PART_Toggle"));
+                    var add = Assert.IsType<MenuItem>(menu.Items[0]); Assert.True(add.IsEnabled);
+                    Invoke(add); Layout(); menu.IsOpen = false; Layout();
+                    var qat = Assert.IsAssignableFrom<RibbonDropDownButton>(Assert.Single(ribbon.QuickAccessItems));
+                    Assert.Same(source, Ribbon.GetQuickAccessSource(qat));
+                    Assert.True(ribbon.IsInQuickAccess(copy)); Assert.False(ribbon.AddToQuickAccess(copy));
+                    Layout(); Assert.False(Part<ButtonBase>(qatPage, "PART_AddButton").IsEnabled);
+                    Part<ButtonBase>(qatPage, "PART_AddButton").RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); Layout();
+                    Assert.Single(ribbon.QuickAccessItems);
+                    menu = OpenCommandMenu(Part<ToggleButton>(copy, "PART_Toggle"));
+                    Assert.False(Assert.IsType<MenuItem>(menu.Items[0]).IsEnabled); menu.IsOpen = false; Layout();
+                    qat.IsDropDownOpen = true; Layout();
+                    Assert.True(Part<Popup>(qat, "PART_Popup").IsOpen);
+                    Assert.Equal(new object[] { mouse, touch }, qat.Items.Cast<object>());
+                    Assert.True(mouse.ActualHeight > 0 && touch.ActualHeight > 0);
+                    int before = clicks; Invoke(touch); Layout();
+                    Assert.Equal(before + 1, clicks); Assert.False(qat.IsDropDownOpen);
+                    Assert.Equal(new object[] { mouse, touch }, source.Items.Cast<object>());
+                    cases++;
+                }
+            }
+            finally { window.Close(); Layout(); }
+
+            void Layout()
+            {
+                Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+                window.UpdateLayout();
+                Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+            }
+
+            ContextMenu OpenCommandMenu(UIElement target)
+            {
+                var constructor = typeof(ContextMenuEventArgs).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Single(ctor => ctor.GetParameters().Length == 2);
+                var args = (ContextMenuEventArgs)constructor.Invoke(new object[] { target, true });
+                target.RaiseEvent(args); Layout(); Assert.True(args.Handled);
+                return PresentationSource.CurrentSources.Cast<PresentationSource>().OfType<HwndSource>()
+                    .Select(host => host.RootVisual).SelectMany(Descendants).OfType<ContextMenu>().Single(menu => menu.IsOpen);
+            }
+        }
+        Assert.Equal(12, cases);
+    }
+
+    private static IEnumerable<DependencyObject> Descendants(DependencyObject root)
+    {
+        yield return root;
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+            foreach (var child in Descendants(VisualTreeHelper.GetChild(root, i))) yield return child;
     }
 
     private static T Part<T>(Control owner, string name) where T : DependencyObject =>

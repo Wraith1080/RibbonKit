@@ -30,6 +30,7 @@ internal static class GalleryQuickAccessPortabilityChecks
             if (scope is not "GalleryQuickAccessKeyboard" and not "GalleryQuickAccessVisible") VerifyPlacements(application);
             if (scope != "GalleryQuickAccessKeyboard") VerifyVisibleStrips(application);
             VerifyInputAndOverflow(application);
+            VerifyScreenTips(application);
         }
         finally { RibbonAnimation.GlobalLevel = motion; ThemeManager.SetDarkMode(application, false); }
     }
@@ -233,6 +234,80 @@ internal static class GalleryQuickAccessPortabilityChecks
             Assert.False(proxy.IsDropDownOpen); Assert.NotNull(Part<ScrollViewer>(source, "PART_ScrollViewer").Content);
         }
         finally { window.Close(); Layout(window); }
+    }
+
+    private static void VerifyScreenTips(Application application)
+    {
+        foreach (bool inRibbon in new[] { false, true })
+        {
+            ThemeManager.Apply(application, RibbonTheme.Office2024); ThemeManager.SetDarkMode(application, false);
+            RibbonGallery source = inRibbon ? new InRibbonGallery { Width = 240 } : new RibbonGallery { Width = 240 };
+            source.Header = "Styles"; source.ScreenTipTitle = "Text styles";
+            source.ScreenTipText = "Choose a style for the selected text.";
+            var tile = new RibbonGalleryItem { Content = "Heading", ToolTip = "Heading 1" }; source.Items.Add(tile);
+            var ribbon = RibbonFor(source);
+            var customTab = new RibbonTab { Header = "Custom" }; Ribbon.SetIsCustom(customTab, true);
+            var customGroup = new RibbonGroup { Header = "Custom styles" }; Ribbon.SetIsCustom(customGroup, true);
+            customTab.Groups.Add(customGroup); ribbon.Tabs.Add(customTab); ribbon.SelectedTab = customTab;
+            var customize = new RibbonCustomizePage { Ribbon = ribbon, Height = 200 };
+            var window = new RibbonWindow { Content = new StackPanel { Children = { ribbon, customize } },
+                Width = 900, Height = 620, Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+            try
+            {
+                window.Show(); Layout(window);
+                var available = Part<ListBox>(customize, "PART_AvailableList");
+                available.SelectedItem = available.Items.Cast<RibbonCommandEntry>().Single(entry => ReferenceEquals(entry.Control, source));
+                Part<TreeView>(customize, "PART_Tree").Items.Cast<RibbonCustomizeNode>().Single(node => node.IsCustom)
+                    .Children.Single().IsSelected = true;
+                Layout(window); Part<ButtonBase>(customize, "PART_AddButton").RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); Layout(window);
+                var custom = Assert.IsAssignableFrom<RibbonDropDownButton>(Assert.Single(customGroup.Items));
+                Assert.True(ribbon.AddToQuickAccess(custom));
+                var qat = Assert.IsAssignableFrom<RibbonDropDownButton>(Assert.Single(ribbon.QuickAccessItems));
+                foreach (RibbonTheme theme in Enum.GetValues<RibbonTheme>())
+                foreach (bool dark in new[] { false, true })
+                foreach (FlowDirection flow in Enum.GetValues<FlowDirection>())
+                {
+                    ThemeManager.Apply(application, theme); ThemeManager.SetDarkMode(application, dark);
+                    window.FlowDirection = flow; ribbon.QuickAccessMaxWidth = 600;
+                    ribbon.SelectedTab = ribbon.Tabs[1]; Layout(window);
+                    VerifyRenderedTip(source, source.ScreenTipTitle, source.ScreenTipText, window);
+                    ribbon.SelectedTab = customTab; Layout(window);
+                    VerifyRenderedTip(custom, source.ScreenTipTitle, source.ScreenTipText, window);
+                    VerifyRenderedTip(qat, source.ScreenTipTitle, source.ScreenTipText, window,
+                        inRibbon && !dark && flow == FlowDirection.LeftToRight && theme is RibbonTheme.Office2024 or RibbonTheme.CrystalLight
+                            ? $"{theme}-gallery-screentip" : null);
+                    ribbon.QuickAccessMaxWidth = 1; Layout(window);
+                    var toolbar = Part<RibbonQuickAccessToolBar>(Part<RibbonTabControl>(ribbon, "TabControlHost"), "QatTabRowHost");
+                    Part<ToggleButton>(toolbar, "PART_OverflowButton").IsChecked = true; Layout(window);
+                    var overflow = Assert.IsAssignableFrom<RibbonDropDownButton>(Assert.Single(Part<ItemsControl>(toolbar, "PART_OverflowHost").Items));
+                    VerifyRenderedTip(overflow, source.ScreenTipTitle, source.ScreenTipText, window);
+                    overflow.IsDropDownOpen = true; Layout(window);
+                    Assert.Equal("Heading 1", tile.ToolTip);
+                    Assert.True(tile.ActualWidth > 0);
+                    overflow.IsDropDownOpen = false;
+                    Part<ToggleButton>(toolbar, "PART_OverflowButton").IsChecked = false; Layout(window);
+                }
+            }
+            finally { window.Close(); Layout(window); }
+        }
+    }
+
+    private static void VerifyRenderedTip(FrameworkElement owner, string? title, string? description, Window window, string? captureName = null)
+    {
+        var tip = Assert.IsType<RibbonScreenTip>(owner.ToolTip);
+        tip.PlacementTarget = owner; tip.IsOpen = true;
+        try
+        {
+            Layout(window); tip.UpdateLayout();
+            Assert.NotNull(PresentationSource.FromVisual(tip));
+            Assert.Equal(title, Part<TextBlock>(tip, "TitleText").Text);
+            Assert.Equal(description, Part<TextBlock>(tip, "DescriptionText").Text);
+            Assert.True(tip.ActualWidth > 0 && tip.ActualHeight > 0);
+            Assert.Same(tip.FindResource("RibbonKit.Brushes.ScreenTip.Surface"), tip.Background);
+            Assert.Equal(owner.FlowDirection, tip.FlowDirection);
+            if (captureName is not null) Save(tip, captureName);
+        }
+        finally { tip.IsOpen = false; Layout(window); }
     }
 
     private sealed record Choice(string Name, string Family);

@@ -8,6 +8,12 @@ RibbonKit.Controls.RibbonGallery.Header.get -> string?
 RibbonKit.Controls.RibbonGallery.Header.set -> void
 RibbonKit.Controls.RibbonGallery.Icon.get -> System.Windows.Media.ImageSource?
 RibbonKit.Controls.RibbonGallery.Icon.set -> void
+RibbonKit.Controls.RibbonGallery.ScreenTipTitle.get -> string?
+RibbonKit.Controls.RibbonGallery.ScreenTipTitle.set -> void
+RibbonKit.Controls.RibbonGallery.ScreenTipText.get -> string?
+RibbonKit.Controls.RibbonGallery.ScreenTipText.set -> void
+static readonly RibbonKit.Controls.RibbonGallery.ScreenTipTitleProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonGallery.ScreenTipTextProperty -> System.Windows.DependencyProperty!
 static readonly RibbonKit.Controls.RibbonGallery.HeaderProperty -> System.Windows.DependencyProperty!
 static readonly RibbonKit.Controls.RibbonGallery.IconProperty -> System.Windows.DependencyProperty!
 override RibbonKit.Controls.RibbonGallery.OnApplyTemplate() -> void

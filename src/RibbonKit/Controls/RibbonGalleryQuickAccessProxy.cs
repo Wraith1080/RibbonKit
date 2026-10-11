@@ -38,7 +38,11 @@ internal sealed class RibbonGalleryQuickAccessProxy : RibbonDropDownButton
         SetBinding(IconProperty, new Binding(nameof(source.Icon)) { Source = source });
         SetBinding(LargeIconProperty, new Binding(nameof(source.Icon)) { Source = source });
         SetBinding(HeaderProperty, new Binding(nameof(source.Header)) { Source = source });
-        SetBinding(ScreenTipTitleProperty, new Binding(nameof(Header)) { Source = this });
+        var tipTitle = new MultiBinding { Converter = ScreenTipTitleConverter.Instance };
+        tipTitle.Bindings.Add(new Binding(nameof(source.ScreenTipTitle)) { Source = source });
+        tipTitle.Bindings.Add(new Binding(nameof(Header)) { Source = this });
+        SetBinding(ScreenTipTitleProperty, tipTitle);
+        SetBinding(ScreenTipTextProperty, new Binding(nameof(source.ScreenTipText)) { Source = source });
         if (source is InRibbonGallery gallery)
             SetBinding(DropDownHeaderProperty, new Binding(nameof(gallery.DropDownHeader)) { Source = gallery });
         else SetBinding(DropDownHeaderProperty, new Binding(nameof(Header)) { Source = this });
@@ -232,6 +236,14 @@ internal sealed class RibbonGalleryQuickAccessProxy : RibbonDropDownButton
         protected override List<AutomationPeer> GetChildrenCore() => SourcePeer.GetChildren() ?? new();
         public override object GetPattern(PatternInterface patternInterface) =>
             patternInterface == PatternInterface.Selection ? SourcePeer.GetPattern(patternInterface) : base.GetPattern(patternInterface);
+    }
+
+    private sealed class ScreenTipTitleConverter : IMultiValueConverter
+    {
+        internal static readonly ScreenTipTitleConverter Instance = new();
+        public object? Convert(object[] values, Type targetType, object parameter, CultureInfo culture) =>
+            values[0] as string ?? values[1] as string;
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotSupportedException();
     }
 
     private sealed class WidthConverter : IMultiValueConverter

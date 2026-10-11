@@ -948,6 +948,18 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Use the existing shared glass overlay with either active native backdrop](docs/history/library/12-keytips-layout-and-validation.md#3248-glass-look-over-mica-and-acrylic--2026-10-11).
 
+### 3.249 Groups in QAT with membership collapse — 2026-10-11
+
+[Keep QAT groups collapsed and reuse their native flyout](docs/history/library/12-keytips-layout-and-validation.md#3249-groups-in-qat-with-membership-collapse--2026-10-11).
+
+### 3.250 Custom-group command additions resolve the original QAT source — 2026-10-11
+
+[Preserve native command menus and prevent duplicate QAT entries from custom copies](docs/history/library/12-keytips-layout-and-validation.md#3250-custom-group-command-additions-resolve-the-original-qat-source--2026-10-11).
+
+### 3.251 Gallery ScreenTips follow QAT and custom-group copies — 2026-10-11
+
+[Share gallery titles and descriptions across native galleries and command copies](docs/history/library/12-keytips-layout-and-validation.md#3251-gallery-screentips-follow-qat-and-custom-group-copies--2026-10-11).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
@@ -1018,6 +1030,12 @@ technical evidence warrants them; preserve existing dated records.
   are in the [customization follow-up](docs/09-FUTURE-THEMES-PLAN.md#qat-only-commands-after-customization).
 - **QAT visibility and options layout:** menu behavior, focused evidence and live
   review are in the [current status](docs/09-FUTURE-THEMES-PLAN.md#qat-visibility-and-options-layout).
+- **Groups in QAT:** permanent membership collapse, focused evidence and remaining
+  live review are in the [group QAT status](docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#group-qat-implementation-and-acceptance).
+- **Custom-group commands in QAT:** menu ownership and duplicate prevention are in
+  the [current status](docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#custom-group-command-copies-in-qat).
+- **Gallery ScreenTips:** source descriptions, copy propagation and live hover review
+  are in the [current status](docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#gallery-screentips).
 - **Crystal portability and Office 2007 orb defaults:** use the
   [active plan's status and acceptance table](docs/13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md#current-status-and-acceptance)
   for slice progress, remaining live review and deferred issues. Shared work

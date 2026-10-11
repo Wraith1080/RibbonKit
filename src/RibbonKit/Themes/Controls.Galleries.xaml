@@ -108,12 +108,16 @@
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True" />
+                                <Condition Property="controls:RibbonPopupInteraction.SuppressHover" Value="False" />
+                            </MultiTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
                             <Setter TargetName="Chrome" Property="BorderBrush"
                                     Value="{DynamicResource RibbonKit.Brushes.GalleryItem.HoverBorder}" />
-                        </Trigger>
+                        </MultiTrigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
@@ -269,14 +273,18 @@
                                                     </Border>
                                                 </Grid>
                                                 <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="IsMouseOver" Value="True" />
+                                                            <Condition Property="controls:RibbonPopupInteraction.SuppressHover" Value="False" />
+                                                        </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
                                                         <Setter TargetName="Chrome" Property="BorderBrush"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
                                                         <Setter TargetName="Chrome" Property="BorderThickness"
                                                                 Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
-                                                    </Trigger>
+                                                    </MultiTrigger>
                                                     <Trigger Property="IsPressed" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
