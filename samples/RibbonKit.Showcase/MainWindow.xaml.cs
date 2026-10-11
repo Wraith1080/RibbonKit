@@ -130,6 +130,9 @@ public partial class MainWindow : RibbonWindow
         DependencyPropertyDescriptor
             .FromProperty(Ribbon.QuickAccessPositionProperty, typeof(Ribbon))
             ?.AddValueChanged(MainRibbon, (_, _) => SaveCustomization());
+        DependencyPropertyDescriptor
+            .FromProperty(Ribbon.IsQuickAccessVisibleProperty, typeof(Ribbon))
+            ?.AddValueChanged(MainRibbon, (_, _) => SaveCustomization());
     }
 
     // Persists the ribbon's current customization; called when the options dialog applies.

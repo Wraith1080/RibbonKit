@@ -217,6 +217,16 @@ public sealed class ApplicationButtonShapeThemeTests
             QuickAccessCommandInteractionChecks.Verify(application);
             return;
         }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "CustomizationLayout")
+        {
+            CustomizationLayoutChecks.Verify(application);
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "QatVisibility")
+        {
+            QuickAccessVisibilityChecks.Verify(application);
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "MinimizedDivider")
         {
             TouchDensityPortabilityChecks.VerifyMinimizedDivider(application);
@@ -250,6 +260,9 @@ public sealed class ApplicationButtonShapeThemeTests
         DropDownHeaderPortabilityChecks.Verify(application);
         GalleryHeaderAndQatCommandChecks.Verify(application);
         QuickAccessCommandInteractionChecks.Verify(application);
+
+        CustomizationLayoutChecks.Verify(application);
+        QuickAccessVisibilityChecks.Verify(application);
 
         GroupedGalleryPortabilityChecks.Verify(application);
         NativeGalleryPopupPortabilityChecks.Verify(application);

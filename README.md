@@ -189,6 +189,19 @@ existing `Background` can reflect that choice through bindings or style triggers
 The heading and row presentation are shared RibbonKit behavior and require no
 Showcase resources or helpers.
 
+### Hiding and restoring QAT
+
+The QAT context menu offers **Hide Quick Access Toolbar**. Right-click a ribbon
+tab or empty ribbon area and choose **Show Quick Access Toolbar** to restore it.
+Hiding preserves commands, their order and placement; adding a command to QAT
+shows it again. The customization page keeps its existing layout.
+
+`Ribbon.IsQuickAccessVisible` defaults to true and supports binding. The
+customization serializer saves visibility with the layout; older files leave
+the current visibility preference intact. Hosts that save changes immediately
+should observe this property alongside `QuickAccessPosition` and QAT collection
+changes. Storage remains application-controlled.
+
 ### Commands declared only in QAT
 
 Buttons, toggles, dropdowns, split buttons, combo boxes and galleries declared directly in

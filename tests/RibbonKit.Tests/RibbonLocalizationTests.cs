@@ -313,6 +313,7 @@ public class RibbonLocalizationTests
             Assert.Equal("first:RemoveFromQuickAccessToolbar", Header(menu, 0));
             Assert.Equal("first:ShowQuickAccessToolbarInTitleBar", Header(menu, 2));
             Assert.Equal("first:CustomizeQuickAccessToolbar", Header(menu, 6));
+            Assert.Equal("first:HideQuickAccessToolbar", Header(menu, 8));
 
             RibbonLocalization.Provider = new PrefixProvider("second");
             menu.RaiseEvent(new RoutedEventArgs(ContextMenu.OpenedEvent, menu));
@@ -321,6 +322,7 @@ public class RibbonLocalizationTests
             Assert.Equal("second:ShowQuickAccessToolbarAboveRibbon", Header(menu, 3));
             Assert.Equal("second:ShowQuickAccessToolbarBelowRibbon", Header(menu, 4));
             Assert.Equal("second:CustomizeQuickAccessToolbar", Header(menu, 6));
+            Assert.Equal("second:HideQuickAccessToolbar", Header(menu, 8));
         }
         finally
         {

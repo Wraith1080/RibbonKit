@@ -1180,9 +1180,38 @@ Focused evidence: `QatCommandInteraction` passed in a RibbonKit-only consumer,
 covering the actual customization page, serializer restore, title/tab/below
 placements, LTR/RTL, native caption hit-test messages and command/menu actions.
 All five `DeclaredQuickAccessCommandTests` passed. Normal Release runtime targets
-and Debug Showcase built cleanly. Live Showcase pointer review of removing/re-adding
-Save, Undo and Redo is open; full-suite/visual/package checks were not rerun for
-this interaction-only fix.
+and Debug Showcase built cleanly. User confirmed the QAT-only remove/re-add
+interaction works on 2026-10-11. This records the reported live interaction scope;
+full-suite/visual/package checks were not rerun for this interaction-only fix.
+
+## QAT visibility and options layout
+
+Implemented 2026-10-11: Hide Quick Access Toolbar is available in its context
+menu; ribbon tab/background and command menus offer Show Quick Access Toolbar
+when hidden. Commands, order and placement persist, and adding a command reveals
+the toolbar. `Ribbon.IsQuickAccessVisible` supports binding and customization JSON;
+older layouts preserve the current preference. Showcase saves visibility changes.
+The Customize QAT page retains its layout, with no additional checkbox.
+
+The actual Showcase Customize Ribbon page reproduced a 0.6-DIP clipping overrun
+at 125%. Shared dialog viewport rounding now matches the rounded page and keeps
+Up/Down/Edit inside the clip. Dialog width remains unchanged.
+[Implementation record](history/library/12-keytips-layout-and-validation.md#3247-qat-visibility-and-customization-viewport-rounding--2026-10-11).
+
+Focused evidence: 26 runtime tests passed, including persistence, older/malformed
+layouts, binding retention, localization and actual Showcase clipping. Independent
+`QatVisibility` passed 36 placement/theme/direction/minimization cycles, including
+overflow closure, borrowed dropdown recovery, caption/body/message restoration
+and hidden KeyTips. `CustomizationLayout` passed eight Office 2024/Crystal,
+LTR/RTL and simulated 125%/200% cases; captures were inspected. Four selected
+Office 2024 default/RTL QAT, Office 2010 default and Crystal below-QAT visual
+scenes passed without approval changes. Both Release runtime targets and normal
+Debug Showcase built cleanly.
+
+Live review remains open: hide/show by pointer in title/tab/below placements,
+restore through a ribbon tab menu, verify saved visibility after restart and
+check the Customize Ribbon action edges on the target monitor. Full-suite,
+package and mixed-monitor gates were not rerun for this bounded change.
 
 ## Acceptance
 

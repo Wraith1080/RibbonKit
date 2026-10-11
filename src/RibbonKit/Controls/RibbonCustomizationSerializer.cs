@@ -274,6 +274,7 @@ public static class RibbonCustomizationSerializer
         }
 
         layout.QuickAccessPosition = ribbon.QuickAccessPosition;
+        layout.IsQuickAccessVisible = ribbon.IsQuickAccessVisible;
         return layout;
     }
 
@@ -393,6 +394,9 @@ public static class RibbonCustomizationSerializer
         {
             ribbon.QuickAccessPosition = position;
         }
+        // Older layouts have no visibility preference; preserve the consumer's current value.
+        if (layout.IsQuickAccessVisible is { } visible)
+            ribbon.SetCurrentValue(Ribbon.IsQuickAccessVisibleProperty, visible);
     }
 
     private static void ReconcileGroups(
@@ -637,6 +641,8 @@ public static class RibbonCustomizationSerializer
 
         /// <summary>The QAT placement (title bar / above / below). Null in older files → left as-is.</summary>
         public RibbonQuickAccessPosition? QuickAccessPosition { get; set; }
+
+        public bool? IsQuickAccessVisible { get; set; }
     }
 
     internal sealed class TabDto

@@ -256,7 +256,11 @@
                         <Trigger Property="IsMinimized" Value="True">
                             <Setter TargetName="MinimizedDivider" Property="Visibility" Value="Visible" />
                         </Trigger>
-                        <Trigger Property="QuickAccessPosition" Value="BelowRibbon">
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="QuickAccessPosition" Value="BelowRibbon" />
+                                <Condition Property="IsQuickAccessVisible" Value="True" />
+                            </MultiTrigger.Conditions>
                             <Setter TargetName="MinimizedDivider" Property="Visibility" Value="Collapsed" />
                             <!-- Crystal raises the body shadow above its inset drawer. Office
                                  retains declaration order; the application-menu overlay stays above both. -->
@@ -269,7 +273,7 @@
                                              RelativeSource="{RelativeSource AncestorType={x:Type controls:Ribbon}}" />
                                 </Setter.Value>
                             </Setter>
-                        </Trigger>
+                        </MultiTrigger>
                         <!-- Minimized + QAT below: the ribbon body card is collapsed, so the
                              QAT bar is left standing alone under the tab strip. Make it a
                              self-contained floating card — round ALL corners (not just the
@@ -937,8 +941,11 @@
                         </Border>
                     </Grid>
                     <ControlTemplate.Triggers>
-                        <DataTrigger Binding="{Binding QuickAccessPosition, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
-                                     Value="TabRow">
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding QuickAccessPosition, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="TabRow" />
+                                <Condition Binding="{Binding IsQuickAccessVisible, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="True" />
+                            </MultiDataTrigger.Conditions>
                             <Setter TargetName="QatTabRowHost" Property="Visibility" Value="Visible" />
                             <Setter TargetName="QatTabRowHost" Property="ItemsSource">
                                 <Setter.Value>
@@ -946,7 +953,7 @@
                                              RelativeSource="{RelativeSource AncestorType={x:Type controls:Ribbon}}" />
                                 </Setter.Value>
                             </Setter>
-                        </DataTrigger>
+                        </MultiDataTrigger>
                         <DataTrigger Binding="{Binding FrameAppearance, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
                                      Value="Office2010Aero">
                             <Setter TargetName="Office2010TabMaterialLayer" Property="Visibility" Value="Visible" />
@@ -987,13 +994,16 @@
                         </MultiDataTrigger>
                         <!-- Office squares its body foot for a full-width extender; Crystal
                              keeps a rounded body above the inset drawer. Both consume the lower gap. -->
-                        <DataTrigger Binding="{Binding QuickAccessPosition, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
-                                     Value="BelowRibbon">
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding QuickAccessPosition, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="BelowRibbon" />
+                                <Condition Binding="{Binding IsQuickAccessVisible, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="True" />
+                            </MultiDataTrigger.Conditions>
                             <Setter TargetName="ContentHost" Property="CornerRadius"
                                     Value="{DynamicResource RibbonKit.Metrics.ContentCornerRadiusQatBelow}" />
                             <Setter TargetName="ContentHost" Property="Margin"
                                     Value="{DynamicResource RibbonKit.Metrics.ContentMarginQatBelow}" />
-                        </DataTrigger>
+                        </MultiDataTrigger>
                         <!-- The message row is another continuation surface, just like a
                              below-ribbon QAT. Square the body foot and consume its lower gap, but
                              keep the ribbon shadow as a deliberate depth boundary above the
@@ -1012,6 +1022,7 @@
                                            Value="BelowRibbon" />
                                 <Condition Binding="{Binding HasOpenMessages, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                            Value="True" />
+                                <Condition Binding="{Binding IsQuickAccessVisible, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="True" />
                             </MultiDataTrigger.Conditions>
                             <Setter TargetName="ContentHost" Property="CornerRadius"
                                     Value="{DynamicResource RibbonKit.Metrics.ContentCornerRadiusQatBelow}" />

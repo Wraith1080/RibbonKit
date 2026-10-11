@@ -940,6 +940,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Preserve native caption hit testing for retained commands after customization](docs/history/library/12-keytips-layout-and-validation.md#3246-restored-qat-only-commands-retain-caption-interaction--2026-10-11).
 
+### 3.247 QAT visibility and customization viewport rounding — 2026-10-11
+
+[Hide and restore QAT without losing commands, and align the options viewport clip](docs/history/library/12-keytips-layout-and-validation.md#3247-qat-visibility-and-customization-viewport-rounding--2026-10-11).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
@@ -1008,6 +1012,8 @@ technical evidence warrants them; preserve existing dated records.
   the [QAT status](docs/09-FUTURE-THEMES-PLAN.md#colored-qat-split-and-dropdown-states).
 - **Restored QAT-only command interaction:** focused evidence and native click review
   are in the [customization follow-up](docs/09-FUTURE-THEMES-PLAN.md#qat-only-commands-after-customization).
+- **QAT visibility and options layout:** menu behavior, focused evidence and live
+  review are in the [current status](docs/09-FUTURE-THEMES-PLAN.md#qat-visibility-and-options-layout).
 - **Crystal portability and Office 2007 orb defaults:** use the
   [active plan's status and acceptance table](docs/13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md#current-status-and-acceptance)
   for slice progress, remaining live review and deferred issues. Shared work

@@ -28,7 +28,7 @@ Numbering is shared with the [Writer history](02-writer-foundation.md); gaps are
 | §3.200–§3.211 | [Crystal menus, scrollbars and DPI](library/09-crystal-menus-scrollbars-and-dpi.md) |
 | §3.212–§3.225 | [Host effects and keyboard focus](library/10-host-effects-and-keyboard-focus.md) |
 | §3.226–§3.233 | [Touch density and gallery projections](library/11-touch-density-and-gallery-projections.md) |
-| §3.234–§3.246 | [KeyTips, layout and validation](library/12-keytips-layout-and-validation.md) |
+| §3.234–§3.247 | [KeyTips, layout and validation](library/12-keytips-layout-and-validation.md) |
 
 ## Numbered records
 
@@ -398,3 +398,5 @@ status updates and investigation narration were removed during compaction.
 ### [3.245 Office 2024 neutral and backdrop QAT washes — 2026-10-11](library/12-keytips-layout-and-validation.md#3245-office-2024-neutral-and-backdrop-qat-washes--2026-10-11)
 
 ### [3.246 Restored QAT-only commands retain caption interaction — 2026-10-11](library/12-keytips-layout-and-validation.md#3246-restored-qat-only-commands-retain-caption-interaction--2026-10-11)
+
+### [3.247 QAT visibility and customization viewport rounding — 2026-10-11](library/12-keytips-layout-and-validation.md#3247-qat-visibility-and-customization-viewport-rounding--2026-10-11)

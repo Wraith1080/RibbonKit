@@ -44,6 +44,8 @@ internal sealed class KeyTipService
         _ribbon.Unloaded += (_, _) => Exit();
     }
 
+    internal void OnQuickAccessVisibilityChanged() => Exit();
+
     private void AttachToWindow()
     {
         Window? window = Window.GetWindow(_ribbon);
@@ -659,6 +661,7 @@ internal sealed class KeyTipService
         foreach (object entry in _ribbon.QuickAccessItems)
         {
             if (entry is not UIElement element
+                || !_ribbon.IsQuickAccessVisible
                 || !element.IsVisible
                 || quickAccessToolBar?.IsOverflowed(element) == true)
             {

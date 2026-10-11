@@ -477,3 +477,33 @@ All five existing declared-command regressions also passed. Normal Release runti
 targets and Debug Showcase built cleanly. These checks do not claim live pointer
 acceptance; current review scope is in the
 [customization follow-up](../../09-FUTURE-THEMES-PLAN.md#qat-only-commands-after-customization).
+
+### 3.247 QAT visibility and customization viewport rounding — 2026-10-11
+
+`Ribbon.IsQuickAccessVisible` is a binding-preserving visibility preference,
+defaulting to true. The shared QAT menu hides the toolbar; ribbon command, tab
+and background menus offer show/hide. Native text-editing and host-supplied
+background menus remain in charge of their own surfaces. Adding a new command
+reveals QAT. Hiding preserves commands, order and placement while releasing all
+visual projections, restoring host caption content and body/message geometry,
+closing overflow/borrowed dropdowns and removing active and root QAT KeyTips.
+The existing Customize QAT page is unchanged. Localization values are appended
+without renumbering existing entries, and cached menu labels refresh on opening.
+
+Customization JSON stores a nullable visibility field; older files preserve the
+host's current preference. Showcase observes the property for its existing save
+policy. Runtime owns no storage or Showcase-specific presentation helper.
+
+The actual Showcase options dialog reproduced a 0.6-DIP action-button overrun at
+125%: its rounded page extended beyond an unrounded ScrollContentPresenter clip.
+The shared dialog now rounds its whole viewport. Width remains 860 DIP; widening
+would conceal the mismatched rounding rather than correct it.
+
+Both Release runtime targets and normal Debug Showcase built cleanly. Twenty-six
+focused runtime tests passed. Independent `QatVisibility` checks cover all three
+placements, expanded/minimized states, LTR/RTL, Touch density and Office 2024,
+Office 2010 and Crystal; `CustomizationLayout` checks cover Office 2024/Crystal,
+LTR/RTL and simulated 125%/200%. Dialog captures were inspected. Four selected
+Office 2024, Office 2010 and Crystal visual scenes passed unchanged. Live pointer
+and mixed-monitor review remain in the
+[current status](../../09-FUTURE-THEMES-PLAN.md#qat-visibility-and-options-layout).
