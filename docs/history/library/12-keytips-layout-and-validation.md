@@ -318,3 +318,47 @@ dark, modern, Crystal, Touch and overflow captures were inspected. Snapshot
 approvals/tolerances and the public API baseline were retained. Full-suite and
 package checks were not rerun. Current native review belongs to the
 [gallery header status](../../09-FUTURE-THEMES-PLAN.md#gallery-header-and-section-layout).
+
+### 3.242 Classic Backstage caption and Chart Tools selection — 2026-10-11
+
+`RibbonWindow` continues Classic Backstage's rail and page through the caption
+using realized `NavColumn`/`ContentArea` brushes, width, direction and foreground.
+Internal `UtilityChrome` references connect the separate adorner branch to shared
+chrome and update after retemplating. Only the custom caption icon is hidden;
+closing or switching design restores chrome without changing the taskbar icon.
+The shared rounded row edge prevents the half-covered pixel seam at fractional
+DPI. No public API symbols or theme literals were added.
+
+Caption paint binds to Backstage's live opacity and render transform, clipped
+within the title row. Keep the caption source through the visual exit, then
+release it in the adorner-removal callback; clearing at the logical close snaps
+the colors early. Glyph foregrounds composite using the same fade progress,
+reuse the resource brushes at endpoints and do not freeze mutable app brushes.
+No second animation clock or layout animation is needed; RTL, interrupted
+reopening and disabled motion follow the body automatically.
+
+Reusing Backstage exposed a stale local flow direction after detachment. Capture
+binding ownership before removing the child, then clear its owned value after
+removal; checking ownership afterward is too late because removal can freeze
+the last value. App-owned replacements survive. RTL evidence must assert the
+physical rail side, not just matching caption/rail coordinates. Simulated DPI
+changes on a reused visual need layout invalidation before rendering.
+
+The Chart Tools reset was Showcase event ordering: `Unchecked` could still see
+the source merged and jump to Chart Design just before removal. Selection polish
+now checks the toggle and waits for declarative activation to settle, with a
+cancellation guard. Shared merging already preserves surviving tabs, including
+Home with injected Refresh, and was retained. Regressions cover Home/View/Ribbon
+Lab, a removed selected tool tab and cancelled activation.
+
+Verification: 54 focused Release runtime tests, 11 unchanged selected visual scenes
+and one RibbonKit-only caption scope passed. The consumer covers 16 light/dark,
+density, direction and simulated DPI combinations, scoped accents, retemplating,
+design changes and close/reopen; seam pixels and the physical RTL side are checked.
+It also samples Subtle/Expressive LTR/RTL opening, closing and interrupted
+reopening, matching opacity, transforms, physical rail position and foreground
+pixels, plus instant global/per-action-disabled paths. Resting and transition
+captures were inspected. Normal Debug Showcase and both Release runtime
+targets built without warnings/errors. Approvals and public API baselines were
+retained; full-suite/package gates were not rerun. Current live review belongs
+to the [caption status](../../09-FUTURE-THEMES-PLAN.md#classic-backstage-caption-continuation).

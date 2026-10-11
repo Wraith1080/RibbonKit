@@ -84,6 +84,21 @@ public class RtlBackstageWindowTests
 
         layer.Remove(adorner);
         adorner.Detach();
+        Assert.Same(DependencyProperty.UnsetValue, backstage.ReadLocalValue(FrameworkElement.FlowDirectionProperty));
+
+        ribbon.FlowDirection = FlowDirection.RightToLeft;
+        // As in a real RTL window, the adorned content and its ribbon have the same direction.
+        adorned.FlowDirection = FlowDirection.RightToLeft;
+        var reopened = new BackstageAdorner(adorned, backstage, ribbon);
+        layer.Add(reopened);
+        decorator.UpdateLayout();
+        Sta.Drain(DispatcherPriority.DataBind);
+        Assert.Equal(FlowDirection.RightToLeft, backstage.FlowDirection);
+        // An app-owned value set during the open must survive removal of our adorner.
+        backstage.FlowDirection = FlowDirection.LeftToRight;
+        layer.Remove(reopened);
+        reopened.Detach();
+        Assert.Equal(FlowDirection.LeftToRight, backstage.ReadLocalValue(FrameworkElement.FlowDirectionProperty));
 
         var explicitBackstage = new Backstage { FlowDirection = FlowDirection.LeftToRight };
         var explicitAdorner = new BackstageAdorner(adorned, explicitBackstage, ribbon);

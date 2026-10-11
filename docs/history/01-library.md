@@ -28,7 +28,7 @@ Numbering is shared with the [Writer history](02-writer-foundation.md); gaps are
 | §3.200–§3.211 | [Crystal menus, scrollbars and DPI](library/09-crystal-menus-scrollbars-and-dpi.md) |
 | §3.212–§3.225 | [Host effects and keyboard focus](library/10-host-effects-and-keyboard-focus.md) |
 | §3.226–§3.233 | [Touch density and gallery projections](library/11-touch-density-and-gallery-projections.md) |
-| §3.234–§3.241 | [KeyTips, layout and validation](library/12-keytips-layout-and-validation.md) |
+| §3.234–§3.242 | [KeyTips, layout and validation](library/12-keytips-layout-and-validation.md) |
 
 ## Numbered records
 
@@ -388,3 +388,5 @@ status updates and investigation narration were removed during compaction.
 ### [3.240 Modern Office glass surfaces and legacy Aero choices — 2026-10-11](library/12-keytips-layout-and-validation.md#3240-modern-office-glass-surfaces-and-legacy-aero-choices--2026-10-11)
 
 ### [3.241 Gallery header contrast and balanced section spacing — 2026-10-11](library/12-keytips-layout-and-validation.md#3241-gallery-header-contrast-and-balanced-section-spacing--2026-10-11)
+
+### [3.242 Classic Backstage caption and Chart Tools selection — 2026-10-11](library/12-keytips-layout-and-validation.md#3242-classic-backstage-caption-and-chart-tools-selection--2026-10-11)

@@ -25,7 +25,7 @@ param(
         'ComboQuickAccess', 'ComboQuickAccessKeyboard', 'GroupedGalleries',
         'GalleryHeadersAndQatCommands', 'DensitySelector', 'MessageTransition',
         'QatThemeRestore', 'MinimizedDivider', 'TouchChrome', 'GroupLauncher',
-        'DensityTransition', 'GlassOverlay', 'Touch', IgnoreCase = $false)]
+        'DensityTransition', 'GlassOverlay', 'BackstageCaption', 'Touch', IgnoreCase = $false)]
     [string]$Scope,
     [ValidateSet('Debug', 'Release')]
     [string]$Configuration = 'Debug'

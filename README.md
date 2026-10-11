@@ -306,6 +306,11 @@ these alongside its accent bands; independent palettes retain their own defaults
 Crystal Sidebar/Floating Backstage geometry can be overridden through
 `RibbonKit.Metrics.Backstage.*`, including `SidebarWidth`, `FloatingMargin` and
 `ActionCornerRadius`. Those layouts contain no fixed application branding.
+Classic (Office 2013) Backstage continues through a `RibbonWindow` caption using
+the realized rail and page brushes, rail width and RTL direction. It hides the
+custom caption icon while open; caption paint follows Backstage's fade and slide,
+and caption glyphs follow the same fade. Normal chrome returns after the closing
+animation completes. `Window.Icon` remains available to the taskbar.
 The application menu receives its translucent paint, 14-DIP outer corners,
 rounded content/split rows, responsive pane width and outside-only shadow from
 shared resources. `RibbonKit.Metrics.ApplicationMenuPaneWidth`,

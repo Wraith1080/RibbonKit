@@ -920,6 +920,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Pair heading paint, balance section gaps and verify one scrollbar across grouped content](docs/history/library/12-keytips-layout-and-validation.md#3241-gallery-header-contrast-and-balanced-section-spacing--2026-10-11).
 
+### 3.242 Classic Backstage caption and Chart Tools selection — 2026-10-11
+
+[Continue the rail through shared window chrome, release RTL state on close and preserve host-tab selection in the merge demo](docs/history/library/12-keytips-layout-and-validation.md#3242-classic-backstage-caption-and-chart-tools-selection--2026-10-11).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
@@ -982,6 +986,8 @@ technical evidence warrants them; preserve existing dated records.
   [glass iteration status](docs/09-FUTURE-THEMES-PLAN.md#office-glass-iteration).
 - **Gallery headers and spacing:** current evidence and native review are in the
   [gallery header status](docs/09-FUTURE-THEMES-PLAN.md#gallery-header-and-section-layout).
+- **Classic Backstage caption and merge demo:** current evidence and remaining
+  live review are in the [caption status](docs/09-FUTURE-THEMES-PLAN.md#classic-backstage-caption-continuation).
 - **Crystal portability and Office 2007 orb defaults:** use the
   [active plan's status and acceptance table](docs/13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md#current-status-and-acceptance)
   for slice progress, remaining live review and deferred issues. Shared work

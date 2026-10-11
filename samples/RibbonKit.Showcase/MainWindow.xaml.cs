@@ -906,12 +906,18 @@ public partial class MainWindow : RibbonWindow
     // imperatively. All this handler does is the app-level polish around the merge.
     private void OnToggleChartToolsMerge(object sender, RoutedEventArgs e)
     {
-        if (MainRibbon.IsMerged(ChartToolsSource))
+        if (MergeToggle.IsChecked == true)
         {
-            // Office jumps to a tool tab when its context appears; do the same so the merge is
-            // immediately visible rather than hiding at the end of the strip.
-            MainRibbon.SelectedTab = ChartToolsSource.Tabs.FirstOrDefault();
-            StatusReady.Content = "Chart Tools merged";
+            // Checked/Unchecked can precede the IsActive binding. Wait for the declarative
+            // merge before jumping to a tool tab, and never jump during deactivation.
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+            {
+                if (MergeToggle.IsChecked == true && MainRibbon.IsMerged(ChartToolsSource))
+                {
+                    MainRibbon.SelectedTab = ChartToolsSource.Tabs.FirstOrDefault();
+                    StatusReady.Content = "Chart Tools merged";
+                }
+            }));
         }
         else
         {

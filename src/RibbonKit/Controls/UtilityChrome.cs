@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace RibbonKit.Controls;
@@ -6,6 +7,23 @@ namespace RibbonKit.Controls;
 // Internal material and surface selectors for the shared templates.
 internal static class UtilityChrome
 {
+    // Caption continuation follows the realized Backstage surfaces, including scoped palettes
+    // and retemplating. These are private template plumbing, not a host-facing API.
+    public static readonly DependencyProperty BackstageCaptionSourceProperty = DependencyProperty.RegisterAttached(
+        "BackstageCaptionSource", typeof(Backstage), typeof(UtilityChrome), new FrameworkPropertyMetadata(null));
+    public static Backstage? GetBackstageCaptionSource(DependencyObject target) => (Backstage?)target.GetValue(BackstageCaptionSourceProperty);
+    public static void SetBackstageCaptionSource(DependencyObject target, Backstage? value) => target.SetValue(BackstageCaptionSourceProperty, value);
+
+    public static readonly DependencyProperty BackstageCaptionRailProperty = DependencyProperty.RegisterAttached(
+        "BackstageCaptionRail", typeof(Border), typeof(UtilityChrome), new FrameworkPropertyMetadata(null));
+    public static Border? GetBackstageCaptionRail(DependencyObject target) => (Border?)target.GetValue(BackstageCaptionRailProperty);
+    public static void SetBackstageCaptionRail(DependencyObject target, Border? value) => target.SetValue(BackstageCaptionRailProperty, value);
+
+    public static readonly DependencyProperty BackstageCaptionPageProperty = DependencyProperty.RegisterAttached(
+        "BackstageCaptionPage", typeof(Border), typeof(UtilityChrome), new FrameworkPropertyMetadata(null));
+    public static Border? GetBackstageCaptionPage(DependencyObject target) => (Border?)target.GetValue(BackstageCaptionPageProperty);
+    public static void SetBackstageCaptionPage(DependencyObject target, Border? value) => target.SetValue(BackstageCaptionPageProperty, value);
+
     public static readonly DependencyProperty QatTitleBarColoredProperty = DependencyProperty.RegisterAttached(
         "QatTitleBarColored", typeof(bool), typeof(UtilityChrome), new FrameworkPropertyMetadata(false, OnQatSurfaceChanged));
     public static bool GetQatTitleBarColored(DependencyObject target) => (bool)target.GetValue(QatTitleBarColoredProperty);

@@ -141,6 +141,11 @@ public sealed class ApplicationButtonShapeThemeTests
     public void Theme_default_and_local_value_follow_wpf_precedence() => RunSta(() =>
     {
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "BackstageCaption")
+        {
+            BackstageCaptionPortabilityChecks.Verify(application);
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "GlassOverlay")
         {
             CapturedBackdropPortabilityChecks.VerifyGlass(application);
@@ -452,6 +457,7 @@ public sealed class ApplicationButtonShapeThemeTests
             Assert.Null(VisualTreeHelper.GetParent(proxy));
 
             VerifyNoApplicationHeaderInset(application);
+            BackstageCaptionPortabilityChecks.Verify(application);
 
             ribbon.IsBackstageOpen = false;
             ribbon.ClearValue(Ribbon.ApplicationButtonShapeProperty);

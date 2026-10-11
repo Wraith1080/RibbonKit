@@ -1078,10 +1078,44 @@ reachability. Targeted popup captures were inspected; snapshot approvals and
 tolerances were retained. Normal Debug Showcase and both Release runtime targets
 built with zero warnings/errors. Full-suite/package checks were not rerun.
 
-Native appearance acceptance remains open for the updated Theme/Accent galleries,
-including legacy dark header contrast, balanced section spacing, multiple-section
-overflow and actual scrollbar interaction. Physical touch and native mixed-monitor
-DPI checks remain separate. [Implementation record](history/library/12-keytips-layout-and-validation.md#3241-gallery-header-contrast-and-balanced-section-spacing--2026-10-11).
+The user accepted the updated Theme/Accent gallery appearance on 2026-10-11,
+including the legacy dark heading contrast and balanced section spacing. This
+confirmation does not establish physical touch, multiple-section overflow input,
+or native mixed-monitor DPI acceptance. [Implementation record](history/library/12-keytips-layout-and-validation.md#3241-gallery-header-contrast-and-balanced-section-spacing--2026-10-11).
+
+## Classic Backstage caption continuation
+
+Implemented 2026-10-11. Classic (Office 2013) Backstage continues its live rail
+and page brushes through `RibbonWindow`'s caption, follows the realized rail
+width and direction, and hides the caption icon while open. The caption paint
+shares Backstage's live opacity and slide transform; its text and controls fade
+to the page foreground using that same progress. The source stays attached until
+the closing animation completes, including when an interrupted close reopens.
+Changing design or finishing the close restores normal chrome without changing
+`Window.Icon`. Shared private template plumbing needs no new public API or
+Showcase presentation helper and follows the existing motion settings.
+
+The shared caption/content row edge rounds at fractional DPI to prevent a bright
+join. Adorner cleanup releases its own direction binding after removal so reused
+Backstage follows RTL on reopening; authored values survive. The Chart Tools demo
+also limits its deferred tool-tab selection to activation. Unchecking preserves
+a surviving host tab, including Home with its contributed Refresh group; a removed
+selected tool tab uses the existing shared fallback.
+
+Verification: 54 focused Release regressions and 11 unchanged visual scenes passed.
+A RibbonKit-only consumer covers light/dark, Compact/Touch, LTR/RTL and simulated
+125%/200% DPI (16 combinations), scoped accents, retemplating, design changes,
+icon restoration and reopening. It asserts the physical RTL rail side and pixels
+across the caption join, plus intermediate fade/slide and foreground paint for
+Subtle/Expressive LTR/RTL opening, closing and interrupted reopening. Global and
+per-action disabled motion are covered; mutable host foreground brushes remain
+editable. Resting and transition captures were inspected. Both Release library
+targets and normal Debug Showcase built with zero warnings/errors. Approvals and
+public API baselines were retained; the full solution/package gates were not rerun.
+
+Native Showcase appearance acceptance for the new caption remains open, including
+transition timing, live RTL, OS reduced motion and real monitor DPI changes.
+[Implementation record](history/library/12-keytips-layout-and-validation.md#3242-classic-backstage-caption-and-chart-tools-selection--2026-10-11).
 
 ## Acceptance
 

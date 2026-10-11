@@ -37,6 +37,7 @@
                 <ControlTemplate TargetType="{x:Type controls:RibbonWindow}">
                     <ControlTemplate.Resources>
                         <controls:WindowFrameGeometryConverter x:Key="WindowFrameGeometry" />
+                        <controls:BackstageCaptionForegroundConverter x:Key="BackstageCaptionForeground" />
                     </ControlTemplate.Resources>
                     <!-- Keep the physical frame LTR. Applying RTL to the direct Window template
                          root makes WPF arrange maximize compensation against the bottom/left
@@ -65,7 +66,7 @@
                              child preserves the Office 2007 orb's intentional upward overlap. -->
                         <AdornerDecorator x:Name="WindowAdornerHost"
                                           FlowDirection="{TemplateBinding FlowDirection}">
-                        <Grid>
+                        <Grid x:Name="WindowLayoutHost">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" MinHeight="34" />
                                 <RowDefinition Height="*" />
@@ -74,7 +75,15 @@
                             <!-- Title bar (its own band token, separate from the tab strip:
                                  Office 2019/2013 use a colored title bar over a light strip) -->
                             <Grid x:Name="TitleBarBand"
-                                  Grid.Row="0">
+                                  Grid.Row="0"
+                                  TextElement.Foreground="{DynamicResource RibbonKit.Brushes.TitleBar.Foreground}">
+                                <controls:UtilityChrome.SurfaceBrush>
+                                    <MultiBinding Converter="{StaticResource BackstageCaptionForeground}">
+                                        <Binding Path="(TextElement.Foreground)" RelativeSource="{RelativeSource Self}" />
+                                        <Binding Path="(controls:UtilityChrome.BackstageCaptionSource).(controls:UtilityChrome.BackstageCaptionPage).(TextElement.Foreground)" RelativeSource="{RelativeSource TemplatedParent}" />
+                                        <Binding Path="(controls:UtilityChrome.BackstageCaptionSource).Opacity" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    </MultiBinding>
+                                </controls:UtilityChrome.SurfaceBrush>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
@@ -86,6 +95,29 @@
                                 <Border x:Name="TitleBarBackgroundLayer"
                                         Grid.ColumnSpan="3"
                                         Background="{DynamicResource RibbonKit.Brushes.TitleBar.Background}" />
+
+                                <!-- Continue the Classic (Office 2013) rail through the caption.
+                                     Its live width and brush belong to Backstage, so scoped accents,
+                                     density, RTL and template replacement retain the same seam.
+                                     Share its fade and slide; clip only this paint, not the caption
+                                     content or the Office 2007 orb overlapping the title row. -->
+                                <Border Grid.ColumnSpan="3" ClipToBounds="True" IsHitTestVisible="False">
+                                    <Grid x:Name="BackstageCaptionBand"
+                                          IsHitTestVisible="False"
+                                          Visibility="Collapsed"
+                                          Background="{Binding Path=(controls:UtilityChrome.BackstageCaptionSource).(controls:UtilityChrome.BackstageCaptionPage).Background, RelativeSource={RelativeSource TemplatedParent}}"
+                                          Opacity="{Binding Path=(controls:UtilityChrome.BackstageCaptionSource).Opacity, RelativeSource={RelativeSource TemplatedParent}, FallbackValue=0}"
+                                          RenderTransform="{Binding Path=(controls:UtilityChrome.BackstageCaptionSource).RenderTransform, RelativeSource={RelativeSource TemplatedParent}}"
+                                          FlowDirection="{Binding Path=(controls:UtilityChrome.BackstageCaptionSource).FlowDirection, RelativeSource={RelativeSource TemplatedParent}, FallbackValue=LeftToRight}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border x:Name="BackstageCaptionRail"
+                                                Width="{Binding Path=(controls:UtilityChrome.BackstageCaptionSource).(controls:UtilityChrome.BackstageCaptionRail).ActualWidth, RelativeSource={RelativeSource TemplatedParent}, FallbackValue=0}"
+                                                Background="{Binding Path=(controls:UtilityChrome.BackstageCaptionSource).(controls:UtilityChrome.BackstageCaptionRail).Background, RelativeSource={RelativeSource TemplatedParent}}" />
+                                    </Grid>
+                                </Border>
 
                                 <!-- Deterministic Office 2007-authored tint, reflection and grain.
                                      These remain useful over the opaque fallback and, when Acrylic
@@ -107,8 +139,8 @@
                                             Visibility="Collapsed" />
                                 </Grid>
 
-                                <!-- Window identity plus quick-access slot. The icon remains in
-                                     the caption when Backstage hides only TitleBarContent. -->
+                                <!-- Window identity plus quick-access slot. Classic Backstage
+                                     suppresses the caption icon without changing Window.Icon. -->
                                 <Grid Grid.Column="0">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
@@ -666,6 +698,24 @@
                             <Setter TargetName="PART_WindowIcon" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="TitleBarContentHost" Property="Margin" Value="10,0,6,0" />
                         </Trigger>
+                        <DataTrigger Binding="{Binding Path=(controls:UtilityChrome.BackstageCaptionSource).Design, RelativeSource={RelativeSource Self}}" Value="Classic">
+                            <!-- Round the shared row edge once, so caption and rail don't each
+                                 paint a half-covered pixel at fractional DPI. -->
+                            <Setter TargetName="WindowLayoutHost" Property="UseLayoutRounding" Value="True" />
+                            <Setter TargetName="BackstageCaptionBand" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="AeroTitleVisual" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_WindowIcon" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_Title" Property="Foreground"
+                                    Value="{Binding Path=(controls:UtilityChrome.SurfaceBrush), ElementName=TitleBarBand}" />
+                            <Setter TargetName="PART_MinimizeButton" Property="Foreground"
+                                    Value="{Binding Path=(controls:UtilityChrome.SurfaceBrush), ElementName=TitleBarBand}" />
+                            <Setter TargetName="PART_MaximizeButton" Property="Foreground"
+                                    Value="{Binding Path=(controls:UtilityChrome.SurfaceBrush), ElementName=TitleBarBand}" />
+                            <Setter TargetName="PART_RestoreButton" Property="Foreground"
+                                    Value="{Binding Path=(controls:UtilityChrome.SurfaceBrush), ElementName=TitleBarBand}" />
+                            <Setter TargetName="PART_CloseButton" Property="Foreground"
+                                    Value="{Binding Path=(controls:UtilityChrome.SurfaceBrush), ElementName=TitleBarBand}" />
+                        </DataTrigger>
                         <!-- The title QAT keeps its density while Backstage hides its presenter.
                              Reserve its touch row and caption hit area through that transition. -->
                         <DataTrigger Binding="{Binding Path=TitleBarContent.(controls:Ribbon.Density), RelativeSource={RelativeSource Self}}" Value="Touch">

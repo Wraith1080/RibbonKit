@@ -2122,6 +2122,7 @@ public class Ribbon : Control
                     adorner.Detach();
                     _backstageAdorner = null;
                     _backstageClosing = false;
+                    ReconcileBackstagePlacementChrome();
                     if (Backstage is Controls.Backstage backstage)
                     {
                         backstage.SetBelowTabsPlacement(false);
@@ -2202,6 +2203,10 @@ public class Ribbon : Control
 
         if (ribbonWindow is not null)
         {
+            // The caption paints the same live surface through the exit. Removing the
+            // source at the logical close would snap the title back before the fade ends.
+            UtilityChrome.SetBackstageCaptionSource(ribbonWindow,
+                (IsBackstageOpen || _backstageAdorner is not null) && !belowTabs ? Backstage as Backstage : null);
             // Full-content Backstage hides the title QAT. Word 2010 keeps the caption QAT and
             // tab row exposed above its File surface.
             ribbonWindow.SetCurrentValue(

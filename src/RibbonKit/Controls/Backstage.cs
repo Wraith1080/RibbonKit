@@ -297,6 +297,8 @@ public class Backstage : TabControl
         base.OnApplyTemplate();
 
         _contentArea = GetTemplateChild("ContentArea") as FrameworkElement;
+        UtilityChrome.SetBackstageCaptionRail(this, GetTemplateChild("NavColumn") as Border);
+        UtilityChrome.SetBackstageCaptionPage(this, _contentArea as Border);
 
         _backButton = GetTemplateChild(BackButtonPartName) as ButtonBase;
         _classic2007AeroJoinBevel =
