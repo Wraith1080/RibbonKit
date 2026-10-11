@@ -507,3 +507,23 @@ LTR/RTL and simulated 125%/200%. Dialog captures were inspected. Four selected
 Office 2024, Office 2010 and Crystal visual scenes passed unchanged. Live pointer
 and mixed-monitor review remain in the
 [current status](../../09-FUTURE-THEMES-PLAN.md#qat-visibility-and-options-layout).
+
+### 3.248 Glass look over Mica and Acrylic — 2026-10-11
+
+The shared glass overlay is backdrop-independent, but Showcase gated its use on
+`ActiveBackdrop=Acrylic`. The refresh now accepts Mica too. Both materials share
+the existing scoped overlay, replacement/removal lifecycle and saved glass
+choice. Office 2013/2019/2024 remain opt-in, Crystal retains its default and
+Office 2007/2010 still suspend the modern treatment in favor of their Aero
+choices. ScreenTip and API documentation now describe both materials. No public
+API, brush, metric or native backdrop activation behavior changed.
+
+Seven new selector cases first reproduced the absent Mica overlay, then passed.
+Together with four legacy cases, eleven focused Release cases cover light/dark,
+Crystal defaults, on/off, repeated Mica/Acrylic/None refresh, noncompounding
+opacity and legacy choice restoration. They inject derived runtime backdrop
+state and invoke the real post-activation refresh; they do not activate DWM.
+The existing RibbonKit-only `GlassOverlay` consumer scope passed. Normal Debug
+Showcase built with zero warnings/errors. Visual baselines and the full suite
+were not rerun because authored glass paint is unchanged. Native Mica review is
+tracked in the [Office glass status](../../09-FUTURE-THEMES-PLAN.md#office-glass-iteration).

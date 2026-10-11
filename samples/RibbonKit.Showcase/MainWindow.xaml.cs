@@ -530,7 +530,7 @@ public partial class MainWindow : RibbonWindow
 
     private void RefreshGlassTreatment()
     {
-        bool enabled = ActiveBackdrop == RibbonBackdrop.Acrylic
+        bool enabled = (ActiveBackdrop is RibbonBackdrop.Mica or RibbonBackdrop.Acrylic)
             && SupportsGlassTreatment(ThemeManager.CurrentTheme)
             && (_glassTreatmentOverride
                 ?? ThemeManager.CurrentTheme == RibbonTheme.CrystalLight);

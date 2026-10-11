@@ -406,14 +406,14 @@ including dark variants; other palettes retain 0.88.
 uses 0.64 so the command body stays visibly darker than the header over gray
 backdrops while remaining translucent.
 Direct scoped and child resources keep normal WPF precedence. The host owns
-replacement/removal and the decision to use glass after native Acrylic activation
-succeeds; the factory itself does not activate Acrylic. WPF capture samples app
-content rather than the desktop or native DWM material. Document content, update
+replacement/removal and the decision to use glass after native Mica or Acrylic
+activation succeeds; the factory itself does not activate either backdrop. WPF
+capture samples app content rather than the desktop or native DWM material. Document content, update
 timing, preferences, native backdrop activation and window integration stay in
 the host.
 
 Showcase offers Glass look for Office 2013, 2019 and 2024 and defaults it on for
-Crystal when Acrylic is active. Office 2007 and 2010 use their existing Aero
+Crystal when Mica or Acrylic is active. Office 2007 and 2010 use their existing Aero
 options; their disabled Glass look switch retains the saved modern-theme choice.
 
 Office 2007 defaults to the round application orb, including its black palette;

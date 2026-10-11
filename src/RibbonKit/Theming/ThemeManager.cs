@@ -61,7 +61,7 @@ public static class ThemeManager
     /// <returns>A fresh dictionary for the host to merge, replace and remove in that scope.</returns>
     /// <remarks>
     /// This changes no resources or native window backdrop. The host chooses whether to use it,
-    /// typically after Acrylic activation succeeds. Remove an earlier overlay before creating its
+    /// typically after Mica or Acrylic activation succeeds. Remove an earlier overlay before creating its
     /// replacement after theme, accent or palette changes, to avoid compounding opacity.
     /// Direct resources on the scope and resources on child controls keep WPF precedence.
     /// </remarks>

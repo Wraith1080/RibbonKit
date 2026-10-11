@@ -19,9 +19,11 @@ namespace RibbonKit.Tests;
 public sealed class ShowcaseViewChoiceTests
 {
     [Theory]
-    [InlineData(RibbonTheme.Office2007)]
-    [InlineData(RibbonTheme.Office2010)]
-    public void Legacy_aero_themes_suspend_glass_without_losing_the_modern_choice(RibbonTheme legacy) => Sta.Run(() =>
+    [InlineData(RibbonTheme.Office2007, RibbonBackdrop.Acrylic)]
+    [InlineData(RibbonTheme.Office2010, RibbonBackdrop.Acrylic)]
+    [InlineData(RibbonTheme.Office2007, RibbonBackdrop.Mica)]
+    [InlineData(RibbonTheme.Office2010, RibbonBackdrop.Mica)]
+    public void Legacy_aero_themes_suspend_glass_without_losing_the_modern_choice(RibbonTheme legacy, RibbonBackdrop backdrop) => Sta.Run(() =>
     {
         var application = Sta.UseApplication(showcaseResources: true);
         ThemeManager.Apply(application, RibbonTheme.Office2024);
@@ -34,7 +36,7 @@ public sealed class ShowcaseViewChoiceTests
             // without depending on native DWM availability in this regression.
             var backdropKey = (DependencyPropertyKey)typeof(RibbonWindow).GetField("ActiveBackdropPropertyKey",
                 BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
-            window.SetValue(backdropKey, RibbonBackdrop.Acrylic);
+            window.SetValue(backdropKey, backdrop);
             window.GlassTreatmentToggle.IsChecked = true;
             Assert.Equal(0.44, ((Brush)window.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground")).Opacity, 5);
 
@@ -58,6 +60,60 @@ public sealed class ShowcaseViewChoiceTests
             Select(RibbonTheme.Office2019);
             Assert.True(window.GlassTreatmentToggle.IsEnabled);
             Assert.False(window.GlassTreatmentToggle.IsChecked);
+            Assert.Equal(1, ((Brush)window.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground")).Opacity);
+        }
+        finally { window.Close(); Sta.ResetApplication(); }
+    });
+
+    [Theory]
+    [InlineData(RibbonTheme.Office2013, false)]
+    [InlineData(RibbonTheme.Office2013, true)]
+    [InlineData(RibbonTheme.Office2019, false)]
+    [InlineData(RibbonTheme.Office2019, true)]
+    [InlineData(RibbonTheme.Office2024, false)]
+    [InlineData(RibbonTheme.Office2024, true)]
+    [InlineData(RibbonTheme.CrystalLight, false)]
+    public void Glass_treatment_tracks_mica_acrylic_and_disabled_backdrops(RibbonTheme theme, bool dark) => Sta.Run(() =>
+    {
+        var application = Sta.UseApplication(showcaseResources: true);
+        ThemeManager.Apply(application, RibbonTheme.Office2024);
+        var window = new MainWindow();
+        try
+        {
+            var type = typeof(MainWindow);
+            type.GetField("_restoringAppearance", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(window, true);
+            window.ThemeGallery.SelectedItem = window.ThemeGallery.Items.Cast<RibbonGalleryItem>()
+                .Single(item => item.Tag!.ToString() == theme.ToString());
+            window.DarkModeToggle.IsChecked = dark;
+            // Crystal's default choice and the Office opt-in use the same host refresh path.
+            if (theme == RibbonTheme.CrystalLight) Assert.True(window.GlassTreatmentToggle.IsChecked);
+            else window.GlassTreatmentToggle.IsChecked = true;
+            int baselineDictionaries = window.Resources.MergedDictionaries.Count;
+            var backdropKey = (DependencyPropertyKey)typeof(RibbonWindow).GetField("ActiveBackdropPropertyKey",
+                BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+            var refresh = type.GetMethod("RefreshCrystalTint", BindingFlags.Instance | BindingFlags.NonPublic)!;
+
+            foreach (var backdrop in new[] { RibbonBackdrop.Mica, RibbonBackdrop.Acrylic, RibbonBackdrop.Mica })
+            {
+                // Native activation remains a host/target-machine check. Exercise its real
+                // post-activation refresh with truthful derived state, without invoking DWM.
+                window.SetValue(backdropKey, backdrop);
+                refresh.Invoke(window, null);
+                Assert.Equal(baselineDictionaries + 1, window.Resources.MergedDictionaries.Count);
+                Assert.Equal(theme == RibbonTheme.Office2019 && dark ? 0.64 : 0.44,
+                    ((Brush)window.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground")).Opacity, 5);
+                Assert.Equal(dark ? (byte)0x50 : (byte)0x98,
+                    Assert.IsType<SolidColorBrush>(window.FindResource("RibbonKit.Brushes.Control.HoverBackground")).Color.A);
+
+                window.GlassTreatmentToggle.IsChecked = false;
+                Assert.Equal(baselineDictionaries, window.Resources.MergedDictionaries.Count);
+                Assert.Equal(1, ((Brush)window.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground")).Opacity);
+                window.GlassTreatmentToggle.IsChecked = true;
+            }
+            window.SetValue(backdropKey, RibbonBackdrop.None);
+            refresh.Invoke(window, null);
+            Assert.True(window.GlassTreatmentToggle.IsChecked);
+            Assert.Equal(baselineDictionaries, window.Resources.MergedDictionaries.Count);
             Assert.Equal(1, ((Brush)window.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground")).Opacity);
         }
         finally { window.Close(); Sta.ResetApplication(); }

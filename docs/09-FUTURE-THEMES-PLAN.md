@@ -165,7 +165,7 @@ The Showcase presentation audit found these Crystal portability gaps:
   do not make the core Crystal controls depend on Showcase capture code.
 
 `AcrylicGlassPresentation` is the only other named presentation adapter in
-Showcase. It implements the optional Glass look over Acrylic, not the ordinary
+Showcase. It implements the optional Glass look over Mica or Acrylic, not the ordinary
 Office theme palettes. If that look is offered as a RibbonKit feature, give it
 a reusable opt-in path. Showcase's preview comparison, document edge fade,
 MDI editor content, Print Preview paint, icons and saved preferences remain
@@ -1041,14 +1041,15 @@ whole-ribbon contrast-theme support.
 
 Scope: Office 2013, 2019 and 2024, including dark variants. Showcase disables and
 unchecks Glass look in Office 2007/2010 while preserving the saved choice for
-supported themes. Native Acrylic activation and Aero remain host choices.
+supported themes. Native Mica/Acrylic activation and Aero remain host choices.
 
 | Review item | Current status |
 | --- | --- |
 | Selector and restoration | Implemented 2026-10-11. Legacy themes cannot activate the overlay; returning to a supported theme restores the saved on/off choice. Focused Release selector, preference and Crystal presentation checks passed 35/35. |
+| Mica combination | Implemented 2026-10-11. Glass look applies after either Mica or Acrylic activation, through the same shared overlay. Eleven focused cases passed for modern Office light/dark, Crystal's default, on/off and Mica/Acrylic/None switching, and legacy Aero suspension/restoration. Repeated refresh keeps one overlay without compounding opacity. The independent `GlassOverlay` scope passed, and normal Debug Showcase built cleanly. Derived backdrop state was injected for selector coverage. User approved the Mica and Glass look combination on 2026-10-11; this records the reported review scope. [Implementation record](history/library/12-keytips-layout-and-validation.md#3248-glass-look-over-mica-and-acrylic--2026-10-11). |
 | Shared ribbon paint | Implemented 2026-10-11. A neutral shared tab-strip token separates the native band from the translucent body. Office 2013/2019 use the title bar's 0.48 glass-opacity multiplier in both light and dark modes. After the user's Office 2019 dark screenshot showed the surfaces blending, its body now uses 0.64 through a scoped theme metric; other bodies retain 0.44. Office 2013's white File label keeps its colored hover. Independent consumer checks passed across 12 palettes, scoped Office 2013 light/2019 dark inside Crystal, and rendered gray-backdrop separation. |
 | Deterministic visual evidence | Latest body adjustment passed 35 selected scenes on 2026-10-11: 14 glass light/dark scenes at 100% and narrow RTL at 200%, including two new Office 2019 dark gray-backdrop cases, plus 21 existing Office and Crystal comparisons. The two affected dark captures and diffs and two new gray captures were inspected before refreshing/creating baselines; existing non-glass approvals, other glass baselines and tolerances were retained. These fixtures use authored WPF paint. |
-| Native appearance acceptance | Office 2019 dark header/body separation confirmed by the user on 2026-10-11 after the body-opacity adjustment. Other review remains open: on the normal Debug Showcase build, compare Acrylic with Glass look on/off in each supported Office theme and dark variant. Review title/status bars, ribbon body, tab markers, command and split-button states, and Backstage at normal/narrow widths; check repeated switches through legacy Aero and Crystal. Open-surface DPI/mixed-monitor and broader motion acceptance are separate gates. |
+| Native appearance acceptance | Office 2019 dark header/body separation confirmed by the user on 2026-10-11 after the body-opacity adjustment. Other review remains open: on the normal Debug Showcase build, compare Mica and Acrylic with Glass look on/off in each supported Office theme and dark variant. Review title/status bars, ribbon body, tab markers, command and split-button states, and Backstage at normal/narrow widths; check repeated switches through legacy Aero and Crystal. Open-surface DPI/mixed-monitor and broader motion acceptance are separate gates. |
 
 The normal Debug Showcase build and both normal Release runtime targets passed
 with zero warnings/errors. The full solution suite and package gate were not rerun

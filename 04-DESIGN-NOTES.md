@@ -944,6 +944,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Hide and restore QAT without losing commands, and align the options viewport clip](docs/history/library/12-keytips-layout-and-validation.md#3247-qat-visibility-and-customization-viewport-rounding--2026-10-11).
 
+### 3.248 Glass look over Mica and Acrylic — 2026-10-11
+
+[Use the existing shared glass overlay with either active native backdrop](docs/history/library/12-keytips-layout-and-validation.md#3248-glass-look-over-mica-and-acrylic--2026-10-11).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
