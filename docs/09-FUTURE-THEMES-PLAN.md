@@ -1054,6 +1054,49 @@ The normal Debug Showcase build and both normal Release runtime targets passed
 with zero warnings/errors. The full solution suite and package gate were not rerun
 for this bounded appearance slice. [Implementation and rendering pitfalls](history/library/12-keytips-layout-and-validation.md#3240-modern-office-glass-surfaces-and-legacy-aero-choices--2026-10-11).
 
+## Colored QAT split and dropdown states
+
+Implemented 2026-10-11. On an accent-colored caption or Office 2019 tab strip,
+Office 2013/2019/2024 split companions now use a pale accent wash instead of a
+neutral grey fill. Colored QAT split/dropdown buttons have transparent outlines
+and no companion glow, including Office 2007/2010 Aero frames. Legacy companion
+fills remain transparent. Active hover, press and open brushes keep their existing
+band coloring, and moving off the colored band restores normal theme styling.
+Ribbon-local companion overrides follow detached title-bar QAT hosts.
+
+The Office 2024 neutral/material follow-up on 2026-10-11 strengthens the light
+companion from `#F2F2F2` to `#ECECEC`; its existing dark contrast is retained.
+With a non-colored title bar and the host's Mica/Acrylic backdrop setting enabled,
+title/tab-row QAT commands use the caption's alpha hover/press washes. Companion
+alpha is half the active hover. Normal icon colors remain, while local resources
+take precedence and moving below the ribbon restores ordinary opaque paint.
+This policy is scoped and enabled only by the Office 2024 backdrop branch.
+
+Latest follow-up evidence: focused `QatBackdrop` and `ColoredQat` independent
+consumer scopes passed, plus three existing Office 2024 light/dark and Office 2010
+visual scenes with unchanged approvals. The new scope checks neutral contrast,
+alpha composition over two underlays, plain/toggle resources, checked paint,
+local/scoped precedence and palette cleanup. Authored QAT captures were inspected.
+Normal Release runtime targets and Debug Showcase built cleanly. Full-suite/package
+checks were not rerun. [Follow-up implementation](history/library/12-keytips-layout-and-validation.md#3245-office-2024-neutral-and-backdrop-qat-washes--2026-10-11).
+
+Verification: the focused RibbonKit-only `ColoredQat` scope passed for five Office
+themes in light/dark, including 14 default/Aero frame combinations, both hovered
+halves, primary press, open-state precedence, two accents, scoped paint and
+placement/off restoration. Realized modern companion pixels and legacy outlines
+are checked; RTL and simulated 125%/200% are included. Caption-strip captures were
+inspected. Three existing default Office 2024/2010/2007 visual scenes passed with
+unchanged approvals. Both normal Release runtime targets and Debug Showcase built
+with zero warnings/errors. Full-suite/package checks were not rerun.
+
+Native visual acceptance remains open: review the actual QAT arrow/primary hover
+and dropdown open states in the normal Debug Showcase, including both legacy Aero
+frames with title-bar coloring enabled. Authored WPF captures do not establish
+native DWM appearance or mixed-monitor DPI acceptance. Also compare Office 2024
+neutral, Mica and Acrylic highlights in light/dark, including plain-button hover
+fade timing; native material acceptance remains open.
+[Implementation record](history/library/12-keytips-layout-and-validation.md#3244-colored-qat-split-companion-and-legacy-borders--2026-10-11).
+
 ## Gallery header and section layout
 
 Implemented 2026-10-11 after the user's legacy dark gallery screenshots. Shared
@@ -1125,6 +1168,21 @@ Native Showcase appearance acceptance for the new caption remains open, includin
 transition timing, live RTL, OS reduced motion and real monitor DPI changes.
 [Implementation record](history/library/12-keytips-layout-and-validation.md#3242-classic-backstage-caption-and-chart-tools-selection--2026-10-11).
 [Icon/title follow-up](history/library/12-keytips-layout-and-validation.md#3243-classic-caption-icon-fade-and-title-continuity--2026-10-11).
+
+## QAT-only commands after customization
+
+Implemented 2026-10-11: retained QAT-only commands now explicitly receive caption
+hit testing from the shared toolbar when added or restored. Their original objects,
+command bindings and handlers remain intact. Ribbon-group command copies remain
+interactive. [Implementation record](history/library/12-keytips-layout-and-validation.md#3246-restored-qat-only-commands-retain-caption-interaction--2026-10-11).
+
+Focused evidence: `QatCommandInteraction` passed in a RibbonKit-only consumer,
+covering the actual customization page, serializer restore, title/tab/below
+placements, LTR/RTL, native caption hit-test messages and command/menu actions.
+All five `DeclaredQuickAccessCommandTests` passed. Normal Release runtime targets
+and Debug Showcase built cleanly. Live Showcase pointer review of removing/re-adding
+Save, Undo and Redo is open; full-suite/visual/package checks were not rerun for
+this interaction-only fix.
 
 ## Acceptance
 

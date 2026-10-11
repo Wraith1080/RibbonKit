@@ -392,3 +392,88 @@ plus null-icon/orb restoration cases. Transition captures were inspected. Normal
 Debug Showcase and both Release runtime targets built without warnings/errors.
 Full-suite/package gates were not rerun; native timing, OS reduced motion and
 monitor-DPI review remain in the [caption status](../../09-FUTURE-THEMES-PLAN.md#classic-backstage-caption-continuation).
+
+### 3.244 Colored QAT split companion and legacy borders — 2026-10-11
+
+The user's accent-caption screenshots exposed two shared-template leaks. The
+inactive split half kept the neutral `Control.CompanionBackground`; active and
+companion borders retained Office 2007/2010 amber even after colored hover/open
+backgrounds were applied. Colored QAT split halves and dropdowns now suppress
+their outline and companion glow. Their border thickness stays intact, avoiding
+an icon/content shift between states; uncolored commands retain the theme paint.
+
+`Qat.ColoredCompanionBackground` is a 30% white wash in Office 2013/2019/2024,
+making the underlying accent paler than the active half. Office 2007/2010 and
+Crystal supply transparent companions; dark palettes inherit those choices.
+The companion trigger precedes active hover/press/open triggers so the active
+half wins. Existing checked-state precedence keeps an open arrow's fill stable.
+The Ribbon publishes the companion token into QAT item/host resources alongside
+the existing hover/pressed brushes, preserving ribbon-local scope across the
+detached title-bar host, and removes it when colored-surface context ends.
+No public C# API or Showcase styling helper was added.
+
+The new focused `ColoredQat` consumer scope first reproduced the grey companion,
+then passed with realized source-backed QAT proxies across all five Office themes
+in light/dark, default frames and both legacy Aero frames. It covers both hovered
+halves, primary press, open/hover precedence, two accents, ribbon-local companion
+overrides, colored Office 2019 tab-row placement and neutral/off restoration.
+Modern companion pixels are checked over the accent band; colored borders and
+glows are checked directly. LTR/RTL and simulated 125%/200% are included. Captured
+caption strips were inspected. Three existing default Office 2024/2010/2007 visual
+scenes passed without baseline changes. Both Release runtime targets and normal
+Debug Showcase built cleanly. Current native review remains in the
+[QAT status](../../09-FUTURE-THEMES-PLAN.md#colored-qat-split-and-dropdown-states).
+
+### 3.245 Office 2024 neutral and backdrop QAT washes — 2026-10-11
+
+Office 2024 light's neutral companion was `#F2F2F2` against the `#F3F3F3` caption.
+It now uses `#ECECEC`, remaining quieter than active hover while visibly marking
+the other half. Its dark companion already has adequate separation and retains
+the authored paint. Other generations keep their neutral palettes.
+
+`SetTitleBarBackdrop` now enables the scoped `QatUseBackdropBrushes` metric in its
+existing Office 2024/non-accent branch. Every base palette supplies a false
+default, including Crystal, so a nearer palette can suppress the application
+policy. Ribbon applies owned merged dictionaries to QAT items and the active
+title/tab-row host. Hover and press/checked washes borrow the caption's black
+(light) or white (dark) alpha brushes; companion uses half the hover opacity.
+This retains the material and normal icon colors through the existing templates
+and wash animations. Explicit per-item resources win over the merged palette.
+Refresh, item removal, placement changes, theme/accent/backdrop switches and unload
+remove only the owned dictionaries, restoring original scoped paint. The opaque
+below-ribbon surface keeps its normal brushes. No public C# API was added; hosts
+continue to own native Mica/Acrylic activation through the existing integration.
+
+The focused `QatBackdrop` independent consumer reproduced the one-channel neutral
+contrast, then passed neutral/active separation, light/dark alpha relationships,
+rendered companion composition over two underlay colors, plain/toggle wash
+resources, checked paint, local precedence and restoration/ownership checks.
+It covers title/tab/below placement, colored-caption priority, non-2024 and nearer
+Crystal scopes, removal, LTR/RTL and simulated 125%/200%. Synthetic mouse flags
+exercise nested template state; native plain-button pointer/fade timing remains
+a live check. Neutral/material QAT captures were inspected. `ColoredQat` and three
+existing Office 2024 light/dark and Office 2010 visual scenes also passed with
+unchanged approvals. Normal Release runtime targets and Debug Showcase built
+cleanly; full-suite/package gates were not rerun. Current acceptance remains in
+the [QAT status](../../09-FUTURE-THEMES-PLAN.md#colored-qat-split-and-dropdown-states).
+
+### 3.246 Restored QAT-only commands retain caption interaction — 2026-10-11
+
+Removing and re-adding an authored Save/Undo/Redo-style command preserves its
+object, bindings and handlers, but its retained logical Ribbon parent can supply
+`WindowChrome.IsHitTestVisibleInChrome=False` instead of the caption visual host's
+true value. Windows then treats its title-bar area as non-client chrome. The
+shared `RibbonQuickAccessToolBar.OnItemsChanged` now explicitly sets the current
+hit-test value on framework-element items, including collection reset/restore.
+Logical ownership and the original control remain intact; no API or Showcase
+helper was added. Ribbon-group copies continue to work through the same host.
+
+The focused `QatCommandInteraction` independent consumer reproduced the false
+caption hit-test value, then passed actual customization-page remove/add,
+serializer clear/restore and all three placements in LTR/RTL. It verifies native
+`WM_NCHITTEST=HTCLIENT` at realized title-bar targets, window command execution,
+toggle/split/dropdown actions and a ribbon-group copy as the working comparison.
+All five existing declared-command regressions also passed. Normal Release runtime
+targets and Debug Showcase built cleanly. These checks do not claim live pointer
+acceptance; current review scope is in the
+[customization follow-up](../../09-FUTURE-THEMES-PLAN.md#qat-only-commands-after-customization).

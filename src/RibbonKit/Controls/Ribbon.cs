@@ -299,6 +299,8 @@ public class Ribbon : Control
     /// </summary>
     public const string QatColoredPressedBackgroundKey = "RibbonKit.Brushes.Qat.ColoredPressedBackground";
 
+    private const string QatColoredCompanionBackgroundKey = "RibbonKit.Brushes.Qat.ColoredCompanionBackground";
+
     // Name of the application (File/orb) ToggleButton inside the RibbonTabControl template. The
     // application menu's click-outside dismissal has to recognise it and stand down, or closing on
     // mouse-DOWN would race the toggle's own click on mouse-UP and the orb would re-open the menu
@@ -1769,6 +1771,7 @@ public class Ribbon : Control
     // items are projected into the host RibbonWindow's TitleBarContent via this host; the
     // shared context menu lets the user move the QAT between placements (like Office).
     private RibbonQuickAccessToolBar? _titleBarQatHost;
+    private readonly Dictionary<FrameworkElement, ResourceDictionary> _qatBackdropPalettes = new();
     private object? _savedTitleBarContent;
     private RibbonWindow? _applicationButtonShapeWindow;
     private System.Windows.Controls.ContextMenu? _qatContextMenu;
@@ -3301,6 +3304,7 @@ public class Ribbon : Control
         }
         Theming.ThemeManager.Changed -= OnThemeConfigurationChanged;
         UnregisterRibbonWindowApplicationButtonShape();
+        ClearQatBackdropPalettes();
         DetachRibbonTabControl();
     }
 
@@ -3436,6 +3440,7 @@ public class Ribbon : Control
     /// </summary>
     internal void UpdateQatButtonContext()
     {
+        ClearQatBackdropPalettes();
         // Resolve the band's policy in this ribbon's resource scope. A window palette
         // can replace the application theme without sharing its title-bar preferences.
         bool titleBarColored = QuickAccessPosition == RibbonQuickAccessPosition.TitleBar
@@ -3443,6 +3448,8 @@ public class Ribbon : Control
         bool tabRowColored = QuickAccessPosition == RibbonQuickAccessPosition.TabRow
             && UtilityChrome.GetQatTabRowColored(this);
         bool colored = titleBarColored || tabRowColored;
+        bool backdrop = !colored && QuickAccessPosition != RibbonQuickAccessPosition.BelowRibbon
+            && UtilityChrome.GetQatUseBackdropBrushes(this);
 
         // Match the hover of the neighbouring chrome: the caption buttons in the title bar,
         // the tabs on the strip.
@@ -3483,12 +3490,19 @@ public class Ribbon : Control
                 element.Resources[QatColoredPressedBackgroundKey] =
                     TryFindResource(pressedKey) as System.Windows.Media.Brush
                     ?? System.Windows.Media.Brushes.Transparent;
+                // The title-bar QAT is outside the Ribbon tree. Carry its scoped companion
+                // token too, just as we carry the band's active hover/pressed brushes.
+                element.Resources[QatColoredCompanionBackgroundKey] =
+                    TryFindResource(QatColoredCompanionBackgroundKey) as System.Windows.Media.Brush
+                    ?? System.Windows.Media.Brushes.Transparent;
             }
             else
             {
                 element.Resources.Remove(QatColoredHoverBackgroundKey);
                 element.Resources.Remove(QatColoredPressedBackgroundKey);
+                element.Resources.Remove(QatColoredCompanionBackgroundKey);
             }
+            if (backdrop) ApplyQatBackdropPalette(element);
         }
 
         // The HOSTS need the same treatment, not just the items. The overflow chevron (»)
@@ -3501,6 +3515,44 @@ public class Ribbon : Control
         ApplyQatSurfaceContext(_titleBarQatHost, titleBarColored, hoverKey, pressedKey);
         ApplyQatSurfaceContext(_qatTabRowHost, tabRowColored, hoverKey, pressedKey);
         ApplyQatSurfaceContext(_qatBelowHost, false, hoverKey, pressedKey);
+        if (backdrop)
+        {
+            ApplyQatBackdropPalette(QuickAccessPosition == RibbonQuickAccessPosition.TitleBar
+                ? _titleBarQatHost : _qatTabRowHost);
+        }
+    }
+
+    private void ClearQatBackdropPalettes()
+    {
+        foreach (var entry in _qatBackdropPalettes)
+            entry.Key.Resources.MergedDictionaries.Remove(entry.Value);
+        _qatBackdropPalettes.Clear();
+    }
+
+    private void ApplyQatBackdropPalette(FrameworkElement? element)
+    {
+        if (element is null) return;
+        var hover = TryFindResource(Theming.ThemeManager.CaptionHoverKey) as System.Windows.Media.Brush
+            ?? System.Windows.Media.Brushes.Transparent;
+        var pressed = TryFindResource(Theming.ThemeManager.CaptionPressedKey) as System.Windows.Media.Brush
+            ?? System.Windows.Media.Brushes.Transparent;
+        var companion = hover.Clone();
+        companion.Opacity *= 0.5;
+        if (companion.CanFreeze) companion.Freeze();
+        // These washes affect only QAT commands on the transparent caption/header band.
+        // A merged dictionary keeps explicit per-item resources authoritative. Own the
+        // dictionary rather than overwriting keys, so removal restores the original scope.
+        var palette = new ResourceDictionary
+        {
+            ["RibbonKit.Brushes.Control.HoverBackground"] = hover,
+            ["RibbonKit.Brushes.Control.SplitActiveHover"] = hover,
+            ["RibbonKit.Brushes.Control.PressedBackground"] = pressed,
+            ["RibbonKit.Brushes.Control.CheckedBackground"] = pressed,
+            ["RibbonKit.Brushes.Control.CheckedHoverBackground"] = pressed,
+            ["RibbonKit.Brushes.Control.CompanionBackground"] = companion,
+        };
+        element.Resources.MergedDictionaries.Add(palette);
+        _qatBackdropPalettes.Add(element, palette);
     }
 
     /// <summary>
@@ -3532,11 +3584,15 @@ public class Ribbon : Control
             host.Resources[QatColoredPressedBackgroundKey] =
                 TryFindResource(pressedKey) as System.Windows.Media.Brush
                 ?? System.Windows.Media.Brushes.Transparent;
+            host.Resources[QatColoredCompanionBackgroundKey] =
+                TryFindResource(QatColoredCompanionBackgroundKey) as System.Windows.Media.Brush
+                ?? System.Windows.Media.Brushes.Transparent;
         }
         else
         {
             host.Resources.Remove(QatColoredHoverBackgroundKey);
             host.Resources.Remove(QatColoredPressedBackgroundKey);
+            host.Resources.Remove(QatColoredCompanionBackgroundKey);
         }
     }
 

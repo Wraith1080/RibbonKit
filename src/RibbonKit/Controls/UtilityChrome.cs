@@ -39,6 +39,11 @@ internal static class UtilityChrome
     public static bool GetQatTabRowColored(DependencyObject target) => (bool)target.GetValue(QatTabRowColoredProperty);
     public static void SetQatTabRowColored(DependencyObject target, bool value) => target.SetValue(QatTabRowColoredProperty, value);
 
+    public static readonly DependencyProperty QatUseBackdropBrushesProperty = DependencyProperty.RegisterAttached(
+        "QatUseBackdropBrushes", typeof(bool), typeof(UtilityChrome), new FrameworkPropertyMetadata(false, OnQatSurfaceChanged));
+    public static bool GetQatUseBackdropBrushes(DependencyObject target) => (bool)target.GetValue(QatUseBackdropBrushesProperty);
+    public static void SetQatUseBackdropBrushes(DependencyObject target, bool value) => target.SetValue(QatUseBackdropBrushesProperty, value);
+
     private static void OnQatSurfaceChanged(DependencyObject target, DependencyPropertyChangedEventArgs args)
     {
         if (target is Ribbon ribbon) ribbon.UpdateQatButtonContext();

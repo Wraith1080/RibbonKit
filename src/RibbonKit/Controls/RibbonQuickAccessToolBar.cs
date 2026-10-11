@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
+using System.Windows.Shell;
 using System.Windows.Threading;
 using RibbonKit.Animation;
 using RibbonKit.Layout;
@@ -122,6 +123,13 @@ public class RibbonQuickAccessToolBar : ItemsControl
     {
         _panel?.RestoreOverflowFocus();
         base.OnItemsChanged(e);
+
+        // Retained QAT-only commands are logical children of Ribbon. On re-add they can
+        // inherit false from that parent instead of true from the caption's visual host.
+        // Mark each item explicitly so Windows routes caption input to WPF. Reset also
+        // reaches this path when ItemsSource is attached or customization is restored.
+        foreach (FrameworkElement item in Items.OfType<FrameworkElement>())
+            item.SetCurrentValue(WindowChrome.IsHitTestVisibleInChromeProperty, true);
 
         // The flyout's contents are a SNAPSHOT taken when it opened, so any change to the toolbar
         // makes it stale. That matters most for "Remove from Quick Access Toolbar" invoked on an

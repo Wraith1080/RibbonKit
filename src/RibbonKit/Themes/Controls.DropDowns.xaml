@@ -70,6 +70,9 @@
                                                          state comes AFTER hover and uses the pressed brush, so the open
                                                          dropdown holds ONE stable background regardless of IsMouseOver —
                                                          which is what was flickering. -->
+                                                    <Trigger Property="controls:Ribbon.QatOnColoredSurface" Value="True">
+                                                        <Setter TargetName="Chrome" Property="BorderBrush" Value="Transparent" />
+                                                    </Trigger>
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>
                                                             <Condition Property="IsMouseOver" Value="True" />
@@ -383,6 +386,14 @@
                                                         <Setter TargetName="CompanionRim" Property="BorderBrush"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.CompanionGlow}" />
                                                     </Trigger>
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="Tag" Value="Companion" />
+                                                            <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredCompanionBackground}" />
+                                                    </MultiTrigger>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.SplitActiveHover}" />
@@ -394,6 +405,12 @@
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
                                                         <Setter TargetName="Chrome" Property="BorderBrush"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                                    </Trigger>
+                                                    <!-- Match ordinary colored QAT buttons in every state, including
+                                                         the legacy companion outline and inner glow. -->
+                                                    <Trigger Property="controls:Ribbon.QatOnColoredSurface" Value="True">
+                                                        <Setter TargetName="Chrome" Property="BorderBrush" Value="Transparent" />
+                                                        <Setter TargetName="CompanionRim" Property="BorderBrush" Value="Transparent" />
                                                     </Trigger>
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>
@@ -565,6 +582,14 @@
                                                         <Setter TargetName="CompanionRim" Property="BorderBrush"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.CompanionGlow}" />
                                                     </Trigger>
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="Tag" Value="Companion" />
+                                                            <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredCompanionBackground}" />
+                                                    </MultiTrigger>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.SplitActiveHover}" />
@@ -583,6 +608,8 @@
                                                     </Trigger>
                                                     <!-- Colored QAT surface: white chevron + band hover/open state. -->
                                                     <Trigger Property="controls:Ribbon.QatOnColoredSurface" Value="True">
+                                                        <Setter TargetName="Chrome" Property="BorderBrush" Value="Transparent" />
+                                                        <Setter TargetName="CompanionRim" Property="BorderBrush" Value="Transparent" />
                                                         <Setter TargetName="ToggleChevron" Property="Stroke" Value="#FFFFFF" />
                                                         <Setter TargetName="VerticalChevron" Property="Stroke" Value="#FFFFFF" />
                                                         <Setter TargetName="VerticalCaption" Property="Foreground" Value="#FFFFFF" />
@@ -708,7 +735,8 @@
                              leave CompanionBackground TRANSPARENT (filling the whole half made a
                              merely-adjacent button look almost as hot as the hovered one); the flat
                              themes have no border to glow inside, so they publish a lighter hover
-                             fill and leave the border and glow Transparent. -->
+                             fill and leave the border and glow Transparent. Colored QAT surfaces
+                             use their own companion token and suppress both outline and glow. -->
                         <Trigger SourceName="PART_Toggle" Property="IsMouseOver" Value="True">
                             <Setter TargetName="PART_Primary" Property="Tag" Value="Companion" />
                         </Trigger>

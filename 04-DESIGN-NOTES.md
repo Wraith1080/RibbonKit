@@ -928,6 +928,18 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Track the icon slot in title movement and fade its paint with Backstage](docs/history/library/12-keytips-layout-and-validation.md#3243-classic-caption-icon-fade-and-title-continuity--2026-10-11).
 
+### 3.244 Colored QAT split companion and legacy borders — 2026-10-11
+
+[Keep split companions on the accent band and remove colored QAT outlines](docs/history/library/12-keytips-layout-and-validation.md#3244-colored-qat-split-companion-and-legacy-borders--2026-10-11).
+
+### 3.245 Office 2024 neutral and backdrop QAT washes — 2026-10-11
+
+[Strengthen neutral companion contrast and carry alpha washes onto material QAT surfaces](docs/history/library/12-keytips-layout-and-validation.md#3245-office-2024-neutral-and-backdrop-qat-washes--2026-10-11).
+
+### 3.246 Restored QAT-only commands retain caption interaction — 2026-10-11
+
+[Preserve native caption hit testing for retained commands after customization](docs/history/library/12-keytips-layout-and-validation.md#3246-restored-qat-only-commands-retain-caption-interaction--2026-10-11).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
@@ -992,6 +1004,10 @@ technical evidence warrants them; preserve existing dated records.
   [gallery header status](docs/09-FUTURE-THEMES-PLAN.md#gallery-header-and-section-layout).
 - **Classic Backstage caption and merge demo:** current evidence and remaining
   live review are in the [caption status](docs/09-FUTURE-THEMES-PLAN.md#classic-backstage-caption-continuation).
+- **Colored QAT split/dropdown states:** focused evidence and live review are in
+  the [QAT status](docs/09-FUTURE-THEMES-PLAN.md#colored-qat-split-and-dropdown-states).
+- **Restored QAT-only command interaction:** focused evidence and native click review
+  are in the [customization follow-up](docs/09-FUTURE-THEMES-PLAN.md#qat-only-commands-after-customization).
 - **Crystal portability and Office 2007 orb defaults:** use the
   [active plan's status and acceptance table](docs/13-CRYSTAL-PORTABILITY-AND-ORB-PLAN.md#current-status-and-acceptance)
   for slice progress, remaining live review and deferred issues. Shared work

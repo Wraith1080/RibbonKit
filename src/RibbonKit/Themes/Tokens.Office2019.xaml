@@ -212,6 +212,7 @@
          (Ribbon.UpdateQatButtonContext); these only surface if a trigger fires first. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredHoverBackground" Color="#2EFFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredPressedBackground" Color="#4DFFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredCompanionBackground" Color="#4DFFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.CloseHoverBackground" Color="#E81123" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.CaptionButton.ClosePressedBackground" Color="#F1707A" />
 
@@ -506,6 +507,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualForeground" Color="Transparent" />
     <system:Boolean x:Key="RibbonKit.Metrics.QatTitleBarColored">False</system:Boolean>
     <system:Boolean x:Key="RibbonKit.Metrics.QatTabRowColored">False</system:Boolean>
+    <system:Boolean x:Key="RibbonKit.Metrics.QatUseBackdropBrushes">False</system:Boolean>
     <system:Boolean x:Key="RibbonKit.Metrics.MessageBar.ActionUseGlassMaterial">False</system:Boolean>
     <system:Double x:Key="RibbonKit.Metrics.MessageBar.ActionDisabledOpacity">0.45</system:Double>
     <!-- Metrics for the independently selected floating/sidebar Backstage layouts. -->

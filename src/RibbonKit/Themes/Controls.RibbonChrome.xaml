@@ -102,6 +102,8 @@
                 Value="{DynamicResource RibbonKit.Metrics.QatTitleBarColored}" />
         <Setter Property="controls:UtilityChrome.QatTabRowColored"
                 Value="{DynamicResource RibbonKit.Metrics.QatTabRowColored}" />
+        <Setter Property="controls:UtilityChrome.QatUseBackdropBrushes"
+                Value="{DynamicResource RibbonKit.Metrics.QatUseBackdropBrushes}" />
         <Setter Property="ApplicationButtonShape"
                 Value="{DynamicResource RibbonKit.ApplicationButtonShape.Default}" />
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Ribbon.Background}" />

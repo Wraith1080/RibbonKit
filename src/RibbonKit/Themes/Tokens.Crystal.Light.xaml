@@ -8,6 +8,8 @@
         <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Office2024.xaml" />
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.ScrollBars.xaml" />
     </ResourceDictionary.MergedDictionaries>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredCompanionBackground" Color="Transparent" />
+    <sys:Boolean x:Key="RibbonKit.Metrics.QatUseBackdropBrushes">False</sys:Boolean>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.TabStripBackground" Color="Transparent" />
     <sys:Double x:Key="RibbonKit.Metrics.Ribbon.TabStripGlassOpacity">0.88</sys:Double>
     <sys:Double x:Key="RibbonKit.Metrics.Ribbon.BodyGlassOpacity">0.44</sys:Double>
