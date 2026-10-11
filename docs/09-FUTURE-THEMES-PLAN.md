@@ -1208,10 +1208,10 @@ Office 2024 default/RTL QAT, Office 2010 default and Crystal below-QAT visual
 scenes passed without approval changes. Both Release runtime targets and normal
 Debug Showcase built cleanly.
 
-Live review remains open: hide/show by pointer in title/tab/below placements,
-restore through a ribbon tab menu, verify saved visibility after restart and
-check the Customize Ribbon action edges on the target monitor. Full-suite,
-package and mixed-monitor gates were not rerun for this bounded change.
+User approved the QAT hide/show behavior and Customize Ribbon clipping fix on
+2026-10-11. This records the reported review scope; restart persistence and
+mixed-monitor acceptance were not separately reported. Full-suite and package
+gates were not rerun for this bounded change.
 
 ## Acceptance
 
