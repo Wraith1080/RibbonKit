@@ -192,6 +192,12 @@ public enum RibbonString
 
     /// <summary>Label for a conventional application-menu exit action.</summary>
     Exit,
+
+    /// <summary>"Show Quick Access Toolbar".</summary>
+    ShowQuickAccessToolbar,
+
+    /// <summary>"Hide Quick Access Toolbar".</summary>
+    HideQuickAccessToolbar,
 }
 
 /// <summary>

@@ -45,12 +45,15 @@ internal static class GroupedGalleryPortabilityChecks
             view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(Choice.Family)));
             var text = new FrameworkElementFactory(typeof(TextBlock));
             text.SetBinding(TextBlock.TextProperty, new Binding(nameof(Choice.Name)));
-            text.SetValue(FrameworkElement.WidthProperty, 112d);
-            text.SetValue(FrameworkElement.HeightProperty, 40d);
+            text.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+            var tileContent = new FrameworkElementFactory(typeof(Border));
+            tileContent.SetValue(FrameworkElement.WidthProperty, 112d);
+            tileContent.SetValue(FrameworkElement.HeightProperty, 40d);
+            tileContent.AppendChild(text);
             var gallery = new InRibbonGallery
             {
                 Width = 158, PopupWidth = 440, Height = density == RibbonDensity.Touch ? 78 : 54,
-                ItemsSource = view, ItemTemplate = new DataTemplate { VisualTree = text }, FlowDirection = flow,
+                ItemsSource = view, ItemTemplate = new DataTemplate { VisualTree = tileContent }, FlowDirection = flow,
             };
             Ribbon.SetDensity(gallery, density);
             var window = new Window
@@ -110,6 +113,7 @@ internal static class GroupedGalleryPortabilityChecks
                 Assert.Equal(440, presenter.MaxWidth, 2);
                 Assert.Same(presenter, scroller.Content);
                 Assert.Equal(Visibility.Collapsed, Part<Border>(gallery, "DropDownHeaderHost").Visibility);
+                Assert.Equal(new Thickness(), scroller.Margin);
                 var groups = Descendants<GroupItem>(presenter).ToArray();
                 Assert.Equal(new[] { "Modern", "Office Modern", "Office Legacy" },
                     groups.Select(group => ((CollectionViewGroup)group.Content).Name));
@@ -120,11 +124,18 @@ internal static class GroupedGalleryPortabilityChecks
                     Assert.Equal(Visibility.Visible, header.Visibility);
                     Assert.False(header.IsHitTestVisible);
                     Assert.Same(gallery.FindResource("RibbonKit.Brushes.ApplicationMenu.HeaderBackground"), header.Background);
+                    var title = Assert.Single(Descendants<TextBlock>(header));
+                    Assert.Same(gallery.FindResource("RibbonKit.Brushes.ApplicationMenu.Foreground"), title.Foreground);
+                    if (dark && theme is RibbonTheme.Office2007 or RibbonTheme.Office2010)
+                        Assert.True(Assert.IsType<SolidColorBrush>(title.Foreground).Color.R >= 200);
                     var headerBounds = Bounds(header, scroller);
                     Assert.True(headerBounds.Top >= previousBottom - 0.01);
                     var tiles = Descendants<RibbonGalleryItem>(group).ToArray();
                     Assert.Equal(((CollectionViewGroup)group.Content).ItemCount, tiles.Length);
                     var bounds = tiles.Select(tile => Bounds(tile, scroller)).OrderBy(rect => rect.Left).ToArray();
+                    var sectionPadding = (Thickness)gallery.FindResource("RibbonKit.Metrics.GallerySectionPadding");
+                    Assert.Equal(sectionPadding.Top, bounds[0].Top - headerBounds.Bottom, 1);
+                    Assert.Equal(sectionPadding.Bottom, Bounds(group, scroller).Bottom - bounds.Max(rect => rect.Bottom), 1);
                     Assert.All(bounds, rect =>
                     {
                         Assert.Equal(bounds[0].Top, rect.Top, 2);
@@ -135,6 +146,8 @@ internal static class GroupedGalleryPortabilityChecks
                     previousBottom = bounds.Max(rect => rect.Bottom);
                 }
                 Assert.True(previousBottom <= scroller.ViewportHeight + 0.01);
+                if (scale == 1.25 && flow == FlowDirection.LeftToRight && density == RibbonDensity.Compact)
+                    Save(popup, $"{theme}-{(dark ? "dark" : "light")}-grouped-gallery");
                 if (!dark && scale == 1.25 && flow == FlowDirection.LeftToRight
                     && theme is RibbonTheme.Office2024 or RibbonTheme.CrystalLight)
                     Save(popup, $"{theme}-{density}-grouped-gallery");
@@ -160,6 +173,34 @@ internal static class GroupedGalleryPortabilityChecks
                 var selectedBounds = Bounds(Part<Border>(selected, "Chrome"), strip);
                 Assert.True(selectedBounds.Top >= -0.01 && selectedBounds.Bottom <= strip.ActualHeight + 0.01,
                     $"{theme}/{density}/{flow}/{scale}: selected bounds {selectedBounds}, strip {strip.RenderSize}.");
+
+                // Exercise overflow after the original six-item selection/width checks.
+                // One native rail scrolls every section heading and tile together.
+                for (int i = 0; i < 18; i++) choices.Add(new($"Extra {i}", "More styles"));
+                gallery.PopupWidth = 440;
+                gallery.IsDropDownOpen = true;
+                Layout();
+                scroller.ScrollToTop(); Layout();
+                Assert.True(scroller.ScrollableHeight > 0);
+                var rail = Assert.Single(Descendants<ScrollBar>(scroller),
+                    bar => bar.Orientation == Orientation.Vertical);
+                Assert.Equal(Visibility.Visible, rail.Visibility);
+                groups = Descendants<GroupItem>(presenter).ToArray();
+                Assert.All(groups, item => Assert.Empty(Descendants<ScrollBar>(item)));
+                var firstHeader = Part<Border>(groups[0], "GroupHeaderHost");
+                var railBounds = Bounds(rail, scroller);
+                Assert.True(railBounds.Top <= Bounds(firstHeader, scroller).Top + 1);
+                if (dark && theme is RibbonTheme.Office2007 or RibbonTheme.Office2010
+                    && density == RibbonDensity.Compact && flow == FlowDirection.LeftToRight && scale == 1.25)
+                    Save(popup, $"{theme}-dark-grouped-scroll-top");
+                scroller.ScrollToEnd(); Layout();
+                Assert.True(Bounds(firstHeader, scroller).Bottom < 0);
+                var lastTile = Assert.IsType<RibbonGalleryItem>(gallery.ItemContainerGenerator.ContainerFromItem(choices[^1]));
+                var lastBounds = Bounds(lastTile, scroller);
+                Assert.True(lastBounds.Top >= -1 && lastBounds.Bottom <= scroller.ViewportHeight + 1);
+                if (dark && theme is RibbonTheme.Office2007 or RibbonTheme.Office2010
+                    && density == RibbonDensity.Compact && flow == FlowDirection.LeftToRight && scale == 1.25)
+                    Save(popup, $"{theme}-dark-grouped-scroll-bottom");
             }
             finally { window.Close(); Layout(); }
             void Layout()

@@ -141,6 +141,16 @@ public sealed class ApplicationButtonShapeThemeTests
     public void Theme_default_and_local_value_follow_wpf_precedence() => RunSta(() =>
     {
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "BackstageCaption")
+        {
+            BackstageCaptionPortabilityChecks.Verify(application);
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "GlassOverlay")
+        {
+            CapturedBackdropPortabilityChecks.VerifyGlass(application);
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "SplitButtonDensity")
         {
             SplitButtonDensityPortabilityChecks.Verify(application);
@@ -192,6 +202,31 @@ public sealed class ApplicationButtonShapeThemeTests
             QuickAccessScopePortabilityChecks.Verify(application);
             return;
         }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "ColoredQat")
+        {
+            ColoredQuickAccessPortabilityChecks.Verify(application);
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "QatBackdrop")
+        {
+            QuickAccessBackdropPortabilityChecks.Verify(application);
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "QatCommandInteraction")
+        {
+            QuickAccessCommandInteractionChecks.Verify(application);
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "CustomizationLayout")
+        {
+            CustomizationLayoutChecks.Verify(application);
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "QatVisibility")
+        {
+            QuickAccessVisibilityChecks.Verify(application);
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "MinimizedDivider")
         {
             TouchDensityPortabilityChecks.VerifyMinimizedDivider(application);
@@ -224,6 +259,10 @@ public sealed class ApplicationButtonShapeThemeTests
         MessageTransitionPortabilityChecks.Verify(application);
         DropDownHeaderPortabilityChecks.Verify(application);
         GalleryHeaderAndQatCommandChecks.Verify(application);
+        QuickAccessCommandInteractionChecks.Verify(application);
+
+        CustomizationLayoutChecks.Verify(application);
+        QuickAccessVisibilityChecks.Verify(application);
 
         GroupedGalleryPortabilityChecks.Verify(application);
         NativeGalleryPopupPortabilityChecks.Verify(application);
@@ -447,6 +486,7 @@ public sealed class ApplicationButtonShapeThemeTests
             Assert.Null(VisualTreeHelper.GetParent(proxy));
 
             VerifyNoApplicationHeaderInset(application);
+            BackstageCaptionPortabilityChecks.Verify(application);
 
             ribbon.IsBackstageOpen = false;
             ribbon.ClearValue(Ribbon.ApplicationButtonShapeProperty);
@@ -457,6 +497,8 @@ public sealed class ApplicationButtonShapeThemeTests
             CapturedBackdropPortabilityChecks.Verify(application);
             GallerySelectionPortabilityChecks.Verify(application);
             QuickAccessScopePortabilityChecks.Verify(application);
+            ColoredQuickAccessPortabilityChecks.Verify(application);
+            QuickAccessBackdropPortabilityChecks.Verify(application);
         }
         finally
         {

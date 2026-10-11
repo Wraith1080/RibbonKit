@@ -130,6 +130,9 @@ public partial class MainWindow : RibbonWindow
         DependencyPropertyDescriptor
             .FromProperty(Ribbon.QuickAccessPositionProperty, typeof(Ribbon))
             ?.AddValueChanged(MainRibbon, (_, _) => SaveCustomization());
+        DependencyPropertyDescriptor
+            .FromProperty(Ribbon.IsQuickAccessVisibleProperty, typeof(Ribbon))
+            ?.AddValueChanged(MainRibbon, (_, _) => SaveCustomization());
     }
 
     // Persists the ribbon's current customization; called when the options dialog applies.
@@ -498,7 +501,7 @@ public partial class MainWindow : RibbonWindow
 
     private void OnToggleGlassTreatment(object sender, RoutedEventArgs e)
     {
-        if (_glassTreatmentSync || GlassTreatmentToggle is null) return;
+        if (_glassTreatmentSync || GlassTreatmentToggle is null || !GlassTreatmentToggle.IsEnabled) return;
         _glassTreatmentOverride = GlassTreatmentToggle.IsChecked == true;
         RefreshGlassTreatment();
         SaveAppearancePreferences();
@@ -517,20 +520,28 @@ public partial class MainWindow : RibbonWindow
         _glassTreatmentSync = true;
         try
         {
-            GlassTreatmentToggle.IsChecked = _glassTreatmentOverride
-                ?? ThemeManager.CurrentTheme == RibbonTheme.CrystalLight;
+            bool supported = SupportsGlassTreatment(ThemeManager.CurrentTheme);
+            GlassTreatmentToggle.IsEnabled = supported;
+            GlassTreatmentToggle.IsChecked = supported && (_glassTreatmentOverride
+                ?? ThemeManager.CurrentTheme == RibbonTheme.CrystalLight);
         }
         finally { _glassTreatmentSync = false; }
     }
 
     private void RefreshGlassTreatment()
     {
-        bool enabled = ActiveBackdrop == RibbonBackdrop.Acrylic
+        bool enabled = (ActiveBackdrop is RibbonBackdrop.Mica or RibbonBackdrop.Acrylic)
+            && SupportsGlassTreatment(ThemeManager.CurrentTheme)
             && (_glassTreatmentOverride
                 ?? ThemeManager.CurrentTheme == RibbonTheme.CrystalLight);
         (_acrylicGlassPresentation ??= new AcrylicGlassPresentation(this))
             .Apply(enabled, ThemeManager.IsDarkMode);
     }
+
+    // The legacy generations already expose their own optional Aero treatment.
+    // Keep the saved modern Glass choice while those themes are active.
+    private static bool SupportsGlassTreatment(RibbonTheme? theme) =>
+        theme is not (RibbonTheme.Office2007 or RibbonTheme.Office2010);
 
     private void OnAnimationOff(object sender, RoutedEventArgs e) =>
         RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
@@ -898,12 +909,18 @@ public partial class MainWindow : RibbonWindow
     // imperatively. All this handler does is the app-level polish around the merge.
     private void OnToggleChartToolsMerge(object sender, RoutedEventArgs e)
     {
-        if (MainRibbon.IsMerged(ChartToolsSource))
+        if (MergeToggle.IsChecked == true)
         {
-            // Office jumps to a tool tab when its context appears; do the same so the merge is
-            // immediately visible rather than hiding at the end of the strip.
-            MainRibbon.SelectedTab = ChartToolsSource.Tabs.FirstOrDefault();
-            StatusReady.Content = "Chart Tools merged";
+            // Checked/Unchecked can precede the IsActive binding. Wait for the declarative
+            // merge before jumping to a tool tab, and never jump during deactivation.
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+            {
+                if (MergeToggle.IsChecked == true && MainRibbon.IsMerged(ChartToolsSource))
+                {
+                    MainRibbon.SelectedTab = ChartToolsSource.Tabs.FirstOrDefault();
+                    StatusReady.Content = "Chart Tools merged";
+                }
+            }));
         }
         else
         {

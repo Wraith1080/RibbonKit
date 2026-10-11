@@ -123,6 +123,13 @@ public class Ribbon : Control
                 RibbonQuickAccessPosition.TabRow,
                 OnQuickAccessPositionChanged));
 
+    /// <summary>Identifies the <see cref="IsQuickAccessVisible"/> dependency property.</summary>
+    public static readonly DependencyProperty IsQuickAccessVisibleProperty =
+        DependencyProperty.Register(
+            nameof(IsQuickAccessVisible), typeof(bool), typeof(Ribbon),
+            new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
+                OnIsQuickAccessVisibleChanged));
+
     /// <summary>Identifies the <see cref="QuickAccessMaxWidth"/> dependency property.</summary>
     public static readonly DependencyProperty QuickAccessMaxWidthProperty =
         DependencyProperty.Register(
@@ -299,6 +306,8 @@ public class Ribbon : Control
     /// </summary>
     public const string QatColoredPressedBackgroundKey = "RibbonKit.Brushes.Qat.ColoredPressedBackground";
 
+    private const string QatColoredCompanionBackgroundKey = "RibbonKit.Brushes.Qat.ColoredCompanionBackground";
+
     // Name of the application (File/orb) ToggleButton inside the RibbonTabControl template. The
     // application menu's click-outside dismissal has to recognise it and stand down, or closing on
     // mouse-DOWN would race the toggle's own click on mouse-UP and the orb would re-open the menu
@@ -433,6 +442,17 @@ public class Ribbon : Control
     {
         get => (RibbonQuickAccessPosition)GetValue(QuickAccessPositionProperty);
         set => SetValue(QuickAccessPositionProperty, value);
+    }
+
+    /// <summary>
+    /// Whether the quick access toolbar is shown. Defaults to true. Hiding preserves its
+    /// commands, order and <see cref="QuickAccessPosition"/>; adding a command through
+    /// <see cref="AddToQuickAccess"/> shows it again.
+    /// </summary>
+    public bool IsQuickAccessVisible
+    {
+        get => (bool)GetValue(IsQuickAccessVisibleProperty);
+        set => SetValue(IsQuickAccessVisibleProperty, value);
     }
 
     /// <summary>
@@ -1105,6 +1125,7 @@ public class Ribbon : Control
         {
             // Restore the authored item itself, including its command bindings/handlers.
             QuickAccessItems.Add(source);
+            SetCurrentValue(IsQuickAccessVisibleProperty, true);
             return true;
         }
 
@@ -1120,6 +1141,7 @@ public class Ribbon : Control
         }
 
         QuickAccessItems.Add(proxy);
+        SetCurrentValue(IsQuickAccessVisibleProperty, true);
         return true;
     }
 
@@ -1425,20 +1447,36 @@ public class Ribbon : Control
             return;
         }
 
-        if (e.Handled || ResolveCommandControl(e.OriginalSource as DependencyObject) is not { } target)
+        if (e.Handled || ContextMenu is not null)
         {
             return;
         }
 
+        FrameworkElement? target = ResolveCommandControl(e.OriginalSource as DependencyObject);
+        if (target is null && !CanOpenRibbonBackgroundMenu(e.OriginalSource as DependencyObject))
+            return;
         e.Handled = true;
+        var menu = CreateRibbonContextMenu(target);
+        RibbonPopupMotion.SuppressNativeContextMenuAnimationForOpen(menu);
+        menu.IsOpen = true;
+    }
 
-        var addItem = new System.Windows.Controls.MenuItem
+    private bool CanOpenRibbonBackgroundMenu(DependencyObject? node)
+    {
+        while (node is not null && !ReferenceEquals(node, this))
         {
-            Header = RibbonLocalization.GetString(RibbonString.AddToQuickAccessToolbar),
-            IsEnabled = !IsInQuickAccess(target),
-        };
-        addItem.Click += (_, _) => AddToQuickAccess(target);
+            // Preserve native text editing and any host-supplied child context menu.
+            if (node is TextBoxBase or System.Windows.Controls.PasswordBox
+                || node is FrameworkElement { ContextMenu: not null }) return false;
+            node = node is System.Windows.Media.Visual or System.Windows.Media.Media3D.Visual3D
+                ? System.Windows.Media.VisualTreeHelper.GetParent(node) ?? LogicalTreeHelper.GetParent(node)
+                : LogicalTreeHelper.GetParent(node);
+        }
+        return ReferenceEquals(node, this);
+    }
 
+    private System.Windows.Controls.ContextMenu CreateRibbonContextMenu(FrameworkElement? target)
+    {
         var customizeItem = new System.Windows.Controls.MenuItem
         {
             Header = RibbonLocalization.GetString(RibbonString.CustomizeQuickAccessToolbar),
@@ -1460,22 +1498,37 @@ public class Ribbon : Control
 
         var menu = new System.Windows.Controls.ContextMenu
         {
-            PlacementTarget = target,
+            PlacementTarget = target ?? this,
             // ContextMenu is hosted in a separate popup window and therefore cannot inherit this
             // from the command's visual tree. Copy it explicitly so item layout and submenu arrows
             // mirror with the owning ribbon.
-            FlowDirection = target.FlowDirection,
+            FlowDirection = (target ?? this).FlowDirection,
         };
         menu.SetBinding(DensityProperty,
-            new Binding { Source = target, Path = new PropertyPath(DensityProperty) });
+            new Binding { Source = target ?? this, Path = new PropertyPath(DensityProperty) });
         ApplyModernMenuStyle(menu);
-        menu.Items.Add(addItem);
+        if (target is not null)
+        {
+            var addItem = new System.Windows.Controls.MenuItem
+            {
+                Header = RibbonLocalization.GetString(RibbonString.AddToQuickAccessToolbar),
+                IsEnabled = !IsInQuickAccess(target),
+            };
+            addItem.Click += (_, _) => AddToQuickAccess(target);
+            menu.Items.Add(addItem);
+        }
         menu.Items.Add(customizeItem);
         menu.Items.Add(customizeRibbonItem);
         menu.Items.Add(new System.Windows.Controls.Separator());
+        var visibilityItem = new System.Windows.Controls.MenuItem
+        {
+            Header = RibbonLocalization.GetString(IsQuickAccessVisible
+                ? RibbonString.HideQuickAccessToolbar : RibbonString.ShowQuickAccessToolbar),
+        };
+        visibilityItem.Click += (_, _) => SetCurrentValue(IsQuickAccessVisibleProperty, !IsQuickAccessVisible);
+        menu.Items.Add(visibilityItem);
         menu.Items.Add(collapseItem);
-        RibbonPopupMotion.SuppressNativeContextMenuAnimationForOpen(menu);
-        menu.IsOpen = true;
+        return menu;
     }
 
     // Cached menu-style dictionary (Themes/Menus.xaml). It lives in its OWN dictionary — NOT the
@@ -1769,6 +1822,7 @@ public class Ribbon : Control
     // items are projected into the host RibbonWindow's TitleBarContent via this host; the
     // shared context menu lets the user move the QAT between placements (like Office).
     private RibbonQuickAccessToolBar? _titleBarQatHost;
+    private readonly Dictionary<FrameworkElement, ResourceDictionary> _qatBackdropPalettes = new();
     private object? _savedTitleBarContent;
     private RibbonWindow? _applicationButtonShapeWindow;
     private System.Windows.Controls.ContextMenu? _qatContextMenu;
@@ -1778,7 +1832,7 @@ public class Ribbon : Control
     /// host lives outside this ribbon's visual tree, so KeyTips cannot discover it by walking from
     /// the ribbon; this is the deliberate bridge back to the owning service.
     /// </summary>
-    internal RibbonQuickAccessToolBar? ActiveQuickAccessToolBar => QuickAccessPosition switch
+    internal RibbonQuickAccessToolBar? ActiveQuickAccessToolBar => !IsQuickAccessVisible ? null : QuickAccessPosition switch
     {
         RibbonQuickAccessPosition.TitleBar => _titleBarQatHost,
         RibbonQuickAccessPosition.TabRow => _qatTabRowHost as RibbonQuickAccessToolBar
@@ -1797,6 +1851,7 @@ public class Ribbon : Control
     private System.Windows.Controls.MenuItem? _qatBelowItem;
     private System.Windows.Controls.MenuItem? _qatRemoveItem;
     private System.Windows.Controls.MenuItem? _qatCustomizeItem;
+    private System.Windows.Controls.MenuItem? _qatVisibilityItem;
     private System.Windows.Controls.Separator? _qatRemoveSeparator;
 
     // The quick-access item under the cursor when the QAT context menu was opened —
@@ -2122,6 +2177,7 @@ public class Ribbon : Control
                     adorner.Detach();
                     _backstageAdorner = null;
                     _backstageClosing = false;
+                    ReconcileBackstagePlacementChrome();
                     if (Backstage is Controls.Backstage backstage)
                     {
                         backstage.SetBelowTabsPlacement(false);
@@ -2202,6 +2258,10 @@ public class Ribbon : Control
 
         if (ribbonWindow is not null)
         {
+            // The caption paints the same live surface through the exit. Removing the
+            // source at the logical close would snap the title back before the fade ends.
+            UtilityChrome.SetBackstageCaptionSource(ribbonWindow,
+                (IsBackstageOpen || _backstageAdorner is not null) && !belowTabs ? Backstage as Backstage : null);
             // Full-content Backstage hides the title QAT. Word 2010 keeps the caption QAT and
             // tab row exposed above its File surface.
             ribbonWindow.SetCurrentValue(
@@ -3296,6 +3356,7 @@ public class Ribbon : Control
         }
         Theming.ThemeManager.Changed -= OnThemeConfigurationChanged;
         UnregisterRibbonWindowApplicationButtonShape();
+        ClearQatBackdropPalettes();
         DetachRibbonTabControl();
     }
 
@@ -3431,13 +3492,16 @@ public class Ribbon : Control
     /// </summary>
     internal void UpdateQatButtonContext()
     {
+        ClearQatBackdropPalettes();
         // Resolve the band's policy in this ribbon's resource scope. A window palette
         // can replace the application theme without sharing its title-bar preferences.
-        bool titleBarColored = QuickAccessPosition == RibbonQuickAccessPosition.TitleBar
+        bool titleBarColored = IsQuickAccessVisible && QuickAccessPosition == RibbonQuickAccessPosition.TitleBar
             && UtilityChrome.GetQatTitleBarColored(this);
-        bool tabRowColored = QuickAccessPosition == RibbonQuickAccessPosition.TabRow
+        bool tabRowColored = IsQuickAccessVisible && QuickAccessPosition == RibbonQuickAccessPosition.TabRow
             && UtilityChrome.GetQatTabRowColored(this);
         bool colored = titleBarColored || tabRowColored;
+        bool backdrop = IsQuickAccessVisible && !colored && QuickAccessPosition != RibbonQuickAccessPosition.BelowRibbon
+            && UtilityChrome.GetQatUseBackdropBrushes(this);
 
         // Match the hover of the neighbouring chrome: the caption buttons in the title bar,
         // the tabs on the strip.
@@ -3478,12 +3542,19 @@ public class Ribbon : Control
                 element.Resources[QatColoredPressedBackgroundKey] =
                     TryFindResource(pressedKey) as System.Windows.Media.Brush
                     ?? System.Windows.Media.Brushes.Transparent;
+                // The title-bar QAT is outside the Ribbon tree. Carry its scoped companion
+                // token too, just as we carry the band's active hover/pressed brushes.
+                element.Resources[QatColoredCompanionBackgroundKey] =
+                    TryFindResource(QatColoredCompanionBackgroundKey) as System.Windows.Media.Brush
+                    ?? System.Windows.Media.Brushes.Transparent;
             }
             else
             {
                 element.Resources.Remove(QatColoredHoverBackgroundKey);
                 element.Resources.Remove(QatColoredPressedBackgroundKey);
+                element.Resources.Remove(QatColoredCompanionBackgroundKey);
             }
+            if (backdrop) ApplyQatBackdropPalette(element);
         }
 
         // The HOSTS need the same treatment, not just the items. The overflow chevron (»)
@@ -3496,6 +3567,44 @@ public class Ribbon : Control
         ApplyQatSurfaceContext(_titleBarQatHost, titleBarColored, hoverKey, pressedKey);
         ApplyQatSurfaceContext(_qatTabRowHost, tabRowColored, hoverKey, pressedKey);
         ApplyQatSurfaceContext(_qatBelowHost, false, hoverKey, pressedKey);
+        if (backdrop)
+        {
+            ApplyQatBackdropPalette(QuickAccessPosition == RibbonQuickAccessPosition.TitleBar
+                ? _titleBarQatHost : _qatTabRowHost);
+        }
+    }
+
+    private void ClearQatBackdropPalettes()
+    {
+        foreach (var entry in _qatBackdropPalettes)
+            entry.Key.Resources.MergedDictionaries.Remove(entry.Value);
+        _qatBackdropPalettes.Clear();
+    }
+
+    private void ApplyQatBackdropPalette(FrameworkElement? element)
+    {
+        if (element is null) return;
+        var hover = TryFindResource(Theming.ThemeManager.CaptionHoverKey) as System.Windows.Media.Brush
+            ?? System.Windows.Media.Brushes.Transparent;
+        var pressed = TryFindResource(Theming.ThemeManager.CaptionPressedKey) as System.Windows.Media.Brush
+            ?? System.Windows.Media.Brushes.Transparent;
+        var companion = hover.Clone();
+        companion.Opacity *= 0.5;
+        if (companion.CanFreeze) companion.Freeze();
+        // These washes affect only QAT commands on the transparent caption/header band.
+        // A merged dictionary keeps explicit per-item resources authoritative. Own the
+        // dictionary rather than overwriting keys, so removal restores the original scope.
+        var palette = new ResourceDictionary
+        {
+            ["RibbonKit.Brushes.Control.HoverBackground"] = hover,
+            ["RibbonKit.Brushes.Control.SplitActiveHover"] = hover,
+            ["RibbonKit.Brushes.Control.PressedBackground"] = pressed,
+            ["RibbonKit.Brushes.Control.CheckedBackground"] = pressed,
+            ["RibbonKit.Brushes.Control.CheckedHoverBackground"] = pressed,
+            ["RibbonKit.Brushes.Control.CompanionBackground"] = companion,
+        };
+        element.Resources.MergedDictionaries.Add(palette);
+        _qatBackdropPalettes.Add(element, palette);
     }
 
     /// <summary>
@@ -3527,11 +3636,15 @@ public class Ribbon : Control
             host.Resources[QatColoredPressedBackgroundKey] =
                 TryFindResource(pressedKey) as System.Windows.Media.Brush
                 ?? System.Windows.Media.Brushes.Transparent;
+            host.Resources[QatColoredCompanionBackgroundKey] =
+                TryFindResource(QatColoredCompanionBackgroundKey) as System.Windows.Media.Brush
+                ?? System.Windows.Media.Brushes.Transparent;
         }
         else
         {
             host.Resources.Remove(QatColoredHoverBackgroundKey);
             host.Resources.Remove(QatColoredPressedBackgroundKey);
+            host.Resources.Remove(QatColoredCompanionBackgroundKey);
         }
     }
 
@@ -3582,6 +3695,21 @@ public class Ribbon : Control
         ribbon.UpdateQuickAccessPlacement();
     }
 
+    private static void OnIsQuickAccessVisibleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var ribbon = (Ribbon)d;
+        ribbon.CancelDensityTransition();
+        ribbon._keyTipService.OnQuickAccessVisibilityChanged();
+        if (!(bool)e.NewValue)
+        {
+            ribbon._titleBarQatHost?.CloseOverflow();
+            (ribbon._qatTabRowHost as RibbonQuickAccessToolBar)?.CloseOverflow();
+            foreach (var menu in ribbon.QuickAccessItems.OfType<RibbonDropDownButton>())
+                menu.EnsureBorrowedItemsReturned();
+        }
+        ribbon.UpdateQuickAccessPlacement();
+    }
+
     /// <summary>
     /// Projects the quick-access items into the host <see cref="RibbonWindow"/>'s title
     /// bar when <see cref="QuickAccessPosition"/> is <see cref="RibbonQuickAccessPosition.TitleBar"/>,
@@ -3594,7 +3722,7 @@ public class Ribbon : Control
         // OLD host must release them before the NEW one claims them. When leaving the title
         // bar, release synchronously (the title-bar host is higher in the tree, so it frees
         // the items at the next layout before the in-ribbon host — lower — claims them).
-        if (QuickAccessPosition != RibbonQuickAccessPosition.TitleBar && _titleBarQatHost is not null)
+        if ((!IsQuickAccessVisible || QuickAccessPosition != RibbonQuickAccessPosition.TitleBar) && _titleBarQatHost is not null)
         {
             _titleBarQatHost.ItemsSource = null;
         }
@@ -3610,7 +3738,7 @@ public class Ribbon : Control
     {
         var window = Window.GetWindow(this) as RibbonWindow;
 
-        if (QuickAccessPosition == RibbonQuickAccessPosition.TitleBar && window is not null)
+        if (IsQuickAccessVisible && QuickAccessPosition == RibbonQuickAccessPosition.TitleBar && window is not null)
         {
             _titleBarQatHost ??= CreateTitleBarQatHost();
 
@@ -3733,6 +3861,13 @@ public class Ribbon : Control
         _qatContextMenu.Items.Add(_qatBelowItem);
         _qatContextMenu.Items.Add(new System.Windows.Controls.Separator());
         _qatContextMenu.Items.Add(_qatCustomizeItem);
+        _qatVisibilityItem = new System.Windows.Controls.MenuItem
+        {
+            Header = RibbonLocalization.GetString(RibbonString.HideQuickAccessToolbar),
+        };
+        _qatVisibilityItem.Click += (_, _) => SetCurrentValue(IsQuickAccessVisibleProperty, !IsQuickAccessVisible);
+        _qatContextMenu.Items.Add(new System.Windows.Controls.Separator());
+        _qatContextMenu.Items.Add(_qatVisibilityItem);
         _qatContextMenu.Opened += OnQatContextMenuOpened;
         return _qatContextMenu;
     }
@@ -3969,6 +4104,9 @@ public class Ribbon : Control
 
     private void RefreshQatContextMenuText()
     {
+        if (_qatVisibilityItem is not null)
+            _qatVisibilityItem.Header = RibbonLocalization.GetString(IsQuickAccessVisible
+                ? RibbonString.HideQuickAccessToolbar : RibbonString.ShowQuickAccessToolbar);
         if (_qatTitleBarItem is not null)
         {
             _qatTitleBarItem.Header = RibbonLocalization.GetString(RibbonString.ShowQuickAccessToolbarInTitleBar);

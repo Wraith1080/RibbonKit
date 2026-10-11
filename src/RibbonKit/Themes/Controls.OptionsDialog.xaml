@@ -236,6 +236,9 @@
     </Style>
 
     <Style TargetType="{x:Type controls:RibbonOptionsDialog}">
+        <!-- Round the viewport with its fill pages; rounding only the page can place
+             the last button beyond an unrounded ScrollContentPresenter clip at 125%. -->
+        <Setter Property="UseLayoutRounding" Value="True" />
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <!-- Custom chrome: WindowStyle=None (set in code) + WindowChrome, so the dialog draws

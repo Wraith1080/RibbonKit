@@ -14,6 +14,12 @@ activation, while `Ribbon.Merge`/`Unmerge` remains the imperative path.
 The attached `RibbonMergeSource.Source` lets a child carry its source for an
 activation-aware host such as MDI. WPF keyboard focus is not document activation.
 
+The Showcase's activation-only jump to Chart Design waits for the declarative
+`IsActive` binding to settle. An `Unchecked` handler can still observe `IsMerged`
+before removal completes, so that value must not trigger a tool-tab jump on
+deactivation. Removing a source preserves a surviving selected host tab; removing
+the selected tool tab retains the shared visible-tab fallback.
+
 Preserve source data context, ordering and identity across repeated merge/unmerge.
 Remove contributed groups by reference; no original-index restoration is needed
 for host groups. Check negative/equal ordering and multiple sources against the

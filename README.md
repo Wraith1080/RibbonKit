@@ -135,7 +135,9 @@ the source heading. `InRibbonGallery.DropDownHeader` adds the same heading above
 the expanded gallery's tiles, outside their scroll viewport, without changing
 the collapsed strip. Null or empty keeps the original popup layout. The heading
 uses the shared theme's `RibbonKit.Brushes.ApplicationMenu.HeaderBackground` and
-primary text brush, including scoped resource overrides.
+`RibbonKit.Brushes.ApplicationMenu.Foreground`, including scoped resource overrides.
+This keeps light heading text on the dark Office2007/2010 header fills while
+their pale gallery tiles retain the normal dark text.
 `RibbonKit.Metrics.DropDownHeaderCornerRadius` rounds all four heading
 corners: 3 DIP for Office2007/2010, 6 for Office2024 and 8 for Crystal; the other
 Office themes remain square. Dark palettes inherit the same geometry.
@@ -144,6 +146,12 @@ For multiple gallery sections, bind `InRibbonGallery.ItemsSource` to a grouped
 WPF collection view (for example, `CollectionViewSource.GroupDescriptions` with
 `PropertyGroupDescription`). The shared template shows each group name above
 its wrapped tiles in the popup and hides those headings in the collapsed strip.
+One native scrollbar serves the complete set of section headings and tiles;
+the section headings scroll with their items. The optional overall
+`DropDownHeader` stays fixed above that viewport. Shared
+`RibbonKit.Metrics.GallerySectionPadding` adds four DIP above and below each
+section's tiles. A gallery with a single caption uses the same space above and
+below its tile viewport. The collapsed strip keeps its original row spacing.
 Consumer-provided `GroupStyle` takes precedence. `InRibbonGallery.PopupWidth`
 sets the expanded card width independently of the strip; its default `NaN`
 retains automatic sizing and wrapping at the strip width. Showcase's Theme
@@ -180,6 +188,19 @@ Applications provide the icons, commands and chosen-mode state; the menu item's
 existing `Background` can reflect that choice through bindings or style triggers.
 The heading and row presentation are shared RibbonKit behavior and require no
 Showcase resources or helpers.
+
+### Hiding and restoring QAT
+
+The QAT context menu offers **Hide Quick Access Toolbar**. Right-click a ribbon
+tab or empty ribbon area and choose **Show Quick Access Toolbar** to restore it.
+Hiding preserves commands, their order and placement; adding a command to QAT
+shows it again. The customization page keeps its existing layout.
+
+`Ribbon.IsQuickAccessVisible` defaults to true and supports binding. The
+customization serializer saves visibility with the layout; older files leave
+the current visibility preference intact. Hosts that save changes immediately
+should observe this property alongside `QuickAccessPosition` and QAT collection
+changes. Storage remains application-controlled.
 
 ### Commands declared only in QAT
 
@@ -298,6 +319,13 @@ these alongside its accent bands; independent palettes retain their own defaults
 Crystal Sidebar/Floating Backstage geometry can be overridden through
 `RibbonKit.Metrics.Backstage.*`, including `SidebarWidth`, `FloatingMargin` and
 `ActionCornerRadius`. Those layouts contain no fixed application branding.
+Classic (Office 2013) Backstage continues through a `RibbonWindow` caption using
+the realized rail and page brushes, rail width and RTL direction. It hides the
+custom caption icon while open; caption paint follows Backstage's fade and slide,
+and caption glyphs follow the same fade. Normal chrome returns after the closing
+animation completes. `Window.Icon` remains available to the taskbar.
+The caption icon fades with Backstage, and the title glides as the icon slot and
+quick access content disappear or return.
 The application menu receives its translucent paint, 14-DIP outer corners,
 rounded content/split rows, responsive pane width and outside-only shadow from
 shared resources. `RibbonKit.Metrics.ApplicationMenuPaneWidth`,
@@ -367,12 +395,26 @@ window.Resources.MergedDictionaries.Remove(glass);
 ```
 
 The factory clones the scope's effective brushes without changing global state.
+Its separate `RibbonKit.Brushes.Ribbon.TabStripBackground` keeps the theme's tab
+band readable while the command body reveals the host backdrop. That token is
+transparent without the overlay. Colored File buttons retain their own hover
+fill when white text on a light palette needs it.
+`RibbonKit.Metrics.Ribbon.TabStripGlassOpacity` sets the overlay's tab-band
+opacity multiplier. Office 2013/2019 use 0.48 to match the title bar's translucency,
+including dark variants; other palettes retain 0.88.
+`RibbonKit.Metrics.Ribbon.BodyGlassOpacity` defaults to 0.44. Office 2019 dark
+uses 0.64 so the command body stays visibly darker than the header over gray
+backdrops while remaining translucent.
 Direct scoped and child resources keep normal WPF precedence. The host owns
-replacement/removal and the decision to use glass after native Acrylic activation
-succeeds; the factory itself does not activate Acrylic. WPF capture samples app
-content rather than the desktop or native DWM material. Document content, update
+replacement/removal and the decision to use glass after native Mica or Acrylic
+activation succeeds; the factory itself does not activate either backdrop. WPF
+capture samples app content rather than the desktop or native DWM material. Document content, update
 timing, preferences, native backdrop activation and window integration stay in
 the host.
+
+Showcase offers Glass look for Office 2013, 2019 and 2024 and defaults it on for
+Crystal when Mica or Acrylic is active. Office 2007 and 2010 use their existing Aero
+options; their disabled Glass look switch retains the saved modern-theme choice.
 
 Office 2007 defaults to the round application orb, including its black palette;
 other themes default to a File tab. Set `Ribbon.ApplicationButtonShape` to `Tab`

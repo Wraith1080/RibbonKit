@@ -72,6 +72,16 @@ internal static class GalleryHeaderAndQatCommandChecks
                 Assert.Equal(density, Ribbon.GetDensity(header));
                 Assert.Equal((CornerRadius)gallery.FindResource("RibbonKit.Metrics.DropDownHeaderCornerRadius"), header.CornerRadius);
                 Assert.Same(gallery.FindResource("RibbonKit.Brushes.ApplicationMenu.HeaderBackground"), header.Background);
+                Assert.Same(gallery.FindResource("RibbonKit.Brushes.ApplicationMenu.Foreground"), title.Foreground);
+                if (dark && theme is RibbonTheme.Office2007 or RibbonTheme.Office2010)
+                    Assert.True(Assert.IsType<SolidColorBrush>(title.Foreground).Color.R >= 200);
+                var sectionPadding = (Thickness)gallery.FindResource("RibbonKit.Metrics.GallerySectionPadding");
+                Assert.Equal(sectionPadding, scroll.Margin);
+                Assert.Equal(sectionPadding.Top, scroll.TranslatePoint(new Point(), popup).Y
+                    - header.TranslatePoint(new Point(0, header.ActualHeight), popup).Y, 1);
+                gallery.Resources["RibbonKit.Brushes.ApplicationMenu.Foreground"] = Brushes.Yellow; Layout(window);
+                Assert.Same(Brushes.Yellow, title.Foreground);
+                gallery.Resources.Remove("RibbonKit.Brushes.ApplicationMenu.Foreground"); Layout(window);
                 gallery.Resources["RibbonKit.Brushes.ApplicationMenu.HeaderBackground"] = Brushes.Coral; Layout(window);
                 Assert.Same(Brushes.Coral, header.Background);
                 gallery.Resources.Remove("RibbonKit.Brushes.ApplicationMenu.HeaderBackground"); Layout(window);
@@ -85,8 +95,8 @@ internal static class GalleryHeaderAndQatCommandChecks
                 scroll.ClearValue(FrameworkElement.MaxHeightProperty); Layout(window);
                 gallery.DropDownHeader = "Updated style heading"; Layout(window);
                 Assert.Equal(gallery.DropDownHeader, title.Text);
-                if (!dark && density == RibbonDensity.Compact && flow == FlowDirection.LeftToRight && scale == 1.25)
-                    SavePreview(popup, theme.ToString());
+                if (density == RibbonDensity.Compact && flow == FlowDirection.LeftToRight && scale == 1.25)
+                    SavePreview(popup, $"{theme}-{(dark ? "dark" : "light")}");
                 gallery.IsDropDownOpen = false; Layout(window);
                 Assert.Equal(16, gallery.SelectedIndex);
                 Assert.Equal(stripHeight, gallery.ActualHeight);

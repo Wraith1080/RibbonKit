@@ -36,6 +36,9 @@
 
     <!-- Tab-strip band: flat, opaque, and identical under Aero and non-Aero. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Background" Color="#BFDBFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.TabStripBackground" Color="Transparent" />
+    <system:Double x:Key="RibbonKit.Metrics.Ribbon.TabStripGlassOpacity">0.88</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.Ribbon.BodyGlassOpacity">0.44</system:Double>
     <!-- The ribbon body (groups area): the signature 2007 VALLEY. Light at the top,
          darkest at 17% down, then lightening all the way to the bottom edge. -->
     <LinearGradientBrush x:Key="RibbonKit.Brushes.Ribbon.ContentBackground" StartPoint="0,0" EndPoint="0,1">
@@ -431,6 +434,7 @@
          per-button with the live caption/tab band brushes. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredHoverBackground" Color="#2EFFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredPressedBackground" Color="#4DFFFFFF" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredCompanionBackground" Color="Transparent" />
     <!-- Close: the same creased glass in red, so it belongs to the same family as its
          neighbours. Pressed stays LIGHTER than hover, the convention the other generations
          follow. (Shared with the MDI child close button, which wants the identical look.) -->
@@ -846,6 +850,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualForeground" Color="Transparent" />
     <system:Boolean x:Key="RibbonKit.Metrics.QatTitleBarColored">False</system:Boolean>
     <system:Boolean x:Key="RibbonKit.Metrics.QatTabRowColored">False</system:Boolean>
+    <system:Boolean x:Key="RibbonKit.Metrics.QatUseBackdropBrushes">False</system:Boolean>
     <system:Boolean x:Key="RibbonKit.Metrics.MessageBar.ActionUseGlassMaterial">False</system:Boolean>
     <system:Double x:Key="RibbonKit.Metrics.MessageBar.ActionDisabledOpacity">0.45</system:Double>
     <!-- Metrics for the independently selected floating/sidebar Backstage layouts. -->
@@ -917,6 +922,7 @@
     <system:Double x:Key="RibbonKit.Metrics.Touch.MenuTopBandHeight">34</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.Touch.ClassicRailPadding">0,16,0,0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.InRibbonGalleryMargin">4,0,4,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.GallerySectionPadding">0,4,0,4</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.Touch.MessageRowHeight">52</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.Touch.MessageActionPadding">12,6</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.Touch.TitleBarHeight">46</system:Double>

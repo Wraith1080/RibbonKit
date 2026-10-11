@@ -24,8 +24,8 @@ param(
         'GalleryQuickAccess', 'GalleryQuickAccessKeyboard', 'GalleryQuickAccessVisible',
         'ComboQuickAccess', 'ComboQuickAccessKeyboard', 'GroupedGalleries',
         'GalleryHeadersAndQatCommands', 'DensitySelector', 'MessageTransition',
-        'QatThemeRestore', 'MinimizedDivider', 'TouchChrome', 'GroupLauncher',
-        'DensityTransition', 'Touch', IgnoreCase = $false)]
+        'QatThemeRestore', 'ColoredQat', 'QatBackdrop', 'QatCommandInteraction', 'QatVisibility', 'CustomizationLayout', 'MinimizedDivider', 'TouchChrome', 'GroupLauncher',
+        'DensityTransition', 'GlassOverlay', 'BackstageCaption', 'Touch', IgnoreCase = $false)]
     [string]$Scope,
     [ValidateSet('Debug', 'Release')]
     [string]$Configuration = 'Debug'

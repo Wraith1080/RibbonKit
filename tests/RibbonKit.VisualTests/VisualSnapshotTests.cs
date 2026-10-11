@@ -302,6 +302,24 @@ public sealed class VisualSnapshotTests
                     AssertSnapshot($"{palette}-tint-purple-100", 1d,
                         sceneFactory: direction => CreateCrystalContextualScene(direction, dark, Colors.Purple), height: 270);
                 }
+                // Append after the established scenes: their native-window initialization
+                // affects WPF's disconnected text rendering, including focused runs.
+                foreach (RibbonTheme theme in new[] { RibbonTheme.Office2013, RibbonTheme.Office2019, RibbonTheme.Office2024 })
+                foreach (bool dark in new[] { false, true })
+                {
+                    ThemeManager.Apply(application, theme);
+                    ThemeManager.SetDarkMode(application, dark);
+                    string name = $"{theme.ToString().ToLowerInvariant()}-glass-{(dark ? "dark" : "light")}";
+                    AssertSnapshot(name + "-100", 1d, sceneFactory: CreateOfficeGlassScene);
+                    AssertSnapshot(name + "-narrow-rtl-200", 2d, FlowDirection.RightToLeft,
+                        direction => CreateOfficeGlassScene(direction, narrow: true));
+                }
+                ThemeManager.Apply(application, RibbonTheme.Office2019);
+                ThemeManager.SetDarkMode(application, true);
+                AssertSnapshot("office2019-glass-dark-gray-100", 1d,
+                    sceneFactory: direction => CreateOfficeGlassGrayScene(direction, narrow: false));
+                AssertSnapshot("office2019-glass-dark-gray-narrow-rtl-200", 2d, FlowDirection.RightToLeft,
+                    direction => CreateOfficeGlassGrayScene(direction, narrow: true));
                 _selection.EnsureAllPatternsMatched();
                 _output.WriteLine("Completed {0} selected visual scenes: {1}",
                     _selection.SelectedScenes.Count, string.Join(", ", _selection.SelectedScenes));
@@ -544,6 +562,48 @@ public sealed class VisualSnapshotTests
         ribbon.SelectedTab = home;
 
         root.Children.Add(ribbon);
+        return root;
+    }
+
+    private static FrameworkElement CreateOfficeGlassScene(FlowDirection flowDirection) =>
+        CreateOfficeGlassScene(flowDirection, narrow: false);
+
+    private static FrameworkElement CreateOfficeGlassGrayScene(FlowDirection flowDirection, bool narrow)
+    {
+        var root = (Grid)CreateOfficeGlassScene(flowDirection, narrow);
+        root.Background = new SolidColorBrush(Color.FromRgb(0x95, 0x95, 0x95));
+        return root;
+    }
+
+    private static FrameworkElement CreateOfficeGlassScene(FlowDirection flowDirection, bool narrow)
+    {
+        var root = (Grid)CreateScene(flowDirection);
+        // A fixed authored backdrop exposes translucent WPF paint deterministically.
+        // Native Acrylic compositing remains a separate live review gate.
+        root.Background = ThemeManager.IsDarkMode
+            ? new LinearGradientBrush(Color.FromRgb(0x28, 0x39, 0x43), Color.FromRgb(0x4C, 0x39, 0x33), 0)
+            : new LinearGradientBrush(Color.FromRgb(0x9C, 0xAF, 0xBD), Color.FromRgb(0xDD, 0xCD, 0xAE), 0);
+        root.Resources.MergedDictionaries.Add(ThemeManager.CreateGlassOverlay(root, ThemeManager.IsDarkMode));
+        var ribbon = Assert.IsType<Ribbon>(root.Children[0]);
+        ribbon.ApplicationButtonShape = RibbonApplicationButtonShape.Tab;
+        ribbon.Backstage = new Backstage();
+        var home = Assert.IsType<RibbonTab>(ribbon.Tabs[0]);
+        var split = new RibbonSplitButton { Header = "Split", Size = RibbonControlSize.Large,
+            LargeIcon = Icon("M3,3 L13,3 L13,13 L3,13 Z") };
+        home.Groups[1].Items.Add(split);
+        if (narrow) ribbon.Width = 440;
+        root.Measure(new Size(Width, Height));
+        root.Arrange(new Rect(0, 0, Width, Height));
+        root.UpdateLayout();
+        Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+        root.UpdateLayout();
+        var tabs = Assert.IsType<RibbonTabControl>(ribbon.Template.FindName("TabControlHost", ribbon));
+        var file = Assert.IsType<ToggleButton>(tabs.Template.FindName("PART_ApplicationButton", tabs));
+        var hoverKey = (DependencyPropertyKey)typeof(UIElement).GetField("IsMouseOverPropertyKey",
+            BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+        file.SetValue(hoverKey, true);
+        var primary = Assert.IsType<Button>(split.Template.FindName("PART_Primary", split));
+        primary.SetValue(hoverKey, true);
         return root;
     }
 

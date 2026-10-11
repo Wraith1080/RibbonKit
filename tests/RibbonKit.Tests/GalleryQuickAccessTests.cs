@@ -19,6 +19,30 @@ namespace RibbonKit.Tests;
 public sealed class GalleryQuickAccessTests
 {
     [Theory]
+    [InlineData(RibbonTheme.Office2007)]
+    [InlineData(RibbonTheme.Office2010)]
+    public void Legacy_dark_gallery_qat_heading_uses_the_header_foreground(RibbonTheme theme) => Sta.Run(() =>
+    {
+        var source = new InRibbonGallery { Header = "Styles", DropDownHeader = "Choose a style", Width = 200 };
+        source.Items.Add(new RibbonGalleryItem { Content = new Border { Width = 60, Height = 30 } });
+        var ribbon = RibbonFor(source);
+        Assert.True(ribbon.AddToQuickAccess(source));
+        var proxy = Assert.IsAssignableFrom<RibbonDropDownButton>(Assert.Single(ribbon.QuickAccessItems));
+        using var host = new Host(proxy);
+        try
+        {
+            ThemeManager.Apply(Application.Current, theme);
+            ThemeManager.SetDarkMode(Application.Current, true);
+            proxy.IsDropDownOpen = true; host.Layout();
+            var title = Assert.IsType<TextBlock>(proxy.Template.FindName("DropDownHeaderText", proxy));
+            Assert.Equal(source.DropDownHeader, title.Text);
+            Assert.Same(proxy.FindResource("RibbonKit.Brushes.ApplicationMenu.Foreground"), title.Foreground);
+            Assert.True(Assert.IsType<SolidColorBrush>(title.Foreground).Color.R >= 200);
+        }
+        finally { proxy.IsDropDownOpen = false; ThemeManager.SetDarkMode(Application.Current, false); host.Layout(); }
+    });
+
+    [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public void Unrealized_authored_gallery_keeps_visuals_items_selection_and_preview_handlers(bool inRibbon) => Sta.Run(() =>

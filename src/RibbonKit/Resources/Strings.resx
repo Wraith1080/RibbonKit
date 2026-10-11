@@ -18,6 +18,12 @@
   <data name="CustomizeQuickAccessToolbar" xml:space="preserve">
     <value>Customize Quick Access Toolbar…</value>
   </data>
+  <data name="ShowQuickAccessToolbar" xml:space="preserve">
+    <value>Show Quick Access Toolbar</value>
+  </data>
+  <data name="HideQuickAccessToolbar" xml:space="preserve">
+    <value>Hide Quick Access Toolbar</value>
+  </data>
   <data name="CustomizeRibbon" xml:space="preserve">
     <value>Customize the Ribbon…</value>
   </data>

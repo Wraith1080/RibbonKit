@@ -1,4 +1,9 @@
 #nullable enable
+RibbonKit.Controls.Ribbon.IsQuickAccessVisible.get -> bool
+RibbonKit.Controls.Ribbon.IsQuickAccessVisible.set -> void
+static readonly RibbonKit.Controls.Ribbon.IsQuickAccessVisibleProperty -> System.Windows.DependencyProperty!
+RibbonKit.Localization.RibbonString.ShowQuickAccessToolbar = 60 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.HideQuickAccessToolbar = 61 -> RibbonKit.Localization.RibbonString
 RibbonKit.Controls.RibbonGallery.Header.get -> string?
 RibbonKit.Controls.RibbonGallery.Header.set -> void
 RibbonKit.Controls.RibbonGallery.Icon.get -> System.Windows.Media.ImageSource?

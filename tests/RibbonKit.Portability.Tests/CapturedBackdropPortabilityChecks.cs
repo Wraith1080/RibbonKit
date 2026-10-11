@@ -222,9 +222,15 @@ internal static class CapturedBackdropPortabilityChecks
         finally { ribbon.IsBackstageOpen = false; window.Close(); Drain(); }
     }
 
-    private static void VerifyGlass(Application application)
+    internal static void VerifyGlass(Application application)
     {
-        var first = new Border(); var second = new Border();
+        var first = new Border { Background = new SolidColorBrush(Color.FromRgb(0x95, 0x95, 0x95)) };
+        var second = new Border();
+        var ribbon = new Ribbon();
+        var home = new RibbonTab { Header = "Home" };
+        home.Groups.Add(new RibbonGroup { Header = "Commands" });
+        ribbon.Tabs.Add(home);
+        first.Child = ribbon;
         int changes = 0;
         EventHandler changed = (_, _) => changes++;
         ThemeManager.Changed += changed;
@@ -238,30 +244,108 @@ internal static class CapturedBackdropPortabilityChecks
                 var palette = ThemeManager.CreatePalette(theme, Colors.Purple, dark);
                 first.Resources.MergedDictionaries.Add(palette);
                 var original = (Brush)first.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground");
+                var originalBand = (Brush)first.FindResource("RibbonKit.Brushes.Ribbon.Background");
+                var originalTitle = (Brush)first.FindResource("RibbonKit.Brushes.TitleBar.Background");
+                var originalFileHover = (Brush)first.FindResource("RibbonKit.Brushes.ApplicationButton.HoverBackground");
                 var other = second.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground");
                 int before = changes;
                 var overlay = ThemeManager.CreateGlassOverlay(first, dark);
                 Assert.Equal(before, changes);
                 Assert.Same(original, first.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground"));
                 first.Resources.MergedDictionaries.Add(overlay);
-                Assert.Equal(original.Opacity * 0.44, ((Brush)first.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground")).Opacity, 5);
+                first.Measure(new Size(700, 170));
+                first.Arrange(new Rect(0, 0, 700, 170));
+                first.UpdateLayout();
+                Drain();
+                var tabs = Assert.IsType<RibbonTabControl>(ribbon.Template.FindName("TabControlHost", ribbon));
+                var tabBand = Assert.IsType<Grid>(tabs.Template.FindName("PART_TabHeaderHost", tabs));
+                var body = Assert.IsType<Border>(tabs.Template.FindName("ContentHost", tabs));
+                Assert.Same(first.FindResource("RibbonKit.Brushes.Ribbon.TabStripBackground"), tabBand.Background);
+                double bandOpacity = theme is RibbonTheme.Office2013 or RibbonTheme.Office2019 ? 0.48 : 0.88;
+                Assert.Equal(originalBand.Opacity * bandOpacity, tabBand.Background.Opacity, 5);
+                Assert.Equal(1, originalBand.Opacity);
+                if (theme is RibbonTheme.Office2013 or RibbonTheme.Office2019)
+                {
+                    var title = (Brush)first.FindResource("RibbonKit.Brushes.TitleBar.Background");
+                    Assert.Equal(title.Opacity / originalTitle.Opacity,
+                        tabBand.Background.Opacity / originalBand.Opacity, 5);
+                }
+                Assert.Equal(0, ribbon.Background.Opacity);
+                Assert.Same(first.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground"), body.Background);
+                double bodyOpacity = theme == RibbonTheme.Office2019 && dark ? 0.64 : 0.44;
+                Assert.Equal(original.Opacity * bodyOpacity, body.Background.Opacity, 5);
+                if (theme == RibbonTheme.Office2019 && dark)
+                    VerifyDarkGlassSeparation(first, tabBand, body);
                 Assert.Equal(1, original.Opacity);
                 Assert.Same(other, second.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground"));
                 Assert.Equal(dark ? (byte)0x50 : (byte)0x98,
                     Assert.IsType<SolidColorBrush>(first.FindResource("RibbonKit.Brushes.Control.HoverBackground")).Color.A);
                 Assert.False(overlay.Contains("RibbonKit.Brushes.Ribbon.ContentBackground"));
+                if (theme == RibbonTheme.Office2013 && !dark)
+                {
+                    var fileHover = Assert.IsType<SolidColorBrush>(first.FindResource("RibbonKit.Brushes.ApplicationButton.HoverBackground"));
+                    Assert.NotSame(originalFileHover, fileHover);
+                    Assert.Equal(Assert.IsType<SolidColorBrush>(originalFileHover).Color, fileHover.Color);
+                    Assert.Equal(originalFileHover.Opacity, fileHover.Opacity);
+                }
                 first.Resources["RibbonKit.Brushes.Tab.HoverBackground"] = Brushes.Orange;
                 Assert.Same(Brushes.Orange, first.FindResource("RibbonKit.Brushes.Tab.HoverBackground"));
                 first.Resources.Remove("RibbonKit.Brushes.Tab.HoverBackground");
                 first.Resources.MergedDictionaries.Remove(overlay);
+                Drain();
+                Assert.Same(first.FindResource("RibbonKit.Brushes.Ribbon.Background"), ribbon.Background);
+                Assert.Equal(Colors.Transparent, Assert.IsType<SolidColorBrush>(tabBand.Background).Color);
                 var replacement = ThemeManager.CreateGlassOverlay(first, dark);
                 Assert.Equal(((Brush)overlay["RibbonKit.Brushes.Ribbon.BodyBackground"]).Opacity,
                     ((Brush)replacement["RibbonKit.Brushes.Ribbon.BodyBackground"]).Opacity);
                 first.Resources.MergedDictionaries.Remove(palette);
                 Assert.Same(other, first.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground"));
             }
+
+            ThemeManager.Apply(application, RibbonTheme.CrystalLight);
+            ThemeManager.SetDarkMode(application, false);
+            foreach (var (scopedTheme, scopedDark) in new[]
+                { (RibbonTheme.Office2013, false), (RibbonTheme.Office2019, true) })
+            {
+                var scoped = ThemeManager.CreatePalette(scopedTheme, Colors.Purple, scopedDark);
+                first.Resources.MergedDictionaries.Add(scoped);
+                var scopedOverlay = ThemeManager.CreateGlassOverlay(first, scopedDark);
+                if (scopedTheme == RibbonTheme.Office2013)
+                {
+                    Assert.Equal(Assert.IsType<SolidColorBrush>(first.FindResource("RibbonKit.Brushes.ApplicationButton.HoverBackground")).Color,
+                        Assert.IsType<SolidColorBrush>(scopedOverlay["RibbonKit.Brushes.ApplicationButton.HoverBackground"]).Color);
+                }
+                first.Resources.MergedDictionaries.Add(scopedOverlay);
+                Drain();
+                var scopedTabs = Assert.IsType<RibbonTabControl>(ribbon.Template.FindName("TabControlHost", ribbon));
+                var scopedBand = Assert.IsType<Grid>(scopedTabs.Template.FindName("PART_TabHeaderHost", scopedTabs));
+                var scopedBody = Assert.IsType<Border>(scopedTabs.Template.FindName("ContentHost", scopedTabs));
+                Assert.Equal(0.48, scopedBand.Background.Opacity, 5);
+                Assert.Equal(scopedDark ? 0.64 : 0.44, scopedBody.Background.Opacity, 5);
+                first.Resources.MergedDictionaries.Remove(scopedOverlay);
+                first.Resources.MergedDictionaries.Remove(scoped);
+            }
         }
         finally { ThemeManager.Changed -= changed; }
+    }
+
+    private static void VerifyDarkGlassSeparation(Border root, FrameworkElement tabBand, FrameworkElement body)
+    {
+        var bitmap = new RenderTargetBitmap((int)root.ActualWidth, (int)root.ActualHeight,
+            96, 96, PixelFormats.Pbgra32);
+        bitmap.Render(root);
+        byte Sample(FrameworkElement surface)
+        {
+            var point = surface.TransformToAncestor(root).Transform(
+                new Point(surface.ActualWidth * 0.75, surface.ActualHeight * 0.5));
+            var pixel = new byte[4];
+            bitmap.CopyPixels(new Int32Rect((int)point.X, (int)point.Y, 1, 1), pixel, 4, 0);
+            return pixel[0];
+        }
+        byte headerShade = Sample(tabBand);
+        byte bodyShade = Sample(body);
+        Assert.True(headerShade - bodyShade >= 16,
+            $"Dark Office 2019 glass needs distinct surfaces over gray paint; header={headerShade}, body={bodyShade}.");
     }
 
     private static Border Surface(Control control) => Assert.IsAssignableFrom<Border>(

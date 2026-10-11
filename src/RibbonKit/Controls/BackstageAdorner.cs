@@ -216,6 +216,8 @@ internal sealed class BackstageAdorner : Adorner
 
         PlacementChanged = null;
 
+        bool releaseFlow = _flowBoundChild is not null
+            && ReferenceEquals(BindingOperations.GetBinding(_flowBoundChild, FlowDirectionProperty)?.Source, this);
         if (_child is not null)
         {
             RemoveVisualChild(_child);
@@ -225,7 +227,13 @@ internal sealed class BackstageAdorner : Adorner
 
         if (_flowBoundChild is not null)
         {
-            BindingOperations.ClearBinding(_flowBoundChild, FlowDirectionProperty);
+            // Detaching can leave the last effective direction as a local value. That would
+            // look authored on the next open and prevent the new adorner from following RTL.
+            // Check ownership before removing the child, while our binding still exists.
+            if (releaseFlow)
+            {
+                _flowBoundChild.ClearValue(FlowDirectionProperty);
+            }
             _flowBoundChild = null;
         }
 

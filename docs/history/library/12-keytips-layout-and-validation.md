@@ -218,3 +218,312 @@ The consumer reproduced the previously recorded Touch gallery-selection failure
 so later consumer scenarios did not run. That failure remains unresolved; the
 test was not removed or weakened. Diff checks passed. No package gate or new
 live/native monitor acceptance was performed for this test-only pruning.
+
+### 3.240 Modern Office glass surfaces and legacy Aero choices — 2026-10-11
+
+Showcase's Glass look now targets Office 2013/2019/2024 and Crystal. By user
+direction, Office 2007/2010 retain their separate Aero path. Their switch is
+disabled and unchecked without overwriting the saved glass override; the real
+refresh handler also prevents an overlay from surviving a switch into a legacy
+theme. Returning to a supported theme restores the saved on/off choice. The
+preference schema and native backdrop activation are unchanged.
+
+Office 2013/2019 had an opaque ribbon-wide background behind the translucent
+body, so reducing BodyBackground opacity could not reveal the host backdrop.
+The shared template now reads `RibbonKit.Brushes.Ribbon.TabStripBackground` on
+PART_TabHeaderHost. Every base palette supplies transparent neutral paint and
+dark overlays inherit it. The optional glass factory clones the effective ribbon
+band using `RibbonKit.Metrics.Ribbon.TabStripGlassOpacity` and clears the
+ribbon-wide brush opacity. Body opacity defaults to its established 0.44. Office
+2013/2019 use 0.48, matching the title bar's glass translucency in light and dark
+modes following user review; other palettes retain 0.88. The metric resolves from
+the scope rather than the global theme. Glass-off paint is unchanged. Light palettes whose File
+button uses white text on a colored block keep the original File hover brush;
+the pale tab hover otherwise washed out Office 2013's label.
+
+Native Office 2019 dark review showed the two bands blending over gray Acrylic:
+the #252525 header at 0.48 and #1E1E1E body at 0.44 converge over a mid-gray
+backdrop. `RibbonKit.Metrics.Ribbon.BodyGlassOpacity` now defaults to 0.44 in all
+base palettes and overrides to 0.64 only in Office 2019 dark. This deepens the
+body while retaining the header's title-bar treatment and 36% backdrop contribution.
+The independent consumer renders both surfaces over #959595 and requires a
+header/body shade difference of at least 16; gray-backdrop fixtures also cover
+100% and narrow RTL at 200%. These checks reproduce the paint issue without
+establishing native DWM acceptance.
+
+These are shared tokens/templates and the existing scoped overlay API. Host theme
+eligibility remains separate from the generic factory; it still works for scoped
+palettes independently of the global theme. No public API or Writer source changed.
+
+New glass fixtures cover File hover, the active split half, selected tabs, QAT
+and body paint over a fixed light/dark WPF backdrop at 100% and narrow RTL at 200%.
+They use synthetic hover state, not native pointer input or DWM Acrylic. Place
+these scenes after the established matrix: native-window initialization changes
+WPF's disconnected text rendering. An early insertion altered Crystal text/edge
+pixels; actual/diff inspection led to restoring scene order, without replacing
+an existing approval or relaxing determinism/tolerances.
+
+Verification: both normal Release runtime targets and normal Debug Showcase built
+with zero warnings/errors. Focused selector/preferences/Crystal checks passed
+35/35. The RibbonKit-only GlassOverlay scope passed one aggregate covering all
+12 palettes, realized tab-band/body resource resolution, removal/local precedence
+and an Office 2013 palette scoped inside Crystal. The selected visual aggregate
+passed 36 scenes: 12 inspected new glass baselines and 24 unchanged Office/Crystal
+comparisons. Subsequent tab-band/body adjustments rebuilt both Release runtime
+targets and the normal Debug Showcase with zero warnings/errors. The independent
+consumer passed matching tab-band/title-bar translucency, rendered gray separation
+and scoped Office 2013 light/2019 dark palettes inside global Crystal light. The
+latest selected visual run passed 35 scenes: 14 glass (including two gray cases)
+and 21 existing comparisons. Affected new glass baselines were refreshed only
+after inspecting actual/diff paint: the latest change affects the Office 2019
+dark body, with other glass and non-glass approvals retained. The
+full solution suite and package gate were not rerun. The active
+[glass iteration status](../../09-FUTURE-THEMES-PLAN.md#office-glass-iteration)
+owns native appearance acceptance and remaining live gates.
+
+### 3.241 Gallery header contrast and balanced section spacing — 2026-10-11
+
+Office 2007/2010 dark keeps dark primary text on its pale ribbon/gallery body,
+but gallery headings used that same text over a #444444/#464646 fill. Shared
+group headers and the overall gallery caption now pair the existing
+`ApplicationMenu.HeaderBackground` with `ApplicationMenu.Foreground`. Shared
+dropdown/split headings use the same pair so gallery QAT captions retain parity.
+Tile foreground and palette-wide primary text are unchanged; scoped overrides
+still resolve normally. No public API symbols or Showcase glue were added.
+
+The old group heading had a two-DIP lower margin and no matching gap after its
+tiles. `RibbonKit.Metrics.GallerySectionPadding` now supplies 0,4,0,4 in all six
+base palettes, inherited by dark overlays. The group items presenter applies it
+while expanded; the strip collapses both the heading and the gap. A non-grouped
+popup with an overall caption applies the same spacing to its viewport. Empty
+captions and grouped popups retain the original outer viewport geometry.
+
+Keep the two heading roles distinct: the optional overall caption is fixed above
+the viewport; every collection-view section heading scrolls with its tiles.
+One native scrollbar serves all sections, with no nested per-section rail.
+The existing direct ItemsPresenter-to-ScrollViewer ownership and permanent
+strip/popup viewports were retained, preserving the native/QAT handoff contract.
+Overflow coverage runs after the original six-item selection/width checks so its
+larger dataset does not replace those cases. Consumer tile content centers its
+label inside the authored box, making vertical gap previews representative.
+
+Verification: normal Debug Showcase and both Release runtime targets built with
+zero warnings/errors; 54 focused runtime tests and 27 unchanged visual scenes
+passed. Three independent scopes passed: grouped and caption galleries each
+cover 96 theme/light-dark/density/LTR-RTL/simulated 125%-200% combinations;
+dropdown/split headings cover 48 combinations plus QAT. Tests check light legacy
+heading text, scoped foreground precedence, equal section gaps, one overflow
+rail, scrolling section headings and last-tile reachability. Targeted legacy
+dark, modern, Crystal, Touch and overflow captures were inspected. Snapshot
+approvals/tolerances and the public API baseline were retained. Full-suite and
+package checks were not rerun. Current native review belongs to the
+[gallery header status](../../09-FUTURE-THEMES-PLAN.md#gallery-header-and-section-layout).
+
+### 3.242 Classic Backstage caption and Chart Tools selection — 2026-10-11
+
+`RibbonWindow` continues Classic Backstage's rail and page through the caption
+using realized `NavColumn`/`ContentArea` brushes, width, direction and foreground.
+Internal `UtilityChrome` references connect the separate adorner branch to shared
+chrome and update after retemplating. Only the custom caption icon is hidden;
+closing or switching design restores chrome without changing the taskbar icon.
+The shared rounded row edge prevents the half-covered pixel seam at fractional
+DPI. No public API symbols or theme literals were added.
+
+Caption paint binds to Backstage's live opacity and render transform, clipped
+within the title row. Keep the caption source through the visual exit, then
+release it in the adorner-removal callback; clearing at the logical close snaps
+the colors early. Glyph foregrounds composite using the same fade progress,
+reuse the resource brushes at endpoints and do not freeze mutable app brushes.
+No second animation clock or layout animation is needed; RTL, interrupted
+reopening and disabled motion follow the body automatically.
+
+Reusing Backstage exposed a stale local flow direction after detachment. Capture
+binding ownership before removing the child, then clear its owned value after
+removal; checking ownership afterward is too late because removal can freeze
+the last value. App-owned replacements survive. RTL evidence must assert the
+physical rail side, not just matching caption/rail coordinates. Simulated DPI
+changes on a reused visual need layout invalidation before rendering.
+
+The Chart Tools reset was Showcase event ordering: `Unchecked` could still see
+the source merged and jump to Chart Design just before removal. Selection polish
+now checks the toggle and waits for declarative activation to settle, with a
+cancellation guard. Shared merging already preserves surviving tabs, including
+Home with injected Refresh, and was retained. Regressions cover Home/View/Ribbon
+Lab, a removed selected tool tab and cancelled activation.
+
+Verification: 54 focused Release runtime tests, 11 unchanged selected visual scenes
+and one RibbonKit-only caption scope passed. The consumer covers 16 light/dark,
+density, direction and simulated DPI combinations, scoped accents, retemplating,
+design changes and close/reopen; seam pixels and the physical RTL side are checked.
+It also samples Subtle/Expressive LTR/RTL opening, closing and interrupted
+reopening, matching opacity, transforms, physical rail position and foreground
+pixels, plus instant global/per-action-disabled paths. Resting and transition
+captures were inspected. Normal Debug Showcase and both Release runtime
+targets built without warnings/errors. Approvals and public API baselines were
+retained; full-suite/package gates were not rerun. Current live review belongs
+to the [caption status](../../09-FUTURE-THEMES-PLAN.md#classic-backstage-caption-continuation).
+
+### 3.243 Classic caption icon fade and title continuity — 2026-10-11
+
+`RibbonWindow` observes the realized caption image's `Visibility`, so template
+triggers, null icons and orb suppression enter the same before/after title
+measurement as QAT changes. `Hidden` still reserves width; `Collapsed` does not,
+so `IsVisibleChanged` alone would miss that transition. The descriptor subscription
+is removed on unload, close and template replacement. Interrupted title glides
+clear their old translate clock before installing the new first-frame seed;
+otherwise the old animated value survives until the next timing tick and jumps.
+
+Classic Backstage retains a non-interactive copy of a previously visible icon's
+paint while collapsing its layout slot. The copy uses the inverse of Backstage's
+live opacity. At close start, the real icon slot returns with the QAT and its
+image uses that same inverse fade; title geometry settles once with both widths.
+Null icons and orb-owned caption suppression are preserved. Removing a template
+trigger can discard a `SetCurrentValue` suppression, so the visibility observer
+reasserts orb ownership before the image paints. No independent icon clock,
+Showcase helper, public API or theme token was added.
+
+Focused follow-up verification: four Release icon/title regressions, two unchanged
+Office 2013 visual scenes and the independent caption scope passed. The title
+checks preserve physical position on the first frame in LTR/RTL, an interrupted
+glide, Hidden-to-Collapsed and coalesced QAT/icon changes; disabled motion and
+template replacement are covered. The consumer adds inverse icon-opacity and
+physical image-bounds checks to Subtle/Expressive opening/closing/reopening,
+plus null-icon/orb restoration cases. Transition captures were inspected. Normal
+Debug Showcase and both Release runtime targets built without warnings/errors.
+Full-suite/package gates were not rerun; native timing, OS reduced motion and
+monitor-DPI review remain in the [caption status](../../09-FUTURE-THEMES-PLAN.md#classic-backstage-caption-continuation).
+
+### 3.244 Colored QAT split companion and legacy borders — 2026-10-11
+
+The user's accent-caption screenshots exposed two shared-template leaks. The
+inactive split half kept the neutral `Control.CompanionBackground`; active and
+companion borders retained Office 2007/2010 amber even after colored hover/open
+backgrounds were applied. Colored QAT split halves and dropdowns now suppress
+their outline and companion glow. Their border thickness stays intact, avoiding
+an icon/content shift between states; uncolored commands retain the theme paint.
+
+`Qat.ColoredCompanionBackground` is a 30% white wash in Office 2013/2019/2024,
+making the underlying accent paler than the active half. Office 2007/2010 and
+Crystal supply transparent companions; dark palettes inherit those choices.
+The companion trigger precedes active hover/press/open triggers so the active
+half wins. Existing checked-state precedence keeps an open arrow's fill stable.
+The Ribbon publishes the companion token into QAT item/host resources alongside
+the existing hover/pressed brushes, preserving ribbon-local scope across the
+detached title-bar host, and removes it when colored-surface context ends.
+No public C# API or Showcase styling helper was added.
+
+The new focused `ColoredQat` consumer scope first reproduced the grey companion,
+then passed with realized source-backed QAT proxies across all five Office themes
+in light/dark, default frames and both legacy Aero frames. It covers both hovered
+halves, primary press, open/hover precedence, two accents, ribbon-local companion
+overrides, colored Office 2019 tab-row placement and neutral/off restoration.
+Modern companion pixels are checked over the accent band; colored borders and
+glows are checked directly. LTR/RTL and simulated 125%/200% are included. Captured
+caption strips were inspected. Three existing default Office 2024/2010/2007 visual
+scenes passed without baseline changes. Both Release runtime targets and normal
+Debug Showcase built cleanly. Current native review remains in the
+[QAT status](../../09-FUTURE-THEMES-PLAN.md#colored-qat-split-and-dropdown-states).
+
+### 3.245 Office 2024 neutral and backdrop QAT washes — 2026-10-11
+
+Office 2024 light's neutral companion was `#F2F2F2` against the `#F3F3F3` caption.
+It now uses `#ECECEC`, remaining quieter than active hover while visibly marking
+the other half. Its dark companion already has adequate separation and retains
+the authored paint. Other generations keep their neutral palettes.
+
+`SetTitleBarBackdrop` now enables the scoped `QatUseBackdropBrushes` metric in its
+existing Office 2024/non-accent branch. Every base palette supplies a false
+default, including Crystal, so a nearer palette can suppress the application
+policy. Ribbon applies owned merged dictionaries to QAT items and the active
+title/tab-row host. Hover and press/checked washes borrow the caption's black
+(light) or white (dark) alpha brushes; companion uses half the hover opacity.
+This retains the material and normal icon colors through the existing templates
+and wash animations. Explicit per-item resources win over the merged palette.
+Refresh, item removal, placement changes, theme/accent/backdrop switches and unload
+remove only the owned dictionaries, restoring original scoped paint. The opaque
+below-ribbon surface keeps its normal brushes. No public C# API was added; hosts
+continue to own native Mica/Acrylic activation through the existing integration.
+
+The focused `QatBackdrop` independent consumer reproduced the one-channel neutral
+contrast, then passed neutral/active separation, light/dark alpha relationships,
+rendered companion composition over two underlay colors, plain/toggle wash
+resources, checked paint, local precedence and restoration/ownership checks.
+It covers title/tab/below placement, colored-caption priority, non-2024 and nearer
+Crystal scopes, removal, LTR/RTL and simulated 125%/200%. Synthetic mouse flags
+exercise nested template state; native plain-button pointer/fade timing remains
+a live check. Neutral/material QAT captures were inspected. `ColoredQat` and three
+existing Office 2024 light/dark and Office 2010 visual scenes also passed with
+unchanged approvals. Normal Release runtime targets and Debug Showcase built
+cleanly; full-suite/package gates were not rerun. Current acceptance remains in
+the [QAT status](../../09-FUTURE-THEMES-PLAN.md#colored-qat-split-and-dropdown-states).
+
+### 3.246 Restored QAT-only commands retain caption interaction — 2026-10-11
+
+Removing and re-adding an authored Save/Undo/Redo-style command preserves its
+object, bindings and handlers, but its retained logical Ribbon parent can supply
+`WindowChrome.IsHitTestVisibleInChrome=False` instead of the caption visual host's
+true value. Windows then treats its title-bar area as non-client chrome. The
+shared `RibbonQuickAccessToolBar.OnItemsChanged` now explicitly sets the current
+hit-test value on framework-element items, including collection reset/restore.
+Logical ownership and the original control remain intact; no API or Showcase
+helper was added. Ribbon-group copies continue to work through the same host.
+
+The focused `QatCommandInteraction` independent consumer reproduced the false
+caption hit-test value, then passed actual customization-page remove/add,
+serializer clear/restore and all three placements in LTR/RTL. It verifies native
+`WM_NCHITTEST=HTCLIENT` at realized title-bar targets, window command execution,
+toggle/split/dropdown actions and a ribbon-group copy as the working comparison.
+All five existing declared-command regressions also passed. Normal Release runtime
+targets and Debug Showcase built cleanly. These checks do not claim live pointer
+acceptance; current review scope is in the
+[customization follow-up](../../09-FUTURE-THEMES-PLAN.md#qat-only-commands-after-customization).
+
+### 3.247 QAT visibility and customization viewport rounding — 2026-10-11
+
+`Ribbon.IsQuickAccessVisible` is a binding-preserving visibility preference,
+defaulting to true. The shared QAT menu hides the toolbar; ribbon command, tab
+and background menus offer show/hide. Native text-editing and host-supplied
+background menus remain in charge of their own surfaces. Adding a new command
+reveals QAT. Hiding preserves commands, order and placement while releasing all
+visual projections, restoring host caption content and body/message geometry,
+closing overflow/borrowed dropdowns and removing active and root QAT KeyTips.
+The existing Customize QAT page is unchanged. Localization values are appended
+without renumbering existing entries, and cached menu labels refresh on opening.
+
+Customization JSON stores a nullable visibility field; older files preserve the
+host's current preference. Showcase observes the property for its existing save
+policy. Runtime owns no storage or Showcase-specific presentation helper.
+
+The actual Showcase options dialog reproduced a 0.6-DIP action-button overrun at
+125%: its rounded page extended beyond an unrounded ScrollContentPresenter clip.
+The shared dialog now rounds its whole viewport. Width remains 860 DIP; widening
+would conceal the mismatched rounding rather than correct it.
+
+Both Release runtime targets and normal Debug Showcase built cleanly. Twenty-six
+focused runtime tests passed. Independent `QatVisibility` checks cover all three
+placements, expanded/minimized states, LTR/RTL, Touch density and Office 2024,
+Office 2010 and Crystal; `CustomizationLayout` checks cover Office 2024/Crystal,
+LTR/RTL and simulated 125%/200%. Dialog captures were inspected. Four selected
+Office 2024, Office 2010 and Crystal visual scenes passed unchanged. Live pointer
+and mixed-monitor review remain in the
+[current status](../../09-FUTURE-THEMES-PLAN.md#qat-visibility-and-options-layout).
+
+### 3.248 Glass look over Mica and Acrylic — 2026-10-11
+
+The shared glass overlay is backdrop-independent, but Showcase gated its use on
+`ActiveBackdrop=Acrylic`. The refresh now accepts Mica too. Both materials share
+the existing scoped overlay, replacement/removal lifecycle and saved glass
+choice. Office 2013/2019/2024 remain opt-in, Crystal retains its default and
+Office 2007/2010 still suspend the modern treatment in favor of their Aero
+choices. ScreenTip and API documentation now describe both materials. No public
+API, brush, metric or native backdrop activation behavior changed.
+
+Seven new selector cases first reproduced the absent Mica overlay, then passed.
+Together with four legacy cases, eleven focused Release cases cover light/dark,
+Crystal defaults, on/off, repeated Mica/Acrylic/None refresh, noncompounding
+opacity and legacy choice restoration. They inject derived runtime backdrop
+state and invoke the real post-activation refresh; they do not activate DWM.
+The existing RibbonKit-only `GlassOverlay` consumer scope passed. Normal Debug
+Showcase built with zero warnings/errors. Visual baselines and the full suite
+were not rerun because authored glass paint is unchanged. Native Mica review is
+tracked in the [Office glass status](../../09-FUTURE-THEMES-PLAN.md#office-glass-iteration).

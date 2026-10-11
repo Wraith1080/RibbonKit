@@ -61,7 +61,7 @@ public static class ThemeManager
     /// <returns>A fresh dictionary for the host to merge, replace and remove in that scope.</returns>
     /// <remarks>
     /// This changes no resources or native window backdrop. The host chooses whether to use it,
-    /// typically after Acrylic activation succeeds. Remove an earlier overlay before creating its
+    /// typically after Mica or Acrylic activation succeeds. Remove an earlier overlay before creating its
     /// replacement after theme, accent or palette changes, to avoid compounding opacity.
     /// Direct resources on the scope and resources on child controls keep WPF precedence.
     /// </remarks>
@@ -145,6 +145,7 @@ public static class ThemeManager
     private const string TabStripControlPressedKey = "RibbonKit.Brushes.TabStrip.ControlPressedBackground";
     private const string QatTitleBarColoredKey = "RibbonKit.Metrics.QatTitleBarColored";
     private const string QatTabRowColoredKey = "RibbonKit.Metrics.QatTabRowColored";
+    private const string QatUseBackdropBrushesKey = "RibbonKit.Metrics.QatUseBackdropBrushes";
 
     // Hover/press washes for the small chrome buttons (minimize chevron, modal-tab close, merged
     // caption buttons, QAT overflow, scroll chevrons, caption buttons, the pressed File button)
@@ -708,6 +709,7 @@ public static class ThemeManager
         resources.Remove(AppButtonMenuOpenForegroundKey);
         resources.Remove(QatTitleBarColoredKey);
         resources.Remove(QatTabRowColoredKey);
+        resources.Remove(QatUseBackdropBrushesKey);
         // Menu-open tokens normally preserve the old checked-state contract: accent fill and
         // white text, including when a custom accent is active. Office 2010 keeps its smooth
         // gel rather than flattening the open File tab; the Office 2019 colored-band branch
@@ -762,6 +764,7 @@ public static class ThemeManager
             resources[TabStripControlHoverKey] = backdropHover;
             resources[TabStripControlPressedKey] = backdropPressed;
             resources[AppButtonPressedKey] = backdropPressed;
+            resources[QatUseBackdropBrushesKey] = true;
             return;
         }
 
