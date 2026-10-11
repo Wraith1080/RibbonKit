@@ -38,6 +38,7 @@
                     <ControlTemplate.Resources>
                         <controls:WindowFrameGeometryConverter x:Key="WindowFrameGeometry" />
                         <controls:BackstageCaptionForegroundConverter x:Key="BackstageCaptionForeground" />
+                        <controls:BackstageCaptionIconOpacityConverter x:Key="BackstageCaptionIconOpacity" />
                     </ControlTemplate.Resources>
                     <!-- Keep the physical frame LTR. Applying RTL to the direct Window template
                          root makes WPF arrange maximize compensation against the bottom/left
@@ -162,6 +163,23 @@
                                                       Margin="6,0,6,0"
                                                       WindowChrome.IsHitTestVisibleInChrome="True" />
                                 </Grid>
+
+                                <!-- Retain only the icon's paint while its layout slot is collapsed.
+                                     This copy shares Backstage's fade, then hands back to the real
+                                     caption image on close without moving the image or hit targets. -->
+                                <Image x:Name="BackstageCaptionIconTransition"
+                                       Grid.ColumnSpan="3"
+                                       IsHitTestVisible="False"
+                                       Visibility="Collapsed"
+                                       HorizontalAlignment="Left"
+                                       VerticalAlignment="Center"
+                                       Width="{Binding Width, ElementName=PART_WindowIcon}"
+                                       Height="{Binding Height, ElementName=PART_WindowIcon}"
+                                       Margin="{Binding Margin, ElementName=PART_WindowIcon}"
+                                       Stretch="{Binding Stretch, ElementName=PART_WindowIcon}"
+                                       Source="{Binding Source, ElementName=PART_WindowIcon}"
+                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                       Opacity="{Binding Path=(controls:UtilityChrome.BackstageCaptionSource).Opacity, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BackstageCaptionIconOpacity}, FallbackValue=0}" />
 
                                 <!-- Named part: the title sits in the star column between the
                                      quick-access slot and the caption buttons, so collapsing that
@@ -704,7 +722,8 @@
                             <Setter TargetName="WindowLayoutHost" Property="UseLayoutRounding" Value="True" />
                             <Setter TargetName="BackstageCaptionBand" Property="Visibility" Value="Visible" />
                             <Setter TargetName="AeroTitleVisual" Property="Visibility" Value="Collapsed" />
-                            <Setter TargetName="PART_WindowIcon" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_WindowIcon" Property="Opacity"
+                                    Value="{Binding Path=(controls:UtilityChrome.BackstageCaptionSource).Opacity, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BackstageCaptionIconOpacity}, FallbackValue=0}" />
                             <Setter TargetName="PART_Title" Property="Foreground"
                                     Value="{Binding Path=(controls:UtilityChrome.SurfaceBrush), ElementName=TitleBarBand}" />
                             <Setter TargetName="PART_MinimizeButton" Property="Foreground"
@@ -716,6 +735,22 @@
                             <Setter TargetName="PART_CloseButton" Property="Foreground"
                                     Value="{Binding Path=(controls:UtilityChrome.SurfaceBrush), ElementName=TitleBarBand}" />
                         </DataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Path=(controls:UtilityChrome.BackstageCaptionSource).Design, RelativeSource={RelativeSource Self}}" Value="Classic" />
+                                <Condition Binding="{Binding IsTitleBarContentVisible, RelativeSource={RelativeSource Self}}" Value="False" />
+                            </MultiDataTrigger.Conditions>
+                            <!-- Restore the icon slot with the QAT at the start of closing.
+                                 Its live opacity still fades in with Backstage's exit. -->
+                            <Setter TargetName="PART_WindowIcon" Property="Visibility" Value="Collapsed" />
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Path=(controls:UtilityChrome.BackstageCaptionSource).Design, RelativeSource={RelativeSource Self}}" Value="Classic" />
+                                <Condition Binding="{Binding Path=(controls:UtilityChrome.BackstageCaptionIconWasVisible), RelativeSource={RelativeSource Self}}" Value="True" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="BackstageCaptionIconTransition" Property="Visibility" Value="Visible" />
+                        </MultiDataTrigger>
                         <!-- The title QAT keeps its density while Backstage hides its presenter.
                              Reserve its touch row and caption hit area through that transition. -->
                         <DataTrigger Binding="{Binding Path=TitleBarContent.(controls:Ribbon.Density), RelativeSource={RelativeSource Self}}" Value="Touch">

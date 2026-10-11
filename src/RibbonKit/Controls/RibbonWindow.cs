@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -66,6 +67,8 @@ public class RibbonWindow : Window
         "RibbonKit.Brushes.WindowFrame.AeroCaptionPressedBorder";
     private const string AeroCaptionBorderThicknessKey =
         "RibbonKit.Metrics.WindowFrame.AeroCaptionBorderThickness";
+    private static readonly DependencyPropertyDescriptor WindowIconVisibilityDescriptor =
+        DependencyPropertyDescriptor.FromProperty(VisibilityProperty, typeof(Image));
 
     private static readonly DependencyPropertyKey ActiveBackdropPropertyKey =
         DependencyProperty.RegisterReadOnly(
@@ -125,6 +128,8 @@ public class RibbonWindow : Window
 
     private FrameworkElement? _title;
     private Image? _windowIcon;
+    private Image? _trackedWindowIcon;
+    private Visibility _trackedWindowIconVisibility;
     private Button? _maximizeButton;
     private Button? _restoreButton;
     private bool _snapButtonPressed;
@@ -166,8 +171,14 @@ public class RibbonWindow : Window
         // compensation inset current if the window is dragged to a monitor of a different
         // resolution/DPI while maximized.
         SizeChanged += (_, _) => UpdateMaximizeInset();
+        Loaded += (_, _) => TrackTitleBarIconVisibility();
+        Unloaded += (_, _) => StopTrackingTitleBarIconVisibility();
         ThemeManager.Changed += OnThemeManagerChanged;
-        Closed += (_, _) => ThemeManager.Changed -= OnThemeManagerChanged;
+        Closed += (_, _) =>
+        {
+            ThemeManager.Changed -= OnThemeManagerChanged;
+            StopTrackingTitleBarIconVisibility();
+        };
     }
 
     /// <summary>
@@ -250,6 +261,7 @@ public class RibbonWindow : Window
     /// <inheritdoc />
     public override void OnApplyTemplate()
     {
+        StopTrackingTitleBarIconVisibility();
         base.OnApplyTemplate();
 
         // Drop any pending title-shift subscription while the OLD part is still in hand — after
@@ -267,6 +279,7 @@ public class RibbonWindow : Window
         _maximizeButton = GetTemplateChild(MaximizeButtonPartName) as Button;
         _restoreButton = GetTemplateChild(RestoreButtonPartName) as Button;
         UpdateTitleBarIconVisibility();
+        if (IsLoaded) TrackTitleBarIconVisibility();
         SetSnapButtonVisualState(SnapButtonVisualState.Normal);
         UpdateMaximizeInset();
     }
@@ -333,9 +346,9 @@ public class RibbonWindow : Window
             return;
         }
 
-        Visibility before = _windowIcon.Visibility;
         if (IsTitleBarIconSuppressed)
         {
+            UtilityChrome.SetBackstageCaptionIconWasVisible(this, false);
             _windowIcon.SetCurrentValue(VisibilityProperty, Visibility.Collapsed);
         }
         else
@@ -344,11 +357,48 @@ public class RibbonWindow : Window
             // without changing Window.Icon, which remains the executable/taskbar identity.
             _windowIcon.ClearValue(VisibilityProperty);
         }
+    }
 
-        if (_windowIcon.Visibility != before)
+    private void TrackTitleBarIconVisibility()
+    {
+        if (_windowIcon is null || ReferenceEquals(_trackedWindowIcon, _windowIcon)) return;
+        StopTrackingTitleBarIconVisibility();
+        _trackedWindowIcon = _windowIcon;
+        _trackedWindowIconVisibility = _windowIcon.Visibility;
+        WindowIconVisibilityDescriptor.AddValueChanged(_trackedWindowIcon, OnTitleBarIconVisibilityChanged);
+    }
+
+    private void StopTrackingTitleBarIconVisibility()
+    {
+        if (_trackedWindowIcon is null) return;
+        WindowIconVisibilityDescriptor.RemoveValueChanged(_trackedWindowIcon, OnTitleBarIconVisibilityChanged);
+        _trackedWindowIcon = null;
+    }
+
+    // Observe the realized slot, including template triggers, null Icon and orb suppression.
+    // IsVisibleChanged would miss Hidden-to-Collapsed changes that also change its layout width.
+    private void OnTitleBarIconVisibilityChanged(object? sender, EventArgs e)
+    {
+        if (_trackedWindowIcon is not { } icon) return;
+        // A template trigger being removed can discard a SetCurrentValue suppression.
+        // Keep an orb-owned caption slot suppressed when Classic Backstage closes.
+        if (IsTitleBarIconSuppressed && icon.Visibility != Visibility.Collapsed)
         {
-            AnimateTitleShift();
+            UpdateTitleBarIconVisibility();
+            return;
         }
+        if (icon.Visibility == Visibility.Collapsed && _trackedWindowIconVisibility == Visibility.Visible
+            && !IsTitleBarIconSuppressed
+            && UtilityChrome.GetBackstageCaptionSource(this)?.Design == RibbonBackstageDesign.Classic)
+        {
+            UtilityChrome.SetBackstageCaptionIconWasVisible(this, true);
+        }
+        else if (icon.Visibility != Visibility.Collapsed)
+        {
+            UtilityChrome.SetBackstageCaptionIconWasVisible(this, false);
+        }
+        _trackedWindowIconVisibility = icon.Visibility;
+        AnimateTitleShift();
     }
 
     private static void OnIsTitleBarContentVisibleChanged(
@@ -357,8 +407,8 @@ public class RibbonWindow : Window
         => ((RibbonWindow)d).AnimateTitleShift();
 
     /// <summary>
-    /// Glides the centered title to its new position when <see cref="TitleBarContent"/> appears
-    /// or disappears, instead of letting it jump.
+    /// Glides the centered title to its new position when the caption icon or
+    /// <see cref="TitleBarContent"/> appears or disappears, instead of letting it jump.
     /// </summary>
     /// <remarks>
     /// The title lives in the star column between the quick-access slot and the caption buttons,
@@ -449,6 +499,10 @@ public class RibbonWindow : Window
             return;
         }
 
+        // A replaced clock can hold its previous animated value until the next tick.
+        // Release this title's old clock so the new FLIP seed paints the first frame too.
+        if (title.RenderTransform is TranslateTransform previous)
+            previous.BeginAnimation(TranslateTransform.XProperty, null);
         Animation.RibbonMotion.AnimateTranslateX(
             title,
             Animation.RibbonAnimationAction.Backstage,

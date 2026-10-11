@@ -134,9 +134,11 @@ internal static class BackstageCaptionPortabilityChecks
                 Drain(window);
                 var band = Part<Grid>(window, "BackstageCaptionBand");
                 var normalBackground = Part<Border>(window, "TitleBarBackgroundLayer").Background;
+                var originalIcon = Part<Image>(window, "PART_WindowIcon");
+                Rect iconBounds = originalIcon.TransformToAncestor(window).TransformBounds(new Rect(originalIcon.RenderSize));
                 ribbon.IsBackstageOpen = true;
                 Assert.Equal(0d, backstage.Opacity); // The first frame uses the shared open seed.
-                SampleMotion(window, backstage, $"{level}-{flow}-opening");
+                SampleMotion(window, backstage, $"{level}-{flow}-opening", iconBounds);
                 PumpUntil(() => !backstage.HasAnimatedProperties);
                 Drain(window);
                 VerifySeam(window, backstage, icon);
@@ -144,17 +146,17 @@ internal static class BackstageCaptionPortabilityChecks
 
                 ribbon.IsBackstageOpen = false;
                 Assert.Equal(Visibility.Visible, band.Visibility); // Paint survives the logical close.
-                SampleMotion(window, backstage, $"{level}-{flow}-closing");
+                SampleMotion(window, backstage, $"{level}-{flow}-closing", iconBounds);
                 // Reopening replaces the body clocks and keeps this one caption surface attached.
                 ribbon.IsBackstageOpen = true;
                 Drain(window);
-                SampleMotion(window, backstage, $"{level}-{flow}-reopening");
+                SampleMotion(window, backstage, $"{level}-{flow}-reopening", iconBounds);
                 PumpUntil(() => !backstage.HasAnimatedProperties);
                 Drain(window);
                 Assert.True(ribbon.IsBackstageOpen);
                 VerifySeam(window, backstage, icon);
                 ribbon.IsBackstageOpen = false;
-                SampleMotion(window, backstage, $"{level}-{flow}-final-close");
+                SampleMotion(window, backstage, $"{level}-{flow}-final-close", iconBounds);
                 PumpUntil(() => band.Visibility == Visibility.Collapsed);
                 Drain(window);
                 Assert.Equal(Visibility.Visible, Part<Image>(window, "PART_WindowIcon").Visibility);
@@ -172,6 +174,28 @@ internal static class BackstageCaptionPortabilityChecks
             ribbon.IsBackstageOpen = false;
             Drain(window);
             Assert.Equal(Visibility.Collapsed, Part<Grid>(window, "BackstageCaptionBand").Visibility);
+
+            RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
+            foreach (bool hasIcon in new[] { false, true })
+            foreach (RibbonApplicationButtonShape shape in new[] { RibbonApplicationButtonShape.Tab, RibbonApplicationButtonShape.Orb })
+            {
+                window.Icon = hasIcon ? icon : null;
+                ribbon.ApplicationButtonShape = shape;
+                Drain(window);
+                Visibility expected = hasIcon && shape == RibbonApplicationButtonShape.Tab ? Visibility.Visible : Visibility.Collapsed;
+                Assert.Equal(expected, Part<Image>(window, "PART_WindowIcon").Visibility);
+                ribbon.IsBackstageOpen = true;
+                Drain(window);
+                Assert.Equal(expected, Part<Image>(window, "BackstageCaptionIconTransition").Visibility);
+                Assert.Equal(0d, Part<Image>(window, "BackstageCaptionIconTransition").Opacity);
+                ribbon.IsBackstageOpen = false;
+                Drain(window);
+                Assert.True(expected == Part<Image>(window, "PART_WindowIcon").Visibility,
+                    $"Closing must preserve the original caption icon state: hasIcon={hasIcon}, shape={shape}.");
+                Assert.Equal(Visibility.Collapsed, Part<Image>(window, "BackstageCaptionIconTransition").Visibility);
+            }
+            ribbon.ApplicationButtonShape = RibbonApplicationButtonShape.Tab;
+            window.Icon = icon;
         }
         finally
         {
@@ -184,24 +208,36 @@ internal static class BackstageCaptionPortabilityChecks
         }
     }
 
-    private static void SampleMotion(RibbonWindow window, Backstage backstage, string name)
+    private static void SampleMotion(RibbonWindow window, Backstage backstage, string name, Rect expectedIconBounds)
     {
         var band = Part<Grid>(window, "BackstageCaptionBand");
+        var captionIcon = Part<Image>(window, "PART_WindowIcon");
+        var transitionIcon = Part<Image>(window, "BackstageCaptionIconTransition");
         (double BodyOpacity, double CaptionOpacity, Matrix BodyTransform, Matrix CaptionTransform,
-            double RailX, double CaptionRailX, Brush Foreground)? sample = null;
+            double RailX, double CaptionRailX, Brush Foreground, double IconOpacity, Visibility IconVisibility, Rect IconBounds)? sample = null;
         PumpUntil(() =>
         {
             double opacity = backstage.Opacity;
             if (opacity <= .001 || opacity >= .999) return false;
+            var icon = captionIcon.Visibility == Visibility.Visible ? captionIcon : transitionIcon;
             sample = (opacity, band.Opacity, backstage.RenderTransform.Value, band.RenderTransform.Value,
                 Part<Border>(backstage, "NavColumn").TransformToAncestor(window).Transform(default).X,
                 Part<Border>(window, "BackstageCaptionRail").TransformToAncestor(window).Transform(default).X,
-                Part<TextBlock>(window, "PART_Title").Foreground);
+                Part<TextBlock>(window, "PART_Title").Foreground, icon.Opacity, icon.Visibility,
+                icon.TransformToAncestor(window).TransformBounds(new Rect(icon.RenderSize)));
             Capture(window, "motion-" + name, VisualTreeHelper.GetDpi(window).DpiScaleX);
             return true;
         });
         var observed = sample!.Value;
         Assert.Equal(observed.BodyOpacity, observed.CaptionOpacity, 6);
+        Assert.Equal(1d - observed.BodyOpacity, observed.IconOpacity, 6);
+        Assert.Equal(Visibility.Visible, observed.IconVisibility);
+        Assert.Same(window.Icon, captionIcon.Source);
+        Assert.Same(window.Icon, transitionIcon.Source);
+        Assert.Equal(expectedIconBounds.X, observed.IconBounds.X, 4);
+        Assert.Equal(expectedIconBounds.Y, observed.IconBounds.Y, 4);
+        Assert.Equal(expectedIconBounds.Width, observed.IconBounds.Width, 4);
+        Assert.Equal(expectedIconBounds.Height, observed.IconBounds.Height, 4);
         Assert.Equal(observed.BodyTransform, observed.CaptionTransform);
         Assert.Equal(observed.RailX, observed.CaptionRailX, 4);
         Assert.NotEqual(0d, observed.BodyTransform.OffsetX);
@@ -259,6 +295,7 @@ internal static class BackstageCaptionPortabilityChecks
             Assert.InRange(railX, 0, 1);
         Assert.Equal(Visibility.Visible, Part<Grid>(window, "BackstageCaptionBand").Visibility);
         Assert.Equal(Visibility.Collapsed, Part<Image>(window, "PART_WindowIcon").Visibility);
+        Assert.Equal(0d, Part<Image>(window, "BackstageCaptionIconTransition").Opacity);
         Assert.Same(icon, window.Icon);
     }
 

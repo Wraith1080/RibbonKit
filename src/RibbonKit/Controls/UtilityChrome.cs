@@ -14,6 +14,11 @@ internal static class UtilityChrome
     public static Backstage? GetBackstageCaptionSource(DependencyObject target) => (Backstage?)target.GetValue(BackstageCaptionSourceProperty);
     public static void SetBackstageCaptionSource(DependencyObject target, Backstage? value) => target.SetValue(BackstageCaptionSourceProperty, value);
 
+    public static readonly DependencyProperty BackstageCaptionIconWasVisibleProperty = DependencyProperty.RegisterAttached(
+        "BackstageCaptionIconWasVisible", typeof(bool), typeof(UtilityChrome), new FrameworkPropertyMetadata(false));
+    public static bool GetBackstageCaptionIconWasVisible(DependencyObject target) => (bool)target.GetValue(BackstageCaptionIconWasVisibleProperty);
+    public static void SetBackstageCaptionIconWasVisible(DependencyObject target, bool value) => target.SetValue(BackstageCaptionIconWasVisibleProperty, value);
+
     public static readonly DependencyProperty BackstageCaptionRailProperty = DependencyProperty.RegisterAttached(
         "BackstageCaptionRail", typeof(Border), typeof(UtilityChrome), new FrameworkPropertyMetadata(null));
     public static Border? GetBackstageCaptionRail(DependencyObject target) => (Border?)target.GetValue(BackstageCaptionRailProperty);

@@ -362,3 +362,33 @@ captures were inspected. Normal Debug Showcase and both Release runtime
 targets built without warnings/errors. Approvals and public API baselines were
 retained; full-suite/package gates were not rerun. Current live review belongs
 to the [caption status](../../09-FUTURE-THEMES-PLAN.md#classic-backstage-caption-continuation).
+
+### 3.243 Classic caption icon fade and title continuity — 2026-10-11
+
+`RibbonWindow` observes the realized caption image's `Visibility`, so template
+triggers, null icons and orb suppression enter the same before/after title
+measurement as QAT changes. `Hidden` still reserves width; `Collapsed` does not,
+so `IsVisibleChanged` alone would miss that transition. The descriptor subscription
+is removed on unload, close and template replacement. Interrupted title glides
+clear their old translate clock before installing the new first-frame seed;
+otherwise the old animated value survives until the next timing tick and jumps.
+
+Classic Backstage retains a non-interactive copy of a previously visible icon's
+paint while collapsing its layout slot. The copy uses the inverse of Backstage's
+live opacity. At close start, the real icon slot returns with the QAT and its
+image uses that same inverse fade; title geometry settles once with both widths.
+Null icons and orb-owned caption suppression are preserved. Removing a template
+trigger can discard a `SetCurrentValue` suppression, so the visibility observer
+reasserts orb ownership before the image paints. No independent icon clock,
+Showcase helper, public API or theme token was added.
+
+Focused follow-up verification: four Release icon/title regressions, two unchanged
+Office 2013 visual scenes and the independent caption scope passed. The title
+checks preserve physical position on the first frame in LTR/RTL, an interrupted
+glide, Hidden-to-Collapsed and coalesced QAT/icon changes; disabled motion and
+template replacement are covered. The consumer adds inverse icon-opacity and
+physical image-bounds checks to Subtle/Expressive opening/closing/reopening,
+plus null-icon/orb restoration cases. Transition captures were inspected. Normal
+Debug Showcase and both Release runtime targets built without warnings/errors.
+Full-suite/package gates were not rerun; native timing, OS reduced motion and
+monitor-DPI review remain in the [caption status](../../09-FUTURE-THEMES-PLAN.md#classic-backstage-caption-continuation).

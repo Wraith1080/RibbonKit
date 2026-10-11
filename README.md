@@ -311,6 +311,8 @@ the realized rail and page brushes, rail width and RTL direction. It hides the
 custom caption icon while open; caption paint follows Backstage's fade and slide,
 and caption glyphs follow the same fade. Normal chrome returns after the closing
 animation completes. `Window.Icon` remains available to the taskbar.
+The caption icon fades with Backstage, and the title glides as the icon slot and
+quick access content disappear or return.
 The application menu receives its translucent paint, 14-DIP outer corners,
 rounded content/split rows, responsive pane width and outside-only shadow from
 shared resources. `RibbonKit.Metrics.ApplicationMenuPaneWidth`,

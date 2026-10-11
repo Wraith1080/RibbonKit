@@ -1095,6 +1095,13 @@ Changing design or finishing the close restores normal chrome without changing
 `Window.Icon`. Shared private template plumbing needs no new public API or
 Showcase presentation helper and follows the existing motion settings.
 
+The 2026-10-11 icon follow-up tracks actual caption-image visibility, including
+template triggers and orb suppression, so title movement includes the icon's
+width. A paint-only copy fades out with opening while its slot collapses; the
+real slot returns with the QAT at the start of closing and its image fades in
+with Backstage's exit. Absent or already suppressed icons stay hidden. Interrupted
+title movement releases its previous clock before seeding the next first frame.
+
 The shared caption/content row edge rounds at fractional DPI to prevent a bright
 join. Adorner cleanup releases its own direction binding after removal so reused
 Backstage follows RTL on reopening; authored values survive. The Chart Tools demo
@@ -1102,20 +1109,22 @@ also limits its deferred tool-tab selection to activation. Unchecking preserves
 a surviving host tab, including Home with its contributed Refresh group; a removed
 selected tool tab uses the existing shared fallback.
 
-Verification: 54 focused Release regressions and 11 unchanged visual scenes passed.
-A RibbonKit-only consumer covers light/dark, Compact/Touch, LTR/RTL and simulated
-125%/200% DPI (16 combinations), scoped accents, retemplating, design changes,
-icon restoration and reopening. It asserts the physical RTL rail side and pixels
-across the caption join, plus intermediate fade/slide and foreground paint for
-Subtle/Expressive LTR/RTL opening, closing and interrupted reopening. Global and
-per-action disabled motion are covered; mutable host foreground brushes remain
-editable. Resting and transition captures were inspected. Both Release library
-targets and normal Debug Showcase built with zero warnings/errors. Approvals and
-public API baselines were retained; the full solution/package gates were not rerun.
+Current icon/title follow-up verification: four focused Release regressions, two
+unchanged Office 2013 visual scenes and the RibbonKit-only caption scope passed.
+The consumer retains the 16 palette/density/direction/DPI combinations and samples
+Subtle/Expressive LTR/RTL opening, closing and reopening, including icon opacity
+and unchanged physical image bounds. Null icons and orb suppression are covered.
+Title checks include the first frame, an interrupted glide, Hidden-to-Collapsed
+width changes, coalesced QAT/icon changes, disabled motion and template replacement.
+Transition captures were inspected. Both Release library targets and normal Debug
+Showcase built with zero warnings/errors. Approvals and public API baselines were
+retained; full solution/package gates were not rerun. The preceding caption and
+merge evidence is in the original implementation record below.
 
 Native Showcase appearance acceptance for the new caption remains open, including
 transition timing, live RTL, OS reduced motion and real monitor DPI changes.
 [Implementation record](history/library/12-keytips-layout-and-validation.md#3242-classic-backstage-caption-and-chart-tools-selection--2026-10-11).
+[Icon/title follow-up](history/library/12-keytips-layout-and-validation.md#3243-classic-caption-icon-fade-and-title-continuity--2026-10-11).
 
 ## Acceptance
 

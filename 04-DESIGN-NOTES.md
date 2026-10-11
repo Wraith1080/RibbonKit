@@ -924,6 +924,10 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Continue the rail through shared window chrome, release RTL state on close and preserve host-tab selection in the merge demo](docs/history/library/12-keytips-layout-and-validation.md#3242-classic-backstage-caption-and-chart-tools-selection--2026-10-11).
 
+### 3.243 Classic caption icon fade and title continuity — 2026-10-11
+
+[Track the icon slot in title movement and fade its paint with Backstage](docs/history/library/12-keytips-layout-and-validation.md#3243-classic-caption-icon-fade-and-title-continuity--2026-10-11).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),
