@@ -76,8 +76,9 @@ Verification: 26 focused Release runtime cases passed. The independent
 gallery-type/theme/light-dark/flow combinations, with four realized native
 ScreenTips per combination (source, custom group, QAT and overflow). Office 2024
 and Crystal captures were inspected. Normal Release runtime builds for both
-frameworks and Debug Showcase passed with zero warnings/errors. Live hover
-acceptance remains open; full validation remains deferred by user direction.
+frameworks and Debug Showcase passed with zero warnings/errors. The user reported
+that the gallery ScreenTips look good on 2026-10-11; further user checks and final
+live hover acceptance remain pending. Full validation remains deferred by user direction.
 Details and additive API rationale: [library history §3.251](history/library/12-keytips-layout-and-validation.md#3251-gallery-screentips-follow-qat-and-custom-group-copies--2026-10-11).
 
 ## Capability and lifetime contract
