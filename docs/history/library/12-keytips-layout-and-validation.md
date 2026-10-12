@@ -659,3 +659,43 @@ all themes, light/dark and LTR/RTL, opening and realizing source/custom/QAT/over
 tips through shared resources. Two rendered captures were inspected. Current builds,
 live hover review and the deferred full gate are maintained in the
 [gallery ScreenTip status](../../08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#gallery-screentips).
+
+### 3.252 Internal hover-suppression bindings use property identity — 2026-10-12
+
+The shared utility rim bound to `(controls:RibbonPopupInteraction.SuppressHover)`
+by name. Runtime path resolution could not find the internal owner, producing the
+reported `PART_ModalClose`/`CrystalUtilityRim` error. The shared application-orb
+template had the same path. Both now reference an internal static `PropertyPath`
+constructed with the registered dependency property as its parameter. Property
+triggers already hold the DP identity and need no change; the helper remains internal
+and the public API baseline is unchanged.
+
+The regression evaluates each realized template's exact binding even when hover is
+inactive, verifies false/true/false through QAT popup open/close, and retains pressed
+feedback. Both cases failed with the original paths and pass with the fix. The final
+47-case runtime slice and independent group consumer passed; 12 new consumer cases
+cover both paths, all QAT placements, LTR/RTL and native modal-close invocation.
+Visual evidence, original-binding fixture instability, normal builds and remaining
+live review are maintained in the
+[hover binding follow-up](../../08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#hover-binding-follow-up--2026-10-12).
+
+### 3.253 Crystal utility snapshots initialize native rendering — 2026-10-12
+
+Selecting `crystal-light-utility-scrollbars-100` in a fresh process could measure
+the disconnected scene before WPF's native window renderer initialized. The first
+and second captures then differed in ribbon layout, preventing a trustworthy
+comparison to the approved image. Inspection of the two captures and their diff
+showed geometry drift during fixture startup.
+
+`CreateCrystalUtilityScene` now calls the existing `InitializeWindowRendering`
+helper before constructing/measuring the scene, as other disconnected fixtures
+already do. Repeatability failures save the first capture, repeated capture and
+their pixel diff before throwing. The exact equality guard and comparison tolerances
+remain unchanged. This correction affects the test fixture, with no runtime or
+approved-image changes.
+
+All six selected light/dark utility scenes at 100/200% and RTL passed. The original
+light 100% scene passed in three fresh test processes, each checking two identical
+captures and the existing approval. This is focused visual evidence, not a full-suite
+pass. Current status is in the
+[hover binding follow-up](../../08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#hover-binding-follow-up--2026-10-12).

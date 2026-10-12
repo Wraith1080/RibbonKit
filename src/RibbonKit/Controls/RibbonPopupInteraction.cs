@@ -13,6 +13,9 @@ internal static class RibbonPopupInteraction
     public static readonly DependencyProperty SuppressHoverProperty = DependencyProperty.RegisterAttached(
         "SuppressHover", typeof(bool), typeof(RibbonPopupInteraction),
         new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits));
+    // Runtime PropertyPath lookup cannot resolve this internal owner by its XAML name.
+    // Give shared-template bindings the registered DP identity instead.
+    public static readonly PropertyPath SuppressHoverPath = new("(0)", SuppressHoverProperty);
     public static bool GetSuppressHover(DependencyObject element) => (bool)element.GetValue(SuppressHoverProperty);
     public static void SetSuppressHover(DependencyObject element, bool value) => element.SetValue(SuppressHoverProperty, value);
 

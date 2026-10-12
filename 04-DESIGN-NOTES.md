@@ -960,6 +960,14 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 [Share gallery titles and descriptions across native galleries and command copies](docs/history/library/12-keytips-layout-and-validation.md#3251-gallery-screentips-follow-qat-and-custom-group-copies--2026-10-11).
 
+### 3.252 Internal hover-suppression bindings use property identity — 2026-10-12
+
+[Resolve shared utility-rim and orb bindings without exposing the internal helper](docs/history/library/12-keytips-layout-and-validation.md#3252-internal-hover-suppression-bindings-use-property-identity--2026-10-12).
+
+### 3.253 Crystal utility snapshots initialize native rendering — 2026-10-12
+
+[Initialize standalone utility captures before measurement and preserve repeatability diagnostics](docs/history/library/12-keytips-layout-and-validation.md#3253-crystal-utility-snapshots-initialize-native-rendering--2026-10-12).
+
 ## 4. Workflow / Session Conventions
 
 Use [AGENTS.md](AGENTS.md), [proportional validation](CONTRIBUTING.md#proportional-validation),

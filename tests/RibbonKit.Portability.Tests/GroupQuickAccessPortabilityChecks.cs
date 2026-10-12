@@ -29,6 +29,7 @@ internal static class GroupQuickAccessPortabilityChecks
             VerifyMatrix(application);
             VerifyOverflowAndKeyboard(application);
             VerifyKeyTips(application);
+            VerifyHoverBindings(application);
         }
         finally { RibbonAnimation.GlobalLevel = motion; ThemeManager.SetDarkMode(application, false); }
     }
@@ -219,6 +220,63 @@ internal static class GroupQuickAccessPortabilityChecks
             window.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(window)!, Environment.TickCount, key)
                 { RoutedEvent = Keyboard.PreviewKeyDownEvent });
             Layout(window);
+        }
+    }
+
+    private static void VerifyHoverBindings(Application application)
+    {
+        foreach (bool utility in new[] { true, false })
+        foreach (FlowDirection flow in Enum.GetValues<FlowDirection>())
+        foreach (RibbonQuickAccessPosition placement in Enum.GetValues<RibbonQuickAccessPosition>())
+        {
+            ThemeManager.Apply(application, utility ? RibbonTheme.CrystalLight : RibbonTheme.Office2007);
+            ThemeManager.SetDarkMode(application, false);
+            var group = new RibbonGroup { Header = "Commands", Icon = Icon() }; group.Items.Add(new RibbonButton { Header = "Action" });
+            var home = new RibbonTab { Header = "Home" }; home.Groups.Add(group);
+            var ribbon = new Ribbon { Backstage = new Backstage(), QuickAccessPosition = placement };
+            ribbon.Tabs.Add(home); Assert.True(ribbon.AddToQuickAccess(group));
+            var qat = Assert.IsAssignableFrom<RibbonDropDownButton>(Assert.Single(ribbon.QuickAccessItems));
+            var window = Window(ribbon); window.FlowDirection = flow;
+            try
+            {
+                window.Show(); Layout(window);
+                var tabs = Part<RibbonTabControl>(ribbon, "TabControlHost");
+                ButtonBase button; FrameworkElement paint; BindingBase binding;
+                if (utility)
+                {
+                    var modal = new RibbonTab { Header = "Preview", IsModal = true }; ribbon.Tabs.Add(modal);
+                    Assert.True(ribbon.EnterModal(modal)); Layout(window);
+                    button = Part<Button>(tabs, "PART_ModalClose");
+                    paint = Part<Border>(button, "CrystalUtilityRim");
+                    binding = paint.Style.Triggers.OfType<MultiDataTrigger>().Single().Conditions[1].Binding;
+                }
+                else
+                {
+                    button = Part<ToggleButton>(tabs, "PART_ApplicationButton");
+                    var presenter = Part<ContentPresenter>(button, "Orb");
+                    paint = Descendants<System.Windows.Shapes.Ellipse>(presenter).Single(ellipse => ellipse.Name == "OrbFill");
+                    binding = presenter.ContentTemplate.Triggers.OfType<MultiDataTrigger>().Single().Conditions[1].Binding;
+                }
+                var expression = (BindingExpression)BindingOperations.SetBinding(paint, FrameworkElement.TagProperty, binding);
+                Layout(window); Assert.Equal(BindingStatus.Active, expression.Status); Assert.Equal(false, paint.Tag);
+                qat.IsDropDownOpen = true; Layout(window); Assert.Equal(true, paint.Tag); Assert.False(expression.HasError);
+                qat.IsDropDownOpen = false; Layout(window); Assert.Equal(false, paint.Tag);
+                if (utility)
+                {
+                    ((IInvokeProvider)UIElementAutomationPeer.CreatePeerForElement(button).GetPattern(PatternInterface.Invoke)).Invoke();
+                    Layout(window); Assert.False(ribbon.IsModal);
+                }
+            }
+            finally { window.Close(); Layout(window); }
+        }
+    }
+
+    private static IEnumerable<T> Descendants<T>(DependencyObject root) where T : DependencyObject
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i); if (child is T match) yield return match;
+            foreach (var nested in Descendants<T>(child)) yield return nested;
         }
     }
 

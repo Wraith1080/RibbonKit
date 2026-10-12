@@ -408,3 +408,7 @@ status updates and investigation narration were removed during compaction.
 ### [3.250 Custom-group command additions resolve the original QAT source — 2026-10-11](library/12-keytips-layout-and-validation.md#3250-custom-group-command-additions-resolve-the-original-qat-source--2026-10-11)
 
 ### [3.251 Gallery ScreenTips follow QAT and custom-group copies — 2026-10-11](library/12-keytips-layout-and-validation.md#3251-gallery-screentips-follow-qat-and-custom-group-copies--2026-10-11)
+
+### [3.252 Internal hover-suppression bindings use property identity — 2026-10-12](library/12-keytips-layout-and-validation.md#3252-internal-hover-suppression-bindings-use-property-identity--2026-10-12)
+
+### [3.253 Crystal utility snapshots initialize native rendering — 2026-10-12](library/12-keytips-layout-and-validation.md#3253-crystal-utility-snapshots-initialize-native-rendering--2026-10-12)

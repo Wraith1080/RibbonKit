@@ -43,7 +43,7 @@
             <MultiDataTrigger>
                 <MultiDataTrigger.Conditions>
                     <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
-                    <Condition Binding="{Binding (controls:RibbonPopupInteraction.SuppressHover), RelativeSource={RelativeSource TemplatedParent}}" Value="False" />
+                    <Condition Binding="{Binding Path={x:Static controls:RibbonPopupInteraction.SuppressHoverPath}, RelativeSource={RelativeSource TemplatedParent}}" Value="False" />
                 </MultiDataTrigger.Conditions>
                 <Setter Property="Opacity" Value="{DynamicResource RibbonKit.Metrics.UtilityRimActiveOpacity}" />
             </MultiDataTrigger>

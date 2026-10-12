@@ -45,6 +45,28 @@ transient merge contributions retain the existing persistence exclusions.
 Implementation details and final automated evidence are recorded in
 [library history §3.249](history/library/12-keytips-layout-and-validation.md#3249-groups-in-qat-with-membership-collapse--2026-10-11).
 
+### Hover binding follow-up — 2026-10-12
+
+The modal close button's shared Crystal rim reported a failed attached-property
+lookup. The utility-rim and application-orb bindings now use the registered
+suppression dependency property through an internal `PropertyPath`, preserving
+QAT hover suppression and pressed feedback without a public API addition.
+
+Verification: 47 focused Release runtime cases passed. `GroupQuickAccess` passed
+its existing matrix and 12 new utility/orb binding cases across all placements
+and both directions, including native modal-close invocation. The Office 2007 orb
+visual scene passed. The Crystal utility fixture follow-up is fixed on 2026-10-12:
+initializing WPF's window renderer before the disconnected scene's first measurement
+restores repeatability. All six light/dark, 100/200% and RTL utility scenes passed
+against unchanged approved images and tolerances; the original 100% case also passed
+in three fresh processes. Repeatability failures now save both captures and their
+diff for inspection. Normal Release runtime builds for both frameworks
+and Debug Showcase passed with zero warnings/errors. On 2026-10-12 the user completed
+the Crystal Print Preview/QAT and Office 2007 orb checks and reported no binding
+errors. Full validation stays deferred.
+Details: [library history §3.252](history/library/12-keytips-layout-and-validation.md#3252-internal-hover-suppression-bindings-use-property-identity--2026-10-12).
+The visual-fixture correction is recorded in [§3.253](history/library/12-keytips-layout-and-validation.md#3253-crystal-utility-snapshots-initialize-native-rendering--2026-10-12).
+
 ## Custom-group command copies in QAT
 
 Fixed on 2026-10-11: context-menu additions from custom tabs/groups resolve to the
