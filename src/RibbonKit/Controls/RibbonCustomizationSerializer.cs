@@ -371,6 +371,13 @@ public static class RibbonCustomizationSerializer
         }
 
         // 5. Rebuild the QAT in the saved order.
+        // Custom groups were recreated above. Resolve group references to their
+        // final objects, never to the discarded pre-Apply group.
+        BuildIdentity(ribbon, out var currentSources, out _, out _);
+        foreach (var key in sources.Where(pair => pair.Value is RibbonGroup).Select(pair => pair.Key).ToArray())
+            sources.Remove(key);
+        foreach (var pair in currentSources.Where(pair => pair.Value is RibbonGroup))
+            sources[pair.Key] = pair.Value;
         ribbon.QuickAccessItems.Clear();
         foreach (QatDto qat in layout.QuickAccess)
         {
@@ -383,7 +390,7 @@ public static class RibbonCustomizationSerializer
             {
                 ribbon.QuickAccessItems.Add(declared);
             }
-            else if (sources.TryGetValue(qat.Ref, out FrameworkElement? source))
+            else if (sources.TryGetValue(qat.Ref, out FrameworkElement? source) && !ribbon.IsInQuickAccess(source))
             {
                 ribbon.QuickAccessItems.Add(ribbon.CreateCommandProxy(source, RibbonControlSize.Small));
             }
@@ -442,7 +449,8 @@ public static class RibbonCustomizationSerializer
 
                 foreach (CommandDto commandDto in groupDto.Commands ?? new List<CommandDto>())
                 {
-                    if (commandDto.SourceId is null || !sources.TryGetValue(commandDto.SourceId, out FrameworkElement? source))
+                    if (commandDto.SourceId is null || !sources.TryGetValue(commandDto.SourceId, out FrameworkElement? source)
+                        || source is RibbonGroup)
                     {
                         continue;
                     }
@@ -515,9 +523,17 @@ public static class RibbonCustomizationSerializer
         foreach (RibbonTab tab in ribbon.Tabs)
         {
             string tabKey = Ribbon.GetCommandId(tab) ?? tab.Header?.ToString() ?? "tab";
+            var groupOccurrences = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (RibbonGroup group in tab.Groups)
             {
                 string groupKey = Ribbon.GetCommandId(group) ?? group.Header?.ToString() ?? "group";
+                groupOccurrences.TryGetValue(groupKey, out int groupOrdinal);
+                groupOccurrences[groupKey] = groupOrdinal + 1;
+                string groupAutoId = $"auto:group:{tabKey}/{groupKey}#{groupOrdinal}";
+                string? groupId = Ribbon.GetCommandId(group);
+                idOf.TryAdd(group, groupId ?? groupAutoId);
+                byId.TryAdd(groupAutoId, group);
+                if (groupId is not null) byId.TryAdd(groupId, group);
                 // A custom group usually borrows one of the catalog's command/group icons. Do
                 // not register the custom group's own id for that image: FindIconId would then
                 // persist a self-reference that cannot exist yet when the group is rebuilt.

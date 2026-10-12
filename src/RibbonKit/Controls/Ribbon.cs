@@ -406,6 +406,11 @@ public class Ribbon : Control
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         LayoutUpdated += OnLayoutUpdated;
+        ToolTipOpening += (_, e) =>
+        {
+            if (e.OriginalSource is DependencyObject target && RibbonPopupInteraction.GetSuppressHover(target))
+                e.Handled = true;
+        };
     }
 
     /// <summary>The tabs hosted by this ribbon.</summary>
@@ -1101,27 +1106,30 @@ public class Ribbon : Control
         RibbonCustomizeRequested?.Invoke(this, EventArgs.Empty);
 
     /// <summary>
-    /// Adds <paramref name="source"/> (a button, toggle, split button, dropdown, combo box or gallery) to
+    /// Adds <paramref name="source"/> (a button, toggle, split button, dropdown, combo box, gallery or group) to
     /// the quick access toolbar. A removed directly declared QAT item is restored as itself,
-    /// except combo boxes and galleries, which use dropdown copies.
-    /// For a ribbon-group source, a small PROXY button is created that mirrors its
+    /// except combo boxes, galleries and groups, which use dropdown copies.
+    /// For a command in a ribbon group, a small PROXY button is created that mirrors its
     /// 16px icon and ScreenTip and invokes it (toggles stay state-synced via a two-way IsChecked
     /// binding). Combo boxes use an icon dropdown that selects from their existing items;
     /// editable text input stays on the original combo. Galleries retain their native tiles,
     /// grouping, selection and preview handlers in the copy's popup.
+    /// Groups stay collapsed while in QAT and open their existing full-content flyout at its button.
+    /// Custom-group command copies resolve to their original command before creating or checking a QAT entry.
     /// Returns <see langword="false"/> when the control is already in the QAT or its type
     /// does not have a supported quick-access representation.
     /// </summary>
     public bool AddToQuickAccess(FrameworkElement source)
     {
         ArgumentNullException.ThrowIfNull(source);
+        source = ResolveQuickAccessSource(source);
 
         if (!IsSupportedQuickAccessSource(source) || IsInQuickAccess(source))
         {
             return false;
         }
 
-        if (_declaredQuickAccessCommands.Contains(source) && source is not (RibbonComboBox or RibbonGallery))
+        if (_declaredQuickAccessCommands.Contains(source) && source is not (RibbonComboBox or RibbonGallery or RibbonGroup))
         {
             // Restore the authored item itself, including its command bindings/handlers.
             QuickAccessItems.Add(source);
@@ -1146,12 +1154,13 @@ public class Ribbon : Control
     }
 
     private static bool IsSupportedQuickAccessSource(FrameworkElement source) =>
-        source is RibbonButton or RibbonToggleButton or RibbonDropDownButton or RibbonComboBox or RibbonGallery;
+        source is RibbonButton or RibbonToggleButton or RibbonDropDownButton or RibbonComboBox or RibbonGallery or RibbonGroup;
 
     // Directly declared QAT commands may have no ribbon-group counterpart. Keep their
     // source objects for this ribbon's lifetime so Remove/Clear/Apply cannot erase the
     // catalog. Proxies and transient merge commands must never become catalog sources.
     private readonly List<FrameworkElement> _declaredQuickAccessCommands = new();
+    private readonly HashSet<RibbonGroupQuickAccessProxy> _groupQuickAccessItems = new();
 
     internal IReadOnlyList<FrameworkElement> DeclaredQuickAccessCommands => _declaredQuickAccessCommands;
 
@@ -1176,6 +1185,13 @@ public class Ribbon : Control
 
     private void OnQuickAccessItemsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        foreach (var removed in _groupQuickAccessItems.Where(item => !QuickAccessItems.Contains(item)).ToArray())
+        {
+            removed.Source.ReleaseQuickAccess(removed);
+            _groupQuickAccessItems.Remove(removed);
+        }
+        foreach (var added in QuickAccessItems.OfType<RibbonGroupQuickAccessProxy>())
+            if (_groupQuickAccessItems.Add(added)) added.Source.RetainQuickAccess(added);
         if (e.NewItems is not null)
         {
             foreach (object item in e.NewItems)
@@ -1194,7 +1210,7 @@ public class Ribbon : Control
                     }
                 }
 
-                if (item is FrameworkElement choice && item is (RibbonComboBox or RibbonGallery))
+                if (item is FrameworkElement choice && item is (RibbonComboBox or RibbonGallery or RibbonGroup))
                 {
                     // Normalize directly authored QAT choices after collection notification.
                     // The source stays retained/logically owned for bindings and Reset.
@@ -1214,11 +1230,22 @@ public class Ribbon : Control
     }
 
     /// <summary>Whether <paramref name="source"/> is already in the quick access toolbar,
-    /// either directly or via a proxy created by <see cref="AddToQuickAccess"/>.</summary>
-    public bool IsInQuickAccess(FrameworkElement source) =>
-        QuickAccessItems.Any(item =>
-            ReferenceEquals(item, source)
-            || (item is DependencyObject d && ReferenceEquals(GetQuickAccessSource(d), source)));
+    /// either directly or via a proxy created by <see cref="AddToQuickAccess"/>.
+    /// Custom-group copies compare using their original command.</summary>
+    public bool IsInQuickAccess(FrameworkElement source)
+    {
+        source = ResolveQuickAccessSource(source);
+        return QuickAccessItems.OfType<FrameworkElement>()
+            .Any(item => ReferenceEquals(ResolveQuickAccessSource(item), source));
+    }
+
+    private static FrameworkElement ResolveQuickAccessSource(FrameworkElement source)
+    {
+        // A custom-group command is already a proxy. Copying it into QAT must
+        // use the original menu/selection owner and the same duplicate identity.
+        while (GetQuickAccessSource(source) is { } original) source = original;
+        return source;
+    }
 
     /// <summary>
     /// Creates a proxy button mirroring <paramref name="source"/>'s icon/ScreenTip that invokes
@@ -1230,6 +1257,10 @@ public class Ribbon : Control
         FrameworkElement proxy;
         switch (source)
         {
+            case RibbonGroup group:
+                proxy = new RibbonGroupQuickAccessProxy(group, this) { Size = size };
+                break;
+
             case RibbonGallery gallery:
                 proxy = new RibbonGalleryQuickAccessProxy(gallery, this) { Size = size };
                 proxy.SetBinding(FlowDirectionProperty, new Binding(nameof(FlowDirection)) { Source = this });
@@ -3998,6 +4029,8 @@ public class Ribbon : Control
 
     private void AttachQatContextMenu(FrameworkElement host)
     {
+        host.SetValue(RibbonPopupInteraction.QuickAccessRibbonProperty, this);
+        RibbonPopupInteraction.SetSuppressHover(host, false);
         host.ContextMenu = EnsureQatContextMenu();
         host.ContextMenuOpening -= OnQatHostContextMenuOpening;
         host.ContextMenuOpening += OnQatHostContextMenuOpening;

@@ -670,7 +670,11 @@ internal sealed class KeyTipService
 
             string? keys = KeyTip.GetKeys(element) ?? (digit <= 9 ? digit.ToString() : null);
             digit++;
-            items.Add(new KeyTipItem(element, KeyTipKind.Leaf, null, keys));
+            items.Add(new KeyTipItem(element,
+                element is RibbonGroupQuickAccessProxy ? KeyTipKind.MenuOpener : KeyTipKind.Leaf, null, keys)
+            {
+                Payload = element,
+            });
         }
 
         // The chevron represents every zero-slotted item as one root action. It takes the next QAT
@@ -760,6 +764,7 @@ internal sealed class KeyTipService
 
     private KeyTipLevel BuildMenuLevel(RibbonDropDownButton opener)
     {
+        if (opener is RibbonGroupQuickAccessProxy groupCopy) return BuildFlyoutLevel(groupCopy.Source);
         var items = new List<KeyTipItem>();
 
         foreach (object? entry in opener.Items)

@@ -93,6 +93,8 @@ public class RibbonQuickAccessPage : Control, IRibbonFillPage
     /// <inheritdoc />
     public override void OnApplyTemplate()
     {
+        if (_availableList is not null)
+            _availableList.SelectionChanged -= OnAvailableSelectionChanged;
         if (_addButton is not null)
         {
             _addButton.Click -= OnAddClick;
@@ -121,6 +123,8 @@ public class RibbonQuickAccessPage : Control, IRibbonFillPage
         _removeButton = GetTemplateChild(RemoveButtonPartName) as ButtonBase;
         _upButton = GetTemplateChild(UpButtonPartName) as ButtonBase;
         _downButton = GetTemplateChild(DownButtonPartName) as ButtonBase;
+        if (_availableList is not null)
+            _availableList.SelectionChanged += OnAvailableSelectionChanged;
 
         if (_addButton is not null)
         {
@@ -153,6 +157,7 @@ public class RibbonQuickAccessPage : Control, IRibbonFillPage
         ObserveRibbon(Ribbon)   ;
         RebuildAvailableList();
         RebuildCurrentList();
+        UpdateAddButton();
     }
 
     // Follow the ribbon's QuickAccessItems while this page is in use, so external changes
@@ -177,8 +182,20 @@ public class RibbonQuickAccessPage : Control, IRibbonFillPage
         }
     }
 
-    private void OnQuickAccessItemsChanged(object? sender, NotifyCollectionChangedEventArgs e) =>
+    private void OnQuickAccessItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
         RebuildCurrentList();
+        UpdateAddButton();
+    }
+
+    private void OnAvailableSelectionChanged(object sender, SelectionChangedEventArgs e) => UpdateAddButton();
+
+    private void UpdateAddButton()
+    {
+        _addButton?.SetCurrentValue(IsEnabledProperty,
+            Ribbon is { } ribbon && _availableList?.SelectedItem is RibbonCommandEntry entry
+                && !ribbon.IsInQuickAccess(entry.Control));
+    }
 
     private void RebuildAvailableList()
     {
@@ -188,7 +205,7 @@ public class RibbonQuickAccessPage : Control, IRibbonFillPage
         }
 
         _availableList.ItemsSource = Ribbon is { } ribbon
-            ? RibbonCommandCatalog.CollectAvailable(ribbon)
+            ? RibbonCommandCatalog.CollectAvailable(ribbon, includeGroups: true)
             : new ObservableCollection<RibbonCommandEntry>();
     }
 

@@ -49,7 +49,7 @@ public enum RibbonGroupLayout
 [TemplatePart(Name = PopupHostPartName, Type = typeof(Border))]
 [TemplatePart(Name = CollapsedButtonPartName, Type = typeof(ToggleButton))]
 [TemplatePart(Name = DialogLauncherPartName, Type = typeof(ButtonBase))]
-public class RibbonGroup : HeaderedItemsControl
+public partial class RibbonGroup : HeaderedItemsControl
 {
     private const string NormalHostPartName = "PART_NormalHost";
     private const string PopupPartName = "PART_Popup";
@@ -319,7 +319,11 @@ public class RibbonGroup : HeaderedItemsControl
         }
     }
 
-    internal void SetSizeState(RibbonGroupSizeState state) => SetValue(SizeStatePropertyKey, state);
+    internal void SetSizeState(RibbonGroupSizeState state)
+    {
+        _adaptiveSizeState = state;
+        SetValue(SizeStatePropertyKey, IsQuickAccessCollapsed ? RibbonGroupSizeState.Collapsed : state);
+    }
 
     /// <summary>
     /// The single button shown while the group is collapsed; its flyout hosts the full
@@ -344,6 +348,10 @@ public class RibbonGroup : HeaderedItemsControl
     /// <inheritdoc />
     public override void OnApplyTemplate()
     {
+        EndQuickAccess();
+        _dismissHelper?.OnClosed();
+        if (_popup is not null) _popup.SetCurrentValue(Popup.IsOpenProperty, false);
+        RestoreFlyoutContent();
         if (_popup is not null)
         {
             _popup.Opened -= OnPopupOpened;
@@ -357,7 +365,11 @@ public class RibbonGroup : HeaderedItemsControl
         }
 
         if (_collapsedButton is not null)
+        {
             _collapsedButton.PreviewKeyDown -= OnCollapsedButtonKeyDown;
+            _collapsedButton.PreviewMouseDown -= OnCollapsedButtonPressed;
+            _collapsedButton.PreviewTouchDown -= OnCollapsedButtonTouched;
+        }
 
         if (_dialogLauncher is not null)
         {
@@ -387,7 +399,11 @@ public class RibbonGroup : HeaderedItemsControl
         }
 
         if (_collapsedButton is not null)
+        {
             _collapsedButton.PreviewKeyDown += OnCollapsedButtonKeyDown;
+            _collapsedButton.PreviewMouseDown += OnCollapsedButtonPressed;
+            _collapsedButton.PreviewTouchDown += OnCollapsedButtonTouched;
+        }
 
         if (_dialogLauncher is not null)
         {
@@ -447,12 +463,14 @@ public class RibbonGroup : HeaderedItemsControl
     {
         // Light-dismiss is managed explicitly (the popup uses StaysOpen=True so WPF's
         // capture-based dismissal never races the collapsed button's clicks).
-        _dismissHelper ??= new PopupDismissHelper(
-            this,
+        _dismissHelper?.Dispose();
+        _dismissHelper = new PopupDismissHelper(
+            _quickAccessProxy ?? (FrameworkElement)this,
             () => _popup,
             CloseFlyout);
         _dismissHelper.OnOpened();
         _returnFocusOnClose = false;
+        if (_quickAccessProxy is not null) AllowQuickAccessContentHover();
 
         // Move the group's content grid from the (hidden) in-ribbon host into the flyout.
         if (_normalHost?.Child is { } content && _popupHost is not null)
@@ -486,6 +504,11 @@ public class RibbonGroup : HeaderedItemsControl
         e.Handled = true;
     }
 
+    // Retarget the shared flyout before the source toggle handles its real press.
+    // Popup.Closed is asynchronous and may be cancelled by an immediate reopen.
+    private void OnCollapsedButtonPressed(object sender, MouseButtonEventArgs e) => EndQuickAccess();
+    private void OnCollapsedButtonTouched(object? sender, TouchEventArgs e) => EndQuickAccess();
+
     private void OnFlyoutKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Handled) return;
@@ -513,8 +536,10 @@ public class RibbonGroup : HeaderedItemsControl
 
     private void CloseFlyout()
     {
-        _returnFocusOnClose = _popupHost?.IsKeyboardFocusWithin == true;
+        _returnFocusOnClose = _dismissHelper?.DismissedByOutsidePress != true
+            && _popupHost?.IsKeyboardFocusWithin == true;
         _collapsedButton?.SetCurrentValue(ToggleButton.IsCheckedProperty, false);
+        _popup?.SetCurrentValue(Popup.IsOpenProperty, false);
     }
 
     /// <summary>
@@ -522,6 +547,7 @@ public class RibbonGroup : HeaderedItemsControl
     /// Office does. Openers are exempt — clicking a drop-down or split button's chevron, a gallery's
     /// expand or scroll buttons, or a combo box's chevron is the START of an interaction, not the
     /// end of one.
+    /// Toggle, checkbox and radio options also stay open so several choices can be changed.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -565,7 +591,7 @@ public class RibbonGroup : HeaderedItemsControl
     /// menu item and its drop-down button, which is exactly where it would get this backwards.
     /// </remarks>
     private static bool KeepsFlyoutOpen(object? originalSource) =>
-        originalSource is FrameworkElement element
+        originalSource is ToggleButton || originalSource is FrameworkElement element
         && element.TemplatedParent switch
         {
             // The primary half of a split button IS the command; only its chevron is an opener.
@@ -578,11 +604,22 @@ public class RibbonGroup : HeaderedItemsControl
 
     private void OnPopupClosed(object? sender, EventArgs e)
     {
-        bool returnFocus = _returnFocusOnClose || _popupHost?.IsKeyboardFocusWithin == true;
+        bool returnFocus = _dismissHelper?.DismissedByOutsidePress != true
+            && (_returnFocusOnClose || _popupHost?.IsKeyboardFocusWithin == true);
         _returnFocusOnClose = false;
         _dismissHelper?.OnClosed();
 
         RestoreFlyoutContent();
+        RestoreQuickAccessHoverContent();
+
+        if (_quickAccessProxy is { } proxy)
+        {
+            proxy.SetCurrentValue(RibbonDropDownButton.IsDropDownOpenProperty, false);
+            if (returnFocus && proxy.IsVisible && proxy.IsEnabled
+                && proxy.Template.FindName("PART_Toggle", proxy) is UIElement opener) opener.Focus();
+            EndQuickAccess(proxy);
+            return;
+        }
 
         if (returnFocus && _collapsedButton is { IsVisible: true, IsEnabled: true })
             _collapsedButton.Focus();
@@ -611,6 +648,9 @@ public class RibbonGroup : HeaderedItemsControl
     {
         switch (node)
         {
+            case RibbonComboBox { IsDropDownOpen: true } combo:
+                combo.SetCurrentValue(ComboBox.IsDropDownOpenProperty, false);
+                break;
             case InRibbonGallery { IsDropDownOpen: true } gallery:
                 gallery.SetCurrentValue(InRibbonGallery.IsDropDownOpenProperty, false);
                 break;

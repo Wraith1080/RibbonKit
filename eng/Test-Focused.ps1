@@ -21,7 +21,7 @@ param(
     [string]$Filter,
     [string[]]$Scenes,
     [ValidateSet('SplitButtonDensity', 'StackedCustomGroups', 'NativeGalleryPopup',
-        'GalleryQuickAccess', 'GalleryQuickAccessKeyboard', 'GalleryQuickAccessVisible',
+        'GalleryQuickAccess', 'GalleryQuickAccessKeyboard', 'GalleryQuickAccessVisible', 'GroupQuickAccess',
         'ComboQuickAccess', 'ComboQuickAccessKeyboard', 'GroupedGalleries',
         'GalleryHeadersAndQatCommands', 'DensitySelector', 'MessageTransition',
         'QatThemeRestore', 'ColoredQat', 'QatBackdrop', 'QatCommandInteraction', 'QatVisibility', 'CustomizationLayout', 'MinimizedDivider', 'TouchChrome', 'GroupLauncher',

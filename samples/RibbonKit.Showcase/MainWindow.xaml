@@ -609,6 +609,8 @@
                     <!-- Width fits exactly 3 tile columns (3 × 78px tiles + 21px chrome/buttons) -->
                     <rk:InRibbonGallery x:Name="StylesGallery"
                                         Header="Styles" Icon="{StaticResource Icon.Style}"
+                                        ScreenTipTitle="Styles"
+                                        ScreenTipText="Choose a text style. Point to a style to preview it, then click to apply it to the sample text."
                                         rk:Ribbon.CommandId="command.styles"
                                         DropDownHeader="Choose a style"
                                         Width="258"
@@ -825,6 +827,8 @@
                 <rk:RibbonGroup Header="Theme" rk:Ribbon.CommandId="group.view.theme" Icon="{StaticResource Icon.Palette}">
                     <rk:InRibbonGallery x:Name="ThemeGallery"
                                         Header="Theme" Icon="{StaticResource Icon.Palette}"
+                                        ScreenTipTitle="Ribbon theme"
+                                        ScreenTipText="Choose the ribbon's appearance, from classic Office themes to Crystal."
                                         rk:Ribbon.CommandId="command.theme"
                                         Width="158"
                                         PopupWidth="440"
@@ -908,6 +912,8 @@
                     <!-- Accent swatches as a gallery: pick a color to recolor the theme -->
                     <rk:InRibbonGallery x:Name="AccentGallery"
                                         Header="Accent" Icon="{StaticResource Icon.ColorDrop}"
+                                        ScreenTipTitle="Accent color"
+                                        ScreenTipText="Choose the ribbon's accent color, or choose Auto to restore the theme's default accent."
                                         rk:Ribbon.CommandId="command.accent"
                                         DropDownHeader="Choose an accent color"
                                         Width="150"

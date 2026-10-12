@@ -167,6 +167,56 @@ public class QuickAccessOverflowTests
         Assert.IsType<RibbonSplitButton>(proxy);
     });
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Adding_a_custom_group_menu_through_its_context_menu_uses_the_original_command(bool split) => Sta.Run(() =>
+    {
+        var ribbon = new Ribbon();
+        RibbonDropDownButton original = split ? new RibbonSplitButton() : new RibbonDropDownButton();
+        original.Header = "Mode"; original.DropDownHeader = "Choose spacing";
+        Ribbon.SetCommandId(original, "command.mode");
+        var first = new RibbonMenuItem { Header = "Mouse" };
+        var last = new RibbonMenuItem { Header = "Touch" };
+        int invoked = 0; last.Click += (_, _) => invoked++;
+        original.Items.Add(first); original.Items.Add(last);
+        var home = new RibbonTab { Header = "Home" };
+        var sourceGroup = new RibbonGroup { Header = "Mode" }; sourceGroup.Items.Add(original); home.Groups.Add(sourceGroup);
+        var customTab = new RibbonTab { Header = "Custom Tab" };
+        var customGroup = new RibbonGroup { Header = "Custom Group" };
+        Ribbon.SetIsCustom(customTab, true); Ribbon.SetCommandId(customTab, "custom:tab");
+        Ribbon.SetIsCustom(customGroup, true); Ribbon.SetCommandId(customGroup, "custom:group");
+        var copy = (RibbonDropDownButton)ribbon.CreateCommandProxy(original, RibbonControlSize.Medium);
+        customGroup.Items.Add(copy); customTab.Groups.Add(customGroup);
+        ribbon.Tabs.Add(home); ribbon.Tabs.Add(customTab); ribbon.SelectedTab = customTab;
+        var createMenu = typeof(Ribbon).GetMethod("CreateRibbonContextMenu",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+        var context = (ContextMenu)createMenu.Invoke(ribbon, new object[] { copy })!;
+        ((MenuItem)context.Items[0]).RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        var qat = Assert.IsAssignableFrom<RibbonDropDownButton>(Assert.Single(ribbon.QuickAccessItems));
+        qat.IsDropDownOpen = true;
+        Assert.Equal(new object[] { first, last }, qat.Items.Cast<object>());
+        Assert.Same(original, Ribbon.GetQuickAccessSource(qat));
+        Assert.Equal("Choose spacing", qat.DropDownHeader);
+        Assert.Equal(split, qat is RibbonSplitButton);
+        last.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); Sta.Drain();
+        Assert.Equal(1, invoked);
+        qat.IsDropDownOpen = false; Sta.Drain();
+        Assert.Equal(new object[] { first, last }, original.Items.Cast<object>());
+        Assert.Empty(copy.Items);
+        Assert.True(ribbon.IsInQuickAccess(copy));
+        Assert.False(ribbon.AddToQuickAccess(original));
+        Assert.False(ribbon.AddToQuickAccess(copy));
+        context = (ContextMenu)createMenu.Invoke(ribbon, new object[] { copy })!;
+        Assert.False(((MenuItem)context.Items[0]).IsEnabled);
+        string saved = RibbonCustomizationSerializer.Serialize(ribbon);
+        ribbon.QuickAccessItems.Clear(); RibbonCustomizationSerializer.Apply(ribbon, saved);
+        qat = Assert.IsAssignableFrom<RibbonDropDownButton>(Assert.Single(ribbon.QuickAccessItems));
+        Assert.Same(original, Ribbon.GetQuickAccessSource(qat));
+        qat.IsDropDownOpen = true; Assert.Equal(new object[] { first, last }, qat.Items.Cast<object>());
+        qat.IsDropDownOpen = false; Sta.Drain();
+    });
+
     [Fact]
     public void Adding_a_command_to_the_quick_access_toolbar_adds_a_proxy_of_it_once() => Sta.Run(() =>
     {
@@ -188,7 +238,7 @@ public class QuickAccessOverflowTests
         var ribbon = new Ribbon();
         FrameworkElement[] unsupported =
         {
-            new RibbonGroup(),
+            new TextBox(),
             new Button(),
         };
 

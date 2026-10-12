@@ -527,3 +527,175 @@ The existing RibbonKit-only `GlassOverlay` consumer scope passed. Normal Debug
 Showcase built with zero warnings/errors. Visual baselines and the full suite
 were not rerun because authored glass paint is unchanged. Native Mica review is
 tracked in the [Office glass status](../../09-FUTURE-THEMES-PLAN.md#office-glass-iteration).
+
+### 3.249 Groups in QAT with membership collapse — 2026-10-11
+
+By user direction, source groups stay collapsed for the entire QAT membership.
+Opening/dismissing their QAT dropdown does not change row layout, so there is no
+input-release restoration coordinator or fixed delay. Removal releases the
+constraint and invalidates adaptive widths; a naturally collapsed group stays
+collapsed. The sizing panel excludes retained groups from expanded width probes
+and reduction ordering, including groups with `CanResize=false`. Visible
+membership changes commit final layout first and reuse the existing render-only
+transition under the dropdown motion policy. Motion changes and unload cancel
+clocks while retaining consumer transform/opacity bindings; open sibling popup
+anchors are excluded from the glide.
+
+An internal dropdown proxy opens the source's existing collapsed `Popup` and
+native content grid. Inactive tabs remain unselected. WPF defers opening a popup
+under an unloaded visual parent, so the same popup is detached from its source
+template panel during that session and reinserted on close; no second content
+view or group picture is created. Logical items, namescope, resources, editor
+bindings, gallery selection and native controls remain source-owned. Placement
+reloads rebind the proxy's flow direction. Tab/group removal, selection changes,
+retemplating, removal/reset and unload release active flyout ownership. The
+original collapsed opener retargets the shared popup before handling its press,
+because an immediate reopen can cancel asynchronous `Popup.Closed`.
+The group proxy disables the base dropdown's own popup lifecycle before attaching
+template handlers. Otherwise its unused popup can register another dismiss
+helper, which cancels native content presses routed through an active source tab.
+Active and inactive native content press regressions reproduce and guard that
+failure. Toggle/check/radio clicks keep the collapsed flyout open for additional
+changes; ordinary commands retain close-after-invocation behavior.
+Clearing the unused popup's template binding and assigning `IsOpen=false` still
+allowed the two-way expression to reopen it. Its empty border measured about
+10 by 10 DIP and appeared as a small circle beside the source flyout. A local
+one-way false binding now keeps that popup closed independently of the opener.
+Native-popup assertions reproduced this in four active/inactive strip/overflow
+cases before the fix; all 32 group runtime cases and the independent 288-case
+matrix plus overflow/keyboard/KeyTips passed afterward.
+The outer overflow dismiss helper follows a nested source flyout's opener through
+the existing popup stack, so native content routed through an active tab remains
+inside its parent flyout despite retaining its original logical ownership.
+
+QAT popup helpers mark an inherited paint/preview suppression flag on the ribbon;
+QAT hosts and native flyout content explicitly stay interactive. Shared hover
+triggers, animated washes, ScreenTips and gallery previews honor the flag without
+disabling commands. Mouse/touch outside presses remain available to normal input
+routing, and outside dismissal avoids returning focus to the former opener.
+Capture-owned outside presses release capture before normal routing. Dropdown
+sources synchronously reclaim borrowed items when reopening before the deferred
+return, keeping their native menu ready for the first opening layout.
+
+Groups enter only the Customize QAT catalog and group caption context menu.
+Existing command IDs keep their order; automatic group IDs use a separate prefix
+and per-header ordinal, so reconciliation of unrelated named siblings does not
+erase an untagged group's QAT identity.
+Restore resolves recreated custom groups to their final objects and deduplicates
+QAT references. Group references are rejected from custom-group command lists,
+and existing merge provenance/persistence exclusions are retained. KeyTips
+descend through the source flyout from strip and overflow, whose group copies
+mirror the strip's explicit keys. The proxy's ExpandCollapse peer exposes native
+flyout children. No public API or generic provider contract was added.
+
+The complete focused Release runtime rerun passed 138 cases, including 32 group cases
+and existing combo/gallery, popup, adaptive, serializer, animation and KeyTip
+regressions. The independent `GroupQuickAccess` scope passed 288 combinations of
+all six themes, both variants, densities, flow directions, simulated 125%/200%
+DPI and all three placements, plus overflow/keyboard, inactive-tab KeyTips and
+native UIA checks. Three native flyout captures were inspected. Fifteen selected
+QAT visual scenes passed; only the Customize QAT list approval changed after
+actual/diff review to include groups.
+The existing `GalleryQuickAccess` independent consumer scope also passed.
+The preceding runtime run passed 137 of 138 cases, with one split-button KeyTip
+failure. The corresponding 106-case runtime slice passed in the unchanged baseline;
+the complete rerun passed without code changes.
+The additional combo consumer scope did not produce a clean pass: its keyboard/
+KeyTip checks were intermittent, and a separate unchanged `a2ebe40` archive also
+failed around overflow KeyTips. Existing focused runtime combo/KeyTip regressions
+passed; the consumer instability remains a recorded verification limit.
+
+Build and live acceptance status is maintained in the
+[group QAT status](../../08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#group-qat-implementation-and-acceptance).
+Synthetic input and simulated DPI do not establish live pointer/keyboard,
+physical touch, slow-machine or mixed-monitor acceptance. Full validation remains
+deferred by request.
+
+### 3.250 Custom-group command additions resolve the original QAT source — 2026-10-11
+
+A custom-group command is already a proxy. Treating it as a new QAT source made
+dropdown/split copies borrow an empty intermediate menu, showing only the header;
+combo/gallery copies also lost their specialized representation. `AddToQuickAccess`
+and `IsInQuickAccess` now resolve the original source through existing proxy links.
+This preserves native items, handlers, selection and persistence identity, and
+deduplicates additions from built-in controls and their custom-group copies.
+No public API was added.
+
+Customize QAT refreshes Add availability on selection and QAT collection changes,
+including external context-menu additions and removal. Duplicate invocations are
+also rejected by the runtime check. Four dropdown/split/combo/gallery cases failed
+before the source fix. The final 114-case focused runtime slice passed, including
+ownership, source invocation, restore, declared commands and merge exclusions.
+The independent `QatCommandInteraction` scope passed 12 new dropdown/split cases
+using the public Customize Ribbon page, routed context-menu opening and native
+UIA invocation across all placements and both directions. It checks that Customize
+QAT and the context menu disable duplicate additions and re-enable after removal.
+One RTL QAT-page scene passed after actual/diff inspection showed only the intended
+disabled Add-button change. Current builds and live acceptance are in the
+[custom command QAT status](../../08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#custom-group-command-copies-in-qat).
+
+### 3.251 Gallery ScreenTips follow QAT and custom-group copies — 2026-10-11
+
+`RibbonGallery` adds optional `ScreenTipTitle` and `ScreenTipText` dependency
+properties, inherited by `InRibbonGallery`, using the existing `ScreenTipHelper`
+and shared `RibbonScreenTip` template. Six compatible symbols are recorded in
+Unshipped; the shipped API baseline is unchanged. This aligns gallery authoring
+with existing ribbon controls and gives copies source-owned description metadata
+without cloning tooltips or adding a projection-provider API.
+
+Gallery copies bind the description and resolve the tip title from the source's
+explicit title or the copy's own header. Keeping that fallback on the copy preserves
+custom renames. The catalog can use the tip title when no gallery header is authored.
+Clearing both source properties removes its generated tip; copies retain their
+existing header-only fallback. Each control owns its tip instance, and native tile
+tooltips are preserved. Showcase supplies descriptions for its three main galleries
+and Localization/RTL gallery. Individual gallery items deliberately receive no
+KeyTip badges; arrows and selection behavior are unchanged.
+
+The focused 26-case runtime slice covers both gallery types, live metadata changes,
+clearing, header fallback, renamed copies, catalog and existing gallery lifecycle.
+The independent gallery consumer adds 48 combinations across both gallery types,
+all themes, light/dark and LTR/RTL, opening and realizing source/custom/QAT/overflow
+tips through shared resources. Two rendered captures were inspected. Current builds,
+live hover review and the deferred full gate are maintained in the
+[gallery ScreenTip status](../../08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#gallery-screentips).
+
+### 3.252 Internal hover-suppression bindings use property identity — 2026-10-12
+
+The shared utility rim bound to `(controls:RibbonPopupInteraction.SuppressHover)`
+by name. Runtime path resolution could not find the internal owner, producing the
+reported `PART_ModalClose`/`CrystalUtilityRim` error. The shared application-orb
+template had the same path. Both now reference an internal static `PropertyPath`
+constructed with the registered dependency property as its parameter. Property
+triggers already hold the DP identity and need no change; the helper remains internal
+and the public API baseline is unchanged.
+
+The regression evaluates each realized template's exact binding even when hover is
+inactive, verifies false/true/false through QAT popup open/close, and retains pressed
+feedback. Both cases failed with the original paths and pass with the fix. The final
+47-case runtime slice and independent group consumer passed; 12 new consumer cases
+cover both paths, all QAT placements, LTR/RTL and native modal-close invocation.
+Visual evidence, original-binding fixture instability, normal builds and remaining
+live review are maintained in the
+[hover binding follow-up](../../08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#hover-binding-follow-up--2026-10-12).
+
+### 3.253 Crystal utility snapshots initialize native rendering — 2026-10-12
+
+Selecting `crystal-light-utility-scrollbars-100` in a fresh process could measure
+the disconnected scene before WPF's native window renderer initialized. The first
+and second captures then differed in ribbon layout, preventing a trustworthy
+comparison to the approved image. Inspection of the two captures and their diff
+showed geometry drift during fixture startup.
+
+`CreateCrystalUtilityScene` now calls the existing `InitializeWindowRendering`
+helper before constructing/measuring the scene, as other disconnected fixtures
+already do. Repeatability failures save the first capture, repeated capture and
+their pixel diff before throwing. The exact equality guard and comparison tolerances
+remain unchanged. This correction affects the test fixture, with no runtime or
+approved-image changes.
+
+All six selected light/dark utility scenes at 100/200% and RTL passed. The original
+light 100% scene passed in three fresh test processes, each checking two identical
+captures and the existing approval. This is focused visual evidence, not a full-suite
+pass. Current status is in the
+[hover binding follow-up](../../08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#hover-binding-follow-up--2026-10-12).

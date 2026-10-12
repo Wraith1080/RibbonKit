@@ -86,8 +86,15 @@ public class RibbonGroupsPanel : Panel
             // ConstrainChildWidth set (the groups row), the host measures us AT the viewport width, so
             // availableSize.Width is exactly the visible area: groups reduce to fit the viewport first,
             // and only the leftover overflow scrolls. See RibbonScrollContentHost.MeasureOverride.
-            int[] order = BuildReductionOrder(_stateWidths!);
-            int[] states = ReductionAlgorithm.ComputeStates(availableSize.Width, _stateWidths!, order);
+            var effectiveWidths = (double[][])_stateWidths!.Clone();
+            for (int i = 0; i < count; i++)
+                if (InternalChildren[i] is RibbonGroup { IsQuickAccessCollapsed: true } qatGroup)
+                {
+                    qatGroup.Measure(probeSize);
+                    effectiveWidths[i] = new[] { qatGroup.DesiredSize.Width };
+                }
+            int[] order = BuildReductionOrder(effectiveWidths);
+            int[] states = ReductionAlgorithm.ComputeStates(availableSize.Width, effectiveWidths, order);
 
             double totalWidth = 0;
             double maxHeight = 0;
@@ -96,7 +103,8 @@ public class RibbonGroupsPanel : Panel
                 UIElement child = InternalChildren[i];
                 if (child is RibbonGroup group && group.CanResize)
                 {
-                    RibbonGroupSizeState desired = _stateMaps![i][states[i]];
+                    RibbonGroupSizeState desired = group.IsQuickAccessCollapsed
+                        ? RibbonGroupSizeState.Collapsed : _stateMaps![i][states[i]];
                     if (group.SizeState != desired)
                     {
                         // Threshold crossing: this is the only moment control sizes change.
@@ -191,7 +199,7 @@ public class RibbonGroupsPanel : Panel
         for (int i = 0; i < count; i++)
         {
             UIElement child = InternalChildren[i];
-            if (child is RibbonGroup group && group.CanResize)
+            if (child is RibbonGroup group && group.CanResize && !group.IsQuickAccessCollapsed)
             {
                 maps[i] = GetStateSequence(group.ReductionMode);
                 widths[i] = new double[maps[i].Length];
@@ -206,7 +214,7 @@ public class RibbonGroupsPanel : Panel
             {
                 if (child is RibbonGroup fixedGroup)
                 {
-                    fixedGroup.SetSizeState(RibbonGroupSizeState.Large);
+                    if (!fixedGroup.IsQuickAccessCollapsed) fixedGroup.SetSizeState(RibbonGroupSizeState.Large);
                 }
 
                 child.Measure(probeSize);
@@ -255,7 +263,7 @@ public class RibbonGroupsPanel : Panel
 
         for (int i = 0; i < InternalChildren.Count; i++)
         {
-            if (InternalChildren[i] is not RibbonGroup group || !group.CanResize)
+            if (InternalChildren[i] is not RibbonGroup group || !group.CanResize || group.IsQuickAccessCollapsed)
             {
                 continue;
             }

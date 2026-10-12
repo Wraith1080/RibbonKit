@@ -39,6 +39,16 @@ public class RibbonGallery : ListBox
     /// <summary>Identifies the <see cref="Icon"/> dependency property.</summary>
     public static readonly DependencyProperty IconProperty = RibbonDropDownButton.IconProperty.AddOwner(typeof(RibbonGallery));
 
+    /// <summary>Identifies the <see cref="ScreenTipTitle"/> dependency property.</summary>
+    public static readonly DependencyProperty ScreenTipTitleProperty = DependencyProperty.Register(
+        nameof(ScreenTipTitle), typeof(string), typeof(RibbonGallery),
+        new FrameworkPropertyMetadata(null, OnScreenTipChanged));
+
+    /// <summary>Identifies the <see cref="ScreenTipText"/> dependency property.</summary>
+    public static readonly DependencyProperty ScreenTipTextProperty = DependencyProperty.Register(
+        nameof(ScreenTipText), typeof(string), typeof(RibbonGallery),
+        new FrameworkPropertyMetadata(null, OnScreenTipChanged));
+
     // Registered properties also resolve through WPF PropertyPath in shared templates.
     // This presentation state is neither persisted nor a public extension point.
     internal static readonly DependencyProperty IsQuickAccessOpenProperty = DependencyProperty.Register(
@@ -54,6 +64,26 @@ public class RibbonGallery : ListBox
 
     /// <summary>Optional icon used by quick-access and custom-group dropdown copies.</summary>
     public ImageSource? Icon { get => (ImageSource?)GetValue(IconProperty); set => SetValue(IconProperty, value); }
+
+    /// <summary>Bold first line of the gallery's ScreenTip (rich tooltip).</summary>
+    public string? ScreenTipTitle
+    {
+        get => (string?)GetValue(ScreenTipTitleProperty);
+        set => SetValue(ScreenTipTitleProperty, value);
+    }
+
+    /// <summary>Descriptive body of the gallery's ScreenTip.</summary>
+    public string? ScreenTipText
+    {
+        get => (string?)GetValue(ScreenTipTextProperty);
+        set => SetValue(ScreenTipTextProperty, value);
+    }
+
+    private static void OnScreenTipChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var gallery = (RibbonGallery)d;
+        ScreenTipHelper.Update(gallery, gallery.ScreenTipTitle, gallery.ScreenTipText);
+    }
 
     /// <inheritdoc />
     public override void OnApplyTemplate()
@@ -92,6 +122,8 @@ public class RibbonGallery : ListBox
         bool separatePreview = this is InRibbonGallery native && native.FreezeStripForQuickAccess();
         var preview = IsVisible && !separatePreview ? GalleryStripPreview.Create(original) : null;
         SetValue(IsQuickAccessOpenProperty, true);
+        foreach (var container in Items.Cast<object>().Select(ItemContainerGenerator.ContainerFromItem).OfType<DependencyObject>())
+            RibbonPopupInteraction.SetSuppressHover(container, false);
         original.Content = preview;
         viewport.Content = presenter;
         return true;
@@ -108,6 +140,8 @@ public class RibbonGallery : ListBox
         _originalViewport = null;
         QuickAccessViewport = null;
         _closeQuickAccess = null;
+        foreach (var container in Items.Cast<object>().Select(ItemContainerGenerator.ContainerFromItem).OfType<DependencyObject>())
+            container.ClearValue(RibbonPopupInteraction.SuppressHoverProperty);
         SetValue(IsQuickAccessOpenProperty, false);
         if (this is InRibbonGallery gallery) gallery.RefreshAfterQuickAccess();
     }
@@ -170,6 +204,7 @@ public class RibbonGallery : ListBox
         base.PrepareContainerForItemOverride(element, item);
         if (element is UIElement container)
         {
+            if (IsQuickAccessOpen) RibbonPopupInteraction.SetSuppressHover(container, false);
             container.MouseEnter += OnItemContainerMouseEnter;
         }
     }
@@ -193,6 +228,7 @@ public class RibbonGallery : ListBox
 
     private void OnItemContainerMouseEnter(object sender, MouseEventArgs e)
     {
+        if (RibbonPopupInteraction.GetSuppressHover((DependencyObject)sender)) return;
         object? item = ItemContainerGenerator.ItemFromContainer((DependencyObject)sender);
         if (item == DependencyProperty.UnsetValue)
         {

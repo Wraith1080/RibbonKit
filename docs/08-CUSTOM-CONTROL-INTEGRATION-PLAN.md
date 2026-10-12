@@ -14,9 +14,95 @@ fresh-view contract below remains a candidate for third-party controls. A tempor
 vector preview preserves the visible source strip while a gallery copy is open;
 closing restores the live strip and reveals the committed selection.
 
-Group-to-QAT support remains a later slice. The user requires group entries to
-appear and be addable only in Customize QAT, with those entries excluded from
-Customize Ribbon. Individual commands keep their normal customization availability.
+Built-in group-to-QAT support uses the source group's existing collapsed flyout.
+Group entries appear and are addable only in Customize QAT, with those entries
+excluded from Customize Ribbon. Individual commands keep their normal availability.
+The source group stays collapsed for the entire QAT membership, by user direction
+on 2026-10-11; removal releases that constraint to adaptive sizing. Opening and
+dismissal do not resize the ribbon or wait for input completion. This implementation
+adds no generic projection-provider API.
+
+## Group QAT implementation and acceptance
+
+The library owns the compact dropdown, membership collapse, source flyout anchor,
+native content restoration, overflow, KeyTips/UIA, hover suppression and caption
+context menus. Hosts supply group icons, commands/data and customization storage.
+Collapse is derived from the live QAT collection and excluded from serialized
+group layout; saved QAT identity recreates the constraint. Hidden QAT retains its
+members. Recreated custom groups resolve to their final source objects on restore;
+transient merge contributions retain the existing persistence exclusions.
+
+| Gate | Status on 2026-10-11 |
+| --- | --- |
+| Permanent collapse, native ownership, inactive tabs, adaptive removal, interruption cleanup, catalog and persistence | All 138 focused Release runtime checks passed on the complete rerun, including active-tab/overflow content presses and toggle/check/radio clicks that keep the group flyout open. Synthetic input checks cover QAT group/combo/gallery/dropdown dismissal and command/File activation. |
+| Independent consumer | `GroupQuickAccess` covers 288 theme/variant/density/flow/simulated-DPI/placement cases plus overflow, keyboard, native UIA and KeyTips; no Showcase resources or helpers. |
+| Extra empty QAT popup | Reproduced in four active/inactive strip and overflow cases. A local one-way closed binding now prevents the unused dropdown popup from appearing as a small circle. All 32 group runtime cases and the 288-case independent consumer scope passed after the fix. User confirmed the stray circle is gone in Showcase on 2026-10-11. |
+| Existing combo/gallery compatibility | The complete runtime rerun and the `GalleryQuickAccess` consumer passed. The preceding runtime run passed 137/138 with one split-button KeyTip failure; the unchanged baseline passed the corresponding 106-case runtime slice. The combo consumer keyboard/KeyTip scope is intermittent: it also failed around overflow KeyTips in an unchanged `a2ebe40` baseline archive. This is not a clean combo consumer pass. |
+| Visuals | 15 selected QAT scenes passed. The changed Customize QAT snapshot was updated after actual/diff inspection; three native group flyout captures were inspected. |
+| Builds | Normal Release runtime (`net8.0-windows` and `net9.0-windows`) and normal Debug Showcase passed with zero warnings/errors. |
+| Live acceptance | Live mouse/keyboard, physical touch, slow-machine interaction and native/mixed-monitor DPI review remain open. Full validation is deferred by request. |
+
+Implementation details and final automated evidence are recorded in
+[library history §3.249](history/library/12-keytips-layout-and-validation.md#3249-groups-in-qat-with-membership-collapse--2026-10-11).
+
+### Hover binding follow-up — 2026-10-12
+
+The modal close button's shared Crystal rim reported a failed attached-property
+lookup. The utility-rim and application-orb bindings now use the registered
+suppression dependency property through an internal `PropertyPath`, preserving
+QAT hover suppression and pressed feedback without a public API addition.
+
+Verification: 47 focused Release runtime cases passed. `GroupQuickAccess` passed
+its existing matrix and 12 new utility/orb binding cases across all placements
+and both directions, including native modal-close invocation. The Office 2007 orb
+visual scene passed. The Crystal utility fixture follow-up is fixed on 2026-10-12:
+initializing WPF's window renderer before the disconnected scene's first measurement
+restores repeatability. All six light/dark, 100/200% and RTL utility scenes passed
+against unchanged approved images and tolerances; the original 100% case also passed
+in three fresh processes. Repeatability failures now save both captures and their
+diff for inspection. Normal Release runtime builds for both frameworks
+and Debug Showcase passed with zero warnings/errors. On 2026-10-12 the user completed
+the Crystal Print Preview/QAT and Office 2007 orb checks and reported no binding
+errors. The user accepted the visual-fixture correction on 2026-10-12 and plans
+to merge this slice. Full validation stays deferred.
+Details: [library history §3.252](history/library/12-keytips-layout-and-validation.md#3252-internal-hover-suppression-bindings-use-property-identity--2026-10-12).
+The visual-fixture correction is recorded in [§3.253](history/library/12-keytips-layout-and-validation.md#3253-crystal-utility-snapshots-initialize-native-rendering--2026-10-12).
+
+## Custom-group command copies in QAT
+
+Fixed on 2026-10-11: context-menu additions from custom tabs/groups resolve to the
+original command, preserving dropdown/split menu items and combo/gallery behavior.
+All copies of that source share one QAT identity. Customize QAT disables Add for
+an existing source, refreshes after external additions/removals, and rejects a
+repeated add through the same runtime check.
+
+Verification: 114 focused Release runtime cases passed. The independent
+`QatCommandInteraction` scope passed, including 12 new dropdown/split cases across
+three placements and both flow directions, native menus/invocation, and duplicate
+prevention in the context menu and Customize QAT page. One selected RTL QAT-page
+visual passed after inspecting/updating its disabled Add-button appearance.
+Release runtime builds and Debug Showcase passed with zero warnings/errors.
+Live Showcase confirmation of this command-copy fix remains open; full validation
+remains deferred. Details: [library history §3.250](history/library/12-keytips-layout-and-validation.md#3250-custom-group-command-additions-resolve-the-original-qat-source--2026-10-11).
+
+## Gallery ScreenTips
+
+Implemented on 2026-10-11: `RibbonGallery.ScreenTipTitle` and `ScreenTipText`
+create the shared rich tooltip and are inherited by `InRibbonGallery`. QAT,
+overflow and custom-group copies follow source tip metadata; a null title falls
+back to the copy's current header, including a custom rename. Tile tooltips remain
+intact. Styles, Theme, Accent and the Localization/RTL Styles demo now have gallery
+descriptions. No per-item KeyTips were added, by user direction.
+
+Verification: 26 focused Release runtime cases passed. The independent
+`GalleryQuickAccess` consumer passed its existing gallery matrix and 48 new
+gallery-type/theme/light-dark/flow combinations, with four realized native
+ScreenTips per combination (source, custom group, QAT and overflow). Office 2024
+and Crystal captures were inspected. Normal Release runtime builds for both
+frameworks and Debug Showcase passed with zero warnings/errors. The user reported
+that the gallery ScreenTips look good on 2026-10-11; further user checks and final
+live hover acceptance remain pending. Full validation remains deferred by user direction.
+Details and additive API rationale: [library history §3.251](history/library/12-keytips-layout-and-validation.md#3251-gallery-screentips-follow-qat-and-custom-group-copies--2026-10-11).
 
 ## Capability and lifetime contract
 
@@ -63,7 +149,7 @@ notifications; normal XAML should not need them. App-authored icons retain owner
 2. Prototype factory/lifetime internally for strip and overflow.
 3. Prove catalog validation, source-ID restore and one command plus one stateful popup control.
 4. Review the additive API, XML docs, designer discovery and consumer reference before release.
-5. Add richer group/gallery/combo projections in subsequent bounded slices.
+5. Prove richer third-party popup controls in subsequent bounded slices.
 
 Acceptance covers invalid opt-in metadata, distinct parents, live state synchronization,
 cleanup during open popups, save/restore, merge park/revive, disabled targets, KeyTips,

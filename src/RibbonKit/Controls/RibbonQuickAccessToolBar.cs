@@ -64,6 +64,9 @@ public class RibbonQuickAccessToolBar : ItemsControl
             new FrameworkPropertyMetadata(typeof(RibbonQuickAccessToolBar)));
     }
 
+    /// <summary>Initializes the interactive QAT surface.</summary>
+    public RibbonQuickAccessToolBar() => RibbonPopupInteraction.SetSuppressHover(this, false);
+
     /// <summary>Whether one or more items currently don't fit and live in the overflow flyout.</summary>
     public bool HasOverflow => (bool)GetValue(HasOverflowProperty);
 
@@ -260,6 +263,12 @@ public class RibbonQuickAccessToolBar : ItemsControl
         // Remember which quick-access item this stands for, so a right-click inside the flyout can
         // offer "Remove from Quick Access Toolbar" for the REAL item rather than for this proxy.
         Ribbon.SetQuickAccessOverflowItemInternal(entry, item);
+        if (entry is RibbonGroupQuickAccessProxy)
+            entry.SetBinding(KeyTip.KeysProperty, new System.Windows.Data.Binding
+            {
+                Source = item,
+                Path = new PropertyPath("(0)", KeyTip.KeysProperty),
+            });
 
         // ⚠ Enabled state comes from the STRIP ITEM, not from the source. CreateCommandProxy wires a
         // fresh proxy to its SOURCE (§3.45), which is right for a strip proxy but one hop short

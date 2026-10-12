@@ -19,6 +19,68 @@ namespace RibbonKit.Tests;
 public sealed class GalleryQuickAccessTests
 {
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ScreenTips_follow_gallery_metadata_in_custom_qat_and_overflow_copies(bool inRibbon) => Sta.Run(() =>
+    {
+        RibbonGallery source = inRibbon ? new InRibbonGallery() : new RibbonGallery();
+        Assert.Null(source.ToolTip);
+        source.Header = "Styles";
+        source.ScreenTipTitle = "Text styles";
+        source.ScreenTipText = "Choose a style for the text.";
+        var tile = new RibbonGalleryItem { Content = "Heading", ToolTip = "Heading 1" };
+        source.Items.Add(tile);
+        var ribbon = RibbonFor(source);
+        var custom = Assert.IsAssignableFrom<RibbonDropDownButton>(ribbon.CreateCommandProxy(source, RibbonControlSize.Medium));
+        var customGroup = new RibbonGroup { Header = "Custom" }; customGroup.Items.Add(custom); ribbon.Tabs[0].Groups.Add(customGroup);
+        ribbon.QuickAccessMaxWidth = 55;
+        for (int i = 0; i < 3; i++) ribbon.QuickAccessItems.Add(new RibbonButton { Header = "Save", Size = RibbonControlSize.Small });
+        Assert.True(ribbon.AddToQuickAccess(custom));
+        var qat = Assert.IsAssignableFrom<RibbonDropDownButton>(ribbon.QuickAccessItems[^1]);
+        using var host = new Host(ribbon);
+        var toolbar = Assert.IsType<RibbonQuickAccessToolBar>(ribbon.ActiveQuickAccessToolBar);
+        toolbar.OverflowButton!.IsChecked = true; host.Layout();
+        var overflow = Assert.IsAssignableFrom<RibbonDropDownButton>(toolbar.OverflowEntries.Single(entry => ReferenceEquals(Ribbon.GetQuickAccessSource(entry), source)));
+        var copies = new[] { custom, qat, overflow };
+
+        var nativeTip = Assert.IsType<RibbonScreenTip>(source.ToolTip);
+        Assert.Equal("Text styles", nativeTip.Title);
+        Assert.Equal(source.ScreenTipText, nativeTip.Description);
+        foreach (var copy in copies)
+        {
+            var tip = Assert.IsType<RibbonScreenTip>(copy.ToolTip);
+            Assert.NotSame(nativeTip, tip);
+            Assert.Equal(source.ScreenTipTitle, tip.Title);
+            Assert.Equal(source.ScreenTipText, tip.Description);
+        }
+
+        source.ScreenTipTitle = null;
+        source.ScreenTipText = "Point to a style to preview it.";
+        source.Header = "Formatting styles";
+        host.Layout();
+        Assert.All(copies, copy =>
+        {
+            var tip = Assert.IsType<RibbonScreenTip>(copy.ToolTip);
+            Assert.Equal(source.Header, tip.Title);
+            Assert.Equal(source.ScreenTipText, tip.Description);
+        });
+        Assert.Null(Assert.IsType<RibbonScreenTip>(source.ToolTip).Title);
+        Assert.Equal("Heading 1", tile.ToolTip);
+        custom.Header = "Favorite styles"; host.Layout();
+        Assert.Equal(custom.Header, Assert.IsType<RibbonScreenTip>(custom.ToolTip).Title);
+        Assert.Equal(source.Header, Assert.IsType<RibbonScreenTip>(qat.ToolTip).Title);
+
+        source.ScreenTipText = null; host.Layout();
+        Assert.Null(source.ToolTip);
+        Assert.All(copies, copy => Assert.Null(Assert.IsType<RibbonScreenTip>(copy.ToolTip).Description));
+        source.ScreenTipTitle = "Style picker";
+        source.Header = null; host.Layout();
+        Assert.Equal("Style picker", RibbonCommandCatalog.Describe(source).DisplayName);
+        Assert.All(copies, copy => Assert.Equal("Style picker", Assert.IsType<RibbonScreenTip>(copy.ToolTip).Title));
+        toolbar.OverflowButton.IsChecked = false;
+    });
+
+    [Theory]
     [InlineData(RibbonTheme.Office2007)]
     [InlineData(RibbonTheme.Office2010)]
     public void Legacy_dark_gallery_qat_heading_uses_the_header_foreground(RibbonTheme theme) => Sta.Run(() =>
@@ -111,9 +173,12 @@ public sealed class GalleryQuickAccessTests
         var source = new InRibbonGallery { Header = "Theme" }; source.Items.Add("Crystal");
         Ribbon.SetCommandId(source, "theme"); var ribbon = RibbonFor(source);
         Assert.Same(source, Assert.Single(RibbonCommandCatalog.CollectAvailable(ribbon)).Control);
-        ribbon.AddToQuickAccess(source);
         var custom = new RibbonGroup { Header = "Custom" }; Ribbon.SetIsCustom(custom, true); Ribbon.SetCommandId(custom, "custom:group");
         custom.Items.Add(ribbon.CreateCommandProxy(source, RibbonControlSize.Medium)); ribbon.Tabs[0].Groups.Add(custom);
+        Assert.True(ribbon.AddToQuickAccess((FrameworkElement)custom.Items[0]));
+        Assert.IsType<RibbonGalleryQuickAccessProxy>(Assert.Single(ribbon.QuickAccessItems));
+        Assert.False(ribbon.AddToQuickAccess(source));
+        Assert.True(ribbon.IsInQuickAccess((FrameworkElement)custom.Items[0]));
         string json = RibbonCustomizationSerializer.Serialize(ribbon);
         var fresh = new InRibbonGallery { Header = "Theme" }; fresh.Items.Add("2024"); Ribbon.SetCommandId(fresh, "theme");
         var restored = RibbonFor(fresh); RibbonCustomizationSerializer.Apply(restored, json);

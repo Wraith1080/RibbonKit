@@ -115,6 +115,7 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
     private UIElement? _menuHost;
     private Popup? _popup;
     private RibbonDropDownButton? _borrowSource;
+    private RibbonDropDownButton? _menuBorrower;
     private bool _borrowed;
     private UIElement? _focusBeforeOpen;
     private bool _returnFocusOnClose;
@@ -234,13 +235,15 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
             _menuHost.PreviewKeyDown += OnMenuKeyDown;
         }
 
-        _popup = GetTemplateChild(PopupPartName) as Popup;
+        _popup = OwnsPopup ? GetTemplateChild(PopupPartName) as Popup : null;
         if (_popup is not null)
         {
             _popup.Opened += OnPopupOpened;
             _popup.Closed += OnPopupClosed;
         }
     }
+
+    internal virtual bool OwnsPopup => true;
 
     /// <summary>
     /// Makes THIS dropdown a PROXY of <paramref name="source"/> (see
@@ -303,12 +306,18 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
 
         if ((bool)e.NewValue)
         {
+            button.ReclaimBorrowedMenu();
             // Borrow the source's items as the proxy OPENS — before the popup lays out, so it sizes
             // to the real menu. The _borrowed guard makes a quick close→reopen a no-op.
             if (button._borrowSource is { } source && !button._borrowed)
             {
+                source.ReclaimBorrowedMenu();
+                source.SetCurrentValue(IsDropDownOpenProperty, false);
+                source._returnFocusOnClose = false;
+                source._focusBeforeOpen = null;
                 MoveItems(source, button);
                 button._borrowed = true;
+                source._menuBorrower = button;
             }
         }
         else if (button._borrowed)
@@ -331,7 +340,19 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
         {
             MoveItems(this, source);
             _borrowed = false;
+            if (ReferenceEquals(source._menuBorrower, this)) source._menuBorrower = null;
         }
+    }
+
+    private void ReclaimBorrowedMenu()
+    {
+        if (_menuBorrower is not { } borrower) return;
+        // The original opener (or another QAT copy) can open on the same press
+        // that dismissed the proxy, before its deferred item return has run.
+        borrower.SetCurrentValue(IsDropDownOpenProperty, false);
+        borrower._returnFocusOnClose = false;
+        borrower._focusBeforeOpen = null;
+        borrower.ReturnBorrowedItems();
     }
 
     private static void MoveItems(RibbonDropDownButton from, RibbonDropDownButton to)
@@ -401,7 +422,8 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
 
     private void OnPopupClosed(object? sender, EventArgs e)
     {
-        bool returnFocus = _returnFocusOnClose || _menuHost?.IsKeyboardFocusWithin == true;
+        bool returnFocus = !_dismissHelper.DismissedByOutsidePress
+            && (_returnFocusOnClose || _menuHost?.IsKeyboardFocusWithin == true);
         _returnFocusOnClose = false;
         _dismissHelper.OnClosed();
 

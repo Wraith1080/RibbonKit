@@ -379,9 +379,17 @@ public sealed class VisualSnapshotTests
 
         if (!Pixels(actual).AsSpan().SequenceEqual(Pixels(repeated)))
         {
+            string directory = Path.Combine(FindRepositoryRoot(), "TestResults", "visual");
+            string firstPath = Path.Combine(directory, snapshotName + ".first.png");
+            string repeatedPath = Path.Combine(directory, snapshotName + ".repeated.png");
+            string repeatDifferencePath = Path.Combine(directory, snapshotName + ".repeat.diff.png");
+            SavePng(actual, firstPath);
+            SavePng(repeated, repeatedPath);
+            SavePng(CreateDifference(actual, repeated), repeatDifferencePath);
             throw new XunitException(
                 $"The visual scene '{snapshotName}' produced different pixels twice in one process. " +
-                "The fixture must be deterministic before its approved image can be trusted.");
+                "The fixture must be deterministic before its approved image can be trusted." + Environment.NewLine +
+                $"First: {firstPath}{Environment.NewLine}Repeated: {repeatedPath}{Environment.NewLine}Diff: {repeatDifferencePath}");
         }
 
         string repositoryRoot = FindRepositoryRoot();
@@ -1261,6 +1269,9 @@ public sealed class VisualSnapshotTests
 
     private static FrameworkElement CreateCrystalUtilityScene(FlowDirection direction)
     {
+        // Isolated selections may reach this disconnected fixture before any
+        // native window. Settle WPF's renderer before its first measurement.
+        InitializeWindowRendering();
         var root = (Grid)CreateScene(direction);
         root.Height = 350;
         var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));

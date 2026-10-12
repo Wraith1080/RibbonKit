@@ -139,6 +139,7 @@
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsMouseOver" Value="True" />
+                                <Condition Property="controls:RibbonPopupInteraction.SuppressHover" Value="False" />
                                 <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
@@ -366,6 +367,7 @@
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsMouseOver" Value="True" />
+                                <Condition Property="controls:RibbonPopupInteraction.SuppressHover" Value="False" />
                                 <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
@@ -497,10 +499,14 @@
                             <Setter TargetName="HeaderPresenter" Property="Content"
                                     Value="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}" />
                         </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True" />
+                                <Condition Property="controls:RibbonPopupInteraction.SuppressHover" Value="False" />
+                            </MultiTrigger.Conditions>
                             <Setter TargetName="Indicator" Property="BorderBrush"
                                     Value="{DynamicResource RibbonKit.Brushes.Option.SelectedBorder}" />
-                        </Trigger>
+                        </MultiTrigger>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="Indicator" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Option.SelectedSurface}" />
@@ -597,10 +603,14 @@
                             <Setter TargetName="HeaderPresenter" Property="Content"
                                     Value="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}" />
                         </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True" />
+                                <Condition Property="controls:RibbonPopupInteraction.SuppressHover" Value="False" />
+                            </MultiTrigger.Conditions>
                             <Setter TargetName="Indicator" Property="Stroke"
                                     Value="{DynamicResource RibbonKit.Brushes.Option.SelectedBorder}" />
-                        </Trigger>
+                        </MultiTrigger>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="Indicator" Property="Fill"
                                     Value="{DynamicResource RibbonKit.Brushes.Option.SelectedSurface}" />
