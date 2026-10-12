@@ -169,8 +169,8 @@ internal static class ColoredQuickAccessPortabilityChecks
         SetHover(arrow, true); SetHover(toggle, true); Layout(window);
         Assert.Same(split.FindResource("RibbonKit.Brushes.Control.CompanionBackground"), Part<Border>(primary, "Chrome").Background);
         Assert.Same(split.FindResource("RibbonKit.Brushes.Control.CompanionBorder"), Part<Border>(primary, "Chrome").BorderBrush);
-        Assert.Same(split.FindResource("RibbonKit.Brushes.Control.HoverBorder"), Part<Border>(arrow, "Chrome").BorderBrush);
-        Assert.Same(dropdown.FindResource("RibbonKit.Brushes.Control.HoverBorder"), Part<Border>(toggle, "Chrome").BorderBrush);
+        Assert.Same(split.FindResource("RibbonKit.Brushes.Control.DropDownHoverBorder"), Part<Border>(arrow, "Chrome").BorderBrush);
+        Assert.Same(dropdown.FindResource("RibbonKit.Brushes.Control.DropDownHoverBorder"), Part<Border>(toggle, "Chrome").BorderBrush);
         SetHover(arrow, false); SetHover(toggle, false); Layout(window);
     }
 

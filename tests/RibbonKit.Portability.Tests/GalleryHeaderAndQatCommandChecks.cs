@@ -132,7 +132,10 @@ internal static class GalleryHeaderAndQatCommandChecks
             Assert.Equal("Undo", undo.Header);
             var qatAvailable = Part<ListBox>(qatPage, "PART_AvailableList");
             var ribbonAvailable = Part<ListBox>(ribbonPage, "PART_AvailableList");
-            var qatEntry = Assert.IsType<RibbonCommandEntry>(Assert.Single(qatAvailable.Items));
+            var qatEntry = Assert.Single(qatAvailable.Items.Cast<RibbonCommandEntry>(), entry => ReferenceEquals(entry.Control, undo));
+            Assert.Equal(2, qatAvailable.Items.Count);
+            Assert.Same(group, Assert.Single(qatAvailable.Items.Cast<RibbonCommandEntry>(),
+                entry => entry.Control is RibbonGroup).Control);
             var ribbonEntry = Assert.IsType<RibbonCommandEntry>(Assert.Single(ribbonAvailable.Items));
             Assert.Same(undo, qatEntry.Control); Assert.Same(undo, ribbonEntry.Control);
             qatAvailable.SelectedItem = qatEntry;
@@ -141,7 +144,8 @@ internal static class GalleryHeaderAndQatCommandChecks
             var current = Part<ListBox>(qatPage, "PART_CurrentList"); current.SelectedIndex = 0;
             Part<ButtonBase>(qatPage, "PART_RemoveButton").RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); Layout(window);
             Assert.Empty(ribbon.QuickAccessItems);
-            Assert.Same(undo, Assert.IsType<RibbonCommandEntry>(Assert.Single(qatAvailable.Items)).Control);
+            Assert.Same(undo, Assert.Single(qatAvailable.Items.Cast<RibbonCommandEntry>(),
+                entry => ReferenceEquals(entry.Control, undo)).Control);
 
             var tree = Part<TreeView>(ribbonPage, "PART_Tree");
             var groupNode = Assert.Single(Assert.IsType<RibbonCustomizeNode>(Assert.Single(tree.Items)).Children);

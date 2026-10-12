@@ -152,14 +152,19 @@ public class KeyboardFocusInteractionTests
         content.Children.Add(row);
         var window = CreateWindow(new AdornerDecorator { Child = content }, flow);
         window.Height = 400;
+        // Keep keyboard cue mode active through the asynchronous layout/render checks.
+        var forceCues = typeof(KeyboardNavigation).GetProperty("AlwaysShowFocusVisual", BindingFlags.Static | BindingFlags.NonPublic)!;
+        object? previousCueMode = forceCues.GetValue(null);
         try
         {
+            forceCues.SetValue(null, true);
             window.Show();
-            Sta.Drain();
+            Sta.Drain(DispatcherPriority.ApplicationIdle);
             window.UpdateLayout();
             foreach (var target in new Control[] { toggle, tile, row })
             {
                 Assert.True(target.Focus());
+                Sta.Drain(DispatcherPriority.ApplicationIdle);
                 ShowFocusVisual();
                 window.UpdateLayout();
                 PumpFrames();
@@ -174,11 +179,15 @@ public class KeyboardFocusInteractionTests
                 AssertChrome(chrome, "changed-" + target.GetType().Name);
             }
         }
-        finally { window.Close(); Sta.ResetApplication(); }
+        finally { forceCues.SetValue(null, previousCueMode); window.Close(); Sta.ResetApplication(); }
 
         void AssertChrome(Border chrome, string name)
         {
-            var adorner = Assert.Single(AdornerLayer.GetAdornerLayer(chrome)!.GetAdorners((UIElement)chrome.TemplatedParent)!);
+            var owner = Assert.IsAssignableFrom<Control>(chrome.TemplatedParent);
+            Assert.Same(owner, Keyboard.FocusedElement);
+            var adorners = AdornerLayer.GetAdornerLayer(chrome)!.GetAdorners(owner);
+            Assert.True(adorners is not null, $"{name}: focused chrome lost its focus adorner.");
+            var adorner = Assert.Single(adorners);
             var ring = FindBorder(adorner);
             Assert.NotNull(ring);
             Rect actual = ring.TransformToVisual(window).TransformBounds(new Rect(ring.RenderSize));

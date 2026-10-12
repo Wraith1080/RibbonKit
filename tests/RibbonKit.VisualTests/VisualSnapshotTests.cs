@@ -1780,7 +1780,8 @@ public sealed class VisualSnapshotTests
 
     private static class SnapshotThread
     {
-        private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(30);
+        // The full matrix renders every scene twice and now includes real caption windows.
+        private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(60);
 
         public static void Run(Action body)
         {

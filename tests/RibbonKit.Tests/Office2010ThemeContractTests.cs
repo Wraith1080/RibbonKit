@@ -246,7 +246,7 @@ public sealed class Office2010ThemeContractTests
     }
 
     [Fact]
-    public void Modern_backstage_content_uses_the_same_theme_scoped_shadow_hook()
+    public void Modern_backstage_uses_theme_scoped_shadow_profiles_on_the_page_host()
     {
         XDocument document = XDocument.Load(ThemePart("Controls.Backstage.xaml"));
         XElement contentArea = Assert.Single(
@@ -260,11 +260,24 @@ public sealed class Office2010ThemeContractTests
 
         Assert.Contains(
             modernTrigger.Elements(Presentation + "Setter"),
-            setter => (string?)setter.Attribute("TargetName") == "ContentArea"
+            setter => (string?)setter.Attribute("TargetName") == "ContentAreaHost"
                 && (string?)setter.Attribute("Property") == "Effect"
                 && setter.Attribute("Value")!.Value.Contains(
-                    "RibbonKit.Effects.Backstage.ContentShadow",
+                    "RibbonKit.Effects.Backstage.ModernPageShadow",
                     StringComparison.Ordinal));
+
+        XElement coloredTrigger = Assert.Single(
+            backstageTemplate.Descendants(Presentation + "MultiTrigger"),
+            trigger => trigger.Descendants(Presentation + "Condition").Any(condition =>
+                (string?)condition.Attribute("Property") == "controls:Backstage.Design"
+                && (string?)condition.Attribute("Value") == "Modern")
+                && trigger.Descendants(Presentation + "Condition").Any(condition =>
+                    (string?)condition.Attribute("Property") == "controls:UtilityChrome.QatTitleBarColored"
+                    && (string?)condition.Attribute("Value") == "True"));
+        Assert.Contains(coloredTrigger.Elements(Presentation + "Setter"), setter =>
+            (string?)setter.Attribute("TargetName") == "ContentAreaHost"
+            && (string?)setter.Attribute("Property") == "Effect"
+            && (string?)setter.Attribute("Value") == "{DynamicResource RibbonKit.Effects.Backstage.ContentShadow}");
     }
 
     [Fact]

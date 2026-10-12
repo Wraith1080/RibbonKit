@@ -28,7 +28,7 @@ internal static class PopupMarginPortabilityChecks
         var borderStyle = new Style(typeof(Border));
         borderStyle.Setters.Add(new Setter(FrameworkElement.TagProperty, "consumer-border"));
         window.Resources[typeof(Border)] = borderStyle;
-        window.Resources["RibbonKit.Brushes.ScreenTip.Border"] = Brushes.Orange;
+        window.Resources["RibbonKit.Brushes.Popup.Border"] = Brushes.Orange;
         try
         {
             window.Show();

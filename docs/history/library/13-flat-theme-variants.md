@@ -273,3 +273,40 @@ adding ten legacy/RTL split-hover approvals. All 24 selected visual comparisons
 passed, including byte-identical Office/Crystal reference captures. Normal Debug
 Showcase built with zero warnings/errors; user appearance and deferred full gates
 remain in the active plan.
+
+Final validation and test alignment, 2026-10-12: the user approved the split
+separator appearance and authorized full validation, then requested retaining
+passed checks and rerunning only failures. Release restore and solution builds
+passed without warnings/errors. Writer passed 481/481. Runtime reached 668/669;
+the remaining keyboard-geometry fixture now keeps keyboard cue mode active
+through its asynchronous render checks, drains pending focus work and asserts
+focus ownership. All 16 keyboard cases passed, retaining exact geometry checks.
+Four older template assertions were aligned with the shared Backstage page host,
+colored page-shadow switch, hover-suppression MultiTriggers and QAT visibility
+condition; their focused rerun passed, and they passed in the later full run.
+
+The complete visual project passed 5/5 with all 171 scenes rendered twice. Its
+30-second aggregate deadline was too short for the measured 45-second matrix;
+the deadline is now 60 seconds. No visual approvals or pixel tolerances changed.
+The independent consumer exceeded its previous five-minute aggregate budget;
+full runs now allow ten minutes and emit per-scope timings. Named focused scopes
+retain their five-minute budget. Two continuation scopes in `Test-Focused.ps1`
+(`AfterGalleryQuickAccess`, `AfterCrystalTint`) allow remaining coverage to run
+without repeating the already-passed prefix.
+
+Consumer assertion repairs reflect existing behavior: gallery reveal is checked
+after a new popup selection rather than an unchanged reopen; native title-band
+height allows one physical pixel of snapping while retaining the declared
+caption-height assertions; groups remain available only in Customize QAT; its
+matrix now expects 336 cases including Flat; popup overrides use `Popup.Border`
+and dropdown hover assertions use `Control.DropDownHoverBorder`. All consumer
+coverage completed through retained passing scopes, the two continuations and
+final ColoredQat/QatBackdrop passes. These are assembled coverage and focused
+repairs, not a clean single consumer aggregate or full-solution pass.
+
+Normal Release packaging and package validation passed, including archive
+metadata/layout and clean net8/net9 WPF consumption. Existing older package
+artifacts were preserved by validating the current package pair in a separate
+input feed. No runtime, Showcase or public API changes were needed for these
+repairs. Physical mixed-monitor, native input/IME and designer acceptance remain
+separate; current reported appearance acceptance is recorded only in the plan.
