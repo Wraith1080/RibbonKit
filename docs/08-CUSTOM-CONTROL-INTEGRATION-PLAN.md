@@ -63,7 +63,8 @@ in three fresh processes. Repeatability failures now save both captures and thei
 diff for inspection. Normal Release runtime builds for both frameworks
 and Debug Showcase passed with zero warnings/errors. On 2026-10-12 the user completed
 the Crystal Print Preview/QAT and Office 2007 orb checks and reported no binding
-errors. Full validation stays deferred.
+errors. The user accepted the visual-fixture correction on 2026-10-12 and plans
+to merge this slice. Full validation stays deferred.
 Details: [library history §3.252](history/library/12-keytips-layout-and-validation.md#3252-internal-hover-suppression-bindings-use-property-identity--2026-10-12).
 The visual-fixture correction is recorded in [§3.253](history/library/12-keytips-layout-and-validation.md#3253-crystal-utility-snapshots-initialize-native-rendering--2026-10-12).
 
