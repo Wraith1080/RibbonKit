@@ -110,6 +110,19 @@ internal static class SplitButtonDensityPortabilityChecks
         Assert.True(split.IsVisible && split.ActualWidth > 0);
         var primary = Part<Button>(split, "PART_Primary");
         var arrow = Part<ToggleButton>(split, "PART_Toggle");
+        if (ThemeManager.CurrentTheme is RibbonTheme.Office2007 or RibbonTheme.Office2010 or RibbonTheme.Office2024Flat)
+        {
+            var mainChrome = Part<Border>(primary, "Chrome");
+            var arrowChrome = Part<Border>(arrow, "Chrome");
+            Assert.Equal(1, split.IsVerticalLayout
+                ? mainChrome.BorderThickness.Bottom + arrowChrome.BorderThickness.Top
+                : mainChrome.BorderThickness.Right + arrowChrome.BorderThickness.Left);
+            // Removing the painted join must retain the original one-DIP content inset.
+            Assert.Equal(1, mainChrome.BorderThickness.Left + mainChrome.Padding.Left);
+            Assert.Equal(1, mainChrome.BorderThickness.Top + mainChrome.Padding.Top);
+            Assert.Equal(1, mainChrome.BorderThickness.Right + mainChrome.Padding.Right);
+            Assert.Equal(1, mainChrome.BorderThickness.Bottom + mainChrome.Padding.Bottom);
+        }
         if (touch)
         {
             Assert.True(primary.ActualWidth >= 44 && primary.ActualHeight >= 44);

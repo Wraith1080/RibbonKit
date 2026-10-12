@@ -57,11 +57,19 @@
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
                                                         <Setter TargetName="Chrome" Property="BorderBrush"
-                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.DropDownHoverBorder}" />
                                                         <Setter TargetName="Chrome" Property="BorderThickness"
                                                                 Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                                     </MultiTrigger>
                                                     <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsPressed" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
                                                         <Setter TargetName="Chrome" Property="BorderBrush"
@@ -85,6 +93,8 @@
                                                         </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredHoverBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredDropDownHoverBorder}" />
                                                     </MultiTrigger>
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>
@@ -93,6 +103,18 @@
                                                         </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredStateBorder}" />
+                                                    </MultiTrigger>
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="IsPressed" Value="True" />
+                                                            <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredStateBorder}" />
                                                     </MultiTrigger>
                                                     <Trigger Property="controls:Ribbon.Density" Value="Touch">
                                                         <Setter TargetName="Chrome" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ChromeMargin}" />
@@ -186,14 +208,12 @@
                             <controls:PopupBorder x:Name="PART_MenuHost"
                                     Style="{DynamicResource {x:Type Border}}"
                                     Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
-                                    BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Popup.Border}"
                                     BorderThickness="1"
                                     CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
                                     Padding="4"
-                                    Margin="4,2,8,8">
-                                <Border.Effect>
-                                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
-                                </Border.Effect>
+                                    Margin="4,2,8,8"
+                                    Effect="{DynamicResource RibbonKit.Effects.PopupShadow}">
                                 <!-- AdornerDecorator gives the popup its own adorner layer so
                                      KeyTip badges can render over the menu items. -->
                                 <AdornerDecorator>
@@ -344,7 +364,8 @@
                                             <ControlTemplate TargetType="{x:Type Button}">
                                                 <Border x:Name="Chrome"
                                                         Background="Transparent"
-                                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                                        BorderThickness="{DynamicResource RibbonKit.Metrics.SplitHorizontalPrimaryBorderThickness}"
+                                                        Padding="{DynamicResource RibbonKit.Metrics.SplitHorizontalPrimaryPadding}"
                                                         CornerRadius="{DynamicResource RibbonKit.Metrics.SplitLeftCornerRadius}"
                                                         Margin="1,1,0,1"
                                                         SnapsToDevicePixels="True">
@@ -378,6 +399,8 @@
                                                                 Value="{DynamicResource RibbonKit.Metrics.SplitTopCornerRadius}" />
                                                         <Setter TargetName="Chrome" Property="BorderThickness"
                                                                 Value="{DynamicResource RibbonKit.Metrics.SplitVerticalPrimaryBorderThickness}" />
+                                                        <Setter TargetName="Chrome" Property="Padding"
+                                                                Value="{DynamicResource RibbonKit.Metrics.SplitVerticalPrimaryPadding}" />
                                                     </DataTrigger>
                                                     <!-- COMPANION state, set by the outer template when the
                                                          OTHER half is hot. Declared FIRST so this half's own
@@ -407,7 +430,7 @@
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.SplitActiveHover}" />
                                                         <Setter TargetName="Chrome" Property="BorderBrush"
-                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.DropDownHoverBorder}" />
                                                     </MultiTrigger>
                                                     <Trigger Property="IsPressed" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
@@ -423,12 +446,22 @@
                                                     </Trigger>
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>
+                                                            <Condition Property="Tag" Value="Companion" />
+                                                            <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredDropDownHoverBorder}" />
+                                                    </MultiTrigger>
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
                                                             <Condition Property="IsMouseOver" Value="True" />
                                                             <Condition Property="controls:RibbonPopupInteraction.SuppressHover" Value="False" />
                                                             <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                                                         </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredHoverBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredDropDownHoverBorder}" />
                                                     </MultiTrigger>
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>
@@ -437,6 +470,8 @@
                                                         </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredStateBorder}" />
                                                     </MultiTrigger>
                                                     <Trigger Property="controls:Ribbon.Density" Value="Touch">
                                                         <Setter TargetName="Chrome" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ChromeMargin}" />
@@ -608,11 +643,19 @@
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.SplitActiveHover}" />
                                                         <Setter TargetName="Chrome" Property="BorderBrush"
-                                                                Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.DropDownHoverBorder}" />
                                                         <Setter TargetName="Chrome" Property="BorderThickness"
                                                                 Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                                     </MultiTrigger>
                                                     <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsPressed" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
                                                         <Setter TargetName="Chrome" Property="BorderBrush"
@@ -630,12 +673,22 @@
                                                     </Trigger>
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>
+                                                            <Condition Property="Tag" Value="Companion" />
+                                                            <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredDropDownHoverBorder}" />
+                                                    </MultiTrigger>
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
                                                             <Condition Property="IsMouseOver" Value="True" />
                                                             <Condition Property="controls:RibbonPopupInteraction.SuppressHover" Value="False" />
                                                             <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                                                         </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredHoverBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredDropDownHoverBorder}" />
                                                     </MultiTrigger>
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>
@@ -644,6 +697,18 @@
                                                         </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredStateBorder}" />
+                                                    </MultiTrigger>
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="IsPressed" Value="True" />
+                                                            <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter TargetName="Chrome" Property="Background"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredStateBorder}" />
                                                     </MultiTrigger>
                                                     <Trigger Property="controls:Ribbon.Density" Value="Touch">
                                                         <Setter TargetName="Chrome" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ChromeMargin}" />
@@ -663,14 +728,12 @@
                             <controls:PopupBorder x:Name="PART_MenuHost"
                                     Style="{DynamicResource {x:Type Border}}"
                                     Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
-                                    BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Popup.Border}"
                                     BorderThickness="1"
                                     CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
                                     Padding="4"
-                                    Margin="4,2,8,8">
-                                <Border.Effect>
-                                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
-                                </Border.Effect>
+                                    Margin="4,2,8,8"
+                                    Effect="{DynamicResource RibbonKit.Effects.PopupShadow}">
                                 <!-- AdornerDecorator gives the popup its own adorner layer so
                                      KeyTip badges can render over the menu items. -->
                                 <AdornerDecorator>
@@ -1001,7 +1064,7 @@
                             <ControlTemplate TargetType="{x:Type ComboBoxItem}">
                                 <Border x:Name="Chrome"
                                         Background="Transparent"
-                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                        BorderThickness="{DynamicResource RibbonKit.Metrics.ComboBoxItemHighlightBorderThickness}"
                                         CornerRadius="{DynamicResource RibbonKit.Metrics.InputCornerRadius}"
                                         Padding="7,4"
                                         SnapsToDevicePixels="True">
@@ -1014,7 +1077,7 @@
                                         <Setter TargetName="Chrome" Property="BorderBrush"
                                                 Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
                                         <Setter TargetName="Chrome" Property="BorderThickness"
-                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                                                Value="{DynamicResource RibbonKit.Metrics.ComboBoxItemHighlightBorderThickness}" />
                                     </Trigger>
                                     <Trigger Property="IsSelected" Value="True">
                                         <Setter TargetName="Chrome" Property="Background"
@@ -1022,7 +1085,7 @@
                                         <Setter TargetName="Chrome" Property="BorderBrush"
                                                 Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBorder}" />
                                         <Setter TargetName="Chrome" Property="BorderThickness"
-                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                                                Value="{DynamicResource RibbonKit.Metrics.ComboBoxItemHighlightBorderThickness}" />
                                     </Trigger>
                                     <Trigger Property="IsEnabled" Value="False">
                                         <Setter Property="Opacity" Value="0.4" />
@@ -1106,16 +1169,14 @@
                                    IsOpen="{TemplateBinding IsDropDownOpen}">
                                 <Border x:Name="PART_PopupRoot"
                                         Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
-                                        BorderBrush="{DynamicResource RibbonKit.Brushes.Input.Border}"
+                                        BorderBrush="{DynamicResource RibbonKit.Brushes.ComboBox.PopupBorder}"
                                         BorderThickness="1"
                                         CornerRadius="{DynamicResource RibbonKit.Metrics.InputCornerRadius}"
                                         Padding="3"
                                         Margin="4,2,8,8"
                                         MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
-                                        MaxHeight="{TemplateBinding MaxDropDownHeight}">
-                                    <Border.Effect>
-                                        <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
-                                    </Border.Effect>
+                                        MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                        Effect="{DynamicResource RibbonKit.Effects.PopupShadow}">
                                     <ScrollViewer PanningMode="VerticalOnly" x:Name="PART_PopupScrollViewer"
                                                   VerticalScrollBarVisibility="Auto"
                                                   HorizontalScrollBarVisibility="Disabled">

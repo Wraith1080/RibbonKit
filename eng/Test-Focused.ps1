@@ -21,11 +21,11 @@ param(
     [string]$Filter,
     [string[]]$Scenes,
     [ValidateSet('SplitButtonDensity', 'StackedCustomGroups', 'NativeGalleryPopup',
-        'GalleryQuickAccess', 'GalleryQuickAccessKeyboard', 'GalleryQuickAccessVisible', 'GroupQuickAccess',
+        'GalleryQuickAccess', 'GalleryQuickAccessKeyboard', 'GalleryQuickAccessVisible', 'GroupQuickAccess', 'AfterGalleryQuickAccess', 'AfterCrystalTint',
         'ComboQuickAccess', 'ComboQuickAccessKeyboard', 'GroupedGalleries',
         'GalleryHeadersAndQatCommands', 'DensitySelector', 'MessageTransition',
         'QatThemeRestore', 'ColoredQat', 'QatBackdrop', 'QatCommandInteraction', 'QatVisibility', 'CustomizationLayout', 'MinimizedDivider', 'TouchChrome', 'GroupLauncher',
-        'DensityTransition', 'GlassOverlay', 'BackstageCaption', 'Touch', IgnoreCase = $false)]
+        'DensityTransition', 'GlassOverlay', 'BackstageCaption', 'Flat2024', 'Touch', IgnoreCase = $false)]
     [string]$Scope,
     [ValidateSet('Debug', 'Release')]
     [string]$Configuration = 'Debug'

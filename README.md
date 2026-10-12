@@ -318,7 +318,24 @@ without consuming the clicked ribbon command or File button's input.
 ### Theming & rendering
 
 Office 2007, 2010, 2013, 2019 and 2024 each have light and dark/black palettes, with
-live theme/accent switching. The Crystal Light theme choice now has both light and
+live theme/accent switching. `RibbonTheme.Office2024Flat` derives from Office 2024
+in light and dark modes, using stronger one-DIP borders and a soft shadow behind
+the ribbon body, lower QAT and attached message bars.
+Normal buttons, collapsed groups and launchers have hover borders matching their
+fill and distinct pressed/active outlines. Dropdowns outline hover; split buttons
+outline both halves when either half is hovered. Combo box input and row styling
+stay unchanged. The Modern/2024 Rail Backstage outlines the selected navigation item.
+With title-bar coloring off, its content page has a quiet top/leading-edge border
+and a four-DIP corner beside the rail, without a shadow. Coloring on uses a square
+page with its soft shadow and no page border. This shared treatment follows
+`ThemeManager.SetAccentedTitleBar` in any RibbonKit consumer.
+The application menu gains clearer inner-panel borders.
+Office 2007, Office 2010 and Office 2024 Flat split buttons use a single separator
+in horizontal and vertical layouts, retaining their content insets and outer outlines.
+The shared geometry also applies to QAT copies.
+Select **2024 Flat** in Showcase's View → Theme gallery, or use
+`ThemeManager.Apply` / `ThemeManager.CreatePalette` in another consumer.
+The Crystal Light theme choice now has both light and
 dark palettes for the same shared `Controls.*.xaml` templates. Shared Crystal
 resources cover menu rows, inputs, galleries, check/radio controls, ScreenTips
 and the built-in Ribbon/QAT customization pages, QAT drawer, message bars and

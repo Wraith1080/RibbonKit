@@ -263,10 +263,16 @@ public sealed class Office2010AeroFrameTests
             groups.Descendants(Presentation + "ControlTemplate"),
             element => (string?)element.Attribute("TargetType") == "{x:Type controls:RibbonTab}");
         XElement hover = Assert.Single(
-            groupsTabTemplate.Descendants(Presentation + "Trigger"),
-            trigger => (string?)trigger.Attribute("SourceName") == "HeaderChrome"
-                && (string?)trigger.Attribute("Property") == "IsMouseOver"
-                && (string?)trigger.Attribute("Value") == "True");
+            groupsTabTemplate.Descendants(Presentation + "MultiTrigger"),
+            trigger => trigger.Descendants(Presentation + "Condition").Any(condition =>
+                (string?)condition.Attribute("SourceName") == "HeaderChrome"
+                && (string?)condition.Attribute("Property") == "IsMouseOver"
+                && (string?)condition.Attribute("Value") == "True")
+                && trigger.Descendants(Presentation + "Condition").Any(condition =>
+                    (string?)condition.Attribute("Property") == "controls:RibbonPopupInteraction.SuppressHover"
+                    && (string?)condition.Attribute("Value") == "False")
+                && !trigger.Descendants(Presentation + "Condition").Any(condition =>
+                    (string?)condition.Attribute("Property") == "IsBackstageActive"));
         Assert.Contains(hover.Elements(Presentation + "Setter"), setter =>
             (string?)setter.Attribute("TargetName") == "HeaderChrome"
             && (string?)setter.Attribute("Property") == "BorderBrush"

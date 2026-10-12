@@ -30,6 +30,11 @@
                             Margin="1"
                             SnapsToDevicePixels="True">
                         <Grid>
+                            <Border x:Name="ColoredStateRim"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Qat.ColoredStateBorder}"
+                                    BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Opacity="0" IsHitTestVisible="False" />
                             <!-- Hover/press cross-fade layers: opacity is animated 0<->1 over the
                                  Hover duration token, so the highlight eases instead of snapping.
                                  Behind the content, non-hit-testable. -->
@@ -152,6 +157,7 @@
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
+                            <Setter TargetName="ColoredStateRim" Property="Opacity" Value="1" />
                         </MultiTrigger>
                         <Trigger Property="controls:Ribbon.Density" Value="Touch">
                             <Setter TargetName="Chrome" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ChromeMargin}" />
@@ -256,6 +262,11 @@
                             Margin="1"
                             SnapsToDevicePixels="True">
                         <Grid>
+                            <Border x:Name="ColoredStateRim"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Qat.ColoredStateBorder}"
+                                    BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Opacity="0" IsHitTestVisible="False" />
                             <!-- Checked / hover / press cross-fade layers. Checked eases over the
                                  ToggleState token; hover/press over the Hover token. Checked+hover
                                  composes (check wash + hover wash) rather than a separate brush.
@@ -280,6 +291,12 @@
                                         BorderThickness="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}"
                                         CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}" />
                             </Border>
+                            <!-- Keep the active outline visible above an opaque hover-colored rim. -->
+                            <Border x:Name="CheckedHoverRim"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Control.CheckedBorder}"
+                                    BorderThickness="{DynamicResource RibbonKit.Metrics.CheckedHoverBorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}"
+                                    Opacity="0" IsHitTestVisible="False" />
                             <Border x:Name="PressWash"
                                     Background="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}"
                                     BorderBrush="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}"
@@ -354,6 +371,15 @@
                              RibbonMotion.FadeWash) so it honors the animation level / reduced-motion.
                              Checked+hover composes the check wash under the hover wash. Off a colored
                              surface only; the QAT-on-colored variants below stay instant. -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsChecked" Value="True" />
+                                <Condition Property="IsMouseOver" Value="True" />
+                                <Condition Property="controls:RibbonPopupInteraction.SuppressHover" Value="False" />
+                                <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="CheckedHoverRim" Property="Opacity" Value="1" />
+                        </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />
                         </Trigger>
@@ -380,6 +406,7 @@
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
+                            <Setter TargetName="ColoredStateRim" Property="Opacity" Value="1" />
                         </MultiTrigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
@@ -388,6 +415,7 @@
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Qat.ColoredPressedBackground}" />
+                            <Setter TargetName="ColoredStateRim" Property="Opacity" Value="1" />
                         </MultiTrigger>
                         <Trigger Property="controls:Ribbon.Density" Value="Touch">
                             <Setter TargetName="Chrome" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ChromeMargin}" />

@@ -1,0 +1,60 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Office 2024 geometry and fills, with crisp one-DIP boundaries and a soft body shadow. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Office2024.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#A6A6A6" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.QatExtender.Border" Color="#A6A6A6" />
+    <!-- Popup frames need stronger separation from the surface beneath them. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#A6A6A6" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Popup.Border" Color="#757575" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.OuterBorder" Color="#757575" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.FrameBorder" Color="#757575" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ComboBox.PopupBorder" Color="#757575" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.InRibbonGallery.PopupBorder" Color="#757575" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelectedBorder" Color="#8A8A8A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.PageFrameBorder" Color="#D1D1D1" />
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.ModernPageFrameThickness">1,1,0,0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.Backstage.ModernPageFrameCornerRadius">4,0,0,0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.ModernConnectedPageFrameThickness">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.Backstage.ModernConnectedPageFrameCornerRadius">0</CornerRadius>
+    <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ModernPageShadow" Opacity="0" BlurRadius="0" ShadowDepth="0" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.InnerOutline" Color="#A6A6A6" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.PaneBorder" Color="#A6A6A6" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.Separator" Color="#A6A6A6" />
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuItemOutlineCornerRadius">0</CornerRadius>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredStateBorder" Color="White" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredDropDownHoverBorder" Color="#C0FFFFFF" />
+
+    <!-- Ordinary hover borders blend into their fill; dropdown/split borders stay distinct. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.DropDownHoverBorder" Color="#A6A6A6" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBorder" Color="#E6E6E6" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.LauncherHoverBorder" Color="#E6E6E6" />
+    <Thickness x:Key="RibbonKit.Metrics.CheckedHoverBorderThickness">1</Thickness>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBorder" Color="#A6A6A6" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBackground" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredCompanionBackground" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="#8A8A8A" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" Color="#8A8A8A" />
+    <Thickness x:Key="RibbonKit.Metrics.ControlHighlightBorderThickness">1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryBorderThickness">1,1,1,0</Thickness>
+
+    <!-- The connected body/QAT/message surfaces retain a faint lift behind their borders. -->
+    <DropShadowEffect x:Key="RibbonKit.Effects.ContentShadow"
+                      BlurRadius="12" ShadowDepth="1" Direction="270"
+                      Opacity="0.10" Color="Black" RenderingBias="Performance" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.QatExtenderShadow"
+                      BlurRadius="12" ShadowDepth="1" Direction="270"
+                      Opacity="0.10" Color="Black" RenderingBias="Performance" />
+    <!-- Preserve effect resource types and popup margins while suppressing floating shadows. -->
+    <DropShadowEffect x:Key="RibbonKit.Effects.PopupShadow" BlurRadius="0" ShadowDepth="0" Opacity="0" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.ApplicationMenuShadow" BlurRadius="0" ShadowDepth="0" Opacity="0" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.ApplicationButtonMenuOpenShadow" BlurRadius="0" ShadowDepth="0" Opacity="0" />
+    <DropShadowEffect x:Key="RibbonKit.Effects.ApplicationOrbShadow" BlurRadius="0" ShadowDepth="0" Opacity="0" />
+    <!-- Split primary geometry; join padding retains the content inset. -->
+    <Thickness x:Key="RibbonKit.Metrics.SplitHorizontalPrimaryBorderThickness">1,1,0,1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.SplitHorizontalPrimaryPadding">0,0,1,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryPadding">0,0,0,1</Thickness>
+</ResourceDictionary>

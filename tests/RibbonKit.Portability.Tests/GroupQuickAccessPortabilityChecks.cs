@@ -118,7 +118,7 @@ internal static class GroupQuickAccessPortabilityChecks
                     }
                 }
             }
-            Assert.Equal(288, cases);
+            Assert.Equal(336, cases);
             string json = RibbonCustomizationSerializer.Serialize(ribbon);
             ribbon.QuickAccessItems.Clear(); Layout(window);
             RibbonCustomizationSerializer.Apply(ribbon, json); Layout(window);

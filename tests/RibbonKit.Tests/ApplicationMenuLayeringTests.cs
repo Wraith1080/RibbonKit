@@ -146,8 +146,13 @@ public class ApplicationMenuLayeringTests
             document.Descendants(Presentation + "Setter"),
             setter => (string?)setter.Attribute("TargetName") == "TabControlHost"
                 && (string?)setter.Attribute("Property") == "Panel.ZIndex");
-        Assert.Equal("QuickAccessPosition", (string?)seamLayer.Parent!.Attribute("Property"));
-        Assert.Equal("BelowRibbon", (string?)seamLayer.Parent.Attribute("Value"));
+        Assert.Equal(Presentation + "MultiTrigger", seamLayer.Parent!.Name);
+        Assert.Contains(seamLayer.Parent.Descendants(Presentation + "Condition"), condition =>
+            (string?)condition.Attribute("Property") == "QuickAccessPosition"
+            && (string?)condition.Attribute("Value") == "BelowRibbon");
+        Assert.Contains(seamLayer.Parent.Descendants(Presentation + "Condition"), condition =>
+            (string?)condition.Attribute("Property") == "IsQuickAccessVisible"
+            && (string?)condition.Attribute("Value") == "True");
         Assert.Equal("{DynamicResource RibbonKit.Metrics.ContentZIndexQatBelow}",
             (string?)seamLayer.Attribute("Value"));
         foreach (string theme in new[] { "Office2007", "Office2010", "Office2013", "Office2019", "Office2024", "Crystal.Light" })

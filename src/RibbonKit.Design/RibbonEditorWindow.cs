@@ -758,6 +758,7 @@ internal sealed class RibbonEditorWindow : Window
         _themeMap.Clear();
         AddThemePreview("(project default)", ThemePreview.ProjectDefault);
         AddThemePreview("Office 2024", ThemePreview.Office2024);
+        AddThemePreview("Office 2024 Flat", ThemePreview.Office2024Flat);
         AddThemePreview("Office 2019", ThemePreview.Office2019);
         AddThemePreview("Office 2013", ThemePreview.Office2013);
         AddThemePreview("Office 2010", ThemePreview.Office2010);

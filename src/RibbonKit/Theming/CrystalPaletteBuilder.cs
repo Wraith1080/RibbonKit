@@ -26,6 +26,7 @@ internal static class CrystalPaletteBuilder
         palette["RibbonKit.Brushes.Input.FocusBorder"] = foreground;
         palette["RibbonKit.Brushes.GalleryItem.HoverBorder"] = palette["RibbonKit.Brushes.Tab.HoverBorder"];
         palette["RibbonKit.Brushes.InRibbonGallery.Border"] = palette["Crystal.Brushes.GalleryBorder"];
+        palette["RibbonKit.Brushes.InRibbonGallery.PopupBorder"] = palette["Crystal.Brushes.GalleryBorder"];
         palette["RibbonKit.Brushes.InRibbonGallery.SurfaceBackground"] = palette["Crystal.Brushes.GallerySurface"];
         palette["RibbonKit.Brushes.InRibbonGallery.PopupBackground"] = palette["Crystal.Brushes.GallerySurface"];
         palette["RibbonKit.Brushes.OptionsDialog.NavigationSelectedForeground"] = foreground;

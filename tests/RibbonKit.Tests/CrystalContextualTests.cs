@@ -1495,9 +1495,14 @@ public class CrystalContextualTests
             var foot = (Border)tab.Template.FindName("ConnectFoot", tab);
             var tabs = (RibbonTabControl)ribbon.Template.FindName("TabControlHost", ribbon);
             var strip = (FrameworkElement)tabs.Template.FindName("PART_TabScroll", tabs);
-            var hoverTrigger = tab.Template.Triggers.OfType<Trigger>().Single(trigger =>
-                trigger.SourceName == "HeaderChrome" &&
-                trigger.Property == UIElement.IsMouseOverProperty);
+            var hoverTrigger = tab.Template.Triggers.OfType<MultiTrigger>().Single(trigger =>
+                trigger.Conditions.OfType<Condition>().Any(condition =>
+                    condition.SourceName == "HeaderChrome" &&
+                    condition.Property == UIElement.IsMouseOverProperty && Equals(condition.Value, true))
+                && trigger.Conditions.OfType<Condition>().Any(condition =>
+                    condition.Property == RibbonPopupInteraction.SuppressHoverProperty && Equals(condition.Value, false))
+                && !trigger.Conditions.OfType<Condition>().Any(condition =>
+                    condition.Property.Name == "IsBackstageActive"));
             Assert.Contains(hoverTrigger.Setters.OfType<Setter>(), setter =>
                 setter.TargetName == "ConnectFoot" &&
                 setter.Property == UIElement.OpacityProperty);

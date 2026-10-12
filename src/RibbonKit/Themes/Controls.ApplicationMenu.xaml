@@ -121,7 +121,7 @@
                                     IsHitTestVisible="False"
                                     BorderBrush="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}"
                                     BorderThickness="1"
-                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}" />
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ApplicationMenuItemOutlineCornerRadius}" />
 
                             <Button x:Name="PART_Primary"
                                     Grid.Column="0"

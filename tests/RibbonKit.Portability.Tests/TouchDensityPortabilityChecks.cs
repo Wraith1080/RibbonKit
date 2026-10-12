@@ -197,9 +197,9 @@ internal static class TouchDensityPortabilityChecks
                     Assert.Equal(46, WindowChrome.GetWindowChrome(window).CaptionHeight);
                     ribbon.IsBackstageOpen = true; Layout(window);
                     Assert.False(window.IsTitleBarContentVisible);
-                    Assert.Equal(titleHeight, Part<Grid>(window, "TitleBarBand").ActualHeight);
+                    AssertTitleBandHeight(window, titleHeight);
                     ribbon.IsBackstageOpen = false; Layout(window);
-                    Assert.Equal(titleHeight, Part<Grid>(window, "TitleBarBand").ActualHeight);
+                    AssertTitleBandHeight(window, titleHeight);
                 }
                 if (host is RibbonQuickAccessToolBar toolbar)
                 {
@@ -314,8 +314,10 @@ internal static class TouchDensityPortabilityChecks
             var strip = Part<ScrollViewer>(gallery, "PART_ScrollViewer");
             Assert.InRange(((RibbonGalleryItem)gallery.Items[0]).ActualHeight,
                 strip.ViewportHeight - 1, strip.ViewportHeight + 1);
-            gallery.SelectedIndex = 8; Layout(window);
             gallery.IsDropDownOpen = true; Layout(window);
+            // A new pick in the popup reveals its row on close. Reopening without
+            // a pick preserves the viewed strip row, even if selection was set earlier.
+            gallery.SelectedIndex = 8; Layout(window);
             gallery.IsDropDownOpen = false; Layout(window);
             Assert.Equal(8, gallery.SelectedIndex);
             var chosen = (RibbonGalleryItem)gallery.Items[8];
@@ -562,7 +564,7 @@ internal static class TouchDensityPortabilityChecks
                             design == RibbonBackstageDesign.CrystalFloating ? "Crystal.Backstage.Style" : "Crystal.Backstage.Sidebar");
                     else backstage.ClearValue(FrameworkElement.StyleProperty);
                     ribbon.IsBackstageOpen = true; Layout(window);
-                    Assert.Equal(titleHeight, Part<Grid>(window, "TitleBarBand").ActualHeight);
+                    AssertTitleBandHeight(window, titleHeight);
                     Assert.True(row.ActualHeight >= 52, $"{theme}/{design}: nav row {row.ActualHeight}");
                     double touchFont = row.FontSize;
                     ribbon.Density = RibbonDensity.Compact; Layout(window);
@@ -594,7 +596,7 @@ internal static class TouchDensityPortabilityChecks
                             || theme == RibbonTheme.CrystalLight && design == RibbonBackstageDesign.CrystalSidebar))
                         SavePreview(window, $"{theme}-{design}-touch-backstage");
                     ribbon.IsBackstageOpen = false; Layout(window);
-                    Assert.Equal(titleHeight, Part<Grid>(window, "TitleBarBand").ActualHeight);
+                    AssertTitleBandHeight(window, titleHeight);
                 }
                 ribbon.Backstage = null;
                 var menu = new RibbonApplicationMenu();
@@ -698,7 +700,7 @@ internal static class TouchDensityPortabilityChecks
                     double radius = expectedTop > 0 ? theme switch
                     {
                         RibbonTheme.Office2007 => 3,
-                        RibbonTheme.Office2024 => 8,
+                        RibbonTheme.Office2024 or RibbonTheme.Office2024Flat => 8,
                         _ => 0,
                     } : 0;
                     Assert.Equal(new CornerRadius(radius, radius, 0, 0), topEdge.CornerRadius);
@@ -1007,6 +1009,13 @@ internal static class TouchDensityPortabilityChecks
             yield return child;
             foreach (var descendant in Descendants(child)) yield return descendant;
         }
+    }
+
+    private static void AssertTitleBandHeight(Window window, double expected)
+    {
+        // Native chrome may snap to the adjacent physical pixel when its contents change.
+        double pixel = 1 / VisualTreeHelper.GetDpi(window).DpiScaleY;
+        Assert.InRange(Part<Grid>(window, "TitleBarBand").ActualHeight, expected - pixel, expected + pixel);
     }
 
     private static void Layout(Window window)

@@ -856,6 +856,12 @@
                                                 <TextBlock Text="Office 2024" VerticalAlignment="Center" />
                                             </StackPanel>
                                         </rk:RibbonGalleryItem>
+                                        <rk:RibbonGalleryItem Tag="Office2024Flat" ToolTip="Office 2024 Flat">
+                                            <StackPanel Orientation="Horizontal" Width="112" Height="40">
+                                                <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />
+                                                <TextBlock Text="2024 Flat" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </rk:RibbonGalleryItem>
                                         <rk:RibbonGalleryItem Tag="Office2019" ToolTip="Office 2019">
                                             <StackPanel Orientation="Horizontal" Width="112" Height="40">
                                                 <Image Source="{StaticResource Icon.Palette}" Width="22" Height="22" Margin="4,0,6,0" />

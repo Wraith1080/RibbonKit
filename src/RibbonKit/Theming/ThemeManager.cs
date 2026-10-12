@@ -37,6 +37,9 @@ public enum RibbonTheme
     /// backdrop blur and document underlay are separate opt-in presentation effects.
     /// </summary>
     CrystalLight,
+
+    /// <summary>Office 2024 with stronger one-DIP borders and soft shadows behind connected ribbon surfaces.</summary>
+    Office2024Flat,
 }
 
 /// <summary>
@@ -288,6 +291,7 @@ public static class ThemeManager
             or RibbonTheme.Office2013
             or RibbonTheme.Office2019
             or RibbonTheme.Office2024
+            or RibbonTheme.Office2024Flat
             or RibbonTheme.CrystalLight;
 
     private static void ApplyDarkModeDictionary(Application application)
@@ -467,6 +471,7 @@ public static class ThemeManager
                 resources[SelectedForegroundKey] = Frozen(displayAccent);
                 break;
             case RibbonTheme.Office2024:
+            case RibbonTheme.Office2024Flat:
                 resources[SelectedUnderlineKey] = Frozen(accent);
                 resources[SelectedForegroundKey] = Frozen(accent);
                 break;
@@ -748,7 +753,7 @@ public static class ThemeManager
         // black washes in light mode and white washes in dark mode, so both tint the material.
         if (_titleBarBackdrop
             && !_accentTitleBar
-            && (CurrentTheme ?? RibbonTheme.Office2024) == RibbonTheme.Office2024)
+            && (CurrentTheme ?? RibbonTheme.Office2024) is RibbonTheme.Office2024 or RibbonTheme.Office2024Flat)
         {
             resources[TitleBarBackgroundKey] = Brushes.Transparent;
             resources[RibbonBackgroundKey] = Brushes.Transparent;

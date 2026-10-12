@@ -320,6 +320,64 @@ public sealed class VisualSnapshotTests
                     sceneFactory: direction => CreateOfficeGlassGrayScene(direction, narrow: false));
                 AssertSnapshot("office2019-glass-dark-gray-narrow-rtl-200", 2d, FlowDirection.RightToLeft,
                     direction => CreateOfficeGlassGrayScene(direction, narrow: true));
+                foreach (bool dark in new[] { false, true })
+                {
+                    ThemeManager.Apply(application, RibbonTheme.Office2024Flat);
+                    ThemeManager.SetDarkMode(application, dark);
+                    string palette = dark ? "office2024-flat-dark" : "office2024-flat-light";
+                    foreach ((int percent, double scale) in DpiScales)
+                        AssertSnapshot($"{palette}-{percent}", scale);
+                    AssertSnapshot($"{palette}-states-100", 1d,
+                        sceneFactory: CreateFlat2024StateScene, height: 270);
+                    AssertSnapshot($"{palette}-states-rtl-200", 2d, FlowDirection.RightToLeft,
+                        CreateFlat2024StateScene, 270);
+                    AssertSnapshot($"{palette}-split-hover-100", 1d,
+                        sceneFactory: CreateSplitHoverScene, height: 270);
+                    AssertSnapshot($"{palette}-qat-below-100", 1d,
+                        sceneFactory: direction => CreateQatScene(direction), height: 270);
+                    AssertSnapshot($"{palette}-qat-below-rtl-200", 2d, FlowDirection.RightToLeft,
+                        direction => CreateQatScene(direction), 270);
+                    AssertSnapshot($"{palette}-message-bar-connected-100", 1d,
+                        sceneFactory: CreateFlat2024MessageBarScene, height: 270);
+                    AssertSnapshot($"{palette}-application-menu-100", 1d,
+                        sceneFactory: direction => CreateCrystalApplicationMenuScene(direction, "default"), height: 400);
+                    AssertSnapshot($"{palette}-application-menu-split-100", 1d,
+                        sceneFactory: direction => CreateCrystalApplicationMenuScene(direction, "split"), height: 400);
+                    AssertSnapshot($"{palette}-application-menu-pressed-100", 1d,
+                        sceneFactory: direction => CreateCrystalApplicationMenuScene(direction, "pressed"), height: 400);
+                    AssertSnapshot($"{palette}-backstage-100", 1d,
+                        sceneFactory: CreateFlat2024BackstageScene, height: 350);
+                    AssertSnapshot($"{palette}-backstage-rtl-200", 2d, FlowDirection.RightToLeft,
+                        CreateFlat2024BackstageScene, 350);
+                    AssertSnapshot($"{palette}-backstage-caption-plain-100", 1d,
+                        sceneFactory: CreateFlat2024BackstageWindowScene, height: 390);
+                    ThemeManager.SetAccentedTitleBar(application, true);
+                    try
+                    {
+                        AssertSnapshot($"{palette}-backstage-caption-colored-100", 1d,
+                            sceneFactory: CreateFlat2024BackstageWindowScene, height: 390);
+                    }
+                    finally { ThemeManager.SetAccentedTitleBar(application, false); }
+                }
+                // Append join refinements after established scenes to preserve their WPF initialization.
+                foreach ((RibbonTheme theme, bool dark, string name) in Themes.Where(variant =>
+                    variant.Theme is RibbonTheme.Office2007 or RibbonTheme.Office2010))
+                {
+                    ThemeManager.Apply(application, theme);
+                    ThemeManager.SetDarkMode(application, dark);
+                    AssertSnapshot($"{name}-split-hover-100", 1d,
+                        sceneFactory: CreateSplitHoverScene, height: 270);
+                    AssertSnapshot($"{name}-split-hover-rtl-125", 1.25d, FlowDirection.RightToLeft,
+                        CreateSplitHoverScene, 270);
+                }
+                foreach (bool dark in new[] { false, true })
+                {
+                    ThemeManager.Apply(application, RibbonTheme.Office2024Flat);
+                    ThemeManager.SetDarkMode(application, dark);
+                    string palette = dark ? "office2024-flat-dark" : "office2024-flat-light";
+                    AssertSnapshot($"{palette}-split-hover-rtl-125", 1.25d, FlowDirection.RightToLeft,
+                        CreateSplitHoverScene, 270);
+                }
                 _selection.EnsureAllPatternsMatched();
                 _output.WriteLine("Completed {0} selected visual scenes: {1}",
                     _selection.SelectedScenes.Count, string.Join(", ", _selection.SelectedScenes));
@@ -615,6 +673,97 @@ public sealed class VisualSnapshotTests
         return root;
     }
 
+    private static FrameworkElement CreateFlat2024StateScene(FlowDirection flowDirection)
+    {
+        InitializeWindowRendering();
+        var root = (Grid)CreateScene(flowDirection);
+        root.Height = 270;
+        var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));
+        ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
+        var home = ribbon.Tabs[0];
+        home.Groups.Clear();
+        var hover = Button("Hover", RibbonControlSize.Large, Icon("M3,3 L13,3 L13,13 L3,13 Z"));
+        var press = Button("Pressed", RibbonControlSize.Large, Icon("M2,8 L6,12 L14,3"));
+        var toggle = new RibbonToggleButton { Header = "On", Size = RibbonControlSize.Large,
+            LargeIcon = Icon("M3,8 L7,12 L14,3"), IsChecked = true };
+        var checkedHover = new RibbonToggleButton { Header = "On / hover", Size = RibbonControlSize.Large,
+            LargeIcon = Icon("M3,8 L7,12 L14,3"), IsChecked = true };
+        var commands = new RibbonGroup { Header = "Normal buttons", CanResize = false };
+        commands.Items.Add(hover);
+        commands.Items.Add(press);
+        commands.Items.Add(toggle);
+        commands.Items.Add(checkedHover);
+        home.Groups.Add(commands);
+        var drop = new RibbonDropDownButton { Header = "Dropdown", Size = RibbonControlSize.Large,
+            LargeIcon = Icon("M3,5 L8,10 L13,5") };
+        var split = new RibbonSplitButton { Header = "Split", Size = RibbonControlSize.Large,
+            LargeIcon = Icon("M4,2 L12,2 L12,5 L14,5 L14,15 L2,15 L2,5 L4,5 Z") };
+        var dropdowns = new RibbonGroup { Header = "Dropdown / split hover", CanResize = false };
+        dropdowns.Items.Add(drop);
+        dropdowns.Items.Add(split);
+        home.Groups.Add(dropdowns);
+        var launcher = new RibbonGroup { Header = "Launcher pressed", ShowDialogLauncher = true, CanResize = false };
+        launcher.Items.Add(Button("Options", RibbonControlSize.Large, Icon("M2,4 L14,4 M2,8 L11,8 M2,12 L8,12")));
+        home.Groups.Add(launcher);
+        var input = new RibbonGroup { Header = "Combo box", CanResize = false };
+        var combo = new RibbonComboBox { InputWidth = 105 };
+        combo.Items.Add("Unchanged");
+        combo.SelectedIndex = 0;
+        input.Items.Add(combo);
+        home.Groups.Add(input);
+        root.Measure(new Size(Width, 270));
+        root.Arrange(new Rect(0, 0, Width, 270));
+        root.UpdateLayout();
+        Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+        root.UpdateLayout();
+        ForceState(hover, typeof(UIElement), "IsMouseOverPropertyKey", true);
+        ForceState(press, typeof(ButtonBase), "IsPressedPropertyKey", true);
+        ForceState(checkedHover, typeof(UIElement), "IsMouseOverPropertyKey", true);
+        ForceState(Assert.IsType<ToggleButton>(drop.Template.FindName("PART_Toggle", drop)),
+            typeof(UIElement), "IsMouseOverPropertyKey", true);
+        ForceState(Assert.IsType<Button>(split.Template.FindName("PART_Primary", split)),
+            typeof(UIElement), "IsMouseOverPropertyKey", true);
+        ForceState(Assert.IsType<Button>(launcher.Template.FindName("PART_DialogLauncher", launcher)),
+            typeof(ButtonBase), "IsPressedPropertyKey", true);
+        ForceState(combo, typeof(UIElement), "IsMouseOverPropertyKey", true);
+        // UIElement's native mouse flags cannot be synthesized by changing its read-only DP.
+        // Native toggle triggers use that DP; RibbonButton's code reads the real mouse flag.
+        // Show the neutral hover wash explicitly in this paint fixture (live input is separate).
+        Assert.IsType<Border>(hover.Template.FindName("HoverWash", hover)).Opacity = 1;
+        Assert.IsType<Border>(checkedHover.Template.FindName("HoverWash", checkedHover)).Opacity = 1;
+        return root;
+    }
+
+    private static FrameworkElement CreateSplitHoverScene(FlowDirection flowDirection)
+    {
+        InitializeWindowRendering();
+        var root = (Grid)CreateScene(flowDirection);
+        root.Height = 270;
+        var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));
+        var home = ribbon.Tabs[0];
+        home.Groups.Clear();
+        var cases = new List<(RibbonSplitButton Split, bool HoverArrow)>();
+        foreach (var layout in new[] { RibbonSplitButtonLayout.Horizontal, RibbonSplitButtonLayout.Vertical })
+        foreach (bool arrow in new[] { false, true })
+        {
+            var split = new RibbonSplitButton { Header = "Split", Layout = layout, Size = RibbonControlSize.Large,
+                LargeIcon = Icon("M4,2 L12,2 L12,5 L14,5 L14,15 L2,15 L2,5 L4,5 Z") };
+            var group = new RibbonGroup { Header = $"{layout} / {(arrow ? "arrow" : "primary")}", CanResize = false };
+            group.Items.Add(split);
+            home.Groups.Add(group);
+            cases.Add((split, arrow));
+        }
+        root.Measure(new Size(Width, 270));
+        root.Arrange(new Rect(0, 0, Width, 270));
+        root.UpdateLayout();
+        Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+        foreach (var item in cases)
+            ForceState(Assert.IsAssignableFrom<ButtonBase>(item.Split.Template.FindName(
+                item.HoverArrow ? "PART_Toggle" : "PART_Primary", item.Split)),
+                typeof(UIElement), "IsMouseOverPropertyKey", true);
+        return root;
+    }
+
     private static FrameworkElement CreateOffice2010ButtonStateScene(FlowDirection flowDirection)
     {
         var root = (Grid)CreateScene(flowDirection);
@@ -866,6 +1015,48 @@ public sealed class VisualSnapshotTests
         backstage.SelectedIndex = 0;
         root.Children.Add(backstage);
         return root;
+    }
+
+    private static FrameworkElement CreateFlat2024BackstageScene(FlowDirection flowDirection)
+    {
+        InitializeWindowRendering();
+        var root = (Grid)CreateModernBackstageShellScene(flowDirection);
+        root.Height = 350;
+        return root;
+    }
+
+    private static FrameworkElement CreateFlat2024MessageBarScene(FlowDirection flowDirection)
+    {
+        InitializeWindowRendering();
+        return CreateMessageBarStackScene(flowDirection);
+    }
+
+    private static FrameworkElement CreateFlat2024BackstageWindowScene(FlowDirection flowDirection)
+    {
+        var root = (Grid)CreateFlat2024BackstageScene(flowDirection);
+        var backstage = Assert.IsType<Backstage>(Assert.Single(root.Children));
+        root.Children.Clear();
+        root.Height = double.NaN;
+        var ribbon = new Ribbon { Backstage = backstage };
+        ribbon.Tabs.Add(new RibbonTab { Header = "Home" });
+        root.Children.Add(ribbon);
+        var window = new RibbonWindow
+        {
+            Title = "RibbonKit", TitleBarContent = new TextBlock { Text = "RibbonKit", Margin = new Thickness(12, 0, 0, 0) },
+            Content = root, Width = Width, Height = 390, FlowDirection = flowDirection,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false,
+            UseLayoutRounding = true, SnapsToDevicePixels = true,
+        };
+        try
+        {
+            window.Show();
+            ribbon.IsBackstageOpen = true;
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+            window.UpdateLayout();
+            Assert.True(backstage.ActualHeight > 200);
+            return Assert.IsType<Grid>(window.Template.FindName("PhysicalWindowFrameHost", window));
+        }
+        catch { window.Close(); throw; }
     }
 
     private static FrameworkElement CreateModernBackstageShellScene(FlowDirection flowDirection)
@@ -1360,6 +1551,7 @@ public sealed class VisualSnapshotTests
 
     private static FrameworkElement CreateCrystalApplicationMenuScene(FlowDirection direction, string state)
     {
+        InitializeWindowRendering();
         var root = (Grid)CreateApplicationMenuMessageBarScene(direction, RibbonApplicationButtonShape.Tab);
         root.Height = 400;
         if (state == "narrow") root.Width = 420;
@@ -1389,7 +1581,14 @@ public sealed class VisualSnapshotTests
             Assert.Same(item, menu.ActiveItem);
         }
         Assert.True(ribbon.IsApplicationMenuOpen);
-        Assert.Equal(new CornerRadius(14), Assert.IsType<Border>(menu.Template.FindName("Frame", menu)).CornerRadius);
+        if (state == "pressed")
+        {
+            var item = Assert.IsType<RibbonApplicationMenuItem>(menu.Items[0]);
+            ForceState(Assert.IsType<Button>(item.Template.FindName("PART_Primary", item)),
+                typeof(ButtonBase), "IsPressedPropertyKey", true);
+        }
+        Assert.Equal(new CornerRadius(ThemeManager.CurrentTheme == RibbonTheme.CrystalLight ? 14 : 8),
+            Assert.IsType<Border>(menu.Template.FindName("Frame", menu)).CornerRadius);
         return root;
     }
 
@@ -1433,7 +1632,7 @@ public sealed class VisualSnapshotTests
         var geometry = Geometry.Parse(geometryData);
         RibbonTheme theme = ThemeManager.CurrentTheme ?? RibbonTheme.Office2024;
         bool lightGlyph = ThemeManager.IsDarkMode
-            && theme is RibbonTheme.Office2013 or RibbonTheme.Office2019 or RibbonTheme.Office2024;
+            && theme is RibbonTheme.Office2013 or RibbonTheme.Office2019 or RibbonTheme.Office2024 or RibbonTheme.Office2024Flat;
         Color foreground = lightGlyph
             ? Color.FromRgb(0xD0, 0xD0, 0xD0)
             : Color.FromRgb(0x44, 0x54, 0x6A);
@@ -1581,7 +1780,8 @@ public sealed class VisualSnapshotTests
 
     private static class SnapshotThread
     {
-        private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(30);
+        // The full matrix renders every scene twice and now includes real caption windows.
+        private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(60);
 
         public static void Run(Action body)
         {

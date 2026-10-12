@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using RibbonKit.Theming;
 using Xunit;
 
 namespace RibbonKit.Tests;
@@ -94,7 +95,7 @@ public class BackstageDarkPaletteTests
     public void Every_palette_defines_the_new_classic_navigation_contract()
     {
         string[] files = Directory.GetFiles(ThemesDirectory(), "Tokens.Office*.xaml");
-        Assert.Equal(10, files.Length);
+        Assert.Equal(2 * Enum.GetValues<RibbonTheme>().Count(theme => theme != RibbonTheme.CrystalLight), files.Length);
 
         foreach (string file in files)
         {
@@ -126,9 +127,25 @@ public class BackstageDarkPaletteTests
     }
 
     private static XElement Resource(XDocument document, string key) =>
-        Assert.Single(
-            document.Root!.Elements(),
-            element => (string?)element.Attribute(Xaml + "Key") == key);
+        Assert.IsType<XElement>(FindResource(document, key));
+
+    private static XElement? FindResource(XDocument document, string key)
+    {
+        XElement? direct = document.Root!.Elements()
+            .SingleOrDefault(element => (string?)element.Attribute(Xaml + "Key") == key);
+        if (direct is not null) return direct;
+        // Derived palettes inherit their authored generation through merged token dictionaries.
+        foreach (XElement dictionary in document.Root
+            .Elements(Presentation + "ResourceDictionary.MergedDictionaries")
+            .Elements(Presentation + "ResourceDictionary").Reverse())
+        {
+            string? source = (string?)dictionary.Attribute("Source");
+            if (source is null) continue;
+            XElement? inherited = FindResource(XDocument.Load(ThemePart(Path.GetFileName(source))), key);
+            if (inherited is not null) return inherited;
+        }
+        return null;
+    }
 
     private static string ThemePart(string fileName) => Path.Combine(ThemesDirectory(), fileName);
 

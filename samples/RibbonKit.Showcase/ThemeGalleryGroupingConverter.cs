@@ -9,7 +9,7 @@ internal sealed class ThemeGalleryGroupingConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => value switch
     {
         "CrystalLight" => "Modern",
-        "Office2024" or "Office2019" or "Office2013" => "Office Modern",
+        "Office2024" or "Office2024Flat" or "Office2019" or "Office2013" => "Office Modern",
         "Office2010" or "Office2007" => "Office Legacy",
         _ => value,
     };
