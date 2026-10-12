@@ -36,6 +36,8 @@
          ============================================================ -->
     <Style TargetType="{x:Type controls:Backstage}">
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="controls:UtilityChrome.QatTitleBarColored"
+                Value="{DynamicResource RibbonKit.Metrics.QatTitleBarColored}" />
         <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Backstage.ContentBackground}" />
         <!-- Nav-column foreground (back arrow + item text). White for the accent column;
              the Modern trigger switches it to the active neutral-rail foreground. -->
@@ -43,6 +45,9 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:Backstage}">
+                    <ControlTemplate.Resources>
+                        <controls:BackstagePageGeometryConverter x:Key="ModernPageGeometry" />
+                    </ControlTemplate.Resources>
                     <!-- Cycle on the visual root avoids TabControl's remembered selected-header
                          entry point when focus wraps from the page back to navigation. -->
                     <Grid x:Name="RootGrid" Background="{TemplateBinding Background}"
@@ -197,12 +202,37 @@
                              page content (invisible on the light content background). The content
                              background is light in every theme, so dark page text is always correct;
                              page content that wants its own colour still sets Foreground explicitly. -->
-                        <Border x:Name="ContentArea" Grid.Column="1"
-                                Background="{DynamicResource RibbonKit.Brushes.Backstage.ContentBackground}"
-                                TextElement.Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
-                                Padding="42,32">
-                            <ContentPresenter ContentSource="SelectedContent" />
-                        </Border>
+                        <!-- Reveal the rail material through the page's leading corner. Keep it
+                             outside the shadow host so it does not square off the page silhouette. -->
+                        <Border x:Name="ModernPageBackdrop" Grid.Column="1"
+                                Background="{Binding Background, ElementName=NavColumn}"
+                                IsHitTestVisible="False" Visibility="Collapsed" />
+                        <Grid x:Name="ContentAreaHost" Grid.Column="1">
+                            <Border x:Name="ContentArea"
+                                    Background="{DynamicResource RibbonKit.Brushes.Backstage.ContentBackground}"
+                                    TextElement.Foreground="{DynamicResource RibbonKit.Brushes.Text.Primary}"
+                                    Padding="42,32">
+                                <Border.Clip>
+                                    <MultiBinding Converter="{StaticResource ModernPageGeometry}">
+                                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource Self}" />
+                                        <Binding Path="ActualHeight" RelativeSource="{RelativeSource Self}" />
+                                        <Binding Path="CornerRadius" ElementName="ModernPageFrame" />
+                                        <Binding Path="BorderThickness" ElementName="ModernPageFrame" />
+                                        <Binding Path="Visibility" ElementName="ModernPageFrame" />
+                                    </MultiBinding>
+                                </Border.Clip>
+                                <ContentPresenter ContentSource="SelectedContent" />
+                            </Border>
+                            <!-- Paint only: the top/leading frame does not inset the page. WPF
+                                 mirrors this corner and edge with the inherited flow direction. -->
+                            <Border x:Name="ModernPageFrame"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Backstage.Modern.PageFrameBorder}"
+                                    BorderThickness="{DynamicResource RibbonKit.Metrics.Backstage.ModernPageFrameThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.Backstage.ModernPageFrameCornerRadius}"
+                                    IsHitTestVisible="False"
+                                    SnapsToDevicePixels="True"
+                                    Visibility="Collapsed" />
+                        </Grid>
                         <!-- Classic2010 needs depth only along the page's left edge. Reapplying the
                              effect to ContentArea would also blur across the new top connector, so
                              this clipped strip gives the effect room to cast left into the rail
@@ -289,14 +319,31 @@
                     <ControlTemplate.Triggers>
                         <!-- Modern (2024): a narrower, light rail with dark foreground. -->
                         <Trigger Property="controls:Backstage.Design" Value="Modern">
+                            <Setter TargetName="ModernPageFrame" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="ModernPageBackdrop" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="RootGrid" Property="Background" Value="Transparent" />
                             <Setter Property="Foreground"
                                     Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.Foreground}" />
                             <Setter TargetName="NavColumn" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.NavBackground}" />
                             <Setter TargetName="NavColumnDef" Property="Width" Value="200" />
-                            <Setter TargetName="ContentArea" Property="Effect"
-                                    Value="{DynamicResource RibbonKit.Effects.Backstage.ContentShadow}" />
+                            <Setter TargetName="ContentAreaHost" Property="Effect"
+                                    Value="{DynamicResource RibbonKit.Effects.Backstage.ModernPageShadow}" />
                         </Trigger>
+                        <!-- Flat uses a rounded rim without shadow under a neutral caption,
+                             and the inherited page shadow without a rim under a colored caption. -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="controls:Backstage.Design" Value="Modern" />
+                                <Condition Property="controls:UtilityChrome.QatTitleBarColored" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="ModernPageFrame" Property="BorderThickness"
+                                    Value="{DynamicResource RibbonKit.Metrics.Backstage.ModernConnectedPageFrameThickness}" />
+                            <Setter TargetName="ModernPageFrame" Property="CornerRadius"
+                                    Value="{DynamicResource RibbonKit.Metrics.Backstage.ModernConnectedPageFrameCornerRadius}" />
+                            <Setter TargetName="ContentAreaHost" Property="Effect"
+                                    Value="{DynamicResource RibbonKit.Effects.Backstage.ContentShadow}" />
+                        </MultiTrigger>
 
                         <!-- Classic2010 (Office 2010): the nav column is the generation's
                              dedicated gradient (blue in light palettes, neutral in Black), with
@@ -569,6 +616,8 @@
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Chrome" Property="Background"
                                     Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.ItemSelected}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush"
+                                    Value="{DynamicResource RibbonKit.Brushes.Backstage.Modern.ItemSelectedBorder}" />
                             <Setter TargetName="SelBar" Property="Visibility" Value="Visible" />
                             <Setter TargetName="NavText" Property="TextElement.Foreground"
                                     Value="{DynamicResource RibbonKit.Brushes.Accent}" />

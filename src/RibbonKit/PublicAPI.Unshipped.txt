@@ -1,4 +1,5 @@
 #nullable enable
+RibbonKit.Theming.RibbonTheme.Office2024Flat = 6 -> RibbonKit.Theming.RibbonTheme
 RibbonKit.Controls.Ribbon.IsQuickAccessVisible.get -> bool
 RibbonKit.Controls.Ribbon.IsQuickAccessVisible.set -> void
 static readonly RibbonKit.Controls.Ribbon.IsQuickAccessVisibleProperty -> System.Windows.DependencyProperty!

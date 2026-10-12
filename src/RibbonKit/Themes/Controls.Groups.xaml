@@ -595,7 +595,15 @@
                                                                     </MultiTrigger.Conditions>
                                                                     <Setter TargetName="Chrome" Property="Background"
                                                                             Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                                    <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                            Value="{DynamicResource RibbonKit.Brushes.Control.LauncherHoverBorder}" />
                                                                 </MultiTrigger>
+                                                                <Trigger Property="IsPressed" Value="True">
+                                                                    <Setter TargetName="Chrome" Property="Background"
+                                                                            Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                                    <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                            Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                                                </Trigger>
                                                             </ControlTemplate.Triggers>
                                                         </ControlTemplate>
                                                     </Setter.Value>
@@ -679,6 +687,10 @@
                                                     <Trigger Property="IsPressed" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                        <Setter TargetName="Chrome" Property="BorderBrush"
+                                                                Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                                        <Setter TargetName="Chrome" Property="BorderThickness"
+                                                                Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                                     </Trigger>
                                                     <Trigger Property="IsEnabled" Value="False">
                                                         <Setter Property="Opacity" Value="0.4" />
@@ -721,14 +733,12 @@
                             <AdornerDecorator>
                                 <Border x:Name="PART_PopupHost"
                                         Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
-                                        BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}"
+                                        BorderBrush="{DynamicResource RibbonKit.Brushes.Popup.Border}"
                                         BorderThickness="1"
                                         CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
                                         Padding="6,4"
-                                        Margin="4,2,8,8">
-                                    <Border.Effect>
-                                        <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
-                                    </Border.Effect>
+                                        Margin="4,2,8,8"
+                                        Effect="{DynamicResource RibbonKit.Effects.PopupShadow}">
                                 </Border>
                             </AdornerDecorator>
                         </Popup>

@@ -141,6 +141,11 @@ public sealed class ApplicationButtonShapeThemeTests
     public void Theme_default_and_local_value_follow_wpf_precedence() => RunSta(() =>
     {
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "Flat2024")
+        {
+            Flat2024ThemeChecks.Verify(application);
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "GroupQuickAccess")
         {
             GroupQuickAccessPortabilityChecks.Verify(application);
@@ -279,6 +284,8 @@ public sealed class ApplicationButtonShapeThemeTests
         KeyboardNavigationPortabilityChecks.Verify(application);
         CustomizationScrollSpacingChecks.Verify(application);
         CrystalUtilityPortabilityChecks.Verify(application);
+        Flat2024ThemeChecks.Verify(application);
+        ThemeManager.Apply(application, RibbonTheme.Office2024);
         CrystalTintPortabilityChecks.Verify(application);
         PopupMarginPortabilityChecks.Verify(application);
         ApplicationMenuViewportChecks.Verify(application);
@@ -353,7 +360,7 @@ public sealed class ApplicationButtonShapeThemeTests
                 double radius = theme switch
                 {
                     RibbonTheme.Office2013 or RibbonTheme.Office2019 => 0,
-                    RibbonTheme.CrystalLight or RibbonTheme.Office2024 => 4,
+                    RibbonTheme.CrystalLight or RibbonTheme.Office2024 or RibbonTheme.Office2024Flat => 4,
                     _ => 3,
                 };
                 AssertMenuRadius(menuItem, radius);

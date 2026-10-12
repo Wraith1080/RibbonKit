@@ -179,10 +179,12 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionGlow" Color="#CCFFF0CB" />
 
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.HoverBorder" Color="#E9C25E" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.DropDownHoverBorder" Color="#E9C25E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="#CB9A34" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" Color="#E0B24E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.InnerGlow" Color="#88FFFFFF" />
     <Thickness x:Key="RibbonKit.Metrics.ControlHighlightBorderThickness">1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ComboBoxItemHighlightBorderThickness">1</Thickness>
 
     <!-- Contextual-tab band tint (a light blue wash; the per-tab ContextualColor overrides it). -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.ContextualBackground" Color="#DCE8F5" />
@@ -295,6 +297,7 @@
     <CornerRadius x:Key="RibbonKit.Metrics.GroupLabelCornerRadius">0</CornerRadius>
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Background" Color="#FBFDFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#8DA5C4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Popup.Border" Color="#8DA5C4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#2E6DB4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#17457E" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Classic.NavBackground" Color="#1E5A9C" />
@@ -513,7 +516,7 @@
     <!-- Vertical split button (Large only): the same rounding rotated a quarter turn. -->
     <CornerRadius x:Key="RibbonKit.Metrics.SplitTopCornerRadius">3,3,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.SplitBottomCornerRadius">0,0,3,3</CornerRadius>
-    <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryBorderThickness">1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryBorderThickness">1,1,1,0</Thickness>
 
     <!-- Ribbon body: a full outline, square corners. The connect is done by moving the SELECTED
          TAB down 1px into the body (TabSelectedMargin, below) — the mechanism that actually works
@@ -656,11 +659,13 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#A67924" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Input.SurfaceBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Input.Border" Color="#8DA5C4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ComboBox.PopupBorder" Color="#8DA5C4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Input.HoverBorder" Color="#5C6B7F" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Input.FocusBorder" Color="#1E5A9C" />
     <!-- Gallery values keep the Office visuals while allowing Crystal-specific materials. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.GalleryItem.HoverBorder" Color="#B9C8DC" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.InRibbonGallery.Border" Color="#8DA5C4" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.InRibbonGallery.PopupBorder" Color="#8DA5C4" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.InRibbonGallery.SurfaceBackground" Color="#FFFFFF" />
     <LinearGradientBrush x:Key="RibbonKit.Brushes.InRibbonGallery.PopupBackground" StartPoint="0,0" EndPoint="0,1">
         <GradientStop Offset="0" Color="#F6F9FC" />
@@ -736,6 +741,7 @@
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuContentRimCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuContentOutlineCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuItemClipCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuItemOutlineCornerRadius">3</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuItemMargin">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuSeparatorMargin">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageBorderThickness">1</Thickness>
@@ -827,4 +833,24 @@
     <system:Double x:Key="RibbonKit.Metrics.Touch.MessageRowHeight">52</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.Touch.MessageActionPadding">12,6</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.Touch.TitleBarHeight">46</system:Double>
+    <!-- Shared popup shadows and colored command outlines are palette resources. -->
+    <DropShadowEffect x:Key="RibbonKit.Effects.PopupShadow" BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredStateBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredDropDownHoverBorder" Color="Transparent" />
+    <!-- Optional Modern Backstage framing; legacy palettes retain their unframed surface. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelectedBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.PageFrameBorder" Color="Transparent" />
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.ModernPageFrameThickness">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.Backstage.ModernPageFrameCornerRadius">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.ModernConnectedPageFrameThickness">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.Backstage.ModernConnectedPageFrameCornerRadius">0</CornerRadius>
+    <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ModernPageShadow"
+                      BlurRadius="9" ShadowDepth="3" Direction="180"
+                      Opacity="0.24" Color="#000000" RenderingBias="Performance" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.LauncherHoverBorder" Color="Transparent" />
+    <Thickness x:Key="RibbonKit.Metrics.CheckedHoverBorderThickness">0</Thickness>
+    <!-- Split primary geometry; join padding retains the content inset. -->
+    <Thickness x:Key="RibbonKit.Metrics.SplitHorizontalPrimaryBorderThickness">1,1,0,1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.SplitHorizontalPrimaryPadding">0,0,1,0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryPadding">0,0,0,1</Thickness>
 </ResourceDictionary>

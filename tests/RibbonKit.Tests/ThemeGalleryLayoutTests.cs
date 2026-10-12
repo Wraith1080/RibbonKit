@@ -54,12 +54,18 @@ public sealed class ThemeGalleryLayoutTests(ITestOutputHelper output)
             Assert.Equal(440, popup.ActualWidth, 2);
             var groups = theme.Items.Groups!.Cast<System.Windows.Data.CollectionViewGroup>().ToArray();
             Assert.Equal(new[] { "Modern", "Office Modern", "Office Legacy" }, groups.Select(group => group.Name));
-            Assert.Equal(new[] { 1, 3, 2 }, groups.Select(group => group.ItemCount));
+            Assert.Equal(new[] { 1, 4, 2 }, groups.Select(group => group.ItemCount));
             foreach (var group in groups)
             {
                 var bounds = group.Items.Cast<RibbonGalleryItem>().Select(tile =>
                     tile.TransformToVisual(popup).TransformBounds(new Rect(tile.RenderSize))).ToArray();
-                Assert.All(bounds, rect => Assert.Equal(bounds[0].Top, rect.Top, 2));
+                // Four modern choices naturally wrap within the existing popup width.
+                foreach (var row in bounds.GroupBy(rect => Math.Round(rect.Top, 2)))
+                {
+                    var ordered = row.OrderBy(rect => rect.Left).ToArray();
+                    for (int i = 1; i < ordered.Length; i++)
+                        Assert.True(ordered[i].Left >= ordered[i - 1].Right - 0.01);
+                }
                 Assert.All(bounds, rect => Assert.True(rect.Left >= 0 && rect.Right <= popup.ActualWidth + 0.01));
             }
             SavePreview(popup, scale, "grouped-theme-popup");

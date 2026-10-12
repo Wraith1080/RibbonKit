@@ -979,6 +979,10 @@ for routine confirmations. Update the plan once, without duplicating the result
 here or adding another numbered history/index entry. Add those entries when new
 technical evidence warrants them; preserve existing dated records.
 
+### 3.254 Office 2024 Flat theme — 2026-10-12
+
+[Derive light/dark borders and state outlines from the shared Office 2024 templates](docs/history/library/13-flat-theme-variants.md#3254-office-2024-flat-theme--2026-10-12).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.
@@ -1004,6 +1008,9 @@ technical evidence warrants them; preserve existing dated records.
   “Corrected” does not establish every theme/DPI/RTL gate.
 
 ### Remaining or intentionally deferred
+
+- **Office 2024 Flat:** implementation and visual review status are in the
+  [flat theme trial](docs/09-FUTURE-THEMES-PLAN.md#office-2024-flat-trial).
 
 - **Theme gallery review and deferred test follow-up:** implementation and
   automated evidence are in §3.214–§3.215. Native Theme gallery review and the

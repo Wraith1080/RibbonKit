@@ -140,7 +140,7 @@ public sealed class ShowcaseViewChoiceTests
                 tile.IsSelected = true; Sta.Drain(); host.UpdateLayout(); Sta.Drain();
                 Assert.Equal(Enum.Parse<RibbonTheme>(tile.Tag!.ToString()!), ThemeManager.CurrentTheme);
                 Assert.Same(tile, main.ThemeGallery.SelectedItem);
-                proxy.IsDropDownOpen = false; Sta.Drain(); Assert.Equal(6, main.ThemeGallery.Items.Count);
+                proxy.IsDropDownOpen = false; Sta.Drain(); Assert.Equal(7, main.ThemeGallery.Items.Count);
             }
         }
         finally { host.Close(); main.Close(); RibbonAnimation.GlobalLevel = motion; Sta.ResetApplication(); }
@@ -156,7 +156,7 @@ public sealed class ShowcaseViewChoiceTests
             var window = new MainWindow();
             try
             {
-                Assert.Equal(6, window.ThemeGallery.Items.Count);
+                Assert.Equal(7, window.ThemeGallery.Items.Count);
                 Assert.Equal("Office2024",
                     ((FrameworkElement)window.ThemeGallery.SelectedItem).Tag);
                 Assert.Equal(7, window.BackstageLayoutSelector.Items.Count);
@@ -184,21 +184,23 @@ public sealed class ShowcaseViewChoiceTests
                 Assert.Equal(RibbonDensity.Touch, window.MainRibbon.Density);
                 window.MouseModeChoice.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 Assert.Equal(RibbonDensity.Compact, window.MainRibbon.Density);
-                window.ThemeGallery.SelectedItem = window.ThemeGallery.Items[2];
+                void SelectTheme(RibbonTheme theme) => window.ThemeGallery.SelectedItem =
+                    window.ThemeGallery.Items.Cast<RibbonGalleryItem>().Single(item => Equals(item.Tag, theme.ToString()));
+                SelectTheme(RibbonTheme.Office2019);
                 Assert.Equal(RibbonTheme.Office2019, ThemeManager.CurrentTheme);
                 var floating = (RibbonMenuItem)window.BackstageLayoutSelector.Items[6];
                 floating.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 Assert.Equal(RibbonBackstageDesign.CrystalFloating, window.ShowcaseBackstage.Design);
                 Assert.Equal("Crystal Floating", window.BackstageLayoutSelector.Header);
-                window.ThemeGallery.SelectedItem = window.ThemeGallery.Items[1];
+                SelectTheme(RibbonTheme.Office2024);
                 Assert.Equal(RibbonTheme.Office2024, ThemeManager.CurrentTheme);
-                window.ThemeGallery.SelectedItem = window.ThemeGallery.Items[0];
+                SelectTheme(RibbonTheme.CrystalLight);
                 Assert.Equal(RibbonTheme.CrystalLight, ThemeManager.CurrentTheme);
                 Assert.True(window.GlassTreatmentToggle.IsChecked);
-                window.ThemeGallery.SelectedItem = window.ThemeGallery.Items[1];
+                SelectTheme(RibbonTheme.Office2024);
                 Assert.False(window.GlassTreatmentToggle.IsChecked);
                 window.GlassTreatmentToggle.IsChecked = true;
-                window.ThemeGallery.SelectedItem = window.ThemeGallery.Items[2];
+                SelectTheme(RibbonTheme.Office2019);
                 Assert.True(window.GlassTreatmentToggle.IsChecked);
             }
             finally { window.Close(); }

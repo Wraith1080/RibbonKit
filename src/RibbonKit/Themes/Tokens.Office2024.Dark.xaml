@@ -54,6 +54,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#404040" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Background" Color="#2B2B2B" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#555555" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Popup.Border" Color="#555555" />
 
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemHoverBackground" Color="#333333" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.ItemSelectedBackground" Color="#3A3A3A" />
@@ -141,10 +142,12 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.MessageBar.CloseHoverBorder" Color="#707070" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Input.SurfaceBackground" Color="#202020" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Input.Border" Color="#555555" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.ComboBox.PopupBorder" Color="#555555" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Input.HoverBorder" Color="#B8B8B8" />
     <!-- Gallery values keep the Office visuals while allowing Crystal-specific materials. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.GalleryItem.HoverBorder" Color="#404040" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.InRibbonGallery.Border" Color="#555555" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.InRibbonGallery.PopupBorder" Color="#555555" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.InRibbonGallery.SurfaceBackground" Color="#202020" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.InRibbonGallery.PopupBackground" Color="#202020" />
     <!-- Separate option resources preserve the Office indicator and focus appearance. -->
@@ -165,6 +168,7 @@
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuContentRimCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuContentOutlineCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuItemClipCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuItemOutlineCornerRadius">4</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuItemMargin">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuSeparatorMargin">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageBorderThickness">1</Thickness>
@@ -181,4 +185,20 @@
     <!-- Contrasting keyboard outlines for accent-filled ribbon and Backstage surfaces. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.KeyboardFocus.Light" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.KeyboardFocus.Dark" Color="#000000" />
+    <!-- Optional Modern Backstage framing; legacy palettes retain their unframed surface. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelectedBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.PageFrameBorder" Color="Transparent" />
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.ModernPageFrameThickness">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.Backstage.ModernPageFrameCornerRadius">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.ModernConnectedPageFrameThickness">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.Backstage.ModernConnectedPageFrameCornerRadius">0</CornerRadius>
+    <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ModernPageShadow"
+                      BlurRadius="6" ShadowDepth="1" Direction="180"
+                      Opacity="0.14" Color="#000000" RenderingBias="Performance" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.LauncherHoverBorder" Color="Transparent" />
+    <Thickness x:Key="RibbonKit.Metrics.CheckedHoverBorderThickness">0</Thickness>
+    <!-- Split primary geometry; join padding retains the content inset. -->
+    <Thickness x:Key="RibbonKit.Metrics.SplitHorizontalPrimaryBorderThickness">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.SplitHorizontalPrimaryPadding">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryPadding">0</Thickness>
 </ResourceDictionary>

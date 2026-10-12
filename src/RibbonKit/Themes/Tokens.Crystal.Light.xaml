@@ -97,6 +97,9 @@
     <DrawingBrush x:Key="RibbonKit.Brushes.Control.HoverBorder"
                   Drawing="{StaticResource Crystal.Drawing.GlassRim}"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.Control.DropDownHoverBorder"
+                  Drawing="{StaticResource Crystal.Drawing.GlassRim}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
     <!-- Reflection lives inside the fill, so the darker outer border remains intact.
          Soft horizontal falloff avoids a hard white stripe at the rounded corners. -->
     <GeometryDrawing x:Key="Crystal.Drawing.InnerReflection" Geometry="M0,0 H1 V1 H0 Z">
@@ -167,6 +170,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionBorder" Color="#805D82A6" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CompanionGlow" Color="Transparent" />
     <Thickness x:Key="RibbonKit.Metrics.ControlHighlightBorderThickness">1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ComboBoxItemHighlightBorderThickness">1</Thickness>
     <SolidColorBrush x:Key="RibbonKit.Brushes.Group.Separator" Color="#40819DB5" />
     <!-- Selection carries the stronger glass surface and an icy reflective marker.
          Hover borrows a quieter rim; its gray underline would compete with selection. -->
@@ -308,6 +312,7 @@
         <GradientStop Color="#E8F0F8" Offset="1" />
     </LinearGradientBrush>
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#A5BBCE" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Popup.Border" Color="#A5BBCE" />
     <!-- Small opaque lenses keep keyboard labels readable over ribbon content. -->
     <DrawingBrush x:Key="RibbonKit.Brushes.KeyTip.Background"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill">
@@ -570,6 +575,11 @@
         <GradientStop Color="#B9CFDF" Offset="0.55" />
         <GradientStop Color="#A8C1D3" Offset="1" />
     </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RibbonKit.Brushes.ComboBox.PopupBorder" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#B5CBDC" Offset="0" />
+        <GradientStop Color="#B9CFDF" Offset="0.55" />
+        <GradientStop Color="#A8C1D3" Offset="1" />
+    </LinearGradientBrush>
     <DrawingBrush x:Key="RibbonKit.Brushes.Input.HoverBorder" Stretch="Fill"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute">
         <DrawingBrush.Drawing>
@@ -601,6 +611,8 @@
     <DrawingBrush x:Key="RibbonKit.Brushes.GalleryItem.HoverBorder" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" Opacity="0.6" />
     <DrawingBrush x:Key="RibbonKit.Brushes.InRibbonGallery.Border" Drawing="{StaticResource Crystal.Drawing.GalleryRim}"
+                  Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
+    <DrawingBrush x:Key="RibbonKit.Brushes.InRibbonGallery.PopupBorder" Drawing="{StaticResource Crystal.Drawing.GalleryRim}"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
     <DrawingBrush x:Key="RibbonKit.Brushes.InRibbonGallery.SurfaceBackground" Drawing="{StaticResource Crystal.Drawing.GallerySpecularSurface}"
                   Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
@@ -939,6 +951,7 @@
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuContentRimCornerRadius">11</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuContentOutlineCornerRadius">10</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuItemClipCornerRadius">8</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuItemOutlineCornerRadius">8</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuItemMargin">4,2,4,2</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuSeparatorMargin">12,4,12,4</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageBorderThickness">0</Thickness>
@@ -1051,4 +1064,24 @@
     <sys:Double x:Key="RibbonKit.Metrics.Touch.MessageRowHeight">52</sys:Double>
     <Thickness x:Key="RibbonKit.Metrics.Touch.MessageActionPadding">12,6</Thickness>
     <sys:Double x:Key="RibbonKit.Metrics.Touch.TitleBarHeight">46</sys:Double>
+    <!-- Shared popup shadows and colored command outlines are palette resources. -->
+    <DropShadowEffect x:Key="RibbonKit.Effects.PopupShadow" BlurRadius="8" ShadowDepth="2" Opacity="0.25" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredStateBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredDropDownHoverBorder" Color="Transparent" />
+    <!-- Optional Modern Backstage framing; legacy palettes retain their unframed surface. -->
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.ItemSelectedBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Backstage.Modern.PageFrameBorder" Color="Transparent" />
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.ModernPageFrameThickness">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.Backstage.ModernPageFrameCornerRadius">0</CornerRadius>
+    <Thickness x:Key="RibbonKit.Metrics.Backstage.ModernConnectedPageFrameThickness">0</Thickness>
+    <CornerRadius x:Key="RibbonKit.Metrics.Backstage.ModernConnectedPageFrameCornerRadius">0</CornerRadius>
+    <DropShadowEffect x:Key="RibbonKit.Effects.Backstage.ModernPageShadow"
+                      BlurRadius="6" ShadowDepth="1" Direction="180"
+                      Opacity="0.12" Color="#000000" RenderingBias="Performance" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Control.LauncherHoverBorder" Color="Transparent" />
+    <Thickness x:Key="RibbonKit.Metrics.CheckedHoverBorderThickness">0</Thickness>
+    <!-- Split primary geometry; join padding retains the content inset. -->
+    <Thickness x:Key="RibbonKit.Metrics.SplitHorizontalPrimaryBorderThickness">1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.SplitHorizontalPrimaryPadding">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryPadding">0</Thickness>
 </ResourceDictionary>

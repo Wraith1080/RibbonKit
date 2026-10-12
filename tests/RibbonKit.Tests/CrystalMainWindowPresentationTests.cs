@@ -407,7 +407,7 @@ public sealed class CrystalMainWindowPresentationTests
                         Assert.IsType<SolidColorBrush>(qat).Color);
                 }
                 else AssertSamePaint(body, qat);
-                Assert.Equal(new Thickness(generation is "2007" or "2010" ? 1 : 0),
+                Assert.Equal(generation is "2007" or "2010" ? new Thickness(1, 1, 1, 0) : new Thickness(0),
                     resources["RibbonKit.Metrics.SplitVerticalPrimaryBorderThickness"]);
             }
         }

@@ -698,7 +698,7 @@ internal static class TouchDensityPortabilityChecks
                     double radius = expectedTop > 0 ? theme switch
                     {
                         RibbonTheme.Office2007 => 3,
-                        RibbonTheme.Office2024 => 8,
+                        RibbonTheme.Office2024 or RibbonTheme.Office2024Flat => 8,
                         _ => 0,
                     } : 0;
                     Assert.Equal(new CornerRadius(radius, radius, 0, 0), topEdge.CornerRadius);

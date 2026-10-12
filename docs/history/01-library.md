@@ -29,6 +29,7 @@ Numbering is shared with the [Writer history](02-writer-foundation.md); gaps are
 | §3.212–§3.225 | [Host effects and keyboard focus](library/10-host-effects-and-keyboard-focus.md) |
 | §3.226–§3.233 | [Touch density and gallery projections](library/11-touch-density-and-gallery-projections.md) |
 | §3.234–§3.248 | [KeyTips, layout and validation](library/12-keytips-layout-and-validation.md) |
+| §3.254 | [Flat theme variants](library/13-flat-theme-variants.md) |
 
 ## Numbered records
 
@@ -412,3 +413,5 @@ status updates and investigation narration were removed during compaction.
 ### [3.252 Internal hover-suppression bindings use property identity — 2026-10-12](library/12-keytips-layout-and-validation.md#3252-internal-hover-suppression-bindings-use-property-identity--2026-10-12)
 
 ### [3.253 Crystal utility snapshots initialize native rendering — 2026-10-12](library/12-keytips-layout-and-validation.md#3253-crystal-utility-snapshots-initialize-native-rendering--2026-10-12)
+
+### [3.254 Office 2024 Flat theme — 2026-10-12](library/13-flat-theme-variants.md#3254-office-2024-flat-theme--2026-10-12)
