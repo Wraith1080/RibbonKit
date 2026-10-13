@@ -108,6 +108,7 @@ RibbonKit.Controls.RibbonMenuItem.LargeIcon.set -> void
 static readonly RibbonKit.Controls.RibbonMenuItem.LargeIconProperty -> System.Windows.DependencyProperty!
 override RibbonKit.Controls.RibbonMessageBar.OnApplyTemplate() -> void
 RibbonKit.Animation.RibbonAnimationAction.DensityChange = 15 -> RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.Animation.RibbonAnimationAction.LayoutModeChange = 16 -> RibbonKit.Animation.RibbonAnimationAction
 RibbonKit.RibbonDensity
 RibbonKit.RibbonDensity.Compact = 0 -> RibbonKit.RibbonDensity
 RibbonKit.RibbonDensity.Touch = 1 -> RibbonKit.RibbonDensity

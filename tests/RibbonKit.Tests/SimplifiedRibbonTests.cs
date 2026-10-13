@@ -20,6 +20,80 @@ namespace RibbonKit.Tests;
 public sealed class SimplifiedRibbonTests
 {
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Mode_toggle_inside_group_closes_flyout_after_click_but_ordinary_toggles_keep_it_open(bool simplified) => Sta.Run(() =>
+    {
+        using var host = new Host(initialSimplified: simplified);
+        var mode = new RibbonToggleButton { Header = "Simplified", IsChecked = simplified };
+        host.Group.Items.Add(mode);
+        mode.Checked += (_, _) => host.Ribbon.LayoutMode = RibbonLayoutMode.Simplified;
+        mode.Unchecked += (_, _) => host.Ribbon.LayoutMode = RibbonLayoutMode.Classic;
+        bool clickFinishedInFlyout = false;
+        mode.Click += (_, _) => clickFinishedInFlyout = host.GroupPopup.IsOpen
+            && ((Border)host.Group.Template.FindName("PART_PopupHost", host.Group)).IsAncestorOf(mode);
+        host.GroupsHost.Width = 70; host.Layout();
+        if (simplified)
+        {
+            host.ToolBar.OpenOverflow(); host.Layout();
+            host.ToolBar.OverflowEntries.OfType<RibbonGroupQuickAccessProxy>().Single().IsDropDownOpen = true;
+        }
+        else host.Group.CollapsedButton!.IsChecked = true;
+        host.Layout();
+        Assert.True(host.GroupPopup.IsOpen);
+        host.Toggle.InvokeFromKeyTip(); host.Layout();
+        Assert.True(host.GroupPopup.IsOpen); // The ordinary toggle exemption remains.
+        mode.InvokeFromKeyTip();
+        Assert.True(clickFinishedInFlyout);
+        host.Layout();
+        Assert.Equal(simplified ? RibbonLayoutMode.Classic : RibbonLayoutMode.Simplified, host.Ribbon.LayoutMode);
+        Assert.False(host.GroupPopup.IsOpen);
+        Assert.False(host.Group.CollapsedButton!.IsChecked);
+        Assert.True(((Decorator)host.Group.Template.FindName("PART_NormalHost", host.Group)).IsAncestorOf(mode));
+        Assert.True(host.Toggle.IsChecked);
+    });
+
+    [Fact]
+    public void Mode_change_closes_title_bar_QAT_nested_menu_and_returns_borrowed_items() => Sta.Run(() =>
+    {
+        using var host = new Host();
+        host.Ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TitleBar;
+        host.Ribbon.AddToQuickAccess(host.Group); host.Layout();
+        var entry = host.Ribbon.QuickAccessItems.OfType<RibbonGroupQuickAccessProxy>().Single();
+        entry.IsDropDownOpen = true; host.Layout();
+        host.Split.IsDropDownOpen = true; host.Layout();
+        Assert.True(host.GroupPopup.IsOpen);
+        Assert.True(host.Split.IsDropDownOpen);
+        host.Ribbon.LayoutMode = RibbonLayoutMode.Simplified; host.Layout();
+        Assert.False(host.GroupPopup.IsOpen);
+        Assert.False(entry.IsDropDownOpen);
+        Assert.False(host.Split.IsDropDownOpen);
+        Assert.Single(host.Split.Items);
+        Assert.True(((Decorator)host.Group.Template.FindName("PART_NormalHost", host.Group)).IsAncestorOf(host.Editor));
+    });
+
+    [Fact]
+    public void Mode_change_closes_native_combo_and_ribbon_context_menu_but_preserves_unrelated_popup() => Sta.Run(() =>
+    {
+        using var host = new Host();
+        var combo = new RibbonComboBox { Header = "Font" }; combo.Items.Add("Calibri");
+        host.Group.Items.Add(combo); host.Layout();
+        var unrelated = new RibbonDropDownButton { Header = "Document menu" };
+        unrelated.Items.Add(new RibbonMenuItem { Header = "Document command" });
+        host.Panel.Children.Add(unrelated); host.Layout();
+        unrelated.IsDropDownOpen = true; host.Layout();
+        combo.IsDropDownOpen = true; host.Layout();
+        Assert.True(combo.IsDropDownOpen);
+        var menu = host.Ribbon.CreateRibbonContextMenu(host.Action);
+        menu.IsOpen = true; host.Layout();
+        Assert.True(menu.IsOpen);
+        host.Ribbon.LayoutMode = RibbonLayoutMode.Simplified; host.Layout();
+        Assert.False(combo.IsDropDownOpen);
+        Assert.False(menu.IsOpen);
+        Assert.True(unrelated.IsDropDownOpen);
+    });
+
+    [Theory]
     [InlineData(RibbonDensity.Compact)]
     [InlineData(RibbonDensity.Touch)]
     public void Switching_preserves_classic_structure_native_controls_and_QAT_membership(RibbonDensity density) => Sta.Run(() =>

@@ -177,6 +177,8 @@ public partial class RibbonGroup
     private void PlayCommittedGroupTransition(List<(FrameworkElement Surface, Point Position)> positions)
     {
         if (!RibbonAnimation.IsEnabled(RibbonAnimationAction.DropdownMenu)) return;
+        for (DependencyObject? node = this; node is Visual visual; node = VisualTreeHelper.GetParent(visual))
+            if (node is Ribbon { IsLayoutMotionChanging: true }) return;
         foreach (var (surface, position) in positions)
         {
             if (!surface.IsVisible || VisualTreeHelper.GetParent(surface) is not RibbonGroupsPanel panel

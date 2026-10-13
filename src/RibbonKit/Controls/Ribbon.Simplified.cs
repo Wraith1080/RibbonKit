@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace RibbonKit.Controls;
 
@@ -70,9 +71,23 @@ public partial class Ribbon
         if (element is RibbonGroupsHost host) host.RequestSimplifiedRefresh();
         if (element is Ribbon ribbon)
         {
+            ribbon.RequestLayoutMotion(Animation.RibbonAnimationAction.LayoutModeChange);
+            // A mode toggle may be inside a collapsed-group flyout. Let its
+            // routed click/command finish before returning the group's content.
+            ribbon.Dispatcher.BeginInvoke(DispatcherPriority.Background,
+                (Action)ribbon.DismissLayoutModePopups);
             ribbon._keyTipService?.OnLayoutModeChanged();
             ribbon.RequestSelectionVisualsRefresh();
         }
+    }
+
+    private void DismissLayoutModePopups()
+    {
+        PopupDismissHelper.DismissOpenPopupsWithin(this);
+        if (_titleBarQatHost is { } title) PopupDismissHelper.DismissOpenPopupsWithin(title);
+        _openRibbonContextMenu?.SetCurrentValue(System.Windows.Controls.ContextMenu.IsOpenProperty, false);
+        _qatContextMenu?.SetCurrentValue(System.Windows.Controls.ContextMenu.IsOpenProperty, false);
+        if (IsApplicationMenuOpen) SetCurrentValue(IsBackstageOpenProperty, false);
     }
 
     private static void OnSimplifiedCommandPolicyChanged(DependencyObject element, DependencyPropertyChangedEventArgs args)

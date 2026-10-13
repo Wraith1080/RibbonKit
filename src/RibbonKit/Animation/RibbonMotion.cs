@@ -242,6 +242,22 @@ public static class RibbonMotion
         }
     }
 
+    // A shallow ribbon needs more readable time, not more travel. Keep the same
+    // TabSwitch override and OS policy while leaving classic tabs unchanged.
+    internal static RibbonDensityTransition? PlaySimplifiedTabSlide(FrameworkElement? element)
+    {
+        if (element is null) return null;
+        if (!RibbonAnimation.IsEnabled(RibbonAnimationAction.TabSwitch))
+            return null;
+        double offset = RibbonAnimation.GetSlideOffset(RibbonAnimationAction.TabSwitch) * 0.8;
+        Duration duration = new(TimeSpan.FromMilliseconds(
+            RibbonAnimation.GetDuration(RibbonAnimationAction.TabSwitch).TimeSpan.TotalMilliseconds * 160 / 130));
+        var ease = new CubicEase { EasingMode = EasingMode.EaseInOut };
+        ease.Freeze();
+        return new RibbonDensityTransition(element, offsetY: -offset,
+            action: RibbonAnimationAction.TabSwitch, durationOverride: duration, easeOverride: ease, fade: false);
+    }
+
     /// <summary>
     /// Animates <paramref name="element"/>'s vertical <see cref="TranslateTransform"/> from
     /// <paramref name="fromY"/> to <paramref name="toY"/> (in DIPs) WITHOUT touching opacity.

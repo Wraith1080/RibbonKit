@@ -361,3 +361,60 @@ PresentationTraceSources.Refresh: setting the switch/listener alone silently
 missed these errors outside the debugger. A deliberately invalid probe verifies
 the recorder before capturing Apply, and discarded alignment properties are
 inspected as the debugger's binding diagnostics does.
+
+#### Visible layout/density motion trial — 2026-10-13
+
+The user requested a stronger collapse after seeing source groups spread as
+simplified mode released its full-group openers, and extended the trial to replace
+density toggling. RibbonKit now commits real geometry, then presents a temporary
+vector drawing of the body: only its chrome stretches; command drawings retain
+natural glyph/icon geometry. Cached source/group slots provide horizontal movement.
+The new additive LayoutModeChange action and existing DensityChange action share
+timing/easing; simplified tabs use a slower downward settle with the TabSwitch
+override. Current numbers, evidence and acceptance are in the active plan's S5.
+
+Capture final drawings at ContextIdle, after Background simplified-row and gallery
+refreshes. Suppress per-group QAT clocks only while this shared layout is being
+committed, avoiding several independently started restores. Translate the lower
+QAT's clipping/shadow wrapper, not its Border: moving that Border upward is cropped
+by the wrapper's final slot. Keep the moving QAT opaque so the host document does
+not show through it. Document layout itself still commits immediately.
+
+The adorner is inert; real controls retain focus, commands and automation. Input
+and policy/layout lifecycle changes release its opacity clock and drawings.
+Already anchored popups/custom templates without an adorner layer use the previous
+opacity-only fallback. Guard both disposed and superseded completion callbacks:
+an old card's queued completion otherwise cancels a newer simplified-tab settle.
+Native minimize owns the body's existing animation after cancellation; regression
+assertions must distinguish that clock from the removed vector card. Final review,
+focused evidence and unrun native/full gates are maintained once in the active plan.
+
+The user's retry recording exposed the old FLIP timing failure again: the live
+destination could render before the ContextIdle transition began. Cover the old
+body and QAT synchronously with vector drawings while deferred copies/layout
+settle. A newly applied hide clock also needs SeekAlignedToLastTick at zero; its
+base opacity otherwise remains visible until the next timing tick. This preserves
+bindings and avoids a destination-to-start flash. Replace the cover and start the
+final animation in one operation; cancellation releases both covers and clocks.
+
+Density selection runs while its menu is still open. Capturing no previous layout
+on that fact alone silently selected the opacity fallback, even though the menu
+closed before the transition. Capture the prior geometry first and check persistent
+popup anchoring after menu dismissal/borrowed-item return. Independent-consumer
+regressions cover both native and simplified selector paths, and force a render
+boundary before Background/ContextIdle work. The latest cadence matches group
+expansion; exact timings and current evidence stay in S5 of the active plan.
+
+A mode toggle inside a collapsed group inherits the ordinary toggle exemption,
+so changing LayoutMode must dismiss ribbon-owned popups independently of the
+group's click classification. Queue cleanup at Background priority after routed
+click/command dispatch; returning the group's grid during that dispatch would
+repeat the earlier reparenting bug. Snapshot registered ownership before closing
+nested flyouts from inside out. Follow popup owners across native popup trees
+and explicit QAT ownership, including the detached title-bar host, while leaving
+unrelated same-window flyouts alone. Use existing close callbacks to return native
+content and borrowed menu items; close native combo/context-menu surfaces as well.
+The mode path closes File's application menu, while density and ordinary toggle
+policies remain unchanged. Focused independent-consumer checks exercise both
+mode directions and title-bar QAT nesting across three palettes and LTR/RTL;
+current results and remaining native/full gates stay in the active plan.

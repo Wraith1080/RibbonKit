@@ -256,6 +256,7 @@ remain separate gates.
 | S2 | Dedicated customization page, pin/unpin, separate ordered state and persistence | Implemented; user accepted scrolling/focus repairs 2026-10-13 and committed them at 1a2a743. Broader end-of-feature gates remain below |
 | S3 | Shared custom-tab/group creation from the simplified editor | Implemented and committed at 4ab4604; user review 2026-10-13 requested the S4 page redesign |
 | S4 | Source filtering, ordered group headers, compact menus and draft-safe persistence utilities | S4a–c committed at 4036aea; catalog/footer/dialog/default refinements and custom-tab positioning implemented 2026-10-13; focused evidence below; awaiting live user review |
+| S5 | Shared visible layout/density collapse and slower simplified tab switching | Experimental trial requested 2026-10-13; implemented in the working tree, awaiting user motion review |
 
 S1 requires focused runtime regressions, a RibbonKit-only consumer matrix, normal
 Debug Showcase build, Release solution build/test for the additive public API,
@@ -625,6 +626,85 @@ implemented and recorded in the additive API baseline.
 Logs are `TestResults/simplified-move-apply-*.log`; per-palette binding traces are
 under the normal runtime test output's `TestResults/simplified-customization/`.
 
+### S5 motion trial — 2026-10-13
+
+The user requested a more visible collapse/expansion after reviewing the existing
+group-spread effect in recordings, then authorized the same treatment for
+Compact/Touch toggling. `LayoutModeChange = 16` is additive; `DensityChange = 15`
+retains its identity. After the user's recorded retry, both use 130 ms Subtle /
+182 ms Expressive with the existing group-expansion easing (cubic/quintic EaseOut).
+Simplified tabs use a 160/224 ms, 8/14.4-DIP downward settle through the
+existing TabSwitch policy; classic tab timing remains 130/182 ms.
+
+The real layout commits immediately, including ribbon height, caption sizing and
+document placement. A temporary noninteractive vector adorner reveals/contracts
+the card edge and moves unscaled command/group drawings between their old and
+final slots. Outgoing content clears early to avoid overlapping captions. The
+lower QAT's clipping/shadow wrapper follows the actual position delta without an
+opacity dip while the vector presentation runs. Its previous transform and consumer
+bindings survive. This creates visible ribbon collapse; it does not glide the
+host's document layout. The compressed source-group slots explain the spread seen
+in the user's first recording; ordinary group/QAT animation remains its own path.
+
+Startup appearance restoration snaps until the first rendered frame. Rapid mode
+and density changes replace pending/current work. Input, policy changes, tab/theme
+changes, minimize, template replacement, unload, resize, direction/DPI changes and
+programmatically opened popups release the presentation. Completion callbacks are
+generation-guarded so an old card cannot cancel a newer tab settle. Keyboard and
+KeyTips use the real committed controls without a fixed animation delay. Existing
+popup frames, side selection and immediate dismissal remain intact; an already
+anchored menu uses the opacity-only fallback. Custom templates without an adorner
+layer also use that fallback. The new action follows global/per-action/reduced-motion
+settings, without Showcase-owned presentation helpers.
+
+The user's follow-up recording showed a destination frame before the animation
+returned to its start, and Touch/Mouse selection missed the visible transition.
+The repair installs an inert old-body/old-QAT vector cover synchronously, before
+deferred layout can expose the destination. Its opacity clock seeks immediately,
+without replacing consumer bindings or waiting for a timing tick. The cover is
+replaced by the animation in the same dispatcher operation after row construction.
+Capture previous geometry while the selector is still open; decide whether a
+persistent popup requires fallback only after dismissal/borrowed-item returns.
+This preserves the visible density transition through both native and simplified
+selector menus. The user requested the quicker group-expansion cadence in place
+of the initial 300/420-ms trial. The user's 2026-10-13 review accepted the repaired
+motion, as recorded below.
+
+The follow-up review identified a mode toggle inside a collapsed-group popup:
+ordinary toggle clicks intentionally keep that group open, leaving its native
+window behind after the ribbon changed mode. LayoutMode changes now dismiss
+ribbon-owned flyouts at Background priority, after the current click/command
+finishes and before the deferred transition captures its final layout. Dismiss
+registered nested flyouts from inside out using an ownership snapshot, including
+simplified overflow and the detached title-bar QAT. Existing close callbacks
+restore borrowed group/menu content and opener state. Native combo dropdowns,
+ribbon context menus and the File application menu also close. Other controls'
+popups in the same window remain open, and ordinary toggles retain their exemption.
+Density changes keep their existing popup policy.
+
+| Check | Result |
+| --- | --- |
+| Focused runtime | Initial 30/30 animation, popup and simplified-layout checks and initial three-case policy retry passed. Snappy repair selection passed 3/4, including the new immediate-clock/binding check; corrected the density test's curve expectation for its per-action override and its focused retry passed 1/1. This is assembled focused evidence |
+| Shared layout-motion consumer | Final snappy repair scope passed cleanly: 24 legacy/Flat/Crystal × LTR/RTL × density × initial-mode cases, each forcing a Render-priority layout before deferred row construction and verifying the destination stays covered. Mode/density motion, startup, bindings, action overrides, interruption, tab settling, resize/template/unload and popup/minimize checks passed. Native and simplified selector menus each passed Touch and Mouse selection with actual popup dismissal |
+| Existing density consumer | All 42 theme × QAT-placement × startup-direction cases and interruption checks completed; the aggregate then failed on outdated popup/minimize assertions after the animation surface moved to the QAT wrapper. Corrected surface-specific assertions passed in the focused popup retry and the final layout-motion scope. The entire density aggregate was not repeated |
+| Render inspection | Inspected pending-cover/start/intermediate/rest frames in Office2010, Office2024Flat and Crystal, including RTL. The forced pre-dispatcher frame retains the old body and QAT. No snapshot approvals/tolerances changed |
+| Builds | Normal Debug Showcase and Release solution builds passed, 0 warnings/errors |
+| User review | Accepted 2026-10-13: the user reported that the repaired motion is perfect after the frame-jump, Touch/Mouse visibility and snappy-timing changes. This accepts the S5 presentation; specific native input/DPI/system-reduced-motion gates remain open |
+| Mode-popup runtime follow-up | Six focused cases passed across the initial run and narrow retry: ordinary toggle exemption, both directions from a native group popup, detached title-bar QAT with nested menu, native combo/context-menu closure, unrelated-popup isolation and existing nested Escape/unload cleanup. The initial run passed 3/6; three test-only NormalHost casts used Border instead of Decorator. Corrected casts and the failed-only retry passed 3/3 |
+| Mode-popup independent consumer | All six Office2010/Office2024Flat/Crystal × LTR/RTL cases passed. Each activates a real toggle in a classic collapsed group, reverses through simplified overflow/group access, then repeats from the title-bar QAT with a nested menu. Click dispatch finishes in the popup, content returns, opener/overflow state clears, and the classic-to-simplified vector transition runs |
+| Mode-popup build | Normal Debug Showcase rebuilt with 0 warnings/errors. No public API changed in this follow-up; the preceding Release evidence is retained |
+| Mode-popup user review | Accepted 2026-10-13: the user confirmed the mode-toggle popup cleanup works perfectly, including the reported collapsed-group case. Feature implementation is finished; full testing is explicitly deferred until the user prompts for it |
+
+Logs are `TestResults/simplified-motion-*.log`; latest repair frames are under
+`TestResults/simplified-motion-jump/renders/`. The final repair consumer log is
+`simplified-motion-jump-consumer-complete.log`. The timing check initially reproduced
+an obsolete card completion canceling a newer tab animation; disposal/generation
+guards repaired it and the final complete scope passed. These focused results do
+not close full end-of-feature or live/native gates. Popup follow-up logs are
+`TestResults/simplified-mode-popup-*.log`; the user's live collapsed-group review
+is accepted. No further implementation or testing is scheduled. Earlier unresolved
+full-suite/native gates below remain recorded for the user-requested validation pass.
+
 ### Remaining acceptance
 
 - Human review of S2's customization page, ordering and labels. The earlier S1
@@ -633,8 +713,8 @@ under the normal runtime test output's `TestResults/simplified-customization/`.
   matrices are automated geometry/interaction evidence.
 - Genuine mixed-monitor DPI transitions and native input; simulated root DPI
   does not establish physical-monitor acceptance. Live reduced-motion review
-  remains unrun; the row switches immediately and native group/QAT effects reuse
-  existing animation policy.
+  remains unrun; real layout commits immediately and S5's presentation follows
+  the existing animation policy.
 - Resolve or separately accept the two unfiltered suite failures; no clean
   full-suite pass is claimed.
 - Full end-of-feature validation and human acceptance of the S2 page's applied,
@@ -644,3 +724,7 @@ under the normal runtime test output's `TestResults/simplified-customization/`.
   requested the S4 redesign; it did not accept the current page layout.
 - User review of S4's column/header/menu layout, physical drag and keyboard
   ordering, and native Reset/Import/Export use. Focused evidence is recorded above.
+- S5's motion presentation and mode-toggle popup cleanup are accepted. Broader
+  physical input, mixed-monitor DPI and live system reduced-motion behavior
+  remain open. Focused offscreen consumer checks do not establish those
+  target-machine gates.

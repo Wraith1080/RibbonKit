@@ -58,19 +58,19 @@ internal static class DensityTransitionPortabilityChecks
         {
             window.Show(); Layout(window);
             var tabs = Part<RibbonTabControl>(ribbon, "TabControlHost");
-            Assert.False(tabs.HasAnimatedProperties); // Persisted startup never fades.
+            Assert.False(HasMotion(tabs)); // Persisted startup never fades.
             WaitForRender(window);
-            Assert.False(tabs.HasAnimatedProperties);
+            Assert.False(HasMotion(tabs));
             double touchHeight = ribbon.ActualHeight;
             AssertCollapsed(adaptive);
             ribbon.Density = RibbonDensity.Compact;
             Layout(window);
             double compactHeight = ribbon.ActualHeight;
             Assert.True(compactHeight < touchHeight);
-            Assert.True(tabs.HasAnimatedProperties);
+            Assert.True(HasMotion(tabs));
             FrameworkElement? qat = placement switch
             {
-                RibbonQuickAccessPosition.BelowRibbon => Part<Border>(ribbon, "QatBelowHost"),
+                RibbonQuickAccessPosition.BelowRibbon => Part<Grid>(ribbon, "QatBelowShadowHost"),
                 RibbonQuickAccessPosition.TitleBar => Assert.IsType<RibbonQuickAccessToolBar>(window.TitleBarContent),
                 _ => null,
             };
@@ -79,14 +79,14 @@ internal static class DensityTransitionPortabilityChecks
             {
                 var transform = Assert.IsType<TransformGroup>(qat!.RenderTransform);
                 var glide = Assert.IsType<TranslateTransform>(transform.Children[^1]);
-                Assert.InRange(glide.Y, 0, RibbonAnimation.GetSlideOffset(RibbonAnimationAction.DensityChange));
+                Assert.InRange(glide.Y, 0, touchHeight - compactHeight + 1);
                 Assert.Equal(0, glide.X);
             }
             else if (qat is not null) Assert.Equal(Matrix.Identity, qat.RenderTransform.Value);
             Assert.Equal(Matrix.Identity, tabs.RenderTransform.Value); // Text/icons are never scaled.
             Assert.Equal(Transform.Identity, tabs.LayoutTransform);
             double titleHeight = Part<Grid>(window, "TitleBarBand").ActualHeight;
-            PumpUntil(() => !tabs.HasAnimatedProperties);
+            PumpUntil(() => !HasMotion(tabs));
             Assert.Equal(compactHeight, ribbon.ActualHeight);
             Assert.Equal(titleHeight, Part<Grid>(window, "TitleBarBand").ActualHeight);
             AssertRest(qat);
@@ -112,7 +112,7 @@ internal static class DensityTransitionPortabilityChecks
             Assert.True(selectedBounds.Bottom > 0 && selectedBounds.Top < viewer.ActualHeight);
             if (theme == RibbonTheme.Office2024 && placement == RibbonQuickAccessPosition.BelowRibbon && !restoreInLoaded)
             {
-                PumpUntil(() => tabs.Opacity < 1d);
+                PumpUntil(() => HasMotion(tabs));
                 SavePreview(window, "density-touch-settling");
             }
             if (placement == RibbonQuickAccessPosition.TitleBar)
@@ -128,7 +128,7 @@ internal static class DensityTransitionPortabilityChecks
             Assert.True(Descendants<RepeatButton>(tabs).Single(button =>
                 ReferenceEquals(button.Command, scroll.ScrollRightCommand)).IsVisible);
             double extent = scroll.ExtentWidth;
-            PumpUntil(() => !tabs.HasAnimatedProperties);
+            PumpUntil(() => !HasMotion(tabs));
             Assert.Equal(touchHeight, ribbon.ActualHeight);
             Assert.Equal(extent, scroll.ExtentWidth);
             AssertRest(qat);
@@ -146,7 +146,7 @@ internal static class DensityTransitionPortabilityChecks
         {
             window.Show(); Layout(window); WaitForRender(window);
             var tabs = Part<RibbonTabControl>(ribbon, "TabControlHost");
-            var qat = Part<Border>(ribbon, "QatBelowHost");
+            var qat = Part<Grid>(ribbon, "QatBelowShadowHost");
             var original = new TranslateTransform(2, 3);
             qat.SetBinding(UIElement.RenderTransformProperty, new Binding(".") { Source = original });
             tabs.SetBinding(UIElement.OpacityProperty, new Binding(".") { Source = 0.8d });
@@ -154,12 +154,12 @@ internal static class DensityTransitionPortabilityChecks
             ribbon.Density = RibbonDensity.Compact;
             ribbon.Density = RibbonDensity.Touch;
             Layout(window);
-            Assert.True(tabs.HasAnimatedProperties);
+            Assert.True(HasMotion(tabs));
             Assert.Same(original, Assert.IsType<TransformGroup>(qat.RenderTransform).Children[0]);
-            PumpUntil(() => tabs.Opacity < 0.74d);
-            Assert.InRange(tabs.Opacity, 0.68d, 0.74d);
+            Assert.Equal(0.8d, tabs.Opacity); // The vector body presentation preserves ancestor opacity.
+            Assert.True(Part<Border>(tabs, "ContentHost").HasAnimatedProperties);
             ribbon.Density = RibbonDensity.Compact; Layout(window);
-            PumpUntil(() => !tabs.HasAnimatedProperties);
+            PumpUntil(() => !HasMotion(tabs));
             Assert.Equal(0.8d, tabs.Opacity);
             Assert.Same(original, qat.RenderTransform);
             Assert.True(BindingOperations.IsDataBound(tabs, UIElement.OpacityProperty));
@@ -168,48 +168,48 @@ internal static class DensityTransitionPortabilityChecks
             // A pending toggle and an active transition both respect disabling motion.
             ribbon.Density = RibbonDensity.Touch;
             RibbonAnimation.SetActionLevel(RibbonAnimationAction.DensityChange, RibbonAnimationLevel.None);
-            Layout(window); Assert.False(tabs.HasAnimatedProperties); Assert.Same(original, qat.RenderTransform);
+            Layout(window); Assert.False(HasMotion(tabs)); Assert.Same(original, qat.RenderTransform);
             RibbonAnimation.ClearActionLevel(RibbonAnimationAction.DensityChange);
             ribbon.Density = RibbonDensity.Compact; Layout(window);
-            Assert.True(tabs.HasAnimatedProperties);
+            Assert.True(HasMotion(tabs));
             RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
-            Assert.False(tabs.HasAnimatedProperties); Assert.Same(original, qat.RenderTransform);
+            Assert.False(HasMotion(tabs)); Assert.Same(original, qat.RenderTransform);
             RibbonAnimation.GlobalLevel = RibbonAnimationLevel.Subtle;
 
             // Policy respects the real OS preference without changing system settings.
             ribbon.Density = RibbonDensity.Touch; Layout(window);
             RibbonAnimation.RespectSystemReduceMotion = true;
-            if (RibbonAnimation.SystemReduceMotion) Assert.False(tabs.HasAnimatedProperties);
+            if (RibbonAnimation.SystemReduceMotion) Assert.False(HasMotion(tabs));
             RibbonAnimation.RespectSystemReduceMotion = false;
 
             ribbon.Density = RibbonDensity.Compact; Layout(window);
             ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TitleBar;
-            Assert.False(tabs.HasAnimatedProperties); Assert.Same(original, qat.RenderTransform);
+            Assert.False(HasMotion(tabs)); Assert.Same(original, qat.RenderTransform);
             Layout(window);
             ribbon.Density = RibbonDensity.Touch; Layout(window);
             ribbon.Template = FreshSharedTemplate();
             ribbon.ApplyTemplate(); Layout(window);
-            Assert.False(tabs.HasAnimatedProperties);
+            Assert.False(HasMotion(tabs));
             Assert.Same(original, qat.RenderTransform);
             var replacement = Part<RibbonTabControl>(ribbon, "TabControlHost");
             Assert.NotSame(tabs, replacement);
             ribbon.Density = RibbonDensity.Compact; Layout(window);
-            Assert.True(replacement.HasAnimatedProperties);
+            Assert.True(HasMotion(replacement));
             object content = window.Content;
             window.Content = null; Layout(window);
-            Assert.False(replacement.HasAnimatedProperties);
+            Assert.False(HasMotion(replacement));
             window.Content = content; Layout(window);
-            Assert.False(Part<RibbonTabControl>(ribbon, "TabControlHost").HasAnimatedProperties);
+            Assert.False(HasMotion(Part<RibbonTabControl>(ribbon, "TabControlHost")));
             WaitForRender(window);
             // Cancel a queued transition on unload as well as an already-running one.
             ribbon.Density = RibbonDensity.Touch;
             window.Content = null; Layout(window);
-            Assert.False(replacement.HasAnimatedProperties);
+            Assert.False(HasMotion(replacement));
         }
         finally { window.Close(); }
     }
 
-    private static void VerifyPopupAnchor(Application application)
+    internal static void VerifyPopupAnchor(Application application)
     {
         ThemeManager.Apply(application, RibbonTheme.Office2024);
         var (window, ribbon, _, _, _) = Create(RibbonQuickAccessPosition.BelowRibbon);
@@ -224,7 +224,7 @@ internal static class DensityTransitionPortabilityChecks
             var popup = Part<Popup>(dropdown, "PART_Popup");
             var anchor = popup.PlacementTarget;
             var placement = popup.Placement;
-            var qat = Part<Border>(ribbon, "QatBelowHost");
+            var qat = Part<Grid>(ribbon, "QatBelowShadowHost");
             ribbon.Density = RibbonDensity.Touch; Layout(window);
             Assert.True(popup.IsOpen);
             Assert.Same(anchor, popup.PlacementTarget);
@@ -237,7 +237,12 @@ internal static class DensityTransitionPortabilityChecks
             // Minimize owns its existing QAT glide; density must release its layer first.
             ribbon.IsMinimized = true;
             Assert.False(Part<RibbonTabControl>(ribbon, "TabControlHost").HasAnimatedProperties);
-            Assert.IsType<TranslateTransform>(qat.RenderTransform);
+            Assert.DoesNotContain(System.Windows.Documents.AdornerLayer.GetAdornerLayer(Part<Border>(
+                Part<RibbonTabControl>(ribbon, "TabControlHost"), "ContentHost"))?.GetAdorners(Part<Border>(
+                Part<RibbonTabControl>(ribbon, "TabControlHost"), "ContentHost")) ?? Array.Empty<System.Windows.Documents.Adorner>(),
+                adorner => adorner.GetType().Name == "RibbonLayoutTransition");
+            Assert.Equal(Matrix.Identity, qat.RenderTransform.Value);
+            Assert.IsType<TranslateTransform>(Part<Border>(ribbon, "QatBelowHost").RenderTransform);
             PumpUntil(() => Part<Border>(Part<RibbonTabControl>(ribbon, "TabControlHost"), "ContentHost").Visibility == Visibility.Collapsed);
             AssertRest(qat);
         }
@@ -277,6 +282,9 @@ internal static class DensityTransitionPortabilityChecks
             Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
         return (window, ribbon, adaptive, gallery, message);
     }
+
+    private static bool HasMotion(RibbonTabControl tabs) => tabs.HasAnimatedProperties
+        || Part<Border>(tabs, "ContentHost").HasAnimatedProperties;
 
     private static void AssertCollapsed(RibbonGroup group) => Assert.Equal(RibbonGroupSizeState.Collapsed, group.SizeState);
     private static void AssertRest(FrameworkElement? element)

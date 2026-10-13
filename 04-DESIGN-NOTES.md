@@ -987,6 +987,8 @@ technical evidence warrants them; preserve existing dated records.
 
 [Source-linked single-row commands, native group access and a separate draft customization page](docs/history/library/14-simplified-ribbon.md#3255-simplified-ribbon-first-layout-slice--2026-10-13).
 
+[Shared layout/density motion trial](docs/history/library/14-simplified-ribbon.md#visible-layoutdensity-motion-trial--2026-10-13).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.

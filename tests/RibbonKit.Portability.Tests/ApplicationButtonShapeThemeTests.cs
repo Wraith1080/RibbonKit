@@ -292,6 +292,12 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("DensityTransitionPortabilityChecks.Verify", () => DensityTransitionPortabilityChecks.Verify(application));
             return;
         }
+
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") is "LayoutMotion" or "LayoutMotionPopup" or "LayoutMotionPaint" or "ModePopupDismissal")
+        {
+            VerifyScope("LayoutMotionPortabilityChecks.Verify", () => LayoutMotionPortabilityChecks.Verify(application));
+            return;
+        }
         // Continue after the completed gallery checks without repeating passing matrices.
         string? scope = Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE");
         if (scope is not ("AfterGalleryQuickAccess" or "AfterCrystalTint"))
@@ -305,6 +311,7 @@ public sealed class ApplicationButtonShapeThemeTests
             if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "Touch")
                 return;
             VerifyScope("DensityTransitionPortabilityChecks.Verify", () => DensityTransitionPortabilityChecks.Verify(application));
+            VerifyScope("LayoutMotionPortabilityChecks.Verify", () => LayoutMotionPortabilityChecks.Verify(application));
             VerifyScope("MessageTransitionPortabilityChecks.Verify", () => MessageTransitionPortabilityChecks.Verify(application));
             VerifyScope("DropDownHeaderPortabilityChecks.Verify", () => DropDownHeaderPortabilityChecks.Verify(application));
             VerifyScope("GalleryHeaderAndQatCommandChecks.Verify", () => GalleryHeaderAndQatCommandChecks.Verify(application));

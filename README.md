@@ -105,13 +105,23 @@ independent of density. Detached QAT hosts, popups and Backstage follow the owni
 ribbon; changing density refreshes adaptive group measurements. Menu and gallery
 scroll viewers support native vertical touch panning.
 
-Live density changes settle gently after the final adaptive layout; ribbon height
+Live density changes use a vector accordion presentation after the final adaptive layout; ribbon height
 and window caption geometry update immediately. `RibbonAnimationAction.DensityChange`
 follows the global None/Subtle/Expressive level and reduced-motion policy, and can
-be overridden with `RibbonAnimation.SetActionLevel`. Subtle uses 160 ms; Expressive
-uses 224 ms. Only opacity and a small below-ribbon QAT translation animate, without
-scaling text or icons. Initial density, including preferences restored during
+be overridden with `RibbonAnimation.SetActionLevel`. Subtle uses 130 ms; Expressive
+uses 182 ms, matching the group-expansion cadence and easing. The card edge reveals/contracts, columns move between their committed
+slots, and the lower QAT follows the height change. Text and icons keep their natural
+scale. An anchored popup uses an opacity-only settle. Initial density, including preferences restored during
 `Loaded` before the first render, appears immediately.
+
+Classic/Simplified changes use the same presentation through
+`RibbonAnimationAction.LayoutModeChange`. Simplified tab content settles downward
+over 160 ms in Subtle (224 ms Expressive), using the existing `TabSwitch` override;
+classic tabs retain their 130 ms timing. Keyboard/mouse input settles an active
+layout presentation immediately. Mode changes close ribbon-owned group, command
+and QAT flyouts after the current click finishes; ordinary toggles retain their
+stay-open behavior. For motion details and acceptance, see the
+[simplified-ribbon plan](docs/15-SIMPLIFIED-RIBBON-PLAN.md#s5-motion-trial--2026-10-13).
 
 `Ribbon.Density` is also an inherited attached property: use
 `Ribbon.SetDensity(scope, RibbonDensity.Touch)` for standalone ribbon controls or

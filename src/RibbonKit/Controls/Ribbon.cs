@@ -89,7 +89,7 @@ public partial class Ribbon : Control
         if (element is Ribbon ribbon)
         {
             ribbon.RequestSelectionVisualsRefresh();
-            ribbon.RequestDensityTransition((RibbonDensity)args.NewValue);
+            ribbon.RequestDensityTransition();
         }
     }
 
@@ -1620,6 +1620,11 @@ public partial class Ribbon : Control
         visibilityItem.Click += (_, _) => SetCurrentValue(IsQuickAccessVisibleProperty, !IsQuickAccessVisible);
         menu.Items.Add(visibilityItem);
         menu.Items.Add(collapseItem);
+        menu.Opened += (_, _) => _openRibbonContextMenu = menu;
+        menu.Closed += (_, _) =>
+        {
+            if (ReferenceEquals(_openRibbonContextMenu, menu)) _openRibbonContextMenu = null;
+        };
         return menu;
     }
 
@@ -1918,6 +1923,7 @@ public partial class Ribbon : Control
     private object? _savedTitleBarContent;
     private RibbonWindow? _applicationButtonShapeWindow;
     private System.Windows.Controls.ContextMenu? _qatContextMenu;
+    private System.Windows.Controls.ContextMenu? _openRibbonContextMenu;
 
     /// <summary>
     /// The constrained QAT host currently on screen, if this placement can overflow. The title-bar
@@ -3376,6 +3382,7 @@ public partial class Ribbon : Control
         CompositionTarget.Rendering += OnFirstDensityRender;
         RibbonAnimation.Changed -= OnDensityMotionPolicyChanged;
         RibbonAnimation.Changed += OnDensityMotionPolicyChanged;
+        AttachLayoutMotionInput();
         SystemParameters.StaticPropertyChanged -= OnDensitySystemMotionChanged;
         SystemParameters.StaticPropertyChanged += OnDensitySystemMotionChanged;
         EnsureSelection();
@@ -3416,6 +3423,8 @@ public partial class Ribbon : Control
 
     private void OnLayoutUpdated(object? sender, EventArgs e)
     {
+        if (_layoutMotion is { } motion && (!motion.MatchesLayout || HasLayoutMotionPopup()))
+            CancelDensityTransition();
         _applicationButtonShapeWindow?.UpdateAeroFrameHeaderBottom(this, _ribbonTabControl?.TabHeaderHost);
         if (IsApplicationMenuOpen)
         {
@@ -3442,6 +3451,7 @@ public partial class Ribbon : Control
         RibbonAnimation.Changed -= OnDensityMotionPolicyChanged;
         SystemParameters.StaticPropertyChanged -= OnDensitySystemMotionChanged;
         CancelDensityTransition();
+        DetachLayoutMotionInput();
         if (ApplicationMenu is RibbonApplicationMenu menu)
         {
             menu.ClearValue(ApplicationMenuGeometryConverter.AvailableHeightProperty);
@@ -3509,6 +3519,8 @@ public partial class Ribbon : Control
             return;
         }
 
+        CancelDensityTransition();
+
         if (IsBelowTabsBackstagePlacementActive())
         {
             SetCurrentValue(IsBackstageOpenProperty, false);
@@ -3524,7 +3536,9 @@ public partial class Ribbon : Control
             ?? _ribbonContentHost;
         // Slide (no fade): the new content is already realized at full opacity, so a fade
         // would flash it transparent for a frame — a subtle rise reads cleanly instead.
-        RibbonMotion.PlaySlideIn(target, RibbonAnimationAction.TabSwitch, RibbonSlideFrom.Top);
+        if (LayoutMode == RibbonLayoutMode.Simplified)
+            _simplifiedTabMotion = RibbonMotion.PlaySimplifiedTabSlide(target);
+        else RibbonMotion.PlaySlideIn(target, RibbonAnimationAction.TabSwitch, RibbonSlideFrom.Top);
     }
 
     private void OnRibbonTabPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -4022,45 +4036,9 @@ public partial class Ribbon : Control
         _densityTransitionsReady = true;
     }
 
-    private void RequestDensityTransition(RibbonDensity density)
+    private void RequestDensityTransition()
     {
-        CancelDensityTransition();
-        if (!_densityTransitionsReady || !IsLoaded || !IsVisible
-            || DesignerProperties.GetIsInDesignMode(this)
-            || !RibbonAnimation.IsEnabled(RibbonAnimationAction.DensityChange)) return;
-        int generation = _densityTransitionGeneration;
-
-        // Wait until inherited density callbacks have reclaimed flyout content and
-        // invalidated every adaptive width. Background also lets deferred selection,
-        // gallery viewport and QAT host updates finish before capturing the surfaces.
-        _pendingDensityTransition = Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)(() =>
-        {
-            _pendingDensityTransition = null;
-            if (!IsLoaded || !IsVisible
-                || !RibbonAnimation.IsEnabled(RibbonAnimationAction.DensityChange)) return;
-            (Window.GetWindow(this) as FrameworkElement ?? this).UpdateLayout();
-            RefreshSelectionVisuals();
-            // Layout/binding can itself change density or replace the template.
-            if (generation != _densityTransitionGeneration) return;
-            if (_ribbonTabControl is { IsVisible: true } tabs)
-                _densityTransitions.Add(new RibbonDensityTransition(tabs));
-
-            FrameworkElement? qat = QuickAccessPosition switch
-            {
-                RibbonQuickAccessPosition.BelowRibbon => _qatBelowHost,
-                RibbonQuickAccessPosition.TitleBar => _titleBarQatHost,
-                _ => null, // The tab-row QAT is already inside the faded tab control.
-            };
-            if (qat is { IsVisible: true })
-            {
-                double offset = QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon && !IsMinimized
-                    && qat.ContextMenu?.IsOpen != true && !PopupDismissHelper.HasOpenPopupWithin(qat)
-                    ? RibbonAnimation.GetSlideOffset(RibbonAnimationAction.DensityChange)
-                        * (density == RibbonDensity.Touch ? -1d : 1d)
-                    : 0d;
-                _densityTransitions.Add(new RibbonDensityTransition(qat, offset));
-            }
-        }));
+        RequestLayoutMotion(RibbonAnimationAction.DensityChange);
     }
 
     private void CancelDensityTransition()
@@ -4068,6 +4046,13 @@ public partial class Ribbon : Control
         _densityTransitionGeneration++;
         _pendingDensityTransition?.Abort();
         _pendingDensityTransition = null;
+        _layoutHold?.Dispose();
+        _layoutHold = null;
+        IsLayoutMotionChanging = false;
+        _simplifiedTabMotion?.Dispose();
+        _simplifiedTabMotion = null;
+        _layoutMotion?.Dispose();
+        _layoutMotion = null;
         foreach (RibbonDensityTransition transition in _densityTransitions) transition.Dispose();
         _densityTransitions.Clear();
     }
@@ -4079,7 +4064,9 @@ public partial class Ribbon : Control
             Dispatcher.BeginInvoke((Action)(() => OnDensityMotionPolicyChanged(sender, e)));
             return;
         }
-        if (!RibbonAnimation.IsEnabled(RibbonAnimationAction.DensityChange)) CancelDensityTransition();
+        // A new policy takes effect immediately, including while a vector card or
+        // simplified tab settle is running. Keep all participating surfaces in step.
+        CancelDensityTransition();
     }
 
     private void OnDensitySystemMotionChanged(object? sender, PropertyChangedEventArgs e)
