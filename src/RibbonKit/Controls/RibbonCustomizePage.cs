@@ -201,7 +201,13 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
             nameof(Ribbon),
             typeof(Ribbon),
             typeof(RibbonCustomizePage),
-            new FrameworkPropertyMetadata(null, (d, _) => ((RibbonCustomizePage)d).RebuildAll()));
+            new FrameworkPropertyMetadata(null, (d, _) =>
+            {
+                var page = (RibbonCustomizePage)d;
+                page.ObserveLayoutMode();
+                page.CoerceValue(IsEnabledProperty);
+                page.RebuildAll();
+            }));
 
     /// <summary>Identifies the <see cref="ResetLayout"/> dependency property.</summary>
     public static readonly DependencyProperty ResetLayoutProperty =
@@ -226,9 +232,21 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
     private ButtonBase? _importButton;
     private ButtonBase? _exportButton;
     private RibbonCustomizeNode? _selectedNode;
+    private static readonly DependencyProperty OwnerLayoutModeProperty = DependencyProperty.Register(
+        "OwnerLayoutMode", typeof(RibbonLayoutMode), typeof(RibbonCustomizePage),
+        new PropertyMetadata(RibbonLayoutMode.Classic, (d, _) => d.CoerceValue(IsEnabledProperty)));
+
+    private void ObserveLayoutMode()
+    {
+        if (Ribbon is null) ClearValue(OwnerLayoutModeProperty);
+        else System.Windows.Data.BindingOperations.SetBinding(this, OwnerLayoutModeProperty,
+            new System.Windows.Data.Binding(nameof(Controls.Ribbon.LayoutMode)) { Source = Ribbon });
+    }
 
     static RibbonCustomizePage()
     {
+        IsEnabledProperty.OverrideMetadata(typeof(RibbonCustomizePage), new UIPropertyMetadata(true, null,
+            (d, value) => (bool)value && ((RibbonCustomizePage)d).Ribbon?.LayoutMode != RibbonLayoutMode.Simplified));
         DefaultStyleKeyProperty.OverrideMetadata(
             typeof(RibbonCustomizePage),
             new FrameworkPropertyMetadata(typeof(RibbonCustomizePage)));
@@ -237,7 +255,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
     /// <summary>Initializes the page; the tree builds once it loads.</summary>
     public RibbonCustomizePage()
     {
-        Loaded += (_, _) => RebuildAll();
+        Loaded += (_, _) => { ObserveLayoutMode(); CoerceValue(IsEnabledProperty); RebuildAll(); };
     }
 
     /// <summary>The ribbon whose structure this page edits.</summary>

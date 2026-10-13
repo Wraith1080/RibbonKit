@@ -314,6 +314,104 @@
         </Setter>
     </Style>
 
+    <Style TargetType="{x:Type controls:RibbonSimplifiedCustomizePage}">
+        <Setter Property="UseLayoutRounding" Value="True" />
+        <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonSimplifiedCustomizePage}">
+                    <ControlTemplate.Resources>
+                        <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource RibbonKit.CustomizePageScrollBarStyle}" />
+                        <Style x:Key="SimplifiedListItemStyle" TargetType="{x:Type ListBoxItem}"
+                               BasedOn="{StaticResource RibbonKit.Customize.ListItemStyle}">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="AutomationProperties.Name" Value="{Binding DisplayName}" />
+                        </Style>
+                        <DataTemplate x:Key="SimplifiedEntryTemplate">
+                            <Grid Margin="2,1">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="{Binding DisplayName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            </Grid>
+                        </DataTemplate>
+                        <DataTemplate x:Key="SimplifiedSelectedTemplate">
+                            <Grid Margin="2,1">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <Grid VerticalAlignment="Center">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,8,0" />
+                                    <TextBlock Grid.Column="1" Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding GroupName}" />
+                                </Grid>
+                                <controls:RibbonCheckBox Grid.Column="1" Margin="8,0,0,0"
+                                    IsChecked="{Binding ShowLabel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Header="{localization:RibbonString Key=ShowLabel}"
+                                    AutomationProperties.Name="{Binding DisplayName}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ControlTemplate.Resources>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" /><RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <controls:RibbonComboBox x:Name="PART_TabSelector" Grid.Row="1" Grid.Column="2"
+                            DisplayMemberPath="Tab.Header" HorizontalAlignment="Stretch" Margin="0,0,0,10"
+                            InputWidth="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
+                            AutomationProperties.Name="{localization:RibbonString Key=SimplifiedTab}" />
+                        <TextBlock Grid.Row="0" Text="{localization:RibbonString Key=ChooseCommandsFromRibbon}"
+                            FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" Margin="0,0,0,6" />
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="{localization:RibbonString Key=CustomizeRibbonLabel}"
+                            FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" Margin="0,0,0,6" />
+                        <ListBox x:Name="PART_AvailableList" Grid.Row="2"
+                            Template="{StaticResource RibbonKit.Customize.ListFrameTemplate}"
+                            ItemContainerStyle="{StaticResource SimplifiedListItemStyle}"
+                            Foreground="{TemplateBinding Foreground}" Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                            BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}" BorderThickness="1"
+                            ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemTemplate="{StaticResource SimplifiedEntryTemplate}"
+                            AutomationProperties.Name="{localization:RibbonString Key=ChooseCommandsFromRibbon}">
+                            <ListBox.GroupStyle>
+                                <GroupStyle><GroupStyle.HeaderTemplate><DataTemplate>
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Margin="6,8,6,4" />
+                                </DataTemplate></GroupStyle.HeaderTemplate></GroupStyle>
+                            </ListBox.GroupStyle>
+                        </ListBox>
+                        <StackPanel Grid.Row="2" Grid.Column="1" VerticalAlignment="Center" Margin="12,0">
+                            <Button x:Name="PART_AddButton" Content="{localization:RibbonString Key=Add}"
+                                Style="{StaticResource OptionsDialogActionButtonStyle}" Margin="0,0,0,6" />
+                            <Button x:Name="PART_RemoveButton" Content="{localization:RibbonString Key=Remove}"
+                                Style="{StaticResource OptionsDialogActionButtonStyle}" />
+                        </StackPanel>
+                        <ListBox x:Name="PART_CurrentList" Grid.Row="2" Grid.Column="2"
+                            Template="{StaticResource RibbonKit.Customize.ListFrameTemplate}"
+                            ItemContainerStyle="{StaticResource SimplifiedListItemStyle}"
+                            Foreground="{TemplateBinding Foreground}" Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                            BorderBrush="{DynamicResource RibbonKit.Brushes.ScreenTip.Border}" BorderThickness="1"
+                            ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemTemplate="{StaticResource SimplifiedSelectedTemplate}"
+                            HorizontalContentAlignment="Stretch" AutomationProperties.Name="{localization:RibbonString Key=CurrentSimplifiedRibbon}" />
+                        <StackPanel Grid.Row="2" Grid.Column="3" VerticalAlignment="Center" Margin="12,0,0,0">
+                            <Button x:Name="PART_UpButton" Content="▲" Style="{StaticResource OptionsDialogReorderButtonStyle}"
+                                ToolTip="{localization:RibbonString Key=MoveUp}" AutomationProperties.Name="{localization:RibbonString Key=MoveUp}" Margin="0,0,0,6" />
+                            <Button x:Name="PART_DownButton" Content="▼" Style="{StaticResource OptionsDialogReorderButtonStyle}"
+                                ToolTip="{localization:RibbonString Key=MoveDown}" AutomationProperties.Name="{localization:RibbonString Key=MoveDown}" />
+                        </StackPanel>
+                        <DockPanel Grid.Row="3" Grid.ColumnSpan="4" Margin="0,12,0,0" LastChildFill="False">
+                            <Button x:Name="PART_ApplyButton" DockPanel.Dock="Right" Content="{localization:RibbonString Key=Apply}"
+                                Style="{StaticResource OptionsDialogPrimaryButtonStyle}" />
+                            <Button x:Name="PART_ResetButton" Content="{localization:RibbonString Key=ResetTab}"
+                                Style="{StaticResource OptionsDialogActionButtonStyle}" Margin="0,0,8,0" />
+                            <Button x:Name="PART_ResetAllButton" Content="{localization:RibbonString Key=ResetAllTabs}"
+                                Style="{StaticResource OptionsDialogActionButtonStyle}" />
+                        </DockPanel>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ============================================================
          RibbonCustomizePage — the built-in "Customize the Ribbon"
          page: available commands | Add/Remove | structure tree (tabs

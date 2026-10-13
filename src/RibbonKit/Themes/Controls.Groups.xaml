@@ -424,6 +424,99 @@
     <!-- ============================================================
          RibbonGroupsHost — hosts groups on the adaptive panel
          ============================================================ -->
+    <!-- The simplified row shares command and popup behavior with QAT while owning
+         its body presentation, accessible name and ellipsis opener. -->
+    <Style x:Key="RibbonKit.SimplifiedToolBar" TargetType="{x:Type controls:RibbonQuickAccessToolBar}">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.SimplifiedCommandsMargin}" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate><layout:RibbonQuickAccessPanel /></ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:RibbonQuickAccessToolBar}">
+                    <Grid>
+                        <DockPanel LastChildFill="True">
+                            <ToggleButton x:Name="PART_OverflowButton" DockPanel.Dock="Right"
+                                          Width="{DynamicResource RibbonKit.Metrics.SimplifiedMoreButtonWidth}"
+                                          Focusable="True" VerticalAlignment="Stretch"
+                                          KeyboardNavigation.TabIndex="1"
+                                          ToolTip="{localization:RibbonString Key=MoreRibbonCommands}"
+                                          AutomationProperties.Name="{localization:RibbonString Key=MoreRibbonCommands}"
+                                          Visibility="Collapsed">
+                                <ToggleButton.Style>
+                                    <Style TargetType="{x:Type ToggleButton}">
+                                        <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                                    <Border x:Name="Chrome" Background="Transparent" BorderBrush="Transparent" BorderThickness="0"
+                                                            CornerRadius="{DynamicResource RibbonKit.Metrics.ControlCornerRadius}">
+                                                        <Path Data="M 0,0 L 1,0 M 6,0 L 7,0 M 12,0 L 13,0"
+                                                              Stroke="{DynamicResource RibbonKit.Brushes.Text.Primary}" StrokeThickness="3"
+                                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBackground}" />
+                                                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.HoverBorder}" />
+                                                            <Setter TargetName="Chrome" Property="BorderThickness" Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                                                        </Trigger>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
+                                                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBorder}" />
+                                                            <Setter TargetName="Chrome" Property="BorderThickness" Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                                                        </Trigger>
+                                                        <Trigger Property="IsPressed" Value="True">
+                                                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
+                                                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
+                                                            <Setter TargetName="Chrome" Property="BorderThickness" Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ToggleButton.Style>
+                            </ToggleButton>
+                            <ItemsPresenter KeyboardNavigation.TabNavigation="Local" KeyboardNavigation.TabIndex="0" />
+                        </DockPanel>
+                        <Popup x:Name="PART_OverflowPopup" AllowsTransparency="True" StaysOpen="True" Placement="Bottom"
+                               controls:Ribbon.Density="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource TemplatedParent}}"
+                               PlacementTarget="{Binding ElementName=PART_OverflowButton}"
+                               IsOpen="{Binding IsChecked, ElementName=PART_OverflowButton, Mode=TwoWay}">
+                            <AdornerDecorator>
+                                <Border controls:Ribbon.QatOnColoredSurface="False"
+                                        Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
+                                        BorderBrush="{DynamicResource RibbonKit.Brushes.Popup.Border}" BorderThickness="1"
+                                        CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
+                                        Padding="4" Margin="4,2,8,8" MinWidth="160"
+                                        Effect="{DynamicResource RibbonKit.Effects.PopupShadow}">
+                                    <ScrollViewer MaxHeight="480" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                        <ItemsControl x:Name="PART_OverflowHost" Focusable="False"
+                                                      KeyboardNavigation.TabNavigation="Cycle" />
+                                    </ScrollViewer>
+                                </Border>
+                            </AdornerDecorator>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="HasOverflow" Value="True">
+                            <Setter TargetName="PART_OverflowButton" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="controls:Ribbon.Density" Value="Touch">
+                            <Setter TargetName="PART_OverflowButton" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style TargetType="{x:Type controls:RibbonGroupsHost}">
         <Setter Property="Focusable" Value="False" />
         <!-- StaticResource: resolved at parse time from this dictionary, so the fixed
@@ -442,7 +535,19 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonGroupsHost}">
-                    <ItemsPresenter />
+                    <Grid>
+                        <ItemsPresenter x:Name="PART_ClassicPresenter" />
+                        <controls:RibbonQuickAccessToolBar x:Name="PART_SimplifiedToolBar"
+                            Visibility="Collapsed" HorizontalAlignment="Stretch"
+                            Style="{StaticResource RibbonKit.SimplifiedToolBar}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="controls:Ribbon.LayoutMode" Value="Simplified">
+                            <!-- Hidden still realizes the source templates for native group flyouts. -->
+                            <Setter TargetName="PART_ClassicPresenter" Property="Visibility" Value="Hidden" />
+                            <Setter TargetName="PART_SimplifiedToolBar" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -451,6 +556,17 @@
                 <Setter Property="Height" Value="Auto" />
                 <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.GroupsRowHeight}" />
             </Trigger>
+            <Trigger Property="controls:Ribbon.LayoutMode" Value="Simplified">
+                <Setter Property="Height" Value="{DynamicResource RibbonKit.Metrics.SimplifiedRowHeight}" />
+                <Setter Property="MinHeight" Value="0" />
+            </Trigger>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="controls:Ribbon.LayoutMode" Value="Simplified" />
+                    <Condition Property="controls:Ribbon.Density" Value="Touch" />
+                </MultiTrigger.Conditions>
+                <Setter Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.SimplifiedRowHeight}" />
+            </MultiTrigger>
         </Style.Triggers>
     </Style>
 

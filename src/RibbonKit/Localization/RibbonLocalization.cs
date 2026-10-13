@@ -198,6 +198,33 @@ public enum RibbonString
 
     /// <summary>"Hide Quick Access Toolbar".</summary>
     HideQuickAccessToolbar,
+
+    /// <summary>Accessible name and tooltip for the simplified ribbon overflow opener.</summary>
+    MoreRibbonCommands,
+
+    /// <summary>Label for switching the ribbon to a single row of selected commands.</summary>
+    SimplifiedRibbon,
+
+    /// <summary>Context command opening simplified ribbon customization.</summary>
+    CustomizeSimplifiedRibbon,
+    /// <summary>Title of the simplified ribbon options page.</summary>
+    CustomizeSimplifiedRibbonPage,
+    /// <summary>Context command pinning an original command to its simplified tab.</summary>
+    PinToSimplifiedRibbon,
+    /// <summary>Context command removing a simplified selection.</summary>
+    RemoveFromSimplifiedRibbon,
+    /// <summary>Label of the tab selector in simplified customization.</summary>
+    SimplifiedTab,
+    /// <summary>Heading of the ordered simplified command list.</summary>
+    CurrentSimplifiedRibbon,
+    /// <summary>Choice to show a simplified command's text label.</summary>
+    ShowLabel,
+    /// <summary>Reset the current simplified tab to app-authored defaults.</summary>
+    ResetTab,
+    /// <summary>Reset all simplified tabs to app-authored defaults.</summary>
+    ResetAllTabs,
+    /// <summary>Commit the current customization draft.</summary>
+    Apply,
 }
 
 /// <summary>

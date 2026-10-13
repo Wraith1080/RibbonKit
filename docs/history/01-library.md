@@ -415,3 +415,5 @@ status updates and investigation narration were removed during compaction.
 ### [3.253 Crystal utility snapshots initialize native rendering — 2026-10-12](library/12-keytips-layout-and-validation.md#3253-crystal-utility-snapshots-initialize-native-rendering--2026-10-12)
 
 ### [3.254 Office 2024 Flat theme — 2026-10-12](library/13-flat-theme-variants.md#3254-office-2024-flat-theme--2026-10-12)
+
+### [3.255 Simplified ribbon first layout slice — 2026-10-13](library/14-simplified-ribbon.md#3255-simplified-ribbon-first-layout-slice--2026-10-13)

@@ -37,7 +37,7 @@ public static class RibbonCustomizationSerializer
         Converters = { new JsonStringEnumConverter() },
     };
 
-    /// <summary>Captures the ribbon's current customizable structure + QAT as a JSON string.</summary>
+    /// <summary>Captures classic structure, QAT and a separate versioned simplified selection section. Simplified tabs/commands require explicit stable command IDs.</summary>
     public static string Serialize(Ribbon ribbon)
     {
         ArgumentNullException.ThrowIfNull(ribbon);
@@ -78,6 +78,19 @@ public static class RibbonCustomizationSerializer
             {
                 return;
             }
+
+            if (root.TryGetProperty(nameof(RibbonLayoutDto.Simplified), out JsonElement simplified)
+                && simplified.ValueKind != JsonValueKind.Null
+                && (simplified.ValueKind != JsonValueKind.Object
+                    || !simplified.TryGetProperty(nameof(SimplifiedDto.Version), out JsonElement version)
+                    || version.ValueKind != JsonValueKind.Number
+                    || !version.TryGetInt32(out int schemaVersion)
+                    || (schemaVersion == 1 && (!simplified.TryGetProperty(nameof(SimplifiedDto.Tabs), out JsonElement selections)
+                        || selections.ValueKind != JsonValueKind.Array
+                        || selections.EnumerateArray().Any(tab => tab.ValueKind != JsonValueKind.Object
+                            || !tab.TryGetProperty(nameof(SimplifiedTabDto.Commands), out JsonElement commands)
+                            || commands.ValueKind != JsonValueKind.Array)))))
+                return;
 
             layout = root.Deserialize<RibbonLayoutDto>(Options);
         }
@@ -145,6 +158,10 @@ public static class RibbonCustomizationSerializer
             }
         }
 
+        if (layout.Simplified is { Version: 1 } simplified &&
+            (simplified.Tabs is null || simplified.Tabs.Any(tab => tab?.Commands is null ||
+                tab.Commands.Any(command => command is null || command.Size is not (RibbonControlSize.Small or RibbonControlSize.Medium)))))
+            return false;
         return layout.QuickAccess.All(item => item is not null);
     }
 
@@ -275,6 +292,19 @@ public static class RibbonCustomizationSerializer
 
         layout.QuickAccessPosition = ribbon.QuickAccessPosition;
         layout.IsQuickAccessVisible = ribbon.IsQuickAccessVisible;
+        layout.Simplified = new SimplifiedDto();
+        foreach (var pair in ribbon.SimplifiedOverrides)
+        {
+            if (Ribbon.GetCommandId(pair.Key) is not { Length: > 0 } tabId) continue;
+            var commands = pair.Value.Where(choice => Ribbon.GetCommandId(choice.Source) is { Length: > 0 }
+                && Ribbon.GetMergeSource(choice.Source) is null && !Ribbon.GetIsMerged(choice.Source));
+            layout.Simplified.Tabs.Add(new SimplifiedTabDto
+            {
+                TabId = tabId,
+                Commands = commands.Select(choice => new SimplifiedCommandDto
+                { SourceId = Ribbon.GetCommandId(choice.Source), Size = choice.Size }).ToList(),
+            });
+        }
         return layout;
     }
 
@@ -404,6 +434,26 @@ public static class RibbonCustomizationSerializer
         // Older layouts have no visibility preference; preserve the consumer's current value.
         if (layout.IsQuickAccessVisible is { } visible)
             ribbon.SetCurrentValue(Ribbon.IsQuickAccessVisibleProperty, visible);
+
+        if (layout.Simplified is { Version: 1 } simplified)
+        {
+            ribbon.ResetSimplifiedOverrides();
+            var seenTabs = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var saved in simplified.Tabs)
+            {
+                if (saved.TabId is not { Length: > 0 } tabId || !seenTabs.Add(tabId)) continue;
+                RibbonTab? tab = ribbon.Tabs.FirstOrDefault(tab => Ribbon.GetCommandId(tab) == tabId
+                    && RibbonCustomizePage.IsCustomizableTab(tab));
+                if (tab is null) continue;
+                var available = Ribbon.SimplifiedSources(tab, true);
+                ribbon.SetSimplifiedChoices(tab, saved.Commands.Select(command =>
+                    (command, source: available.FirstOrDefault(entry => command.SourceId is { Length: > 0 }
+                        && Ribbon.GetCommandId(entry.Control) == command.SourceId)?.Control))
+                    .Where(pair => pair.source is not null)
+                    .Select(pair => new SimplifiedCommandChoice(pair.source!, pair.command.Size)), false);
+            }
+            ribbon.NotifySimplifiedCustomizationChanged();
+        }
     }
 
     private static void ReconcileGroups(
@@ -659,6 +709,26 @@ public static class RibbonCustomizationSerializer
         public RibbonQuickAccessPosition? QuickAccessPosition { get; set; }
 
         public bool? IsQuickAccessVisible { get; set; }
+
+        public SimplifiedDto? Simplified { get; set; }
+    }
+
+    internal sealed class SimplifiedDto
+    {
+        public int Version { get; set; } = 1;
+        public List<SimplifiedTabDto> Tabs { get; set; } = new();
+    }
+
+    internal sealed class SimplifiedTabDto
+    {
+        public string? TabId { get; set; }
+        public List<SimplifiedCommandDto> Commands { get; set; } = new();
+    }
+
+    internal sealed class SimplifiedCommandDto
+    {
+        public string? SourceId { get; set; }
+        public RibbonControlSize Size { get; set; } = RibbonControlSize.Medium;
     }
 
     internal sealed class TabDto

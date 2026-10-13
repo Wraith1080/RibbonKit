@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
@@ -34,7 +35,7 @@ namespace RibbonKit.Controls;
 [TemplatePart(Name = ApplicationMenuOverlayLayerPartName, Type = typeof(Canvas))]
 [TemplatePart(Name = ApplicationMenuOverlayPresenterPartName, Type = typeof(ContentPresenter))]
 [TemplatePart(Name = ApplicationButtonOverlayPartName, Type = typeof(Border))]
-public class Ribbon : Control
+public partial class Ribbon : Control
 {
     /// <summary>Identifies the inherited attached <see cref="Density"/> dependency property.</summary>
     public static readonly DependencyProperty DensityProperty = DependencyProperty.RegisterAttached(
@@ -1102,8 +1103,10 @@ public class Ribbon : Control
     public static string? GetCommandId(DependencyObject element) =>
         (string?)element.GetValue(CommandIdProperty);
 
-    internal void RaiseRibbonCustomizeRequested() =>
-        RibbonCustomizeRequested?.Invoke(this, EventArgs.Empty);
+    internal void RaiseRibbonCustomizeRequested()
+    {
+        if (LayoutMode == RibbonLayoutMode.Classic) RibbonCustomizeRequested?.Invoke(this, EventArgs.Empty);
+    }
 
     /// <summary>
     /// Adds <paramref name="source"/> (a button, toggle, split button, dropdown, combo box, gallery or group) to
@@ -1375,8 +1378,42 @@ public class Ribbon : Control
         }
 
         proxy.SetValue(QuickAccessSourcePropertyKey, source);
+        MirrorCommandPresentation(proxy, source);
         MirrorEnabledState(proxy, source);
         return proxy;
+    }
+
+    // Preserve live labels/icons on source-linked copies, including simplified row
+    // and overflow copies. Combo/gallery/group copies already bind their own captions.
+    internal static void MirrorCommandPresentation(FrameworkElement proxy, FrameworkElement source)
+    {
+        if (source is not (RibbonButton or RibbonToggleButton or RibbonDropDownButton)) return;
+        foreach (string name in new[] { "Header", "Icon", "LargeIcon", "ScreenTipTitle", "ScreenTipText" })
+        {
+            var property = DependencyPropertyDescriptor.FromName(name, proxy.GetType(), proxy.GetType())?.DependencyProperty;
+            if (property is null) continue;
+            if (name is "Header" or "Icon" or "LargeIcon" or "ScreenTipTitle")
+            {
+                var binding = new MultiBinding { Converter = ProxyPresentationConverter.Instance, ConverterParameter = name };
+                binding.Bindings.Add(new Binding(name) { Source = source });
+                binding.Bindings.Add(new Binding(name switch
+                    { "Header" => "ScreenTipTitle", "ScreenTipTitle" => "Header", "Icon" => "LargeIcon", _ => "Icon" }) { Source = source });
+                proxy.SetBinding(property, binding);
+            }
+            else proxy.SetBinding(property, new Binding(name) { Source = source });
+        }
+    }
+
+    private sealed class ProxyPresentationConverter : IMultiValueConverter
+    {
+        internal static readonly ProxyPresentationConverter Instance = new();
+        public object? Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            object? primary = values[0] == DependencyProperty.UnsetValue ? null : values[0];
+            object? fallback = values[1] == DependencyProperty.UnsetValue ? null : values[1];
+            return primary ?? (parameter is "Header" && fallback is string title ? StripShortcutSuffix(title) : fallback);
+        }
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotSupportedException();
     }
 
     /// <summary>
@@ -1399,7 +1436,7 @@ public class Ribbon : Control
     /// question entirely.
     /// </para>
     /// </remarks>
-    private static void MirrorEnabledState(FrameworkElement proxy, FrameworkElement source)
+    internal static void MirrorEnabledState(FrameworkElement proxy, FrameworkElement source)
     {
         var enabled = new System.Windows.Data.MultiBinding { Converter = ProxyEnabledConverter.Instance };
         enabled.Bindings.Add(new System.Windows.Data.Binding(nameof(IsEnabled)) { Source = source });
@@ -1506,7 +1543,7 @@ public class Ribbon : Control
         return ReferenceEquals(node, this);
     }
 
-    private System.Windows.Controls.ContextMenu CreateRibbonContextMenu(FrameworkElement? target)
+    internal System.Windows.Controls.ContextMenu CreateRibbonContextMenu(FrameworkElement? target)
     {
         var customizeItem = new System.Windows.Controls.MenuItem
         {
@@ -1518,7 +1555,11 @@ public class Ribbon : Control
         {
             Header = RibbonLocalization.GetString(RibbonString.CustomizeRibbon),
         };
-        customizeRibbonItem.Click += (_, _) => RaiseRibbonCustomizeRequested();
+        customizeRibbonItem.Click += (_, _) =>
+        {
+            if (LayoutMode == RibbonLayoutMode.Classic) RaiseRibbonCustomizeRequested();
+            else SimplifiedCustomizeRequested?.Invoke(this, EventArgs.Empty);
+        };
 
         var collapseItem = new System.Windows.Controls.MenuItem
         {
@@ -1547,9 +1588,30 @@ public class Ribbon : Control
             };
             addItem.Click += (_, _) => AddToQuickAccess(target);
             menu.Items.Add(addItem);
+            if (LayoutMode == RibbonLayoutMode.Simplified)
+            {
+                FrameworkElement source = OriginalSimplifiedSource(target);
+                RibbonTab? tab = FindSimplifiedTab(source);
+                bool pinned = tab is not null && GetSimplifiedChoices(tab).Any(choice => SameSimplifiedCommand(choice.Source, source));
+                var pin = new System.Windows.Controls.MenuItem
+                {
+                    Header = RibbonLocalization.GetString(pinned ? RibbonString.RemoveFromSimplifiedRibbon : RibbonString.PinToSimplifiedRibbon),
+                    IsEnabled = tab is not null,
+                };
+                pin.Click += (_, _) => { if (pinned) RemoveFromSimplifiedRibbon(source); else PinToSimplifiedRibbon(source); };
+                menu.Items.Add(pin);
+            }
         }
         menu.Items.Add(customizeItem);
         menu.Items.Add(customizeRibbonItem);
+        var simplifiedItem = new System.Windows.Controls.MenuItem
+        {
+            Header = RibbonLocalization.GetString(RibbonString.SimplifiedRibbon),
+            IsChecked = LayoutMode == RibbonLayoutMode.Simplified,
+        };
+        simplifiedItem.Click += (_, _) => SetCurrentValue(LayoutModeProperty,
+            LayoutMode == RibbonLayoutMode.Classic ? RibbonLayoutMode.Simplified : RibbonLayoutMode.Classic);
+        menu.Items.Add(simplifiedItem);
         menu.Items.Add(new System.Windows.Controls.Separator());
         var visibilityItem = new System.Windows.Controls.MenuItem
         {
@@ -1605,7 +1667,7 @@ public class Ribbon : Control
     // Walks up from the right-clicked element (visual parent first, logical as fallback so
     // popup content and text elements still resolve) to the nearest ribbon command control,
     // stopping at the ribbon itself.
-    private FrameworkElement? ResolveCommandControl(DependencyObject? node)
+    internal FrameworkElement? ResolveCommandControl(DependencyObject? node)
     {
         bool textEditor = false;
         while (node is not null && !ReferenceEquals(node, this))

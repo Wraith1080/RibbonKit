@@ -25,7 +25,7 @@ param(
         'ComboQuickAccess', 'ComboQuickAccessKeyboard', 'GroupedGalleries',
         'GalleryHeadersAndQatCommands', 'DensitySelector', 'MessageTransition',
         'QatThemeRestore', 'ColoredQat', 'QatBackdrop', 'QatCommandInteraction', 'QatVisibility', 'CustomizationLayout', 'MinimizedDivider', 'TouchChrome', 'GroupLauncher',
-        'DensityTransition', 'GlassOverlay', 'BackstageCaption', 'Flat2024', 'Touch', IgnoreCase = $false)]
+        'DensityTransition', 'GlassOverlay', 'BackstageCaption', 'Flat2024', 'SimplifiedRibbon', 'SimplifiedCustomization', 'OverflowMenus', 'Touch', IgnoreCase = $false)]
     [string]$Scope,
     [ValidateSet('Debug', 'Release')]
     [string]$Configuration = 'Debug'

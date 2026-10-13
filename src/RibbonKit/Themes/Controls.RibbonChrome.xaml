@@ -970,6 +970,10 @@
                                 </Setter.Value>
                             </Setter>
                         </MultiDataTrigger>
+                        <Trigger Property="controls:Ribbon.LayoutMode" Value="Simplified">
+                            <Setter TargetName="PART_ContentScroll" Property="Margin"
+                                    Value="{DynamicResource RibbonKit.Metrics.SimplifiedGroupsRowMargin}" />
+                        </Trigger>
                         <DataTrigger Binding="{Binding FrameAppearance, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
                                      Value="Office2010Aero">
                             <Setter TargetName="Office2010TabMaterialLayer" Property="Visibility" Value="Visible" />

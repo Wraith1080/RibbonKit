@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:system="clr-namespace:System;assembly=System.Runtime">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Office2024.Dark.xaml" />
     </ResourceDictionary.MergedDictionaries>
@@ -32,6 +33,8 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredCompanionBackground" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="#B0B0B0" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" Color="#B0B0B0" />
+    <system:Double x:Key="RibbonKit.Metrics.UtilityRimPressedOpacity">1</system:Double>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Utility.CheckedBorder" Color="#B0B0B0" />
     <!-- Split primary geometry; join padding retains the content inset. -->
     <Thickness x:Key="RibbonKit.Metrics.SplitHorizontalPrimaryBorderThickness">1,1,0,1</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.SplitHorizontalPrimaryPadding">0,0,1,0</Thickness>

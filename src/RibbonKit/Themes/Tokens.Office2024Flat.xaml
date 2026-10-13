@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:system="clr-namespace:System;assembly=System.Runtime">
     <!-- Office 2024 geometry and fills, with crisp one-DIP boundaries and a soft body shadow. -->
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/RibbonKit;component/Themes/Tokens.Office2024.xaml" />
@@ -38,6 +39,8 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.Qat.ColoredCompanionBackground" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.PressedBorder" Color="#8A8A8A" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Control.CheckedBorder" Color="#8A8A8A" />
+    <system:Double x:Key="RibbonKit.Metrics.UtilityRimPressedOpacity">1</system:Double>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Utility.CheckedBorder" Color="#8A8A8A" />
     <Thickness x:Key="RibbonKit.Metrics.ControlHighlightBorderThickness">1</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryBorderThickness">1,1,1,0</Thickness>
 

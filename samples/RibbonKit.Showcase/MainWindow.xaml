@@ -496,6 +496,7 @@
                                           DropDownHeader="Paste options"
                                           x:Name="DemoSplitTarget"
                                           rk:Ribbon.CommandId="cmd.paste"
+                                          rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="100"
                                           Layout="Vertical"
                                           LargeIcon="{StaticResource Icon.Paste}"
                                           Icon="{StaticResource Icon.Paste}"
@@ -510,12 +511,14 @@
                         <rk:RibbonButton Header="Cut" Size="Medium"
                                          x:Name="DemoButtonTarget"
                                          rk:Ribbon.CommandId="cmd.cut"
+                                         rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="80"
                                          Icon="{StaticResource Icon.Cut}"
                                          SizeDefinition="Medium, Medium, Small"
                                          ScreenTipTitle="Cut (Ctrl+X)"
                                          ScreenTipText="Remove the selection and put it on the Clipboard." rk:KeyTip.Keys="CU" />
                         <rk:RibbonButton Header="Copy" Size="Medium"
                                          rk:Ribbon.CommandId="cmd.copy"
+                                         rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="80"
                                          Icon="{StaticResource Icon.Copy}"
                                          SizeDefinition="Medium, Medium, Small"
                                          ScreenTipTitle="Copy (Ctrl+C)"
@@ -542,6 +545,7 @@
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                             <rk:RibbonComboBox InputWidth="128"
                                                rk:Ribbon.CommandId="command.home.font.family"
+                                               rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="90"
                                                Icon="{StaticResource Icon.Font}"
                                                IsEditable="True"
                                                SelectedIndex="0"
@@ -556,6 +560,7 @@
                             </rk:RibbonComboBox>
                             <rk:RibbonComboBox InputWidth="48"
                                                rk:Ribbon.CommandId="command.home.font.size"
+                                               rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="90"
                                                Icon="{StaticResource Icon.Font}"
                                                Margin="4,0,0,0"
                                                SelectedIndex="2"
@@ -573,16 +578,20 @@
                         <StackPanel Orientation="Horizontal">
                             <rk:RibbonToggleButton Size="Small"
                                                    rk:Ribbon.CommandId="cmd.bold"
+                                                   rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60"
+                                                   rk:Ribbon.SimplifiedSize="Small"
                                                    Icon="{StaticResource Icon.Bold}"
                                                    ScreenTipTitle="Bold (Ctrl+B)"
                                                    ScreenTipText="Make your text bold." />
                             <rk:RibbonToggleButton Size="Small"
                                                    rk:Ribbon.CommandId="cmd.italic"
+                                                   rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small"
                                                    Icon="{StaticResource Icon.Italic}"
                                                    ScreenTipTitle="Italic (Ctrl+I)"
                                                    ScreenTipText="Italicize your text." />
                             <rk:RibbonToggleButton Size="Small"
                                                    rk:Ribbon.CommandId="cmd.underline"
+                                                   rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small"
                                                    Icon="{StaticResource Icon.Underline}"
                                                    ScreenTipTitle="Underline (Ctrl+U)"
                                                    ScreenTipText="Underline your text." />
@@ -612,6 +621,7 @@
                                         ScreenTipTitle="Styles"
                                         ScreenTipText="Choose a text style. Point to a style to preview it, then click to apply it to the sample text."
                                         rk:Ribbon.CommandId="command.styles"
+                                        rk:Ribbon.SimplifiedPlacement="Inline"
                                         DropDownHeader="Choose a style"
                                         Width="258"
                                         SelectedIndex="0"
@@ -1026,7 +1036,15 @@
                                            ScreenTipTitle="Acrylic backdrop (Windows 11)"
                                            ScreenTipText="Apply the Windows 11 Acrylic material — a translucent blur of whatever is behind the window. Replaces Mica when both are toggled. Requires Windows 11 22H2+." />
                     <!-- Keep the former toggle's serialized command identity for saved QAT/layouts. -->
+                    <rk:RibbonToggleButton x:Name="SimplifiedRibbonToggle" Header="Simplified Ribbon"
+                                           rk:Ribbon.CommandId="command.view.simplifiedRibbon"
+                                           rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="1000"
+                                           Icon="{StaticResource Icon.Sliders}" LargeIcon="{StaticResource Icon.Sliders}"
+                                           Checked="OnToggleSimplifiedRibbon" Unchecked="OnToggleSimplifiedRibbon"
+                                           ScreenTipTitle="Simplified Ribbon"
+                                           ScreenTipText="Show selected commands in one row. More Commands opens the original groups." />
                     <rk:RibbonDropDownButton x:Name="TouchModeSelector"
+                                             rk:Ribbon.SimplifiedPlacement="Inline"
                                              rk:Ribbon.CommandId="auto:tab.view/group.view.backstage/Touch mode#2"
                                              Header="Touch/Mouse Mode"
                                              DropDownHeader="Optimize spacing between commands"
@@ -1065,6 +1083,7 @@
                         </rk:RibbonMenuItem>
                     </rk:RibbonDropDownButton>
                     <rk:RibbonToggleButton x:Name="GlassTreatmentToggle"
+                                           rk:Ribbon.SimplifiedPlacement="Inline"
                                            Header="Glass look"
                                            Size="Large"
                                            LargeIcon="{StaticResource Icon.Acrylic}"

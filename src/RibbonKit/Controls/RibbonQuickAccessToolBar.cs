@@ -5,6 +5,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Shell;
 using System.Windows.Threading;
+using System.Windows.Input;
 using RibbonKit.Animation;
 using RibbonKit.Layout;
 
@@ -77,6 +78,22 @@ public class RibbonQuickAccessToolBar : ItemsControl
     /// </summary>
     internal Ribbon? Owner { get; set; }
 
+    // The simplified body reuses the source-linked overflow lifecycle, independently of QAT membership.
+    internal bool IsSimplified { get; set; }
+
+    /// <inheritdoc />
+    protected override void OnContextMenuOpening(ContextMenuEventArgs e)
+    {
+        base.OnContextMenuOpening(e);
+        if (!IsSimplified || e.Handled || ContextMenu is not null || Owner is not { } owner) return;
+        FrameworkElement? target = owner.ResolveCommandControl(e.OriginalSource as DependencyObject);
+        e.Handled = true;
+        var menu = owner.CreateRibbonContextMenu(target);
+        RibbonPopupMotion.SuppressNativeContextMenuAnimationForOpen(menu);
+        menu.IsOpen = true;
+    }
+    internal Dictionary<FrameworkElement, RibbonGroup> SimplifiedGroups { get; } = new();
+
     /// <summary>The chevron that opens the overflow flyout, exposed for the KeyTip service.</summary>
     internal ToggleButton? OverflowButton => _overflowButton;
 
@@ -91,6 +108,8 @@ public class RibbonQuickAccessToolBar : ItemsControl
     /// <inheritdoc />
     public override void OnApplyTemplate()
     {
+        CloseOverflow();
+        _dismiss?.OnClosed();
         _panel?.RestoreOverflowFocus();
         _panel = null;
         base.OnApplyTemplate();
@@ -112,13 +131,32 @@ public class RibbonQuickAccessToolBar : ItemsControl
         // walk leaves its own toggle as the single owner of open/close.
         _dismiss = _overflowButton is null
             ? null
-            : new PopupDismissHelper(_overflowButton, () => _overflowPopup, CloseOverflow);
+            : new PopupDismissHelper(_overflowButton, () => _overflowPopup, CloseOverflow, () =>
+            {
+                if (_overflowButton is { IsVisible: true, IsEnabled: true }) _overflowButton.Focus();
+            });
 
         if (_overflowPopup is not null)
         {
             _overflowPopup.Opened += OnOverflowOpened;
             _overflowPopup.Closed += OnOverflowClosed;
         }
+    }
+
+    /// <inheritdoc />
+    protected override void OnPreviewKeyDown(KeyEventArgs e)
+    {
+        base.OnPreviewKeyDown(e);
+        if (e.Handled || _overflowButton?.IsKeyboardFocusWithin != true || e.Key is not (Key.Down or Key.Up)) return;
+        OpenOverflow();
+        bool last = e.Key == Key.Up;
+        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+        {
+            var candidates = OverflowEntries.Where(entry => entry.IsEnabled && entry.IsVisible).ToArray();
+            if ((last ? candidates.LastOrDefault() : candidates.FirstOrDefault()) is not { } entry) return;
+            if (!entry.Focus()) entry.MoveFocus(new TraversalRequest(last ? FocusNavigationDirection.Last : FocusNavigationDirection.First));
+        }));
+        e.Handled = true;
     }
 
     /// <inheritdoc />
@@ -173,7 +211,9 @@ public class RibbonQuickAccessToolBar : ItemsControl
             (Action)(() =>
             {
                 _overflowUpdatePending = false;
-                bool current = _panel is { OverflowedChildren.Count: > 0 };
+                bool current = IsSimplified
+                    ? _panel?.OverflowedChildren.Any(child => child.Visibility == Visibility.Visible && child is not RibbonGroupSeparator) == true
+                    : _panel is { OverflowedChildren.Count: > 0 };
                 SetValue(HasOverflowPropertyKey, current);
 
                 // Items came back into the strip while the flyout was open — close it rather than
@@ -188,6 +228,9 @@ public class RibbonQuickAccessToolBar : ItemsControl
     private void OnOverflowOpened(object? sender, EventArgs e)
     {
         _dismiss?.OnOpened();
+        FrameworkElement? surface = _overflowPopup?.Child is AdornerDecorator decorator
+            ? decorator.Child as FrameworkElement
+            : _overflowPopup?.Child as FrameworkElement;
 
         if (_overflowHost is null)
         {
@@ -202,7 +245,8 @@ public class RibbonQuickAccessToolBar : ItemsControl
             {
                 if (child is FrameworkElement element)
                 {
-                    entries.Add(GetOrCreateEntry(ribbon, element));
+                    if (element is not RibbonGroupSeparator && element.Visibility == Visibility.Visible)
+                        entries.Add(GetOrCreateEntry(ribbon, element));
                 }
             }
         }
@@ -210,6 +254,8 @@ public class RibbonQuickAccessToolBar : ItemsControl
         // Anything no longer in the toolbar at all can go; anything merely back in the strip is
         // kept, because it will very likely overflow again on the next resize.
         PruneEntries();
+        foreach (FrameworkElement entry in entries.OfType<FrameworkElement>())
+            entry.SetValue(RibbonOverflowMenu.ParentSurfaceProperty, surface);
 
         _overflowHost.ItemsSource = entries;
 
@@ -221,9 +267,6 @@ public class RibbonQuickAccessToolBar : ItemsControl
         // The AdornerDecorator is infrastructure for KeyTips, not the visible flyout surface.
         // Keep motion targeted at its Border child so PlayFlyoutOpen fades the chrome and slides
         // the padded content, preserving §3.42's no-clipping invariant.
-        FrameworkElement? surface = _overflowPopup?.Child is AdornerDecorator decorator
-            ? decorator.Child as FrameworkElement
-            : _overflowPopup?.Child as FrameworkElement;
         RibbonMotion.PlayFlyoutOpen(surface, RibbonAnimationAction.DropdownMenu);
     }
 
@@ -252,17 +295,19 @@ public class RibbonQuickAccessToolBar : ItemsControl
         // mirror, and the catalog deliberately refuses to build those.
         FrameworkElement source = Ribbon.GetQuickAccessSource(item) ?? item;
         FrameworkElement entry = ribbon.CreateCommandProxy(source, RibbonControlSize.Medium);
+        if (IsSimplified) Ribbon.MirrorCommandPresentation(entry, item);
+        entry.SetValue(RibbonOverflowMenu.IsEntryProperty, true);
 
         entry.HorizontalAlignment = HorizontalAlignment.Stretch;
 
-        // Stretched so the hover highlight spans the flyout like a menu row, but the CONTENT is
-        // left-aligned — a drop-down or split otherwise centres its icon+label and reads as a
-        // different kind of thing from the plain buttons beside it.
-        entry.SetValue(HorizontalContentAlignmentProperty, HorizontalAlignment.Left);
+        // The dropdown's menu-row grid stretches to put its arrow at the trailing
+        // edge. Other entries keep their primary icon/label aligned to the start.
+        entry.SetValue(HorizontalContentAlignmentProperty,
+            entry is RibbonDropDownButton and not RibbonSplitButton ? HorizontalAlignment.Stretch : HorizontalAlignment.Left);
 
         // Remember which quick-access item this stands for, so a right-click inside the flyout can
         // offer "Remove from Quick Access Toolbar" for the REAL item rather than for this proxy.
-        Ribbon.SetQuickAccessOverflowItemInternal(entry, item);
+        if (!IsSimplified) Ribbon.SetQuickAccessOverflowItemInternal(entry, item);
         if (entry is RibbonGroupQuickAccessProxy)
             entry.SetBinding(KeyTip.KeysProperty, new System.Windows.Data.Binding
             {
@@ -311,7 +356,7 @@ public class RibbonQuickAccessToolBar : ItemsControl
 
         foreach (FrameworkElement item in _entries.Keys.ToList())
         {
-            if (ribbon.QuickAccessItems.Contains(item))
+            if (Items.Contains(item))
             {
                 continue;
             }

@@ -983,6 +983,10 @@ technical evidence warrants them; preserve existing dated records.
 
 [Derive light/dark borders and state outlines from the shared Office 2024 templates](docs/history/library/13-flat-theme-variants.md#3254-office-2024-flat-theme--2026-10-12).
 
+### 3.255 Simplified ribbon layout and customization — 2026-10-13
+
+[Source-linked single-row commands, native group access and a separate draft customization page](docs/history/library/14-simplified-ribbon.md#3255-simplified-ribbon-first-layout-slice--2026-10-13).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.
@@ -1008,6 +1012,9 @@ technical evidence warrants them; preserve existing dated records.
   “Corrected” does not establish every theme/DPI/RTL gate.
 
 ### Remaining or intentionally deferred
+
+- **Simplified ribbon:** layout/customization evidence and remaining acceptance are in the
+  [active plan](docs/15-SIMPLIFIED-RIBBON-PLAN.md#delivery-and-acceptance).
 
 - **Office 2024 Flat:** implementation and visual review status are in the
   [flat theme trial](docs/09-FUTURE-THEMES-PLAN.md#office-2024-flat-trial).

@@ -27,6 +27,7 @@ internal sealed class PopupDismissHelper : IDisposable
     private readonly FrameworkElement _owner;
     private readonly Func<Popup?> _getPopup;
     private readonly Action _close;
+    private readonly Action? _afterEscape;
     private Window? _window;
     private Ribbon? _quickAccessRibbon;
     internal bool DismissedByOutsidePress { get; private set; }
@@ -41,11 +42,12 @@ internal sealed class PopupDismissHelper : IDisposable
                 && (ReferenceEquals(surface, helper._owner) || surface.IsAncestorOf(helper._owner)));
     }
 
-    public PopupDismissHelper(FrameworkElement owner, Func<Popup?> getPopup, Action close)
+    public PopupDismissHelper(FrameworkElement owner, Func<Popup?> getPopup, Action close, Action? afterEscape = null)
     {
         _owner = owner;
         _getPopup = getPopup;
         _close = close;
+        _afterEscape = afterEscape;
         _owner.Unloaded += OnOwnerUnloaded;
     }
 
@@ -178,6 +180,8 @@ internal sealed class PopupDismissHelper : IDisposable
         }
 
         _close();
+        if (_afterEscape is not null)
+            _owner.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, _afterEscape);
         return true;
     }
 

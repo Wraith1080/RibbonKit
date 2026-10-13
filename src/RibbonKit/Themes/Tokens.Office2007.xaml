@@ -850,6 +850,8 @@
 
     <!-- Utility and scrollbar material. -->
     <system:Double x:Key="RibbonKit.Metrics.UtilityRimActiveOpacity">0</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.UtilityRimPressedOpacity">0</system:Double>
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Utility.CheckedBorder" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.WashAccent" Color="Transparent" />
     <system:Boolean x:Key="RibbonKit.Metrics.UseUtilityScrollMaterial">False</system:Boolean>
     <system:Boolean x:Key="RibbonKit.Metrics.ContextualUseCrystalMaterial">False</system:Boolean>
@@ -952,4 +954,12 @@
     <Thickness x:Key="RibbonKit.Metrics.SplitHorizontalPrimaryBorderThickness">1,1,0,1</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.SplitHorizontalPrimaryPadding">0,0,1,0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryPadding">0,0,0,1</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.SimplifiedRowHeight">42</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.SimplifiedGroupsRowMargin">4,1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.SimplifiedCommandsMargin">0,3</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.Touch.SimplifiedRowHeight">52</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.SimplifiedMoreButtonWidth">32</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.MenuItemMinHeight">32</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.MenuItemMinWidth">200</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.MenuSubmenuButtonWidth">32</system:Double>
 </ResourceDictionary>

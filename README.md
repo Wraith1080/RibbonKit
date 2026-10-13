@@ -30,7 +30,7 @@ below describes the current checkout, including post-release additions; see
 - Tab/group horizontal scrolling and optional `RibbonWindow` title/QAT/contextual integration.
 - Arbitrary WPF group content, with optional `IRibbonSizeAware` participation.
 - Opt-in Compact/Touch density, shared by ribbon controls, menus, galleries, QAT and File navigation.
-- Simplified single-row ribbon remains a candidate.
+- Opt-in simplified single-row ribbon with application-selected commands, priority-based overflow and native group flyouts.
 
 ### Controls
 
@@ -126,6 +126,88 @@ preferences; customization import/reset does not change
 density. Application-authored fixed-size content and native window/document UI
 remain host-owned. See the [touch plan](docs/14-TOUCH-DENSITY-PLAN.md#verification-and-acceptance)
 for automated evidence and pending native touch, visual and DPI acceptance.
+
+### Simplified ribbon
+
+Set `Ribbon.LayoutMode="Simplified"` and mark the commands to show in its single
+row. Classic is the default; Compact/Touch density applies to either layout.
+
+```xml
+<rk:Ribbon LayoutMode="Simplified">
+    <rk:RibbonTab Header="Home">
+        <rk:RibbonGroup Header="Clipboard">
+            <rk:RibbonButton Header="Paste"
+                             rk:Ribbon.SimplifiedPlacement="Inline"
+                             rk:Ribbon.SimplifiedPriority="100" />
+            <rk:RibbonButton Header="Paste Special" />
+        </rk:RibbonGroup>
+    </rk:RibbonTab>
+</rk:Ribbon>
+```
+
+Higher priorities stay inline longer when space runs out; ties overflow from the
+end. Set `Ribbon.SimplifiedSize="Small"` for an icon-only inline command (supply an
+icon); the default Medium size includes its label. Changing the property updates
+the existing copy, and overflow entries keep their labels. Commands retain their
+original tab/group ordering. **More Ribbon Commands**
+offers displaced inline commands and each group's original full-content flyout,
+so editors, arbitrary content and dialog launchers remain accessible. Inline
+buttons/toggles/splits/dropdowns retain source state and actions; combos and
+galleries use source-linked dropdown copies. Editable combo text entry remains
+available in the native group flyout.
+
+QAT and simplified overflow use menu-sized rows (32 DIP minimum height, 44 in
+Touch, and 200 DIP minimum width). Dropdown, split, combo, gallery and group
+entries have a trailing submenu arrow and open beside their row. Placement uses
+the current monitor's work area, flips sides near an edge, and falls back to the
+overlaid dropdown when neither side fits. RTL mirrors the preferred side and
+arrow. Native menu and combo choices share the row minimums.
+
+Showcase offers **View → Simplified Ribbon** and the shared ribbon context menu
+offers the same switch. Its choice is saved with host-owned appearance preferences.
+Home demonstrates Small Bold/Italic/Underline commands and a Styles gallery using
+the existing QAT dropdown behavior.
+Only the active layout's **Customize Ribbon** page is shown; both modes use the
+same page title and context-menu label. QAT customization remains available in
+either mode. Add `RibbonSimplifiedCustomizePage` to a
+`RibbonOptionsDialog` with its `Ribbon` property pointing at the owning ribbon.
+It lists commands by their original group and supports Add/Remove, Move Up/Down,
+Show Label, Reset Tab and Reset All Tabs. Ordering can cross groups; dividers
+follow contiguous group sections without changing the original group contents.
+Group flyouts and arbitrary editors are access surfaces rather than pinnable commands.
+
+The page edits a draft. Its Apply button and `ApplyChanges()` commit it;
+`CancelChanges()` discards uncommitted edits. `RibbonOptionsDialog` commits on OK,
+discards drafts on Cancel/close, hides the inactive customization page by mode,
+and selects the newly eligible counterpart when the mode changes. Apply followed
+by Cancel keeps the already applied choices. The QAT/classic pages retain their
+existing live-edit contract.
+
+In Simplified mode, a command's context menu offers Pin/Remove and **Customize
+the Ribbon**. Hosts open their simplified options surface on
+`Ribbon.SimplifiedCustomizeRequested` and save on
+`Ribbon.SimplifiedCustomizationChanged`. The equivalent programmatic actions are
+`PinToSimplifiedRibbon(source)` and `RemoveFromSimplifiedRibbon(source)`; copies
+resolve to the original command. Both actions return false for unsupported,
+transient or duplicate requests.
+
+`RibbonCustomizationSerializer` stores simplified order/labels in a separate
+optional `Simplified` section with version 1. Assign explicit, stable
+`Ribbon.CommandId` values to each customizable tab and command for restart
+persistence. Untagged selections work in the current session. Missing commands
+are skipped, duplicate identities use the first eligible source, and contextual,
+modal and merged contributions are excluded. Old classic-only JSON preserves
+current simplified choices; malformed sections leave the layout unchanged.
+Reset uses the app-authored placement/size properties. Layout mode remains a
+host-owned appearance preference. See the
+[simplified ribbon plan](docs/15-SIMPLIFIED-RIBBON-PLAN.md#customize-simplified-ribbon)
+for acceptance and remaining full/native checks.
+
+The tab selector fills the selected-command column without a side label. Custom
+tab/group creation is the next planned slice: New Tab/New Group/Rename and a
+target group selector, with shared structure and separate simplified selections.
+Existing custom tabs/groups can already be edited in Classic and used in either
+layout. See the plan's [structure editor proposal](docs/15-SIMPLIFIED-RIBBON-PLAN.md#custom-tab-and-group-editor-proposal).
 
 ### Dropdown headings and descriptive rows
 

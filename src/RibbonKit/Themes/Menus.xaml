@@ -20,6 +20,8 @@
          ============================================================ -->
 
     <Style x:Key="RibbonKit.MenuItem" TargetType="{x:Type MenuItem}">
+        <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.MenuItemMinHeight}" />
+        <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.MenuItemMinWidth}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="Template">
             <Setter.Value>
@@ -144,7 +146,7 @@
         <Style.Triggers>
             <Trigger Property="controls:Ribbon.Density" Value="Touch">
                 <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
-                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.MenuItemMinWidth}" />
                 <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ControlMargin}" />
             </Trigger>
         </Style.Triggers>

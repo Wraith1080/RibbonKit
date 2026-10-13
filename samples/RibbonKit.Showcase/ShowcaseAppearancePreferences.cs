@@ -38,6 +38,7 @@ internal sealed record ShowcaseAppearancePreferences
     public bool DarkMode { get; init; }
 
     public bool TouchMode { get; init; }
+    public bool SimplifiedRibbon { get; init; }
 
     public bool AccentedTitleBar { get; init; }
 

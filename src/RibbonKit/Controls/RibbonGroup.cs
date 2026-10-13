@@ -519,6 +519,12 @@ public partial class RibbonGroup : HeaderedItemsControl
         }
         // Editors keep caret/selection keys. Buttons use the flyout's spatial order.
         if (Keyboard.FocusedElement is not ButtonBase button || Keyboard.Modifiers != ModifierKeys.None) return;
+        if (_quickAccessProxy is { } entry && RibbonOverflowMenu.IsEntry(entry)
+            && e.Key == RibbonOverflowMenu.ReturnKey(entry))
+        {
+            e.Handled = _dismissHelper?.TryDismissTopmostForEscape() == true;
+            return;
+        }
         FocusNavigationDirection? direction = e.Key switch
         {
             Key.Down => FocusNavigationDirection.Down,
@@ -674,11 +680,20 @@ public partial class RibbonGroup : HeaderedItemsControl
         // Intermediate presenters can otherwise short-circuit a width probe after
         // a descendant changes density while the group's size state stays Large.
         InvalidateMeasureRecursive(this);
-        InvalidateHostPanel();
+        // Menu borrowing briefly changes inherited density as items are detached
+        // and returned. Invalidate geometry without rebuilding/closing an open
+        // simplified menu; its copies already inherit density through their host.
+        InvalidateHostPanel(refreshSimplified: false);
     }
 
-    private void InvalidateHostPanel()
+    private void InvalidateHostPanel(bool refreshSimplified = true)
     {
+        for (DependencyObject? parent = VisualTreeHelper.GetParent(this); parent is not null; parent = VisualTreeHelper.GetParent(parent))
+            if (parent is RibbonGroupsHost host)
+            {
+                if (refreshSimplified && Ribbon.GetLayoutMode(host) == RibbonLayoutMode.Simplified) host.RequestSimplifiedRefresh();
+                break;
+            }
         if (VisualTreeHelper.GetParent(this) is RibbonGroupsPanel panel)
         {
             panel.InvalidateStateCache();

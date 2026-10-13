@@ -19,6 +19,8 @@ public sealed class CustomizeDialogLayoutTests
         try
         {
             window.Show(); Sta.Drain();
+            typeof(MainWindow).GetField("_restoringAppearance", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.SetValue(window, true);
+            window.MainRibbon.LayoutMode = RibbonLayoutMode.Classic;
             var dialog = window.CreateCustomizationDialog(false);
             try
             {

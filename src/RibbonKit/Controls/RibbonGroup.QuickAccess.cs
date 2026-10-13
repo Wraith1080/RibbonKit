@@ -17,6 +17,8 @@ public partial class RibbonGroup
     private RibbonTab? _quickAccessTab;
     private Panel? _detachedPopupParent;
     private int _detachedPopupIndex;
+    private PlacementMode _quickAccessOriginalPlacement;
+    private CustomPopupPlacementCallback? _quickAccessOriginalPlacementCallback;
     private RibbonGroupSizeState _adaptiveSizeState = RibbonGroupSizeState.Large;
     private readonly List<RibbonDensityTransition> _quickAccessTransitions = new();
     private readonly List<DependencyObject> _quickAccessHoverContent = new();
@@ -46,7 +48,8 @@ public partial class RibbonGroup
         CommitQuickAccessLayout(positions);
     }
 
-    // Collapse is derived from live QAT membership, never persisted as group layout.
+    // Collapse is derived from live source-flyout projections (QAT or simplified),
+    // never persisted as group layout.
     private void CommitQuickAccessLayout(List<(FrameworkElement Surface, Point Position)> positions)
     {
         InvalidateHostPanel();
@@ -85,6 +88,9 @@ public partial class RibbonGroup
             parent.Children.Remove(_popup);
         }
         _popup.SetCurrentValue(Popup.PlacementTargetProperty, proxy);
+        _quickAccessOriginalPlacement = _popup.Placement;
+        _quickAccessOriginalPlacementCallback = _popup.CustomPopupPlacementCallback;
+        if (RibbonOverflowMenu.IsEntry(proxy)) RibbonOverflowMenu.ConfigurePopup(proxy, _popup, _popupHost);
         _popup.SetCurrentValue(Popup.IsOpenProperty, true);
         return true;
     }
@@ -119,6 +125,9 @@ public partial class RibbonGroup
             _quickAccessTab = null;
             Unloaded -= OnQuickAccessUnloaded;
             _popup?.SetCurrentValue(Popup.PlacementTargetProperty, _collapsedButton);
+            _popup?.SetCurrentValue(Popup.PlacementProperty, _quickAccessOriginalPlacement);
+            _popup?.SetCurrentValue(Popup.CustomPopupPlacementCallbackProperty, _quickAccessOriginalPlacementCallback);
+            _quickAccessOriginalPlacementCallback = null;
             if (_detachedPopupParent is { } parent && _popup is not null)
                 parent.Children.Insert(Math.Min(_detachedPopupIndex, parent.Children.Count), _popup);
             _detachedPopupParent = null;

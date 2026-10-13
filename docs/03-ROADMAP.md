@@ -35,8 +35,10 @@ retains implementation decisions and dated gates. Release assets are described i
 Touch density implementation and acceptance are tracked in the
 [active touch plan](14-TOUCH-DENSITY-PLAN.md).
 
-Unscheduled candidates include simplified single-row ribbon, an
-Office-style status bar, XML-defined ribbon authoring, purpose-authored monochrome
+Simplified ribbon layout, its dedicated customization page and remaining acceptance are tracked in
+the [active simplified plan](15-SIMPLIFIED-RIBBON-PLAN.md).
+
+Unscheduled candidates include an Office-style status bar, XML-defined ribbon authoring, purpose-authored monochrome
 QAT icons, and an opaque non-Mica theme-transition capture. These are not supported
 APIs or commitments. A ribbon slider is intentionally not planned.
 

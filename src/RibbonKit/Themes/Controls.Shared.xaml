@@ -31,8 +31,8 @@
          ============================================================ -->
     <BooleanToVisibilityConverter x:Key="RibbonKit.BoolToVis" />
 
-    <!-- Shared utility rims are paint only. Office keeps zero state opacity;
-         Crystal enables hover/pressed/checked rims through its token layer. -->
+    <!-- Shared utility rims are paint only. Hover and pressed/open visibility
+         are separate: Flat enables active borders while keeping hover unchanged. -->
     <Style x:Key="RibbonKit.UtilityRim" TargetType="{x:Type Border}">
         <Setter Property="IsHitTestVisible" Value="False" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
@@ -48,7 +48,7 @@
                 <Setter Property="Opacity" Value="{DynamicResource RibbonKit.Metrics.UtilityRimActiveOpacity}" />
             </MultiDataTrigger>
             <DataTrigger Binding="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
-                <Setter Property="Opacity" Value="{DynamicResource RibbonKit.Metrics.UtilityRimActiveOpacity}" />
+                <Setter Property="Opacity" Value="{DynamicResource RibbonKit.Metrics.UtilityRimPressedOpacity}" />
                 <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
             </DataTrigger>
         </Style.Triggers>
@@ -56,7 +56,11 @@
     <Style x:Key="RibbonKit.UtilityToggleRim" TargetType="{x:Type Border}" BasedOn="{StaticResource RibbonKit.UtilityRim}">
         <Style.Triggers>
             <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
-                <Setter Property="Opacity" Value="{DynamicResource RibbonKit.Metrics.UtilityRimActiveOpacity}" />
+                <Setter Property="Opacity" Value="{DynamicResource RibbonKit.Metrics.UtilityRimPressedOpacity}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Utility.CheckedBorder}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                <Setter Property="BorderBrush" Value="{DynamicResource RibbonKit.Brushes.Control.PressedBorder}" />
             </DataTrigger>
         </Style.Triggers>
     </Style>
@@ -148,9 +152,11 @@
                                           DockPanel.Dock="Right"
                                           Width="20"
                                           Height="22"
-                                          Focusable="False"
+                                          Focusable="True"
+                                          KeyboardNavigation.TabIndex="1"
                                           VerticalAlignment="Center"
                                           ToolTip="{localization:RibbonString Key=MoreQuickAccessCommands}"
+                                          AutomationProperties.Name="{localization:RibbonString Key=MoreQuickAccessCommands}"
                                           Visibility="{Binding HasOverflow, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource RibbonKit.BoolToVis}}">
                                 <ToggleButton.Style>
                                     <Style TargetType="{x:Type ToggleButton}">
@@ -252,7 +258,7 @@
                                     </Style>
                                 </ToggleButton.Style>
                             </ToggleButton>
-                            <ItemsPresenter />
+                            <ItemsPresenter KeyboardNavigation.TabNavigation="Local" KeyboardNavigation.TabIndex="0" />
                         </DockPanel>
                         <!-- A Popup has no layout footprint, so it can sit in the same cell. -->
                         <!-- StaysOpen=True + explicit dismissal (PopupDismissHelper), the house

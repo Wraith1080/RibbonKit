@@ -190,6 +190,17 @@
                 <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.LargeButtonMinWidth}" />
                 <Setter Property="VerticalAlignment" Value="Center" />
             </MultiTrigger>
+            <DataTrigger Binding="{Binding Path={x:Static controls:RibbonOverflowMenu.IsEntryPath}, RelativeSource={RelativeSource Self}}" Value="True">
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.MenuItemMinHeight}" />
+                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.MenuItemMinWidth}" />
+            </DataTrigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding Path={x:Static controls:RibbonOverflowMenu.IsEntryPath}, RelativeSource={RelativeSource Self}}" Value="True" />
+                    <Condition Binding="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource Self}}" Value="Touch" />
+                </MultiDataTrigger.Conditions>
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+            </MultiDataTrigger>
         </Style.Triggers>
     </Style>
 
@@ -450,6 +461,17 @@
                 <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.LargeButtonMinWidth}" />
                 <Setter Property="VerticalAlignment" Value="Center" />
             </MultiTrigger>
+            <DataTrigger Binding="{Binding Path={x:Static controls:RibbonOverflowMenu.IsEntryPath}, RelativeSource={RelativeSource Self}}" Value="True">
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.MenuItemMinHeight}" />
+                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.MenuItemMinWidth}" />
+            </DataTrigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding Path={x:Static controls:RibbonOverflowMenu.IsEntryPath}, RelativeSource={RelativeSource Self}}" Value="True" />
+                    <Condition Binding="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource Self}}" Value="Touch" />
+                </MultiDataTrigger.Conditions>
+                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+            </MultiDataTrigger>
         </Style.Triggers>
     </Style>
 

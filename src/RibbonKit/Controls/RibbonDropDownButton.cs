@@ -238,6 +238,7 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
         _popup = OwnsPopup ? GetTemplateChild(PopupPartName) as Popup : null;
         if (_popup is not null)
         {
+            if (RibbonOverflowMenu.IsEntry(this)) RibbonOverflowMenu.ConfigurePopup(this, _popup, _menuHost as FrameworkElement);
             _popup.Opened += OnPopupOpened;
             _popup.Closed += OnPopupClosed;
         }
@@ -453,7 +454,8 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
     private void OnOpenerKeyDown(object sender, KeyEventArgs e)
     {
         Key key = e.Key == Key.System ? e.SystemKey : e.Key;
-        if (!e.Handled && !IsDropDownOpen && IsKeyboardFocusWithin && (key == Key.Down || key == Key.Up))
+        if (!e.Handled && !IsDropDownOpen && IsKeyboardFocusWithin
+            && (key == Key.Down || key == Key.Up || RibbonOverflowMenu.IsEntry(this) && key == RibbonOverflowMenu.OpenKey(this)))
         {
             _focusLastItem = key == Key.Up;
             SetCurrentValue(IsDropDownOpenProperty, true);
@@ -473,6 +475,12 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
         // A ScrollViewer consumes arrows before WPF's navigation post-processing. Navigate
         // menu buttons here, leaving embedded editors' ordinary key handling intact.
         if (Keyboard.FocusedElement is not ButtonBase button || Keyboard.Modifiers != ModifierKeys.None) return;
+        if (RibbonOverflowMenu.IsEntry(this) && e.Key == RibbonOverflowMenu.ReturnKey(this))
+        {
+            SetCurrentValue(IsDropDownOpenProperty, false);
+            e.Handled = true;
+            return;
+        }
         FocusNavigationDirection? direction = e.Key switch
         {
             Key.Down => FocusNavigationDirection.Down,

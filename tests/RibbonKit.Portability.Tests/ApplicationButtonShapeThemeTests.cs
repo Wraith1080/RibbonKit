@@ -156,6 +156,21 @@ public sealed class ApplicationButtonShapeThemeTests
     public void Theme_default_and_local_value_follow_wpf_precedence() => RunSta(() =>
     {
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "SimplifiedCustomization")
+        {
+            VerifyScope("SimplifiedCustomizationPortabilityChecks.Verify", () => SimplifiedCustomizationPortabilityChecks.Verify(application));
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "OverflowMenus")
+        {
+            VerifyScope("OverflowMenuPortabilityChecks.Verify", () => OverflowMenuPortabilityChecks.Verify(application));
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "SimplifiedRibbon")
+        {
+            VerifyScope("SimplifiedRibbonPortabilityChecks.Verify", () => SimplifiedRibbonPortabilityChecks.Verify(application));
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "Flat2024")
         {
             VerifyScope("Flat2024ThemeChecks.Verify", () => Flat2024ThemeChecks.Verify(application));
@@ -308,7 +323,13 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("CrystalUtilityPortabilityChecks.Verify", () => CrystalUtilityPortabilityChecks.Verify(application));
             VerifyScope("Flat2024ThemeChecks.Verify", () => Flat2024ThemeChecks.Verify(application));
             ThemeManager.Apply(application, RibbonTheme.Office2024);
+            VerifyScope("SimplifiedRibbonPortabilityChecks.Verify", () => SimplifiedRibbonPortabilityChecks.Verify(application));
+            ThemeManager.Apply(application, RibbonTheme.Office2024);
+            VerifyScope("SimplifiedCustomizationPortabilityChecks.Verify", () => SimplifiedCustomizationPortabilityChecks.Verify(application));
+            ThemeManager.Apply(application, RibbonTheme.Office2024);
             VerifyScope("CrystalTintPortabilityChecks.Verify", () => CrystalTintPortabilityChecks.Verify(application));
+            ThemeManager.Apply(application, RibbonTheme.Office2024);
+            VerifyScope("OverflowMenuPortabilityChecks.Verify", () => OverflowMenuPortabilityChecks.Verify(application));
         }
         ThemeManager.Apply(application, RibbonTheme.Office2024);
         VerifyScope("PopupMarginPortabilityChecks.Verify", () => PopupMarginPortabilityChecks.Verify(application));

@@ -65,6 +65,15 @@ public class RibbonGroupsPanel : Panel
     /// <inheritdoc />
     protected override Size MeasureOverride(Size availableSize)
     {
+        // Simplified renders sibling command copies. Keep native source templates realized
+        // for their group flyouts without reporting their hidden widths to the body scroller.
+        if (Ribbon.GetLayoutMode(this) == RibbonLayoutMode.Simplified)
+        {
+            foreach (UIElement child in InternalChildren)
+                child.Measure(new Size(double.PositiveInfinity, availableSize.Height));
+            (_scrollHost ??= FindScrollHost())?.ReportContentWidth(0d);
+            return new Size(0, 0);
+        }
         int count = InternalChildren.Count;
         if (count == 0)
         {
