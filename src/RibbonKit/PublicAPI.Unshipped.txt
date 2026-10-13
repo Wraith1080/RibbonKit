@@ -4,6 +4,9 @@ RibbonKit.Controls.RibbonSimplifiedCustomizePage
 RibbonKit.Controls.RibbonSimplifiedCustomizePage.RibbonSimplifiedCustomizePage() -> void
 RibbonKit.Controls.RibbonSimplifiedCustomizePage.Ribbon.get -> RibbonKit.Controls.Ribbon?
 RibbonKit.Controls.RibbonSimplifiedCustomizePage.Ribbon.set -> void
+RibbonKit.Controls.RibbonSimplifiedCustomizePage.ResetLayout.get -> string?
+RibbonKit.Controls.RibbonSimplifiedCustomizePage.ResetLayout.set -> void
+static readonly RibbonKit.Controls.RibbonSimplifiedCustomizePage.ResetLayoutProperty -> System.Windows.DependencyProperty!
 static readonly RibbonKit.Controls.RibbonSimplifiedCustomizePage.RibbonProperty -> System.Windows.DependencyProperty!
 RibbonKit.Controls.RibbonSimplifiedCustomizePage.ApplyChanges() -> void
 RibbonKit.Controls.RibbonSimplifiedCustomizePage.CancelChanges() -> void
@@ -26,6 +29,12 @@ RibbonKit.Localization.RibbonString.AllGroups = 74 -> RibbonKit.Localization.Rib
 RibbonKit.Localization.RibbonString.SimplifiedGroup = 75 -> RibbonKit.Localization.RibbonString
 RibbonKit.Localization.RibbonString.RenameTab = 76 -> RibbonKit.Localization.RibbonString
 RibbonKit.Localization.RibbonString.RenameGroup = 77 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.New = 78 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.AllTabs = 79 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.ShowItemLabel = 80 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.ResetQuickAccessToolbar = 81 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.ResetAllCustomizations = 82 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.InvalidRibbonLayout = 83 -> RibbonKit.Localization.RibbonString
 static readonly RibbonKit.Controls.Ribbon.SimplifiedSizeProperty -> System.Windows.DependencyProperty!
 static RibbonKit.Controls.Ribbon.GetSimplifiedSize(System.Windows.DependencyObject! element) -> RibbonKit.RibbonControlSize
 static RibbonKit.Controls.Ribbon.SetSimplifiedSize(System.Windows.DependencyObject! element, RibbonKit.RibbonControlSize value) -> void

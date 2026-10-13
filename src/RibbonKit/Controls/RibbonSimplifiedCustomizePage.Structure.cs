@@ -13,18 +13,18 @@ public partial class RibbonSimplifiedCustomizePage
     private readonly Dictionary<RibbonGroup, List<FrameworkElement>> _memberships = new();
     private Selector? _groups;
     private RibbonGroup? _group;
-    private bool HasDraft => _drafts.Count > 0 || _newTabs.Count > 0 || _newGroups.Count > 0 || _renames.Count > 0 || _memberships.Count > 0;
+    private bool HasDraft => _drafts.Count > 0 || _newTabs.Count > 0 || _newGroups.Count > 0 || _renames.Count > 0 || _memberships.Count > 0 || _pendingLayout is not null || _pendingQat is not null;
 
-    private string DraftHeader(FrameworkElement element) => _renames.TryGetValue(element, out string? name) ? name : element switch
+    private string DraftHeader(FrameworkElement element) => ChoiceName(element) ?? (element switch
     {
         RibbonTab tab => tab.Header?.ToString() ?? string.Empty,
         RibbonGroup group => group.Header?.ToString() ?? string.Empty,
         _ => string.Empty,
-    };
+    });
 
     private List<RibbonTab> DraftTabs()
     {
-        var tabs = Ribbon?.Tabs.Where(RibbonCustomizePage.IsCustomizableTab).ToList() ?? new();
+        var tabs = _layoutTabs?.ToList() ?? Ribbon?.Tabs.Where(RibbonCustomizePage.IsCustomizableTab).ToList() ?? new();
         if (Ribbon is null) return tabs;
         foreach (var pair in _newTabs)
             tabs.Insert(pair.Anchor is not null && tabs.IndexOf(pair.Anchor) is >= 0 and var index ? index + 1 : tabs.Count, pair.Tab);
@@ -33,7 +33,7 @@ public partial class RibbonSimplifiedCustomizePage
 
     private List<RibbonGroup> DraftGroups(RibbonTab tab)
     {
-        var groups = tab.Groups.Where(group => !Controls.Ribbon.GetIsMerged(group)).ToList();
+        var groups = _layoutGroups.TryGetValue(tab, out var imported) ? imported.ToList() : tab.Groups.Where(group => !Controls.Ribbon.GetIsMerged(group)).ToList();
         if (_newGroups.TryGetValue(tab, out var additions))
             foreach (var pair in additions)
                 groups.Insert(pair.Anchor is not null && groups.IndexOf(pair.Anchor) is >= 0 and var index ? index + 1 : groups.Count, pair.Group);
@@ -46,7 +46,7 @@ public partial class RibbonSimplifiedCustomizePage
         if (_group is not null && !groups.Contains(_group)) _group = null;
         if (_groups is null) return;
         var entries = new List<SimplifiedGroupChoice> { new(null, null) };
-        entries.AddRange(groups.Select(group => new SimplifiedGroupChoice(group, _renames.GetValueOrDefault(group))));
+        entries.AddRange(groups.Select(group => new SimplifiedGroupChoice(group, ChoiceName(group))));
         bool wasRefreshing = _refreshing; _refreshing = true;
         _groups.ItemsSource = entries;
         _groups.SelectedItem = entries.First(entry => entry.Group == _group);
@@ -60,35 +60,42 @@ public partial class RibbonSimplifiedCustomizePage
         RefreshLists();
     }
 
-    private List<(SimplifiedCommandSource Source, string Path)> AvailableSources()
+    private List<(SimplifiedCommandSource Source, string Path)> AvailableSources(RibbonTab? filter = null)
     {
         var result = new List<(SimplifiedCommandSource Source, string Path)>();
         if (Ribbon is null) return result;
         // Prefer original declarations, keeping custom copies out of command discovery.
-        foreach (var tab in Ribbon.Tabs.Where(RibbonCustomizePage.IsCustomizableTab).OrderBy(Controls.Ribbon.GetIsCustom))
-        foreach (var source in Controls.Ribbon.SimplifiedSources(tab, true))
+        foreach (var tab in DraftTabs().Where(tab => filter is null || tab == filter).OrderBy(Controls.Ribbon.GetIsCustom))
+        foreach (var source in DraftSources(tab))
             if (!result.Any(pair => Controls.Ribbon.SameSimplifiedCommand(pair.Source.Control, source.Control)))
-                result.Add((source, DraftHeader(tab) + " › " + DraftHeader(source.Group)));
+                result.Add((source, filter is null ? DraftHeader(tab) + " › " + DraftHeader(source.Group) : DraftHeader(source.Group)));
         return result;
     }
 
-    private List<SimplifiedCommandSource> DraftSources()
+    private List<SimplifiedCommandSource> DraftSources() => _tab is null ? new() : DraftSources(_tab);
+    private List<SimplifiedCommandSource> DraftSources(RibbonTab tab)
     {
-        if (_tab is null) return new();
-        var groups = DraftGroups(_tab);
-        var sources = Controls.Ribbon.SimplifiedSources(_tab, true).Where(entry => groups.Contains(entry.Group)).ToList();
+        var groups = DraftGroups(tab);
+        var sources = Controls.Ribbon.SimplifiedSources(tab, true).Where(entry => groups.Contains(entry.Group)).ToList();
         foreach (var group in groups)
+        {
+            if (_layoutSources.TryGetValue(group, out var imported)) sources.AddRange(imported);
             if (_memberships.TryGetValue(group, out var members))
                 foreach (var source in members)
                     if (!sources.Any(entry => entry.Group == group && Controls.Ribbon.SameSimplifiedCommand(entry.Control, source)))
                         sources.Add(new SimplifiedCommandSource(source, group, source));
+        }
         return sources;
     }
 
     private RibbonGroup? TargetGroup(FrameworkElement source)
     {
         var sources = DraftSources();
-        if (_group is null) return sources.FirstOrDefault(entry => Controls.Ribbon.SameSimplifiedCommand(entry.Control, source))?.Group;
+        if (_group is null)
+        {
+            var matches = sources.Where(entry => Controls.Ribbon.SameSimplifiedCommand(entry.Control, source)).Select(entry => entry.Group).Distinct().ToList();
+            return matches.Count == 1 ? matches[0] : null;
+        }
         return Controls.Ribbon.GetIsCustom(_group) || sources.Any(entry => entry.Group == _group && Controls.Ribbon.SameSimplifiedCommand(entry.Control, source))
             ? _group : null;
     }
@@ -119,7 +126,7 @@ public partial class RibbonSimplifiedCustomizePage
         var group = RibbonCustomizePage.CreateCustomGroup();
         if (!_newGroups.TryGetValue(_tab, out var groups)) _newGroups[_tab] = groups = new();
         groups.Add((group, _group)); _group = group;
-        RefreshGroups(); RefreshLists();
+        RefreshGroups(); RefreshLists(selectHeader: group);
     }
 
     private void Rename(FrameworkElement? target)
@@ -142,7 +149,8 @@ public partial class RibbonSimplifiedCustomizePage
 
     private void ApplyStructure(Ribbon ribbon)
     {
-        var available = AvailableSources().Select(pair => pair.Source.Control).ToList();
+        var available = ribbon.Tabs.Where(RibbonCustomizePage.IsCustomizableTab)
+            .SelectMany(tab => Controls.Ribbon.SimplifiedSources(tab, true)).Select(entry => entry.Control).ToList();
         foreach (var pair in _newTabs)
             ribbon.Tabs.Insert(pair.Anchor is not null && ribbon.Tabs.IndexOf(pair.Anchor) is >= 0 and var index ? index + 1 : ribbon.Tabs.Count, pair.Tab);
         foreach (var addition in _newGroups.Where(pair => ribbon.Tabs.Contains(pair.Key) && RibbonCustomizePage.IsCustomizableTab(pair.Key)))
@@ -169,5 +177,6 @@ public partial class RibbonSimplifiedCustomizePage
     private void ClearDraft()
     {
         _drafts.Clear(); _newTabs.Clear(); _newGroups.Clear(); _renames.Clear(); _memberships.Clear();
+        ClearPersistenceDraft();
     }
 }

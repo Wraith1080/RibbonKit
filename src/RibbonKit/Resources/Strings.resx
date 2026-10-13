@@ -218,4 +218,10 @@
   <data name="SimplifiedGroup" xml:space="preserve"><value>Group</value></data>
   <data name="RenameTab" xml:space="preserve"><value>Rename tab…</value></data>
   <data name="RenameGroup" xml:space="preserve"><value>Rename group…</value></data>
+  <data name="New" xml:space="preserve"><value>New</value></data>
+  <data name="AllTabs" xml:space="preserve"><value>All tabs</value></data>
+  <data name="ShowItemLabel" xml:space="preserve"><value>Show item label</value></data>
+  <data name="ResetQuickAccessToolbar" xml:space="preserve"><value>Reset Quick Access Toolbar</value></data>
+  <data name="ResetAllCustomizations" xml:space="preserve"><value>Reset all customizations</value></data>
+  <data name="InvalidRibbonLayout" xml:space="preserve"><value>This file does not contain a valid ribbon customization.</value></data>
 </root>

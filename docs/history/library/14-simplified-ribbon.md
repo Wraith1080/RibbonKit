@@ -278,3 +278,32 @@ surface to preserve Touch viewport height. Native invocation tests drain UIA
 dispatch; render captures settle layout after modal rename. Focused behavior,
 independent-consumer geometry/interaction and render checks passed; current
 counts, assembled-run limits and full/native acceptance stay in the active plan.
+
+#### Source filtering, ordered headers and draft utilities — 2026-10-13
+
+S4 replaces the standard Group selector and per-row checkboxes with selectable
+contiguous group headers and an Edit menu label toggle. Headers can recur after
+cross-group reordering; empty groups remain Add targets. Two independent tab
+selectors keep source discovery bounded without changing the destination draft.
+New/Edit menus and a separate utility row reduce footer crowding. The shared
+template inherits owner density and uses existing Touch target tokens.
+
+WPF drag/drop changes only simplified order, preserving source/group identity.
+The insertion marker uses the actual scroll-content viewport, including RTL
+scrollbar placement. Edge scrolling stops on leave/drop/template replacement;
+generation checks reject stale drags. Native menu opening transfers focus on
+every open and Escape returns to the opener. Checked/Unchecked events update
+label drafts for mouse/keyboard and UIA Toggle; Click alone missed UIA changes.
+
+Serializer parsing/capture/writing helpers support detached imported descriptors
+and source references. Export overlays the current draft without mutating the
+ribbon; Apply materializes it once. Missing/transient membership is normalized
+before export/commit. Duplicate tab IDs and same-tab group IDs reject malformed
+files; separate tabs may share a group ID. Legacy optional profiles remap across
+recreated groups, and selection restoration uses stable tab/group/source IDs.
+
+The optional ResetLayout property shares Classic's host-authored startup baseline
+contract. QAT-only reset preserves live group objects and session-only profiles;
+whole reset/import use the existing complete serializer contract. Later live
+changes supersede older pending operations of the same scope. The current
+acceptance, exact focused evidence and full/native limits remain in the active plan.

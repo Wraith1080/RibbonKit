@@ -2,7 +2,8 @@
 
 > Active implementation plan. First layout slice authorized 2026-10-13.
 > S2 customization implemented after the user's continuation on 2026-10-13.
-> S3 shared custom-tab/group draft editor implemented 2026-10-13; review pending.
+> S3 shared custom-tab/group draft editor implemented and committed at 4ab4604.
+> S4a–c editor redesign authorized and implemented 2026-10-13; user review pending.
 
 ## Layout contract
 
@@ -112,13 +113,146 @@ S3 uses the shared page, templates, classic identity helpers and name dialog:
   (AllGroups, SimplifiedGroup, RenameTab, RenameGroup); their values append to the
   baseline. Existing page/API/event contracts provide the host integration.
 
+### S4 editor redesign — authorized 2026-10-13
+
+The user's S3 review requested a less crowded Customize Ribbon page and then
+authorized implementation. S4a–c implement the following contract in the shared
+editor, retaining the shared page title and mode-based navigation. Focused
+evidence is recorded below; physical input and user acceptance remain open.
+
+#### Columns and selection
+
+- Give each column one full-width tab selector immediately beneath its heading,
+  with no label beside the selector. Both selectors and lists align vertically.
+  The left selector filters available commands by source tab; the right selector
+  chooses the destination tab being customized. Initialize both to the active
+  eligible tab, then let them change independently. Include an All Tabs source
+  choice for discovery. Changing the source filter preserves destination
+  selection, draft edits and order. New custom tabs are also source choices;
+  their staged membership must be discoverable before Apply.
+- Keep the left list grouped by source group with native pixel scrolling.
+  Single-tab filtering needs only group names; All Tabs uses Tab > Group paths.
+  Available entries remain commands; a group header is not an addable command.
+  Preserve the existing exclusions for contextual, modal and merged content.
+- Replace the right Group selector with an ordered list containing selectable
+  group headers and command rows. Empty groups retain a selectable header, so a
+  newly created group is an immediate Add target. Selecting a command targets
+  its group; selecting a header targets that group. Without a row selection, Add
+  uses the command's existing destination membership when it is unambiguous.
+  If multiple destination groups qualify, require choosing a header.
+- Prefer this header list over a conventional tree: the current profile permits
+  Clipboard > Font > Clipboard order. Render headers for contiguous runs,
+  including repeated headers when a group recurs; selecting either header
+  identifies the same group. Insert empty-group headers without changing command
+  order. Do not regroup existing profiles into unique-group blocks when opening,
+  saving or importing them. A header's selection replaces the old Add-target
+  selector; Show Label does not depend on a Group selector.
+
+#### Reordering and compact actions
+
+- Make right-side command rows draggable, with an insertion indicator and
+  edge autoscrolling. A drop changes simplified row order and preserves source
+  and target-group identity; crossing a header can create a new contiguous run.
+  Use the existing Add rules for custom-group membership and duplicate checks.
+  Keep Move Up/Down as a keyboard-accessible equivalent with the same ordering
+  semantics. Preserve selection/focus and bring the moved row into view.
+- Put **New** and **Edit** below the right list. New opens a menu with New Tab
+  and New Group. New Tab creates a tab with one custom group; New Group inserts
+  after the selected group or appends when no group is selected. Select the new
+  destination immediately. Creation and names remain staged until Apply/OK.
+- Edit opens a menu with Rename Tab and Rename Group, using the existing name
+  dialog and selection to determine the group. For a selected command, also show
+  a checkable **Show item label** entry mapped to Medium/Small. Remove the inline
+  checkboxes from command rows. Label state belongs to the selected source/group
+  occurrence, preserving independent copies in other groups. Menu availability
+  follows selection, and its checked state refreshes whenever it opens.
+- Keep Add/Remove between the lists and Move Up/Down beside the right list. Group
+  header selection supports targeting/naming; command selection supports removal,
+  ordering and label editing. Reuse the existing simplified removal contract:
+  removing an inline command retains its shared custom-group membership.
+
+#### Utility row and reset scopes
+
+- Place **Reset**, **Import**, **Export**, and **Apply** in a separate lower action
+  row beneath New/Edit on the right, with Apply last and aligned to the end.
+  Allow action rows to wrap at narrow widths while retaining standard button
+  target sizes. Reserve footer height before sizing the lists so Touch rows and
+  scrollbar targets remain usable at short heights. No standalone Reset Tab,
+  Reset All, New Tab, New Group or Rename buttons remain in the standard template.
+- Reset opens one menu with explicit scopes:
+
+  | Entry | Draft result |
+  | --- | --- |
+  | Reset this tab | Restore the destination tab's authored simplified selection, order and labels; retain shared tab/group structure and membership |
+  | Reset all tabs | Restore all simplified profiles; retain shared structure, membership and QAT |
+  | Reset Quick Access Toolbar | Restore authored QAT membership, order, position and visibility; retain ribbon customization |
+  | Reset all customizations | Restore the host's complete customization baseline: shared/classic structure and properties, simplified profiles and QAT |
+
+  The separate All Tabs and All Customizations entries preserve the current
+  lightweight reset and make the proposed "reset everything" scope explicit.
+  QAT/full reset use an authored host baseline, never a capture of already
+  customized state. Disable those entries when no baseline is supplied. A reset
+  only changes the draft; Cancel discards it and Apply/OK commits it.
+
+#### Import, export and draft safety
+
+- Reuse the existing customization JSON format and native file dialogs. The file
+  covers shared/classic structure, simplified profiles and QAT; theme and ribbon
+  layout mode remain host appearance preferences. Continue reading simplified
+  versions 1 and 2 and handling missing source/group IDs safely.
+- Import validates a file into a detached draft, replacing the pending
+  customization shown by this editor. Refresh the selectors, group headers and
+  row choices without mutating the live ribbon. Report unreadable or invalid
+  files while retaining the previous draft. Imported changes, including QAT and
+  classic fields, commit together on Apply/OK and are discarded on Cancel.
+- Export writes the current draft, including pending creation, renaming,
+  ordering, labels and resets. Build that snapshot without applying it to the
+  live ribbon. Exporting a file does not mark the draft as applied.
+- Extend the current draft model to stage imported/reset fields as well as
+  structures and simplified profiles. Rebase untouched fields onto current live
+  state before Apply so editing another options page does not restore unrelated
+  fields from an old snapshot. Later edits on the QAT/classic page take precedence
+  over an older pending reset/import of the same scope; clear that superseded
+  pending operation and refresh its draft view. Test this cross-page sequence.
+- Bounded public addition: an optional `ResetLayout` dependency property
+  on `RibbonSimplifiedCustomizePage`, matching the existing Classic page's host
+  baseline contract. Showcase supplies its existing startup baseline; another
+  consumer can supply its own. Draft parsing/snapshot helpers remain internal.
+  Document added template parts and localized strings, retain existing
+  template-part hooks as compatibility paths, and record intentional public
+  additions through the normal API baseline. Drag behavior stays internal.
+
+#### Implementation order and acceptance
+
+1. **S4a — page presentation:** source-tab filtering, selectable ordered group
+   headers, New/Edit menus, label choice in Edit, and responsive action rows.
+   Preserve existing draft, membership and ordering behavior before adding drag.
+2. **S4b — interaction:** command drag ordering, insertion/autoscroll, keyboard
+   equivalence, menu focus/Escape return, and selection retention. Keep native
+   pixel scrolling and mode/template draft survival covered.
+3. **S4c — persistence utilities:** baseline integration, scoped Reset menu,
+   detached Import and draft Export, and cross-page edit precedence. Implement
+   the bounded baseline-property proposal above with XML documentation and API
+   baseline coverage. Import and QAT reset use the same draft safety contract.
+
+Use relevant focused checks for each implementation slice. Cover independent
+source/destination selectors, empty and repeated group headers, same-source
+copies in different groups, drag versus Move Up/Down, label/menu state, Apply/
+Cancel, reset scopes, malformed/legacy imports, draft export round trips, and
+later QAT/classic edits. Verify shared themes, Compact/Touch, LTR/RTL, narrow/short
+pages and an independent RibbonKit consumer. Inspect rendered evidence and ask
+for user review of the revised layout and drag behavior. Full-suite testing
+remains reserved for the end; physical input and genuine monitor-DPI acceptance
+remain separate gates.
+
 ## Delivery and acceptance
 
 | Slice | Scope | Status |
 | --- | --- | --- |
 | S1 | Shared layout/selection/priority, native full-group access, keyboard/KeyTips, Showcase toggle and classic-customization gating | Implemented; user accepted the current visuals 2026-10-13. Native-input/DPI and earlier combined/full-suite limits remain open |
 | S2 | Dedicated customization page, pin/unpin, separate ordered state and persistence | Implemented; user accepted scrolling/focus repairs 2026-10-13 and committed them at 1a2a743. Broader end-of-feature gates remain below |
-| S3 | Shared custom-tab/group creation from the simplified editor | Implemented 2026-10-13; focused evidence below; awaiting user review |
+| S3 | Shared custom-tab/group creation from the simplified editor | Implemented and committed at 4ab4604; user review 2026-10-13 requested the S4 page redesign |
+| S4 | Source filtering, ordered group headers, compact menus and draft-safe persistence utilities | S4a–c implemented 2026-10-13; focused evidence below; awaiting user review |
 
 S1 requires focused runtime regressions, a RibbonKit-only consumer matrix, normal
 Debug Showcase build, Release solution build/test for the additive public API,
@@ -127,7 +261,8 @@ remain explicit live gates.
 
 ### Recorded verification — 2026-10-13
 
-Work is uncommitted on `codex/simplified-mode`.
+These results record the earlier implementation checkpoints on
+`codex/simplified-mode`; S3 is committed at `4ab4604`.
 
 User-requested validation policy: run affected builds and relevant focused checks
 during implementation; reserve full-suite testing for the end. The full run below
@@ -356,7 +491,45 @@ Logs are `TestResults/simplified-scroll-focus-*.log`. The repair is committed at
 
 Logs are `TestResults/simplified-structure-*.log`; rendered evidence lives in the
 normal Release test outputs under `TestResults/simplified-customization/`.
-S3 changes remain uncommitted.
+S3 is committed at `4ab4604` (Simplified mode custom tab + custom group WIP).
+
+### S4 editor redesign evidence — 2026-10-13
+
+Implemented independent source/destination selectors, selectable contiguous and
+empty-group headers, command drag reordering with an insertion marker and edge
+scrolling, compact New/Edit menus, and the separate Reset/Import/Export/Apply row.
+The standard template inherits owner ribbon density and keeps Touch rows/actions
+at least 44 DIP. Existing custom-template parts retain their compatibility paths.
+
+Import projects a validated layout into detached tab/group descriptors and source
+references; no preview proxies borrow native content. Export overlays draft changes
+onto the current capture without applying it. Apply commits the snapshot once;
+Cancel discards it. QAT-only reset applies just QAT fields, preserving live group
+objects and untagged session choices. Later live edits supersede an older pending
+import/reset of the same ribbon or QAT scope. Missing/transient custom membership
+is filtered from the draft and its exported file. Duplicate tab IDs or group IDs
+within one tab reject the file; group IDs can recur in separate tabs.
+
+The only public additions are the optional host-authored `ResetLayout` property
+and six appended localized string identifiers. The property has XML documentation
+and an additive API baseline entry; Showcase supplies its existing startup capture.
+
+| Check | Result |
+| --- | --- |
+| Existing editor/serializer selection | 63/63 passed after updating assertions to use menu actions and selectable headers |
+| Initial new workflows | 12/14 passed; native UIA Toggle exposed a draft label-update bug, repaired by observing Checked/Unchecked. The other failure assumed TitleBar rather than the fixture's captured TabRow baseline; the assertion now uses the authored baseline. The two repaired checks passed 2/2 |
+| Drag and imported snapshot follow-up | 6/6 passed: actual WPF drag-event routes, LTR/RTL insertion geometry and edge scrolling, stale/foreign rejection, later Classic edits, draft round trip and one commit notification |
+| Final editor selection | 30/30 passed after Touch targets and selection remapping: menu focus/Escape, native UIA labels, drag events, legacy/unknown imports, scopes, cancellation, source filtering, smooth scrolling, localization and responsive selectors |
+| Final import edges | 8/8 passed after filtering missing/transient membership from the exported draft; includes contextual/modal sources, group IDs scoped to tabs, older profiles, export round trip and existing merge-rebuild behavior |
+| Independent consumer | Final 112 theme/dark/density/direction/simulated 100/150% root-DPI combinations passed, using public RibbonKit controls/resources only. Covers 560/700/900-pixel widths, 44-DIP Touch actions, source filtering including staged custom tabs, native label toggle, creation/naming, resets, cancellation and persistence |
+| Render inspection | Inspected the actual Showcase Customize Ribbon page and shared Office/Crystal RTL captures. No snapshot approvals or tolerances changed |
+| Builds | Final normal Release solution and Debug Showcase builds passed, 0 warnings/errors; includes both runtime target frameworks |
+| Full/native acceptance | Full suite remains deferred until the end. Physical drag, native file-picker use, mouse/touch/keyboard review and mixed-monitor DPI acceptance remain open |
+
+These are overlapping focused selections, not a clean combined/full-suite result.
+Logs are `TestResults/simplified-editor-redesign-*.log`; rendered PNGs are in the
+normal test outputs under `TestResults/simplified-customization/`, including
+`showcase-customize-redesign.png`. S4 changes are uncommitted.
 
 ### Remaining acceptance
 
@@ -373,4 +546,7 @@ S3 changes remain uncommitted.
 - Full end-of-feature validation and human acceptance of the S2 page's applied,
   canceled and restarted selections.
 - Human acceptance of S3's custom-tab/group editor and its persistence/cancellation
-  behavior; automated focused evidence is recorded above.
+  behavior; automated focused evidence is recorded above. The 2026-10-13 review
+  requested the S4 redesign; it did not accept the current page layout.
+- User review of S4's column/header/menu layout, physical drag and keyboard
+  ordering, and native Reset/Import/Export use. Focused evidence is recorded above.

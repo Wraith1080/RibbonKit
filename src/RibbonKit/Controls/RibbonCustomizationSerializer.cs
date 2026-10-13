@@ -56,12 +56,22 @@ public static class RibbonCustomizationSerializer
     public static void Apply(Ribbon ribbon, string? json)
     {
         ArgumentNullException.ThrowIfNull(ribbon);
+        if (!TryReadLayout(json, out var layout)) return;
+        List<RibbonMergeSource> merged = ribbon.UnmergeAllForRebuild();
+        try { ApplyLayout(ribbon, layout!); }
+        finally { ribbon.RemergeAfterRebuild(merged); }
+    }
+
+    internal static RibbonLayoutDto CaptureLayout(Ribbon ribbon) => BuildLayout(ribbon);
+    internal static string WriteLayout(RibbonLayoutDto layout) => JsonSerializer.Serialize(layout, Options);
+    internal static bool TryReadLayout(string? json, out RibbonLayoutDto? layout)
+    {
+        layout = null;
         if (string.IsNullOrWhiteSpace(json))
         {
-            return;
+            return false;
         }
 
-        RibbonLayoutDto? layout;
         try
         {
             using JsonDocument document = JsonDocument.Parse(json);
@@ -77,7 +87,7 @@ public static class RibbonCustomizationSerializer
                 || !root.TryGetProperty(nameof(RibbonLayoutDto.QuickAccess), out JsonElement quickAccess)
                 || quickAccess.ValueKind != JsonValueKind.Array)
             {
-                return;
+                return false;
             }
 
             if (root.TryGetProperty(nameof(RibbonLayoutDto.Simplified), out JsonElement simplified)
@@ -91,34 +101,21 @@ public static class RibbonCustomizationSerializer
                         || selections.EnumerateArray().Any(tab => tab.ValueKind != JsonValueKind.Object
                             || !tab.TryGetProperty(nameof(SimplifiedTabDto.Commands), out JsonElement commands)
                             || commands.ValueKind != JsonValueKind.Array)))))
-                return;
+                return false;
 
             layout = root.Deserialize<RibbonLayoutDto>(Options);
         }
         catch (JsonException)
         {
-            return; // Corrupt/foreign string — leave the ribbon as-is.
+            return false; // Corrupt/foreign string — leave the ribbon as-is.
         }
 
         if (layout is null || !IsValid(layout))
         {
-            return;
+            return false;
         }
 
-        // ApplyLayout clears and rebuilds Ribbon.Tabs, which would strand merged tabs at the end
-        // with stale merge records. Take every merge source out first and put it back after —
-        // simpler than re-asserting positions inside a collection that was cleared underneath the
-        // merge service, and customization is a rare, user-initiated operation
-        // (docs/06-MERGE-AND-MODAL-PLAN.md §5.3).
-        List<RibbonMergeSource> merged = ribbon.UnmergeAllForRebuild();
-        try
-        {
-            ApplyLayout(ribbon, layout);
-        }
-        finally
-        {
-            ribbon.RemergeAfterRebuild(merged);
-        }
+        return true;
     }
 
     private static bool IsValid(RibbonLayoutDto layout)
@@ -130,12 +127,15 @@ public static class RibbonCustomizationSerializer
             return false;
         }
 
+        var tabIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (TabDto? tab in layout.Tabs)
         {
             if (tab?.Groups is null)
             {
                 return false;
             }
+            if (tab.Id is { Length: > 0 } tabId && !tabIds.Add(tabId)) return false;
+            var groupIds = new HashSet<string>(StringComparer.Ordinal);
 
             foreach (GroupDto? group in tab.Groups)
             {
@@ -143,6 +143,7 @@ public static class RibbonCustomizationSerializer
                 {
                     return false;
                 }
+                if (group.Id is { Length: > 0 } groupId && !groupIds.Add(groupId)) return false;
 
                 if (group.Commands is null)
                 {
@@ -164,6 +165,25 @@ public static class RibbonCustomizationSerializer
                 tab.Commands.Any(command => command is null || command.Size is not (RibbonControlSize.Small or RibbonControlSize.Medium)))))
             return false;
         return layout.QuickAccess.All(item => item is not null);
+    }
+
+    // Applies only the QAT scope, preserving live tab/group objects and session-only selections.
+    internal static void ApplyQuickAccessLayout(Ribbon ribbon, RibbonLayoutDto layout)
+    {
+        BuildIdentity(ribbon, out var sources, out _, out _);
+        var declared = ribbon.DeclaredQuickAccessCommands.Concat(ribbon.QuickAccessItems.OfType<FrameworkElement>())
+            .Where(item => Ribbon.GetQuickAccessSource(item) is null && Ribbon.GetCommandId(item) is not null)
+            .GroupBy(item => Ribbon.GetCommandId(item)!).ToDictionary(group => group.Key, group => group.First());
+        ribbon.QuickAccessItems.Clear();
+        foreach (var item in layout.QuickAccess)
+        {
+            if (item.Ref is null) continue;
+            if (declared.TryGetValue(item.Ref, out var original)) ribbon.QuickAccessItems.Add(original);
+            else if (sources.TryGetValue(item.Ref, out var source) && !ribbon.IsInQuickAccess(source))
+                ribbon.QuickAccessItems.Add(ribbon.CreateCommandProxy(source, RibbonControlSize.Small));
+        }
+        if (layout.QuickAccessPosition is { } position) ribbon.SetCurrentValue(Ribbon.QuickAccessPositionProperty, position);
+        if (layout.IsQuickAccessVisible is { } visible) ribbon.SetCurrentValue(Ribbon.IsQuickAccessVisibleProperty, visible);
     }
 
     // ---- Serialize ---------------------------------------------------------------
@@ -588,7 +608,7 @@ public static class RibbonCustomizationSerializer
     /// excluded by the catalog, so only real controls get ids, and the per-group index is stable
     /// because custom groups (all-proxy) contribute no controls.
     /// </summary>
-    private static void BuildIdentity(
+    internal static void BuildIdentity(
         Ribbon ribbon,
         out Dictionary<string, FrameworkElement> byId,
         out Dictionary<FrameworkElement, string> idOf,

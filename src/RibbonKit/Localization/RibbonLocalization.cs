@@ -233,6 +233,18 @@ public enum RibbonString
     RenameTab,
     /// <summary>Rename the selected ribbon group.</summary>
     RenameGroup,
+    /// <summary>Menu opener for new customization tabs and groups.</summary>
+    New,
+    /// <summary>Discover commands from every eligible ribbon tab.</summary>
+    AllTabs,
+    /// <summary>Checkable menu entry controlling a selected simplified command's label.</summary>
+    ShowItemLabel,
+    /// <summary>Restore the host's authored quick access toolbar baseline.</summary>
+    ResetQuickAccessToolbar,
+    /// <summary>Restore the host's complete customization baseline.</summary>
+    ResetAllCustomizations,
+    /// <summary>Error for an invalid or unrelated customization file.</summary>
+    InvalidRibbonLayout,
 }
 
 /// <summary>

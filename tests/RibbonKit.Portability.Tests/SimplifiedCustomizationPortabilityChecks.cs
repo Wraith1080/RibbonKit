@@ -5,6 +5,9 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
+using System.Text.Json.Nodes;
 using RibbonKit.Animation;
 using RibbonKit.Controls;
 using RibbonKit.Localization;
@@ -40,7 +43,8 @@ internal static class SimplifiedCustomizationPortabilityChecks
                     (i < 12 ? group : otherGroup).Items.Add(button);
                 }
                 tab.Groups.Add(group); tab.Groups.Add(otherGroup); ribbon.Tabs.Add(tab);
-                var page = new RibbonSimplifiedCustomizePage { Ribbon = ribbon };
+                ribbon.AddToQuickAccess(first);
+                var page = new RibbonSimplifiedCustomizePage { Ribbon = ribbon, ResetLayout = RibbonCustomizationSerializer.Serialize(ribbon) };
                 var classic = new RibbonOptionsPage { Header = "Classic", Content = new RibbonCustomizePage { Ribbon = ribbon } };
                 var simplified = new RibbonOptionsPage { Header = "Simplified", Content = page };
                 var qat = new RibbonOptionsPage { Header = "QAT", Content = new RibbonQuickAccessPage { Ribbon = ribbon } };
@@ -52,12 +56,20 @@ internal static class SimplifiedCustomizationPortabilityChecks
                 {
                     dialog.Show(); Layout(dialog); VisualTreeHelper.SetRootDpi(dialog, new DpiScale(scale, scale)); Layout(dialog);
                     Assert.True(page.IsEnabled); Assert.False(classic.IsEnabled); Assert.True(qat.IsEnabled);
+                    Assert.Equal(density, Ribbon.GetDensity(Part<Button>(page, "PART_NewButton")));
+                    if (density == RibbonDensity.Touch)
+                    {
+                        foreach (string name in new[] { "PART_NewButton", "PART_EditButton", "PART_ResetMenuButton", "PART_ImportButton", "PART_ExportButton", "PART_ApplyButton", "PART_AddButton", "PART_RemoveButton", "PART_UpButton", "PART_DownButton" })
+                        {
+                            var target = Part<Button>(page, name); Assert.True(target.ActualHeight >= 43.5); Assert.True(target.ActualWidth >= 43.5);
+                        }
+                    }
                     Assert.Equal(Visibility.Collapsed, classic.Visibility); Assert.Equal(Visibility.Visible, simplified.Visibility);
                     var viewport = Part<ScrollContentPresenter>(Part<ScrollViewer>(dialog, "PART_ContentScroll"), "PART_ScrollContentPresenter");
                     Assert.Equal(ScrollBarVisibility.Disabled, Part<ScrollViewer>(dialog, "PART_ContentScroll").VerticalScrollBarVisibility);
-                    var parts = new[] { "PART_TabSelector", "PART_GroupSelector", "PART_NewTabButton", "PART_NewGroupButton", "PART_RenameTabButton", "PART_RenameGroupButton",
+                    var parts = new[] { "PART_TabSelector", "PART_SourceTabSelector", "PART_NewButton", "PART_EditButton", "PART_ImportButton", "PART_ExportButton",
                         "PART_AvailableList", "PART_CurrentList", "PART_AddButton", "PART_RemoveButton",
-                        "PART_UpButton", "PART_DownButton", "PART_ResetButton", "PART_ResetAllButton", "PART_ApplyButton" };
+                        "PART_UpButton", "PART_DownButton", "PART_ResetMenuButton", "PART_ApplyButton" };
                     foreach (string name in parts)
                     {
                         var part = Part<FrameworkElement>(page, name);
@@ -72,8 +84,8 @@ internal static class SimplifiedCustomizationPortabilityChecks
                         dialog.Width = width; Layout(dialog); Layout(dialog);
                         Assert.InRange(Math.Abs(selector.ActualWidth - currentFrame.ActualWidth), 0, 1);
                         Assert.InRange(Math.Abs(Part<FrameworkElement>(selector, "InputBox").ActualWidth - selector.ActualWidth), 0, 1);
-                        var groupSelector = Part<RibbonComboBox>(page, "PART_GroupSelector");
-                        Assert.InRange(Math.Abs(groupSelector.ActualWidth - currentFrame.ActualWidth), 0, 1);
+                        var groupSelector = Part<RibbonComboBox>(page, "PART_SourceTabSelector");
+                        Assert.InRange(Math.Abs(groupSelector.ActualWidth - Part<ListBox>(page, "PART_AvailableList").ActualWidth), 0, 1);
                         Assert.InRange(Math.Abs(Part<FrameworkElement>(groupSelector, "InputBox").ActualWidth - groupSelector.ActualWidth), 0, 1);
                         foreach (string name in parts)
                         {
@@ -84,7 +96,7 @@ internal static class SimplifiedCustomizationPortabilityChecks
                         }
                     }
                     var available = Part<ListBox>(page, "PART_AvailableList"); var current = Part<ListBox>(page, "PART_CurrentList");
-                    Assert.Equal(25, available.Items.Count); Assert.Single(current.Items.Cast<object>());
+                    Assert.Equal(25, available.Items.Count); Assert.Single(current.Items.Cast<object>(), item => item is not DependencyObject);
                     var scroll = Part<ScrollViewer>(available, "PART_ScrollViewer");
                     Assert.False(scroll.CanContentScroll); Assert.False(Part<ScrollViewer>(current, "PART_ScrollViewer").CanContentScroll);
                     scroll.ScrollToVerticalOffset(7.5); Layout(dialog);
@@ -96,26 +108,37 @@ internal static class SimplifiedCustomizationPortabilityChecks
                     Assert.InRange(lastBounds.Bottom, 0, scroll.ViewportHeight + 1);
                     scroll.ScrollToTop(); Layout(dialog);
                     available.SelectedIndex = 1; Click(page, "PART_AddButton"); Layout(dialog);
-                    Assert.Equal(2, current.Items.Count);
+                    Assert.Equal(2, current.Items.Cast<object>().Count(item => item is not DependencyObject));
                     string before = RibbonCustomizationSerializer.Serialize(ribbon);
-                    page.CancelChanges(); Layout(dialog); Assert.Single(current.Items.Cast<object>());
+                    page.CancelChanges(); Layout(dialog); Assert.Single(current.Items.Cast<object>(), item => item is not DependencyObject);
                     Assert.Equal(before, RibbonCustomizationSerializer.Serialize(ribbon));
                     available.SelectedIndex = 1; Click(page, "PART_AddButton"); Click(page, "PART_UpButton");
                     page.ApplyChanges(); Layout(dialog);
                     Assert.Contains("command-0", RibbonCustomizationSerializer.Serialize(ribbon));
+                    current.SelectedIndex = 1; Click(page, "PART_EditButton"); Layout(dialog);
+                    var editMenu = Part<Button>(page, "PART_EditButton").ContextMenu;
+                    var showLabel = editMenu.Items.OfType<MenuItem>().Single(item => item.IsCheckable);
+                    Assert.True(showLabel.IsChecked);
+                    ((IToggleProvider)new MenuItemAutomationPeer(showLabel).GetPattern(PatternInterface.Toggle)).Toggle(); Layout(dialog);
+                    Assert.False(showLabel.IsChecked); editMenu.IsOpen = false; page.ApplyChanges(); Layout(dialog);
+                    var savedChoices = JsonNode.Parse(RibbonCustomizationSerializer.Serialize(ribbon))!["Simplified"]!["Tabs"]![0]!["Commands"]!;
+                    Assert.Equal("Small", savedChoices[0]!["Size"]!.GetValue<string>());
                     ribbon.LayoutMode = RibbonLayoutMode.Classic; Layout(dialog);
                     Assert.Equal(Visibility.Visible, classic.Visibility); Assert.Equal(Visibility.Collapsed, simplified.Visibility);
                     Assert.Same(classic, dialog.SelectedPage); Assert.False(page.IsEnabled); Assert.True(qat.IsEnabled);
                     ribbon.LayoutMode = RibbonLayoutMode.Simplified; Layout(dialog);
                     Assert.Equal(Visibility.Collapsed, classic.Visibility); Assert.Equal(Visibility.Visible, simplified.Visibility);
-                    Assert.Same(simplified, dialog.SelectedPage); Assert.Equal(2, current.Items.Count);
+                    Assert.Same(simplified, dialog.SelectedPage); Assert.Equal(2, current.Items.Cast<object>().Count(item => item is not DependencyObject));
                     string beforeStructure = RibbonCustomizationSerializer.Serialize(ribbon);
                     Click(page, "PART_NewTabButton"); available.SelectedIndex = 1; Click(page, "PART_AddButton"); Layout(dialog);
-                    Assert.Single(ribbon.Tabs); Assert.Single(current.Items.Cast<object>());
+                    Assert.Single(ribbon.Tabs); Assert.Single(current.Items.Cast<object>(), item => item is not DependencyObject);
                     Assert.Equal(beforeStructure, RibbonCustomizationSerializer.Serialize(ribbon));
                     page.CancelChanges(); Layout(dialog); Assert.Equal(beforeStructure, RibbonCustomizationSerializer.Serialize(ribbon));
                     Click(page, "PART_NewTabButton"); available.SelectedIndex = 1; Click(page, "PART_AddButton");
                     Click(page, "PART_NewGroupButton"); available.SelectedIndex = 0; Click(page, "PART_AddButton"); Layout(dialog);
+                    var sourceSelector = Part<Selector>(page, "PART_SourceTabSelector");
+                    sourceSelector.SelectedIndex = 2; Layout(dialog); Assert.Equal(2, available.Items.Count);
+                    sourceSelector.SelectedIndex = 1; Layout(dialog); Assert.Equal(25, available.Items.Count);
                     if (theme == RibbonTheme.Office2024 && !dark && density == RibbonDensity.Compact && direction == FlowDirection.LeftToRight && scale == 1)
                     {
                         Rename(page, "PART_RenameTabButton", "My tools"); Rename(page, "PART_RenameGroupButton", "Favorites");
@@ -134,8 +157,17 @@ internal static class SimplifiedCustomizationPortabilityChecks
                     Assert.NotSame(customTab, restored); Assert.Equal(2, restored.Groups.Count);
                     Assert.All(restored.Groups, item => Assert.Single(item.Items.Cast<object>()));
                     Part<Selector>(page, "PART_TabSelector").SelectedIndex = 0; Layout(dialog);
-                    Click(page, "PART_ResetAllButton"); page.ApplyChanges(); Layout(dialog); Assert.Single(current.Items.Cast<object>());
+                    Click(page, "PART_ResetAllButton"); page.ApplyChanges(); Layout(dialog); Assert.Single(current.Items.Cast<object>(), item => item is not DependencyObject);
                     Assert.Equal(2, restored.Groups.Count); Assert.All(restored.Groups, item => Assert.Single(item.Items.Cast<object>()));
+                    var extraQat = group.Items.OfType<RibbonButton>().ElementAt(1); ribbon.AddToQuickAccess(extraQat);
+                    string beforeQatReset = RibbonCustomizationSerializer.Serialize(ribbon);
+                    ResetScope(page, RibbonString.ResetQuickAccessToolbar); Assert.Equal(beforeQatReset, RibbonCustomizationSerializer.Serialize(ribbon));
+                    page.CancelChanges(); Assert.Equal(beforeQatReset, RibbonCustomizationSerializer.Serialize(ribbon));
+                    ResetScope(page, RibbonString.ResetQuickAccessToolbar); page.ApplyChanges(); Layout(dialog);
+                    Assert.True(ribbon.IsInQuickAccess(first)); Assert.False(ribbon.IsInQuickAccess(extraQat)); Assert.Same(restored, ribbon.Tabs.Last());
+                    string beforeFullReset = RibbonCustomizationSerializer.Serialize(ribbon);
+                    ResetScope(page, RibbonString.ResetAllCustomizations); Assert.Equal(beforeFullReset, RibbonCustomizationSerializer.Serialize(ribbon));
+                    page.ApplyChanges(); Layout(dialog); Assert.Single(ribbon.Tabs); Assert.Equal(page.ResetLayout, RibbonCustomizationSerializer.Serialize(ribbon));
                     cases++;
                 }
                 finally { dialog.Close(); Layout(dialog); }
@@ -146,8 +178,33 @@ internal static class SimplifiedCustomizationPortabilityChecks
     }
 
     private static T Part<T>(Control control, string name) where T : DependencyObject => Assert.IsAssignableFrom<T>(control.Template.FindName(name, control));
-    private static void Click(Control control, string name) => Part<ButtonBase>(control, name).RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+    private static void Click(Control control, string name)
+    {
+        var action = name switch
+        {
+            "PART_NewTabButton" => ("PART_NewButton", RibbonString.NewTab),
+            "PART_NewGroupButton" => ("PART_NewButton", RibbonString.NewGroup),
+            "PART_RenameTabButton" => ("PART_EditButton", RibbonString.RenameTab),
+            "PART_RenameGroupButton" => ("PART_EditButton", RibbonString.RenameGroup),
+            "PART_ResetButton" => ("PART_ResetMenuButton", RibbonString.ResetTab),
+            "PART_ResetAllButton" => ("PART_ResetMenuButton", RibbonString.ResetAllTabs),
+            _ => (name, (RibbonString?)null),
+        };
+        var button = Part<ButtonBase>(control, action.Item1);
+        button.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+        if (action.Item2 is not { } key) return;
+        var menu = button.ContextMenu;
+        var item = menu.Items.OfType<MenuItem>().Single(item => Equals(item.Header, RibbonLocalization.GetString(key)));
+        Assert.True(item.IsEnabled); item.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent)); menu.IsOpen = false;
+    }
     private static void Layout(Window window) { Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle); window.UpdateLayout(); }
+
+    private static void ResetScope(Control page, RibbonString scope)
+    {
+        Click(page, "PART_ResetMenuButton"); var menu = Part<Button>(page, "PART_ResetMenuButton").ContextMenu;
+        var item = menu.Items.OfType<MenuItem>().Single(item => Equals(item.Header, RibbonLocalization.GetString(scope)));
+        Assert.True(item.IsEnabled); item.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent)); menu.IsOpen = false;
+    }
 
     private static void Rename(Control page, string part, string caption)
     {

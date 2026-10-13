@@ -171,10 +171,12 @@ Only the active layout's **Customize Ribbon** page is shown; both modes use the
 same page title and context-menu label. QAT customization remains available in
 either mode. Add `RibbonSimplifiedCustomizePage` to a
 `RibbonOptionsDialog` with its `Ribbon` property pointing at the owning ribbon.
-It discovers commands from the whole ribbon, grouped by their tab/group path,
-and supports Add/Remove, Move Up/Down, Show Label, Reset Tab and Reset All Tabs.
-The group selector shows all selected commands or filters a particular group.
-Ordering can cross groups; dividers follow contiguous group sections.
+Each column has an independent full-width tab selector: the left filters source
+commands, including an All Tabs choice, and the right chooses the destination.
+The selected list has selectable group headers, including empty groups as Add
+targets. Drag commands to reorder them, or use Move Up/Down. Ordering can cross
+groups; repeated headers preserve contiguous group sections. Add/Remove retain
+source/group identity and shared command membership.
 Group flyouts and arbitrary editors are access surfaces rather than pinnable commands.
 
 The page edits a draft. Its Apply button and `ApplyChanges()` commit it;
@@ -202,15 +204,15 @@ the current session. Missing sources/groups are skipped, duplicate source/group
 pairs use the first eligible entry, and contextual,
 modal and merged contributions are excluded. Old classic-only JSON preserves
 current simplified choices; malformed sections leave the layout unchanged.
-Reset uses the app-authored placement/size properties and preserves shared
-custom structure and membership. Layout mode remains a
+Reset This Tab and Reset All Tabs restore app-authored placement/size choices
+and preserve shared custom structure, membership and QAT. Layout mode remains a
 host-owned appearance preference. See the
 [simplified ribbon plan](docs/15-SIMPLIFIED-RIBBON-PLAN.md#customize-simplified-ribbon)
 for acceptance and remaining full/native checks.
 
-The tab and group selectors fill the selected-command column without side
-labels. New Tab creates a tab with one custom group; New Group inserts after the
-selected group. Rename Tab/Group opens the shared name editor. Creation, naming
+The **New** menu creates a tab with one custom group, or inserts a group after the
+selected group. **Edit** offers Rename Tab/Group and, for a selected command, the
+checkable **Show item label** choice. Creation, naming
 and membership stay in the draft until Apply/OK; Cancel leaves no new structure
 behind. Custom groups accept commands from other tabs; built-in groups retain
 their original command membership. Tabs/groups and custom-group membership
@@ -218,6 +220,21 @@ appear in both layouts, while simplified order/labels remain separate. Removing
 a simplified selection leaves its shared custom-group command available through
 the group's flyout. See the plan's
 [structure editor](docs/15-SIMPLIFIED-RIBBON-PLAN.md#custom-tab-and-group-editor).
+
+The lower utility row provides **Reset**, **Import**, **Export**, and **Apply**.
+Supply the optional `ResetLayout` property with a startup capture made before
+loading saved customization to enable Reset QAT and Reset All Customizations.
+QAT reset preserves live tab/group objects and session-only simplified choices;
+full reset restores the complete supplied customization baseline. Both remain
+drafts until Apply/OK.
+
+Import validates the existing customization JSON format into a detached draft.
+Export includes the current draft without applying it. Cancel discards pending
+imports and resets; an earlier Apply stays committed. The file contains shared/
+classic structure, simplified profiles and QAT, while appearance stays host-owned.
+Later live edits on another customization page supersede an older pending import
+or reset of that scope. See the [editor redesign](docs/15-SIMPLIFIED-RIBBON-PLAN.md#s4-editor-redesign--authorized-2026-10-13)
+for implementation and verification details.
 
 ### Dropdown headings and descriptive rows
 

@@ -999,7 +999,7 @@ public partial class MainWindow : RibbonWindow
         var simplifiedPage = new RibbonOptionsPage
         {
             Header = RibbonLocalization.GetString(RibbonString.CustomizeRibbonPage),
-            Content = new RibbonSimplifiedCustomizePage { Ribbon = MainRibbon },
+            Content = new RibbonSimplifiedCustomizePage { Ribbon = MainRibbon, ResetLayout = _baselineLayout },
         };
 
         var dialog = new RibbonOptionsDialog { Title = "Options", Owner = this };

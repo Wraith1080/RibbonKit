@@ -14,7 +14,7 @@ using Xunit;
 
 namespace RibbonKit.Tests;
 
-public sealed class SimplifiedCustomizationTests
+public sealed partial class SimplifiedCustomizationTests
 {
     [Theory]
     [InlineData(false)]
@@ -23,7 +23,7 @@ public sealed class SimplifiedCustomizationTests
     {
         using var host = new Host(); host.Click("PART_NewGroupButton");
         host.SelectAvailable(host.First); host.Click("PART_AddButton");
-        host.Current.Items.Cast<SimplifiedCustomizeEntry>().Single().ShowLabel = false;
+        Assert.IsType<SimplifiedCustomizeEntry>(host.Current.SelectedItem).ShowLabel = false;
         host.Click("PART_NewTabButton"); host.SelectAvailable(host.Second); host.Click("PART_AddButton"); host.Page.ApplyChanges(); host.Layout();
         var tab = host.Ribbon.Tabs.Last(); string tabId = Ribbon.GetCommandId(tab)!;
         var before = JsonNode.Parse(RibbonCustomizationSerializer.Serialize(host.Ribbon))!;
@@ -43,7 +43,7 @@ public sealed class SimplifiedCustomizationTests
     public void Applying_membership_resolves_the_current_source_and_skips_removed_commands(bool replacementExists) => Sta.Run(() =>
     {
         using var host = new Host(); host.Click("PART_NewGroupButton");
-        var group = ((SimplifiedGroupChoice)host.Part<Selector>("PART_GroupSelector").SelectedItem).Group!;
+        var group = ((SimplifiedGroupChoice)host.Current.SelectedItem).Group!;
         host.SelectAvailable(host.First); host.Click("PART_AddButton"); host.GroupA.Items.Remove(host.First);
         var replacement = new RibbonButton { Header = "Replacement copy" }; Ribbon.SetCommandId(replacement, "first");
         if (replacementExists) host.GroupA.Items.Add(replacement);
@@ -66,9 +66,9 @@ public sealed class SimplifiedCustomizationTests
         using var host = new Host(); string before = RibbonCustomizationSerializer.Serialize(host.Ribbon);
         host.Page.RenameDraft(host.Tab, "Renamed Home"); host.Page.RenameDraft(host.GroupA, "Renamed Clipboard");
         host.Click("PART_NewTabButton");
-        var tab = ((SimplifiedTabChoice)host.Part<Selector>("PART_TabSelector").SelectedItem).Tab;
+        var tab = ((SimplifiedTabChoice)host.Part<Selector>("PART_TabSelector").SelectedItem).Tab!;
         host.Page.RenameDraft(tab, "Favorites"); host.Click("PART_NewGroupButton");
-        var group = ((SimplifiedGroupChoice)host.Part<Selector>("PART_GroupSelector").SelectedItem).Group!;
+        var group = ((SimplifiedGroupChoice)host.Current.SelectedItem).Group!;
         host.Page.RenameDraft(group, "Editing favorites"); host.SelectAvailable(host.Second); host.Click("PART_AddButton");
         Assert.Equal(before, RibbonCustomizationSerializer.Serialize(host.Ribbon)); Assert.Empty(group.Items);
         Assert.DoesNotContain(tab, host.Ribbon.Tabs);
@@ -88,12 +88,12 @@ public sealed class SimplifiedCustomizationTests
     {
         using var host = new Host(); host.Ribbon.AddToQuickAccess(host.First);
         host.Click("PART_NewGroupButton");
-        var group = ((SimplifiedGroupChoice)host.Part<Selector>("PART_GroupSelector").SelectedItem).Group!;
+        var group = ((SimplifiedGroupChoice)host.Current.SelectedItem).Group!;
         string groupId = Ribbon.GetCommandId(group)!; host.Page.RenameDraft(group, "Favorites");
         host.SelectAvailable(host.First); host.Click("PART_AddButton");
-        host.Current.Items.Cast<SimplifiedCustomizeEntry>().Single().ShowLabel = false;
+        Assert.IsType<SimplifiedCustomizeEntry>(host.Current.SelectedItem).ShowLabel = false;
         host.SelectAvailable(host.Second); host.Click("PART_AddButton"); host.Click("PART_UpButton");
-        Assert.Empty(group.Items); Assert.Equal(new[] { host.Second, host.First }, host.Selected());
+        Assert.Empty(group.Items); Assert.Equal(new[] { host.First, host.Third, host.Second, host.First }, host.Selected());
         host.Page.ApplyChanges(); host.Layout();
         Assert.Contains(group, host.Tab.Groups); Assert.Equal(RibbonGroupLayout.Stacked, group.Layout);
         Assert.Equal(new[] { host.First, host.Second }, group.Items.OfType<FrameworkElement>().Select(Ribbon.GetQuickAccessSource));
@@ -136,7 +136,7 @@ public sealed class SimplifiedCustomizationTests
         var classic = new RibbonCustomizePage { Ribbon = host.Ribbon };
         ((Grid)host.Window.Content).Children.Add(classic); host.Layout();
         host.Click("PART_NewTabButton");
-        var tab = ((SimplifiedTabChoice)host.Part<Selector>("PART_TabSelector").SelectedItem).Tab;
+        var tab = ((SimplifiedTabChoice)host.Part<Selector>("PART_TabSelector").SelectedItem).Tab!;
         host.Page.RenameDraft(tab, "My tools"); host.SelectAvailable(host.Second); host.Click("PART_AddButton");
         host.Page.ApplyChanges(); host.Layout();
         Assert.Equal(new[] { host.Tab, tab }, host.Ribbon.Tabs);
@@ -168,7 +168,7 @@ public sealed class SimplifiedCustomizationTests
         var page = new RibbonSimplifiedCustomizePage { Ribbon = host.Ribbon };
         var dialog = new RibbonOptionsDialog { Width = 800, Height = 600, ShowActivated = false, ShowInTaskbar = false, Left = -10000, Top = -10000 };
         dialog.Pages.Add(new RibbonOptionsPage { Content = page, Header = "Customize Ribbon" }); dialog.Show(); Sta.Drain();
-        ((ButtonBase)page.Template.FindName("PART_NewTabButton", page)).RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); Sta.Drain();
+        ClickAction(page, "PART_NewTabButton"); Sta.Drain();
         var list = (ListBox)page.Template.FindName("PART_AvailableList", page);
         list.SelectedItem = list.Items.Cast<SimplifiedCustomizeEntry>().Single(entry => entry.Control == host.First);
         ((ButtonBase)page.Template.FindName("PART_AddButton", page)).RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
@@ -184,8 +184,7 @@ public sealed class SimplifiedCustomizationTests
     public void Group_selection_limits_builtin_membership_and_rename_dialog_only_changes_the_draft() => Sta.Run(() =>
     {
         using var host = new Host();
-        var selector = host.Part<Selector>("PART_GroupSelector");
-        selector.SelectedItem = selector.Items.Cast<SimplifiedGroupChoice>().Single(entry => entry.Group == host.GroupA); host.Layout();
+        host.Current.SelectedItem = host.Current.Items.OfType<SimplifiedGroupChoice>().Single(entry => entry.Group == host.GroupA); host.Layout();
         host.SelectAvailable(host.Third); Assert.False(host.Part<ButtonBase>("PART_AddButton").IsEnabled);
         Assert.DoesNotContain(host.Available.Items.Cast<SimplifiedCustomizeEntry>(), entry => entry.Control is RibbonGroup);
         host.Page.FlowDirection = FlowDirection.RightToLeft;
@@ -286,7 +285,7 @@ public sealed class SimplifiedCustomizationTests
         host.SelectAvailable(host.Second); host.Click("PART_AddButton");
         host.Click("PART_UpButton"); host.Click("PART_UpButton");
         Assert.Equal(new[] { host.Second, host.First, host.Third }, host.Selected());
-        var entry = host.Current.Items.Cast<SimplifiedCustomizeEntry>().First();
+        var entry = host.Current.Items.OfType<SimplifiedCustomizeEntry>().First();
         entry.ShowLabel = false;
         Assert.Equal(before, RibbonCustomizationSerializer.Serialize(host.Ribbon));
         host.Page.ApplyChanges(); host.Layout();
@@ -297,7 +296,7 @@ public sealed class SimplifiedCustomizationTests
         Assert.True(host.Ribbon.IsInQuickAccess(host.First));
         Assert.Equal(1, host.ToolBar.Items.OfType<RibbonGroupSeparator>().Count(separator => !host.ToolBar.IsOverflowed(separator)));
         string applied = RibbonCustomizationSerializer.Serialize(host.Ribbon);
-        host.Current.SelectedIndex = 0; host.Click("PART_RemoveButton");
+        host.Current.SelectedItem = host.Current.Items.OfType<SimplifiedCustomizeEntry>().First(); host.Click("PART_RemoveButton");
         host.Page.CancelChanges(); host.Layout();
         Assert.Equal(applied, RibbonCustomizationSerializer.Serialize(host.Ribbon));
         Assert.Equal(host.Row(), host.Selected());
@@ -320,7 +319,7 @@ public sealed class SimplifiedCustomizationTests
         host.SelectAvailable(host.Second); host.Click("PART_AddButton");
         var tabs = host.Part<Selector>("PART_TabSelector");
         tabs.SelectedItem = tabs.Items.Cast<SimplifiedTabChoice>().Single(entry => entry.Tab == other); host.Layout();
-        host.Current.SelectedIndex = 0; host.Click("PART_RemoveButton");
+        host.Current.SelectedItem = host.Current.Items.OfType<SimplifiedCustomizeEntry>().First(); host.Click("PART_RemoveButton");
         host.Ribbon.LayoutMode = RibbonLayoutMode.Classic; host.Layout();
         host.Ribbon.LayoutMode = RibbonLayoutMode.Simplified; host.Layout();
         tabs.SelectedItem = tabs.Items.Cast<SimplifiedTabChoice>().Single(entry => entry.Tab == host.Tab); host.Layout();
@@ -481,6 +480,8 @@ public sealed class SimplifiedCustomizationTests
             Assert.Equal(RibbonLocalization.GetString(RibbonString.CustomizeRibbonPage), dialog.SelectedPage.Header);
             Assert.Equal(Visibility.Collapsed, dialog.Pages.Single(page => page.Content is RibbonCustomizePage).Visibility);
             Assert.False(dialog.Pages.Single(page => page.Content is RibbonCustomizePage).IsEnabled);
+            dialog.Show(); Sta.Drain(); dialog.UpdateLayout();
+            Save(dialog, "showcase-customize-redesign");
             dialog.Close();
         }
         finally { main.Close(); Sta.ResetApplication(); }
@@ -493,7 +494,7 @@ public sealed class SimplifiedCustomizationTests
         var combo = host.Part<RibbonComboBox>("PART_TabSelector");
         Assert.Same(host.Tab, Assert.IsType<SimplifiedTabChoice>(combo.SelectedItem).Tab);
         Assert.Contains(Descendants(combo).OfType<TextBlock>(), text => text.Text == "Home");
-        Assert.Equal("Copy", System.Windows.Automation.AutomationProperties.GetName((DependencyObject)host.Current.ItemContainerGenerator.ContainerFromIndex(0)));
+        Assert.Equal("Copy", System.Windows.Automation.AutomationProperties.GetName((DependencyObject)host.Current.ItemContainerGenerator.ContainerFromItem(host.Current.Items.OfType<SimplifiedCustomizeEntry>().First())));
         Save(host.Window, "simplified-customize-office2024");
         host.Page.FlowDirection = FlowDirection.RightToLeft;
         ThemeManager.Apply(Sta.UseApplication(), RibbonTheme.CrystalLight); host.Layout();
@@ -525,14 +526,17 @@ public sealed class SimplifiedCustomizationTests
         try
         {
             RibbonLocalization.Provider = new PageProvider(); host.Layout();
-            Assert.Equal("localized:ResetTab", host.Part<Button>("PART_ResetButton").Content);
+            Assert.Equal("localized:Reset", System.Windows.Automation.AutomationProperties.GetName(host.Part<Button>("PART_ResetMenuButton")));
             Assert.Equal("localized:Apply", host.Part<Button>("PART_ApplyButton").Content);
-            Assert.Equal("localized:RenameTab", host.Part<Button>("PART_RenameTabButton").Content);
-            Assert.Equal("localized:AllGroups", ((SimplifiedGroupChoice)host.Part<Selector>("PART_GroupSelector").SelectedItem).DisplayName);
+            Assert.Equal("localized:New", System.Windows.Automation.AutomationProperties.GetName(host.Part<Button>("PART_NewButton")));
+            Assert.Equal("localized:AllTabs", host.Part<Selector>("PART_SourceTabSelector").Items.Cast<SimplifiedTabChoice>().First().DisplayName);
             host.Tab.Header = "Changed by host"; host.GroupA.Header = "Host group"; host.Layout();
             Assert.Equal("Changed by host", ((SimplifiedTabChoice)host.Part<Selector>("PART_TabSelector").SelectedItem).DisplayName);
-            Assert.Equal("Host group", host.Part<Selector>("PART_GroupSelector").Items.Cast<SimplifiedGroupChoice>().Single(entry => entry.Group == host.GroupA).DisplayName);
-            Assert.Contains(Descendants(host.Page).OfType<RibbonCheckBox>(), check => check.Header == "localized:ShowLabel");
+            Assert.Equal("Host group", host.Current.Items.OfType<SimplifiedGroupChoice>().Single(entry => entry.Group == host.GroupA).DisplayName);
+            Assert.Empty(Descendants(host.Page).OfType<RibbonCheckBox>());
+            host.Current.SelectedItem = host.Current.Items.OfType<SimplifiedCustomizeEntry>().First();
+            host.Click("PART_EditButton");
+            Assert.Contains(host.Part<Button>("PART_EditButton").ContextMenu.Items.OfType<MenuItem>(), item => Equals(item.Header, "localized:ShowItemLabel"));
         }
         finally { RibbonLocalization.Provider = previous; }
     });
@@ -635,6 +639,26 @@ public sealed class SimplifiedCustomizationTests
         using var stream = File.Create(Path.Combine(directory, name + ".png")); encoder.Save(stream);
     }
 
+    private static void ClickAction(RibbonSimplifiedCustomizePage page, string name)
+    {
+        var action = name switch
+        {
+            "PART_NewTabButton" => ("PART_NewButton", RibbonString.NewTab),
+            "PART_NewGroupButton" => ("PART_NewButton", RibbonString.NewGroup),
+            "PART_RenameTabButton" => ("PART_EditButton", RibbonString.RenameTab),
+            "PART_RenameGroupButton" => ("PART_EditButton", RibbonString.RenameGroup),
+            "PART_ResetButton" => ("PART_ResetMenuButton", RibbonString.ResetTab),
+            "PART_ResetAllButton" => ("PART_ResetMenuButton", RibbonString.ResetAllTabs),
+            _ => (name, (RibbonString?)null),
+        };
+        var button = (ButtonBase)page.Template.FindName(action.Item1, page);
+        button.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+        if (action.Item2 is not { } key) return;
+        var menu = button.ContextMenu;
+        var item = menu.Items.OfType<MenuItem>().Single(item => Equals(item.Header, RibbonLocalization.GetString(key)));
+        Assert.True(item.IsEnabled); item.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent)); menu.IsOpen = false;
+    }
+
     private sealed class Host : IDisposable
     {
         internal readonly Ribbon Ribbon = new() { LayoutMode = RibbonLayoutMode.Simplified };
@@ -663,9 +687,9 @@ public sealed class SimplifiedCustomizationTests
             Window.Show(); Layout();
         }
         internal T Part<T>(string name) where T : DependencyObject => (T)Page.Template.FindName(name, Page);
-        internal void Click(string name) { Part<ButtonBase>(name).RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); Layout(); }
+        internal void Click(string name) { ClickAction(Page, name); Layout(); }
         internal void SelectAvailable(FrameworkElement control) => Available.SelectedItem = Available.Items.Cast<SimplifiedCustomizeEntry>().Single(entry => entry.Control == control);
-        internal FrameworkElement[] Selected() => Current.Items.Cast<SimplifiedCustomizeEntry>().Select(entry => entry.Control).ToArray();
+        internal FrameworkElement[] Selected() => Current.Items.OfType<SimplifiedCustomizeEntry>().Select(entry => entry.Control).ToArray();
         internal FrameworkElement[] Row() => ToolBar.Items.OfType<FrameworkElement>().Where(item => item is not RibbonGroupQuickAccessProxy and not RibbonGroupSeparator).Select(item => Ribbon.GetQuickAccessSource(item)!).ToArray();
         internal void Layout() { Sta.Drain(); Window.UpdateLayout(); Sta.Drain(); Window.UpdateLayout(); }
         public void Dispose() { Window.Close(); Sta.Drain(); RibbonAnimation.GlobalLevel = RibbonAnimationLevel.Subtle; Sta.ResetApplication(); }
