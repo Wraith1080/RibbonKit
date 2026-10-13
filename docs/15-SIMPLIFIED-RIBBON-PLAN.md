@@ -619,7 +619,8 @@ implemented and recorded in the additive API baseline.
 | Reuse/ownership | 1/1 passed using actual collections: a discarded generated item renders with normal styling when reused, and authored alignment/local style settings survive removal |
 | Independent consumer | All 12 public-only legacy/flat/Crystal × density × direction cases passed with realized-popup/discarded-container trace assertions on Apply; Touch dialogs also use simulated 150% root DPI |
 | Builds | Normal Debug Showcase and Release solution (net8.0/net9.0 runtime targets) builds passed, 0 warnings/errors |
-| Remaining | User retry and full end-of-feature/native gates remain open |
+| User review | Confirmed 2026-10-13: the user followed the manual dropdown/open, custom-tab move and Apply sequence and reported no binding errors. The move-then-Apply alignment-binding fix is accepted |
+| Remaining | Full end-of-feature validation and broader native-input/DPI gates remain open |
 
 Logs are `TestResults/simplified-move-apply-*.log`; per-palette binding traces are
 under the normal runtime test output's `TestResults/simplified-customization/`.
