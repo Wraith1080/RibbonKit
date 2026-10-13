@@ -256,6 +256,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
     public RibbonCustomizePage()
     {
         Loaded += (_, _) => { ObserveLayoutMode(); CoerceValue(IsEnabledProperty); RebuildAll(); };
+        IsEnabledChanged += (_, _) => { if (IsEnabled && IsLoaded) RebuildAll(); };
     }
 
     /// <summary>The ribbon whose structure this page edits.</summary>
@@ -752,7 +753,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         RebuildTree(selectItem: group);
     }
 
-    private static RibbonGroup CreateCustomGroup()
+    internal static RibbonGroup CreateCustomGroup()
     {
         var group = new RibbonGroup { Header = RibbonLocalization.GetString(RibbonString.NewGroup) };
         Controls.Ribbon.SetIsCustom(group, true);
@@ -765,7 +766,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
     }
 
     // A generated persistence id so user-created tabs/groups survive save/restore.
-    private static string NewCustomId() => "custom:" + Guid.NewGuid().ToString("N");
+    internal static string NewCustomId() => "custom:" + Guid.NewGuid().ToString("N");
 
     /// <summary>
     /// Opens the edit dialog for the selection. What's editable follows the target

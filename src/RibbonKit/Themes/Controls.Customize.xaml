@@ -358,10 +358,16 @@
                             <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
                             <RowDefinition Height="*" /><RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <controls:RibbonComboBox x:Name="PART_TabSelector" Grid.Row="1" Grid.Column="2"
-                            DisplayMemberPath="Tab.Header" HorizontalAlignment="Stretch" Margin="0,0,0,10"
-                            InputWidth="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
-                            AutomationProperties.Name="{localization:RibbonString Key=SimplifiedTab}" />
+                        <StackPanel Grid.Row="1" Grid.Column="2">
+                            <controls:RibbonComboBox x:Name="PART_TabSelector"
+                                DisplayMemberPath="DisplayName" HorizontalAlignment="Stretch" Margin="0,0,0,6"
+                                InputWidth="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
+                                AutomationProperties.Name="{localization:RibbonString Key=SimplifiedTab}" />
+                            <controls:RibbonComboBox x:Name="PART_GroupSelector"
+                                DisplayMemberPath="DisplayName" HorizontalAlignment="Stretch" Margin="0,0,0,10"
+                                InputWidth="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
+                                AutomationProperties.Name="{localization:RibbonString Key=SimplifiedGroup}" />
+                        </StackPanel>
                         <TextBlock Grid.Row="0" Text="{localization:RibbonString Key=ChooseCommandsFromRibbon}"
                             FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" Margin="0,0,0,6" />
                         <TextBlock Grid.Row="0" Grid.Column="2" Text="{localization:RibbonString Key=CustomizeRibbonLabel}"
@@ -400,13 +406,23 @@
                             <Button x:Name="PART_DownButton" Content="▼" Style="{StaticResource OptionsDialogReorderButtonStyle}"
                                 ToolTip="{localization:RibbonString Key=MoveDown}" AutomationProperties.Name="{localization:RibbonString Key=MoveDown}" />
                         </StackPanel>
-                        <DockPanel Grid.Row="3" Grid.ColumnSpan="4" Margin="0,12,0,0" LastChildFill="False">
+                        <DockPanel Grid.Row="3" Grid.ColumnSpan="4" Margin="0,12,0,0" LastChildFill="True">
                             <Button x:Name="PART_ApplyButton" DockPanel.Dock="Right" Content="{localization:RibbonString Key=Apply}"
-                                Style="{StaticResource OptionsDialogPrimaryButtonStyle}" />
-                            <Button x:Name="PART_ResetButton" Content="{localization:RibbonString Key=ResetTab}"
-                                Style="{StaticResource OptionsDialogActionButtonStyle}" Margin="0,0,8,0" />
-                            <Button x:Name="PART_ResetAllButton" Content="{localization:RibbonString Key=ResetAllTabs}"
-                                Style="{StaticResource OptionsDialogActionButtonStyle}" />
+                                Style="{StaticResource OptionsDialogPrimaryButtonStyle}" Margin="8,0,0,6" VerticalAlignment="Top" />
+                            <WrapPanel>
+                                <Button x:Name="PART_ResetButton" Content="{localization:RibbonString Key=ResetTab}"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}" Margin="0,0,8,6" />
+                                <Button x:Name="PART_ResetAllButton" Content="{localization:RibbonString Key=ResetAllTabs}"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}" Margin="0,0,8,6" />
+                                <Button x:Name="PART_NewTabButton" Content="{localization:RibbonString Key=NewTab}"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}" Margin="0,0,6,6" />
+                                <Button x:Name="PART_NewGroupButton" Content="{localization:RibbonString Key=NewGroup}"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}" Margin="0,0,6,6" />
+                                <Button x:Name="PART_RenameTabButton" Content="{localization:RibbonString Key=RenameTab}"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}" Margin="0,0,6,6" />
+                                <Button x:Name="PART_RenameGroupButton" Content="{localization:RibbonString Key=RenameGroup}"
+                                    Style="{StaticResource OptionsDialogActionButtonStyle}" Margin="0,0,0,6" />
+                            </WrapPanel>
                         </DockPanel>
                     </Grid>
                 </ControlTemplate>

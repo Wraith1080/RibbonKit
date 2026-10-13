@@ -245,3 +245,36 @@ scroll/navigation and public-resource-only editor/overflow consumer checks passe
 the active plan records exact counts and the earlier combined-run failure.
 Normal Release runtime and Debug Showcase builds passed. Physical input, user
 review and final full testing remain separate gates.
+
+#### Shared custom-tab/group draft editor — 2026-10-13
+
+S3 stages detached tabs/groups, name overrides and source references in the
+simplified page. It reuses the classic ID/Stacked-group helpers and name dialog.
+Apply attaches only the edited structures and creates native source-linked
+membership copies; Cancel drops references without mutating the live ribbon.
+Current sources are resolved again at Apply so host replacements with stable
+IDs are honored and missing/transient sources cannot become stale membership.
+The classic tree refreshes on re-enablement after a mode switch.
+
+Discovery spans eligible tabs, deduplicates original commands and retains their
+tab/group path; groups stay out of the available-command list. All Groups shows
+the complete row, while an explicit group filters selections and targets Add.
+Built-in membership remains app-owned; custom groups accept cross-tab commands.
+Remove/reset change the simplified profile, preserving shared structure/membership.
+
+Selections now carry group identity. Source/group pairs deduplicate within a
+group, and the row cache keys by declaration so two groups can host separate
+copies of one source. Internal group metadata follows overflow copies and
+context pin/remove actions. Version 2 persists GroupId with SourceId/Size;
+version 1 and untagged built-in groups retain first-source-group fallback.
+Unknown groups skip their selections; malformed optional shapes prevent any Apply.
+Absent/unknown optional sections remap current overrides by stable tab/group IDs
+when Classic-only data recreates custom structures.
+
+Selector descriptors bind host Header properties through private dependency
+properties and bind All Groups to the localization source, preserving live
+updates without using UIElements as combo items. The footer wraps as one action
+surface to preserve Touch viewport height. Native invocation tests drain UIA
+dispatch; render captures settle layout after modal rename. Focused behavior,
+independent-consumer geometry/interaction and render checks passed; current
+counts, assembled-run limits and full/native acceptance stay in the active plan.

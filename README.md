@@ -171,9 +171,10 @@ Only the active layout's **Customize Ribbon** page is shown; both modes use the
 same page title and context-menu label. QAT customization remains available in
 either mode. Add `RibbonSimplifiedCustomizePage` to a
 `RibbonOptionsDialog` with its `Ribbon` property pointing at the owning ribbon.
-It lists commands by their original group and supports Add/Remove, Move Up/Down,
-Show Label, Reset Tab and Reset All Tabs. Ordering can cross groups; dividers
-follow contiguous group sections without changing the original group contents.
+It discovers commands from the whole ribbon, grouped by their tab/group path,
+and supports Add/Remove, Move Up/Down, Show Label, Reset Tab and Reset All Tabs.
+The group selector shows all selected commands or filters a particular group.
+Ordering can cross groups; dividers follow contiguous group sections.
 Group flyouts and arbitrary editors are access surfaces rather than pinnable commands.
 
 The page edits a draft. Its Apply button and `ApplyChanges()` commit it;
@@ -188,26 +189,35 @@ the Ribbon**. Hosts open their simplified options surface on
 `Ribbon.SimplifiedCustomizeRequested` and save on
 `Ribbon.SimplifiedCustomizationChanged`. The equivalent programmatic actions are
 `PinToSimplifiedRibbon(source)` and `RemoveFromSimplifiedRibbon(source)`; copies
-resolve to the original command. Both actions return false for unsupported,
+resolve to the original command and retain their target group. Both actions return false for unsupported,
 transient or duplicate requests.
 
 `RibbonCustomizationSerializer` stores simplified order/labels in a separate
-optional `Simplified` section with version 1. Assign explicit, stable
-`Ribbon.CommandId` values to each customizable tab and command for restart
-persistence. Untagged selections work in the current session. Missing commands
-are skipped, duplicate identities use the first eligible source, and contextual,
+optional `Simplified` section with version 2, recording source, target group and
+size. Version 1 loads by inferring the first eligible group. Assign explicit,
+stable `Ribbon.CommandId` values to customizable tabs, groups and commands for
+restart persistence. New custom tabs/groups receive generated IDs. Built-in
+groups without IDs retain source-only fallback; commands without IDs work in
+the current session. Missing sources/groups are skipped, duplicate source/group
+pairs use the first eligible entry, and contextual,
 modal and merged contributions are excluded. Old classic-only JSON preserves
 current simplified choices; malformed sections leave the layout unchanged.
-Reset uses the app-authored placement/size properties. Layout mode remains a
+Reset uses the app-authored placement/size properties and preserves shared
+custom structure and membership. Layout mode remains a
 host-owned appearance preference. See the
 [simplified ribbon plan](docs/15-SIMPLIFIED-RIBBON-PLAN.md#customize-simplified-ribbon)
 for acceptance and remaining full/native checks.
 
-The tab selector fills the selected-command column without a side label. Custom
-tab/group creation is the next planned slice: New Tab/New Group/Rename and a
-target group selector, with shared structure and separate simplified selections.
-Existing custom tabs/groups can already be edited in Classic and used in either
-layout. See the plan's [structure editor proposal](docs/15-SIMPLIFIED-RIBBON-PLAN.md#custom-tab-and-group-editor-proposal).
+The tab and group selectors fill the selected-command column without side
+labels. New Tab creates a tab with one custom group; New Group inserts after the
+selected group. Rename Tab/Group opens the shared name editor. Creation, naming
+and membership stay in the draft until Apply/OK; Cancel leaves no new structure
+behind. Custom groups accept commands from other tabs; built-in groups retain
+their original command membership. Tabs/groups and custom-group membership
+appear in both layouts, while simplified order/labels remain separate. Removing
+a simplified selection leaves its shared custom-group command available through
+the group's flyout. See the plan's
+[structure editor](docs/15-SIMPLIFIED-RIBBON-PLAN.md#custom-tab-and-group-editor).
 
 ### Dropdown headings and descriptive rows
 

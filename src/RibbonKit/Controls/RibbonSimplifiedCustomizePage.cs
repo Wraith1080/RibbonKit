@@ -8,16 +8,45 @@ using System.Windows.Media;
 
 namespace RibbonKit.Controls;
 
-internal sealed record SimplifiedTabChoice(RibbonTab Tab);
+internal sealed class SimplifiedTabChoice : DependencyObject
+{
+    private static readonly DependencyProperty DisplayNameProperty = DependencyProperty.Register(
+        nameof(DisplayName), typeof(string), typeof(SimplifiedTabChoice), new PropertyMetadata(string.Empty));
+    internal SimplifiedTabChoice(RibbonTab tab, string? draftName)
+    {
+        Tab = tab;
+        if (draftName is not null) SetValue(DisplayNameProperty, draftName);
+        else BindingOperations.SetBinding(this, DisplayNameProperty, new Binding(nameof(tab.Header)) { Source = tab });
+    }
+    public RibbonTab Tab { get; }
+    public string DisplayName => (string?)GetValue(DisplayNameProperty) ?? string.Empty;
+}
+
+internal sealed class SimplifiedGroupChoice : DependencyObject
+{
+    private static readonly DependencyProperty DisplayNameProperty = DependencyProperty.Register(
+        nameof(DisplayName), typeof(string), typeof(SimplifiedGroupChoice), new PropertyMetadata(string.Empty));
+    internal SimplifiedGroupChoice(RibbonGroup? group, string? draftName)
+    {
+        Group = group;
+        if (draftName is not null) SetValue(DisplayNameProperty, draftName);
+        else BindingOperations.SetBinding(this, DisplayNameProperty, group is null
+            ? new Binding("[AllGroups]") { Source = RibbonKit.Localization.RibbonLocalizationBindingSource.Instance }
+            : new Binding(nameof(group.Header)) { Source = group });
+    }
+    public RibbonGroup? Group { get; }
+    public string DisplayName => (string?)GetValue(DisplayNameProperty) ?? string.Empty;
+}
 
 internal sealed class SimplifiedCustomizeEntry : INotifyPropertyChanged
 {
     private bool _showLabel;
     private readonly Action<bool>? _labelChanged;
-    internal SimplifiedCustomizeEntry(SimplifiedCommandSource source, RibbonControlSize size, Action<bool>? labelChanged = null)
+    internal SimplifiedCustomizeEntry(SimplifiedCommandSource source, RibbonControlSize size, Action<bool>? labelChanged = null, string? groupName = null)
     {
         Control = source.Control;
-        GroupName = source.Group.Header?.ToString() ?? string.Empty;
+        Group = source.Group;
+        GroupName = groupName ?? source.Group.Header?.ToString() ?? string.Empty;
         var description = RibbonCommandCatalog.Describe(source.Declaration);
         DisplayName = description.DisplayName;
         Icon = description.Icon;
@@ -25,6 +54,7 @@ internal sealed class SimplifiedCustomizeEntry : INotifyPropertyChanged
         _labelChanged = labelChanged;
     }
     public FrameworkElement Control { get; }
+    internal RibbonGroup Group { get; }
     public string GroupName { get; }
     public string DisplayName { get; }
     public ImageSource? Icon { get; }
@@ -46,9 +76,15 @@ internal sealed class SimplifiedCustomizeEntry : INotifyPropertyChanged
 /// A lookless, tab-based simplified ribbon editor. Changes stay in a draft until
 /// <see cref="ApplyChanges"/>; <see cref="CancelChanges"/> discards that draft.
 /// <see cref="RibbonOptionsDialog"/> commits it on OK and cancels it on other close paths.
-/// Eligible only in Simplified mode; QAT and classic layout remain independent.
+/// Eligible only in Simplified mode. New/renamed tabs and groups and custom-group
+/// membership are shared with Classic; simplified order, labels and QAT stay independent.
 /// </summary>
 [TemplatePart(Name = "PART_TabSelector", Type = typeof(Selector))]
+[TemplatePart(Name = "PART_GroupSelector", Type = typeof(Selector))]
+[TemplatePart(Name = "PART_NewTabButton", Type = typeof(ButtonBase))]
+[TemplatePart(Name = "PART_NewGroupButton", Type = typeof(ButtonBase))]
+[TemplatePart(Name = "PART_RenameTabButton", Type = typeof(ButtonBase))]
+[TemplatePart(Name = "PART_RenameGroupButton", Type = typeof(ButtonBase))]
 [TemplatePart(Name = "PART_AvailableList", Type = typeof(ListBox))]
 [TemplatePart(Name = "PART_CurrentList", Type = typeof(ListBox))]
 [TemplatePart(Name = "PART_AddButton", Type = typeof(ButtonBase))]
@@ -58,7 +94,7 @@ internal sealed class SimplifiedCustomizeEntry : INotifyPropertyChanged
 [TemplatePart(Name = "PART_ResetButton", Type = typeof(ButtonBase))]
 [TemplatePart(Name = "PART_ResetAllButton", Type = typeof(ButtonBase))]
 [TemplatePart(Name = "PART_ApplyButton", Type = typeof(ButtonBase))]
-public class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
+public partial class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
 {
     /// <summary>Identifies the <see cref="Ribbon"/> dependency property.</summary>
     public static readonly DependencyProperty RibbonProperty = DependencyProperty.Register(
@@ -99,13 +135,14 @@ public class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
         set => SetValue(RibbonProperty, value);
     }
 
-    /// <summary>Commits edited tabs, ordering, labels and resets. Hosts can persist the ribbon after this call.</summary>
+    /// <summary>Commits new/renamed tabs and groups, custom-group membership, simplified ordering, labels and resets. Hosts can persist the ribbon after this call.</summary>
     public void ApplyChanges()
     {
         if (Ribbon is not { } ribbon) return;
-        bool changed = _drafts.Count > 0;
+        bool changed = HasDraft;
+        ApplyStructure(ribbon);
         foreach (var pair in _drafts) ribbon.SetSimplifiedChoices(pair.Key, pair.Value, false);
-        _drafts.Clear();
+        ClearDraft();
         if (changed) ribbon.NotifySimplifiedCustomizationChanged();
         RefreshTabs();
     }
@@ -113,7 +150,7 @@ public class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
     /// <summary>Discards uncommitted edits and reloads the current saved selections.</summary>
     public void CancelChanges()
     {
-        _drafts.Clear();
+        ClearDraft();
         RefreshTabs();
     }
 
@@ -123,13 +160,16 @@ public class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
         foreach (var pair in _handlers) pair.Button.Click -= pair.Handler;
         _handlers.Clear();
         if (_tabs is not null) _tabs.SelectionChanged -= OnTabChanged;
+        if (_groups is not null) _groups.SelectionChanged -= OnGroupChanged;
         if (_available is not null) _available.SelectionChanged -= OnSelectionChanged;
         if (_current is not null) _current.SelectionChanged -= OnSelectionChanged;
         base.OnApplyTemplate();
         _tabs = GetTemplateChild("PART_TabSelector") as Selector;
+        _groups = GetTemplateChild("PART_GroupSelector") as Selector;
         _available = GetTemplateChild("PART_AvailableList") as ListBox;
         _current = GetTemplateChild("PART_CurrentList") as ListBox;
         if (_tabs is not null) _tabs.SelectionChanged += OnTabChanged;
+        if (_groups is not null) _groups.SelectionChanged += OnGroupChanged;
         if (_available is not null) _available.SelectionChanged += OnSelectionChanged;
         if (_current is not null) _current.SelectionChanged += OnSelectionChanged;
         Hook("PART_AddButton", (_, _) => Add());
@@ -139,6 +179,10 @@ public class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
         Hook("PART_ResetButton", (_, _) => Reset(false));
         Hook("PART_ResetAllButton", (_, _) => Reset(true));
         Hook("PART_ApplyButton", (_, _) => ApplyChanges());
+        Hook("PART_NewTabButton", (_, _) => NewTab());
+        Hook("PART_NewGroupButton", (_, _) => NewGroup());
+        Hook("PART_RenameTabButton", (_, _) => Rename(_tab));
+        Hook("PART_RenameGroupButton", (_, _) => Rename(_group));
         RefreshTabs();
     }
 
@@ -152,7 +196,7 @@ public class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
     private void ChangeRibbon()
     {
         StopObserving();
-        _drafts.Clear(); _tab = null;
+        ClearDraft(); _tab = null; _group = null;
         if (Ribbon is null) ClearValue(OwnerLayoutModeProperty);
         else SetBinding(OwnerLayoutModeProperty, new Binding(nameof(Controls.Ribbon.LayoutMode)) { Source = Ribbon });
         CoerceValue(IsEnabledProperty);
@@ -181,6 +225,8 @@ public class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
     {
         if (_refreshing) return;
         _tab = (_tabs?.SelectedItem as SimplifiedTabChoice)?.Tab;
+        _group = null;
+        RefreshGroups();
         RefreshLists();
     }
 
@@ -188,12 +234,13 @@ public class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
     {
         if (_tabs is null) return;
         _refreshing = true;
-        var tabs = Ribbon?.Tabs.Where(RibbonCustomizePage.IsCustomizableTab).ToList() ?? new();
-        var entries = tabs.Select(tab => new SimplifiedTabChoice(tab)).ToList();
+        var tabs = DraftTabs();
+        var entries = tabs.Select(tab => new SimplifiedTabChoice(tab, _renames.GetValueOrDefault(tab))).ToList();
         _tabs.ItemsSource = entries;
         _tab = tabs.Contains(_tab!) ? _tab : tabs.FirstOrDefault(tab => ReferenceEquals(tab, Ribbon?.SelectedTab)) ?? tabs.FirstOrDefault();
         _tabs.SelectedItem = entries.FirstOrDefault(entry => ReferenceEquals(entry.Tab, _tab));
         _refreshing = false;
+        RefreshGroups();
         RefreshLists();
     }
 
@@ -201,22 +248,27 @@ public class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
         ? _drafts.TryGetValue(tab, out var draft) ? draft?.ToList() ?? ribbon.GetSimplifiedDefaults(tab) : ribbon.GetSimplifiedChoices(tab)
         : new();
 
-    private void RefreshLists(FrameworkElement? selected = null)
+    private void RefreshLists(FrameworkElement? selected = null, RibbonGroup? selectedGroup = null)
     {
         if (_available is null || _current is null) return;
-        var sources = _tab is { } tab ? Controls.Ribbon.SimplifiedSources(tab, true) : new();
-        var available = new ListCollectionView(sources.Select(source => new SimplifiedCustomizeEntry(source, Controls.Ribbon.GetSimplifiedSize(source.Control))).ToList());
+        var sources = DraftSources();
+        var previousAvailable = (_available.SelectedItem as SimplifiedCustomizeEntry)?.Control;
+        var availableEntries = AvailableSources().Select(pair => new SimplifiedCustomizeEntry(pair.Source,
+            Controls.Ribbon.GetSimplifiedSize(pair.Source.Control), groupName: pair.Path)).ToList();
+        var available = new ListCollectionView(availableEntries);
         available.GroupDescriptions.Add(new PropertyGroupDescription(nameof(SimplifiedCustomizeEntry.GroupName)));
         _available.ItemsSource = available;
+        _available.SelectedItem = availableEntries.FirstOrDefault(entry => ReferenceEquals(entry.Control, previousAvailable));
         var entries = new ObservableCollection<SimplifiedCustomizeEntry>();
         foreach (var choice in Choices())
         {
-            var source = sources.FirstOrDefault(entry => Controls.Ribbon.SameSimplifiedCommand(entry.Control, choice.Source));
+            var source = Controls.Ribbon.ResolveSimplifiedChoice(sources, choice);
             if (source is null) continue;
-            entries.Add(new SimplifiedCustomizeEntry(source, choice.Size, show => ChangeLabel(source.Control, show)));
+            if (_group is not null && source.Group != _group) continue;
+            entries.Add(new SimplifiedCustomizeEntry(source, choice.Size, show => ChangeLabel(source.Control, source.Group, show), DraftHeader(source.Group)));
         }
         _current.ItemsSource = entries;
-        _current.SelectedItem = entries.FirstOrDefault(entry => ReferenceEquals(entry.Control, selected));
+        _current.SelectedItem = entries.FirstOrDefault(entry => ReferenceEquals(entry.Control, selected) && (selectedGroup is null || entry.Group == selectedGroup));
         UpdateButtons();
     }
 
@@ -226,28 +278,30 @@ public class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
         UpdateButtons();
     }
 
-    private void ChangeLabel(FrameworkElement source, bool show)
+    private void ChangeLabel(FrameworkElement source, RibbonGroup group, bool show)
     {
         var choices = Choices();
-        int index = choices.FindIndex(choice => ReferenceEquals(choice.Source, source));
+        int index = choices.FindIndex(choice => SameChoice(choice, source, group));
         if (index < 0) return;
-        choices[index] = new SimplifiedCommandChoice(source, show ? RibbonControlSize.Medium : RibbonControlSize.Small);
+        choices[index] = new SimplifiedCommandChoice(source, show ? RibbonControlSize.Medium : RibbonControlSize.Small, group);
         SaveDraft(choices);
     }
 
     private void Add()
     {
         if (!IsEnabled || _available?.SelectedItem is not SimplifiedCustomizeEntry entry) return;
+        if (TargetGroup(entry.Control) is not { } group) return;
         var choices = Choices();
-        if (choices.Any(choice => Controls.Ribbon.SameSimplifiedCommand(choice.Source, entry.Control))) return;
-        choices.Add(new SimplifiedCommandChoice(entry.Control, Controls.Ribbon.GetSimplifiedSize(entry.Control)));
-        SaveDraft(choices); RefreshLists(entry.Control);
+        if (choices.Any(choice => SameChoice(choice, entry.Control, group))) return;
+        StageMembership(group, entry.Control);
+        choices.Add(new SimplifiedCommandChoice(entry.Control, Controls.Ribbon.GetSimplifiedSize(entry.Control), group));
+        SaveDraft(choices); RefreshLists(entry.Control, group);
     }
 
     private void Remove()
     {
         if (!IsEnabled || _current?.SelectedItem is not SimplifiedCustomizeEntry entry) return;
-        var choices = Choices(); choices.RemoveAll(choice => ReferenceEquals(choice.Source, entry.Control));
+        var choices = Choices(); choices.RemoveAll(choice => SameChoice(choice, entry.Control, entry.Group));
         SaveDraft(choices); RefreshLists();
     }
 
@@ -255,17 +309,21 @@ public class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
     {
         if (!IsEnabled || _current?.SelectedItem is not SimplifiedCustomizeEntry entry) return;
         var choices = Choices();
-        int index = choices.FindIndex(choice => ReferenceEquals(choice.Source, entry.Control));
-        int target = index + delta;
-        if (index < 0 || target < 0 || target >= choices.Count) return;
+        var visible = _current.Items.Cast<SimplifiedCustomizeEntry>().ToList();
+        int visibleIndex = visible.IndexOf(entry), visibleTarget = visibleIndex + delta;
+        if (visibleIndex < 0 || visibleTarget < 0 || visibleTarget >= visible.Count) return;
+        int index = choices.FindIndex(choice => SameChoice(choice, entry.Control, entry.Group));
+        var neighbour = visible[visibleTarget];
+        int target = choices.FindIndex(choice => SameChoice(choice, neighbour.Control, neighbour.Group));
+        if (index < 0 || target < 0) return;
         (choices[index], choices[target]) = (choices[target], choices[index]);
-        SaveDraft(choices); RefreshLists(entry.Control);
+        SaveDraft(choices); RefreshLists(entry.Control, entry.Group);
     }
 
     private void Reset(bool all)
     {
         if (!IsEnabled || Ribbon is null) return;
-        foreach (var tab in Ribbon.Tabs.Where(tab => RibbonCustomizePage.IsCustomizableTab(tab) && (all || ReferenceEquals(tab, _tab))))
+        foreach (var tab in DraftTabs().Where(tab => all || ReferenceEquals(tab, _tab)))
             _drafts[tab] = null;
         RefreshLists();
     }
@@ -273,14 +331,19 @@ public class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
     private void UpdateButtons()
     {
         var choices = Choices();
-        int index = _current?.SelectedItem is SimplifiedCustomizeEntry entry ? choices.FindIndex(choice => ReferenceEquals(choice.Source, entry.Control)) : -1;
-        Enable("PART_AddButton", _available?.SelectedItem is SimplifiedCustomizeEntry available && !choices.Any(choice => Controls.Ribbon.SameSimplifiedCommand(choice.Source, available.Control)));
+        int index = _current?.SelectedIndex ?? -1;
+        Enable("PART_AddButton", _available?.SelectedItem is SimplifiedCustomizeEntry available && TargetGroup(available.Control) is { } group
+            && !choices.Any(choice => SameChoice(choice, available.Control, group)));
         Enable("PART_RemoveButton", index >= 0);
         Enable("PART_UpButton", index > 0);
-        Enable("PART_DownButton", index >= 0 && index < choices.Count - 1);
+        Enable("PART_DownButton", index >= 0 && index < (_current?.Items.Count ?? 0) - 1);
         Enable("PART_ResetButton", _tab is not null);
         Enable("PART_ResetAllButton", Ribbon?.Tabs.Any(RibbonCustomizePage.IsCustomizableTab) == true);
-        Enable("PART_ApplyButton", _drafts.Count > 0);
+        Enable("PART_ApplyButton", HasDraft);
+        Enable("PART_NewTabButton", Ribbon is not null);
+        Enable("PART_NewGroupButton", _tab is not null);
+        Enable("PART_RenameTabButton", _tab is not null);
+        Enable("PART_RenameGroupButton", _group is not null);
     }
 
     private void Enable(string name, bool enabled) => (GetTemplateChild(name) as ButtonBase)?.SetCurrentValue(IsEnabledProperty, enabled);

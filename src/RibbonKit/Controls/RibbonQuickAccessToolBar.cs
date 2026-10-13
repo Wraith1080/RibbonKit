@@ -316,7 +316,12 @@ public class RibbonQuickAccessToolBar : ItemsControl
         // mirror, and the catalog deliberately refuses to build those.
         FrameworkElement source = Ribbon.GetQuickAccessSource(item) ?? item;
         FrameworkElement entry = ribbon.CreateCommandProxy(source, RibbonControlSize.Medium);
-        if (IsSimplified) Ribbon.MirrorCommandPresentation(entry, item);
+        if (IsSimplified)
+        {
+            Ribbon.MirrorCommandPresentation(entry, item);
+            entry.SetBinding(Ribbon.SimplifiedCommandGroupProperty, new System.Windows.Data.Binding
+            { Source = item, Path = new PropertyPath(Ribbon.SimplifiedCommandGroupProperty) });
+        }
         entry.SetValue(RibbonOverflowMenu.IsEntryProperty, true);
 
         entry.HorizontalAlignment = HorizontalAlignment.Stretch;

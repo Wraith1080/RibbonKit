@@ -90,7 +90,7 @@ public class RibbonGroupsHost : ItemsControl
         foreach (var choice in choices)
         {
             FrameworkElement source = choice.Source;
-            var entry = sources.FirstOrDefault(entry => Ribbon.SameSimplifiedCommand(entry.Control, source));
+            var entry = Ribbon.ResolveSimplifiedChoice(sources, choice);
             if (entry is null) continue;
             RibbonGroup group = entry.Group;
             if (group != previous)
@@ -103,14 +103,15 @@ public class RibbonGroupsHost : ItemsControl
                 _simplified.SimplifiedGroups[separator] = group;
             }
             previous = group;
-            retained.Add(source);
-            if (!_copies.TryGetValue(source, out FrameworkElement? copy))
+            retained.Add(entry.Declaration);
+            if (!_copies.TryGetValue(entry.Declaration, out FrameworkElement? copy))
             {
                 copy = owner.CreateCommandProxy(source, choice.Size);
                 copy.SetBinding(KeyTip.KeysProperty, new Binding { Source = source, Path = new PropertyPath(KeyTip.KeysProperty) });
-                _copies.Add(source, copy);
+                _copies.Add(entry.Declaration, copy);
             }
             copy.SetBinding(VisibilityProperty, VisibilityBinding(entry.Declaration, group));
+            copy.SetValue(Ribbon.SimplifiedCommandGroupProperty, group);
             if (!ReferenceEquals(source, entry.Declaration))
             {
                 Ribbon.MirrorEnabledState(copy, entry.Declaration);

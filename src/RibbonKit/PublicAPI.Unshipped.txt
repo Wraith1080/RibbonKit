@@ -22,6 +22,10 @@ RibbonKit.Localization.RibbonString.ShowLabel = 70 -> RibbonKit.Localization.Rib
 RibbonKit.Localization.RibbonString.ResetTab = 71 -> RibbonKit.Localization.RibbonString
 RibbonKit.Localization.RibbonString.ResetAllTabs = 72 -> RibbonKit.Localization.RibbonString
 RibbonKit.Localization.RibbonString.Apply = 73 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.AllGroups = 74 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.SimplifiedGroup = 75 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.RenameTab = 76 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.RenameGroup = 77 -> RibbonKit.Localization.RibbonString
 static readonly RibbonKit.Controls.Ribbon.SimplifiedSizeProperty -> System.Windows.DependencyProperty!
 static RibbonKit.Controls.Ribbon.GetSimplifiedSize(System.Windows.DependencyObject! element) -> RibbonKit.RibbonControlSize
 static RibbonKit.Controls.Ribbon.SetSimplifiedSize(System.Windows.DependencyObject! element, RibbonKit.RibbonControlSize value) -> void

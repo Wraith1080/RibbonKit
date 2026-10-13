@@ -18,7 +18,8 @@ namespace RibbonKit.Controls;
 /// string the app assigns to the built-in tabs, groups, and commands it wants persistable
 /// (proxies reference their source command by this id, so a saved "custom group contains Bold"
 /// survives even though the proxy object does not). Custom tabs/groups created by
-/// <see cref="RibbonCustomizePage"/> auto-get a generated id. Elements without an id are left
+/// <see cref="RibbonCustomizePage"/> or <see cref="RibbonSimplifiedCustomizePage"/>
+/// auto-get a generated id. Elements without an id are left
 /// alone: not serialized, never moved/removed by <see cref="Apply"/>.
 /// </para>
 /// <para>
@@ -37,7 +38,7 @@ public static class RibbonCustomizationSerializer
         Converters = { new JsonStringEnumConverter() },
     };
 
-    /// <summary>Captures classic structure, QAT and a separate versioned simplified selection section. Simplified tabs/commands require explicit stable command IDs.</summary>
+    /// <summary>Captures classic structure, QAT and simplified selections with group identity in a separate versioned section. Stable tab/command IDs enable restart persistence; group IDs preserve assignments, with source-only fallback for untagged built-in groups.</summary>
     public static string Serialize(Ribbon ribbon)
     {
         ArgumentNullException.ThrowIfNull(ribbon);
@@ -85,7 +86,7 @@ public static class RibbonCustomizationSerializer
                     || !simplified.TryGetProperty(nameof(SimplifiedDto.Version), out JsonElement version)
                     || version.ValueKind != JsonValueKind.Number
                     || !version.TryGetInt32(out int schemaVersion)
-                    || (schemaVersion == 1 && (!simplified.TryGetProperty(nameof(SimplifiedDto.Tabs), out JsonElement selections)
+                    || (schemaVersion is 1 or 2 && (!simplified.TryGetProperty(nameof(SimplifiedDto.Tabs), out JsonElement selections)
                         || selections.ValueKind != JsonValueKind.Array
                         || selections.EnumerateArray().Any(tab => tab.ValueKind != JsonValueKind.Object
                             || !tab.TryGetProperty(nameof(SimplifiedTabDto.Commands), out JsonElement commands)
@@ -158,7 +159,7 @@ public static class RibbonCustomizationSerializer
             }
         }
 
-        if (layout.Simplified is { Version: 1 } simplified &&
+        if (layout.Simplified is { Version: 1 or 2 } simplified &&
             (simplified.Tabs is null || simplified.Tabs.Any(tab => tab?.Commands is null ||
                 tab.Commands.Any(command => command is null || command.Size is not (RibbonControlSize.Small or RibbonControlSize.Medium)))))
             return false;
@@ -297,12 +298,13 @@ public static class RibbonCustomizationSerializer
         {
             if (Ribbon.GetCommandId(pair.Key) is not { Length: > 0 } tabId) continue;
             var commands = pair.Value.Where(choice => Ribbon.GetCommandId(choice.Source) is { Length: > 0 }
+                && choice.Group is { } group && !Ribbon.GetIsMerged(group)
                 && Ribbon.GetMergeSource(choice.Source) is null && !Ribbon.GetIsMerged(choice.Source));
             layout.Simplified.Tabs.Add(new SimplifiedTabDto
             {
                 TabId = tabId,
                 Commands = commands.Select(choice => new SimplifiedCommandDto
-                { SourceId = Ribbon.GetCommandId(choice.Source), Size = choice.Size }).ToList(),
+                { SourceId = Ribbon.GetCommandId(choice.Source), GroupId = Ribbon.GetCommandId(choice.Group!), Size = choice.Size }).ToList(),
             });
         }
         return layout;
@@ -312,6 +314,10 @@ public static class RibbonCustomizationSerializer
 
     private static void ApplyLayout(Ribbon ribbon, RibbonLayoutDto layout)
     {
+        // An absent/unknown optional section preserves choices across rebuilt custom identities.
+        var retainedSelections = layout.Simplified is not { Version: 1 or 2 }
+            ? ribbon.SimplifiedOverrides.Select(pair => new KeyValuePair<RibbonTab, List<SimplifiedCommandChoice>>(pair.Key, pair.Value.ToList())).ToList()
+            : null;
         // 1. Catalog identity → live element, from the CURRENT ribbon (custom-group proxies are
         //    excluded by the catalog, so `sources` holds only real command controls + QAT items).
         //    `sources` is keyed by BOTH the app's explicit CommandId AND the auto-derived path id,
@@ -435,7 +441,7 @@ public static class RibbonCustomizationSerializer
         if (layout.IsQuickAccessVisible is { } visible)
             ribbon.SetCurrentValue(Ribbon.IsQuickAccessVisibleProperty, visible);
 
-        if (layout.Simplified is { Version: 1 } simplified)
+        if (layout.Simplified is { Version: 1 or 2 } simplified)
         {
             ribbon.ResetSimplifiedOverrides();
             var seenTabs = new HashSet<string>(StringComparer.Ordinal);
@@ -448,9 +454,31 @@ public static class RibbonCustomizationSerializer
                 var available = Ribbon.SimplifiedSources(tab, true);
                 ribbon.SetSimplifiedChoices(tab, saved.Commands.Select(command =>
                     (command, source: available.FirstOrDefault(entry => command.SourceId is { Length: > 0 }
-                        && Ribbon.GetCommandId(entry.Control) == command.SourceId)?.Control))
+                        && Ribbon.GetCommandId(entry.Control) == command.SourceId
+                        && (simplified.Version == 1 || command.GroupId is null || (command.GroupId is { Length: > 0 } && Ribbon.GetCommandId(entry.Group) == command.GroupId)))))
                     .Where(pair => pair.source is not null)
-                    .Select(pair => new SimplifiedCommandChoice(pair.source!, pair.command.Size)), false);
+                    .Select(pair => new SimplifiedCommandChoice(pair.source!.Control, pair.command.Size, pair.source.Group)), false);
+            }
+            ribbon.NotifySimplifiedCustomizationChanged();
+        }
+        else if (retainedSelections is { Count: > 0 })
+        {
+            ribbon.ResetSimplifiedOverrides();
+            foreach (var saved in retainedSelections)
+            {
+                var tab = ribbon.Tabs.Contains(saved.Key) ? saved.Key : ribbon.Tabs.FirstOrDefault(candidate =>
+                    Ribbon.GetCommandId(saved.Key) is { Length: > 0 } id && Ribbon.GetCommandId(candidate) == id && RibbonCustomizePage.IsCustomizableTab(candidate));
+                if (tab is null) continue;
+                var available = Ribbon.SimplifiedSources(tab, true);
+                var choices = new List<SimplifiedCommandChoice>();
+                foreach (var choice in saved.Value)
+                {
+                    var groupId = choice.Group is null ? null : Ribbon.GetCommandId(choice.Group);
+                    var source = available.FirstOrDefault(entry => Ribbon.SameSimplifiedCommand(entry.Control, choice.Source)
+                        && (choice.Group is null || entry.Group == choice.Group || (groupId is { Length: > 0 } && Ribbon.GetCommandId(entry.Group) == groupId)));
+                    if (source is not null) choices.Add(new SimplifiedCommandChoice(source.Control, choice.Size, source.Group));
+                }
+                ribbon.SetSimplifiedChoices(tab, choices, false);
             }
             ribbon.NotifySimplifiedCustomizationChanged();
         }
@@ -715,7 +743,7 @@ public static class RibbonCustomizationSerializer
 
     internal sealed class SimplifiedDto
     {
-        public int Version { get; set; } = 1;
+        public int Version { get; set; } = 2;
         public List<SimplifiedTabDto> Tabs { get; set; } = new();
     }
 
@@ -728,6 +756,7 @@ public static class RibbonCustomizationSerializer
     internal sealed class SimplifiedCommandDto
     {
         public string? SourceId { get; set; }
+        public string? GroupId { get; set; }
         public RibbonControlSize Size { get; set; } = RibbonControlSize.Medium;
     }
 

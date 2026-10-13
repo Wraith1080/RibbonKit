@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using RibbonKit.Animation;
 using RibbonKit.Controls;
 using RibbonKit.Localization;
@@ -15,6 +16,227 @@ namespace RibbonKit.Tests;
 
 public sealed class SimplifiedCustomizationTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Classic_only_or_unknown_sections_preserve_profiles_across_rebuilt_custom_tabs_and_groups(bool unknownVersion) => Sta.Run(() =>
+    {
+        using var host = new Host(); host.Click("PART_NewGroupButton");
+        host.SelectAvailable(host.First); host.Click("PART_AddButton");
+        host.Current.Items.Cast<SimplifiedCustomizeEntry>().Single().ShowLabel = false;
+        host.Click("PART_NewTabButton"); host.SelectAvailable(host.Second); host.Click("PART_AddButton"); host.Page.ApplyChanges(); host.Layout();
+        var tab = host.Ribbon.Tabs.Last(); string tabId = Ribbon.GetCommandId(tab)!;
+        var before = JsonNode.Parse(RibbonCustomizationSerializer.Serialize(host.Ribbon))!;
+        var legacy = before.DeepClone(); legacy.AsObject().Remove("Simplified");
+        if (unknownVersion) legacy["Simplified"] = JsonNode.Parse("{\"Version\":99,\"Tabs\":[]}");
+        RibbonCustomizationSerializer.Apply(host.Ribbon, legacy.ToJsonString()); host.Layout();
+        Assert.NotSame(tab, host.Ribbon.Tabs.Single(candidate => Ribbon.GetCommandId(candidate) == tabId));
+        var after = JsonNode.Parse(RibbonCustomizationSerializer.Serialize(host.Ribbon))!;
+        Assert.True(JsonNode.DeepEquals(before["Simplified"], after["Simplified"]));
+        Assert.Equal(2, host.Ribbon.GetSimplifiedChoices(host.Tab).Count(choice => choice.Source == host.First));
+        Assert.Contains(host.Ribbon.GetSimplifiedChoices(host.Tab), choice => choice.Source == host.First && choice.Size == RibbonControlSize.Small);
+    });
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Applying_membership_resolves_the_current_source_and_skips_removed_commands(bool replacementExists) => Sta.Run(() =>
+    {
+        using var host = new Host(); host.Click("PART_NewGroupButton");
+        var group = ((SimplifiedGroupChoice)host.Part<Selector>("PART_GroupSelector").SelectedItem).Group!;
+        host.SelectAvailable(host.First); host.Click("PART_AddButton"); host.GroupA.Items.Remove(host.First);
+        var replacement = new RibbonButton { Header = "Replacement copy" }; Ribbon.SetCommandId(replacement, "first");
+        if (replacementExists) host.GroupA.Items.Add(replacement);
+        host.Page.ApplyChanges(); host.Layout();
+        if (replacementExists)
+        {
+            Assert.Same(replacement, Ribbon.GetQuickAccessSource(group.Items.OfType<FrameworkElement>().Single()));
+            Assert.All(host.Ribbon.GetSimplifiedChoices(host.Tab).Where(choice => Ribbon.GetCommandId(choice.Source) == "first"), choice => Assert.Same(replacement, choice.Source));
+        }
+        else
+        {
+            Assert.Empty(group.Items);
+            Assert.DoesNotContain(host.Ribbon.GetSimplifiedChoices(host.Tab), choice => choice.Source == host.First);
+        }
+    });
+
+    [Fact]
+    public void Structure_draft_survives_mode_and_template_changes_and_cancel_leaves_no_live_edits() => Sta.Run(() =>
+    {
+        using var host = new Host(); string before = RibbonCustomizationSerializer.Serialize(host.Ribbon);
+        host.Page.RenameDraft(host.Tab, "Renamed Home"); host.Page.RenameDraft(host.GroupA, "Renamed Clipboard");
+        host.Click("PART_NewTabButton");
+        var tab = ((SimplifiedTabChoice)host.Part<Selector>("PART_TabSelector").SelectedItem).Tab;
+        host.Page.RenameDraft(tab, "Favorites"); host.Click("PART_NewGroupButton");
+        var group = ((SimplifiedGroupChoice)host.Part<Selector>("PART_GroupSelector").SelectedItem).Group!;
+        host.Page.RenameDraft(group, "Editing favorites"); host.SelectAvailable(host.Second); host.Click("PART_AddButton");
+        Assert.Equal(before, RibbonCustomizationSerializer.Serialize(host.Ribbon)); Assert.Empty(group.Items);
+        Assert.DoesNotContain(tab, host.Ribbon.Tabs);
+        host.Ribbon.LayoutMode = RibbonLayoutMode.Classic; host.Layout();
+        host.Ribbon.LayoutMode = RibbonLayoutMode.Simplified; host.Layout();
+        host.Page.Template = null; host.Layout(); host.Page.ClearValue(Control.TemplateProperty); host.Layout();
+        Assert.Same(tab, ((SimplifiedTabChoice)host.Part<Selector>("PART_TabSelector").SelectedItem).Tab);
+        Assert.Equal("Favorites", ((SimplifiedTabChoice)host.Part<Selector>("PART_TabSelector").SelectedItem).DisplayName);
+        Assert.Equal(new[] { host.Second }, host.Selected());
+        host.Page.CancelChanges(); host.Layout();
+        Assert.Single(host.Part<Selector>("PART_TabSelector").Items.Cast<object>());
+        Assert.Equal(before, RibbonCustomizationSerializer.Serialize(host.Ribbon));
+    });
+
+    [Fact]
+    public void Custom_group_membership_and_group_specific_profiles_apply_invoke_and_round_trip_independently() => Sta.Run(() =>
+    {
+        using var host = new Host(); host.Ribbon.AddToQuickAccess(host.First);
+        host.Click("PART_NewGroupButton");
+        var group = ((SimplifiedGroupChoice)host.Part<Selector>("PART_GroupSelector").SelectedItem).Group!;
+        string groupId = Ribbon.GetCommandId(group)!; host.Page.RenameDraft(group, "Favorites");
+        host.SelectAvailable(host.First); host.Click("PART_AddButton");
+        host.Current.Items.Cast<SimplifiedCustomizeEntry>().Single().ShowLabel = false;
+        host.SelectAvailable(host.Second); host.Click("PART_AddButton"); host.Click("PART_UpButton");
+        Assert.Empty(group.Items); Assert.Equal(new[] { host.Second, host.First }, host.Selected());
+        host.Page.ApplyChanges(); host.Layout();
+        Assert.Contains(group, host.Tab.Groups); Assert.Equal(RibbonGroupLayout.Stacked, group.Layout);
+        Assert.Equal(new[] { host.First, host.Second }, group.Items.OfType<FrameworkElement>().Select(Ribbon.GetQuickAccessSource));
+        var choices = host.Ribbon.GetSimplifiedChoices(host.Tab);
+        Assert.Equal(2, choices.Count(choice => choice.Source == host.First));
+        Assert.Equal(RibbonControlSize.Medium, choices.Single(choice => choice.Source == host.First && choice.Group == host.GroupA).Size);
+        Assert.Equal(RibbonControlSize.Small, choices.Single(choice => choice.Source == host.First && choice.Group == group).Size);
+        int clicks = 0; host.First.Click += (_, _) => clicks++;
+        var copies = host.ToolBar.Items.OfType<RibbonButton>().Where(copy => Ribbon.GetQuickAccessSource(copy) == host.First).ToArray();
+        Assert.Equal(2, copies.Length); Assert.NotSame(copies[0], copies[1]);
+        foreach (var copy in copies) copy.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+        host.Layout();
+        Assert.Equal(2, clicks);
+        // Context actions on an overflow copy retain its group assignment.
+        host.ToolBar.Width = 1; host.Layout(); host.ToolBar.OpenOverflow(); host.Layout();
+        var customCopy = host.ToolBar.OverflowEntries.Single(copy => Ribbon.GetQuickAccessSource(copy) == host.First && copy.GetValue(Ribbon.SimplifiedCommandGroupProperty) == group);
+        var remove = host.Ribbon.CreateRibbonContextMenu(customCopy).Items.OfType<MenuItem>().Single(item => Equals(item.Header, RibbonLocalization.GetString(RibbonString.RemoveFromSimplifiedRibbon)));
+        remove.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent)); host.Layout();
+        Assert.Single(host.Ribbon.GetSimplifiedChoices(host.Tab), choice => choice.Source == host.First);
+        Assert.True(host.Ribbon.PinToSimplifiedRibbon((FrameworkElement)group.Items[0])); host.Layout();
+        host.ToolBar.Width = double.NaN; host.Layout();
+        string saved = RibbonCustomizationSerializer.Serialize(host.Ribbon);
+        Assert.Equal(2, JsonNode.Parse(saved)!["Simplified"]!["Version"]!.GetValue<int>());
+        RibbonCustomizationSerializer.Apply(host.Ribbon, saved); host.Layout();
+        var restored = host.Tab.Groups.Single(candidate => Ribbon.GetCommandId(candidate) == groupId);
+        Assert.NotSame(group, restored); Assert.Equal("Favorites", restored.Header);
+        Assert.Equal(2, host.Ribbon.GetSimplifiedChoices(host.Tab).Count(choice => choice.Source == host.First));
+        Assert.Contains(host.Ribbon.GetSimplifiedChoices(host.Tab), choice => choice.Group == restored && choice.Source == host.Second);
+        Assert.True(host.Ribbon.IsInQuickAccess(host.First));
+        host.Page.CancelChanges(); host.Layout(); host.Click("PART_ResetButton"); host.Page.ApplyChanges(); host.Layout();
+        Assert.Equal(new[] { host.First, host.Third }, host.Row()); Assert.Equal(2, restored.Items.Count);
+        Assert.Equal(new object[] { host.First, host.Second }, host.GroupA.Items.Cast<object>());
+    });
+
+    [Fact]
+    public void A_new_tab_accepts_whole_ribbon_commands_and_classic_editor_refreshes_after_apply() => Sta.Run(() =>
+    {
+        using var host = new Host();
+        host.Ribbon.PinToSimplifiedRibbon(host.Second);
+        var classic = new RibbonCustomizePage { Ribbon = host.Ribbon };
+        ((Grid)host.Window.Content).Children.Add(classic); host.Layout();
+        host.Click("PART_NewTabButton");
+        var tab = ((SimplifiedTabChoice)host.Part<Selector>("PART_TabSelector").SelectedItem).Tab;
+        host.Page.RenameDraft(tab, "My tools"); host.SelectAvailable(host.Second); host.Click("PART_AddButton");
+        host.Page.ApplyChanges(); host.Layout();
+        Assert.Equal(new[] { host.Tab, tab }, host.Ribbon.Tabs);
+        Assert.Equal(new[] { host.Second }, host.Ribbon.GetSimplifiedChoices(tab).Select(choice => choice.Source));
+        Assert.Same(host.Second, Ribbon.GetQuickAccessSource(tab.Groups.Single().Items.OfType<FrameworkElement>().Single()));
+        var declaration = tab.Groups.Single().Items.OfType<FrameworkElement>().Single();
+        Assert.True(host.Ribbon.RemoveFromSimplifiedRibbon(declaration));
+        Assert.Empty(host.Ribbon.GetSimplifiedChoices(tab));
+        Assert.Contains(host.Ribbon.GetSimplifiedChoices(host.Tab), choice => choice.Source == host.Second);
+        Assert.True(host.Ribbon.PinToSimplifiedRibbon(declaration)); host.Layout();
+        host.Ribbon.SelectedTab = tab; host.Ribbon.LayoutMode = RibbonLayoutMode.Classic; host.Layout();
+        Assert.True(classic.IsEnabled);
+        var tree = (TreeView)classic.Template.FindName("PART_Tree", classic);
+        Assert.Contains(tree.Items.Cast<RibbonCustomizeNode>(), node => node.Item == tab && node.Children.Single().Children.Count == 1);
+        host.Ribbon.LayoutMode = RibbonLayoutMode.Simplified; host.Layout();
+        string saved = RibbonCustomizationSerializer.Serialize(host.Ribbon), id = Ribbon.GetCommandId(tab)!;
+        RibbonCustomizationSerializer.Apply(host.Ribbon, saved); host.Layout();
+        var restored = host.Ribbon.Tabs.Single(candidate => Ribbon.GetCommandId(candidate) == id);
+        Assert.Equal("My tools", restored.Header); Assert.Same(restored.Groups.Single(), host.Ribbon.GetSimplifiedChoices(restored).Single().Group);
+        Assert.Same(host.Second, host.Ribbon.GetSimplifiedChoices(restored).Single().Source);
+    });
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Options_OK_applies_new_structure_and_Cancel_discards_it(bool ok) => Sta.Run(() =>
+    {
+        using var host = new Host(); string before = RibbonCustomizationSerializer.Serialize(host.Ribbon);
+        var page = new RibbonSimplifiedCustomizePage { Ribbon = host.Ribbon };
+        var dialog = new RibbonOptionsDialog { Width = 800, Height = 600, ShowActivated = false, ShowInTaskbar = false, Left = -10000, Top = -10000 };
+        dialog.Pages.Add(new RibbonOptionsPage { Content = page, Header = "Customize Ribbon" }); dialog.Show(); Sta.Drain();
+        ((ButtonBase)page.Template.FindName("PART_NewTabButton", page)).RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); Sta.Drain();
+        var list = (ListBox)page.Template.FindName("PART_AvailableList", page);
+        list.SelectedItem = list.Items.Cast<SimplifiedCustomizeEntry>().Single(entry => entry.Control == host.First);
+        ((ButtonBase)page.Template.FindName("PART_AddButton", page)).RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+        Assert.Equal(before, RibbonCustomizationSerializer.Serialize(host.Ribbon));
+        if (ok) ((ButtonBase)dialog.Template.FindName("PART_OkButton", dialog)).RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+        else dialog.Close(); host.Layout();
+        Assert.Equal(ok ? 2 : 1, host.Ribbon.Tabs.Count);
+        if (!ok) Assert.Equal(before, RibbonCustomizationSerializer.Serialize(host.Ribbon));
+        else Assert.Single(host.Ribbon.GetSimplifiedChoices(host.Ribbon.Tabs.Last()));
+    });
+
+    [Fact]
+    public void Group_selection_limits_builtin_membership_and_rename_dialog_only_changes_the_draft() => Sta.Run(() =>
+    {
+        using var host = new Host();
+        var selector = host.Part<Selector>("PART_GroupSelector");
+        selector.SelectedItem = selector.Items.Cast<SimplifiedGroupChoice>().Single(entry => entry.Group == host.GroupA); host.Layout();
+        host.SelectAvailable(host.Third); Assert.False(host.Part<ButtonBase>("PART_AddButton").IsEnabled);
+        Assert.DoesNotContain(host.Available.Items.Cast<SimplifiedCustomizeEntry>(), entry => entry.Control is RibbonGroup);
+        host.Page.FlowDirection = FlowDirection.RightToLeft;
+        Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+        {
+            var dialog = Application.Current.Windows.OfType<RibbonCustomizeEditDialog>().Single(); dialog.ApplyTemplate();
+            ((TextBox)dialog.Template.FindName("PART_NameBox", dialog)).Text = "Draft Home";
+            ((ButtonBase)dialog.Template.FindName("PART_OkButton", dialog)).RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+        }));
+        host.Click("PART_RenameTabButton");
+        Assert.Equal("Home", host.Tab.Header);
+        Assert.Equal("Draft Home", ((SimplifiedTabChoice)host.Part<Selector>("PART_TabSelector").SelectedItem).DisplayName);
+        Save(host.Window, "structure-editor-rtl");
+        host.Page.CancelChanges(); Assert.Equal("Home", host.Tab.Header);
+    });
+
+    [Fact]
+    public void Version_one_migrates_and_unknown_group_ids_do_not_move_commands_to_another_group() => Sta.Run(() =>
+    {
+        using var host = new Host(); host.Ribbon.PinToSimplifiedRibbon(host.Second);
+        var legacy = JsonNode.Parse(RibbonCustomizationSerializer.Serialize(host.Ribbon))!;
+        legacy["Simplified"]!["Version"] = 1;
+        foreach (var command in legacy["Simplified"]!["Tabs"]![0]!["Commands"]!.AsArray()) command!.AsObject().Remove("GroupId");
+        host.Ribbon.ResetSimplifiedOverrides(); RibbonCustomizationSerializer.Apply(host.Ribbon, legacy.ToJsonString()); host.Layout();
+        Assert.Equal(new[] { host.First, host.Third, host.Second }, host.Row());
+        Assert.All(host.Ribbon.GetSimplifiedChoices(host.Tab), choice => Assert.NotNull(choice.Group));
+        var current = JsonNode.Parse(RibbonCustomizationSerializer.Serialize(host.Ribbon))!;
+        current["Simplified"]!["Tabs"]![0]!["Commands"]![0]!["GroupId"] = "missing";
+        RibbonCustomizationSerializer.Apply(host.Ribbon, current.ToJsonString()); host.Layout();
+        Assert.Equal(new[] { host.Third, host.Second }, host.Row());
+        // Untagged built-in groups preserve the legacy source-only fallback.
+        host.GroupA.ClearValue(Ribbon.CommandIdProperty);
+        host.Ribbon.PinToSimplifiedRibbon(host.First);
+        string saved = RibbonCustomizationSerializer.Serialize(host.Ribbon); host.Ribbon.ResetSimplifiedOverrides();
+        RibbonCustomizationSerializer.Apply(host.Ribbon, saved); host.Layout(); Assert.Contains(host.First, host.Row());
+    });
+
+    [Theory]
+    [InlineData("{\"Version\":2,\"Tabs\":null}")]
+    [InlineData("{\"Version\":2,\"Tabs\":[{\"TabId\":\"home\"}]}")]
+    [InlineData("{\"Version\":2,\"Tabs\":[{\"TabId\":\"home\",\"Commands\":[null]}]}")]
+    [InlineData("{\"Version\":2,\"Tabs\":[{\"TabId\":\"home\",\"Commands\":[{\"SourceId\":\"first\",\"GroupId\":{},\"Size\":\"Medium\"}]}]}")]
+    public void Malformed_version_two_leaves_all_live_structure_and_selections_unchanged(string section) => Sta.Run(() =>
+    {
+        using var host = new Host(); host.Ribbon.PinToSimplifiedRibbon(host.Second);
+        string before = RibbonCustomizationSerializer.Serialize(host.Ribbon);
+        var json = JsonNode.Parse(before)!; json["Tabs"]![0]!["Header"] = "Must not apply"; json["Simplified"] = JsonNode.Parse(section);
+        RibbonCustomizationSerializer.Apply(host.Ribbon, json.ToJsonString()); host.Layout();
+        Assert.Equal(before, RibbonCustomizationSerializer.Serialize(host.Ribbon));
+    });
+
     [Theory]
     [InlineData(FlowDirection.LeftToRight)]
     [InlineData(FlowDirection.RightToLeft)]
@@ -305,6 +527,11 @@ public sealed class SimplifiedCustomizationTests
             RibbonLocalization.Provider = new PageProvider(); host.Layout();
             Assert.Equal("localized:ResetTab", host.Part<Button>("PART_ResetButton").Content);
             Assert.Equal("localized:Apply", host.Part<Button>("PART_ApplyButton").Content);
+            Assert.Equal("localized:RenameTab", host.Part<Button>("PART_RenameTabButton").Content);
+            Assert.Equal("localized:AllGroups", ((SimplifiedGroupChoice)host.Part<Selector>("PART_GroupSelector").SelectedItem).DisplayName);
+            host.Tab.Header = "Changed by host"; host.GroupA.Header = "Host group"; host.Layout();
+            Assert.Equal("Changed by host", ((SimplifiedTabChoice)host.Part<Selector>("PART_TabSelector").SelectedItem).DisplayName);
+            Assert.Equal("Host group", host.Part<Selector>("PART_GroupSelector").Items.Cast<SimplifiedGroupChoice>().Single(entry => entry.Group == host.GroupA).DisplayName);
             Assert.Contains(Descendants(host.Page).OfType<RibbonCheckBox>(), check => check.Header == "localized:ShowLabel");
         }
         finally { RibbonLocalization.Provider = previous; }

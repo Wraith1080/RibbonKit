@@ -1590,15 +1590,14 @@ public partial class Ribbon : Control
             menu.Items.Add(addItem);
             if (LayoutMode == RibbonLayoutMode.Simplified)
             {
-                FrameworkElement source = OriginalSimplifiedSource(target);
-                RibbonTab? tab = FindSimplifiedTab(source);
-                bool pinned = tab is not null && GetSimplifiedChoices(tab).Any(choice => SameSimplifiedCommand(choice.Source, source));
+                var (tab, entry) = FindSimplifiedTarget(target);
+                bool pinned = tab is not null && entry is not null && GetSimplifiedChoices(tab).Any(choice => choice.Group == entry.Group && SameSimplifiedCommand(choice.Source, entry.Control));
                 var pin = new System.Windows.Controls.MenuItem
                 {
                     Header = RibbonLocalization.GetString(pinned ? RibbonString.RemoveFromSimplifiedRibbon : RibbonString.PinToSimplifiedRibbon),
                     IsEnabled = tab is not null,
                 };
-                pin.Click += (_, _) => { if (pinned) RemoveFromSimplifiedRibbon(source); else PinToSimplifiedRibbon(source); };
+                pin.Click += (_, _) => { if (pinned) RemoveFromSimplifiedRibbon(target); else PinToSimplifiedRibbon(target); };
                 menu.Items.Add(pin);
             }
         }

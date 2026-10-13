@@ -214,4 +214,8 @@
   <data name="ResetTab" xml:space="preserve"><value>Reset tab</value></data>
   <data name="ResetAllTabs" xml:space="preserve"><value>Reset all tabs</value></data>
   <data name="Apply" xml:space="preserve"><value>Apply</value></data>
+  <data name="AllGroups" xml:space="preserve"><value>All groups</value></data>
+  <data name="SimplifiedGroup" xml:space="preserve"><value>Group</value></data>
+  <data name="RenameTab" xml:space="preserve"><value>Rename tab…</value></data>
+  <data name="RenameGroup" xml:space="preserve"><value>Rename group…</value></data>
 </root>

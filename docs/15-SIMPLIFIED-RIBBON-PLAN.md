@@ -2,6 +2,7 @@
 
 > Active implementation plan. First layout slice authorized 2026-10-13.
 > S2 customization implemented after the user's continuation on 2026-10-13.
+> S3 shared custom-tab/group draft editor implemented 2026-10-13; review pending.
 
 ## Layout contract
 
@@ -76,36 +77,48 @@ S2 implementation:
    ordering, reset, cancellation, malformed/older JSON, missing commands,
    contextual/merged commands, RTL, localization and independent-consumer use.
 
-### Custom tab and group editor proposal
+### Custom tab and group editor
 
-The user asked how creation will fit this command-list editor. Proposed next
-bounded slice; these creation controls are not implemented yet:
+S3 uses the shared page, templates, classic identity helpers and name dialog:
 
-- Add New Tab/New Group/Rename actions under the selected-command list, with a
-  full-column group selector alongside the tab selector. Left-side discovery
-  must offer commands from the whole ribbon, so a new empty tab can receive
-  commands. Groups remain structure choices, never available command entries.
-- Reuse the existing custom tab/group identities and source-linked proxies.
-  Structure belongs to the shared ribbon and appears in both layouts;
-  simplified selection/order/labels remain a separate per-layout profile.
-- Draft new/renamed structure and membership until Apply/OK. Cancel must leave
-  no created tabs/groups behind. Reset-current/all must state whether it resets
-  selections or custom structure; the current reset actions reset selections.
-- Record explicit target-group identity with each selected command. Current
-  S2 infers the group from original source discovery; that is insufficient when
-  the same command also belongs to a new custom group. Extend the optional
-  serializer section with migration from version 1 and preserve missing/transient
-  source behavior before exposing that assignment.
-- Verify creation, naming, command membership, group placement/dividers, save/load,
-  reset/cancel, switching modes and a consumer without Showcase resources.
+- Tab/group selectors fill the selected-command column. All Groups retains the
+  complete ordered row; choosing a group filters its selections and targets Add.
+  Discovery covers the whole eligible ribbon with tab/group headings. Groups
+  remain structure choices, never available command entries.
+- New Tab stages a tab with one custom group; New Group stages an insertion
+  after the selected group, or appends with All Groups selected. Rename Tab and
+  Rename Group stage names. Footer actions wrap within the existing fill page,
+  preserving room for Touch rows at short heights.
+- Detached structures and source references remain drafts through retemplate
+  and mode switches. Apply/OK attaches the structures and creates source-linked
+  membership copies. Cancel leaves no live mutations or proxy bindings behind.
+  Built-in groups accept selections of their own commands; new membership goes
+  into custom groups. Names and membership appear in both layouts. The classic
+  editor refreshes when it becomes enabled again.
+- Simplified selection/order/labels remain a separate profile, keyed by source
+  and target group. The same source can appear in different groups with distinct
+  labels/order. Inline copies are cached by declaration, and inline/overflow
+  context actions retain the target group. Remove/reset affect selections;
+  shared tabs/groups and their command membership remain available. Whole-ribbon
+  structure removal/reordering stays with the existing Classic editor.
+- Serializer version 2 records GroupId alongside SourceId/Size and reads version
+  1 by inferring the first eligible group. Stable group IDs preserve assignments;
+  untagged built-in groups retain source-only fallback. Unknown group IDs skip
+  their commands, and malformed shapes reject Apply before any live mutation.
+  Sources are resolved again when a draft is applied, preserving current host
+  replacements and skipping missing/transient commands. Absent/unknown optional
+  sections remap existing profiles across rebuilt custom tab/group identities.
+- The only public additions in this slice are four localized string identifiers
+  (AllGroups, SimplifiedGroup, RenameTab, RenameGroup); their values append to the
+  baseline. Existing page/API/event contracts provide the host integration.
 
 ## Delivery and acceptance
 
 | Slice | Scope | Status |
 | --- | --- | --- |
 | S1 | Shared layout/selection/priority, native full-group access, keyboard/KeyTips, Showcase toggle and classic-customization gating | Implemented; user accepted the current visuals 2026-10-13. Native-input/DPI and earlier combined/full-suite limits remain open |
-| S2 | Dedicated customization page, pin/unpin, separate ordered state and persistence | Implemented 2026-10-13; focused checks/consumer evidence below; awaiting user visual review |
-| S3 | Shared custom-tab/group creation from the simplified editor | Proposed after user review; implementation pending |
+| S2 | Dedicated customization page, pin/unpin, separate ordered state and persistence | Implemented; user accepted scrolling/focus repairs 2026-10-13 and committed them at 1a2a743. Broader end-of-feature gates remain below |
+| S3 | Shared custom-tab/group creation from the simplified editor | Implemented 2026-10-13; focused evidence below; awaiting user review |
 
 S1 requires focused runtime regressions, a RibbonKit-only consumer matrix, normal
 Debug Showcase build, Release solution build/test for the additive public API,
@@ -318,11 +331,32 @@ requests so dismissal cannot later steal focus from another control.
 | Independent editor consumer | 112 theme/dark/density/direction/simulated-DPI combinations passed, now with two source groups, fractional scrolling and last-command visibility |
 | Independent overflow consumer | 56 theme/dark/density/direction combinations passed in both ribbon modes, including opening focus and Escape return. Root DPI is 100% for light and 150% for dark. Focus checks start from an active window and focused opener; the initial inactive-window fixture had no keyboard focus |
 | Builds | Normal Release runtime, net8/net9, and normal Debug Showcase passed with 0 warnings/errors |
-| Full suite and live review | Full testing remains deferred until the end. Physical wheel/thumb/input and user review remain pending |
+| Full suite and live review | User accepted these scrolling/focus repairs 2026-10-13. Full testing remains deferred until the end; broader native/DPI gates remain below |
 
-Logs are `TestResults/simplified-scroll-focus-*.log`. Prior changes are committed
-at `e9a98c7`; this repair is uncommitted. The proposed S3 structure editor has not
-started.
+Logs are `TestResults/simplified-scroll-focus-*.log`. The repair is committed at
+`1a2a743` after the user's confirmation.
+
+### S3 focused evidence — 2026-10-13
+
+| Check | Result |
+| --- | --- |
+| Related runtime baseline | 83/85 initially passed; the two scrolling cases exposed a Touch viewport smaller than one row. Consolidating the footer repaired both |
+| New structure/migration/cancel cases | Initial selection passed 10/13; the two scrolling cases and one invocation assertion were repaired in a 3/3 focused run. Invocation assertions now drain the native UIA dispatch before counting calls. This is assembled evidence, not a clean combined/full run |
+| Final presentation/localization | 6/6 passed: responsive columns, native rename dialog, live host/provider names, mode/template draft retention and bounded Office/Crystal rendering |
+| Final scrolling | 2/2 passed after restoring standard footer button minimum widths, with Compact/Touch inside both direction cases |
+| Source replacement/removal during drafts | 2/2 passed: membership binds to the current source object or skips a removed command |
+| Legacy/unknown optional sections | 13/13 passed, including profile preservation across recreated custom tabs/groups and existing malformed/absent-section cases |
+| Copy targets | 4/4 passed: explicit copies retain their tab/group even when another tab is active; original commands retain active-tab preference; inline/overflow removal leaves other group copies selected |
+| Overflow/keyboard regressions | 30/30 passed, including both hosts, entry focus/Escape, menu sizing, submenu placement/fallback and nested source restoration |
+| Independent consumer | Final 112 theme/dark/density/direction/simulated-DPI cases passed: creation/cancel/apply, two custom groups, source membership, serialization/restoration, reset preserving structure, both selectors and all footer actions at 560/700/900-pixel widths |
+| Selected visual comparison | Existing Office2024 RTL QAT customization scene passed 1/1 with unchanged approval/tolerance |
+| Render inspection | Inspected the S3 independent-consumer draft with named tab/group and the RTL editor capture. Capture waits for layout after modal rename |
+| Builds | Normal Release solution and Debug Showcase passed, 0 warnings/errors |
+| Full/native acceptance | Deferred: full end-of-feature suite, physical input/mixed-monitor checks, and user review of S3 creation/naming/membership and restart behavior |
+
+Logs are `TestResults/simplified-structure-*.log`; rendered evidence lives in the
+normal Release test outputs under `TestResults/simplified-customization/`.
+S3 changes remain uncommitted.
 
 ### Remaining acceptance
 
@@ -338,4 +372,5 @@ started.
   full-suite pass is claimed.
 - Full end-of-feature validation and human acceptance of the S2 page's applied,
   canceled and restarted selections.
-- The proposed S3 custom-tab/group editor and its persistence/cancellation gates.
+- Human acceptance of S3's custom-tab/group editor and its persistence/cancellation
+  behavior; automated focused evidence is recorded above.

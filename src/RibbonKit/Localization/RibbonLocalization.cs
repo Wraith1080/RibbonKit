@@ -225,6 +225,14 @@ public enum RibbonString
     ResetAllTabs,
     /// <summary>Commit the current customization draft.</summary>
     Apply,
+    /// <summary>All groups in the simplified customization group selector.</summary>
+    AllGroups,
+    /// <summary>Accessible name of the simplified customization group selector.</summary>
+    SimplifiedGroup,
+    /// <summary>Rename the selected ribbon tab.</summary>
+    RenameTab,
+    /// <summary>Rename the selected ribbon group.</summary>
+    RenameGroup,
 }
 
 /// <summary>
