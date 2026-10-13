@@ -221,3 +221,27 @@ and rounding geometry; actual/diff inspection identified the startup drift.
 Final Release solution and Debug Showcase builds passed. Current acceptance,
 assembled runtime selections, full-run limits and the proposed structure editor
 belong to the active plan.
+
+#### Pixel scrolling and overflow focus handoff — 2026-10-13
+
+The grouped simplified command list inherited logical content scrolling. Native
+group containers could become the scroll units, giving group jumps rather than
+small offsets. Both simplified lists now set CanContentScroll=false through the
+existing frame's template binding. Native line/thumb scrolling and selected-item
+visibility remain WPF-owned; classic/QAT customization templates are unchanged.
+
+Overflow focus had been queued only by the toolbar's Up/Down handler. The popup's
+Opened lifecycle now queues the same handoff for click, Enter/Space and KeyTips,
+after proxy realization. A pending Up request selects the last eligible row;
+other paths select the first. Focus falls into native template children for
+non-focusable dropdown/group containers. Request generations and popup identity
+guard deferred work across close/reopen/template replacement. Escape's existing
+return callback and outside-press behavior remain intact.
+
+Native focus tests need an active owner window and a focused opener to model a
+user opening a menu. An inactive independent fixture retained no keyboard focus;
+activating its offscreen window established that prerequisite. Focused runtime
+scroll/navigation and public-resource-only editor/overflow consumer checks passed;
+the active plan records exact counts and the earlier combined-run failure.
+Normal Release runtime and Debug Showcase builds passed. Physical input, user
+review and final full testing remain separate gates.

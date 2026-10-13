@@ -296,6 +296,34 @@ Logs are `TestResults/simplified-customization-*`. Captures remain in normal
 Release test output under `TestResults/simplified-customization/`; the initially
 failing actual/diff are retained in repository `TestResults/visual/`.
 
+### Grouped-list scrolling and overflow focus — 2026-10-13
+
+The simplified editor's available and selected lists now use native pixel
+scrolling. Group headings no longer become whole-group scroll steps; small
+scrollbar offsets and line scrolling retain partial rows. Selecting the last
+command still brings it into view. This is scoped to the simplified page.
+
+Both QAT and simplified overflow transfer focus after their entries are realized
+on every opening path, including click, Enter/Space and KeyTips. Disabled entries
+are skipped; dropdown/group entries can focus their native inner button. Up
+enters the last eligible entry, other opening paths enter the first, and Escape
+returns to the opener. Closing/reopening/retemplating invalidates pending focus
+requests so dismissal cannot later steal focus from another control.
+
+| Check | Result |
+| --- | --- |
+| Focused grouped/selected scrolling | 2/2 passed, with both densities inside each direction case: fractional offsets, native line scrolling and last-command visibility |
+| Focused overflow navigation | Final 10/10 passed: both hosts, directions and densities, native toggle click handler, synthetic Enter/Space/Up/Down, disabled-entry skipping, Tab navigation, Escape and cancellation of deferred focus |
+| Related runtime regressions | Larger selection passed 74/75; one new focus case failed. Its isolated retry passed, then the focus fixture was given an active owner window and the final ten-case selection passed. This is assembled focused evidence, not a clean combined/full run |
+| Independent editor consumer | 112 theme/dark/density/direction/simulated-DPI combinations passed, now with two source groups, fractional scrolling and last-command visibility |
+| Independent overflow consumer | 56 theme/dark/density/direction combinations passed in both ribbon modes, including opening focus and Escape return. Root DPI is 100% for light and 150% for dark. Focus checks start from an active window and focused opener; the initial inactive-window fixture had no keyboard focus |
+| Builds | Normal Release runtime, net8/net9, and normal Debug Showcase passed with 0 warnings/errors |
+| Full suite and live review | Full testing remains deferred until the end. Physical wheel/thumb/input and user review remain pending |
+
+Logs are `TestResults/simplified-scroll-focus-*.log`. Prior changes are committed
+at `e9a98c7`; this repair is uncommitted. The proposed S3 structure editor has not
+started.
+
 ### Remaining acceptance
 
 - Human review of S2's customization page, ordering and labels. The earlier S1

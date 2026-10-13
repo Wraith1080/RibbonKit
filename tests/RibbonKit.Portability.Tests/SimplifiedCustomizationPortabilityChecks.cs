@@ -29,13 +29,15 @@ internal static class SimplifiedCustomizationPortabilityChecks
                 var ribbon = new Ribbon { LayoutMode = RibbonLayoutMode.Simplified, Density = density };
                 var tab = new RibbonTab { Header = "Home" }; Ribbon.SetCommandId(tab, "home");
                 var group = new RibbonGroup { Header = "Editing" }; Ribbon.SetCommandId(group, "editing");
+                var otherGroup = new RibbonGroup { Header = "Formatting" }; Ribbon.SetCommandId(otherGroup, "formatting");
                 var first = new RibbonButton { Header = "Copy" }; Ribbon.SetCommandId(first, "copy");
                 Ribbon.SetSimplifiedPlacement(first, RibbonSimplifiedPlacement.Inline); group.Items.Add(first);
                 for (int i = 0; i < 24; i++)
                 {
-                    var button = new RibbonButton { Header = $"Command {i}" }; Ribbon.SetCommandId(button, $"command-{i}"); group.Items.Add(button);
+                    var button = new RibbonButton { Header = $"Command {i}" }; Ribbon.SetCommandId(button, $"command-{i}");
+                    (i < 12 ? group : otherGroup).Items.Add(button);
                 }
-                tab.Groups.Add(group); ribbon.Tabs.Add(tab);
+                tab.Groups.Add(group); tab.Groups.Add(otherGroup); ribbon.Tabs.Add(tab);
                 var page = new RibbonSimplifiedCustomizePage { Ribbon = ribbon };
                 var classic = new RibbonOptionsPage { Header = "Classic", Content = new RibbonCustomizePage { Ribbon = ribbon } };
                 var simplified = new RibbonOptionsPage { Header = "Simplified", Content = page };
@@ -69,6 +71,16 @@ internal static class SimplifiedCustomizationPortabilityChecks
                     }
                     var available = Part<ListBox>(page, "PART_AvailableList"); var current = Part<ListBox>(page, "PART_CurrentList");
                     Assert.Equal(25, available.Items.Count); Assert.Single(current.Items.Cast<object>());
+                    var scroll = Part<ScrollViewer>(available, "PART_ScrollViewer");
+                    Assert.False(scroll.CanContentScroll); Assert.False(Part<ScrollViewer>(current, "PART_ScrollViewer").CanContentScroll);
+                    scroll.ScrollToVerticalOffset(7.5); Layout(dialog);
+                    Assert.InRange(scroll.VerticalOffset, 7, 8);
+                    available.SelectedIndex = available.Items.Count - 1; available.ScrollIntoView(available.SelectedItem); Layout(dialog);
+                    var last = (ListBoxItem)available.ItemContainerGenerator.ContainerFromIndex(available.SelectedIndex);
+                    Rect lastBounds = last.TransformToAncestor(scroll).TransformBounds(new Rect(last.RenderSize));
+                    Assert.InRange(lastBounds.Top, -1, scroll.ViewportHeight);
+                    Assert.InRange(lastBounds.Bottom, 0, scroll.ViewportHeight + 1);
+                    scroll.ScrollToTop(); Layout(dialog);
                     available.SelectedIndex = 1; Click(page, "PART_AddButton"); Layout(dialog);
                     Assert.Equal(2, current.Items.Count);
                     string before = RibbonCustomizationSerializer.Serialize(ribbon);

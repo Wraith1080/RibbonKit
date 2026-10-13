@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using RibbonKit.Animation;
@@ -39,7 +40,7 @@ internal static class OverflowMenuPortabilityChecks
             Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
         try
         {
-            ThemeManager.Apply(application, RibbonTheme.Office2024); window.Show(); Layout(window);
+            ThemeManager.Apply(application, RibbonTheme.Office2024); window.Show(); window.Activate(); Layout(window);
             foreach (var theme in Enum.GetValues<RibbonTheme>())
             foreach (bool dark in new[] { false, true })
             foreach (var density in Enum.GetValues<RibbonDensity>())
@@ -68,10 +69,13 @@ internal static class OverflowMenuPortabilityChecks
                         Assert.InRange(toolbar.ActualHeight, expected - pixel, expected + pixel);
                     }
                     var more = (ToggleButton)toolbar.Template.FindName("PART_OverflowButton", toolbar);
+                    Assert.True(more.Focus());
                     more.IsChecked = true; Layout(window);
                     var root = (Popup)toolbar.Template.FindName("PART_OverflowPopup", toolbar);
                     Assert.True(root.IsOpen);
                     var entries = (ItemsControl)toolbar.Template.FindName("PART_OverflowHost", toolbar);
+                    var initial = entries.Items.OfType<FrameworkElement>().First(entry => entry.IsEnabled);
+                    Assert.True(initial.IsKeyboardFocusWithin, $"{theme}/{dark}/{density}/{direction}/{mode}: initial={initial}, visible={initial.IsVisible}, focusable={initial.Focusable}, focused={Keyboard.FocusedElement}");
                     foreach (var row in entries.Items.OfType<FrameworkElement>()) CheckRow(row, minimum);
                     foreach (string header in new[] { "Select", "Paste", "Size", "Shapes", "Styles", "Editing" })
                     {
@@ -101,7 +105,10 @@ internal static class OverflowMenuPortabilityChecks
                     Assert.Equal(0, combo.SelectedIndex); Assert.Single(gallery.Items); Assert.Single(strip.Items);
                     var native = (Popup)group.Template.FindName("PART_Popup", group);
                     Assert.Equal(PlacementMode.Bottom, native.Placement); Assert.Null(native.CustomPopupPlacementCallback);
-                    more.IsChecked = false; Layout(window);
+                    var focused = (UIElement)Keyboard.FocusedElement;
+                    InputManager.Current.ProcessInput(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(focused)!, Environment.TickCount, Key.Escape)
+                        { RoutedEvent = Keyboard.PreviewKeyDownEvent });
+                    Layout(window); Assert.False(root.IsOpen); Assert.True(more.IsKeyboardFocused);
                 }
             }
         }

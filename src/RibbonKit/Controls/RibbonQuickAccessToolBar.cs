@@ -53,6 +53,8 @@ public class RibbonQuickAccessToolBar : ItemsControl
     private ItemsControl? _overflowHost;
     private PopupDismissHelper? _dismiss;
     private bool _overflowUpdatePending;
+    private bool _focusLastOnOpen;
+    private int _overflowFocusRequest;
 
     // Flyout proxy per quick-access item, kept for the toolbar's lifetime. See GetOrCreateEntry:
     // rebuilding these per open strands borrowed drop-down menus.
@@ -148,15 +150,30 @@ public class RibbonQuickAccessToolBar : ItemsControl
     {
         base.OnPreviewKeyDown(e);
         if (e.Handled || _overflowButton?.IsKeyboardFocusWithin != true || e.Key is not (Key.Down or Key.Up)) return;
-        OpenOverflow();
         bool last = e.Key == Key.Up;
+        if (_overflowPopup is { IsOpen: true }) QueueOverflowFocus(last);
+        else
+        {
+            _focusLastOnOpen = last;
+            OpenOverflow();
+        }
+        e.Handled = true;
+    }
+
+    private void QueueOverflowFocus(bool last)
+    {
+        var popup = _overflowPopup;
+        int request = ++_overflowFocusRequest;
         Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
         {
-            var candidates = OverflowEntries.Where(entry => entry.IsEnabled && entry.IsVisible).ToArray();
-            if ((last ? candidates.LastOrDefault() : candidates.FirstOrDefault()) is not { } entry) return;
-            if (!entry.Focus()) entry.MoveFocus(new TraversalRequest(last ? FocusNavigationDirection.Last : FocusNavigationDirection.First));
+            // A dismiss, reopen or template replacement supersedes this realization request.
+            if (request != _overflowFocusRequest || !ReferenceEquals(popup, _overflowPopup) || popup?.IsOpen != true) return;
+            var candidates = OverflowEntries.Where(entry => entry.IsEnabled && entry.IsVisible);
+            foreach (var entry in last ? candidates.Reverse() : candidates)
+            {
+                if (entry.Focus() || entry.MoveFocus(new TraversalRequest(last ? FocusNavigationDirection.Last : FocusNavigationDirection.First))) break;
+            }
         }));
-        e.Handled = true;
     }
 
     /// <inheritdoc />
@@ -268,6 +285,10 @@ public class RibbonQuickAccessToolBar : ItemsControl
         // Keep motion targeted at its Border child so PlayFlyoutOpen fades the chrome and slides
         // the padded content, preserving §3.42's no-clipping invariant.
         RibbonMotion.PlayFlyoutOpen(surface, RibbonAnimationAction.DropdownMenu);
+        // Click, Enter/Space and KeyTips use the same focus handoff as the arrow keys.
+        // Defer until the newly assigned proxy controls have their native templates/layout.
+        QueueOverflowFocus(_focusLastOnOpen);
+        _focusLastOnOpen = false;
     }
 
     /// <summary>
@@ -374,6 +395,8 @@ public class RibbonQuickAccessToolBar : ItemsControl
 
     private void OnOverflowClosed(object? sender, EventArgs e)
     {
+        _overflowFocusRequest++;
+        _focusLastOnOpen = false;
         _dismiss?.OnClosed();
 
         // Close any entry menu still open AND make sure its BORROWED items go home. Testing
@@ -415,6 +438,8 @@ public class RibbonQuickAccessToolBar : ItemsControl
     /// <summary>Closes the overflow through its toggle, keeping button and popup state synchronized.</summary>
     internal void CloseOverflow()
     {
+        _overflowFocusRequest++;
+        _focusLastOnOpen = false;
         if (_overflowButton is not null)
         {
             _overflowButton.SetCurrentValue(ToggleButton.IsCheckedProperty, false);

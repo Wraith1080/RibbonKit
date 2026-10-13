@@ -16,6 +16,46 @@ namespace RibbonKit.Tests;
 public sealed class OverflowFocusAndUtilityTests
 {
     [Theory]
+    [InlineData(false, FlowDirection.LeftToRight)]
+    [InlineData(false, FlowDirection.RightToLeft)]
+    [InlineData(true, FlowDirection.LeftToRight)]
+    [InlineData(true, FlowDirection.RightToLeft)]
+    public void Opening_overflow_by_click_enter_space_or_arrows_focuses_an_enabled_entry(bool simplified, FlowDirection flow) => Sta.Run(() =>
+    {
+        using var host = new Host(flow);
+        host.Window.Activate(); host.Layout();
+        host.Ribbon.LayoutMode = simplified ? RibbonLayoutMode.Simplified : RibbonLayoutMode.Classic; host.Layout();
+        var toolbar = simplified ? ((RibbonGroupsHost)host.Tab.Content).SimplifiedToolBar!
+            : Descendants(host.Window).OfType<RibbonQuickAccessToolBar>().First(bar => !bar.IsSimplified && bar.IsVisible);
+        toolbar.Width = 1; host.Layout();
+        var items = toolbar.Items.OfType<RibbonButton>().ToArray();
+        items[0].IsEnabled = false; host.Layout();
+        var opener = toolbar.OverflowButton!;
+        foreach (var density in new[] { RibbonDensity.Compact, RibbonDensity.Touch })
+        {
+            host.Ribbon.Density = density; host.Layout();
+            foreach (var key in new[] { Key.None, Key.Enter, Key.Space, Key.Down, Key.Up })
+            {
+                Assert.True(opener.Focus());
+                if (key == Key.None) typeof(ToggleButton).GetMethod("OnClick", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(opener, null);
+                else Send(opener, key);
+                host.Layout(); Assert.True(opener.IsChecked);
+                var candidates = toolbar.OverflowEntries.Where(entry => entry.IsEnabled && entry.IsVisible).ToArray();
+                var expected = key == Key.Up ? candidates.Last() : candidates.First();
+                Assert.True(expected.IsKeyboardFocusWithin, $"{density}/{key}: expected focus within {expected}, actual={Keyboard.FocusedElement}, open={opener.IsChecked}");
+                Assert.True(((UIElement)Keyboard.FocusedElement).MoveFocus(new TraversalRequest(key == Key.Up ? FocusNavigationDirection.Previous : FocusNavigationDirection.Next)));
+                Assert.NotSame(opener, Keyboard.FocusedElement);
+                Send((UIElement)Keyboard.FocusedElement, Key.Escape); host.Layout();
+                Assert.False(opener.IsChecked); Assert.Same(opener, Keyboard.FocusedElement);
+            }
+        }
+        // Opening then dismissing before realization must not steal focus afterward.
+        var outside = new Button { Content = "After the ribbon" }; host.Panel.Children.Add(outside); host.Layout();
+        toolbar.OpenOverflow(); toolbar.CloseOverflow();
+        Assert.True(outside.Focus()); host.Layout(); Assert.Same(outside, Keyboard.FocusedElement);
+    });
+
+    [Theory]
     [InlineData(RibbonQuickAccessPosition.TitleBar, FlowDirection.LeftToRight)]
     [InlineData(RibbonQuickAccessPosition.TitleBar, FlowDirection.RightToLeft)]
     [InlineData(RibbonQuickAccessPosition.TabRow, FlowDirection.LeftToRight)]

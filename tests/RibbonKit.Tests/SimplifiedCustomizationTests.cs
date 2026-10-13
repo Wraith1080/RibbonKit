@@ -15,6 +15,46 @@ namespace RibbonKit.Tests;
 
 public sealed class SimplifiedCustomizationTests
 {
+    [Theory]
+    [InlineData(FlowDirection.LeftToRight)]
+    [InlineData(FlowDirection.RightToLeft)]
+    public void Grouped_and_selected_lists_scroll_by_pixels_and_reveal_the_last_command(FlowDirection direction) => Sta.Run(() =>
+    {
+        using var host = new Host(); host.Page.FlowDirection = direction; host.Window.Height = 430;
+        foreach (var group in new[] { host.GroupA, host.GroupB })
+        for (int i = 0; i < 16; i++)
+        {
+            var command = new RibbonButton { Header = group.Header + " " + i };
+            Ribbon.SetSimplifiedPlacement(command, RibbonSimplifiedPlacement.Inline); group.Items.Add(command);
+        }
+        host.Page.CancelChanges(); host.Layout();
+        foreach (var density in new[] { RibbonDensity.Compact, RibbonDensity.Touch })
+        {
+            host.Ribbon.Density = density; Ribbon.SetDensity(host.Page, density); host.Layout();
+            foreach (var list in new[] { host.Available, host.Current })
+            {
+                var viewer = (ScrollViewer)list.Template.FindName("PART_ScrollViewer", list);
+                Assert.True(viewer.ScrollableHeight > 0, $"No scroll range: extent={viewer.ExtentHeight}, viewport={viewer.ViewportHeight}");
+                viewer.ScrollToTop(); host.Layout();
+                var first = (ListBoxItem)list.ItemContainerGenerator.ContainerFromIndex(0);
+                double before = first.TransformToAncestor(list).Transform(new Point()).Y;
+                viewer.ScrollToVerticalOffset(7.5); host.Layout();
+                double moved = before - first.TransformToAncestor(list).Transform(new Point()).Y;
+                Assert.InRange(moved, 7, 8);
+                Assert.InRange(viewer.VerticalOffset, 7, 8);
+                viewer.ScrollToTop(); host.Layout(); viewer.LineDown(); host.Layout();
+                Assert.InRange(viewer.VerticalOffset, 15, 17);
+                list.SelectedIndex = list.Items.Count - 1; list.ScrollIntoView(list.SelectedItem); host.Layout();
+                var last = (ListBoxItem)list.ItemContainerGenerator.ContainerFromIndex(list.Items.Count - 1);
+                var bounds = last.TransformToAncestor(viewer).TransformBounds(new Rect(last.RenderSize));
+                Assert.InRange(bounds.Top, 0, viewer.ViewportHeight);
+                Assert.InRange(bounds.Bottom, 0, viewer.ViewportHeight + 1);
+                Assert.Equal(list.Items.Count - 1, list.SelectedIndex);
+                viewer.ScrollToTop(); host.Layout();
+            }
+        }
+    });
+
     [Fact]
     public void Draft_order_labels_apply_cancel_and_classic_QAT_isolation() => Sta.Run(() =>
     {
