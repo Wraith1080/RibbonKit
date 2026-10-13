@@ -26,6 +26,8 @@ public class RibbonComboBox : ComboBox
     private const string PopupRootPartName = "PART_PopupRoot";
     private const string PopupScrollViewerPartName = "PART_PopupScrollViewer";
     private const string ScrollBarStyleResourceKey = "RibbonKit.ScrollBarStyle";
+    private static readonly DependencyProperty DetachedGeneratedContainerProperty = DependencyProperty.RegisterAttached(
+        "DetachedGeneratedContainer", typeof(bool), typeof(RibbonComboBox), new PropertyMetadata(false));
     private static readonly Uri ScrollBarResourcesUri = new(
         "/RibbonKit;component/Themes/Controls.ScrollBars.xaml",
         UriKind.RelativeOrAbsolute);
@@ -126,6 +128,33 @@ public class RibbonComboBox : ComboBox
 
     /// <inheritdoc />
     protected override AutomationPeer OnCreateAutomationPeer() => new RibbonComboBoxAutomationPeer(this);
+
+    /// <inheritdoc />
+    protected override void ClearContainerForItemOverride(DependencyObject element, object item)
+    {
+        // WPF clears the generated style during recycling. Its system ComboBoxItem
+        // style then activates ancestor alignment bindings on the detached container.
+        // Suppress only that fallback while detached; authored containers/local values
+        // and the normal attached item style retain their own behavior.
+        if (!ReferenceEquals(element, item) && element is ComboBoxItem container
+            && container.ReadLocalValue(OverridesDefaultStyleProperty) == DependencyProperty.UnsetValue)
+        {
+            container.SetValue(OverridesDefaultStyleProperty, true);
+            container.SetValue(DetachedGeneratedContainerProperty, true);
+        }
+        base.ClearContainerForItemOverride(element, item);
+    }
+
+    /// <inheritdoc />
+    protected override void PrepareContainerForItemOverride(DependencyObject element, object item)
+    {
+        if ((bool)element.GetValue(DetachedGeneratedContainerProperty))
+        {
+            element.ClearValue(OverridesDefaultStyleProperty);
+            element.ClearValue(DetachedGeneratedContainerProperty);
+        }
+        base.PrepareContainerForItemOverride(element, item);
+    }
 
     private void ApplyPopupScrollBarStyle()
     {

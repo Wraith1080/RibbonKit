@@ -44,6 +44,8 @@ internal static class SimplifiedCustomizationPortabilityChecks
                 }
                 tab.Groups.Add(group); tab.Groups.Add(otherGroup); ribbon.Tabs.Add(tab);
                 ribbon.AddToQuickAccess(first);
+                var undoOnly = new RibbonButton { Header = "Undo only" }; Ribbon.SetCommandId(undoOnly, "undo-only");
+                ribbon.QuickAccessItems.Add(undoOnly); ribbon.QuickAccessItems.Remove(undoOnly);
                 var page = new RibbonSimplifiedCustomizePage { Ribbon = ribbon, ResetLayout = RibbonCustomizationSerializer.Serialize(ribbon) };
                 var classic = new RibbonOptionsPage { Header = "Classic", Content = new RibbonCustomizePage { Ribbon = ribbon } };
                 var simplified = new RibbonOptionsPage { Header = "Simplified", Content = page };
@@ -137,7 +139,8 @@ internal static class SimplifiedCustomizationPortabilityChecks
                     Click(page, "PART_NewTabButton"); available.SelectedIndex = 1; Click(page, "PART_AddButton");
                     Click(page, "PART_NewGroupButton"); available.SelectedIndex = 0; Click(page, "PART_AddButton"); Layout(dialog);
                     var sourceSelector = Part<Selector>(page, "PART_SourceTabSelector");
-                    sourceSelector.SelectedIndex = 2; Layout(dialog); Assert.Equal(2, available.Items.Count);
+                    Assert.Equal(3, sourceSelector.Items.Count); // All tabs, authored Home, QAT-only; custom destinations stay out.
+                    sourceSelector.SelectedIndex = 2; Layout(dialog); Assert.Single(available.Items);
                     sourceSelector.SelectedIndex = 1; Layout(dialog); Assert.Equal(25, available.Items.Count);
                     if (theme == RibbonTheme.Office2024 && !dark && density == RibbonDensity.Compact && direction == FlowDirection.LeftToRight && scale == 1)
                     {
@@ -145,6 +148,7 @@ internal static class SimplifiedCustomizationPortabilityChecks
                         Layout(dialog); Layout(dialog); Save(dialog, "structure-editor-consumer");
                     }
                     page.ApplyChanges(); Layout(dialog); Assert.Equal(2, ribbon.Tabs.Count);
+                    Assert.All(ribbon.Tabs.Last().Groups, custom => { Assert.NotNull(custom.Icon); Assert.Equal(RibbonGroupLayout.Stacked, custom.Layout); });
                     var customTab = ribbon.Tabs.Last(); string customId = Ribbon.GetCommandId(customTab)!;
                     Assert.True(Ribbon.GetIsCustom(customTab)); Assert.Equal(2, customTab.Groups.Count);
                     Assert.All(customTab.Groups, item => Assert.Single(item.Items.Cast<object>()));
@@ -211,6 +215,8 @@ internal static class SimplifiedCustomizationPortabilityChecks
         Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
         {
             var dialog = Application.Current.Windows.OfType<RibbonCustomizeEditDialog>().Single(); dialog.ApplyTemplate();
+            if (part == "PART_RenameGroupButton")
+            { Assert.True(dialog.CanEditIcon); Assert.True(dialog.CanEditLayout); Assert.NotNull(dialog.SelectedIcon); }
             Part<TextBox>(dialog, "PART_NameBox").Text = caption; Click(dialog, "PART_OkButton");
         }));
         Click(page, part);

@@ -307,3 +307,57 @@ contract. QAT-only reset preserves live group objects and session-only profiles;
 whole reset/import use the existing complete serializer contract. Later live
 changes supersede older pending operations of the same scope. The current
 acceptance, exact focused evidence and full/native limits remain in the active plan.
+
+#### Authored catalog, shared group editing and dialog centering — 2026-10-13
+
+The follow-up review separates the source catalog from destination drafts. Only
+authored eligible tabs/groups supply ribbon commands; a separate localized choice
+lists retained QAT-only declarations. Canonical sources deduplicate copies. QAT
+declarations participate in Apply-time membership resolution and persistence even
+after removal from the toolbar. Custom tabs/groups stay on the destination side.
+
+Simplified group editing reuses the full shared name/icon/layout dialog. Metadata
+is drafted independently of live groups; export/import and Apply use identical
+layout normalization, including Large-to-Stacked command sizes and explicit None
+icons. Both editors use the shared Stacked creation factory and neutral vector
+resource. A per-ribbon weak resource cache gives detached drafts an icon before
+joining the visual tree and a stable serializer identity across restart. A plain
+DynamicResource on an unattached group did not resolve the generic theme icon.
+Normal Add seeds the new source/group selection as Small while retaining existing
+profiles. Existing group layouts and label preferences are preserved.
+
+The shared edit dialog now determines its final section height before WPF performs
+CenterOwner positioning; changing Height in SourceInitialized shifted the final
+dialog upward. Reset/icon Import/icon Export and New/Edit/Apply now occupy the two
+column footers, wrapping independently with the existing Touch target styles.
+Showcase declares a few prioritized simplified controls in each authored tab,
+including contextual/modal and merge content, without changing persistence policy.
+Current verification and human review remain in the active plan.
+
+#### Custom-tab positioning draft — 2026-10-13
+
+The simplified Edit menu opens a shared Before/After positioning modal for custom
+destination tabs. Creation and movement are chronological relative placements:
+collecting every creation before replaying moves would misplace a later tab
+created after an already moved tab. The draft fold and Apply replay the same
+placements; Apply resolves live references/stable IDs and preserves tab/group
+objects and active selection. Missing anchors skip moves. The existing serialized
+Tabs sequence carries draft and committed order; no optional schema was added.
+
+Collection Move notifications previously ran removal/addition bookkeeping. During
+modal mode this erased a custom tab's authored visibility and recorded its
+temporary Collapsed state. Move now preserves modal/merge membership and visibility
+subscriptions; genuine removals/additions retain their existing lifecycle. The
+focused reproduction, merge/provenance cleanup, themed independent consumer and
+remaining acceptance are recorded in the active plan.
+
+Apply refreshes the tab-selector ItemsSource. WPF clears generated combo-item
+styles, exposing the system style's ItemsControl-ancestor alignment bindings on
+discarded containers. The shared RibbonComboBox cleanup now suppresses only this
+detached system-style fallback and restores it before reuse; authored containers
+and local values retain ownership. The protected container hooks are recorded in
+the additive API baseline. Trace reproduction must call
+PresentationTraceSources.Refresh: setting the switch/listener alone silently
+missed these errors outside the debugger. A deliberately invalid probe verifies
+the recorder before capturing Apply, and discarded alignment properties are
+inspected as the debugger's binding diagnostics does.

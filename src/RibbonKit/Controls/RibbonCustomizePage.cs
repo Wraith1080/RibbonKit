@@ -631,12 +631,19 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
             ? RibbonControlSize.Large
             : RibbonControlSize.Medium;
         FrameworkElement proxy = ribbon.CreateCommandProxy(entry.Control, proxySize);
+        var tab = ResolveTab(_selectedNode);
+        var simplified = tab is null ? null : ribbon.GetSimplifiedChoices(tab);
 
         // Insert after the selected command when one is selected, else append.
         int insertAt = _selectedNode is { Kind: RibbonCustomizeNodeKind.Command } commandNode
             ? group.Items.IndexOf(commandNode.Item) + 1
             : group.Items.Count;
         group.Items.Insert(Math.Clamp(insertAt, 0, group.Items.Count), proxy);
+        if (tab is not null && simplified is not null)
+        {
+            simplified.Add(new SimplifiedCommandChoice(Controls.Ribbon.OriginalSimplifiedSource(entry.Control), RibbonControlSize.Small, group));
+            ribbon.SetSimplifiedChoices(tab, simplified);
+        }
 
         RebuildTree(selectItem: proxy);
     }
@@ -723,7 +730,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         var tab = new RibbonTab { Header = RibbonLocalization.GetString(RibbonString.NewTab) };
         Controls.Ribbon.SetIsCustom(tab, true);
         Controls.Ribbon.SetCommandId(tab, NewCustomId());
-        tab.Groups.Add(CreateCustomGroup());
+        tab.Groups.Add(CreateCustomGroup(ribbon));
 
         // Insert after the tab containing the selection (Office behavior), else append.
         int insertAt = ResolveTab(_selectedNode) is { } anchor && ribbon.Tabs.IndexOf(anchor) is >= 0 and var anchorIndex
@@ -741,7 +748,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
             return;
         }
 
-        RibbonGroup group = CreateCustomGroup();
+        RibbonGroup group = CreateCustomGroup(Ribbon!);
 
         // Insert after the selected group (or the selected command's group), else append.
         RibbonGroup? anchor = _selectedNode?.Item as RibbonGroup ?? _selectedNode?.Parent?.Item as RibbonGroup;
@@ -753,11 +760,14 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
         RebuildTree(selectItem: group);
     }
 
-    internal static RibbonGroup CreateCustomGroup()
+    internal const string DefaultGroupIconKey = "RibbonKit.Customize.DefaultGroupIcon";
+
+    internal static RibbonGroup CreateCustomGroup(Ribbon ribbon)
     {
         var group = new RibbonGroup { Header = RibbonLocalization.GetString(RibbonString.NewGroup) };
         Controls.Ribbon.SetIsCustom(group, true);
         Controls.Ribbon.SetCommandId(group, NewCustomId());
+        group.Icon = RibbonCommandCatalog.DefaultGroupIcon(ribbon);
 
         // Stacked applies the vertical-wrap items panel (3-row columns of Medium/Small
         // proxies) via RibbonGroup.ApplyGroupLayout — the customize default, like Office.

@@ -12,15 +12,17 @@ internal sealed class SimplifiedTabChoice : DependencyObject
 {
     private static readonly DependencyProperty DisplayNameProperty = DependencyProperty.Register(
         nameof(DisplayName), typeof(string), typeof(SimplifiedTabChoice), new PropertyMetadata(string.Empty));
-    internal SimplifiedTabChoice(RibbonTab? tab, string? draftName)
+    internal SimplifiedTabChoice(RibbonTab? tab, string? draftName, bool commandsNotInRibbon = false)
     {
         Tab = tab;
+        CommandsNotInRibbon = commandsNotInRibbon;
         if (draftName is not null) SetValue(DisplayNameProperty, draftName);
         else BindingOperations.SetBinding(this, DisplayNameProperty, tab is null
-            ? new Binding("[AllTabs]") { Source = RibbonKit.Localization.RibbonLocalizationBindingSource.Instance }
+            ? new Binding(commandsNotInRibbon ? "[CommandsNotInRibbon]" : "[AllTabs]") { Source = RibbonKit.Localization.RibbonLocalizationBindingSource.Instance }
             : new Binding(nameof(tab.Header)) { Source = tab });
     }
     public RibbonTab? Tab { get; }
+    internal bool CommandsNotInRibbon { get; }
     public string DisplayName => (string?)GetValue(DisplayNameProperty) ?? string.Empty;
 }
 
@@ -121,6 +123,7 @@ public partial class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
     private Selector? _tabs;
     private Selector? _sourceTabs;
     private RibbonTab? _sourceTab;
+    private bool _sourceQatOnly;
     private bool _sourceInitialized;
     private ListBox? _available;
     private ListBox? _current;
@@ -228,7 +231,7 @@ public partial class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
     private void ChangeRibbon()
     {
         StopObserving();
-        ClearDraft(); _tab = null; _group = null; _sourceTab = null; _sourceInitialized = false;
+        ClearDraft(); _tab = null; _group = null; _sourceTab = null; _sourceQatOnly = false; _sourceInitialized = false;
         if (Ribbon is null) ClearValue(OwnerLayoutModeProperty);
         else SetBinding(OwnerLayoutModeProperty, new Binding(nameof(Controls.Ribbon.LayoutMode)) { Source = Ribbon });
         CoerceValue(IsEnabledProperty);
@@ -268,6 +271,7 @@ public partial class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
     {
         if (_refreshing) return;
         _sourceTab = (_sourceTabs?.SelectedItem as SimplifiedTabChoice)?.Tab;
+        _sourceQatOnly = (_sourceTabs?.SelectedItem as SimplifiedTabChoice)?.CommandsNotInRibbon == true;
         RefreshLists();
     }
     private void OnTabChanged(object sender, SelectionChangedEventArgs e)
@@ -289,15 +293,17 @@ public partial class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
         _tab = tabs.Contains(_tab!) ? _tab : tabs.FirstOrDefault(tab => _tab is not null && Controls.Ribbon.GetCommandId(_tab) is { Length: > 0 } id && Controls.Ribbon.GetCommandId(tab) == id)
             ?? tabs.FirstOrDefault(tab => ReferenceEquals(tab, Ribbon?.SelectedTab)) ?? tabs.FirstOrDefault();
         _tabs.SelectedItem = entries.FirstOrDefault(entry => ReferenceEquals(entry.Tab, _tab));
-        if (!_sourceInitialized) { _sourceTab = _tab; _sourceInitialized = true; }
-        if (_sourceTab is not null && !tabs.Contains(_sourceTab))
-            _sourceTab = tabs.FirstOrDefault(tab => Controls.Ribbon.GetCommandId(_sourceTab) is { Length: > 0 } id && Controls.Ribbon.GetCommandId(tab) == id) ?? tabs.FirstOrDefault();
+        var sourceTabs = SourceTabs();
+        if (!_sourceInitialized) { _sourceTab = sourceTabs.Contains(_tab!) ? _tab : sourceTabs.FirstOrDefault(); _sourceInitialized = true; }
+        if (_sourceTab is not null && !sourceTabs.Contains(_sourceTab))
+            _sourceTab = sourceTabs.FirstOrDefault(tab => Controls.Ribbon.GetCommandId(_sourceTab) is { Length: > 0 } id && Controls.Ribbon.GetCommandId(tab) == id) ?? sourceTabs.FirstOrDefault();
         if (_sourceTabs is not null)
         {
             var sourceEntries = new List<SimplifiedTabChoice> { new(null, null) };
-            sourceEntries.AddRange(tabs.Select(tab => new SimplifiedTabChoice(tab, ChoiceName(tab))));
+            sourceEntries.AddRange(sourceTabs.Select(tab => new SimplifiedTabChoice(tab, null)));
+            sourceEntries.Add(new(null, null, commandsNotInRibbon: true));
             _sourceTabs.ItemsSource = sourceEntries;
-            _sourceTabs.SelectedItem = sourceEntries.FirstOrDefault(entry => entry.Tab == _sourceTab);
+            _sourceTabs.SelectedItem = sourceEntries.FirstOrDefault(entry => entry.Tab == _sourceTab && entry.CommandsNotInRibbon == _sourceQatOnly);
         }
         _refreshing = false;
         RefreshGroups();

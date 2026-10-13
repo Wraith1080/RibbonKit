@@ -224,4 +224,10 @@
   <data name="ResetQuickAccessToolbar" xml:space="preserve"><value>Reset Quick Access Toolbar</value></data>
   <data name="ResetAllCustomizations" xml:space="preserve"><value>Reset all customizations</value></data>
   <data name="InvalidRibbonLayout" xml:space="preserve"><value>This file does not contain a valid ribbon customization.</value></data>
+  <data name="CommandsNotInRibbon" xml:space="preserve"><value>Commands not in the ribbon</value></data>
+  <data name="MoveTab" xml:space="preserve"><value>Move tab…</value></data>
+  <data name="Before" xml:space="preserve"><value>Before</value></data>
+  <data name="After" xml:space="preserve"><value>After</value></data>
+  <data name="TabPositionLabel" xml:space="preserve"><value>Position:</value></data>
+  <data name="TargetTabLabel" xml:space="preserve"><value>Target tab:</value></data>
 </root>

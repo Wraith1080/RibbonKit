@@ -245,6 +245,18 @@ public enum RibbonString
     ResetAllCustomizations,
     /// <summary>Error for an invalid or unrelated customization file.</summary>
     InvalidRibbonLayout,
+    /// <summary>Source catalog of declared quick access commands absent from the authored ribbon.</summary>
+    CommandsNotInRibbon,
+    /// <summary>Open the selected custom tab's positioning dialog.</summary>
+    MoveTab,
+    /// <summary>Place a custom tab before the target tab.</summary>
+    Before,
+    /// <summary>Place a custom tab after the target tab.</summary>
+    After,
+    /// <summary>Label for the tab positioning choice.</summary>
+    TabPositionLabel,
+    /// <summary>Label for the tab used as a positioning anchor.</summary>
+    TargetTabLabel,
 }
 
 /// <summary>

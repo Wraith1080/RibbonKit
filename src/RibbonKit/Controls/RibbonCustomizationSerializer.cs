@@ -617,6 +617,7 @@ public static class RibbonCustomizationSerializer
         byId = new Dictionary<string, FrameworkElement>();
         idOf = new Dictionary<FrameworkElement, string>();
         iconById = new Dictionary<string, ImageSource>();
+        iconById.Add(RibbonCustomizePage.DefaultGroupIconKey, RibbonCommandCatalog.DefaultGroupIcon(ribbon));
 
         foreach (RibbonTab tab in ribbon.Tabs)
         {
@@ -695,7 +696,7 @@ public static class RibbonCustomizationSerializer
         }
     }
 
-    private static string? FindIconId(ImageSource? icon, Dictionary<string, ImageSource> iconById)
+    internal static string? FindIconId(ImageSource? icon, Dictionary<string, ImageSource> iconById)
     {
         if (icon is null)
         {

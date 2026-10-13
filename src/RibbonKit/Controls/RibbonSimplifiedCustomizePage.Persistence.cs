@@ -71,7 +71,7 @@ public partial class RibbonSimplifiedCustomizePage
     private void ProjectLayout(RibbonLayoutDto layout)
     {
         if (Ribbon is not { } ribbon) return;
-        BuildIdentity(ribbon, out var byId, out _, out _);
+        BuildIdentity(ribbon, out var byId, out _, out var icons);
         var eligible = ribbon.Tabs.Where(RibbonCustomizePage.IsCustomizableTab).SelectMany(tab => Controls.Ribbon.SimplifiedSources(tab, true))
             .Select(source => source.Control).Concat(ribbon.DeclaredQuickAccessCommands).ToHashSet();
         _layoutTabs = new();
@@ -91,7 +91,7 @@ public partial class RibbonSimplifiedCustomizePage
             var groups = new List<RibbonGroup>();
             foreach (var groupData in saved.Groups)
             {
-                RibbonGroup? group = groupData.IsCustom ? RibbonCustomizePage.CreateCustomGroup()
+                RibbonGroup? group = groupData.IsCustom ? RibbonCustomizePage.CreateCustomGroup(ribbon)
                     : tab.Groups.FirstOrDefault(group => !Controls.Ribbon.GetIsCustom(group) && Controls.Ribbon.GetCommandId(group) == groupData.Id);
                 if (group is null || groups.Contains(group)) continue;
                 if (groupData.IsCustom)
@@ -100,6 +100,7 @@ public partial class RibbonSimplifiedCustomizePage
                     groupData.Id ??= Controls.Ribbon.GetCommandId(group);
                     group.Header = groupData.Header ?? RibbonLocalization.GetString(RibbonString.NewGroup);
                     group.Layout = groupData.Layout == RibbonGroupLayout.Default ? RibbonGroupLayout.Stacked : groupData.Layout;
+                    group.Icon = groupData.IconCommandId is not null ? icons.GetValueOrDefault(groupData.IconCommandId) : null;
                     var commands = new List<SimplifiedCommandSource>();
                     var knownCommands = new List<CommandDto>();
                     foreach (var command in groupData.Commands ?? new())
@@ -165,7 +166,7 @@ public partial class RibbonSimplifiedCustomizePage
         {
             // A later edit in the live Classic/Simplified surface supersedes the older imported scope.
             _pendingLayout = null; _pendingRibbonBase = null; ClearLayoutProjection();
-            _drafts.Clear(); _newTabs.Clear(); _newGroups.Clear(); _renames.Clear(); _memberships.Clear();
+            _drafts.Clear(); _tabPlacements.Clear(); _newGroups.Clear(); _renames.Clear(); _groupEdits.Clear(); _memberships.Clear();
             changed = true;
         }
         if (_pendingQatBase is not null && !SameQatScope(live, _pendingQatBase))
@@ -192,7 +193,7 @@ public partial class RibbonSimplifiedCustomizePage
         layout.QuickAccess = (_pendingQat ?? live).QuickAccess;
         layout.QuickAccessPosition = (_pendingQat ?? live).QuickAccessPosition;
         layout.IsQuickAccessVisible = (_pendingQat ?? live).IsQuickAccessVisible;
-        BuildIdentity(Ribbon!, out _, out var ids, out _);
+        BuildIdentity(Ribbon!, out _, out var ids, out var icons);
         var tabs = new List<TabDto>();
         foreach (var tab in DraftTabs())
         {
@@ -211,14 +212,20 @@ public partial class RibbonSimplifiedCustomizePage
                 groupData.Header = DraftHeader(group);
                 if (groupData.IsCustom)
                 {
+                    groupData.IconCommandId = FindIconId(DraftIcon(group), icons);
+                    groupData.Layout = DraftLayout(group);
                     groupData.Commands ??= new();
+                    if (_groupEdits.TryGetValue(group, out var edit) && edit.Layout != group.Layout)
+                        foreach (var command in groupData.Commands)
+                            command.Size = groupData.Layout == RibbonGroupLayout.Large ? RibbonControlSize.Large
+                                : command.Size == RibbonControlSize.Large ? RibbonControlSize.Medium : command.Size;
                     if (_memberships.TryGetValue(group, out var members))
                         foreach (var source in members)
                         {
                             string? sourceId = ids.GetValueOrDefault(source) ?? Controls.Ribbon.GetCommandId(source);
                             if (sourceId is null || groupData.Commands.Any(command => command.SourceId == sourceId)) continue;
                             groupData.Commands.Add(new CommandDto { SourceId = sourceId, Header = RibbonCommandCatalog.Describe(source).DisplayName,
-                                Size = group.Layout == RibbonGroupLayout.Large ? RibbonControlSize.Large : RibbonControlSize.Medium });
+                                Size = DraftLayout(group) == RibbonGroupLayout.Large ? RibbonControlSize.Large : RibbonControlSize.Medium });
                         }
                 }
                 groups.Add(groupData);

@@ -35,6 +35,14 @@ RibbonKit.Localization.RibbonString.ShowItemLabel = 80 -> RibbonKit.Localization
 RibbonKit.Localization.RibbonString.ResetQuickAccessToolbar = 81 -> RibbonKit.Localization.RibbonString
 RibbonKit.Localization.RibbonString.ResetAllCustomizations = 82 -> RibbonKit.Localization.RibbonString
 RibbonKit.Localization.RibbonString.InvalidRibbonLayout = 83 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.CommandsNotInRibbon = 84 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.MoveTab = 85 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Before = 86 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.After = 87 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.TabPositionLabel = 88 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.TargetTabLabel = 89 -> RibbonKit.Localization.RibbonString
+override RibbonKit.Controls.RibbonComboBox.ClearContainerForItemOverride(System.Windows.DependencyObject! element, object! item) -> void
+override RibbonKit.Controls.RibbonComboBox.PrepareContainerForItemOverride(System.Windows.DependencyObject! element, object! item) -> void
 static readonly RibbonKit.Controls.Ribbon.SimplifiedSizeProperty -> System.Windows.DependencyProperty!
 static RibbonKit.Controls.Ribbon.GetSimplifiedSize(System.Windows.DependencyObject! element) -> RibbonKit.RibbonControlSize
 static RibbonKit.Controls.Ribbon.SetSimplifiedSize(System.Windows.DependencyObject! element, RibbonKit.RibbonControlSize value) -> void

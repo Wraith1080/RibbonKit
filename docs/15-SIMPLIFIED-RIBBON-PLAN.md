@@ -3,7 +3,8 @@
 > Active implementation plan. First layout slice authorized 2026-10-13.
 > S2 customization implemented after the user's continuation on 2026-10-13.
 > S3 shared custom-tab/group draft editor implemented and committed at 4ab4604.
-> S4a–c editor redesign authorized and implemented 2026-10-13; user review pending.
+> S4a–c committed at 4036aea. Follow-up review refinement implemented 2026-10-13;
+> focused evidence below, live user review and full validation pending.
 
 ## Layout contract
 
@@ -128,8 +129,9 @@ evidence is recorded below; physical input and user acceptance remain open.
   chooses the destination tab being customized. Initialize both to the active
   eligible tab, then let them change independently. Include an All Tabs source
   choice for discovery. Changing the source filter preserves destination
-  selection, draft edits and order. New custom tabs are also source choices;
-  their staged membership must be discoverable before Apply.
+  selection, draft edits and order. The 2026-10-13 follow-up review excludes
+  custom tabs/groups from this source catalog and adds Commands not in the ribbon
+  for retained QAT-only declarations, deduplicated against authored commands.
 - Keep the left list grouped by source group with native pixel scrolling.
   Single-tab filtering needs only group names; All Tabs uses Tab > Group paths.
   Available entries remain commands; a group header is not an addable command.
@@ -156,12 +158,13 @@ evidence is recorded below; physical input and user acceptance remain open.
   Use the existing Add rules for custom-group membership and duplicate checks.
   Keep Move Up/Down as a keyboard-accessible equivalent with the same ordering
   semantics. Preserve selection/focus and bring the moved row into view.
-- Put **New** and **Edit** below the right list. New opens a menu with New Tab
+- Put **New**, **Edit** and **Apply** below the right list. New opens a menu with New Tab
   and New Group. New Tab creates a tab with one custom group; New Group inserts
   after the selected group or appends when no group is selected. Select the new
   destination immediately. Creation and names remain staged until Apply/OK.
-- Edit opens a menu with Rename Tab and Rename Group, using the existing name
-  dialog and selection to determine the group. For a selected command, also show
+- Edit opens a menu with Rename Tab and Rename Group, using the shared edit
+  dialog and selection to determine the group. Custom groups expose icon/layout
+  controls and stage those changes alongside their name. For a selected command, also show
   a checkable **Show item label** entry mapped to Medium/Small. Remove the inline
   checkboxes from command rows. Label state belongs to the selected source/group
   occurrence, preserving independent copies in other groups. Menu availability
@@ -171,11 +174,11 @@ evidence is recorded below; physical input and user acceptance remain open.
   ordering and label editing. Reuse the existing simplified removal contract:
   removing an inline command retains its shared custom-group membership.
 
-#### Utility row and reset scopes
+#### Utility actions and reset scopes
 
-- Place **Reset**, **Import**, **Export**, and **Apply** in a separate lower action
-  row beneath New/Edit on the right, with Apply last and aligned to the end.
-  Allow action rows to wrap at narrow widths while retaining standard button
+- Place **Reset** and icon-only **Import/Export** under the left list, aligned
+  with the right-side New/Edit/Apply row. Both sides wrap independently at narrow
+  widths while retaining standard button
   target sizes. Reserve footer height before sizing the lists so Touch rows and
   scrollbar targets remain usable at short heights. No standalone Reset Tab,
   Reset All, New Tab, New Group or Rename buttons remain in the standard template.
@@ -252,7 +255,7 @@ remain separate gates.
 | S1 | Shared layout/selection/priority, native full-group access, keyboard/KeyTips, Showcase toggle and classic-customization gating | Implemented; user accepted the current visuals 2026-10-13. Native-input/DPI and earlier combined/full-suite limits remain open |
 | S2 | Dedicated customization page, pin/unpin, separate ordered state and persistence | Implemented; user accepted scrolling/focus repairs 2026-10-13 and committed them at 1a2a743. Broader end-of-feature gates remain below |
 | S3 | Shared custom-tab/group creation from the simplified editor | Implemented and committed at 4ab4604; user review 2026-10-13 requested the S4 page redesign |
-| S4 | Source filtering, ordered group headers, compact menus and draft-safe persistence utilities | S4a–c implemented 2026-10-13; focused evidence below; awaiting user review |
+| S4 | Source filtering, ordered group headers, compact menus and draft-safe persistence utilities | S4a–c committed at 4036aea; catalog/footer/dialog/default refinements and custom-tab positioning implemented 2026-10-13; focused evidence below; awaiting live user review |
 
 S1 requires focused runtime regressions, a RibbonKit-only consumer matrix, normal
 Debug Showcase build, Release solution build/test for the additive public API,
@@ -529,7 +532,97 @@ and an additive API baseline entry; Showcase supplies its existing startup captu
 These are overlapping focused selections, not a clean combined/full-suite result.
 Logs are `TestResults/simplified-editor-redesign-*.log`; rendered PNGs are in the
 normal test outputs under `TestResults/simplified-customization/`, including
-`showcase-customize-redesign.png`. S4 changes are uncommitted.
+`showcase-customize-redesign.png`. S4 is committed at `4036aea`.
+
+### S4 review refinement — authorized 2026-10-13
+
+The user approved the five follow-up requests and the defaults/commit boundaries:
+authored source catalog plus retained QAT-only commands; balanced column actions;
+shared final-size dialog centering; shared custom structures with neutral icons,
+Stacked creation defaults and hidden labels for new normal-mode command additions;
+and authored simplified defaults across Showcase tabs. Existing labels/icons/Large
+layouts remain user choices. Simplified names/icons/layouts/imports are drafts
+until Apply/OK, with Cancel discarding them. Normal editing retains its existing
+Options transaction and snapshot restoration contract.
+The only public addition in this refinement is the appended
+`RibbonString.CommandsNotInRibbon` localization identifier; no persistence schema
+version changed. Saved simplified profiles retain precedence over the new Showcase
+authored defaults; Reset this tab previews the revised defaults.
+
+| Check | Result |
+| --- | --- |
+| Dialog reproduction | All three section-size cases reproduced the vertical offset before the fix; all three passed after moving final sizing before CenterOwner positioning |
+| Initial focused editor/serializer/QAT selection | 103/106 passed. Three new checks exposed missing neutral icons on detached groups; repaired in the shared resource lookup |
+| Resource repair | 4/4 passed: both draft/import metadata paths, native full group dialog, and normal additions preserving existing labels/Large layout |
+| Final serializer/resource follow-up | 28/29 passed. The remaining existing picker test expected only its QAT icon; the new neutral default intentionally adds a second choice. Updated coverage verifies both distinct choices and deduplication; the repaired contract and native full dialog passed 2/2 |
+| Independent consumer | 112 theme/light-dark/density/direction/simulated 100/150% root-DPI combinations passed, using public RibbonKit resources only. Includes 560/700/900 widths, Touch targets, QAT-only discovery after removal, source/destination separation, group icons/Stacked defaults, native group editing and persistence |
+| Showcase defaults | Added 27 prioritized inline policies across authored ordinary, contextual/modal and merged content. Focused runtime coverage confirms defaults on authored ribbon tabs |
+| Render inspection | Inspected actual Showcase editor, independent consumer, Crystal RTL page and full group dialog captures. Footer columns align; the neutral vector icon and Stacked selection render. No approvals/tolerances changed |
+| Builds | Normal Release solution (net8.0/net9.0 runtime targets) and Debug Showcase builds passed, 0 warnings/errors |
+| Full/native acceptance | Full suite remains deferred until the end. Live user review, physical drag/file picker, genuine mixed-monitor DPI and native mouse/touch/keyboard acceptance remain open |
+
+These are overlapping focused selections and scoped repairs, not a clean combined
+or full-suite run. Logs are `TestResults/simplified-review-*.log`; captures remain
+in normal test outputs under `TestResults/simplified-customization/`. This review
+refinement is uncommitted.
+
+### Custom-tab positioning — authorized 2026-10-13
+
+The user approved **Edit → Move tab…** with Before/After and a target-tab selector.
+It is available for custom destination tabs when another eligible tab exists.
+Targets exclude the moving tab and contextual/modal/merged content. The shared
+internal modal reuses edit-dialog chrome, final-size centering, native selectors,
+localized bindings, keyboard focus, Enter/Cancel actions and Touch targets.
+
+Creation and positioning use chronological draft placements. This keeps a tab
+created after a moved tab in the requested position. Moves, repeated placements
+and names survive retemplating/mode changes; Cancel clears placements; export
+includes draft order; import and Apply use the existing Tabs sequence. Apply
+resolves current tabs/anchors by reference or stable ID, skips removed anchors,
+and preserves existing objects, command profiles/QAT and the active tab. No
+persistence version or public runtime-control API changed; five localized string
+identifiers were appended.
+
+| Check | Result |
+| --- | --- |
+| Initial move selection | 4/8 passed. Active-tab selection reset during Apply required preservation around collection moves. Two modal-input harness callbacks ran while opening the menu rather than the dialog; scheduling now starts after opening the menu |
+| Selection/dialog repair | 4/4 passed, covering both before/after moves and native LTR OK/RTL Cancel |
+| Modal reproduction | Moving a custom tab during modal mode incorrectly restored it as Collapsed. Reproduced 1/1 before fixing Move notifications to preserve modal/merge membership and authored visibility |
+| Final relevant runtime selection | 31/31 passed: positioning, chronological creation, export/import, cancellation, missing/replaced anchors, original objects/profiles, source separation and existing merge/modal/selection regressions |
+| Dialog/provenance follow-up | 3/3 passed: Compact/Touch final-size owner centering, live title/position localization, and moving merged content without losing provenance or Unmerge cleanup |
+| Independent consumer | 12 public-only cases passed across Office2010, Office2024Flat and Crystal × Compact/Touch × LTR/RTL. Includes native menu/dialog routing, initial focus, accessible names, bounds/Touch targets, simulated 150% root DPI on Touch dialogs, draft/committed moves, Cancel and persistence |
+| Render inspection | Inspected compact LTR and Crystal Touch RTL dialog captures; both selectors and actions fit without clipping. No approvals/tolerances changed |
+| Builds | Normal Release solution (net8.0/net9.0 runtime targets) and Debug Showcase builds passed, 0 warnings/errors |
+| Full/native acceptance | Full suite remains deferred until the end. User review and genuine mixed-monitor/native physical-input acceptance remain open |
+
+The focused selections overlap; they are not a full-suite run. Evidence is in
+`TestResults/simplified-tab-move-*.log` and normal test captures under
+`TestResults/simplified-customization/move-tab-*.png`. This follow-up and the prior
+review refinement remain uncommitted.
+
+#### Move-then-Apply binding diagnostics — 2026-10-13
+
+The user reported HorizontalContentAlignment/VerticalContentAlignment ancestor
+binding errors after moving a custom tab and clicking Apply. Reproduction opened
+the native selectors and Move dialog, then inspected discarded containers after
+Apply refreshed ItemsSource. Enabling the trace recorder requires
+PresentationTraceSources.Refresh; an invalid probe prevents a silent false pass.
+The exact pair reproduced before the shared RibbonComboBox cleanup fix. The fix
+suppresses detached generated containers' system-style fallback and restores it
+before reuse; authored containers/local settings remain app-owned. No template
+paint or alignment policy changed. Two inherited protected hooks are now
+implemented and recorded in the additive API baseline.
+
+| Check | Result |
+| --- | --- |
+| Focused combined runtime | 17/20 passed, including all three Office2024/Office2010/Crystal-RTL move/Apply trace cases and QAT behavior. Three KeyTip activation cases failed; the same three passed 3/3 in a fresh focused process. The user reported using the computer during the combined run; focus interference is plausible but unconfirmed. This is not a clean combined run |
+| Reuse/ownership | 1/1 passed using actual collections: a discarded generated item renders with normal styling when reused, and authored alignment/local style settings survive removal |
+| Independent consumer | All 12 public-only legacy/flat/Crystal × density × direction cases passed with realized-popup/discarded-container trace assertions on Apply; Touch dialogs also use simulated 150% root DPI |
+| Builds | Normal Debug Showcase and Release solution (net8.0/net9.0 runtime targets) builds passed, 0 warnings/errors |
+| Remaining | User retry and full end-of-feature/native gates remain open |
+
+Logs are `TestResults/simplified-move-apply-*.log`; per-palette binding traces are
+under the normal runtime test output's `TestResults/simplified-customization/`.
 
 ### Remaining acceptance
 

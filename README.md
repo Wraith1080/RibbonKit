@@ -212,8 +212,9 @@ for acceptance and remaining full/native checks.
 
 The **New** menu creates a tab with one custom group, or inserts a group after the
 selected group. **Edit** offers Rename Tab/Group and, for a selected command, the
-checkable **Show item label** choice. Creation, naming
-and membership stay in the draft until Apply/OK; Cancel leaves no new structure
+checkable **Show item label** choice. Custom groups reuse the full name/icon/layout
+dialog and start with a neutral vector icon and Stacked layout. Creation, naming,
+icons, layouts and membership stay in the draft until Apply/OK; Cancel leaves no new structure
 behind. Custom groups accept commands from other tabs; built-in groups retain
 their original command membership. Tabs/groups and custom-group membership
 appear in both layouts, while simplified order/labels remain separate. Removing
@@ -221,7 +222,20 @@ a simplified selection leaves its shared custom-group command available through
 the group's flyout. See the plan's
 [structure editor](docs/15-SIMPLIFIED-RIBBON-PLAN.md#custom-tab-and-group-editor).
 
-The lower utility row provides **Reset**, **Import**, **Export**, and **Apply**.
+For a custom destination tab, **Edit → Move tab…** chooses Before/After another
+eligible tab. New draft tabs and existing custom tabs use the same operation;
+Apply/OK commits shared tab order, and Cancel discards the move. Contextual, modal
+and merged tabs stay outside the target list. Tab moves preserve command order,
+labels and shared group membership.
+
+The source selector lists authored tabs, All Tabs, and **Commands not in the
+ribbon** for retained QAT-only declarations. Custom tabs/groups are destination
+structure, independent of the available-command catalog. Normal customization
+additions start with hidden simplified labels; existing selections and group
+layouts remain intact.
+
+Below the left list are **Reset** and icon-only **Import/Export**; below the right
+list are **New**, **Edit** and **Apply**. Each side wraps independently at narrow widths.
 Supply the optional `ResetLayout` property with a startup capture made before
 loading saved customization to enable Reset QAT and Reset All Customizations.
 QAT reset preserves live tab/group objects and session-only simplified choices;

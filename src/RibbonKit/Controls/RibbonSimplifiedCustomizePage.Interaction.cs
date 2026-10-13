@@ -50,6 +50,7 @@ public partial class RibbonSimplifiedCustomizePage
             case CustomizeMenu.Edit:
                 AddAction(RibbonString.RenameTab, () => Rename(_tab), _tab is not null);
                 AddAction(RibbonString.RenameGroup, () => Rename(_group), _group is not null);
+                AddAction(RibbonString.MoveTab, MoveTab, _tab is not null && Controls.Ribbon.GetIsCustom(_tab) && DraftTabs().Count > 1);
                 if (_current?.SelectedItem is SimplifiedCustomizeEntry entry)
                 {
                     menu.Items.Add(new Separator());

@@ -160,11 +160,12 @@ public sealed partial class SimplifiedCustomizationTests
         var custom = ((SimplifiedTabChoice)targetTabs.SelectedItem).Tab!;
         var customGroup = Assert.IsType<SimplifiedGroupChoice>(host.Current.SelectedItem).Group!;
         host.SelectAvailable(picture); host.Click("PART_AddButton");
-        sourceTabs.SelectedItem = sourceTabs.Items.Cast<SimplifiedTabChoice>().Single(choice => choice.Tab == custom);
+        Assert.DoesNotContain(sourceTabs.Items.Cast<SimplifiedTabChoice>(), choice => choice.Tab == custom);
         Assert.Same(picture, Assert.Single(host.Available.Items.Cast<SimplifiedCustomizeEntry>()).Control);
         Assert.Equal(new[] { picture }, host.Selected()); Assert.Empty(customGroup.Items);
         host.Page.ApplyChanges(); host.Layout();
-        Assert.Same(custom, ((SimplifiedTabChoice)sourceTabs.SelectedItem).Tab);
+        Assert.Same(insert, ((SimplifiedTabChoice)sourceTabs.SelectedItem).Tab);
+        Assert.DoesNotContain(sourceTabs.Items.Cast<SimplifiedTabChoice>(), choice => choice.Tab == custom);
         Assert.Same(picture, Ribbon.GetQuickAccessSource(Assert.IsAssignableFrom<FrameworkElement>(customGroup.Items[0])));
         Assert.Empty(host.Ribbon.GetSimplifiedChoices(insert));
     });

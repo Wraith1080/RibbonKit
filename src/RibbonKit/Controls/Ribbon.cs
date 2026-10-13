@@ -4230,7 +4230,9 @@ public partial class Ribbon : Control
     private void OnTabsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         // Track visibility so selection can escape a contextual tab that hides.
-        if (e.OldItems is not null)
+        // Move changes order without ending modal/merge membership or re-recording
+        // temporary visibility as the tab's authored state.
+        if (e.Action != NotifyCollectionChangedAction.Move && e.OldItems is not null)
         {
             foreach (RibbonTab tab in e.OldItems)
             {
@@ -4247,7 +4249,7 @@ public partial class Ribbon : Control
             }
         }
 
-        if (e.NewItems is not null)
+        if (e.Action != NotifyCollectionChangedAction.Move && e.NewItems is not null)
         {
             foreach (RibbonTab tab in e.NewItems)
             {

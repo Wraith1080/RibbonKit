@@ -737,7 +737,8 @@
                                      Icon="{StaticResource Icon.Table}"
                                      SizeDefinition="Large, Medium, Small"
                                      ScreenTipTitle="Table"
-                                     ScreenTipText="Insert a table into your document." />
+                                     ScreenTipText="Insert a table into your document."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="100" />
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Illustrations" rk:Ribbon.CommandId="group.insert.illustrations" Icon="{StaticResource Icon.Picture}">
                     <rk:RibbonButton Header="Pictures"
@@ -746,7 +747,8 @@
                                      Icon="{StaticResource Icon.Picture}"
                                      SizeDefinition="Large, Medium, Small"
                                      ScreenTipTitle="Pictures"
-                                     ScreenTipText="Insert pictures from your computer or the web." />
+                                     ScreenTipText="Insert pictures from your computer or the web."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60" />
                     <!-- Simulates selecting a picture: shows the contextual tab -->
                     <rk:RibbonToggleButton Header="Select Picture"
                                            LargeIcon="{StaticResource Icon.Select}"
@@ -773,7 +775,8 @@
                                      Icon="{StaticResource Icon.Link}"
                                      SizeDefinition="Large, Medium, Small"
                                      ScreenTipTitle="Link (Ctrl+K)"
-                                     ScreenTipText="Create a link to a webpage or another place in your document." />
+                                     ScreenTipText="Create a link to a webpage or another place in your document."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60" />
                 </rk:RibbonGroup>
             </rk:RibbonTab>
 
@@ -788,13 +791,15 @@
                                      Icon="{StaticResource Icon.Sliders}"
                                      SizeDefinition="Large, Medium, Small"
                                      ScreenTipTitle="Corrections"
-                                     ScreenTipText="Improve brightness, contrast, or sharpness." />
+                                     ScreenTipText="Improve brightness, contrast, or sharpness."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="100" />
                     <rk:RibbonButton Header="Color"
                                      LargeIcon="{StaticResource Icon.ColorDrop}"
                                      Icon="{StaticResource Icon.ColorDrop}"
                                      SizeDefinition="Large, Medium, Small"
                                      ScreenTipTitle="Color"
-                                     ScreenTipText="Change the color of your picture." />
+                                     ScreenTipText="Change the color of your picture."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60" rk:Ribbon.SimplifiedSize="Small" />
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Size" Icon="{StaticResource Icon.Crop}">
                     <rk:RibbonButton Header="Crop"
@@ -802,7 +807,8 @@
                                      Icon="{StaticResource Icon.Crop}"
                                      SizeDefinition="Large, Medium, Small"
                                      ScreenTipTitle="Crop"
-                                     ScreenTipText="Crop the picture to remove unwanted areas." />
+                                     ScreenTipText="Crop the picture to remove unwanted areas."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60" />
                 </rk:RibbonGroup>
             </rk:RibbonTab>
 
@@ -814,7 +820,8 @@
                                      Icon="{StaticResource Icon.Zoom}"
                                      SizeDefinition="Large, Medium, Small"
                                      ScreenTipTitle="Zoom"
-                                     ScreenTipText="Zoom the document to a specific level." />
+                                     ScreenTipText="Zoom the document to a specific level."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="100" />
                     <rk:RibbonGroupSeparator x:Name="ViewZoomGroupSeparator" />
                     <StackPanel VerticalAlignment="Center">
                         <rk:RibbonButton x:Name="ActualSizeButton"
@@ -823,7 +830,8 @@
                                          rk:Ribbon.CommandId="cmd.zoom.actualSize"
                                          Icon="{StaticResource Icon.Zoom}"
                                          ScreenTipTitle="100%"
-                                         ScreenTipText="Return the document to its actual-size zoom level." />
+                                         ScreenTipText="Return the document to its actual-size zoom level."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60" />
                         <rk:RibbonButton x:Name="PageWidthButton"
                                          Header="Page Width"
                                          Size="Medium"
@@ -915,7 +923,8 @@
                                            Checked="OnToggleDarkMode"
                                            Unchecked="OnToggleDarkMode"
                                            ScreenTipTitle="Dark mode"
-                                           ScreenTipText="Use this generation's dark palette: Black for Office 2007/2010, Dark Gray for 2013, and modern dark for 2019/2024." />
+                                           ScreenTipText="Use this generation's dark palette: Black for Office 2007/2010, Dark Gray for 2013, and modern dark for 2019/2024."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60" rk:Ribbon.SimplifiedSize="Small" />
                     <rk:RibbonToggleButton x:Name="AccentedTitleBarToggle"
                                            Header="Colored Title Bar"
                                            Size="Large"
@@ -1237,21 +1246,24 @@
                                      SizeDefinition="Large, Medium, Small"
                                      Click="OnAnimationOff"
                                      ScreenTipTitle="No motion"
-                                     ScreenTipText="Turn every ribbon transition off — actions snap instantly." />
+                                     ScreenTipText="Turn every ribbon transition off — actions snap instantly."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60" />
                     <rk:RibbonButton Header="Subtle"
                                      LargeIcon="{StaticResource Icon.MotionLow}"
                                      Icon="{StaticResource Icon.MotionLow}"
                                      SizeDefinition="Large, Medium, Small"
                                      Click="OnAnimationSubtle"
                                      ScreenTipTitle="Subtle motion (default)"
-                                     ScreenTipText="Short, understated fades and small slides." />
+                                     ScreenTipText="Short, understated fades and small slides."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60" />
                     <rk:RibbonButton Header="Expressive"
                                      LargeIcon="{StaticResource Icon.MotionHigh}"
                                      Icon="{StaticResource Icon.MotionHigh}"
                                      SizeDefinition="Large, Medium, Small"
                                      Click="OnAnimationExpressive"
                                      ScreenTipTitle="Expressive motion"
-                                     ScreenTipText="Longer, more pronounced motion with springier easing." />
+                                     ScreenTipText="Longer, more pronounced motion with springier easing."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60" />
                     <rk:RibbonToggleButton Header="Respect System"
                                            Size="Large"
                                            IsChecked="True"
@@ -1382,7 +1394,8 @@
                                            Checked="OnToggleChartToolsMerge"
                                            Unchecked="OnToggleChartToolsMerge"
                                            ScreenTipTitle="Merge Chart Tools (tab merging)"
-                                           ScreenTipText="Activate a RibbonMergeSource, the way an embedded editor or MDI child contributes ribbon content while it is active. Two tabs appear after the host's, and a Chart Data group joins the Home tab. Merged content never appears in Customize the Ribbon and is never persisted." />
+                                           ScreenTipText="Activate a RibbonMergeSource, the way an embedded editor or MDI child contributes ribbon content while it is active. Two tabs appear after the host's, and a Chart Data group joins the Home tab. Merged content never appears in Customize the Ribbon and is never persisted."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60" />
                     <rk:RibbonButton Header="Options"
                                      rk:Ribbon.CommandId="cmd.options"
                                      Size="Large"
@@ -1390,7 +1403,8 @@
                                      Icon="{StaticResource Icon.Gear}"
                                      Click="OnOpenOptions"
                                      ScreenTipTitle="Options"
-                                     ScreenTipText="Open the merged options dialog: the app's own pages plus the Quick Access Toolbar customization page. Also reachable by right-clicking any ribbon button." />
+                                     ScreenTipText="Open the merged options dialog: the app's own pages plus the Quick Access Toolbar customization page. Also reachable by right-clicking any ribbon button."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60" />
                 </rk:RibbonGroup>
             </rk:RibbonTab>
 
@@ -1399,7 +1413,8 @@
                     <rk:RibbonDropDownButton x:Name="LayoutDemosButton" Header="Try layouts" Size="Large"
                                              Icon="{StaticResource Icon.Select}"
                                              ScreenTipTitle="Layout demonstrations"
-                                             ScreenTipText="Try scrolling and overflow, then restore the original layout.">
+                                             ScreenTipText="Try scrolling and overflow, then restore the original layout."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="100">
                         <rk:RibbonMenuItem x:Name="ScrollPreviewToggle" Header="Show scroll arrows" Click="OnScrollPreview" />
                         <rk:RibbonMenuItem x:Name="BodyScrollPreviewToggle" Header="Keep Home groups expanded" Click="OnBodyScrollPreview" />
                         <rk:RibbonMenuItem x:Name="OverflowPreviewToggle" Header="Show QAT overflow" Click="OnOverflowPreview" />
@@ -1409,13 +1424,15 @@
                     <rk:RibbonToggleButton x:Name="CompareToggle" Header="Compare 2024" Size="Large"
                                            Icon="{StaticResource Icon.Palette}" Checked="OnCompare2024" Unchecked="OnCompare2024"
                                            ScreenTipTitle="Compare Crystal with Office 2024"
-                                           ScreenTipText="Switch between Crystal and Office 2024 while keeping the current control values." />
+                                           ScreenTipText="Switch between Crystal and Office 2024 while keeping the current control values."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60" rk:Ribbon.SimplifiedSize="Small" />
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Document" rk:Ribbon.CommandId="group.samples.document" Icon="{StaticResource Icon.Style}">
                     <StackPanel>
                         <rk:RibbonTextBox x:Name="TitleInput" Header="Title" InputWidth="170"
                                           Text="RibbonKit — core ribbon showcase" AutomationProperties.Name="Document title" />
-                        <rk:RibbonDropDownButton x:Name="DocumentEffectsButton" Header="Document effects" Size="Medium" Icon="{StaticResource Icon.Style}">
+                        <rk:RibbonDropDownButton x:Name="DocumentEffectsButton" Header="Document effects" Size="Medium" Icon="{StaticResource Icon.Style}"
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60">
                             <rk:RibbonMenuItem x:Name="DocumentLengthToggle" Header="Add scrolling text" Click="OnDocumentLengthToggle" />
                             <rk:RibbonMenuItem x:Name="DocumentFadeToggle" Header="Show document edge fade" Click="OnDocumentFadeToggle" />
                             <rk:RibbonMenuItem x:Name="DocumentQatUnderlayToggle" Header="Show document through QAT" Click="OnDocumentQatUnderlayToggle" />
@@ -1438,7 +1455,8 @@
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="States" rk:Ribbon.CommandId="group.samples.states" Icon="{StaticResource Icon.Gear}">
                     <rk:RibbonToggleButton x:Name="EnableOptionsToggle" Header="Enable options" Size="Large"
-                                           Icon="{StaticResource Icon.Select}" IsChecked="True" />
+                                           Icon="{StaticResource Icon.Select}" IsChecked="True"
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60" />
                     <rk:RibbonToggleButton x:Name="DisableGalleryToggle" Header="Disable gallery" Size="Large"
                                            Icon="{StaticResource Icon.Style}" Checked="OnDisableGallery" Unchecked="OnDisableGallery" />
                     <rk:RibbonButton Header="Change context tint" Size="Large" Icon="{StaticResource Icon.Palette}"
@@ -1464,19 +1482,22 @@
                                      LargeIcon="{StaticResource Icon.Print}"
                                      Icon="{StaticResource Icon.Print}"
                                      ScreenTipTitle="Print"
-                                     ScreenTipText="Send the document to the printer." />
+                                     ScreenTipText="Send the document to the printer."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="100" />
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Page Setup" Icon="{StaticResource Icon.Crop}">
                     <rk:RibbonButton Header="Margins"
                                      Size="Large"
                                      Icon="{StaticResource Icon.Crop}"
                                      ScreenTipTitle="Margins"
-                                     ScreenTipText="Choose the margin sizes for the whole document." />
+                                     ScreenTipText="Choose the margin sizes for the whole document."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60" />
                     <rk:RibbonButton Header="Orientation"
                                      Size="Large"
                                      Icon="{StaticResource Icon.Picture}"
                                      ScreenTipTitle="Orientation"
-                                     ScreenTipText="Switch between portrait and landscape." />
+                                     ScreenTipText="Switch between portrait and landscape."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60" />
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="Zoom" Icon="{StaticResource Icon.Zoom}">
                     <rk:RibbonButton Header="Zoom"
@@ -1484,12 +1505,14 @@
                                      LargeIcon="{StaticResource Icon.Zoom}"
                                      Icon="{StaticResource Icon.Zoom}"
                                      ScreenTipTitle="Zoom"
-                                     ScreenTipText="Change the preview magnification." />
+                                     ScreenTipText="Change the preview magnification."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="100" />
                     <rk:RibbonButton Header="One Page"
                                      Size="Large"
                                      Icon="{StaticResource Icon.Picture}"
                                      ScreenTipTitle="One Page"
-                                     ScreenTipText="Fit a single page in the window." />
+                                     ScreenTipText="Fit a single page in the window."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60" />
                 </rk:RibbonGroup>
             </rk:RibbonTab>
 
@@ -1522,7 +1545,8 @@
                                              LargeIcon="{StaticResource Icon.Redo}"
                                              Icon="{StaticResource Icon.Redo}"
                                              ScreenTipTitle="Refresh Chart Data"
-                                             ScreenTipText="Re-read the chart's source range. This group is injected into the HOST's Home tab by the merge source — right-click it to add it to the Quick Access Toolbar, then unmerge and watch the proxy grey out instead of vanishing." />
+                                             ScreenTipText="Re-read the chart's source range. This group is injected into the HOST's Home tab by the merge source — right-click it to add it to the Quick Access Toolbar, then unmerge and watch the proxy grey out instead of vanishing."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60" rk:Ribbon.SimplifiedSize="Small" />
                         </rk:RibbonGroup>
                     </rk:RibbonGroupContribution>
                 </rk:RibbonMergeSource.Groups>
@@ -1535,7 +1559,8 @@
                                          LargeIcon="{StaticResource Icon.Style}"
                                          Icon="{StaticResource Icon.Style}"
                                          ScreenTipTitle="Change Chart Type"
-                                         ScreenTipText="Switch between column, line, pie and the rest." />
+                                         ScreenTipText="Switch between column, line, pie and the rest."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="100" />
                     </rk:RibbonGroup>
                     <rk:RibbonGroup Header="Data" Icon="{StaticResource Icon.Table}">
                         <rk:RibbonButton Header="Select Data"
@@ -1543,7 +1568,8 @@
                                          LargeIcon="{StaticResource Icon.Table}"
                                          Icon="{StaticResource Icon.Table}"
                                          ScreenTipTitle="Select Data"
-                                         ScreenTipText="Choose the range the chart plots." />
+                                         ScreenTipText="Choose the range the chart plots."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="60" />
                     </rk:RibbonGroup>
                 </rk:RibbonTab>
                 <rk:RibbonTab Header="Chart Format"
@@ -1555,7 +1581,8 @@
                                          LargeIcon="{StaticResource Icon.ColorDrop}"
                                          Icon="{StaticResource Icon.ColorDrop}"
                                          ScreenTipTitle="Shape Fill"
-                                         ScreenTipText="Fill the selected series with a colour or gradient." />
+                                         ScreenTipText="Fill the selected series with a colour or gradient."
+                                     rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="100" />
                     </rk:RibbonGroup>
                 </rk:RibbonTab>
             </rk:RibbonMergeSource>
