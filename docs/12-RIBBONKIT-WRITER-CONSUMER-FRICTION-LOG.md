@@ -252,6 +252,28 @@ dependencies. Final appearance and live input remain user review gates.
 
 [Verification](history/02-writer-foundation.md#3216-writer-crystal-integration-and-deferred-validation--2026-10-02).
 
+### RKWF-047 — Simplified customization needs host dialog and persistence integration
+
+App-corrected 2026-10-14. Writer previously registered only classic/QAT requests
+and pages, leaving Customize Ribbon without a handler in Simplified mode. Add the
+shared simplified page with the factory reset baseline, route its request and
+select the current mode's editor; reuse the shared dialog's page eligibility.
+Author useful command defaults using existing attached placement/size properties.
+No runtime change or host preference-schema change is required.
+
+Writer owns ribbon storage and outer dialog rollback. The simplified page's Apply
+must advance the ribbon-only checkpoint through SimplifiedCustomizationChanged;
+otherwise a later outer Cancel reverses that explicit Apply. A temporary handler
+is scoped around the modal dialog and removed in finally. The ordinary handler
+saves pin/remove changes outside Options, honoring existing load/rollback guards.
+Appearance previews retain their separate Apply/Cancel boundary.
+
+Two focused independent Writer checks passed: actual context-menu request routes,
+draft Cancel, Apply then Cancel, OK, pin persistence/restart, and the existing
+Crystal appearance rollback/persistence contract. No new timing workaround or
+automation gap was introduced. Live visual review/full validation remain open in
+the [active simplified plan](15-SIMPLIFIED-RIBBON-PLAN.md#s7-host-defaults-and-customization-integration--2026-10-14).
+
 ### Verification note — 2026-09-15 cleanup
 
 77 focused Writer tests passed. The combined window run hit the known WPF WindowChrome

@@ -183,6 +183,12 @@ Only the active layout's **Customize Ribbon** page is shown; both modes use the
 same page title and context-menu label. QAT customization remains available in
 either mode. Add `RibbonSimplifiedCustomizePage` to a
 `RibbonOptionsDialog` with its `Ribbon` property pointing at the owning ribbon.
+The host adds both `RibbonCustomizePage` and `RibbonSimplifiedCustomizePage` to
+its dialog and handles both ribbon customization request events. On a request,
+select the editor matching `Ribbon.LayoutMode`; the shared dialog handles page
+eligibility and later mode changes. Capture the factory layout before restoring
+saved customization and pass it as `ResetLayout` to both editors. RTL Lab and
+Writer demonstrate this integration; MDI demonstrates command defaults only.
 Each column has an independent full-width tab selector: the left filters source
 commands, including an All Tabs choice, and the right chooses the destination.
 The selected list has selectable group headers, including empty groups as Add
@@ -197,6 +203,11 @@ discards drafts on Cancel/close, hides the inactive customization page by mode,
 and selects the newly eligible counterpart when the mode changes. Apply followed
 by Cancel keeps the already applied choices. The QAT/classic pages retain their
 existing live-edit contract.
+Hosts with their own dialog-wide rollback must advance their saved ribbon
+checkpoint on `SimplifiedCustomizationChanged`, so a later Cancel retains a
+simplified Apply. Keep that checkpoint independent of unapplied appearance
+previews. Writer demonstrates this alongside pin/remove persistence outside
+the dialog.
 
 In Simplified mode, a command's context menu offers Pin/Remove and **Customize
 the Ribbon**. Hosts open their simplified options surface on

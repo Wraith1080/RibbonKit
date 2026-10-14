@@ -39,6 +39,7 @@ public partial class MainWindow
 
         MainRibbon.QuickAccessCustomizeRequested += OnQuickAccessCustomizeRequested;
         MainRibbon.RibbonCustomizeRequested += OnRibbonCustomizeRequested;
+        MainRibbon.SimplifiedCustomizeRequested += OnRibbonCustomizeRequested;
         Loaded += OnWriterWindowLoaded;
     }
 
@@ -68,6 +69,7 @@ public partial class MainWindow
 
         ((INotifyCollectionChanged)MainRibbon.QuickAccessItems).CollectionChanged +=
             OnQuickAccessItemsChanged;
+        MainRibbon.SimplifiedCustomizationChanged += OnSimplifiedCustomizationChanged;
         _quickAccessPositionDescriptor = DependencyPropertyDescriptor.FromProperty(
             Ribbon.QuickAccessPositionProperty,
             typeof(Ribbon));
@@ -82,6 +84,9 @@ public partial class MainWindow
     }
 
     private void OnQuickAccessPositionChanged(object? sender, EventArgs e) =>
+        SaveRibbonLayoutIfReady();
+
+    private void OnSimplifiedCustomizationChanged(object? sender, EventArgs e) =>
         SaveRibbonLayoutIfReady();
 
     private void SaveDocumentViewPreferences()
@@ -150,6 +155,11 @@ public partial class MainWindow
             Header = RibbonLocalization.GetString(RibbonString.QuickAccessToolbarPage),
             Content = new RibbonQuickAccessPage { Ribbon = MainRibbon },
         };
+        var simplifiedPage = new RibbonOptionsPage
+        {
+            Header = RibbonLocalization.GetString(RibbonString.CustomizeRibbonPage),
+            Content = new RibbonSimplifiedCustomizePage { Ribbon = MainRibbon, ResetLayout = _baselineRibbonLayout },
+        };
 
         var dialog = new RibbonOptionsDialog
         {
@@ -158,10 +168,11 @@ public partial class MainWindow
         };
         dialog.Pages.Add(appearancePage);
         dialog.Pages.Add(customizePage);
+        dialog.Pages.Add(simplifiedPage);
         dialog.Pages.Add(quickAccessPage);
         dialog.SelectedPage = selected switch
         {
-            WriterSettingsPage.CustomizeRibbon => customizePage,
+            WriterSettingsPage.CustomizeRibbon => MainRibbon.LayoutMode == RibbonLayoutMode.Simplified ? simplifiedPage : customizePage,
             WriterSettingsPage.QuickAccess => quickAccessPage,
             _ => appearancePage,
         };
@@ -186,6 +197,15 @@ public partial class MainWindow
         };
 
         _settingsDialog = dialog;
+        // The simplified page's Apply commits its ribbon draft immediately.
+        // Save that checkpoint so a subsequent Cancel only discards later work,
+        // while appearance previews retain their own rollback/Apply boundary.
+        void OnSimplifiedApplied(object? sender, EventArgs e)
+        {
+            rollbackRibbon = RibbonCustomizationSerializer.Serialize(MainRibbon);
+            _writerSettings.SaveRibbonLayout(rollbackRibbon);
+        }
+        MainRibbon.SimplifiedCustomizationChanged += OnSimplifiedApplied;
         RegisterAppearanceDialog(dialog);
         try
         {
@@ -193,6 +213,7 @@ public partial class MainWindow
         }
         finally
         {
+            MainRibbon.SimplifiedCustomizationChanged -= OnSimplifiedApplied;
             _settingsDialog = null;
         }
 
@@ -427,6 +448,8 @@ public partial class MainWindow
         Loaded -= OnWriterWindowLoaded;
         MainRibbon.QuickAccessCustomizeRequested -= OnQuickAccessCustomizeRequested;
         MainRibbon.RibbonCustomizeRequested -= OnRibbonCustomizeRequested;
+        MainRibbon.SimplifiedCustomizeRequested -= OnRibbonCustomizeRequested;
+        MainRibbon.SimplifiedCustomizationChanged -= OnSimplifiedCustomizationChanged;
         ((INotifyCollectionChanged)MainRibbon.QuickAccessItems).CollectionChanged -=
             OnQuickAccessItemsChanged;
         if (_quickAccessPositionDescriptor is not null)

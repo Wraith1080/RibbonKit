@@ -991,6 +991,8 @@ technical evidence warrants them; preserve existing dated records.
 
 [Simplified defaults in designer authoring](docs/history/library/14-simplified-ribbon.md#simplified-defaults-in-designer-authoring--2026-10-14).
 
+[MDI command defaults and RTL/Writer host dialog integration](docs/history/library/14-simplified-ribbon.md#mdi-rtl-and-writer-host-integration--2026-10-14).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.

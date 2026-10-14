@@ -464,3 +464,23 @@ The public-only regression forces Render-priority layout before Background for
 startup, Loaded-restored mode, first visits and revisits. The old implementation
 failed on a missing row; current runtime and consumer evidence, exact timing,
 visual rereview and unrun full/native gates are maintained in the active plan.
+
+#### MDI, RTL and Writer host integration — 2026-10-14
+
+Applications must compose the shared simplified editor into their own options
+dialog and handle SimplifiedCustomizeRequested. RTL Lab and Writer now include
+both classic/simplified editors with the factory reset baseline, select by mode
+and reuse RibbonOptionsDialog's eligibility switching. QAT remains a separate
+entry. MDI adds only command defaults, including its transient document merge
+command; no dialog was added. Writer and RTL author useful Inline/size/priority
+defaults through the existing attached properties.
+
+Writer's outer dialog rollback previously knew only the appearance Apply/OK
+boundary. The simplified page emits SimplifiedCustomizationChanged on its own
+Apply, so advance the ribbon-only checkpoint and storage there while the dialog
+is open. Otherwise Apply then Cancel would restore the obsolete opening snapshot.
+Subscribe temporarily around ShowDialog and remove the handler in finally;
+outside Options, use the same ribbon event for pin/remove persistence. Appearance
+preview rollback remains independent. This is host integration using existing
+public APIs, with no runtime or preference-schema changes. Focused real event,
+draft, persistence/restart and MDI target checks are recorded in the active plan.

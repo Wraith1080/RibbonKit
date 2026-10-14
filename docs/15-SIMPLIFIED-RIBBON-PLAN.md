@@ -7,6 +7,8 @@
 > focused evidence below, live user review and full validation pending.
 > S5 motion and mode-popup cleanup accepted 2026-10-13. S6 designer defaults
 > authorized 2026-10-14 before the deferred full validation pass.
+> S7 host defaults and RTL/Writer dialog integration implemented 2026-10-14;
+> focused verification and user review below; full validation remains deferred.
 
 ## Layout contract
 
@@ -260,6 +262,7 @@ remain separate gates.
 | S4 | Source filtering, ordered group headers, compact menus and draft-safe persistence utilities | S4a–c committed at 4036aea; catalog/footer/dialog/default refinements and custom-tab positioning implemented 2026-10-13; focused evidence below; awaiting live user review |
 | S5 | Shared visible layout/density collapse and simplified tab switching | Implemented; original and follow-up motion review recorded below; broader native/full gates remain open |
 | S6 | Designer defaults and per-command simplified visibility/label controls | Implemented; focused evidence and user review below; full/package/native gates remain deferred |
+| S7 | MDI/RTL/Writer defaults and RTL/Writer simplified customization integration | Implemented; focused consumer checks and accepted live review below; broader full/native gates remain open |
 
 S1 requires focused runtime regressions, a RibbonKit-only consumer matrix, normal
 Debug Showcase build, Release solution build/test for the additive public API,
@@ -773,6 +776,43 @@ Logs are `TestResults/simplified-designer-*.log`; toolbox callback diagnostics u
 [feature availability plan](16-RIBBON-FEATURE-AVAILABILITY-PLAN.md) proposes a
 persistent host capability Boolean starting with Simplified Ribbon. It is a design
 record, not an implemented runtime switch or additional authorized feature slice.
+
+### S7 host defaults and customization integration — 2026-10-14
+
+The user requested useful default commands in MDI, RTL Lab and Writer, plus the
+missing simplified customization page in RTL/Writer. MDI intentionally receives
+defaults only: its five Window commands and each document's merged UPPERCASE
+command use Inline placement. No MDI customization dialog or event wiring was
+added. RTL defaults include direction/localization, density, customization and
+the sample font/styles/clipboard commands. Writer defaults cover common commands
+on Home, Insert, contextual Table/Picture Tools, Page, View and Print Preview;
+text formatting and small navigation actions use icon-only labels, while primary
+actions and font/gallery selectors retain labels. Other commands remain available
+through the shared overflow/full-group surfaces.
+
+The missing dialog is host composition: RTL and Writer had the classic/QAT pages
+but neither the shared simplified page nor its request handler. Each now adds
+`RibbonSimplifiedCustomizePage` with the existing factory reset baseline, handles
+`SimplifiedCustomizeRequested`, and selects the editor for the current layout.
+QAT entry retains both mode-specific editors; shared RibbonOptionsDialog handles
+their visibility, eligibility and mode changes. No runtime/API or persistence
+schema changes were needed; Classic remains the initial mode in these hosts.
+
+Writer's host saves pin/remove changes outside Options. While Options is open,
+the shared page's Apply advances only the ribbon rollback/storage checkpoint,
+so later Cancel discards subsequent drafts without reversing Apply or committing
+appearance previews. OK and appearance Apply retain their existing contracts.
+The [Writer friction record](12-RIBBONKIT-WRITER-CONSUMER-FRICTION-LOG.md#rkwf-047--simplified-customization-needs-host-dialog-and-persistence-integration)
+records this consumer glue.
+
+| Check | Result |
+| --- | --- |
+| RTL host | Focused realized-window check passed: real simplified context-menu request opens the enabled shared editor in RTL, QAT entry exposes it, and changing mode switches to the classic counterpart |
+| MDI host | Focused check passed: five Window defaults project, merged UPPERCASE commands stay visible and target their contributing document across activation/revisit. The first harness assertion ran before deferred click forwarding; it passed after draining that work |
+| Independent Writer consumer | Two focused tests passed without Showcase resources/helpers: simplified and QAT event routes, draft Cancel, Apply then further draft/Cancel, OK, pin persistence and restart, plus the existing Crystal appearance Apply/Cancel/OK/restart contract |
+| Debug builds | Normal Showcase and Writer builds passed with 0 warnings/errors. Earlier focused builds encountered a DesignTools copy lock from Visual Studio; after the user closed VS, normal builds completed cleanly |
+| User review | Accepted 2026-10-14: the user reported everything is good after reviewing MDI/RTL/Writer simplified defaults and RTL/Writer customization integration. MDI remains defaults-only. This accepts S7's current presentation and integration; it does not establish the earlier specific full-suite/native gates |
+| Limits | Full testing remains deferred until prompted; all earlier unresolved full-suite/native gates are retained. No commit/push/publication |
 
 ### Remaining acceptance
 
