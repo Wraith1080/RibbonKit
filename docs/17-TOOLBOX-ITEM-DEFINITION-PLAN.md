@@ -93,7 +93,9 @@ designer results distinct from builds, package inspection and runtime consumers.
 ## Sequencing and acceptance
 
 The intended follow-on sequence is feature availability, then this Toolbox
-definition refresh. T1's include/exclude matrix should be reviewable before T2
+definition refresh, then the
+[ribbon/host animation synchronization plan](18-HOST-LAYOUT-TRANSITION-PLAN.md).
+T1's include/exclude matrix should be reviewable before T2
 implementation. The current S6 defaults/toolbox repair remains accepted in the
 [simplified plan](15-SIMPLIFIED-RIBBON-PLAN.md#s6-designer-defaults--2026-10-14).
 
