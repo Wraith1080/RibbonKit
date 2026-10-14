@@ -6,5 +6,9 @@ namespace RibbonKit.Design;
 public sealed class SimplifiedCommandInitializer : DefaultInitializer
 {
     /// <inheritdoc />
-    public override void InitializeDefaults(ModelItem item) => DesignModel.InitializeSimplifiedDefaults(item);
+    public override void InitializeDefaults(ModelItem item)
+    {
+        DesignLog.Write("Toolbox simplified defaults: " + DesignModel.TypeName(item));
+        DesignModel.InitializeSimplifiedDefaults(item);
+    }
 }

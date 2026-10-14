@@ -48,7 +48,15 @@ internal static class DesignModel
                 ModelProperty? property = FindAttached(item, "RibbonKit.Controls.Ribbon", name);
                 if (property is null)
                     DesignLog.Error("InitializeSimplifiedDefaults", new InvalidOperationException("Could not resolve Ribbon." + name));
-                else if (property.Value is null) property.SetValue(value);
+                else
+                {
+                    // Toolbox models can expose the effective default through
+                    // Value even when no attribute exists. Only IsSet tells us
+                    // whether the author already supplied a local assignment.
+                    DesignLog.Write("Simplified default " + TypeName(item) + "." + name
+                        + ": IsSet=" + property.IsSet + ", effective=" + property.ComputedValue);
+                    if (!property.IsSet) property.SetValue(value);
+                }
             }
             catch (Exception ex) { DesignLog.Error("InitializeSimplifiedDefaults " + name, ex); }
         }

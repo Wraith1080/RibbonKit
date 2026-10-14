@@ -1023,6 +1023,9 @@ technical evidence warrants them; preserve existing dated records.
 - **Ribbon feature availability:** proposed persistent capability switches are in
   the [design plan](docs/16-RIBBON-FEATURE-AVAILABILITY-PLAN.md).
 
+- **Toolbox item definitions:** the follow-on inventory, authoring and package
+  review is in the [design plan](docs/17-TOOLBOX-ITEM-DEFINITION-PLAN.md).
+
 - **Office 2024 Flat:** implementation and visual review status are in the
   [flat theme trial](docs/09-FUTURE-THEMES-PLAN.md#office-2024-flat-trial).
 

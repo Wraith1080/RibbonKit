@@ -111,3 +111,7 @@ These are assessment questions, not approved APIs or additional work in S6.
 No implementation, test run, schedule or public API change is implied by this
 plan. The full simplified-feature validation remains deferred until the user
 explicitly requests it; earlier unresolved gates stay in its active plan.
+
+The next planned follow-on is the
+[Toolbox item-definition refresh](17-TOOLBOX-ITEM-DEFINITION-PLAN.md). Its inventory
+and authoring decisions follow this feature-availability contract.

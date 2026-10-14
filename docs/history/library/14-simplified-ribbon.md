@@ -436,3 +436,12 @@ default. The net472 tooling remains independent of RibbonKit runtime types.
 Public-only authored-XAML checks prove runtime layout/label interpretation;
 toolbox/Model API edits, undo and reload still require live Visual Studio review.
 Current evidence and remaining gates are in the active plan's S6.
+
+The live toolbox follow-up exposed an unsafe new-item guard: ModelProperty.Value
+can wrap an effective default even when there is no authored attribute. Use
+ModelProperty.IsSet to preserve local assignments and initialize unassigned
+placement/size. Log the toolbox initializer's entry separately from per-property
+state so the next native drop can distinguish skipped defaults from a callback
+that never ran. The package-only toolbox manifest lists allowed controls; it is
+not a property-default mechanism and does not affect project-reference Toolbox
+population. Current native retry and retained evidence remain in S6.

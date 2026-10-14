@@ -259,7 +259,7 @@ remain separate gates.
 | S3 | Shared custom-tab/group creation from the simplified editor | Implemented and committed at 4ab4604; user review 2026-10-13 requested the S4 page redesign |
 | S4 | Source filtering, ordered group headers, compact menus and draft-safe persistence utilities | S4a–c committed at 4036aea; catalog/footer/dialog/default refinements and custom-tab positioning implemented 2026-10-13; focused evidence below; awaiting live user review |
 | S5 | Shared visible layout/density collapse and slower simplified tab switching | Implemented; motion and mode-popup cleanup accepted 2026-10-13; broader native/full gates remain below |
-| S6 | Designer defaults and per-command simplified visibility/label controls | Implemented 2026-10-14: new supported commands start Inline with labels shown; evidence below; live Visual Studio review pending |
+| S6 | Designer defaults and per-command simplified visibility/label controls | Implemented; focused evidence and user review below; full/package/native gates remain deferred |
 
 S1 requires focused runtime regressions, a RibbonKit-only consumer matrix, normal
 Debug Showcase build, Release solution build/test for the additive public API,
@@ -729,17 +729,17 @@ access; they are not silently converted into simplified command copies.
 | --- | --- |
 | Debug builds | DesignTools and normal Showcase builds passed, 0 warnings/errors; deployed DesignTools DLL hashes match both normal runtime Design folders |
 | Independent consumer | Focused SimplifiedDesignerDefaults scope passed: 12 Office2010/Office2024Flat/Crystal × LTR/RTL × shown/hidden-label cases. Fresh authored XAML realizes all seven supported command families and the selected label layout. Unconfigured runtime commands still default to Overflow/Medium; native editors remain excluded from inline copies |
-| Live designer | Pending: real toolbox drop, context/editor Add, checkbox edits, undo/redo, saved XAML reload and existing-item preservation in Visual Studio. The public-only runtime check does not execute the isolated Model API |
+| Live designer | Accepted 2026-10-14: after the toolbox guard repair, the user confirmed the placement/default now appears for the reported RibbonButton/RibbonToggleButton drops, and defaults, Ribbon Editor and undo/redo work. Earlier checklist acceptance of context/editor Add, checkbox edits, reload and runtime presentation is retained |
+| Toolbox guard follow-up | Replaced the Value-null test with ModelProperty.IsSet so an effective default wrapper cannot suppress a new authored default. Added a toolbox-callback entry and per-property IsSet/effective-value diagnostics. DesignTools and normal Debug Showcase builds passed, 0 warnings/errors; deployed DLL hashes match both runtime Design folders. Native outcome is recorded in the live-designer row |
 | Full/package/native gates | Deferred until the user's explicit prompt, including the earlier unresolved full-suite/native gates; no capability API was added |
 
-Logs are `TestResults/simplified-designer-*.log`. The separately requested
+Logs are `TestResults/simplified-designer-*.log`; toolbox callback diagnostics use
+`%LOCALAPPDATA%/RibbonKit/DesignTools.log`. The separately requested
 [feature availability plan](16-RIBBON-FEATURE-AVAILABILITY-PLAN.md) proposes a
 persistent host capability Boolean starting with Simplified Ribbon. It is a design
 record, not an implemented runtime switch or additional authorized feature slice.
 
 ### Remaining acceptance
-
-- S6 live Visual Studio creation/property/undo/reload review described above.
 
 - Human review of S2's customization page, ordering and labels. The earlier S1
   visual fixes are accepted; native mouse/touch, full keyboard/KeyTip traversal
