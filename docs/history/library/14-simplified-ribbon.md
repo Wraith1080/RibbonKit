@@ -418,3 +418,21 @@ The mode path closes File's application menu, while density and ordinary toggle
 policies remain unchanged. Focused independent-consumer checks exercise both
 mode directions and title-bar QAT nesting across three palettes and LTR/RTL;
 current results and remaining native/full gates stay in the active plan.
+
+#### Simplified defaults in designer authoring — 2026-10-14
+
+New supported commands use Inline/Medium through a shared new-item initializer.
+Register it for toolbox drops and call the same helper from both ModelFactory
+creation paths, covering context commands and nested Ribbon Editor additions.
+Write attached enum names through the existing type-qualified ModelProperty
+resolver inside the caller's transaction. Check local model assignments before
+seeding defaults so copies/repeated initializer calls retain authored values.
+
+The editor's Boolean presentation maps to existing enum properties: simplified
+visibility uses Inline/Overflow; label visibility uses Medium/Small. Restrict
+these rows to supported commands in groups/panels, excluding menu/gallery entries
+and native editors. This adds no runtime API and changes no unconfigured runtime
+default. The net472 tooling remains independent of RibbonKit runtime types.
+Public-only authored-XAML checks prove runtime layout/label interpretation;
+toolbox/Model API edits, undo and reload still require live Visual Studio review.
+Current evidence and remaining gates are in the active plan's S6.

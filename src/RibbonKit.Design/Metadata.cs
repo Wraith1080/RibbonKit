@@ -79,6 +79,15 @@ internal sealed class Metadata : IProvideAttributeTable
             builder.AddCustomAttributes(RibbonSplitButtonType, controlProvider);
             builder.AddCustomAttributes(RibbonDropDownButtonType, controlProvider);
 
+            // Toolbox drops run their own creation transaction. Use the same
+            // persisted defaults as the editor/context-menu creation paths.
+            var simplifiedInitializer = new FeatureAttribute(typeof(SimplifiedCommandInitializer));
+            foreach (string type in new[]
+            {
+                RibbonButtonType, RibbonToggleButtonType, RibbonSplitButtonType, RibbonDropDownButtonType,
+                "RibbonKit.Controls.RibbonComboBox", "RibbonKit.Controls.RibbonGallery", "RibbonKit.Controls.InRibbonGallery",
+            }) builder.AddCustomAttributes(type, simplifiedInitializer);
+
             // Properties-window categories + descriptions for the main controls.
             PropertyMetadata.Register(builder);
 

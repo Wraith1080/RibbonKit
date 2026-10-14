@@ -24,7 +24,34 @@ internal static class DesignModel
     public static ModelItem Create(ModelItem context, string typeName)
     {
         var id = new TypeIdentifier(Xmlns, typeName);
-        return ModelFactory.CreateItem(context.Context, id);
+        ModelItem item = ModelFactory.CreateItem(context.Context, id);
+        InitializeSimplifiedDefaults(item);
+        return item;
+    }
+
+    internal static bool IsSimplifiedCommand(ModelItem item) => TypeName(item) is
+        "RibbonButton" or "RibbonToggleButton" or "RibbonSplitButton" or "RibbonDropDownButton"
+        or "RibbonComboBox" or "RibbonGallery" or "InRibbonGallery";
+
+    // Called only for new model items, inside their existing creation transaction.
+    // Toolbox drops and the editor/context-menu factories share the same defaults.
+    internal static void InitializeSimplifiedDefaults(ModelItem item)
+    {
+        if (!IsSimplifiedCommand(item)) return;
+        SetDefault("SimplifiedPlacement", "Inline");
+        SetDefault("SimplifiedSize", "Medium");
+
+        void SetDefault(string name, string value)
+        {
+            try
+            {
+                ModelProperty? property = FindAttached(item, "RibbonKit.Controls.Ribbon", name);
+                if (property is null)
+                    DesignLog.Error("InitializeSimplifiedDefaults", new InvalidOperationException("Could not resolve Ribbon." + name));
+                else if (property.Value is null) property.SetValue(value);
+            }
+            catch (Exception ex) { DesignLog.Error("InitializeSimplifiedDefaults " + name, ex); }
+        }
     }
 
     /// <summary>
@@ -627,7 +654,7 @@ internal static class DesignModel
     {
         try
         {
-            return ModelFactory.CreateItem(context.Context, new TypeIdentifier(Xmlns, typeName));
+            return Create(context, typeName);
         }
         catch
         {

@@ -989,6 +989,8 @@ technical evidence warrants them; preserve existing dated records.
 
 [Shared layout/density motion trial](docs/history/library/14-simplified-ribbon.md#visible-layoutdensity-motion-trial--2026-10-13).
 
+[Simplified defaults in designer authoring](docs/history/library/14-simplified-ribbon.md#simplified-defaults-in-designer-authoring--2026-10-14).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.
@@ -1017,6 +1019,9 @@ technical evidence warrants them; preserve existing dated records.
 
 - **Simplified ribbon:** layout/customization evidence and remaining acceptance are in the
   [active plan](docs/15-SIMPLIFIED-RIBBON-PLAN.md#delivery-and-acceptance).
+
+- **Ribbon feature availability:** proposed persistent capability switches are in
+  the [design plan](docs/16-RIBBON-FEATURE-AVAILABILITY-PLAN.md).
 
 - **Office 2024 Flat:** implementation and visual review status are in the
   [flat theme trial](docs/09-FUTURE-THEMES-PLAN.md#office-2024-flat-trial).

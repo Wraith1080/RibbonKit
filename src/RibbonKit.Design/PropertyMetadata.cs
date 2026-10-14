@@ -19,6 +19,12 @@ internal static class PropertyMetadata
             "Where the Quick Access Toolbar renders: title bar, tab row (default), or below the ribbon.");
         Describe(b, "RibbonKit.Controls.Ribbon", "IsMinimized",
             "Collapse the ribbon to just its tab headers.");
+        Describe(b, "RibbonKit.Controls.Ribbon", "LayoutMode",
+            "Runtime startup layout: Classic or Simplified. This is an authored setting, not a design-only preview.");
+        Describe(b, "RibbonKit.Controls.Ribbon", "SimplifiedPlacement",
+            "Command placement: Inline shows it in the simplified row; Overflow keeps it in More Commands. New designer commands start Inline.");
+        Describe(b, "RibbonKit.Controls.Ribbon", "SimplifiedSize",
+            "Simplified label visibility: Medium shows icon and label; Small shows only the icon. New designer commands start Medium.");
         Describe(b, "RibbonKit.Controls.Ribbon", "Backstage",
             "The File-button content (typically a Backstage). The File button is hidden while this is null.");
         Describe(b, "RibbonKit.Controls.Ribbon", "ApplicationButtonHeader",

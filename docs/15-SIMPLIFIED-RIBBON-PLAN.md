@@ -5,6 +5,8 @@
 > S3 shared custom-tab/group draft editor implemented and committed at 4ab4604.
 > S4a–c committed at 4036aea. Follow-up review refinement implemented 2026-10-13;
 > focused evidence below, live user review and full validation pending.
+> S5 motion and mode-popup cleanup accepted 2026-10-13. S6 designer defaults
+> authorized 2026-10-14 before the deferred full validation pass.
 
 ## Layout contract
 
@@ -256,7 +258,8 @@ remain separate gates.
 | S2 | Dedicated customization page, pin/unpin, separate ordered state and persistence | Implemented; user accepted scrolling/focus repairs 2026-10-13 and committed them at 1a2a743. Broader end-of-feature gates remain below |
 | S3 | Shared custom-tab/group creation from the simplified editor | Implemented and committed at 4ab4604; user review 2026-10-13 requested the S4 page redesign |
 | S4 | Source filtering, ordered group headers, compact menus and draft-safe persistence utilities | S4a–c committed at 4036aea; catalog/footer/dialog/default refinements and custom-tab positioning implemented 2026-10-13; focused evidence below; awaiting live user review |
-| S5 | Shared visible layout/density collapse and slower simplified tab switching | Experimental trial requested 2026-10-13; implemented in the working tree, awaiting user motion review |
+| S5 | Shared visible layout/density collapse and slower simplified tab switching | Implemented; motion and mode-popup cleanup accepted 2026-10-13; broader native/full gates remain below |
+| S6 | Designer defaults and per-command simplified visibility/label controls | Implemented 2026-10-14: new supported commands start Inline with labels shown; evidence below; live Visual Studio review pending |
 
 S1 requires focused runtime regressions, a RibbonKit-only consumer matrix, normal
 Debug Showcase build, Release solution build/test for the additive public API,
@@ -702,10 +705,41 @@ an obsolete card completion canceling a newer tab animation; disposal/generation
 guards repaired it and the final complete scope passed. These focused results do
 not close full end-of-feature or live/native gates. Popup follow-up logs are
 `TestResults/simplified-mode-popup-*.log`; the user's live collapsed-group review
-is accepted. No further implementation or testing is scheduled. Earlier unresolved
+is accepted. This closed implementation at the 2026-10-13 checkpoint; the user's
+2026-10-14 follow-up adds the bounded S6 designer slice below. Earlier unresolved
 full-suite/native gates below remain recorded for the user-requested validation pass.
 
+### S6 designer defaults — 2026-10-14
+
+The user requested simplified defaults for items added through the designer and
+confirmed Inline placement with labels shown by default. Toolbox initializers,
+group context commands and Ribbon Editor creation share one helper that writes
+the existing attached `Ribbon.SimplifiedPlacement=Inline` and
+`Ribbon.SimplifiedSize=Medium` values inside the creation transaction. It does not
+overwrite assigned values or change the runtime's Overflow/Medium defaults.
+
+Supported button/toggle/split/dropdown, combo and gallery commands expose **Show
+in simplified ribbon** and **Show simplified label** checkboxes in Ribbon Editor.
+These author runtime XAML: unchecked visibility maps to Overflow, and unchecked
+label maps to Small. Each edit is undoable through the existing attached-property
+resolver. Native editors and unsupported option/menu-item types retain full-group
+access; they are not silently converted into simplified command copies.
+
+| Check | Result |
+| --- | --- |
+| Debug builds | DesignTools and normal Showcase builds passed, 0 warnings/errors; deployed DesignTools DLL hashes match both normal runtime Design folders |
+| Independent consumer | Focused SimplifiedDesignerDefaults scope passed: 12 Office2010/Office2024Flat/Crystal × LTR/RTL × shown/hidden-label cases. Fresh authored XAML realizes all seven supported command families and the selected label layout. Unconfigured runtime commands still default to Overflow/Medium; native editors remain excluded from inline copies |
+| Live designer | Pending: real toolbox drop, context/editor Add, checkbox edits, undo/redo, saved XAML reload and existing-item preservation in Visual Studio. The public-only runtime check does not execute the isolated Model API |
+| Full/package/native gates | Deferred until the user's explicit prompt, including the earlier unresolved full-suite/native gates; no capability API was added |
+
+Logs are `TestResults/simplified-designer-*.log`. The separately requested
+[feature availability plan](16-RIBBON-FEATURE-AVAILABILITY-PLAN.md) proposes a
+persistent host capability Boolean starting with Simplified Ribbon. It is a design
+record, not an implemented runtime switch or additional authorized feature slice.
+
 ### Remaining acceptance
+
+- S6 live Visual Studio creation/property/undo/reload review described above.
 
 - Human review of S2's customization page, ordering and labels. The earlier S1
   visual fixes are accepted; native mouse/touch, full keyboard/KeyTip traversal

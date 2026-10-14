@@ -629,6 +629,10 @@ design-tools assembly provides context commands, responsive Ribbon Editor, struc
 drag/drop and design-only theme/tab/File preview. Its delivery surface is context
 menus, **not a floating smart-tag glyph**.
 
+New supported designer commands start visible in Simplified Ribbon with labels
+shown. Ribbon Editor exposes **Show in simplified ribbon** and **Show simplified
+label** as persistent XAML settings; existing authored values are preserved.
+
 ![Visual Studio Ribbon Editor](docs/images/ribbon-editor.png)
 
 See [design-tools setup](src/RibbonKit.Design/SETUP-DESIGNTOOLS.md), including the
