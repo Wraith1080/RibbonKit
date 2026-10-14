@@ -135,6 +135,7 @@
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonQuickAccessToolBar}">
         <Setter Property="Focusable" Value="False" />
+        <Setter Property="KeyboardNavigation.TabNavigation" Value="Local" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="ItemsPanel">
             <Setter.Value>

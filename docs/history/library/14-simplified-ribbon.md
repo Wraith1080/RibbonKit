@@ -484,3 +484,32 @@ outside Options, use the same ribbon event for pin/remove persistence. Appearanc
 preview rollback remains independent. This is host integration using existing
 public APIs, with no runtime or preference-schema changes. Focused real event,
 draft, persistence/restart and MDI target checks are recorded in the active plan.
+
+#### End-of-feature validation repairs — 2026-10-14
+
+First-measure realization exposed a detached custom-group declaration's enabled
+state: mirroring only that declaration does not reliably inherit the destination
+group's disabling. Simplified row copies now supply that group explicitly to the
+existing source/parking MultiBinding. Ordinary QAT copies retain the two-input
+contract; no public API changed. A realized independent consumer checks group
+disable/reenable and original source disable/reenable across the palette/density/
+direction matrix.
+
+Touch derivatives in Customize/Move templates crossed the OptionsDialog BasedOn
+file boundary. Keep the three action/primary/reorder derivatives beside their
+base styles and consume them from both templates. Brushes, metrics and triggers
+remain shared. Update stale list/page counts, checked-rim token and stretched
+dropdown-row expectations without weakening their binding/geometry assertions.
+
+The new accessible QAT chevron introduced inner TabIndex values. Without a local
+navigation group on the toolbar, WPF sorts its ItemsPresenter ahead of preceding
+siblings in a standalone host and Tab skips the strip. Scope the toolbar locally;
+forward/reverse order includes inline items and More, excluding zero-slot sources.
+Independent checks cover all themes/directions and embedded placement changes.
+
+Retain passing prefixes when the aggregate stops: the bounded keyboard selection
+and two new continuation points avoid repeating large matrices. Measured scope
+durations now exceed the old full timeout; allow 20 minutes for the full consumer
+and 10 for its large continuations. Current results, the two reproduced
+pre-feature Crystal QAT approval mismatches and native limits remain solely in
+the active plan's end-of-feature record.

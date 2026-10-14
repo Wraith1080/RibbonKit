@@ -52,7 +52,7 @@ public sealed class DarkModeTemplateContractTests
             .Where(element => partNames.Contains((string?)element.Attribute(Xaml + "Name")))
             .ToArray();
 
-        Assert.Equal(5, controls.Length); // PART_AvailableList appears on both built-in pages.
+        Assert.Equal(7, controls.Length); // QAT, classic and simplified pages, plus the icon dialog.
         Assert.All(
             controls,
             element => Assert.Equal(

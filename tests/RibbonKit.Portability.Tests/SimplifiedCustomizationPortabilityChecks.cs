@@ -153,6 +153,25 @@ internal static class SimplifiedCustomizationPortabilityChecks
                     Assert.True(Ribbon.GetIsCustom(customTab)); Assert.Equal(2, customTab.Groups.Count);
                     Assert.All(customTab.Groups, item => Assert.Single(item.Items.Cast<object>()));
                     Assert.Same(first, Ribbon.GetQuickAccessSource((FrameworkElement)customTab.Groups.Last().Items[0]));
+                    if (scale == 1)
+                    {
+                        var previousTab = ribbon.SelectedTab;
+                        var ribbonWindow = new Window { Content = ribbon, Width = 1000, Height = 240, FlowDirection = direction,
+                            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+                        try
+                        {
+                            ribbon.SelectedTab = customTab; ribbonWindow.Show(); Layout(ribbonWindow);
+                            var toolbar = Part<RibbonQuickAccessToolBar>((RibbonGroupsHost)customTab.Content, "PART_SimplifiedToolBar");
+                            var projected = toolbar.Items.OfType<RibbonButton>().Single(item => Ribbon.GetQuickAccessSource(item) == first);
+                            var destination = customTab.Groups.Last();
+                            destination.IsEnabled = false; Layout(ribbonWindow);
+                            Assert.True(first.IsEnabled); Assert.False(projected.IsEnabled);
+                            destination.IsEnabled = true; Layout(ribbonWindow); Assert.True(projected.IsEnabled);
+                            first.IsEnabled = false; Layout(ribbonWindow); Assert.False(projected.IsEnabled);
+                            first.IsEnabled = true; Layout(ribbonWindow); Assert.True(projected.IsEnabled);
+                        }
+                        finally { ribbonWindow.Content = null; ribbonWindow.Close(); ribbon.SelectedTab = previousTab; Layout(dialog); }
+                    }
                     string structured = RibbonCustomizationSerializer.Serialize(ribbon);
                     Assert.Contains("\"GroupId\"", structured);
                     ribbon.LayoutMode = RibbonLayoutMode.Classic; Layout(dialog); Assert.Equal(2, ribbon.Tabs.Count);

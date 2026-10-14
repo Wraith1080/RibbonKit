@@ -305,7 +305,12 @@ public sealed class ApplicationButtonShapeThemeTests
         }
         // Continue after the completed gallery checks without repeating passing matrices.
         string? scope = Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE");
-        if (scope is not ("AfterGalleryQuickAccess" or "AfterCrystalTint"))
+        if (scope == "QatOverflowKeyboard")
+        {
+            VerifyScope("KeyboardNavigationPortabilityChecks.VerifyQatOverflow", () => KeyboardNavigationPortabilityChecks.VerifyQatOverflow(application));
+            return;
+        }
+        if (scope is not ("AfterGalleryQuickAccess" or "AfterCrystalTint" or "AfterKeyboardNavigation" or "AfterSimplifiedDesignerDefaults"))
         {
             if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") != "Touch")
                 VerifyScope("QuickAccessScopePortabilityChecks.VerifyThemeRestore", () => QuickAccessScopePortabilityChecks.VerifyThemeRestore(application));
@@ -332,16 +337,22 @@ public sealed class ApplicationButtonShapeThemeTests
         }
         if (scope != "AfterCrystalTint")
         {
-            VerifyScope("GroupQuickAccessPortabilityChecks.Verify", () => GroupQuickAccessPortabilityChecks.Verify(application));
-            ThemeManager.Apply(application, RibbonTheme.Office2024);
-            VerifyScope("KeyboardFocusPortabilityChecks.Verify", () => KeyboardFocusPortabilityChecks.Verify(application));
-            VerifyScope("KeyboardNavigationPortabilityChecks.Verify", () => KeyboardNavigationPortabilityChecks.Verify(application));
-            VerifyScope("CustomizationScrollSpacingChecks.Verify", () => CustomizationScrollSpacingChecks.Verify(application));
-            VerifyScope("CrystalUtilityPortabilityChecks.Verify", () => CrystalUtilityPortabilityChecks.Verify(application));
-            VerifyScope("Flat2024ThemeChecks.Verify", () => Flat2024ThemeChecks.Verify(application));
-            ThemeManager.Apply(application, RibbonTheme.Office2024);
-            VerifyScope("SimplifiedRibbonPortabilityChecks.Verify", () => SimplifiedRibbonPortabilityChecks.Verify(application));
-            VerifyScope("SimplifiedDesignerDefaultsPortabilityChecks.Verify", () => SimplifiedDesignerDefaultsPortabilityChecks.Verify(application));
+            if (scope is not ("AfterKeyboardNavigation" or "AfterSimplifiedDesignerDefaults"))
+            {
+                VerifyScope("GroupQuickAccessPortabilityChecks.Verify", () => GroupQuickAccessPortabilityChecks.Verify(application));
+                ThemeManager.Apply(application, RibbonTheme.Office2024);
+                VerifyScope("KeyboardFocusPortabilityChecks.Verify", () => KeyboardFocusPortabilityChecks.Verify(application));
+                VerifyScope("KeyboardNavigationPortabilityChecks.Verify", () => KeyboardNavigationPortabilityChecks.Verify(application));
+            }
+            if (scope != "AfterSimplifiedDesignerDefaults")
+            {
+                VerifyScope("CustomizationScrollSpacingChecks.Verify", () => CustomizationScrollSpacingChecks.Verify(application));
+                VerifyScope("CrystalUtilityPortabilityChecks.Verify", () => CrystalUtilityPortabilityChecks.Verify(application));
+                VerifyScope("Flat2024ThemeChecks.Verify", () => Flat2024ThemeChecks.Verify(application));
+                ThemeManager.Apply(application, RibbonTheme.Office2024);
+                VerifyScope("SimplifiedRibbonPortabilityChecks.Verify", () => SimplifiedRibbonPortabilityChecks.Verify(application));
+                VerifyScope("SimplifiedDesignerDefaultsPortabilityChecks.Verify", () => SimplifiedDesignerDefaultsPortabilityChecks.Verify(application));
+            }
             ThemeManager.Apply(application, RibbonTheme.Office2024);
             VerifyScope("SimplifiedCustomizationPortabilityChecks.Verify", () => SimplifiedCustomizationPortabilityChecks.Verify(application));
             ThemeManager.Apply(application, RibbonTheme.Office2024);
@@ -1143,9 +1154,13 @@ public sealed class ApplicationButtonShapeThemeTests
         thread.SetApartmentState(ApartmentState.STA);
         thread.IsBackground = true;
         thread.Start();
-        // The complete consumer now includes gallery/group QAT and Flat matrices as well as Touch.
-        var timeout = string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE"))
-            ? TimeSpan.FromMinutes(10) : TimeSpan.FromMinutes(5);
+        // The measured full consumer now exceeds ten minutes with simplified
+        // layout/customization matrices. Large continuations retain a bounded
+        // allowance without repeating their completed prefixes.
+        string? scope = Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE");
+        var timeout = string.IsNullOrWhiteSpace(scope) ? TimeSpan.FromMinutes(20)
+            : scope is "AfterGalleryQuickAccess" or "AfterKeyboardNavigation" or "AfterSimplifiedDesignerDefaults"
+                ? TimeSpan.FromMinutes(10) : TimeSpan.FromMinutes(5);
         if (!thread.Join(timeout))
             throw new TimeoutException($"The ribbon portability test did not finish within {timeout.TotalSeconds:0} seconds.");
         failure?.Throw();

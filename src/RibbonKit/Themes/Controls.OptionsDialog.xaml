@@ -138,6 +138,26 @@
         <Setter Property="FontSize" Value="11" />
     </Style>
 
+    <!-- Keep touch derivatives beside their base styles for the XAML designer. -->
+    <Style x:Key="OptionsDialogTouchActionButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource OptionsDialogActionButtonStyle}">
+        <Style.Triggers><Trigger Property="controls:Ribbon.Density" Value="Touch">
+            <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+        </Trigger></Style.Triggers>
+    </Style>
+
+    <Style x:Key="OptionsDialogTouchPrimaryButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource OptionsDialogPrimaryButtonStyle}">
+        <Style.Triggers><Trigger Property="controls:Ribbon.Density" Value="Touch">
+            <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+        </Trigger></Style.Triggers>
+    </Style>
+
+    <Style x:Key="OptionsDialogTouchReorderButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource OptionsDialogReorderButtonStyle}">
+        <Style.Triggers><Trigger Property="controls:Ribbon.Density" Value="Touch">
+            <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+            <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
+        </Trigger></Style.Triggers>
+    </Style>
+
     <!-- The page control IS the nav entry: it renders only its Header (the dialog presents
          the page's Content separately), highlighting from its host ListBoxItem's state. -->
     <Style TargetType="{x:Type controls:RibbonOptionsPage}">

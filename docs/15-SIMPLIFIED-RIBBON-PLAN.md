@@ -4,11 +4,14 @@
 > S2 customization implemented after the user's continuation on 2026-10-13.
 > S3 shared custom-tab/group draft editor implemented and committed at 4ab4604.
 > S4a–c committed at 4036aea. Follow-up review refinement implemented 2026-10-13;
-> focused evidence below, live user review and full validation pending.
+> focused evidence and subsequent end-of-feature validation below; live review
+> remains limited to the recorded acceptance scopes.
 > S5 motion and mode-popup cleanup accepted 2026-10-13. S6 designer defaults
 > authorized 2026-10-14 before the deferred full validation pass.
 > S7 host defaults and RTL/Writer dialog integration implemented 2026-10-14;
-> focused verification and user review below; full validation remains deferred.
+> focused verification, user review and end-of-feature validation below.
+> Functional coverage is assembled from the full run and targeted repairs;
+> two Crystal QAT snapshot comparisons and specific native gates remain open.
 
 ## Layout contract
 
@@ -256,12 +259,12 @@ remain separate gates.
 
 | Slice | Scope | Status |
 | --- | --- | --- |
-| S1 | Shared layout/selection/priority, native full-group access, keyboard/KeyTips, Showcase toggle and classic-customization gating | Implemented; user accepted the current visuals 2026-10-13. Native-input/DPI and earlier combined/full-suite limits remain open |
+| S1 | Shared layout/selection/priority, native full-group access, keyboard/KeyTips, Showcase toggle and classic-customization gating | Implemented; user accepted the current visuals 2026-10-13. Specific native-input/DPI and current end-of-feature gates remain below |
 | S2 | Dedicated customization page, pin/unpin, separate ordered state and persistence | Implemented; user accepted scrolling/focus repairs 2026-10-13 and committed them at 1a2a743. Broader end-of-feature gates remain below |
 | S3 | Shared custom-tab/group creation from the simplified editor | Implemented and committed at 4ab4604; user review 2026-10-13 requested the S4 page redesign |
 | S4 | Source filtering, ordered group headers, compact menus and draft-safe persistence utilities | S4a–c committed at 4036aea; catalog/footer/dialog/default refinements and custom-tab positioning implemented 2026-10-13; focused evidence below; awaiting live user review |
 | S5 | Shared visible layout/density collapse and simplified tab switching | Implemented; original and follow-up motion review recorded below; broader native/full gates remain open |
-| S6 | Designer defaults and per-command simplified visibility/label controls | Implemented; focused evidence and user review below; full/package/native gates remain deferred |
+| S6 | Designer defaults and per-command simplified visibility/label controls | Implemented; focused evidence and accepted user review below; latest full/package results and remaining native gates below |
 | S7 | MDI/RTL/Writer defaults and RTL/Writer simplified customization integration | Implemented; focused consumer checks and accepted live review below; broader full/native gates remain open |
 
 S1 requires focused runtime regressions, a RibbonKit-only consumer matrix, normal
@@ -812,7 +815,54 @@ records this consumer glue.
 | Independent Writer consumer | Two focused tests passed without Showcase resources/helpers: simplified and QAT event routes, draft Cancel, Apply then further draft/Cancel, OK, pin persistence and restart, plus the existing Crystal appearance Apply/Cancel/OK/restart contract |
 | Debug builds | Normal Showcase and Writer builds passed with 0 warnings/errors. Earlier focused builds encountered a DesignTools copy lock from Visual Studio; after the user closed VS, normal builds completed cleanly |
 | User review | Accepted 2026-10-14: the user reported everything is good after reviewing MDI/RTL/Writer simplified defaults and RTL/Writer customization integration. MDI remains defaults-only. This accepts S7's current presentation and integration; it does not establish the earlier specific full-suite/native gates |
-| Limits | Full testing remains deferred until prompted; all earlier unresolved full-suite/native gates are retained. No commit/push/publication |
+| Limits | End-of-feature testing was requested and is recorded below; specific native gates remain open. No commit/push/publication |
+
+### End-of-feature validation and repairs — 2026-10-14
+
+The user requested full testing while retaining passing checks unless a repeat
+was critical. The checkout began clean at `872a20c` on `codex/simplified-mode`.
+One unfiltered Release solution pass ran with test projects serialized (`-m:1`)
+and all local selection/capture/update flags cleared. After failures, passing
+projects/scenes/consumer prefixes were retained; only failures, affected binding
+and keyboard checks, and unfinished sections ran again. This is assembled
+coverage, not a clean single unfiltered solution pass.
+
+| Gate | Result |
+| --- | --- |
+| Restore/build | Restore and final normal Release solution build passed, 0 warnings/errors; both runtime TFMs and DesignTools built with the API/XML-documentation analyzers |
+| Runtime | Full run: 823/827 passed, 4 failed. All four failed cases passed after repairs. Five already-passing proxy mirror/parking cases were repeated because the shared enabled-state binding changed; they passed. The strengthened custom-group/source-disable case also passed |
+| Writer | Full project passed 482/482, including the earlier `WriterSharedMaterialsEffectsOrbAndOpenSurfaceDpiReturnsStayBounded` failure. Its passing project was not repeated |
+| Independent consumer | The initial aggregate stopped at the obsolete dropdown alignment assertion. The repaired run passed 17 named scopes, including the earlier Touch popup failure, then exposed QAT overflow Tab entry. The keyboard repair passed QAT overflow/order across all seven themes and LTR/RTL. Continuations completed the remaining scopes without repeating the large passed prefix: 37 named scopes passed, with the failed part of the full keyboard matrix repaired separately. Includes 224 simplified layout combinations, 112 customization combinations (56 realized destination/source enable-state cases), designer defaults and 12 tab-move cases. No clean single consumer aggregate pass is claimed |
+| Visual comparison | Full run: four harness tests passed; the matrix passed 63 scenes before failing at Crystal light QAT below, 100%. The 108 unfinished scenes were then captured with repeatability assertions and compared offline using the same Pbgra32 conversion and unchanged thresholds: 106 matched. Total compared coverage is 169/171. Capture-mode test success is not an approval-comparison pass |
+| Residual visual gate | `crystal-light-qat-below-100` and `crystal-light-qat-below-200` differ from approval by 5,551 and 17,043 significant pixels. Actual/diff images were inspected. The pre-feature package's DLL (`fd9c326`) reproduces both actual PNGs byte-for-byte with the current fixture. This excludes the new Simplified runtime behavior as their cause; fixture/approval reconciliation remains open. No approval or tolerance changed |
+| Packaging | Final normal pack passed. Archive/designer placement validation and clean net8/net9 WPF consumers passed, 0 warnings/errors. Packaged DLL hashes match final normal Release outputs. Older packages were preserved; a validation-input directory selected the current pair because `artifacts` contains multiple versions. Package validation was repeated only after the QAT template repair changed the binaries |
+| Debug review | Final normal Showcase and Writer Debug builds passed, 0 warnings/errors; no special configurations/output paths or app launches |
+| Live limits | No new physical-input, genuine mixed-monitor DPI, OS reduced-motion or designer acceptance is established by these checks. Earlier accepted presentation/authoring scopes remain recorded. Nothing committed, pushed, published or scheduled |
+
+Repairs stay in RibbonKit: simplified copies explicitly include their destination
+group in the enabled-state binding, alongside source enablement and parking.
+Touch action/reorder style derivatives moved beside their OptionsDialog bases,
+repairing the cross-file BasedOn designer contract while retaining their paint
+and metrics. The QAT toolbar now forms a local Tab navigation group so its inner
+TabIndex values cannot make standalone QAT items precede sibling controls.
+Forward/reverse checks include the accessible More button and still exclude
+zero-slot originals. Stale list/page counts, checked-rim token and dropdown-row
+alignment assertions were updated to their implemented contracts.
+
+`QatOverflowKeyboard`, `AfterKeyboardNavigation` and
+`AfterSimplifiedDesignerDefaults` are bounded local harness selections for the
+failed/unfinished sections. The new destination enablement consumer check realizes
+the ribbon in a window; its first attempt used an unmounted editor-only ribbon
+and failed at the missing template part. The corrected 112-case matrix passed.
+Measured passing consumer scopes alone total 683.2 seconds, excluding the full
+keyboard section; the full aggregate's allowance is now 20 minutes and large
+continuations 10 minutes instead of inevitable 10/5-minute timeouts. No full rerun
+was performed solely to exercise that timeout constant.
+
+Logs use `TestResults/simplified-final-20261014-*.log`; TRX and scope/comparison
+ledgers are in `TestResults/simplified-final-20261014/`. Diagnostic PNGs are in
+`TestResults/visual/` and `TestResults/visual-capture/`. The retained prefix and
+offline continuation report identify every one of the 171 scene comparisons.
 
 ### Remaining acceptance
 
@@ -824,10 +874,11 @@ records this consumer glue.
   does not establish physical-monitor acceptance. Live reduced-motion review
   remains unrun; real layout commits immediately and S5's presentation follows
   the existing animation policy.
-- Resolve or separately accept the two unfiltered suite failures; no clean
-  full-suite pass is claimed.
-- Full end-of-feature validation and human acceptance of the S2 page's applied,
-  canceled and restarted selections.
+- Reconcile the two Crystal QAT snapshot comparisons described above; no clean
+  single full-suite pass is claimed. The earlier Writer DPI and Touch popup
+  failures now pass at their current recorded scopes.
+- Human acceptance of the S2 page's applied, canceled and restarted selections;
+  automated end-of-feature coverage is recorded above.
 - Human acceptance of S3's custom-tab/group editor and its persistence/cancellation
   behavior; automated focused evidence is recorded above. The 2026-10-13 review
   requested the S4 redesign; it did not accept the current page layout.

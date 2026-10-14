@@ -332,22 +332,6 @@
                                 </Trigger>
                             </Style.Triggers>
                         </Style>
-                        <Style x:Key="SimplifiedActionButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource OptionsDialogActionButtonStyle}">
-                            <Style.Triggers><Trigger Property="controls:Ribbon.Density" Value="Touch">
-                                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
-                            </Trigger></Style.Triggers>
-                        </Style>
-                        <Style x:Key="SimplifiedPrimaryButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource OptionsDialogPrimaryButtonStyle}">
-                            <Style.Triggers><Trigger Property="controls:Ribbon.Density" Value="Touch">
-                                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
-                            </Trigger></Style.Triggers>
-                        </Style>
-                        <Style x:Key="SimplifiedReorderButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource OptionsDialogReorderButtonStyle}">
-                            <Style.Triggers><Trigger Property="controls:Ribbon.Density" Value="Touch">
-                                <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
-                                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
-                            </Trigger></Style.Triggers>
-                        </Style>
                         <DataTemplate x:Key="SimplifiedEntryTemplate">
                             <Grid Margin="2,1">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
@@ -408,9 +392,9 @@
                         </ListBox>
                         <StackPanel Grid.Row="2" Grid.Column="1" VerticalAlignment="Center" Margin="12,0">
                             <Button x:Name="PART_AddButton" Content="{localization:RibbonString Key=Add}"
-                                Style="{StaticResource SimplifiedActionButtonStyle}" Margin="0,0,0,6" />
+                                Style="{StaticResource OptionsDialogTouchActionButtonStyle}" Margin="0,0,0,6" />
                             <Button x:Name="PART_RemoveButton" Content="{localization:RibbonString Key=Remove}"
-                                Style="{StaticResource SimplifiedActionButtonStyle}" />
+                                Style="{StaticResource OptionsDialogTouchActionButtonStyle}" />
                         </StackPanel>
                         <ListBox x:Name="PART_CurrentList" Grid.Row="2" Grid.Column="2"
                             Template="{StaticResource RibbonKit.Customize.ListFrameTemplate}"
@@ -421,30 +405,30 @@
                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemTemplate="{StaticResource SimplifiedSelectedTemplate}"
                             HorizontalContentAlignment="Stretch" AutomationProperties.Name="{localization:RibbonString Key=CurrentSimplifiedRibbon}" />
                         <StackPanel Grid.Row="2" Grid.Column="3" VerticalAlignment="Center" Margin="12,0,0,0">
-                            <Button x:Name="PART_UpButton" Content="▲" Style="{StaticResource SimplifiedReorderButtonStyle}"
+                            <Button x:Name="PART_UpButton" Content="▲" Style="{StaticResource OptionsDialogTouchReorderButtonStyle}"
                                 ToolTip="{localization:RibbonString Key=MoveUp}" AutomationProperties.Name="{localization:RibbonString Key=MoveUp}" Margin="0,0,0,6" />
-                            <Button x:Name="PART_DownButton" Content="▼" Style="{StaticResource SimplifiedReorderButtonStyle}"
+                            <Button x:Name="PART_DownButton" Content="▼" Style="{StaticResource OptionsDialogTouchReorderButtonStyle}"
                                 ToolTip="{localization:RibbonString Key=MoveDown}" AutomationProperties.Name="{localization:RibbonString Key=MoveDown}" />
                         </StackPanel>
                         <WrapPanel Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="2" Margin="0,10,0,0">
-                            <Button x:Name="PART_NewButton" Style="{StaticResource SimplifiedActionButtonStyle}" Margin="0,0,6,6" AutomationProperties.Name="{localization:RibbonString Key=New}">
+                            <Button x:Name="PART_NewButton" Style="{StaticResource OptionsDialogTouchActionButtonStyle}" Margin="0,0,6,6" AutomationProperties.Name="{localization:RibbonString Key=New}">
                                 <StackPanel Orientation="Horizontal"><TextBlock Text="{localization:RibbonString Key=New}" /><TextBlock Text="▼" Margin="8,0,0,0" FontSize="9" VerticalAlignment="Center" /></StackPanel>
                             </Button>
-                            <Button x:Name="PART_EditButton" Style="{StaticResource SimplifiedActionButtonStyle}" Margin="0,0,6,6" AutomationProperties.Name="{localization:RibbonString Key=Edit}">
+                            <Button x:Name="PART_EditButton" Style="{StaticResource OptionsDialogTouchActionButtonStyle}" Margin="0,0,6,6" AutomationProperties.Name="{localization:RibbonString Key=Edit}">
                                 <StackPanel Orientation="Horizontal"><TextBlock Text="{localization:RibbonString Key=Edit}" /><TextBlock Text="▼" Margin="8,0,0,0" FontSize="9" VerticalAlignment="Center" /></StackPanel>
                             </Button>
                             <Button x:Name="PART_ApplyButton" Content="{localization:RibbonString Key=Apply}"
-                                Style="{StaticResource SimplifiedPrimaryButtonStyle}" Margin="0,0,0,6" />
+                                Style="{StaticResource OptionsDialogTouchPrimaryButtonStyle}" Margin="0,0,0,6" />
                         </WrapPanel>
                         <WrapPanel Grid.Row="3" Margin="0,10,0,0">
-                                <Button x:Name="PART_ResetMenuButton" Style="{StaticResource SimplifiedActionButtonStyle}" Margin="0,0,6,6" AutomationProperties.Name="{localization:RibbonString Key=Reset}">
+                                <Button x:Name="PART_ResetMenuButton" Style="{StaticResource OptionsDialogTouchActionButtonStyle}" Margin="0,0,6,6" AutomationProperties.Name="{localization:RibbonString Key=Reset}">
                                     <StackPanel Orientation="Horizontal"><TextBlock Text="{localization:RibbonString Key=Reset}" /><TextBlock Text="▼" Margin="8,0,0,0" FontSize="9" VerticalAlignment="Center" /></StackPanel>
                                 </Button>
-                                <Button x:Name="PART_ImportButton" Style="{StaticResource SimplifiedReorderButtonStyle}" Margin="0,0,6,6"
+                                <Button x:Name="PART_ImportButton" Style="{StaticResource OptionsDialogTouchReorderButtonStyle}" Margin="0,0,6,6"
                                     ToolTip="{localization:RibbonString Key=ImportRibbonLayoutTooltip}" AutomationProperties.Name="{localization:RibbonString Key=Import}">
                                     <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="15" Text="&#xE8E5;" />
                                 </Button>
-                                <Button x:Name="PART_ExportButton" Style="{StaticResource SimplifiedReorderButtonStyle}" Margin="0,0,0,6"
+                                <Button x:Name="PART_ExportButton" Style="{StaticResource OptionsDialogTouchReorderButtonStyle}" Margin="0,0,0,6"
                                     ToolTip="{localization:RibbonString Key=ExportRibbonLayoutTooltip}" AutomationProperties.Name="{localization:RibbonString Key=Export}">
                                     <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="15" Text="&#xE74E;" />
                                 </Button>
@@ -855,18 +839,6 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:RibbonCustomizeMoveTabDialog}">
-                    <ControlTemplate.Resources>
-                        <Style x:Key="MoveDialogActionStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource OptionsDialogActionButtonStyle}">
-                            <Style.Triggers><Trigger Property="controls:Ribbon.Density" Value="Touch">
-                                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
-                            </Trigger></Style.Triggers>
-                        </Style>
-                        <Style x:Key="MoveDialogPrimaryStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource OptionsDialogPrimaryButtonStyle}">
-                            <Style.Triggers><Trigger Property="controls:Ribbon.Density" Value="Touch">
-                                <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
-                            </Trigger></Style.Triggers>
-                        </Style>
-                    </ControlTemplate.Resources>
                     <AdornerDecorator>
                         <Border Background="{TemplateBinding Background}">
                             <Grid>
@@ -893,9 +865,9 @@
                                 <Border Grid.Row="2" BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}" BorderThickness="0,1,0,0">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="16,10">
                                         <Button x:Name="PART_OkButton" Content="{localization:RibbonString Key=Ok}" IsDefault="True"
-                                            Style="{StaticResource MoveDialogPrimaryStyle}" />
+                                            Style="{StaticResource OptionsDialogTouchPrimaryButtonStyle}" />
                                         <Button x:Name="PART_CancelButton" Content="{localization:RibbonString Key=Cancel}" IsCancel="True"
-                                            Style="{StaticResource MoveDialogActionStyle}" Margin="8,0,0,0" />
+                                            Style="{StaticResource OptionsDialogTouchActionButtonStyle}" Margin="8,0,0,0" />
                                     </StackPanel>
                                 </Border>
                             </Grid>

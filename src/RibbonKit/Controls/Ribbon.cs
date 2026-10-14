@@ -1436,7 +1436,7 @@ public partial class Ribbon : Control
     /// question entirely.
     /// </para>
     /// </remarks>
-    internal static void MirrorEnabledState(FrameworkElement proxy, FrameworkElement source)
+    internal static void MirrorEnabledState(FrameworkElement proxy, FrameworkElement source, RibbonGroup? group = null)
     {
         var enabled = new System.Windows.Data.MultiBinding { Converter = ProxyEnabledConverter.Instance };
         enabled.Bindings.Add(new System.Windows.Data.Binding(nameof(IsEnabled)) { Source = source });
@@ -1445,17 +1445,23 @@ public partial class Ribbon : Control
             Source = proxy,
             Path = new PropertyPath("(0)", IsCommandParkedProperty),
         });
+        // Simplified copies live outside their destination group's visual tree.
+        // Its enabled state must remain an explicit input even while source
+        // controls are detached or borrowed by a native popup.
+        if (group is not null)
+            enabled.Bindings.Add(new System.Windows.Data.Binding(nameof(IsEnabled)) { Source = group });
 
         proxy.SetBinding(IsEnabledProperty, enabled);
     }
 
-    /// <summary>Enabled = the source is enabled AND this proxy is not parked.</summary>
+    /// <summary>Enabled = source enabled, proxy not parked, and any destination group enabled.</summary>
     private sealed class ProxyEnabledConverter : System.Windows.Data.IMultiValueConverter
     {
         internal static readonly ProxyEnabledConverter Instance = new();
 
         public object Convert(object[] values, Type targetType, object parameter, System.Globalization.CultureInfo culture) =>
-            values is { Length: 2 } && values[0] is true && values[1] is false;
+            values.Length is 2 or 3 && values[0] is true && values[1] is false
+                && (values.Length == 2 || values[2] is true);
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, System.Globalization.CultureInfo culture) =>
             throw new NotSupportedException("A proxy's enabled state is derived, never pushed back.");

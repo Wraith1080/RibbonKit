@@ -993,6 +993,8 @@ technical evidence warrants them; preserve existing dated records.
 
 [MDI command defaults and RTL/Writer host dialog integration](docs/history/library/14-simplified-ribbon.md#mdi-rtl-and-writer-host-integration--2026-10-14).
 
+[End-of-feature enabled-state, style-scope and QAT navigation repairs](docs/history/library/14-simplified-ribbon.md#end-of-feature-validation-repairs--2026-10-14).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.

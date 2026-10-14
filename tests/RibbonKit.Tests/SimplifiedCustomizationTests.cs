@@ -565,7 +565,11 @@ public sealed partial class SimplifiedCustomizationTests
         Assert.Same(host.First, Assert.Single(host.Ribbon.GetSimplifiedChoices(custom)).Source);
         group.IsEnabled = false; host.Layout();
         Assert.False(((RibbonGroupsHost)custom.Content).SimplifiedToolBar!.Items.OfType<RibbonButton>().Single().IsEnabled);
-        group.IsEnabled = true;
+        group.IsEnabled = true; host.Layout();
+        Assert.True(((RibbonGroupsHost)custom.Content).SimplifiedToolBar!.Items.OfType<RibbonButton>().Single().IsEnabled);
+        host.First.IsEnabled = false; host.Layout();
+        Assert.False(((RibbonGroupsHost)custom.Content).SimplifiedToolBar!.Items.OfType<RibbonButton>().Single().IsEnabled);
+        host.First.IsEnabled = true; host.Layout();
         string saved = RibbonCustomizationSerializer.Serialize(host.Ribbon);
         RibbonCustomizationSerializer.Apply(host.Ribbon, saved); host.Layout();
         var restored = host.Ribbon.Tabs.Single(tab => Ribbon.GetCommandId(tab) == "custom-tab");

@@ -143,9 +143,9 @@ public class RibbonGroupsHost : ItemsControl
             }
             copy.SetBinding(VisibilityProperty, VisibilityBinding(entry.Declaration, group));
             copy.SetValue(Ribbon.SimplifiedCommandGroupProperty, group);
+            Ribbon.MirrorEnabledState(copy, entry.Declaration, group);
             if (!ReferenceEquals(source, entry.Declaration))
             {
-                Ribbon.MirrorEnabledState(copy, entry.Declaration);
                 Ribbon.MirrorCommandPresentation(copy, entry.Declaration);
             }
             switch (copy)
