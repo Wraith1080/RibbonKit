@@ -2,6 +2,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
+using System.Reflection;
 using RibbonKit.Animation;
 using Xunit;
 
@@ -9,6 +11,50 @@ namespace RibbonKit.Tests;
 
 public class LayoutAnimationTests
 {
+    [Theory]
+    [InlineData(RibbonAnimationLevel.None, 0d, 0d)]
+    [InlineData(RibbonAnimationLevel.Subtle, 120d, 6d)]
+    [InlineData(RibbonAnimationLevel.Expressive, 160d, 8d)]
+    public void Simplified_tab_uses_short_travel_timing_and_the_action_override(
+        RibbonAnimationLevel intensity, double milliseconds, double offset) => Sta.Run(() =>
+    {
+        var level = RibbonAnimation.GlobalLevel;
+        var reduce = RibbonAnimation.RespectSystemReduceMotion;
+        var previous = RibbonAnimation.GetActionOverride(RibbonAnimationAction.TabSwitch);
+        try
+        {
+            RibbonAnimation.RespectSystemReduceMotion = false;
+            RibbonAnimation.GlobalLevel = RibbonAnimationLevel.Expressive;
+            RibbonAnimation.SetActionLevel(RibbonAnimationAction.TabSwitch, intensity);
+            var surface = new Border();
+            using var transition = RibbonMotion.PlaySimplifiedTabSlide(surface);
+            if (intensity == RibbonAnimationLevel.None)
+            {
+                Assert.Null(transition); Assert.False(surface.HasAnimatedProperties);
+                Assert.True(surface.RenderTransform.Value.IsIdentity); Assert.Equal(1, surface.Opacity);
+                return;
+            }
+            Assert.NotNull(transition);
+            var clock = Assert.IsType<AnimationClock>(typeof(RibbonDensityTransition)
+                .GetField("_fade", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(transition));
+            var animation = Assert.IsType<DoubleAnimation>(clock.Timeline);
+            Assert.Equal(milliseconds, animation.Duration.TimeSpan.TotalMilliseconds);
+            var ease = Assert.IsType<CubicEase>(animation.EasingFunction);
+            Assert.Equal(EasingMode.EaseOut, ease.EasingMode);
+            Assert.True(ease.Ease(0.25) > 0.5);
+            var transforms = Assert.IsType<TransformGroup>(surface.RenderTransform);
+            Assert.Equal(-offset, Assert.IsType<TranslateTransform>(transforms.Children[1]).Y);
+            Assert.Equal(intensity == RibbonAnimationLevel.Expressive ? 182 : 130,
+                RibbonAnimation.GetDuration(RibbonAnimationAction.TabSwitch).TimeSpan.TotalMilliseconds);
+        }
+        finally
+        {
+            RibbonAnimation.GlobalLevel = level; RibbonAnimation.RespectSystemReduceMotion = reduce;
+            if (previous is { } value) RibbonAnimation.SetActionLevel(RibbonAnimationAction.TabSwitch, value);
+            else RibbonAnimation.ClearActionLevel(RibbonAnimationAction.TabSwitch);
+        }
+    });
+
     [Fact]
     public void Layout_action_is_additive_and_density_shares_its_timing() => Sta.Run(() =>
     {
@@ -84,7 +130,7 @@ public class LayoutAnimationTests
             Assert.NotNull(transition);
             var transforms = Assert.IsType<TransformGroup>(surface.RenderTransform);
             Assert.Same(original, transforms.Children[0]);
-            Assert.Equal(-8, Assert.IsType<TranslateTransform>(transforms.Children[1]).Y);
+            Assert.Equal(-6, Assert.IsType<TranslateTransform>(transforms.Children[1]).Y);
             Assert.Equal(0.8, surface.Opacity);
             RibbonAnimation.SetActionLevel(RibbonAnimationAction.TabSwitch, RibbonAnimationLevel.None);
             Assert.Same(original, surface.RenderTransform);

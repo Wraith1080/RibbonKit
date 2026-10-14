@@ -116,11 +116,13 @@ scale. An anchored popup uses an opacity-only settle. Initial density, including
 
 Classic/Simplified changes use the same presentation through
 `RibbonAnimationAction.LayoutModeChange`. Simplified tab content settles downward
-over 160 ms in Subtle (224 ms Expressive), using the existing `TabSwitch` override;
+over 120 ms in Subtle (160 ms Expressive), with a short 6/8-DIP slide using the existing `TabSwitch` override;
 classic tabs retain their 130 ms timing. Keyboard/mouse input settles an active
 layout presentation immediately. Mode changes close ribbon-owned group, command
 and QAT flyouts after the current click finishes; ordinary toggles retain their
-stay-open behavior. For motion details and acceptance, see the
+stay-open behavior. Simplified commands are prepared during the incoming row's
+first measure, so an animation-free switch can show the commands in its first
+render. For motion details and acceptance, see the
 [simplified-ribbon plan](docs/15-SIMPLIFIED-RIBBON-PLAN.md#s5-motion-trial--2026-10-13).
 
 `Ribbon.Density` is also an inherited attached property: use

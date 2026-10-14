@@ -445,3 +445,22 @@ state so the next native drop can distinguish skipped defaults from a callback
 that never ran. The package-only toolbox manifest lists allowed controls; it is
 not a property-default mechanism and does not affect project-reference Toolbox
 population. Current native retry and retained evidence remain in S6.
+
+#### Simplified tab cadence and first-render readiness — 2026-10-14
+
+The shorter body now uses 120/160-ms Subtle/Expressive tab motion, 6/8-DIP travel
+and cubic EaseOut, keeping its row opaque and honoring TabSwitch's effective
+policy. Classic timing and the accepted shared card collapse remain unchanged.
+
+Building copies only at Background after Loaded permits an empty first frame on
+tab changes. Prepare the row in RibbonGroupsHost's first measure, including
+before Loaded; cancel the pending refresh and avoid a redundant Loaded rebuild.
+Keep unload ownership cleanup and defer when a registered flyout remains open,
+so forced layout during a routed command cannot return its borrowed content
+mid-dispatch. Guard reentrant layout while group membership is retained. Record
+the inherited protected measure override in the additive API baseline.
+
+The public-only regression forces Render-priority layout before Background for
+startup, Loaded-restored mode, first visits and revisits. The old implementation
+failed on a missing row; current runtime and consumer evidence, exact timing,
+visual rereview and unrun full/native gates are maintained in the active plan.

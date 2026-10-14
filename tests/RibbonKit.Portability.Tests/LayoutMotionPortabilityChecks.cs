@@ -31,6 +31,11 @@ internal static class LayoutMotionPortabilityChecks
             RibbonAnimation.RespectSystemReduceMotion = false;
             foreach (var action in actions) RibbonAnimation.ClearActionLevel(action);
             string? scope = Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE");
+            if (scope == "SimplifiedTabReadiness")
+            {
+                VerifyTabReadiness(application);
+                return;
+            }
             if (scope == "ModePopupDismissal")
             {
                 VerifyModePopupDismissal(application);
@@ -55,6 +60,7 @@ internal static class LayoutMotionPortabilityChecks
             }
             DensityTransitionPortabilityChecks.VerifyPopupAnchor(application);
             VerifyModePopupDismissal(application);
+            VerifyTabReadiness(application);
         }
         finally
         {
@@ -63,6 +69,55 @@ internal static class LayoutMotionPortabilityChecks
             foreach (var action in actions)
                 if (overrides[action] is { } value) RibbonAnimation.SetActionLevel(action, value);
                 else RibbonAnimation.ClearActionLevel(action);
+        }
+    }
+
+    private static void VerifyTabReadiness(Application application)
+    {
+        RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
+        foreach (var theme in new[] { RibbonTheme.Office2010, RibbonTheme.Office2024Flat, RibbonTheme.CrystalLight })
+        foreach (var direction in new[] { FlowDirection.LeftToRight, FlowDirection.RightToLeft })
+        foreach (var density in new[] { RibbonDensity.Compact, RibbonDensity.Touch })
+        foreach (bool restoreInLoaded in new[] { false, true })
+        {
+            ThemeManager.Apply(application, theme);
+            var (window, ribbon) = Create();
+            ribbon.FlowDirection = direction; ribbon.Density = density;
+            if (restoreInLoaded) window.Loaded += (_, _) => ribbon.LayoutMode = RibbonLayoutMode.Simplified;
+            else ribbon.LayoutMode = RibbonLayoutMode.Simplified;
+            try
+            {
+                window.Show();
+                // Loaded may restore preferences. Pump it without draining the
+                // Background row-building queue, then force the render boundary.
+                if (restoreInLoaded) Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
+                BeforeDeferredRefresh();
+                Layout(window);
+                foreach (int index in new[] { 1, 0, 1, 0 })
+                {
+                    ribbon.SelectedTab = ribbon.Tabs[index];
+                    BeforeDeferredRefresh();
+                    Layout(window);
+                }
+
+                void BeforeDeferredRefresh() => Dispatcher.CurrentDispatcher.Invoke(() =>
+                {
+                    window.UpdateLayout();
+                    var toolbar = Descendants((DependencyObject)ribbon.SelectedTab!.Content)
+                        .OfType<RibbonQuickAccessToolBar>().Single();
+                    var sources = ribbon.SelectedTab.Groups.SelectMany(group => group.Items.OfType<RibbonButton>()).ToArray();
+                    foreach (var source in sources)
+                    {
+                        var copy = Assert.Single(toolbar.Items.OfType<FrameworkElement>(),
+                            item => ReferenceEquals(Ribbon.GetQuickAccessSource(item), source));
+                        Assert.True(copy.IsVisible && copy.ActualWidth > 0, "The command must be arranged before Background refresh.");
+                    }
+                    Assert.Equal(1, Body(ribbon).Opacity);
+                    Assert.Empty(Holds(Body(ribbon))); Assert.Empty(Scenes(Body(ribbon)));
+                    Assert.False(Assert.IsAssignableFrom<FrameworkElement>(Body(ribbon).Child).HasAnimatedProperties);
+                }, DispatcherPriority.Render);
+            }
+            finally { window.Close(); }
         }
     }
 
@@ -246,7 +301,7 @@ internal static class LayoutMotionPortabilityChecks
             ribbon.SelectedTab = ribbon.Tabs[0]; Layout(window);
             var content = Assert.IsAssignableFrom<FrameworkElement>(body.Child);
             Assert.True(content.HasAnimatedProperties);
-            WaitMilliseconds(100);
+            WaitMilliseconds(40);
             Assert.True(content.HasAnimatedProperties);
             RibbonAnimation.SetActionLevel(RibbonAnimationAction.TabSwitch, RibbonAnimationLevel.None);
             Assert.False(content.HasAnimatedProperties);

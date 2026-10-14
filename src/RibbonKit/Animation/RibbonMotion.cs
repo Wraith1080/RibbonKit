@@ -242,17 +242,16 @@ public static class RibbonMotion
         }
     }
 
-    // A shallow ribbon needs more readable time, not more travel. Keep the same
-    // TabSwitch override and OS policy while leaving classic tabs unchanged.
+    // Short travel in the single row settles promptly. Keep the TabSwitch
+    // override and OS policy while leaving classic tabs unchanged.
     internal static RibbonDensityTransition? PlaySimplifiedTabSlide(FrameworkElement? element)
     {
         if (element is null) return null;
-        if (!RibbonAnimation.IsEnabled(RibbonAnimationAction.TabSwitch))
-            return null;
-        double offset = RibbonAnimation.GetSlideOffset(RibbonAnimationAction.TabSwitch) * 0.8;
-        Duration duration = new(TimeSpan.FromMilliseconds(
-            RibbonAnimation.GetDuration(RibbonAnimationAction.TabSwitch).TimeSpan.TotalMilliseconds * 160 / 130));
-        var ease = new CubicEase { EasingMode = EasingMode.EaseInOut };
+        var level = RibbonAnimation.GetEffectiveLevel(RibbonAnimationAction.TabSwitch);
+        if (level == RibbonAnimationLevel.None) return null;
+        double offset = level == RibbonAnimationLevel.Expressive ? 8d : 6d;
+        Duration duration = new(TimeSpan.FromMilliseconds(level == RibbonAnimationLevel.Expressive ? 160d : 120d));
+        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
         ease.Freeze();
         return new RibbonDensityTransition(element, offsetY: -offset,
             action: RibbonAnimationAction.TabSwitch, durationOverride: duration, easeOverride: ease, fade: false);

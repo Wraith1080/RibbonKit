@@ -65,6 +65,7 @@ static readonly RibbonKit.Controls.Ribbon.SimplifiedPriorityProperty -> System.W
 static RibbonKit.Controls.Ribbon.GetSimplifiedPriority(System.Windows.DependencyObject! element) -> int
 static RibbonKit.Controls.Ribbon.SetSimplifiedPriority(System.Windows.DependencyObject! element, int value) -> void
 override RibbonKit.Controls.RibbonGroupsHost.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonGroupsHost.MeasureOverride(System.Windows.Size constraint) -> System.Windows.Size
 override RibbonKit.Controls.RibbonGroupsHost.OnItemsChanged(System.Collections.Specialized.NotifyCollectionChangedEventArgs! e) -> void
 RibbonKit.Localization.RibbonString.MoreRibbonCommands = 62 -> RibbonKit.Localization.RibbonString
 RibbonKit.Localization.RibbonString.SimplifiedRibbon = 63 -> RibbonKit.Localization.RibbonString

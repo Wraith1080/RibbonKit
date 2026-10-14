@@ -18,12 +18,16 @@ public class RibbonGroupsHost : ItemsControl
     private readonly Dictionary<FrameworkElement, FrameworkElement> _copies = new();
     private readonly Dictionary<RibbonGroup, RibbonGroupQuickAccessProxy> _groups = new();
     private readonly List<RibbonGroupSeparator> _separators = new();
-    private bool _refreshPending;
+    private DispatcherOperation? _refreshOperation;
+    private bool _refreshing;
 
     /// <summary>Initializes a groups host that releases borrowed content when disconnected.</summary>
     public RibbonGroupsHost()
     {
-        Loaded += (_, _) => RequestSimplifiedRefresh();
+        Loaded += (_, _) =>
+        {
+            if (_simplified?.ItemsSource is null) RequestSimplifiedRefresh();
+        };
         Unloaded += (_, _) => ClearSimplified();
     }
 
@@ -55,19 +59,46 @@ public class RibbonGroupsHost : ItemsControl
 
     internal void RequestSimplifiedRefresh()
     {
-        if (_refreshPending) return;
-        _refreshPending = true;
-        Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+        if (_refreshOperation is not null) return;
+        InvalidateMeasure();
+        _refreshOperation = Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
         {
-            _refreshPending = false;
+            _refreshOperation = null;
             RefreshSimplified();
         }));
     }
 
-    private void RefreshSimplified()
+    /// <inheritdoc />
+    protected override Size MeasureOverride(Size constraint)
+    {
+        // A tab's first measure must already include its command copies. Waiting
+        // for Background after Loaded exposes an empty row for a render frame.
+        // Open flyouts keep the deferred path so borrowed content is never
+        // returned during an invocation that forced layout synchronously.
+        if (!_refreshing && _simplified is not null
+            && (_refreshOperation is not null || _simplified.ItemsSource is null)
+            && Ribbon.GetLayoutMode(this) == RibbonLayoutMode.Simplified
+            && !PopupDismissHelper.HasOpenPopupWithin(this))
+        {
+            _refreshOperation?.Abort();
+            _refreshOperation = null;
+            RefreshSimplified(allowUnloaded: true);
+        }
+        return base.MeasureOverride(constraint);
+    }
+
+    private void RefreshSimplified(bool allowUnloaded = false)
+    {
+        if (_refreshing) return;
+        _refreshing = true;
+        try { BuildSimplified(allowUnloaded); }
+        finally { _refreshing = false; }
+    }
+
+    private void BuildSimplified(bool allowUnloaded)
     {
         if (_simplified is null) return;
-        if (Ribbon.GetLayoutMode(this) != RibbonLayoutMode.Simplified || !IsLoaded)
+        if (Ribbon.GetLayoutMode(this) != RibbonLayoutMode.Simplified || !allowUnloaded && !IsLoaded)
         {
             ClearSimplified();
             return;

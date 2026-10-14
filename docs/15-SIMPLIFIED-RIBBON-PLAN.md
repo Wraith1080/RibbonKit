@@ -258,7 +258,7 @@ remain separate gates.
 | S2 | Dedicated customization page, pin/unpin, separate ordered state and persistence | Implemented; user accepted scrolling/focus repairs 2026-10-13 and committed them at 1a2a743. Broader end-of-feature gates remain below |
 | S3 | Shared custom-tab/group creation from the simplified editor | Implemented and committed at 4ab4604; user review 2026-10-13 requested the S4 page redesign |
 | S4 | Source filtering, ordered group headers, compact menus and draft-safe persistence utilities | S4a–c committed at 4036aea; catalog/footer/dialog/default refinements and custom-tab positioning implemented 2026-10-13; focused evidence below; awaiting live user review |
-| S5 | Shared visible layout/density collapse and slower simplified tab switching | Implemented; motion and mode-popup cleanup accepted 2026-10-13; broader native/full gates remain below |
+| S5 | Shared visible layout/density collapse and simplified tab switching | Implemented; original and follow-up motion review recorded below; broader native/full gates remain open |
 | S6 | Designer defaults and per-command simplified visibility/label controls | Implemented; focused evidence and user review below; full/package/native gates remain deferred |
 
 S1 requires focused runtime regressions, a RibbonKit-only consumer matrix, normal
@@ -636,8 +636,9 @@ group-spread effect in recordings, then authorized the same treatment for
 Compact/Touch toggling. `LayoutModeChange = 16` is additive; `DensityChange = 15`
 retains its identity. After the user's recorded retry, both use 130 ms Subtle /
 182 ms Expressive with the existing group-expansion easing (cubic/quintic EaseOut).
-Simplified tabs use a 160/224 ms, 8/14.4-DIP downward settle through the
-existing TabSwitch policy; classic tab timing remains 130/182 ms.
+After the 2026-10-14 follow-up below, simplified tabs use a 120/160-ms,
+6/8-DIP downward settle with cubic EaseOut through the existing TabSwitch policy;
+classic tab timing remains 130/182 ms.
 
 The real layout commits immediately, including ribbon height, caption sizing and
 document placement. A temporary noninteractive vector adorner reveals/contracts
@@ -709,6 +710,40 @@ is accepted. This closed implementation at the 2026-10-13 checkpoint; the user's
 2026-10-14 follow-up adds the bounded S6 designer slice below. Earlier unresolved
 full-suite/native gates below remain recorded for the user-requested validation pass.
 
+### S5 tab timing and initial row readiness repair — 2026-10-14
+
+The user reported that simplified Expressive tab switching felt too long and
+that No Motion exposed a briefly empty row on tab changes and cold startup.
+The supplied recording shows an empty selected Home row before its commands
+appear. Simplified tab timing is now 120 ms Subtle / 160 ms Expressive, with
+6/8-DIP travel and cubic EaseOut. The incoming row stays fully opaque; global,
+per-action and system reduced-motion policies still determine whether it moves.
+Classic tab and layout/density collapse timings remain unchanged.
+
+The new tab's copies were built by a Background refresh after Loaded, allowing
+layout/render to precede row construction. A focused public-only consumer
+reproduced missing commands on the first tab switch when forcing a Render-priority
+layout before Background. RibbonGroupsHost now consumes pending row preparation
+during its first measure, including before Loaded, and cancels the queued refresh.
+Loaded avoids rebuilding a row already prepared there. Keep the existing unload
+cleanup and source/proxy ownership; no all-tab cache or host-owned presentation
+was introduced. Open registered flyouts retain the deferred refresh path to avoid
+returning borrowed content during a command that forces synchronous layout.
+A reentrancy guard protects measure-triggered preparation. The protected WPF
+MeasureOverride hook is recorded in the additive API baseline.
+
+| Check | Result |
+| --- | --- |
+| Focused runtime | 26/26 LayoutAnimationTests and SimplifiedRibbonTests passed, including 120/160-ms clock durations, 6/8-DIP travel, easing, per-action None, bindings, native popup cleanup/returns and the Showcase Home declaration |
+| First-render consumer | 24 Office2010/Office2024Flat/Crystal × LTR/RTL × density × initial/Loaded-restored mode cases passed. Commands are arranged at Render priority before Background on startup, first visit and repeated tab revisits; No Motion has no body hold/clock |
+| Motion/popup consumer | Final LayoutMotionPaint scope passed cleanly after the preparation change, including forced old-frame covers, layout/density motion, interruption, tab cancellation, selector popup dismissal, six themed mode-popup cases and the 24 readiness cases |
+| Builds | Normal Debug Showcase and Release solution builds passed, 0 warnings/errors |
+| Live/full gates | Animation accepted 2026-10-14: the user described the repaired tab motion as perfectly animated. This confirms the new visual cadence; actual No Motion/cold-launch blank-interval acceptance was not separately reported. Full tests and earlier unresolved native/full-suite gates remain deferred until an explicit prompt |
+
+Logs are `TestResults/simplified-tab-*.log`; recording samples are under
+`TestResults/simplified-tab-followup-video/`. Build/consumer evidence does not
+establish actual cold-launch performance or physical keyboard/touch acceptance.
+
 ### S6 designer defaults — 2026-10-14
 
 The user requested simplified defaults for items added through the designer and
@@ -758,7 +793,7 @@ record, not an implemented runtime switch or additional authorized feature slice
   requested the S4 redesign; it did not accept the current page layout.
 - User review of S4's column/header/menu layout, physical drag and keyboard
   ordering, and native Reset/Import/Export use. Focused evidence is recorded above.
-- S5's motion presentation and mode-toggle popup cleanup are accepted. Broader
+- S5's original motion presentation and mode-toggle popup cleanup are accepted.
+  The tab follow-up's remaining native review scope is recorded above. Broader
   physical input, mixed-monitor DPI and live system reduced-motion behavior
-  remain open. Focused offscreen consumer checks do not establish those
-  target-machine gates.
+  remain open. Focused offscreen consumer checks do not establish those gates.

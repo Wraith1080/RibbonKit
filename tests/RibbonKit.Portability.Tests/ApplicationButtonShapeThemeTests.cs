@@ -293,7 +293,7 @@ public sealed class ApplicationButtonShapeThemeTests
             return;
         }
 
-        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") is "LayoutMotion" or "LayoutMotionPopup" or "LayoutMotionPaint" or "ModePopupDismissal")
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") is "LayoutMotion" or "LayoutMotionPopup" or "LayoutMotionPaint" or "ModePopupDismissal" or "SimplifiedTabReadiness")
         {
             VerifyScope("LayoutMotionPortabilityChecks.Verify", () => LayoutMotionPortabilityChecks.Verify(application));
             return;
