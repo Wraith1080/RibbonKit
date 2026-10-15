@@ -1003,6 +1003,10 @@ technical evidence warrants them; preserve existing dated records.
 
 [Reviewed authoring list, separate package/project discovery, metadata contracts and cache/deployment pitfalls](docs/history/library/02-designer-and-context-menus.md#3257-toolbox-definitions-and-discovery-metadata--2026-10-15).
 
+### 3.258 Dropdown opener paint precedes native popup creation — 2026-10-15
+
+[Preserve pressed feedback through dropdown and split-button opening](docs/history/library/04-office2007-and-popup-motion.md#3258-dropdown-opener-paint-precedes-native-popup-creation--2026-10-15).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.

@@ -90,10 +90,44 @@ internal static class QuickAccessCommandInteractionChecks
                     Layout(); Assert.Equal(!wasChecked, toggle.IsChecked);
                     foreach (var menu in new[] { split, dropdown })
                     {
-                        ((IToggleProvider)FrameworkElementAutomationPeer.CreatePeerForElement(Part<ToggleButton>(menu, "PART_Toggle"))!
-                            .GetPattern(PatternInterface.Toggle)).Toggle();
-                        Layout(); Assert.True(menu.IsDropDownOpen);
-                        menu.IsDropDownOpen = false; Layout();
+                        var opener = Part<ToggleButton>(menu, "PART_Toggle");
+                        var chrome = Part<Border>(opener, "Chrome");
+                        var popup = Part<Popup>(menu, "PART_Popup");
+                        var paint = new List<(bool Checked, Brush Background, Brush Border)>();
+                        var originalPlacement = popup.Placement;
+                        var originalCallback = popup.CustomPopupPlacementCallback;
+                        popup.SetCurrentValue(Popup.PlacementProperty, PlacementMode.Custom);
+                        popup.SetCurrentValue(Popup.CustomPopupPlacementCallbackProperty,
+                            new CustomPopupPlacementCallback((size, target, offset) =>
+                            {
+                                // Native creation precedes Opened; inspect that transition,
+                                // not just the stable menu after the dispatcher drains.
+                                if (popup.IsOpen) paint.Add((opener.IsChecked == true, chrome.Background, chrome.BorderBrush));
+                                return new[] { new CustomPopupPlacement(new Point(0, target.Height), PopupPrimaryAxis.None) };
+                            }));
+                        try
+                        {
+                            ((IToggleProvider)FrameworkElementAutomationPeer.CreatePeerForElement(opener)!
+                                .GetPattern(PatternInterface.Toggle)).Toggle();
+                            Layout(); Assert.True(menu.IsDropDownOpen);
+                            Assert.NotEmpty(paint);
+                            bool colored = Ribbon.GetQatOnColoredSurface(opener);
+                            foreach (var sample in paint)
+                            {
+                                Assert.True(sample.Checked);
+                                Assert.Same(menu.FindResource(colored ? Ribbon.QatColoredPressedBackgroundKey
+                                    : "RibbonKit.Brushes.Control.PressedBackground"), sample.Background);
+                                Assert.Same(menu.FindResource(colored ? "RibbonKit.Brushes.Qat.ColoredStateBorder"
+                                    : "RibbonKit.Brushes.Control.PressedBorder"), sample.Border);
+                            }
+                            menu.IsDropDownOpen = false; Layout();
+                        }
+                        finally
+                        {
+                            menu.IsDropDownOpen = false;
+                            popup.SetCurrentValue(Popup.CustomPopupPlacementCallbackProperty, originalCallback);
+                            popup.SetCurrentValue(Popup.PlacementProperty, originalPlacement);
+                        }
                     }
                 }
             }

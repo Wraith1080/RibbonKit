@@ -214,11 +214,14 @@
                                 </StackPanel>
                             </Grid>
                         </ToggleButton>
-                                                <Popup controls:Ribbon.Density="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource TemplatedParent}}" x:Name="PART_Popup"
+                        <!-- Open from the completed toggle state. Binding straight to the owner
+                             can create the native popup during the toggle's source update, before
+                             its IsChecked value and pressed paint have been committed. -->
+                        <Popup controls:Ribbon.Density="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource TemplatedParent}}" x:Name="PART_Popup"
                                AllowsTransparency="True"
                                StaysOpen="True"
                                Placement="Bottom"
-                               IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                               IsOpen="{Binding IsChecked, ElementName=PART_Toggle, Mode=TwoWay}">
                             <controls:PopupBorder x:Name="PART_MenuHost"
                                     Style="{DynamicResource {x:Type Border}}"
                                     Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
@@ -758,11 +761,14 @@
                                 </Style>
                             </ToggleButton.Style>
                         </ToggleButton>
+                        <!-- Open from the completed toggle state. Binding straight to the owner
+                             can create the native popup during the toggle's source update, before
+                             its IsChecked value and pressed paint have been committed. -->
                         <Popup controls:Ribbon.Density="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource TemplatedParent}}" x:Name="PART_Popup"
                                AllowsTransparency="True"
                                StaysOpen="True"
                                Placement="Bottom"
-                               IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                               IsOpen="{Binding IsChecked, ElementName=PART_Toggle, Mode=TwoWay}">
                             <controls:PopupBorder x:Name="PART_MenuHost"
                                     Style="{DynamicResource {x:Type Border}}"
                                     Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"

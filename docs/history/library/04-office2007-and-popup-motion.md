@@ -483,3 +483,43 @@ already-disabled-at-creation case, and — the one that guards the design —
 two writes while the other four still pass. The overflow hop is NOT unit-tested: entries are only
 built inside `OnOverflowOpened`, which needs the popup and panel template parts, and the harness
 deliberately never opens a real popup. It is on the manual checklist instead.
+
+### 3.258 Dropdown opener paint precedes native popup creation — 2026-10-15
+
+The reported recording showed dropdown openers briefly losing their pressed paint.
+Both shared dropdown/split templates bound `Popup.IsOpen` directly to the owner's
+`IsDropDownOpen`. A toggle's two-way source update could create the native popup
+before its own `IsChecked` value and template triggers had finished updating.
+The popup placement callback reproduced the stale, unchecked opener; checking only
+at `Popup.Opened` missed the defect because the state had settled by then.
+
+Both popups now bind two-way to `PART_Toggle.IsChecked`. The toggle retains its
+two-way binding to the public owner property. This orders pressed paint before
+native popup creation without a timer, dispatcher delay, animation change or API
+addition. Closing the popup still updates the toggle and public property.
+
+`DropDownPressedVisualTests` samples checked state and background/border brushes
+during native placement, across dropdowns and horizontal/vertical split buttons
+in Office 2007, 2010, 2024, Flat and Crystal. It also covers native popup close,
+programmatic opening, click closing, rapid reopen and binding retention. The
+original bindings failed the opening check for both dropdown and split controls.
+Record observations in the callback and assert afterwards: WPF binding evaluation
+can swallow exceptions raised inside placement callbacks.
+
+Debug evidence: 79 focused runtime cases passed (pressed visuals, menu borrowing,
+split hover, QAT overflow, focus and dismissal). The independent consumer's
+`QatCommandInteraction` scope passed, including transient opener paint for dropdown
+and split copies in all three QAT placements and LTR/RTL. The two selected Office
+2024 default/RTL 100% visual scenes passed. Crystal's below-QAT 100% scene differed
+from its approval by 5,551 significant pixels; actual/diff images were inspected.
+Rebuilding with the original popup bindings produced the exact same actual PNG
+(SHA-256 `03FE9E96B54D2BE62FA9812D34C0E33014D939F1B816C59D56177494330BEB17`).
+Approvals remain unchanged; the later selected Crystal 200%/RTL scenes were not
+reached. This is not a clean five-scene comparison or full-suite result.
+
+Normal Debug runtime builds for net8/net9 and Showcase passed with zero warnings
+or errors. The initial build encountered a Visual Studio lock on the design-tools
+deployment copy; subsequent runtime/consumer builds used `BuildProjectReferences=false`
+with existing design outputs and the explicitly rebuilt runtime. Physical mouse
+review of the corrected build, mixed-monitor/DPI and reduced-motion acceptance
+were not performed.

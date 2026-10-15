@@ -421,3 +421,5 @@ status updates and investigation narration were removed during compaction.
 ### [3.256 Ribbon capability and user-operation policy — 2026-10-15](library/15-feature-availability.md#3256-ribbon-capability-and-user-operation-policy--2026-10-15)
 
 ### [3.257 Toolbox definitions and discovery metadata — 2026-10-15](library/02-designer-and-context-menus.md#3257-toolbox-definitions-and-discovery-metadata--2026-10-15)
+
+### [3.258 Dropdown opener paint precedes native popup creation — 2026-10-15](library/04-office2007-and-popup-motion.md#3258-dropdown-opener-paint-precedes-native-popup-creation--2026-10-15)
