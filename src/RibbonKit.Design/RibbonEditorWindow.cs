@@ -996,6 +996,7 @@ internal sealed class RibbonEditorWindow : Window
         "RibbonDropDownButton" => "Drop-Down",
         "RibbonComboBox" => "Combo Box",
         "RibbonTextBox" => "Text Box",
+        "RibbonScrollBar" => "Scroll Bar",
         "InRibbonGallery" => "Gallery (in-ribbon)",
         "RibbonGallery" => "Gallery",
         "RibbonGroupSeparator" => "Group Separator",
@@ -1204,6 +1205,17 @@ internal sealed class RibbonEditorWindow : Window
         new PropSpec("GroupName", "Group name", EditorKind.Text),
     };
 
+    private static readonly PropSpec[] ScrollBarSpecs =
+    {
+        new PropSpec("Orientation", "Orientation", EditorKind.Enum, new[] { "Horizontal", "Vertical" }),
+        new PropSpec("Minimum", "Minimum", EditorKind.Text),
+        new PropSpec("Maximum", "Maximum", EditorKind.Text),
+        new PropSpec("Value", "Value", EditorKind.Text),
+        new PropSpec("SmallChange", "Small change", EditorKind.Text),
+        new PropSpec("LargeChange", "Large change", EditorKind.Text),
+        new PropSpec("ViewportSize", "Viewport size", EditorKind.Text),
+    };
+
     private static readonly PropSpec[] ApplicationMenuSpecs =
     {
         new PropSpec("DefaultHeader", "Default pane name", EditorKind.Text),
@@ -1275,6 +1287,7 @@ internal sealed class RibbonEditorWindow : Window
         "BackstageTabItem" => BackstageItemSpecs,
         "RibbonComboBox" => ComboSpecs,
         "RibbonTextBox" => TextBoxSpecs,
+        "RibbonScrollBar" => ScrollBarSpecs,
         "RibbonCheckBox" => CheckBoxSpecs,
         "RibbonRadioButton" => RadioButtonSpecs,
         "RibbonSplitButton" => SplitButtonSpecs,
@@ -1996,6 +2009,7 @@ internal sealed class RibbonEditorWindow : Window
             control.Items.Add(new Separator());
             control.Items.Add(MakeControlMenuItem("Combo Box", "RibbonComboBox", false));
             control.Items.Add(MakeControlMenuItem("Text Box", "RibbonTextBox", true));
+            control.Items.Add(MakeControlMenuItem("Scroll Bar", "RibbonScrollBar", false));
             control.Items.Add(MakeControlMenuItem("Gallery (in-ribbon)", "InRibbonGallery", false));
             control.Items.Add(MakeControlMenuItem("Gallery (drop-down)", "RibbonGallery", false));
             control.Items.Add(MakeControlMenuItem("Group Separator", "RibbonGroupSeparator", false));

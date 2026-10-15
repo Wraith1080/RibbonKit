@@ -114,19 +114,7 @@ public sealed class RibbonContextMenuProvider : ContextMenuProvider
 
     private void OnAddTab(object sender, MenuActionEventArgs e)
     {
-        ModelItem ribbon = e.Selection.PrimarySelection;
-        using (ModelEditingScope scope = ribbon.BeginEdit("Add Tab"))
-        {
-            ModelItem tab = DesignModel.Create(ribbon, "RibbonTab");
-            tab.Properties["Header"].SetValue("New Tab");
-
-            ModelItem group = DesignModel.Create(ribbon, "RibbonGroup");
-            group.Properties["Header"].SetValue("New Group");
-            DesignModel.Add(tab, "Groups", group);
-
-            DesignModel.Add(ribbon, "Tabs", tab);
-            scope.Complete();
-        }
+        DesignModel.AddTab(e.Selection.PrimarySelection);
     }
 
     private void OnAddBackstage(object sender, MenuActionEventArgs e)
@@ -140,11 +128,6 @@ public sealed class RibbonContextMenuProvider : ContextMenuProvider
         using (ModelEditingScope scope = ribbon.BeginEdit("Add Backstage"))
         {
             ModelItem backstage = DesignModel.Create(ribbon, "Backstage");
-
-            // Seed one nav item so the backstage isn't empty.
-            ModelItem item = DesignModel.Create(ribbon, "BackstageTabItem");
-            item.Properties["Header"].SetValue("Info");
-            DesignModel.Add(backstage, "Items", item);
 
             ribbon.Properties["Backstage"].SetValue(backstage);
             scope.Complete();
@@ -212,14 +195,7 @@ public sealed class RibbonTabContextMenuProvider : ContextMenuProvider
 
     private void OnAddGroup(object sender, MenuActionEventArgs e)
     {
-        ModelItem tab = e.Selection.PrimarySelection;
-        using (ModelEditingScope scope = tab.BeginEdit("Add Group"))
-        {
-            ModelItem group = DesignModel.Create(tab, "RibbonGroup");
-            group.Properties["Header"].SetValue("New Group");
-            DesignModel.Add(tab, "Groups", group);
-            scope.Complete();
-        }
+        DesignModel.AddGroup(e.Selection.PrimarySelection);
     }
 }
 
@@ -235,6 +211,11 @@ public sealed class RibbonGroupContextMenuProvider : ContextMenuProvider
         AddControlVerb("Add Split Button", "RibbonSplitButton");
         AddControlVerb("Add Drop-Down Button", "RibbonDropDownButton");
         AddControlVerb("Add Text Box", "RibbonTextBox");
+        AddControlVerb("Add Combo Box", "RibbonComboBox");
+        AddControlVerb("Add In-Ribbon Gallery", "InRibbonGallery");
+        AddControlVerb("Add Drop-Down Gallery", "RibbonGallery");
+        AddControlVerb("Add Scroll Bar", "RibbonScrollBar");
+        AddControlVerb("Add Group Separator", "RibbonGroupSeparator");
 
         DesignVerbs.AddReorderAndDelete(this, "Groups", "Group");
     }
@@ -242,44 +223,29 @@ public sealed class RibbonGroupContextMenuProvider : ContextMenuProvider
     private void AddControlVerb(string caption, string typeName)
     {
         var action = new MenuAction(caption);
-        action.Execute += (sender, e) => AddControl(e, typeName, caption.Substring("Add ".Length));
+        action.Execute += (sender, e) => DesignModel.AddControl(e.Selection.PrimarySelection, "Items", typeName);
         Items.Add(action);
-    }
-
-    private static void AddControl(MenuActionEventArgs e, string typeName, string label)
-    {
-        ModelItem group = e.Selection.PrimarySelection;
-        using (ModelEditingScope scope = group.BeginEdit(label))
-        {
-            ModelItem control = DesignModel.Create(group, typeName);
-
-            // RibbonKit command and compact option controls carry their caption in Header.
-            control.Properties["Header"]?.SetValue(label);
-
-            DesignModel.Add(group, "Items", control); // control -> group.Items
-            scope.Complete();
-        }
     }
 }
 
 /// <summary>
 /// Reorder/delete for a selected leaf command or compact option control within its
-/// <c>RibbonGroup.Items</c>. One provider serves every registered type because it acts on the
+/// <c>RibbonGroup.Items</c> or a panel's <c>Children</c>. One provider serves every registered type because it acts on the
 /// current selection.
 /// </summary>
 public sealed class RibbonControlContextMenuProvider : ContextMenuProvider
 {
     public RibbonControlContextMenuProvider() =>
-        DesignVerbs.AddReorderAndDelete(this, "Items", "Control");
+        DesignVerbs.AddReorderAndDelete(this, null, "Control");
 }
 
 /// <summary>Shared "Move Left / Move Right / Delete" verbs added to a provider's menu.</summary>
 internal static class DesignVerbs
 {
     /// <param name="provider">The provider to add the verbs to.</param>
-    /// <param name="parentCollection">The parent collection the selected item lives in (Tabs/Groups/Items).</param>
+    /// <param name="parentCollection">The parent collection (Tabs/Groups), or null to resolve Items/Children for a leaf.</param>
     /// <param name="noun">Human noun for the captions ("Tab", "Group", "Control").</param>
-    public static void AddReorderAndDelete(ContextMenuProvider provider, string parentCollection, string noun)
+    public static void AddReorderAndDelete(ContextMenuProvider provider, string? parentCollection, string noun)
     {
         var left = new MenuAction("Move " + noun + " Left");
         left.Execute += (s, e) => DesignModel.Move(e.Selection.PrimarySelection, parentCollection, -1);

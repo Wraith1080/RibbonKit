@@ -12,8 +12,8 @@ commands and Ribbon Editor; a floating smart-tag adorner is not supported.
 | `RibbonKit.Design.csproj` | `net472`, output `RibbonKit.DesignTools.dll`, no runtime-project reference |
 | `Metadata.cs`, `PropertyMetadata.cs` | String-type metadata registration and property descriptions |
 | `ToolboxMetadata.cs` | String-type Toolbox visibility/category intent, checked against the package manifest |
-| `DesignModel.cs` | ModelItem edits, collection/attached-property handling and undo transactions |
-| `RibbonDefaultInitializer.cs`, `ContextMenuProviders.cs` | Toolbox starter content and context commands |
+| `DesignModel.cs`, `DesignModel.NewItems.cs`, `NewItemDefaults.cs` | ModelItem edits, guarded creation policy, collection/attached-property handling and undo transactions |
+| `RibbonDefaultInitializer.cs`, `RibbonItemDefaultInitializer.cs`, `ContextMenuProviders.cs` | Toolbox starter content and context commands |
 | `SimplifiedCommandInitializer.cs` | Supported toolbox command defaults, shared with Model API creation |
 | `RibbonEditorWindow.cs`, `TabPreview.cs` | Structure editor and design-only preview coordination |
 
@@ -80,14 +80,20 @@ definition refresh. Customization pages require the host's explicit Ribbon and
 baseline assignments; MdiContainer requires host documents. No application
 bindings, event handlers or persistence are guessed.
 
-This discovery slice preserves the existing creation/default/undo behavior below.
-New starter defaults and missing Add actions are subsequent bounded work in the
-Toolbox plan. A disabled runtime feature does not remove authored types/settings
-from the Toolbox.
+The T2b creation slice shares guarded starter defaults across Toolbox drops,
+context actions and the editor. Message/page/host authoring additions remain a
+subsequent bounded slice in the Toolbox plan. A disabled runtime feature does not
+remove authored types/settings from the Toolbox.
 
 ## Editor behavior
 
-Dropping a Ribbon seeds Home/Group. Context commands add/reorder/delete tabs, groups,
+Dropping an unassigned empty Ribbon seeds Home/Group; a new standalone tab seeds
+New Tab/New Group. New Backstage and application-menu roots receive one Info page
+or plain New Command. Combo/gallery and split/dropdown controls receive one native
+item, without guessing selection or pane content. Assigned values, explicit empties,
+bindings, ItemsSource and existing children block the corresponding default writes.
+Initializers run inside the creation transaction and open no nested undo scopes.
+Context commands add/reorder/delete tabs, groups,
 controls and File surfaces, and select QAT placement. **Edit Ribbon…** opens a structure
 tree with contextual Add/Move/Delete actions and separate Properties/Design Preview tabs.
 Edits apply immediately to the model as individual undo transactions, not through an
@@ -97,6 +103,9 @@ The tree follows group items, panel children and supported combo/gallery/menu/Fi
 collections, not arbitrary visual Content graphs. Caption edits Header/Content/Tag
 as appropriate; stacks expose orientation. Type-aware editors cover sizing, ScreenTips,
 input state/width, contextual color, group reduction/launcher and File navigation fields.
+Group context Add includes combo, both galleries, scrollbar and group separator;
+leaf move/delete resolves group Items or panel Children. The editor also offers
+Scroll Bar with native orientation, range, value and change/viewport fields.
 Supported command controls added through the toolbox, context commands or Ribbon
 Editor start inline in the simplified ribbon with their label shown. The editor's
 **Show in simplified ribbon** checkbox writes `Ribbon.SimplifiedPlacement` as

@@ -1,9 +1,9 @@
 # Toolbox item definitions
 
-> T1 matrix approved and T2 authorized 2026-10-15. T2a definitions/discovery is
-> implemented from `31caf54` on `codex/api-and-component-updates`; automated
-> evidence and remaining live discovery checks are below. T2b/T2c creation work
-> has not started. No runtime public API or creation defaults changed.
+> T1 matrix approved and T2 authorized 2026-10-15. T2a definitions/discovery and
+> T2b existing creation paths are implemented on `codex/api-and-component-updates`.
+> Automated evidence and remaining live designer checks are below. T2c has not
+> started. Runtime public APIs and unconfigured runtime defaults are unchanged.
 
 ## Goal
 
@@ -63,6 +63,8 @@ their existing framework/editor routes; do not relist them as RibbonKit types.
 All types below are in `RibbonKit.Controls`. **Keep** identifies the original
 manifest entries; **Add** identifies the approved T2a additions. A group panel
 below means an application-authored panel inside a group, not a generated RibbonKit host.
+The creation-support column records the T1 review; delivered changes are recorded
+in the T2a/T2b sections below.
 
 | Type | Decision | Valid owner/location | Existing creation support and gap |
 | --- | --- | --- | --- |
@@ -143,7 +145,7 @@ ModelProperty is not set. Check boxes, radio buttons, text boxes, scrollbars,
 menu/gallery entries and separators do not acquire unsupported inline behavior.
 These are designer creation defaults; runtime Overflow/Medium defaults remain.
 
-Current support has specific gaps, not one missing global initializer:
+The T1 review found specific gaps, addressed in the bounded T2b/T2c slices:
 
 - Only Ribbon has starter structure; the seven command families have Simplified
   initializers. Direct tab/group/Backstage, combo/gallery and new container drops
@@ -269,6 +271,69 @@ own review rather than an implicit generic ParentAdapter.
 No full runtime/Writer/visual/consumer suite was repeated for these bounded
 definitions/metadata changes. Earlier passed evidence and residual Crystal/native
 gates are retained. No commit, push, merge, publication or scheduling was performed.
+
+## T2b — existing creation paths, 2026-10-15
+
+Toolbox initializers, context Add actions and Ribbon Editor now share one guarded
+creation policy through the Model API adapter. Only newly created unassigned
+properties receive captions or starter children. `ModelProperty.IsSet` protects
+local values, bindings and explicit empty values; collection counts protect
+existing children. An assigned `ItemsSource`, including explicit null, prevents
+item seeding. Initializers open no edit scopes; editor/context actions retain one
+scope per operation. Raw child factories suppress SDK default initialization so
+the shared policy runs once rather than duplicating structure. Native SDK mapping,
+serialization and undo behavior remain live acceptance gates.
+
+| New item | Starter content |
+| --- | --- |
+| Ribbon | One Home tab with one Group; a separately created tab gets New Tab/New Group |
+| Group and captioned controls/items | A useful Header or Content caption only when unassigned; no guessed size, dimensions, selection, command, icon or host binding |
+| Backstage | One Info page |
+| Combo and either gallery | One native ComboBoxItem or RibbonGalleryItem captioned Item |
+| Split/dropdown | One RibbonMenuItem captioned Menu Item |
+| Application menu | One New Command with no pane Content; existing semantic pane/footer factories preserve arbitrary custom content |
+
+The seven supported command families retain Inline/Medium designer defaults.
+Native inputs, menu/gallery entries and separators receive no independent
+Simplified command defaults. Group context menus now add combo, both galleries,
+scrollbar and group separator. Those controls have leaf move/delete registration;
+leaf actions resolve the actual Items/Children collection rather than assuming
+every control is directly in a group. Ribbon Editor adds Scroll Bar and exposes
+its native orientation/range/value fields. Existing stacked Size choices and
+application-menu semantic ownership are preserved. No runtime source, public API,
+Toolbox inventory or host/message/page authoring behavior changed in this slice.
+
+| Gate | Result |
+| --- | --- |
+| Focused Release contracts | 44/44 passed: 42 new creation-policy cases and the two definition contracts. Tests execute the compiled net472 policy through reflection without the VS SDK; they cover starter ownership, idempotence, explicit empties, existing children, bindings, ItemsSource/null and supported-family boundaries. They do not exercise ModelItem transactions |
+| Independent authored consumer | SimplifiedDesignerDefaults passed: 12 theme/direction/label combinations with native seeded combo/gallery/menu children, plus starter Ribbon/Backstage/application-menu/scrollbar XAML ownership and unchanged empty runtime constructors; no Showcase resources/helpers |
+| Normal Release solution build | Passed, 0 warnings/errors; net472 DesignTools and both runtime targets |
+| Local pack and package consumer | Archive/layout checks passed; manifest and four runtime/DesignTools DLL entries match normal Release outputs. Clean private-cache net8/net9 consumer Release builds passed, 0 warnings/errors; net8 smoke constructed all 31 advertised types |
+| Normal Debug review output | Showcase and net8/net9 package consumer builds passed, 0 warnings/errors. Both runtime Debug Design copies match the new DesignTools DLL; no stale deployment remains |
+| Native Visual Studio creation | Pending: fresh-session Toolbox drop and context/editor Add, authored assignments/children, save/reload, property editing and one-step undo/redo. T2a's observed Toolbox presentation acceptance is retained; separate reference-path discovery remains unconfirmed |
+
+Build/package logs, deployment hashes and preserved prior packages/consumer are
+under `TestResults/toolbox-t2b-20261015/`. The newly generated independent consumer
+is `TestResults/package-consumer/PackageConsumer.csproj`, with normal Debug outputs
+and a private package cache. The prior consumer was preserved before regeneration.
+
+For native review, reopen the designer after loading the new DLL/package:
+
+- Drop a new Ribbon/tab and confirm a single starter structure; check captions
+  and native item children for combo, galleries and split/dropdown controls.
+- Use group right-click Add and Ribbon Editor for the added families; check
+  Scroll Bar fields and leaf move/delete both directly in groups and in panels.
+- Preserve explicit empty/bound captions, Overflow/Small, Size/selection,
+  ItemsSource and existing/custom content across editing and save/reload. Repeat
+  initialization must not append placeholders. Feature-disabled authoring stays
+  available under the existing explanation.
+- Confirm each drop/Add/property edit/move/delete has one undo and redo, then
+  reload the saved XAML. Check package and project-reference discovery separately.
+
+No full runtime/Writer/visual suite was repeated for this designer-only slice.
+Earlier assembled end-of-feature evidence, the two Crystal QAT comparisons and
+remaining native gates are retained. T2c and the host transition API review remain
+separate work. No commit, push, merge, publication or scheduling was performed.
 
 ## T2 — definitions and designer alignment
 

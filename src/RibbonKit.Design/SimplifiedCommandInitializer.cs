@@ -9,6 +9,6 @@ public sealed class SimplifiedCommandInitializer : DefaultInitializer
     public override void InitializeDefaults(ModelItem item)
     {
         DesignLog.Write("Toolbox simplified defaults: " + DesignModel.TypeName(item));
-        DesignModel.InitializeSimplifiedDefaults(item);
+        DesignModel.InitializeNewItemDefaults(item);
     }
 }

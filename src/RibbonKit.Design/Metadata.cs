@@ -79,6 +79,11 @@ internal sealed class Metadata : IProvideAttributeTable
             builder.AddCustomAttributes(RibbonTextBoxType, controlProvider);
             builder.AddCustomAttributes(RibbonSplitButtonType, controlProvider);
             builder.AddCustomAttributes(RibbonDropDownButtonType, controlProvider);
+            foreach (string type in new[]
+            {
+                "RibbonKit.Controls.RibbonComboBox", "RibbonKit.Controls.RibbonGallery", "RibbonKit.Controls.InRibbonGallery",
+                "RibbonKit.Controls.RibbonScrollBar", "RibbonKit.Controls.RibbonGroupSeparator",
+            }) builder.AddCustomAttributes(type, controlProvider);
 
             // Toolbox drops run their own creation transaction. Use the same
             // persisted defaults as the editor/context-menu creation paths.
@@ -88,6 +93,16 @@ internal sealed class Metadata : IProvideAttributeTable
                 RibbonButtonType, RibbonToggleButtonType, RibbonSplitButtonType, RibbonDropDownButtonType,
                 "RibbonKit.Controls.RibbonComboBox", "RibbonKit.Controls.RibbonGallery", "RibbonKit.Controls.InRibbonGallery",
             }) builder.AddCustomAttributes(type, simplifiedInitializer);
+
+            var itemInitializer = new FeatureAttribute(typeof(RibbonItemDefaultInitializer));
+            foreach (string type in new[]
+            {
+                RibbonTabType, RibbonGroupType, BackstageType, ApplicationMenuType,
+                RibbonCheckBoxType, RibbonRadioButtonType, RibbonTextBoxType,
+                "RibbonKit.Controls.BackstageTabItem", "RibbonKit.Controls.RibbonMenuItem", "RibbonKit.Controls.RibbonGalleryItem",
+                "RibbonKit.Controls.RibbonApplicationMenuItem", "RibbonKit.Controls.RibbonApplicationMenuPaneItem",
+                "RibbonKit.Controls.RibbonApplicationMenuButton",
+            }) builder.AddCustomAttributes(type, itemInitializer);
 
             // Properties-window categories + descriptions for the main controls.
             PropertyMetadata.Register(builder);

@@ -235,3 +235,28 @@ source DLL; release the Visual Studio lock and rebuild when needed. Packaged
 Release DLL/manifest hashes separately establish which outputs were tested.
 Current results and native discovery/creation acceptance belong in the
 [active Toolbox plan](../../17-TOOLBOX-ITEM-DEFINITION-PLAN.md#t2a--implementation-and-evidence-2026-10-15).
+
+#### T2b creation-default alignment — 2026-10-15
+
+`NewItemDefaults` holds a model-independent new-item policy; `DesignModel.NewItems`
+maps it to string-type Model API properties/collections. Root/item/supported-command
+initializers and editor/context factories share it. Guard writes with IsSet, not
+effective Value; also check collection occupancy and ItemsSource before inserting
+native starter children. Explicit empty/null assignments remain author choices.
+Never seed application-menu command Content merely to provide a preview: Content
+changes a plain command into a pane entry. Keep arbitrary custom content intact.
+
+Create raw children with CreateOptions.None, then apply the shared defaults once
+inside the caller's existing creation scope. Otherwise SDK initializers and manual
+parent seeding can duplicate tabs/groups/menu items. Context Add Tab/Backstage no
+longer insert their own second starters. Group Add includes combo, galleries,
+scrollbar and separator; registered leaf verbs resolve Items versus panel Children.
+The editor exposes scrollbar range/orientation fields without invented dimensions.
+
+Focused contracts execute the compiled net472 policy in a consumer test process
+without loading the VS SDK. Independent authored-XAML checks cover semantic native
+children and Simplified presentation; these cannot establish IsSet/serialization
+mapping or Visual Studio transaction/undo behavior. Normal Release/Debug deployment
+and package checks belong with the corresponding DLL hashes. Current evidence and
+the native acceptance boundary are recorded once in the
+[T2b plan section](../../17-TOOLBOX-ITEM-DEFINITION-PLAN.md#t2b--existing-creation-paths-2026-10-15).
