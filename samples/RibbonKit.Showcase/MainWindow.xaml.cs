@@ -7,6 +7,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Media;
 using RibbonKit.Animation;
@@ -85,6 +86,7 @@ public partial class MainWindow : RibbonWindow
     public MainWindow()
     {
         InitializeComponent();
+        InitializeFeatureSelectors();
 
         _applicationMenu = ShowcaseApplicationMenu;
         MainRibbon.ApplicationMenu = null;
@@ -93,6 +95,34 @@ public partial class MainWindow : RibbonWindow
         SyncGlassTreatmentToggle();
 
         Loaded += OnWindowLoaded;
+    }
+
+    private void InitializeFeatureSelectors()
+    {
+        // Inactive tabs and borrowed popup content need not share the Window's
+        // namescope. Keep an explicit owner so policy also reaches command copies.
+        var simplifiedEnabled = new MultiBinding
+        {
+            Mode = BindingMode.OneWay,
+            Converter = new SimplifiedRibbonPermissionConverter(),
+        };
+        simplifiedEnabled.Bindings.Add(new Binding(nameof(Ribbon.IsSimplifiedRibbonEnabled)) { Source = MainRibbon });
+        simplifiedEnabled.Bindings.Add(new Binding(nameof(Ribbon.CanUserChangeLayoutMode)) { Source = MainRibbon });
+        SimplifiedRibbonToggle.SetBinding(IsEnabledProperty, simplifiedEnabled);
+        TouchModeSelector.SetBinding(IsEnabledProperty, new Binding(nameof(Ribbon.CanUserChangeDensity))
+        {
+            Source = MainRibbon,
+            Mode = BindingMode.OneWay,
+        });
+    }
+
+    private sealed class SimplifiedRibbonPermissionConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture) =>
+            values.Length == 2 && values[0] is true && values[1] is true;
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) =>
+            throw new NotSupportedException();
     }
 
     private void OnWindowLoaded(object sender, RoutedEventArgs e)

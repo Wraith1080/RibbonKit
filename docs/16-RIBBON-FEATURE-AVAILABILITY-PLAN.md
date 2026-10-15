@@ -104,12 +104,20 @@ Recorded 2026-10-15 on `codex/api-and-component-updates`, based on clean `2f8f52
 | Full visual project | Four selection/harness tests passed; matrix stopped at `crystal-light-qat-below-100`, 5,551 significant pixels. Its actual/diff were inspected and its actual PNG is byte-for-byte unchanged from the retained pre-slice image. The two known Crystal comparisons remain open; later matrix scenes were not rerun/captured in this slice |
 | Packaging | Normal Release pack and archive/designer placement validation passed; clean net8/net9 WPF package consumers built with 0 warnings/errors. Packaged runtime/DesignTools DLLs match final normal Release output. Previous packages preserved; current pair selected in a validation-input directory |
 | Normal Debug review output | Full Debug solution build passed, 0 warnings/errors, including Showcase and Writer; no task-specific configuration/output and no application launch/live review |
+| Showcase selector binding repair, 2026-10-15, after `977c3e6` | Reproduced all three reported ElementName source errors before View was realized. Explicit-owner bindings passed 7/7 focused Release cases: validated binding-trace regression across detached, Classic/Simplified and QAT presentations with disable/re-enable, plus the six existing density/QAT cases. Normal Debug Showcase build succeeded, 0 errors and 12 designer-copy warnings because Visual Studio held DesignTools.dll; no process was closed. No runtime/public API change or live/native acceptance claim |
 
 Logs are `TestResults/feature-policy-20261015-*.log`; full and final-selection TRX
 files are in `TestResults/feature-policy-20261015/`. Passed projects/scopes were
 retained. Final source changes were checked with the affected selection and the
 feature consumer, not another complete solution run. No approvals/tolerances were
 changed. Nothing committed, pushed, merged, published or scheduled.
+
+The binding-repair logs are `TestResults/showcase-feature-binding-*-20261015.log`;
+the pre-fix trace is `TestResults/showcase-feature-binding-before-trace-20261015.txt`.
+Its regression writes the post-fix trace under the normal Release test output's
+`TestResults/showcase/feature-selector-binding-trace.txt`. Earlier full-run and
+independent-consumer evidence remains retained; the binding repair changed only
+Showcase selector wiring and did not repeat those gates.
 
 New focused coverage includes defaults, binding/source preservation, explicit
 scopes/reparenting, nested Ribbons, direct/stale menu handlers, detached page

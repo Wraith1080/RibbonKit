@@ -76,3 +76,11 @@ consumer covers three palettes, both directions and densities. Dated results and
 
 native/designer limits belong in the active plan.
 
+Showcase policy selectors originally used `ElementName=MainRibbon`. Commands on
+unselected, collection-owned tabs have no Window namescope connection yet, so all
+three policy bindings logged source-resolution errors at startup. Bind directly
+to the owned Ribbon instance after InitializeComponent instead. A OneWay
+MultiBinding combines Simplified capability and layout permission; the existing
+source-enabled mirroring carries changes to Simplified/QAT copies while popup
+content is borrowed. This is host selector wiring, with no runtime API change.
+
