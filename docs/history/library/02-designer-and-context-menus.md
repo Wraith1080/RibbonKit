@@ -260,3 +260,23 @@ mapping or Visual Studio transaction/undo behavior. Normal Release/Debug deploym
 and package checks belong with the corresponding DLL hashes. Current evidence and
 the native acceptance boundary are recorded once in the
 [T2b plan section](../../17-TOOLBOX-ITEM-DEFINITION-PLAN.md#t2b--existing-creation-paths-2026-10-15).
+
+Toolbox TabItem pitfall: the host's generic designer initialization runs before
+custom InitializeDefaults unless the provider opts out. A direct RibbonTab drop
+produced an empty gray Grid, fixed dimensions and centered alignment; the log
+showed Header/Groups already set, so the preservation guards correctly refused to
+seed. Raw context-menu creation did not have that state. RibbonTab now has its own
+provider with SkipDesignerInitialization=true set in its constructor, before the
+host checks it; do not clear Content or relax IsSet guards to remove a suspected
+placeholder. A compiled-metadata/SDK regression covers the selected provider and
+skip policy; actual Toolbox drop and undo/serialization remain native gates.
+
+The initializer opt-out covers content, not the designer's subsequent layout
+placement. User testing confirmed group/no Grid while fixed dimensions and center
+alignment still hid the tab header. Keep those phases separate: Ribbon's
+`RibbonTabsPlacementAdapter` declines free position/size writes for its
+collection-owned children, and RibbonTab's DefaultSizeMode.None suppresses default
+sizing. Register the placement adapter on the Ribbon parent, not on RibbonTab
+(which would govern its group area). Read selection bounds through ModelItem.View;
+do not clear authored geometry or attach a delayed cleanup to every tab. SDK
+metadata/edge-permission regression evidence is distinct from live drop acceptance.

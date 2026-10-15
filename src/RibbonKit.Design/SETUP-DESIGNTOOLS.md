@@ -13,8 +13,9 @@ commands and Ribbon Editor; a floating smart-tag adorner is not supported.
 | `Metadata.cs`, `PropertyMetadata.cs` | String-type metadata registration and property descriptions |
 | `ToolboxMetadata.cs` | String-type Toolbox visibility/category intent, checked against the package manifest |
 | `DesignModel.cs`, `DesignModel.NewItems.cs`, `NewItemDefaults.cs` | ModelItem edits, guarded creation policy, collection/attached-property handling and undo transactions |
-| `RibbonDefaultInitializer.cs`, `RibbonItemDefaultInitializer.cs`, `ContextMenuProviders.cs` | Toolbox starter content and context commands |
+| `RibbonDefaultInitializer.cs`, `RibbonTabDefaultInitializer.cs`, `RibbonItemDefaultInitializer.cs`, `ContextMenuProviders.cs` | Toolbox starter content and context commands |
 | `SimplifiedCommandInitializer.cs` | Supported toolbox command defaults, shared with Model API creation |
+| `RibbonTabsPlacementAdapter.cs` | Collection-owned placement for Ribbon children without free-form size/position writes |
 | `RibbonEditorWindow.cs`, `TabPreview.cs` | Structure editor and design-only preview coordination |
 
 The extension works through the Visual Studio Model API, not live .NET 8/9 control
@@ -93,6 +94,12 @@ or plain New Command. Combo/gallery and split/dropdown controls receive one nati
 item, without guessing selection or pane content. Assigned values, explicit empties,
 bindings, ItemsSource and existing children block the corresponding default writes.
 Initializers run inside the creation transaction and open no nested undo scopes.
+RibbonTab opts out of generic designer initialization before applying its own
+defaults, preventing the inherited TabItem Grid on new drops. Placement is a
+separate phase: Ribbon's child placement adapter declines geometry writes, and
+RibbonTab's DefaultSizeMode.None opts out of default sizing. This does not clear
+content or dimensions already written into existing XAML. Live drop/reload/undo
+acceptance is tracked in the Toolbox plan separately from SDK metadata checks.
 Context commands add/reorder/delete tabs, groups,
 controls and File surfaces, and select QAT placement. **Edit Ribbon…** opens a structure
 tree with contextual Add/Move/Delete actions and separate Properties/Design Preview tabs.

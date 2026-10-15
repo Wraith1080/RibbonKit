@@ -284,6 +284,20 @@ scope per operation. Raw child factories suppress SDK default initialization so
 the shared policy runs once rather than duplicating structure. Native SDK mapping,
 serialization and undo behavior remain live acceptance gates.
 
+The user's 2026-10-15 Showcase Toolbox test found generic TabItem initialization
+running first: a dropped RibbonTab received Header="RibbonTab", Width/Height,
+center alignment and an empty gray Grid, while the RibbonKit log already reported
+Header/Groups as set. Right-click Add Tab created the expected group. RibbonTab
+now uses a dedicated initializer whose constructor sets the SDK's
+`SkipDesignerInitialization=true` before the host applies its defaults; it then uses the same
+guarded group defaults. The user's follow-up confirmed New Group and no Grid, but
+fixed dimensions and centered alignment remained and hid the header. Skipping
+content initialization does not suppress the host's separate placement step.
+Ribbon now supplies `RibbonTabsPlacementAdapter` for its collection-owned child
+layout, declining position/size writes; RibbonTab also declares
+`DefaultSizeMode.None`. Existing authored Grid/content/geometry/settings are not
+repaired or cleared. Live acceptance scope is recorded in the table below.
+
 | New item | Starter content |
 | --- | --- |
 | Ribbon | One Home tab with one Group; a separately created tab gets New Tab/New Group |
@@ -306,16 +320,22 @@ Toolbox inventory or host/message/page authoring behavior changed in this slice.
 | Gate | Result |
 | --- | --- |
 | Focused Release contracts | 44/44 passed: 42 new creation-policy cases and the two definition contracts. Tests execute the compiled net472 policy through reflection without the VS SDK; they cover starter ownership, idempotence, explicit empties, existing children, bindings, ItemsSource/null and supported-family boundaries. They do not exercise ModelItem transactions |
+| Toolbox TabItem correction | Focused Release SDK regression passed and was extended after the user's partial native result: one tab initializer skips generic content; sizing mode is None; the Ribbon parent owns the placement adapter, which declines Move/Size on all four edges. Other initializer policies remain unchanged. Normal Release solution, Debug deployment, local pack and independent net8/net9 package consumer checks passed for the changed designer DLL. Live coverage is recorded in the native row below |
 | Independent authored consumer | SimplifiedDesignerDefaults passed: 12 theme/direction/label combinations with native seeded combo/gallery/menu children, plus starter Ribbon/Backstage/application-menu/scrollbar XAML ownership and unchanged empty runtime constructors; no Showcase resources/helpers |
 | Normal Release solution build | Passed, 0 warnings/errors; net472 DesignTools and both runtime targets |
 | Local pack and package consumer | Archive/layout checks passed; manifest and four runtime/DesignTools DLL entries match normal Release outputs. Clean private-cache net8/net9 consumer Release builds passed, 0 warnings/errors; net8 smoke constructed all 31 advertised types |
 | Normal Debug review output | Showcase and net8/net9 package consumer builds passed, 0 warnings/errors. Both runtime Debug Design copies match the new DesignTools DLL; no stale deployment remains |
-| Native Visual Studio creation | Pending: fresh-session Toolbox drop and context/editor Add, authored assignments/children, save/reload, property editing and one-step undo/redo. T2a's observed Toolbox presentation acceptance is retained; separate reference-path discovery remains unconfirmed |
+| Native Visual Studio creation | Accepted 2026-10-15 for a fresh RibbonTab Toolbox drop in Showcase after reopening Visual Studio: visible header, one New Group, no Grid or added Width/Height/alignment attributes; user reported it works perfectly. Other changed-family drops/context/editor Add, authored-assignment preservation, save/reload, property editing and one-step undo/redo remain unconfirmed. T2a's observed Toolbox presentation acceptance is retained; separate reference-path discovery remains unconfirmed |
 
 Build/package logs, deployment hashes and preserved prior packages/consumer are
 under `TestResults/toolbox-t2b-20261015/`. The newly generated independent consumer
 is `TestResults/package-consumer/PackageConsumer.csproj`, with normal Debug outputs
 and a private package cache. The prior consumer was preserved before regeneration.
+The tab-initializer correction's build, regression, package and deployment evidence
+and preserved previous packages/consumer are under
+`TestResults/designer-tab-grid-20261015/`; its `placement/` subdirectory retains the
+subsequent placement correction's build/package evidence and prior consumer/package
+pair. The placement regression and Debug build logs are in the parent directory.
 
 For native review, reopen the designer after loading the new DLL/package:
 

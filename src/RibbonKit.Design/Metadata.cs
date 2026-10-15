@@ -1,3 +1,4 @@
+using Microsoft.VisualStudio.DesignTools.Extensibility;
 using Microsoft.VisualStudio.DesignTools.Extensibility.Features;
 using Microsoft.VisualStudio.DesignTools.Extensibility.Metadata;
 using RibbonKit.Design;
@@ -45,12 +46,15 @@ internal sealed class Metadata : IProvideAttributeTable
             builder.AddCustomAttributes(
                 RibbonType,
                 new FeatureAttribute(typeof(RibbonDefaultInitializer)),
+                new FeatureAttribute(typeof(RibbonTabsPlacementAdapter)),
                 new FeatureAttribute(typeof(RibbonContextMenuProvider)),
                 new FeatureAttribute(typeof(SelectedTabPreviewProvider)));
 
-            // Tab: "Add Group".
+            // Tab: suppress generic TabItem Grid/sizing before seeding a group.
             builder.AddCustomAttributes(
                 RibbonTabType,
+                new DefaultSizeAttribute(DefaultSizeMode.None),
+                new FeatureAttribute(typeof(RibbonTabDefaultInitializer)),
                 new FeatureAttribute(typeof(RibbonTabContextMenuProvider)));
 
             // Backstage: "Add Nav Item" / "Add Nav Button", and translate SelectedIndex to the editor's
@@ -97,7 +101,7 @@ internal sealed class Metadata : IProvideAttributeTable
             var itemInitializer = new FeatureAttribute(typeof(RibbonItemDefaultInitializer));
             foreach (string type in new[]
             {
-                RibbonTabType, RibbonGroupType, BackstageType, ApplicationMenuType,
+                RibbonGroupType, BackstageType, ApplicationMenuType,
                 RibbonCheckBoxType, RibbonRadioButtonType, RibbonTextBoxType,
                 "RibbonKit.Controls.BackstageTabItem", "RibbonKit.Controls.RibbonMenuItem", "RibbonKit.Controls.RibbonGalleryItem",
                 "RibbonKit.Controls.RibbonApplicationMenuItem", "RibbonKit.Controls.RibbonApplicationMenuPaneItem",
