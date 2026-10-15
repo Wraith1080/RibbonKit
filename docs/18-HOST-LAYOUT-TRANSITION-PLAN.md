@@ -27,7 +27,9 @@ moving boundary between the ribbon/QAT area and the host content.
   commits real layout, and starts its vector presentation at ContextIdle after
   simplified copies, borrowed popup content and density measurements settle.
   Below-ribbon QAT motion participates in that transition; arbitrary host content
-  does not. QAT relocation also has its existing QuickAccessMove animation path.
+  does not. QuickAccessMove policy is defined, but current QAT relocation cancels
+  layout motion and reparents items without a playback call site. H1 must review
+  relocation presentation as well as the shared notifications.
 - In the user's RTL Lab recording, the DockPanel content moves immediately to
   its final bounds while the ribbon still presents its previous drawing. The
   ribbon is waiting for its own layout work, not for a host content animator.

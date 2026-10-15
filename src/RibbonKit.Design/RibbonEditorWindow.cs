@@ -1131,6 +1131,18 @@ internal sealed class RibbonEditorWindow : Window
         public System.Func<ModelItem, bool>? AppliesTo { get; }
     }
 
+    private static readonly PropSpec[] RibbonFeatureSpecs =
+    {
+        new PropSpec("IsSimplifiedRibbonEnabled", "Enable Simplified Ribbon", EditorKind.Bool),
+        new PropSpec("CanUserCustomizeRibbon", "Allow Ribbon customization", EditorKind.Bool),
+        new PropSpec("CanUserCustomizeQuickAccess", "Allow QAT customization", EditorKind.Bool),
+        new PropSpec("CanUserRepositionQuickAccess", "Allow QAT positioning", EditorKind.Bool),
+        new PropSpec("CanUserToggleQuickAccessVisibility", "Allow QAT show/hide", EditorKind.Bool),
+        new PropSpec("CanUserMinimizeRibbon", "Allow user minimize/restore", EditorKind.Bool),
+        new PropSpec("CanUserChangeLayoutMode", "Allow layout switching", EditorKind.Bool),
+        new PropSpec("CanUserChangeDensity", "Allow density switching", EditorKind.Bool),
+    };
+
     private static readonly PropSpec[] ControlSpecs =
     {
         new PropSpec("Size", "Size", EditorKind.Enum, new[] { "Large", "Medium", "Small" }),
@@ -1250,6 +1262,7 @@ internal sealed class RibbonEditorWindow : Window
 
     private static PropSpec[] SpecsFor(NodeKind kind) => kind switch
     {
+        NodeKind.Ribbon => RibbonFeatureSpecs,
         NodeKind.Control => ControlSpecs,
         NodeKind.Tab => TabSpecs,
         NodeKind.Group => GroupSpecs,
@@ -1331,7 +1344,7 @@ internal sealed class RibbonEditorWindow : Window
         {
             _propsPanel.Children.Clear();
 
-            if (node is null || node.Kind == NodeKind.Ribbon)
+            if (node is null)
             {
                 return;
             }
@@ -1364,6 +1377,8 @@ internal sealed class RibbonEditorWindow : Window
                 _propsPanel.Children.Add(BuildPropRow(node.Item, KeyTipSpec));
                 if (node.Kind == NodeKind.Control && DesignModel.IsSimplifiedCommand(node.Item))
                 {
+                    if (_ribbon.Properties["IsSimplifiedRibbonEnabled"].ComputedValue is false)
+                        _propsPanel.Children.Add(new TextBlock { Text = "Simplified settings are retained while the feature is disabled.", TextWrapping = TextWrapping.Wrap, Opacity = 0.7 });
                     _propsPanel.Children.Add(BuildPropRow(node.Item, SimplifiedPlacementSpec));
                     _propsPanel.Children.Add(BuildPropRow(node.Item, SimplifiedLabelSpec));
                 }

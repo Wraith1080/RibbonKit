@@ -61,6 +61,10 @@ public class RibbonQuickAccessPage : Control, IRibbonFillPage
             typeof(RibbonQuickAccessPage),
             new FrameworkPropertyMetadata(null, OnRibbonChanged));
 
+    private static readonly DependencyProperty OwnerCustomizationEnabledProperty = DependencyProperty.Register(
+        "OwnerCustomizationEnabled", typeof(bool), typeof(RibbonQuickAccessPage),
+        new PropertyMetadata(true, (d, _) => d.CoerceValue(IsEnabledProperty)));
+
     private ListBox? _availableList;
     private ListBox? _currentList;
     private ButtonBase? _addButton;
@@ -71,6 +75,8 @@ public class RibbonQuickAccessPage : Control, IRibbonFillPage
 
     static RibbonQuickAccessPage()
     {
+        IsEnabledProperty.OverrideMetadata(typeof(RibbonQuickAccessPage), new UIPropertyMetadata(true, null,
+            (d, value) => (bool)value && ((RibbonQuickAccessPage)d).Ribbon?.CanUserCustomizeQuickAccess != false));
         DefaultStyleKeyProperty.OverrideMetadata(
             typeof(RibbonQuickAccessPage),
             new FrameworkPropertyMetadata(typeof(RibbonQuickAccessPage)));
@@ -149,8 +155,13 @@ public class RibbonQuickAccessPage : Control, IRibbonFillPage
         RebuildBothLists();
     }
 
-    private static void OnRibbonChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
-        ((RibbonQuickAccessPage)d).RebuildBothLists();
+    private static void OnRibbonChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var page = (RibbonQuickAccessPage)d;
+        Controls.Ribbon.ObserveUserPermission(page, OwnerCustomizationEnabledProperty, page.Ribbon,
+            nameof(Controls.Ribbon.CanUserCustomizeQuickAccess));
+        page.RebuildBothLists();
+    }
 
     private void RebuildBothLists()
     {
@@ -241,15 +252,15 @@ public class RibbonQuickAccessPage : Control, IRibbonFillPage
 
     private void OnAddClick(object sender, RoutedEventArgs e)
     {
-        if (Ribbon is { } ribbon && _availableList?.SelectedItem is RibbonCommandEntry entry)
+        if (IsEnabled && Ribbon is { } ribbon && _availableList?.SelectedItem is RibbonCommandEntry entry)
         {
-            ribbon.AddToQuickAccess(entry.Control);
+            ribbon.AddToQuickAccessFromUser(entry.Control);
         }
     }
 
     private void OnRemoveClick(object sender, RoutedEventArgs e)
     {
-        if (Ribbon is { } ribbon && _currentList?.SelectedItem is RibbonCommandEntry entry)
+        if (IsEnabled && Ribbon is { } ribbon && _currentList?.SelectedItem is RibbonCommandEntry entry)
         {
             ribbon.QuickAccessItems.Remove(entry.Control);
         }
@@ -261,7 +272,7 @@ public class RibbonQuickAccessPage : Control, IRibbonFillPage
 
     private void MoveSelected(int delta)
     {
-        if (Ribbon is not { } ribbon || _currentList?.SelectedItem is not RibbonCommandEntry entry)
+        if (!IsEnabled || Ribbon is not { } ribbon || _currentList?.SelectedItem is not RibbonCommandEntry entry)
         {
             return;
         }

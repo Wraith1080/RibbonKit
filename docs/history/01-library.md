@@ -417,3 +417,5 @@ status updates and investigation narration were removed during compaction.
 ### [3.254 Office 2024 Flat theme — 2026-10-12](library/13-flat-theme-variants.md#3254-office-2024-flat-theme--2026-10-12)
 
 ### [3.255 Simplified ribbon first layout slice — 2026-10-13](library/14-simplified-ribbon.md#3255-simplified-ribbon-first-layout-slice--2026-10-13)
+
+### [3.256 Ribbon capability and user-operation policy — 2026-10-15](library/15-feature-availability.md#3256-ribbon-capability-and-user-operation-policy--2026-10-15)

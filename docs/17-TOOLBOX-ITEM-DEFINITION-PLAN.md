@@ -99,6 +99,8 @@ T1's include/exclude matrix should be reviewable before T2
 implementation. The current S6 defaults/toolbox repair remains accepted in the
 [simplified plan](15-SIMPLIFIED-RIBBON-PLAN.md#s6-designer-defaults--2026-10-14).
 
-The full simplified-feature test pass and its earlier unresolved native/full
-gates remain deferred until the user explicitly requests testing. Creating this
-plan does not start those gates, schedule work or authorize publishing a package.
+Simplified end-of-feature evidence is assembled from a full run and targeted
+repairs; the two residual Crystal QAT comparisons and specific native gates remain
+in [plan 15](15-SIMPLIFIED-RIBBON-PLAN.md#end-of-feature-validation-and-repairs--2026-10-14).
+Creating this plan does not start Toolbox implementation, schedule work or
+authorize publishing a package.

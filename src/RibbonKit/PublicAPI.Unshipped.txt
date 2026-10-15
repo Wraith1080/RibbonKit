@@ -179,3 +179,28 @@ RibbonKit.Controls.CapturedBackdrop.Apply(bool enabled) -> void
 RibbonKit.Controls.CapturedBackdrop.Refresh() -> void
 RibbonKit.Controls.CapturedBackdrop.Dispose() -> void
 static RibbonKit.Theming.ThemeManager.CreateGlassOverlay(System.Windows.FrameworkElement! scope, bool dark = false) -> System.Windows.ResourceDictionary!
+
+RibbonKit.Controls.Ribbon.IsSimplifiedRibbonEnabled.get -> bool
+RibbonKit.Controls.Ribbon.IsSimplifiedRibbonEnabled.set -> void
+static readonly RibbonKit.Controls.Ribbon.IsSimplifiedRibbonEnabledProperty -> System.Windows.DependencyProperty!
+RibbonKit.Controls.Ribbon.CanUserCustomizeRibbon.get -> bool
+RibbonKit.Controls.Ribbon.CanUserCustomizeRibbon.set -> void
+static readonly RibbonKit.Controls.Ribbon.CanUserCustomizeRibbonProperty -> System.Windows.DependencyProperty!
+RibbonKit.Controls.Ribbon.CanUserCustomizeQuickAccess.get -> bool
+RibbonKit.Controls.Ribbon.CanUserCustomizeQuickAccess.set -> void
+static readonly RibbonKit.Controls.Ribbon.CanUserCustomizeQuickAccessProperty -> System.Windows.DependencyProperty!
+RibbonKit.Controls.Ribbon.CanUserRepositionQuickAccess.get -> bool
+RibbonKit.Controls.Ribbon.CanUserRepositionQuickAccess.set -> void
+static readonly RibbonKit.Controls.Ribbon.CanUserRepositionQuickAccessProperty -> System.Windows.DependencyProperty!
+RibbonKit.Controls.Ribbon.CanUserToggleQuickAccessVisibility.get -> bool
+RibbonKit.Controls.Ribbon.CanUserToggleQuickAccessVisibility.set -> void
+static readonly RibbonKit.Controls.Ribbon.CanUserToggleQuickAccessVisibilityProperty -> System.Windows.DependencyProperty!
+RibbonKit.Controls.Ribbon.CanUserMinimizeRibbon.get -> bool
+RibbonKit.Controls.Ribbon.CanUserMinimizeRibbon.set -> void
+static readonly RibbonKit.Controls.Ribbon.CanUserMinimizeRibbonProperty -> System.Windows.DependencyProperty!
+RibbonKit.Controls.Ribbon.CanUserChangeLayoutMode.get -> bool
+RibbonKit.Controls.Ribbon.CanUserChangeLayoutMode.set -> void
+static readonly RibbonKit.Controls.Ribbon.CanUserChangeLayoutModeProperty -> System.Windows.DependencyProperty!
+RibbonKit.Controls.Ribbon.CanUserChangeDensity.get -> bool
+RibbonKit.Controls.Ribbon.CanUserChangeDensity.set -> void
+static readonly RibbonKit.Controls.Ribbon.CanUserChangeDensityProperty -> System.Windows.DependencyProperty!

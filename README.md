@@ -139,6 +139,25 @@ density. Application-authored fixed-size content and native window/document UI
 remain host-owned. See the [touch plan](docs/14-TOUCH-DENSITY-PLAN.md#verification-and-acceptance)
 for automated evidence and pending native touch, visual and DPI acceptance.
 
+### Feature availability and user permissions
+
+Ribbon policy properties default to true and support authored XAML and bindings.
+`IsSimplifiedRibbonEnabled="False"` enforces Classic while retaining the requested
+layout/binding and saved profiles for re-enable.
+
+`CanUserCustomizeRibbon`, `CanUserCustomizeQuickAccess`,
+`CanUserRepositionQuickAccess`, `CanUserToggleQuickAccessVisibility`,
+`CanUserMinimizeRibbon`, `CanUserChangeLayoutMode` and `CanUserChangeDensity`
+control user actions independently. They preserve application configuration and
+startup restoration. For example, set QAT placement to BelowRibbon and disable
+`CanUserRepositionQuickAccess` to keep user-facing placement fixed. Disabling
+minimization permission does not force an application-minimized Ribbon open.
+
+Built-in menus/pages enforce these permissions, including user imports/resets;
+host-owned layout/density selectors bind their availability to the corresponding
+properties. Serializer `Apply` remains an application restoration API. Policy is
+not saved in customization JSON. See the [contract and current verification](docs/16-RIBBON-FEATURE-AVAILABILITY-PLAN.md).
+
 ### Simplified ribbon
 
 Set `Ribbon.LayoutMode="Simplified"` and mark the commands to show in its single

@@ -98,7 +98,7 @@ public class RibbonOptionsDialog : Window
             if (args.NewItems is not null)
                 foreach (RibbonOptionsPage page in args.NewItems)
                 {
-                    if (page.Content is RibbonCustomizePage or RibbonSimplifiedCustomizePage
+                    if (page.Content is RibbonCustomizePage or RibbonSimplifiedCustomizePage or RibbonQuickAccessPage
                         && page.ReadLocalValue(IsEnabledProperty) == DependencyProperty.UnsetValue)
                         page.SetBinding(IsEnabledProperty, new System.Windows.Data.Binding(nameof(IsEnabled)) { Source = page.Content });
                     if (page.Content is RibbonCustomizePage or RibbonSimplifiedCustomizePage

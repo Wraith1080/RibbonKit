@@ -75,6 +75,16 @@ for XAML editing and is never flattened or overwritten. Group separators are ada
 chrome without captions. Preview theme changes palette/metrics, not authored structural
 choices such as File shape.
 
+### Feature policy authoring
+
+Select the Ribbon root in Ribbon Editor to edit the eight feature-policy Booleans,
+also described in the Properties grid. These are ordinary persisted runtime
+properties, not preview overrides. Simplified placement/label values remain
+editable while the feature is disabled; the editor explains their inactive state.
+Each explicit edit uses the existing single Model API undo scope. Live drop,
+property binding, undo/redo and reload acceptance remains distinct from build and
+authored-XAML consumer checks.
+
 ### Using the Icons.xaml browser
 
 

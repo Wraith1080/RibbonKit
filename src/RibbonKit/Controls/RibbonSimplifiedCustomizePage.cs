@@ -115,6 +115,10 @@ public partial class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
         nameof(Ribbon), typeof(Ribbon), typeof(RibbonSimplifiedCustomizePage),
         new FrameworkPropertyMetadata(null, (d, _) => ((RibbonSimplifiedCustomizePage)d).ChangeRibbon()));
 
+    private static readonly DependencyProperty OwnerCustomizationEnabledProperty = DependencyProperty.Register(
+        "OwnerCustomizationEnabled", typeof(bool), typeof(RibbonSimplifiedCustomizePage),
+        new PropertyMetadata(true, (d, _) => d.CoerceValue(IsEnabledProperty)));
+
     private static readonly DependencyProperty OwnerLayoutModeProperty = DependencyProperty.Register(
         "OwnerLayoutMode", typeof(RibbonLayoutMode), typeof(RibbonSimplifiedCustomizePage),
         new PropertyMetadata(RibbonLayoutMode.Classic, (d, _) => d.CoerceValue(IsEnabledProperty)));
@@ -136,7 +140,7 @@ public partial class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
         DefaultStyleKeyProperty.OverrideMetadata(typeof(RibbonSimplifiedCustomizePage),
             new FrameworkPropertyMetadata(typeof(RibbonSimplifiedCustomizePage)));
         IsEnabledProperty.OverrideMetadata(typeof(RibbonSimplifiedCustomizePage), new UIPropertyMetadata(true, null,
-            (d, value) => (bool)value && ((RibbonSimplifiedCustomizePage)d).Ribbon?.LayoutMode == RibbonLayoutMode.Simplified));
+            (d, value) => (bool)value && ((RibbonSimplifiedCustomizePage)d).Ribbon is { CanUserCustomizeRibbon: true, IsSimplifiedRibbonEnabled: true, LayoutMode: RibbonLayoutMode.Simplified }));
     }
 
     /// <summary>Initializes a draft editor; loading or retemplating preserves unfinished edits.</summary>
@@ -156,17 +160,17 @@ public partial class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
     /// <summary>Commits structure, simplified selections, labels, scoped resets and imported customization. Hosts can persist the ribbon after this call.</summary>
     public void ApplyChanges()
     {
-        if (Ribbon is not { } ribbon) return;
+        if (Ribbon is not { CanUserCustomizeRibbon: true, IsSimplifiedRibbonEnabled: true } ribbon) return;
         RebasePending();
         bool changed = HasDraft;
         bool fullLayout = _pendingLayout is not null;
         if (fullLayout)
-            RibbonCustomizationSerializer.Apply(ribbon, RibbonCustomizationSerializer.WriteLayout(BuildDraftLayout()));
+            RibbonCustomizationSerializer.ApplyUserLayout(ribbon, RibbonCustomizationSerializer.WriteLayout(BuildDraftLayout()));
         else
         {
             ApplyStructure(ribbon);
             foreach (var pair in _drafts) ribbon.SetSimplifiedChoices(pair.Key, pair.Value, false);
-            if (_pendingQat is not null) RibbonCustomizationSerializer.ApplyQuickAccessLayout(ribbon, _pendingQat);
+            if (_pendingQat is not null) RibbonCustomizationSerializer.ApplyQuickAccessLayout(ribbon, _pendingQat, userInitiated: true);
         }
         ClearDraft();
         if (changed && !fullLayout) ribbon.NotifySimplifiedCustomizationChanged();
@@ -232,6 +236,7 @@ public partial class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
     {
         StopObserving();
         ClearDraft(); _tab = null; _group = null; _sourceTab = null; _sourceQatOnly = false; _sourceInitialized = false;
+        Controls.Ribbon.ObserveUserPermission(this, OwnerCustomizationEnabledProperty, Ribbon, nameof(Controls.Ribbon.CanUserCustomizeRibbon));
         if (Ribbon is null) ClearValue(OwnerLayoutModeProperty);
         else SetBinding(OwnerLayoutModeProperty, new Binding(nameof(Controls.Ribbon.LayoutMode)) { Source = Ribbon });
         CoerceValue(IsEnabledProperty);

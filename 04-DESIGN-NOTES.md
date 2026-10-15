@@ -995,6 +995,10 @@ technical evidence warrants them; preserve existing dated records.
 
 [End-of-feature enabled-state, style-scope and QAT navigation repairs](docs/history/library/14-simplified-ribbon.md#end-of-feature-validation-repairs--2026-10-14).
 
+### 3.256 Ribbon capability and user-operation policy — 2026-10-15
+
+[Default-true capability, independent user permissions, binding preservation and locked import scopes](docs/history/library/15-feature-availability.md#3256-ribbon-capability-and-user-operation-policy--2026-10-15).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.
@@ -1024,7 +1028,7 @@ technical evidence warrants them; preserve existing dated records.
 - **Simplified ribbon:** layout/customization evidence and remaining acceptance are in the
   [active plan](docs/15-SIMPLIFIED-RIBBON-PLAN.md#delivery-and-acceptance).
 
-- **Ribbon feature availability:** proposed persistent capability switches are in
+- **Ribbon feature availability:** capability/user-policy implementation and current evidence are in
   the [design plan](docs/16-RIBBON-FEATURE-AVAILABILITY-PLAN.md).
 
 - **Toolbox item definitions:** the follow-on inventory, authoring and package

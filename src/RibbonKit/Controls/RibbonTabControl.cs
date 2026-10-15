@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -57,6 +58,7 @@ public class RibbonTabControl : TabControl
     public static readonly DependencyProperty IsBackstageActiveProperty =
         IsBackstageActivePropertyKey.DependencyProperty;
 
+    private ToggleButton? _minimizeToggle;
     private Rectangle? _marker;
     private TranslateTransform? _markerTranslate;
     private Panel? _markerHost;
@@ -139,10 +141,26 @@ public class RibbonTabControl : TabControl
         RequestSelectionVisualsRefresh();
     }
 
+    private void OnMinimizeToggleClick(object sender, RoutedEventArgs e)
+    {
+        for (DependencyObject? node = this; node is not null; node = VisualTreeHelper.GetParent(node))
+            if (node is Ribbon ribbon)
+            {
+                if (ribbon.CanUserMinimizeRibbon && !ribbon.IsModal)
+                    ribbon.SetCurrentValue(Ribbon.IsMinimizedProperty, !ribbon.IsMinimized);
+                // OneWay keeps the host state authoritative, including stale clicks after a policy change.
+                _minimizeToggle?.GetBindingExpression(ToggleButton.IsCheckedProperty)?.UpdateTarget();
+                return;
+            }
+    }
+
     /// <inheritdoc />
     public override void OnApplyTemplate()
     {
+        if (_minimizeToggle is not null) _minimizeToggle.Click -= OnMinimizeToggleClick;
         base.OnApplyTemplate();
+        _minimizeToggle = GetTemplateChild("MinimizeToggle") as ToggleButton;
+        if (_minimizeToggle is not null) _minimizeToggle.Click += OnMinimizeToggleClick;
 
         _marker = GetTemplateChild("PART_TabMarker") as Rectangle;
         _markerTranslate = GetTemplateChild("PART_TabMarkerTranslate") as TranslateTransform;

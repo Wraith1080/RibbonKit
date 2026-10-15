@@ -1051,8 +1051,20 @@
                                            Icon="{StaticResource Icon.Sliders}" LargeIcon="{StaticResource Icon.Sliders}"
                                            Checked="OnToggleSimplifiedRibbon" Unchecked="OnToggleSimplifiedRibbon"
                                            ScreenTipTitle="Simplified Ribbon"
-                                           ScreenTipText="Show selected commands in one row. More Commands opens the original groups." />
+                                           ScreenTipText="Show selected commands in one row. More Commands opens the original groups.">
+                        <rk:RibbonToggleButton.Style>
+                            <Style TargetType="{x:Type rk:RibbonToggleButton}" BasedOn="{StaticResource {x:Type rk:RibbonToggleButton}}">
+                                <Setter Property="IsEnabled" Value="{Binding CanUserChangeLayoutMode, ElementName=MainRibbon}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSimplifiedRibbonEnabled, ElementName=MainRibbon}" Value="False">
+                                        <Setter Property="IsEnabled" Value="False" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </rk:RibbonToggleButton.Style>
+                    </rk:RibbonToggleButton>
                     <rk:RibbonDropDownButton x:Name="TouchModeSelector"
+                                             IsEnabled="{Binding CanUserChangeDensity, ElementName=MainRibbon}"
                                              rk:Ribbon.SimplifiedPlacement="Inline"
                                              rk:Ribbon.CommandId="auto:tab.view/group.view.backstage/Touch mode#2"
                                              Header="Touch/Mouse Mode"

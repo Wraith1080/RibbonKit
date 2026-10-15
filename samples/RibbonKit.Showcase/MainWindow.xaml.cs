@@ -520,15 +520,15 @@ public partial class MainWindow : RibbonWindow
 
     private void OnSelectDensity(object sender, RoutedEventArgs e)
     {
-        if (MainRibbon is null || sender is not RibbonMenuItem { Tag: RibbonDensity density }) return;
-        MainRibbon.Density = density;
+        if (MainRibbon is null || !MainRibbon.CanUserChangeDensity || sender is not RibbonMenuItem { Tag: RibbonDensity density }) return;
+        MainRibbon.SetCurrentValue(Ribbon.DensityProperty, density);
         SaveAppearancePreferences();
     }
 
     private void OnToggleSimplifiedRibbon(object sender, RoutedEventArgs e)
     {
-        if (MainRibbon is null || SimplifiedRibbonToggle is null) return;
-        MainRibbon.LayoutMode = SimplifiedRibbonToggle.IsChecked == true ? RibbonLayoutMode.Simplified : RibbonLayoutMode.Classic;
+        if (MainRibbon is null || !MainRibbon.IsSimplifiedRibbonEnabled || !MainRibbon.CanUserChangeLayoutMode || SimplifiedRibbonToggle is null) return;
+        MainRibbon.SetCurrentValue(Ribbon.LayoutModeProperty, SimplifiedRibbonToggle.IsChecked == true ? RibbonLayoutMode.Simplified : RibbonLayoutMode.Classic);
     }
 
     private void SyncGlassTreatmentToggle()

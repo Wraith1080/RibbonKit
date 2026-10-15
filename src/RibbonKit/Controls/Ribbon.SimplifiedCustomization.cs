@@ -21,6 +21,7 @@ public partial class Ribbon
     public bool PinToSimplifiedRibbon(FrameworkElement source)
     {
         ArgumentNullException.ThrowIfNull(source);
+        if (!IsSimplifiedRibbonEnabled) return false;
         var (tab, entry) = FindSimplifiedTarget(source);
         if (tab is null || entry is null) return false;
         source = entry.Control;
@@ -35,6 +36,7 @@ public partial class Ribbon
     public bool RemoveFromSimplifiedRibbon(FrameworkElement source)
     {
         ArgumentNullException.ThrowIfNull(source);
+        if (!IsSimplifiedRibbonEnabled) return false;
         var (tab, entry) = FindSimplifiedTarget(source);
         if (tab is null || entry is null) return false;
         source = entry.Control;

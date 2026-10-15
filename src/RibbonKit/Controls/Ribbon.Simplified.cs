@@ -11,7 +11,7 @@ public partial class Ribbon
         nameof(LayoutMode), typeof(RibbonLayoutMode), typeof(Ribbon),
         new FrameworkPropertyMetadata(RibbonLayoutMode.Classic,
             FrameworkPropertyMetadataOptions.Inherits | FrameworkPropertyMetadataOptions.AffectsMeasure,
-            OnLayoutModeChanged), value => value is RibbonLayoutMode.Classic or RibbonLayoutMode.Simplified);
+            OnLayoutModeChanged, CoerceLayoutMode), value => value is RibbonLayoutMode.Classic or RibbonLayoutMode.Simplified);
 
     /// <summary>Gets or sets the body layout. Hosts own the selector and appearance persistence.</summary>
     public RibbonLayoutMode LayoutMode

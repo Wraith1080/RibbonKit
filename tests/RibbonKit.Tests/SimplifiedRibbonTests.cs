@@ -433,6 +433,77 @@ public sealed class SimplifiedRibbonTests
         finally { window.Close(); Sta.Drain(); RibbonAnimation.GlobalLevel = RibbonAnimationLevel.Subtle; Sta.ResetApplication(); }
     });
 
+    [Theory]
+    [InlineData(RibbonQuickAccessPosition.TitleBar)]
+    [InlineData(RibbonQuickAccessPosition.BelowRibbon)]
+    public void Disabling_capability_closes_owned_group_flyouts_preserves_QAT_and_releases_simplified_copies(RibbonQuickAccessPosition placement) => Sta.Run(() =>
+    {
+        using var host = new Host(initialSimplified: true);
+        host.Ribbon.QuickAccessPosition = placement;
+        host.Ribbon.AddToQuickAccess(host.Group); host.Layout();
+        var qat = host.Ribbon.QuickAccessItems.OfType<RibbonGroupQuickAccessProxy>().Single();
+        qat.IsDropDownOpen = true; host.Layout(); host.Split.IsDropDownOpen = true; host.Layout();
+        Assert.True(host.GroupPopup.IsOpen); Assert.True(host.Split.IsDropDownOpen);
+        string saved = RibbonCustomizationSerializer.Serialize(host.Ribbon);
+        host.Ribbon.IsSimplifiedRibbonEnabled = false; host.Layout();
+        Assert.Equal(RibbonLayoutMode.Classic, host.Ribbon.LayoutMode);
+        Assert.False(host.GroupPopup.IsOpen); Assert.False(host.Split.IsDropDownOpen);
+        Assert.Single(host.Split.Items); Assert.Empty(host.ToolBar.Items);
+        Assert.Same(qat, Assert.Single(host.Ribbon.QuickAccessItems));
+        Assert.True(host.Group.IsQuickAccessCollapsed);
+        Assert.Equal(saved, RibbonCustomizationSerializer.Serialize(host.Ribbon));
+        host.Ribbon.IsSimplifiedRibbonEnabled = true; host.Layout();
+        Assert.Equal(RibbonLayoutMode.Simplified, host.Ribbon.LayoutMode);
+        Assert.NotEmpty(host.ToolBar.Items);
+    });
+
+    [Fact]
+    public void Disabling_capability_returns_focus_to_the_classic_source_after_layout() => Sta.Run(() =>
+    {
+        using var host = new Host(initialSimplified: true);
+        host.Window.Activate(); host.Layout();
+        var copy = host.Copy(host.Action);
+        Assert.True(copy.Focus()); Assert.True(copy.IsKeyboardFocusWithin);
+        host.Ribbon.IsSimplifiedRibbonEnabled = false; host.Layout();
+        Sta.Drain(System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+        Assert.True(host.Action.IsKeyboardFocusWithin);
+    });
+
+    [Fact]
+    public void Capability_focus_return_does_not_override_a_later_user_focus_choice() => Sta.Run(() =>
+    {
+        using var host = new Host(initialSimplified: true);
+        host.Window.Activate(); host.Layout(); Assert.True(host.Copy(host.Action).Focus());
+        host.Ribbon.IsSimplifiedRibbonEnabled = false; host.Layout();
+        Assert.True(host.Toggle.Focus());
+        Sta.Drain(System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+        Assert.True(host.Toggle.IsKeyboardFocusWithin);
+    });
+
+    [Fact]
+    public void Minimize_permission_guards_header_chevron_and_tab_double_click_but_allows_host_state() => Sta.Run(() =>
+    {
+        using var host = new Host();
+        var tabs = (RibbonTabControl)host.Ribbon.Template.FindName("TabControlHost", host.Ribbon);
+        var toggle = (ToggleButton)tabs.Template.FindName("MinimizeToggle", tabs);
+        Assert.Equal(Visibility.Visible, toggle.Visibility);
+        toggle.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); Assert.True(host.Ribbon.IsMinimized);
+        host.Ribbon.IsMinimized = false;
+        var doubleClick = new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = Control.MouseDoubleClickEvent };
+        var method = typeof(RibbonTab).GetMethod("OnMouseDoubleClick", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        host.Ribbon.CanUserMinimizeRibbon = false; host.Layout();
+        Assert.Equal(Visibility.Collapsed, toggle.Visibility); Assert.False(toggle.IsEnabled);
+        toggle.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+        method.Invoke(host.Tab, new object[] { doubleClick }); Assert.False(host.Ribbon.IsMinimized);
+        host.Ribbon.IsMinimized = true; toggle.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); Assert.True(host.Ribbon.IsMinimized);
+        host.Ribbon.IsMinimized = false; host.Ribbon.CanUserMinimizeRibbon = true; host.Layout();
+        method.Invoke(host.Tab, new object[] { doubleClick }); Assert.True(host.Ribbon.IsMinimized);
+        host.Ribbon.IsMinimized = false; host.Tab.IsModal = true; Assert.True(host.Ribbon.EnterModal(host.Tab));
+        toggle.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+        method.Invoke(host.Tab, new object[] { doubleClick }); Assert.False(host.Ribbon.IsMinimized);
+        Assert.True(host.Ribbon.ExitModal());
+    });
+
     private sealed class Host : IDisposable
     {
         internal readonly Ribbon Ribbon = new();

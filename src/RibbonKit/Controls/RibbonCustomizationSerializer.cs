@@ -62,6 +62,14 @@ public static class RibbonCustomizationSerializer
         finally { ribbon.RemergeAfterRebuild(merged); }
     }
 
+    internal static void ApplyUserLayout(Ribbon ribbon, string? json)
+    {
+        if (!ribbon.CanUserCustomizeRibbon || !TryReadLayout(json, out var layout)) return;
+        List<RibbonMergeSource> merged = ribbon.UnmergeAllForRebuild();
+        try { ApplyLayout(ribbon, layout!, userInitiated: true); }
+        finally { ribbon.RemergeAfterRebuild(merged); }
+    }
+
     internal static RibbonLayoutDto CaptureLayout(Ribbon ribbon) => BuildLayout(ribbon);
     internal static string WriteLayout(RibbonLayoutDto layout) => JsonSerializer.Serialize(layout, Options);
     internal static bool TryReadLayout(string? json, out RibbonLayoutDto? layout)
@@ -168,22 +176,25 @@ public static class RibbonCustomizationSerializer
     }
 
     // Applies only the QAT scope, preserving live tab/group objects and session-only selections.
-    internal static void ApplyQuickAccessLayout(Ribbon ribbon, RibbonLayoutDto layout)
+    internal static void ApplyQuickAccessLayout(Ribbon ribbon, RibbonLayoutDto layout, bool userInitiated = false)
     {
         BuildIdentity(ribbon, out var sources, out _, out _);
         var declared = ribbon.DeclaredQuickAccessCommands.Concat(ribbon.QuickAccessItems.OfType<FrameworkElement>())
             .Where(item => Ribbon.GetQuickAccessSource(item) is null && Ribbon.GetCommandId(item) is not null)
             .GroupBy(item => Ribbon.GetCommandId(item)!).ToDictionary(group => group.Key, group => group.First());
-        ribbon.QuickAccessItems.Clear();
-        foreach (var item in layout.QuickAccess)
+        if (!userInitiated || ribbon.CanUserCustomizeQuickAccess)
         {
-            if (item.Ref is null) continue;
-            if (declared.TryGetValue(item.Ref, out var original)) ribbon.QuickAccessItems.Add(original);
-            else if (sources.TryGetValue(item.Ref, out var source) && !ribbon.IsInQuickAccess(source))
-                ribbon.QuickAccessItems.Add(ribbon.CreateCommandProxy(source, RibbonControlSize.Small));
+            ribbon.QuickAccessItems.Clear();
+            foreach (var item in layout.QuickAccess)
+            {
+                if (item.Ref is null) continue;
+                if (declared.TryGetValue(item.Ref, out var original)) ribbon.QuickAccessItems.Add(original);
+                else if (sources.TryGetValue(item.Ref, out var source) && !ribbon.IsInQuickAccess(source))
+                    ribbon.QuickAccessItems.Add(ribbon.CreateCommandProxy(source, RibbonControlSize.Small));
+            }
         }
-        if (layout.QuickAccessPosition is { } position) ribbon.SetCurrentValue(Ribbon.QuickAccessPositionProperty, position);
-        if (layout.IsQuickAccessVisible is { } visible) ribbon.SetCurrentValue(Ribbon.IsQuickAccessVisibleProperty, visible);
+        if ((!userInitiated || ribbon.CanUserRepositionQuickAccess) && layout.QuickAccessPosition is { } position) ribbon.SetCurrentValue(Ribbon.QuickAccessPositionProperty, position);
+        if ((!userInitiated || ribbon.CanUserToggleQuickAccessVisibility) && layout.IsQuickAccessVisible is { } visible) ribbon.SetCurrentValue(Ribbon.IsQuickAccessVisibleProperty, visible);
     }
 
     // ---- Serialize ---------------------------------------------------------------
@@ -332,7 +343,7 @@ public static class RibbonCustomizationSerializer
 
     // ---- Apply -------------------------------------------------------------------
 
-    private static void ApplyLayout(Ribbon ribbon, RibbonLayoutDto layout)
+    private static void ApplyLayout(Ribbon ribbon, RibbonLayoutDto layout, bool userInitiated = false)
     {
         // An absent/unknown optional section preserves choices across rebuilt custom identities.
         var retainedSelections = layout.Simplified is not { Version: 1 or 2 }
@@ -434,31 +445,35 @@ public static class RibbonCustomizationSerializer
             sources.Remove(key);
         foreach (var pair in currentSources.Where(pair => pair.Value is RibbonGroup))
             sources[pair.Key] = pair.Value;
-        ribbon.QuickAccessItems.Clear();
-        foreach (QatDto qat in layout.QuickAccess)
+        if (!userInitiated || ribbon.CanUserCustomizeQuickAccess)
         {
-            if (qat.Ref is null)
+            ribbon.QuickAccessItems.Clear();
+            foreach (QatDto qat in layout.QuickAccess)
             {
-                continue;
+                if (qat.Ref is null)
+                {
+                    continue;
+                }
+
+                if (declaredQat.TryGetValue(qat.Ref, out FrameworkElement? declared))
+                {
+                    ribbon.QuickAccessItems.Add(declared);
+                }
+                else if (sources.TryGetValue(qat.Ref, out FrameworkElement? source) && !ribbon.IsInQuickAccess(source))
+                {
+                    ribbon.QuickAccessItems.Add(ribbon.CreateCommandProxy(source, RibbonControlSize.Small));
+                }
             }
 
-            if (declaredQat.TryGetValue(qat.Ref, out FrameworkElement? declared))
-            {
-                ribbon.QuickAccessItems.Add(declared);
-            }
-            else if (sources.TryGetValue(qat.Ref, out FrameworkElement? source) && !ribbon.IsInQuickAccess(source))
-            {
-                ribbon.QuickAccessItems.Add(ribbon.CreateCommandProxy(source, RibbonControlSize.Small));
-            }
         }
 
         // 6. Restore the QAT placement (title bar / above / below). Null in older files → keep current.
-        if (layout.QuickAccessPosition is { } position)
+        if ((!userInitiated || ribbon.CanUserRepositionQuickAccess) && layout.QuickAccessPosition is { } position)
         {
             ribbon.QuickAccessPosition = position;
         }
         // Older layouts have no visibility preference; preserve the consumer's current value.
-        if (layout.IsQuickAccessVisible is { } visible)
+        if ((!userInitiated || ribbon.CanUserToggleQuickAccessVisibility) && layout.IsQuickAccessVisible is { } visible)
             ribbon.SetCurrentValue(Ribbon.IsQuickAccessVisibleProperty, visible);
 
         if (layout.Simplified is { Version: 1 or 2 } simplified)

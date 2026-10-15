@@ -303,6 +303,11 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("SimplifiedDesignerDefaultsPortabilityChecks.Verify", () => SimplifiedDesignerDefaultsPortabilityChecks.Verify(application));
             return;
         }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "FeatureAvailability")
+        {
+            VerifyScope("FeatureAvailabilityPortabilityChecks.Verify", () => FeatureAvailabilityPortabilityChecks.Verify(application));
+            return;
+        }
         // Continue after the completed gallery checks without repeating passing matrices.
         string? scope = Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE");
         if (scope == "QatOverflowKeyboard")
@@ -354,6 +359,7 @@ public sealed class ApplicationButtonShapeThemeTests
                 VerifyScope("SimplifiedDesignerDefaultsPortabilityChecks.Verify", () => SimplifiedDesignerDefaultsPortabilityChecks.Verify(application));
             }
             ThemeManager.Apply(application, RibbonTheme.Office2024);
+            VerifyScope("FeatureAvailabilityPortabilityChecks.Verify", () => FeatureAvailabilityPortabilityChecks.Verify(application));
             VerifyScope("SimplifiedCustomizationPortabilityChecks.Verify", () => SimplifiedCustomizationPortabilityChecks.Verify(application));
             ThemeManager.Apply(application, RibbonTheme.Office2024);
             VerifyScope("TabMoveCustomizationChecks.Verify", () => TabMoveCustomizationChecks.Verify(application));
