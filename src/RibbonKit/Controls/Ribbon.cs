@@ -1558,30 +1558,6 @@ public partial class Ribbon : Control
 
     internal System.Windows.Controls.ContextMenu CreateRibbonContextMenu(FrameworkElement? target)
     {
-        var customizeItem = new System.Windows.Controls.MenuItem
-        {
-            Header = RibbonLocalization.GetString(RibbonString.CustomizeQuickAccessToolbar),
-        };
-        customizeItem.Click += (_, _) => { if (CanUserCustomizeQuickAccess) QuickAccessCustomizeRequested?.Invoke(this, EventArgs.Empty); };
-
-        var customizeRibbonItem = new System.Windows.Controls.MenuItem
-        {
-            Header = RibbonLocalization.GetString(RibbonString.CustomizeRibbon),
-        };
-        customizeRibbonItem.Click += (_, _) =>
-        {
-            if (!CanUserCustomizeRibbon) return;
-            if (LayoutMode == RibbonLayoutMode.Classic) RaiseRibbonCustomizeRequested();
-            else SimplifiedCustomizeRequested?.Invoke(this, EventArgs.Empty);
-        };
-
-        var collapseItem = new System.Windows.Controls.MenuItem
-        {
-            Header = RibbonLocalization.GetString(RibbonString.CollapseRibbon),
-            IsChecked = IsMinimized,
-        };
-        collapseItem.Click += (_, _) => { if (CanUserMinimizeRibbon) SetCurrentValue(IsMinimizedProperty, !IsMinimized); };
-
         var menu = new System.Windows.Controls.ContextMenu
         {
             PlacementTarget = target ?? this,
@@ -1593,15 +1569,20 @@ public partial class Ribbon : Control
         menu.SetBinding(DensityProperty,
             new Binding { Source = target ?? this, Path = new PropertyPath(DensityProperty) });
         ApplyModernMenuStyle(menu);
+        // Construct only entries that will be parented. An omitted MenuItem can
+        // activate native ancestor-alignment bindings while ownerless.
         if (target is not null)
         {
-            var addItem = new System.Windows.Controls.MenuItem
+            if (CanUserCustomizeQuickAccess)
             {
-                Header = RibbonLocalization.GetString(RibbonString.AddToQuickAccessToolbar),
-                IsEnabled = !IsInQuickAccess(target),
-            };
-            addItem.Click += (_, _) => { if (CanUserCustomizeQuickAccess) AddToQuickAccessFromUser(target); };
-            if (CanUserCustomizeQuickAccess) menu.Items.Add(addItem);
+                var addItem = new System.Windows.Controls.MenuItem
+                {
+                    Header = RibbonLocalization.GetString(RibbonString.AddToQuickAccessToolbar),
+                    IsEnabled = !IsInQuickAccess(target),
+                };
+                addItem.Click += (_, _) => { if (CanUserCustomizeQuickAccess) AddToQuickAccessFromUser(target); };
+                menu.Items.Add(addItem);
+            }
             if (IsSimplifiedRibbonEnabled && CanUserCustomizeRibbon && LayoutMode == RibbonLayoutMode.Simplified)
             {
                 var (tab, entry) = FindSimplifiedTarget(target);
@@ -1615,28 +1596,64 @@ public partial class Ribbon : Control
                 menu.Items.Add(pin);
             }
         }
-        if (CanUserCustomizeQuickAccess) menu.Items.Add(customizeItem);
-        if (CanUserCustomizeRibbon) menu.Items.Add(customizeRibbonItem);
-        var simplifiedItem = new System.Windows.Controls.MenuItem
+        if (CanUserCustomizeQuickAccess)
         {
-            Header = RibbonLocalization.GetString(RibbonString.SimplifiedRibbon),
-            IsChecked = LayoutMode == RibbonLayoutMode.Simplified,
-        };
-        simplifiedItem.Click += (_, _) =>
+            var customizeItem = new System.Windows.Controls.MenuItem
+            {
+                Header = RibbonLocalization.GetString(RibbonString.CustomizeQuickAccessToolbar),
+            };
+            customizeItem.Click += (_, _) => { if (CanUserCustomizeQuickAccess) QuickAccessCustomizeRequested?.Invoke(this, EventArgs.Empty); };
+            menu.Items.Add(customizeItem);
+        }
+        if (CanUserCustomizeRibbon)
         {
-            if (IsSimplifiedRibbonEnabled && CanUserChangeLayoutMode) SetCurrentValue(LayoutModeProperty,
-                LayoutMode == RibbonLayoutMode.Classic ? RibbonLayoutMode.Simplified : RibbonLayoutMode.Classic);
-        };
-        if (IsSimplifiedRibbonEnabled && CanUserChangeLayoutMode) menu.Items.Add(simplifiedItem);
+            var customizeRibbonItem = new System.Windows.Controls.MenuItem
+            {
+                Header = RibbonLocalization.GetString(RibbonString.CustomizeRibbon),
+            };
+            customizeRibbonItem.Click += (_, _) =>
+            {
+                if (!CanUserCustomizeRibbon) return;
+                if (LayoutMode == RibbonLayoutMode.Classic) RaiseRibbonCustomizeRequested();
+                else SimplifiedCustomizeRequested?.Invoke(this, EventArgs.Empty);
+            };
+            menu.Items.Add(customizeRibbonItem);
+        }
+        if (IsSimplifiedRibbonEnabled && CanUserChangeLayoutMode)
+        {
+            var simplifiedItem = new System.Windows.Controls.MenuItem
+            {
+                Header = RibbonLocalization.GetString(RibbonString.SimplifiedRibbon),
+                IsChecked = LayoutMode == RibbonLayoutMode.Simplified,
+            };
+            simplifiedItem.Click += (_, _) =>
+            {
+                if (IsSimplifiedRibbonEnabled && CanUserChangeLayoutMode) SetCurrentValue(LayoutModeProperty,
+                    LayoutMode == RibbonLayoutMode.Classic ? RibbonLayoutMode.Simplified : RibbonLayoutMode.Classic);
+            };
+            menu.Items.Add(simplifiedItem);
+        }
         menu.Items.Add(new System.Windows.Controls.Separator());
-        var visibilityItem = new System.Windows.Controls.MenuItem
+        if (CanUserToggleQuickAccessVisibility)
         {
-            Header = RibbonLocalization.GetString(IsQuickAccessVisible
-                ? RibbonString.HideQuickAccessToolbar : RibbonString.ShowQuickAccessToolbar),
-        };
-        visibilityItem.Click += (_, _) => { if (CanUserToggleQuickAccessVisibility) SetCurrentValue(IsQuickAccessVisibleProperty, !IsQuickAccessVisible); };
-        if (CanUserToggleQuickAccessVisibility) menu.Items.Add(visibilityItem);
-        if (CanUserMinimizeRibbon) menu.Items.Add(collapseItem);
+            var visibilityItem = new System.Windows.Controls.MenuItem
+            {
+                Header = RibbonLocalization.GetString(IsQuickAccessVisible
+                    ? RibbonString.HideQuickAccessToolbar : RibbonString.ShowQuickAccessToolbar),
+            };
+            visibilityItem.Click += (_, _) => { if (CanUserToggleQuickAccessVisibility) SetCurrentValue(IsQuickAccessVisibleProperty, !IsQuickAccessVisible); };
+            menu.Items.Add(visibilityItem);
+        }
+        if (CanUserMinimizeRibbon)
+        {
+            var collapseItem = new System.Windows.Controls.MenuItem
+            {
+                Header = RibbonLocalization.GetString(RibbonString.CollapseRibbon),
+                IsChecked = IsMinimized,
+            };
+            collapseItem.Click += (_, _) => { if (CanUserMinimizeRibbon) SetCurrentValue(IsMinimizedProperty, !IsMinimized); };
+            menu.Items.Add(collapseItem);
+        }
         menu.Opened += (_, _) => _openRibbonContextMenu = menu;
         menu.Closed += (_, _) =>
         {

@@ -84,3 +84,12 @@ MultiBinding combines Simplified capability and layout permission; the existing
 source-enabled mirroring carries changes to Simplified/QAT copies while popup
 content is borrowed. This is host selector wiring, with no runtime API change.
 
+Conditional context-menu entries must be constructed inside their eligibility
+branch. Creating a MenuItem and then skipping Items.Add leaves an ownerless
+control; its native style activates HorizontalContentAlignment and
+VerticalContentAlignment ancestor bindings and reports missing ItemsControl
+sources. This reproduced through Showcase's routed right-click opening with
+CanUserCustomizeRibbon disabled. Gate construction for every conditional entry
+and retain click-time permission checks. Existing themed menu styles, alignment
+defaults, order and re-enable behavior remain intact.
+

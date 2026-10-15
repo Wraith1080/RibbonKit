@@ -1,10 +1,16 @@
+using System.Diagnostics;
+using System.IO;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Interop;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Threading;
 using RibbonKit.Animation;
 using RibbonKit.Controls;
+using RibbonKit.Localization;
 using RibbonKit.Theming;
 using Xunit;
 
@@ -46,6 +52,7 @@ internal static class FeatureAvailabilityPortabilityChecks
                     Ribbon.SetLayoutMode(host, RibbonLayoutMode.Simplified); Layout(window);
                     Assert.Equal(RibbonLayoutMode.Classic, ribbon.LayoutMode); Assert.Equal(RibbonLayoutMode.Classic, Ribbon.GetLayoutMode(host));
                     Assert.True(source.IsVisible); Assert.Equal(density, ribbon.Density);
+                    VerifyContextMenus(ribbon, source, window);
                     var tabs = Descendants(ribbon).OfType<RibbonTabControl>().Single();
                     var minimize = (System.Windows.Controls.Primitives.ToggleButton)tabs.Template.FindName("MinimizeToggle", tabs);
                     Assert.Equal(Visibility.Collapsed, minimize.Visibility); Assert.False(minimize.IsEnabled);
@@ -70,6 +77,67 @@ internal static class FeatureAvailabilityPortabilityChecks
             }
         }
         finally { RibbonAnimation.GlobalLevel = previous; }
+    }
+
+    private static void VerifyContextMenus(Ribbon ribbon, UIElement source, Window window)
+    {
+        using var errors = new StringWriter();
+        using var listener = new TextWriterTraceListener(errors);
+        var trace = PresentationTraceSources.DataBindingSource;
+        var previous = trace.Switch.Level;
+        trace.Listeners.Add(listener); PresentationTraceSources.Refresh(); trace.Switch.Level = SourceLevels.Warning;
+        ContextMenu? menu = null;
+        try
+        {
+            var probe = new TextBlock();
+            probe.SetBinding(TextBlock.TextProperty, new Binding("ConsumerMenuTraceProbeMissing") { Source = new object() });
+            _ = probe.Text; Layout(window); listener.Flush();
+            Assert.Contains("ConsumerMenuTraceProbeMissing", errors.ToString());
+            errors.GetStringBuilder().Clear();
+
+            ribbon.CanUserMinimizeRibbon = true;
+            foreach (bool customize in new[] { false, true })
+            {
+                ribbon.CanUserCustomizeRibbon = customize; Layout(window);
+                foreach (UIElement target in new UIElement[] { ribbon, source })
+                {
+                    RaiseOpening(target); Layout(window);
+                    menu = OpenMenus().Single();
+                    Assert.Equal(customize, menu.Items.OfType<MenuItem>().Any(item =>
+                        Equals(item.Header, RibbonLocalization.GetString(RibbonString.CustomizeRibbon))));
+                    Assert.Contains(menu.Items.OfType<MenuItem>(), item =>
+                        Equals(item.Header, RibbonLocalization.GetString(RibbonString.CollapseRibbon)));
+                    menu.IsOpen = false; Layout(window); menu = null;
+                }
+            }
+            ribbon.CanUserCustomizeRibbon = false; ribbon.CanUserMinimizeRibbon = false; Layout(window);
+            RaiseOpening(ribbon); Layout(window); Assert.Empty(OpenMenus());
+            listener.Flush();
+            Assert.DoesNotContain("HorizontalContentAlignment", errors.ToString());
+            Assert.DoesNotContain("VerticalContentAlignment", errors.ToString());
+        }
+        finally
+        {
+            if (menu is not null) menu.IsOpen = false;
+            ribbon.CanUserCustomizeRibbon = false; ribbon.CanUserMinimizeRibbon = false;
+            Layout(window); listener.Flush();
+            string directory = Path.Combine(AppContext.BaseDirectory, "TestResults", "feature-availability");
+            Directory.CreateDirectory(directory);
+            File.WriteAllText(Path.Combine(directory, $"context-menu-binding-{ThemeManager.CurrentTheme}-{window.FlowDirection}-{ribbon.Density}.txt"), errors.ToString());
+            trace.Listeners.Remove(listener); PresentationTraceSources.Refresh(); trace.Switch.Level = previous;
+        }
+
+        static void RaiseOpening(UIElement target)
+        {
+            // Simulate WPF's routed input event without calling RibbonKit internals.
+            var constructor = typeof(ContextMenuEventArgs).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic)
+                .Single(ctor => ctor.GetParameters().Length == 2);
+            var args = (ContextMenuEventArgs)constructor.Invoke(new object[] { target, true });
+            target.RaiseEvent(args); Assert.True(args.Handled);
+        }
+
+        static IEnumerable<ContextMenu> OpenMenus() => PresentationSource.CurrentSources.Cast<PresentationSource>().OfType<HwndSource>()
+            .SelectMany(host => Descendants(host.RootVisual)).OfType<ContextMenu>().Where(menu => menu.IsOpen);
     }
 
     private static IEnumerable<DependencyObject> Descendants(DependencyObject parent)

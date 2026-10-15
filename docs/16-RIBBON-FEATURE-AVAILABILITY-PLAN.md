@@ -105,6 +105,7 @@ Recorded 2026-10-15 on `codex/api-and-component-updates`, based on clean `2f8f52
 | Packaging | Normal Release pack and archive/designer placement validation passed; clean net8/net9 WPF package consumers built with 0 warnings/errors. Packaged runtime/DesignTools DLLs match final normal Release output. Previous packages preserved; current pair selected in a validation-input directory |
 | Normal Debug review output | Full Debug solution build passed, 0 warnings/errors, including Showcase and Writer; no task-specific configuration/output and no application launch/live review |
 | Showcase selector binding repair, 2026-10-15, after `977c3e6` | Reproduced all three reported ElementName source errors before View was realized. Explicit-owner bindings passed 7/7 focused Release cases: validated binding-trace regression across detached, Classic/Simplified and QAT presentations with disable/re-enable, plus the six existing density/QAT cases. Normal Debug Showcase build succeeded, 0 errors and 12 designer-copy warnings because Visual Studio held DesignTools.dll; no process was closed. No runtime/public API change or live/native acceptance claim |
+| Context-menu binding repair, 2026-10-15, after `f5343d7` | Reproduced both reported MenuItem alignment errors through Showcase's routed right-click path with CanUserCustomizeRibbon disabled. Conditional entries are now created only when included. 12/12 focused Release regressions passed, including six Showcase policy cases over background/command menus and re-enable, plus existing stale-handler/user-add checks. Independent consumer passed 12 theme/direction/density combinations with validated empty menu binding traces, re-enable and empty-menu suppression. Normal Release net8/net9 library build passed, 0 warnings/errors. Normal Debug Showcase build succeeded, 0 errors and the same 12 Visual Studio designer-copy lock warnings. No new public API; physical input remains separate |
 
 Logs are `TestResults/feature-policy-20261015-*.log`; full and final-selection TRX
 files are in `TestResults/feature-policy-20261015/`. Passed projects/scopes were
@@ -118,6 +119,14 @@ Its regression writes the post-fix trace under the normal Release test output's
 `TestResults/showcase/feature-selector-binding-trace.txt`. Earlier full-run and
 independent-consumer evidence remains retained; the binding repair changed only
 Showcase selector wiring and did not repeat those gates.
+
+The context-menu follow-up logs are `TestResults/context-menu-binding-*-20261015.log`;
+the pre-fix capture is `TestResults/context-menu-binding-before-trace-20261015.txt`.
+The six Showcase trace files are in the normal Release runtime test output's
+`TestResults/showcase/`; the independent consumer's twelve traces are in its
+normal Release output's `TestResults/feature-availability/`. All post-fix traces
+were empty. This bounded library fix retained prior full-suite, visual and
+package evidence without repeating those gates.
 
 New focused coverage includes defaults, binding/source preservation, explicit
 scopes/reparenting, nested Ribbons, direct/stale menu handlers, detached page
