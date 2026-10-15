@@ -249,7 +249,7 @@ reuse an older global-cache package with the same version.
 | Package contents | Manifest and all four packaged runtime/DesignTools DLL copies match current source/normal Release outputs; archive and designer paths validated |
 | Independent package consumer | Clean private-cache net8/net9 Release builds passed, 0 warnings/errors; net8 runtime smoke passed and constructed all 31 advertised controls without Showcase resources/helpers |
 | Normal Debug review output | Showcase and kept package-consumer builds passed, 0 warnings/errors. The first Showcase build left a stale net8 designer copy because Visual Studio held it; user closed Visual Studio, the necessary rebuild passed, and both normal Debug Design copies match the newly built DesignTools DLL |
-| Live Visual Studio | Pending: package Toolbox inventory/category and project-reference inventory/filtering must be observed separately; no native drop/default/undo/reload acceptance claimed by the builds or smoke test |
+| Live Visual Studio | Accepted 2026-10-15 for the user's observed Toolbox presentation: user reported it looks good in Visual Studio. Reference path was not specified, so separate package/project-reference inventories are not both established. Native drop/default/undo/reload checks remain for T2b/T2c |
 
 Logs are `TestResults/toolbox-t2a-*-20261015.log`. Prior packages and the selected
 validation pair are under `TestResults/toolbox-t2a-20261015/`. The retained
@@ -257,7 +257,7 @@ validation pair are under `TestResults/toolbox-t2a-20261015/`. The retained
 package and private cache, with normal Debug and Release outputs. Its
 `runtime-smoke.json` records the net8 constructor/smoke result.
 
-For live review, reopen Visual Studio, open the retained package consumer and
+For separate reference-path confirmation, open the retained package consumer and
 ConsumerWindow.xaml, and inspect the RibbonKit Toolbox list/category. Separately
 open the normal solution/Showcase project-reference designer and check whether
 the matching visibility metadata is honored, especially generated hosts/panels
