@@ -4,6 +4,8 @@ using System.Windows.Media;
 namespace RibbonKit.Writer.Editing;
 
 /// <summary>Draws one accessible cell in Writer's 8×8 Insert-table gallery.</summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public sealed class WriterTableGridCellPreview : FrameworkElement
 {
     public static readonly DependencyProperty IsHighlightedProperty = DependencyProperty.Register(

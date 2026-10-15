@@ -44,6 +44,8 @@ public sealed class RibbonCommandEntry
 [TemplatePart(Name = RemoveButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = UpButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = DownButtonPartName, Type = typeof(ButtonBase))]
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonQuickAccessPage : Control, IRibbonFillPage
 {
     private const string AvailableListPartName = "PART_AvailableList";

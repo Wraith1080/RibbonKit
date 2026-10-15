@@ -8,6 +8,8 @@ using System.Windows.Media;
 namespace RibbonKit.Writer.Editing;
 
 /// <summary>A RibbonKit-themed solid-color picker with palette and exact-value entry.</summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public partial class WriterColorDialog : Window
 {
     private static readonly Color[] StandardColors =

@@ -12,6 +12,8 @@ namespace RibbonKit.Controls;
 /// <see cref="Layout.RibbonGroupsPanel"/>. Created by <see cref="RibbonTab"/>;
 /// not intended for direct use.
 /// </summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonGroupsHost : ItemsControl
 {
     private RibbonQuickAccessToolBar? _simplified;

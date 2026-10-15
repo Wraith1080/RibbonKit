@@ -180,6 +180,8 @@ public sealed class RibbonCustomizeNode : INotifyPropertyChanged
 [TemplatePart(Name = ResetButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = ImportButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = ExportButtonPartName, Type = typeof(ButtonBase))]
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonCustomizePage : Control, IRibbonFillPage
 {
     private const string AvailableListPartName = "PART_AvailableList";

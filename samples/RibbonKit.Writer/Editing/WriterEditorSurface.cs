@@ -14,6 +14,8 @@ namespace RibbonKit.Writer.Editing;
 /// document, and therefore leaves selection, undo, clipboard, IME and spelling state in WPF's
 /// editor. Paper mode is a centred canvas, not a paginator and does not insert page breaks.
 /// </remarks>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public sealed class WriterEditorSurface : Grid
 {
     private RichTextBox? _editor;

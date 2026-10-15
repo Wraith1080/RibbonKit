@@ -15,6 +15,8 @@ namespace RibbonKit.Controls;
 /// Clicking it raises Click/Command like a normal button and closes the dropdown.
 /// Submenus arrive in a later phase.
 /// </summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonMenuItem : Button
 {
     /// <summary>Identifies the <see cref="Header"/> dependency property.</summary>

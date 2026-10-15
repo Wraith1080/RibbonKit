@@ -51,6 +51,9 @@ public sealed class RibbonContextMenuProvider : ContextMenuProvider
         qat.Items.Add(_qatBelowRibbon);
         Items.Add(qat);
 
+        DesignerContextActions.AddOwnerMenus(this);
+        DesignerContextActions.AddPreviewMenus(this);
+
         UpdateItemStatus += OnUpdateItemStatus;
     }
 
@@ -152,6 +155,7 @@ public sealed class BackstageContextMenuProvider : ContextMenuProvider
         var addButton = new MenuAction("Add Nav Button");
         addButton.Execute += OnAddNavButton;
         Items.Add(addButton);
+        DesignerContextActions.AddPreviewMenus(this);
     }
 
     private void OnAddNavItem(object sender, MenuActionEventArgs e)
@@ -191,6 +195,7 @@ public sealed class RibbonTabContextMenuProvider : ContextMenuProvider
         Items.Add(addGroup);
 
         DesignVerbs.AddReorderAndDelete(this, "Tabs", "Tab");
+        DesignerContextActions.AddPreviewMenus(this);
     }
 
     private void OnAddGroup(object sender, MenuActionEventArgs e)
@@ -216,6 +221,9 @@ public sealed class RibbonGroupContextMenuProvider : ContextMenuProvider
         AddControlVerb("Add Drop-Down Gallery", "RibbonGallery");
         AddControlVerb("Add Scroll Bar", "RibbonScrollBar");
         AddControlVerb("Add Group Separator", "RibbonGroupSeparator");
+        var addStack = new MenuAction("Add Stack Panel");
+        addStack.Execute += (_, e) => DesignModel.AddStackPanel(e.Selection.PrimarySelection, "Items", "Vertical");
+        Items.Add(addStack);
 
         DesignVerbs.AddReorderAndDelete(this, "Groups", "Group");
     }
@@ -235,8 +243,14 @@ public sealed class RibbonGroupContextMenuProvider : ContextMenuProvider
 /// </summary>
 public sealed class RibbonControlContextMenuProvider : ContextMenuProvider
 {
-    public RibbonControlContextMenuProvider() =>
+    public RibbonControlContextMenuProvider()
+    {
+        var addItem = new MenuAction("Add Item");
+        addItem.Execute += (_, e) => DesignModel.AddDefaultItem(e.Selection.PrimarySelection);
+        Items.Add(addItem);
+        UpdateItemStatus += (_, e) => addItem.Enabled = DesignModel.CanAddDefaultItem(e.Selection.PrimarySelection);
         DesignVerbs.AddReorderAndDelete(this, null, "Control");
+    }
 }
 
 /// <summary>Shared "Move Left / Move Right / Delete" verbs added to a provider's menu.</summary>

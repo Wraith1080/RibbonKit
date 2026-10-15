@@ -7,6 +7,8 @@ using RibbonKit.Writer.Preview;
 namespace RibbonKit.Writer.Printing;
 
 /// <summary>A Writer-owned printer picker with a real preview of the exact fixed paginator.</summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public partial class WriterPrintSetupDialog : Window
 {
     private readonly WriterPreviewSnapshot _snapshot;

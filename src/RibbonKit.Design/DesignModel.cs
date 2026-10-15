@@ -130,7 +130,7 @@ internal static partial class DesignModel
     private static ModelItemCollection? ParentCollection(ModelItem item, string? propertyName)
     {
         if (item.Parent is not { } parent) return null;
-        foreach (string name in propertyName is null ? new[] { "Items", "Children" } : new[] { propertyName })
+        foreach (string name in propertyName is null ? new[] { "Items", "Children", "QuickAccessItems" } : new[] { propertyName })
         {
             var property = FindProperty(parent, name);
             if (property is { IsCollection: true } && !property.Collection.IsReadOnly
@@ -636,16 +636,11 @@ internal static partial class DesignModel
 
     private static ModelItem? CreateRawAny(ModelItem context, string typeName)
     {
-        try
-        {
-            return CreateRaw(context, typeName);
-        }
-        catch
-        {
-            // Not a RibbonKit type — fall through to the framework namespaces.
-        }
-
-        return CreateFramework(context, typeName, initializeDefaults: false);
+        // The SDK can return an unresolved model instead of throwing for a type
+        // in the wrong xmlns. Route native WPF items before creating that model.
+        return NewItemDefaults.IsFrameworkType(typeName)
+            ? CreateFramework(context, typeName, initializeDefaults: false)
+            : CreateRaw(context, typeName);
     }
 
     /// <summary>
@@ -727,6 +722,7 @@ internal static partial class DesignModel
     /// </summary>
     public static string? CaptionProperty(ModelItem item)
     {
+        if (TypeName(item) == "RibbonMessage") return "Title";
         if (IsScalarValue(FindProperty(item, "Header")))
         {
             return "Header";
@@ -813,6 +809,7 @@ internal static partial class DesignModel
     /// </summary>
     public static ModelItem? AddItem(ModelItem container, string typeName, string captionProperty, string label)
     {
+        if (FindProperty(container, "ItemsSource")?.IsSet == true) return null;
         using (ModelEditingScope scope = container.BeginEdit("Add " + label))
         {
             ModelItem? item = CreateAny(container, typeName);

@@ -26,6 +26,8 @@ namespace RibbonKit.Layout;
 /// shrinks — it never flips back and forth.
 /// </para>
 /// </remarks>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonQuickAccessPanel : Panel
 {
     private readonly List<UIElement> _overflow = new();

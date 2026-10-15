@@ -108,6 +108,8 @@ internal sealed class SimplifiedCustomizeEntry : INotifyPropertyChanged
 [TemplatePart(Name = "PART_ResetButton", Type = typeof(ButtonBase))]
 [TemplatePart(Name = "PART_ResetAllButton", Type = typeof(ButtonBase))]
 [TemplatePart(Name = "PART_ApplyButton", Type = typeof(ButtonBase))]
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public partial class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
 {
     /// <summary>Identifies the <see cref="Ribbon"/> dependency property.</summary>

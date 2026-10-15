@@ -54,6 +54,7 @@ internal sealed class Metadata : IProvideAttributeTable
             builder.AddCustomAttributes(
                 RibbonTabType,
                 new DefaultSizeAttribute(DefaultSizeMode.None),
+                new FeatureAttribute(typeof(RibbonTabsPlacementAdapter)),
                 new FeatureAttribute(typeof(RibbonTabDefaultInitializer)),
                 new FeatureAttribute(typeof(RibbonTabContextMenuProvider)));
 
@@ -66,12 +67,24 @@ internal sealed class Metadata : IProvideAttributeTable
 
             builder.AddCustomAttributes(
                 ApplicationMenuType,
+                new FeatureAttribute(typeof(RibbonFileContextMenuProvider)),
                 new FeatureAttribute(typeof(ApplicationMenuPanePreviewProvider)));
+
+            foreach (string type in new[]
+            {
+                "RibbonKit.Controls.BackstageTabItem", "RibbonKit.Controls.RibbonApplicationMenuItem",
+                "RibbonKit.Controls.RibbonApplicationMenuPaneItem", "RibbonKit.Controls.RibbonApplicationMenuButton",
+            }) builder.AddCustomAttributes(type, new FeatureAttribute(typeof(RibbonFileContextMenuProvider)));
+            builder.AddCustomAttributes("RibbonKit.Controls.RibbonMessageBar", new FeatureAttribute(typeof(RibbonMessageBarContextMenuProvider)));
 
             // Group: add command/option controls + reorder/delete the group.
             builder.AddCustomAttributes(
                 RibbonGroupType,
+                new DefaultSizeAttribute(DefaultSizeMode.None),
+                new FeatureAttribute(typeof(RibbonTabsPlacementAdapter)),
                 new FeatureAttribute(typeof(RibbonGroupContextMenuProvider)));
+
+            builder.AddCustomAttributes("RibbonKit.Controls.RibbonComboBox", new DefaultSizeAttribute(DefaultSizeMode.None));
 
             // Leaf controls: reorder/delete within their group. One provider serves every
             // registered leaf type (it acts on the current selection).
@@ -106,6 +119,7 @@ internal sealed class Metadata : IProvideAttributeTable
                 "RibbonKit.Controls.BackstageTabItem", "RibbonKit.Controls.RibbonMenuItem", "RibbonKit.Controls.RibbonGalleryItem",
                 "RibbonKit.Controls.RibbonApplicationMenuItem", "RibbonKit.Controls.RibbonApplicationMenuPaneItem",
                 "RibbonKit.Controls.RibbonApplicationMenuButton",
+                "RibbonKit.Controls.RibbonMessageBar", "RibbonKit.Controls.RibbonMessage",
             }) builder.AddCustomAttributes(type, itemInitializer);
 
             // Properties-window categories + descriptions for the main controls.

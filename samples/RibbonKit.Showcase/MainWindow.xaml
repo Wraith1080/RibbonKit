@@ -1621,12 +1621,12 @@
                 <!-- Document and the Print Preview surface share one cell, so the preview covers
                      the document but leaves the status bar alone. -->
                 <Grid>
-                <Border x:Name="DocumentSurface" Margin="8,8,8,0"
+                    <Border x:Name="DocumentSurface" Margin="8,8,8,0"
                         Background="White"
                         BorderBrush="#E0E0E0"
                         BorderThickness="1"
                         CornerRadius="8,8,0,0">
-                    <RichTextBox x:Name="DocumentEditor"
+                        <RichTextBox x:Name="DocumentEditor"
                                  Background="Transparent"
                                  BorderThickness="0"
                                  Padding="28,22"
@@ -1634,42 +1634,46 @@
                                  FontSize="13"
                                  VerticalScrollBarVisibility="Auto"
                                  IsInactiveSelectionHighlightEnabled="True">
-                        <FlowDocument PagePadding="0" TextAlignment="Left">
-                            <Paragraph FontSize="18" Foreground="#6B6B6B" Margin="0,0,0,12"><Run x:Name="DocumentTitle" /></Paragraph>
-                            <Paragraph FontSize="13" Foreground="#9A9A9A" Margin="0,0,0,6">Make the window narrower: groups collapse to flyout buttons by priority — Styles (10) → Editing (5) → Clipboard (default, resizes first) — Font never reduces (CanResize=False).</Paragraph>
-                            <Paragraph FontSize="13" Foreground="#9A9A9A" Margin="0,0,0,6">Click a collapsed group button to open its flyout with the full group content.</Paragraph>
-                            <Paragraph FontSize="13" Foreground="#9A9A9A" Margin="0,0,0,6">New: click the File button for the backstage view (Esc or the back arrow returns). Paste is a split button, Select is a dropdown, B/I/U are toggles, Font has combos and a ↘ launcher.</Paragraph>
-                            <Paragraph FontSize="13" Foreground="#9A9A9A" Margin="0,0,0,18">Hover any button for its ScreenTip. Hover the Styles gallery for LIVE PREVIEW of the sentence below — click to commit, move away to revert.</Paragraph>
-                            <Paragraph><Run x:Name="StylePreviewText" FontSize="14" Text="The quick brown fox jumps over the lazy dog." /></Paragraph>
-                        </FlowDocument>
-                    </RichTextBox>
-                </Border>
+                            <FlowDocument PagePadding="0" TextAlignment="Left">
+                                <Paragraph FontSize="18" Foreground="#6B6B6B" Margin="0,0,0,12">
+                                    <Run x:Name="DocumentTitle" />
+                                </Paragraph>
+                                <Paragraph FontSize="13" Foreground="#9A9A9A" Margin="0,0,0,6">Make the window narrower: groups collapse to flyout buttons by priority — Styles (10) → Editing (5) → Clipboard (default, resizes first) — Font never reduces (CanResize=False).</Paragraph>
+                                <Paragraph FontSize="13" Foreground="#9A9A9A" Margin="0,0,0,6">Click a collapsed group button to open its flyout with the full group content.</Paragraph>
+                                <Paragraph FontSize="13" Foreground="#9A9A9A" Margin="0,0,0,6">New: click the File button for the backstage view (Esc or the back arrow returns). Paste is a split button, Select is a dropdown, B/I/U are toggles, Font has combos and a ↘ launcher.</Paragraph>
+                                <Paragraph FontSize="13" Foreground="#9A9A9A" Margin="0,0,0,18">Hover any button for its ScreenTip. Hover the Styles gallery for LIVE PREVIEW of the sentence below — click to commit, move away to revert.</Paragraph>
+                                <Paragraph>
+                                    <Run x:Name="StylePreviewText" FontSize="14" Text="The quick brown fox jumps over the lazy dog." />
+                                </Paragraph>
+                            </FlowDocument>
+                        </RichTextBox>
+                    </Border>
 
-                <!-- Print Preview surface. Shown only while the Print Preview MODAL TAB is active
+                    <!-- Print Preview surface. Shown only while the Print Preview MODAL TAB is active
                      (the ribbon's ModalEntered / ModalExited handlers toggle it), so the demo shows
                      a real mode change rather than just another tab. -->
-                <Border x:Name="PrintPreviewSurface"
+                    <Border x:Name="PrintPreviewSurface"
                         Margin="8,8,8,0"
                         Background="{DynamicResource Showcase.Brushes.PrintPreview.Canvas}"
                         Visibility="Collapsed">
-                    <Border Width="420"
+                        <Border Width="420"
                             Margin="0,24"
                             VerticalAlignment="Stretch"
                             Background="White"
                             BorderBrush="{DynamicResource Showcase.Brushes.PrintPreview.PageBorder}"
                             BorderThickness="1">
-                        <StackPanel Margin="36,44" VerticalAlignment="Top">
-                            <TextBlock Text="RibbonKit"
+                            <StackPanel Margin="36,44" VerticalAlignment="Top">
+                                <TextBlock Text="RibbonKit"
                                        FontSize="22"
                                        Foreground="{DynamicResource Showcase.Brushes.PrintPreview.TitleForeground}"
                                        Margin="0,0,0,14" />
-                            <TextBlock TextWrapping="Wrap"
+                                <TextBlock TextWrapping="Wrap"
                                        FontSize="12"
                                        Foreground="{DynamicResource Showcase.Brushes.PrintPreview.BodyForeground}"
                                        Text="Page 1 of 1 — this is a modal tab. Every other tab and the File button are hidden, the ribbon cannot be minimized (try double-clicking a tab header, or Ctrl+F1), and the backstage is blocked. The Quick Access Toolbar stays, exactly like Word's Print Preview." />
-                        </StackPanel>
+                            </StackPanel>
+                        </Border>
                     </Border>
-                </Border>
                 </Grid>
             </DockPanel>
         </Grid>

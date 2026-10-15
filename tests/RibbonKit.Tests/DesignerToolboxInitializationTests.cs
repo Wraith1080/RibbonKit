@@ -47,21 +47,35 @@ public sealed class DesignerToolboxInitializationTests
         // Placement adapters describe a parent's child layout. Register this on
         // Ribbon, where tabs are inserted, rather than on each tab's group area.
         var placementType = interaction.GetType("Microsoft.VisualStudio.DesignTools.Extensibility.Interaction.PlacementAdapter", throwOnError: true)!;
-        var ribbonPlacement = Activator.CreateInstance(Assert.Single(Providers("Ribbon", placementType)))!;
-        Assert.Equal("RibbonTabsPlacementAdapter", ribbonPlacement.GetType().Name);
-        Assert.Empty(Providers("RibbonTab", placementType));
         var intentType = interaction.GetType("Microsoft.VisualStudio.DesignTools.Extensibility.Interaction.PlacementIntent", throwOnError: true)!;
         var positionsType = interaction.GetType("Microsoft.VisualStudio.DesignTools.Extensibility.Interaction.RelativePositions", throwOnError: true)!;
         var canSet = placementType.GetMethod("CanSetPosition")!;
-        foreach (string intent in new[] { "Move", "Size" })
-        foreach (string edge in new[] { "LeftSide", "RightSide", "TopSide", "BottomSide" })
+        foreach (string parent in new[] { "Ribbon", "RibbonTab", "RibbonGroup" })
         {
-            object position = positionsType.GetProperty(edge)!.GetValue(null)!;
-            Assert.False((bool)canSet.Invoke(ribbonPlacement, new[] { Enum.Parse(intentType, intent), position })!);
+            var placement = Activator.CreateInstance(Assert.Single(Providers(parent, placementType)))!;
+            Assert.Equal("RibbonTabsPlacementAdapter", placement.GetType().Name);
+            foreach (string intent in new[] { "Move", "Size" })
+            foreach (string edge in new[] { "LeftSide", "RightSide", "TopSide", "BottomSide" })
+            {
+                object position = positionsType.GetProperty(edge)!.GetValue(null)!;
+                Assert.False((bool)canSet.Invoke(placement, new[] { Enum.Parse(intentType, intent), position })!);
+            }
         }
-        var tabSize = Assert.Single(Attributes("RibbonTab"),
-            attribute => attribute.GetType().FullName == "Microsoft.VisualStudio.DesignTools.Extensibility.DefaultSizeAttribute");
-        Assert.Equal("None", tabSize.GetType().GetProperty("Mode")!.GetValue(tabSize)!.ToString());
+        foreach (string type in new[] { "RibbonTab", "RibbonGroup", "RibbonComboBox" })
+        {
+            var size = Assert.Single(Attributes(type),
+                attribute => attribute.GetType().FullName == "Microsoft.VisualStudio.DesignTools.Extensibility.DefaultSizeAttribute");
+            Assert.Equal("None", size.GetType().GetProperty("Mode")!.GetValue(size)!.ToString());
+        }
+
+        var contextType = interaction.GetType("Microsoft.VisualStudio.DesignTools.Extensibility.Interaction.ContextMenuProvider", throwOnError: true)!;
+        var ribbonContext = Activator.CreateInstance(Assert.Single(Providers("Ribbon", contextType)))!;
+        var menuItems = ((IEnumerable)contextType.GetProperty("Items")!.GetValue(ribbonContext)!).Cast<object>().ToArray();
+        var captions = menuItems.Select(item => item.GetType().GetProperty("DisplayName")!.GetValue(item) as string).ToArray();
+        Assert.Contains("Preview Ribbon Tab", captions);
+        Assert.Contains("Preview File Page", captions);
+        Assert.Contains("Messages", captions);
+        Assert.Contains("Add Quick Access Command", captions);
 
         object Initializer(string type)
         {

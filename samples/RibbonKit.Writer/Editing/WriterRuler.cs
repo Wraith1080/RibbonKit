@@ -29,6 +29,8 @@ public sealed class WriterRulerPageSettingsEventArgs : EventArgs
 /// margins are previewed until release; paragraph marker changes are delegated to the editor's
 /// native undoable formatting path.
 /// </remarks>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public sealed class WriterRuler : FrameworkElement, IDisposable
 {
     private const double RulerHeight = 31d;

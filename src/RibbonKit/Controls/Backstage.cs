@@ -43,6 +43,8 @@ public enum BackstageItemPlacement
 /// </summary>
 [TemplatePart(Name = BackButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = Classic2007AeroJoinBevelPartName, Type = typeof(Border))]
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class Backstage : TabControl
 {
     private const string BackButtonPartName = "PART_BackButton";
@@ -367,6 +369,8 @@ public class Backstage : TabControl
 /// …): clicking raises <see cref="Click"/> / runs <see cref="Command"/> and it never becomes the
 /// selected page. <see cref="Placement"/> pins it to the top (default) or bottom of the column.
 /// </summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class BackstageTabItem : TabItem
 {
     /// <summary>Identifies the <see cref="Icon"/> dependency property.</summary>
@@ -532,6 +536,8 @@ public class BackstageTabItem : TabItem
 /// the <see cref="Backstage"/> template so all items stay in the one <see cref="TabControl"/>
 /// (selection keeps working); only their vertical arrangement differs.
 /// </summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class BackstageNavPanel : Panel
 {
     /// <summary>Identifies the <see cref="SeparatorBrush"/> dependency property.</summary>

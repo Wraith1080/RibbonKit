@@ -35,6 +35,8 @@ namespace RibbonKit.Controls;
 [TemplatePart(Name = ApplicationMenuLayerPartName, Type = typeof(Canvas))]
 [TemplatePart(Name = ApplicationMenuPresenterPartName, Type = typeof(ContentPresenter))]
 [TemplatePart(Name = TabHeaderHostPartName, Type = typeof(FrameworkElement))]
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonTabControl : TabControl
 {
     internal const string ApplicationMenuLayerPartName = "ApplicationMenuLayer";

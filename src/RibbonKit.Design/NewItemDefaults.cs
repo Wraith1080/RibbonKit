@@ -6,6 +6,8 @@ namespace RibbonKit.Design;
 // collection state; no runtime controls or designer SDK objects enter this policy.
 internal static class NewItemDefaults
 {
+    internal static bool IsFrameworkType(string type) => type is "ComboBoxItem" or "StackPanel" or "TextBlock" or "Separator";
+
     internal static bool IsSimplifiedCommand(string type) => type is
         "RibbonButton" or "RibbonToggleButton" or "RibbonSplitButton" or "RibbonDropDownButton"
         or "RibbonComboBox" or "RibbonGallery" or "InRibbonGallery";
@@ -38,12 +40,14 @@ internal static class NewItemDefaults
             _ => null,
         };
         if (caption is not null) Set("Header", caption);
+        if (type == "RibbonComboBox") Set("InputWidth", "130");
         switch (type)
         {
             case "ComboBoxItem": case "RibbonGalleryItem": Set("Content", "Item"); break;
             case "RibbonApplicationMenuPaneItem": Set("Content", "Pane Item"); break;
             case "RibbonApplicationMenuButton": Set("Content", "Footer Button"); break;
             case "TextBlock": Set("Text", "Text"); break;
+            case "RibbonMessage": Set("Title", "Notification"); Set("Message", "Message text"); break;
         }
 
         switch (type)
@@ -52,6 +56,7 @@ internal static class NewItemDefaults
             case "RibbonTab": Seed("Groups", "RibbonGroup", "Header", ribbonStarterTab ? "Group" : "New Group"); break;
             case "Backstage": Seed("Items", "BackstageTabItem", "Header", "Info"); break;
             case "RibbonApplicationMenu": Seed("Items", "RibbonApplicationMenuItem", "Header", "New Command"); break;
+            case "RibbonMessageBar": Seed("Items", "RibbonMessage", "Title", "Notification"); break;
             case "RibbonComboBox": Seed("Items", "ComboBoxItem", "Content", "Item"); break;
             case "RibbonGallery": case "InRibbonGallery": Seed("Items", "RibbonGalleryItem", "Content", "Item"); break;
             case "RibbonDropDownButton": case "RibbonSplitButton": Seed("Items", "RibbonMenuItem", "Header", "Menu Item"); break;

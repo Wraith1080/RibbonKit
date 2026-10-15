@@ -20,6 +20,8 @@ namespace RibbonKit.Controls;
 [TemplatePart(Name = MinimizeButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = MaximizeRestoreButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = CloseButtonPartName, Type = typeof(ButtonBase))]
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class MdiChild : ContentControl
 {
     private const string DragThumbPartName = "PART_DragThumb";

@@ -11,6 +11,8 @@ namespace RibbonKit.Layout;
 /// filling the panel; Minimized stacked as caption strips along the bottom edge,
 /// in item order.
 /// </summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class MdiCanvasPanel : Panel
 {
     // Gap between minimized caption strips and from the panel edges.

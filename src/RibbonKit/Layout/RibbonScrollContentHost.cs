@@ -30,6 +30,8 @@ namespace RibbonKit.Layout;
 /// <see cref="TranslateTransform"/> (no re-layout).
 /// </para>
 /// </remarks>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonScrollContentHost : Decorator
 {
     /// <summary>Identifies the <see cref="Offset"/> dependency property.</summary>

@@ -30,6 +30,7 @@ internal static class SimplifiedDesignerDefaultsPortabilityChecks
                 ThemeManager.Apply(application, theme);
                 string commands = string.Join("", types.Select(type =>
                     $"<rk:{type} Header=\"{type}\" Icon=\"{{StaticResource Glyph}}\" rk:Ribbon.CommandId=\"{type}\" "
+                    + (type == "RibbonComboBox" ? "InputWidth=\"130\" " : "")
                     + $"rk:Ribbon.SimplifiedPlacement=\"Inline\" rk:Ribbon.SimplifiedSize=\"{size}\">"
                     + StarterChild(type) + $"</rk:{type}>"));
                 string xaml = "<rk:Ribbon xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" "
@@ -54,6 +55,11 @@ internal static class SimplifiedDesignerDefaultsPortabilityChecks
                     {
                         Assert.Equal(RibbonSimplifiedPlacement.Inline, source.ReadLocalValue(Ribbon.SimplifiedPlacementProperty));
                         Assert.Equal(size, source.ReadLocalValue(Ribbon.SimplifiedSizeProperty));
+                        if (source is RibbonComboBox combo)
+                        {
+                            Assert.Equal(130d, combo.InputWidth);
+                            Assert.Equal(DependencyProperty.UnsetValue, combo.ReadLocalValue(FrameworkElement.WidthProperty));
+                        }
                         var copy = Assert.IsAssignableFrom<Control>(toolbar.Items.OfType<FrameworkElement>()
                             .Single(item => ReferenceEquals(Ribbon.GetQuickAccessSource(item), source)));
                         var medium = Assert.IsAssignableFrom<FrameworkElement>(copy.Template.FindName("MediumLayout", copy));
@@ -95,6 +101,8 @@ internal static class SimplifiedDesignerDefaultsPortabilityChecks
     {
         var ribbon = Assert.IsType<Ribbon>(XamlReader.Parse("""
             <rk:Ribbon xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:rk="urn:ribbonkit">
+              <rk:Ribbon.MessageBar><rk:RibbonMessageBar><rk:RibbonMessage Title="Notification" Message="Message text" /></rk:RibbonMessageBar></rk:Ribbon.MessageBar>
+              <rk:Ribbon.QuickAccessItems><rk:RibbonButton Header="Button" Size="Small" /></rk:Ribbon.QuickAccessItems>
               <rk:Ribbon.Backstage><rk:Backstage><rk:BackstageTabItem Header="Info" /></rk:Backstage></rk:Ribbon.Backstage>
               <rk:Ribbon.ApplicationMenu><rk:RibbonApplicationMenu>
                 <rk:RibbonApplicationMenuItem Header="New Command" />
@@ -108,6 +116,9 @@ internal static class SimplifiedDesignerDefaultsPortabilityChecks
         Assert.Equal("Home", tab.Header);
         var group = Assert.Single(tab.Groups);
         Assert.Equal("Group", group.Header);
+        Assert.Equal(DependencyProperty.UnsetValue, group.ReadLocalValue(FrameworkElement.WidthProperty));
+        Assert.Equal("Message text", Assert.IsType<RibbonMessage>(Assert.Single(ribbon.MessageBar!.Items.Cast<object>())).Message);
+        Assert.Equal("Button", Assert.IsType<RibbonButton>(Assert.Single(ribbon.QuickAccessItems)).Header);
         var backstage = Assert.IsType<Backstage>(ribbon.Backstage);
         Assert.Equal("Info", Assert.IsType<BackstageTabItem>(Assert.Single(backstage.Items.Cast<object>())).Header);
         var menu = Assert.IsType<RibbonApplicationMenu>(ribbon.ApplicationMenu);

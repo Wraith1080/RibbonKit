@@ -431,6 +431,22 @@ internal sealed class RibbonEditorWindow : Window
         rootItem.IsExpanded = true;
         _tree.Items.Add(rootItem);
 
+        var messageBar = DesignModel.FindProperty(_ribbon, "MessageBar")?.Value;
+        if (messageBar is not null && SafeType(messageBar) == "RibbonMessageBar")
+        {
+            var barNode = MakeTreeItem(new NodeInfo(messageBar, NodeKind.Control, null, "MessageBar"), "Messages");
+            barNode.IsExpanded = true;
+            rootItem.Items.Add(barNode);
+            foreach (var message in SafeChildren(messageBar, "Items")) AddNode(barNode, message, "Items");
+        }
+        var quickAccess = SafeChildren(_ribbon, "QuickAccessItems");
+        if (quickAccess.Count > 0)
+        {
+            var qatNode = new TreeViewItem { Header = "Quick Access Toolbar", IsExpanded = true };
+            rootItem.Items.Add(qatNode);
+            foreach (var command in quickAccess) AddNode(qatNode, command, "QuickAccessItems");
+        }
+
         // Backstage (the File menu) is a scalar property of the ribbon, not part of Tabs — surface it
         // as its own node so its nav items can be edited. ParentCollection stays null (it's not in a
         // collection, so Move/Delete don't apply).
@@ -996,6 +1012,8 @@ internal sealed class RibbonEditorWindow : Window
         "RibbonDropDownButton" => "Drop-Down",
         "RibbonComboBox" => "Combo Box",
         "RibbonTextBox" => "Text Box",
+        "RibbonMessageBar" => "Messages",
+        "RibbonMessage" => "Message",
         "RibbonScrollBar" => "Scroll Bar",
         "InRibbonGallery" => "Gallery (in-ribbon)",
         "RibbonGallery" => "Gallery",
@@ -1216,6 +1234,15 @@ internal sealed class RibbonEditorWindow : Window
         new PropSpec("ViewportSize", "Viewport size", EditorKind.Text),
     };
 
+    private static readonly PropSpec[] MessageSpecs =
+    {
+        new PropSpec("Title", "Title", EditorKind.Text),
+        new PropSpec("Message", "Message", EditorKind.Text),
+        new PropSpec("ActionContent", "Action label", EditorKind.Text),
+        new PropSpec("IsDismissible", "Dismissible", EditorKind.Bool),
+        new PropSpec("IsOpen", "Open", EditorKind.Bool),
+    };
+
     private static readonly PropSpec[] ApplicationMenuSpecs =
     {
         new PropSpec("DefaultHeader", "Default pane name", EditorKind.Text),
@@ -1288,6 +1315,7 @@ internal sealed class RibbonEditorWindow : Window
         "RibbonComboBox" => ComboSpecs,
         "RibbonTextBox" => TextBoxSpecs,
         "RibbonScrollBar" => ScrollBarSpecs,
+        "RibbonMessage" => MessageSpecs,
         "RibbonCheckBox" => CheckBoxSpecs,
         "RibbonRadioButton" => RadioButtonSpecs,
         "RibbonSplitButton" => SplitButtonSpecs,
@@ -1783,6 +1811,7 @@ internal sealed class RibbonEditorWindow : Window
     /// </summary>
     private (ModelItem Parent, string Collection)? ResolveChildTarget(NodeInfo? node)
     {
+        if (node?.ParentCollection == "QuickAccessItems" || node?.Item.Parent is { } owner && SafeType(owner) == "RibbonMessageBar") return null;
         if (node != null && FindApplicationMenu(node) != null)
         {
             return null; // application-menu slots use their semantic Add actions below
@@ -1823,6 +1852,8 @@ internal sealed class RibbonEditorWindow : Window
                 return new ItemTarget { Container = container, TypeName = "RibbonGalleryItem", CaptionProperty = "Content", Label = "Item" };
             case "Backstage":
                 return new ItemTarget { Container = container, TypeName = "BackstageTabItem", CaptionProperty = "Header", Label = "Page" };
+            case "RibbonMessageBar":
+                return new ItemTarget { Container = container, TypeName = "RibbonMessage", CaptionProperty = "Title", Label = "Notification" };
             // Split and drop-down buttons are ItemsControls whose flyout entries are RibbonMenuItems in
             // Items — same shape as the combos/galleries above (RibbonSplitButton derives from
             // RibbonDropDownButton). This lets the tree list the menu entries and the "Add Item" button
@@ -1990,6 +2021,23 @@ internal sealed class RibbonEditorWindow : Window
             {
                 _addMenu.Items.Add(MakeMenuItem("Application Menu", OnAddApplicationMenu));
             }
+            if (DesignModel.CanAddSingleton(_ribbon, "MessageBar"))
+                _addMenu.Items.Add(MakeMenuItem("Message Bar", () =>
+                {
+                    var bar = DesignModel.AddSingleton(_ribbon, "MessageBar", "RibbonMessageBar");
+                    if (bar is not null) RebuildTree(bar);
+                }));
+            var qat = new MenuItem { Header = "Quick Access Command" };
+            foreach (string type in new[] { "RibbonButton", "RibbonToggleButton", "RibbonSplitButton", "RibbonDropDownButton", "RibbonComboBox", "RibbonGallery", "InRibbonGallery" })
+            {
+                string commandType = type;
+                qat.Items.Add(MakeMenuItem(FriendlyType(type), () =>
+                {
+                    var command = DesignModel.AddControl(_ribbon, "QuickAccessItems", commandType, size: "Small");
+                    if (command is not null) RebuildTree(command);
+                }));
+            }
+            _addMenu.Items.Add(qat);
         }
 
         if (ResolveTab(node) != null)

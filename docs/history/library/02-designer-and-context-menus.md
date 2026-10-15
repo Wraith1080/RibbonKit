@@ -276,7 +276,48 @@ placement. User testing confirmed group/no Grid while fixed dimensions and cente
 alignment still hid the tab header. Keep those phases separate: Ribbon's
 `RibbonTabsPlacementAdapter` declines free position/size writes for its
 collection-owned children, and RibbonTab's DefaultSizeMode.None suppresses default
-sizing. Register the placement adapter on the Ribbon parent, not on RibbonTab
-(which would govern its group area). Read selection bounds through ModelItem.View;
+sizing. Register the placement adapter on the parent that owns the affected
+collection: Ribbon governs tabs, RibbonTab governs groups and RibbonGroup governs
+commands. Read selection bounds through ModelItem.View;
 do not clear authored geometry or attach a delayed cleanup to every tab. SDK
 metadata/edge-permission regression evidence is distinct from live drop acceptance.
+
+#### Owner authoring and native namespace resolution — 2026-10-15
+
+Live review narrowed the direct-drop list to useful visible destinations. Owner
+context/editor actions handle File children, group separators, messages and QAT
+commands; host XAML handles options/customization pages. Generated panels/hosts
+remain template-owned. Standard ToolboxItem/DesignTimeVisible exclusions on runtime
+and Writer visual types supplement SDK metadata for reflected project discovery;
+package manifest validation cannot establish whether a native host honors them.
+
+Group and combo drops need both collection-owned placement and no default outer
+size. New combo InputWidth is guarded independently so an existing/bound input
+width survives. Native ComboBoxItem creation had silently failed because the SDK
+can return an unresolved RibbonKit-namespace model without throwing. Select the
+known WPF native namespace before creation; exception fallback is insufficient.
+Do not relax IsSet or ItemsSource preservation to compensate for an unresolved type.
+
+Message singleton creation, QAT children and the editor tree use existing Model
+API edit scopes. Preview context submenus reuse primitive tab/File coordinators;
+they do not author selection/open-state changes or instantiate replacement pages.
+Current checks and remaining native acceptance are recorded in the
+[T2c plan section](../../17-TOOLBOX-ITEM-DEFINITION-PLAN.md#t2c--owner-authoring-and-live-review-corrections-2026-10-15).
+
+#### File-page preview realization — 2026-10-15
+
+A page preview requested before its File surface had a live visible designer node
+raised XDG0005, although the surface itself rendered. First-chance capture in
+WpfSurface located the null dereference in TapTypeUtilities.GetTypeConverter /
+TapInstanceManager.TypeConvertInstance. Reapplying the same page after realization
+worked; a regular WPF design-mode host did not reproduce the isolated failure.
+
+Keep the primitive preview coordinators. FilePagePreviewRequest waits for the
+SDK ViewService.LayoutUpdated event and ViewItem.IsVisible before invalidating
+Backstage.SelectedIndex or ApplicationMenu.DesignPreviewActiveIndex. Do not
+invalidate a hidden alternate surface just to reset its session choice. Switching
+or closing cancels the pending subscription; completed requests unsubscribe before
+applying, so nested layout cannot apply them twice. This uses no polling, delay,
+new runtime API or serialized preview value. The active plan owns the exact
+native and automated verification scope; retained traces and checks are under
+TestResults/designer-file-preview-20261015.

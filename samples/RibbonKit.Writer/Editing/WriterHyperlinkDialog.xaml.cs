@@ -5,6 +5,8 @@ using System.Windows.Controls;
 namespace RibbonKit.Writer.Editing;
 
 /// <summary>Accessible, transactional editor for a Writer hyperlink address and label.</summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public partial class WriterHyperlinkDialog : Window
 {
     /// <summary>Creates a hyperlink dialog with optional existing values.</summary>

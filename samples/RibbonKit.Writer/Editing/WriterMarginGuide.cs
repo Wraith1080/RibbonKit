@@ -14,6 +14,8 @@ namespace RibbonKit.Writer.Editing;
 /// duplicated in a second layout model. A preview page setting can be supplied during ruler drag
 /// without changing the document or the editor's page padding.
 /// </remarks>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public sealed class WriterMarginGuide : FrameworkElement, IDisposable
 {
     private const double NormalGuideOpacity = 0.58;

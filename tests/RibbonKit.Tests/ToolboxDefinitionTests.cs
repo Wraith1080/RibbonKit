@@ -1,4 +1,6 @@
 using System.IO;
+using System.ComponentModel;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Xml.Linq;
@@ -20,7 +22,7 @@ public sealed class ToolboxDefinitionTests
         Assert.Equal("RibbonKit", (string?)items.Attribute("BlendCategory"));
         Assert.Equal("WPF", (string?)items.Attribute("UIFramework"));
         string[] names = ManifestTypes();
-        Assert.Equal(31, names.Length);
+        Assert.Equal(15, names.Length);
         Assert.Equal(names.Length, names.Distinct(StringComparer.Ordinal).Count());
 
         string plan = File.ReadAllText(Path.Combine(Root(), "docs", "17-TOOLBOX-ITEM-DEFINITION-PLAN.md"));
@@ -46,6 +48,12 @@ public sealed class ToolboxDefinitionTests
         Assert.Equal(included.Length, included.Distinct(StringComparer.Ordinal).Count());
         Assert.Equal(excluded.Length, excluded.Distinct(StringComparer.Ordinal).Count());
         Assert.Empty(included.Intersect(excluded, StringComparer.Ordinal));
+        foreach (string name in excluded)
+        {
+            var type = typeof(Ribbon).Assembly.GetType(name, throwOnError: true)!;
+            Assert.Equal(ToolboxItemAttribute.None, type.GetCustomAttribute<ToolboxItemAttribute>());
+            Assert.Equal(DesignTimeVisibleAttribute.No, type.GetCustomAttribute<DesignTimeVisibleAttribute>());
+        }
         var publicVisuals = typeof(Ribbon).Assembly.GetExportedTypes()
             .Where(type => typeof(FrameworkElement).IsAssignableFrom(type)).Select(type => type.FullName!);
         Assert.Equal(publicVisuals.OrderBy(name => name), included.Concat(excluded).OrderBy(name => name));

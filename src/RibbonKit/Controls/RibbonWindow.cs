@@ -50,6 +50,8 @@ public enum RibbonWindowFrameAppearance
 [TemplatePart(Name = WindowIconPartName, Type = typeof(Image))]
 [TemplatePart(Name = MaximizeButtonPartName, Type = typeof(FrameworkElement))]
 [TemplatePart(Name = RestoreButtonPartName, Type = typeof(FrameworkElement))]
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonWindow : Window
 {
     private const string WindowRootPartName = "PART_WindowRoot";

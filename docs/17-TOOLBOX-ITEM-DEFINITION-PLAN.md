@@ -2,8 +2,10 @@
 
 > T1 matrix approved and T2 authorized 2026-10-15. T2a definitions/discovery and
 > T2b existing creation paths are implemented on `codex/api-and-component-updates`.
-> Automated evidence and remaining live designer checks are below. T2c has not
-> started. Runtime public APIs and unconfigured runtime defaults are unchanged.
+> The subsequent live-authoring corrections and T2c owner actions are implemented;
+> automated evidence and remaining live designer checks are below. The current
+> Toolbox matrix has 15 direct-drop entries. Runtime public APIs and unconfigured
+> runtime defaults are unchanged.
 
 ## Goal
 
@@ -26,7 +28,9 @@ the accepted S6 Inline/label defaults and existing authored settings.
   net472 DesignTools assembly beside each runtime target in its `Design` folder.
 - Project-reference Toolbox discovery reflects public controls and does not use
   that package allowlist. `ToolboxMetadata.cs` supplies matching visibility and
-  category intent by string type name. Native host acceptance is still required;
+  category intent by string type name. Excluded runtime types also carry standard
+  `ToolboxItem(false)` / `DesignTimeVisible(false)` discovery hints; Writer marks its
+  sample-only visual types likewise. Native host acceptance is still required;
   the manifest alone does not prove the Showcase Toolbox was filtered or updated.
 - `Metadata.cs` registers designer providers by string type name. Initializers
   and Model API creation paths provide defaults; the manifest does not write
@@ -44,9 +48,10 @@ alone does not make a control useful as a Toolbox item.
 At the T1 snapshot (`4d5c094`), the manifest had 18 unique entries. Source inspection
 covers all 45 public FrameworkElement-derived types in `Controls`/`Layout`, including windows and
 non-rendering merge sources, plus the nonvisual authoring objects below. Partial
-class declarations count once. The approved package surface is 31 entries:
-retain 18 and add 13. These are authoring destinations, not claims that
-Visual Studio already routes a Toolbox drop into each property correctly.
+class declarations count once. T1 initially approved 31 package entries: retain 18
+and add 13. The later live-authoring review reduced the current list to 15 direct
+drops, with owner actions or host XAML for the other types. These destinations do
+not establish that Visual Studio routes every drop correctly.
 
 The source of truth for this review is the [manifest](../src/RibbonKit/tools/VisualStudioToolsManifest.xml),
 [metadata](../src/RibbonKit.Design/Metadata.cs),
@@ -63,8 +68,10 @@ their existing framework/editor routes; do not relist them as RibbonKit types.
 All types below are in `RibbonKit.Controls`. **Keep** identifies the original
 manifest entries; **Add** identifies the approved T2a additions. A group panel
 below means an application-authored panel inside a group, not a generated RibbonKit host.
-The creation-support column records the T1 review; delivered changes are recorded
-in the T2a/T2b sections below.
+The current decisions incorporate the 2026-10-15 live authoring review: keep useful
+direct drops, use owner context/editor actions for semantic children and popups,
+and author options/customization pages in their host XAML. The creation-support
+column records the original T1 findings; delivery and current evidence are below.
 
 | Type | Decision | Valid owner/location | Existing creation support and gap |
 | --- | --- | --- | --- |
@@ -80,24 +87,24 @@ in the T2a/T2b sections below.
 | `RibbonComboBox` | Keep | Group `Items` or group panel | Supported-command initializer and editor Add Item; absent from group context Add/leaf registration |
 | `RibbonTextBox` | Keep | Group `Items` or group panel | Context/editor Add and leaf verbs; native full-group presentation |
 | `RibbonScrollBar` | Keep | Group panel or application content | Generic XAML/Properties; absent from editor/context Add |
-| `RibbonMenuItem` | Keep | Split/dropdown `Items` | Editor Add Item; do not treat as an independent Simplified command |
+| `RibbonMenuItem` | Context | Split/dropdown `Items` | Editor Add Item; do not treat as an independent Simplified command |
 | `RibbonGallery` | Keep | Group `Items` or group panel | Supported-command initializer and editor Add Item; group context support incomplete |
 | `InRibbonGallery` | Keep | Group `Items` or group panel | Same defaults; preserve native gallery/selection behavior |
-| `RibbonGalleryItem` | Keep | Either gallery's `Items` | Editor Add Item and caption/content editing; no independent command defaults |
-| `Backstage` | Keep | Singleton `Ribbon.Backstage` | Ribbon context Add Backstage seeds a page; no direct-drop initializer |
-| `BackstageTabItem` | Keep | `Backstage.Items` | Backstage context Add Nav Item/Button and editor Add Item |
-| `RibbonGroupSeparator` | Add | Group `Items` or horizontal command cluster | Editor Add exists; no caption, command ID, KeyTip or Simplified default |
-| `RibbonApplicationMenu` | Add | Singleton `Ribbon.ApplicationMenu` | Root context/editor Add and pane preview exist; currently creates an empty menu |
-| `RibbonApplicationMenuItem` | Add | Application menu `Items` | Editor semantic Add Command; Content distinguishes command from pane entry |
-| `RibbonApplicationMenuSeparator` | Add | Application menu `Items` | Editor semantic Add Separator; retain non-command semantics |
-| `RibbonApplicationMenuPaneItem` | Add | Panel in menu `DefaultContent` or menu-item `Content` | Editor semantic Add Pane Item creates a managed StackPanel; preserves custom content |
-| `RibbonApplicationMenuButton` | Add | Panel in menu `FooterContent` | Editor semantic Add Footer Button; not a navigation item |
-| `RibbonOptionsPage` | Add | `RibbonOptionsDialog.Pages` | Generic XAML/Properties; its template is a navigation header, not a standalone content presenter |
-| `RibbonCustomizePage` | Add | Options-page `Content`, Backstage page or host content | Authored reusable editor; host explicitly assigns `Ribbon` and factory reset baseline |
-| `RibbonSimplifiedCustomizePage` | Add | Same page/content locations | Host assigns `Ribbon`/baseline; remains authorable while capability or customization is disabled |
-| `RibbonQuickAccessPage` | Add | Same page/content locations | Host explicitly assigns `Ribbon`; independent QAT policy applies |
-| `RibbonMessageBar` | Add | `Ribbon.MessageBar` or documented standalone host panel | Runtime authoring exists; no dedicated designer Add/initializer |
-| `RibbonMessage` | Add | Message bar `Items` | Runtime authoring exists; needs a parent-specific Add path and useful new-item text |
+| `RibbonGalleryItem` | Context | Either gallery's `Items` | Editor Add Item and caption/content editing; no independent command defaults |
+| `Backstage` | Context | Singleton `Ribbon.Backstage` | Ribbon context Add Backstage seeds a page; no direct-drop initializer |
+| `BackstageTabItem` | Context | `Backstage.Items` | Backstage context Add Nav Item/Button and editor Add Item |
+| `RibbonGroupSeparator` | Context | Group `Items` or horizontal command cluster | Editor Add exists; no caption, command ID, KeyTip or Simplified default |
+| `RibbonApplicationMenu` | Context | Singleton `Ribbon.ApplicationMenu` | Root context/editor Add and pane preview exist; currently creates an empty menu |
+| `RibbonApplicationMenuItem` | Context | Application menu `Items` | Editor semantic Add Command; Content distinguishes command from pane entry |
+| `RibbonApplicationMenuSeparator` | Context | Application menu `Items` | Editor semantic Add Separator; retain non-command semantics |
+| `RibbonApplicationMenuPaneItem` | Context | Panel in menu `DefaultContent` or menu-item `Content` | Editor semantic Add Pane Item creates a managed StackPanel; preserves custom content |
+| `RibbonApplicationMenuButton` | Context | Panel in menu `FooterContent` | Editor semantic Add Footer Button; not a navigation item |
+| `RibbonOptionsPage` | XAML | `RibbonOptionsDialog.Pages` | Generic XAML/Properties; its template is a navigation header, not a standalone content presenter |
+| `RibbonCustomizePage` | XAML | Options-page `Content`, Backstage page or host content | Authored reusable editor; host explicitly assigns `Ribbon` and factory reset baseline |
+| `RibbonSimplifiedCustomizePage` | XAML | Same page/content locations | Host assigns `Ribbon`/baseline; remains authorable while capability or customization is disabled |
+| `RibbonQuickAccessPage` | XAML | Same page/content locations | Host explicitly assigns `Ribbon`; independent QAT policy applies |
+| `RibbonMessageBar` | Context | `Ribbon.MessageBar` or documented standalone host panel | Runtime authoring exists; no dedicated designer Add/initializer |
+| `RibbonMessage` | Context | Message bar `Items` | Runtime authoring exists; needs a parent-specific Add path and useful new-item text |
 | `MdiContainer` | Add | Application content panel | Public documented preview host; host supplies documents and optional `Ribbon` binding, no sample documents injected |
 
 ### Proposed exclusions and alternate authoring routes
@@ -195,8 +202,10 @@ Recommended discovery contract:
    designer metadata, using the SDK's Toolbox visibility support. Verify its
    effect in a fresh VS session separately. Do not claim the manifest filters
    project references, or change public visibility to force filtering. If the
-   host ignores metadata for discovered helpers, document the actual limit before
-   proposing any runtime attributes or extra integration.
+   host ignores metadata for discovered helpers, record the actual limit. The
+   follow-up live review authorized standard runtime discovery hints on exclusions
+   and equivalent sample-only Writer hints; these are additional intent, not proof
+   of native project-reference filtering.
 3. Keep **RibbonKit** as the VS/Blend category and normal CLR display names. Group
    the manifest for readability; do not promise its order becomes Toolbox order.
    Retain existing/default icons. Custom Toolbox artwork and renamed subcategories
@@ -213,13 +222,14 @@ Recommended discovery contract:
 | --- | --- | --- |
 | T2a — definitions/discovery | Proposed 31-entry manifest, matching string metadata visibility intent, setup-guide delivery/discovery update | XML/type/duplicate/exclusion checks; normal Release designer/runtime build; normal pack and net8/net9 Design paths; independent package consumer; fresh package and project-reference Toolbox inventories separately |
 | T2b — existing creation paths | Fill group context/leaf/scrollbar gaps; minimal safe initializers and shared caption/child defaults; reuse existing application-menu factories | Focused default/ownership checks and existing independent SimplifiedDesignerDefaults scope only where affected; Debug review output; live new drop/Add, explicit values/bindings/empty values, save/reload and one-step undo/redo |
-| T2c — newly exposed host/message authoring | Bounded message bar/message creation; safe page captions without guessed Ribbon/host wiring; MdiContainer stays an empty host | Independent authored consumer for new families; property/collection ownership, policy-disabled authoring, existing content/ItemsSource preservation; native message/page/MDI creation and reload/undo/redo |
+| T2c — owner authoring and live-review corrections | Message/QAT owner actions and tree ownership; context tab/File-page previews; revised direct-drop matrix and discovery hints; automatic group/combo layout and native combo child resolution. Options/customization pages use host XAML; MdiContainer stays an empty host | Focused SDK/default/discovery contracts, independent authored consumer, package consumer and Debug deployment; native context/drop/preview/undo/reload and separate reference-path inventories |
 | T3 — acceptance | No new runtime API assumed; resolve any specific native routing gaps explicitly | Record exactly which package/project-reference routes and changed families were observed; retain previous passing evidence; broader gates only for a concrete API/build/distribution change |
 
-The user approved the 13 additions, including the four reusable page types and
-preview MdiContainer, the ScreenTip/window/helper exclusions, and the bounded
-native-drop routing review. T2a precedes creation/default changes so discovery can
-be assessed separately. No public runtime API is proposed.
+The initial T1 approval covered 13 additions, including four reusable page types
+and preview MdiContainer. The subsequent live review moved owner-specific entries
+to context/editor actions; the user explicitly chose to hide options/customization
+pages and author them in host XAML. T2a preceded creation/default changes so
+discovery could be assessed separately. No public runtime API is proposed.
 
 T1 evidence was source/manifest inspection and read-only inspection of the installed
 SDK metadata. The matrix was checked against the public-type inventory and current
@@ -352,8 +362,72 @@ For native review, reopen the designer after loading the new DLL/package:
 
 No full runtime/Writer/visual suite was repeated for this designer-only slice.
 Earlier assembled end-of-feature evidence, the two Crystal QAT comparisons and
-remaining native gates are retained. T2c and the host transition API review remain
-separate work. No commit, push, merge, publication or scheduling was performed.
+remaining native gates are retained. The subsequent T2c work is recorded below;
+the host transition API review remains separate work. No commit, push, merge,
+publication or scheduling was performed.
+
+## T2c — owner authoring and live-review corrections, 2026-10-15
+
+The current matrix keeps 15 controls with useful direct-drop destinations. File
+surfaces/items, messages, group separators and menu/gallery children use semantic
+context/editor Add actions. Options/customization pages use host XAML. Generated
+hosts/panels and ScreenTips stay hidden; the library creates its own presentation
+hosts. Standard visibility hints supplement string-type designer metadata for all
+30 excluded public visual types. Writer's public sample visual types receive the
+same hints: solution discovery can expose them even though Writer is not packed.
+The user confirmed the revised list in Showcase's project-reference session;
+separate package-reference discovery remains a native host check.
+
+RibbonTab and RibbonGroup now also register the existing collection placement
+adapter for their children. Group and combo declare no default outer size; new
+combos receive `InputWidth="130"` only when unassigned, matching the existing
+runtime input default. This preserves explicit/bound dimensions and InputWidth.
+The SDK can create an unresolved model for a WPF ComboBoxItem requested in the
+RibbonKit XML namespace without throwing. Known native ComboBoxItem, StackPanel,
+TextBlock and Separator factories now select the WPF namespace explicitly. This
+addresses the failed group-context Add Combo Box without weakening assignment or
+ItemsSource guards.
+
+Root/File context menus offer owner actions and design-only tab/File-page preview
+menus, reusing the existing primitive preview coordinators. They do not write
+SelectedIndex or open-state overrides into application XAML. Message Bar is a
+singleton Add only when unassigned, seeds one Notification, and supports Add
+Message; the editor tree exposes that ownership. QAT commands are added to
+QuickAccessItems, with their own tree heading and native Small size. Generated
+QAT panels are never inserted. New child actions retain one Model API transaction;
+existing bindings, explicit empties, custom content and assigned ItemsSource stay
+protected. These paths need native transaction/preview acceptance.
+
+Options windows and their static page XAML can be designed directly. Interactive
+customization, runtime bindings and the host's dialog command need the running
+application; no host Ribbon binding, baseline, persistence or window is invented.
+
+| Gate | Result |
+| --- | --- |
+| Focused Release runtime/designer contracts | 50/50 passed: 47 guarded default cases, one compiled SDK metadata/placement/menu-registration case and two complete inventory contracts. Covers InputWidth preservation and native namespace classification; no live ModelItem transaction claim |
+| Writer visibility contract | 1/1 passed: all exported Writer visual types carry both standard exclusion hints; this does not prove native Toolbox discovery honors them |
+| Independent authored consumer | SimplifiedDesignerDefaults aggregate passed: the existing 12 theme/direction/label combinations, with added automatic group/combo outer dimensions, InputWidth, message bar/message and QAT ownership checks; no Showcase resources/helpers |
+| Normal Release solution | Passed, 0 warnings/errors after the final designer source changes; net8/net9 runtime and net472 DesignTools |
+| Local package and independent consumer | Package validation passed; clean private-cache net8/net9 Release builds passed with 0 warnings/errors. Net8 smoke constructed all 15 advertised types; runtime/DesignTools and manifest hashes match normal Release outputs |
+| Normal Debug review | Showcase, Writer and net8/net9 package consumer builds passed, 0 warnings/errors. User closed Visual Studio to release the stale designer copy; both Debug Design DLLs match the current net472 Debug output |
+| File-preview repair | Captured the isolated WpfSurface exception in its type-converter lookup. File-page translation now waits for ViewService.LayoutUpdated and a visible child view; hidden-surface changes update session state only, and obsolete requests detach. Four new Release readiness/cancellation checks passed. The earlier focused WPF surface-cycle check passed and is retained; it does not exercise the isolated designer. Normal Release solution, Debug Showcase, package validation and fresh private-cache net8/net9 Release/Debug consumer builds passed with 0 warnings/errors; packaged/deployed hashes match. Evidence: `TestResults/designer-file-preview-20261015/` |
+| Native Visual Studio | User accepted 2026-10-15: fresh Group/Combo drops, group Add Combo Box, automatic outer sizing/InputWidth/starter Item and undo/redo; revised Showcase project-reference Toolbox list, tab preview and message/QAT actions. Agent live verification after the File-preview repair passed: context Backstage Info/application-menu Save As/Close; editor application menu → Backstage Info/Open → Closed → application-menu default/Print. Designer returned to 0 errors, with unchanged MainWindow.xaml hash. Separate package-reference discovery and remaining authoring saved-XAML/reload coverage are unconfirmed. Earlier accepted RibbonTab creation/undo/reload evidence is retained |
+
+Evidence and preserved prior package pair/consumer are under
+`TestResults/toolbox-authoring-review-20261015/`. The regenerated independent
+consumer remains `TestResults/package-consumer/PackageConsumer.csproj` with normal
+Debug outputs and a private package cache. User-authored Showcase review XAML is
+preserved.
+
+Retain the accepted Group/Combo drops, Add Combo Box, undo/redo and Showcase
+Toolbox/action results above. File preview now has agent live coverage of both
+routes; the native cycle did not change authored XAML. Remaining authoring
+saved-XAML/reload and unconfirmed transaction scopes stay separate from that
+preview check. Inspect package-reference discovery independently from the accepted
+Showcase project-reference list. No passed suite
+was repeated solely for this follow-up; the earlier assembled full-run/targeted
+repair evidence and open Crystal/native gates remain unchanged. No commit, push,
+merge, publication or scheduling was performed.
 
 ## T2 — definitions and designer alignment
 

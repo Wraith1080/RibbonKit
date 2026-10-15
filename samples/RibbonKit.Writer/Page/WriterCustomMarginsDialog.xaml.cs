@@ -6,6 +6,8 @@ using RibbonKit.Writer.Models;
 namespace RibbonKit.Writer.Page;
 
 /// <summary>Transactional four-edge custom-margin editor for the current Writer page.</summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public partial class WriterCustomMarginsDialog : Window
 {
     private readonly DocumentPageSettings _openingSettings;

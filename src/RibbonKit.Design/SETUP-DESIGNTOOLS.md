@@ -12,11 +12,12 @@ commands and Ribbon Editor; a floating smart-tag adorner is not supported.
 | `RibbonKit.Design.csproj` | `net472`, output `RibbonKit.DesignTools.dll`, no runtime-project reference |
 | `Metadata.cs`, `PropertyMetadata.cs` | String-type metadata registration and property descriptions |
 | `ToolboxMetadata.cs` | String-type Toolbox visibility/category intent, checked against the package manifest |
-| `DesignModel.cs`, `DesignModel.NewItems.cs`, `NewItemDefaults.cs` | ModelItem edits, guarded creation policy, collection/attached-property handling and undo transactions |
+| `DesignModel.cs`, `DesignModel.NewItems.cs`, `DesignModel.Authoring.cs`, `NewItemDefaults.cs` | ModelItem edits, guarded creation/owner policy, collection/attached-property handling and undo transactions |
 | `RibbonDefaultInitializer.cs`, `RibbonTabDefaultInitializer.cs`, `RibbonItemDefaultInitializer.cs`, `ContextMenuProviders.cs` | Toolbox starter content and context commands |
 | `SimplifiedCommandInitializer.cs` | Supported toolbox command defaults, shared with Model API creation |
-| `RibbonTabsPlacementAdapter.cs` | Collection-owned placement for Ribbon children without free-form size/position writes |
-| `RibbonEditorWindow.cs`, `TabPreview.cs` | Structure editor and design-only preview coordination |
+| `RibbonTabsPlacementAdapter.cs` | Collection-owned child placement on Ribbon, RibbonTab and RibbonGroup without free-form size/position writes |
+| `DesignerContextActions.cs` | Owner-based File/message/QAT Add actions and design-only tab/File-page context previews |
+| `RibbonEditorWindow.cs`, `TabPreview.cs`, `FilePagePreviewRequest.cs` | Structure editor, design-only preview coordination and visible-view readiness |
 
 The extension works through the Visual Studio Model API, not live .NET 8/9 control
 instances. Preserve string type names and isolation. SDK reference assemblies are
@@ -51,11 +52,12 @@ isolated package consumer used for live validation. The 2026-08-11 recorded VS 2
 ## Toolbox discovery and placement
 
 The [package manifest](../RibbonKit/tools/VisualStudioToolsManifest.xml) declares
-the authoring list under **RibbonKit** in Visual Studio and Blend. It includes
-the ribbon/commands, Backstage and application-menu families, options/customization
-pages, messages, group separators and the preview MDI host. Windows/dialog roots,
-generated hosts, layout panels, automatic ScreenTips and nonvisual definitions
-stay outside that list. See the reviewed
+the direct-drop authoring list under **RibbonKit** in Visual Studio and Blend:
+ribbon/tab/group, command controls, galleries and the preview MDI host.
+Owner-specific File surfaces/items, messages, separators and item children use
+context/editor Add actions. Options/customization pages use host XAML. Window roots,
+generated hosts/panels, ScreenTips and nonvisual definitions stay outside the list.
+See the reviewed
 [type/parent matrix](../../docs/17-TOOLBOX-ITEM-DEFINITION-PLAN.md#reviewed-include-matrix)
 for individual destinations.
 
@@ -69,8 +71,12 @@ Package and project references have separate discovery paths:
   by type-name string. The manifest itself does not filter project references.
   The actual result depends on the designer loading the updated DesignTools DLL
   and honoring its metadata; record that result separately from package discovery.
-  If helpers remain visible, inspect cache/loading before assuming this metadata
-  is supported by that discovery path. Public runtime types remain available.
+  Excluded runtime types also carry standard ToolboxItem(false) and
+  DesignTimeVisible(false) hints. Writer applies them to its sample-only visual
+  types because solution discovery can expose controls that are not shipped in the
+  library package. If helpers remain visible, inspect loading/discovery support;
+  these attributes are intent until observed in the active host. Public runtime
+  types remain available.
 
 Discovery does not route a drop into a semantic property. Application menus and
 Backstage belong on their Ribbon singleton properties; menu/pane/footer entries,
@@ -81,10 +87,10 @@ definition refresh. Customization pages require the host's explicit Ribbon and
 baseline assignments; MdiContainer requires host documents. No application
 bindings, event handlers or persistence are guessed.
 
-The T2b creation slice shares guarded starter defaults across Toolbox drops,
-context actions and the editor. Message/page/host authoring additions remain a
-subsequent bounded slice in the Toolbox plan. A disabled runtime feature does not
-remove authored types/settings from the Toolbox.
+Guarded starter defaults are shared across Toolbox drops, context actions and the
+editor. Static options-window/page XAML can be previewed directly; interactive
+customization, host bindings and the application's dialog command require runtime.
+A disabled runtime feature does not remove prepared authored settings.
 
 ## Editor behavior
 
@@ -96,9 +102,12 @@ bindings, ItemsSource and existing children block the corresponding default writ
 Initializers run inside the creation transaction and open no nested undo scopes.
 RibbonTab opts out of generic designer initialization before applying its own
 defaults, preventing the inherited TabItem Grid on new drops. Placement is a
-separate phase: Ribbon's child placement adapter declines geometry writes, and
-RibbonTab's DefaultSizeMode.None opts out of default sizing. This does not clear
-content or dimensions already written into existing XAML. Live drop/reload/undo
+separate phase: the child placement adapter on Ribbon, RibbonTab and RibbonGroup
+declines geometry writes; RibbonTab, RibbonGroup and RibbonComboBox declare
+DefaultSizeMode.None. A new unassigned combo gets InputWidth="130", with no guessed
+outer Width. Native ComboBoxItem, StackPanel, TextBlock and Separator factories
+select the WPF namespace explicitly instead of relying on an exception fallback.
+Existing XAML content and dimensions remain authored choices. Live drop/reload/undo
 acceptance is tracked in the Toolbox plan separately from SDK metadata checks.
 Context commands add/reorder/delete tabs, groups,
 controls and File surfaces, and select QAT placement. **Edit Ribbon…** opens a structure
@@ -113,6 +122,9 @@ input state/width, contextual color, group reduction/launcher and File navigatio
 Group context Add includes combo, both galleries, scrollbar and group separator;
 leaf move/delete resolves group Items or panel Children. The editor also offers
 Scroll Bar with native orientation, range, value and change/viewport fields.
+Root/context Add offers Message Bar, Message and Quick Access Command actions;
+the editor tree follows MessageBar.Items and QuickAccessItems. Generated hosts
+and panels are supplied by templates rather than inserted through those actions.
 Supported command controls added through the toolbox, context commands or Ribbon
 Editor start inline in the simplified ribbon with their label shown. The editor's
 **Show in simplified ribbon** checkbox writes `Ribbon.SimplifiedPlacement` as
@@ -212,10 +224,19 @@ choice; keep authored objects intact. Object-valued null/UnsetValue substitution
 previously crashed or poisoned isolated-designer model reads.
 
 Providers are lazy: explicitly invalidate the appropriate model property when the
-selection changes. Backstage inherited SelectedIndex registration must cover the
-actual declaring-type paths. Reset clears the preview; session previews disappear
+selection changes. Root/tab/File context menus expose Preview Ribbon Tab and
+Preview File Page choices through these same coordinators; these do not serialize
+authored selection/open-state changes. Backstage inherited SelectedIndex
+registration must cover the actual declaring-type paths. Reset clears the preview; session previews disappear
 when the designer reloads. Hand-authored `d:SelectedIndex`/`d:IsBackstageOpen` remain
 alternatives, but the Model API does not expose a general design-namespace write path.
+
+A hidden File surface can lack a live designer node. Translating its child page
+property too early can raise XDG0005 in the isolated host's type-converter lookup
+while the parent preview still renders. Keep the choice in session state, then
+apply it when ViewService.LayoutUpdated reports a visible child view. A new or
+closed surface cancels the obsolete request; inactive-page resets wait until that
+surface is shown. No timer, fixed delay or authored-property write is needed.
 
 The editor is a plain WPF window on the VS UI thread; the surface is isolated.
 Live File-surface cycling and subsequent model editing must remain healthy. Its DPI
@@ -230,8 +251,9 @@ is currently enabled by default in code; this guide does not claim a release-tim
 has disabled it.
 
 The package manifest filters authorable controls. Matching project-reference
-metadata is an integration intent until checked in the active designer host;
-package filtering alone is not evidence about the in-solution Toolbox. Consult
+metadata and standard runtime visibility hints are integration intent until
+checked in the active designer host; package filtering alone is not evidence about
+the in-solution Toolbox. Consult
 the manifest instead of maintaining a duplicate count. A locked DesignTools DLL
 may leave a successful build's deployed copy stale: close Visual Studio, rebuild
 in the normal configuration, and compare deployment copies before live review.

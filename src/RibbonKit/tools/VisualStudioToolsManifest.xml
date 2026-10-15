@@ -18,7 +18,6 @@
       <!-- Structure -->
       <Item Type="RibbonKit.Controls.RibbonTab" />
       <Item Type="RibbonKit.Controls.RibbonGroup" />
-      <Item Type="RibbonKit.Controls.RibbonGroupSeparator" />
 
       <!-- Command controls -->
       <Item Type="RibbonKit.Controls.RibbonButton" />
@@ -30,33 +29,10 @@
       <Item Type="RibbonKit.Controls.RibbonComboBox" />
       <Item Type="RibbonKit.Controls.RibbonTextBox" />
       <Item Type="RibbonKit.Controls.RibbonScrollBar" />
-      <Item Type="RibbonKit.Controls.RibbonMenuItem" />
 
       <!-- Galleries -->
       <Item Type="RibbonKit.Controls.RibbonGallery" />
       <Item Type="RibbonKit.Controls.InRibbonGallery" />
-      <Item Type="RibbonKit.Controls.RibbonGalleryItem" />
-
-      <!-- Backstage -->
-      <Item Type="RibbonKit.Controls.Backstage" />
-      <Item Type="RibbonKit.Controls.BackstageTabItem" />
-
-      <!-- Application menu: child items belong in their semantic menu/pane/footer slots. -->
-      <Item Type="RibbonKit.Controls.RibbonApplicationMenu" />
-      <Item Type="RibbonKit.Controls.RibbonApplicationMenuItem" />
-      <Item Type="RibbonKit.Controls.RibbonApplicationMenuSeparator" />
-      <Item Type="RibbonKit.Controls.RibbonApplicationMenuPaneItem" />
-      <Item Type="RibbonKit.Controls.RibbonApplicationMenuButton" />
-
-      <!-- Host-authored options/customization content; the host assigns the Ribbon explicitly. -->
-      <Item Type="RibbonKit.Controls.RibbonOptionsPage" />
-      <Item Type="RibbonKit.Controls.RibbonCustomizePage" />
-      <Item Type="RibbonKit.Controls.RibbonSimplifiedCustomizePage" />
-      <Item Type="RibbonKit.Controls.RibbonQuickAccessPage" />
-
-      <!-- Messages -->
-      <Item Type="RibbonKit.Controls.RibbonMessageBar" />
-      <Item Type="RibbonKit.Controls.RibbonMessage" />
 
       <!-- Preview MDI host; child windows are generated from host-owned documents. -->
       <Item Type="RibbonKit.Controls.MdiContainer" />

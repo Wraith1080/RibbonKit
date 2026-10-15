@@ -31,6 +31,8 @@ namespace RibbonKit.Controls;
 /// proxies the ORIGINAL command, not the QAT proxy, to avoid proxy-of-proxy chains.
 /// </para>
 /// </remarks>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonQuickAccessToolBar : ItemsControl
 {
     internal const string OverflowButtonPartName = "PART_OverflowButton";

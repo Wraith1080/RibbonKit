@@ -8,6 +8,8 @@ namespace RibbonKit.Controls;
 /// <see cref="InRibbonGallery"/>. Put any content inside (a style preview, a color
 /// swatch, a thumbnail).
 /// </summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonGalleryItem : ListBoxItem
 {
     static RibbonGalleryItem()

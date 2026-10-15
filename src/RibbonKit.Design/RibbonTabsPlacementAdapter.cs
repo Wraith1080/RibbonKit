@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.DesignTools.Extensibility.Model;
 namespace RibbonKit.Design;
 
 /// <summary>
-/// Keeps Ribbon's children in their collection-owned layout instead of assigning
+/// Keeps ribbon, tab and group children in their collection-owned layout instead of assigning
 /// free-form coordinates or dimensions during a Toolbox drop.
 /// </summary>
 public sealed class RibbonTabsPlacementAdapter : PlacementAdapter
@@ -29,7 +29,7 @@ public sealed class RibbonTabsPlacementAdapter : PlacementAdapter
         return values;
     }
 
-    // The Ribbon owns tab arrangement. These callbacks must not write Width,
+    // RibbonKit owns collection arrangement. These callbacks must not write Width,
     // Height, Margin or alignment, nor clear existing authored assignments.
     /// <inheritdoc />
     public override void SetPlacements(ModelItem item, PlacementIntent intent, params RelativeValue[] positions) { }

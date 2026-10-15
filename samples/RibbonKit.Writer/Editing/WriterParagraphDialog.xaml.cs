@@ -19,6 +19,8 @@ public sealed record WriterParagraphDialogResult(
 /// <summary>
 /// A Writer-owned, transactional paragraph formatting dialog. It does not mutate a document directly.
 /// </summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public partial class WriterParagraphDialog : Window
 {
     private static readonly DependencyPropertyDescriptor ComboBoxTextDescriptor =

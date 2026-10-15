@@ -274,6 +274,19 @@ Crystal appearance rollback/persistence contract. No new timing workaround or
 automation gap was introduced. Live visual review/full validation remain open in
 the [active simplified plan](15-SIMPLIFIED-RIBBON-PLAN.md#s7-host-defaults-and-customization-integration--2026-10-14).
 
+### RKWF-048 — Solution Toolbox discovery exposes Writer sample controls
+
+App authoring correction, first reported 2026-10-15 during Toolbox review.
+Visual Studio can discover public Writer visual types from the open solution even
+though the sample is not packable and none are advertised by RibbonKit's package
+manifest. Mark those types with standard ToolboxItem(false) and
+DesignTimeVisible(false) hints; preserve their public visibility and runtime use.
+No control behavior, timing workaround or host integration is added. One focused
+Writer reflection contract passed. Project-reference filtering depends on the
+active Visual Studio host; package consumer validation cannot prove that result.
+Current acceptance stays in
+[Toolbox plan T2c](17-TOOLBOX-ITEM-DEFINITION-PLAN.md#t2c--owner-authoring-and-live-review-corrections-2026-10-15).
+
 ### Verification note — 2026-09-15 cleanup
 
 77 focused Writer tests passed. The combined window run hit the known WPF WindowChrome

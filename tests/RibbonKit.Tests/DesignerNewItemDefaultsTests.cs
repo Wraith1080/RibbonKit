@@ -36,6 +36,7 @@ public sealed class DesignerNewItemDefaultsTests
     [InlineData("InRibbonGallery", "Items", "RibbonGalleryItem", "Content", "Item")]
     [InlineData("RibbonSplitButton", "Items", "RibbonMenuItem", "Header", "Menu Item")]
     [InlineData("RibbonDropDownButton", "Items", "RibbonMenuItem", "Header", "Menu Item")]
+    [InlineData("RibbonMessageBar", "Items", "RibbonMessage", "Title", "Notification")]
     public void Empty_new_structures_receive_one_semantically_owned_child_and_do_not_duplicate_it(
         string type, string collection, string childType, string captionProperty, string caption)
     {
@@ -77,6 +78,7 @@ public sealed class DesignerNewItemDefaultsTests
         item.Values["ItemsSource"] = "{Binding Choices}";
         item.Values["Width"] = "{Binding EditorWidth}";
         item.Values["SelectedItem"] = "{Binding Selection}";
+        item.Values["InputWidth"] = "{Binding InputWidth}";
         var before = item.Values.ToArray();
         item.Initialize();
         Assert.Equal(before, item.Values.ToArray());
@@ -140,6 +142,31 @@ public sealed class DesignerNewItemDefaultsTests
         Assert.False(item.Values.ContainsKey("Ribbon.SimplifiedPlacement"));
         Assert.False(item.Values.ContainsKey("Ribbon.SimplifiedSize"));
         Assert.Empty(item.Children);
+    }
+
+    [Fact]
+    public void New_combo_uses_input_width_and_native_item_without_outer_width()
+    {
+        var combo = new Item("RibbonComboBox");
+        combo.Initialize();
+        Assert.Equal("130", combo.Values["InputWidth"]);
+        Assert.False(combo.Values.ContainsKey("Width"));
+        Assert.Equal("ComboBoxItem", Assert.Single(combo.Children["Items"]).Type);
+        var native = Apply.DeclaringType!.GetMethod("IsFrameworkType", BindingFlags.Static | BindingFlags.NonPublic)!;
+        Assert.True((bool)native.Invoke(null, new object[] { "ComboBoxItem" })!);
+        Assert.False((bool)native.Invoke(null, new object[] { "RibbonComboBox" })!);
+    }
+
+    [Theory]
+    [InlineData("90")]
+    [InlineData("")]
+    [InlineData("{Binding Width}")]
+    public void Authored_combo_input_width_is_preserved(string value)
+    {
+        var combo = new Item("RibbonComboBox");
+        combo.Values["InputWidth"] = value;
+        combo.Initialize();
+        Assert.Equal(value, combo.Values["InputWidth"]);
     }
 
     private sealed class Item(string type)
