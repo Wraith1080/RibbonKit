@@ -38,6 +38,7 @@ internal sealed class Metadata : IProvideAttributeTable
         get
         {
             var builder = new AttributeTableBuilder();
+            ToolboxMetadata.Register(builder);
 
             // Ribbon: seed a starter tab/group when dropped, offer "Add Tab" / "Edit Ribbon…" on
             // right-click, and translate the editor's primitive-only tab, theme, and File previews.

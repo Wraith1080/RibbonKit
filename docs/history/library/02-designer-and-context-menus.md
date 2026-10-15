@@ -210,3 +210,28 @@ styles that match the dropdown, in a **dedicated `Themes/Menus.xaml`** dictionar
   `menu.Resources[typeof(MenuItem)] = RibbonKit.MenuItem` and
   `menu.Resources[MenuItem.SeparatorStyleKey] = RibbonKit.MenuSeparator` — which every `MenuItem`
   (including submenu items) and `Separator` in the menu subtree resolves.
+
+### 3.257 Toolbox definitions and discovery metadata — 2026-10-15
+
+The reviewed Toolbox surface includes authorable controls and their semantic
+children while excluding generated presentation, Window roots, automatic
+ScreenTips and nonvisual definitions. Package discovery uses the tools manifest;
+project-reference discovery receives separate ToolboxBrowsable/tab/category
+attributes through string-type DesignTools metadata. Preserve net472 isolation
+and public runtime visibility. Attribute registration is intent until checked in
+the actual designer host; package filtering cannot prove project-reference
+behavior. A discoverable type also does not supply a semantic drop adapter.
+
+Definition contracts compare the approved matrix, manifest, metadata lists and
+all public FrameworkElement types to catch omissions or drift. Package validation
+constructs advertised types in a consumer without Showcase references. Keep its
+NuGet.Config globalPackagesFolder pointed at the consumer's private cache for
+later IDE restores; same-version packages in the global cache can otherwise mask
+the locally tested package. No creation/default/undo paths changed in T2a.
+
+A successful build with ContinueOnError copy warnings can leave a deployed
+DesignTools DLL stale. Compare both normal Debug Design copies with the new
+source DLL; release the Visual Studio lock and rebuild when needed. Packaged
+Release DLL/manifest hashes separately establish which outputs were tested.
+Current results and native discovery/creation acceptance belong in the
+[active Toolbox plan](../../17-TOOLBOX-ITEM-DEFINITION-PLAN.md#t2a--implementation-and-evidence-2026-10-15).

@@ -174,6 +174,9 @@ Assert-Condition ($symbolPackage.BaseName -eq "RibbonKit.$packageVersion") 'Symb
 $toolboxItems = @($toolboxManifest.FileList.File.ToolboxItems.Item)
 Assert-Condition ($toolboxItems.Count -gt 0) 'The packaged Visual Studio toolbox manifest contains no controls.'
 Assert-Condition (@($toolboxItems | Where-Object Type -eq 'RibbonKit.Controls.Ribbon').Count -eq 1) 'The toolbox manifest must expose RibbonKit.Controls.Ribbon.'
+$toolboxTypes = @($toolboxItems | ForEach-Object { [string]$_.Type })
+Assert-Condition (@($toolboxTypes | Group-Object | Where-Object Count -gt 1).Count -eq 0) 'The toolbox manifest contains duplicate types.'
+Assert-Condition (@($toolboxTypes | Where-Object { $_ -notmatch '^RibbonKit\.Controls\.[A-Za-z_][A-Za-z0-9_]*$' }).Count -eq 0) 'The toolbox manifest contains an invalid authoring type name.'
 
 $consumerRoot = Join-Path $repositoryRoot 'TestResults\package-consumer'
 $consumerProject = Join-Path $consumerRoot 'PackageConsumer.csproj'
@@ -191,6 +194,9 @@ $escapedPackageVersion = [System.Security.SecurityElement]::Escape($packageVersi
 Write-Utf8File (Join-Path $consumerRoot 'NuGet.Config') @"
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
+  <config>
+    <add key="globalPackagesFolder" value=".packages" />
+  </config>
   <packageSources>
     <clear />
     <add key="RibbonKit local package" value="$escapedPackageDirectory" />
@@ -245,6 +251,35 @@ public partial class App : Application
     }
 }
 '@
+
+$toolboxLiterals = ($toolboxTypes | ForEach-Object { '        "' + $_ + '",' }) -join "`n"
+Write-Utf8File (Join-Path $consumerRoot 'ToolboxCatalog.cs') @"
+using System;
+using System.Windows;
+using RibbonKit.Controls;
+
+namespace PackageConsumer;
+
+internal static class ToolboxCatalog
+{
+    internal static int Verify()
+    {
+        string[] names =
+        {
+$toolboxLiterals
+        };
+        foreach (string name in names)
+        {
+            var type = typeof(Ribbon).Assembly.GetType(name, throwOnError: true)!;
+            if (!type.IsPublic || type.IsAbstract || !typeof(FrameworkElement).IsAssignableFrom(type)
+                || typeof(Window).IsAssignableFrom(type) || type.GetConstructor(Type.EmptyTypes) is null)
+                throw new InvalidOperationException("Invalid Toolbox authoring type: " + name);
+            _ = (FrameworkElement)Activator.CreateInstance(type)!;
+        }
+        return names.Length;
+    }
+}
+"@
 
 Write-Utf8File (Join-Path $consumerRoot 'ConsumerWindow.xaml') @'
 <rk:RibbonWindow x:Class="PackageConsumer.ConsumerWindow"
@@ -312,6 +347,7 @@ public partial class ConsumerWindow : RibbonWindow
         try
         {
             double contentRenderedMilliseconds = App.StartupStopwatch.Elapsed.TotalMilliseconds;
+            int toolboxTypesChecked = ToolboxCatalog.Verify();
             ForceFullCollection();
             long managedBefore = GC.GetTotalMemory(forceFullCollection: true);
 
@@ -334,6 +370,7 @@ public partial class ConsumerWindow : RibbonWindow
             File.WriteAllText(resultPath, JsonSerializer.Serialize(new
             {
                 succeeded = true,
+                toolboxTypesChecked,
                 contentRenderedMilliseconds,
                 managedBeforeBytes = managedBefore,
                 managedAfterBytes = managedAfter,
@@ -391,7 +428,7 @@ try {
         $previousResultPath = [Environment]::GetEnvironmentVariable('RIBBONKIT_PACKAGE_SMOKE_RESULT', 'Process')
         [Environment]::SetEnvironmentVariable('RIBBONKIT_PACKAGE_SMOKE_RESULT', $runtimeResultPath, 'Process')
         try {
-            $runtimeProcess = Start-Process -FilePath $consumerExecutable -PassThru
+            $runtimeProcess = Start-Process -FilePath $consumerExecutable -PassThru -WindowStyle Hidden
             try {
                 if (-not $runtimeProcess.WaitForExit(30000)) {
                     $runtimeProcess.Kill()

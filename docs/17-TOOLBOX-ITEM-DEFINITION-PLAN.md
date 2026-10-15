@@ -1,9 +1,9 @@
 # Toolbox item definitions
 
-> T1 investigated 2026-10-15 at `4d5c094` on `codex/api-and-component-updates`,
-> after user acceptance of the eight original feature gates and reported repairs.
-> The matrix below is proposed for review. T2 implementation and T3 validation
-> have not started; no runtime/public API or Toolbox definitions changed.
+> T1 matrix approved and T2 authorized 2026-10-15. T2a definitions/discovery is
+> implemented from `31caf54` on `codex/api-and-component-updates`; automated
+> evidence and remaining live discovery checks are below. T2b/T2c creation work
+> has not started. No runtime public API or creation defaults changed.
 
 ## Goal
 
@@ -20,13 +20,14 @@ the accepted S6 Inline/label defaults and existing authored settings.
 ## Current boundary
 
 - `src/RibbonKit/tools/VisualStudioToolsManifest.xml` is the package Toolbox
-  allowlist, with RibbonKit as its Visual Studio/Blend category. It currently
-  lists the ribbon, tabs/groups, command/input controls, galleries and Backstage.
+  allowlist, with RibbonKit as its Visual Studio/Blend category. It now follows
+  the reviewed authoring matrix below.
 - `src/RibbonKit/RibbonKit.csproj` packages that manifest under `tools/` and the
   net472 DesignTools assembly beside each runtime target in its `Design` folder.
 - Project-reference Toolbox discovery reflects public controls and does not use
-  that package allowlist. A change to the manifest alone does not prove the
-  Showcase solution's Toolbox has been filtered or updated.
+  that package allowlist. `ToolboxMetadata.cs` supplies matching visibility and
+  category intent by string type name. Native host acceptance is still required;
+  the manifest alone does not prove the Showcase Toolbox was filtered or updated.
 - `Metadata.cs` registers designer providers by string type name. Initializers
   and Model API creation paths provide defaults; the manifest does not write
   per-command XAML properties. Use ModelProperty.IsSet to preserve assignments.
@@ -40,11 +41,11 @@ alone does not make a control useful as a Toolbox item.
 
 ### Inventory findings — 2026-10-15
 
-The manifest has 18 unique entries. Source inspection covers all 45 public
-FrameworkElement-derived types in `Controls`/`Layout`, including windows and
+At the T1 snapshot (`4d5c094`), the manifest had 18 unique entries. Source inspection
+covers all 45 public FrameworkElement-derived types in `Controls`/`Layout`, including windows and
 non-rendering merge sources, plus the nonvisual authoring objects below. Partial
-class declarations count once. The recommended package surface is 31 entries:
-retain 18 and add 13. These are proposed authoring destinations, not claims that
+class declarations count once. The approved package surface is 31 entries:
+retain 18 and add 13. These are authoring destinations, not claims that
 Visual Studio already routes a Toolbox drop into each property correctly.
 
 The source of truth for this review is the [manifest](../src/RibbonKit/tools/VisualStudioToolsManifest.xml),
@@ -57,11 +58,11 @@ tooling. Public API visibility is preserved for excluded types.
 Framework `ComboBoxItem`, `TextBlock`, `StackPanel` and other WPF content keep
 their existing framework/editor routes; do not relist them as RibbonKit types.
 
-### Proposed include matrix
+### Reviewed include matrix
 
-All types below are in `RibbonKit.Controls`. **Keep** means already in the
-package manifest; **Add** is a proposed entry. A group panel below means an
-application-authored panel inside a group, not a generated RibbonKit host.
+All types below are in `RibbonKit.Controls`. **Keep** identifies the original
+manifest entries; **Add** identifies the approved T2a additions. A group panel
+below means an application-authored panel inside a group, not a generated RibbonKit host.
 
 | Type | Decision | Valid owner/location | Existing creation support and gap |
 | --- | --- | --- | --- |
@@ -213,15 +214,61 @@ Recommended discovery contract:
 | T2c — newly exposed host/message authoring | Bounded message bar/message creation; safe page captions without guessed Ribbon/host wiring; MdiContainer stays an empty host | Independent authored consumer for new families; property/collection ownership, policy-disabled authoring, existing content/ItemsSource preservation; native message/page/MDI creation and reload/undo/redo |
 | T3 — acceptance | No new runtime API assumed; resolve any specific native routing gaps explicitly | Record exactly which package/project-reference routes and changed families were observed; retain previous passing evidence; broader gates only for a concrete API/build/distribution change |
 
-Decisions for review are the 13 additions (especially the four reusable page
-types and preview MdiContainer), the ScreenTip/window/helper exclusions, and the
-focused native-drop routing boundary. No public runtime API is proposed. T2a
-should precede creation/default changes so discovery can be assessed separately.
+The user approved the 13 additions, including the four reusable page types and
+preview MdiContainer, the ScreenTip/window/helper exclusions, and the bounded
+native-drop routing review. T2a precedes creation/default changes so discovery can
+be assessed separately. No public runtime API is proposed.
 
-T1 evidence is source/manifest inspection and read-only inspection of the installed
+T1 evidence was source/manifest inspection and read-only inspection of the installed
 SDK metadata. The matrix was checked against the public-type inventory and current
 manifest. No builds, tests, package generation, designer launch or changes to
-defaults/metadata/runtime behavior were performed for this planning review.
+defaults/metadata/runtime behavior were performed during that planning review.
+
+## T2a — implementation and evidence, 2026-10-15
+
+The manifest delivers the approved authoring list. `ToolboxMetadata.Register`
+supplies matching ToolboxBrowsable, tab and category attributes for included
+types and explicit exclusions for public presentation/root types. This remains
+net472/string-type metadata without a runtime-project reference. Contract tests
+compare the metadata lists, package manifest, reviewed matrix and the complete
+public FrameworkElement inventory. No initializer, Model API factory, context
+action, property assignment or runtime control behavior changed.
+
+Package validation now rejects duplicate/invalid Toolbox names and generates an
+independent consumer catalog from the packaged manifest. Its optional runtime
+smoke check resolves and constructs each advertised type; this does not prove
+designer drops or render every new family. The kept consumer's NuGet.Config pins
+its private `.packages` directory so a later Visual Studio restore cannot silently
+reuse an older global-cache package with the same version.
+
+| Gate | Result |
+| --- | --- |
+| Focused Release definition contracts | 2/2 passed; 31 unique constructible public authoring types, 14 explicit public visual/root exclusions, all 45 public visual types classified; reviewed matrix and metadata agree |
+| Normal Release solution build | Passed, 0 warnings/errors; net8/net9 runtime and net472 DesignTools |
+| Normal local pack | Passed; previous current-version package pair preserved before replacement; existing package/deployment paths retained |
+| Package contents | Manifest and all four packaged runtime/DesignTools DLL copies match current source/normal Release outputs; archive and designer paths validated |
+| Independent package consumer | Clean private-cache net8/net9 Release builds passed, 0 warnings/errors; net8 runtime smoke passed and constructed all 31 advertised controls without Showcase resources/helpers |
+| Normal Debug review output | Showcase and kept package-consumer builds passed, 0 warnings/errors. The first Showcase build left a stale net8 designer copy because Visual Studio held it; user closed Visual Studio, the necessary rebuild passed, and both normal Debug Design copies match the newly built DesignTools DLL |
+| Live Visual Studio | Pending: package Toolbox inventory/category and project-reference inventory/filtering must be observed separately; no native drop/default/undo/reload acceptance claimed by the builds or smoke test |
+
+Logs are `TestResults/toolbox-t2a-*-20261015.log`. Prior packages and the selected
+validation pair are under `TestResults/toolbox-t2a-20261015/`. The retained
+`TestResults/package-consumer/PackageConsumer.csproj` uses the selected local
+package and private cache, with normal Debug and Release outputs. Its
+`runtime-smoke.json` records the net8 constructor/smoke result.
+
+For live review, reopen Visual Studio, open the retained package consumer and
+ConsumerWindow.xaml, and inspect the RibbonKit Toolbox list/category. Separately
+open the normal solution/Showcase project-reference designer and check whether
+the matching visibility metadata is honored, especially generated hosts/panels
+and windows. Record the two results independently before attributing an observed
+list to the manifest. T2b/T2c own the remaining creation/default additions and
+representative drop/property/reload/undo checks; a focused routing gap needs its
+own review rather than an implicit generic ParentAdapter.
+
+No full runtime/Writer/visual/consumer suite was repeated for these bounded
+definitions/metadata changes. Earlier passed evidence and residual Crystal/native
+gates are retained. No commit, push, merge, publication or scheduling was performed.
 
 ## T2 — definitions and designer alignment
 

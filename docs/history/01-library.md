@@ -18,7 +18,7 @@ Numbering is shared with the [Writer history](02-writer-foundation.md); gaps are
 | Records | Archive |
 | --- | --- |
 | §3.1–§3.21 | [Core controls](library/01-core-controls.md) |
-| §3.22–§3.26 | [Designer and context menus](library/02-designer-and-context-menus.md) |
+| §3.22–§3.26, §3.257 | [Designer and context menus](library/02-designer-and-context-menus.md) |
 | §3.27–§3.37 | [Office themes and layout](library/03-office-themes-and-layout.md) |
 | §3.38–§3.45 | [Office 2007 and popup motion](library/04-office2007-and-popup-motion.md) |
 | §3.46–§3.64 | [Application menu, localization and snapshots](library/05-application-menu-localization-and-snapshots.md) |
@@ -419,3 +419,5 @@ status updates and investigation narration were removed during compaction.
 ### [3.255 Simplified ribbon first layout slice — 2026-10-13](library/14-simplified-ribbon.md#3255-simplified-ribbon-first-layout-slice--2026-10-13)
 
 ### [3.256 Ribbon capability and user-operation policy — 2026-10-15](library/15-feature-availability.md#3256-ribbon-capability-and-user-operation-policy--2026-10-15)
+
+### [3.257 Toolbox definitions and discovery metadata — 2026-10-15](library/02-designer-and-context-menus.md#3257-toolbox-definitions-and-discovery-metadata--2026-10-15)

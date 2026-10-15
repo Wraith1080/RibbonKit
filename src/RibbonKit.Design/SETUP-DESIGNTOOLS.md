@@ -11,6 +11,7 @@ commands and Ribbon Editor; a floating smart-tag adorner is not supported.
 | --- | --- |
 | `RibbonKit.Design.csproj` | `net472`, output `RibbonKit.DesignTools.dll`, no runtime-project reference |
 | `Metadata.cs`, `PropertyMetadata.cs` | String-type metadata registration and property descriptions |
+| `ToolboxMetadata.cs` | String-type Toolbox visibility/category intent, checked against the package manifest |
 | `DesignModel.cs` | ModelItem edits, collection/attached-property handling and undo transactions |
 | `RibbonDefaultInitializer.cs`, `ContextMenuProviders.cs` | Toolbox starter content and context commands |
 | `SimplifiedCommandInitializer.cs` | Supported toolbox command defaults, shared with Model API creation |
@@ -45,6 +46,44 @@ claim. Use [CONTRIBUTING.md](../../CONTRIBUTING.md#proportional-validation) for 
 validation commands. `eng/Validate-Package.ps1 -RunConsumer -KeepConsumer` provides the
 isolated package consumer used for live validation. The 2026-08-11 recorded VS 2026
 18.7.1 check proved packaged context commands and Ribbon Editor; it is historical evidence.
+
+## Toolbox discovery and placement
+
+The [package manifest](../RibbonKit/tools/VisualStudioToolsManifest.xml) declares
+the authoring list under **RibbonKit** in Visual Studio and Blend. It includes
+the ribbon/commands, Backstage and application-menu families, options/customization
+pages, messages, group separators and the preview MDI host. Windows/dialog roots,
+generated hosts, layout panels, automatic ScreenTips and nonvisual definitions
+stay outside that list. See the reviewed
+[type/parent matrix](../../docs/17-TOOLBOX-ITEM-DEFINITION-PLAN.md#reviewed-include-matrix)
+for individual destinations.
+
+Package and project references have separate discovery paths:
+
+- A **package reference** uses `tools/VisualStudioToolsManifest.xml` for its
+  allowlist. Archive/type/consumer validation does not prove the Visual Studio
+  Toolbox loaded it; use a fresh session and the newly built package.
+- A **project reference** reflects public controls. DesignTools now registers
+  matching ToolboxBrowsable visibility intent and RibbonKit tab/category metadata
+  by type-name string. The manifest itself does not filter project references.
+  The actual result depends on the designer loading the updated DesignTools DLL
+  and honoring its metadata; record that result separately from package discovery.
+  If helpers remain visible, inspect cache/loading before assuming this metadata
+  is supported by that discovery path. Public runtime types remain available.
+
+Discovery does not route a drop into a semantic property. Application menus and
+Backstage belong on their Ribbon singleton properties; menu/pane/footer entries,
+options pages and messages belong in their matching collections/content slots.
+Use the existing semantic Ribbon Editor/context actions or property-element XAML
+when a direct drop cannot choose that slot. No ParentAdapter was added by the
+definition refresh. Customization pages require the host's explicit Ribbon and
+baseline assignments; MdiContainer requires host documents. No application
+bindings, event handlers or persistence are guessed.
+
+This discovery slice preserves the existing creation/default/undo behavior below.
+New starter defaults and missing Add actions are subsequent bounded work in the
+Toolbox plan. A disabled runtime feature does not remove authored types/settings
+from the Toolbox.
 
 ## Editor behavior
 
@@ -174,9 +213,12 @@ than aborting the editor. Check the latest error after reproducing a failure. Lo
 is currently enabled by default in code; this guide does not claim a release-time gate
 has disabled it.
 
-The package toolbox manifest filters authorable controls. Project-reference consumers
-can still see reflected public controls; package-only filtering is not evidence about
-the in-solution Toolbox. Consult the manifest instead of maintaining a duplicate count.
+The package manifest filters authorable controls. Matching project-reference
+metadata is an integration intent until checked in the active designer host;
+package filtering alone is not evidence about the in-solution Toolbox. Consult
+the manifest instead of maintaining a duplicate count. A locked DesignTools DLL
+may leave a successful build's deployed copy stale: close Visual Studio, rebuild
+in the normal configuration, and compare deployment copies before live review.
 
 Known/deferred boundaries: no floating smart-tag glyph in the isolated designer;
 no general scalar reset/icon-clear action (remove the XAML attribute); no ParentAdapter

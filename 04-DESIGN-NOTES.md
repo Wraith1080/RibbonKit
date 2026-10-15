@@ -999,6 +999,10 @@ technical evidence warrants them; preserve existing dated records.
 
 [Default-true capability, independent user permissions, binding preservation and locked import scopes](docs/history/library/15-feature-availability.md#3256-ribbon-capability-and-user-operation-policy--2026-10-15).
 
+### 3.257 Toolbox definitions and discovery metadata — 2026-10-15
+
+[Reviewed authoring list, separate package/project discovery, metadata contracts and cache/deployment pitfalls](docs/history/library/02-designer-and-context-menus.md#3257-toolbox-definitions-and-discovery-metadata--2026-10-15).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.
