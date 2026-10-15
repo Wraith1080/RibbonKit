@@ -88,8 +88,11 @@ fine-grained tab/group permissions are deferred, not part of this implementation
 
 ## Verification and acceptance
 
-F2 is implemented; automated evidence below is assembled from one full Release
-run and final affected checks. F3 live/native acceptance remains open.
+F2 is implemented. User review on 2026-10-15 confirmed the eight original gates
+were working properly and the reported post-implementation binding problems were
+resolved. That behavior is accepted within the user's reviewed scope. Automated
+evidence below remains assembled from one full Release run and final affected
+checks; the specific designer/DPI/reduced-motion gates below remain separate.
 
 Recorded 2026-10-15 on `codex/api-and-component-updates`, based on clean `2f8f525`:
 
@@ -140,7 +143,7 @@ eligibility, inert/re-enabled drafts, independent import scopes, popup return an
 focus. The independent public-only consumer checks two Ribbons across Office2010,
 Office2024Flat and Crystal, both directions and densities (12 combinations).
 
-Live Visual Studio property/edit/undo/reload acceptance, physical input, genuine
+Live Visual Studio property/edit/undo/reload acceptance, genuine
 mixed-monitor DPI and OS reduced-motion review remain separate gates. Existing
 Simplified acceptance and assembled end-of-feature evidence are retained in
 [plan 15](15-SIMPLIFIED-RIBBON-PLAN.md#end-of-feature-validation-and-repairs--2026-10-14).
