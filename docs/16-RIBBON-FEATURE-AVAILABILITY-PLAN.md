@@ -106,6 +106,7 @@ Recorded 2026-10-15 on `codex/api-and-component-updates`, based on clean `2f8f52
 | Normal Debug review output | Full Debug solution build passed, 0 warnings/errors, including Showcase and Writer; no task-specific configuration/output and no application launch/live review |
 | Showcase selector binding repair, 2026-10-15, after `977c3e6` | Reproduced all three reported ElementName source errors before View was realized. Explicit-owner bindings passed 7/7 focused Release cases: validated binding-trace regression across detached, Classic/Simplified and QAT presentations with disable/re-enable, plus the six existing density/QAT cases. Normal Debug Showcase build succeeded, 0 errors and 12 designer-copy warnings because Visual Studio held DesignTools.dll; no process was closed. No runtime/public API change or live/native acceptance claim |
 | Context-menu binding repair, 2026-10-15, after `f5343d7` | Reproduced both reported MenuItem alignment errors through Showcase's routed right-click path with CanUserCustomizeRibbon disabled. Conditional entries are now created only when included. 12/12 focused Release regressions passed, including six Showcase policy cases over background/command menus and re-enable, plus existing stale-handler/user-add checks. Independent consumer passed 12 theme/direction/density combinations with validated empty menu binding traces, re-enable and empty-menu suppression. Normal Release net8/net9 library build passed, 0 warnings/errors. Normal Debug Showcase build succeeded, 0 errors and the same 12 Visual Studio designer-copy lock warnings. No new public API; physical input remains separate |
+| RTL lab preview follow-up, 2026-10-15, after `d04b4ab` | Reproduced all three reported ElementName errors during window startup. Explicit-source preview bindings passed 2/2 focused Release cases: validated empty binding trace with live font/style/sample updates before tab realization, direct and QAT selection, LTR/RTL and Classic/Simplified; existing RTL native gallery reopen regression also passed. Normal Debug Showcase build succeeded, 0 errors and the same 12 Visual Studio designer-copy lock warnings. Host wiring only, no runtime/public API change; original bindings predate feature flags, but first occurrence of the errors is unestablished |
 
 Logs are `TestResults/feature-policy-20261015-*.log`; full and final-selection TRX
 files are in `TestResults/feature-policy-20261015/`. Passed projects/scopes were
@@ -127,6 +128,11 @@ The six Showcase trace files are in the normal Release runtime test output's
 normal Release output's `TestResults/feature-availability/`. All post-fix traces
 were empty. This bounded library fix retained prior full-suite, visual and
 package evidence without repeating those gates.
+
+The RTL preview logs are `TestResults/rtl-selection-preview-*-20261015.log`;
+retained before/after traces are `TestResults/rtl-selection-preview-*-trace-20261015.txt`.
+The post-fix trace is empty. No independent-consumer or broader gates were
+repeated for these host-owned preview bindings; existing evidence remains retained.
 
 New focused coverage includes defaults, binding/source preservation, explicit
 scopes/reparenting, nested Ribbons, direct/stale menu handlers, detached page

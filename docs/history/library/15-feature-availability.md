@@ -93,3 +93,11 @@ CanUserCustomizeRibbon disabled. Gate construction for every conditional entry
 and retain click-time permission checks. Existing themed menu styles, alignment
 defaults, order and re-enable behavior remain intact.
 
+The RTL lab's three selection-preview bindings have the same detached-tab
+namescope boundary as the main window selectors. Bind the font label, style
+label and sample FontFamily directly to the source controls after
+InitializeComponent. Keep their live OneWay selection updates while inactive or
+selected through QAT. The original ElementName declarations date to `71965f1`
+(2026-10-09), before feature flags; that establishes the age of the declarations,
+not when the diagnostics first appeared. The repair is host-owned preview wiring.
+
