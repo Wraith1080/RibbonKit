@@ -1091,6 +1091,7 @@ internal sealed class RibbonEditorWindow : Window
         IconRef,
         Color,
         AttachedText,
+        AttachedChoiceBool,
     }
 
     private sealed class PropSpec
@@ -1239,6 +1240,14 @@ internal sealed class RibbonEditorWindow : Window
     private static readonly PropSpec KeyTipSpec =
         new PropSpec("Keys", "KeyTip (Alt access key)", EditorKind.AttachedText, attachedOwner: "RibbonKit.Controls.KeyTip");
 
+    private static readonly PropSpec SimplifiedPlacementSpec =
+        new PropSpec("SimplifiedPlacement", "Show in simplified ribbon", EditorKind.AttachedChoiceBool,
+            new[] { "Inline", "Overflow" }, attachedOwner: "RibbonKit.Controls.Ribbon");
+
+    private static readonly PropSpec SimplifiedLabelSpec =
+        new PropSpec("SimplifiedSize", "Show simplified label", EditorKind.AttachedChoiceBool,
+            new[] { "Medium", "Small" }, attachedOwner: "RibbonKit.Controls.Ribbon");
+
     private static PropSpec[] SpecsFor(NodeKind kind) => kind switch
     {
         NodeKind.Control => ControlSpecs,
@@ -1353,6 +1362,11 @@ internal sealed class RibbonEditorWindow : Window
             {
                 _propsPanel.Children.Add(BuildPropRow(node.Item, CommandIdSpec));
                 _propsPanel.Children.Add(BuildPropRow(node.Item, KeyTipSpec));
+                if (node.Kind == NodeKind.Control && DesignModel.IsSimplifiedCommand(node.Item))
+                {
+                    _propsPanel.Children.Add(BuildPropRow(node.Item, SimplifiedPlacementSpec));
+                    _propsPanel.Children.Add(BuildPropRow(node.Item, SimplifiedLabelSpec));
+                }
                 any = true;
             }
 
@@ -1390,12 +1404,31 @@ internal sealed class RibbonEditorWindow : Window
             EditorKind.IconRef => BuildIconEditor(item, spec),
             EditorKind.Color => BuildColorEditor(item, spec),
             EditorKind.AttachedText => BuildAttachedTextEditor(item, spec),
+            EditorKind.AttachedChoiceBool => BuildAttachedChoiceBoolEditor(item, spec),
             _ => BuildTextEditor(item, spec),
         };
         Grid.SetColumn(editor, 1);
         row.Children.Add(editor);
 
         return row;
+    }
+
+    private UIElement BuildAttachedChoiceBoolEditor(ModelItem item, PropSpec spec)
+    {
+        var check = new CheckBox
+        {
+            IsChecked = DesignModel.GetAttachedString(item, spec.AttachedOwner!, spec.Name) == spec.EnumValues![0],
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        void Commit()
+        {
+            if (!_syncingProps)
+                DesignModel.SetAttached(item, spec.AttachedOwner!, spec.Name,
+                    spec.EnumValues![check.IsChecked == true ? 0 : 1]);
+        }
+        check.Checked += (_, _) => Commit();
+        check.Unchecked += (_, _) => Commit();
+        return check;
     }
 
     private UIElement BuildTextEditor(ModelItem item, PropSpec spec)

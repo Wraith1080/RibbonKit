@@ -1131,6 +1131,9 @@ public sealed class VisualSnapshotTests
     private static FrameworkElement CreateQatScene(FlowDirection flowDirection,
         bool minimized = false, bool message = false, bool tabRow = false)
     {
+        // Focused selections can reach this disconnected fixture before any
+        // native window initializes WPF's text and pixel-rounding behavior.
+        InitializeWindowRendering();
         var root = (Grid)CreateMessageBarStackScene(flowDirection);
         var ribbon = Assert.IsType<Ribbon>(Assert.Single(root.Children));
         ribbon.MessageBar!.Items.Clear();

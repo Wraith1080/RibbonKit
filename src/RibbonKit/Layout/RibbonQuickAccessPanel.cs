@@ -55,6 +55,8 @@ public class RibbonQuickAccessPanel : Panel
     /// <inheritdoc />
     protected override Size MeasureOverride(Size availableSize)
     {
+        if (ItemsControl.GetItemsOwner(this) is RibbonQuickAccessToolBar { IsSimplified: true } simplified)
+            return MeasureSimplified(availableSize, simplified);
         double natural = 0;
         double height = 0;
 
@@ -101,6 +103,51 @@ public class RibbonQuickAccessPanel : Panel
 
         UpdateOwner();
         return new Size(used, height);
+    }
+
+    private Size MeasureSimplified(Size availableSize, RibbonQuickAccessToolBar owner)
+    {
+        var visible = InternalChildren.Cast<UIElement>()
+            .Where(child => child.Visibility == Visibility.Visible).ToList();
+        foreach (UIElement child in visible) child.Measure(new Size(double.PositiveInfinity, availableSize.Height));
+        var inline = visible.Where(child => child is not RibbonGroupQuickAccessProxy and not RibbonGroupSeparator).ToList();
+        var preceding = new Dictionary<UIElement, RibbonGroupSeparator>();
+        RibbonGroupSeparator? section = null;
+        foreach (UIElement child in InternalChildren)
+        {
+            if (child is RibbonGroupSeparator separator) section = separator;
+            else if (section is not null) preceding[child] = section;
+        }
+        List<UIElement> WithSeparators()
+        {
+            var kept = new List<UIElement>();
+            RibbonGroup? previous = null;
+            foreach (UIElement child in inline)
+            {
+                if (child is not FrameworkElement element || !owner.SimplifiedGroups.TryGetValue(element, out RibbonGroup? group)) continue;
+                if (previous is not null && previous != group)
+                {
+                    var divider = preceding.GetValueOrDefault(child);
+                    if (divider is not null) kept.Add(divider);
+                }
+                kept.Add(child);
+                previous = group;
+            }
+            return kept;
+        }
+        var kept = WithSeparators();
+        foreach (UIElement child in inline.OrderBy(Ribbon.GetSimplifiedPriority)
+                     .ThenByDescending(child => InternalChildren.IndexOf(child)).ToArray())
+        {
+            if (kept.Sum(item => item.DesiredSize.Width) <= availableSize.Width) break;
+            inline.Remove(child);
+            kept = WithSeparators();
+        }
+        _overflow.Clear();
+        foreach (UIElement child in InternalChildren)
+            if (!kept.Contains(child)) _overflow.Add(child);
+        owner.OnOverflowChanged(this, _overflow.Any(child => child.Visibility == Visibility.Visible && child is not RibbonGroupSeparator));
+        return new Size(kept.Sum(child => child.DesiredSize.Width), kept.Count == 0 ? 0 : kept.Max(child => child.DesiredSize.Height));
     }
 
     /// <inheritdoc />

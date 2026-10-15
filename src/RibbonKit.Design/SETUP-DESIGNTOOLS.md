@@ -13,6 +13,7 @@ commands and Ribbon Editor; a floating smart-tag adorner is not supported.
 | `Metadata.cs`, `PropertyMetadata.cs` | String-type metadata registration and property descriptions |
 | `DesignModel.cs` | ModelItem edits, collection/attached-property handling and undo transactions |
 | `RibbonDefaultInitializer.cs`, `ContextMenuProviders.cs` | Toolbox starter content and context commands |
+| `SimplifiedCommandInitializer.cs` | Supported toolbox command defaults, shared with Model API creation |
 | `RibbonEditorWindow.cs`, `TabPreview.cs` | Structure editor and design-only preview coordination |
 
 The extension works through the Visual Studio Model API, not live .NET 8/9 control
@@ -57,6 +58,14 @@ The tree follows group items, panel children and supported combo/gallery/menu/Fi
 collections, not arbitrary visual Content graphs. Caption edits Header/Content/Tag
 as appropriate; stacks expose orientation. Type-aware editors cover sizing, ScreenTips,
 input state/width, contextual color, group reduction/launcher and File navigation fields.
+Supported command controls added through the toolbox, context commands or Ribbon
+Editor start inline in the simplified ribbon with their label shown. The editor's
+**Show in simplified ribbon** checkbox writes `Ribbon.SimplifiedPlacement` as
+Inline/Overflow; **Show simplified label** writes `Ribbon.SimplifiedSize` as
+Medium/Small. These are authored runtime settings, each with one undo operation.
+Existing authored values are preserved. Native editors and unsupported option or
+menu-entry types remain available through full-group flyouts. These creation
+defaults do not change unconfigured runtime commands' Overflow/Medium defaults.
 `Ribbon.CommandId` and `KeyTip.Keys` use type-qualified attached-property lookup; clearing
 the field removes the attribute. Enum/brush conversion errors are logged.
 

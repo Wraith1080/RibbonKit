@@ -810,7 +810,7 @@ public class CrystalContextualTests
             var utilityRim = FindUtilityRim(overflowButton)!;
             Assert.Equal(1d, utilityRim.Opacity);
             Assert.False(utilityRim.IsHitTestVisible);
-            Assert.Same(window.FindResource("RibbonKit.Brushes.Control.HoverBorder"), utilityRim.BorderBrush);
+            Assert.Same(window.FindResource("RibbonKit.Brushes.Utility.CheckedBorder"), utilityRim.BorderBrush);
             Assert.NotEmpty(qat.OverflowEntries);
             overflowButton.IsChecked = false;
             var compareUtility = (RibbonToggleButton)window.FindName("CompareToggle");
@@ -852,7 +852,8 @@ public class CrystalContextualTests
                 Sta.Drain();
                 dialog.UpdateLayout();
                 Assert.Same(window, dialog.Owner);
-                Assert.Equal(3, dialog.Pages.Count);
+                Assert.Equal(4, dialog.Pages.Count);
+                Assert.Single(dialog.Pages, entry => entry.Content is RibbonSimplifiedCustomizePage);
                 Assert.Same(dialog.Pages[1], dialog.SelectedPage);
                 var selectedNavigation = dialog.Pages[1];
                 Assert.Equal(Visibility.Visible,
@@ -896,17 +897,18 @@ public class CrystalContextualTests
                 Assert.IsType<DrawingBrush>(scrollBar.FindResource("RibbonKit.Brushes.ScrollBar.Thumb"));
                 Assert.Same(window.FindResource("RibbonKit.Brushes.Window.Background"),
                     dialog.FindResource("RibbonKit.Brushes.Window.Background"));
-                dialog.SelectedPage = dialog.Pages[2];
+                var quickAccessPage = dialog.Pages.Single(entry => entry.Content is RibbonQuickAccessPage);
+                dialog.SelectedPage = quickAccessPage;
                 Sta.Drain();
                 Assert.Same(ribbon, Assert.IsType<RibbonQuickAccessPage>(dialog.SelectedPage.Content).Ribbon);
                 Assert.Equal(Visibility.Collapsed,
                     ((Rectangle)selectedNavigation.Template.FindName("BottomMarker", selectedNavigation)).Visibility);
                 Assert.Equal(Visibility.Visible,
-                    ((Rectangle)dialog.Pages[2].Template.FindName("BottomMarker", dialog.Pages[2])).Visibility);
+                    ((Rectangle)quickAccessPage.Template.FindName("BottomMarker", quickAccessPage)).Visibility);
             }
             finally { dialog.Close(); }
             var quickAccessDialog = window.CreateCustomizationDialog(true);
-            Assert.Same(quickAccessDialog.Pages[2], quickAccessDialog.SelectedPage);
+            Assert.Same(quickAccessDialog.Pages.Single(entry => entry.Content is RibbonQuickAccessPage), quickAccessDialog.SelectedPage);
             quickAccessDialog.Close();
         }
         finally { window.Close(); Sta.ResetApplication(); }

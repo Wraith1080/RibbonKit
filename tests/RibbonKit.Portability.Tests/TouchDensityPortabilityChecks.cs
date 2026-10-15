@@ -217,11 +217,14 @@ internal static class TouchDensityPortabilityChecks
                     var overflowSplit = Descendants(popup.Child).OfType<RibbonSplitButton>().Single();
                     foreach (var control in new Control[] { overflowDropdown, overflowSplit })
                     {
-                        Assert.Equal(HorizontalAlignment.Left, control.HorizontalContentAlignment);
+                        // Dropdown rows stretch so their submenu arrow stays at the
+                        // trailing edge; split primary content remains start-aligned.
+                        var alignment = control is RibbonSplitButton ? HorizontalAlignment.Left : HorizontalAlignment.Stretch;
+                        Assert.Equal(alignment, control.HorizontalContentAlignment);
                         var primary = control is RibbonSplitButton ? Part<ButtonBase>(control, "PART_Primary")
                             : Part<ButtonBase>(control, "PART_Toggle");
                         var presenter = Part<ContentPresenter>(primary, "NativeContent");
-                        Assert.Equal(HorizontalAlignment.Left, presenter.HorizontalAlignment);
+                        Assert.Equal(alignment, presenter.HorizontalAlignment);
                         Assert.InRange(presenter.TranslatePoint(new Point(), primary).X, 0, 2);
                     }
                     SavePreview(Assert.IsAssignableFrom<FrameworkElement>(popup.Child), $"qat-{position}-touch-overflow");

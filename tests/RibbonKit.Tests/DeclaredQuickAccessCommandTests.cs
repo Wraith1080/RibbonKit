@@ -92,7 +92,10 @@ public sealed class DeclaredQuickAccessCommandTests
         ribbon.QuickAccessItems.Clear();
         Assert.Single(RibbonCommandCatalog.CollectAvailable(ribbon));
         group.Items.Remove(undo);
-        Assert.Same(undo.Icon, Assert.Single(RibbonCommandCatalog.CollectIcons(ribbon)));
+        var icons = RibbonCommandCatalog.CollectIcons(ribbon);
+        Assert.Equal(2, icons.Count);
+        Assert.Same(undo.Icon, Assert.Single(icons, icon => ReferenceEquals(icon, undo.Icon)));
+        Assert.Contains(RibbonCommandCatalog.DefaultGroupIcon(ribbon), icons);
     });
 
     [Fact]

@@ -464,7 +464,7 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <rk:RibbonSplitButton x:Name="PasteButton" Header="Paste" Size="Large" Layout="Vertical"
+                        <rk:RibbonSplitButton x:Name="PasteButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="100" Header="Paste" Size="Large" Layout="Vertical"
                                          Icon="{StaticResource Icon.WriterPaste}"
                                          LargeIcon="{StaticResource Icon.WriterPaste.Large}"
                                          rk:Ribbon.CommandId="Writer.Home.Clipboard.Paste" rk:KeyTip.Keys="PV"
@@ -480,11 +480,11 @@
                                                AutomationProperties.Name="Paste text only" />
                         </rk:RibbonSplitButton>
                         <StackPanel Grid.Column="1" Margin="4,0,0,0" VerticalAlignment="Center">
-                            <rk:RibbonButton x:Name="CutButton" Header="Cut" Size="Small" Icon="{StaticResource Icon.WriterCut}"
+                            <rk:RibbonButton x:Name="CutButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="70" Header="Cut" Size="Small" Icon="{StaticResource Icon.WriterCut}"
                                              rk:Ribbon.CommandId="Writer.Home.Clipboard.Cut" rk:KeyTip.Keys="CX"
                                              ScreenTipTitle="Cut" ScreenTipText="Remove the selected text and place it on the clipboard (Ctrl+X)."
                                              AutomationProperties.AutomationId="HomeCut" AutomationProperties.Name="Cut" />
-                            <rk:RibbonButton x:Name="CopyButton" Header="Copy" Size="Small" Icon="{StaticResource Icon.WriterCopy}"
+                            <rk:RibbonButton x:Name="CopyButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="75" Header="Copy" Size="Small" Icon="{StaticResource Icon.WriterCopy}"
                                              rk:Ribbon.CommandId="Writer.Home.Clipboard.Copy" rk:KeyTip.Keys="CP"
                                              ScreenTipTitle="Copy" ScreenTipText="Copy the selected text to the clipboard (Ctrl+C)."
                                              AutomationProperties.AutomationId="HomeCopy" AutomationProperties.Name="Copy" />
@@ -496,7 +496,7 @@
                                 AutomationProperties.AutomationId="FontGroup" AutomationProperties.Name="Font">
                     <StackPanel Margin="2,2,2,0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                            <rk:RibbonComboBox x:Name="FontFamilyCombo" InputWidth="128" IsEditable="True"
+                            <rk:RibbonComboBox x:Name="FontFamilyCombo" Icon="{StaticResource Icon.WriterFont}" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="100" InputWidth="128" IsEditable="True"
                                                IsTextSearchEnabled="True"
                                                TextSearch.TextPath="DisplayName"
                                                ScrollViewer.CanContentScroll="True"
@@ -512,7 +512,7 @@
                                     </DataTemplate>
                                 </rk:RibbonComboBox.ItemTemplate>
                             </rk:RibbonComboBox>
-                            <rk:RibbonComboBox x:Name="FontSizeCombo" InputWidth="48" Margin="4,0,0,0" IsEditable="True"
+                            <rk:RibbonComboBox x:Name="FontSizeCombo" Icon="{StaticResource Icon.WriterFont}" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="100" InputWidth="48" Margin="4,0,0,0" IsEditable="True"
                                                rk:Ribbon.CommandId="Writer.Home.Font.Size" rk:KeyTip.Keys="FS"
                                                ScreenTipTitle="Font size" ScreenTipText="Choose the text size in points."
                                                AutomationProperties.AutomationId="FontSize" AutomationProperties.Name="Font size">
@@ -535,15 +535,15 @@
                             </rk:RibbonComboBox>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
-                            <rk:RibbonToggleButton x:Name="BoldButton" Header="Bold" Size="Small" Icon="{StaticResource Icon.WriterBold}"
+                            <rk:RibbonToggleButton x:Name="BoldButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="100" Header="Bold" Size="Small" Icon="{StaticResource Icon.WriterBold}"
                                                    rk:Ribbon.CommandId="Writer.Home.Font.Bold" rk:KeyTip.Keys="FB"
                                                    ScreenTipTitle="Bold" ScreenTipText="Make the selected text bold (Ctrl+B)."
                                                    AutomationProperties.AutomationId="HomeBold" AutomationProperties.Name="Bold" />
-                            <rk:RibbonToggleButton x:Name="ItalicButton" Header="Italic" Size="Small" Icon="{StaticResource Icon.WriterItalic}"
+                            <rk:RibbonToggleButton x:Name="ItalicButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="100" Header="Italic" Size="Small" Icon="{StaticResource Icon.WriterItalic}"
                                                    rk:Ribbon.CommandId="Writer.Home.Font.Italic" rk:KeyTip.Keys="FI"
                                                    ScreenTipTitle="Italic" ScreenTipText="Italicize the selected text (Ctrl+I)."
                                                    AutomationProperties.AutomationId="HomeItalic" AutomationProperties.Name="Italic" />
-                            <rk:RibbonToggleButton x:Name="UnderlineButton" Header="Underline" Size="Small" Icon="{StaticResource Icon.WriterUnderline}"
+                            <rk:RibbonToggleButton x:Name="UnderlineButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="100" Header="Underline" Size="Small" Icon="{StaticResource Icon.WriterUnderline}"
                                                    rk:Ribbon.CommandId="Writer.Home.Font.Underline" rk:KeyTip.Keys="FU"
                                                    ScreenTipTitle="Underline" ScreenTipText="Underline the selected text (Ctrl+U)."
                                                    AutomationProperties.AutomationId="HomeUnderline" AutomationProperties.Name="Underline" />
@@ -559,7 +559,7 @@
                                              rk:Ribbon.CommandId="Writer.Home.Font.ClearFormatting" rk:KeyTip.Keys="FC"
                                              ScreenTipTitle="Clear Formatting" ScreenTipText="Remove direct character formatting while retaining paragraph layout."
                                              AutomationProperties.AutomationId="ClearFormatting" AutomationProperties.Name="Clear Formatting" />
-                            <rk:RibbonSplitButton x:Name="TextColorButton" Header="Text Color" Size="Small" Icon="{StaticResource Icon.WriterTextColor}"
+                            <rk:RibbonSplitButton x:Name="TextColorButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="85" Header="Text Color" Size="Small" Icon="{StaticResource Icon.WriterTextColor}"
                                                      rk:Ribbon.CommandId="Writer.Home.Font.TextColor" rk:KeyTip.Keys="TC"
                                                      ScreenTipTitle="Text Color" ScreenTipText="Apply the last-used color or choose another solid color."
                                                      AutomationProperties.AutomationId="TextColor" AutomationProperties.Name="Text Color">
@@ -567,7 +567,7 @@
                                 <Separator />
                                 <rk:RibbonMenuItem x:Name="TextColorMoreColors" Header="More Colors..." rk:Ribbon.CommandId="Writer.Home.Font.TextColor.More" rk:KeyTip.Keys="M" AutomationProperties.AutomationId="TextColorMoreColors" AutomationProperties.Name="More text colors" />
                             </rk:RibbonSplitButton>
-                            <rk:RibbonSplitButton x:Name="HighlightColorButton" Header="Highlight" Size="Small" Icon="{StaticResource Icon.WriterHighlight}"
+                            <rk:RibbonSplitButton x:Name="HighlightColorButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="85" Header="Highlight" Size="Small" Icon="{StaticResource Icon.WriterHighlight}"
                                                      rk:Ribbon.CommandId="Writer.Home.Font.Highlight" rk:KeyTip.Keys="TH"
                                                      ScreenTipTitle="Text Highlight" ScreenTipText="Apply the last-used highlight or choose another solid color."
                                                      AutomationProperties.AutomationId="HighlightColor" AutomationProperties.Name="Text Highlight">
@@ -583,29 +583,29 @@
                                 AutomationProperties.AutomationId="ParagraphGroup" AutomationProperties.Name="Paragraph">
                     <StackPanel Margin="2,2,2,0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                            <rk:RibbonToggleButton x:Name="AlignLeftButton" Header="Align Left" Size="Small" Icon="{StaticResource Icon.WriterAlignLeft}"
+                            <rk:RibbonToggleButton x:Name="AlignLeftButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="60" Header="Align Left" Size="Small" Icon="{StaticResource Icon.WriterAlignLeft}"
                                                    rk:Ribbon.CommandId="Writer.Home.Paragraph.AlignLeft" rk:KeyTip.Keys="AL"
                                                    ScreenTipTitle="Align Left" ScreenTipText="Align the selected paragraphs to the left."
                                                    AutomationProperties.AutomationId="AlignLeft" AutomationProperties.Name="Align Left" />
-                            <rk:RibbonToggleButton x:Name="AlignCenterButton" Header="Center" Size="Small" Icon="{StaticResource Icon.WriterAlignCenter}"
+                            <rk:RibbonToggleButton x:Name="AlignCenterButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="60" Header="Center" Size="Small" Icon="{StaticResource Icon.WriterAlignCenter}"
                                                    rk:Ribbon.CommandId="Writer.Home.Paragraph.AlignCenter" rk:KeyTip.Keys="AC"
                                                    ScreenTipTitle="Center" ScreenTipText="Center the selected paragraphs."
                                                    AutomationProperties.AutomationId="AlignCenter" AutomationProperties.Name="Center" />
-                            <rk:RibbonToggleButton x:Name="AlignRightButton" Header="Align Right" Size="Small" Icon="{StaticResource Icon.WriterAlignRight}"
+                            <rk:RibbonToggleButton x:Name="AlignRightButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="60" Header="Align Right" Size="Small" Icon="{StaticResource Icon.WriterAlignRight}"
                                                    rk:Ribbon.CommandId="Writer.Home.Paragraph.AlignRight" rk:KeyTip.Keys="AR"
                                                    ScreenTipTitle="Align Right" ScreenTipText="Align the selected paragraphs to the right."
                                                    AutomationProperties.AutomationId="AlignRight" AutomationProperties.Name="Align Right" />
-                            <rk:RibbonToggleButton x:Name="AlignJustifyButton" Header="Justify" Size="Small" Icon="{StaticResource Icon.WriterJustify}"
+                            <rk:RibbonToggleButton x:Name="AlignJustifyButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="60" Header="Justify" Size="Small" Icon="{StaticResource Icon.WriterJustify}"
                                                    rk:Ribbon.CommandId="Writer.Home.Paragraph.AlignJustify" rk:KeyTip.Keys="AJ"
                                                    ScreenTipTitle="Justify" ScreenTipText="Justify the selected paragraphs."
                                                    AutomationProperties.AutomationId="AlignJustify" AutomationProperties.Name="Justify" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
-                            <rk:RibbonToggleButton x:Name="BulletsButton" Header="Bullets" Size="Small" Icon="{StaticResource Icon.WriterBullets}"
+                            <rk:RibbonToggleButton x:Name="BulletsButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="65" Header="Bullets" Size="Small" Icon="{StaticResource Icon.WriterBullets}"
                                                    rk:Ribbon.CommandId="Writer.Home.Paragraph.Bullets" rk:KeyTip.Keys="BL"
                                                    ScreenTipTitle="Bullets" ScreenTipText="Toggle a bulleted list for the selected paragraphs."
                                                    AutomationProperties.AutomationId="ParagraphBullets" AutomationProperties.Name="Bullets" />
-                            <rk:RibbonToggleButton x:Name="NumberingButton" Header="Numbering" Size="Small" Icon="{StaticResource Icon.WriterNumbering}"
+                            <rk:RibbonToggleButton x:Name="NumberingButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="65" Header="Numbering" Size="Small" Icon="{StaticResource Icon.WriterNumbering}"
                                                    rk:Ribbon.CommandId="Writer.Home.Paragraph.Numbering" rk:KeyTip.Keys="NU"
                                                    ScreenTipTitle="Numbering" ScreenTipText="Toggle a numbered list for the selected paragraphs."
                                                    AutomationProperties.AutomationId="ParagraphNumbering" AutomationProperties.Name="Numbering" />
@@ -634,7 +634,7 @@
                 <rk:RibbonGroup x:Name="EditingGroup" Header="Editing" rk:Ribbon.CommandId="Writer.Home.Editing" rk:KeyTip.Keys="ED" Icon="{StaticResource Icon.WriterFind}" AutomationProperties.AutomationId="EditingGroup" AutomationProperties.Name="Editing">
                     <StackPanel Margin="2,2,2,0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                            <rk:RibbonButton x:Name="FindButton" Header="Find" Size="Small" Icon="{StaticResource Icon.WriterFind}"
+                            <rk:RibbonButton x:Name="FindButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="80" Header="Find" Size="Small" Icon="{StaticResource Icon.WriterFind}"
                                              rk:Ribbon.CommandId="Writer.Home.Editing.Find" rk:KeyTip.Keys="FD"
                                              ScreenTipTitle="Find" ScreenTipText="Find text in the current document (Ctrl+F)."
                                              AutomationProperties.AutomationId="EditingFind" AutomationProperties.Name="Find" />
@@ -662,7 +662,7 @@
                                 rk:KeyTip.Keys="TB" Icon="{StaticResource Icon.WriterTable}"
                                 AutomationProperties.AutomationId="InsertTablesGroup" AutomationProperties.Name="Table"
                                 AutomationProperties.HelpText="Insert a native table whose supported structure and formatting are preserved in RibbonKit Writer files.">
-                    <rk:InRibbonGallery x:Name="TableGridPicker" Width="278" Height="54"
+                    <rk:InRibbonGallery x:Name="TableGridPicker" Header="Table" Icon="{StaticResource Icon.WriterTable}" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="100" Width="278" Height="54"
                                         FlowDirection="LeftToRight"
                                         SelectionChanged="OnTableGridSelectionChanged"
                                         ItemPreview="OnTableGridItemPreview"
@@ -681,7 +681,7 @@
                 <rk:RibbonGroup x:Name="InsertIllustrationsGroup" Header="Illustrations" rk:Ribbon.CommandId="Writer.Insert.Illustrations"
                                 rk:KeyTip.Keys="IL" Icon="{StaticResource Icon.WriterImage}"
                                 AutomationProperties.AutomationId="InsertIllustrationsGroup" AutomationProperties.Name="Illustrations">
-                    <rk:RibbonButton x:Name="InsertPictureButton" Header="Picture" Size="Large"
+                    <rk:RibbonButton x:Name="InsertPictureButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="90" Header="Picture" Size="Large"
                                      SizeDefinition="Large, Medium, Small"
                                      Icon="{StaticResource Icon.WriterImage}" LargeIcon="{StaticResource Icon.WriterImage}"
                                      Click="OnInsertPictureClick" rk:Ribbon.CommandId="Writer.Insert.Picture" rk:KeyTip.Keys="PI"
@@ -691,7 +691,7 @@
                 <rk:RibbonGroup x:Name="InsertLinksGroup" Header="Links" rk:Ribbon.CommandId="Writer.Insert.Links"
                                 rk:KeyTip.Keys="LK" Icon="{StaticResource Icon.WriterHyperlink}"
                                 AutomationProperties.AutomationId="InsertLinksGroup" AutomationProperties.Name="Links">
-                    <rk:RibbonButton x:Name="InsertHyperlinkButton" Header="Hyperlink" Size="Large"
+                    <rk:RibbonButton x:Name="InsertHyperlinkButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="80" Header="Hyperlink" Size="Large"
                                      SizeDefinition="Large, Medium, Small"
                                      Icon="{StaticResource Icon.WriterHyperlink}" LargeIcon="{StaticResource Icon.WriterHyperlink}"
                                      Click="OnInsertHyperlinkClick" rk:Ribbon.CommandId="Writer.Insert.Hyperlink" rk:KeyTip.Keys="HY"
@@ -717,7 +717,7 @@
                 <rk:RibbonGroup x:Name="TableRowsColumnsGroup" Header="Rows &amp; Columns" rk:Ribbon.CommandId="Writer.TableTools.RowsColumns"
                                 rk:KeyTip.Keys="RC" Icon="{StaticResource Icon.WriterColumns}"
                                 AutomationProperties.AutomationId="TableRowsColumnsGroup" AutomationProperties.Name="Rows and Columns">
-                    <rk:RibbonButton x:Name="InsertTableRowAboveButton" Header="Row Above" Size="Large" SizeDefinition="Large, Medium, Small"
+                    <rk:RibbonButton x:Name="InsertTableRowAboveButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="95" Header="Row Above" Size="Large" SizeDefinition="Large, Medium, Small"
                                      Icon="{StaticResource Icon.WriterAddRowAbove}" LargeIcon="{StaticResource Icon.WriterAddRowAbove}"
                                      Click="OnInsertTableRowAboveClick" rk:Ribbon.CommandId="Writer.TableTools.Rows.InsertAbove" rk:KeyTip.Keys="RA"
                                      ScreenTipTitle="Insert Row Above" ScreenTipText="Insert one row above the current table cell."
@@ -727,7 +727,7 @@
                                      Click="OnInsertTableRowBelowClick" rk:Ribbon.CommandId="Writer.TableTools.Rows.InsertBelow" rk:KeyTip.Keys="RB"
                                      ScreenTipTitle="Insert Row Below" ScreenTipText="Insert one row below the current table cell."
                                      AutomationProperties.AutomationId="TableInsertRowBelow" AutomationProperties.Name="Insert row below" />
-                    <rk:RibbonButton x:Name="InsertTableColumnLeftButton" Header="Column Left" Size="Large" SizeDefinition="Large, Medium, Small"
+                    <rk:RibbonButton x:Name="InsertTableColumnLeftButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="90" Header="Column Left" Size="Large" SizeDefinition="Large, Medium, Small"
                                      Icon="{StaticResource Icon.WriterAddColumnLeft}" LargeIcon="{StaticResource Icon.WriterAddColumnLeft}"
                                      Click="OnInsertTableColumnLeftClick" rk:Ribbon.CommandId="Writer.TableTools.Columns.InsertLeft" rk:KeyTip.Keys="CL"
                                      ScreenTipTitle="Insert Column Left" ScreenTipText="Insert one column to the left of the current table cell."
@@ -737,12 +737,12 @@
                                      Click="OnInsertTableColumnRightClick" rk:Ribbon.CommandId="Writer.TableTools.Columns.InsertRight" rk:KeyTip.Keys="CR"
                                      ScreenTipTitle="Insert Column Right" ScreenTipText="Insert one column to the right of the current table cell."
                                      AutomationProperties.AutomationId="TableInsertColumnRight" AutomationProperties.Name="Insert column right" />
-                    <rk:RibbonButton x:Name="DeleteTableRowButton" Header="Delete Row" Size="Large" SizeDefinition="Large, Medium, Small"
+                    <rk:RibbonButton x:Name="DeleteTableRowButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="80" Header="Delete Row" Size="Large" SizeDefinition="Large, Medium, Small"
                                      Icon="{StaticResource Icon.WriterDeleteRow}" LargeIcon="{StaticResource Icon.WriterDeleteRow}"
                                      Click="OnDeleteTableRowClick" rk:Ribbon.CommandId="Writer.TableTools.Rows.Delete" rk:KeyTip.Keys="DR"
                                      ScreenTipTitle="Delete Row" ScreenTipText="Delete the row containing the current table cell."
                                      AutomationProperties.AutomationId="TableDeleteRow" AutomationProperties.Name="Delete row" />
-                    <rk:RibbonButton x:Name="DeleteTableColumnButton" Header="Delete Column" Size="Large" SizeDefinition="Large, Medium, Small"
+                    <rk:RibbonButton x:Name="DeleteTableColumnButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="80" Header="Delete Column" Size="Large" SizeDefinition="Large, Medium, Small"
                                      Icon="{StaticResource Icon.WriterDeleteColumn}" LargeIcon="{StaticResource Icon.WriterDeleteColumn}"
                                      Click="OnDeleteTableColumnClick" rk:Ribbon.CommandId="Writer.TableTools.Columns.Delete" rk:KeyTip.Keys="DC"
                                      ScreenTipTitle="Delete Column" ScreenTipText="Delete the column containing the current table cell."
@@ -751,12 +751,12 @@
                 <rk:RibbonGroup x:Name="TableMergeGroup" Header="Merge" rk:Ribbon.CommandId="Writer.TableTools.Merge"
                                 rk:KeyTip.Keys="ME" Icon="{StaticResource Icon.WriterMergeCells}"
                                 AutomationProperties.AutomationId="TableMergeGroup" AutomationProperties.Name="Merge">
-                    <rk:RibbonButton x:Name="MergeTableCellsButton" Header="Merge Cells" Size="Large" SizeDefinition="Large, Medium, Small"
+                    <rk:RibbonButton x:Name="MergeTableCellsButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="70" Header="Merge Cells" Size="Large" SizeDefinition="Large, Medium, Small"
                                      Icon="{StaticResource Icon.WriterMergeCells}" LargeIcon="{StaticResource Icon.WriterMergeCells}"
                                      Click="OnMergeTableCellsClick" rk:Ribbon.CommandId="Writer.TableTools.MergeCells" rk:KeyTip.Keys="MC"
                                      ScreenTipTitle="Merge Cells" ScreenTipText="Merge the selected rectangular table cells into one cell."
                                      AutomationProperties.AutomationId="TableMergeCells" AutomationProperties.Name="Merge cells" />
-                    <rk:RibbonButton x:Name="SplitTableCellButton" Header="Split Cell" Size="Large" SizeDefinition="Large, Medium, Small"
+                    <rk:RibbonButton x:Name="SplitTableCellButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="70" Header="Split Cell" Size="Large" SizeDefinition="Large, Medium, Small"
                                      Icon="{StaticResource Icon.WriterSplitCells}" LargeIcon="{StaticResource Icon.WriterSplitCells}"
                                      Click="OnSplitTableCellClick" rk:Ribbon.CommandId="Writer.TableTools.SplitCell" rk:KeyTip.Keys="SC"
                                      ScreenTipTitle="Split Cell" ScreenTipText="Split the spanned cell into its logical rows and columns."
@@ -804,7 +804,7 @@
                 <rk:RibbonGroup x:Name="TableAlignmentGroup" Header="Alignment" rk:Ribbon.CommandId="Writer.TableTools.Alignment"
                                 rk:KeyTip.Keys="AL" Icon="{StaticResource Icon.WriterAlignCenter}"
                                 AutomationProperties.AutomationId="TableAlignmentGroup" AutomationProperties.Name="Alignment">
-                    <rk:RibbonDropDownButton x:Name="TableAlignmentButton" Header="Cell Alignment" Size="Large"
+                    <rk:RibbonDropDownButton x:Name="TableAlignmentButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="60" Header="Cell Alignment" Size="Large"
                                              SizeDefinition="Large, Medium, Small"
                                              Icon="{StaticResource Icon.WriterAlignCenter}" LargeIcon="{StaticResource Icon.WriterAlignCenter}"
                                              rk:Ribbon.CommandId="Writer.TableTools.Alignment.Cell" rk:KeyTip.Keys="CA"
@@ -840,7 +840,7 @@
                                 rk:KeyTip.Keys="DE" Icon="{StaticResource Icon.WriterBorders}"
                                 AutomationProperties.AutomationId="TableDesignGroup" AutomationProperties.Name="Design"
                                 AutomationProperties.HelpText="Restrained border and background presets only; full table styles are deferred.">
-                    <rk:RibbonDropDownButton x:Name="TableBordersButton" Header="Borders" Size="Large"
+                    <rk:RibbonDropDownButton x:Name="TableBordersButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="60" Header="Borders" Size="Large"
                                              SizeDefinition="Large, Medium, Small"
                                              Icon="{StaticResource Icon.WriterBorders}" LargeIcon="{StaticResource Icon.WriterBorders}"
                                              rk:Ribbon.CommandId="Writer.TableTools.Design.Borders" rk:KeyTip.Keys="BO"
@@ -896,7 +896,7 @@
                                           ScreenTipTitle="Picture Height" ScreenTipText="Enter a height in device-independent pixels, then choose Apply Size."
                                           AutomationProperties.AutomationId="PictureHeight" AutomationProperties.Name="Picture height" />
                     </Grid>
-                    <rk:RibbonButton x:Name="ApplyPictureSizeButton" Header="Apply Size" Size="Large" SizeDefinition="Large, Medium, Small"
+                    <rk:RibbonButton x:Name="ApplyPictureSizeButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="100" Header="Apply Size" Size="Large" SizeDefinition="Large, Medium, Small"
                                      Icon="{StaticResource Icon.WriterPageSize}" LargeIcon="{StaticResource Icon.WriterPageSize}"
                                      Click="OnApplyPictureSizeClick" rk:Ribbon.CommandId="Writer.PictureTools.Size.Apply" rk:KeyTip.Keys="A"
                                      ScreenTipTitle="Apply Picture Size" ScreenTipText="Commit the entered picture dimensions as one Undo unit."
@@ -905,7 +905,7 @@
                 <rk:RibbonGroup x:Name="PictureActionsGroup" Header="Picture" rk:Ribbon.CommandId="Writer.PictureTools.Actions"
                                 rk:KeyTip.Keys="AC" Icon="{StaticResource Icon.WriterImage}"
                                 AutomationProperties.AutomationId="PictureActionsGroup" AutomationProperties.Name="Picture actions">
-                    <rk:RibbonButton x:Name="RemoveSelectedPictureButton" Header="Remove Picture" Size="Large" SizeDefinition="Large, Medium, Small"
+                    <rk:RibbonButton x:Name="RemoveSelectedPictureButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="80" Header="Remove Picture" Size="Large" SizeDefinition="Large, Medium, Small"
                                      Icon="{StaticResource Icon.WriterDelete}" LargeIcon="{StaticResource Icon.WriterDelete}"
                                      Click="OnRemoveSelectedPictureClick" rk:Ribbon.CommandId="Writer.PictureTools.Remove" rk:KeyTip.Keys="R"
                                      ScreenTipTitle="Remove Picture" ScreenTipText="Remove the selected picture. Undo restores it."
@@ -917,7 +917,7 @@
                 <rk:RibbonGroup x:Name="PageSetupGroup" Header="Page Setup" rk:Ribbon.CommandId="Writer.Page.Setup" rk:KeyTip.Keys="PS"
                                 Icon="{StaticResource Icon.WriterPageSize}"
                                 AutomationProperties.AutomationId="PageSetupGroup" AutomationProperties.Name="Page Setup">
-                    <rk:RibbonDropDownButton x:Name="PaperSizeButton" Header="Paper Size" Size="Large"
+                    <rk:RibbonDropDownButton x:Name="PaperSizeButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="100" Header="Paper Size" Size="Large"
                                                  Icon="{StaticResource Icon.WriterPageSize}"
                                                  LargeIcon="{StaticResource Icon.WriterPageSize}"
                                                  rk:Ribbon.CommandId="Writer.Page.Size" rk:KeyTip.Keys="SZ"
@@ -933,7 +933,7 @@
                                                rk:Ribbon.CommandId="Writer.Page.Size.Legal" rk:KeyTip.Keys="G"
                                                AutomationProperties.AutomationId="PaperSizeLegal" AutomationProperties.Name="Legal paper" />
                     </rk:RibbonDropDownButton>
-                    <rk:RibbonDropDownButton x:Name="OrientationButton" Header="Orientation" Size="Large"
+                    <rk:RibbonDropDownButton x:Name="OrientationButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="90" Header="Orientation" Size="Large"
                                                  Icon="{StaticResource Icon.WriterPortrait}"
                                                  LargeIcon="{StaticResource Icon.WriterPortrait}"
                                                  rk:Ribbon.CommandId="Writer.Page.Orientation" rk:KeyTip.Keys="OR"
@@ -950,7 +950,7 @@
                 <rk:RibbonGroup x:Name="MarginsGroup" Header="Margins" rk:Ribbon.CommandId="Writer.Page.Margins" rk:KeyTip.Keys="M"
                                 Icon="{StaticResource Icon.WriterMargins}"
                                 AutomationProperties.AutomationId="MarginsGroup" AutomationProperties.Name="Margins">
-                    <rk:RibbonDropDownButton x:Name="MarginsButton" Header="Margins" Size="Large"
+                    <rk:RibbonDropDownButton x:Name="MarginsButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="80" Header="Margins" Size="Large"
                                              Icon="{StaticResource Icon.WriterMargins}" LargeIcon="{StaticResource Icon.WriterMargins}"
                                              rk:Ribbon.CommandId="Writer.Page.Margins.Choose" rk:KeyTip.Keys="MA"
                                              ScreenTipTitle="Margins" ScreenTipText="Choose a preset or enter all four physical page margins."
@@ -976,7 +976,7 @@
                 <rk:RibbonGroup x:Name="PageBackgroundGroup" Header="Page Background" rk:Ribbon.CommandId="Writer.Page.Background" rk:KeyTip.Keys="B"
                                 Icon="{StaticResource Icon.WriterPageColor}"
                                 AutomationProperties.AutomationId="PageBackgroundGroup" AutomationProperties.Name="Page Background">
-                    <rk:RibbonDropDownButton x:Name="PageColorButton" Header="Page Color" Size="Large"
+                    <rk:RibbonDropDownButton x:Name="PageColorButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="70" Header="Page Color" Size="Large"
                                              Icon="{StaticResource Icon.WriterPageColor}" LargeIcon="{StaticResource Icon.WriterPageColor}"
                                              rk:Ribbon.CommandId="Writer.Page.Color" rk:KeyTip.Keys="PC"
                                              ScreenTipTitle="Page Color" ScreenTipText="Choose the page background used by editing, preview, and native Writer content."
@@ -1003,12 +1003,12 @@
                                            Click="OnContinuousViewClick" rk:Ribbon.CommandId="Writer.View.Continuous" rk:KeyTip.Keys="C"
                                            ScreenTipTitle="Continuous Edit" ScreenTipText="Use the workspace-filling live editor without changing its document."
                                            AutomationProperties.AutomationId="ViewContinuous" AutomationProperties.Name="Continuous Edit" />
-                    <rk:RibbonToggleButton x:Name="PaperViewButton" Header="Paper" Size="Large"
+                    <rk:RibbonToggleButton x:Name="PaperViewButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="100" Header="Paper" Size="Large"
                                            Icon="{StaticResource Icon.WriterDocument}" LargeIcon="{StaticResource Icon.WriterDocument}"
                                            Click="OnPaperViewClick" rk:Ribbon.CommandId="Writer.View.Paper" rk:KeyTip.Keys="P"
                                            ScreenTipTitle="Paper View" ScreenTipText="Centre the same live editor on the logical paper."
                                            AutomationProperties.AutomationId="ViewPaper" AutomationProperties.Name="Paper View" />
-                    <rk:RibbonToggleButton x:Name="PrintPreviewViewButton" Header="Print Preview" Size="Large"
+                    <rk:RibbonToggleButton x:Name="PrintPreviewViewButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="95" Header="Print Preview" Size="Large"
                                            Icon="{StaticResource Icon.WriterPrintPreview}" LargeIcon="{StaticResource Icon.WriterPrintPreview}"
                                            Click="OnPrintPreviewViewClick" rk:Ribbon.CommandId="Writer.View.PrintPreview" rk:KeyTip.Keys="R"
                                            ScreenTipTitle="Print Preview" ScreenTipText="Enter the dedicated preview mode using the exact paginator used for printing."
@@ -1017,17 +1017,17 @@
                 <rk:RibbonGroup x:Name="ViewZoomGroup" Header="Zoom" rk:Ribbon.CommandId="Writer.View.Zoom" rk:KeyTip.Keys="Z"
                                 Icon="{StaticResource Icon.WriterZoomReset}"
                                 AutomationProperties.AutomationId="ZoomGroup" AutomationProperties.Name="Zoom">
-                    <rk:RibbonButton x:Name="ZoomOutButton" Header="Zoom Out" Size="Large"
+                    <rk:RibbonButton x:Name="ZoomOutButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="60" Header="Zoom Out" Size="Large"
                                      Icon="{StaticResource Icon.WriterZoomOut}" LargeIcon="{StaticResource Icon.WriterZoomOut}"
                                      rk:Ribbon.CommandId="Writer.Home.Editing.ZoomOut" rk:KeyTip.Keys="ZO"
                                      ScreenTipTitle="Zoom Out" ScreenTipText="Reduce the current document view zoom by ten percent."
                                      AutomationProperties.AutomationId="ZoomOut" AutomationProperties.Name="Zoom Out" />
-                    <rk:RibbonButton x:Name="ZoomResetButton" Header="100%" Size="Large"
+                    <rk:RibbonButton x:Name="ZoomResetButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="100" Header="100%" Size="Large"
                                      Icon="{StaticResource Icon.WriterZoomReset}" LargeIcon="{StaticResource Icon.WriterZoomReset}"
                                      rk:Ribbon.CommandId="Writer.Home.Editing.ZoomReset" rk:KeyTip.Keys="ZR"
                                      ScreenTipTitle="Reset Zoom" ScreenTipText="Restore the current document view zoom to 100 percent."
                                      AutomationProperties.AutomationId="ZoomReset" AutomationProperties.Name="Reset Zoom" />
-                    <rk:RibbonButton x:Name="ZoomInButton" Header="Zoom In" Size="Large"
+                    <rk:RibbonButton x:Name="ZoomInButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="60" Header="Zoom In" Size="Large"
                                      Icon="{StaticResource Icon.WriterZoomIn}" LargeIcon="{StaticResource Icon.WriterZoomIn}"
                                      rk:Ribbon.CommandId="Writer.Home.Editing.ZoomIn" rk:KeyTip.Keys="ZI"
                                      ScreenTipTitle="Zoom In" ScreenTipText="Increase the current document view zoom by ten percent."
@@ -1036,12 +1036,12 @@
                 <rk:RibbonGroup x:Name="ViewDisplayGroup" Header="Show" rk:Ribbon.CommandId="Writer.View.Show" rk:KeyTip.Keys="S"
                                 Icon="{StaticResource Icon.WriterRuler}"
                                 AutomationProperties.AutomationId="ViewDisplayGroup" AutomationProperties.Name="Show">
-                    <rk:RibbonToggleButton x:Name="RulerToggleButton" Header="Ruler" Size="Large"
+                    <rk:RibbonToggleButton x:Name="RulerToggleButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="70" Header="Ruler" Size="Large"
                                            Icon="{StaticResource Icon.WriterRuler}" LargeIcon="{StaticResource Icon.WriterRuler}"
                                            Click="OnRulerToggleClick" rk:Ribbon.CommandId="Writer.View.Show.Ruler" rk:KeyTip.Keys="RU"
                                            ScreenTipTitle="Ruler" ScreenTipText="Show the calibrated horizontal ruler in Paper view."
                                            AutomationProperties.AutomationId="ViewRuler" AutomationProperties.Name="Ruler" />
-                    <rk:RibbonToggleButton x:Name="MarginGuidesToggleButton" Header="Margin Guides" Size="Large"
+                    <rk:RibbonToggleButton x:Name="MarginGuidesToggleButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="60" Header="Margin Guides" Size="Large"
                                            Icon="{StaticResource Icon.WriterGridlines}" LargeIcon="{StaticResource Icon.WriterGridlines}"
                                            Click="OnMarginGuidesToggleClick" rk:Ribbon.CommandId="Writer.View.Show.MarginGuides" rk:KeyTip.Keys="MG"
                                            ScreenTipTitle="Margin Guides" ScreenTipText="Show non-printing dotted guides at the page content boundary."
@@ -1055,17 +1055,17 @@
                 <rk:RibbonGroup x:Name="PreviewLayoutGroup" Header="Preview Layout" rk:Ribbon.CommandId="Writer.View.Preview" rk:KeyTip.Keys="L"
                                 Icon="{StaticResource Icon.WriterPrintPreview}"
                                 AutomationProperties.AutomationId="PreviewGroup" AutomationProperties.Name="Preview Layout">
-                    <rk:RibbonToggleButton x:Name="OnePageButton" Header="One Page" Size="Large"
+                    <rk:RibbonToggleButton x:Name="OnePageButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="90" Header="One Page" Size="Large"
                                            Icon="{StaticResource Icon.WriterOnePage}" LargeIcon="{StaticResource Icon.WriterOnePage}"
                                            Click="OnOnePageClick" rk:Ribbon.CommandId="Writer.View.Preview.OnePage" rk:KeyTip.Keys="O"
                                            ScreenTipTitle="One Page" ScreenTipText="Show one preview page at the current zoom."
                                            AutomationProperties.AutomationId="PreviewOnePage" AutomationProperties.Name="One Page" />
-                    <rk:RibbonToggleButton x:Name="TwoPagesButton" Header="Two Pages" Size="Large"
+                    <rk:RibbonToggleButton x:Name="TwoPagesButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="80" Header="Two Pages" Size="Large"
                                            Icon="{StaticResource Icon.WriterTwoPages}" LargeIcon="{StaticResource Icon.WriterTwoPages}"
                                            Click="OnTwoPagesClick" rk:Ribbon.CommandId="Writer.View.Preview.TwoPages" rk:KeyTip.Keys="T"
                                            ScreenTipTitle="Two Pages" ScreenTipText="Fit up to two adjacent preview pages."
                                            AutomationProperties.AutomationId="PreviewTwoPages" AutomationProperties.Name="Two Pages" />
-                    <rk:RibbonToggleButton x:Name="PageWidthButton" Header="Page Width" Size="Large"
+                    <rk:RibbonToggleButton x:Name="PageWidthButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="100" Header="Page Width" Size="Large"
                                            Icon="{StaticResource Icon.WriterPageWidth}" LargeIcon="{StaticResource Icon.WriterPageWidth}"
                                            Click="OnPageWidthClick" rk:Ribbon.CommandId="Writer.View.Preview.PageWidth" rk:KeyTip.Keys="W"
                                            ScreenTipTitle="Page Width" ScreenTipText="Fit the preview page width to the available viewport."
@@ -1074,12 +1074,12 @@
                 <rk:RibbonGroup x:Name="PreviewNavigationGroup" Header="Navigation" rk:Ribbon.CommandId="Writer.View.Preview.Navigation" rk:KeyTip.Keys="N"
                                 Icon="{StaticResource Icon.WriterNextPage}"
                                 AutomationProperties.AutomationId="PreviewNavigationGroup" AutomationProperties.Name="Preview Navigation">
-                    <rk:RibbonButton x:Name="PreviousPageButton" Header="Previous Page" Size="Large"
+                    <rk:RibbonButton x:Name="PreviousPageButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="70" Header="Previous Page" Size="Large"
                                      Icon="{StaticResource Icon.WriterPreviousPage}" LargeIcon="{StaticResource Icon.WriterPreviousPage}"
                                      Click="OnPreviousPageClick" rk:Ribbon.CommandId="Writer.View.Preview.Previous" rk:KeyTip.Keys="B"
                                      ScreenTipTitle="Previous Page" ScreenTipText="Move to the previous preview page."
                                      AutomationProperties.AutomationId="PreviewPreviousPage" AutomationProperties.Name="Previous Page" />
-                    <rk:RibbonButton x:Name="NextPageButton" Header="Next Page" Size="Large"
+                    <rk:RibbonButton x:Name="NextPageButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="70" Header="Next Page" Size="Large"
                                      Icon="{StaticResource Icon.WriterNextPage}" LargeIcon="{StaticResource Icon.WriterNextPage}"
                                      Click="OnNextPageClick" rk:Ribbon.CommandId="Writer.View.Preview.Next" rk:KeyTip.Keys="N"
                                      ScreenTipTitle="Next Page" ScreenTipText="Move to the next preview page."
@@ -1088,17 +1088,17 @@
                 <rk:RibbonGroup x:Name="PreviewZoomGroup" Header="Zoom" rk:Ribbon.CommandId="Writer.PrintPreview.Zoom" rk:KeyTip.Keys="Z"
                                 Icon="{StaticResource Icon.WriterZoomReset}"
                                 AutomationProperties.AutomationId="PreviewZoomGroup" AutomationProperties.Name="Preview Zoom">
-                    <rk:RibbonButton x:Name="PreviewZoomOutButton" Header="Zoom Out" Size="Large"
+                    <rk:RibbonButton x:Name="PreviewZoomOutButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="60" Header="Zoom Out" Size="Large"
                                      Icon="{StaticResource Icon.WriterZoomOut}" LargeIcon="{StaticResource Icon.WriterZoomOut}"
                                      rk:Ribbon.CommandId="Writer.Home.Editing.ZoomOut" rk:KeyTip.Keys="ZO"
                                      ScreenTipTitle="Zoom Out" ScreenTipText="Reduce preview zoom by ten percent."
                                      AutomationProperties.AutomationId="PreviewZoomOut" AutomationProperties.Name="Zoom Out" />
-                    <rk:RibbonButton x:Name="PreviewZoomResetButton" Header="100%" Size="Large"
+                    <rk:RibbonButton x:Name="PreviewZoomResetButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="100" Header="100%" Size="Large"
                                      Icon="{StaticResource Icon.WriterZoomReset}" LargeIcon="{StaticResource Icon.WriterZoomReset}"
                                      rk:Ribbon.CommandId="Writer.Home.Editing.ZoomReset" rk:KeyTip.Keys="ZR"
                                      ScreenTipTitle="Reset Zoom" ScreenTipText="Restore preview zoom to 100 percent."
                                      AutomationProperties.AutomationId="PreviewZoomReset" AutomationProperties.Name="Reset Zoom" />
-                    <rk:RibbonButton x:Name="PreviewZoomInButton" Header="Zoom In" Size="Large"
+                    <rk:RibbonButton x:Name="PreviewZoomInButton" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Small" rk:Ribbon.SimplifiedPriority="60" Header="Zoom In" Size="Large"
                                      Icon="{StaticResource Icon.WriterZoomIn}" LargeIcon="{StaticResource Icon.WriterZoomIn}"
                                      rk:Ribbon.CommandId="Writer.Home.Editing.ZoomIn" rk:KeyTip.Keys="ZI"
                                      ScreenTipTitle="Zoom In" ScreenTipText="Increase preview zoom by ten percent."

@@ -21,8 +21,10 @@ Keep these API pitfalls when maintaining the tooling:
   distinguish an inert command from failed model access.
 - Add children through explicit Tabs/Groups/Items collection properties.
   Enum names are strings resolved by the property's type converter.
-- ModelProperty.Value indicates a local assignment; ComputedValue gives the
-  effective value. UpdateItemStatus controls verb availability and checked state.
+- ModelProperty.IsSet identifies a local assignment. Value can wrap an effective
+  default even without one; ComputedValue gives the effective value. UpdateItemStatus
+  controls verb availability and checked state. The 2026-10-14 toolbox-default
+  follow-up corrected the earlier Value-null guidance.
 - The modern toolbox uses tools/VisualStudioToolsManifest.xml in the package;
   project-reference discovery is a different path.
 

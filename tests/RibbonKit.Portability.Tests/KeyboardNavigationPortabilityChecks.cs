@@ -16,6 +16,18 @@ internal static class KeyboardNavigationPortabilityChecks
     private static FlowDirection _direction;
     private static string _lastInput = "";
 
+    internal static void VerifyQatOverflow(Application application)
+    {
+        foreach (RibbonTheme theme in Enum.GetValues<RibbonTheme>())
+        foreach (var direction in new[] { FlowDirection.LeftToRight, FlowDirection.RightToLeft })
+        {
+            ThemeManager.Apply(application, theme);
+            _direction = direction;
+            VerifyQatOverflow();
+            VerifyQatOrder();
+        }
+    }
+
     internal static void Verify(Application application)
     {
         var failures = new List<string>();
@@ -226,12 +238,22 @@ internal static class KeyboardNavigationPortabilityChecks
             Assert.False(hidden.Focusable);
             Assert.Equal(Visibility.Visible, hidden.Visibility);
             Assert.Equal(KeyboardNavigationMode.None, KeyboardNavigation.GetTabNavigation(dropdown));
+            Assert.True(visible.Focusable, $"Visible QAT item overflowed: desired={visible.DesiredSize}, actual={visible.RenderSize}, "
+                + $"toolbar={qat.RenderSize}, density={Ribbon.GetDensity(qat)}, size={visible.Size}.");
             Assert.True(before.Focus());
             Press(Key.Tab);
-            Assert.Same(visible, Keyboard.FocusedElement);
+            Assert.True(ReferenceEquals(visible, Keyboard.FocusedElement),
+                $"QAT first stop is {Describe(Keyboard.FocusedElement)}; item={visible.RenderSize}, enabled={visible.IsEnabled}, "
+                + $"visible={visible.IsVisible}, focusable={visible.Focusable}, tabStop={visible.IsTabStop}, "
+                + $"itemNav={KeyboardNavigation.GetTabNavigation(visible)}, toolbarNav={KeyboardNavigation.GetTabNavigation(qat)}, "
+                + $"toolbar={qat.RenderSize}, density={Ribbon.GetDensity(qat)}, size={visible.Size}.");
+            Press(Key.Tab);
+            var more = Assert.IsType<ToggleButton>(qat.Template.FindName("PART_OverflowButton", qat));
+            Assert.Same(more, Keyboard.FocusedElement);
             Press(Key.Tab);
             Assert.Same(after, Keyboard.FocusedElement);
-            Previous(after, visible);
+            Previous(after, more);
+            Previous(more, visible);
 
             setting.IsChecked = false;
             setting.IsChecked = true;

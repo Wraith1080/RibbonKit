@@ -117,6 +117,7 @@ public partial class MdiDemo : RibbonWindow
                             + "the document that contributed them, not on whichever is active.",
         };
         upper.Click += (_, _) => editor.Text = editor.Text.ToUpperInvariant();
+        Ribbon.SetSimplifiedPlacement(upper, RibbonSimplifiedPlacement.Inline);
 
         var group = new RibbonGroup { Header = "Text", Icon = TryFindResource("Icon.Font") as ImageSource };
         group.Items.Add(upper);

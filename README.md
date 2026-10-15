@@ -30,7 +30,7 @@ below describes the current checkout, including post-release additions; see
 - Tab/group horizontal scrolling and optional `RibbonWindow` title/QAT/contextual integration.
 - Arbitrary WPF group content, with optional `IRibbonSizeAware` participation.
 - Opt-in Compact/Touch density, shared by ribbon controls, menus, galleries, QAT and File navigation.
-- Simplified single-row ribbon remains a candidate.
+- Opt-in simplified single-row ribbon with application-selected commands, priority-based overflow and native group flyouts.
 
 ### Controls
 
@@ -105,13 +105,25 @@ independent of density. Detached QAT hosts, popups and Backstage follow the owni
 ribbon; changing density refreshes adaptive group measurements. Menu and gallery
 scroll viewers support native vertical touch panning.
 
-Live density changes settle gently after the final adaptive layout; ribbon height
+Live density changes use a vector accordion presentation after the final adaptive layout; ribbon height
 and window caption geometry update immediately. `RibbonAnimationAction.DensityChange`
 follows the global None/Subtle/Expressive level and reduced-motion policy, and can
-be overridden with `RibbonAnimation.SetActionLevel`. Subtle uses 160 ms; Expressive
-uses 224 ms. Only opacity and a small below-ribbon QAT translation animate, without
-scaling text or icons. Initial density, including preferences restored during
+be overridden with `RibbonAnimation.SetActionLevel`. Subtle uses 130 ms; Expressive
+uses 182 ms, matching the group-expansion cadence and easing. The card edge reveals/contracts, columns move between their committed
+slots, and the lower QAT follows the height change. Text and icons keep their natural
+scale. An anchored popup uses an opacity-only settle. Initial density, including preferences restored during
 `Loaded` before the first render, appears immediately.
+
+Classic/Simplified changes use the same presentation through
+`RibbonAnimationAction.LayoutModeChange`. Simplified tab content settles downward
+over 120 ms in Subtle (160 ms Expressive), with a short 6/8-DIP slide using the existing `TabSwitch` override;
+classic tabs retain their 130 ms timing. Keyboard/mouse input settles an active
+layout presentation immediately. Mode changes close ribbon-owned group, command
+and QAT flyouts after the current click finishes; ordinary toggles retain their
+stay-open behavior. Simplified commands are prepared during the incoming row's
+first measure, so an animation-free switch can show the commands in its first
+render. For motion details and acceptance, see the
+[simplified-ribbon plan](docs/15-SIMPLIFIED-RIBBON-PLAN.md#s5-motion-trial--2026-10-13).
 
 `Ribbon.Density` is also an inherited attached property: use
 `Ribbon.SetDensity(scope, RibbonDensity.Touch)` for standalone ribbon controls or
@@ -126,6 +138,140 @@ preferences; customization import/reset does not change
 density. Application-authored fixed-size content and native window/document UI
 remain host-owned. See the [touch plan](docs/14-TOUCH-DENSITY-PLAN.md#verification-and-acceptance)
 for automated evidence and pending native touch, visual and DPI acceptance.
+
+### Simplified ribbon
+
+Set `Ribbon.LayoutMode="Simplified"` and mark the commands to show in its single
+row. Classic is the default; Compact/Touch density applies to either layout.
+
+```xml
+<rk:Ribbon LayoutMode="Simplified">
+    <rk:RibbonTab Header="Home">
+        <rk:RibbonGroup Header="Clipboard">
+            <rk:RibbonButton Header="Paste"
+                             rk:Ribbon.SimplifiedPlacement="Inline"
+                             rk:Ribbon.SimplifiedPriority="100" />
+            <rk:RibbonButton Header="Paste Special" />
+        </rk:RibbonGroup>
+    </rk:RibbonTab>
+</rk:Ribbon>
+```
+
+Higher priorities stay inline longer when space runs out; ties overflow from the
+end. Set `Ribbon.SimplifiedSize="Small"` for an icon-only inline command (supply an
+icon); the default Medium size includes its label. Changing the property updates
+the existing copy, and overflow entries keep their labels. Commands retain their
+original tab/group ordering. **More Ribbon Commands**
+offers displaced inline commands and each group's original full-content flyout,
+so editors, arbitrary content and dialog launchers remain accessible. Inline
+buttons/toggles/splits/dropdowns retain source state and actions; combos and
+galleries use source-linked dropdown copies. Editable combo text entry remains
+available in the native group flyout.
+
+QAT and simplified overflow use menu-sized rows (32 DIP minimum height, 44 in
+Touch, and 200 DIP minimum width). Dropdown, split, combo, gallery and group
+entries have a trailing submenu arrow and open beside their row. Placement uses
+the current monitor's work area, flips sides near an edge, and falls back to the
+overlaid dropdown when neither side fits. RTL mirrors the preferred side and
+arrow. Native menu and combo choices share the row minimums.
+
+Showcase offers **View → Simplified Ribbon** and the shared ribbon context menu
+offers the same switch. Its choice is saved with host-owned appearance preferences.
+Home demonstrates Small Bold/Italic/Underline commands and a Styles gallery using
+the existing QAT dropdown behavior.
+Only the active layout's **Customize Ribbon** page is shown; both modes use the
+same page title and context-menu label. QAT customization remains available in
+either mode. Add `RibbonSimplifiedCustomizePage` to a
+`RibbonOptionsDialog` with its `Ribbon` property pointing at the owning ribbon.
+The host adds both `RibbonCustomizePage` and `RibbonSimplifiedCustomizePage` to
+its dialog and handles both ribbon customization request events. On a request,
+select the editor matching `Ribbon.LayoutMode`; the shared dialog handles page
+eligibility and later mode changes. Capture the factory layout before restoring
+saved customization and pass it as `ResetLayout` to both editors. RTL Lab and
+Writer demonstrate this integration; MDI demonstrates command defaults only.
+Each column has an independent full-width tab selector: the left filters source
+commands, including an All Tabs choice, and the right chooses the destination.
+The selected list has selectable group headers, including empty groups as Add
+targets. Drag commands to reorder them, or use Move Up/Down. Ordering can cross
+groups; repeated headers preserve contiguous group sections. Add/Remove retain
+source/group identity and shared command membership.
+Group flyouts and arbitrary editors are access surfaces rather than pinnable commands.
+
+The page edits a draft. Its Apply button and `ApplyChanges()` commit it;
+`CancelChanges()` discards uncommitted edits. `RibbonOptionsDialog` commits on OK,
+discards drafts on Cancel/close, hides the inactive customization page by mode,
+and selects the newly eligible counterpart when the mode changes. Apply followed
+by Cancel keeps the already applied choices. The QAT/classic pages retain their
+existing live-edit contract.
+Hosts with their own dialog-wide rollback must advance their saved ribbon
+checkpoint on `SimplifiedCustomizationChanged`, so a later Cancel retains a
+simplified Apply. Keep that checkpoint independent of unapplied appearance
+previews. Writer demonstrates this alongside pin/remove persistence outside
+the dialog.
+
+In Simplified mode, a command's context menu offers Pin/Remove and **Customize
+the Ribbon**. Hosts open their simplified options surface on
+`Ribbon.SimplifiedCustomizeRequested` and save on
+`Ribbon.SimplifiedCustomizationChanged`. The equivalent programmatic actions are
+`PinToSimplifiedRibbon(source)` and `RemoveFromSimplifiedRibbon(source)`; copies
+resolve to the original command and retain their target group. Both actions return false for unsupported,
+transient or duplicate requests.
+
+`RibbonCustomizationSerializer` stores simplified order/labels in a separate
+optional `Simplified` section with version 2, recording source, target group and
+size. Version 1 loads by inferring the first eligible group. Assign explicit,
+stable `Ribbon.CommandId` values to customizable tabs, groups and commands for
+restart persistence. New custom tabs/groups receive generated IDs. Built-in
+groups without IDs retain source-only fallback; commands without IDs work in
+the current session. Missing sources/groups are skipped, duplicate source/group
+pairs use the first eligible entry, and contextual,
+modal and merged contributions are excluded. Old classic-only JSON preserves
+current simplified choices; malformed sections leave the layout unchanged.
+Reset This Tab and Reset All Tabs restore app-authored placement/size choices
+and preserve shared custom structure, membership and QAT. Layout mode remains a
+host-owned appearance preference. See the
+[simplified ribbon plan](docs/15-SIMPLIFIED-RIBBON-PLAN.md#customize-simplified-ribbon)
+for acceptance and remaining full/native checks.
+
+The **New** menu creates a tab with one custom group, or inserts a group after the
+selected group. **Edit** offers Rename Tab/Group and, for a selected command, the
+checkable **Show item label** choice. Custom groups reuse the full name/icon/layout
+dialog and start with a neutral vector icon and Stacked layout. Creation, naming,
+icons, layouts and membership stay in the draft until Apply/OK; Cancel leaves no new structure
+behind. Custom groups accept commands from other tabs; built-in groups retain
+their original command membership. Tabs/groups and custom-group membership
+appear in both layouts, while simplified order/labels remain separate. Removing
+a simplified selection leaves its shared custom-group command available through
+the group's flyout. See the plan's
+[structure editor](docs/15-SIMPLIFIED-RIBBON-PLAN.md#custom-tab-and-group-editor).
+
+For a custom destination tab, **Edit → Move tab…** chooses Before/After another
+eligible tab. New draft tabs and existing custom tabs use the same operation;
+Apply/OK commits shared tab order, and Cancel discards the move. Contextual, modal
+and merged tabs stay outside the target list. Tab moves preserve command order,
+labels and shared group membership.
+
+The source selector lists authored tabs, All Tabs, and **Commands not in the
+ribbon** for retained QAT-only declarations. Custom tabs/groups are destination
+structure, independent of the available-command catalog. Normal customization
+additions start with hidden simplified labels; existing selections and group
+layouts remain intact.
+
+Below the left list are **Reset** and icon-only **Import/Export**; below the right
+list are **New**, **Edit** and **Apply**. Each side wraps independently at narrow widths.
+Supply the optional `ResetLayout` property with a startup capture made before
+loading saved customization to enable Reset QAT and Reset All Customizations.
+QAT reset preserves live tab/group objects and session-only simplified choices;
+full reset restores the complete supplied customization baseline. Both remain
+drafts until Apply/OK.
+
+Import validates the existing customization JSON format into a detached draft.
+Export includes the current draft without applying it. Cancel discards pending
+imports and resets; an earlier Apply stays committed. The file contains shared/
+classic structure, simplified profiles and QAT, while appearance stays host-owned.
+Later live edits on another customization page supersede an older pending import
+or reset of that scope. See the [editor redesign](docs/15-SIMPLIFIED-RIBBON-PLAN.md#s4-editor-redesign--authorized-2026-10-13)
+for implementation and verification details.
 
 ### Dropdown headings and descriptive rows
 
@@ -495,6 +641,10 @@ snapshots and the runnable Showcase support development. The separate Visual Stu
 design-tools assembly provides context commands, responsive Ribbon Editor, structural
 drag/drop and design-only theme/tab/File preview. Its delivery surface is context
 menus, **not a floating smart-tag glyph**.
+
+New supported designer commands start visible in Simplified Ribbon with labels
+shown. Ribbon Editor exposes **Show in simplified ribbon** and **Show simplified
+label** as persistent XAML settings; existing authored values are preserved.
 
 ![Visual Studio Ribbon Editor](docs/images/ribbon-editor.png)
 

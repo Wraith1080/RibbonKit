@@ -87,6 +87,37 @@ public class RibbonOptionsDialog : Window
     public RibbonOptionsDialog()
     {
         SetValue(PagesPropertyKey, new ObservableCollection<RibbonOptionsPage>());
+        Pages.CollectionChanged += (_, args) =>
+        {
+            if (args.OldItems is not null)
+                foreach (RibbonOptionsPage page in args.OldItems)
+                {
+                    page.IsEnabledChanged -= OnPageEligibilityChanged;
+                    page.IsVisibleChanged -= OnPageEligibilityChanged;
+                }
+            if (args.NewItems is not null)
+                foreach (RibbonOptionsPage page in args.NewItems)
+                {
+                    if (page.Content is RibbonCustomizePage or RibbonSimplifiedCustomizePage
+                        && page.ReadLocalValue(IsEnabledProperty) == DependencyProperty.UnsetValue)
+                        page.SetBinding(IsEnabledProperty, new System.Windows.Data.Binding(nameof(IsEnabled)) { Source = page.Content });
+                    if (page.Content is RibbonCustomizePage or RibbonSimplifiedCustomizePage
+                        && page.ReadLocalValue(VisibilityProperty) == DependencyProperty.UnsetValue)
+                        page.SetBinding(VisibilityProperty, new System.Windows.Data.Binding("Ribbon.LayoutMode")
+                        {
+                            Source = page.Content, Converter = CustomizePageVisibilityConverter.Instance,
+                            ConverterParameter = page.Content is RibbonCustomizePage ? RibbonLayoutMode.Classic : RibbonLayoutMode.Simplified,
+                        });
+                    page.IsEnabledChanged += OnPageEligibilityChanged;
+                    page.IsVisibleChanged += OnPageEligibilityChanged;
+                }
+            EnsurePageSelection();
+        };
+        Closed += (_, _) =>
+        {
+            foreach (RibbonSimplifiedCustomizePage page in Pages.Select(page => page.Content).OfType<RibbonSimplifiedCustomizePage>())
+                page.CancelChanges();
+        };
         Width = 860;
         Height = 600;
         MinWidth = 560;
@@ -189,10 +220,34 @@ public class RibbonOptionsDialog : Window
 
     private void EnsurePageSelection()
     {
-        if (SelectedPage is null && Pages.Count > 0)
+        if (SelectedPage is null || !SelectedPage.IsEnabled || SelectedPage.Visibility != Visibility.Visible || !Pages.Contains(SelectedPage))
         {
-            SelectedPage = Pages[0];
+            SelectedPage = Pages.FirstOrDefault(page => page.IsEnabled && page.Visibility == Visibility.Visible);
         }
+    }
+
+    private void OnPageEligibilityChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (SelectedPage is null || (SelectedPage.IsEnabled && SelectedPage.Visibility == Visibility.Visible)) return;
+        // The newly eligible counterpart may update its binding later in this same transfer.
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            if (SelectedPage is null || (SelectedPage.IsEnabled && SelectedPage.Visibility == Visibility.Visible)) return;
+            RibbonOptionsPage? counterpart = Pages.FirstOrDefault(page => page.IsEnabled && page.Visibility == Visibility.Visible &&
+                (SelectedPage.Content is RibbonCustomizePage ? page.Content is RibbonSimplifiedCustomizePage :
+                    SelectedPage.Content is RibbonSimplifiedCustomizePage && page.Content is RibbonCustomizePage));
+            if (counterpart is not null) SelectedPage = counterpart;
+            else EnsurePageSelection();
+        }));
+    }
+
+    private sealed class CustomizePageVisibilityConverter : System.Windows.Data.IValueConverter
+    {
+        internal static readonly CustomizePageVisibilityConverter Instance = new();
+        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) =>
+            value is RibbonLayoutMode mode && Equals(mode, parameter) ? Visibility.Visible : Visibility.Collapsed;
+        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) =>
+            throw new NotSupportedException();
     }
 
     private static void OnSelectedPageChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
@@ -249,6 +304,8 @@ public class RibbonOptionsDialog : Window
 
     private void OnOkClick(object sender, RoutedEventArgs e)
     {
+        foreach (RibbonSimplifiedCustomizePage page in Pages.Select(page => page.Content).OfType<RibbonSimplifiedCustomizePage>())
+            page.ApplyChanges();
         Applied?.Invoke(this, EventArgs.Empty);
         CloseWithResult(true);
     }

@@ -16,11 +16,12 @@ internal sealed class RibbonDensityTransition : IDisposable
     private bool _disposed;
 
     internal RibbonDensityTransition(FrameworkElement surface, double offsetY = 0d,
-        RibbonAnimationAction action = RibbonAnimationAction.DensityChange, double offsetX = 0d)
+        RibbonAnimationAction action = RibbonAnimationAction.DensityChange, double offsetX = 0d,
+        Duration? durationOverride = null, IEasingFunction? easeOverride = null, bool fade = true)
     {
         _surface = surface;
-        Duration duration = RibbonAnimation.GetDuration(action);
-        IEasingFunction ease = RibbonAnimation.GetEase(action);
+        Duration duration = durationOverride ?? RibbonAnimation.GetDuration(action);
+        IEasingFunction ease = easeOverride ?? RibbonAnimation.GetEase(action);
 
         if (offsetY != 0d || offsetX != 0d)
         {
@@ -39,7 +40,7 @@ internal sealed class RibbonDensityTransition : IDisposable
 
         // Start from a gentle dip, never transparency. No opacity seed is needed on
         // an already-visible surface, and leaving its base untouched preserves bindings.
-        _fade = new DoubleAnimation(surface.Opacity * 0.85d,
+        _fade = new DoubleAnimation(surface.Opacity * (fade ? 0.85d : 1d),
             (double)surface.GetAnimationBaseValue(UIElement.OpacityProperty), duration)
         {
             EasingFunction = ease,

@@ -24,6 +24,12 @@
   <data name="HideQuickAccessToolbar" xml:space="preserve">
     <value>Hide Quick Access Toolbar</value>
   </data>
+  <data name="MoreRibbonCommands" xml:space="preserve">
+    <value>More Ribbon Commands</value>
+  </data>
+  <data name="SimplifiedRibbon" xml:space="preserve">
+    <value>Simplified Ribbon</value>
+  </data>
   <data name="CustomizeRibbon" xml:space="preserve">
     <value>Customize the Ribbon…</value>
   </data>
@@ -198,4 +204,30 @@
   <data name="Exit" xml:space="preserve">
     <value>Exit</value>
   </data>
+  <data name="CustomizeSimplifiedRibbon" xml:space="preserve"><value>Customize the Ribbon…</value></data>
+  <data name="CustomizeSimplifiedRibbonPage" xml:space="preserve"><value>Customize Ribbon</value></data>
+  <data name="PinToSimplifiedRibbon" xml:space="preserve"><value>Pin to Simplified Ribbon</value></data>
+  <data name="RemoveFromSimplifiedRibbon" xml:space="preserve"><value>Remove from Simplified Ribbon</value></data>
+  <data name="SimplifiedTab" xml:space="preserve"><value>Tab:</value></data>
+  <data name="CurrentSimplifiedRibbon" xml:space="preserve"><value>Selected commands:</value></data>
+  <data name="ShowLabel" xml:space="preserve"><value>Show label</value></data>
+  <data name="ResetTab" xml:space="preserve"><value>Reset tab</value></data>
+  <data name="ResetAllTabs" xml:space="preserve"><value>Reset all tabs</value></data>
+  <data name="Apply" xml:space="preserve"><value>Apply</value></data>
+  <data name="AllGroups" xml:space="preserve"><value>All groups</value></data>
+  <data name="SimplifiedGroup" xml:space="preserve"><value>Group</value></data>
+  <data name="RenameTab" xml:space="preserve"><value>Rename tab…</value></data>
+  <data name="RenameGroup" xml:space="preserve"><value>Rename group…</value></data>
+  <data name="New" xml:space="preserve"><value>New</value></data>
+  <data name="AllTabs" xml:space="preserve"><value>All tabs</value></data>
+  <data name="ShowItemLabel" xml:space="preserve"><value>Show item label</value></data>
+  <data name="ResetQuickAccessToolbar" xml:space="preserve"><value>Reset Quick Access Toolbar</value></data>
+  <data name="ResetAllCustomizations" xml:space="preserve"><value>Reset all customizations</value></data>
+  <data name="InvalidRibbonLayout" xml:space="preserve"><value>This file does not contain a valid ribbon customization.</value></data>
+  <data name="CommandsNotInRibbon" xml:space="preserve"><value>Commands not in the ribbon</value></data>
+  <data name="MoveTab" xml:space="preserve"><value>Move tab…</value></data>
+  <data name="Before" xml:space="preserve"><value>Before</value></data>
+  <data name="After" xml:space="preserve"><value>After</value></data>
+  <data name="TabPositionLabel" xml:space="preserve"><value>Position:</value></data>
+  <data name="TargetTabLabel" xml:space="preserve"><value>Target tab:</value></data>
 </root>

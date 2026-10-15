@@ -22,18 +22,22 @@ public class DensityAnimationTests
             foreach (var (level, milliseconds, offset) in new[]
             {
                 (RibbonAnimationLevel.None, 0d, 0d),
-                (RibbonAnimationLevel.Subtle, 160d, 4d),
-                (RibbonAnimationLevel.Expressive, 224d, 7.2d),
+                (RibbonAnimationLevel.Subtle, 130d, 18d),
+                (RibbonAnimationLevel.Expressive, 182d, 32.4d),
             })
             {
                 RibbonAnimation.SetActionLevel(RibbonAnimationAction.DensityChange, level);
                 Assert.Equal(milliseconds, RibbonAnimation.GetDuration(RibbonAnimationAction.DensityChange).TimeSpan.TotalMilliseconds);
                 Assert.Equal(offset, RibbonAnimation.GetSlideOffset(RibbonAnimationAction.DensityChange), 6);
-                var ease = Assert.IsType<CubicEase>(RibbonAnimation.GetEase(RibbonAnimationAction.DensityChange));
-                Assert.Equal(EasingMode.EaseInOut, ease.EasingMode);
-                Assert.True(ease.IsFrozen);
-                // Keep the dip visible during the first quarter of the transition.
-                Assert.InRange(ease.Ease(0.25d), 0d, 0.1d);
+                var ease = RibbonAnimation.GetEase(RibbonAnimationAction.DensityChange);
+                if (level == RibbonAnimationLevel.Expressive)
+                    Assert.Equal(EasingMode.EaseOut, Assert.IsType<QuinticEase>(ease).EasingMode);
+                else
+                {
+                    var cubic = Assert.IsType<CubicEase>(ease);
+                    Assert.Equal(EasingMode.EaseOut, cubic.EasingMode); Assert.True(cubic.IsFrozen);
+                }
+                Assert.True(ease.Ease(0.25d) > 0.4d); // Same quick start as group expansion.
             }
             RibbonAnimation.ClearActionLevel(RibbonAnimationAction.DensityChange);
             RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;

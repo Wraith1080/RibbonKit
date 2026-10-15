@@ -961,6 +961,8 @@
 
     <!-- Utility and scrollbar material. -->
     <sys:Double x:Key="RibbonKit.Metrics.UtilityRimActiveOpacity">1</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.UtilityRimPressedOpacity">1</sys:Double>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Utility.CheckedBorder" Drawing="{StaticResource Crystal.Drawing.GlassRim}" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.Glyph" Color="#4F6476" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.ButtonBackground" Color="#F6FBFD" />
     <DrawingBrush x:Key="RibbonKit.Brushes.ScrollBar.ButtonBorder"
@@ -1084,4 +1086,12 @@
     <Thickness x:Key="RibbonKit.Metrics.SplitHorizontalPrimaryBorderThickness">1</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.SplitHorizontalPrimaryPadding">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryPadding">0</Thickness>
+    <sys:Double x:Key="RibbonKit.Metrics.SimplifiedRowHeight">42</sys:Double>
+    <Thickness x:Key="RibbonKit.Metrics.SimplifiedGroupsRowMargin">4,1</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.SimplifiedCommandsMargin">0,3</Thickness>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.SimplifiedRowHeight">52</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.SimplifiedMoreButtonWidth">32</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.MenuItemMinHeight">32</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.MenuItemMinWidth">200</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.MenuSubmenuButtonWidth">32</sys:Double>
 </ResourceDictionary>

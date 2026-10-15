@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -27,6 +28,7 @@ internal sealed class PopupDismissHelper : IDisposable
     private readonly FrameworkElement _owner;
     private readonly Func<Popup?> _getPopup;
     private readonly Action _close;
+    private readonly Action? _afterEscape;
     private Window? _window;
     private Ribbon? _quickAccessRibbon;
     internal bool DismissedByOutsidePress { get; private set; }
@@ -41,11 +43,62 @@ internal sealed class PopupDismissHelper : IDisposable
                 && (ReferenceEquals(surface, helper._owner) || surface.IsAncestorOf(helper._owner)));
     }
 
-    public PopupDismissHelper(FrameworkElement owner, Func<Popup?> getPopup, Action close)
+    // Snapshot ownership before closing anything: a parent's close can unload
+    // nested owners or return borrowed content to a different tree.
+    internal static void DismissOpenPopupsWithin(FrameworkElement surface)
+    {
+        var window = Window.GetWindow(surface);
+        var stack = window is not null && OpenStackByWindow.TryGetValue(window, out var open)
+            ? open.ToArray() : Array.Empty<PopupDismissHelper>();
+        var owned = stack.Where(helper => helper._getPopup()?.IsOpen == true
+            && BelongsToSurface(helper, surface, stack)).Reverse().ToArray();
+        foreach (var helper in owned)
+        {
+            if (helper._getPopup() is not { IsOpen: true } popup) continue;
+            if (popup.Child is { } child) CloseNativePopupsWithin(child);
+            helper._close();
+        }
+        CloseNativePopupsWithin(surface);
+    }
+
+    private static bool BelongsToSurface(PopupDismissHelper helper, FrameworkElement surface,
+        PopupDismissHelper[] stack)
+    {
+        var visited = new HashSet<PopupDismissHelper>();
+        while (visited.Add(helper))
+        {
+            if (IsWithin(helper._owner, surface)
+                || surface is Ribbon ribbon && ReferenceEquals(helper._quickAccessRibbon, ribbon)) return true;
+            // A nested opener can live in a separate native popup tree. Follow
+            // the outer popup's registered owner, including title-bar QAT copies.
+            var parent = stack.LastOrDefault(candidate => !ReferenceEquals(candidate, helper)
+                && candidate._getPopup() is { IsOpen: true, Child: { } child }
+                && IsWithin(helper._owner, child));
+            if (parent is null) return false;
+            helper = parent;
+        }
+        return false;
+    }
+
+    private static void CloseNativePopupsWithin(DependencyObject node)
+    {
+        // ComboBox uses WPF capture rather than a registered dismiss helper.
+        if (node is ComboBox { IsDropDownOpen: true } combo)
+            combo.SetCurrentValue(ComboBox.IsDropDownOpenProperty, false);
+        if (node is FrameworkElement { ContextMenu: { IsOpen: true } menu })
+            menu.SetCurrentValue(ContextMenu.IsOpenProperty, false);
+        if (node is not (Visual or Visual3D)) return;
+        var children = Enumerable.Range(0, VisualTreeHelper.GetChildrenCount(node))
+            .Select(index => VisualTreeHelper.GetChild(node, index)).ToArray();
+        foreach (var child in children) CloseNativePopupsWithin(child);
+    }
+
+    public PopupDismissHelper(FrameworkElement owner, Func<Popup?> getPopup, Action close, Action? afterEscape = null)
     {
         _owner = owner;
         _getPopup = getPopup;
         _close = close;
+        _afterEscape = afterEscape;
         _owner.Unloaded += OnOwnerUnloaded;
     }
 
@@ -178,6 +231,8 @@ internal sealed class PopupDismissHelper : IDisposable
         }
 
         _close();
+        if (_afterEscape is not null)
+            _owner.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, _afterEscape);
         return true;
     }
 

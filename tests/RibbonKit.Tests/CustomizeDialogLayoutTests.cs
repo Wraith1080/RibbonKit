@@ -10,6 +10,26 @@ namespace RibbonKit.Tests;
 
 public sealed class CustomizeDialogLayoutTests
 {
+    [Theory]
+    [InlineData(false, false, false)]
+    [InlineData(true, true, false)]
+    [InlineData(false, false, true)]
+    public void Edit_dialog_centers_its_final_sections_on_the_owner(bool icons, bool layout, bool size) => Sta.Run(() =>
+    {
+        ThemeManager.Apply(Sta.UseApplication(), RibbonTheme.Office2024);
+        var owner = new RibbonOptionsDialog { Left = 120, Top = 100, Width = 900, Height = 600,
+            WindowStartupLocation = WindowStartupLocation.Manual, ShowActivated = false, ShowInTaskbar = false };
+        var dialog = new RibbonCustomizeEditDialog { CanEditIcon = icons, CanEditLayout = layout, CanEditSize = size,
+            ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            owner.Show(); Sta.Drain(); dialog.Owner = owner; dialog.Show(); Sta.Drain();
+            Assert.InRange(Math.Abs(dialog.Left + dialog.ActualWidth / 2 - owner.Left - owner.ActualWidth / 2), 0, 3);
+            Assert.InRange(Math.Abs(dialog.Top + dialog.ActualHeight / 2 - owner.Top - owner.ActualHeight / 2), 0, 3);
+        }
+        finally { dialog.Close(); owner.Close(); Sta.Drain(); Sta.ResetApplication(); }
+    });
+
     [Fact]
     public void Showcase_customization_actions_fit_the_content_clip() => Sta.Run(() =>
     {
@@ -19,6 +39,8 @@ public sealed class CustomizeDialogLayoutTests
         try
         {
             window.Show(); Sta.Drain();
+            typeof(MainWindow).GetField("_restoringAppearance", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.SetValue(window, true);
+            window.MainRibbon.LayoutMode = RibbonLayoutMode.Classic;
             var dialog = window.CreateCustomizationDialog(false);
             try
             {

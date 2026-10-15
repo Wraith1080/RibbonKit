@@ -70,6 +70,9 @@ public class RibbonCustomizeEditDialog : Window
     private ButtonBase? _okButton;
     private ButtonBase? _cancelButton;
     private ButtonBase? _closeButton;
+    private bool _canEditIcon;
+    private bool _canEditLayout;
+    private bool _canEditSize;
 
     static RibbonCustomizeEditDialog()
     {
@@ -81,7 +84,7 @@ public class RibbonCustomizeEditDialog : Window
     /// <summary>Initializes the dialog with small-modal defaults (custom close-only chrome).</summary>
     public RibbonCustomizeEditDialog()
     {
-        // Fixed width; the height is derived from which sections show (OnSourceInitialized).
+        // Final dimensions must be available before WPF computes CenterOwner positioning.
         // NOT SizeToContent: it collapses the width to near-zero under WindowStyle=None +
         // WindowChrome (WPF measures the custom-chrome window wrong).
         Width = 460;
@@ -89,19 +92,20 @@ public class RibbonCustomizeEditDialog : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         WindowStyle = WindowStyle.None;
         ResizeMode = ResizeMode.NoResize;
+        UpdateDialogHeight();
     }
 
     /// <summary>The target's display name; edited in place. Whitespace-only edits are ignored.</summary>
     public string? ItemName { get; set; }
 
     /// <summary>Show the icon picker (custom groups).</summary>
-    public bool CanEditIcon { get; set; }
+    public bool CanEditIcon { get => _canEditIcon; set { _canEditIcon = value; UpdateDialogHeight(); } }
 
     /// <summary>Show the layout choice (custom groups).</summary>
-    public bool CanEditLayout { get; set; }
+    public bool CanEditLayout { get => _canEditLayout; set { _canEditLayout = value; UpdateDialogHeight(); } }
 
     /// <summary>Show the button-size choice (custom-group commands).</summary>
-    public bool CanEditSize { get; set; }
+    public bool CanEditSize { get => _canEditSize; set { _canEditSize = value; UpdateDialogHeight(); } }
 
     /// <summary>When the owning group's layout is Large: show the size as a locked "Large".</summary>
     public bool SizeLocked { get; set; }
@@ -119,17 +123,14 @@ public class RibbonCustomizeEditDialog : Window
     /// <summary>In: the command's current size. Out: the picked size.</summary>
     public RibbonControlSize SelectedSize { get; set; } = RibbonControlSize.Medium;
 
-    /// <inheritdoc />
-    protected override void OnSourceInitialized(EventArgs e)
-    {
-        // Size to the sections the caller enabled (they're set before ShowDialog). A base
-        // height covers the title bar, name field, and button bar; each optional section adds
-        // its own. Done here (not SizeToContent) to dodge the chrome-measurement bug.
-        Height = 172
+    private void UpdateDialogHeight() => Height = 172
             + (CanEditIcon ? 192 : 0)
             + (CanEditLayout ? 62 : 0)
             + (CanEditSize ? 62 : 0);
 
+    /// <inheritdoc />
+    protected override void OnSourceInitialized(EventArgs e)
+    {
         base.OnSourceInitialized(e);
         MicaHelper.SetRoundedCorners(this, borderColor: 0x00E0E0E0);
     }

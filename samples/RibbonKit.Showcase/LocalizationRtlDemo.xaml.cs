@@ -194,6 +194,11 @@ public partial class LocalizationRtlDemo : RibbonWindow
             Header = RibbonLocalization.GetString(RibbonString.QuickAccessToolbarPage),
             Content = new RibbonQuickAccessPage { Ribbon = DemoRibbon },
         };
+        var simplifiedPage = new RibbonOptionsPage
+        {
+            Header = RibbonLocalization.GetString(RibbonString.CustomizeRibbonPage),
+            Content = new RibbonSimplifiedCustomizePage { Ribbon = DemoRibbon, ResetLayout = _baselineLayout },
+        };
         var dialog = new RibbonOptionsDialog
         {
             Title = "Localization & RTL Options",
@@ -201,8 +206,10 @@ public partial class LocalizationRtlDemo : RibbonWindow
             FlowDirection = FlowDirection,
         };
         dialog.Pages.Add(customizePage);
+        dialog.Pages.Add(simplifiedPage);
         dialog.Pages.Add(quickAccessPage);
-        dialog.SelectedPage = showQuickAccessPage ? quickAccessPage : customizePage;
+        dialog.SelectedPage = showQuickAccessPage ? quickAccessPage
+            : DemoRibbon.LayoutMode == RibbonLayoutMode.Simplified ? simplifiedPage : customizePage;
         if (_crystalPresentation?.Palette is { } palette)
         {
             dialog.Resources.MergedDictionaries.Add(palette);

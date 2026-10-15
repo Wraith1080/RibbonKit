@@ -35,7 +35,7 @@ public enum RibbonAnimationAction
     /// <summary>The selected-tab marker sliding from one tab to another.</summary>
     TabMarker,
 
-    /// <summary>Tab content cross-fading when the active tab changes.</summary>
+    /// <summary>Tab content settling vertically when the active tab changes.</summary>
     TabSwitch,
 
     /// <summary>In-ribbon gallery expanding to / collapsing from its drop-down.</summary>
@@ -71,8 +71,11 @@ public enum RibbonAnimationAction
     /// <summary>A ribbon message row appearing or disappearing.</summary>
     MessageBar,
 
-    /// <summary>A live Compact/Touch density change settling after its final layout.</summary>
+    /// <summary>A live Compact/Touch density change revealing or contracting its committed layout.</summary>
     DensityChange,
+
+    /// <summary>A live Classic/Simplified layout change opening or contracting the ribbon body.</summary>
+    LayoutModeChange,
 }
 
 /// <summary>
@@ -98,9 +101,9 @@ public enum RibbonAnimationAction
 /// library honors a user's system-wide reduced-motion preference automatically.
 /// </para>
 /// <para>
-/// All motion uses transform and opacity animation only (composited on the GPU); no
-/// layout-affecting property (Width/Height/Margin) is ever animated, so transitions never
-/// trigger a re-layout pass.
+/// Ribbon layout transitions use render transforms, opacity and temporary vector
+/// drawings after committing the final layout. They do not animate Width, Height,
+/// Margin or LayoutTransform; command text and icons retain their natural scale.
 /// </para>
 /// </remarks>
 public static class RibbonAnimation
@@ -223,10 +226,6 @@ public static class RibbonAnimation
     /// <summary>The easing function for an action at its effective level.</summary>
     public static IEasingFunction GetEase(RibbonAnimationAction action)
     {
-        // Let the density dip remain visible while the eye follows the immediate
-        // geometry change, then settle smoothly. Other actions retain their easing.
-        if (action == RibbonAnimationAction.DensityChange) return SharedCubicInOut;
-
         switch (GetEffectiveLevel(action))
         {
             case RibbonAnimationLevel.Expressive:
@@ -267,7 +266,8 @@ public static class RibbonAnimation
             RibbonAnimationAction.TabSwitch => 10d,
             RibbonAnimationAction.KeyTip => 4d,
             RibbonAnimationAction.MessageBar => 6d,
-            RibbonAnimationAction.DensityChange => 4d,
+            RibbonAnimationAction.DensityChange => 18d,
+            RibbonAnimationAction.LayoutModeChange => 18d,
             _ => 0d,
         };
 
@@ -289,7 +289,6 @@ public static class RibbonAnimation
     /// Any shared <see cref="Freezable"/> added here needs the same treatment.
     /// </remarks>
     private static readonly CubicEase SharedCubicOut = Frozen(new CubicEase { EasingMode = EasingMode.EaseOut });
-    private static readonly CubicEase SharedCubicInOut = Frozen(new CubicEase { EasingMode = EasingMode.EaseInOut });
 
     private static T Frozen<T>(T freezable)
         where T : Freezable
@@ -316,7 +315,8 @@ public static class RibbonAnimation
             RibbonAnimationAction.RibbonScroll => 160d,
             RibbonAnimationAction.QuickAccessMove => 150d,
             RibbonAnimationAction.ThemeSwitch => 160d,
-            RibbonAnimationAction.DensityChange => 160d,
+            RibbonAnimationAction.DensityChange => 130d,
+            RibbonAnimationAction.LayoutModeChange => 130d,
             RibbonAnimationAction.MessageBar => 160d,
             RibbonAnimationAction.RibbonMinimize => 180d,
             RibbonAnimationAction.MdiWindowState => 200d,

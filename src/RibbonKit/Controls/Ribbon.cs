@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
@@ -34,7 +35,7 @@ namespace RibbonKit.Controls;
 [TemplatePart(Name = ApplicationMenuOverlayLayerPartName, Type = typeof(Canvas))]
 [TemplatePart(Name = ApplicationMenuOverlayPresenterPartName, Type = typeof(ContentPresenter))]
 [TemplatePart(Name = ApplicationButtonOverlayPartName, Type = typeof(Border))]
-public class Ribbon : Control
+public partial class Ribbon : Control
 {
     /// <summary>Identifies the inherited attached <see cref="Density"/> dependency property.</summary>
     public static readonly DependencyProperty DensityProperty = DependencyProperty.RegisterAttached(
@@ -88,7 +89,7 @@ public class Ribbon : Control
         if (element is Ribbon ribbon)
         {
             ribbon.RequestSelectionVisualsRefresh();
-            ribbon.RequestDensityTransition((RibbonDensity)args.NewValue);
+            ribbon.RequestDensityTransition();
         }
     }
 
@@ -1102,8 +1103,10 @@ public class Ribbon : Control
     public static string? GetCommandId(DependencyObject element) =>
         (string?)element.GetValue(CommandIdProperty);
 
-    internal void RaiseRibbonCustomizeRequested() =>
-        RibbonCustomizeRequested?.Invoke(this, EventArgs.Empty);
+    internal void RaiseRibbonCustomizeRequested()
+    {
+        if (LayoutMode == RibbonLayoutMode.Classic) RibbonCustomizeRequested?.Invoke(this, EventArgs.Empty);
+    }
 
     /// <summary>
     /// Adds <paramref name="source"/> (a button, toggle, split button, dropdown, combo box, gallery or group) to
@@ -1375,8 +1378,42 @@ public class Ribbon : Control
         }
 
         proxy.SetValue(QuickAccessSourcePropertyKey, source);
+        MirrorCommandPresentation(proxy, source);
         MirrorEnabledState(proxy, source);
         return proxy;
+    }
+
+    // Preserve live labels/icons on source-linked copies, including simplified row
+    // and overflow copies. Combo/gallery/group copies already bind their own captions.
+    internal static void MirrorCommandPresentation(FrameworkElement proxy, FrameworkElement source)
+    {
+        if (source is not (RibbonButton or RibbonToggleButton or RibbonDropDownButton)) return;
+        foreach (string name in new[] { "Header", "Icon", "LargeIcon", "ScreenTipTitle", "ScreenTipText" })
+        {
+            var property = DependencyPropertyDescriptor.FromName(name, proxy.GetType(), proxy.GetType())?.DependencyProperty;
+            if (property is null) continue;
+            if (name is "Header" or "Icon" or "LargeIcon" or "ScreenTipTitle")
+            {
+                var binding = new MultiBinding { Converter = ProxyPresentationConverter.Instance, ConverterParameter = name };
+                binding.Bindings.Add(new Binding(name) { Source = source });
+                binding.Bindings.Add(new Binding(name switch
+                    { "Header" => "ScreenTipTitle", "ScreenTipTitle" => "Header", "Icon" => "LargeIcon", _ => "Icon" }) { Source = source });
+                proxy.SetBinding(property, binding);
+            }
+            else proxy.SetBinding(property, new Binding(name) { Source = source });
+        }
+    }
+
+    private sealed class ProxyPresentationConverter : IMultiValueConverter
+    {
+        internal static readonly ProxyPresentationConverter Instance = new();
+        public object? Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            object? primary = values[0] == DependencyProperty.UnsetValue ? null : values[0];
+            object? fallback = values[1] == DependencyProperty.UnsetValue ? null : values[1];
+            return primary ?? (parameter is "Header" && fallback is string title ? StripShortcutSuffix(title) : fallback);
+        }
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotSupportedException();
     }
 
     /// <summary>
@@ -1399,7 +1436,7 @@ public class Ribbon : Control
     /// question entirely.
     /// </para>
     /// </remarks>
-    private static void MirrorEnabledState(FrameworkElement proxy, FrameworkElement source)
+    internal static void MirrorEnabledState(FrameworkElement proxy, FrameworkElement source, RibbonGroup? group = null)
     {
         var enabled = new System.Windows.Data.MultiBinding { Converter = ProxyEnabledConverter.Instance };
         enabled.Bindings.Add(new System.Windows.Data.Binding(nameof(IsEnabled)) { Source = source });
@@ -1408,17 +1445,23 @@ public class Ribbon : Control
             Source = proxy,
             Path = new PropertyPath("(0)", IsCommandParkedProperty),
         });
+        // Simplified copies live outside their destination group's visual tree.
+        // Its enabled state must remain an explicit input even while source
+        // controls are detached or borrowed by a native popup.
+        if (group is not null)
+            enabled.Bindings.Add(new System.Windows.Data.Binding(nameof(IsEnabled)) { Source = group });
 
         proxy.SetBinding(IsEnabledProperty, enabled);
     }
 
-    /// <summary>Enabled = the source is enabled AND this proxy is not parked.</summary>
+    /// <summary>Enabled = source enabled, proxy not parked, and any destination group enabled.</summary>
     private sealed class ProxyEnabledConverter : System.Windows.Data.IMultiValueConverter
     {
         internal static readonly ProxyEnabledConverter Instance = new();
 
         public object Convert(object[] values, Type targetType, object parameter, System.Globalization.CultureInfo culture) =>
-            values is { Length: 2 } && values[0] is true && values[1] is false;
+            values.Length is 2 or 3 && values[0] is true && values[1] is false
+                && (values.Length == 2 || values[2] is true);
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, System.Globalization.CultureInfo culture) =>
             throw new NotSupportedException("A proxy's enabled state is derived, never pushed back.");
@@ -1506,7 +1549,7 @@ public class Ribbon : Control
         return ReferenceEquals(node, this);
     }
 
-    private System.Windows.Controls.ContextMenu CreateRibbonContextMenu(FrameworkElement? target)
+    internal System.Windows.Controls.ContextMenu CreateRibbonContextMenu(FrameworkElement? target)
     {
         var customizeItem = new System.Windows.Controls.MenuItem
         {
@@ -1518,7 +1561,11 @@ public class Ribbon : Control
         {
             Header = RibbonLocalization.GetString(RibbonString.CustomizeRibbon),
         };
-        customizeRibbonItem.Click += (_, _) => RaiseRibbonCustomizeRequested();
+        customizeRibbonItem.Click += (_, _) =>
+        {
+            if (LayoutMode == RibbonLayoutMode.Classic) RaiseRibbonCustomizeRequested();
+            else SimplifiedCustomizeRequested?.Invoke(this, EventArgs.Empty);
+        };
 
         var collapseItem = new System.Windows.Controls.MenuItem
         {
@@ -1547,9 +1594,29 @@ public class Ribbon : Control
             };
             addItem.Click += (_, _) => AddToQuickAccess(target);
             menu.Items.Add(addItem);
+            if (LayoutMode == RibbonLayoutMode.Simplified)
+            {
+                var (tab, entry) = FindSimplifiedTarget(target);
+                bool pinned = tab is not null && entry is not null && GetSimplifiedChoices(tab).Any(choice => choice.Group == entry.Group && SameSimplifiedCommand(choice.Source, entry.Control));
+                var pin = new System.Windows.Controls.MenuItem
+                {
+                    Header = RibbonLocalization.GetString(pinned ? RibbonString.RemoveFromSimplifiedRibbon : RibbonString.PinToSimplifiedRibbon),
+                    IsEnabled = tab is not null,
+                };
+                pin.Click += (_, _) => { if (pinned) RemoveFromSimplifiedRibbon(target); else PinToSimplifiedRibbon(target); };
+                menu.Items.Add(pin);
+            }
         }
         menu.Items.Add(customizeItem);
         menu.Items.Add(customizeRibbonItem);
+        var simplifiedItem = new System.Windows.Controls.MenuItem
+        {
+            Header = RibbonLocalization.GetString(RibbonString.SimplifiedRibbon),
+            IsChecked = LayoutMode == RibbonLayoutMode.Simplified,
+        };
+        simplifiedItem.Click += (_, _) => SetCurrentValue(LayoutModeProperty,
+            LayoutMode == RibbonLayoutMode.Classic ? RibbonLayoutMode.Simplified : RibbonLayoutMode.Classic);
+        menu.Items.Add(simplifiedItem);
         menu.Items.Add(new System.Windows.Controls.Separator());
         var visibilityItem = new System.Windows.Controls.MenuItem
         {
@@ -1559,6 +1626,11 @@ public class Ribbon : Control
         visibilityItem.Click += (_, _) => SetCurrentValue(IsQuickAccessVisibleProperty, !IsQuickAccessVisible);
         menu.Items.Add(visibilityItem);
         menu.Items.Add(collapseItem);
+        menu.Opened += (_, _) => _openRibbonContextMenu = menu;
+        menu.Closed += (_, _) =>
+        {
+            if (ReferenceEquals(_openRibbonContextMenu, menu)) _openRibbonContextMenu = null;
+        };
         return menu;
     }
 
@@ -1605,7 +1677,7 @@ public class Ribbon : Control
     // Walks up from the right-clicked element (visual parent first, logical as fallback so
     // popup content and text elements still resolve) to the nearest ribbon command control,
     // stopping at the ribbon itself.
-    private FrameworkElement? ResolveCommandControl(DependencyObject? node)
+    internal FrameworkElement? ResolveCommandControl(DependencyObject? node)
     {
         bool textEditor = false;
         while (node is not null && !ReferenceEquals(node, this))
@@ -1857,6 +1929,7 @@ public class Ribbon : Control
     private object? _savedTitleBarContent;
     private RibbonWindow? _applicationButtonShapeWindow;
     private System.Windows.Controls.ContextMenu? _qatContextMenu;
+    private System.Windows.Controls.ContextMenu? _openRibbonContextMenu;
 
     /// <summary>
     /// The constrained QAT host currently on screen, if this placement can overflow. The title-bar
@@ -3315,6 +3388,7 @@ public class Ribbon : Control
         CompositionTarget.Rendering += OnFirstDensityRender;
         RibbonAnimation.Changed -= OnDensityMotionPolicyChanged;
         RibbonAnimation.Changed += OnDensityMotionPolicyChanged;
+        AttachLayoutMotionInput();
         SystemParameters.StaticPropertyChanged -= OnDensitySystemMotionChanged;
         SystemParameters.StaticPropertyChanged += OnDensitySystemMotionChanged;
         EnsureSelection();
@@ -3355,6 +3429,8 @@ public class Ribbon : Control
 
     private void OnLayoutUpdated(object? sender, EventArgs e)
     {
+        if (_layoutMotion is { } motion && (!motion.MatchesLayout || HasLayoutMotionPopup()))
+            CancelDensityTransition();
         _applicationButtonShapeWindow?.UpdateAeroFrameHeaderBottom(this, _ribbonTabControl?.TabHeaderHost);
         if (IsApplicationMenuOpen)
         {
@@ -3381,6 +3457,7 @@ public class Ribbon : Control
         RibbonAnimation.Changed -= OnDensityMotionPolicyChanged;
         SystemParameters.StaticPropertyChanged -= OnDensitySystemMotionChanged;
         CancelDensityTransition();
+        DetachLayoutMotionInput();
         if (ApplicationMenu is RibbonApplicationMenu menu)
         {
             menu.ClearValue(ApplicationMenuGeometryConverter.AvailableHeightProperty);
@@ -3448,6 +3525,8 @@ public class Ribbon : Control
             return;
         }
 
+        CancelDensityTransition();
+
         if (IsBelowTabsBackstagePlacementActive())
         {
             SetCurrentValue(IsBackstageOpenProperty, false);
@@ -3463,7 +3542,9 @@ public class Ribbon : Control
             ?? _ribbonContentHost;
         // Slide (no fade): the new content is already realized at full opacity, so a fade
         // would flash it transparent for a frame — a subtle rise reads cleanly instead.
-        RibbonMotion.PlaySlideIn(target, RibbonAnimationAction.TabSwitch, RibbonSlideFrom.Top);
+        if (LayoutMode == RibbonLayoutMode.Simplified)
+            _simplifiedTabMotion = RibbonMotion.PlaySimplifiedTabSlide(target);
+        else RibbonMotion.PlaySlideIn(target, RibbonAnimationAction.TabSwitch, RibbonSlideFrom.Top);
     }
 
     private void OnRibbonTabPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -3961,45 +4042,9 @@ public class Ribbon : Control
         _densityTransitionsReady = true;
     }
 
-    private void RequestDensityTransition(RibbonDensity density)
+    private void RequestDensityTransition()
     {
-        CancelDensityTransition();
-        if (!_densityTransitionsReady || !IsLoaded || !IsVisible
-            || DesignerProperties.GetIsInDesignMode(this)
-            || !RibbonAnimation.IsEnabled(RibbonAnimationAction.DensityChange)) return;
-        int generation = _densityTransitionGeneration;
-
-        // Wait until inherited density callbacks have reclaimed flyout content and
-        // invalidated every adaptive width. Background also lets deferred selection,
-        // gallery viewport and QAT host updates finish before capturing the surfaces.
-        _pendingDensityTransition = Dispatcher.BeginInvoke(DispatcherPriority.Background, (Action)(() =>
-        {
-            _pendingDensityTransition = null;
-            if (!IsLoaded || !IsVisible
-                || !RibbonAnimation.IsEnabled(RibbonAnimationAction.DensityChange)) return;
-            (Window.GetWindow(this) as FrameworkElement ?? this).UpdateLayout();
-            RefreshSelectionVisuals();
-            // Layout/binding can itself change density or replace the template.
-            if (generation != _densityTransitionGeneration) return;
-            if (_ribbonTabControl is { IsVisible: true } tabs)
-                _densityTransitions.Add(new RibbonDensityTransition(tabs));
-
-            FrameworkElement? qat = QuickAccessPosition switch
-            {
-                RibbonQuickAccessPosition.BelowRibbon => _qatBelowHost,
-                RibbonQuickAccessPosition.TitleBar => _titleBarQatHost,
-                _ => null, // The tab-row QAT is already inside the faded tab control.
-            };
-            if (qat is { IsVisible: true })
-            {
-                double offset = QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon && !IsMinimized
-                    && qat.ContextMenu?.IsOpen != true && !PopupDismissHelper.HasOpenPopupWithin(qat)
-                    ? RibbonAnimation.GetSlideOffset(RibbonAnimationAction.DensityChange)
-                        * (density == RibbonDensity.Touch ? -1d : 1d)
-                    : 0d;
-                _densityTransitions.Add(new RibbonDensityTransition(qat, offset));
-            }
-        }));
+        RequestLayoutMotion(RibbonAnimationAction.DensityChange);
     }
 
     private void CancelDensityTransition()
@@ -4007,6 +4052,13 @@ public class Ribbon : Control
         _densityTransitionGeneration++;
         _pendingDensityTransition?.Abort();
         _pendingDensityTransition = null;
+        _layoutHold?.Dispose();
+        _layoutHold = null;
+        IsLayoutMotionChanging = false;
+        _simplifiedTabMotion?.Dispose();
+        _simplifiedTabMotion = null;
+        _layoutMotion?.Dispose();
+        _layoutMotion = null;
         foreach (RibbonDensityTransition transition in _densityTransitions) transition.Dispose();
         _densityTransitions.Clear();
     }
@@ -4018,7 +4070,9 @@ public class Ribbon : Control
             Dispatcher.BeginInvoke((Action)(() => OnDensityMotionPolicyChanged(sender, e)));
             return;
         }
-        if (!RibbonAnimation.IsEnabled(RibbonAnimationAction.DensityChange)) CancelDensityTransition();
+        // A new policy takes effect immediately, including while a vector card or
+        // simplified tab settle is running. Keep all participating surfaces in step.
+        CancelDensityTransition();
     }
 
     private void OnDensitySystemMotionChanged(object? sender, PropertyChangedEventArgs e)
@@ -4169,7 +4223,9 @@ public class Ribbon : Control
     private void OnTabsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         // Track visibility so selection can escape a contextual tab that hides.
-        if (e.OldItems is not null)
+        // Move changes order without ending modal/merge membership or re-recording
+        // temporary visibility as the tab's authored state.
+        if (e.Action != NotifyCollectionChangedAction.Move && e.OldItems is not null)
         {
             foreach (RibbonTab tab in e.OldItems)
             {
@@ -4186,7 +4242,7 @@ public class Ribbon : Control
             }
         }
 
-        if (e.NewItems is not null)
+        if (e.Action != NotifyCollectionChangedAction.Move && e.NewItems is not null)
         {
             foreach (RibbonTab tab in e.NewItems)
             {

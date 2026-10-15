@@ -408,6 +408,121 @@ public sealed class MainWindowIntegrationTests
     }
 
     [Fact]
+    public async Task SimplifiedSettingsRequestsDraftApplyCancelAndRestartUseSharedPage()
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var directory = new TemporaryDirectory();
+            var store = new WriterSettingsStore(new WriterSettingsPaths(directory.File("appearance.json"), directory.File("ribbon.json")));
+            string applied;
+            using (var fixture = new WindowFixture(settings: store))
+            {
+                fixture.Show();
+                fixture.Ribbon.LayoutMode = RibbonLayoutMode.Simplified;
+                await PumpAsync();
+                var bold = Assert.IsType<RibbonToggleButton>(fixture.Window.FindName("BoldButton"));
+                var italic = Assert.IsType<RibbonToggleButton>(fixture.Window.FindName("ItalicButton"));
+                var font = Assert.IsType<RibbonComboBox>(fixture.Window.FindName("FontFamilyCombo"));
+                var gallery = Assert.IsType<InRibbonGallery>(fixture.Window.FindName("TableGridPicker"));
+                Assert.Equal(RibbonSimplifiedPlacement.Inline, Ribbon.GetSimplifiedPlacement(bold));
+                Assert.Equal(RibbonSimplifiedPlacement.Inline, Ribbon.GetSimplifiedPlacement(font));
+                Assert.Equal(RibbonControlSize.Medium, Ribbon.GetSimplifiedSize(font));
+                Assert.NotNull(font.Icon);
+                Assert.Equal("Table", gallery.Header);
+                Assert.NotNull(gallery.Icon);
+                string opening = RibbonCustomizationSerializer.Serialize(fixture.Ribbon);
+
+                RunSettings(quickAccess: false, (dialog, page) =>
+                {
+                    RemoveDraft(page, bold);
+                    Assert.Equal(opening, RibbonCustomizationSerializer.Serialize(fixture.Ribbon));
+                    dialog.Close();
+                });
+                Assert.Equal(opening, RibbonCustomizationSerializer.Serialize(fixture.Ribbon));
+
+                applied = opening;
+                RunSettings(quickAccess: true, (dialog, page) =>
+                {
+                    RemoveDraft(page, bold);
+                    Click((ButtonBase)page.Template.FindName("PART_ApplyButton", page));
+                    applied = RibbonCustomizationSerializer.Serialize(fixture.Ribbon);
+                    Assert.NotEqual(opening, applied);
+                    Assert.Equal(applied, store.LoadRibbonLayout());
+                    RemoveDraft(page, italic);
+                    dialog.Close();
+                });
+                Assert.Equal(applied, RibbonCustomizationSerializer.Serialize(fixture.Ribbon));
+                Assert.Equal(applied, store.LoadRibbonLayout());
+
+                RunSettings(quickAccess: false, (dialog, page) =>
+                {
+                    RemoveDraft(page, italic);
+                    Click((ButtonBase)dialog.Template.FindName("PART_OkButton", dialog));
+                });
+                Assert.NotEqual(applied, store.LoadRibbonLayout());
+                // Context pinning outside Options also belongs to the host's saved layout.
+                Assert.True(fixture.Ribbon.PinToSimplifiedRibbon(italic));
+                applied = RibbonCustomizationSerializer.Serialize(fixture.Ribbon);
+                Assert.Equal(applied, store.LoadRibbonLayout());
+
+                void RunSettings(bool quickAccess, Action<RibbonOptionsDialog, RibbonSimplifiedCustomizePage> action)
+                {
+                    Exception? failure = null;
+                    bool reviewed = false;
+                    fixture.Window.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() =>
+                    {
+                        var dialog = fixture.Window.OwnedWindows.OfType<RibbonOptionsDialog>().Single();
+                        try
+                        {
+                            if (quickAccess)
+                            {
+                                Assert.IsType<RibbonQuickAccessPage>(dialog.SelectedPage!.Content);
+                                dialog.SelectedPage = dialog.Pages.Single(item => item.Content is RibbonSimplifiedCustomizePage);
+                                dialog.UpdateLayout();
+                            }
+                            var page = Assert.IsType<RibbonSimplifiedCustomizePage>(dialog.SelectedPage!.Content);
+                            Assert.True(page.IsEnabled);
+                            Assert.Same(fixture.Ribbon, page.Ribbon);
+                            Assert.False(string.IsNullOrEmpty(page.ResetLayout));
+                            Assert.Equal(Visibility.Collapsed, dialog.Pages.Single(item => item.Content is RibbonCustomizePage).Visibility);
+                            action(dialog, page);
+                            reviewed = true;
+                        }
+                        catch (Exception ex) { failure = ex; dialog.Close(); }
+                    }));
+                    // Obtain the library context menu; click the real entry to exercise host event subscriptions.
+                    var menu = (ContextMenu)typeof(Ribbon).GetMethod("CreateRibbonContextMenu", BindingFlags.Instance | BindingFlags.NonPublic)!
+                        .Invoke(fixture.Ribbon, new object?[] { null })!;
+                    string header = RibbonKit.Localization.RibbonLocalization.GetString(quickAccess
+                        ? RibbonKit.Localization.RibbonString.CustomizeQuickAccessToolbar
+                        : RibbonKit.Localization.RibbonString.CustomizeRibbon);
+                    FindMenuItem(menu.Items, header).RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+                    if (failure is not null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
+                    Assert.True(reviewed);
+                }
+            }
+            using var restarted = new WindowFixture(settings: store);
+            restarted.Show();
+            restarted.Ribbon.LayoutMode = RibbonLayoutMode.Simplified;
+            await PumpAsync();
+            Assert.Equal(applied, RibbonCustomizationSerializer.Serialize(restarted.Ribbon));
+            Assert.True(restarted.Ribbon.PinToSimplifiedRibbon((FrameworkElement)restarted.Window.FindName("BoldButton")));
+            Assert.False(restarted.Ribbon.PinToSimplifiedRibbon((FrameworkElement)restarted.Window.FindName("ItalicButton")));
+        }, TimeSpan.FromSeconds(45));
+
+        static void RemoveDraft(RibbonSimplifiedCustomizePage page, FrameworkElement command)
+        {
+            page.ApplyTemplate();
+            var current = (ListBox)page.Template.FindName("PART_CurrentList", page);
+            current.SelectedItem = current.Items.Cast<object>().Single(item =>
+                ReferenceEquals(item.GetType().GetProperty("Control")?.GetValue(item), command));
+            var remove = (ButtonBase)page.Template.FindName("PART_RemoveButton", page);
+            Assert.True(remove.IsEnabled);
+            Click(remove);
+        }
+    }
+
+    [Fact]
     public async Task DefaultPaperExpandsAndSwitchesViewsWithNativeHistory()
     {
         await StaTestHelper.RunAsync(async () =>

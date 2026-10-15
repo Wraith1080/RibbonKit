@@ -58,6 +58,9 @@ internal static class Flat2024ThemeChecks
         panel.Children.Add(ribbon);
         panel.Children.Add(collapsedGroup);
         panel.Children.Add(backstage);
+        var utilityStyles = new ResourceDictionary { Source = new Uri("/RibbonKit;component/Themes/Controls.Shared.xaml", UriKind.Relative) };
+        var utility = new RepeatButton { Style = (Style)utilityStyles["RibbonKit.ScrollLeftButton"], Height = 30 };
+        panel.Children.Add(utility);
         var window = new RibbonWindow { Content = panel, Width = 900, Height = 680,
             Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
         try
@@ -75,6 +78,17 @@ internal static class Flat2024ThemeChecks
                 Layout(window);
                 var original = ThemeManager.CreatePalette(RibbonTheme.Office2024, dark: dark);
                 var flat = ThemeManager.CreatePalette(RibbonTheme.Office2024Flat, dark: dark);
+                var utilityRim = Part<Border>(utility, "CrystalUtilityRim");
+                SetState(utility, typeof(ButtonBase), "IsPressedPropertyKey", true); Layout(window);
+                Assert.Equal(1, utilityRim.Opacity); Assert.Equal(new Thickness(1), utilityRim.BorderThickness);
+                Assert.Equal(ColorOf(flat["RibbonKit.Brushes.Control.PressedBorder"]), ColorOf(utilityRim.BorderBrush));
+                SetState(utility, typeof(ButtonBase), "IsPressedPropertyKey", false); Layout(window); Assert.Equal(0, utilityRim.Opacity);
+                var collapse = Part<ToggleButton>(Part<RibbonTabControl>(ribbon, "TabControlHost"), "MinimizeToggle");
+                collapse.IsChecked = true; Layout(window);
+                var checkedRim = Part<Border>(collapse, "CrystalUtilityRim");
+                Assert.Equal(1, checkedRim.Opacity);
+                Assert.Equal(ColorOf(flat["RibbonKit.Brushes.Utility.CheckedBorder"]), ColorOf(checkedRim.BorderBrush));
+                collapse.IsChecked = false; Layout(window);
                 Assert.True(ThemeManager.SupportsDarkMode(RibbonTheme.Office2024Flat));
                 Assert.Equal(original["RibbonKit.Metrics.ContentBorderThickness"], flat["RibbonKit.Metrics.ContentBorderThickness"]);
                 Assert.Equal(original["RibbonKit.Metrics.ContentCornerRadius"], flat["RibbonKit.Metrics.ContentCornerRadius"]);

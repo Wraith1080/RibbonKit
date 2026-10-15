@@ -1,4 +1,74 @@
 #nullable enable
+override RibbonKit.Controls.RibbonQuickAccessToolBar.OnContextMenuOpening(System.Windows.Controls.ContextMenuEventArgs! e) -> void
+RibbonKit.Controls.RibbonSimplifiedCustomizePage
+RibbonKit.Controls.RibbonSimplifiedCustomizePage.RibbonSimplifiedCustomizePage() -> void
+RibbonKit.Controls.RibbonSimplifiedCustomizePage.Ribbon.get -> RibbonKit.Controls.Ribbon?
+RibbonKit.Controls.RibbonSimplifiedCustomizePage.Ribbon.set -> void
+RibbonKit.Controls.RibbonSimplifiedCustomizePage.ResetLayout.get -> string?
+RibbonKit.Controls.RibbonSimplifiedCustomizePage.ResetLayout.set -> void
+static readonly RibbonKit.Controls.RibbonSimplifiedCustomizePage.ResetLayoutProperty -> System.Windows.DependencyProperty!
+static readonly RibbonKit.Controls.RibbonSimplifiedCustomizePage.RibbonProperty -> System.Windows.DependencyProperty!
+RibbonKit.Controls.RibbonSimplifiedCustomizePage.ApplyChanges() -> void
+RibbonKit.Controls.RibbonSimplifiedCustomizePage.CancelChanges() -> void
+override RibbonKit.Controls.RibbonSimplifiedCustomizePage.OnApplyTemplate() -> void
+RibbonKit.Controls.Ribbon.PinToSimplifiedRibbon(System.Windows.FrameworkElement! source) -> bool
+RibbonKit.Controls.Ribbon.RemoveFromSimplifiedRibbon(System.Windows.FrameworkElement! source) -> bool
+RibbonKit.Controls.Ribbon.SimplifiedCustomizeRequested -> System.EventHandler?
+RibbonKit.Controls.Ribbon.SimplifiedCustomizationChanged -> System.EventHandler?
+RibbonKit.Localization.RibbonString.CustomizeSimplifiedRibbon = 64 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.CustomizeSimplifiedRibbonPage = 65 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.PinToSimplifiedRibbon = 66 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.RemoveFromSimplifiedRibbon = 67 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.SimplifiedTab = 68 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.CurrentSimplifiedRibbon = 69 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.ShowLabel = 70 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.ResetTab = 71 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.ResetAllTabs = 72 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Apply = 73 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.AllGroups = 74 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.SimplifiedGroup = 75 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.RenameTab = 76 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.RenameGroup = 77 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.New = 78 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.AllTabs = 79 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.ShowItemLabel = 80 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.ResetQuickAccessToolbar = 81 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.ResetAllCustomizations = 82 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.InvalidRibbonLayout = 83 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.CommandsNotInRibbon = 84 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.MoveTab = 85 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.Before = 86 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.After = 87 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.TabPositionLabel = 88 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.TargetTabLabel = 89 -> RibbonKit.Localization.RibbonString
+override RibbonKit.Controls.RibbonComboBox.ClearContainerForItemOverride(System.Windows.DependencyObject! element, object! item) -> void
+override RibbonKit.Controls.RibbonComboBox.PrepareContainerForItemOverride(System.Windows.DependencyObject! element, object! item) -> void
+static readonly RibbonKit.Controls.Ribbon.SimplifiedSizeProperty -> System.Windows.DependencyProperty!
+static RibbonKit.Controls.Ribbon.GetSimplifiedSize(System.Windows.DependencyObject! element) -> RibbonKit.RibbonControlSize
+static RibbonKit.Controls.Ribbon.SetSimplifiedSize(System.Windows.DependencyObject! element, RibbonKit.RibbonControlSize value) -> void
+override RibbonKit.Controls.RibbonQuickAccessToolBar.OnPreviewKeyDown(System.Windows.Input.KeyEventArgs! e) -> void
+RibbonKit.RibbonLayoutMode
+RibbonKit.RibbonLayoutMode.Classic = 0 -> RibbonKit.RibbonLayoutMode
+RibbonKit.RibbonLayoutMode.Simplified = 1 -> RibbonKit.RibbonLayoutMode
+RibbonKit.RibbonSimplifiedPlacement
+RibbonKit.RibbonSimplifiedPlacement.Overflow = 0 -> RibbonKit.RibbonSimplifiedPlacement
+RibbonKit.RibbonSimplifiedPlacement.Inline = 1 -> RibbonKit.RibbonSimplifiedPlacement
+RibbonKit.Controls.Ribbon.LayoutMode.get -> RibbonKit.RibbonLayoutMode
+RibbonKit.Controls.Ribbon.LayoutMode.set -> void
+static readonly RibbonKit.Controls.Ribbon.LayoutModeProperty -> System.Windows.DependencyProperty!
+static RibbonKit.Controls.Ribbon.GetLayoutMode(System.Windows.DependencyObject! element) -> RibbonKit.RibbonLayoutMode
+static RibbonKit.Controls.Ribbon.SetLayoutMode(System.Windows.DependencyObject! element, RibbonKit.RibbonLayoutMode value) -> void
+static readonly RibbonKit.Controls.Ribbon.SimplifiedPlacementProperty -> System.Windows.DependencyProperty!
+static RibbonKit.Controls.Ribbon.GetSimplifiedPlacement(System.Windows.DependencyObject! element) -> RibbonKit.RibbonSimplifiedPlacement
+static RibbonKit.Controls.Ribbon.SetSimplifiedPlacement(System.Windows.DependencyObject! element, RibbonKit.RibbonSimplifiedPlacement value) -> void
+static readonly RibbonKit.Controls.Ribbon.SimplifiedPriorityProperty -> System.Windows.DependencyProperty!
+static RibbonKit.Controls.Ribbon.GetSimplifiedPriority(System.Windows.DependencyObject! element) -> int
+static RibbonKit.Controls.Ribbon.SetSimplifiedPriority(System.Windows.DependencyObject! element, int value) -> void
+override RibbonKit.Controls.RibbonGroupsHost.OnApplyTemplate() -> void
+override RibbonKit.Controls.RibbonGroupsHost.MeasureOverride(System.Windows.Size constraint) -> System.Windows.Size
+override RibbonKit.Controls.RibbonGroupsHost.OnItemsChanged(System.Collections.Specialized.NotifyCollectionChangedEventArgs! e) -> void
+RibbonKit.Localization.RibbonString.MoreRibbonCommands = 62 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.SimplifiedRibbon = 63 -> RibbonKit.Localization.RibbonString
 RibbonKit.Theming.RibbonTheme.Office2024Flat = 6 -> RibbonKit.Theming.RibbonTheme
 RibbonKit.Controls.Ribbon.IsQuickAccessVisible.get -> bool
 RibbonKit.Controls.Ribbon.IsQuickAccessVisible.set -> void
@@ -39,6 +109,7 @@ RibbonKit.Controls.RibbonMenuItem.LargeIcon.set -> void
 static readonly RibbonKit.Controls.RibbonMenuItem.LargeIconProperty -> System.Windows.DependencyProperty!
 override RibbonKit.Controls.RibbonMessageBar.OnApplyTemplate() -> void
 RibbonKit.Animation.RibbonAnimationAction.DensityChange = 15 -> RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.Animation.RibbonAnimationAction.LayoutModeChange = 16 -> RibbonKit.Animation.RibbonAnimationAction
 RibbonKit.RibbonDensity
 RibbonKit.RibbonDensity.Compact = 0 -> RibbonKit.RibbonDensity
 RibbonKit.RibbonDensity.Touch = 1 -> RibbonKit.RibbonDensity

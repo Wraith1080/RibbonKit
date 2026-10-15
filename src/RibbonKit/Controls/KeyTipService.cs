@@ -45,6 +45,7 @@ internal sealed class KeyTipService
     }
 
     internal void OnQuickAccessVisibilityChanged() => Exit();
+    internal void OnLayoutModeChanged() => Exit();
 
     private void AttachToWindow()
     {
@@ -701,6 +702,19 @@ internal sealed class KeyTipService
     private KeyTipLevel BuildTabGroupsLevel(RibbonTab tab)
     {
         var items = new List<KeyTipItem>();
+
+        if (_ribbon.LayoutMode == RibbonLayoutMode.Simplified
+            && tab.Content is RibbonGroupsHost { SimplifiedToolBar: { } simplified })
+        {
+            foreach (FrameworkElement entry in simplified.Items.OfType<FrameworkElement>())
+                if (entry is not RibbonGroupSeparator && entry.IsVisible && !simplified.IsOverflowed(entry))
+                    AddControlItems(entry, items);
+            if (simplified is { HasOverflow: true, OverflowButton: { IsVisible: true } overflow })
+                items.Add(new KeyTipItem(overflow, KeyTipKind.QuickAccessOverflow,
+                    RibbonLocalization.GetString(RibbonString.MoreRibbonCommands), null) { Payload = simplified });
+            AutoAssign(items);
+            return new KeyTipLevel(items);
+        }
 
         foreach (RibbonGroup group in tab.Groups)
         {

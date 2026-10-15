@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media;
 
@@ -12,6 +13,14 @@ namespace RibbonKit.Controls;
 /// </summary>
 internal static class RibbonCommandCatalog
 {
+    private static readonly ConditionalWeakTable<Ribbon, ImageSource> DefaultGroupIcons = new();
+
+    // Generic theme dictionaries are not application resources. Resolve the shared vector
+    // explicitly for detached drafts, retaining one identity per ribbon for persistence.
+    internal static ImageSource DefaultGroupIcon(Ribbon ribbon) => DefaultGroupIcons.GetValue(ribbon, scope =>
+        scope.TryFindResource(RibbonCustomizePage.DefaultGroupIconKey) as ImageSource
+        ?? (ImageSource)new ResourceDictionary { Source = new Uri("pack://application:,,,/RibbonKit;component/Themes/Icons.Customize.xaml") }[RibbonCustomizePage.DefaultGroupIconKey]);
+
     /// <summary>Group commands with their tab › group path, plus directly declared QAT commands.</summary>
     internal static ObservableCollection<RibbonCommandEntry> CollectAvailable(Ribbon ribbon, bool includeGroups = false)
     {
@@ -158,6 +167,7 @@ internal static class RibbonCommandCatalog
             }
         }
 
+        Add(DefaultGroupIcon(ribbon));
         foreach (RibbonTab tab in ribbon.Tabs)
         {
             foreach (RibbonGroup group in tab.Groups)

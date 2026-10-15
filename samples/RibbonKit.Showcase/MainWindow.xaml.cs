@@ -121,12 +121,21 @@ public partial class MainWindow : RibbonWindow
         }
 
         RestoreAppearancePreferences();
+        DependencyPropertyDescriptor.FromProperty(Ribbon.LayoutModeProperty, typeof(Ribbon))
+            .AddValueChanged(MainRibbon, (_, _) =>
+            {
+                SimplifiedRibbonToggle.IsChecked = MainRibbon.LayoutMode == RibbonLayoutMode.Simplified;
+                SaveAppearancePreferences();
+            });
+        SimplifiedRibbonToggle.IsChecked = MainRibbon.LayoutMode == RibbonLayoutMode.Simplified;
 
         // Persist QAT edits made OUTSIDE the options dialog too: right-click "Add/Remove from
         // Quick Access Toolbar" mutates QuickAccessItems, and the placement menu changes
         // QuickAccessPosition — neither goes through the dialog's Apply. Subscribe AFTER the
         // restore above so replaying the saved state doesn't itself trigger a save.
         MainRibbon.QuickAccessItems.CollectionChanged += (_, _) => SaveCustomization();
+        MainRibbon.SimplifiedCustomizationChanged += (_, _) => SaveCustomization();
+        MainRibbon.SimplifiedCustomizeRequested += (_, _) => OpenOptionsDialog(OptionsPageKind.SimplifiedRibbon);
         DependencyPropertyDescriptor
             .FromProperty(Ribbon.QuickAccessPositionProperty, typeof(Ribbon))
             ?.AddValueChanged(MainRibbon, (_, _) => SaveCustomization());
@@ -184,6 +193,7 @@ public partial class MainWindow : RibbonWindow
 
             DarkModeToggle.IsChecked = preferences.DarkMode;
             MainRibbon.Density = preferences.TouchMode ? RibbonDensity.Touch : RibbonDensity.Compact;
+            MainRibbon.LayoutMode = preferences.SimplifiedRibbon ? RibbonLayoutMode.Simplified : RibbonLayoutMode.Classic;
             AccentedTitleBarToggle.IsChecked = preferences.AccentedTitleBar;
             ApplyAccentPreference(preferences.Accent);
 
@@ -242,6 +252,7 @@ public partial class MainWindow : RibbonWindow
             Accent = _customAccent,
             DarkMode = ThemeManager.IsDarkMode,
             TouchMode = MainRibbon.Density == RibbonDensity.Touch,
+            SimplifiedRibbon = MainRibbon.LayoutMode == RibbonLayoutMode.Simplified,
             AccentedTitleBar = ThemeManager.IsAccentedTitleBar,
             FrameAppearance = _preferredFrameAppearance,
             UseAccentForAeroFrame = _useAccentForAeroFrame,
@@ -512,6 +523,12 @@ public partial class MainWindow : RibbonWindow
         if (MainRibbon is null || sender is not RibbonMenuItem { Tag: RibbonDensity density }) return;
         MainRibbon.Density = density;
         SaveAppearancePreferences();
+    }
+
+    private void OnToggleSimplifiedRibbon(object sender, RoutedEventArgs e)
+    {
+        if (MainRibbon is null || SimplifiedRibbonToggle is null) return;
+        MainRibbon.LayoutMode = SimplifiedRibbonToggle.IsChecked == true ? RibbonLayoutMode.Simplified : RibbonLayoutMode.Classic;
     }
 
     private void SyncGlassTreatmentToggle()
@@ -834,6 +851,7 @@ public partial class MainWindow : RibbonWindow
     {
         Editor,
         CustomizeRibbon,
+        SimplifiedRibbon,
         QuickAccess,
     }
 
@@ -959,7 +977,8 @@ public partial class MainWindow : RibbonWindow
     }
 
     internal RibbonOptionsDialog CreateCustomizationDialog(bool quickAccess) =>
-        CreateOptionsDialog(quickAccess ? OptionsPageKind.QuickAccess : OptionsPageKind.CustomizeRibbon);
+        CreateOptionsDialog(quickAccess ? OptionsPageKind.QuickAccess : MainRibbon.LayoutMode == RibbonLayoutMode.Simplified
+            ? OptionsPageKind.SimplifiedRibbon : OptionsPageKind.CustomizeRibbon);
 
     private RibbonOptionsDialog CreateOptionsDialog(OptionsPageKind select)
     {
@@ -969,19 +988,29 @@ public partial class MainWindow : RibbonWindow
             Header = RibbonLocalization.GetString(RibbonString.CustomizeRibbonPage),
             Content = new RibbonCustomizePage { Ribbon = MainRibbon, ResetLayout = _baselineLayout },
         };
+        customizePage.SetBinding(IsEnabledProperty, new System.Windows.Data.Binding(nameof(IsEnabled))
+            { Source = customizePage.Content });
         var qatPage = new RibbonOptionsPage
         {
             Header = RibbonLocalization.GetString(RibbonString.QuickAccessToolbarPage),
             Content = new RibbonQuickAccessPage { Ribbon = MainRibbon },
         };
 
+        var simplifiedPage = new RibbonOptionsPage
+        {
+            Header = RibbonLocalization.GetString(RibbonString.CustomizeRibbonPage),
+            Content = new RibbonSimplifiedCustomizePage { Ribbon = MainRibbon, ResetLayout = _baselineLayout },
+        };
+
         var dialog = new RibbonOptionsDialog { Title = "Options", Owner = this };
         dialog.Pages.Add(editorPage);
         dialog.Pages.Add(customizePage);
+        dialog.Pages.Add(simplifiedPage);
         dialog.Pages.Add(qatPage);
         dialog.SelectedPage = select switch
         {
             OptionsPageKind.CustomizeRibbon => customizePage,
+            OptionsPageKind.SimplifiedRibbon => simplifiedPage,
             OptionsPageKind.QuickAccess => qatPage,
             _ => editorPage,
         };

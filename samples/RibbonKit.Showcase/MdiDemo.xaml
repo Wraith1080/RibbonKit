@@ -16,14 +16,14 @@
         <rk:Ribbon x:Name="DemoRibbon" DockPanel.Dock="Top">
             <rk:RibbonTab Header="Window" rk:Ribbon.CommandId="tab.window">
                 <rk:RibbonGroup Header="Documents">
-                    <rk:RibbonButton Header="New Document"
+                    <rk:RibbonButton Header="New Document" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="100"
                                      Size="Large"
                                      LargeIcon="{StaticResource Icon.Copy}"
                                      Icon="{StaticResource Icon.Copy}"
                                      Click="OnNewDocument"
                                      ScreenTipTitle="New document"
                                      ScreenTipText="Open a new child window in the MDI area (a UserControl wrapped in themed chrome)." />
-                    <rk:RibbonButton Header="Close Active"
+                    <rk:RibbonButton Header="Close Active" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="90"
                                      Size="Large"
                                      LargeIcon="{StaticResource Icon.Exit}"
                                      Icon="{StaticResource Icon.Exit}"
@@ -32,17 +32,17 @@
                                      ScreenTipText="Close the currently active child window." />
                 </rk:RibbonGroup>
                 <rk:RibbonGroup Header="State">
-                    <rk:RibbonButton Header="Maximize"
+                    <rk:RibbonButton Header="Maximize" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="80"
                                      Click="OnMaximizeActive"
                                      SizeDefinition="Large, Medium, Small"
                                      Icon="{StaticResource Icon.Copy}"
                                      ScreenTipText="Maximize the active child to fill the MDI area." Size="Large" />
-                    <rk:RibbonButton Header="Minimize"
+                    <rk:RibbonButton Header="Minimize" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="70"
                                      Click="OnMinimizeActive"
                                      SizeDefinition="Large, Medium, Small"
                                      Icon="{StaticResource Icon.Copy}"
                                      ScreenTipText="Minimize the active child to a caption strip along the bottom." Size="Large" />
-                    <rk:RibbonButton Header="Restore"
+                    <rk:RibbonButton Header="Restore" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="80"
                                      Click="OnRestoreActive"
                                      SizeDefinition="Large, Medium, Small"
                                      Icon="{StaticResource Icon.Copy}"

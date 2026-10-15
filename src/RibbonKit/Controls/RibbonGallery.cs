@@ -148,6 +148,10 @@ public class RibbonGallery : ListBox
 
     private static ItemsPresenter? FindPresenter(DependencyObject parent)
     {
+        // A returned presenter is already the viewport's logical content while
+        // its hidden source group cannot run another measure pass. Reopening
+        // from a different command copy must not depend on visual realization.
+        if (parent is ScrollViewer { Content: ItemsPresenter content }) return content;
         for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
         {
             var child = VisualTreeHelper.GetChild(parent, i);

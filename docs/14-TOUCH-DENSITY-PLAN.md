@@ -207,6 +207,11 @@ the new heading appearance awaits user review and live native gates stay separat
 
 ### Live density transition — 2026-10-07
 
+The accepted settle described below is the historical implementation. The working
+tree's experimental accordion replacement, requested 2026-10-13, shares its
+presentation with Classic/Simplified changes; current motion evidence and review
+are in [S5 of the simplified-ribbon plan](15-SIMPLIFIED-RIBBON-PLAN.md#s5-motion-trial--2026-10-13).
+
 The final density is applied before any motion. A coalesced dispatcher operation
 runs after inherited callbacks, binding/layout, selection/gallery viewport refresh
 and deferred QAT placement. It completes the window/adaptive layout and selection
@@ -662,7 +667,7 @@ user's request: no full-suite, snapshot approval or native-input retry.
 | --- | --- |
 | Shared implementation and API documentation | Passed 2026-10-07: documented additive API; shipped baseline unchanged; matching Touch metrics in all six base themes |
 | Touch/Mouse dropdown selector | Full Release runtime and RibbonKit-only consumer passed 2026-10-08 for the final uniformly rounded headings, dropdown/split-button matrix and all QAT placements. Three documented shared properties, nine additive Unshipped symbols; shipped baseline unchanged. Actual renders inspected; heading user review pending |
-| Live density transition | Refined to 85% opacity and cubic EaseInOut, visually accepted 2026-10-08. Current full Release runtime and independent consumer passed, covering completion/interruption, startup, disabled policy, bindings, template/unload, QAT placements, popup anchors and adaptive geometry. Physical input and live reduced-motion review remain separate |
+| Live density transition | Prior opacity settle accepted 2026-10-08. The experimental 2026-10-13 accordion replacement and its current evidence/review are tracked in [simplified S5](15-SIMPLIFIED-RIBBON-PLAN.md#s5-motion-trial--2026-10-13); earlier full Release evidence does not validate this replacement. Physical input and live reduced-motion review remain separate |
 | Group launcher caption height | Passed focused Release verification 2026-10-08: RibbonKit-only six-theme/light-dark/LTR-RTL launcher aggregate and broader Touch consumer; nominal 14-DIP height, equal neighboring caption bands, retained Touch width and visibility toggles. Office2007 render inspected; user visual review pending |
 | Minimized QAT/message and Touch modal geometry | Passed focused Release verification 2026-10-08 after adding Office2007 to the upper-corner correction: independent chrome aggregate checks Office2007/2024 exposed upper QAT corners, flush message seams, both densities and Touch modal position across all themes/placements. Initial Office2024 fix's broader Touch aggregate and 13 runtime checks remain earlier evidence. Latest renders inspected; user review pending |
 | Minimized document-boundary divider | User accepted the conditional divider on 2026-10-08: it appears only below an exposed minimized header and is suppressed with a lower QAT or open messages. Focused Release six-theme/both-density visibility matrix passed. Initial relocation's broader Touch consumer and 24 runtime checks predate this refinement; full/native gates remain separate |

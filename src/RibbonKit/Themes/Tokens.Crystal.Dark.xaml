@@ -438,6 +438,8 @@
 
     <!-- Utility and scrollbar material. -->
     <system:Double x:Key="RibbonKit.Metrics.UtilityRimActiveOpacity">1</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.UtilityRimPressedOpacity">1</system:Double>
+    <DrawingBrush x:Key="RibbonKit.Brushes.Utility.CheckedBorder" Drawing="{StaticResource Crystal.Drawing.GlassRim}" Viewbox="0,0,1,1" ViewboxUnits="Absolute" Stretch="Fill" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.Glyph" Color="#B5CAD9" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScrollBar.ButtonBackground" Color="#243645" />
     <DrawingBrush x:Key="RibbonKit.Brushes.ScrollBar.ButtonBorder" Drawing="{StaticResource Crystal.Drawing.GlassRim}"
