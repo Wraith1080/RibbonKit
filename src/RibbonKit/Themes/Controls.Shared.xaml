@@ -150,6 +150,7 @@
                     <Grid>
                         <DockPanel LastChildFill="True">
                             <ToggleButton x:Name="PART_OverflowButton"
+                                          ClickMode="Press"
                                           DockPanel.Dock="Right"
                                           Width="20"
                                           Height="22"

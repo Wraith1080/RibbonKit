@@ -1114,8 +1114,12 @@ The broader material/DPI checks above remain open.
 [Correction and comparison evidence](history/library/04-office2007-and-popup-motion.md#3258-dropdown-opener-paint-precedes-native-popup-creation--2026-10-15).
 
 Overflow review on 2026-10-16 found no matching state gap in either QAT overflow or
-Simplified More Commands. Both retain release activation and hold-and-cancel;
-the press-to-open correction is not needed for their current popup bindings.
+Simplified More Commands. The user subsequently reported slow opening and requested
+the same press-to-open behavior without testing for now. Both shared overflow
+toggles now use `ClickMode.Press`, starting opening on mouse-down and giving up
+hold-and-cancel. Their direct checked-state popup bindings remain in place.
+Build, automated and live checks were deferred for this change at the user's
+request; perceived opening speed remains pending review.
 
 ## Gallery header and section layout
 

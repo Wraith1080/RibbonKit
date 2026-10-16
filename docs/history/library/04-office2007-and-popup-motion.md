@@ -684,3 +684,12 @@ trace is `TestResults/dropdown-flicker/native-overflow-state.txt`; the probe was
 removed. No runtime/template changes were needed, so release activation and
 hold-and-cancel remain available on these two openers. No new CPU/latency benchmark,
 full-suite or mixed-monitor acceptance is implied.
+
+**Overflow press activation follow-up — 2026-10-16.** After the review above, the
+user still reported slow opening and requested applying press activation without
+testing for now. Added `ClickMode.Press` to the QAT overflow and Simplified More
+Commands toggles in their shared templates. Opening starts on mouse-down; the
+existing checked-state popup bindings and visual triggers are unchanged.
+Hold-and-cancel is no longer available on these openers. No build, automated tests
+or live UI checks ran for this change; the earlier release-mode evidence does not
+validate the new input timing or establish a latency improvement.
