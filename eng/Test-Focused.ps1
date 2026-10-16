@@ -26,7 +26,7 @@ param(
         'ComboQuickAccess', 'ComboQuickAccessKeyboard', 'GroupedGalleries',
         'GalleryHeadersAndQatCommands', 'DensitySelector', 'MessageTransition',
         'QatThemeRestore', 'ColoredQat', 'QatBackdrop', 'QatCommandInteraction', 'QatVisibility', 'CustomizationLayout', 'MinimizedDivider', 'TouchChrome', 'GroupLauncher',
-        'DensityTransition', 'DensityTransitionLifecycle', 'HostLayoutTransition', 'LayoutMotion', 'LayoutMotionPopup', 'LayoutMotionPaint', 'ModePopupDismissal', 'SimplifiedTabReadiness', 'GlassOverlay', 'BackstageCaption', 'Flat2024', 'SimplifiedRibbon', 'SimplifiedDesignerDefaults', 'FeatureAvailability', 'SimplifiedCustomization', 'TabMoveCustomization', 'OverflowMenus', 'Touch', IgnoreCase = $false)]
+        'DensityTransition', 'DensityTransitionLifecycle', 'HostLayoutTransition', 'QatRowGeometry', 'ContextualMarker', 'LayoutMotion', 'LayoutMotionPopup', 'LayoutMotionPaint', 'ModePopupDismissal', 'SimplifiedTabReadiness', 'GlassOverlay', 'BackstageCaption', 'Flat2024', 'SimplifiedRibbon', 'SimplifiedDesignerDefaults', 'FeatureAvailability', 'SimplifiedCustomization', 'TabMoveCustomization', 'OverflowMenus', 'Touch', IgnoreCase = $false)]
     [string]$Scope,
     [ValidateSet('Debug', 'Release')]
     [string]$Configuration = 'Debug'

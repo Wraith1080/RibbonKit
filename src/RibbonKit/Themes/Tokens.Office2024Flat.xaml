@@ -8,6 +8,8 @@
 
     <SolidColorBrush x:Key="RibbonKit.Brushes.Ribbon.Border" Color="#A6A6A6" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.QatExtender.Border" Color="#A6A6A6" />
+    <!-- Reserve the compact row before bordered dropdown/split proxies arrive. -->
+    <system:Double x:Key="RibbonKit.Metrics.QatExtenderMinHeight">32</system:Double>
     <!-- Popup frames need stronger separation from the surface beneath them. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.ScreenTip.Border" Color="#A6A6A6" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Popup.Border" Color="#757575" />

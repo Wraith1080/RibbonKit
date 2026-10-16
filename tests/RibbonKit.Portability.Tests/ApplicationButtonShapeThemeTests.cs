@@ -298,6 +298,13 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("HostLayoutTransitionPortabilityChecks.Verify", () => HostLayoutTransitionPortabilityChecks.Verify(application));
             return;
         }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") is "QatRowGeometry" or "ContextualMarker")
+        {
+            if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "QatRowGeometry")
+                VerifyScope("QatAndContextualGeometryChecks.VerifyQat", () => QatAndContextualGeometryChecks.VerifyQat(application));
+            else VerifyScope("QatAndContextualGeometryChecks.VerifyMarker", () => QatAndContextualGeometryChecks.VerifyMarker(application));
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "DensityTransitionLifecycle")
         {
             VerifyScope("DensityTransitionPortabilityChecks.VerifyLifecycle", () => DensityTransitionPortabilityChecks.VerifyLifecycle(application));
@@ -339,6 +346,8 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("DensityTransitionPortabilityChecks.Verify", () => DensityTransitionPortabilityChecks.Verify(application));
             VerifyScope("LayoutMotionPortabilityChecks.Verify", () => LayoutMotionPortabilityChecks.Verify(application));
             VerifyScope("HostLayoutTransitionPortabilityChecks.Verify", () => HostLayoutTransitionPortabilityChecks.Verify(application));
+            VerifyScope("QatAndContextualGeometryChecks.VerifyQat", () => QatAndContextualGeometryChecks.VerifyQat(application));
+            VerifyScope("QatAndContextualGeometryChecks.VerifyMarker", () => QatAndContextualGeometryChecks.VerifyMarker(application));
             VerifyScope("MessageTransitionPortabilityChecks.Verify", () => MessageTransitionPortabilityChecks.Verify(application));
             VerifyScope("DropDownHeaderPortabilityChecks.Verify", () => DropDownHeaderPortabilityChecks.Verify(application));
             VerifyScope("GalleryHeaderAndQatCommandChecks.Verify", () => GalleryHeaderAndQatCommandChecks.Verify(application));
