@@ -1098,6 +1098,18 @@ neutral, Mica and Acrylic highlights in light/dark, including plain-button hover
 fade timing; native material acceptance remains open.
 [Implementation record](history/library/12-keytips-layout-and-validation.md#3244-colored-qat-split-companion-and-legacy-borders--2026-10-11).
 
+Dropdown opener flicker follow-up accepted for now on 2026-10-16. The user confirmed
+the replacement works and accepted opening on mouse press, including the inability
+to hold and move away to cancel the click. They reported the same behavior in
+Microsoft Office. This accepts the interaction in the reviewed build.
+Assembled focused evidence covers 81 runtime cases, the independent consumer's
+`QatCommandInteraction` and `ColoredQat` scopes, and four unchanged Office 2024/Flat
+visual scenes. Native input reproduced the original state gap and the new pressed
+state through popup creation. No measured latency improvement or separate
+Visual Studio-specific acceptance is claimed.
+The broader material/DPI checks above remain open.
+[Correction and comparison evidence](history/library/04-office2007-and-popup-motion.md#3258-dropdown-opener-paint-precedes-native-popup-creation--2026-10-15).
+
 ## Gallery header and section layout
 
 Implemented 2026-10-11 after the user's legacy dark gallery screenshots. Shared

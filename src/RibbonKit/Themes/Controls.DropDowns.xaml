@@ -30,7 +30,7 @@
                              access OVERFLOW flyout opts in, where a centred drop-down looked like a
                              different kind of control from the plain buttons stacked beside it. -->
                         <ToggleButton x:Name="PART_Toggle"
-                                      controls:RibbonPopupInteraction.IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                      ClickMode="Press"
                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"
                                       HorizontalContentAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource TemplatedParent}}"
                                       IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
@@ -62,7 +62,7 @@
                                                         <Setter TargetName="Chrome" Property="BorderThickness"
                                                                 Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                                     </MultiTrigger>
-                                                    <Trigger Property="controls:RibbonPopupInteraction.IsOpen" Value="True">
+                                                    <Trigger Property="IsChecked" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
                                                         <Setter TargetName="Chrome" Property="BorderBrush"
@@ -99,7 +99,7 @@
                                                     </MultiTrigger>
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>
-                                                            <Condition Property="controls:RibbonPopupInteraction.IsOpen" Value="True" />
+                                                            <Condition Property="IsChecked" Value="True" />
                                                             <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                                                         </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
@@ -215,8 +215,7 @@
                                 </StackPanel>
                             </Grid>
                         </ToggleButton>
-                        <!-- The owner synchronizes the opener's pressed paint before this binding
-                             creates the popup. Keep the original direct owner binding here. -->
+                        <!-- Open on press, keeping native IsPressed paint through popup creation. -->
                         <Popup controls:Ribbon.Density="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource TemplatedParent}}" x:Name="PART_Popup"
                                AllowsTransparency="True"
                                StaysOpen="True"
@@ -572,7 +571,7 @@
                             </Grid>
                         </Button>
                         <ToggleButton x:Name="PART_Toggle"
-                                      controls:RibbonPopupInteraction.IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                      ClickMode="Press"
                                       Grid.Column="1"
                                       Grid.Row="0"
                                       Grid.RowSpan="2"
@@ -689,7 +688,7 @@
                                                         <Setter TargetName="Chrome" Property="BorderThickness"
                                                                 Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                                     </MultiTrigger>
-                                                    <Trigger Property="controls:RibbonPopupInteraction.IsOpen" Value="True">
+                                                    <Trigger Property="IsChecked" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
                                                         <Setter TargetName="Chrome" Property="BorderBrush"
@@ -734,7 +733,7 @@
                                                     </MultiTrigger>
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>
-                                                            <Condition Property="controls:RibbonPopupInteraction.IsOpen" Value="True" />
+                                                            <Condition Property="IsChecked" Value="True" />
                                                             <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                                                         </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
@@ -762,7 +761,7 @@
                                 </Style>
                             </ToggleButton.Style>
                         </ToggleButton>
-                        <!-- As for the dropdown, the owner commits the opener's paint first. -->
+                        <!-- The arrow opens on press; the primary action keeps release semantics. -->
                         <Popup controls:Ribbon.Density="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource TemplatedParent}}" x:Name="PART_Popup"
                                AllowsTransparency="True"
                                StaysOpen="True"
@@ -869,7 +868,10 @@
                             </MultiTrigger.Conditions>
                             <Setter TargetName="PART_Primary" Property="Tag" Value="Companion" />
                         </MultiTrigger>
-                        <Trigger SourceName="PART_Toggle" Property="controls:RibbonPopupInteraction.IsOpen" Value="True">
+                        <Trigger SourceName="PART_Toggle" Property="IsChecked" Value="True">
+                            <Setter TargetName="PART_Primary" Property="Tag" Value="Companion" />
+                        </Trigger>
+                        <Trigger SourceName="PART_Toggle" Property="IsPressed" Value="True">
                             <Setter TargetName="PART_Primary" Property="Tag" Value="Companion" />
                         </Trigger>
                         <MultiTrigger>

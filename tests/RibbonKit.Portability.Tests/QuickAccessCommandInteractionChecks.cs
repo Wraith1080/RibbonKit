@@ -92,8 +92,9 @@ internal static class QuickAccessCommandInteractionChecks
                     {
                         var opener = Part<ToggleButton>(menu, "PART_Toggle");
                         var chrome = Part<Border>(opener, "Chrome");
+                        var primaryChrome = menu is RibbonSplitButton ? Part<Border>(Part<Button>(menu, "PART_Primary"), "Chrome") : null;
                         var popup = Part<Popup>(menu, "PART_Popup");
-                        var paint = new List<(bool Open, Brush Background, Brush Border)>();
+                        var paint = new List<(bool Open, Brush Background, Brush Border, Brush? Companion)>();
                         var originalPlacement = popup.Placement;
                         var originalCallback = popup.CustomPopupPlacementCallback;
                         popup.SetCurrentValue(Popup.PlacementProperty, PlacementMode.Custom);
@@ -102,13 +103,13 @@ internal static class QuickAccessCommandInteractionChecks
                             {
                                 // Native creation precedes Opened; inspect that transition,
                                 // not just the stable menu after the dispatcher drains.
-                                if (popup.IsOpen) paint.Add((menu.IsDropDownOpen, chrome.Background, chrome.BorderBrush));
+                                if (popup.IsOpen) paint.Add((menu.IsDropDownOpen, chrome.Background, chrome.BorderBrush, primaryChrome?.Background));
                                 return new[] { new CustomPopupPlacement(new Point(0, target.Height), PopupPrimaryAxis.None) };
                             }));
                         try
                         {
-                            ((IToggleProvider)FrameworkElementAutomationPeer.CreatePeerForElement(opener)!
-                                .GetPattern(PatternInterface.Toggle)).Toggle();
+                            Assert.Equal(ClickMode.Press, opener.ClickMode);
+                            PressOpener(opener);
                             Layout(); Assert.True(menu.IsDropDownOpen);
                             Assert.NotEmpty(paint);
                             bool colored = Ribbon.GetQatOnColoredSurface(opener);
@@ -119,7 +120,19 @@ internal static class QuickAccessCommandInteractionChecks
                                     : "RibbonKit.Brushes.Control.PressedBackground"), sample.Background);
                                 Assert.Same(menu.FindResource(colored ? "RibbonKit.Brushes.Qat.ColoredStateBorder"
                                     : "RibbonKit.Brushes.Control.PressedBorder"), sample.Border);
+                                if (primaryChrome is not null)
+                                    Assert.Same(menu.FindResource(colored ? "RibbonKit.Brushes.Qat.ColoredCompanionBackground"
+                                        : "RibbonKit.Brushes.Control.CompanionBackground"), sample.Companion);
                             }
+                            menu.IsDropDownOpen = false; Layout();
+                            // Accessibility activation has no preceding physical press.
+                            // Keep its ordinary toggle/open/close contract as well.
+                            ((IToggleProvider)FrameworkElementAutomationPeer.CreatePeerForElement(opener)!
+                                .GetPattern(PatternInterface.Toggle)).Toggle();
+                            Layout(); Assert.True(menu.IsDropDownOpen); Assert.True(popup.IsOpen);
+                            Assert.True(opener.IsChecked);
+                            Assert.Same(menu.FindResource(colored ? Ribbon.QatColoredPressedBackgroundKey
+                                : "RibbonKit.Brushes.Control.PressedBackground"), chrome.Background);
                             menu.IsDropDownOpen = false; Layout();
                         }
                         finally
@@ -165,6 +178,22 @@ internal static class QuickAccessCommandInteractionChecks
                 }
             }
         }
+    }
+
+    private static void PressOpener(ToggleButton opener)
+    {
+        // This offscreen consumer supplies press state without injecting OS input.
+        var pressedKey = (DependencyPropertyKey)typeof(ButtonBase)
+            .GetField("IsPressedPropertyKey", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+        opener.SetValue(pressedKey, true);
+        try { MouseEvent("OnMouseLeftButtonDown", Mouse.MouseDownEvent); }
+        finally { opener.SetValue(pressedKey, false); }
+        MouseEvent("OnMouseLeftButtonUp", Mouse.MouseUpEvent);
+
+        void MouseEvent(string method, RoutedEvent routedEvent) => typeof(ButtonBase)
+            .GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)!
+            .Invoke(opener, new object[] { new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
+                { RoutedEvent = routedEvent, Source = opener } });
     }
 
     private static void VerifyCustomCommandMenus(ImageSource icon)

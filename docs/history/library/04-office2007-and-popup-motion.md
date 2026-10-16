@@ -630,3 +630,42 @@ The temporary probe was removed and `codex/api-and-component-updates` plus its
 normal current Debug runtime, Showcase and test outputs were restored; all
 comparison/restoration builds had zero warnings/errors. Plugged-in Visual Studio
 native review remains separate. The checkpoint was not pushed.
+
+**Press-time opening replaces the paint flag — 2026-10-16.** The user requested
+reverting the correction and trying another approach. Removed the internal
+`RibbonPopupInteraction.IsOpen` property, its owner-callback synchronization and
+the two template bindings. Open styling again uses ordinary `IsChecked` triggers;
+the popups retain their original direct owner binding. Both opener toggles now
+use WPF `ClickMode.Press`, so existing `IsPressed` paint spans the in-progress
+checked-state transfer. The split primary action retains release semantics. Its
+companion trigger now also follows the arrow's native pressed state, preventing
+the other half from losing its highlight during that same transfer. The separate
+Crystal capture-registration optimization above remains in place.
+
+A temporary native-input diagnostic compared two otherwise identical Flat
+dropdowns with press versus release activation. Original release activation
+reached native placement and `Popup.Opened` with both `IsPressed=false` and
+`IsChecked=false`, and hover paint. Press activation reached both stages with
+`IsPressed=true`, `IsChecked=false` and the pressed brush; the checked update
+finished afterwards. This confirms the state gap without a dependency on painted
+frames or animation completion. The local trace is
+`TestResults/dropdown-flicker/native-press-state.txt`; the probe was removed.
+Its logging/timestamps are state evidence, not a CPU or presentation-latency
+benchmark. Showcase native mouse open/reclick-close, Escape and Space were checked.
+
+The 15 palette/layout regressions now exercise mouse-down/up handlers with supplied
+press state in their offscreen fixtures. They assert opening before release,
+no second toggle on release, transient arrow/companion brushes, programmatic/native
+close, rapid reopen and bindings. The companion assertion fails without its new
+pressed trigger. Initially-open and external-binding/notification checks remain;
+the independent consumer additionally retains settled accessibility activation.
+Direct automation invocation has no preceding physical press and is no longer
+used as the fixture for mouse-pressed paint during native creation.
+
+Debug evidence is assembled from the final 18 opening/binding cases and 63 related
+focus, dismissal, borrowing, overflow, hover and motion cases. Independent
+`QatCommandInteraction` (all QAT placements, LTR/RTL and transient companion paint)
+and `ColoredQat` scopes passed. Office 2024 default/RTL 100% and Flat light/dark
+states 100% visual scenes passed without approval changes. Normal Debug runtime
+net8/net9 builds passed with zero warnings/errors. Full-suite, a new CPU comparison,
+mixed-monitor/DPI and final user latency/appearance acceptance are not claimed.

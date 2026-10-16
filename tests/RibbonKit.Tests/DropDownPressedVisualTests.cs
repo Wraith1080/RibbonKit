@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media;
 using RibbonKit.Controls;
 using RibbonKit.Theming;
@@ -95,7 +96,7 @@ public sealed class DropDownPressedVisualTests
 
     [Theory]
     [MemberData(nameof(Openers))]
-    public void Opener_has_pressed_paint_during_native_popup_creation(RibbonTheme theme, int kind) => Sta.Run(() =>
+    public void Mouse_press_opens_with_pressed_paint_before_release(RibbonTheme theme, int kind) => Sta.Run(() =>
     {
         ThemeManager.Apply(Sta.UseApplication(), theme);
         var button = kind == 0 ? new RibbonDropDownButton { Header = "Select" }
@@ -108,17 +109,22 @@ public sealed class DropDownPressedVisualTests
         {
             window.Show(); Sta.Drain(); window.UpdateLayout();
             var toggle = Assert.IsType<ToggleButton>(button.Template.FindName("PART_Toggle", button));
+            Assert.Equal(ClickMode.Press, toggle.ClickMode);
+            if (button is RibbonSplitButton)
+                Assert.Equal(ClickMode.Release, Assert.IsType<Button>(button.Template.FindName("PART_Primary", button)).ClickMode);
             var chrome = Assert.IsType<Border>(toggle.Template.FindName("Chrome", toggle));
+            var primary = button.Template.FindName("PART_Primary", button) as Button;
+            var primaryChrome = primary?.Template.FindName("Chrome", primary) as Border;
             var popup = Assert.IsType<Popup>(button.Template.FindName("PART_Popup", button));
-            var placementPaint = new List<(bool Open, Brush Background, Brush Border)>();
+            var placementPaint = new List<(bool Open, Brush Background, Brush Border, Brush? Companion)>();
             popup.Placement = PlacementMode.Custom;
             popup.CustomPopupPlacementCallback = (size, target, offset) =>
             {
                 // Placement runs while the native window is being created, before
                 // Popup.Opened. Checking only after Opened misses the transient flash.
-                // Paint follows the owner's intent while the IsChecked transfer finishes.
+                // Native IsPressed covers the two-way IsChecked source transfer.
                 // Assert outside the binding callback: WPF can swallow its exceptions.
-                if (popup.IsOpen) placementPaint.Add((button.IsDropDownOpen, chrome.Background, chrome.BorderBrush));
+                if (popup.IsOpen) placementPaint.Add((button.IsDropDownOpen, chrome.Background, chrome.BorderBrush, primaryChrome?.Background));
                 return new[] { new CustomPopupPlacement(new Point(0, target.Height), PopupPrimaryAxis.None) };
             };
 
@@ -134,7 +140,29 @@ public sealed class DropDownPressedVisualTests
             Assert.True(System.Windows.Data.BindingOperations.IsDataBound(toggle, ToggleButton.IsCheckedProperty));
             Assert.True(System.Windows.Data.BindingOperations.IsDataBound(popup, Popup.IsOpenProperty));
 
-            void Click() => typeof(ToggleButton).GetMethod("OnClick", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(toggle, null);
+            void Click()
+            {
+                bool opening = !button.IsDropDownOpen;
+                // Supply the physical press state separately: this offscreen STA
+                // fixture does not inject OS mouse input or acquire native capture.
+                var pressedKey = (DependencyPropertyKey)typeof(ButtonBase)
+                    .GetField("IsPressedPropertyKey", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+                toggle.SetValue(pressedKey, true);
+                try
+                {
+                    MouseEvent("OnMouseLeftButtonDown", Mouse.MouseDownEvent);
+                    Assert.Equal(opening, button.IsDropDownOpen);
+                    Assert.Equal(opening, popup.IsOpen);
+                }
+                finally { toggle.SetValue(pressedKey, false); }
+                MouseEvent("OnMouseLeftButtonUp", Mouse.MouseUpEvent);
+                // Mouse-up must not toggle a second time.
+                Assert.Equal(opening, button.IsDropDownOpen);
+            }
+            void MouseEvent(string method, RoutedEvent routedEvent) => typeof(ButtonBase)
+                .GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)!
+                .Invoke(toggle, new object[] { new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
+                    { RoutedEvent = routedEvent, Source = toggle } });
             void CheckOpening()
             {
                 Sta.Drain();
@@ -145,6 +173,8 @@ public sealed class DropDownPressedVisualTests
                     Assert.True(paint.Open);
                     Assert.Same(button.FindResource("RibbonKit.Brushes.Control.PressedBackground"), paint.Background);
                     Assert.Same(button.FindResource("RibbonKit.Brushes.Control.PressedBorder"), paint.Border);
+                    if (primaryChrome is not null)
+                        Assert.Same(button.FindResource("RibbonKit.Brushes.Control.CompanionBackground"), paint.Companion);
                 }
                 placementPaint.Clear();
             }
