@@ -1102,6 +1102,10 @@ Dropdown opener flicker follow-up accepted for now on 2026-10-16. The user confi
 the replacement works and accepted opening on mouse press, including the inability
 to hold and move away to cancel the click. They reported the same behavior in
 Microsoft Office. This accepts the interaction in the reviewed build.
+In a further comparison on 2026-10-16, the user reported that the older implementation
+also felt slower than the flickery build and chose to retain the current fix.
+The user identified `fd9c326` (`office 2024 flat and bordered`) as the regression's
+origin on 2026-10-16; no further commit investigation is needed.
 Future revisit noted at the user's request on 2026-10-16: reassess the press-to-open
 tradeoff, especially preserving hold-and-cancel without reintroducing flicker or
 opening lag. Keep the current behavior accepted for now.
