@@ -1102,6 +1102,9 @@ Dropdown opener flicker follow-up accepted for now on 2026-10-16. The user confi
 the replacement works and accepted opening on mouse press, including the inability
 to hold and move away to cancel the click. They reported the same behavior in
 Microsoft Office. This accepts the interaction in the reviewed build.
+Future revisit noted at the user's request on 2026-10-16: reassess the press-to-open
+tradeoff, especially preserving hold-and-cancel without reintroducing flicker or
+opening lag. Keep the current behavior accepted for now.
 Assembled focused evidence covers 81 runtime cases, the independent consumer's
 `QatCommandInteraction` and `ColoredQat` scopes, and four unchanged Office 2024/Flat
 visual scenes. Native input reproduced the original state gap and the new pressed
@@ -1109,6 +1112,10 @@ state through popup creation. No measured latency improvement or separate
 Visual Studio-specific acceptance is claimed.
 The broader material/DPI checks above remain open.
 [Correction and comparison evidence](history/library/04-office2007-and-popup-motion.md#3258-dropdown-opener-paint-precedes-native-popup-creation--2026-10-15).
+
+Overflow review on 2026-10-16 found no matching state gap in either QAT overflow or
+Simplified More Commands. Both retain release activation and hold-and-cancel;
+the press-to-open correction is not needed for their current popup bindings.
 
 ## Gallery header and section layout
 

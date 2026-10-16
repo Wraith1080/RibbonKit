@@ -669,3 +669,18 @@ and `ColoredQat` scopes passed. Office 2024 default/RTL 100% and Flat light/dark
 states 100% visual scenes passed without approval changes. Normal Debug runtime
 net8/net9 builds passed with zero warnings/errors. Full-suite, a new CPU comparison,
 mixed-monitor/DPI and final user latency/appearance acceptance are not claimed.
+
+**QAT and Simplified overflow review — 2026-10-16.** Both shared overflow templates
+already bind `Popup.IsOpen` directly to `PART_OverflowButton.IsChecked`. They do not
+have the dropdown owner's reentrant two-way source transfer. Twelve focused
+regressions in `OverflowFocusAndUtilityTests` cover both templates in Office 2007,
+2010, 2019, 2024, Flat and Crystal, each with LTR/RTL open/close cycles. Invoking
+without a physical pressed state still observes `IsChecked=true` and the expected
+open background during native placement; Simplified also has its checked border.
+All twelve passed. A temporary RibbonKit-only native-input probe confirmed both
+Flat overflow openers reach placement and `Opened` with `IsPressed=false`,
+`IsChecked=true` and their open paint. QAT re-click closes normally. The local state
+trace is `TestResults/dropdown-flicker/native-overflow-state.txt`; the probe was
+removed. No runtime/template changes were needed, so release activation and
+hold-and-cancel remain available on these two openers. No new CPU/latency benchmark,
+full-suite or mixed-monitor acceptance is implied.

@@ -15,6 +15,62 @@ namespace RibbonKit.Tests;
 
 public sealed class OverflowFocusAndUtilityTests
 {
+    public static IEnumerable<object[]> OverflowOpeners()
+    {
+        foreach (var theme in new[] { RibbonTheme.Office2007, RibbonTheme.Office2010,
+            RibbonTheme.Office2019, RibbonTheme.Office2024, RibbonTheme.Office2024Flat, RibbonTheme.CrystalLight })
+            foreach (bool simplified in new[] { false, true })
+                yield return new object[] { theme, simplified };
+    }
+
+    [Theory]
+    [MemberData(nameof(OverflowOpeners))]
+    public void Overflow_is_checked_and_painted_before_native_popup_creation(RibbonTheme theme, bool simplified) => Sta.Run(() =>
+    {
+        using var host = new Host(FlowDirection.LeftToRight);
+        ThemeManager.Apply(host.Application, theme);
+        host.Ribbon.LayoutMode = simplified ? RibbonLayoutMode.Simplified : RibbonLayoutMode.Classic;
+        host.Layout();
+        var toolbar = simplified ? ((RibbonGroupsHost)host.Tab.Content).SimplifiedToolBar!
+            : Descendants(host.Window).OfType<RibbonQuickAccessToolBar>().First(bar => !bar.IsSimplified && bar.IsVisible);
+        toolbar.Width = 1; host.Layout();
+        var opener = toolbar.OverflowButton!;
+        var chrome = (Border)opener.Template.FindName("Chrome", opener);
+        var popup = (Popup)toolbar.Template.FindName("PART_OverflowPopup", toolbar);
+        var paint = new List<(bool? Checked, Brush Background, Brush Border)>();
+        popup.Placement = PlacementMode.Custom;
+        popup.CustomPopupPlacementCallback = (_, target, _) =>
+        {
+            // Observe native creation, before Opened can hide an in-progress
+            // toggle transfer. Assert afterwards: bindings can swallow exceptions.
+            if (popup.IsOpen) paint.Add((opener.IsChecked, chrome.Background, chrome.BorderBrush));
+            return new[] { new CustomPopupPlacement(new Point(0, target.Height), PopupPrimaryAxis.None) };
+        };
+        foreach (var flow in new[] { FlowDirection.LeftToRight, FlowDirection.RightToLeft })
+        {
+            host.Window.FlowDirection = flow; host.Layout();
+            // Invoke without IsPressed, matching the release-click transition
+            // that exposed the dropdown owner's reentrant checked-state gap.
+            Click(); host.Layout();
+            Assert.True(popup.IsOpen); Assert.True(opener.IsChecked); Assert.NotEmpty(paint);
+            bool colored = Ribbon.GetQatOnColoredSurface(opener);
+            var background = opener.FindResource(simplified ? "RibbonKit.Brushes.Control.CheckedBackground"
+                : colored ? Ribbon.QatColoredPressedBackgroundKey : "RibbonKit.Brushes.TabStrip.ControlHoverBackground");
+            foreach (var sample in paint)
+            {
+                Assert.True(sample.Checked);
+                Assert.Same(background, sample.Background);
+                if (simplified)
+                    Assert.Same(opener.FindResource("RibbonKit.Brushes.Control.CheckedBorder"), sample.Border);
+            }
+            paint.Clear();
+            Click(); host.Layout();
+            Assert.False(popup.IsOpen); Assert.False(opener.IsChecked);
+        }
+
+        void Click() => typeof(ToggleButton).GetMethod("OnClick", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(opener, null);
+    });
+
     [Theory]
     [InlineData(false, FlowDirection.LeftToRight)]
     [InlineData(false, FlowDirection.RightToLeft)]
