@@ -27,6 +27,8 @@ public partial class LocalizationRtlDemo : RibbonWindow
     {
         InitializeComponent();
         InitializeSelectionPreview();
+        var contentTransition = new ShowcaseContentTransition(DemoRibbon, LabContentSurface);
+        Closed += (_, _) => contentTransition.Dispose();
         _applicationMenu = DemoApplicationMenu;
         DemoRibbon.ApplicationMenu = null;
         _baselineLayout = RibbonCustomizationSerializer.Serialize(DemoRibbon);

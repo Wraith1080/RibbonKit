@@ -423,3 +423,5 @@ status updates and investigation narration were removed during compaction.
 ### [3.257 Toolbox definitions and discovery metadata — 2026-10-15](library/02-designer-and-context-menus.md#3257-toolbox-definitions-and-discovery-metadata--2026-10-15)
 
 ### [3.258 Dropdown opener paint precedes native popup creation — 2026-10-15](library/04-office2007-and-popup-motion.md#3258-dropdown-opener-paint-precedes-native-popup-creation--2026-10-15)
+
+### [3.259 Ribbon-owned lifecycle and QAT relocation presentation — 2026-10-16](library/16-host-layout-transitions.md#3259-ribbon-owned-lifecycle-and-qat-relocation-presentation--2026-10-16)

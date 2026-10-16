@@ -1124,6 +1124,11 @@ toggles now use `ClickMode.Press`, starting opening on mouse-down and giving up
 hold-and-cancel. Their direct checked-state popup bindings remain in place.
 Build, automated and live checks were deferred for this change at the user's
 request; perceived opening speed remains pending review.
+The subsequent authorized host-layout implementation on 2026-10-16 built the
+current templates and passed the affected dropdown/overflow runtime and independent
+consumer checks as part of its assembled validation. This does not establish native
+press/hold behavior, perceived speed, measured latency or Visual Studio acceptance;
+see [host-layout evidence](18-HOST-LAYOUT-TRANSITION-PLAN.md#h3--verification-and-acceptance-2026-10-16).
 
 ## Gallery header and section layout
 

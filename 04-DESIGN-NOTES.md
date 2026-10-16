@@ -1008,6 +1008,10 @@ technical evidence warrants them; preserve existing dated records.
 [Preserve pressed feedback through dropdown and split-button opening](docs/history/library/04-office2007-and-popup-motion.md#3258-dropdown-opener-paint-precedes-native-popup-creation--2026-10-15).
 [Current acceptance](docs/09-FUTURE-THEMES-PLAN.md#colored-qat-split-and-dropdown-states).
 
+### 3.259 Ribbon-owned lifecycle and QAT relocation presentation — 2026-10-16
+
+[Shared start/progress, inert QAT relocation and optional application content animation](docs/history/library/16-host-layout-transitions.md#3259-ribbon-owned-lifecycle-and-qat-relocation-presentation--2026-10-16).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.
@@ -1043,8 +1047,8 @@ technical evidence warrants them; preserve existing dated records.
 - **Toolbox item definitions:** the follow-on inventory, authoring and package
   review is in the [design plan](docs/17-TOOLBOX-ITEM-DEFINITION-PLAN.md).
 
-- **Ribbon/host animation synchronization:** layout, density and QAT placement
-  hooks follow the Toolbox plan; see the [design plan](docs/18-HOST-LAYOUT-TRANSITION-PLAN.md).
+- **Ribbon/host animation synchronization:** shared lifecycle, QAT relocation and
+  application examples are tracked in the [active plan](docs/18-HOST-LAYOUT-TRANSITION-PLAN.md).
 
 - **Office 2024 Flat:** implementation and visual review status are in the
   [flat theme trial](docs/09-FUTURE-THEMES-PLAN.md#office-2024-flat-trial).

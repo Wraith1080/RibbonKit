@@ -204,3 +204,50 @@ static readonly RibbonKit.Controls.Ribbon.CanUserChangeLayoutModeProperty -> Sys
 RibbonKit.Controls.Ribbon.CanUserChangeDensity.get -> bool
 RibbonKit.Controls.Ribbon.CanUserChangeDensity.set -> void
 static readonly RibbonKit.Controls.Ribbon.CanUserChangeDensityProperty -> System.Windows.DependencyProperty!
+RibbonKit.Animation.RibbonLayoutTransitionEventArgs
+RibbonKit.Animation.RibbonLayoutTransitionEventArgs.BoundaryMotion.get -> RibbonKit.Animation.RibbonLayoutTransitionMotion!
+RibbonKit.Animation.RibbonLayoutTransitionEventArgs.CoordinateRoot.get -> System.Windows.FrameworkElement!
+RibbonKit.Animation.RibbonLayoutTransitionEventArgs.FinalGeometry.get -> RibbonKit.Animation.RibbonLayoutTransitionGeometry?
+RibbonKit.Animation.RibbonLayoutTransitionEventArgs.Outcome.get -> RibbonKit.Animation.RibbonLayoutTransitionOutcome?
+RibbonKit.Animation.RibbonLayoutTransitionEventArgs.PreviousGeometry.get -> RibbonKit.Animation.RibbonLayoutTransitionGeometry!
+RibbonKit.Animation.RibbonLayoutTransitionEventArgs.PreviousState.get -> RibbonKit.Animation.RibbonLayoutTransitionState!
+RibbonKit.Animation.RibbonLayoutTransitionEventArgs.QuickAccessMotion.get -> RibbonKit.Animation.RibbonLayoutTransitionMotion?
+RibbonKit.Animation.RibbonLayoutTransitionEventArgs.Reason.get -> RibbonKit.Animation.RibbonLayoutTransitionReason
+RibbonKit.Animation.RibbonLayoutTransitionEventArgs.TargetState.get -> RibbonKit.Animation.RibbonLayoutTransitionState!
+RibbonKit.Animation.RibbonLayoutTransitionEventArgs.TransitionId.get -> long
+RibbonKit.Animation.RibbonLayoutTransitionEventArgs.WasStarted.get -> bool
+RibbonKit.Animation.RibbonLayoutTransitionGeometry
+RibbonKit.Animation.RibbonLayoutTransitionGeometry.Dpi.get -> System.Windows.DpiScale
+RibbonKit.Animation.RibbonLayoutTransitionGeometry.OccupiedBounds.get -> System.Windows.Rect
+RibbonKit.Animation.RibbonLayoutTransitionGeometry.PaintedBounds.get -> System.Windows.Rect
+RibbonKit.Animation.RibbonLayoutTransitionGeometry.QuickAccessBounds.get -> System.Windows.Rect?
+RibbonKit.Animation.RibbonLayoutTransitionGeometry.QuickAccessPanelBounds.get -> System.Windows.Rect?
+RibbonKit.Animation.RibbonLayoutTransitionMotion
+RibbonKit.Animation.RibbonLayoutTransitionMotion.Action.get -> RibbonKit.Animation.RibbonAnimationAction
+RibbonKit.Animation.RibbonLayoutTransitionMotion.Duration.get -> System.Windows.Duration
+RibbonKit.Animation.RibbonLayoutTransitionMotion.Easing.get -> System.Windows.Media.Animation.IEasingFunction!
+RibbonKit.Animation.RibbonLayoutTransitionMotion.EffectiveLevel.get -> RibbonKit.Animation.RibbonAnimationLevel
+RibbonKit.Animation.RibbonLayoutTransitionMotion.IsAnimated.get -> bool
+RibbonKit.Animation.RibbonLayoutTransitionMotion.Progress.get -> double
+RibbonKit.Animation.RibbonLayoutTransitionOutcome
+RibbonKit.Animation.RibbonLayoutTransitionOutcome.Completed = 0 -> RibbonKit.Animation.RibbonLayoutTransitionOutcome
+RibbonKit.Animation.RibbonLayoutTransitionOutcome.Interrupted = 2 -> RibbonKit.Animation.RibbonLayoutTransitionOutcome
+RibbonKit.Animation.RibbonLayoutTransitionOutcome.Skipped = 3 -> RibbonKit.Animation.RibbonLayoutTransitionOutcome
+RibbonKit.Animation.RibbonLayoutTransitionOutcome.Superseded = 1 -> RibbonKit.Animation.RibbonLayoutTransitionOutcome
+RibbonKit.Animation.RibbonLayoutTransitionReason
+RibbonKit.Animation.RibbonLayoutTransitionReason.Capability = 8 -> RibbonKit.Animation.RibbonLayoutTransitionReason
+RibbonKit.Animation.RibbonLayoutTransitionReason.Density = 2 -> RibbonKit.Animation.RibbonLayoutTransitionReason
+RibbonKit.Animation.RibbonLayoutTransitionReason.LayoutMode = 1 -> RibbonKit.Animation.RibbonLayoutTransitionReason
+RibbonKit.Animation.RibbonLayoutTransitionReason.None = 0 -> RibbonKit.Animation.RibbonLayoutTransitionReason
+RibbonKit.Animation.RibbonLayoutTransitionReason.QuickAccessPlacement = 4 -> RibbonKit.Animation.RibbonLayoutTransitionReason
+RibbonKit.Animation.RibbonLayoutTransitionReason.QuickAccessVisibility = 16 -> RibbonKit.Animation.RibbonLayoutTransitionReason
+RibbonKit.Animation.RibbonLayoutTransitionState
+RibbonKit.Animation.RibbonLayoutTransitionState.Density.get -> RibbonKit.RibbonDensity
+RibbonKit.Animation.RibbonLayoutTransitionState.IsMinimized.get -> bool
+RibbonKit.Animation.RibbonLayoutTransitionState.IsQuickAccessVisible.get -> bool
+RibbonKit.Animation.RibbonLayoutTransitionState.LayoutMode.get -> RibbonKit.RibbonLayoutMode
+RibbonKit.Animation.RibbonLayoutTransitionState.QuickAccessPosition.get -> RibbonKit.RibbonQuickAccessPosition
+RibbonKit.Controls.Ribbon.LayoutTransitionEnded -> System.EventHandler<RibbonKit.Animation.RibbonLayoutTransitionEventArgs!>?
+RibbonKit.Controls.Ribbon.LayoutTransitionPreparing -> System.EventHandler<RibbonKit.Animation.RibbonLayoutTransitionEventArgs!>?
+RibbonKit.Controls.Ribbon.LayoutTransitionStarting -> System.EventHandler<RibbonKit.Animation.RibbonLayoutTransitionEventArgs!>?
+static readonly RibbonKit.Animation.RibbonLayoutTransitionMotion.ProgressProperty -> System.Windows.DependencyProperty!

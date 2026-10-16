@@ -87,6 +87,8 @@ public partial class MainWindow : RibbonWindow
     {
         InitializeComponent();
         InitializeFeatureSelectors();
+        var documentTransition = new ShowcaseContentTransition(MainRibbon, DocumentSurface);
+        Closed += (_, _) => documentTransition.Dispose();
 
         _applicationMenu = ShowcaseApplicationMenu;
         MainRibbon.ApplicationMenu = null;

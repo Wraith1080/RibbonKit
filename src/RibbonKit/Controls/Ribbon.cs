@@ -89,7 +89,8 @@ public partial class Ribbon : Control
         if (element is Ribbon ribbon)
         {
             ribbon.RequestSelectionVisualsRefresh();
-            ribbon.RequestDensityTransition();
+            ribbon.RequestLayoutMotion(RibbonAnimationAction.DensityChange,
+                ribbon.LayoutState(density: (RibbonDensity)args.OldValue));
         }
     }
 
@@ -1954,6 +1955,7 @@ public partial class Ribbon : Control
     // items are projected into the host RibbonWindow's TitleBarContent via this host; the
     // shared context menu lets the user move the QAT between placements (like Office).
     private RibbonQuickAccessToolBar? _titleBarQatHost;
+    private DispatcherOperation? _pendingQuickAccessPlacement;
     private readonly Dictionary<FrameworkElement, ResourceDictionary> _qatBackdropPalettes = new();
     private object? _savedTitleBarContent;
     private RibbonWindow? _applicationButtonShapeWindow;
@@ -3458,6 +3460,7 @@ public partial class Ribbon : Control
 
     private void OnLayoutUpdated(object? sender, EventArgs e)
     {
+        _layoutCoordinator?.Validate();
         if (_layoutMotion is { } motion && (!motion.MatchesLayout || HasLayoutMotionPopup()))
             CancelDensityTransition();
         _applicationButtonShapeWindow?.UpdateAeroFrameHeaderBottom(this, _ribbonTabControl?.TabHeaderHost);
@@ -3481,6 +3484,7 @@ public partial class Ribbon : Control
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        _pendingQuickAccessPlacement?.Abort(); _pendingQuickAccessPlacement = null;
         _densityTransitionsReady = false;
         CompositionTarget.Rendering -= OnFirstDensityRender;
         RibbonAnimation.Changed -= OnDensityMotionPolicyChanged;
@@ -3832,14 +3836,37 @@ public partial class Ribbon : Control
     private static void OnQuickAccessPositionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var ribbon = (Ribbon)d;
-        ribbon.CancelDensityTransition();
-        ribbon.UpdateQuickAccessPlacement();
+        Action[] dismissals = [];
+        if (ribbon.IsLoaded && ribbon._densityTransitionsReady && Window.GetWindow(ribbon) is { } window)
+        {
+            FrameworkElement? oldHost = (RibbonQuickAccessPosition)e.OldValue switch
+            {
+                RibbonQuickAccessPosition.TitleBar => ribbon._titleBarQatHost,
+                RibbonQuickAccessPosition.TabRow => ribbon._qatTabRowHost,
+                _ => ribbon._qatBelowHost,
+            };
+            var roots = ribbon.QuickAccessItems.OfType<FrameworkElement>().Concat(oldHost is null ? [] : new[] { oldHost }).Distinct().ToArray();
+            dismissals = roots.Select(root => PopupDismissHelper.CaptureDismissalWithin(root, window)).ToArray();
+        }
+        try
+        {
+            ribbon.RequestLayoutMotion(RibbonAnimationAction.QuickAccessMove,
+                ribbon.LayoutState(position: (RibbonQuickAccessPosition)e.OldValue));
+        }
+        finally
+        {
+            if (dismissals.Length > 0)
+                ribbon.Dispatcher.BeginInvoke(DispatcherPriority.Background,
+                    (Action)(() => { foreach (var dismiss in dismissals) dismiss(); }));
+            ribbon.UpdateQuickAccessPlacement();
+        }
     }
 
     private static void OnIsQuickAccessVisibleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var ribbon = (Ribbon)d;
-        ribbon.CancelDensityTransition();
+        ribbon.RequestLayoutMotion(RibbonAnimationAction.QuickAccessMove,
+            ribbon.LayoutState(visible: (bool)e.OldValue));
         ribbon._keyTipService.OnQuickAccessVisibilityChanged();
         if (!(bool)e.NewValue)
         {
@@ -3870,13 +3897,15 @@ public partial class Ribbon : Control
 
         // Apply the final placement after a layout pass, so whichever host currently owns
         // the items has released them before we (re)claim — avoids a transient double-parent.
-        Dispatcher.BeginInvoke(
+        _pendingQuickAccessPlacement?.Abort();
+        _pendingQuickAccessPlacement = Dispatcher.BeginInvoke(
             System.Windows.Threading.DispatcherPriority.Background,
             (Action)ApplyQuickAccessPlacement);
     }
 
     private void ApplyQuickAccessPlacement()
     {
+        _pendingQuickAccessPlacement = null;
         var window = Window.GetWindow(this) as RibbonWindow;
 
         if (IsQuickAccessVisible && QuickAccessPosition == RibbonQuickAccessPosition.TitleBar && window is not null)
@@ -3917,6 +3946,7 @@ public partial class Ribbon : Control
         // layout entirely — it is never measured, keeps its stale RenderSize, and raises no
         // SizeChanged going either way.
         RequestSelectionVisualsRefresh();
+        _layoutCoordinator?.HideCurrentQat();
     }
 
     private RibbonQuickAccessToolBar CreateTitleBarQatHost()
@@ -4072,11 +4102,6 @@ public partial class Ribbon : Control
         _densityTransitionsReady = true;
     }
 
-    private void RequestDensityTransition()
-    {
-        RequestLayoutMotion(RibbonAnimationAction.DensityChange);
-    }
-
     private void CancelDensityTransition()
     {
         _densityTransitionGeneration++;
@@ -4091,6 +4116,7 @@ public partial class Ribbon : Control
         _layoutMotion = null;
         foreach (RibbonDensityTransition transition in _densityTransitions) transition.Dispose();
         _densityTransitions.Clear();
+        _layoutCoordinator?.Cancel();
     }
 
     private void OnDensityMotionPolicyChanged(object? sender, EventArgs e)

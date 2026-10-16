@@ -139,10 +139,14 @@ public partial class Ribbon
                 }
             }
         }
-        ribbon.SetValue(SimplifiedCapabilityPropertyKey, e.NewValue);
-        ribbon.ReconcileFeatureTabs();
-        ribbon.CoerceValue(LayoutModeProperty);
-        ribbon.CancelDensityTransition();
+        ribbon._changingSimplifiedCapability = true;
+        try
+        {
+            ribbon.SetValue(SimplifiedCapabilityPropertyKey, e.NewValue);
+            ribbon.ReconcileFeatureTabs();
+            ribbon.CoerceValue(LayoutModeProperty);
+        }
+        finally { ribbon._changingSimplifiedCapability = false; }
         ribbon._keyTipService?.OnLayoutModeChanged();
         if (restoreFocus)
             ribbon.Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, (Action)(() =>

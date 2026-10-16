@@ -71,7 +71,8 @@ public partial class Ribbon
         if (element is RibbonGroupsHost host) host.RequestSimplifiedRefresh();
         if (element is Ribbon ribbon)
         {
-            ribbon.RequestLayoutMotion(Animation.RibbonAnimationAction.LayoutModeChange);
+            ribbon.RequestLayoutMotion(Animation.RibbonAnimationAction.LayoutModeChange,
+                ribbon.LayoutState(mode: (RibbonLayoutMode)args.OldValue));
             // A mode toggle may be inside a collapsed-group flyout. Let its
             // routed click/command finish before returning the group's content.
             ribbon.Dispatcher.BeginInvoke(DispatcherPriority.Background,

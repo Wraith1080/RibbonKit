@@ -1,0 +1,79 @@
+# Library history: Host layout transitions
+
+Current evidence and remaining acceptance belong to the
+[active plan](../../18-HOST-LAYOUT-TRANSITION-PLAN.md).
+
+### 3.259 Ribbon-owned lifecycle and QAT relocation presentation — 2026-10-16
+
+The user selected continuous QAT movement with departure/arrival fallback,
+approved Ribbon-owned coordination with optional RibbonWindow presentation
+support, and authorized implementation plus animation of the main Showcase
+document card. Writer and MDI integration remain separate opt-in work.
+
+The old QuickAccessMove policy had no relocation playback call site. A private
+per-Ribbon coordinator now covers effective layout, density, capability coercion,
+QAT placement and visibility. Existing selection APIs and bindings remain intact.
+The three additive CLR lifecycle events expose immutable state/geometry snapshots
+and read-only progress sources backed by child clocks of one ParallelTimeline.
+Boundary policy priority is layout, density, then QAT; relocating command drawings
+retain QuickAccessMove timing. No host controls or completes library playback.
+
+Vector QAT/header/caption drawings use RibbonWindow's outer plane so the detached
+title-bar host and lower panel share coordinates. Ownership commits once; live
+controls remain at final bounds. Command-strip source/destination drawings travel
+and crossfade at natural size. Panel chrome is separate from commands, retaining
+its nested effect/clip tree, shadow and opacity masks. A nontrivial LayoutTransform
+or composed reversal uses local departure/arrival. Missing caption planes, native/
+media/live-VisualBrush capture and persistent anchored popups settle immediately.
+
+The body and QAT holds are installed synchronously before callbacks can expose
+destination layout. Final capture and shared playback start happen in one deferred
+operation after normal preparation and borrowed-item returns. Supersession samples
+the currently composed frame before release; Preparing(B) can precede Ended(A).
+Event reentrancy is serialized and cleanup is identity-scoped. Every prepared
+identity terminates even when canceled/skipped before Starting. Exceptions clean
+up library state before normal propagation.
+
+Two geometry/lifecycle pitfalls were reproduced during implementation:
+
+- Touch title-bar placement changes caption height. A point saved in the content
+  adorner layer moves when that layer moves, so it does not hold the old window
+  position. Preserve body/header/caption origins in the stable outer coordinate
+  plane and animate the body's origin correction as drawing translation.
+- Content detachment can fire LayoutUpdated before Unloaded. Verify common
+  ancestry before TransformToVisual; otherwise a cancellation path can throw while
+  the detached control still reports IsLoaded.
+- A replacement hold must inherit the previous presentation's opacity; the real
+  body already has an owned zero-opacity clock. Reading that hidden body produced
+  a blank pending cover. Clear the stale current-body pointer before callbacks
+  that can force layout, while keeping the old session alive for handoff.
+- Multiple changes inside one lifecycle callback retain the first old state and
+  combine reasons. Overwriting the queued state with the last property's callback
+  incorrectly reported an intermediate density as the previous density.
+- Broad popup dismissal during QAT relocation closed an unrelated File menu.
+  Capture old QAT ownership before reparenting and defer only those closures.
+  Version checks skip a popup closed/reopened since capture. Startup does not
+  enqueue cleanup that could close a later menu.
+
+Temporary hide clocks compose over existing animation. Seek the owned contribution
+to its stopped fill synchronously, then remove that clock; clearing all opacity
+animation would destroy another animator's clock. WPF may retain inactive animation
+storage until its next timing tick, so immediate-settle checks observe visible
+opacity/presentation rather than HasAnimatedProperties alone. Existing density
+consumer assertions now verify inert QAT drawings and unchanged live transforms;
+the focused lifecycle scope retains unload/template/policy/popup checks.
+The Crystal utility consumer's minimize fixture now performs its native click
+instead of assigning a OneWay-bound IsChecked value, matching the implemented
+feature-availability policy without altering minimize behavior.
+
+ShowcaseContentTransition is application-owned and uses only public events/progress.
+MainWindow animates DocumentSurface containing DocumentEditor; RTL Lab uses the same
+example. An independently authored public-only consumer animator verifies optional
+host synchronization separately from QAT movement without subscribers. Runtime
+pixel checks follow a unique QAT icon through both directions of both routes and
+assert natural dimensions, instead of treating a declared policy/adorner as proof
+of movement. Main-window captures inspect prepared/start/middle/final frames.
+
+Exact final build/test/package results and native limits remain in the active plan.
+Older full-run-plus-repair evidence is not reclassified as a clean suite pass, and
+the two residual Crystal QAT comparisons remain open unless separately reconciled.

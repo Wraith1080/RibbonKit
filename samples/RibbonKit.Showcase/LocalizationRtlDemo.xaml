@@ -399,7 +399,7 @@
             </rk:RibbonTab>
         </rk:Ribbon>
 
-        <Grid Margin="16">
+        <Grid x:Name="LabContentSurface" Margin="16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="3*" />
                 <ColumnDefinition Width="16" />

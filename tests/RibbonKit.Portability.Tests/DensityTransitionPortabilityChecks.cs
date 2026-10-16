@@ -33,13 +33,33 @@ internal static class DensityTransitionPortabilityChecks
             foreach (RibbonQuickAccessPosition placement in Enum.GetValues<RibbonQuickAccessPosition>())
             foreach (bool restoreInLoaded in new[] { false, true })
                 VerifyPlacement(application, theme, placement, restoreInLoaded);
-            VerifyInterruption(application);
-            VerifyPopupAnchor(application);
+            VerifyLifecycle(application);
         }
         finally
         {
             RibbonAnimation.GlobalLevel = level;
             RibbonAnimation.RespectSystemReduceMotion = reduce;
+            if (action is { } value) RibbonAnimation.SetActionLevel(RibbonAnimationAction.DensityChange, value);
+            else RibbonAnimation.ClearActionLevel(RibbonAnimationAction.DensityChange);
+        }
+    }
+
+    internal static void VerifyLifecycle(Application application)
+    {
+        var level = RibbonAnimation.GlobalLevel;
+        bool reduce = RibbonAnimation.RespectSystemReduceMotion;
+        var action = RibbonAnimation.GetActionOverride(RibbonAnimationAction.DensityChange);
+        try
+        {
+            RibbonAnimation.GlobalLevel = RibbonAnimationLevel.Subtle;
+            RibbonAnimation.RespectSystemReduceMotion = false;
+            RibbonAnimation.ClearActionLevel(RibbonAnimationAction.DensityChange);
+            VerifyInterruption(application);
+            VerifyPopupAnchor(application);
+        }
+        finally
+        {
+            RibbonAnimation.GlobalLevel = level; RibbonAnimation.RespectSystemReduceMotion = reduce;
             if (action is { } value) RibbonAnimation.SetActionLevel(RibbonAnimationAction.DensityChange, value);
             else RibbonAnimation.ClearActionLevel(RibbonAnimationAction.DensityChange);
         }
@@ -77,10 +97,8 @@ internal static class DensityTransitionPortabilityChecks
             if (qat is not null) Assert.True(qat.HasAnimatedProperties);
             if (placement == RibbonQuickAccessPosition.BelowRibbon)
             {
-                var transform = Assert.IsType<TransformGroup>(qat!.RenderTransform);
-                var glide = Assert.IsType<TranslateTransform>(transform.Children[^1]);
-                Assert.InRange(glide.Y, 0, touchHeight - compactHeight + 1);
-                Assert.Equal(0, glide.X);
+                Assert.Equal(Matrix.Identity, qat!.RenderTransform.Value); // Only the inert QAT drawing moves.
+                Assert.Equal(0, qat.Opacity); // Its complete panel/clip/shadow presentation is held in the window layer.
             }
             else if (qat is not null) Assert.Equal(Matrix.Identity, qat.RenderTransform.Value);
             Assert.Equal(Matrix.Identity, tabs.RenderTransform.Value); // Text/icons are never scaled.
@@ -155,7 +173,8 @@ internal static class DensityTransitionPortabilityChecks
             ribbon.Density = RibbonDensity.Touch;
             Layout(window);
             Assert.True(HasMotion(tabs));
-            Assert.Same(original, Assert.IsType<TransformGroup>(qat.RenderTransform).Children[0]);
+            Assert.Same(original, qat.RenderTransform);
+            Assert.Equal(0, qat.Opacity);
             Assert.Equal(0.8d, tabs.Opacity); // The vector body presentation preserves ancestor opacity.
             Assert.True(Part<Border>(tabs, "ContentHost").HasAnimatedProperties);
             ribbon.Density = RibbonDensity.Compact; Layout(window);
@@ -184,7 +203,7 @@ internal static class DensityTransitionPortabilityChecks
 
             ribbon.Density = RibbonDensity.Compact; Layout(window);
             ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TitleBar;
-            Assert.False(HasMotion(tabs)); Assert.Same(original, qat.RenderTransform);
+            Assert.True(HasMotion(tabs)); Assert.Same(original, qat.RenderTransform); // The successor placement now has its own hold.
             Layout(window);
             ribbon.Density = RibbonDensity.Touch; Layout(window);
             ribbon.Template = FreshSharedTemplate();
@@ -230,10 +249,11 @@ internal static class DensityTransitionPortabilityChecks
             Assert.Same(anchor, popup.PlacementTarget);
             Assert.Equal(placement, popup.Placement);
             Assert.Equal(Matrix.Identity, qat.RenderTransform.Value); // No glide of a live anchor.
-            Assert.True(qat.HasAnimatedProperties); // Its opacity still settles.
+            Assert.Equal(1, qat.Opacity); // A persistent popup settles immediately; its anchor remains live.
             dropdown.IsDropDownOpen = false; Layout(window);
             ribbon.Density = RibbonDensity.Compact; Layout(window);
-            Assert.IsType<TransformGroup>(qat.RenderTransform);
+            Assert.Equal(Matrix.Identity, qat.RenderTransform.Value);
+            Assert.Equal(0, qat.Opacity); // The inert presentation owns this glide.
             // Minimize owns its existing QAT glide; density must release its layer first.
             ribbon.IsMinimized = true;
             Assert.False(Part<RibbonTabControl>(ribbon, "TabControlHost").HasAnimatedProperties);
@@ -283,14 +303,20 @@ internal static class DensityTransitionPortabilityChecks
         return (window, ribbon, adaptive, gallery, message);
     }
 
-    private static bool HasMotion(RibbonTabControl tabs) => tabs.HasAnimatedProperties
-        || Part<Border>(tabs, "ContentHost").HasAnimatedProperties;
+    private static bool HasMotion(RibbonTabControl tabs)
+    {
+        var body = Part<Border>(tabs, "ContentHost");
+        // Removing our composed clock can leave inactive WPF animation storage
+        // until the next timing tick. Observe the presentation, not that storage.
+        return tabs.Opacity != (double)tabs.GetAnimationBaseValue(UIElement.OpacityProperty)
+            || body.Opacity != (double)body.GetAnimationBaseValue(UIElement.OpacityProperty);
+    }
 
     private static void AssertCollapsed(RibbonGroup group) => Assert.Equal(RibbonGroupSizeState.Collapsed, group.SizeState);
     private static void AssertRest(FrameworkElement? element)
     {
         if (element is null) return;
-        Assert.False(element.HasAnimatedProperties);
+        PumpUntil(() => !element.HasAnimatedProperties);
         Assert.Equal(1d, element.Opacity);
         Assert.Equal(Matrix.Identity, element.RenderTransform.Value);
     }

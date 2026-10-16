@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Data;
 using RibbonKit.Controls;
 
 namespace RibbonKit.Animation;
@@ -26,19 +27,33 @@ internal sealed class RibbonLayoutTransition : Adorner, IDisposable
     private readonly DpiScale _dpi;
     private readonly Matrix _transform;
     private bool _disposed;
+    private readonly Point _origin;
+    private readonly FrameworkElement _coordinateRoot;
+    internal Point PresentedOrigin
+    {
+        get
+        {
+            if (_surface.FindCommonVisualAncestor(_coordinateRoot) is null) return _origin;
+            Point final = _surface.TranslatePoint(new Point(), _coordinateRoot);
+            double p = Math.Clamp((double)GetValue(ProgressProperty), 0, 1);
+            return new Point(_origin.X + (final.X - _origin.X) * p, _origin.Y + (final.Y - _origin.Y) * p);
+        }
+    }
     internal bool MatchesLayout => _surface.IsVisible && _surface.RenderSize == _current.Size
         && _surface.FlowDirection == _direction && VisualTreeHelper.GetDpi(_surface).Equals(_dpi)
         && _surface.RenderTransform.Value == _transform;
 
     private RibbonLayoutTransition(FrameworkElement surface, AdornerLayer layer,
         RibbonLayoutSnapshot previous, RibbonLayoutSnapshot current,
-        RibbonAnimationAction action, Action completed) : base(surface)
+        RibbonAnimationAction action, Action completed, RibbonLayoutTransitionMotion? shared, Point? origin, FrameworkElement? coordinateRoot) : base(surface)
     {
         _surface = surface;
         _layer = layer;
         _previous = previous;
         _current = current;
         _completed = completed;
+        _coordinateRoot = coordinateRoot ?? layer;
+        _origin = origin ?? surface.TranslatePoint(new Point(), _coordinateRoot);
         _travel = RibbonAnimation.GetSlideOffset(action);
         _direction = surface.FlowDirection;
         _dpi = VisualTreeHelper.GetDpi(surface);
@@ -53,17 +68,18 @@ internal sealed class RibbonLayoutTransition : Adorner, IDisposable
         var motion = new DoubleAnimation(0d, 1d, RibbonAnimation.GetDuration(action))
         { EasingFunction = RibbonAnimation.GetEase(action) };
         motion.Completed += (_, _) => { if (!_disposed) _completed(); };
-        BeginAnimation(ProgressProperty, motion);
+        if (shared is null) BeginAnimation(ProgressProperty, motion);
+        else SetBinding(ProgressProperty, new Binding(nameof(RibbonLayoutTransitionMotion.Progress)) { Source = shared });
     }
 
     internal static RibbonLayoutTransition? Start(FrameworkElement surface,
-        RibbonLayoutSnapshot previous, RibbonAnimationAction action, Action completed)
+        RibbonLayoutSnapshot previous, RibbonAnimationAction action, Action completed, RibbonLayoutTransitionMotion? shared = null, Point? origin = null, FrameworkElement? coordinateRoot = null)
     {
         if (AdornerLayer.GetAdornerLayer(surface) is not { } layer
             || surface.ActualWidth <= 0 || surface.ActualHeight <= 0) return null;
         var current = RibbonLayoutSnapshot.Capture(surface);
         if (current.Frame is null && current.Content.Children.Count == 0) return null;
-        return new RibbonLayoutTransition(surface, layer, previous, current, action, completed);
+        return new RibbonLayoutTransition(surface, layer, previous, current, action, completed, shared, origin, coordinateRoot);
     }
 
     protected override Size MeasureOverride(Size constraint) => new(
@@ -71,8 +87,15 @@ internal sealed class RibbonLayoutTransition : Adorner, IDisposable
         Math.Max(_previous.Size.Height, _current.Size.Height));
 
     protected override void OnRender(DrawingContext drawing)
+        => DrawPresentation(drawing);
+
+    private void DrawPresentation(DrawingContext drawing, bool includeOrigin = true)
     {
+        if (_surface.FindCommonVisualAncestor(_layer) is null) return;
         double progress = (double)GetValue(ProgressProperty);
+        Point final = _surface.TranslatePoint(new Point(), _layer), presented = _coordinateRoot.TranslatePoint(PresentedOrigin, _layer);
+        drawing.PushTransform(new TranslateTransform(includeOrigin ? presented.X - final.X : 0,
+            includeOrigin ? presented.Y - final.Y : 0));
         double height = _previous.Size.Height + (_current.Size.Height - _previous.Size.Height) * progress;
         // The frame alone follows the moving bottom edge. No layout property and
         // no glyph/image scale participates in the accordion presentation.
@@ -107,6 +130,7 @@ internal sealed class RibbonLayoutTransition : Adorner, IDisposable
         }
         drawing.Pop();
         drawing.Pop();
+        drawing.Pop();
     }
 
     public void Dispose()
@@ -114,9 +138,18 @@ internal sealed class RibbonLayoutTransition : Adorner, IDisposable
         if (_disposed) return;
         _disposed = true;
         BeginAnimation(ProgressProperty, null);
-        _surface.ApplyAnimationClock(UIElement.OpacityProperty, null);
-        _hide.Controller?.Remove();
+        BindingOperations.ClearBinding(this, ProgressProperty);
+        RibbonLayoutDrawing.ReleaseHide(_hide);
         _layer.Remove(this);
+    }
+
+    internal RibbonLayoutSnapshot CapturePresentation()
+    {
+        var visual = new DrawingVisual();
+        using (var drawing = visual.RenderOpen()) DrawPresentation(drawing, false);
+        double p = Math.Clamp((double)GetValue(ProgressProperty), 0, 1);
+        return RibbonLayoutSnapshot.FromDrawing(new Size(_current.Size.Width,
+            _previous.Size.Height + (_current.Size.Height - _previous.Size.Height) * p), visual.Drawing);
     }
 }
 
@@ -125,6 +158,10 @@ internal sealed class RibbonLayoutTransition : Adorner, IDisposable
 // work may still realize simplified copies; this cover stays in place until then.
 internal sealed class RibbonLayoutHold : Adorner, IDisposable
 {
+    internal RibbonLayoutSnapshot Snapshot => _snapshot;
+    internal double PresentationOpacity => _bodyOpacity;
+    internal Point Origin { get; }
+    private readonly FrameworkElement _coordinateRoot;
     private readonly AdornerLayer _layer;
     private readonly RibbonLayoutSnapshot _snapshot;
     private readonly FrameworkElement? _footer;
@@ -137,15 +174,17 @@ internal sealed class RibbonLayoutHold : Adorner, IDisposable
     private bool _disposed;
 
     private RibbonLayoutHold(FrameworkElement surface, AdornerLayer layer,
-        RibbonLayoutSnapshot snapshot, FrameworkElement? footer) : base(surface)
+        RibbonLayoutSnapshot snapshot, FrameworkElement? footer, Point? origin, FrameworkElement? coordinateRoot, double? opacity) : base(surface)
     {
         _layer = layer;
         _snapshot = snapshot;
+        _coordinateRoot = coordinateRoot ?? layer;
+        Origin = origin ?? surface.TranslatePoint(new Point(), _coordinateRoot);
         _footer = footer;
         IsHitTestVisible = false;
         Focusable = false;
         Effect = surface.Effect?.CloneCurrentValue();
-        _bodyOpacity = RibbonLayoutDrawing.OpacityBelowLayer(surface, layer);
+        _bodyOpacity = opacity ?? RibbonLayoutDrawing.OpacityBelowLayer(surface, layer);
         if (footer is { IsVisible: true, ActualHeight: > 0 })
         {
             _footerSnapshot = RibbonLayoutSnapshot.Capture(footer);
@@ -158,9 +197,17 @@ internal sealed class RibbonLayoutHold : Adorner, IDisposable
     }
 
     internal static RibbonLayoutHold? Start(FrameworkElement surface,
-        RibbonLayoutSnapshot previous, FrameworkElement? footer) =>
+        RibbonLayoutSnapshot previous, FrameworkElement? footer, Point? origin = null, FrameworkElement? coordinateRoot = null, double? opacity = null) =>
         AdornerLayer.GetAdornerLayer(surface) is { } layer
-            ? new RibbonLayoutHold(surface, layer, previous, footer) : null;
+            ? new RibbonLayoutHold(surface, layer, previous, footer, origin, coordinateRoot, opacity) : null;
+
+    public override GeneralTransform GetDesiredTransform(GeneralTransform transform)
+    {
+        if (AdornedElement.FindCommonVisualAncestor(_layer) is null) return base.GetDesiredTransform(transform);
+        Point current = ((FrameworkElement)AdornedElement).TranslatePoint(new Point(), _layer);
+        Point previous = _coordinateRoot.TranslatePoint(Origin, _layer);
+        return new GeneralTransformGroup { Children = { base.GetDesiredTransform(transform), new TranslateTransform(previous.X - current.X, previous.Y - current.Y) } };
+    }
 
     protected override Size MeasureOverride(Size constraint) => new(_snapshot.Size.Width,
         Math.Max(_snapshot.Size.Height, _footerPosition.Y + (_footerSnapshot?.Size.Height ?? 0)));
@@ -186,12 +233,10 @@ internal sealed class RibbonLayoutHold : Adorner, IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        ((FrameworkElement)AdornedElement).ApplyAnimationClock(UIElement.OpacityProperty, null);
-        _hide.Controller?.Remove();
+        RibbonLayoutDrawing.ReleaseHide(_hide);
         if (_hideFooter is { } footerClock)
         {
-            _footer!.ApplyAnimationClock(UIElement.OpacityProperty, null);
-            footerClock.Controller?.Remove();
+            RibbonLayoutDrawing.ReleaseHide(footerClock);
         }
         _layer.Remove(this);
     }
@@ -201,13 +246,21 @@ internal static class RibbonLayoutDrawing
 {
     internal static AnimationClock HideImmediately(FrameworkElement surface)
     {
-        var clock = new DoubleAnimation(0, 0, new Duration(TimeSpan.FromDays(1))).CreateClock();
-        surface.ApplyAnimationClock(UIElement.OpacityProperty, clock);
+        var clock = new DoubleAnimation(0, 0, new Duration(TimeSpan.FromDays(1))) { FillBehavior = FillBehavior.Stop }.CreateClock();
+        surface.ApplyAnimationClock(UIElement.OpacityProperty, clock, HandoffBehavior.Compose);
         // Applying a clock alone can leave the base opacity visible until the
         // next timing tick. Seek synchronously without overwriting the binding.
         clock.Controller!.Begin();
         clock.Controller.SeekAlignedToLastTick(TimeSpan.Zero, TimeSeekOrigin.BeginTime);
         return clock;
+    }
+
+    internal static void ReleaseHide(AnimationClock clock)
+    {
+        // Stop this composed contribution synchronously before removing it. Do
+        // not clear another animator's clocks or the consumer's base expression.
+        clock.Controller?.SeekAlignedToLastTick(TimeSpan.FromDays(1), TimeSeekOrigin.BeginTime);
+        clock.Controller?.Remove();
     }
 
     internal static double OpacityBelowLayer(Visual surface, Visual layer)
@@ -222,6 +275,8 @@ internal static class RibbonLayoutDrawing
 
 internal sealed class RibbonLayoutSnapshot
 {
+    internal static RibbonLayoutSnapshot FromDrawing(Size size, DrawingGroup drawing) => new()
+    { Size = size, FullContent = drawing.CloneCurrentValue() };
     internal Size Size { get; private init; }
     internal DrawingGroup? Frame { get; private init; }
     internal DrawingGroup FullContent { get; private init; } = new();

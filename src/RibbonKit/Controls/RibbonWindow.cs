@@ -54,6 +54,14 @@ public enum RibbonWindowFrameAppearance
 [System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonWindow : Window
 {
+    // Optional window-wide plane for a Ribbon's inert QAT presentation. The
+    // Ribbon owns state, clocks and lifecycle; the Window supplies hosting only.
+    internal (FrameworkElement Root, System.Windows.Documents.AdornerLayer Layer)? RibbonPresentationSurface =>
+        GetTemplateChild("WindowAdornerHost") is System.Windows.Documents.AdornerDecorator { Child: FrameworkElement root } host
+            ? (root, host.AdornerLayer) : null;
+
+    internal FrameworkElement? RibbonPresentationCaption => GetTemplateChild("TitleBarBand") as FrameworkElement;
+
     private const string WindowRootPartName = "PART_WindowRoot";
     private const string TitlePartName = "PART_Title";
     private const string WindowIconPartName = "PART_WindowIcon";
