@@ -601,3 +601,32 @@ symbols and automation overhead do not identify the remaining cause; a resolved
 call tree for the user's spike is still needed. No full-suite or final native
 acceptance is claimed.
 No animation policy or duration was changed during this check.
+
+**Plugged-in revision comparison — 2026-10-16.** With the user's authorization,
+the current work was committed as local checkpoint `715469b`. The checkout was
+temporarily switched among that checkpoint, `2f10894` (before the flicker fix),
+and `0263e7a` (the initial fix). AC power/charging and the unchanged Balanced
+scheme were confirmed. Normal Debug outputs were rebuilt for each revision;
+three fresh processes per version/theme exercised the same main Showcase QAT
+Select copy in Crystal and Flat, outside Visual Studio without UI inspection.
+Eighteen diagnostic runs covered 234 openings. Each first-open sample followed
+500 ms of startup settling; twelve subsequent openings per process held the
+menu for 200 ms with Subtle motion, then closed for 50 ms. The actual toggle
+click path was invoked synthetically; this is not a native mouse/VS acceptance.
+
+Median first click elapsed times for original/initial/current were 31.17/31.85/
+35.08 ms in Crystal and 27.22/31.81/32.09 ms in Flat. Median per-process mean
+warm opening CPU times were 109.38/110.68/98.96 ms and 80.73/91.15/93.75 ms,
+respectively. CPU covers all process threads throughout each 200-ms opening
+interval, including render, focus, animation and capture; first CPU samples have
+coarse accounting increments. Warm CPU ranges overlap between original and
+current. Flat's approximately 4.5-ms increase in warm click elapsed time is not
+claimed to be zero regression. These conditions did not reproduce the reported
+large added delay; a CPU spike also exists in the original implementation.
+Earlier battery/inspection-heavy timings used different conditions and cannot
+establish a causal power-source improvement. Raw revision-stamped readings,
+protocol and aggregates are under `TestResults/dropdown-flicker/cpu-comparison/`.
+The temporary probe was removed and `codex/api-and-component-updates` plus its
+normal current Debug runtime, Showcase and test outputs were restored; all
+comparison/restoration builds had zero warnings/errors. Plugged-in Visual Studio
+native review remains separate. The checkpoint was not pushed.
