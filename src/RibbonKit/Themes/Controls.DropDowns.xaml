@@ -30,6 +30,7 @@
                              access OVERFLOW flyout opts in, where a centred drop-down looked like a
                              different kind of control from the plain buttons stacked beside it. -->
                         <ToggleButton x:Name="PART_Toggle"
+                                      controls:RibbonPopupInteraction.IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"
                                       HorizontalContentAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource TemplatedParent}}"
                                       IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
@@ -61,7 +62,7 @@
                                                         <Setter TargetName="Chrome" Property="BorderThickness"
                                                                 Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                                     </MultiTrigger>
-                                                    <Trigger Property="IsChecked" Value="True">
+                                                    <Trigger Property="controls:RibbonPopupInteraction.IsOpen" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
                                                         <Setter TargetName="Chrome" Property="BorderBrush"
@@ -98,7 +99,7 @@
                                                     </MultiTrigger>
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>
-                                                            <Condition Property="IsChecked" Value="True" />
+                                                            <Condition Property="controls:RibbonPopupInteraction.IsOpen" Value="True" />
                                                             <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                                                         </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
@@ -214,14 +215,13 @@
                                 </StackPanel>
                             </Grid>
                         </ToggleButton>
-                        <!-- Open from the completed toggle state. Binding straight to the owner
-                             can create the native popup during the toggle's source update, before
-                             its IsChecked value and pressed paint have been committed. -->
+                        <!-- The owner synchronizes the opener's pressed paint before this binding
+                             creates the popup. Keep the original direct owner binding here. -->
                         <Popup controls:Ribbon.Density="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource TemplatedParent}}" x:Name="PART_Popup"
                                AllowsTransparency="True"
                                StaysOpen="True"
                                Placement="Bottom"
-                               IsOpen="{Binding IsChecked, ElementName=PART_Toggle, Mode=TwoWay}">
+                               IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <controls:PopupBorder x:Name="PART_MenuHost"
                                     Style="{DynamicResource {x:Type Border}}"
                                     Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
@@ -572,6 +572,7 @@
                             </Grid>
                         </Button>
                         <ToggleButton x:Name="PART_Toggle"
+                                      controls:RibbonPopupInteraction.IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
                                       Grid.Column="1"
                                       Grid.Row="0"
                                       Grid.RowSpan="2"
@@ -688,7 +689,7 @@
                                                         <Setter TargetName="Chrome" Property="BorderThickness"
                                                                 Value="{DynamicResource RibbonKit.Metrics.ControlHighlightBorderThickness}" />
                                                     </MultiTrigger>
-                                                    <Trigger Property="IsChecked" Value="True">
+                                                    <Trigger Property="controls:RibbonPopupInteraction.IsOpen" Value="True">
                                                         <Setter TargetName="Chrome" Property="Background"
                                                                 Value="{DynamicResource RibbonKit.Brushes.Control.PressedBackground}" />
                                                         <Setter TargetName="Chrome" Property="BorderBrush"
@@ -733,7 +734,7 @@
                                                     </MultiTrigger>
                                                     <MultiTrigger>
                                                         <MultiTrigger.Conditions>
-                                                            <Condition Property="IsChecked" Value="True" />
+                                                            <Condition Property="controls:RibbonPopupInteraction.IsOpen" Value="True" />
                                                             <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
                                                         </MultiTrigger.Conditions>
                                                         <Setter TargetName="Chrome" Property="Background"
@@ -761,14 +762,12 @@
                                 </Style>
                             </ToggleButton.Style>
                         </ToggleButton>
-                        <!-- Open from the completed toggle state. Binding straight to the owner
-                             can create the native popup during the toggle's source update, before
-                             its IsChecked value and pressed paint have been committed. -->
+                        <!-- As for the dropdown, the owner commits the opener's paint first. -->
                         <Popup controls:Ribbon.Density="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource TemplatedParent}}" x:Name="PART_Popup"
                                AllowsTransparency="True"
                                StaysOpen="True"
                                Placement="Bottom"
-                               IsOpen="{Binding IsChecked, ElementName=PART_Toggle, Mode=TwoWay}">
+                               IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <controls:PopupBorder x:Name="PART_MenuHost"
                                     Style="{DynamicResource {x:Type Border}}"
                                     Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
@@ -870,7 +869,7 @@
                             </MultiTrigger.Conditions>
                             <Setter TargetName="PART_Primary" Property="Tag" Value="Companion" />
                         </MultiTrigger>
-                        <Trigger SourceName="PART_Toggle" Property="IsChecked" Value="True">
+                        <Trigger SourceName="PART_Toggle" Property="controls:RibbonPopupInteraction.IsOpen" Value="True">
                             <Setter TargetName="PART_Primary" Property="Tag" Value="Companion" />
                         </Trigger>
                         <MultiTrigger>

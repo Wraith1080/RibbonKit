@@ -70,14 +70,14 @@ internal sealed class CrystalMainWindowPresentation
             _backstage.Resources.MergedDictionaries.Remove(_backstageScope);
         }
         _menuBackdrop.Apply(enabled);
-        if (enabled) RefreshRegistrations();
+        if (enabled) RefreshRegistrations(refreshExisting: true);
         else ClearRegistrations();
     }
 
     private void OnRibbonLoaded(object sender, RoutedEventArgs e) => RefreshRegistrations();
     private void OnControlsChanged(object? sender, NotifyCollectionChangedEventArgs e) => RefreshRegistrations();
 
-    private void RefreshRegistrations()
+    private void RefreshRegistrations(bool refreshExisting = false)
     {
         if (!_enabled || _closed || _refreshing) return;
         _refreshing = true;
@@ -110,11 +110,18 @@ internal sealed class CrystalMainWindowPresentation
                 _popups[obsolete].Dispose();
                 _popups.Remove(obsolete);
             }
+            // Menu borrowing changes item collections repeatedly. Existing
+            // registrations already track load/template/geometry changes;
+            // rediscovery alone must not re-enable them or queue new captures.
             foreach (Control control in controls)
             {
                 if (!_popups.TryGetValue(control, out var popup))
+                {
                     _popups.Add(control, popup = new CapturedBackdrop(control, _window));
-                popup.Apply(true);
+                    popup.Apply(true);
+                }
+                else if (refreshExisting)
+                    popup.Refresh();
             }
 
             void Visit(DependencyObject node)

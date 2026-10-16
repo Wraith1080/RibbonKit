@@ -93,7 +93,7 @@ internal static class QuickAccessCommandInteractionChecks
                         var opener = Part<ToggleButton>(menu, "PART_Toggle");
                         var chrome = Part<Border>(opener, "Chrome");
                         var popup = Part<Popup>(menu, "PART_Popup");
-                        var paint = new List<(bool Checked, Brush Background, Brush Border)>();
+                        var paint = new List<(bool Open, Brush Background, Brush Border)>();
                         var originalPlacement = popup.Placement;
                         var originalCallback = popup.CustomPopupPlacementCallback;
                         popup.SetCurrentValue(Popup.PlacementProperty, PlacementMode.Custom);
@@ -102,7 +102,7 @@ internal static class QuickAccessCommandInteractionChecks
                             {
                                 // Native creation precedes Opened; inspect that transition,
                                 // not just the stable menu after the dispatcher drains.
-                                if (popup.IsOpen) paint.Add((opener.IsChecked == true, chrome.Background, chrome.BorderBrush));
+                                if (popup.IsOpen) paint.Add((menu.IsDropDownOpen, chrome.Background, chrome.BorderBrush));
                                 return new[] { new CustomPopupPlacement(new Point(0, target.Height), PopupPrimaryAxis.None) };
                             }));
                         try
@@ -114,7 +114,7 @@ internal static class QuickAccessCommandInteractionChecks
                             bool colored = Ribbon.GetQatOnColoredSurface(opener);
                             foreach (var sample in paint)
                             {
-                                Assert.True(sample.Checked);
+                                Assert.True(sample.Open);
                                 Assert.Same(menu.FindResource(colored ? Ribbon.QatColoredPressedBackgroundKey
                                     : "RibbonKit.Brushes.Control.PressedBackground"), sample.Background);
                                 Assert.Same(menu.FindResource(colored ? "RibbonKit.Brushes.Qat.ColoredStateBorder"

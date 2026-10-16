@@ -8,6 +8,14 @@ namespace RibbonKit.Controls;
 // Paint/preview policy only: command hit testing and normal input routing stay live.
 internal static class RibbonPopupInteraction
 {
+    // The owner's opening intent reaches paint before a toggle's two-way source
+    // transfer finishes. Keep this separate from IsChecked to avoid reentrant
+    // Checked/Unchecked events while the native popup is being constructed.
+    public static readonly DependencyProperty IsOpenProperty = DependencyProperty.RegisterAttached(
+        "IsOpen", typeof(bool), typeof(RibbonPopupInteraction), new PropertyMetadata(false));
+    public static bool GetIsOpen(DependencyObject element) => (bool)element.GetValue(IsOpenProperty);
+    public static void SetIsOpen(DependencyObject element, bool value) => element.SetValue(IsOpenProperty, value);
+
     internal static readonly DependencyProperty QuickAccessRibbonProperty = DependencyProperty.RegisterAttached(
         "QuickAccessRibbon", typeof(Ribbon), typeof(RibbonPopupInteraction), new PropertyMetadata(null));
     public static readonly DependencyProperty SuppressHoverProperty = DependencyProperty.RegisterAttached(

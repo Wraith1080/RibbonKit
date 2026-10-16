@@ -493,10 +493,11 @@ before its own `IsChecked` value and template triggers had finished updating.
 The popup placement callback reproduced the stale, unchecked opener; checking only
 at `Popup.Opened` missed the defect because the state had settled by then.
 
-Both popups now bind two-way to `PART_Toggle.IsChecked`. The toggle retains its
+The initial correction bound both popups two-way to `PART_Toggle.IsChecked`. The toggle retained its
 two-way binding to the public owner property. This orders pressed paint before
 native popup creation without a timer, dispatcher delay, animation change or API
-addition. Closing the popup still updates the toggle and public property.
+addition. Closing the popup still updates the toggle and public property. This
+binding arrangement was superseded by the follow-up below.
 
 `DropDownPressedVisualTests` samples checked state and background/border brushes
 during native placement, across dropdowns and horizontal/vertical split buttons
@@ -523,3 +524,80 @@ deployment copy; subsequent runtime/consumer builds used `BuildProjectReferences
 with existing design outputs and the explicitly rebuilt runtime. Physical mouse
 review of the corrected build, mixed-monitor/DPI and reduced-motion acceptance
 were not performed.
+
+**First-open latency follow-up — 2026-10-16.** The user reported a first-open
+slowdown, amplified under the Visual Studio debugger, after the initial correction.
+They confirmed that the intermediate version restoring the direct owner binding
+was fast, including under Visual Studio, while its incomplete paint wiring still
+flickered. This is evidence for that intermediate version, not acceptance of the
+completed correction or proof that all popup content had been rendered eagerly.
+
+The shared dropdown/split popups again bind directly to the owner's
+`IsDropDownOpen`. Its change callback synchronously updates an internal paint-only
+`RibbonPopupInteraction.IsOpen` flag on `PART_Toggle`; shared neutral/colored open
+triggers and the split companion trigger use that flag. An ordinary owner binding
+also initializes the flag when the control is initially open or retemplated.
+Native popup creation no longer depends on the opener's checked-state binding.
+There is no content prewarming, dispatcher delay, timer, animation change or public
+API addition. The capture and host integration paths are unchanged.
+
+Do not synchronize `ToggleButton.IsChecked` itself from the owner's source-update
+callback: a bound-owner regression observed four `Checked` notifications for three
+openings. Updating paint alone preserves the original input/notification path.
+The placement regression now verifies owner opening intent and the same pressed
+background/border brushes before native creation, plus the settled checked state;
+it does not require the in-progress toggle transfer to finish first. Added coverage
+checks initially open dropdown/split controls, external owner bindings, native
+close and exactly one checked/unchecked notification per transition.
+
+Final Debug evidence is assembled from 70 focused runtime cases (16 opening/paint
+checks and 54 initially-open, borrowing, QAT overflow, combo/gallery projection,
+dismissal and captured-backdrop cases). The independent consumer's
+`QatCommandInteraction` and `ColoredQat` scopes both passed. Four selected visual
+scenes passed unchanged: Office 2024 default/RTL 100% and Flat light/dark states
+100%. The earlier Crystal approval discrepancy above was not rerun or reapproved.
+Normal Debug runtime net8/net9 and Showcase builds passed. Subsequent user review
+still reported noticeable first-open lag; this is not accepted as resolved. Full-suite,
+mixed-monitor/DPI and reduced-motion acceptance are not claimed.
+
+The animation check found no completion callback or synchronous wait gating
+dropdown creation. In fresh-process Debug diagnostics using the main Showcase
+content and Crystal QAT Select copy, the default click returned at approximately
+46 ms with the native popup open and its surface opacity still zero. Disabling
+only Hover returned at approximately 47 ms, again at zero opacity; disabling only
+DropdownMenu returned at approximately 40 ms with opacity one. These single-run
+diagnostic timings are not performance thresholds or live Visual Studio evidence.
+The authored dropdown fade starts fully transparent and lasts 130 ms at Subtle
+(182 ms at Expressive), so first-frame/rendering delay can leave an already-open
+popup invisible. Whether that explains the user's remaining lag is unconfirmed;
+the requested live No Motion comparison separates visibility from opening latency.
+The user subsequently confirmed unchanged delay with No Motion, and CPU spikes
+on each opening under Visual Studio. Motion duration is not the remaining explanation.
+
+**CPU follow-up — 2026-10-16.** Native mouse openings were traced with Visual Studio
+attached, in Flat and Crystal. The managed path reaches native popup creation and
+WPF render synchronization; Crystal also performs its optional host snapshot/blur.
+Do not attribute UI Automation bounding-rectangle work from inspection to ordinary
+opening. First-render diagnostics also ran before `Popup.Opened` and before queued
+capture, so delaying capture cannot be claimed to fix first presentation. Neither
+the motion policy nor capture queue priority was changed.
+
+One independent source of redundant work was reproduced and corrected:
+`CrystalMainWindowPresentation` re-enabled every existing capture registration on
+every discovered collection change, including QAT menu borrowing/restoration.
+Discovery now enables only new registrations; an explicit palette application
+refreshes existing registrations. Their own load/template/geometry tracking remains
+active. A regression changes a different closed menu while a captured QAT menu is
+open and verifies its unchanged captured brush survives. It fails with the former
+re-enable loop and passes with the correction. Normal Debug Showcase build passed
+with zero warnings/errors, and the four capture/presentation regressions passed.
+The separate first-open latency remains unresolved: controlled diagnostic timings
+did not establish its removal by suppressing opener paint or by this discovery
+correction. A deeper Windows CPU recording was unavailable because the process
+lacked profiling privileges (`0xc5585011`). A subsequent Visual Studio CPU Usage
+recording of three native Flat QAT openings is saved locally under
+`TestResults/dropdown-flicker/VS-dropdown-cpu.diagsession`. Its unresolved WPF/native
+symbols and automation overhead do not identify the remaining cause; a resolved
+call tree for the user's spike is still needed. No full-suite or final native
+acceptance is claimed.
+No animation policy or duration was changed during this check.
