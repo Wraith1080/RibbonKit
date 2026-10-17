@@ -29,6 +29,9 @@ internal sealed class RibbonLayoutTransition : Adorner, IDisposable
     private bool _disposed;
     private readonly Point _origin;
     private readonly FrameworkElement _coordinateRoot;
+    private readonly VisualCollection _visuals;
+    private readonly ContainerVisual _chrome = new();
+    private readonly DrawingVisual _foreground = new();
     internal Point PresentedOrigin
     {
         get
@@ -61,6 +64,8 @@ internal sealed class RibbonLayoutTransition : Adorner, IDisposable
         IsHitTestVisible = false;
         Focusable = false;
         Effect = surface.Effect?.CloneCurrentValue();
+        _visuals = new VisualCollection(this) { _chrome, _foreground };
+        if (current.CloneChrome() is { } chrome) _chrome.Children.Add(chrome);
         // The adorner can sit above an ancestor with consumer-owned opacity.
         Opacity = RibbonLayoutDrawing.OpacityBelowLayer(surface, layer);
         _hide = RibbonLayoutDrawing.HideImmediately(surface);
@@ -86,8 +91,26 @@ internal sealed class RibbonLayoutTransition : Adorner, IDisposable
         Math.Max(_previous.Size.Width, _current.Size.Width),
         Math.Max(_previous.Size.Height, _current.Size.Height));
 
+    protected override int VisualChildrenCount => _visuals?.Count ?? 0;
+    protected override Visual GetVisualChild(int index) => _visuals[index];
+
     protected override void OnRender(DrawingContext drawing)
-        => DrawPresentation(drawing);
+    {
+        double progress = (double)GetValue(ProgressProperty);
+        double height = _previous.Size.Height + (_current.Size.Height - _previous.Size.Height) * progress;
+        if (_surface.FindCommonVisualAncestor(_layer) is not null)
+        {
+            Point final = _surface.TranslatePoint(new Point(), _layer);
+            Point presented = _coordinateRoot.TranslatePoint(PresentedOrigin, _layer);
+            _chrome.Transform = new TransformGroup { Children =
+            {
+                new ScaleTransform(1, Math.Max(0, height) / _current.Size.Height),
+                new TranslateTransform(presented.X - final.X, presented.Y - final.Y),
+            } };
+        }
+        using var content = _foreground.RenderOpen();
+        DrawPresentation(content);
+    }
 
     private void DrawPresentation(DrawingContext drawing, bool includeOrigin = true)
     {
@@ -148,8 +171,10 @@ internal sealed class RibbonLayoutTransition : Adorner, IDisposable
         var visual = new DrawingVisual();
         using (var drawing = visual.RenderOpen()) DrawPresentation(drawing, false);
         double p = Math.Clamp((double)GetValue(ProgressProperty), 0, 1);
-        return RibbonLayoutSnapshot.FromDrawing(new Size(_current.Size.Width,
-            _previous.Size.Height + (_current.Size.Height - _previous.Size.Height) * p), visual.Drawing);
+        double height = _previous.Size.Height + (_current.Size.Height - _previous.Size.Height) * p;
+        var chrome = RibbonVectorSnapshot.Clone(_chrome);
+        chrome.Transform = new ScaleTransform(1, Math.Max(0, height) / _current.Size.Height);
+        return RibbonLayoutSnapshot.FromDrawing(new Size(_current.Size.Width, height), visual.Drawing, chrome);
     }
 }
 
@@ -171,6 +196,7 @@ internal sealed class RibbonLayoutHold : Adorner, IDisposable
     private readonly double _footerOpacity;
     private readonly AnimationClock _hide;
     private readonly AnimationClock? _hideFooter;
+    private readonly VisualCollection _visuals;
     private bool _disposed;
 
     private RibbonLayoutHold(FrameworkElement surface, AdornerLayer layer,
@@ -193,6 +219,10 @@ internal sealed class RibbonLayoutHold : Adorner, IDisposable
             _hideFooter = RibbonLayoutDrawing.HideImmediately(footer);
         }
         _hide = RibbonLayoutDrawing.HideImmediately(surface);
+        _visuals = new VisualCollection(this);
+        AddPresentation(snapshot, _bodyOpacity, new Point());
+        if (_footerSnapshot is { } footerSnapshot)
+            AddPresentation(footerSnapshot, _footerOpacity, _footerPosition);
         layer.Add(this);
     }
 
@@ -212,21 +242,22 @@ internal sealed class RibbonLayoutHold : Adorner, IDisposable
     protected override Size MeasureOverride(Size constraint) => new(_snapshot.Size.Width,
         Math.Max(_snapshot.Size.Height, _footerPosition.Y + (_footerSnapshot?.Size.Height ?? 0)));
 
-    protected override void OnRender(DrawingContext drawing)
+    protected override int VisualChildrenCount => _visuals?.Count ?? 0;
+    protected override Visual GetVisualChild(int index) => _visuals[index];
+
+    private void AddPresentation(RibbonLayoutSnapshot snapshot, double opacity, Point position)
     {
-        drawing.PushOpacity(_bodyOpacity);
-        if (_snapshot.Frame is { } frame) drawing.DrawDrawing(frame);
-        drawing.DrawDrawing(_snapshot.FullContent);
-        drawing.Pop();
-        if (_footerSnapshot is { } footer)
+        var layer = new ContainerVisual { Opacity = opacity,
+            Transform = new TranslateTransform(position.X, position.Y) };
+        if (snapshot.CloneChrome() is { } chrome) layer.Children.Add(chrome);
+        var foreground = new DrawingVisual();
+        using (var drawing = foreground.RenderOpen())
         {
-            drawing.PushOpacity(_footerOpacity);
-            drawing.PushTransform(new TranslateTransform(_footerPosition.X, _footerPosition.Y));
-            if (footer.Frame is { } footerFrame) drawing.DrawDrawing(footerFrame);
-            drawing.DrawDrawing(footer.FullContent);
-            drawing.Pop();
-            drawing.Pop();
+            if (snapshot.Frame is { } frame) drawing.DrawDrawing(frame);
+            drawing.DrawDrawing(snapshot.FullContent);
         }
+        layer.Children.Add(foreground);
+        _visuals.Add(layer);
     }
 
     public void Dispose()
@@ -275,8 +306,16 @@ internal static class RibbonLayoutDrawing
 
 internal sealed class RibbonLayoutSnapshot
 {
-    internal static RibbonLayoutSnapshot FromDrawing(Size size, DrawingGroup drawing) => new()
-    { Size = size, FullContent = drawing.CloneCurrentValue() };
+    internal static RibbonLayoutSnapshot FromDrawing(Size size, DrawingGroup drawing, ContainerVisual? chrome = null) => new()
+    { Size = size, FullContent = drawing.CloneCurrentValue(), Chrome = chrome };
+    private ContainerVisual? Chrome { get; init; }
+    internal ContainerVisual? CloneChrome()
+    {
+        if (Chrome is null) return null;
+        var clone = RibbonVectorSnapshot.Clone(Chrome);
+        clone.Transform = Chrome.Transform?.CloneCurrentValue();
+        return clone;
+    }
     internal Size Size { get; private init; }
     internal DrawingGroup? Frame { get; private init; }
     internal DrawingGroup FullContent { get; private init; } = new();
@@ -292,12 +331,19 @@ internal sealed class RibbonLayoutSnapshot
                 ? host.SimplifiedToolBar?.Items.OfType<FrameworkElement>().ToArray() ?? Array.Empty<FrameworkElement>()
                 : host.Items.OfType<FrameworkElement>().ToArray();
         items = items.Where(item => item.IsVisible && item.ActualWidth > 0 && item.ActualHeight > 0).ToArray();
+        // Shared templates isolate effect-bearing decoration from foreground.
+        // Keep that visual tree intact in playback and reversal holds as well.
+        FrameworkElement? chrome = surface is Panel panel ? panel.Children.OfType<FrameworkElement>()
+            .FirstOrDefault(child => child.Name is "ContentHost" or "QatBelowHost") : null;
+        var allContent = new HashSet<Visual>();
         var excluded = items.Cast<Visual>().ToHashSet();
+        if (chrome is not null) { allContent.Add(chrome); excluded.Add(chrome); }
         var snapshot = new RibbonLayoutSnapshot
         {
             Size = surface.RenderSize,
             Frame = VisualTreeHelper.GetDrawing(surface)?.CloneCurrentValue(),
-            FullContent = Children(surface, new HashSet<Visual>()),
+            Chrome = RibbonVectorSnapshot.Capture(chrome, surface, includeAncestors: false)?.Visual,
+            FullContent = Children(surface, allContent),
             Content = Children(surface, excluded),
         };
         if (host is not null)

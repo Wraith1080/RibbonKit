@@ -725,7 +725,7 @@ public class CrystalContextualTests
                     Assert.True(chrome.ActualWidth > bodyRadius.TopLeft + bodyRadius.TopRight);
                     // The nominal 3-DIP inset stays inside the outline. Layout rounding
                     // may distribute one extra physical pixel to the trailing edge.
-                    var arrowBounds = chrome.TransformToAncestor(bodyHost).TransformBounds(new Rect(chrome.RenderSize));
+                    var arrowBounds = chrome.TransformToVisual(bodyHost).TransformBounds(new Rect(chrome.RenderSize));
                     var dpi = VisualTreeHelper.GetDpi(bodyHost);
                     Assert.InRange(Math.Abs(arrowBounds.Top - 3), 0, 1 / dpi.DpiScaleY);
                     Assert.InRange(Math.Abs(bodyHost.ActualHeight - arrowBounds.Bottom - 3), 0, 1 / dpi.DpiScaleY);

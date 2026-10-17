@@ -427,3 +427,5 @@ status updates and investigation narration were removed during compaction.
 ### [3.259 Ribbon-owned lifecycle and QAT relocation presentation — 2026-10-16](library/16-host-layout-transitions.md#3259-ribbon-owned-lifecycle-and-qat-relocation-presentation--2026-10-16)
 
 ### [3.260 Stable lower QAT and contextual selection geometry — 2026-10-16](library/13-flat-theme-variants.md#3260-stable-lower-qat-and-contextual-selection-geometry--2026-10-16)
+
+### [3.261 Foreground stays outside decorative shadow effects — 2026-10-17](library/16-host-layout-transitions.md#3261-foreground-stays-outside-decorative-shadow-effects--2026-10-17)

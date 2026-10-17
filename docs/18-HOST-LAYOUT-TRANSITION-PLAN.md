@@ -153,8 +153,8 @@ host-layout-release-build-complete.log, host-layout-debug-build.log,
 host-layout-pack.log and host-layout-package-validation.log.
 
 Prior Simplified end-of-feature evidence remains assembled from a full run and
-targeted repairs, not a clean single full-suite pass. Its two Crystal QAT snapshot
-comparisons and native limits remain in the
+targeted repairs, not a clean single full-suite pass. Its later Crystal QAT snapshot
+reconciliation and remaining native limits are linked from the
 [active Simplified plan](15-SIMPLIFIED-RIBBON-PLAN.md#end-of-feature-validation-and-repairs--2026-10-14).
 Toolbox native creation/transaction/save/reload and separate package-reference
 discovery remain in [plan 17](17-TOOLBOX-ITEM-DEFINITION-PLAN.md). Accepted dropdown
@@ -180,8 +180,8 @@ with no API additions or Showcase-only workaround.
 | Visual comparisons | Four harness tests passed in the full run, plus 63 comparisons before the known Crystal 100% mismatch. The unfinished selection passed in retained 66-scene and six-scene prefixes followed by the final 34-scene comparison. Total 169/171. Sixteen Flat approvals were updated only after actual/diff inspection: lower-QAT, state, connected-message and File-menu scenes reflect the intended row reserve and consequent message position. No tolerance changed. The two Crystal QAT-below 100%/200% residuals remain 5,551/17,043 significant pixels; both current actual PNGs match retained pre-track captures byte-for-byte |
 | Final builds/API | Normal Release and Debug solution builds passed with 0 warnings/errors. Both runtime TFMs and API/XML checks passed; neither public API baseline changed in these geometry repairs |
 | Package | Normal pack and archive/designer-layout validation passed, plus clean net8/net9 WPF package builds with 0 warnings/errors. Packaged runtime DLL hashes match the final normal Release outputs. The previous package pair was preserved before packing; a validation-input directory selects the current pair. Package runtime smoke and native Toolbox discovery were not run |
-| Review/output limits | Normal Debug Showcase is ready. Existing physical input/KeyTip, popup-anchor, genuine mixed-monitor DPI, OS reduced-motion and designer gates remain separate. New follow-up work after user commit fc90dfb consists of validation fixtures, continuations/timeouts, reviewed approvals and documentation; no additional runtime behavior was changed |
-| Crystal reconciliation, 2026-10-17 | The user accepted the current 200% capture; its approval was updated and the normal selected comparison passed. With retained coverage, 170/171 comparisons now have passing evidence. At 100%, corrected text spacing is accepted but the current capture remains too soft. The user accepted a sharp diagnostic with isolated shadow chrome; that preview is not an implemented correction or acceptance of the current 100% capture |
+| Review/output limits | At this geometry-validation checkpoint, follow-up work after user commit fc90dfb consisted of validation fixtures, continuations/timeouts, reviewed approvals and documentation. The subsequent shared shadow correction is recorded below. Physical input/KeyTip, popup-anchor, genuine mixed-monitor DPI, OS reduced-motion and designer gates remain separate |
+| Crystal reconciliation, 2026-10-17 | The user accepted the 200% capture and the sharp 100% diagnostic, then authorized the shared correction. The implemented 100% capture is byte-for-byte identical to that accepted diagnostic. Both comparisons now pass with the reviewed approvals; implementation and current verification are recorded below |
 
 Implementation rationale is in
 [the geometry correction record](history/library/13-flat-theme-variants.md#3260-stable-lower-qat-and-contextual-selection-geometry--2026-10-16).
@@ -203,18 +203,55 @@ disabled and fixed/static text hinting. The body and lower-QAT shadow effects
 enclose their foreground content. Changing RenderingBias from Performance to
 Quality leaves both captures unchanged in this software-rendered path; moving
 decorative chrome/shadow into separate inert siblings produces crisp foreground
-text and icons while retaining the shadow. This is a diagnostic visual-tree
-experiment, with no runtime template change and no 100% approval update.
+text and icons while retaining the shadow. That diagnostic visual-tree
+experiment changed neither runtime templates nor the 100% approval; the authorized
+implementation follows below.
 Evidence is under TestResults/crystal-sharpness; the accepted 200% comparison is
 recorded in crystal-200-reviewed-comparison.log.
 
-The next bounded correction should separate decorative shadow chrome from live
-foreground in the shared templates, retain lower-QAT panel clipping and occupied
-bounds, and adjust transition capture/bounds lookup where necessary. Verify
-affected Crystal body/QAT scenes, relocation with/without host synchronization,
-and an independent consumer. Retain existing passing checks and cadence.
+The diagnostic established the bounded shared-template correction implemented
+below. Existing passing evidence is retained; this follow-up does not change cadence.
 
 The separately reported Writer popup sharpening is an open investigation in
 [RKWF-049](12-RIBBONKIT-WRITER-CONSUMER-FRICTION-LOG.md#rkwf-049--popup-text-sharpens-after-opening).
 It is not established as the same cause and does not expand this host-layout
 track into popup animation changes.
+
+## Separate decorative shadow chrome — 2026-10-17
+
+Implemented after the user's authorization on a clean checkout at 8c8318e.
+The body and lower QAT retain their existing named decorative borders, dynamic
+paint/effect resources, margins, border widths, padding and corner triggers.
+Commands occupy sibling foreground borders with bound matching insets. The lower
+QAT's parent still clips the rendered shadow. Minimize, body holds and transitions
+target the complete presentation; ordinary tab switching targets foreground only.
+Older custom templates without the presentation wrapper retain their previous
+target lookup. No public API, duration/easing, reduced-motion or popup timing changed.
+
+Body snapshots preserve an independent effect-bearing chrome visual, including
+holds and sampled reversals. Only that decoration scales with the boundary;
+foreground text/icons remain outside the shadow effect surface. QAT capture and
+painted-bound reporting continue to include the original shadow and clipping.
+
+| Gate | Result |
+| --- | --- |
+| Focused runtime | 49 existing lifecycle/movement/layout/layering cases passed. Four new 100/150/200% light/dark/direction pixel cases verify that changing a decorative shadow leaves its own text/icon pixels identical while changing halo pixels. A new hold/playback/reversal case verifies glyphs remain outside effect subtrees. The theme selection passed 28/29; its remaining utility-arrow test assumed the chrome was an ancestor. Using common-visual coordinates passed the focused repair. Total 83 unique runtime cases covered; assembled focused evidence |
+| Independent host synchronization | All 24 combinations passed: Office2010/Flat/Crystal, LTR/RTL, Compact/Touch, with and without a separately authored content animator. Both directions of both required QAT routes retain ownership, natural-scale movement and terminal cleanup. Added checks keep command ancestors free of the decorative effect and include panel bounds in painted geometry |
+| Independent existing behavior | DensityTransition, DensityTransitionLifecycle, LayoutMotion, LayoutMotionPaint and QatRowGeometry passed, including opacity/transform bindings, interruptions, minimize handoff, natural command geometry and the 24-case lower-row matrix. The existing AfterCrystalApplicationMenu continuation passed all eight scopes: Crystal QAT/messages, Backstage captions, captured backdrops, gallery selection, QAT resource scope, colored QAT and QAT backdrop. Total 14 focused scope executions including the host-synchronization matrix |
+| Rendering | All 171 scenes were captured twice with exact repeatability. Inspected before/current/diff pages for 53 changed comparisons: foreground rasterization improves without changing the established decorative geometry; the remaining 118 retained their approvals. Updated only those 53 reviewed approvals, with no tolerance change. The normal full visual matrix then passed all 171 comparisons. This is a clean visual comparison run, not a clean full solution test run |
+| User review scope | The corrected 100% Crystal PNG SHA256 is 48408FE1D6465D0CB2E27ACA6084F2A43776C019E5B5D980B4EA724A76EE2355, identical to the diagnostic the user called sharp. This does not establish new native keyboard/input, popup, genuine mixed-monitor DPI or OS reduced-motion acceptance |
+| Final normal builds | Debug and Release solution builds passed with 0 warnings/errors, including both runtime TFMs and API/XML analyzers. Public API files are unchanged. Normal Debug Showcase and Writer outputs contain the corrected library |
+| Verification limits | No new full solution test run, package rebuild/package-consumer run or native acceptance is claimed for this bounded appearance correction. Earlier broad evidence is retained at its recorded scope; package evidence above predates this correction. Writer popup sharpening remains a separate open investigation |
+
+Diagnostics and logs are under TestResults: shadow-pixels-final.log,
+shadow-animation-layer-regression.log, shadow-runtime-second.log,
+shadow-runtime-themes.log, shadow-utility-coordinate-repair.log,
+shadow-consumer-host-layout.log, shadow-consumer-density.log,
+shadow-consumer-density-lifecycle.log, shadow-consumer-layout-motion.log,
+shadow-consumer-layout-paint.log, shadow-consumer-qat-geometry.log,
+shadow-consumer-crystal-tail.log, shadow-visual-capture.log,
+shadow-visual-comparison.log, shadow-final-debug-build.log,
+shadow-final-release-build.log, shadow-review and shadow-fix.
+The prior/current-runtime minimized-header probe has identical checked, hover,
+focus and pressed states and identical header pixels; it does not establish native
+acceptance or alter interaction policy. Writer's popup sharpening remains RKWF-049.

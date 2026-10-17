@@ -2121,7 +2121,7 @@ public partial class Ribbon : Control
 
         ribbon.CancelDensityTransition();
 
-        ribbon._ribbonContentHost ??= FindDescendantByName(ribbon, "ContentHost");
+        ribbon._ribbonContentHost ??= FindContentPresentation(ribbon);
         if (ribbon._ribbonContentHost is not { } host)
         {
             return;
@@ -3370,7 +3370,7 @@ public partial class Ribbon : Control
             TrackTabRowQatSize(tabRowHost);
         }
 
-        if (GetTemplateChild("QatBelowHost") is FrameworkElement belowHost)
+        if ((GetTemplateChild("QatBelowShadowHost") ?? GetTemplateChild("QatBelowHost")) is FrameworkElement belowHost)
         {
             _qatBelowHost = belowHost;
             AttachQatContextMenu(belowHost);
@@ -3445,7 +3445,7 @@ public partial class Ribbon : Control
 
         // Visibility of the ribbon body is code-managed (see OnIsMinimizedChanged); sync it
         // to the current state in case the ribbon loaded already minimized.
-        _ribbonContentHost ??= FindDescendantByName(this, "ContentHost");
+        _ribbonContentHost ??= FindContentPresentation(this);
         if (_ribbonContentHost is not null)
         {
             _ribbonContentHost.Visibility = IsMinimized ? Visibility.Collapsed : Visibility.Visible;
@@ -3518,7 +3518,7 @@ public partial class Ribbon : Control
             AttachQatContextMenu(tabRowHost);
             TrackTabRowQatSize(tabRowHost);
         }
-        _ribbonContentHost = FindDescendantByName(tabControl, "ContentHost");
+        _ribbonContentHost = FindContentPresentation(tabControl);
     }
 
     private void DetachRibbonTabControl()
@@ -3570,8 +3570,9 @@ public partial class Ribbon : Control
             return;
         }
 
-        _ribbonContentHost ??= FindDescendantByName(this, "ContentHost");
-        FrameworkElement? target = (_ribbonContentHost as System.Windows.Controls.Border)?.Child as FrameworkElement
+        _ribbonContentHost ??= FindContentPresentation(this);
+        FrameworkElement? target = (FindDescendantByName(this, "ContentForeground") as Border)?.Child as FrameworkElement
+            ?? (_ribbonContentHost as Border)?.Child as FrameworkElement
             ?? _ribbonContentHost;
         // Slide (no fade): the new content is already realized at full opacity, so a fade
         // would flash it transparent for a frame — a subtle rise reads cleanly instead.
@@ -3792,6 +3793,9 @@ public partial class Ribbon : Control
             host.Resources.Remove(QatColoredCompanionBackgroundKey);
         }
     }
+
+    private static FrameworkElement? FindContentPresentation(DependencyObject root) =>
+        FindDescendantByName(root, "ContentPresentationHost") ?? FindDescendantByName(root, "ContentHost");
 
     private static FrameworkElement? FindDescendantByName(DependencyObject root, string name)
     {

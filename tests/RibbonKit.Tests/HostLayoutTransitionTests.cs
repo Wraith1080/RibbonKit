@@ -8,6 +8,7 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Effects;
 using System.Windows.Threading;
 using RibbonKit.Animation;
 using RibbonKit.Controls;
@@ -439,6 +440,47 @@ public sealed class HostLayoutTransitionTests
             for (int i = 0; i < pixels.Length; i += 4)
                 if (pixels[i] > 180 && pixels[i + 2] > 180 && pixels[i + 1] < 150) samples.Add(pixels[i + 1]);
             Assert.NotEmpty(samples); return samples.Average(value => (double)value);
+        }
+    });
+
+    [Fact]
+    public void Body_holds_playback_and_reversal_keep_glyphs_outside_shadow_effects() => Run((window, ribbon) =>
+    {
+        ThemeManager.Apply(Sta.UseApplication(), RibbonTheme.CrystalLight); Settle(window);
+        ribbon.Density = RibbonDensity.Touch;
+        InspectPresentation(); // Synchronous previous-presentation hold.
+        Drain(); InspectPresentation(); // Playback uses the same separation.
+        ribbon.Density = RibbonDensity.Compact;
+        InspectPresentation(); // A reversal captures chrome independently of text.
+        Drain(); InspectPresentation();
+        PumpUntil(() => QatScenes(window).Length == 0);
+
+        void InspectPresentation()
+        {
+            var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(window);
+            var root = window.RibbonPresentationSurface!.Value;
+            var presentations = (root.Layer.GetAdorners(root.Root) ?? []).Cast<Visual>().ToList();
+            var tabs = (RibbonTabControl)ribbon.Template.FindName("TabControlHost", ribbon);
+            var body = (FrameworkElement)tabs.Template.FindName("ContentPresentationHost", tabs);
+            presentations.AddRange(AdornerLayer.GetAdornerLayer(body)?.GetAdorners(body) ?? []);
+            Assert.NotEmpty(presentations);
+            var visuals = presentations.SelectMany(Visuals).ToArray();
+            Assert.Contains(visuals, visual => HasGlyphs(VisualTreeHelper.GetDrawing(visual)));
+            var shadows = visuals.Where(visual => (visual as UIElement)?.Effect is DropShadowEffect
+                || (visual as ContainerVisual)?.Effect is DropShadowEffect).ToArray();
+            Assert.NotEmpty(shadows);
+            foreach (var shadow in shadows)
+                Assert.DoesNotContain(Visuals(shadow), visual => HasGlyphs(VisualTreeHelper.GetDrawing(visual)));
+        }
+        static bool HasGlyphs(Drawing? drawing) => drawing is GlyphRunDrawing
+            || drawing is DrawingGroup group && group.Children.Any(HasGlyphs);
+        static IEnumerable<Visual> Visuals(Visual parent)
+        {
+            yield return parent;
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+                if (VisualTreeHelper.GetChild(parent, i) is Visual child)
+                    foreach (var visual in Visuals(child)) yield return visual;
         }
     });
 

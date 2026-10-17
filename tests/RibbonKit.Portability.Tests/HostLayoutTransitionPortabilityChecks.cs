@@ -7,6 +7,7 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Effects;
 using System.Windows.Threading;
 using RibbonKit.Animation;
 using RibbonKit.Controls;
@@ -85,6 +86,8 @@ internal static class HostLayoutTransitionPortabilityChecks
                 PumpUntil(() => QatScenes(window).Length == 0);
                 Assert.Equal(1, content.Opacity);
                 Assert.Same(original, ribbon.QuickAccessItems[0]);
+                AssertNoShadowAncestor(command);
+                AssertNoShadowAncestor(original);
                 Assert.All(QatScenes(window), a => Assert.False(a.IsHitTestVisible));
             }
             ribbon.LayoutMode = RibbonLayoutMode.Simplified;
@@ -116,6 +119,12 @@ internal static class HostLayoutTransitionPortabilityChecks
     private static IEnumerable<DependencyObject> Descendants(DependencyObject node)
     { for (int i = 0; i < VisualTreeHelper.GetChildrenCount(node); i++) { var child = VisualTreeHelper.GetChild(node, i); yield return child; foreach (var descendant in Descendants(child)) yield return descendant; } }
     private static void Drain() => Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+    private static void AssertNoShadowAncestor(DependencyObject foreground)
+    {
+        for (DependencyObject? node = foreground; node is not null; node = VisualTreeHelper.GetParent(node))
+            if (node is UIElement element) Assert.False(element.Effect is DropShadowEffect,
+                "A command must remain outside the decorative shadow's effect surface.");
+    }
     private static void PumpUntil(Func<bool> condition)
     {
         var watch = Stopwatch.StartNew(); var frame = new DispatcherFrame();
@@ -149,6 +158,7 @@ internal static class HostLayoutTransitionPortabilityChecks
             Assert.Equal(0, e.BoundaryMotion.Progress);
             Assert.NotNull(e.FinalGeometry);
             if (e.FinalGeometry.QuickAccessBounds is { } qat) Assert.True(e.FinalGeometry.PaintedBounds.Contains(qat));
+            if (e.FinalGeometry.QuickAccessPanelBounds is { } panel) Assert.True(e.FinalGeometry.PaintedBounds.Contains(panel));
             Active[e.TransitionId].Start(e.BoundaryMotion);
         }
         private void End(object? sender, RibbonLayoutTransitionEventArgs e)

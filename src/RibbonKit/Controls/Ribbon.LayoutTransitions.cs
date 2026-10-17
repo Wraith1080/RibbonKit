@@ -194,12 +194,12 @@ public partial class Ribbon
             if (qat.Panel is { } panel)
             {
                 Rect halo = panel.Bounds;
-                if (_owner._qatBelowHost?.Effect is DropShadowEffect shadow)
+                if ((FindDescendantByName(_owner, "QatBelowHost") ?? _owner._qatBelowHost)?.Effect is DropShadowEffect shadow)
                     halo.Inflate(shadow.BlurRadius + Math.Abs(shadow.ShadowDepth) + 1,
                         shadow.BlurRadius + Math.Abs(shadow.ShadowDepth) + 1);
                 painted.Union(halo);
             }
-            if (_owner._ribbonContentHost is { Effect: DropShadowEffect bodyShadow } body)
+            if (FindDescendantByName(_owner, "ContentHost") is { Effect: DropShadowEffect bodyShadow } body)
             {
                 Rect halo = body.TransformToVisual(root).TransformBounds(new Rect(body.RenderSize));
                 halo.Inflate(bodyShadow.BlurRadius + Math.Abs(bodyShadow.ShadowDepth),

@@ -176,7 +176,7 @@ internal static class DensityTransitionPortabilityChecks
             Assert.Same(original, qat.RenderTransform);
             Assert.Equal(0, qat.Opacity);
             Assert.Equal(0.8d, tabs.Opacity); // The vector body presentation preserves ancestor opacity.
-            Assert.True(Part<Border>(tabs, "ContentHost").HasAnimatedProperties);
+            Assert.True(Part<Grid>(tabs, "ContentPresentationHost").HasAnimatedProperties);
             ribbon.Density = RibbonDensity.Compact; Layout(window);
             PumpUntil(() => !HasMotion(tabs));
             Assert.Equal(0.8d, tabs.Opacity);
@@ -257,12 +257,12 @@ internal static class DensityTransitionPortabilityChecks
             // Minimize owns its existing QAT glide; density must release its layer first.
             ribbon.IsMinimized = true;
             Assert.False(Part<RibbonTabControl>(ribbon, "TabControlHost").HasAnimatedProperties);
-            Assert.DoesNotContain(System.Windows.Documents.AdornerLayer.GetAdornerLayer(Part<Border>(
-                Part<RibbonTabControl>(ribbon, "TabControlHost"), "ContentHost"))?.GetAdorners(Part<Border>(
-                Part<RibbonTabControl>(ribbon, "TabControlHost"), "ContentHost")) ?? Array.Empty<System.Windows.Documents.Adorner>(),
+            Assert.DoesNotContain(System.Windows.Documents.AdornerLayer.GetAdornerLayer(Part<Grid>(
+                Part<RibbonTabControl>(ribbon, "TabControlHost"), "ContentPresentationHost"))?.GetAdorners(Part<Grid>(
+                Part<RibbonTabControl>(ribbon, "TabControlHost"), "ContentPresentationHost")) ?? Array.Empty<System.Windows.Documents.Adorner>(),
                 adorner => adorner.GetType().Name == "RibbonLayoutTransition");
             Assert.Equal(Matrix.Identity, qat.RenderTransform.Value);
-            Assert.IsType<TranslateTransform>(Part<Border>(ribbon, "QatBelowHost").RenderTransform);
+            Assert.IsType<TranslateTransform>(Part<Grid>(ribbon, "QatBelowShadowHost").RenderTransform);
             PumpUntil(() => Part<Border>(Part<RibbonTabControl>(ribbon, "TabControlHost"), "ContentHost").Visibility == Visibility.Collapsed);
             AssertRest(qat);
         }
@@ -305,7 +305,7 @@ internal static class DensityTransitionPortabilityChecks
 
     private static bool HasMotion(RibbonTabControl tabs)
     {
-        var body = Part<Border>(tabs, "ContentHost");
+        var body = Part<Grid>(tabs, "ContentPresentationHost");
         // Removing our composed clock can leave inactive WPF animation storage
         // until the next timing tick. Observe the presentation, not that storage.
         return tabs.Opacity != (double)tabs.GetAnimationBaseValue(UIElement.OpacityProperty)

@@ -77,3 +77,33 @@ of movement. Main-window captures inspect prepared/start/middle/final frames.
 Exact final build/test/package results and native limits remain in the active plan.
 Older full-run-plus-repair evidence is not reclassified as a clean suite pass, and
 the two residual Crystal QAT comparisons remain open unless separately reconciled.
+
+### 3.261 Foreground stays outside decorative shadow effects — 2026-10-17
+
+The user's Crystal 100% comparison isolated a soft foreground despite corrected
+text spacing. A software-rendered diagnostic reproduced the actual PNG exactly
+with animation disabled and Fixed hinting. RenderingBias=Quality did not change
+it; separating shadow chrome from commands produced the accepted sharp image.
+
+The shared body and lower-QAT templates now place effect-bearing decoration and
+foreground in siblings. Existing named decorative borders retain their resources
+and geometry; foreground insets bind to those borders. Complete presentation roots
+own minimize/layout opacity and motion, while tab switching still moves content
+only. The lower-QAT clip remains on its parent after the child effect renders.
+Custom templates without the new body wrapper keep their old lookup fallback.
+
+Body holds/playback/reversal snapshots retain a separate vector chrome tree so
+the animation adorner does not reapply the effect around text. Boundary scaling
+affects decoration only. Painted geometry still reads the decorative borders'
+shadow extent. Initialize visual-child enumeration defensively: WPF can query it
+while the constructor sets IsHitTestVisible, before the collection is assigned.
+
+Pixel checks compare foreground with its own shadow toggled, retaining a neighboring
+body shadow that can legitimately overlap the QAT. Keep a disconnected capture root
+independent of native Window content offsets when sampling by visual coordinates.
+Utility-arrow coordinates use TransformToVisual because decoration is a sibling.
+Independent consumers verify both QAT routes with/without host synchronization,
+plus existing binding, geometry and interruption checks. Reviewed visual updates
+cover sharper foreground in affected shadow themes, with no tolerance change.
+Exact evidence and remaining native gates stay in plan 18; Writer popup sharpening
+is a separate open RKWF-049 investigation.
