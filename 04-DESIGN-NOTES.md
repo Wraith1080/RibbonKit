@@ -1020,6 +1020,15 @@ technical evidence warrants them; preserve existing dated records.
 
 [Separate shared chrome from text in resting and animated presentations](docs/history/library/16-host-layout-transitions.md#3261-foreground-stays-outside-decorative-shadow-effects--2026-10-17).
 
+### 3.262 Refresh popup text when opening motion settles — 2026-10-17
+
+[Native delayed-sharpening reproduction and one completion text redraw](docs/history/library/04-office2007-and-popup-motion.md#3262-refresh-popup-text-when-opening-motion-settles--2026-10-17).
+[Current acceptance](docs/12-RIBBONKIT-WRITER-CONSUMER-FRICTION-LOG.md#rkwf-049--popup-text-sharpens-after-opening).
+
+### 3.263 Shared text refresh after control animation — 2026-10-17
+
+[Shared completion repaint for ribbon text, including both tab layouts](docs/history/library/04-office2007-and-popup-motion.md#3263-shared-text-refresh-after-control-animation--2026-10-17).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.

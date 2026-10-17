@@ -429,3 +429,7 @@ status updates and investigation narration were removed during compaction.
 ### [3.260 Stable lower QAT and contextual selection geometry — 2026-10-16](library/13-flat-theme-variants.md#3260-stable-lower-qat-and-contextual-selection-geometry--2026-10-16)
 
 ### [3.261 Foreground stays outside decorative shadow effects — 2026-10-17](library/16-host-layout-transitions.md#3261-foreground-stays-outside-decorative-shadow-effects--2026-10-17)
+
+### [3.262 Refresh popup text when opening motion settles — 2026-10-17](library/04-office2007-and-popup-motion.md#3262-refresh-popup-text-when-opening-motion-settles--2026-10-17)
+
+### [3.263 Shared text refresh after control animation — 2026-10-17](library/04-office2007-and-popup-motion.md#3263-shared-text-refresh-after-control-animation--2026-10-17)

@@ -329,6 +329,7 @@ public class RibbonScrollContentHost : Decorator
             BeginAnimation(OffsetProperty, null);
             _animActive = false;
             Offset = target;
+            RibbonMotion.RefreshSettledText(this);
         };
         BeginAnimation(OffsetProperty, anim);
     }

@@ -164,6 +164,7 @@ internal sealed class RibbonLayoutTransition : Adorner, IDisposable
         BindingOperations.ClearBinding(this, ProgressProperty);
         RibbonLayoutDrawing.ReleaseHide(_hide);
         _layer.Remove(this);
+        RibbonMotion.RefreshSettledText(_surface);
     }
 
     internal RibbonLayoutSnapshot CapturePresentation()
@@ -270,6 +271,7 @@ internal sealed class RibbonLayoutHold : Adorner, IDisposable
             RibbonLayoutDrawing.ReleaseHide(footerClock);
         }
         _layer.Remove(this);
+        RibbonMotion.RefreshSettledText(AdornedElement);
     }
 }
 

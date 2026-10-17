@@ -602,7 +602,12 @@ public class MdiChild : ContentControl
 
             // Release the transform once settled so the child renders (and hit-tests)
             // untransformed between transitions.
-            toZero.Completed += (_, _) => SetCurrentValue(RenderTransformProperty, null);
+            toZero.Completed += (_, _) =>
+            {
+                if (!ReferenceEquals(RenderTransform, group)) return;
+                SetCurrentValue(RenderTransformProperty, null);
+                RibbonMotion.RefreshSettledText(this);
+            };
 
             scale.BeginAnimation(ScaleTransform.ScaleXProperty, toIdentity);
             scale.BeginAnimation(ScaleTransform.ScaleYProperty, toIdentity);

@@ -79,5 +79,6 @@ internal sealed class RibbonDensityTransition : IDisposable
             if (ReferenceEquals(_surface.RenderTransform, _transforms))
                 _surface.SetCurrentValue(UIElement.RenderTransformProperty, _originalTransform);
         }
+        RibbonMotion.RefreshSettledText(_surface);
     }
 }

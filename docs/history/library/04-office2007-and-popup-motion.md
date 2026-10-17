@@ -693,3 +693,79 @@ existing checked-state popup bindings and visual triggers are unchanged.
 Hold-and-cancel is no longer available on these openers. No build, automated tests
 or live UI checks ran for this change; the earlier release-mode evidence does not
 validate the new input timing or establish a latency improvement.
+
+### 3.262 Refresh popup text when opening motion settles — 2026-10-17
+
+The user clarified that text stays soft after animation has stopped, then sharpens
+later. The preceding shadow separation (§3.261, committed at a97ac75) corrected
+static effect rasterization but did not resolve this temporal symptom.
+
+A WPF 8.0.31 screen-pixel probe reproduced delayed sharpening at opacity 1 and
+content offset 0 on the hardware compositor, display DPI 125%. Three bracketed
+baselines retained 2,797 significant text-pixel differences from the one-second
+frame through at least 250ms; settling occurred around 500ms or later. Clearing
+the held transform clock, fixed hinting and removing the effect did not solve it.
+Invalidating the enclosing border failed; invalidating the visible TextBlocks
+once at rest removed the long delay without overriding authored font modes.
+Offscreen RenderTargetBitmap redraws had hidden the symptom.
+
+PlayFlyoutOpen now requests that single leaf-text redraw at slide completion, or
+fade completion for surfaces without sliding content. It preserves the fixed
+surface/content-slide geometry, clock policy, timing/easing, popup lifetime,
+bindings and text options. It adds no recurring timer or per-frame layout change.
+The ComboBox comment was corrected to describe the existing content slide.
+
+Verification: 32 unique focused runtime cases across the retained popup/pressed
+selection and the final three-case regression selection; this is assembled focused
+evidence. The original new regression fails with the completion redraw removed
+and passes when restored. The independent consumer's native Crystal/Office2024
+first-open/interrupted-reopen captures are byte-identical from their earliest
+settled samples (37–97ms) through one second. An earlier library run could still
+capture the preceding compositor frame around 28ms, then sharp text around 77ms;
+managed completion is not a synchronous screen-presentation guarantee.
+NativeGalleryPopup passed separately. Normal Debug solution and Release runtime
+builds passed with zero warnings/errors, including both runtime TFMs/API/XML checks.
+
+Diagnostic source and native images are retained under TestResults; temporary
+visible-window tests were removed from the projects. No full-suite/package run,
+approval update, actual Writer input-driven acceptance, genuine mixed-monitor DPI
+or OS reduced-motion acceptance is claimed. Current acceptance and log pointers
+belong to [RKWF-049](../../12-RIBBONKIT-WRITER-CONSUMER-FRICTION-LOG.md#rkwf-049--popup-text-sharpens-after-opening).
+
+### 3.263 Shared text refresh after control animation — 2026-10-17
+
+The user extended the popup correction to RibbonKit's other animated text and
+identified tab-body switching as another reproduction. A native RibbonKit-only
+consumer confirmed post-motion changes in both Classic and Simplified. Completion
+refresh now reaches the affected visible render parts, including editable combo
+text and custom text painting, without changing font settings or cadence.
+
+Shared open/slide/fade/translation/KeyTip/scroll helpers request one refresh at
+rest. Density transition disposal and body hold/vector cleanup do so after
+restoring the real presentation. RibbonScrollContentHost and the existing MDI
+state transition have corresponding completion hooks; MDI checks transform
+ownership so a stale or second-axis completion cannot clear newer motion.
+Decoration-only washes, marker travel and orb rotation retain their old behavior.
+
+Do not exclude every RibbonQuickAccessToolBar by type: the Simplified command row
+uses that control with IsSimplified=true and visible labels. Only an actual QAT
+strip is exempt. Refreshing only an ancestor misses glyph renderers; visiting
+visible UIElements also reaches editable/custom text render parts. The pass is
+once per settle, never per frame, and neither changes layout values nor replaces
+bindings, transforms, clips, opacity, command identity or popup anchors.
+
+The user clarified the boundary before completion: application document rendering
+and RichTextBox-specific treatment are outside this fix. Exploratory rich-text
+handling, its tests and changes to host content animators were removed. No font
+rendering-mode pulse or new public API is retained.
+
+Verification: 79 unique focused runtime cases across retained existing and new
+selections. The 12 new cases cover shared completion paths, authored render modes,
+natural bounds and the QAT/Simplified distinction. Native 125% tier-2 WPF 8.0.31
+Classic/Simplified and editable-combo captures stay unchanged from their first
+settled sample through one second; pre-fix tab captures changed well after rest.
+The independent host scope covers all 24 combinations, including QAT movement
+with/without subscribers. Debug/Release solution builds pass with no warnings or
+errors. No new full-suite/package/approval run or physical-input, mixed-monitor,
+OS reduced-motion or actual Writer acceptance is implied. Current acceptance and
+artifact pointers stay in [RKWF-049](../../12-RIBBONKIT-WRITER-CONSUMER-FRICTION-LOG.md#rkwf-049--popup-text-sharpens-after-opening).

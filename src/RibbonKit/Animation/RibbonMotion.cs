@@ -70,6 +70,7 @@ public static class RibbonMotion
             // would leave the element invisible if a later caller cleared the animation alone.
             element.SetValue(UIElement.OpacityProperty, 1d);
             element.BeginAnimation(UIElement.OpacityProperty, null);
+            if (offset <= 0d) RefreshSettledText(element);
         };
 
         // WPF ticks animation clocks before layout/render. Seed the base value so a transition
@@ -88,16 +89,16 @@ public static class RibbonMotion
         switch (from)
         {
             case RibbonSlideFrom.Top:
-                Slide(translate, TranslateTransform.YProperty, -offset, duration, ease);
+                Slide(translate, TranslateTransform.YProperty, -offset, duration, ease, element);
                 break;
             case RibbonSlideFrom.Bottom:
-                Slide(translate, TranslateTransform.YProperty, offset, duration, ease);
+                Slide(translate, TranslateTransform.YProperty, offset, duration, ease, element);
                 break;
             case RibbonSlideFrom.Left:
-                Slide(translate, TranslateTransform.XProperty, -offset, duration, ease);
+                Slide(translate, TranslateTransform.XProperty, -offset, duration, ease, element);
                 break;
             case RibbonSlideFrom.Right:
-                Slide(translate, TranslateTransform.XProperty, offset, duration, ease);
+                Slide(translate, TranslateTransform.XProperty, offset, duration, ease, element);
                 break;
         }
     }
@@ -183,6 +184,7 @@ public static class RibbonMotion
         {
             EasingFunction = RibbonAnimation.GetEase(action),
         };
+        fade.Completed += (_, _) => RefreshSettledText(element);
         element.BeginAnimation(UIElement.OpacityProperty, fade);
     }
 
@@ -210,6 +212,7 @@ public static class RibbonMotion
                 resting.BeginAnimation(TranslateTransform.YProperty, null);
                 resting.X = 0d;
                 resting.Y = 0d;
+                RefreshSettledText(element);
             }
 
             return;
@@ -228,16 +231,16 @@ public static class RibbonMotion
         switch (from)
         {
             case RibbonSlideFrom.Top:
-                Slide(translate, TranslateTransform.YProperty, -offset, duration, ease);
+                Slide(translate, TranslateTransform.YProperty, -offset, duration, ease, element);
                 break;
             case RibbonSlideFrom.Bottom:
-                Slide(translate, TranslateTransform.YProperty, offset, duration, ease);
+                Slide(translate, TranslateTransform.YProperty, offset, duration, ease, element);
                 break;
             case RibbonSlideFrom.Left:
-                Slide(translate, TranslateTransform.XProperty, -offset, duration, ease);
+                Slide(translate, TranslateTransform.XProperty, -offset, duration, ease, element);
                 break;
             case RibbonSlideFrom.Right:
-                Slide(translate, TranslateTransform.XProperty, offset, duration, ease);
+                Slide(translate, TranslateTransform.XProperty, offset, duration, ease, element);
                 break;
         }
     }
@@ -289,6 +292,7 @@ public static class RibbonMotion
         {
             EasingFunction = RibbonAnimation.GetEase(action),
         };
+        anim.Completed += (_, _) => RefreshSettledText(element);
         translate.BeginAnimation(TranslateTransform.YProperty, anim);
     }
 
@@ -334,6 +338,7 @@ public static class RibbonMotion
         {
             EasingFunction = RibbonAnimation.GetEase(action),
         };
+        anim.Completed += (_, _) => RefreshSettledText(element);
         translate.BeginAnimation(TranslateTransform.XProperty, anim);
     }
 
@@ -422,6 +427,7 @@ public static class RibbonMotion
         Duration duration = RibbonAnimation.GetDuration(action);
         IEasingFunction ease = RibbonAnimation.GetEase(action);
 
+        double offset = RibbonAnimation.GetSlideOffset(action);
         var fade = new DoubleAnimation(0d, 1d, duration) { EasingFunction = ease };
 
         // ⚠ The fade must RELEASE itself, and it must be SEEDED. Both halves matter:
@@ -443,6 +449,10 @@ public static class RibbonMotion
         {
             surface.SetValue(UIElement.OpacityProperty, 1d);
             surface.BeginAnimation(UIElement.OpacityProperty, null);
+            if (content is null || offset <= 0d)
+            {
+                RefreshSettledText(surface);
+            }
         };
 
         surface.SetValue(UIElement.OpacityProperty, 0d);
@@ -453,7 +463,6 @@ public static class RibbonMotion
         // exactly the failure this design exists to rule out.
         ClearTransform(surface);
 
-        double offset = RibbonAnimation.GetSlideOffset(action);
         if (content is null || offset <= 0d)
         {
             return;
@@ -469,7 +478,29 @@ public static class RibbonMotion
         translate.SetValue(TranslateTransform.YProperty, -offset);
 
         var slide = new DoubleAnimation(-offset, 0d, duration) { EasingFunction = ease };
+        slide.Completed += (_, _) => RefreshSettledText(content);
         translate.BeginAnimation(TranslateTransform.YProperty, slide);
+    }
+
+    internal static void RefreshSettledText(DependencyObject root)
+    {
+        // Native WPF can retain moving glyph rendering after playback stops.
+        // Refresh the affected subtree once, including editable/custom text's
+        // render parts: repainting only its enclosing border misses the glyphs.
+        // No font-mode, binding or layout changes. Icon-only QAT
+        // relocation keeps its existing inert drawing playback, without a hook.
+        if (root is UIElement { IsVisible: false }) return;
+        // The Simplified command row reuses this control with visible labels.
+        if (root is RibbonKit.Controls.RibbonQuickAccessToolBar { IsSimplified: false }) return;
+        if (root is UIElement element)
+        {
+            element.InvalidateVisual();
+        }
+
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            RefreshSettledText(VisualTreeHelper.GetChild(root, i));
+        }
     }
 
     /// <summary>
@@ -530,6 +561,7 @@ public static class RibbonMotion
         element.BeginAnimation(UIElement.OpacityProperty, null);
         element.Opacity = 1d;
         ClearTransform(element);
+        RefreshSettledText(element);
     }
 
     /// <summary>
@@ -586,6 +618,7 @@ public static class RibbonMotion
         {
             EasingFunction = RibbonAnimation.GetEase(action),
         };
+        fade.Completed += (_, _) => RefreshSettledText(element);
         element.BeginAnimation(UIElement.OpacityProperty, fade);
     }
 
@@ -615,22 +648,23 @@ public static class RibbonMotion
         Duration duration = RibbonAnimation.GetDuration(action);
         IEasingFunction ease = RibbonAnimation.GetEase(action);
 
+        double offset = RibbonAnimation.GetSlideOffset(action);
         var fade = new DoubleAnimation(0d, 1d, duration) { EasingFunction = ease };
         fade.Completed += (_, _) =>
         {
             element.BeginAnimation(UIElement.OpacityProperty, null);
             element.Opacity = 1d;
+            if (offset <= 0d) RefreshSettledText(element);
         };
         element.BeginAnimation(UIElement.OpacityProperty, fade);
 
-        double offset = RibbonAnimation.GetSlideOffset(action);
         if (offset <= 0d)
         {
             return;
         }
 
         TranslateTransform translate = EnsureTranslate(element);
-        Slide(translate, TranslateTransform.YProperty, -offset, duration, ease);
+        Slide(translate, TranslateTransform.YProperty, -offset, duration, ease, element);
     }
 
     /// <summary>
@@ -726,6 +760,7 @@ public static class RibbonMotion
             scrollViewer.SetValue(AnimatedVerticalOffsetProperty, targetOffset);
             scrollViewer.BeginAnimation(AnimatedVerticalOffsetProperty, null);
             scrollViewer.ScrollToVerticalOffset(targetOffset);
+            RefreshSettledText(scrollViewer);
         };
         scrollViewer.BeginAnimation(AnimatedVerticalOffsetProperty, anim);
     }
@@ -742,7 +777,8 @@ public static class RibbonMotion
         DependencyProperty axis,
         double fromValue,
         Duration duration,
-        IEasingFunction ease)
+        IEasingFunction ease,
+        FrameworkElement textRoot)
     {
         // Zero out the other axis so a reused transform never leaves a stale offset.
         DependencyProperty other = axis == TranslateTransform.XProperty
@@ -761,6 +797,7 @@ public static class RibbonMotion
         {
             translate.SetValue(axis, 0d);
             translate.BeginAnimation(axis, null);
+            RefreshSettledText(textRoot);
         };
         translate.BeginAnimation(axis, slide);
     }

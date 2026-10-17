@@ -212,10 +212,11 @@ recorded in crystal-200-reviewed-comparison.log.
 The diagnostic established the bounded shared-template correction implemented
 below. Existing passing evidence is retained; this follow-up does not change cadence.
 
-The separately reported Writer popup sharpening is an open investigation in
+The separately reported Writer popup sharpening is tracked in
 [RKWF-049](12-RIBBONKIT-WRITER-CONSUMER-FRICTION-LOG.md#rkwf-049--popup-text-sharpens-after-opening).
-It is not established as the same cause and does not expand this host-layout
-track into popup animation changes.
+The static shadow correction below did not resolve that temporal symptom. The
+user's subsequent clarification led to a separate shared control-motion text fix;
+its current evidence and Writer live-review limit belong to RKWF-049.
 
 ## Separate decorative shadow chrome — 2026-10-17
 
@@ -241,7 +242,7 @@ painted-bound reporting continue to include the original shadow and clipping.
 | Rendering | All 171 scenes were captured twice with exact repeatability. Inspected before/current/diff pages for 53 changed comparisons: foreground rasterization improves without changing the established decorative geometry; the remaining 118 retained their approvals. Updated only those 53 reviewed approvals, with no tolerance change. The normal full visual matrix then passed all 171 comparisons. This is a clean visual comparison run, not a clean full solution test run |
 | User review scope | The corrected 100% Crystal PNG SHA256 is 48408FE1D6465D0CB2E27ACA6084F2A43776C019E5B5D980B4EA724A76EE2355, identical to the diagnostic the user called sharp. This does not establish new native keyboard/input, popup, genuine mixed-monitor DPI or OS reduced-motion acceptance |
 | Final normal builds | Debug and Release solution builds passed with 0 warnings/errors, including both runtime TFMs and API/XML analyzers. Public API files are unchanged. Normal Debug Showcase and Writer outputs contain the corrected library |
-| Verification limits | No new full solution test run, package rebuild/package-consumer run or native acceptance is claimed for this bounded appearance correction. Earlier broad evidence is retained at its recorded scope; package evidence above predates this correction. Writer popup sharpening remains a separate open investigation |
+| Verification limits | No new full solution test run, package rebuild/package-consumer run or native acceptance is claimed for this bounded appearance correction. Earlier broad evidence is retained at its recorded scope; package evidence above predates this correction. Writer popup sharpening is a separate issue tracked in RKWF-049 |
 
 Diagnostics and logs are under TestResults: shadow-pixels-final.log,
 shadow-animation-layer-regression.log, shadow-runtime-second.log,
