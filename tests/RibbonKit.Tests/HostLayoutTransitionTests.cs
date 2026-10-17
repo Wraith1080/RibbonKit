@@ -157,7 +157,11 @@ public sealed class HostLayoutTransitionTests
             ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
         };
         ribbon.LayoutMode = RibbonLayoutMode.Simplified;
-        Settle(window);
+        Drain();
+        // Two sequential transitions can outlast the ordinary single-transition
+        // settle interval, especially during the full suite. Wait for the actual
+        // terminal notifications rather than a fixed wall-clock delay.
+        PumpUntil(() => endings == 2);
         Assert.Equal(2, starts.Count);
         var combined = starts[1];
         Assert.Equal(RibbonDensity.Compact, combined.PreviousState.Density);

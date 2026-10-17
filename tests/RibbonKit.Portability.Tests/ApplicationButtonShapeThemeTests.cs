@@ -333,7 +333,7 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("KeyboardNavigationPortabilityChecks.VerifyQatOverflow", () => KeyboardNavigationPortabilityChecks.VerifyQatOverflow(application));
             return;
         }
-        if (scope is not ("AfterGalleryQuickAccess" or "AfterCrystalTint" or "AfterKeyboardNavigation" or "AfterSimplifiedDesignerDefaults" or "AfterCustomizationScrollSpacing" or "AfterApplicationMenuViewport"))
+        if (scope is not ("AfterGalleryQuickAccess" or "AfterCrystalTint" or "AfterKeyboardNavigation" or "AfterSimplifiedDesignerDefaults" or "AfterCustomizationScrollSpacing" or "AfterApplicationMenuViewport" or "AfterCrystalApplicationMenu"))
         {
             if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") != "Touch")
                 VerifyScope("QuickAccessScopePortabilityChecks.VerifyThemeRestore", () => QuickAccessScopePortabilityChecks.VerifyThemeRestore(application));
@@ -361,7 +361,7 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("ComboBoxQuickAccessPortabilityChecks.Verify", () => ComboBoxQuickAccessPortabilityChecks.Verify(application));
             VerifyScope("GalleryQuickAccessPortabilityChecks.Verify", () => GalleryQuickAccessPortabilityChecks.Verify(application));
         }
-        if (scope is not ("AfterCrystalTint" or "AfterApplicationMenuViewport"))
+        if (scope is not ("AfterCrystalTint" or "AfterApplicationMenuViewport" or "AfterCrystalApplicationMenu"))
         {
             if (scope is not ("AfterKeyboardNavigation" or "AfterSimplifiedDesignerDefaults" or "AfterCustomizationScrollSpacing"))
             {
@@ -391,12 +391,13 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("OverflowMenuPortabilityChecks.Verify", () => OverflowMenuPortabilityChecks.Verify(application));
         }
         ThemeManager.Apply(application, RibbonTheme.Office2024);
-        if (scope != "AfterApplicationMenuViewport")
+        if (scope is not ("AfterApplicationMenuViewport" or "AfterCrystalApplicationMenu"))
         {
             VerifyScope("PopupMarginPortabilityChecks.Verify", () => PopupMarginPortabilityChecks.Verify(application));
             VerifyScope("ApplicationMenuViewportChecks.Verify", () => ApplicationMenuViewportChecks.Verify(application));
         }
-        VerifyScope("CrystalApplicationMenuPortabilityChecks.Verify", () => CrystalApplicationMenuPortabilityChecks.Verify(application));
+        if (scope != "AfterCrystalApplicationMenu")
+            VerifyScope("CrystalApplicationMenuPortabilityChecks.Verify", () => CrystalApplicationMenuPortabilityChecks.Verify(application));
         VerifyScope("CrystalQuickAccessPortabilityChecks.Verify", () => CrystalQuickAccessPortabilityChecks.Verify(application));
         VerifyScope("CrystalMessagePortabilityChecks.Verify", () => CrystalMessagePortabilityChecks.Verify(application));
         Assert.Equal(new CornerRadius(4), application.Resources["RibbonKit.Metrics.MenuItemCornerRadius"]);
@@ -1185,12 +1186,12 @@ public sealed class ApplicationButtonShapeThemeTests
         thread.SetApartmentState(ApartmentState.STA);
         thread.IsBackground = true;
         thread.Start();
-        // The measured full consumer now exceeds ten minutes with simplified
+        // The measured full consumer exceeds twenty minutes with simplified
         // layout/customization matrices. Large continuations retain a bounded
         // allowance without repeating their completed prefixes.
         string? scope = Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE");
-        var timeout = string.IsNullOrWhiteSpace(scope) ? TimeSpan.FromMinutes(20)
-            : scope is "AfterGalleryQuickAccess" or "AfterKeyboardNavigation" or "AfterSimplifiedDesignerDefaults" or "AfterCustomizationScrollSpacing" or "AfterApplicationMenuViewport"
+        var timeout = string.IsNullOrWhiteSpace(scope) ? TimeSpan.FromMinutes(30)
+            : scope is "AfterGalleryQuickAccess" or "AfterKeyboardNavigation" or "AfterSimplifiedDesignerDefaults" or "AfterCustomizationScrollSpacing" or "AfterApplicationMenuViewport" or "AfterCrystalApplicationMenu"
                 ? TimeSpan.FromMinutes(10) : TimeSpan.FromMinutes(5);
         if (!thread.Join(timeout))
             throw new TimeoutException($"The ribbon portability test did not finish within {timeout.TotalSeconds:0} seconds.");

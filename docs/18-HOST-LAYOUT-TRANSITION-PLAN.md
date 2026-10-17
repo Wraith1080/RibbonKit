@@ -136,7 +136,8 @@ consumer has a separately authored animator with no Showcase reference.
 | Visual comparisons | Four harness tests passed. The matrix passed 63 scenes before the known Crystal light QAT-below 100% mismatch; 106 remaining selected comparisons passed normally. Total 169/171. The residual 100% and 200% differences remain 5,551 and 17,043 significant pixels; inspected actual/diff images and SHA256 comparisons match the retained pre-track actual PNGs byte-for-byte. No approval/tolerance changed |
 | Final Release/API/package gates | Final normal Release solution build passed, 0 warnings/errors, including both runtime TFMs and API/XML analyzers. Shipped baseline untouched; additions are in PublicAPI.Unshipped. Normal pack and archive/designer-layout validation passed; clean net8/net9 WPF package consumers built with 0 warnings/errors. Older packages were preserved and the current pair was selected in a validation-input directory. Package runtime smoke/native designer discovery were not run |
 | Normal Debug review output | Final normal solution Debug build passed, 0 warnings/errors. Showcase is ready in its standard output folder |
-| Native acceptance | Open: real mouse/touch/keyboard and KeyTips, focused editor interaction, popup anchors and cleanup, genuine mixed-monitor DPI, OS reduced motion, and subjective continuous travel versus fallback appearance |
+| User appearance review | On 2026-10-16 the user reported that the implemented host-layout/QAT/content animation "looks perfect." This accepts the appearance they reviewed; the later QAT-height and Chart Tools marker reports are tracked below |
+| Native acceptance | Open: exhaustive real mouse/touch/keyboard and KeyTips, focused editor interaction, popup anchors and cleanup, genuine mixed-monitor DPI and OS reduced motion. The reported appearance approval does not establish these separate gates |
 
 Focused checks and normal outputs use standard Debug/Release configurations.
 Full Release validation is required for the public additions; XML documentation
@@ -160,3 +161,60 @@ discovery remain in [plan 17](17-TOOLBOX-ITEM-DEFINITION-PLAN.md). Accepted drop
 press behavior and the latest overflow timing follow-up remain in
 [plan 09](09-FUTURE-THEMES-PLAN.md#colored-qat-split-and-dropdown-states).
 This track does not establish a latency improvement or Visual Studio acceptance.
+
+## Post-review geometry repairs and full validation — 2026-10-17
+
+The user requested a fresh full test after two bounded repairs: stable lower-QAT
+height in Office 2024 Flat and correct contextual marker placement while Chart
+Tools headers enter in Office 2024, Flat and Crystal. The fixes were committed by
+the user as fc90dfb on 2026-10-16. They remain in shared tokens and RibbonTabControl,
+with no API additions or Showcase-only workaround.
+
+| Gate | Current result |
+| --- | --- |
+| Independent geometry checks | QatRowGeometry and ContextualMarker passed 24 combinations each: three palettes, light/dark, LTR/RTL, Compact/Touch. Touch cases simulate 150% root DPI; Compact uses the current display DPI. Checks add/remove dropdown, split, gallery and group QAT proxies, sample merged-header entrance/rest/remerge geometry, and retain the compact ordinary selection glide |
+| Actual Showcase | MergeSelectionTests passed 8/8, including all three pill themes. Inspected the Chart Tools captures under TestResults/geometry-fixes; this is authored offscreen rendering, not new native input acceptance |
+| Full Release runtime | 969/970 passed in the full run. The remaining sequential-transition test reached the correct combined state but checked its second completion after a fixed single-transition interval. Replacing that interval with a bounded wait for both Ended notifications passed the focused repair. All 970 cases have passing coverage assembled from the full run and this repair; this is not a clean single runtime/full-suite pass |
+| Writer | 483/483 passed in the full run; retained without repetition |
+| Full independent consumer | The full aggregate hit its 20-minute cap during OverflowMenus after 30 named scopes passed, including both new geometry matrices. The unfinished overflow scope passed separately. The next continuation passed three more scopes, then exposed an old assertion requiring every non-Crystal minimum height to be zero. It now expects Flat's intended 32-DIP reserve. The final continuation passed the remaining eight scopes and aggregate assertions: 42 unique named scopes covered. Future full runs have a bounded 30-minute cap; the passed prefix was not rerun to claim a clean aggregate |
+| Visual comparisons | Four harness tests passed in the full run, plus 63 comparisons before the known Crystal 100% mismatch. The unfinished selection passed in retained 66-scene and six-scene prefixes followed by the final 34-scene comparison. Total 169/171. Sixteen Flat approvals were updated only after actual/diff inspection: lower-QAT, state, connected-message and File-menu scenes reflect the intended row reserve and consequent message position. No tolerance changed. The two Crystal QAT-below 100%/200% residuals remain 5,551/17,043 significant pixels; both current actual PNGs match retained pre-track captures byte-for-byte |
+| Final builds/API | Normal Release and Debug solution builds passed with 0 warnings/errors. Both runtime TFMs and API/XML checks passed; neither public API baseline changed in these geometry repairs |
+| Package | Normal pack and archive/designer-layout validation passed, plus clean net8/net9 WPF package builds with 0 warnings/errors. Packaged runtime DLL hashes match the final normal Release outputs. The previous package pair was preserved before packing; a validation-input directory selects the current pair. Package runtime smoke and native Toolbox discovery were not run |
+| Review/output limits | Normal Debug Showcase is ready. Existing physical input/KeyTip, popup-anchor, genuine mixed-monitor DPI, OS reduced-motion and designer gates remain separate. New follow-up work after user commit fc90dfb consists of validation fixtures, continuations/timeouts, reviewed approvals and documentation; no additional runtime behavior was changed |
+| Crystal reconciliation, 2026-10-17 | The user accepted the current 200% capture; its approval was updated and the normal selected comparison passed. With retained coverage, 170/171 comparisons now have passing evidence. At 100%, corrected text spacing is accepted but the current capture remains too soft. The user accepted a sharp diagnostic with isolated shadow chrome; that preview is not an implemented correction or acceptance of the current 100% capture |
+
+Implementation rationale is in
+[the geometry correction record](history/library/13-flat-theme-variants.md#3260-stable-lower-qat-and-contextual-selection-geometry--2026-10-16).
+
+Evidence under TestResults: geometry-full-release.log,
+geometry-terminal-wait-repair.log, geometry-consumer-tail.log,
+geometry-consumer-overflow.log, geometry-consumer-final-tail.log,
+geometry-remaining-visual.log, geometry-final-visual.log,
+geometry-final-visual-tail.log, geometry-crystal-200.log,
+geometry-flat-visual-capture.log, geometry-flat-visual-update.log,
+geometry-flat-states-capture.log, geometry-flat-states-update.log,
+geometry-flat-menu-capture.log, geometry-flat-menu-update.log, geometry-final-release-build.log,
+geometry-final-debug-build.log, geometry-final-pack.log and
+geometry-final-package-validation.log. Capture/update-mode success alone is not
+an approval-comparison pass; the normal comparisons above supply that evidence.
+
+The 100% diagnostic reproduces the current actual PNG byte-for-byte with motion
+disabled and fixed/static text hinting. The body and lower-QAT shadow effects
+enclose their foreground content. Changing RenderingBias from Performance to
+Quality leaves both captures unchanged in this software-rendered path; moving
+decorative chrome/shadow into separate inert siblings produces crisp foreground
+text and icons while retaining the shadow. This is a diagnostic visual-tree
+experiment, with no runtime template change and no 100% approval update.
+Evidence is under TestResults/crystal-sharpness; the accepted 200% comparison is
+recorded in crystal-200-reviewed-comparison.log.
+
+The next bounded correction should separate decorative shadow chrome from live
+foreground in the shared templates, retain lower-QAT panel clipping and occupied
+bounds, and adjust transition capture/bounds lookup where necessary. Verify
+affected Crystal body/QAT scenes, relocation with/without host synchronization,
+and an independent consumer. Retain existing passing checks and cadence.
+
+The separately reported Writer popup sharpening is an open investigation in
+[RKWF-049](12-RIBBONKIT-WRITER-CONSUMER-FRICTION-LOG.md#rkwf-049--popup-text-sharpens-after-opening).
+It is not established as the same cause and does not expand this host-layout
+track into popup animation changes.

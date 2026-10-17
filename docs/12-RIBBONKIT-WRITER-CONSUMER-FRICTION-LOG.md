@@ -33,6 +33,7 @@ or approve new runtime APIs; first establish the focused reproduction and scope.
   and cold-start checks remain in RKWF-007/009/010.
 - RKWF-008 is a bounded harness allowance, not a product defect.
 - RKWF-026 now uses the available shared glyph hook; only Writer's migrated W live appearance acceptance remains.
+- RKWF-049 tracks the newly reported popup text sharpening; no correction is claimed.
 
 All other entries below retain corrections, constraints or accepted workarounds.
 No complete Windows contrast-theme, genuine OS IME or production RTL
@@ -286,6 +287,30 @@ Writer reflection contract passed. Project-reference filtering depends on the
 active Visual Studio host; package consumer validation cannot prove that result.
 Current acceptance stays in
 [Toolbox plan T2c](17-TOOLBOX-ITEM-DEFINITION-PLAN.md#t2c--owner-authoring-and-live-review-corrections-2026-10-15).
+
+### RKWF-049 — Popup text sharpens after opening
+
+Open shared-runtime candidate, first reported 2026-10-17. In Writer, opening a
+ComboBox or dropdown initially shows soft text that becomes sharper; the delay
+varies from quick to noticeable. The user's clarification concerns popup text,
+not a confirmed document-editor rendering defect. Theme/DPI and a native frame
+sequence in the actual Writer process remain to be established.
+
+Inspection and an isolated native-popup probe confirm that PlayFlyoutOpen releases
+its surface fade but leaves the content TranslateTransform clock attached at zero.
+That is not proof that the clock causes the reported blur. The probe used bundled
+WPF 10 with the normal Debug library; its offscreen captures at 190ms and about
+1190ms were identical, including an Auto/Fixed hinting comparison. It does not
+reproduce Writer's native presentation or establish an improvement.
+
+No Writer workaround, runtime change, timing change or global text-rendering
+override was applied. Next reproduce native popup frames in Writer's target
+runtime, compare motion enabled/disabled and completed-clock cleanup, then verify
+the smallest shared correction in an independent consumer. Preserve popup anchors,
+authored rendering settings and existing duration/easing. Diagnostic evidence is
+under TestResults/popup-sharpness and popup-sharpness-diagnostic.log. The separate
+static Crystal snapshot diagnosis is in
+[plan 18](18-HOST-LAYOUT-TRANSITION-PLAN.md#post-review-geometry-repairs-and-full-validation--2026-10-17).
 
 ### Verification note — 2026-09-15 cleanup
 

@@ -1012,6 +1012,10 @@ technical evidence warrants them; preserve existing dated records.
 
 [Shared start/progress, inert QAT relocation and optional application content animation](docs/history/library/16-host-layout-transitions.md#3259-ribbon-owned-lifecycle-and-qat-relocation-presentation--2026-10-16).
 
+### 3.260 Stable lower QAT and contextual selection geometry — 2026-10-16
+
+[Reserve Flat's lower row and follow contextual header entrance geometry](docs/history/library/13-flat-theme-variants.md#3260-stable-lower-qat-and-contextual-selection-geometry--2026-10-16).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.
