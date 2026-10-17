@@ -52,21 +52,25 @@ internal static class HostLayoutTransitionPortabilityChecks
         var ribbon = new Ribbon { QuickAccessPosition = RibbonQuickAccessPosition.TitleBar, Background = Brushes.Navy };
         var tab = new RibbonTab { Header = "Home" };
         var group = new RibbonGroup { Header = "Commands" };
-        var command = new RibbonButton { Header = "Save" };
+        var command = new RibbonButton { Header = "Save",
+            Icon = new DrawingImage(new GeometryDrawing(Brushes.Magenta, null, new RectangleGeometry(new Rect(0, 0, 16, 16)))) };
         group.Items.Add(command); tab.Groups.Add(group); ribbon.Tabs.Add(tab); ribbon.SelectedTab = tab;
         ribbon.AddToQuickAccess(command);
         var dock = new DockPanel(); DockPanel.SetDock(ribbon, Dock.Top); dock.Children.Add(ribbon);
         dock.Children.Add(new Border { Background = Brushes.White });
-        var window = new RibbonWindow { Content = dock, Width = 700, Height = 350,
+        var window = new RibbonWindow { Content = dock, Title = "Steady consumer title", Width = 700, Height = 350,
             Background = Brushes.White, Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
         window.Resources["RibbonKit.Brushes.TitleBar.Background"] = new SolidColorBrush(color);
         RibbonLayoutTransitionMotion? motion = null;
         RibbonLayoutTransitionEventArgs? transition = null;
         bool ended = false; int samples = 0;
+        byte[]? titleInk = null, qatInk = null;
         var progressProperty = DependencyPropertyDescriptor.FromProperty(RibbonLayoutTransitionMotion.ProgressProperty, typeof(RibbonLayoutTransitionMotion));
         ribbon.LayoutTransitionStarting += (_, e) =>
         {
             motion = e.BoundaryMotion; transition = e;
+            titleInk = motion.Action == RibbonAnimationAction.LayoutModeChange ? TitlePixels() : null;
+            qatInk = titleInk is not null ? QatPixels() : null;
             progressProperty.AddValueChanged(motion, SamplePaint);
         };
         ribbon.LayoutTransitionEnded += (_, e) =>
@@ -86,6 +90,24 @@ internal static class HostLayoutTransitionPortabilityChecks
             Point header = transition.CoordinateRoot.TranslatePoint(new Point(450, top + 2), window);
             bitmap.CopyPixels(new Int32Rect((int)header.X, (int)header.Y, 1, 1), pixel, 4, 0);
             Assert.Equal(Colors.Navy, Color.FromArgb(pixel[3], pixel[2], pixel[1], pixel[0]));
+            if (titleInk is not null) Assert.Equal(titleInk, TitlePixels());
+            if (qatInk is not null) Assert.Equal(qatInk, QatPixels());
+        }
+        byte[] TitlePixels()
+            => Pixels(new Int32Rect(220, 10, 200, 16));
+        byte[] QatPixels()
+        {
+            var qat = (FrameworkElement)ribbon.QuickAccessItems[0];
+            Rect bounds = qat.TransformToVisual(window).TransformBounds(new Rect(qat.RenderSize));
+            return Pixels(new Int32Rect((int)Math.Ceiling(bounds.X) + 1, (int)Math.Ceiling(bounds.Y) + 1,
+                (int)Math.Floor(bounds.Width) - 2, (int)Math.Floor(bounds.Height) - 2));
+        }
+        byte[] Pixels(Int32Rect rect)
+        {
+            var bitmap = new RenderTargetBitmap(700, 350, 96, 96, PixelFormats.Pbgra32); bitmap.Render(window);
+            byte[] pixels = new byte[rect.Width * rect.Height * 4];
+            bitmap.CopyPixels(rect, pixels, rect.Width * 4, 0);
+            return pixels;
         }
         try
         {

@@ -136,3 +136,24 @@ and border, plus unique body ink so geometry-only checks cannot miss occlusion.
 Wait for terminal cleanup and a rendered frame when fixtures need settled drawings;
 observe the public Progress DP rather than assuming a background timer sees short
 intermediate frames. Current focused evidence and native limits belong to plan 18.
+
+The user's subsequent video isolated stationary caption/tab-header ink dimming
+during Simplified toggles. This is the same complementary-alpha hole applied to
+foreground: repairing the background alone did not preserve text contrast. Paused
+mid-transition pixel checks reproduce it before any completion text refresh runs.
+For a mode-only change with unchanged caption/header rectangles, carry one final
+foreground at authored opacity from shared start. Density, placement, visibility,
+combined changes and genuinely moving chrome retain their existing presentation.
+Keep the actual caption/header band bounds when sampling a reversal; foreground
+descendant bounds omit empty padding and otherwise invent geometry movement.
+The shared text-settle correction is unchanged. Native glyph-region comparisons
+cover before/start/intermediate/rest/600-ms-later frames, rather than sampling only
+background color. Current evidence remains in the active plan.
+
+The title-bar QAT had its own strip crossfade and needed the same stationary
+mode-only rule. Its icon-only status excludes text refresh, not opacity stability.
+Carry one committed strip when its endpoint rectangles match, without altering
+relocation, density or combined requests. Preserve the strip's band rectangle for
+pending holds and stationary sampled reversals; descendant ink bounds alone can
+otherwise trigger a false departure/arrival. Extend pixel checks to actual QAT
+icons, since stable caption text does not prove stability in that separate layer.

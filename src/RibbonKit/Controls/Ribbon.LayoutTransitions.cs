@@ -274,7 +274,12 @@ public partial class Ribbon
                     session.BodyMotion = RibbonLayoutTransition.Start(body, before, session.Action, () => { }, session.Boundary, session.BodyOrigin, session.Root);
                     _owner._layoutMotion = session.BodyMotion;
                 }
-                session.Qat?.Start(finalQat, session.Boundary, session.QuickAccess ?? session.Boundary);
+                bool modeOnly = session.Before.LayoutMode != session.Target.LayoutMode
+                    && session.Before.Density == session.Target.Density
+                    && session.Before.QuickAccessPosition == session.Target.QuickAccessPosition
+                    && session.Before.IsQuickAccessVisible == session.Target.IsQuickAccessVisible
+                    && session.Before.IsMinimized == session.Target.IsMinimized;
+                session.Qat?.Start(finalQat, session.Boundary, session.QuickAccess ?? session.Boundary, modeOnly);
                 if (!session.Boundary.IsAnimated && session.QuickAccess?.IsAnimated != true)
                 { End(session, RibbonLayoutTransitionOutcome.Skipped); return; }
                 var timeline = new ParallelTimeline();

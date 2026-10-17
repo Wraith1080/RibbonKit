@@ -558,6 +558,58 @@ public sealed class HostLayoutTransitionTests
     });
 
     [Theory]
+    [InlineData(false, false, false)]
+    [InlineData(true, false, false)]
+    [InlineData(true, true, false)]
+    [InlineData(true, false, true)]
+    public void Stationary_caption_header_and_Qat_ink_does_not_dim_during_mode_changes(bool dark, bool accent, bool reverse) => Run((window, ribbon) =>
+    {
+        ThemeManager.SetDarkMode(Application.Current, dark);
+        ThemeManager.SetAccentedTitleBar(Application.Current, accent);
+        if (accent) ThemeManager.SetAccent(Application.Current, Color.FromRgb(0x87, 0x64, 0xB8));
+        window.Title = "Stationary caption";
+        ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TitleBar;
+        Settle(window);
+        var title = (TextBlock)window.Template.FindName("PART_Title", window);
+        Rect titleBounds = title.TransformToVisual(window).TransformBounds(new Rect(title.RenderSize));
+        var header = (FrameworkElement)ribbon.Tabs[0].Template.FindName("HeaderText", ribbon.Tabs[0]);
+        Rect tabBounds = header.TransformToVisual(window).TransformBounds(new Rect(header.RenderSize));
+        var qat = (FrameworkElement)ribbon.QuickAccessItems[0];
+        Rect qatBounds = qat.TransformToVisual(window).TransformBounds(new Rect(qat.RenderSize));
+        RibbonLayoutTransitionEventArgs? started = null;
+        ribbon.LayoutTransitionStarting += (_, e) => started = e;
+        foreach (var mode in new[] { RibbonLayoutMode.Simplified, RibbonLayoutMode.Classic })
+        {
+            started = null; ribbon.LayoutMode = mode; Drain(); Assert.NotNull(started);
+            var clock = SharedClock(started); clock.Controller!.Pause();
+            clock.Controller.SeekAlignedToLastTick(TimeSpan.Zero, TimeSeekOrigin.BeginTime);
+            byte[] titleAtStart = Pixels(titleBounds), tabAtStart = Pixels(tabBounds);
+            byte[] qatAtStart = Pixels(qatBounds);
+            foreach (double time in new[] { .15, .3, .5 })
+            {
+                clock.Controller.SeekAlignedToLastTick(TimeSpan.FromMilliseconds(started.BoundaryMotion.Duration.TimeSpan.TotalMilliseconds * time), TimeSeekOrigin.BeginTime);
+                Assert.Equal(titleAtStart, Pixels(titleBounds));
+                Assert.Equal(tabAtStart, Pixels(tabBounds));
+                Assert.Equal(qatAtStart, Pixels(qatBounds));
+            }
+            // The checks above run before completion, so completion-only text
+            // refresh cannot cause or conceal their loss of foreground alpha.
+            if (reverse && mode == RibbonLayoutMode.Simplified) continue;
+            clock.Controller.Resume(); Settle(window);
+        }
+        byte[] Pixels(Rect bounds)
+        {
+            window.UpdateLayout();
+            var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(window);
+            var rect = new Int32Rect((int)Math.Ceiling(bounds.X) + 1, (int)Math.Ceiling(bounds.Y) + 1,
+                (int)Math.Floor(bounds.Width) - 2, (int)Math.Floor(bounds.Height) - 2);
+            byte[] result = new byte[rect.Width * rect.Height * 4]; bitmap.CopyPixels(rect, result, rect.Width * 4, 0);
+            return result;
+        }
+    });
+
+    [Theory]
     [InlineData(1d)]
     [InlineData(0.7d)]
     public void Host_content_does_not_expose_the_backing_color_during_layout_motion(double opacity) => Run((window, ribbon) =>

@@ -13,6 +13,7 @@ internal sealed class RibbonVectorSnapshot
     internal ContainerVisual Visual { get; }
     internal Rect Bounds { get; }
     private RibbonVectorSnapshot(ContainerVisual visual, Rect bounds) { Visual = visual; Bounds = bounds; }
+    internal RibbonVectorSnapshot WithBounds(Rect? bounds) => bounds is { } value ? new(Visual, value) : this;
 
     internal static RibbonVectorSnapshot? Capture(Visual? source, Visual root, Visual? exclude = null, bool includeAncestors = true,
         Visual? excludeAlso = null, bool useDrawingBounds = false)
@@ -121,6 +122,7 @@ internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
     private RibbonQuickAccessFrame? _current;
     private RibbonLayoutTransitionMotion? _boundary;
     private RibbonLayoutTransitionMotion? _motion;
+    private bool _modeOnly;
     private bool _disposed;
     private readonly Size _rootSize;
     private readonly DpiScale _dpi;
@@ -157,10 +159,12 @@ internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
         && VisualTreeHelper.GetDpi(_root).Equals(_dpi);
     internal bool HasPresentation => _previous.Strip is not null || _previous.Panel is not null
         || _current?.Strip is not null || _current?.Panel is not null;
+    private Rect? StationaryStripBounds => _modeOnly && _previous.Strip is { } before && _current?.Strip is { } after
+        && before.Bounds == after.Bounds ? after.Bounds : null;
 
-    internal void Start(RibbonQuickAccessFrame current, RibbonLayoutTransitionMotion boundary, RibbonLayoutTransitionMotion motion)
+    internal void Start(RibbonQuickAccessFrame current, RibbonLayoutTransitionMotion boundary, RibbonLayoutTransitionMotion motion, bool modeOnly)
     {
-        _current = current; _boundary = boundary; _motion = motion;
+        _current = current; _boundary = boundary; _motion = motion; _modeOnly = modeOnly;
         if (current.Background is { } surface)
         {
             _background.Children.Clear(); _background.Children.Add(surface.Visual);
@@ -196,6 +200,13 @@ internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
             : new TranslateTransform(0, travel * (1 - alpha));
         _oldStrip.Opacity = 1 - alpha;
         _newStrip.Opacity = alpha;
+        if (StationaryStripBounds is not null)
+        {
+            // Mode-only changes do not move the QAT. Its icons need the same
+            // single-presentation treatment as stationary caption/header ink.
+            _oldStrip.Transform = null; _newStrip.Transform = null;
+            _oldStrip.Opacity = 0; _newStrip.Opacity = 1;
+        }
 
         double b = _boundary.IsAnimated ? Math.Clamp(_boundary.Progress, 0, 1) : 1;
         // The transparent tab row relies on the ribbon's outer backdrop. Move
@@ -206,8 +217,8 @@ internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
         if (_previous.Header?.Bounds is { } oldHeader && current.Header?.Bounds is { } newHeader)
             _presentedHeader = Interpolate(oldHeader, newHeader, b);
         UpdateBackgroundClip();
-        PlaceChrome(_oldHeader, _newHeader, _previous.Header?.Bounds, current.Header?.Bounds, b, false);
-        PlaceChrome(_oldCaption, _newCaption, _previous.Caption?.Bounds, current.Caption?.Bounds, b, true);
+        PlaceChrome(_oldHeader, _newHeader, _previous.Header?.Bounds, current.Header?.Bounds, b, false, _modeOnly);
+        PlaceChrome(_oldCaption, _newCaption, _previous.Caption?.Bounds, current.Caption?.Bounds, b, true, _modeOnly);
         // Fade caption content over one continuous background. Fading two whole
         // opaque bands with (1-b, b) leaves an alpha hole over the window backing.
         if (_captionBackgroundBounds is { Width: > 0, Height: > 0 } background
@@ -248,13 +259,17 @@ internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
             target.X - source.X * sx, target.Y - source.Y * sy));
     }
 
-    private static void PlaceChrome(ContainerVisual old, ContainerVisual final, Rect? before, Rect? after, double p, bool clip)
+    private static void PlaceChrome(ContainerVisual old, ContainerVisual final, Rect? before, Rect? after, double p, bool clip, bool modeOnly)
     {
         if (before is not { } start || after is not { } end) return;
         Vector delta = end.TopLeft - start.TopLeft;
         old.Transform = new TranslateTransform(delta.X * p, delta.Y * p);
         final.Transform = new TranslateTransform(-delta.X * (1 - p), -delta.Y * (1 - p));
-        old.Opacity = 1 - p; final.Opacity = p;
+        // A mode-only change leaves the caption/header in place. Carry one
+        // committed foreground at authored opacity: cross-fading identical ink
+        // dims it at mid-motion, particularly over a dark background.
+        bool stationary = modeOnly && start == end;
+        old.Opacity = stationary ? 0 : 1 - p; final.Opacity = stationary ? 1 : p;
         if (clip && VisualTreeHelper.GetParent(old) is ContainerVisual parent)
             parent.Clip = new RectangleGeometry(new Rect(start.X + delta.X * p, start.Y + delta.Y * p,
                 start.Width + (end.Width - start.Width) * p, start.Height + (end.Height - start.Height) * p));
@@ -272,13 +287,17 @@ internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
 
     internal RibbonQuickAccessFrame CapturePresentation() => new()
     {
-        Header = RibbonVectorSnapshot.Capture(_headers, _root, includeAncestors: false),
-        Caption = RibbonVectorSnapshot.Capture(_captions, _root, _captionBackground, includeAncestors: false),
+        Header = RibbonVectorSnapshot.Capture(_headers, _root, includeAncestors: false)?.WithBounds(_presentedHeader),
+        // Foreground descendant bounds omit empty caption padding. Preserve the
+        // presented band rectangle when a reversal samples this composed tree.
+        Caption = RibbonVectorSnapshot.Capture(_captions, _root, _captionBackground, includeAncestors: false)
+            ?.WithBounds((_captions.Clip as RectangleGeometry)?.Rect ?? _previous.Caption?.Bounds),
         CaptionBackground = RibbonVectorSnapshot.Capture(_captionBackground, _root, includeAncestors: false),
         Background = RibbonVectorSnapshot.Capture(_background, _root, includeAncestors: false),
         BackgroundBounds = _current is null || _boundary is null ? _previous.BackgroundBounds
             : Interpolate(_previous.BackgroundBounds, _current.BackgroundBounds, Math.Clamp(_boundary.Progress, 0, 1)),
-        Strip = RibbonVectorSnapshot.Capture(_strips, _root, includeAncestors: false),
+        Strip = RibbonVectorSnapshot.Capture(_strips, _root, includeAncestors: false)
+            ?.WithBounds(_current is null ? _previous.Strip?.Bounds : StationaryStripBounds),
         Panel = RibbonVectorSnapshot.Capture(_panels, _root, includeAncestors: false),
         Occupied = _current is null || _boundary is null ? _previous.Occupied
             : Interpolate(_previous.Occupied, _current.Occupied, Math.Clamp(_boundary.Progress, 0, 1)),

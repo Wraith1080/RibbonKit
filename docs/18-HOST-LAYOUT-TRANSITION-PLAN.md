@@ -298,3 +298,54 @@ Usable native frames use the gap- and neutral-live- prefixes under
 layout-flash-native; neutral-final- lock-screen frames are excluded. Early edge experiments
 are diagnostics, superseded by the final runtime/native evidence above.
 Implementation pitfalls are in [§3.264](history/library/16-host-layout-transitions.md#3264-stable-caption-and-content-paint-during-layout-transitions--2026-10-18).
+
+### Stationary foreground follow-up — 2026-10-18
+
+The user's recording showed caption and tab-header text dimming during Simplified
+toggles in dark mode. The preceding screen-color checks verified background/edge
+paint, not constant foreground opacity. The recording's stationary title loses
+roughly one fifth of its ink contrast during repeated toggles. A paused-transition
+regression reproduces this before completion callbacks: it is the foreground
+crossfade, not the accepted text-sharpening correction.
+
+A mode-only transition now carries one committed caption/header foreground and
+stationary QAT strip at authored opacity when their old/final rectangles match.
+The previous hold lasts until shared start. Body/host motion, duration/easing, reduced-motion policy,
+density/QAT/visibility changes and moving chrome keep their existing behavior.
+Sampled reversals preserve the band/strip rectangles instead of inferring layout
+from foreground descendant bounds. No public API or text-refresh change is made.
+
+- All 40 HostLayoutTransition cases passed, including four new light/dark/accent
+  and rapid-reversal glyph-pixel cases. The original three palette cases failed
+  before the correction while the clock was paused before completion. Header
+  ink checks target the header presenter, excluding the independently painted
+  moving body shadow and selection underline. After the user reported title-bar
+  QAT flicker too, the same four cases were extended to icon pixels: all four
+  failed before the QAT-layer correction, then the full 40-case selection passed.
+- The independent RibbonKit-only consumer passed its new public-progress title
+  and QAT icon pixel assertions and all 24 existing combinations with/without a
+  host animator. Its icon uses an ordinary consumer-owned vector drawing.
+- 100 programmatic native screen frames were captured at 125% DPI/WPF 8.0.31:
+  dark Flat, dark accented Office2024, light Office2024 and dark Crystal. Both mode
+  directions retain byte-identical caption-title and Home-header glyph regions
+  from staged start through intermediate motion, the first settled sample and
+  600 ms later. The initial before/start regions also match exactly. Mouse/touch
+  transitions were captured as controls; their motion path was not changed.
+- A further 52 native frames cover the QAT-layer correction in both mode
+  directions in the same four palettes. The sampled Save icon, title and Home
+  header regions remain byte-identical before/start/intermediate/rest/600-ms-later
+  frames. The earlier text-only recordings did not establish QAT icon stability.
+- Normal Debug and Release solution builds passed with zero warnings/errors,
+  including both runtime TFMs/API/XML checks. Temporary native probe code was
+  removed; the standard Debug outputs contain the correction.
+
+Evidence: TestResults/layout-text-flicker contains runtime-before.log,
+runtime-final.log, consumer-final.log, native-fixed.log,
+native-ink-comparison.txt, native-before-start.txt and the final build logs.
+The QAT extension adds qat-before.log, qat-runtime-final.log,
+qat-consumer-final.log, qat-native.log, qat-native-pixels.txt and qat-*-build.log.
+The source recording analysis is retained there; native frames use ink-fixed-
+and qat-fixed- under TestResults/layout-flash-native. The earlier 27 resting visual comparisons
+are retained: templates/tokens and resting paint did not change in this follow-up.
+No full-suite/package rerun or new physical-input, genuine mixed-monitor DPI,
+OS reduced-motion or user visual acceptance is claimed.
