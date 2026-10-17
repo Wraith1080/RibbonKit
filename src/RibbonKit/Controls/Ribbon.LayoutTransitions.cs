@@ -101,7 +101,7 @@ public partial class Ribbon
             session.BodyOrigin = previous?.BodyMotion?.PresentedOrigin ?? previous?.BodyHold?.Origin;
             if (layer is not null && qat.IsSafe && (session.Boundary.IsAnimated || session.QuickAccess?.IsAnimated == true))
             {
-                session.Qat = new RibbonQuickAccessTransition(root, layer, qat);
+                session.Qat = new RibbonQuickAccessTransition(root, layer, qat, FindDescendantByName(_owner, "RibbonBackgroundLayer"));
                 HideQat(session);
             }
             // Install the successor holds before notifying or releasing the old
@@ -161,17 +161,26 @@ public partial class Ribbon
             FrameworkElement? panel = state.IsQuickAccessVisible && state.QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon
                 ? FindDescendantByName(_owner, "QatBelowShadowHost") ?? _owner._qatBelowHost : null;
             FrameworkElement? header = _owner._ribbonTabControl?.TabHeaderHost;
+            FrameworkElement? background = FindDescendantByName(_owner, "RibbonBackgroundLayer");
             FrameworkElement? caption = includeCaption && Window.GetWindow(_owner) is RibbonWindow window
-                ? window.RibbonPresentationCaption : null;
+                && window.RibbonPresentationCaptionBackground is not null ? window.RibbonPresentationCaption : null;
+            FrameworkElement? captionBackground = caption is not null && Window.GetWindow(_owner) is RibbonWindow captionWindow
+                ? captionWindow.RibbonPresentationCaptionBackground : null;
             return new RibbonQuickAccessFrame
             {
-                IsSafe = (strip is null || !RibbonVectorSnapshot.ContainsUnsupported(strip))
+                IsSafe = (!includeCaption || Window.GetWindow(_owner) is not RibbonWindow || (caption is not null && background is not null))
+                    && (strip is null || !RibbonVectorSnapshot.ContainsUnsupported(strip))
                     && (header is null || !RibbonVectorSnapshot.ContainsUnsupported(header, _owner._qatTabRowHost))
                     && (caption is null || !RibbonVectorSnapshot.ContainsUnsupported(caption, _owner._titleBarQatHost))
                     && (panel is null || !RibbonVectorSnapshot.ContainsUnsupported(panel, strip))
+                    && (background is null || !RibbonVectorSnapshot.ContainsUnsupported(background))
                     && (_owner._ribbonContentHost is null || !RibbonVectorSnapshot.ContainsUnsupported(_owner._ribbonContentHost)),
                 Header = RibbonVectorSnapshot.Capture(header, root, _owner._qatTabRowHost),
-                Caption = RibbonVectorSnapshot.Capture(caption, root, _owner._titleBarQatHost),
+                Caption = RibbonVectorSnapshot.Capture(caption, root, _owner._titleBarQatHost, excludeAlso: captionBackground),
+                CaptionBackground = RibbonVectorSnapshot.Capture(captionBackground, root, useDrawingBounds: true),
+                Background = RibbonVectorSnapshot.Capture(background, root, useDrawingBounds: true),
+                BackgroundBounds = background is null ? Rect.Empty
+                    : background.TransformToVisual(root).TransformBounds(new Rect(background.RenderSize)),
                 Strip = RibbonVectorSnapshot.Capture(strip, root),
                 Panel = RibbonVectorSnapshot.Capture(panel, root, strip),
                 Occupied = Occupied(root),
@@ -217,7 +226,8 @@ public partial class Ribbon
                 FindDescendantByName(_owner, "QatBelowShadowHost") ?? _owner._qatBelowHost,
                 _owner._ribbonTabControl?.TabHeaderHost,
                 (session.Before.QuickAccessPosition == RibbonQuickAccessPosition.TitleBar || session.Target.QuickAccessPosition == RibbonQuickAccessPosition.TitleBar)
-                    && Window.GetWindow(_owner) is RibbonWindow window ? window.RibbonPresentationCaption : null }.OfType<FrameworkElement>())
+                    && Window.GetWindow(_owner) is RibbonWindow window && window.RibbonPresentationCaptionBackground is not null
+                    ? window.RibbonPresentationCaption : null }.OfType<FrameworkElement>())
                 if (!session.Hidden.ContainsKey(host)) session.Hidden.Add(host, RibbonLayoutDrawing.HideImmediately(host));
         }
         private static void ShowQat(Session session)

@@ -13,7 +13,7 @@
                  MinWidth="360"
                  WindowStartupLocation="CenterScreen"
                  UseLayoutRounding="True"
-                 Background="White">
+                 Background="{DynamicResource RibbonKit.Brushes.Window.Background}">
     <rk:RibbonWindow.Resources>
         <!-- Showcase-only content primitives for the Classic2007 concept page. The control
              library supplies the shell and navigation chrome; applications remain free to put

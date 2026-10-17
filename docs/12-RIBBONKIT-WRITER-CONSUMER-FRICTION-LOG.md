@@ -350,9 +350,13 @@ and optional host-content animation remain separate from text rendering policy.
 Normal Debug/Release solution builds pass with zero warnings/errors, including
 both runtime TFMs/API/XML checks.
 
-The user explicitly limited this work to RibbonKit controls. Application document
+The user accepted the improved appearance on 2026-10-18 ("it looks great now").
+This accepts the control-animation text they reviewed, without extending the
+separate native gates below.
+
+The user explicitly limited this text-settle work to RibbonKit controls. Application document
 rendering and RichTextBox-specific handling are excluded; no rendering-hint pulse,
-host content-animator change or RichTextBox-specific test is retained. Native Writer
+host content-animator change or RichTextBox-specific test is retained for that fix. Native Writer
 review, physical input, genuine mixed-monitor DPI and OS reduced-motion acceptance
 remain open. No new full-suite/package run or approval update is claimed. The
 implementation record is [§3.263](history/library/04-office2007-and-popup-motion.md#3263-shared-text-refresh-after-control-animation--2026-10-17).

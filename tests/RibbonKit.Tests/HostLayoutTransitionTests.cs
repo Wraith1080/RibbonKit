@@ -484,6 +484,184 @@ public sealed class HostLayoutTransitionTests
         }
     });
 
+    [Theory]
+    [InlineData(RibbonQuickAccessPosition.TitleBar, false, 1d)]
+    [InlineData(RibbonQuickAccessPosition.TitleBar, true, 1d)]
+    [InlineData(RibbonQuickAccessPosition.TitleBar, true, 0.7d)]
+    [InlineData(RibbonQuickAccessPosition.TabRow, false, 1d)]
+    public void Caption_background_keeps_its_authored_paint_during_layout_motion(RibbonQuickAccessPosition placement, bool density, double opacity) => Run((window, ribbon) =>
+    {
+        window.Background = Brushes.White;
+        ribbon.Background = Brushes.Navy;
+        ribbon.QuickAccessPosition = placement; Settle(window);
+        PumpUntil(() => QatScenes(window).Length == 0);
+        window.Resources["RibbonKit.Brushes.TitleBar.Background"] = Brushes.Black;
+        ((Border)window.Template.FindName("TitleBarBackgroundLayer", window))
+            .SetBinding(UIElement.OpacityProperty, new Binding(".") { Source = opacity });
+        Drain();
+        Color before = PaintPixel(window, new Point(window.ActualWidth * 0.65, 12));
+        double oldHeight = window.RibbonPresentationCaption!.ActualHeight;
+        Color headerPaint = PaintPixel(window, new Point(window.ActualWidth * 0.65, oldHeight + 2));
+        RibbonLayoutTransitionEventArgs? started = null;
+        ribbon.LayoutTransitionStarting += (_, e) => started = e;
+        if (density) ribbon.Density = RibbonDensity.Touch;
+        else ribbon.LayoutMode = RibbonLayoutMode.Simplified;
+        Drain(); Assert.NotNull(started);
+        var clock = SharedClock(started);
+        clock.Controller!.Pause();
+        foreach (double progress in new[] { 0d, 0.25d, 0.5d, 0.75d })
+        {
+            clock.Controller.SeekAlignedToLastTick(TimeSpan.FromMilliseconds(started.BoundaryMotion.Duration.TimeSpan.TotalMilliseconds * progress), TimeSeekOrigin.BeginTime);
+            double height = oldHeight + (window.RibbonPresentationCaption!.ActualHeight - oldHeight) * started.BoundaryMotion.Progress;
+            foreach (double y in new[] { 12d, height - 3 })
+            {
+                Color pixel = PaintPixel(window, new Point(window.ActualWidth * 0.65, y));
+                Assert.InRange((int)pixel.R, before.R - 2, before.R + 2);
+                Assert.InRange((int)pixel.G, before.G - 2, before.G + 2);
+                Assert.InRange((int)pixel.B, before.B - 2, before.B + 2);
+            }
+            Assert.Equal(headerPaint, PaintPixel(window, new Point(window.ActualWidth * 0.65, height + 2)));
+        }
+        clock.Controller.Resume();
+    });
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Accent_caption_keeps_its_color_through_mode_and_density_reversals(bool dark) => Run((window, ribbon) =>
+    {
+        ThemeManager.SetDarkMode(Application.Current, dark);
+        ThemeManager.SetAccent(Application.Current, Color.FromRgb(0x87, 0x64, 0xB8));
+        ThemeManager.SetAccentedTitleBar(Application.Current, true);
+        window.Background = Brushes.White;
+        ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TitleBar;
+        Settle(window); PumpUntil(() => QatScenes(window).Length == 0);
+        Color before = PaintPixel(window, new Point(window.ActualWidth * 0.65, 12));
+        Assert.NotEqual(Colors.White, before);
+        RibbonLayoutTransitionEventArgs? started = null;
+        ribbon.LayoutTransitionStarting += (_, e) => started = e;
+        foreach (Action change in new Action[] {
+            () => ribbon.LayoutMode = RibbonLayoutMode.Simplified,
+            () => ribbon.Density = RibbonDensity.Touch,
+            () => ribbon.Density = RibbonDensity.Compact,
+            () => ribbon.LayoutMode = RibbonLayoutMode.Classic })
+        {
+            started = null; change(); Drain(); Assert.NotNull(started);
+            var clock = SharedClock(started); clock.Controller!.Pause();
+            foreach (double time in new[] { 0d, 0.15d, 0.5d, 0.9d })
+            {
+                clock.Controller.SeekAlignedToLastTick(TimeSpan.FromMilliseconds(started.BoundaryMotion.Duration.TimeSpan.TotalMilliseconds * time), TimeSeekOrigin.BeginTime);
+                Assert.Equal(before, PaintPixel(window, new Point(window.ActualWidth * 0.65, 12)));
+            }
+            clock.Controller.Resume(); PumpUntil(() => QatScenes(window).Length == 0);
+        }
+    });
+
+    [Theory]
+    [InlineData(1d)]
+    [InlineData(0.7d)]
+    public void Host_content_does_not_expose_the_backing_color_during_layout_motion(double opacity) => Run((window, ribbon) =>
+    {
+        window.Background = Brushes.White;
+        var surface = new Border { Background = Brushes.Black, Opacity = opacity,
+            BorderBrush = Brushes.Red, BorderThickness = new Thickness(2), CornerRadius = new CornerRadius(8) };
+        var dock = (DockPanel)window.Content; dock.Children.RemoveAt(1); dock.Children.Add(surface); window.UpdateLayout();
+        PaintPixel(window, new Point(window.ActualWidth / 2, window.ActualHeight - 80));
+        using var animator = new RibbonKit.Showcase.ShowcaseContentTransition(ribbon, surface);
+        RibbonLayoutTransitionEventArgs? started = null;
+        ribbon.LayoutTransitionStarting += (_, e) => started = e;
+        ribbon.Density = RibbonDensity.Touch; Drain(); Assert.NotNull(started);
+        var clock = SharedClock(started);
+        clock.Controller!.Pause();
+        foreach (double progress in new[] { 0d, 0.25d, 0.5d, 0.75d })
+        {
+            clock.Controller.SeekAlignedToLastTick(TimeSpan.FromMilliseconds(started.BoundaryMotion.Duration.TimeSpan.TotalMilliseconds * progress), TimeSeekOrigin.BeginTime);
+            int expected = (int)Math.Round(255 * (1 - opacity));
+            for (int offset = 4; offset <= 60; offset += 2)
+            {
+                Color pixel = PaintPixel(window, new Point(window.ActualWidth / 2, window.ActualHeight - offset));
+                Assert.InRange((int)pixel.R, expected - 2, expected + 2);
+                Assert.InRange((int)pixel.G, expected - 2, expected + 2);
+            }
+        }
+        clock.Controller.Resume();
+    });
+
+    [Fact]
+    public void Moving_ribbon_backdrop_stays_below_command_presentations_and_is_released() => Run((window, ribbon) =>
+    {
+        ribbon.Background = Brushes.Navy;
+        ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TitleBar;
+        ribbon.Tabs[0].Groups[0].Items.Add(new RibbonButton { Header = "Unique body ink", Size = RibbonControlSize.Large,
+            Icon = new DrawingImage(new GeometryDrawing(Brushes.Magenta, null, new RectangleGeometry(new Rect(0, 0, 24, 24)))) });
+        Settle(window);
+        Assert.True(MagentaPixels(window) > 100);
+        RibbonLayoutTransitionEventArgs? started = null;
+        ribbon.LayoutTransitionStarting += (_, e) => started = e;
+        ribbon.Density = RibbonDensity.Touch; Drain(); Assert.NotNull(started);
+        var clock = SharedClock(started); clock.Controller!.Pause();
+        clock.Controller.SeekAlignedToLastTick(TimeSpan.FromMilliseconds(started.BoundaryMotion.Duration.TimeSpan.TotalMilliseconds / 2), TimeSeekOrigin.BeginTime);
+        Assert.True(MagentaPixels(window) > 100, "The moving backdrop must not cover the body's command drawings.");
+        var background = Assert.IsType<Border>(ribbon.Template.FindName("RibbonBackgroundLayer", ribbon));
+        var layer = AdornerLayer.GetAdornerLayer(background)!;
+        Assert.Equal(1, background.Opacity);
+        clock.Controller.Resume(); PumpUntil(() => QatScenes(window).Length == 0);
+        Assert.Null(layer.GetAdorners(background));
+        Assert.Equal(1, background.Opacity);
+
+        static int MagentaPixels(Window window)
+        {
+            window.UpdateLayout();
+            int width = (int)window.ActualWidth, height = (int)window.ActualHeight;
+            var image = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32); image.Render(window);
+            byte[] pixels = new byte[width * height * 4]; image.CopyPixels(pixels, width * 4, 0);
+            int count = 0;
+            for (int i = 0; i < pixels.Length; i += 4)
+                if (pixels[i] > 240 && pixels[i + 1] < 20 && pixels[i + 2] > 240) count++;
+            return count;
+        }
+    });
+
+    [Fact]
+    public void Caption_without_a_separate_background_layer_uses_immediate_fallback() => Run((window, ribbon) =>
+    {
+        var decorator = new FrameworkElementFactory(typeof(AdornerDecorator), "WindowAdornerHost");
+        var root = new FrameworkElementFactory(typeof(DockPanel), "WindowLayoutHost");
+        var caption = new FrameworkElementFactory(typeof(Border), "TitleBarBand");
+        caption.SetValue(DockPanel.DockProperty, Dock.Top);
+        caption.SetValue(FrameworkElement.HeightProperty, 34d);
+        caption.SetValue(Border.BackgroundProperty, Brushes.Navy);
+        var titleContent = new FrameworkElementFactory(typeof(ContentPresenter), "TitleBarContentHost");
+        titleContent.SetBinding(ContentPresenter.ContentProperty, new Binding(nameof(RibbonWindow.TitleBarContent)) { RelativeSource = RelativeSource.TemplatedParent });
+        caption.AppendChild(titleContent); root.AppendChild(caption);
+        var content = new FrameworkElementFactory(typeof(ContentPresenter));
+        content.SetBinding(ContentPresenter.ContentProperty, new Binding(nameof(Window.Content)) { RelativeSource = RelativeSource.TemplatedParent });
+        root.AppendChild(content); decorator.AppendChild(root);
+        window.Template = new ControlTemplate(typeof(RibbonWindow)) { VisualTree = decorator };
+        window.ApplyTemplate(); Settle(window);
+        ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TitleBar; Settle(window);
+        int starts = 0; var endings = new List<RibbonLayoutTransitionEventArgs>();
+        ribbon.LayoutTransitionStarting += (_, _) => starts++;
+        ribbon.LayoutTransitionEnded += (_, e) => endings.Add(e);
+        ribbon.Density = RibbonDensity.Touch; Drain();
+        Assert.Equal(0, starts);
+        Assert.Equal(RibbonLayoutTransitionOutcome.Skipped, Assert.Single(endings).Outcome);
+        Assert.Empty(QatScenes(window));
+    });
+
+    private static ClockGroup SharedClock(RibbonLayoutTransitionEventArgs args) => (ClockGroup)((AnimationClock)typeof(RibbonLayoutTransitionMotion)
+        .GetField("_clock", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(args.BoundaryMotion)!).Parent!;
+
+    private static Color PaintPixel(Window window, Point point)
+    {
+        window.UpdateLayout();
+        var image = new RenderTargetBitmap((int)Math.Ceiling(window.ActualWidth), (int)Math.Ceiling(window.ActualHeight), 96, 96, PixelFormats.Pbgra32);
+        image.Render(window);
+        byte[] pixel = new byte[4];
+        image.CopyPixels(new Int32Rect((int)point.X, (int)point.Y, 1, 1), pixel, 4, 0);
+        return Color.FromArgb(pixel[3], pixel[2], pixel[1], pixel[0]);
+    }
+
     private static Adorner[] QatScenes(RibbonWindow window)
     {
         var root = window.RibbonPresentationSurface!.Value;
@@ -509,7 +687,14 @@ public sealed class HostLayoutTransitionTests
     private static void Settle(Window window)
     {
         Drain(); window.UpdateLayout();
-        var watch = Stopwatch.StartNew(); PumpUntil(() => watch.ElapsedMilliseconds >= 240);
+        var watch = Stopwatch.StartNew();
+        PumpUntil(() => watch.ElapsedMilliseconds >= 240
+            && (window is not RibbonWindow ribbonWindow || QatScenes(ribbonWindow).Length == 0));
+        bool rendered = false;
+        EventHandler onRender = (_, _) => rendered = true;
+        CompositionTarget.Rendering += onRender;
+        try { PumpUntil(() => rendered); }
+        finally { CompositionTarget.Rendering -= onRender; }
         Drain(); window.UpdateLayout();
     }
     private static void PumpUntil(Func<bool> condition)

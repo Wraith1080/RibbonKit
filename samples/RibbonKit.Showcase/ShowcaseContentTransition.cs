@@ -44,7 +44,7 @@ internal sealed class ShowcaseContentTransition : IDisposable
             || e.PreviousGeometry.OccupiedBounds == e.FinalGeometry.OccupiedBounds)
         { Remove(e.TransitionId); return; }
         drawing.ShowSurface();
-        ContainerVisual final = Capture(_surface);
+        ContentFrame final = CaptureFrame(_surface);
         Rect bounds = Bounds(e.CoordinateRoot);
         drawing.HideSurface();
         drawing.Start(final, bounds, e.BoundaryMotion);
@@ -67,7 +67,23 @@ internal sealed class ShowcaseContentTransition : IDisposable
         OnUnloaded(this, new RoutedEventArgs());
     }
 
-    private static ContainerVisual Capture(Visual source)
+    private sealed record ContentFrame(ContainerVisual Visual, ContainerVisual Chrome, Rect ChromeBounds);
+
+    private static ContentFrame CaptureFrame(FrameworkElement source)
+    {
+        // Only the surface's decoration follows its changing size. Child text
+        // and icons keep their natural geometry in the committed drawing.
+        ContainerVisual visual = Capture(source, includeOwnDrawing: false);
+        var chrome = new DrawingVisual();
+        Rect bounds = Rect.Empty;
+        using (var dc = chrome.RenderOpen())
+            if (VisualTreeHelper.GetDrawing(source) is { } drawing)
+            { dc.DrawDrawing(drawing.CloneCurrentValue()); bounds = drawing.Bounds; }
+        visual.Children.Insert(0, chrome);
+        return new ContentFrame(visual, chrome, bounds);
+    }
+
+    private static ContainerVisual Capture(Visual source, bool includeOwnDrawing = true)
     {
         var copy = new DrawingVisual
         {
@@ -76,7 +92,7 @@ internal sealed class ShowcaseContentTransition : IDisposable
             OpacityMask = (source as UIElement)?.OpacityMask?.CloneCurrentValue() ?? (source as ContainerVisual)?.OpacityMask?.CloneCurrentValue(),
         };
         using (var dc = copy.RenderOpen())
-            if (VisualTreeHelper.GetDrawing(source) is { } drawing) dc.DrawDrawing(drawing.CloneCurrentValue());
+            if (includeOwnDrawing && VisualTreeHelper.GetDrawing(source) is { } drawing) dc.DrawDrawing(drawing.CloneCurrentValue());
         for (int i = 0; i < VisualTreeHelper.GetChildrenCount(source); i++)
         {
             if (VisualTreeHelper.GetChild(source, i) is not Visual child || child is UIElement { Visibility: not Visibility.Visible }) continue;
@@ -96,7 +112,8 @@ internal sealed class ShowcaseContentTransition : IDisposable
         private readonly FrameworkElement _surface;
         private readonly AdornerLayer _layer;
         private readonly VisualCollection _children;
-        private readonly ContainerVisual _viewport = new(), _old = new(), _final = new();
+        private readonly ContainerVisual _viewport = new();
+        private ContentFrame? _final;
         private readonly Rect _before;
         private Rect _after;
         private AnimationClock? _hide;
@@ -108,7 +125,7 @@ internal sealed class ShowcaseContentTransition : IDisposable
             _surface = surface; _layer = layer; _before = _after = PresentedBounds = before;
             IsHitTestVisible = false; Focusable = false;
             _children = new VisualCollection(this) { _viewport };
-            _viewport.Children.Add(_old); _viewport.Children.Add(_final); _old.Children.Add(previous);
+            _viewport.Children.Add(previous);
             HideSurface(); Update(); layer.Add(this);
         }
         internal void HideSurface()
@@ -122,9 +139,10 @@ internal sealed class ShowcaseContentTransition : IDisposable
             _hide?.Controller?.SeekAlignedToLastTick(TimeSpan.FromDays(1), TimeSeekOrigin.BeginTime);
             _hide?.Controller?.Remove(); _hide = null;
         }
-        internal void Start(ContainerVisual final, Rect after, RibbonLayoutTransitionMotion motion)
+        internal void Start(ContentFrame final, Rect after, RibbonLayoutTransitionMotion motion)
         {
-            _after = after; _final.Children.Add(final);
+            _after = after; _final = final;
+            _viewport.Children.Clear(); _viewport.Children.Add(final.Visual);
             SetBinding(ProgressProperty, new Binding(nameof(RibbonLayoutTransitionMotion.Progress)) { Source = motion });
             Update();
         }
@@ -135,15 +153,21 @@ internal sealed class ShowcaseContentTransition : IDisposable
                 _before.Width + (_after.Width - _before.Width) * p, _before.Height + (_after.Height - _before.Height) * p);
             _viewport.Transform = new TranslateTransform(PresentedBounds.X, PresentedBounds.Y);
             _viewport.Clip = new RectangleGeometry(new Rect(PresentedBounds.Size));
-            _old.Opacity = 1 - p; _final.Opacity = p;
+            // Carry one drawing at its authored opacity, so backing paint never
+            // leaks through a whole-card cross-fade. Move the card's bottom edge
+            // with the viewport instead of revealing its final border early.
+            if (_final is { ChromeBounds: { Width: > 0, Height: > 0 } bounds } frame)
+            {
+                double sx = PresentedBounds.Width / bounds.Width, sy = PresentedBounds.Height / bounds.Height;
+                frame.Chrome.Transform = new MatrixTransform(new Matrix(sx, 0, 0, sy, -bounds.X * sx, -bounds.Y * sy));
+            }
         }
         // The clone remains in content-local coordinates, so the next hold can
         // start from the actual composed presentation on a rapid reversal.
         internal ContainerVisual Capture()
         {
             var result = new ContainerVisual();
-            ContainerVisual old = ShowcaseContentTransition.Capture(_old), final = ShowcaseContentTransition.Capture(_final);
-            result.Children.Add(old); result.Children.Add(final);
+            foreach (Visual child in _viewport.Children) result.Children.Add(ShowcaseContentTransition.Capture(child));
             result.Clip = new RectangleGeometry(new Rect(PresentedBounds.Size));
             return result;
         }

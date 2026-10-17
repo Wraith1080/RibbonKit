@@ -61,6 +61,7 @@ public class RibbonWindow : Window
             ? (root, host.AdornerLayer) : null;
 
     internal FrameworkElement? RibbonPresentationCaption => GetTemplateChild("TitleBarBand") as FrameworkElement;
+    internal FrameworkElement? RibbonPresentationCaptionBackground => GetTemplateChild("TitleBarBackgroundLayer") as FrameworkElement;
 
     private const string WindowRootPartName = "PART_WindowRoot";
     private const string TitlePartName = "PART_Title";

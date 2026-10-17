@@ -433,3 +433,5 @@ status updates and investigation narration were removed during compaction.
 ### [3.262 Refresh popup text when opening motion settles — 2026-10-17](library/04-office2007-and-popup-motion.md#3262-refresh-popup-text-when-opening-motion-settles--2026-10-17)
 
 ### [3.263 Shared text refresh after control animation — 2026-10-17](library/04-office2007-and-popup-motion.md#3263-shared-text-refresh-after-control-animation--2026-10-17)
+
+### [3.264 Stable caption and content paint during layout transitions — 2026-10-18](library/16-host-layout-transitions.md#3264-stable-caption-and-content-paint-during-layout-transitions--2026-10-18)

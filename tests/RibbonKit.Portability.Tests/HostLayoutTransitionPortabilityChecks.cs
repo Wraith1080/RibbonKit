@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -29,6 +30,7 @@ internal static class HostLayoutTransitionPortabilityChecks
         {
             RibbonAnimation.GlobalLevel = RibbonAnimationLevel.Subtle; RibbonAnimation.RespectSystemReduceMotion = false;
             foreach (var action in actions) RibbonAnimation.ClearActionLevel(action);
+            VerifyCaptionPaint(app);
             foreach (var theme in new[] { RibbonTheme.Office2010, RibbonTheme.Office2024Flat, RibbonTheme.CrystalLight })
             foreach (var direction in new[] { FlowDirection.LeftToRight, FlowDirection.RightToLeft })
             foreach (var density in new[] { RibbonDensity.Compact, RibbonDensity.Touch })
@@ -40,6 +42,67 @@ internal static class HostLayoutTransitionPortabilityChecks
             RibbonAnimation.GlobalLevel = level; RibbonAnimation.RespectSystemReduceMotion = reduce;
             foreach (var action in actions)
                 if (overrides[action] is { } value) RibbonAnimation.SetActionLevel(action, value); else RibbonAnimation.ClearActionLevel(action);
+        }
+    }
+
+    private static void VerifyCaptionPaint(Application app)
+    {
+        ThemeManager.Apply(app, RibbonTheme.Office2024Flat);
+        var color = Color.FromRgb(0x87, 0x64, 0xB8);
+        var ribbon = new Ribbon { QuickAccessPosition = RibbonQuickAccessPosition.TitleBar, Background = Brushes.Navy };
+        var tab = new RibbonTab { Header = "Home" };
+        var group = new RibbonGroup { Header = "Commands" };
+        var command = new RibbonButton { Header = "Save" };
+        group.Items.Add(command); tab.Groups.Add(group); ribbon.Tabs.Add(tab); ribbon.SelectedTab = tab;
+        ribbon.AddToQuickAccess(command);
+        var dock = new DockPanel(); DockPanel.SetDock(ribbon, Dock.Top); dock.Children.Add(ribbon);
+        dock.Children.Add(new Border { Background = Brushes.White });
+        var window = new RibbonWindow { Content = dock, Width = 700, Height = 350,
+            Background = Brushes.White, Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        window.Resources["RibbonKit.Brushes.TitleBar.Background"] = new SolidColorBrush(color);
+        RibbonLayoutTransitionMotion? motion = null;
+        RibbonLayoutTransitionEventArgs? transition = null;
+        bool ended = false; int samples = 0;
+        var progressProperty = DependencyPropertyDescriptor.FromProperty(RibbonLayoutTransitionMotion.ProgressProperty, typeof(RibbonLayoutTransitionMotion));
+        ribbon.LayoutTransitionStarting += (_, e) =>
+        {
+            motion = e.BoundaryMotion; transition = e;
+            progressProperty.AddValueChanged(motion, SamplePaint);
+        };
+        ribbon.LayoutTransitionEnded += (_, e) =>
+        {
+            progressProperty.RemoveValueChanged(e.BoundaryMotion, SamplePaint);
+            Console.WriteLine($"Caption paint {e.Reason}: {e.Outcome}, progress={motion?.Progress}, samples={samples}.");
+            ended = true;
+        };
+        void SamplePaint(object? sender, EventArgs args)
+        {
+            if (motion is null || ended || motion.Progress <= 0 || motion.Progress >= 1) return;
+            var bitmap = new RenderTargetBitmap(700, 350, 96, 96, PixelFormats.Pbgra32); bitmap.Render(window);
+            byte[] pixel = new byte[4]; bitmap.CopyPixels(new Int32Rect(450, 12, 1, 1), pixel, 4, 0);
+            Assert.Equal(color, Color.FromArgb(pixel[3], pixel[2], pixel[1], pixel[0])); samples++;
+            double top = transition!.PreviousGeometry.OccupiedBounds.Top
+                + (transition.FinalGeometry!.OccupiedBounds.Top - transition.PreviousGeometry.OccupiedBounds.Top) * motion.Progress;
+            Point header = transition.CoordinateRoot.TranslatePoint(new Point(450, top + 2), window);
+            bitmap.CopyPixels(new Int32Rect((int)header.X, (int)header.Y, 1, 1), pixel, 4, 0);
+            Assert.Equal(Colors.Navy, Color.FromArgb(pixel[3], pixel[2], pixel[1], pixel[0]));
+        }
+        try
+        {
+            window.Show(); Drain(); window.UpdateLayout();
+            bool rendered = false; EventHandler onRender = (_, _) => rendered = true;
+            CompositionTarget.Rendering += onRender;
+            try { PumpUntil(() => rendered); } finally { CompositionTarget.Rendering -= onRender; }
+            ribbon.LayoutMode = RibbonLayoutMode.Simplified;
+            PumpUntil(() => ended); Assert.True(samples > 0);
+            ended = false; samples = 0; motion = null; ribbon.Density = RibbonDensity.Touch;
+            PumpUntil(() => ended); Assert.True(samples > 0);
+            Console.WriteLine($"Independent accent-caption paint: {samples} intermediate samples passed.");
+        }
+        finally
+        {
+            if (motion is not null) progressProperty.RemoveValueChanged(motion, SamplePaint);
+            window.Close(); Drain();
         }
     }
 

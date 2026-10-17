@@ -136,8 +136,7 @@
                     </ControlTemplate.Resources>
                     <!-- The backstage overlay is hosted in the window's adorner layer
                          by the Ribbon class itself (see BackstageAdorner), not here. -->
-                    <Border x:Name="RibbonSurface"
-                            Background="{TemplateBinding Background}">
+                    <Border x:Name="RibbonSurface" Background="Transparent">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -145,6 +144,12 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
+                            <!-- Keep the backdrop separate from command visuals so a
+                                 caption-height transition can carry it without moving
+                                 live controls or leaving a gap above the committed row. -->
+                            <Border x:Name="RibbonBackgroundLayer" Grid.RowSpan="4"
+                                    Background="{TemplateBinding Background}"
+                                    IsHitTestVisible="False" />
                             <controls:RibbonTabControl
                                 x:Name="TabControlHost"
                                 Grid.Row="0"
@@ -336,7 +341,7 @@
                              tab-control compose the same fallback/material and tint as the title. -->
                         <DataTrigger Binding="{Binding FrameAppearance, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
                                      Value="Office2010Aero">
-                            <Setter TargetName="RibbonSurface" Property="Background" Value="Transparent" />
+                            <Setter TargetName="RibbonBackgroundLayer" Property="Background" Value="Transparent" />
                         </DataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

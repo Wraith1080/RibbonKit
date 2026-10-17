@@ -14,12 +14,13 @@ internal sealed class RibbonVectorSnapshot
     internal Rect Bounds { get; }
     private RibbonVectorSnapshot(ContainerVisual visual, Rect bounds) { Visual = visual; Bounds = bounds; }
 
-    internal static RibbonVectorSnapshot? Capture(Visual? source, Visual root, Visual? exclude = null, bool includeAncestors = true)
+    internal static RibbonVectorSnapshot? Capture(Visual? source, Visual root, Visual? exclude = null, bool includeAncestors = true,
+        Visual? excludeAlso = null, bool useDrawingBounds = false)
     {
         if (source is null || ContainsUnsupported(source, exclude)) return null;
         try
         {
-            Rect bounds = source is FrameworkElement element ? new Rect(element.RenderSize)
+            Rect bounds = !useDrawingBounds && source is FrameworkElement element ? new Rect(element.RenderSize)
                 : VisualTreeHelper.GetDescendantBounds(source);
             if (bounds.IsEmpty || bounds.Width <= 0 || bounds.Height <= 0) return null;
             GeneralTransform transform = source.TransformToVisual(root);
@@ -30,7 +31,7 @@ internal sealed class RibbonVectorSnapshot
                 for (DependencyObject? parent = VisualTreeHelper.GetParent(source); parent is Visual ancestor && parent != common;
                      parent = VisualTreeHelper.GetParent(parent)) wrapper.Opacity *= VisualTreeHelper.GetOpacity(ancestor);
             }
-            wrapper.Children.Add(Clone(source, exclude));
+            wrapper.Children.Add(Clone(source, exclude, excludeAlso));
             return new RibbonVectorSnapshot(wrapper, transform.TransformBounds(bounds));
         }
         catch (InvalidOperationException) { return null; }
@@ -49,7 +50,7 @@ internal sealed class RibbonVectorSnapshot
         return false;
     }
 
-    internal static ContainerVisual Clone(Visual source, Visual? exclude = null)
+    internal static ContainerVisual Clone(Visual source, Visual? exclude = null, Visual? excludeAlso = null)
     {
         var result = new DrawingVisual
         {
@@ -64,9 +65,9 @@ internal sealed class RibbonVectorSnapshot
         if (VisualTreeHelper.GetDrawing(source) is { } own) drawing.DrawDrawing(own.CloneCurrentValue());
         for (int i = 0; i < VisualTreeHelper.GetChildrenCount(source); i++)
         {
-            if (VisualTreeHelper.GetChild(source, i) is not Visual child || ReferenceEquals(child, exclude)
+            if (VisualTreeHelper.GetChild(source, i) is not Visual child || ReferenceEquals(child, exclude) || ReferenceEquals(child, excludeAlso)
                 || child is UIElement { Visibility: not Visibility.Visible }) continue;
-            ContainerVisual copy = Clone(child, exclude);
+            ContainerVisual copy = Clone(child, exclude, excludeAlso);
             copy.Transform = new MatrixTransform(Matrix(child.TransformToAncestor(source)));
             result.Children.Add(copy);
         }
@@ -87,6 +88,9 @@ internal sealed class RibbonQuickAccessFrame
     internal bool IsSafe { get; init; } = true;
     internal RibbonVectorSnapshot? Header { get; init; }
     internal RibbonVectorSnapshot? Caption { get; init; }
+    internal RibbonVectorSnapshot? CaptionBackground { get; init; }
+    internal RibbonVectorSnapshot? Background { get; init; }
+    internal Rect BackgroundBounds { get; init; }
     internal RibbonVectorSnapshot? Strip { get; init; }
     internal RibbonVectorSnapshot? Panel { get; init; }
     internal Rect Occupied { get; init; }
@@ -100,6 +104,13 @@ internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
     private readonly VisualCollection _visuals;
     private readonly ContainerVisual _headers = new(), _captions = new();
     private readonly ContainerVisual _oldHeader = new(), _newHeader = new(), _oldCaption = new(), _newCaption = new();
+    private readonly ContainerVisual _captionBackground = new();
+    private Rect? _captionBackgroundBounds;
+    private readonly ContainerVisual _background = new();
+    private readonly ContainerVisual _backgroundViewport = new();
+    private readonly FrameworkElement? _backgroundHost;
+    private Rect? _presentedHeader;
+    private Rect? _backgroundDrawingBounds;
     private readonly ContainerVisual _panels = new();
     private readonly ContainerVisual _strips = new();
     private readonly ContainerVisual _oldPanel = new();
@@ -115,17 +126,26 @@ internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
     private readonly DpiScale _dpi;
     private readonly FlowDirection _direction;
 
-    internal RibbonQuickAccessTransition(FrameworkElement root, AdornerLayer layer, RibbonQuickAccessFrame previous) : base(root)
+    internal RibbonQuickAccessTransition(FrameworkElement root, AdornerLayer layer, RibbonQuickAccessFrame previous,
+        FrameworkElement? backgroundHost) : base(root)
     {
         _root = root; _layer = layer; _previous = previous;
         _rootSize = root.RenderSize; _dpi = VisualTreeHelper.GetDpi(root); _direction = root.FlowDirection;
         IsHitTestVisible = false; Focusable = false;
         Opacity = RibbonLayoutDrawing.OpacityBelowLayer(root, layer);
-        _visuals = new VisualCollection(this) { _captions, _headers, _panels, _strips };
+        _visuals = new VisualCollection(this) { _backgroundViewport, _captions, _headers, _panels, _strips };
+        _backgroundViewport.Children.Add(_background);
+        if (previous.Background is { } surface)
+        { _background.Children.Add(surface.Visual); _backgroundDrawingBounds = surface.Bounds; }
+        _backgroundHost = backgroundHost; _presentedHeader = previous.Header?.Bounds;
+        _root.LayoutUpdated += OnLayoutUpdated;
+        UpdateBackgroundClip();
         _headers.Children.Add(_oldHeader); _headers.Children.Add(_newHeader);
-        _captions.Children.Add(_oldCaption); _captions.Children.Add(_newCaption);
+        _captions.Children.Add(_captionBackground); _captions.Children.Add(_oldCaption); _captions.Children.Add(_newCaption);
         if (previous.Header is { } header) _oldHeader.Children.Add(header.Visual);
         if (previous.Caption is { } caption) _oldCaption.Children.Add(caption.Visual);
+        if (previous.CaptionBackground is { } backdrop)
+        { _captionBackground.Children.Add(backdrop.Visual); _captionBackgroundBounds = backdrop.Bounds; }
         _panels.Children.Add(_oldPanel); _panels.Children.Add(_newPanel);
         _strips.Children.Add(_oldStrip); _strips.Children.Add(_newStrip);
         if (previous.Panel is { } panel) _oldPanel.Children.Add(panel.Visual);
@@ -141,8 +161,18 @@ internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
     internal void Start(RibbonQuickAccessFrame current, RibbonLayoutTransitionMotion boundary, RibbonLayoutTransitionMotion motion)
     {
         _current = current; _boundary = boundary; _motion = motion;
+        if (current.Background is { } surface)
+        {
+            _background.Children.Clear(); _background.Children.Add(surface.Visual);
+            _backgroundDrawingBounds = surface.Bounds;
+        }
         if (current.Header is { } header) _newHeader.Children.Add(header.Visual);
         if (current.Caption is { } caption) _newCaption.Children.Add(caption.Visual);
+        if (current.CaptionBackground is { } backdrop)
+        {
+            _captionBackground.Children.Clear(); _captionBackground.Children.Add(backdrop.Visual);
+            _captionBackgroundBounds = backdrop.Bounds;
+        }
         if (current.Panel is { } panel) _newPanel.Children.Add(panel.Visual);
         if (current.Strip is { } strip) _newStrip.Children.Add(strip.Visual);
         boundary.Changed += OnProgress;
@@ -168,8 +198,24 @@ internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
         _newStrip.Opacity = alpha;
 
         double b = _boundary.IsAnimated ? Math.Clamp(_boundary.Progress, 0, 1) : 1;
+        // The transparent tab row relies on the ribbon's outer backdrop. Move
+        // that decoration with the boundary too, rather than exposing the window
+        // backing between the animated caption and the committed ribbon origin.
+        if (_backgroundDrawingBounds is { Width: > 0, Height: > 0 } surfaceBounds)
+            PlaceBackground(_background, surfaceBounds, Interpolate(_previous.BackgroundBounds, current.BackgroundBounds, b));
+        if (_previous.Header?.Bounds is { } oldHeader && current.Header?.Bounds is { } newHeader)
+            _presentedHeader = Interpolate(oldHeader, newHeader, b);
+        UpdateBackgroundClip();
         PlaceChrome(_oldHeader, _newHeader, _previous.Header?.Bounds, current.Header?.Bounds, b, false);
         PlaceChrome(_oldCaption, _newCaption, _previous.Caption?.Bounds, current.Caption?.Bounds, b, true);
+        // Fade caption content over one continuous background. Fading two whole
+        // opaque bands with (1-b, b) leaves an alpha hole over the window backing.
+        if (_captionBackgroundBounds is { Width: > 0, Height: > 0 } background
+            && _previous.Caption?.Bounds is { } beforeCaption && current.Caption?.Bounds is { } afterCaption)
+        {
+            Rect bounds = Interpolate(beforeCaption, afterCaption, b);
+            PlaceBackground(_captionBackground, background, bounds);
+        }
         Rect? old = _previous.Panel?.Bounds, final = current.Panel?.Bounds;
         double top = (old?.Top ?? _previous.Occupied.Bottom) * (1 - b)
             + (final?.Top ?? current.Occupied.Bottom) * b;
@@ -178,6 +224,28 @@ internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
         PlacePanel(_newPanel, final, top, height);
         _oldPanel.Opacity = height <= 0.01 ? 0 : final is null ? 1 : 1 - b;
         _newPanel.Opacity = height <= 0.01 ? 0 : old is null ? 1 : b;
+    }
+
+    private void OnLayoutUpdated(object? sender, EventArgs e) => UpdateBackgroundClip();
+
+    private void UpdateBackgroundClip()
+    {
+        // The real backdrop remains behind the body and keeps its authored alpha.
+        // Paint only the header gap outside its committed bounds; a full backdrop
+        // in this window-wide layer would obscure body adorners or double opacity.
+        _backgroundViewport.Clip = Geometry.Empty;
+        if (_presentedHeader is not { } header || _backgroundHost is null
+            || _backgroundHost.FindCommonVisualAncestor(_root) is null) return;
+        Rect live = _backgroundHost.TransformToVisual(_root).TransformBounds(new Rect(_backgroundHost.RenderSize));
+        _backgroundViewport.Clip = new CombinedGeometry(GeometryCombineMode.Exclude,
+            new RectangleGeometry(header), new RectangleGeometry(live));
+    }
+
+    private static void PlaceBackground(ContainerVisual visual, Rect source, Rect target)
+    {
+        double sx = target.Width / source.Width, sy = target.Height / source.Height;
+        visual.Transform = new MatrixTransform(new Matrix(sx, 0, 0, sy,
+            target.X - source.X * sx, target.Y - source.Y * sy));
     }
 
     private static void PlaceChrome(ContainerVisual old, ContainerVisual final, Rect? before, Rect? after, double p, bool clip)
@@ -205,7 +273,11 @@ internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
     internal RibbonQuickAccessFrame CapturePresentation() => new()
     {
         Header = RibbonVectorSnapshot.Capture(_headers, _root, includeAncestors: false),
-        Caption = RibbonVectorSnapshot.Capture(_captions, _root, includeAncestors: false),
+        Caption = RibbonVectorSnapshot.Capture(_captions, _root, _captionBackground, includeAncestors: false),
+        CaptionBackground = RibbonVectorSnapshot.Capture(_captionBackground, _root, includeAncestors: false),
+        Background = RibbonVectorSnapshot.Capture(_background, _root, includeAncestors: false),
+        BackgroundBounds = _current is null || _boundary is null ? _previous.BackgroundBounds
+            : Interpolate(_previous.BackgroundBounds, _current.BackgroundBounds, Math.Clamp(_boundary.Progress, 0, 1)),
         Strip = RibbonVectorSnapshot.Capture(_strips, _root, includeAncestors: false),
         Panel = RibbonVectorSnapshot.Capture(_panels, _root, includeAncestors: false),
         Occupied = _current is null || _boundary is null ? _previous.Occupied
@@ -227,6 +299,7 @@ internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
         _disposed = true;
         if (_boundary is not null) _boundary.Changed -= OnProgress;
         if (_motion is not null && !ReferenceEquals(_motion, _boundary)) _motion.Changed -= OnProgress;
+        _root.LayoutUpdated -= OnLayoutUpdated;
         _layer.Remove(this);
     }
 }

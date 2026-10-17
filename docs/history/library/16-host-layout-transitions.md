@@ -107,3 +107,32 @@ plus existing binding, geometry and interruption checks. Reviewed visual updates
 cover sharper foreground in affected shadow themes, with no tolerance change.
 Exact evidence and remaining native gates stay in plan 18; Writer popup sharpening
 is a separate open RKWF-049 investigation.
+
+### 3.264 Stable caption and content paint during layout transitions — 2026-10-18
+
+Cross-fading complete opaque drawings with complementary opacity exposes their
+backing: source-over alpha is 0.75 at the midpoint, rather than 1. The detached
+title-bar QAT track included caption background paint in both drawings, explaining
+the white flash over Showcase's white window backing. Caption foreground now fades
+over one independently carried background; its geometry follows the shared boundary.
+Capture actual drawing bounds because layout can change before a Border repaints.
+
+A growing title-bar QAT also moves the real ribbon origin. Its transparent header
+cannot fill the gap above that origin. A separate themed RibbonBackgroundLayer
+provides inert gap paint, clipped to the presented header outside the real backdrop.
+Keep the real backdrop visible and exclude its bounds: overlapping copies change
+authored alpha, and a full backdrop in the window-wide adorner obscures body motion.
+Reversals retain the composed geometry; custom captions without separable backdrop
+parts settle immediately. Placement ownership, bindings and cadence are unchanged.
+
+The application-owned Showcase animator carries one content drawing after shared
+start and scales only its root decoration to the moving viewport. Whole-card fades
+flash the paper; clipping two sizes leaves an early bottom-border seam. Child text
+and icons stay unscaled. The main window starts with the same themed background
+used by its normal backdrop setup. No RichTextBox rendering policy is involved.
+
+Regression pixels cover caption color/alpha, the moving header gap, card interior
+and border, plus unique body ink so geometry-only checks cannot miss occlusion.
+Wait for terminal cleanup and a rendered frame when fixtures need settled drawings;
+observe the public Progress DP rather than assuming a background timer sees short
+intermediate frames. Current focused evidence and native limits belong to plan 18.

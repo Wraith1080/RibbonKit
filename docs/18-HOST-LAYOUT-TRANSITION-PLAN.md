@@ -256,3 +256,45 @@ shadow-final-release-build.log, shadow-review and shadow-fix.
 The prior/current-runtime minimized-header probe has identical checked, hover,
 focus and pressed states and identical header pixels; it does not establish native
 acceptance or alter interaction policy. Writer's popup sharpening remains RKWF-049.
+
+## Caption and Showcase card flash correction — 2026-10-18
+
+The user reported a white title-bar flash during mode/density changes when QAT is
+in the caption, plus a dark-mode Showcase content flash. This is a compositing
+correction to the existing lifecycle, with no API, timing/easing or motion-policy
+change. Runtime started clean on codex/api-and-component-updates at eed0442.
+
+Caption foreground now crossfades over one carried background. Complementary
+whole-band fades previously exposed the backing at intermediate progress. A
+separate themed RibbonBackgroundLayer also fills the moving transparent-header
+gap outside the real backdrop; the real background stays visible behind the body,
+without duplicate alpha or an overlay covering command drawings. Drawing bounds
+are measured separately from committed layout bounds. Old custom caption/ribbon
+templates without separable backdrop parts use immediate fallback.
+
+Showcase carries one final content drawing from shared start and morphs only its
+root decoration to the presented viewport. Its paper no longer fades into the
+backing or reveals the final bottom border early. Child text/icons keep natural
+geometry. Initial window paint now matches its existing themed backdrop setup.
+This remains application-owned animation; no RichTextBox font, document paint or
+text-settle workaround is added. Interruption, ownership and cleanup use the
+existing transition identities and clocks.
+
+| Gate | Current result |
+| --- | --- |
+| Focused runtime | 40/40 passed: all 36 HostLayoutTransition cases and four Office2010AeroFrame template cases. Ten new cases cover caption color/alpha, moving header gap, accent light/dark reversals, card opacity/border, body-ink visibility and custom-template fallback. The fixture now waits for terminal cleanup plus a rendered frame instead of assuming a fixed interval establishes settled drawings |
+| Independent consumer | All 24 existing theme/direction/density/host-animator combinations passed, including both directions of both required QAT routes. A new RibbonKit-only paint check observes public Progress and samples caption/header color during mode and density motion. It has no Showcase resources/helpers. A background-timer probe missed the second short animation's intermediate updates; the final check observes the public DP directly |
+| Theme comparisons | 27/27 selected scenes passed normally across Office2007/2010/2013/2019/2024, Flat and Crystal: light/dark, colored caption, lower QAT, 100/125/200% and RTL/Glass cases. No approvals or tolerances changed. This is a focused comparison, not another full matrix or full-suite run |
+| Native screen diagnostics | 136 usable screen frames at the display's 125% DPI/WPF 8.0.31: accented TitleBar QAT in Office2024 light, Flat dark, Office2013 dark and Crystal dark; neutral TitleBar in Office2024 dark and Crystal light/dark; unaccented Office2024 dark TabRow as a control. Programmatic Classic/Simplified/Touch/Compact sequences were sampled at staged and intermediate shared-clock times. Caption and paper sample colors stayed constant; inspected accent and neutral frames retain the body and correct caption/header/card edges. The neutral cases were recaptured after the user unlocked Windows. This is controlled programmatic screen capture, not physical-input acceptance |
+| Normal builds/API | Debug and Release solution builds passed with 0 warnings/errors, including both runtime TFMs and API/XML analyzers. Public API files unchanged; temporary native probes removed from the test project. Standard Debug output is ready for review |
+| Remaining scope | User visual review of this correction, physical mouse/touch/keyboard/KeyTips, live popup behavior, genuine mixed-monitor DPI and OS reduced motion remain separate. Crystal capture adapters/native material integration were not exercised by the controlled probe. No full solution test or package rerun is claimed; earlier passing evidence is retained at its recorded scope |
+
+Evidence under TestResults: layout-flash-regression-without-fixes.log (controlled
+old-compositor failures), layout-flash-final-runtime.log,
+layout-flash-final-consumer.log, layout-flash-visual.log,
+layout-flash-native-gap.log, layout-flash-native-neutral-live.log,
+layout-flash-final-release-build.log and layout-flash-final-debug-build.log.
+Usable native frames use the gap- and neutral-live- prefixes under
+layout-flash-native; neutral-final- lock-screen frames are excluded. Early edge experiments
+are diagnostics, superseded by the final runtime/native evidence above.
+Implementation pitfalls are in [§3.264](history/library/16-host-layout-transitions.md#3264-stable-caption-and-content-paint-during-layout-transitions--2026-10-18).
