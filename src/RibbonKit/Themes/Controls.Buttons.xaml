@@ -627,18 +627,25 @@
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <Ellipse x:Name="FocusRing" Width="18" Height="18" Margin="-2,0"
-                                         VerticalAlignment="Center" StrokeThickness="1"
-                                         Stroke="{DynamicResource RibbonKit.Brushes.Option.FocusBorder}"
-                                         Opacity="0" IsHitTestVisible="False" />
-                                <Ellipse x:Name="Indicator" Width="14" Height="14"
-                                         VerticalAlignment="Center"
-                                         Fill="{DynamicResource RibbonKit.Brushes.Option.IdleSurface}"
-                                         Stroke="{DynamicResource RibbonKit.Brushes.Option.IdleBorder}"
-                                         StrokeThickness="1" />
-                                <Ellipse x:Name="SelectionMark" Width="6" Height="6"
-                                         Fill="{DynamicResource RibbonKit.Brushes.Option.Glyph}"
-                                         VerticalAlignment="Center" Visibility="Collapsed" />
+                                <!-- Keep the nested circles on one shared center. Independently
+                                     rounding centered circles can move the dot by a device pixel
+                                     at fractional DPI, especially in a 44-DIP Touch row. -->
+                                <Grid x:Name="IndicatorHost" Width="14" Height="14"
+                                      VerticalAlignment="Center" UseLayoutRounding="False"
+                                      SnapsToDevicePixels="False">
+                                    <Ellipse x:Name="FocusRing" Width="18" Height="18" Margin="-2,0"
+                                             VerticalAlignment="Center" StrokeThickness="1"
+                                             Stroke="{DynamicResource RibbonKit.Brushes.Option.FocusBorder}"
+                                             Opacity="0" IsHitTestVisible="False" />
+                                    <Ellipse x:Name="Indicator" Width="14" Height="14"
+                                             VerticalAlignment="Center"
+                                             Fill="{DynamicResource RibbonKit.Brushes.Option.IdleSurface}"
+                                             Stroke="{DynamicResource RibbonKit.Brushes.Option.IdleBorder}"
+                                             StrokeThickness="1" />
+                                    <Ellipse x:Name="SelectionMark" Width="6" Height="6"
+                                             Fill="{DynamicResource RibbonKit.Brushes.Option.Glyph}"
+                                             VerticalAlignment="Center" Visibility="Collapsed" />
+                                </Grid>
                                 <ContentPresenter x:Name="HeaderPresenter" Grid.Column="1"
                                                   Content="{TemplateBinding Header}"
                                                   ContentTemplate="{TemplateBinding ContentTemplate}"

@@ -282,6 +282,11 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("TouchDensityPortabilityChecks.VerifyMinimizedDivider", () => TouchDensityPortabilityChecks.VerifyMinimizedDivider(application));
             return;
         }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "TouchOptions")
+        {
+            VerifyScope("RadioIndicatorPortabilityChecks.Verify", () => RadioIndicatorPortabilityChecks.Verify(application));
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "TouchChrome")
         {
             VerifyScope("TouchDensityPortabilityChecks.VerifyChrome", () => TouchDensityPortabilityChecks.VerifyChrome(application));

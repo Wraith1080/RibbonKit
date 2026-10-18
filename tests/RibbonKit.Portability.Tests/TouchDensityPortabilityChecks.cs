@@ -23,6 +23,7 @@ internal static class TouchDensityPortabilityChecks
         VerifyMinimizedDivider(application);
         VerifyChrome(application);
         VerifyGroupLauncher(application);
+        RadioIndicatorPortabilityChecks.Verify(application);
         var animation = RibbonAnimation.GlobalLevel;
         RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
         var button = new RibbonButton { Header = "Copy", Size = RibbonControlSize.Small, SizeDefinition = "Small,Small,Small", HorizontalAlignment = HorizontalAlignment.Left };

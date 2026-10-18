@@ -1048,6 +1048,10 @@ technical evidence warrants them; preserve existing dated records.
 [Pair theme selection with a host-owned Backstage design](docs/history/library/13-flat-theme-variants.md#3267-showcase-theme-preferred-backstage-layouts--2026-10-18).
 [Current mapping and evidence](docs/09-FUTURE-THEMES-PLAN.md#theme-preferred-backstage-layouts).
 
+### 3.268 Concentric radio indicators at fractional DPI — 2026-10-18
+
+[Keep the selected dot and focus ring centered through density changes](docs/history/library/11-touch-density-and-gallery-projections.md#3268-concentric-radio-indicators-at-fractional-dpi--2026-10-18).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.

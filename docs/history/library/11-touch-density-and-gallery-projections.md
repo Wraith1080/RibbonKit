@@ -481,3 +481,23 @@ comparisons were inspected; no snapshot approvals changed.
 Release solution and normal Debug Showcase builds passed with zero warnings and
 errors. Live retesting of this sibling-popup correction remains pending; the full
 suite and native mixed-monitor DPI review remain deferred.
+
+### 3.268 Concentric radio indicators at fractional DPI — 2026-10-18
+
+The Touch radio selection dot reproduced a one-device-pixel downward shift at
+125% scaling. Independently arranging the 14-DIP circle and six-DIP dot in the
+full row let layout rounding choose different centers. Their shared template
+now places the circle, dot and focus ring in one 14-DIP host, with rounding and
+pixel snapping disabled inside that host. Vector dimensions and row targets
+remain the same; the correction also applies to Compact fractional-DPI paint.
+
+The new `TouchOptions` RibbonKit-only consumer scope checks concentric dot and
+focus geometry, selected/unselected/disabled visibility and target heights across
+all seven themes, light/dark, LTR/RTL and 100/125/150/200% simulated DPI, each with
+a Compact/Touch/Compact round trip. The initial regression failed at 125% Touch;
+all 112 combinations passed after the fix. Six existing option-control tests and
+three existing Release input-control snapshots passed without approval changes.
+Actual before/after renders were inspected, and the normal Debug Showcase build
+passed with zero warnings/errors. Current live review is tracked in the
+[Touch acceptance table](../../14-TOUCH-DENSITY-PLAN.md#verification-and-acceptance);
+the full suite and native monitor transitions were not rerun for this fix.

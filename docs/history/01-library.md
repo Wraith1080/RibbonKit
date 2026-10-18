@@ -441,3 +441,5 @@ status updates and investigation narration were removed during compaction.
 ### [3.266 Persistent Showcase application-menu choice — 2026-10-18](library/13-flat-theme-variants.md#3266-persistent-showcase-application-menu-choice--2026-10-18)
 
 ### [3.267 Showcase theme-preferred Backstage layouts — 2026-10-18](library/13-flat-theme-variants.md#3267-showcase-theme-preferred-backstage-layouts--2026-10-18)
+
+### [3.268 Concentric radio indicators at fractional DPI — 2026-10-18](library/11-touch-density-and-gallery-projections.md#3268-concentric-radio-indicators-at-fractional-dpi--2026-10-18)
