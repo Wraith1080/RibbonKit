@@ -348,4 +348,6 @@ The source recording analysis is retained there; native frames use ink-fixed-
 and qat-fixed- under TestResults/layout-flash-native. The earlier 27 resting visual comparisons
 are retained: templates/tokens and resting paint did not change in this follow-up.
 No full-suite/package rerun or new physical-input, genuine mixed-monitor DPI,
-OS reduced-motion or user visual acceptance is claimed.
+OS reduced-motion acceptance is claimed. On 2026-10-18 the user confirmed the
+reviewed caption/header/QAT flicker correction is "perfect." This accepts that
+visual scope; the separate input, popup, DPI and OS motion gates remain open.
