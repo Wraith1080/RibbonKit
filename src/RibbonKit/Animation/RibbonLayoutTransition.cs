@@ -337,6 +337,17 @@ internal sealed class RibbonLayoutSnapshot
         // Keep that visual tree intact in playback and reversal holds as well.
         FrameworkElement? chrome = surface is Panel panel ? panel.Children.OfType<FrameworkElement>()
             .FirstOrDefault(child => child.Name is "ContentHost" or "QatBelowHost") : null;
+        var chromeVisual = new ContainerVisual();
+        if (RibbonVectorSnapshot.Capture(chrome, surface, includeAncestors: false) is { } bodyChrome)
+            chromeVisual.Children.Add(bodyChrome.Visual);
+        // The connected-tab cut is a sibling of the body so it can cover its
+        // border. Playback sits above both: carry the cut with the opaque chrome,
+        // otherwise the animated top border briefly closes the selected tab.
+        if (chrome?.Name == "ContentHost" && surface.Parent is Panel bodyParent
+            && bodyParent.Children.OfType<FrameworkElement>()
+                .FirstOrDefault(child => child.Name == "PART_ConnectNotch") is { IsVisible: true } notch
+            && RibbonVectorSnapshot.Capture(notch, surface, includeAncestors: false) is { } cut)
+            chromeVisual.Children.Add(cut.Visual);
         var allContent = new HashSet<Visual>();
         var excluded = items.Cast<Visual>().ToHashSet();
         if (chrome is not null) { allContent.Add(chrome); excluded.Add(chrome); }
@@ -344,7 +355,7 @@ internal sealed class RibbonLayoutSnapshot
         {
             Size = surface.RenderSize,
             Frame = VisualTreeHelper.GetDrawing(surface)?.CloneCurrentValue(),
-            Chrome = RibbonVectorSnapshot.Capture(chrome, surface, includeAncestors: false)?.Visual,
+            Chrome = chromeVisual,
             FullContent = Children(surface, allContent),
             Content = Children(surface, excluded),
         };

@@ -165,14 +165,14 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.InnerOutline" Color="#555555" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.ApplicationMenu.ShadowCaster" Color="Black" />
     <Visibility x:Key="RibbonKit.Visibilities.ApplicationMenuOutsideShadow">Collapsed</Visibility>
-    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuContentRimCornerRadius">0</CornerRadius>
-    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuContentOutlineCornerRadius">0</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuContentRimCornerRadius">6</CornerRadius>
+    <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuContentOutlineCornerRadius">5</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuItemClipCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuItemOutlineCornerRadius">4</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuItemMargin">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuSeparatorMargin">0</Thickness>
-    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageBorderThickness">1</Thickness>
-    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageMargin">0,0,2,2</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageBorderThickness">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageMargin">0</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneMinimumWidth">0</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneViewportInset">0</system:Double>
 

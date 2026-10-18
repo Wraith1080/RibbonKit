@@ -20,6 +20,79 @@ namespace RibbonKit.Tests;
 public sealed class HostLayoutTransitionTests
 {
     [Theory]
+    [InlineData(RibbonTheme.Office2007, false)]
+    [InlineData(RibbonTheme.Office2010, false)]
+    [InlineData(RibbonTheme.Office2013, false)]
+    [InlineData(RibbonTheme.Office2007, true)]
+    [InlineData(RibbonTheme.Office2010, true)]
+    [InlineData(RibbonTheme.Office2013, true)]
+    public void Connected_tab_cut_remains_in_opaque_chrome_during_mode_and_density_motion(RibbonTheme theme, bool rtl) => Run((window, ribbon) =>
+    {
+        ThemeManager.Apply(Application.Current, theme);
+        ribbon.FlowDirection = rtl ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+        ribbon.Resources["RibbonKit.Brushes.Tab.ConnectNotch"] = Brushes.Magenta;
+        Settle(window);
+        var tabs = (RibbonTabControl)ribbon.Template.FindName("TabControlHost", ribbon);
+        var body = (FrameworkElement)tabs.Template.FindName("ContentPresentationHost", tabs);
+        var notch = (Border)tabs.Template.FindName("PART_ConnectNotch", tabs);
+        RibbonLayoutTransitionEventArgs? started = null;
+        ribbon.LayoutTransitionStarting += (_, e) => started = e;
+        foreach (Action change in new Action[]
+        {
+            () => ribbon.LayoutMode = RibbonLayoutMode.Simplified,
+            () => ribbon.LayoutMode = RibbonLayoutMode.Classic,
+            () => ribbon.Density = RibbonDensity.Touch,
+            () => ribbon.Density = RibbonDensity.Compact,
+        })
+        {
+            started = null; change(); Drain(); Assert.NotNull(started);
+            var scene = Assert.Single(AdornerLayer.GetAdornerLayer(body)!.GetAdorners(body)!.OfType<RibbonLayoutTransition>());
+            var clock = SharedClock(started); clock.Controller!.Pause();
+            foreach (double progress in new[] { .15, .5, .85 })
+            {
+                clock.Controller.SeekAlignedToLastTick(TimeSpan.FromMilliseconds(started.BoundaryMotion.Duration.TimeSpan.TotalMilliseconds * progress), TimeSeekOrigin.BeginTime);
+                Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Render);
+                window.UpdateLayout();
+                var image = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+                // Render the body presentation itself, without the tab header's
+                // matching ConnectFoot hiding a missing cut. Leave room above
+                // the final origin for the density transition's moving top edge.
+                var presentation = new ContainerVisual { Transform = new TranslateTransform(0, 100) };
+                presentation.Children.Add(RibbonVectorSnapshot.Clone(scene));
+                image.Render(presentation);
+                int x = (int)notch.TranslatePoint(new Point(notch.ActualWidth / 2, 0), body).X;
+                byte[] column = new byte[(int)window.ActualHeight * 4];
+                image.CopyPixels(new Int32Rect(x, 0, 1, (int)window.ActualHeight), column, 4, 0);
+                // The moving one-pixel cut can straddle device pixels. Require its
+                // hue rather than full pixel coverage at a fractional Y coordinate.
+                Assert.True(Enumerable.Range(0, (int)window.ActualHeight).Any(y =>
+                    column[y * 4] - column[y * 4 + 1] > 40 && column[y * 4 + 2] - column[y * 4 + 1] > 40),
+                    $"{theme}, rtl={rtl}, progress={progress}: the body presentation covered the connected-tab cut.");
+            }
+            clock.Controller.Resume(); Settle(window);
+            Assert.True(notch.Width > 0); Assert.Equal(1, body.Opacity);
+        }
+    });
+
+    [Fact]
+    public void Backdrop_updates_do_not_start_a_ribbon_theme_fade() => Run((window, ribbon) =>
+    {
+        var tabs = (RibbonTabControl)ribbon.Template.FindName("TabControlHost", ribbon);
+        var ink = ribbon.Tabs[0];
+        Color before = PaintPixel(window, ink.TranslatePoint(new Point(10, 10), window));
+        foreach (bool enabled in new[] { true, false, true, false })
+        {
+            ThemeManager.SetTitleBarBackdrop(Application.Current, enabled);
+            Assert.False(tabs.HasAnimatedProperties);
+            Assert.Equal(1, tabs.Opacity);
+            Assert.Equal(before, PaintPixel(window, ink.TranslatePoint(new Point(10, 10), window)));
+        }
+        // Real palette changes retain the configured ThemeSwitch motion.
+        ThemeManager.SetAccent(Application.Current, Colors.Purple);
+        Assert.True(tabs.HasAnimatedProperties);
+    });
+
+    [Theory]
     [InlineData(RibbonQuickAccessPosition.TitleBar, RibbonQuickAccessPosition.BelowRibbon)]
     [InlineData(RibbonQuickAccessPosition.BelowRibbon, RibbonQuickAccessPosition.TitleBar)]
     [InlineData(RibbonQuickAccessPosition.TabRow, RibbonQuickAccessPosition.BelowRibbon)]

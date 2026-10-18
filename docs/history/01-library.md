@@ -435,3 +435,5 @@ status updates and investigation narration were removed during compaction.
 ### [3.263 Shared text refresh after control animation — 2026-10-17](library/04-office2007-and-popup-motion.md#3263-shared-text-refresh-after-control-animation--2026-10-17)
 
 ### [3.264 Stable caption and content paint during layout transitions — 2026-10-18](library/16-host-layout-transitions.md#3264-stable-caption-and-content-paint-during-layout-transitions--2026-10-18)
+
+### [3.265 Office menu, hover and transition polish — 2026-10-18](library/13-flat-theme-variants.md#3265-office-menu-hover-and-transition-polish--2026-10-18)

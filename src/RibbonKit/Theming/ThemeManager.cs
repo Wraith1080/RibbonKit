@@ -219,6 +219,18 @@ public static class ThemeManager
     /// </summary>
     public static event EventHandler? Changed;
 
+    // The public notification also covers native-backdrop paint changes. Those
+    // must refresh resources without starting the theme-switch opacity settle.
+    internal static bool IsBackdropOnlyChange { get; private set; }
+
+    private static void RaiseChanged(bool backdropOnly = false)
+    {
+        bool previous = IsBackdropOnlyChange;
+        IsBackdropOnlyChange = backdropOnly;
+        try { Changed?.Invoke(null, EventArgs.Empty); }
+        finally { IsBackdropOnlyChange = previous; }
+    }
+
     /// <summary>
     /// Applies <paramref name="theme"/> application-wide, replacing any token
     /// dictionary previously applied by this manager (and, on first call, any token
@@ -264,7 +276,7 @@ public static class ThemeManager
         // Re-derive customizations for the freshly-applied theme.
         ApplyAccentOverrides(application);
         ApplyTitleBarOverride(application);
-        Changed?.Invoke(null, EventArgs.Empty);
+        RaiseChanged();
     }
 
     /// <summary>
@@ -281,7 +293,7 @@ public static class ThemeManager
         ApplyDarkModeDictionary(application);
         ApplyAccentOverrides(application);
         ApplyTitleBarOverride(application);
-        Changed?.Invoke(null, EventArgs.Empty);
+        RaiseChanged();
     }
 
     /// <summary>Returns whether <paramref name="theme"/> has a RibbonKit dark palette.</summary>
@@ -333,7 +345,7 @@ public static class ThemeManager
         _accent = accent;
         ApplyAccentOverrides(application);
         ApplyTitleBarOverride(application); // an accented title bar tracks the accent
-        Changed?.Invoke(null, EventArgs.Empty);
+        RaiseChanged();
     }
 
     /// <summary>Clears a custom accent set via <see cref="SetAccent"/>, reverting to the
@@ -344,7 +356,7 @@ public static class ThemeManager
         _accent = null;
         ApplyAccentOverrides(application);
         ApplyTitleBarOverride(application);
-        Changed?.Invoke(null, EventArgs.Empty);
+        RaiseChanged();
     }
 
     /// <summary>
@@ -360,7 +372,7 @@ public static class ThemeManager
         // then layer the title-bar/strip colors on top.
         ApplyAccentOverrides(application);
         ApplyTitleBarOverride(application);
-        Changed?.Invoke(null, EventArgs.Empty);
+        RaiseChanged();
     }
 
     /// <summary>
@@ -385,7 +397,7 @@ public static class ThemeManager
         // system also writes, so the two passes must always run in that order.
         ApplyAccentOverrides(application);
         ApplyTitleBarOverride(application);
-        Changed?.Invoke(null, EventArgs.Empty);
+        RaiseChanged(backdropOnly: true);
     }
 
     private static void ApplyAccentOverrides(Application application) =>

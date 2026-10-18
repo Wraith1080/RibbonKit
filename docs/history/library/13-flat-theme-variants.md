@@ -343,3 +343,46 @@ scopes rather than rerunning the large prefix. Sixteen Flat approvals were revie
 for the intentional lower-row reserve, including state scenes and the message bar
 behind File menus. Their menu paint/state and command scale did not change.
 The two previously open Crystal QAT comparisons were left untouched.
+
+### 3.265 Office menu, hover and transition polish — 2026-10-18
+
+Office 2024 light/dark now use 6/5-DIP inner rim/outline corners; Flat inherits
+those metrics. The existing rounded content clip shapes only the four outer
+corners, leaving the navigation/page join square. Office 2007 through 2024 use
+zero active-page border and margin, matching Crystal's existing shared-frame
+policy while retaining the heading band and navigation separator.
+
+Glass preserves a palette's transparent tab hover rather than adding a wash to
+2024's underline-only state. QAT and File washes remain independent. Office 2013
+colors its reserved hover border with the hover fill, bringing its top edge up
+to the selected outline without moving labels. Its dark and Glass edges follow
+the same effective fill.
+
+Backdrop-only ThemeManager notifications still refresh resources, QAT state and
+selection geometry but skip Ribbon's ThemeSwitch opacity settle. An internal
+notification flag is scoped and restored around each synchronous public Changed
+event, including nested notifications; actual palette/accent changes keep motion.
+No public API or native backdrop ownership changed.
+
+Body snapshots now carry the sibling PART_ConnectNotch alongside opaque chrome.
+An adorner otherwise draws the complete top border above the live notch. Keep
+the cut outside fading command content, including transition holds and reversals.
+The regression renders the body presentation separately so the header's matching
+ConnectFoot cannot conceal a missing cut; it samples fractional animation frames.
+
+The two new flicker regressions failed with their fixes temporarily removed.
+Focused automated checks passed; current counts and native review limits are in
+the [active theme plan](../../09-FUTURE-THEMES-PLAN.md#office-menu-hover-and-transition-polish).
+Visual review inspected actual/diff and first/repeated captures before changing
+seven existing approvals and adding 24 focused scenes. Tolerances are unchanged.
+A fixed hover slot isolates vertical paint from disconnected text auto-sizing.
+Include the eight Office 2007/2010 default DPI scenes when comparing the older
+2013/2024 fixtures: omitting their font/DPI warm-up produced unrelated geometry
+diffs that disappeared with that prefix; their approvals remain unchanged.
+
+The follow-up heading gap was the separator's one-DIP highlight, outside the
+page. HeaderBandJoin paints that strip with the header background and bottom
+separator without changing HeaderBand's padding or page measurement. It follows
+the heading's visibility so a headerless page reserves no extra row. Geometry
+checks use the measured divider edges at fractional DPI and the menu's logical
+coordinates in both directions; the host reflects the whole surface for RTL.

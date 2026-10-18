@@ -247,9 +247,17 @@ internal static class CapturedBackdropPortabilityChecks
                 var originalBand = (Brush)first.FindResource("RibbonKit.Brushes.Ribbon.Background");
                 var originalTitle = (Brush)first.FindResource("RibbonKit.Brushes.TitleBar.Background");
                 var originalFileHover = (Brush)first.FindResource("RibbonKit.Brushes.ApplicationButton.HoverBackground");
+                var originalTabHover = (Brush)first.FindResource("RibbonKit.Brushes.Tab.HoverBackground");
                 var other = second.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground");
                 int before = changes;
                 var overlay = ThemeManager.CreateGlassOverlay(first, dark);
+                if (theme is RibbonTheme.Office2024 or RibbonTheme.Office2024Flat)
+                {
+                    Assert.Equal(0, Assert.IsType<SolidColorBrush>(originalTabHover).Color.A);
+                    Assert.Equal(0, Assert.IsType<SolidColorBrush>(overlay["RibbonKit.Brushes.Tab.HoverBackground"]).Color.A);
+                }
+                if (theme == RibbonTheme.Office2013)
+                    Assert.Same(overlay["RibbonKit.Brushes.Tab.HoverBackground"], overlay["RibbonKit.Brushes.Tab.HoverBorder"]);
                 Assert.Equal(before, changes);
                 Assert.Same(original, first.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground"));
                 first.Resources.MergedDictionaries.Add(overlay);

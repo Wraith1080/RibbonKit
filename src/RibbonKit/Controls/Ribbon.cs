@@ -3611,7 +3611,8 @@ public partial class Ribbon : Control
         CancelDensityTransition();
         UpdateQatButtonContext();
         // Soften a theme/accent swap with a quick opacity settle on the ribbon strip.
-        RibbonMotion.PlayThemeCrossfade(_ribbonTabControl, RibbonAnimationAction.ThemeSwitch);
+        if (!Theming.ThemeManager.IsBackdropOnlyChange)
+            RibbonMotion.PlayThemeCrossfade(_ribbonTabControl, RibbonAnimationAction.ThemeSwitch);
 
         // A theme whose selected tab connects into the body does so with a themed negative body
         // margin (+ the tab strip's ZIndex). The margin token updates on the swap, but the overlap

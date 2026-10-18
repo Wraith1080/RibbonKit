@@ -156,6 +156,11 @@ public sealed class ApplicationButtonShapeThemeTests
     public void Theme_default_and_local_value_follow_wpf_precedence() => RunSta(() =>
     {
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "ThemePolish")
+        {
+            VerifyScope("ThemePolishPortabilityChecks.Verify", () => ThemePolishPortabilityChecks.Verify(application));
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "TabMoveCustomization")
         {
             VerifyScope("TabMoveCustomizationChecks.Verify", () => TabMoveCustomizationChecks.Verify(application));
@@ -350,6 +355,7 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("QatAndContextualGeometryChecks.VerifyMarker", () => QatAndContextualGeometryChecks.VerifyMarker(application));
             VerifyScope("MessageTransitionPortabilityChecks.Verify", () => MessageTransitionPortabilityChecks.Verify(application));
             VerifyScope("DropDownHeaderPortabilityChecks.Verify", () => DropDownHeaderPortabilityChecks.Verify(application));
+            VerifyScope("ThemePolishPortabilityChecks.Verify", () => ThemePolishPortabilityChecks.Verify(application));
             VerifyScope("GalleryHeaderAndQatCommandChecks.Verify", () => GalleryHeaderAndQatCommandChecks.Verify(application));
             VerifyScope("QuickAccessCommandInteractionChecks.Verify", () => QuickAccessCommandInteractionChecks.Verify(application));
 

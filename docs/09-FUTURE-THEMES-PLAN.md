@@ -1298,3 +1298,22 @@ Colored QAT commands use corresponding light state outlines.
 
 Implementation rationale and verification limits are recorded in
 [§3.254](history/library/13-flat-theme-variants.md#3254-office-2024-flat-theme--2026-10-12).
+
+## Office menu, hover and transition polish
+
+Implemented 2026-10-18 from the supplied screenshots and backdrop recording:
+2024/Flat inner menu corners are rounded around the combined content surface;
+Office menu pages share that frame; Glass retains 2024's transparent tab hover;
+2013 hover reaches the selected header's top edge; connected-tab cuts travel with
+body chrome; backdrop-only changes skip the ribbon theme fade.
+[Implementation and regression pitfalls](history/library/13-flat-theme-variants.md#3265-office-menu-hover-and-transition-polish--2026-10-18).
+
+| Gate | Current evidence |
+| --- | --- |
+| Build | Normal Debug runtime builds for net8.0-windows and net9.0-windows and normal Debug Showcase build passed with zero warnings/errors. |
+| Focused runtime | 78/78 passed: host/layout transitions, application-menu visual states/dark palettes and Showcase backdrop/Glass preferences. Six notch cases exercise both mode and density directions in 2007/2010/2013, LTR/RTL, with 72 paused rendered samples. Both new flicker regressions failed against the old behavior. |
+| Independent consumer | ThemePolish passed 28 theme/light-dark/direction combinations without Showcase; GlassOverlay passed all 14 light/dark palettes plus scoped resource precedence checks. |
+| Selected visuals | 43 Release scenes passed repeated rendering and approval comparison after actual/diff review: 24 new scenes, seven updated menu approvals and 12 retained references, including the required theme/DPI warm-up prefix. Covers 100/150/200%, RTL, both palettes, 2013 hover, 2024/Flat Glass hover and Office menu pages. |
+| Native review | Pending user review of all six reported fixes in Showcase, especially real Mica/Acrylic toggles and the live connected notch during Simplified/Touch transitions. Native pointer input, mixed-monitor DPI and reduced-motion review were not run. |
+| Broader validation | Full solution suite and release/package gates were not run for this bounded fix. |
+| Heading join follow-up | Corrected 2026-10-18: the heading background covers the divider's one-DIP highlight strip, preserving text inset and page layout. The independent ThemePolish consumer passed all 28 palette/direction combinations plus a headerless-page check; 16 selected Release menu scenes passed after actual/diff inspection and approval updates. Normal Debug runtime/Showcase builds passed. Native review of this seam remains open. Earlier runtime/motion evidence above was retained. |

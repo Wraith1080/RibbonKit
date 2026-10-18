@@ -1033,6 +1033,11 @@ technical evidence warrants them; preserve existing dated records.
 
 [Continuous caption paint, transparent-header gap coverage and application card decoration](docs/history/library/16-host-layout-transitions.md#3264-stable-caption-and-content-paint-during-layout-transitions--2026-10-18).
 
+### 3.265 Office menu, hover and transition polish — 2026-10-18
+
+[Shared frame tokens, transparent Glass hover and stable connected-tab chrome](docs/history/library/13-flat-theme-variants.md#3265-office-menu-hover-and-transition-polish--2026-10-18).
+[Current review status](docs/09-FUTURE-THEMES-PLAN.md#office-menu-hover-and-transition-polish).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.

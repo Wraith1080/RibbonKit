@@ -378,6 +378,32 @@ public sealed class VisualSnapshotTests
                     AssertSnapshot($"{palette}-split-hover-rtl-125", 1.25d, FlowDirection.RightToLeft,
                         CreateSplitHoverScene, 270);
                 }
+                foreach (bool dark in new[] { false, true })
+                {
+                    ThemeManager.Apply(application, RibbonTheme.Office2013);
+                    ThemeManager.SetDarkMode(application, dark);
+                    string palette = dark ? "office2013-dark" : "office2013-default";
+                    AssertSnapshot($"{palette}-tab-hover-100", 1d, sceneFactory: direction => CreateTabHoverScene(direction));
+                    AssertSnapshot($"{palette}-tab-hover-rtl-150", 1.5d, FlowDirection.RightToLeft, direction => CreateTabHoverScene(direction));
+                    foreach (var theme in new[] { RibbonTheme.Office2024, RibbonTheme.Office2024Flat })
+                    {
+                        ThemeManager.Apply(application, theme);
+                        string name = $"{theme.ToString().ToLowerInvariant()}-glass-{(dark ? "dark" : "light")}-tab-hover";
+                        AssertSnapshot(name + "-100", 1d, sceneFactory: direction => CreateTabHoverScene(direction, glass: true));
+                        AssertSnapshot(name + "-rtl-200", 2d, FlowDirection.RightToLeft,
+                            direction => CreateTabHoverScene(direction, glass: true));
+                    }
+                    foreach (var theme in new[] { RibbonTheme.Office2007, RibbonTheme.Office2010, RibbonTheme.Office2013, RibbonTheme.Office2019, RibbonTheme.Office2024 })
+                    {
+                        ThemeManager.Apply(application, theme);
+                        string name = $"{theme.ToString().ToLowerInvariant()}-{(dark ? "dark" : "light")}-application-menu-page";
+                        AssertSnapshot(name + "-100", 1d,
+                            sceneFactory: direction => CreateCrystalApplicationMenuScene(direction, "split"), height: 400);
+                        if (theme == RibbonTheme.Office2024)
+                            AssertSnapshot(name + "-rtl-150", 1.5d, FlowDirection.RightToLeft,
+                                direction => CreateCrystalApplicationMenuScene(direction, "split"), 400);
+                    }
+                }
                 _selection.EnsureAllPatternsMatched();
                 _output.WriteLine("Completed {0} selected visual scenes: {1}",
                     _selection.SelectedScenes.Count, string.Join(", ", _selection.SelectedScenes));
@@ -638,6 +664,23 @@ public sealed class VisualSnapshotTests
     {
         var root = (Grid)CreateOfficeGlassScene(flowDirection, narrow);
         root.Background = new SolidColorBrush(Color.FromRgb(0x95, 0x95, 0x95));
+        return root;
+    }
+
+    private static FrameworkElement CreateTabHoverScene(FlowDirection direction, bool glass = false)
+    {
+        InitializeWindowRendering();
+        var root = (Grid)(glass ? CreateOfficeGlassScene(direction, narrow: false) : CreateScene(direction));
+        var ribbon = Assert.IsType<Ribbon>(root.Children[0]);
+        var tab = ribbon.Tabs.First(item => !item.IsSelected && !item.IsContextual);
+        // This scene compares vertical hover paint; use a fixed header slot so
+        // disconnected font measurement cannot change its horizontal placement.
+        tab.Width = 80;
+        root.Measure(new Size(Width, Height)); root.Arrange(new Rect(0, 0, Width, Height)); root.UpdateLayout();
+        Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+        root.UpdateLayout();
+        var chrome = Assert.IsType<Border>(tab.Template.FindName("HeaderChrome", tab));
+        ForceState(chrome, typeof(UIElement), "IsMouseOverPropertyKey", true);
         return root;
     }
 
@@ -1590,7 +1633,7 @@ public sealed class VisualSnapshotTests
             ForceState(Assert.IsType<Button>(item.Template.FindName("PART_Primary", item)),
                 typeof(ButtonBase), "IsPressedPropertyKey", true);
         }
-        Assert.Equal(new CornerRadius(ThemeManager.CurrentTheme == RibbonTheme.CrystalLight ? 14 : 8),
+        Assert.Equal((CornerRadius)menu.FindResource("RibbonKit.Metrics.ApplicationMenuCornerRadius"),
             Assert.IsType<Border>(menu.Template.FindName("Frame", menu)).CornerRadius);
         return root;
     }
