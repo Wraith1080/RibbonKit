@@ -1,7 +1,10 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Media;
+using System.Windows.Threading;
 using RibbonKit.Animation;
 using Xunit;
 
@@ -259,6 +262,72 @@ public class PopupMotionTests
 
         Assert.False(border.HasAnimatedProperties);
     });
+
+    [Theory]
+    [InlineData(RibbonAnimationAction.DropdownMenu, true)]
+    [InlineData(RibbonAnimationAction.Gallery, true)]
+    [InlineData(RibbonAnimationAction.DropdownMenu, false)]
+    public void Completion_refreshes_text_at_rest_without_changing_author_rendering_or_bounds(
+        RibbonAnimationAction action, bool hasSlidingContent) => Sta.Run(() =>
+    {
+        using var forced = new ForcedMotion();
+        var level = RibbonAnimation.GlobalLevel;
+        RibbonAnimation.GlobalLevel = RibbonAnimationLevel.Subtle;
+        var text = new TextBlock { FontSize = 14 };
+        text.SetBinding(TextBlock.TextProperty, new Binding(".") { Source = "Keep authored text settings" });
+        TextOptions.SetTextFormattingMode(text, TextFormattingMode.Display);
+        TextOptions.SetTextRenderingMode(text, TextRenderingMode.Grayscale);
+        TextOptions.SetTextHintingMode(text, TextHintingMode.Fixed);
+        FrameworkElement content = hasSlidingContent ? new Border { Child = text } : text;
+        FrameworkElement surface = hasSlidingContent
+            ? new Border { Child = content, Padding = new Thickness(8), Background = Brushes.White }
+            : text;
+        int settledLayouts = 0;
+        text.LayoutUpdated += (_, _) =>
+        {
+            if (surface.Opacity == 1 && content.RenderTransform.Value.OffsetY == 0)
+                settledLayouts++;
+        };
+        var window = new Window { Content = surface, Width = 350, Height = 180, Left = -10000, Top = -10000,
+            ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            window.Show();
+            window.UpdateLayout();
+            PumpUntil(() => settledLayouts > 0);
+            int before = settledLayouts;
+            Size size = text.RenderSize;
+            RibbonMotion.PlayFlyoutOpen(surface, action);
+            // Replace an in-flight request. Only the latest presentation matters.
+            RibbonMotion.PlayFlyoutOpen(surface, action);
+            // InvalidateVisual also requests arrange. Observe that one completion refresh
+            // without relying on the native compositor's separate glyph-cache timing.
+            PumpUntil(() => settledLayouts > before && surface.Opacity == 1 && content.RenderTransform.Value.OffsetY == 0);
+            Assert.Equal(size, text.RenderSize);
+            Assert.Equal(Matrix.Identity, surface.RenderTransform.Value);
+            Assert.True(BindingOperations.IsDataBound(text, TextBlock.TextProperty));
+            Assert.Equal(TextFormattingMode.Display, TextOptions.GetTextFormattingMode(text));
+            Assert.Equal(TextRenderingMode.Grayscale, TextOptions.GetTextRenderingMode(text));
+            Assert.Equal(TextHintingMode.Fixed, TextOptions.GetTextHintingMode(text));
+        }
+        finally
+        {
+            window.Close();
+            RibbonAnimation.GlobalLevel = level;
+        }
+    });
+
+    private static void PumpUntil(Func<bool> condition)
+    {
+        var watch = Stopwatch.StartNew();
+        var frame = new DispatcherFrame();
+        var timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(5) };
+        timer.Tick += (_, _) => { if (condition() || watch.ElapsedMilliseconds > 2000) frame.Continue = false; };
+        timer.Start();
+        try { Dispatcher.PushFrame(frame); }
+        finally { timer.Stop(); }
+        Assert.True(condition());
+    }
 
     /// <summary>
     /// Pins motion ON for the duration of a test. Without this the suite fails on any machine

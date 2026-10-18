@@ -5,6 +5,8 @@ using System.Windows.Controls;
 namespace RibbonKit.Writer.Editing;
 
 /// <summary>Accessible, transactional editor for deterministic date/time insertion.</summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public partial class WriterDateTimeDialog : Window
 {
     private bool _initialized;

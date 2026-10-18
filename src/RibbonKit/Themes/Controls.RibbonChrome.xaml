@@ -136,8 +136,7 @@
                     </ControlTemplate.Resources>
                     <!-- The backstage overlay is hosted in the window's adorner layer
                          by the Ribbon class itself (see BackstageAdorner), not here. -->
-                    <Border x:Name="RibbonSurface"
-                            Background="{TemplateBinding Background}">
+                    <Border x:Name="RibbonSurface" Background="Transparent">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -145,6 +144,12 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
+                            <!-- Keep the backdrop separate from command visuals so a
+                                 caption-height transition can carry it without moving
+                                 live controls or leaving a gap above the committed row. -->
+                            <Border x:Name="RibbonBackgroundLayer" Grid.RowSpan="4"
+                                    Background="{TemplateBinding Background}"
+                                    IsHitTestVisible="False" />
                             <controls:RibbonTabControl
                                 x:Name="TabControlHost"
                                 Grid.Row="0"
@@ -167,6 +172,8 @@
                                         <Binding Path="Margin" ElementName="QatBelowHost" />
                                     </MultiBinding>
                                 </Grid.Clip>
+                                <!-- Only decorative chrome enters the effect surface. Commands
+                                     remain vector foreground in a sibling with identical insets. -->
                                 <Border x:Name="QatBelowHost"
                                         KeyboardNavigation.TabNavigation="Local"
                                         KeyboardNavigation.TabIndex="1"
@@ -179,7 +186,17 @@
                                         BorderThickness="{DynamicResource RibbonKit.Metrics.QatExtenderBorderThickness}"
                                         CornerRadius="{DynamicResource RibbonKit.Metrics.QatExtenderCornerRadius}"
                                         Effect="{DynamicResource RibbonKit.Effects.QatExtenderShadow}"
-                                        Visibility="Collapsed">
+                                        IsHitTestVisible="False"
+                                        Visibility="Collapsed" />
+                                <Border x:Name="QatBelowForeground"
+                                        KeyboardNavigation.TabNavigation="Local"
+                                        KeyboardNavigation.TabIndex="1"
+                                        Background="Transparent"
+                                        MinHeight="{Binding MinHeight, ElementName=QatBelowHost}"
+                                        Margin="{Binding Margin, ElementName=QatBelowHost}"
+                                        Padding="{Binding Padding, ElementName=QatBelowHost}"
+                                        BorderThickness="{Binding BorderThickness, ElementName=QatBelowHost}"
+                                        Visibility="{Binding Visibility, ElementName=QatBelowHost}">
                                     <!-- ItemsSource bound only by the BelowRibbon trigger. -->
                                     <ItemsControl x:Name="QatBelowItems"
                                                   Focusable="False"
@@ -324,7 +341,7 @@
                              tab-control compose the same fallback/material and tint as the title. -->
                         <DataTrigger Binding="{Binding FrameAppearance, RelativeSource={RelativeSource AncestorType={x:Type controls:RibbonWindow}}}"
                                      Value="Office2010Aero">
-                            <Setter TargetName="RibbonSurface" Property="Background" Value="Transparent" />
+                            <Setter TargetName="RibbonBackgroundLayer" Property="Background" Value="Transparent" />
                         </DataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -764,7 +781,7 @@
                                           VerticalAlignment="Center"
                                           ToolTip="{localization:RibbonString Key=MinimizeRibbon}"
                                           controls:FocusVisualTracking.Background="{DynamicResource RibbonKit.Brushes.Ribbon.Background}"
-                                          IsChecked="{Binding IsMinimized, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Mode=TwoWay}">
+                                          IsChecked="{Binding IsMinimized, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}, Mode=OneWay}">
                                 <ToggleButton.Style>
                                     <Style TargetType="{x:Type ToggleButton}">
                                         <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
@@ -828,6 +845,10 @@
                                         <Style.Triggers>
                                             <!-- Minimizing is blocked while a modal tab owns the
                                                  ribbon, so the chevron goes away with it. -->
+                                            <DataTrigger Binding="{Binding CanUserMinimizeRibbon, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}" Value="False">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Setter Property="IsEnabled" Value="False" />
+                                            </DataTrigger>
                                             <DataTrigger Binding="{Binding IsModal, RelativeSource={RelativeSource AncestorType={x:Type controls:Ribbon}}}"
                                                          Value="True">
                                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -886,40 +907,52 @@
                              around) over the light ribbon band. Flat themes (2019/2013)
                              zero the margin and radius and use a top/bottom-only border,
                              collapsing it back to a full-width strip — all via tokens. -->
-                        <Border x:Name="ContentHost"
-                                Grid.Row="1"
-                                KeyboardNavigation.TabNavigation="Local"
-                                KeyboardNavigation.TabIndex="1"
-                                Background="{DynamicResource RibbonKit.Brushes.Ribbon.BodyBackground}"
-                                BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
-                                BorderThickness="{DynamicResource RibbonKit.Metrics.ContentBorderThickness}"
-                                CornerRadius="{DynamicResource RibbonKit.Metrics.ContentCornerRadius}"
-                                Margin="{DynamicResource RibbonKit.Metrics.ContentMargin}"
-                                Effect="{DynamicResource RibbonKit.Effects.ContentShadow}"
-                                SnapsToDevicePixels="True">
-                            <!-- Groups row in a horizontal scroller. ConstrainChildWidth lets the
-                                 adaptive panel reduce groups to fit FIRST; only when even the fully
-                                 reduced row overflows do the chevrons appear and scroll it (Office). -->
-                            <Grid>
-                                <layout:RibbonScrollContentHost x:Name="PART_ContentScroll"
-                                                                ConstrainChildWidth="True"
-                                                                Margin="{DynamicResource RibbonKit.Metrics.GroupsRowMargin}">
-                                    <ContentPresenter ContentSource="SelectedContent" />
-                                </layout:RibbonScrollContentHost>
-                                <RepeatButton Style="{StaticResource RibbonKit.ScrollLeftButton}"
-                                              Tag="BodyScroll"
-                                              Width="{DynamicResource RibbonKit.Metrics.BodyScrollButtonWidth}"
-                                              HorizontalAlignment="Left"
-                                              Command="{Binding ScrollLeftCommand, ElementName=PART_ContentScroll}"
-                                              Visibility="{Binding CanScrollLeft, ElementName=PART_ContentScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
-                                <RepeatButton Style="{StaticResource RibbonKit.ScrollRightButton}"
-                                              Tag="BodyScroll"
-                                              Width="{DynamicResource RibbonKit.Metrics.BodyScrollButtonWidth}"
-                                              HorizontalAlignment="Right"
-                                              Command="{Binding ScrollRightCommand, ElementName=PART_ContentScroll}"
-                                              Visibility="{Binding CanScrollRight, ElementName=PART_ContentScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
-                            </Grid>
-                        </Border>
+                        <Grid x:Name="ContentPresentationHost" Grid.Row="1">
+                            <Border x:Name="ContentHost"
+                                    KeyboardNavigation.TabNavigation="Local"
+                                    KeyboardNavigation.TabIndex="1"
+                                    Background="{DynamicResource RibbonKit.Brushes.Ribbon.BodyBackground}"
+                                    BorderBrush="{DynamicResource RibbonKit.Brushes.Ribbon.Border}"
+                                    BorderThickness="{DynamicResource RibbonKit.Metrics.ContentBorderThickness}"
+                                    CornerRadius="{DynamicResource RibbonKit.Metrics.ContentCornerRadius}"
+                                    Margin="{DynamicResource RibbonKit.Metrics.ContentMargin}"
+                                    Effect="{DynamicResource RibbonKit.Effects.ContentShadow}"
+                                    IsHitTestVisible="False"
+                                    Visibility="{Binding Visibility, ElementName=ContentPresentationHost}"
+                                    SnapsToDevicePixels="True" />
+                            <Border x:Name="ContentForeground"
+                                    KeyboardNavigation.TabNavigation="Local"
+                                    KeyboardNavigation.TabIndex="1"
+                                    Background="Transparent"
+                                    Margin="{Binding Margin, ElementName=ContentHost}"
+                                    Padding="{Binding Padding, ElementName=ContentHost}"
+                                    BorderThickness="{Binding BorderThickness, ElementName=ContentHost}"
+                                    Visibility="{Binding Visibility, ElementName=ContentPresentationHost}"
+                                    SnapsToDevicePixels="True">
+                                <!-- Groups row in a horizontal scroller. ConstrainChildWidth lets the
+                                     adaptive panel reduce groups to fit FIRST; only when even the fully
+                                     reduced row overflows do the chevrons appear and scroll it (Office). -->
+                                <Grid>
+                                    <layout:RibbonScrollContentHost x:Name="PART_ContentScroll"
+                                                                    ConstrainChildWidth="True"
+                                                                    Margin="{DynamicResource RibbonKit.Metrics.GroupsRowMargin}">
+                                        <ContentPresenter ContentSource="SelectedContent" />
+                                    </layout:RibbonScrollContentHost>
+                                    <RepeatButton Style="{StaticResource RibbonKit.ScrollLeftButton}"
+                                                  Tag="BodyScroll"
+                                                  Width="{DynamicResource RibbonKit.Metrics.BodyScrollButtonWidth}"
+                                                  HorizontalAlignment="Left"
+                                                  Command="{Binding ScrollLeftCommand, ElementName=PART_ContentScroll}"
+                                                  Visibility="{Binding CanScrollLeft, ElementName=PART_ContentScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
+                                    <RepeatButton Style="{StaticResource RibbonKit.ScrollRightButton}"
+                                                  Tag="BodyScroll"
+                                                  Width="{DynamicResource RibbonKit.Metrics.BodyScrollButtonWidth}"
+                                                  HorizontalAlignment="Right"
+                                                  Command="{Binding ScrollRightCommand, ElementName=PART_ContentScroll}"
+                                                  Visibility="{Binding CanScrollRight, ElementName=PART_ContentScroll, Converter={StaticResource RibbonKit.BoolToVis}}" />
+                                </Grid>
+                            </Border>
+                        </Grid>
                         <!-- Body-border NOTCH: a 1px body-coloured sliver lying OVER the body's
                              top border, directly under the selected tab, cutting a tab-wide gap
                              into the border so the active tab opens seamlessly into the body

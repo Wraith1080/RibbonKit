@@ -30,6 +30,7 @@
                              access OVERFLOW flyout opts in, where a centred drop-down looked like a
                              different kind of control from the plain buttons stacked beside it. -->
                         <ToggleButton x:Name="PART_Toggle"
+                                      ClickMode="Press"
                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"
                                       HorizontalContentAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource TemplatedParent}}"
                                       IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
@@ -214,7 +215,8 @@
                                 </StackPanel>
                             </Grid>
                         </ToggleButton>
-                                                <Popup controls:Ribbon.Density="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource TemplatedParent}}" x:Name="PART_Popup"
+                        <!-- Open on press, keeping native IsPressed paint through popup creation. -->
+                        <Popup controls:Ribbon.Density="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource TemplatedParent}}" x:Name="PART_Popup"
                                AllowsTransparency="True"
                                StaysOpen="True"
                                Placement="Bottom"
@@ -569,6 +571,7 @@
                             </Grid>
                         </Button>
                         <ToggleButton x:Name="PART_Toggle"
+                                      ClickMode="Press"
                                       Grid.Column="1"
                                       Grid.Row="0"
                                       Grid.RowSpan="2"
@@ -758,6 +761,7 @@
                                 </Style>
                             </ToggleButton.Style>
                         </ToggleButton>
+                        <!-- The arrow opens on press; the primary action keeps release semantics. -->
                         <Popup controls:Ribbon.Density="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource TemplatedParent}}" x:Name="PART_Popup"
                                AllowsTransparency="True"
                                StaysOpen="True"
@@ -865,6 +869,9 @@
                             <Setter TargetName="PART_Primary" Property="Tag" Value="Companion" />
                         </MultiTrigger>
                         <Trigger SourceName="PART_Toggle" Property="IsChecked" Value="True">
+                            <Setter TargetName="PART_Primary" Property="Tag" Value="Companion" />
+                        </Trigger>
+                        <Trigger SourceName="PART_Toggle" Property="IsPressed" Value="True">
                             <Setter TargetName="PART_Primary" Property="Tag" Value="Companion" />
                         </Trigger>
                         <MultiTrigger>

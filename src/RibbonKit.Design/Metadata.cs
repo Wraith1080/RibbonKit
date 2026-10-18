@@ -1,3 +1,4 @@
+using Microsoft.VisualStudio.DesignTools.Extensibility;
 using Microsoft.VisualStudio.DesignTools.Extensibility.Features;
 using Microsoft.VisualStudio.DesignTools.Extensibility.Metadata;
 using RibbonKit.Design;
@@ -38,18 +39,23 @@ internal sealed class Metadata : IProvideAttributeTable
         get
         {
             var builder = new AttributeTableBuilder();
+            ToolboxMetadata.Register(builder);
 
             // Ribbon: seed a starter tab/group when dropped, offer "Add Tab" / "Edit Ribbon…" on
             // right-click, and translate the editor's primitive-only tab, theme, and File previews.
             builder.AddCustomAttributes(
                 RibbonType,
                 new FeatureAttribute(typeof(RibbonDefaultInitializer)),
+                new FeatureAttribute(typeof(RibbonTabsPlacementAdapter)),
                 new FeatureAttribute(typeof(RibbonContextMenuProvider)),
                 new FeatureAttribute(typeof(SelectedTabPreviewProvider)));
 
-            // Tab: "Add Group".
+            // Tab: suppress generic TabItem Grid/sizing before seeding a group.
             builder.AddCustomAttributes(
                 RibbonTabType,
+                new DefaultSizeAttribute(DefaultSizeMode.None),
+                new FeatureAttribute(typeof(RibbonTabsPlacementAdapter)),
+                new FeatureAttribute(typeof(RibbonTabDefaultInitializer)),
                 new FeatureAttribute(typeof(RibbonTabContextMenuProvider)));
 
             // Backstage: "Add Nav Item" / "Add Nav Button", and translate SelectedIndex to the editor's
@@ -61,12 +67,24 @@ internal sealed class Metadata : IProvideAttributeTable
 
             builder.AddCustomAttributes(
                 ApplicationMenuType,
+                new FeatureAttribute(typeof(RibbonFileContextMenuProvider)),
                 new FeatureAttribute(typeof(ApplicationMenuPanePreviewProvider)));
+
+            foreach (string type in new[]
+            {
+                "RibbonKit.Controls.BackstageTabItem", "RibbonKit.Controls.RibbonApplicationMenuItem",
+                "RibbonKit.Controls.RibbonApplicationMenuPaneItem", "RibbonKit.Controls.RibbonApplicationMenuButton",
+            }) builder.AddCustomAttributes(type, new FeatureAttribute(typeof(RibbonFileContextMenuProvider)));
+            builder.AddCustomAttributes("RibbonKit.Controls.RibbonMessageBar", new FeatureAttribute(typeof(RibbonMessageBarContextMenuProvider)));
 
             // Group: add command/option controls + reorder/delete the group.
             builder.AddCustomAttributes(
                 RibbonGroupType,
+                new DefaultSizeAttribute(DefaultSizeMode.None),
+                new FeatureAttribute(typeof(RibbonTabsPlacementAdapter)),
                 new FeatureAttribute(typeof(RibbonGroupContextMenuProvider)));
+
+            builder.AddCustomAttributes("RibbonKit.Controls.RibbonComboBox", new DefaultSizeAttribute(DefaultSizeMode.None));
 
             // Leaf controls: reorder/delete within their group. One provider serves every
             // registered leaf type (it acts on the current selection).
@@ -78,6 +96,11 @@ internal sealed class Metadata : IProvideAttributeTable
             builder.AddCustomAttributes(RibbonTextBoxType, controlProvider);
             builder.AddCustomAttributes(RibbonSplitButtonType, controlProvider);
             builder.AddCustomAttributes(RibbonDropDownButtonType, controlProvider);
+            foreach (string type in new[]
+            {
+                "RibbonKit.Controls.RibbonComboBox", "RibbonKit.Controls.RibbonGallery", "RibbonKit.Controls.InRibbonGallery",
+                "RibbonKit.Controls.RibbonScrollBar", "RibbonKit.Controls.RibbonGroupSeparator",
+            }) builder.AddCustomAttributes(type, controlProvider);
 
             // Toolbox drops run their own creation transaction. Use the same
             // persisted defaults as the editor/context-menu creation paths.
@@ -87,6 +110,17 @@ internal sealed class Metadata : IProvideAttributeTable
                 RibbonButtonType, RibbonToggleButtonType, RibbonSplitButtonType, RibbonDropDownButtonType,
                 "RibbonKit.Controls.RibbonComboBox", "RibbonKit.Controls.RibbonGallery", "RibbonKit.Controls.InRibbonGallery",
             }) builder.AddCustomAttributes(type, simplifiedInitializer);
+
+            var itemInitializer = new FeatureAttribute(typeof(RibbonItemDefaultInitializer));
+            foreach (string type in new[]
+            {
+                RibbonGroupType, BackstageType, ApplicationMenuType,
+                RibbonCheckBoxType, RibbonRadioButtonType, RibbonTextBoxType,
+                "RibbonKit.Controls.BackstageTabItem", "RibbonKit.Controls.RibbonMenuItem", "RibbonKit.Controls.RibbonGalleryItem",
+                "RibbonKit.Controls.RibbonApplicationMenuItem", "RibbonKit.Controls.RibbonApplicationMenuPaneItem",
+                "RibbonKit.Controls.RibbonApplicationMenuButton",
+                "RibbonKit.Controls.RibbonMessageBar", "RibbonKit.Controls.RibbonMessage",
+            }) builder.AddCustomAttributes(type, itemInitializer);
 
             // Properties-window categories + descriptions for the main controls.
             PropertyMetadata.Register(builder);

@@ -310,3 +310,36 @@ artifacts were preserved by validating the current package pair in a separate
 input feed. No runtime, Showcase or public API changes were needed for these
 repairs. Physical mixed-monitor, native input/IME and designer acceptance remain
 separate; current reported appearance acceptance is recorded only in the plan.
+
+### 3.260 Stable lower QAT and contextual selection geometry — 2026-10-16
+
+Flat's bordered dropdown/split templates made a lower QAT with plain buttons grow
+when menu-style commands were added. Flat light/dark now reserve the existing
+32-DIP QatExtenderMinHeight, matching Crystal's established approach. The minimum
+leaves larger authored content and Touch targets free to grow. Proxy ownership,
+bindings, command behavior, panel clips and shadows are unchanged.
+
+A newly merged contextual header animates its render transform without changing
+layout size. The shared tab marker could keep the first sampled entrance Y after
+the header finished. RibbonTabControl now compares its selected header's geometry
+on rendering ticks while loaded; changed geometry refreshes marker and connected
+notch. Stable geometry does not replace the ordinary selection-glide clock.
+Unloading removes the static rendering subscription. No fixed animation delay,
+public API or Showcase-specific positioning is involved.
+
+The independent consumer covers both repairs across three palettes, light/dark,
+direction and density, including simulated Touch DPI, menu-style QAT additions/
+removals, repeated merge and entrance/rest samples. Actual Showcase Chart Tools
+captures verify the three pill themes. During full validation, a sequential
+transition regression needed an event-based terminal wait rather than one fixed
+single-transition interval; the consumer's old all-non-Crystal-zero minimum-height
+assertion also needed Flat's intentional reserve. Full-run results, continuations,
+visual approval decisions and native limits belong to
+[the active gates](../../18-HOST-LAYOUT-TRANSITION-PLAN.md#post-review-geometry-repairs-and-full-validation--2026-10-17).
+
+The full consumer's measured 20-minute limit expired during the final overflow
+matrix; the future bound is 30 minutes. Explicit continuations retain completed
+scopes rather than rerunning the large prefix. Sixteen Flat approvals were reviewed
+for the intentional lower-row reserve, including state scenes and the message bar
+behind File menus. Their menu paint/state and command scale did not change.
+The two previously open Crystal QAT comparisons were left untouched.

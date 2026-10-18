@@ -44,7 +44,13 @@ public sealed class CrystalMainWindowPresentationTests
             Assert.Contains(qat, registrations.Keys);
             qat.IsDropDownOpen = true;
             Sta.Drain(); window.UpdateLayout(); Sta.Drain();
-            Assert.IsType<DrawingBrush>(Assert.IsAssignableFrom<Border>(qat.Template.FindName("PART_MenuHost", qat)).Background);
+            var qatHost = Assert.IsAssignableFrom<Border>(qat.Template.FindName("PART_MenuHost", qat));
+            var capturedPaint = Assert.IsType<DrawingBrush>(qatHost.Background);
+            // Borrowing and restoring another menu's leaf items raises collection
+            // notifications too. Discovery must not recapture an unchanged open menu.
+            initial.Items.Add(new RibbonMenuItem { Header = "Another command" });
+            Sta.Drain(); window.UpdateLayout(); Sta.Drain();
+            Assert.Same(capturedPaint, qatHost.Background);
             qat.IsDropDownOpen = false;
 
             var later = DropDown("Added later");

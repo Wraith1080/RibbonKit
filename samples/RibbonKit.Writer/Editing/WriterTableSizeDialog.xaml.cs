@@ -5,6 +5,8 @@ using System.Windows.Controls;
 namespace RibbonKit.Writer.Editing;
 
 /// <summary>Accessible, fixed-size entry dialog for table dimensions outside the quick gallery.</summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public partial class WriterTableSizeDialog : Window
 {
     private bool _initialized;

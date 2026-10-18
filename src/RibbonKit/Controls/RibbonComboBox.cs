@@ -189,15 +189,13 @@ public class RibbonComboBox : ComboBox
     {
         base.OnDropDownOpened(e);
 
-        // Fade + unfold on the DropdownMenu timing (130ms). Driven from code rather than a
+        // Fade + inner-content slide on the configured DropdownMenu timing. Driven from code rather than a
         // template storyboard because the duration comes from RibbonAnimation via DynamicResource,
         // and a templated storyboard referencing one cannot be frozen.
         //
-        // ⚠ This popup is why PlayFlyoutOpen scales instead of sliding. ComboBox MANAGES its own
-        // PART_Popup, and unlike a plain Popup it does not compensate for the child's margin — so
-        // the headroom a slide needs displaced the drop-down here while leaving the drop-down
-        // BUTTON's flyout correct, and no single margin/offset pair fitted both. A scale from
-        // below 1 never leaves its resting bounds, so the template's geometry is untouched. §3.42.
+        // ComboBox manages PART_Popup and does not compensate for its child's margin like a
+        // plain Popup. Keep the surface fixed and move only its content inside the existing
+        // padding; extra headroom/offset compensation broke anchors across popup kinds (§3.42).
         RibbonMotion.PlayFlyoutOpen(_popupRoot, RibbonAnimationAction.DropdownMenu);
     }
 

@@ -20,6 +20,8 @@ namespace RibbonKit.Controls;
 [TemplatePart(Name = MinimizeButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = MaximizeRestoreButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = CloseButtonPartName, Type = typeof(ButtonBase))]
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class MdiChild : ContentControl
 {
     private const string DragThumbPartName = "PART_DragThumb";
@@ -600,7 +602,12 @@ public class MdiChild : ContentControl
 
             // Release the transform once settled so the child renders (and hit-tests)
             // untransformed between transitions.
-            toZero.Completed += (_, _) => SetCurrentValue(RenderTransformProperty, null);
+            toZero.Completed += (_, _) =>
+            {
+                if (!ReferenceEquals(RenderTransform, group)) return;
+                SetCurrentValue(RenderTransformProperty, null);
+                RibbonMotion.RefreshSettledText(this);
+            };
 
             scale.BeginAnimation(ScaleTransform.ScaleXProperty, toIdentity);
             scale.BeginAnimation(ScaleTransform.ScaleYProperty, toIdentity);

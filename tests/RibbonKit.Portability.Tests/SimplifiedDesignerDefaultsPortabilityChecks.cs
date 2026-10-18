@@ -22,6 +22,7 @@ internal static class SimplifiedDesignerDefaultsPortabilityChecks
             "RibbonComboBox", "RibbonGallery", "InRibbonGallery" };
         try
         {
+            VerifyStarterStructures();
             foreach (var theme in new[] { RibbonTheme.Office2010, RibbonTheme.Office2024Flat, RibbonTheme.CrystalLight })
             foreach (var direction in new[] { FlowDirection.LeftToRight, FlowDirection.RightToLeft })
             foreach (var size in new[] { RibbonControlSize.Medium, RibbonControlSize.Small })
@@ -29,7 +30,9 @@ internal static class SimplifiedDesignerDefaultsPortabilityChecks
                 ThemeManager.Apply(application, theme);
                 string commands = string.Join("", types.Select(type =>
                     $"<rk:{type} Header=\"{type}\" Icon=\"{{StaticResource Glyph}}\" rk:Ribbon.CommandId=\"{type}\" "
-                    + $"rk:Ribbon.SimplifiedPlacement=\"Inline\" rk:Ribbon.SimplifiedSize=\"{size}\" />"));
+                    + (type == "RibbonComboBox" ? "InputWidth=\"130\" " : "")
+                    + $"rk:Ribbon.SimplifiedPlacement=\"Inline\" rk:Ribbon.SimplifiedSize=\"{size}\">"
+                    + StarterChild(type) + $"</rk:{type}>"));
                 string xaml = "<rk:Ribbon xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" "
                     + "xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" xmlns:rk=\"urn:ribbonkit\" LayoutMode=\"Simplified\" SelectedIndex=\"0\">"
                     + "<rk:Ribbon.Resources><DrawingImage x:Key=\"Glyph\"><DrawingImage.Drawing>"
@@ -52,6 +55,11 @@ internal static class SimplifiedDesignerDefaultsPortabilityChecks
                     {
                         Assert.Equal(RibbonSimplifiedPlacement.Inline, source.ReadLocalValue(Ribbon.SimplifiedPlacementProperty));
                         Assert.Equal(size, source.ReadLocalValue(Ribbon.SimplifiedSizeProperty));
+                        if (source is RibbonComboBox combo)
+                        {
+                            Assert.Equal(130d, combo.InputWidth);
+                            Assert.Equal(DependencyProperty.UnsetValue, combo.ReadLocalValue(FrameworkElement.WidthProperty));
+                        }
                         var copy = Assert.IsAssignableFrom<Control>(toolbar.Items.OfType<FrameworkElement>()
                             .Single(item => ReferenceEquals(Ribbon.GetQuickAccessSource(item), source)));
                         var medium = Assert.IsAssignableFrom<FrameworkElement>(copy.Template.FindName("MediumLayout", copy));
@@ -60,6 +68,12 @@ internal static class SimplifiedDesignerDefaultsPortabilityChecks
                         Assert.Equal(size == RibbonControlSize.Small ? Visibility.Visible : Visibility.Collapsed, small.Visibility);
                         Assert.Equal(direction, copy.FlowDirection);
                         Assert.True(copy.ActualWidth > 0);
+                        if (source is ItemsControl container && StarterChild(source.GetType().Name).Length > 0)
+                        {
+                            Assert.Single(container.Items);
+                            if (container.Items[0] is RibbonMenuItem menuItem) Assert.Equal("Menu Item", menuItem.Header);
+                            else Assert.Equal("Item", Assert.IsAssignableFrom<ContentControl>(container.Items[0]).Content);
+                        }
                     }
                     var unconfigured = Assert.IsType<RibbonButton>(group.Items[types.Length]);
                     Assert.Equal(RibbonSimplifiedPlacement.Overflow, Ribbon.GetSimplifiedPlacement(unconfigured));
@@ -73,6 +87,50 @@ internal static class SimplifiedDesignerDefaultsPortabilityChecks
             }
         }
         finally { RibbonAnimation.GlobalLevel = level; }
+    }
+
+    private static string StarterChild(string type) => type switch
+    {
+        "RibbonComboBox" => "<ComboBoxItem Content=\"Item\" />",
+        "RibbonGallery" or "InRibbonGallery" => "<rk:RibbonGalleryItem Content=\"Item\" />",
+        "RibbonSplitButton" or "RibbonDropDownButton" => "<rk:RibbonMenuItem Header=\"Menu Item\" />",
+        _ => "",
+    };
+
+    private static void VerifyStarterStructures()
+    {
+        var ribbon = Assert.IsType<Ribbon>(XamlReader.Parse("""
+            <rk:Ribbon xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:rk="urn:ribbonkit">
+              <rk:Ribbon.MessageBar><rk:RibbonMessageBar><rk:RibbonMessage Title="Notification" Message="Message text" /></rk:RibbonMessageBar></rk:Ribbon.MessageBar>
+              <rk:Ribbon.QuickAccessItems><rk:RibbonButton Header="Button" Size="Small" /></rk:Ribbon.QuickAccessItems>
+              <rk:Ribbon.Backstage><rk:Backstage><rk:BackstageTabItem Header="Info" /></rk:Backstage></rk:Ribbon.Backstage>
+              <rk:Ribbon.ApplicationMenu><rk:RibbonApplicationMenu>
+                <rk:RibbonApplicationMenuItem Header="New Command" />
+              </rk:RibbonApplicationMenu></rk:Ribbon.ApplicationMenu>
+              <rk:Ribbon.Tabs><rk:RibbonTab Header="Home"><rk:RibbonTab.Groups><rk:RibbonGroup Header="Group">
+                <StackPanel><rk:RibbonScrollBar /><rk:RibbonGroupSeparator /></StackPanel>
+              </rk:RibbonGroup></rk:RibbonTab.Groups></rk:RibbonTab></rk:Ribbon.Tabs>
+            </rk:Ribbon>
+            """));
+        var tab = Assert.Single(ribbon.Tabs);
+        Assert.Equal("Home", tab.Header);
+        var group = Assert.Single(tab.Groups);
+        Assert.Equal("Group", group.Header);
+        Assert.Equal(DependencyProperty.UnsetValue, group.ReadLocalValue(FrameworkElement.WidthProperty));
+        Assert.Equal("Message text", Assert.IsType<RibbonMessage>(Assert.Single(ribbon.MessageBar!.Items.Cast<object>())).Message);
+        Assert.Equal("Button", Assert.IsType<RibbonButton>(Assert.Single(ribbon.QuickAccessItems)).Header);
+        var backstage = Assert.IsType<Backstage>(ribbon.Backstage);
+        Assert.Equal("Info", Assert.IsType<BackstageTabItem>(Assert.Single(backstage.Items.Cast<object>())).Header);
+        var menu = Assert.IsType<RibbonApplicationMenu>(ribbon.ApplicationMenu);
+        var command = Assert.IsType<RibbonApplicationMenuItem>(Assert.Single(menu.Items.Cast<object>()));
+        Assert.Equal("New Command", command.Header);
+        Assert.Null(command.Content);
+        var panel = Assert.IsType<StackPanel>(Assert.Single(group.Items.Cast<object>()));
+        Assert.IsType<RibbonScrollBar>(panel.Children[0]);
+        Assert.IsType<RibbonGroupSeparator>(panel.Children[1]);
+        Assert.Empty(new Ribbon().Tabs);
+        Assert.Empty(new RibbonComboBox().Items);
+        Assert.Empty(new RibbonApplicationMenu().Items);
     }
 
     private static IEnumerable<DependencyObject> Descendants(DependencyObject parent)

@@ -26,6 +26,8 @@ namespace RibbonKit.Writer;
 /// <summary>
 /// The Writer editing surface hosted by the ribbon shell.
 /// </summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public partial class MainWindow : RibbonWindow
 {
     public WriterShellViewModel Shell { get; }

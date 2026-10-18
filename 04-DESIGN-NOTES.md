@@ -995,6 +995,44 @@ technical evidence warrants them; preserve existing dated records.
 
 [End-of-feature enabled-state, style-scope and QAT navigation repairs](docs/history/library/14-simplified-ribbon.md#end-of-feature-validation-repairs--2026-10-14).
 
+### 3.256 Ribbon capability and user-operation policy — 2026-10-15
+
+[Default-true capability, independent user permissions, binding preservation and locked import scopes](docs/history/library/15-feature-availability.md#3256-ribbon-capability-and-user-operation-policy--2026-10-15).
+
+### 3.257 Toolbox definitions and discovery metadata — 2026-10-15
+
+[Reviewed authoring list, separate package/project discovery, metadata contracts and cache/deployment pitfalls](docs/history/library/02-designer-and-context-menus.md#3257-toolbox-definitions-and-discovery-metadata--2026-10-15).
+
+### 3.258 Dropdown opener paint precedes native popup creation — 2026-10-15
+
+[Preserve pressed feedback through dropdown and split-button opening](docs/history/library/04-office2007-and-popup-motion.md#3258-dropdown-opener-paint-precedes-native-popup-creation--2026-10-15).
+[Current acceptance](docs/09-FUTURE-THEMES-PLAN.md#colored-qat-split-and-dropdown-states).
+
+### 3.259 Ribbon-owned lifecycle and QAT relocation presentation — 2026-10-16
+
+[Shared start/progress, inert QAT relocation and optional application content animation](docs/history/library/16-host-layout-transitions.md#3259-ribbon-owned-lifecycle-and-qat-relocation-presentation--2026-10-16).
+
+### 3.260 Stable lower QAT and contextual selection geometry — 2026-10-16
+
+[Reserve Flat's lower row and follow contextual header entrance geometry](docs/history/library/13-flat-theme-variants.md#3260-stable-lower-qat-and-contextual-selection-geometry--2026-10-16).
+
+### 3.261 Foreground stays outside decorative shadow effects — 2026-10-17
+
+[Separate shared chrome from text in resting and animated presentations](docs/history/library/16-host-layout-transitions.md#3261-foreground-stays-outside-decorative-shadow-effects--2026-10-17).
+
+### 3.262 Refresh popup text when opening motion settles — 2026-10-17
+
+[Native delayed-sharpening reproduction and one completion text redraw](docs/history/library/04-office2007-and-popup-motion.md#3262-refresh-popup-text-when-opening-motion-settles--2026-10-17).
+[Current acceptance](docs/12-RIBBONKIT-WRITER-CONSUMER-FRICTION-LOG.md#rkwf-049--popup-text-sharpens-after-opening).
+
+### 3.263 Shared text refresh after control animation — 2026-10-17
+
+[Shared completion repaint for ribbon text, including both tab layouts](docs/history/library/04-office2007-and-popup-motion.md#3263-shared-text-refresh-after-control-animation--2026-10-17).
+
+### 3.264 Stable caption and content paint during layout transitions — 2026-10-18
+
+[Continuous caption paint, transparent-header gap coverage and application card decoration](docs/history/library/16-host-layout-transitions.md#3264-stable-caption-and-content-paint-during-layout-transitions--2026-10-18).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.
@@ -1024,14 +1062,14 @@ technical evidence warrants them; preserve existing dated records.
 - **Simplified ribbon:** layout/customization evidence and remaining acceptance are in the
   [active plan](docs/15-SIMPLIFIED-RIBBON-PLAN.md#delivery-and-acceptance).
 
-- **Ribbon feature availability:** proposed persistent capability switches are in
+- **Ribbon feature availability:** capability/user-policy implementation and current evidence are in
   the [design plan](docs/16-RIBBON-FEATURE-AVAILABILITY-PLAN.md).
 
 - **Toolbox item definitions:** the follow-on inventory, authoring and package
   review is in the [design plan](docs/17-TOOLBOX-ITEM-DEFINITION-PLAN.md).
 
-- **Ribbon/host animation synchronization:** layout, density and QAT placement
-  hooks follow the Toolbox plan; see the [design plan](docs/18-HOST-LAYOUT-TRANSITION-PLAN.md).
+- **Ribbon/host animation synchronization:** shared lifecycle, QAT relocation and
+  application examples are tracked in the [active plan](docs/18-HOST-LAYOUT-TRANSITION-PLAN.md).
 
 - **Office 2024 Flat:** implementation and visual review status are in the
   [flat theme trial](docs/09-FUTURE-THEMES-PLAN.md#office-2024-flat-trial).

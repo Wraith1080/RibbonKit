@@ -483,3 +483,289 @@ already-disabled-at-creation case, and — the one that guards the design —
 two writes while the other four still pass. The overflow hop is NOT unit-tested: entries are only
 built inside `OnOverflowOpened`, which needs the popup and panel template parts, and the harness
 deliberately never opens a real popup. It is on the manual checklist instead.
+
+### 3.258 Dropdown opener paint precedes native popup creation — 2026-10-15
+
+The reported recording showed dropdown openers briefly losing their pressed paint.
+Both shared dropdown/split templates bound `Popup.IsOpen` directly to the owner's
+`IsDropDownOpen`. A toggle's two-way source update could create the native popup
+before its own `IsChecked` value and template triggers had finished updating.
+The popup placement callback reproduced the stale, unchecked opener; checking only
+at `Popup.Opened` missed the defect because the state had settled by then.
+
+The initial correction bound both popups two-way to `PART_Toggle.IsChecked`. The toggle retained its
+two-way binding to the public owner property. This orders pressed paint before
+native popup creation without a timer, dispatcher delay, animation change or API
+addition. Closing the popup still updates the toggle and public property. This
+binding arrangement was superseded by the follow-up below.
+
+`DropDownPressedVisualTests` samples checked state and background/border brushes
+during native placement, across dropdowns and horizontal/vertical split buttons
+in Office 2007, 2010, 2024, Flat and Crystal. It also covers native popup close,
+programmatic opening, click closing, rapid reopen and binding retention. The
+original bindings failed the opening check for both dropdown and split controls.
+Record observations in the callback and assert afterwards: WPF binding evaluation
+can swallow exceptions raised inside placement callbacks.
+
+Debug evidence: 79 focused runtime cases passed (pressed visuals, menu borrowing,
+split hover, QAT overflow, focus and dismissal). The independent consumer's
+`QatCommandInteraction` scope passed, including transient opener paint for dropdown
+and split copies in all three QAT placements and LTR/RTL. The two selected Office
+2024 default/RTL 100% visual scenes passed. Crystal's below-QAT 100% scene differed
+from its approval by 5,551 significant pixels; actual/diff images were inspected.
+Rebuilding with the original popup bindings produced the exact same actual PNG
+(SHA-256 `03FE9E96B54D2BE62FA9812D34C0E33014D939F1B816C59D56177494330BEB17`).
+Approvals remain unchanged; the later selected Crystal 200%/RTL scenes were not
+reached. This is not a clean five-scene comparison or full-suite result.
+
+Normal Debug runtime builds for net8/net9 and Showcase passed with zero warnings
+or errors. The initial build encountered a Visual Studio lock on the design-tools
+deployment copy; subsequent runtime/consumer builds used `BuildProjectReferences=false`
+with existing design outputs and the explicitly rebuilt runtime. Physical mouse
+review of the corrected build, mixed-monitor/DPI and reduced-motion acceptance
+were not performed.
+
+**First-open latency follow-up — 2026-10-16.** The user reported a first-open
+slowdown, amplified under the Visual Studio debugger, after the initial correction.
+They confirmed that the intermediate version restoring the direct owner binding
+was fast, including under Visual Studio, while its incomplete paint wiring still
+flickered. This is evidence for that intermediate version, not acceptance of the
+completed correction or proof that all popup content had been rendered eagerly.
+
+The shared dropdown/split popups again bind directly to the owner's
+`IsDropDownOpen`. Its change callback synchronously updates an internal paint-only
+`RibbonPopupInteraction.IsOpen` flag on `PART_Toggle`; shared neutral/colored open
+triggers and the split companion trigger use that flag. An ordinary owner binding
+also initializes the flag when the control is initially open or retemplated.
+Native popup creation no longer depends on the opener's checked-state binding.
+There is no content prewarming, dispatcher delay, timer, animation change or public
+API addition. The capture and host integration paths are unchanged.
+
+Do not synchronize `ToggleButton.IsChecked` itself from the owner's source-update
+callback: a bound-owner regression observed four `Checked` notifications for three
+openings. Updating paint alone preserves the original input/notification path.
+The placement regression now verifies owner opening intent and the same pressed
+background/border brushes before native creation, plus the settled checked state;
+it does not require the in-progress toggle transfer to finish first. Added coverage
+checks initially open dropdown/split controls, external owner bindings, native
+close and exactly one checked/unchecked notification per transition.
+
+Final Debug evidence is assembled from 70 focused runtime cases (16 opening/paint
+checks and 54 initially-open, borrowing, QAT overflow, combo/gallery projection,
+dismissal and captured-backdrop cases). The independent consumer's
+`QatCommandInteraction` and `ColoredQat` scopes both passed. Four selected visual
+scenes passed unchanged: Office 2024 default/RTL 100% and Flat light/dark states
+100%. The earlier Crystal approval discrepancy above was not rerun or reapproved.
+Normal Debug runtime net8/net9 and Showcase builds passed. Subsequent user review
+still reported noticeable first-open lag; this is not accepted as resolved. Full-suite,
+mixed-monitor/DPI and reduced-motion acceptance are not claimed.
+
+The animation check found no completion callback or synchronous wait gating
+dropdown creation. In fresh-process Debug diagnostics using the main Showcase
+content and Crystal QAT Select copy, the default click returned at approximately
+46 ms with the native popup open and its surface opacity still zero. Disabling
+only Hover returned at approximately 47 ms, again at zero opacity; disabling only
+DropdownMenu returned at approximately 40 ms with opacity one. These single-run
+diagnostic timings are not performance thresholds or live Visual Studio evidence.
+The authored dropdown fade starts fully transparent and lasts 130 ms at Subtle
+(182 ms at Expressive), so first-frame/rendering delay can leave an already-open
+popup invisible. Whether that explains the user's remaining lag is unconfirmed;
+the requested live No Motion comparison separates visibility from opening latency.
+The user subsequently confirmed unchanged delay with No Motion, and CPU spikes
+on each opening under Visual Studio. Motion duration is not the remaining explanation.
+
+**CPU follow-up — 2026-10-16.** Native mouse openings were traced with Visual Studio
+attached, in Flat and Crystal. The managed path reaches native popup creation and
+WPF render synchronization; Crystal also performs its optional host snapshot/blur.
+Do not attribute UI Automation bounding-rectangle work from inspection to ordinary
+opening. First-render diagnostics also ran before `Popup.Opened` and before queued
+capture, so delaying capture cannot be claimed to fix first presentation. Neither
+the motion policy nor capture queue priority was changed.
+
+One independent source of redundant work was reproduced and corrected:
+`CrystalMainWindowPresentation` re-enabled every existing capture registration on
+every discovered collection change, including QAT menu borrowing/restoration.
+Discovery now enables only new registrations; an explicit palette application
+refreshes existing registrations. Their own load/template/geometry tracking remains
+active. A regression changes a different closed menu while a captured QAT menu is
+open and verifies its unchanged captured brush survives. It fails with the former
+re-enable loop and passes with the correction. Normal Debug Showcase build passed
+with zero warnings/errors, and the four capture/presentation regressions passed.
+The separate first-open latency remains unresolved: controlled diagnostic timings
+did not establish its removal by suppressing opener paint or by this discovery
+correction. A deeper Windows CPU recording was unavailable because the process
+lacked profiling privileges (`0xc5585011`). A subsequent Visual Studio CPU Usage
+recording of three native Flat QAT openings is saved locally under
+`TestResults/dropdown-flicker/VS-dropdown-cpu.diagsession`. Its unresolved WPF/native
+symbols and automation overhead do not identify the remaining cause; a resolved
+call tree for the user's spike is still needed. No full-suite or final native
+acceptance is claimed.
+No animation policy or duration was changed during this check.
+
+**Plugged-in revision comparison — 2026-10-16.** With the user's authorization,
+the current work was committed as local checkpoint `715469b`. The checkout was
+temporarily switched among that checkpoint, `2f10894` (before the flicker fix),
+and `0263e7a` (the initial fix). AC power/charging and the unchanged Balanced
+scheme were confirmed. Normal Debug outputs were rebuilt for each revision;
+three fresh processes per version/theme exercised the same main Showcase QAT
+Select copy in Crystal and Flat, outside Visual Studio without UI inspection.
+Eighteen diagnostic runs covered 234 openings. Each first-open sample followed
+500 ms of startup settling; twelve subsequent openings per process held the
+menu for 200 ms with Subtle motion, then closed for 50 ms. The actual toggle
+click path was invoked synthetically; this is not a native mouse/VS acceptance.
+
+Median first click elapsed times for original/initial/current were 31.17/31.85/
+35.08 ms in Crystal and 27.22/31.81/32.09 ms in Flat. Median per-process mean
+warm opening CPU times were 109.38/110.68/98.96 ms and 80.73/91.15/93.75 ms,
+respectively. CPU covers all process threads throughout each 200-ms opening
+interval, including render, focus, animation and capture; first CPU samples have
+coarse accounting increments. Warm CPU ranges overlap between original and
+current. Flat's approximately 4.5-ms increase in warm click elapsed time is not
+claimed to be zero regression. These conditions did not reproduce the reported
+large added delay; a CPU spike also exists in the original implementation.
+Earlier battery/inspection-heavy timings used different conditions and cannot
+establish a causal power-source improvement. Raw revision-stamped readings,
+protocol and aggregates are under `TestResults/dropdown-flicker/cpu-comparison/`.
+The temporary probe was removed and `codex/api-and-component-updates` plus its
+normal current Debug runtime, Showcase and test outputs were restored; all
+comparison/restoration builds had zero warnings/errors. Plugged-in Visual Studio
+native review remains separate. The checkpoint was not pushed.
+
+**Press-time opening replaces the paint flag — 2026-10-16.** The user requested
+reverting the correction and trying another approach. Removed the internal
+`RibbonPopupInteraction.IsOpen` property, its owner-callback synchronization and
+the two template bindings. Open styling again uses ordinary `IsChecked` triggers;
+the popups retain their original direct owner binding. Both opener toggles now
+use WPF `ClickMode.Press`, so existing `IsPressed` paint spans the in-progress
+checked-state transfer. The split primary action retains release semantics. Its
+companion trigger now also follows the arrow's native pressed state, preventing
+the other half from losing its highlight during that same transfer. The separate
+Crystal capture-registration optimization above remains in place.
+
+A temporary native-input diagnostic compared two otherwise identical Flat
+dropdowns with press versus release activation. Original release activation
+reached native placement and `Popup.Opened` with both `IsPressed=false` and
+`IsChecked=false`, and hover paint. Press activation reached both stages with
+`IsPressed=true`, `IsChecked=false` and the pressed brush; the checked update
+finished afterwards. This confirms the state gap without a dependency on painted
+frames or animation completion. The local trace is
+`TestResults/dropdown-flicker/native-press-state.txt`; the probe was removed.
+Its logging/timestamps are state evidence, not a CPU or presentation-latency
+benchmark. Showcase native mouse open/reclick-close, Escape and Space were checked.
+
+The 15 palette/layout regressions now exercise mouse-down/up handlers with supplied
+press state in their offscreen fixtures. They assert opening before release,
+no second toggle on release, transient arrow/companion brushes, programmatic/native
+close, rapid reopen and bindings. The companion assertion fails without its new
+pressed trigger. Initially-open and external-binding/notification checks remain;
+the independent consumer additionally retains settled accessibility activation.
+Direct automation invocation has no preceding physical press and is no longer
+used as the fixture for mouse-pressed paint during native creation.
+
+Debug evidence is assembled from the final 18 opening/binding cases and 63 related
+focus, dismissal, borrowing, overflow, hover and motion cases. Independent
+`QatCommandInteraction` (all QAT placements, LTR/RTL and transient companion paint)
+and `ColoredQat` scopes passed. Office 2024 default/RTL 100% and Flat light/dark
+states 100% visual scenes passed without approval changes. Normal Debug runtime
+net8/net9 builds passed with zero warnings/errors. Full-suite, a new CPU comparison,
+mixed-monitor/DPI and final user latency/appearance acceptance are not claimed.
+
+**QAT and Simplified overflow review — 2026-10-16.** Both shared overflow templates
+already bind `Popup.IsOpen` directly to `PART_OverflowButton.IsChecked`. They do not
+have the dropdown owner's reentrant two-way source transfer. Twelve focused
+regressions in `OverflowFocusAndUtilityTests` cover both templates in Office 2007,
+2010, 2019, 2024, Flat and Crystal, each with LTR/RTL open/close cycles. Invoking
+without a physical pressed state still observes `IsChecked=true` and the expected
+open background during native placement; Simplified also has its checked border.
+All twelve passed. A temporary RibbonKit-only native-input probe confirmed both
+Flat overflow openers reach placement and `Opened` with `IsPressed=false`,
+`IsChecked=true` and their open paint. QAT re-click closes normally. The local state
+trace is `TestResults/dropdown-flicker/native-overflow-state.txt`; the probe was
+removed. No runtime/template changes were needed, so release activation and
+hold-and-cancel remain available on these two openers. No new CPU/latency benchmark,
+full-suite or mixed-monitor acceptance is implied.
+
+**Overflow press activation follow-up — 2026-10-16.** After the review above, the
+user still reported slow opening and requested applying press activation without
+testing for now. Added `ClickMode.Press` to the QAT overflow and Simplified More
+Commands toggles in their shared templates. Opening starts on mouse-down; the
+existing checked-state popup bindings and visual triggers are unchanged.
+Hold-and-cancel is no longer available on these openers. No build, automated tests
+or live UI checks ran for this change; the earlier release-mode evidence does not
+validate the new input timing or establish a latency improvement.
+
+### 3.262 Refresh popup text when opening motion settles — 2026-10-17
+
+The user clarified that text stays soft after animation has stopped, then sharpens
+later. The preceding shadow separation (§3.261, committed at a97ac75) corrected
+static effect rasterization but did not resolve this temporal symptom.
+
+A WPF 8.0.31 screen-pixel probe reproduced delayed sharpening at opacity 1 and
+content offset 0 on the hardware compositor, display DPI 125%. Three bracketed
+baselines retained 2,797 significant text-pixel differences from the one-second
+frame through at least 250ms; settling occurred around 500ms or later. Clearing
+the held transform clock, fixed hinting and removing the effect did not solve it.
+Invalidating the enclosing border failed; invalidating the visible TextBlocks
+once at rest removed the long delay without overriding authored font modes.
+Offscreen RenderTargetBitmap redraws had hidden the symptom.
+
+PlayFlyoutOpen now requests that single leaf-text redraw at slide completion, or
+fade completion for surfaces without sliding content. It preserves the fixed
+surface/content-slide geometry, clock policy, timing/easing, popup lifetime,
+bindings and text options. It adds no recurring timer or per-frame layout change.
+The ComboBox comment was corrected to describe the existing content slide.
+
+Verification: 32 unique focused runtime cases across the retained popup/pressed
+selection and the final three-case regression selection; this is assembled focused
+evidence. The original new regression fails with the completion redraw removed
+and passes when restored. The independent consumer's native Crystal/Office2024
+first-open/interrupted-reopen captures are byte-identical from their earliest
+settled samples (37–97ms) through one second. An earlier library run could still
+capture the preceding compositor frame around 28ms, then sharp text around 77ms;
+managed completion is not a synchronous screen-presentation guarantee.
+NativeGalleryPopup passed separately. Normal Debug solution and Release runtime
+builds passed with zero warnings/errors, including both runtime TFMs/API/XML checks.
+
+Diagnostic source and native images are retained under TestResults; temporary
+visible-window tests were removed from the projects. No full-suite/package run,
+approval update, actual Writer input-driven acceptance, genuine mixed-monitor DPI
+or OS reduced-motion acceptance is claimed. Current acceptance and log pointers
+belong to [RKWF-049](../../12-RIBBONKIT-WRITER-CONSUMER-FRICTION-LOG.md#rkwf-049--popup-text-sharpens-after-opening).
+
+### 3.263 Shared text refresh after control animation — 2026-10-17
+
+The user extended the popup correction to RibbonKit's other animated text and
+identified tab-body switching as another reproduction. A native RibbonKit-only
+consumer confirmed post-motion changes in both Classic and Simplified. Completion
+refresh now reaches the affected visible render parts, including editable combo
+text and custom text painting, without changing font settings or cadence.
+
+Shared open/slide/fade/translation/KeyTip/scroll helpers request one refresh at
+rest. Density transition disposal and body hold/vector cleanup do so after
+restoring the real presentation. RibbonScrollContentHost and the existing MDI
+state transition have corresponding completion hooks; MDI checks transform
+ownership so a stale or second-axis completion cannot clear newer motion.
+Decoration-only washes, marker travel and orb rotation retain their old behavior.
+
+Do not exclude every RibbonQuickAccessToolBar by type: the Simplified command row
+uses that control with IsSimplified=true and visible labels. Only an actual QAT
+strip is exempt. Refreshing only an ancestor misses glyph renderers; visiting
+visible UIElements also reaches editable/custom text render parts. The pass is
+once per settle, never per frame, and neither changes layout values nor replaces
+bindings, transforms, clips, opacity, command identity or popup anchors.
+
+The user clarified the boundary before completion: application document rendering
+and RichTextBox-specific treatment are outside this fix. Exploratory rich-text
+handling, its tests and changes to host content animators were removed. No font
+rendering-mode pulse or new public API is retained.
+
+Verification: 79 unique focused runtime cases across retained existing and new
+selections. The 12 new cases cover shared completion paths, authored render modes,
+natural bounds and the QAT/Simplified distinction. Native 125% tier-2 WPF 8.0.31
+Classic/Simplified and editable-combo captures stay unchanged from their first
+settled sample through one second; pre-fix tab captures changed well after rest.
+The independent host scope covers all 24 combinations, including QAT movement
+with/without subscribers. Debug/Release solution builds pass with no warnings or
+errors. No new full-suite/package/approval run or physical-input, mixed-monitor,
+OS reduced-motion or actual Writer acceptance is implied. Current acceptance and
+artifact pointers stay in [RKWF-049](../../12-RIBBONKIT-WRITER-CONSUMER-FRICTION-LOG.md#rkwf-049--popup-text-sharpens-after-opening).

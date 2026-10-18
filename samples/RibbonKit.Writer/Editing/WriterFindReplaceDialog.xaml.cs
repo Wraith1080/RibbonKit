@@ -3,6 +3,8 @@ using System.Windows;
 namespace RibbonKit.Writer.Editing;
 
 /// <summary>A small app-owned dialog over the deterministic Writer find/replace service.</summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public partial class WriterFindReplaceDialog : Window
 {
     private readonly WriterFindReplaceService _service;

@@ -1098,6 +1098,38 @@ neutral, Mica and Acrylic highlights in light/dark, including plain-button hover
 fade timing; native material acceptance remains open.
 [Implementation record](history/library/12-keytips-layout-and-validation.md#3244-colored-qat-split-companion-and-legacy-borders--2026-10-11).
 
+Dropdown opener flicker follow-up accepted for now on 2026-10-16. The user confirmed
+the replacement works and accepted opening on mouse press, including the inability
+to hold and move away to cancel the click. They reported the same behavior in
+Microsoft Office. This accepts the interaction in the reviewed build.
+In a further comparison on 2026-10-16, the user reported that the older implementation
+also felt slower than the flickery build and chose to retain the current fix.
+The user identified `fd9c326` (`office 2024 flat and bordered`) as the regression's
+origin on 2026-10-16; no further commit investigation is needed.
+Future revisit noted at the user's request on 2026-10-16: reassess the press-to-open
+tradeoff, especially preserving hold-and-cancel without reintroducing flicker or
+opening lag. Keep the current behavior accepted for now.
+Assembled focused evidence covers 81 runtime cases, the independent consumer's
+`QatCommandInteraction` and `ColoredQat` scopes, and four unchanged Office 2024/Flat
+visual scenes. Native input reproduced the original state gap and the new pressed
+state through popup creation. No measured latency improvement or separate
+Visual Studio-specific acceptance is claimed.
+The broader material/DPI checks above remain open.
+[Correction and comparison evidence](history/library/04-office2007-and-popup-motion.md#3258-dropdown-opener-paint-precedes-native-popup-creation--2026-10-15).
+
+Overflow review on 2026-10-16 found no matching state gap in either QAT overflow or
+Simplified More Commands. The user subsequently reported slow opening and requested
+the same press-to-open behavior without testing for now. Both shared overflow
+toggles now use `ClickMode.Press`, starting opening on mouse-down and giving up
+hold-and-cancel. Their direct checked-state popup bindings remain in place.
+Build, automated and live checks were deferred for this change at the user's
+request; perceived opening speed remains pending review.
+The subsequent authorized host-layout implementation on 2026-10-16 built the
+current templates and passed the affected dropdown/overflow runtime and independent
+consumer checks as part of its assembled validation. This does not establish native
+press/hold behavior, perceived speed, measured latency or Visual Studio acceptance;
+see [host-layout evidence](18-HOST-LAYOUT-TRANSITION-PLAN.md#h3--verification-and-acceptance-2026-10-16).
+
 ## Gallery header and section layout
 
 Implemented 2026-10-11 after the user's legacy dark gallery screenshots. Shared
@@ -1169,6 +1201,14 @@ Native Showcase appearance acceptance for the new caption remains open, includin
 transition timing, live RTL, OS reduced motion and real monitor DPI changes.
 [Implementation record](history/library/12-keytips-layout-and-validation.md#3242-classic-backstage-caption-and-chart-tools-selection--2026-10-11).
 [Icon/title follow-up](history/library/12-keytips-layout-and-validation.md#3243-classic-caption-icon-fade-and-title-continuity--2026-10-11).
+
+Chart Tools marker correction, 2026-10-16: the shared selected-tab marker now
+refreshes when its selected header's rendered geometry changes. This follows
+contextual entrance motion through its final position in Office 2024, Flat and
+Crystal, including remerge; the existing connected-tab notch refreshes with it.
+Stable target geometry leaves ordinary selection-glide clocks alone. Focused
+consumer/Showcase evidence and the requested full validation are recorded in
+[the current geometry gates](18-HOST-LAYOUT-TRANSITION-PLAN.md#post-review-geometry-repairs-and-full-validation--2026-10-17).
 
 ## QAT-only commands after customization
 
@@ -1253,6 +1293,7 @@ Colored QAT commands use corresponding light state outlines.
 | Hover-border concept and split companion | Refined 2026-10-12 by user direction. Neutral ordinary hover borders match their fills; resting state chrome remains invisible. Collapsed groups and launchers follow the same rule. Split-button companions use the same distinct outline as the hovered half, with fill only on the hovered half, including colored QAT surfaces. Checked toggles retain a distinct outline above the hover paint. The independent consumer passed eight palette/density/direction cases plus horizontal/vertical hover in both halves, colored QAT and unchanged size checks. Six existing split-hover runtime cases passed. Four state and two menu-split approvals were updated after inspection; two new horizontal/vertical hover captures were inspected and approved. All 16 selected visual comparisons passed, including unchanged Office/Crystal scenes. Normal Debug Showcase rebuilt with zero warnings/errors. |
 | Soft body shadow | Restored 2026-10-12 by user direction behind the ribbon body, lower QAT and attached message bars, in light/dark modes. Both shared effects use a 12-DIP blur, 1-DIP downward depth and 10% opacity, shallower and fainter than regular 2024. Existing borders, layout and lower-QAT clipping are retained. Eight independent palette/density/direction cases passed, checking the realized body, QAT and message effects. All 26 changed/new captures and current diff diagnostics were inspected before 24 approval updates and two new connected-message approvals. All 34 selected visual comparisons passed: 30 Flat scenes and four unchanged Office/Crystal scenes. Normal Debug Showcase rebuilt with zero warnings/errors. |
 | Split-button separator | Refined 2026-10-12 by user direction for Office 2024 Flat, Office 2010 and Office 2007, both orientations and light/dark. The dropdown half alone paints the shared edge; primary padding preserves the original content inset and outer outline. Crystal retains its existing geometry. Seven focused runtime regressions and both independent consumer scopes (Flat2024 and SplitButtonDensity) passed, including all theme/density/direction combinations at 125/200%, QAT copies, state changes and unchanged sizes. Sixteen captures and two fresh diff diagnostics were inspected before six approval updates and ten new approvals. All 24 selected comparisons passed, including unchanged Office/Crystal references. Normal Debug Showcase built with zero warnings/errors. The user approved the separator appearance on 2026-10-12; final automated evidence is recorded above. |
+| Stable lower-QAT height | Corrected 2026-10-16: Flat light/dark reserve the existing 32-DIP minimum row metric, as Crystal does, so bordered dropdown/split/gallery/group proxies do not enlarge a row initially containing plain buttons. It remains a minimum; Touch targets and larger authored content can grow naturally. Current evidence is in the [geometry gates](18-HOST-LAYOUT-TRANSITION-PLAN.md#post-review-geometry-repairs-and-full-validation--2026-10-17) |
 | Native appearance acceptance | The user confirmed the Backstage content-page border placement and approved the single split separators on 2026-10-12, then authorized full automated validation. This records the reported appearance scope. Exhaustive light/dark, QAT placements, combo boxes, title-color transitions, native DPI/mixed-monitor, reduced-motion, OS IME and Visual Studio designer acceptance remain separate from automated coverage. |
 
 Implementation rationale and verification limits are recorded in

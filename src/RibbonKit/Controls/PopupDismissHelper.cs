@@ -31,6 +31,7 @@ internal sealed class PopupDismissHelper : IDisposable
     private readonly Action? _afterEscape;
     private Window? _window;
     private Ribbon? _quickAccessRibbon;
+    private int _openVersion;
     internal bool DismissedByOutsidePress { get; private set; }
 
     // Moving an open flyout's anchor with a render-only glide would leave its
@@ -59,6 +60,54 @@ internal sealed class PopupDismissHelper : IDisposable
             helper._close();
         }
         CloseNativePopupsWithin(surface);
+    }
+
+    // Deferred QAT relocation must retain the old ownership snapshot even after
+    // reparenting, and must not close a popup opened again by a newer request.
+    internal static Action CaptureDismissalWithin(FrameworkElement surface, Window window)
+    {
+        var stack = OpenStackByWindow.TryGetValue(window, out var open) ? open.ToArray() : [];
+        var owned = stack.Where(helper => helper._getPopup()?.IsOpen == true && BelongsToSurface(helper, surface, stack))
+            .Reverse().Select(helper => (Helper: helper, Popup: helper._getPopup()!, Version: helper._openVersion)).ToArray();
+        var native = new List<Action>();
+        CaptureNative(surface);
+        foreach (var entry in owned) if (entry.Popup.Child is { } child) CaptureNative(child);
+        return () =>
+        {
+            foreach (var close in native) close();
+            foreach (var entry in owned)
+                if (entry.Helper._openVersion == entry.Version && ReferenceEquals(entry.Helper._getPopup(), entry.Popup) && entry.Popup.IsOpen)
+                    entry.Helper._close();
+        };
+
+        void CaptureNative(DependencyObject node)
+        {
+            if (node is ComboBox { IsDropDownOpen: true } combo)
+            {
+                bool closed = false;
+                EventHandler handler = (_, _) => closed = true;
+                combo.DropDownClosed += handler;
+                native.Add(() =>
+                {
+                    combo.DropDownClosed -= handler;
+                    if (!closed && combo.IsDropDownOpen) combo.SetCurrentValue(ComboBox.IsDropDownOpenProperty, false);
+                });
+            }
+            if (node is FrameworkElement { ContextMenu: { IsOpen: true } menu })
+            {
+                bool closed = false;
+                RoutedEventHandler handler = (_, _) => closed = true;
+                menu.Closed += handler;
+                native.Add(() =>
+                {
+                    menu.Closed -= handler;
+                    if (!closed && menu.IsOpen) menu.SetCurrentValue(ContextMenu.IsOpenProperty, false);
+                });
+            }
+            if (node is not (Visual or Visual3D)) return;
+            for (int index = 0; index < VisualTreeHelper.GetChildrenCount(node); index++)
+                CaptureNative(VisualTreeHelper.GetChild(node, index));
+        }
     }
 
     private static bool BelongsToSurface(PopupDismissHelper helper, FrameworkElement surface,
@@ -105,6 +154,7 @@ internal sealed class PopupDismissHelper : IDisposable
     /// <summary>Call from the popup's Opened event.</summary>
     public void OnOpened()
     {
+        _openVersion++;
         OnClosed(); // Defensive: never double-subscribe.
         DismissedByOutsidePress = false;
 

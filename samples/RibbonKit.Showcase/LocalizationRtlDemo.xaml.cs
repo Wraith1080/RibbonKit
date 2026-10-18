@@ -1,7 +1,9 @@
 using System.Globalization;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Media;
 using RibbonKit.Controls;
 using RibbonKit.Localization;
@@ -24,10 +26,31 @@ public partial class LocalizationRtlDemo : RibbonWindow
     public LocalizationRtlDemo()
     {
         InitializeComponent();
+        InitializeSelectionPreview();
+        var contentTransition = new ShowcaseContentTransition(DemoRibbon, LabContentSurface);
+        Closed += (_, _) => contentTransition.Dispose();
         _applicationMenu = DemoApplicationMenu;
         DemoRibbon.ApplicationMenu = null;
         _baselineLayout = RibbonCustomizationSerializer.Serialize(DemoRibbon);
         UpdateStatus();
+    }
+
+    private void InitializeSelectionPreview()
+    {
+        // The choices tab starts detached and may move into a group popup.
+        // Explicit sources keep its preview live without Window namescope lookup.
+        RtlFontSelectionText.SetBinding(TextBlock.TextProperty, new Binding("SelectedItem.Content")
+        {
+            Source = RtlFontCombo, Mode = BindingMode.OneWay, StringFormat = "Font: {0}",
+        });
+        RtlStyleSelectionText.SetBinding(TextBlock.TextProperty, new Binding(nameof(RibbonGallery.SelectedValue))
+        {
+            Source = RtlStylesGallery, Mode = BindingMode.OneWay, StringFormat = "Style: {0}",
+        });
+        RtlFontPreviewText.SetBinding(TextBlock.FontFamilyProperty, new Binding("SelectedItem.Content")
+        {
+            Source = RtlFontCombo, Mode = BindingMode.OneWay,
+        });
     }
 
     internal void AttachApplicationSurfaceSource(MainWindow source)

@@ -23,6 +23,8 @@ public enum WriterPreviewViewMode
 /// The page views and print service consume the snapshot's same eagerly materialized paginator.
 /// This avoids reformatting the mutable flow paginator after a viewer has already requested pages.
 /// </remarks>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public sealed class WriterDocumentPreviewView : Grid
 {
     private const double HorizontalChromeAllowance = 48;

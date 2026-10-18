@@ -30,6 +30,8 @@ namespace RibbonKit.Layout;
 /// changes (see <see cref="InvalidateStateCache"/>).
 /// </para>
 /// </remarks>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonGroupsPanel : Panel
 {
     private double[][]? _stateWidths;

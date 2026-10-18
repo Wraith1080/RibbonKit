@@ -104,11 +104,11 @@ internal static class CrystalUtilityPortabilityChecks
             Assert.True(tabScroll.ScrollRightCommand.CanExecute(null));
             tabScroll.ScrollRightCommand.Execute(null);
             Assert.True(tabScroll.Offset > 0);
-            minimize.IsChecked = true;
+            NativeClick(minimize); // The capability policy uses a guarded Click and a OneWay state binding.
             Layout();
             Assert.True(ribbon.IsMinimized);
             Assert.Equal(1, Part<Border>(minimize, "CrystalUtilityRim").Opacity);
-            minimize.IsChecked = false;
+            NativeClick(minimize);
             overflow.IsChecked = true;
             Layout();
             Assert.True(Part<Popup>(qat, "PART_OverflowPopup").IsOpen);

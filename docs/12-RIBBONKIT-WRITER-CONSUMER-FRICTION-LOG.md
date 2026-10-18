@@ -33,6 +33,8 @@ or approve new runtime APIs; first establish the focused reproduction and scope.
   and cold-start checks remain in RKWF-007/009/010.
 - RKWF-008 is a bounded harness allowance, not a product defect.
 - RKWF-026 now uses the available shared glyph hook; only Writer's migrated W live appearance acceptance remains.
+- RKWF-049 has a shared popup-completion correction with native diagnostic evidence;
+  visual acceptance in the actual Writer process remains open.
 
 All other entries below retain corrections, constraints or accepted workarounds.
 No complete Windows contrast-theme, genuine OS IME or production RTL
@@ -273,6 +275,91 @@ draft Cancel, Apply then Cancel, OK, pin persistence/restart, and the existing
 Crystal appearance rollback/persistence contract. No new timing workaround or
 automation gap was introduced. Live visual review/full validation remain open in
 the [active simplified plan](15-SIMPLIFIED-RIBBON-PLAN.md#s7-host-defaults-and-customization-integration--2026-10-14).
+
+### RKWF-048 — Solution Toolbox discovery exposes Writer sample controls
+
+App authoring correction, first reported 2026-10-15 during Toolbox review.
+Visual Studio can discover public Writer visual types from the open solution even
+though the sample is not packable and none are advertised by RibbonKit's package
+manifest. Mark those types with standard ToolboxItem(false) and
+DesignTimeVisible(false) hints; preserve their public visibility and runtime use.
+No control behavior, timing workaround or host integration is added. One focused
+Writer reflection contract passed. Project-reference filtering depends on the
+active Visual Studio host; package consumer validation cannot prove that result.
+Current acceptance stays in
+[Toolbox plan T2c](17-TOOLBOX-ITEM-DEFINITION-PLAN.md#t2c--owner-authoring-and-live-review-corrections-2026-10-15).
+
+### RKWF-049 — Popup text sharpens after opening
+
+Shared correction implemented 2026-10-17; Writer live acceptance remains open. Opening a
+ComboBox or dropdown initially shows soft text that becomes sharper; the delay
+varies from quick to noticeable, including after movement stops. The user's
+clarification concerns animated popup text, not a confirmed document-editor defect.
+
+The earlier WPF 10 offscreen redraw probe did not reproduce the native symptom.
+An actual screen-pixel sequence using WPF 8.0.31, hardware tier 2 and the display's
+125% DPI reproduced soft text at opacity 1/content offset 0 that sharpened roughly
+half a second later. Releasing the completed transform clock, fixed hinting and
+removing the popup effect did not remove that delay. Invalidating only the popup
+border also failed; invalidating its visible TextBlocks once at rest removed the
+long delay in bracketed baseline/fix/baseline comparisons.
+
+PlayFlyoutOpen now requests that text redraw at slide completion, or fade completion
+for a surface without sliding content. No timer, font-mode override or Writer glue
+is added. Existing timing/easing, reduced-motion policy and popup anchors remain.
+The independent consumer's Crystal/Office2024 first-open and interrupted-reopen
+sequences were unchanged from their first captured settled frame through one second;
+those first samples were 37–97ms after managed rest. An earlier verification caught
+the preceding compositor frame at about 28ms, followed by sharp pixels around 77ms:
+this does not promise synchronous screen presentation on the managed callback.
+The three new dropdown/gallery/fade-only regressions cover the redraw request,
+authored font settings, text binding and unchanged bounds; the original regression
+fails when completion redraw is removed. NativeGalleryPopup consumer checks passed.
+
+Current limits: no actual Writer input-driven frame recording, mixed-monitor DPI
+or OS reduced-motion acceptance. The native capture uses programmatic opening in
+a separate consumer, not Writer. Diagnostic source, frames and logs are retained
+under TestResults/native-text-settle and text-settle-*; the temporary visible-window
+probe was removed from both test projects. No snapshot approvals changed.
+Implementation and verification are recorded in
+[§3.262](history/library/04-office2007-and-popup-motion.md#3262-refresh-popup-text-when-opening-motion-settles--2026-10-17).
+The separate static Crystal shadow correction did not solve this temporal symptom;
+its evidence remains in
+[plan 18](18-HOST-LAYOUT-TRANSITION-PLAN.md#post-review-geometry-repairs-and-full-validation--2026-10-17).
+
+**Ribbon control scope expansion — 2026-10-17.** The user also reported the delay
+after changing ribbon tabs. Shared control motion now refreshes the affected
+visible render subtree once at rest: Classic/Simplified tab bodies, opening and
+restored surfaces, Backstage pages, contextual headers, messages, KeyTips, title
+glides, theme fades, ribbon/gallery scrolling and existing MDI state transitions.
+Layout/density drawing cleanup also refreshes the real ribbon presentation.
+Font modes, animation cadence and public APIs are unchanged. Actual icon-only QAT
+strips are exempt; the Simplified row reuses the same toolbar type with visible
+labels and remains eligible. Decorative washes, the tab marker and orb rotation
+do not need text refreshes.
+
+Current evidence: 79 unique focused runtime cases across the 67-case existing
+selection and 12 new completion/exemption cases. The independent native consumer
+reproduced Classic/Simplified text changes after movement stopped, then retained
+unchanged text from its first settled capture through one second with the fix,
+including editable RibbonComboBox text. This is hardware tier 2, WPF 8.0.31 at the
+single display's 125% DPI. Logs and before/after PNGs are under
+TestResults/native-tab-text-settle and text-settle-tab-*. The independent host
+contract covers 24 theme/direction/density/subscriber combinations; its QAT motion
+and optional host-content animation remain separate from text rendering policy.
+Normal Debug/Release solution builds pass with zero warnings/errors, including
+both runtime TFMs/API/XML checks.
+
+The user accepted the improved appearance on 2026-10-18 ("it looks great now").
+This accepts the control-animation text they reviewed, without extending the
+separate native gates below.
+
+The user explicitly limited this text-settle work to RibbonKit controls. Application document
+rendering and RichTextBox-specific handling are excluded; no rendering-hint pulse,
+host content-animator change or RichTextBox-specific test is retained for that fix. Native Writer
+review, physical input, genuine mixed-monitor DPI and OS reduced-motion acceptance
+remain open. No new full-suite/package run or approval update is claimed. The
+implementation record is [§3.263](history/library/04-office2007-and-popup-motion.md#3263-shared-text-refresh-after-control-animation--2026-10-17).
 
 ### Verification note — 2026-09-15 cleanup
 

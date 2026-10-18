@@ -40,6 +40,8 @@ namespace RibbonKit.Controls;
 /// </para>
 /// </remarks>
 [ContentProperty(nameof(Tabs))]
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonMergeSource : FrameworkElement
 {
     private static readonly DependencyPropertyKey TabsPropertyKey =

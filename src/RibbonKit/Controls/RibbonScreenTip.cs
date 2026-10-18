@@ -8,6 +8,8 @@ namespace RibbonKit.Controls;
 /// wrapped description. Created automatically when a control's ScreenTip properties
 /// are set; can also be assigned to any ToolTip property directly.
 /// </summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonScreenTip : ToolTip
 {
     /// <summary>Identifies the <see cref="Title"/> dependency property.</summary>

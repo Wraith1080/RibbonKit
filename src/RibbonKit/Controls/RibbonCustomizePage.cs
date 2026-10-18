@@ -92,7 +92,7 @@ public sealed class RibbonCustomizeNode : INotifyPropertyChanged
         get => Item is RibbonTab tab && tab.Visibility == Visibility.Visible;
         set
         {
-            if (Item is not RibbonTab tab || value == (tab.Visibility == Visibility.Visible))
+            if (!_ribbon.CanUserCustomizeRibbon || Item is not RibbonTab tab || value == (tab.Visibility == Visibility.Visible))
             {
                 return;
             }
@@ -180,6 +180,8 @@ public sealed class RibbonCustomizeNode : INotifyPropertyChanged
 [TemplatePart(Name = ResetButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = ImportButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = ExportButtonPartName, Type = typeof(ButtonBase))]
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonCustomizePage : Control, IRibbonFillPage
 {
     private const string AvailableListPartName = "PART_AvailableList";
@@ -232,12 +234,17 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
     private ButtonBase? _importButton;
     private ButtonBase? _exportButton;
     private RibbonCustomizeNode? _selectedNode;
+    private static readonly DependencyProperty OwnerCustomizationEnabledProperty = DependencyProperty.Register(
+        "OwnerCustomizationEnabled", typeof(bool), typeof(RibbonCustomizePage),
+        new PropertyMetadata(true, (d, _) => d.CoerceValue(IsEnabledProperty)));
+
     private static readonly DependencyProperty OwnerLayoutModeProperty = DependencyProperty.Register(
         "OwnerLayoutMode", typeof(RibbonLayoutMode), typeof(RibbonCustomizePage),
         new PropertyMetadata(RibbonLayoutMode.Classic, (d, _) => d.CoerceValue(IsEnabledProperty)));
 
     private void ObserveLayoutMode()
     {
+        Controls.Ribbon.ObserveUserPermission(this, OwnerCustomizationEnabledProperty, Ribbon, nameof(Controls.Ribbon.CanUserCustomizeRibbon));
         if (Ribbon is null) ClearValue(OwnerLayoutModeProperty);
         else System.Windows.Data.BindingOperations.SetBinding(this, OwnerLayoutModeProperty,
             new System.Windows.Data.Binding(nameof(Controls.Ribbon.LayoutMode)) { Source = Ribbon });
@@ -246,7 +253,8 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
     static RibbonCustomizePage()
     {
         IsEnabledProperty.OverrideMetadata(typeof(RibbonCustomizePage), new UIPropertyMetadata(true, null,
-            (d, value) => (bool)value && ((RibbonCustomizePage)d).Ribbon?.LayoutMode != RibbonLayoutMode.Simplified));
+            (d, value) => (bool)value && ((RibbonCustomizePage)d).Ribbon?.CanUserCustomizeRibbon != false
+                && ((RibbonCustomizePage)d).Ribbon?.LayoutMode != RibbonLayoutMode.Simplified));
         DefaultStyleKeyProperty.OverrideMetadata(
             typeof(RibbonCustomizePage),
             new FrameworkPropertyMetadata(typeof(RibbonCustomizePage)));
@@ -618,6 +626,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
 
     private void OnAddClick(object sender, RoutedEventArgs e)
     {
+        if (!IsEnabled) return;
         if (Ribbon is not { } ribbon
             || _availableList?.SelectedItem is not RibbonCommandEntry entry
             || ResolveTargetCustomGroup() is not { } group)
@@ -650,6 +659,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
 
     private void OnRemoveClick(object sender, RoutedEventArgs e)
     {
+        if (!IsEnabled) return;
         if (Ribbon is not { } ribbon || _selectedNode is not { } node || !CanRemove(node))
         {
             return;
@@ -680,6 +690,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
 
     private void MoveSelected(int delta)
     {
+        if (!IsEnabled) return;
         if (Ribbon is not { } ribbon || _selectedNode is not { } node || !CanMove(node, delta))
         {
             return;
@@ -722,6 +733,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
 
     private void OnNewTabClick(object sender, RoutedEventArgs e)
     {
+        if (!IsEnabled) return;
         if (Ribbon is not { } ribbon)
         {
             return;
@@ -743,6 +755,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
 
     private void OnNewGroupClick(object sender, RoutedEventArgs e)
     {
+        if (!IsEnabled) return;
         if (ResolveTab(_selectedNode) is not { } tab)
         {
             return;
@@ -786,6 +799,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
     /// </summary>
     private void OnEditClick(object sender, RoutedEventArgs e)
     {
+        if (!IsEnabled) return;
         if (Ribbon is not { } ribbon || _selectedNode is not { } node || !CanEdit(node))
         {
             return;
@@ -832,6 +846,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
             return;
         }
 
+        if (!IsEnabled) return;
         ApplyEdit(node, dialog);
         RebuildTree(selectItem: node.Item);
         RebuildAvailableListOnly();
@@ -897,12 +912,13 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
     /// </summary>
     private void OnResetClick(object sender, RoutedEventArgs e)
     {
+        if (!IsEnabled) return;
         if (Ribbon is not { } ribbon || string.IsNullOrEmpty(ResetLayout))
         {
             return;
         }
 
-        RibbonCustomizationSerializer.Apply(ribbon, ResetLayout);
+        RibbonCustomizationSerializer.ApplyUserLayout(ribbon, ResetLayout);
         RebuildAll();
     }
 
@@ -911,6 +927,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
     // can't corrupt the ribbon, but the file read itself is guarded and surfaced as a message box).
     private void OnExportClick(object sender, RoutedEventArgs e)
     {
+        if (!IsEnabled) return;
         if (Ribbon is not { } ribbon)
         {
             return;
@@ -943,6 +960,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
 
     private void OnImportClick(object sender, RoutedEventArgs e)
     {
+        if (!IsEnabled) return;
         if (Ribbon is not { } ribbon)
         {
             return;
@@ -974,7 +992,7 @@ public class RibbonCustomizePage : Control, IRibbonFillPage
 
         // Apply reconciles from any string and ignores unknown/foreign content, so an invalid layout
         // leaves the ribbon usable rather than throwing.
-        RibbonCustomizationSerializer.Apply(ribbon, json);
+        RibbonCustomizationSerializer.ApplyUserLayout(ribbon, json);
         RebuildAll();
     }
 

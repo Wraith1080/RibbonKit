@@ -25,7 +25,8 @@ namespace RibbonKit.Controls;
 /// <remarks>
 /// The flyout popup uses <c>StaysOpen=True</c> plus <see cref="PopupDismissHelper"/>
 /// for light-dismiss, so WPF's popup mouse-capture never interferes with the opener
-/// toggle — the toggle keeps completely standard click semantics.
+/// toggle. The default template uses <see cref="ClickMode.Press"/> to open while
+/// the toggle's pressed visual is active.
 /// </remarks>
 [TemplatePart(Name = MenuHostPartName, Type = typeof(UIElement))]
 [TemplatePart(Name = PopupPartName, Type = typeof(Popup))]
@@ -304,7 +305,6 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
     private static void OnIsDropDownOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var button = (RibbonDropDownButton)d;
-
         if ((bool)e.NewValue)
         {
             button.ReclaimBorrowedMenu();

@@ -250,9 +250,9 @@ public class RibbonTab : TabItem
 
         // A modal tab owns the whole ribbon, so double-click must not minimize it away. The
         // ribbon reverts the change anyway; stopping here keeps the gesture from flickering.
-        if (e.ChangedButton == MouseButton.Left && FindAncestorRibbon() is { IsModal: false } ribbon)
+        if (e.ChangedButton == MouseButton.Left && FindAncestorRibbon() is { IsModal: false, CanUserMinimizeRibbon: true } ribbon)
         {
-            ribbon.IsMinimized = !ribbon.IsMinimized;
+            ribbon.SetCurrentValue(Ribbon.IsMinimizedProperty, !ribbon.IsMinimized);
             e.Handled = true;
         }
     }

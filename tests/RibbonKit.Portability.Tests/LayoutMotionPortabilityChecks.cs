@@ -114,7 +114,7 @@ internal static class LayoutMotionPortabilityChecks
                     }
                     Assert.Equal(1, Body(ribbon).Opacity);
                     Assert.Empty(Holds(Body(ribbon))); Assert.Empty(Scenes(Body(ribbon)));
-                    Assert.False(Assert.IsAssignableFrom<FrameworkElement>(Body(ribbon).Child).HasAnimatedProperties);
+                    Assert.False(Content(ribbon).HasAnimatedProperties);
                 }, DispatcherPriority.Render);
             }
             finally { window.Close(); }
@@ -207,7 +207,7 @@ internal static class LayoutMotionPortabilityChecks
         try
         {
             window.Show(); Layout(window); WaitForRender(window);
-            Border body = Body(ribbon);
+            FrameworkElement body = Body(ribbon);
             Assert.Empty(Scenes(body));
             Assert.False(body.HasAnimatedProperties);
             double previousHeight = body.ActualHeight;
@@ -299,7 +299,7 @@ internal static class LayoutMotionPortabilityChecks
             ribbon.LayoutMode = RibbonLayoutMode.Simplified; Layout(window);
             PumpUntil(() => Scenes(body).Length == 0);
             ribbon.SelectedTab = ribbon.Tabs[0]; Layout(window);
-            var content = Assert.IsAssignableFrom<FrameworkElement>(body.Child);
+            var content = Content(ribbon);
             Assert.True(content.HasAnimatedProperties);
             WaitMilliseconds(40);
             Assert.True(content.HasAnimatedProperties);
@@ -417,14 +417,19 @@ internal static class LayoutMotionPortabilityChecks
         return (window, ribbon);
     }
 
-    private static Border Body(Ribbon ribbon)
+    private static FrameworkElement Body(Ribbon ribbon)
     {
         var tabs = (RibbonTabControl)ribbon.Template.FindName("TabControlHost", ribbon);
-        return (Border)tabs.Template.FindName("ContentHost", tabs);
+        return (FrameworkElement)tabs.Template.FindName("ContentPresentationHost", tabs);
     }
-    private static Adorner[] Scenes(Border body) => AdornerLayer.GetAdornerLayer(body)?.GetAdorners(body)
+    private static FrameworkElement Content(Ribbon ribbon)
+    {
+        var tabs = (RibbonTabControl)ribbon.Template.FindName("TabControlHost", ribbon);
+        return (FrameworkElement)((Border)tabs.Template.FindName("ContentForeground", tabs)).Child;
+    }
+    private static Adorner[] Scenes(FrameworkElement body) => AdornerLayer.GetAdornerLayer(body)?.GetAdorners(body)
         ?.Where(adorner => adorner.GetType().Name == "RibbonLayoutTransition").ToArray() ?? Array.Empty<Adorner>();
-    private static Adorner[] Holds(Border body) => AdornerLayer.GetAdornerLayer(body)?.GetAdorners(body)
+    private static Adorner[] Holds(FrameworkElement body) => AdornerLayer.GetAdornerLayer(body)?.GetAdorners(body)
         ?.Where(adorner => adorner.GetType().Name == "RibbonLayoutHold").ToArray() ?? Array.Empty<Adorner>();
     private static void Layout(Window window)
     { Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle); window.UpdateLayout(); }

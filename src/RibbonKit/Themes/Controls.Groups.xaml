@@ -441,6 +441,7 @@
                     <Grid>
                         <DockPanel LastChildFill="True">
                             <ToggleButton x:Name="PART_OverflowButton" DockPanel.Dock="Right"
+                                          ClickMode="Press"
                                           Width="{DynamicResource RibbonKit.Metrics.SimplifiedMoreButtonWidth}"
                                           Focusable="True" VerticalAlignment="Stretch"
                                           KeyboardNavigation.TabIndex="1"

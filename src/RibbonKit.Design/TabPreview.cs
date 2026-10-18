@@ -56,6 +56,7 @@ internal static class TabPreviewCoordinator
     private static FileSurfacePreview _fileSurface;
     private static ModelItem? _backstage;
     private static int? _backstagePage;
+    private static FilePagePreviewRequest? _pendingFilePage;
 
     /// <summary>The currently previewed tab index, or null when no tab preview is active.</summary>
     public static int? CurrentIndex => _tabIndex;
@@ -96,12 +97,22 @@ internal static class TabPreviewCoordinator
     /// </summary>
     public static void SetFileSurface(ModelItem ribbon, FileSurfacePreview surface)
     {
+        bool changed = !Equals(_ribbon, ribbon) || _fileSurface != surface;
         _ribbon = ribbon;
         _fileSurface = surface;
+        if (!changed) return;
+        _pendingFilePage?.Dispose();
+        _pendingFilePage = null;
+        DesignLog.Write("File preview requested: " + surface);
         // A single invalidation makes the runtime-side transition atomic. Object-valued translations
         // are deliberately avoided: VS 2022 can poison later DesignerModelProperty.Value reads after
         // either null or UnsetValue is returned for ApplicationMenu.
         Invalidate(ribbon, "DesignPreviewFileSurface");
+        if (surface == FileSurfacePreview.Backstage && _backstage is not null
+            && Equals(DesignModel.FindProperty(ribbon, "Backstage")?.Value, _backstage))
+            RefreshBackstagePage(_backstage);
+        else if (surface == FileSurfacePreview.ApplicationMenu)
+            ApplicationMenuPreviewCoordinator.RefreshActiveIndex(ribbon);
     }
 
     /// <summary>True (with the index) when a tab preview is active for <paramref name="ribbon"/>.</summary>
@@ -149,11 +160,27 @@ internal static class TabPreviewCoordinator
         _backstage = backstage;
         _backstagePage = index;
         if (backstage != null)
+            RefreshBackstagePage(backstage);
+    }
+
+    private static void RefreshBackstagePage(ModelItem backstage) =>
+        InvalidateFilePageWhenReady(backstage, FileSurfacePreview.Backstage, () =>
         {
             // Invalidate under both possible declaring types (see SelectorType note above).
             Invalidate(backstage, BackstageType, "SelectedIndex");
             Invalidate(backstage, SelectorType, "SelectedIndex");
-        }
+        });
+
+    internal static void InvalidateFilePageWhenReady(ModelItem item, FileSurfacePreview surface, System.Action apply)
+    {
+        if (_ribbon is null || _fileSurface != surface) return;
+        _pendingFilePage?.Dispose();
+        var ribbon = _ribbon;
+        var view = item.Context.Services.GetRequiredService<ViewService>();
+        _pendingFilePage = new FilePagePreviewRequest(
+            () => Equals(_ribbon, ribbon) && _fileSurface == surface,
+            () => item.View?.IsVisible == true,
+            apply, handler => view.LayoutUpdated += handler, handler => view.LayoutUpdated -= handler);
     }
 
     /// <summary>True (with the index) when a backstage-page preview is active for <paramref name="backstage"/>.</summary>
@@ -179,8 +206,9 @@ internal static class TabPreviewCoordinator
             var pid = new PropertyIdentifier(new TypeIdentifier(declaringTypeName), propertyName);
             item.Context.Services.GetRequiredService<ValueTranslationService>().InvalidateProperty(item, pid);
         }
-        catch
+        catch (System.Exception error)
         {
+            DesignLog.Error("Preview invalidation " + declaringTypeName + "." + propertyName, error);
             // Best-effort: without the service the surface just won't refresh until the next touch.
         }
     }
@@ -320,10 +348,18 @@ internal static class ApplicationMenuPreviewCoordinator
         _index = index;
 
         if (menu != null)
-        {
-            TabPreviewCoordinator.Invalidate(menu, MenuType, "DesignPreviewActiveIndex");
-        }
+            Refresh(menu);
     }
+
+    internal static void RefreshActiveIndex(ModelItem ribbon)
+    {
+        if (_menu is not null && Equals(DesignModel.FindProperty(ribbon, "ApplicationMenu")?.Value, _menu))
+            Refresh(_menu);
+    }
+
+    private static void Refresh(ModelItem menu) =>
+        TabPreviewCoordinator.InvalidateFilePageWhenReady(menu, FileSurfacePreview.ApplicationMenu,
+            () => TabPreviewCoordinator.Invalidate(menu, MenuType, "DesignPreviewActiveIndex"));
 
     public static bool TryGetActiveIndex(ModelItem menu, out int index)
     {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -34,6 +35,8 @@ namespace RibbonKit.Controls;
 [TemplatePart(Name = ApplicationMenuLayerPartName, Type = typeof(Canvas))]
 [TemplatePart(Name = ApplicationMenuPresenterPartName, Type = typeof(ContentPresenter))]
 [TemplatePart(Name = TabHeaderHostPartName, Type = typeof(FrameworkElement))]
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonTabControl : TabControl
 {
     internal const string ApplicationMenuLayerPartName = "ApplicationMenuLayer";
@@ -57,6 +60,7 @@ public class RibbonTabControl : TabControl
     public static readonly DependencyProperty IsBackstageActiveProperty =
         IsBackstageActivePropertyKey.DependencyProperty;
 
+    private ToggleButton? _minimizeToggle;
     private Rectangle? _marker;
     private TranslateTransform? _markerTranslate;
     private Panel? _markerHost;
@@ -71,6 +75,8 @@ public class RibbonTabControl : TabControl
     private FrameworkElement? _tabHeaderHost;
     private bool _selectionVisualsRefreshPending;
     private readonly HashSet<RibbonTab> _observedTabs = [];
+    private RibbonTab? _selectionGeometryTab;
+    private Rect _selectionGeometryBounds;
 
     /// <summary>The realized tab-row surface used to anchor the Office 2010 Backstage.</summary>
     internal FrameworkElement? TabHeaderHost => _tabHeaderHost;
@@ -99,9 +105,48 @@ public class RibbonTabControl : TabControl
         // Keep the marker and the body-border notch under the selected tab when the strip
         // reflows (window resize). These don't fire on tab selection (the strip's own size is
         // unchanged), so they never race the selection glide.
-        SizeChanged += (_, _) => { UpdateMarker(animate: false); UpdateConnectNotch(); };
-        Loaded += (_, _) => { UpdateMarker(animate: false); UpdateConnectNotch(); };
+        SizeChanged += (_, _) => RefreshSelectionVisuals();
+        Loaded += OnSelectionGeometryLoaded;
+        Unloaded += OnSelectionGeometryUnloaded;
         LayoutUpdated += (_, _) => UpdateApplicationMenuPlacement();
+    }
+
+    private void OnSelectionGeometryLoaded(object sender, RoutedEventArgs e)
+    {
+        RefreshSelectionVisuals();
+        CompositionTarget.Rendering -= OnSelectionGeometryRendering;
+        CompositionTarget.Rendering += OnSelectionGeometryRendering;
+    }
+
+    private void OnSelectionGeometryUnloaded(object sender, RoutedEventArgs e)
+    {
+        CompositionTarget.Rendering -= OnSelectionGeometryRendering;
+        _selectionGeometryTab = null;
+    }
+
+    private bool TrySelectionGeometry(out RibbonTab? tab, out Rect bounds)
+    {
+        tab = SelectedItem as RibbonTab; bounds = Rect.Empty;
+        if (tab is not { IsVisible: true, ActualWidth: > 0, ActualHeight: > 0 }) return false;
+        try { bounds = tab.TransformToAncestor(this).TransformBounds(new Rect(tab.RenderSize)); return true; }
+        catch (InvalidOperationException) { return false; } // A merged container can be between trees.
+    }
+
+    private void RememberSelectionGeometry()
+    {
+        if (TrySelectionGeometry(out var tab, out var bounds))
+        { _selectionGeometryTab = tab; _selectionGeometryBounds = bounds; }
+        else _selectionGeometryTab = null;
+    }
+
+    private void OnSelectionGeometryRendering(object? sender, EventArgs e)
+    {
+        // Render-only contextual entrance does not raise SizeChanged or arrange
+        // the marker. Refresh only when its target moved, so a normal selection
+        // glide keeps its own clock and is not canceled on every rendering tick.
+        if (IsVisible && TrySelectionGeometry(out var tab, out var bounds)
+            && (!ReferenceEquals(tab, _selectionGeometryTab) || bounds != _selectionGeometryBounds))
+            RefreshSelectionVisuals();
     }
 
     /// <inheritdoc />
@@ -139,10 +184,26 @@ public class RibbonTabControl : TabControl
         RequestSelectionVisualsRefresh();
     }
 
+    private void OnMinimizeToggleClick(object sender, RoutedEventArgs e)
+    {
+        for (DependencyObject? node = this; node is not null; node = VisualTreeHelper.GetParent(node))
+            if (node is Ribbon ribbon)
+            {
+                if (ribbon.CanUserMinimizeRibbon && !ribbon.IsModal)
+                    ribbon.SetCurrentValue(Ribbon.IsMinimizedProperty, !ribbon.IsMinimized);
+                // OneWay keeps the host state authoritative, including stale clicks after a policy change.
+                _minimizeToggle?.GetBindingExpression(ToggleButton.IsCheckedProperty)?.UpdateTarget();
+                return;
+            }
+    }
+
     /// <inheritdoc />
     public override void OnApplyTemplate()
     {
+        if (_minimizeToggle is not null) _minimizeToggle.Click -= OnMinimizeToggleClick;
         base.OnApplyTemplate();
+        _minimizeToggle = GetTemplateChild("MinimizeToggle") as ToggleButton;
+        if (_minimizeToggle is not null) _minimizeToggle.Click += OnMinimizeToggleClick;
 
         _marker = GetTemplateChild("PART_TabMarker") as Rectangle;
         _markerTranslate = GetTemplateChild("PART_TabMarkerTranslate") as TranslateTransform;
@@ -197,6 +258,7 @@ public class RibbonTabControl : TabControl
         base.OnSelectionChanged(e);
         UpdateMarker(animate: true);
         UpdateConnectNotch();
+        RememberSelectionGeometry();
 
         // Swapping the selected tab replaces the groups row inside the shared content scroller without
         // changing any size, so WPF reuses each level's cached measure and the scroller keeps the
@@ -298,6 +360,7 @@ public class RibbonTabControl : TabControl
         UpdateMarker(animate: false);
         UpdateConnectNotch();
         UpdateApplicationMenuPlacement();
+        RememberSelectionGeometry();
     }
 
     /// <summary>

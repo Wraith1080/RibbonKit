@@ -5,8 +5,9 @@
   — so internal part/host/panel/dialog types are excluded simply by not being listed.
 
   NOTE: this only takes effect when RibbonKit is consumed as a NuGet PACKAGE. In a project-reference
-  setup (e.g. the showcase referencing the RibbonKit project) the designer falls back to reflecting
-  all public controls, so this manifest has no effect there.
+  setup (e.g. the showcase referencing the RibbonKit project) discovery reflects public controls.
+  ToolboxMetadata in RibbonKit.DesignTools supplies matching visibility/category intent there;
+  this manifest itself does not filter project references. Verify the two discovery paths separately.
 -->
 <FileList>
   <File Reference="RibbonKit.dll">
@@ -28,16 +29,13 @@
       <Item Type="RibbonKit.Controls.RibbonComboBox" />
       <Item Type="RibbonKit.Controls.RibbonTextBox" />
       <Item Type="RibbonKit.Controls.RibbonScrollBar" />
-      <Item Type="RibbonKit.Controls.RibbonMenuItem" />
 
       <!-- Galleries -->
       <Item Type="RibbonKit.Controls.RibbonGallery" />
       <Item Type="RibbonKit.Controls.InRibbonGallery" />
-      <Item Type="RibbonKit.Controls.RibbonGalleryItem" />
 
-      <!-- Backstage -->
-      <Item Type="RibbonKit.Controls.Backstage" />
-      <Item Type="RibbonKit.Controls.BackstageTabItem" />
+      <!-- Preview MDI host; child windows are generated from host-owned documents. -->
+      <Item Type="RibbonKit.Controls.MdiContainer" />
     </ToolboxItems>
   </File>
 </FileList>

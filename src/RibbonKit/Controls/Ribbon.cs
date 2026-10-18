@@ -89,7 +89,8 @@ public partial class Ribbon : Control
         if (element is Ribbon ribbon)
         {
             ribbon.RequestSelectionVisualsRefresh();
-            ribbon.RequestDensityTransition();
+            ribbon.RequestLayoutMotion(RibbonAnimationAction.DensityChange,
+                ribbon.LayoutState(density: (RibbonDensity)args.OldValue));
         }
     }
 
@@ -399,6 +400,7 @@ public partial class Ribbon : Control
         quickAccessItems.CollectionChanged += OnQuickAccessItemsCollectionChanged;
         SetValue(QuickAccessItemsPropertyKey, quickAccessItems);
         _keyTipService = new KeyTipService(this);
+        SetValue(SimplifiedCapabilityPropertyKey, true);
         PropertyChangedEventManager.AddHandler(
             RibbonLocalizationBindingSource.Instance,
             OnLocalizationBindingSourceChanged,
@@ -1105,7 +1107,7 @@ public partial class Ribbon : Control
 
     internal void RaiseRibbonCustomizeRequested()
     {
-        if (LayoutMode == RibbonLayoutMode.Classic) RibbonCustomizeRequested?.Invoke(this, EventArgs.Empty);
+        if (CanUserCustomizeRibbon && LayoutMode == RibbonLayoutMode.Classic) RibbonCustomizeRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -1122,7 +1124,12 @@ public partial class Ribbon : Control
     /// Returns <see langword="false"/> when the control is already in the QAT or its type
     /// does not have a supported quick-access representation.
     /// </summary>
-    public bool AddToQuickAccess(FrameworkElement source)
+    public bool AddToQuickAccess(FrameworkElement source) => AddToQuickAccessCore(source, revealToolbar: true);
+
+    internal bool AddToQuickAccessFromUser(FrameworkElement source) =>
+        CanUserCustomizeQuickAccess && AddToQuickAccessCore(source, revealToolbar: CanUserToggleQuickAccessVisibility);
+
+    private bool AddToQuickAccessCore(FrameworkElement source, bool revealToolbar)
     {
         ArgumentNullException.ThrowIfNull(source);
         source = ResolveQuickAccessSource(source);
@@ -1136,7 +1143,7 @@ public partial class Ribbon : Control
         {
             // Restore the authored item itself, including its command bindings/handlers.
             QuickAccessItems.Add(source);
-            SetCurrentValue(IsQuickAccessVisibleProperty, true);
+            if (revealToolbar) SetCurrentValue(IsQuickAccessVisibleProperty, true);
             return true;
         }
 
@@ -1152,7 +1159,7 @@ public partial class Ribbon : Control
         }
 
         QuickAccessItems.Add(proxy);
-        SetCurrentValue(IsQuickAccessVisibleProperty, true);
+        if (revealToolbar) SetCurrentValue(IsQuickAccessVisibleProperty, true);
         return true;
     }
 
@@ -1531,6 +1538,7 @@ public partial class Ribbon : Control
             return;
         e.Handled = true;
         var menu = CreateRibbonContextMenu(target);
+        if (!menu.Items.OfType<System.Windows.Controls.MenuItem>().Any(item => item.Visibility == Visibility.Visible)) return;
         RibbonPopupMotion.SuppressNativeContextMenuAnimationForOpen(menu);
         menu.IsOpen = true;
     }
@@ -1551,29 +1559,6 @@ public partial class Ribbon : Control
 
     internal System.Windows.Controls.ContextMenu CreateRibbonContextMenu(FrameworkElement? target)
     {
-        var customizeItem = new System.Windows.Controls.MenuItem
-        {
-            Header = RibbonLocalization.GetString(RibbonString.CustomizeQuickAccessToolbar),
-        };
-        customizeItem.Click += (_, _) => QuickAccessCustomizeRequested?.Invoke(this, EventArgs.Empty);
-
-        var customizeRibbonItem = new System.Windows.Controls.MenuItem
-        {
-            Header = RibbonLocalization.GetString(RibbonString.CustomizeRibbon),
-        };
-        customizeRibbonItem.Click += (_, _) =>
-        {
-            if (LayoutMode == RibbonLayoutMode.Classic) RaiseRibbonCustomizeRequested();
-            else SimplifiedCustomizeRequested?.Invoke(this, EventArgs.Empty);
-        };
-
-        var collapseItem = new System.Windows.Controls.MenuItem
-        {
-            Header = RibbonLocalization.GetString(RibbonString.CollapseRibbon),
-            IsChecked = IsMinimized,
-        };
-        collapseItem.Click += (_, _) => SetCurrentValue(IsMinimizedProperty, !IsMinimized);
-
         var menu = new System.Windows.Controls.ContextMenu
         {
             PlacementTarget = target ?? this,
@@ -1585,16 +1570,21 @@ public partial class Ribbon : Control
         menu.SetBinding(DensityProperty,
             new Binding { Source = target ?? this, Path = new PropertyPath(DensityProperty) });
         ApplyModernMenuStyle(menu);
+        // Construct only entries that will be parented. An omitted MenuItem can
+        // activate native ancestor-alignment bindings while ownerless.
         if (target is not null)
         {
-            var addItem = new System.Windows.Controls.MenuItem
+            if (CanUserCustomizeQuickAccess)
             {
-                Header = RibbonLocalization.GetString(RibbonString.AddToQuickAccessToolbar),
-                IsEnabled = !IsInQuickAccess(target),
-            };
-            addItem.Click += (_, _) => AddToQuickAccess(target);
-            menu.Items.Add(addItem);
-            if (LayoutMode == RibbonLayoutMode.Simplified)
+                var addItem = new System.Windows.Controls.MenuItem
+                {
+                    Header = RibbonLocalization.GetString(RibbonString.AddToQuickAccessToolbar),
+                    IsEnabled = !IsInQuickAccess(target),
+                };
+                addItem.Click += (_, _) => { if (CanUserCustomizeQuickAccess) AddToQuickAccessFromUser(target); };
+                menu.Items.Add(addItem);
+            }
+            if (IsSimplifiedRibbonEnabled && CanUserCustomizeRibbon && LayoutMode == RibbonLayoutMode.Simplified)
             {
                 var (tab, entry) = FindSimplifiedTarget(target);
                 bool pinned = tab is not null && entry is not null && GetSimplifiedChoices(tab).Any(choice => choice.Group == entry.Group && SameSimplifiedCommand(choice.Source, entry.Control));
@@ -1603,34 +1593,74 @@ public partial class Ribbon : Control
                     Header = RibbonLocalization.GetString(pinned ? RibbonString.RemoveFromSimplifiedRibbon : RibbonString.PinToSimplifiedRibbon),
                     IsEnabled = tab is not null,
                 };
-                pin.Click += (_, _) => { if (pinned) RemoveFromSimplifiedRibbon(target); else PinToSimplifiedRibbon(target); };
+                pin.Click += (_, _) => { if (!CanUserCustomizeRibbon) return; if (pinned) RemoveFromSimplifiedRibbon(target); else PinToSimplifiedRibbon(target); };
                 menu.Items.Add(pin);
             }
         }
-        menu.Items.Add(customizeItem);
-        menu.Items.Add(customizeRibbonItem);
-        var simplifiedItem = new System.Windows.Controls.MenuItem
+        if (CanUserCustomizeQuickAccess)
         {
-            Header = RibbonLocalization.GetString(RibbonString.SimplifiedRibbon),
-            IsChecked = LayoutMode == RibbonLayoutMode.Simplified,
-        };
-        simplifiedItem.Click += (_, _) => SetCurrentValue(LayoutModeProperty,
-            LayoutMode == RibbonLayoutMode.Classic ? RibbonLayoutMode.Simplified : RibbonLayoutMode.Classic);
-        menu.Items.Add(simplifiedItem);
+            var customizeItem = new System.Windows.Controls.MenuItem
+            {
+                Header = RibbonLocalization.GetString(RibbonString.CustomizeQuickAccessToolbar),
+            };
+            customizeItem.Click += (_, _) => { if (CanUserCustomizeQuickAccess) QuickAccessCustomizeRequested?.Invoke(this, EventArgs.Empty); };
+            menu.Items.Add(customizeItem);
+        }
+        if (CanUserCustomizeRibbon)
+        {
+            var customizeRibbonItem = new System.Windows.Controls.MenuItem
+            {
+                Header = RibbonLocalization.GetString(RibbonString.CustomizeRibbon),
+            };
+            customizeRibbonItem.Click += (_, _) =>
+            {
+                if (!CanUserCustomizeRibbon) return;
+                if (LayoutMode == RibbonLayoutMode.Classic) RaiseRibbonCustomizeRequested();
+                else SimplifiedCustomizeRequested?.Invoke(this, EventArgs.Empty);
+            };
+            menu.Items.Add(customizeRibbonItem);
+        }
+        if (IsSimplifiedRibbonEnabled && CanUserChangeLayoutMode)
+        {
+            var simplifiedItem = new System.Windows.Controls.MenuItem
+            {
+                Header = RibbonLocalization.GetString(RibbonString.SimplifiedRibbon),
+                IsChecked = LayoutMode == RibbonLayoutMode.Simplified,
+            };
+            simplifiedItem.Click += (_, _) =>
+            {
+                if (IsSimplifiedRibbonEnabled && CanUserChangeLayoutMode) SetCurrentValue(LayoutModeProperty,
+                    LayoutMode == RibbonLayoutMode.Classic ? RibbonLayoutMode.Simplified : RibbonLayoutMode.Classic);
+            };
+            menu.Items.Add(simplifiedItem);
+        }
         menu.Items.Add(new System.Windows.Controls.Separator());
-        var visibilityItem = new System.Windows.Controls.MenuItem
+        if (CanUserToggleQuickAccessVisibility)
         {
-            Header = RibbonLocalization.GetString(IsQuickAccessVisible
-                ? RibbonString.HideQuickAccessToolbar : RibbonString.ShowQuickAccessToolbar),
-        };
-        visibilityItem.Click += (_, _) => SetCurrentValue(IsQuickAccessVisibleProperty, !IsQuickAccessVisible);
-        menu.Items.Add(visibilityItem);
-        menu.Items.Add(collapseItem);
+            var visibilityItem = new System.Windows.Controls.MenuItem
+            {
+                Header = RibbonLocalization.GetString(IsQuickAccessVisible
+                    ? RibbonString.HideQuickAccessToolbar : RibbonString.ShowQuickAccessToolbar),
+            };
+            visibilityItem.Click += (_, _) => { if (CanUserToggleQuickAccessVisibility) SetCurrentValue(IsQuickAccessVisibleProperty, !IsQuickAccessVisible); };
+            menu.Items.Add(visibilityItem);
+        }
+        if (CanUserMinimizeRibbon)
+        {
+            var collapseItem = new System.Windows.Controls.MenuItem
+            {
+                Header = RibbonLocalization.GetString(RibbonString.CollapseRibbon),
+                IsChecked = IsMinimized,
+            };
+            collapseItem.Click += (_, _) => { if (CanUserMinimizeRibbon) SetCurrentValue(IsMinimizedProperty, !IsMinimized); };
+            menu.Items.Add(collapseItem);
+        }
         menu.Opened += (_, _) => _openRibbonContextMenu = menu;
         menu.Closed += (_, _) =>
         {
             if (ReferenceEquals(_openRibbonContextMenu, menu)) _openRibbonContextMenu = null;
         };
+        NormalizeMenuSeparators(menu);
         return menu;
     }
 
@@ -1925,6 +1955,7 @@ public partial class Ribbon : Control
     // items are projected into the host RibbonWindow's TitleBarContent via this host; the
     // shared context menu lets the user move the QAT between placements (like Office).
     private RibbonQuickAccessToolBar? _titleBarQatHost;
+    private DispatcherOperation? _pendingQuickAccessPlacement;
     private readonly Dictionary<FrameworkElement, ResourceDictionary> _qatBackdropPalettes = new();
     private object? _savedTitleBarContent;
     private RibbonWindow? _applicationButtonShapeWindow;
@@ -2090,7 +2121,7 @@ public partial class Ribbon : Control
 
         ribbon.CancelDensityTransition();
 
-        ribbon._ribbonContentHost ??= FindDescendantByName(ribbon, "ContentHost");
+        ribbon._ribbonContentHost ??= FindContentPresentation(ribbon);
         if (ribbon._ribbonContentHost is not { } host)
         {
             return;
@@ -3339,7 +3370,7 @@ public partial class Ribbon : Control
             TrackTabRowQatSize(tabRowHost);
         }
 
-        if (GetTemplateChild("QatBelowHost") is FrameworkElement belowHost)
+        if ((GetTemplateChild("QatBelowShadowHost") ?? GetTemplateChild("QatBelowHost")) is FrameworkElement belowHost)
         {
             _qatBelowHost = belowHost;
             AttachQatContextMenu(belowHost);
@@ -3414,7 +3445,7 @@ public partial class Ribbon : Control
 
         // Visibility of the ribbon body is code-managed (see OnIsMinimizedChanged); sync it
         // to the current state in case the ribbon loaded already minimized.
-        _ribbonContentHost ??= FindDescendantByName(this, "ContentHost");
+        _ribbonContentHost ??= FindContentPresentation(this);
         if (_ribbonContentHost is not null)
         {
             _ribbonContentHost.Visibility = IsMinimized ? Visibility.Collapsed : Visibility.Visible;
@@ -3429,6 +3460,7 @@ public partial class Ribbon : Control
 
     private void OnLayoutUpdated(object? sender, EventArgs e)
     {
+        _layoutCoordinator?.Validate();
         if (_layoutMotion is { } motion && (!motion.MatchesLayout || HasLayoutMotionPopup()))
             CancelDensityTransition();
         _applicationButtonShapeWindow?.UpdateAeroFrameHeaderBottom(this, _ribbonTabControl?.TabHeaderHost);
@@ -3452,6 +3484,7 @@ public partial class Ribbon : Control
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        _pendingQuickAccessPlacement?.Abort(); _pendingQuickAccessPlacement = null;
         _densityTransitionsReady = false;
         CompositionTarget.Rendering -= OnFirstDensityRender;
         RibbonAnimation.Changed -= OnDensityMotionPolicyChanged;
@@ -3485,7 +3518,7 @@ public partial class Ribbon : Control
             AttachQatContextMenu(tabRowHost);
             TrackTabRowQatSize(tabRowHost);
         }
-        _ribbonContentHost = FindDescendantByName(tabControl, "ContentHost");
+        _ribbonContentHost = FindContentPresentation(tabControl);
     }
 
     private void DetachRibbonTabControl()
@@ -3537,8 +3570,9 @@ public partial class Ribbon : Control
             return;
         }
 
-        _ribbonContentHost ??= FindDescendantByName(this, "ContentHost");
-        FrameworkElement? target = (_ribbonContentHost as System.Windows.Controls.Border)?.Child as FrameworkElement
+        _ribbonContentHost ??= FindContentPresentation(this);
+        FrameworkElement? target = (FindDescendantByName(this, "ContentForeground") as Border)?.Child as FrameworkElement
+            ?? (_ribbonContentHost as Border)?.Child as FrameworkElement
             ?? _ribbonContentHost;
         // Slide (no fade): the new content is already realized at full opacity, so a fade
         // would flash it transparent for a frame — a subtle rise reads cleanly instead.
@@ -3760,6 +3794,9 @@ public partial class Ribbon : Control
         }
     }
 
+    private static FrameworkElement? FindContentPresentation(DependencyObject root) =>
+        FindDescendantByName(root, "ContentPresentationHost") ?? FindDescendantByName(root, "ContentHost");
+
     private static FrameworkElement? FindDescendantByName(DependencyObject root, string name)
     {
         int count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(root);
@@ -3803,14 +3840,37 @@ public partial class Ribbon : Control
     private static void OnQuickAccessPositionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var ribbon = (Ribbon)d;
-        ribbon.CancelDensityTransition();
-        ribbon.UpdateQuickAccessPlacement();
+        Action[] dismissals = [];
+        if (ribbon.IsLoaded && ribbon._densityTransitionsReady && Window.GetWindow(ribbon) is { } window)
+        {
+            FrameworkElement? oldHost = (RibbonQuickAccessPosition)e.OldValue switch
+            {
+                RibbonQuickAccessPosition.TitleBar => ribbon._titleBarQatHost,
+                RibbonQuickAccessPosition.TabRow => ribbon._qatTabRowHost,
+                _ => ribbon._qatBelowHost,
+            };
+            var roots = ribbon.QuickAccessItems.OfType<FrameworkElement>().Concat(oldHost is null ? [] : new[] { oldHost }).Distinct().ToArray();
+            dismissals = roots.Select(root => PopupDismissHelper.CaptureDismissalWithin(root, window)).ToArray();
+        }
+        try
+        {
+            ribbon.RequestLayoutMotion(RibbonAnimationAction.QuickAccessMove,
+                ribbon.LayoutState(position: (RibbonQuickAccessPosition)e.OldValue));
+        }
+        finally
+        {
+            if (dismissals.Length > 0)
+                ribbon.Dispatcher.BeginInvoke(DispatcherPriority.Background,
+                    (Action)(() => { foreach (var dismiss in dismissals) dismiss(); }));
+            ribbon.UpdateQuickAccessPlacement();
+        }
     }
 
     private static void OnIsQuickAccessVisibleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var ribbon = (Ribbon)d;
-        ribbon.CancelDensityTransition();
+        ribbon.RequestLayoutMotion(RibbonAnimationAction.QuickAccessMove,
+            ribbon.LayoutState(visible: (bool)e.OldValue));
         ribbon._keyTipService.OnQuickAccessVisibilityChanged();
         if (!(bool)e.NewValue)
         {
@@ -3841,13 +3901,15 @@ public partial class Ribbon : Control
 
         // Apply the final placement after a layout pass, so whichever host currently owns
         // the items has released them before we (re)claim — avoids a transient double-parent.
-        Dispatcher.BeginInvoke(
+        _pendingQuickAccessPlacement?.Abort();
+        _pendingQuickAccessPlacement = Dispatcher.BeginInvoke(
             System.Windows.Threading.DispatcherPriority.Background,
             (Action)ApplyQuickAccessPlacement);
     }
 
     private void ApplyQuickAccessPlacement()
     {
+        _pendingQuickAccessPlacement = null;
         var window = Window.GetWindow(this) as RibbonWindow;
 
         if (IsQuickAccessVisible && QuickAccessPosition == RibbonQuickAccessPosition.TitleBar && window is not null)
@@ -3888,6 +3950,7 @@ public partial class Ribbon : Control
         // layout entirely — it is never measured, keeps its stale RenderSize, and raises no
         // SizeChanged going either way.
         RequestSelectionVisualsRefresh();
+        _layoutCoordinator?.HideCurrentQat();
     }
 
     private RibbonQuickAccessToolBar CreateTitleBarQatHost()
@@ -3924,21 +3987,21 @@ public partial class Ribbon : Control
             Header = RibbonLocalization.GetString(RibbonString.ShowQuickAccessToolbarInTitleBar),
         };
         _qatTitleBarItem.Click += (_, _) =>
-            SetCurrentValue(QuickAccessPositionProperty, RibbonQuickAccessPosition.TitleBar);
+            { if (CanUserRepositionQuickAccess) SetCurrentValue(QuickAccessPositionProperty, RibbonQuickAccessPosition.TitleBar); };
 
         _qatAboveItem = new System.Windows.Controls.MenuItem
         {
             Header = RibbonLocalization.GetString(RibbonString.ShowQuickAccessToolbarAboveRibbon),
         };
         _qatAboveItem.Click += (_, _) =>
-            SetCurrentValue(QuickAccessPositionProperty, RibbonQuickAccessPosition.TabRow);
+            { if (CanUserRepositionQuickAccess) SetCurrentValue(QuickAccessPositionProperty, RibbonQuickAccessPosition.TabRow); };
 
         _qatBelowItem = new System.Windows.Controls.MenuItem
         {
             Header = RibbonLocalization.GetString(RibbonString.ShowQuickAccessToolbarBelowRibbon),
         };
         _qatBelowItem.Click += (_, _) =>
-            SetCurrentValue(QuickAccessPositionProperty, RibbonQuickAccessPosition.BelowRibbon);
+            { if (CanUserRepositionQuickAccess) SetCurrentValue(QuickAccessPositionProperty, RibbonQuickAccessPosition.BelowRibbon); };
 
         // Shown only when the right-click landed on a quick-access ITEM (the hosts'
         // ContextMenuOpening captures which one into _qatMenuTarget).
@@ -3948,7 +4011,7 @@ public partial class Ribbon : Control
         };
         _qatRemoveItem.Click += (_, _) =>
         {
-            if (_qatMenuTarget is not null)
+            if (CanUserCustomizeQuickAccess && _qatMenuTarget is not null)
             {
                 QuickAccessItems.Remove(_qatMenuTarget);
                 _qatMenuTarget = null;
@@ -3959,7 +4022,7 @@ public partial class Ribbon : Control
         {
             Header = RibbonLocalization.GetString(RibbonString.CustomizeQuickAccessToolbar),
         };
-        _qatCustomizeItem.Click += (_, _) => QuickAccessCustomizeRequested?.Invoke(this, EventArgs.Empty);
+        _qatCustomizeItem.Click += (_, _) => { if (CanUserCustomizeQuickAccess) QuickAccessCustomizeRequested?.Invoke(this, EventArgs.Empty); };
 
         _qatRemoveSeparator = new System.Windows.Controls.Separator();
 
@@ -3977,10 +4040,11 @@ public partial class Ribbon : Control
         {
             Header = RibbonLocalization.GetString(RibbonString.HideQuickAccessToolbar),
         };
-        _qatVisibilityItem.Click += (_, _) => SetCurrentValue(IsQuickAccessVisibleProperty, !IsQuickAccessVisible);
+        _qatVisibilityItem.Click += (_, _) => { if (CanUserToggleQuickAccessVisibility) SetCurrentValue(IsQuickAccessVisibleProperty, !IsQuickAccessVisible); };
         _qatContextMenu.Items.Add(new System.Windows.Controls.Separator());
         _qatContextMenu.Items.Add(_qatVisibilityItem);
         _qatContextMenu.Opened += OnQatContextMenuOpened;
+        OnQatContextMenuOpened(_qatContextMenu, new RoutedEventArgs());
         return _qatContextMenu;
     }
 
@@ -4042,11 +4106,6 @@ public partial class Ribbon : Control
         _densityTransitionsReady = true;
     }
 
-    private void RequestDensityTransition()
-    {
-        RequestLayoutMotion(RibbonAnimationAction.DensityChange);
-    }
-
     private void CancelDensityTransition()
     {
         _densityTransitionGeneration++;
@@ -4061,6 +4120,7 @@ public partial class Ribbon : Control
         _layoutMotion = null;
         foreach (RibbonDensityTransition transition in _densityTransitions) transition.Dispose();
         _densityTransitions.Clear();
+        _layoutCoordinator?.Cancel();
     }
 
     private void OnDensityMotionPolicyChanged(object? sender, EventArgs e)
@@ -4102,8 +4162,11 @@ public partial class Ribbon : Control
     private void OnQatHostContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
     {
         _qatMenuTarget = ResolveQuickAccessItem(e.OriginalSource as DependencyObject);
+        if (!CanUserRepositionQuickAccess && !CanUserCustomizeQuickAccess && !CanUserToggleQuickAccessVisibility)
+        { e.Handled = true; return; }
         if (sender is FrameworkElement { ContextMenu: { } menu } host)
         {
+            OnQatContextMenuOpened(menu, new RoutedEventArgs());
             PrepareQatContextMenu(host, menu);
         }
     }
@@ -4161,7 +4224,7 @@ public partial class Ribbon : Control
         RefreshQatContextMenuText();
 
         // "Remove" applies only when the right-click landed on an actual QAT item.
-        Visibility removeVisibility = _qatMenuTarget is null ? Visibility.Collapsed : Visibility.Visible;
+        Visibility removeVisibility = _qatMenuTarget is null || !CanUserCustomizeQuickAccess ? Visibility.Collapsed : Visibility.Visible;
         if (_qatRemoveItem is not null)
         {
             _qatRemoveItem.Visibility = removeVisibility;
@@ -4171,6 +4234,12 @@ public partial class Ribbon : Control
         {
             _qatRemoveSeparator.Visibility = removeVisibility;
         }
+
+        foreach (var item in new[] { _qatTitleBarItem, _qatAboveItem, _qatBelowItem })
+            if (item is not null) item.Visibility = CanUserRepositionQuickAccess ? Visibility.Visible : Visibility.Collapsed;
+        if (_qatCustomizeItem is not null) _qatCustomizeItem.Visibility = CanUserCustomizeQuickAccess ? Visibility.Visible : Visibility.Collapsed;
+        if (_qatVisibilityItem is not null) _qatVisibilityItem.Visibility = CanUserToggleQuickAccessVisibility ? Visibility.Visible : Visibility.Collapsed;
+        NormalizeMenuSeparators(_qatContextMenu!);
 
         // Show a check next to the current placement.
         if (_qatTitleBarItem is not null)
@@ -4222,6 +4291,7 @@ public partial class Ribbon : Control
 
     private void OnTabsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        ReconcileFeatureTabs();
         // Track visibility so selection can escape a contextual tab that hides.
         // Move changes order without ending modal/merge membership or re-recording
         // temporary visibility as the tab's authored state.

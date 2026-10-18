@@ -13,6 +13,8 @@ namespace RibbonKit.Controls;
 /// presentation with the rest of the content in the group flyout. It is deliberately not a
 /// command, focus target, KeyTip target, quick-access source, or UI Automation control element.
 /// </remarks>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonGroupSeparator : Control, IRibbonSizeAware
 {
     private static readonly DependencyPropertyKey SizeStatePropertyKey =

@@ -50,6 +50,8 @@ internal sealed class RibbonLocalizedChoice<T>(T value, RibbonString displayStri
 [TemplatePart(Name = OkButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = CancelButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = CloseButtonPartName, Type = typeof(ButtonBase))]
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonCustomizeEditDialog : Window
 {
     private const string NameBoxPartName = "PART_NameBox";

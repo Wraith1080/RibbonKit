@@ -47,6 +47,8 @@ namespace RibbonKit.Controls;
 /// </summary>
 [TemplatePart(Name = FramePartName, Type = typeof(FrameworkElement))]
 [TemplatePart(Name = PanePartName, Type = typeof(FrameworkElement))]
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonApplicationMenu : ItemsControl
 {
     private const string FramePartName = "PART_Frame";
@@ -564,6 +566,8 @@ public class RibbonApplicationMenu : ItemsControl
 /// </summary>
 [TemplatePart(Name = PrimaryPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = ArrowPartName, Type = typeof(ButtonBase))]
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonApplicationMenuItem : HeaderedContentControl
 {
     private const string PrimaryPartName = "PART_Primary";
@@ -876,6 +880,8 @@ public class RibbonApplicationMenuItem : HeaderedContentControl
 /// <see cref="Setter"/> can assign it. A dedicated control picks up its default style from
 /// Generic.xaml with no resource lookup involved.
 /// </remarks>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonApplicationMenuSeparator : Control
 {
     static RibbonApplicationMenuSeparator()
@@ -893,6 +899,8 @@ public class RibbonApplicationMenuSeparator : Control
 /// <see cref="Description"/> beneath it — Word's "Word Document / Save the document in the default
 /// file format". Clicking one runs its command and closes the menu.
 /// </summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonApplicationMenuPaneItem : Button
 {
     /// <summary>Identifies the <see cref="Icon"/> dependency property.</summary>
@@ -941,6 +949,8 @@ public class RibbonApplicationMenuPaneItem : Button
 /// <i>Word Options</i> and <i>Exit Word</i>. A bordered glass button with an optional 16px icon;
 /// clicking it closes the menu like any other command inside it.
 /// </summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonApplicationMenuButton : Button
 {
     /// <summary>Identifies the <see cref="Icon"/> dependency property.</summary>

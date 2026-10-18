@@ -11,7 +11,8 @@
 > S7 host defaults and RTL/Writer dialog integration implemented 2026-10-14;
 > focused verification, user review and end-of-feature validation below.
 > Functional coverage is assembled from the full run and targeted repairs;
-> two Crystal QAT snapshot comparisons and specific native gates remain open.
+> Crystal QAT rendering reconciliation is complete at its 2026-10-17 scope in
+> plan 18; specific native gates remain open.
 
 ## Layout contract
 
@@ -834,7 +835,7 @@ coverage, not a clean single unfiltered solution pass.
 | Writer | Full project passed 482/482, including the earlier `WriterSharedMaterialsEffectsOrbAndOpenSurfaceDpiReturnsStayBounded` failure. Its passing project was not repeated |
 | Independent consumer | The initial aggregate stopped at the obsolete dropdown alignment assertion. The repaired run passed 17 named scopes, including the earlier Touch popup failure, then exposed QAT overflow Tab entry. The keyboard repair passed QAT overflow/order across all seven themes and LTR/RTL. Continuations completed the remaining scopes without repeating the large passed prefix: 37 named scopes passed, with the failed part of the full keyboard matrix repaired separately. Includes 224 simplified layout combinations, 112 customization combinations (56 realized destination/source enable-state cases), designer defaults and 12 tab-move cases. No clean single consumer aggregate pass is claimed |
 | Visual comparison | Full run: four harness tests passed; the matrix passed 63 scenes before failing at Crystal light QAT below, 100%. The 108 unfinished scenes were then captured with repeatability assertions and compared offline using the same Pbgra32 conversion and unchanged thresholds: 106 matched. Total compared coverage is 169/171. Capture-mode test success is not an approval-comparison pass |
-| Residual visual gate | `crystal-light-qat-below-100` and `crystal-light-qat-below-200` differ from approval by 5,551 and 17,043 significant pixels. Actual/diff images were inspected. The pre-feature package's DLL (`fd9c326`) reproduces both actual PNGs byte-for-byte with the current fixture. This excludes the new Simplified runtime behavior as their cause; fixture/approval reconciliation remains open. No approval or tolerance changed |
+| Residual visual gate | The original `crystal-light-qat-below-100` and `crystal-light-qat-below-200` differences were 5,551 and 17,043 significant pixels. The pre-feature package's DLL (`fd9c326`) reproduced both actual PNGs byte-for-byte, excluding the new Simplified runtime behavior as their cause. Both comparisons were subsequently reconciled through user review and shared shadow separation in [plan 18](18-HOST-LAYOUT-TRANSITION-PLAN.md#separate-decorative-shadow-chrome--2026-10-17). No tolerance changed |
 | Packaging | Final normal pack passed. Archive/designer placement validation and clean net8/net9 WPF consumers passed, 0 warnings/errors. Packaged DLL hashes match final normal Release outputs. Older packages were preserved; a validation-input directory selected the current pair because `artifacts` contains multiple versions. Package validation was repeated only after the QAT template repair changed the binaries |
 | Debug review | Final normal Showcase and Writer Debug builds passed, 0 warnings/errors; no special configurations/output paths or app launches |
 | User review | Accepted 2026-10-14: the user reported all looks good after reviewing the tested/patched feature. This accepts the current presentation and repairs; it does not resolve the two residual snapshot comparisons or establish the specific native gates below. Host content animation synchronization is a subsequent design discussion |
@@ -875,7 +876,7 @@ offline continuation report identify every one of the 171 scene comparisons.
   does not establish physical-monitor acceptance. Live reduced-motion review
   remains unrun; real layout commits immediately and S5's presentation follows
   the existing animation policy.
-- Reconcile the two Crystal QAT snapshot comparisons described above; no clean
+- The Crystal QAT comparisons are reconciled as linked above; no clean
   single full-suite pass is claimed. The earlier Writer DPI and Touch popup
   failures now pass at their current recorded scopes.
 - Human acceptance of the S2 page's applied, canceled and restarted selections;

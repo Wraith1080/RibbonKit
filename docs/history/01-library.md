@@ -18,7 +18,7 @@ Numbering is shared with the [Writer history](02-writer-foundation.md); gaps are
 | Records | Archive |
 | --- | --- |
 | §3.1–§3.21 | [Core controls](library/01-core-controls.md) |
-| §3.22–§3.26 | [Designer and context menus](library/02-designer-and-context-menus.md) |
+| §3.22–§3.26, §3.257 | [Designer and context menus](library/02-designer-and-context-menus.md) |
 | §3.27–§3.37 | [Office themes and layout](library/03-office-themes-and-layout.md) |
 | §3.38–§3.45 | [Office 2007 and popup motion](library/04-office2007-and-popup-motion.md) |
 | §3.46–§3.64 | [Application menu, localization and snapshots](library/05-application-menu-localization-and-snapshots.md) |
@@ -417,3 +417,21 @@ status updates and investigation narration were removed during compaction.
 ### [3.254 Office 2024 Flat theme — 2026-10-12](library/13-flat-theme-variants.md#3254-office-2024-flat-theme--2026-10-12)
 
 ### [3.255 Simplified ribbon first layout slice — 2026-10-13](library/14-simplified-ribbon.md#3255-simplified-ribbon-first-layout-slice--2026-10-13)
+
+### [3.256 Ribbon capability and user-operation policy — 2026-10-15](library/15-feature-availability.md#3256-ribbon-capability-and-user-operation-policy--2026-10-15)
+
+### [3.257 Toolbox definitions and discovery metadata — 2026-10-15](library/02-designer-and-context-menus.md#3257-toolbox-definitions-and-discovery-metadata--2026-10-15)
+
+### [3.258 Dropdown opener paint precedes native popup creation — 2026-10-15](library/04-office2007-and-popup-motion.md#3258-dropdown-opener-paint-precedes-native-popup-creation--2026-10-15)
+
+### [3.259 Ribbon-owned lifecycle and QAT relocation presentation — 2026-10-16](library/16-host-layout-transitions.md#3259-ribbon-owned-lifecycle-and-qat-relocation-presentation--2026-10-16)
+
+### [3.260 Stable lower QAT and contextual selection geometry — 2026-10-16](library/13-flat-theme-variants.md#3260-stable-lower-qat-and-contextual-selection-geometry--2026-10-16)
+
+### [3.261 Foreground stays outside decorative shadow effects — 2026-10-17](library/16-host-layout-transitions.md#3261-foreground-stays-outside-decorative-shadow-effects--2026-10-17)
+
+### [3.262 Refresh popup text when opening motion settles — 2026-10-17](library/04-office2007-and-popup-motion.md#3262-refresh-popup-text-when-opening-motion-settles--2026-10-17)
+
+### [3.263 Shared text refresh after control animation — 2026-10-17](library/04-office2007-and-popup-motion.md#3263-shared-text-refresh-after-control-animation--2026-10-17)
+
+### [3.264 Stable caption and content paint during layout transitions — 2026-10-18](library/16-host-layout-transitions.md#3264-stable-caption-and-content-paint-during-layout-transitions--2026-10-18)

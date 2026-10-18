@@ -184,13 +184,15 @@ public sealed class Office2010AeroFrameTests
         XDocument chrome = LoadTheme("Controls.RibbonChrome.xaml");
 
         XElement ribbonSurface = NamedElement(chrome, "RibbonSurface");
+        Assert.Equal("Transparent", (string?)ribbonSurface.Attribute("Background"));
+        Assert.Equal("{TemplateBinding Background}", (string?)NamedElement(chrome, "RibbonBackgroundLayer").Attribute("Background"));
         XElement ribbonTemplate = Assert.Single(
             ribbonSurface.Ancestors(Presentation + "ControlTemplate"));
         XElement transparentSurface = Assert.Single(
             ribbonTemplate.Descendants(Presentation + "DataTrigger"),
             trigger => BindingContains(trigger, "FrameAppearance")
                 && (string?)trigger.Attribute("Value") == "Office2010Aero");
-        AssertSetter(transparentSurface, "RibbonSurface", "Background", "Transparent");
+        AssertSetter(transparentSurface, "RibbonBackgroundLayer", "Background", "Transparent");
 
         XElement material = NamedElement(chrome, "Office2010TabMaterialLayer");
         XElement tintVisual = NamedElement(chrome, "Office2010TabTintVisual");

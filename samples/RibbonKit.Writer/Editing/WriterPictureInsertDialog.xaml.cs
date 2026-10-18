@@ -6,6 +6,8 @@ using Microsoft.Win32;
 namespace RibbonKit.Writer.Editing;
 
 /// <summary>Accessible, app-owned path picker for portable Writer images.</summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public partial class WriterPictureInsertDialog : Window
 {
     /// <summary>Creates a picture picker with an optional opening path.</summary>

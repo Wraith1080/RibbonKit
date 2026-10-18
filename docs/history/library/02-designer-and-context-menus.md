@@ -210,3 +210,114 @@ styles that match the dropdown, in a **dedicated `Themes/Menus.xaml`** dictionar
   `menu.Resources[typeof(MenuItem)] = RibbonKit.MenuItem` and
   `menu.Resources[MenuItem.SeparatorStyleKey] = RibbonKit.MenuSeparator` — which every `MenuItem`
   (including submenu items) and `Separator` in the menu subtree resolves.
+
+### 3.257 Toolbox definitions and discovery metadata — 2026-10-15
+
+The reviewed Toolbox surface includes authorable controls and their semantic
+children while excluding generated presentation, Window roots, automatic
+ScreenTips and nonvisual definitions. Package discovery uses the tools manifest;
+project-reference discovery receives separate ToolboxBrowsable/tab/category
+attributes through string-type DesignTools metadata. Preserve net472 isolation
+and public runtime visibility. Attribute registration is intent until checked in
+the actual designer host; package filtering cannot prove project-reference
+behavior. A discoverable type also does not supply a semantic drop adapter.
+
+Definition contracts compare the approved matrix, manifest, metadata lists and
+all public FrameworkElement types to catch omissions or drift. Package validation
+constructs advertised types in a consumer without Showcase references. Keep its
+NuGet.Config globalPackagesFolder pointed at the consumer's private cache for
+later IDE restores; same-version packages in the global cache can otherwise mask
+the locally tested package. No creation/default/undo paths changed in T2a.
+
+A successful build with ContinueOnError copy warnings can leave a deployed
+DesignTools DLL stale. Compare both normal Debug Design copies with the new
+source DLL; release the Visual Studio lock and rebuild when needed. Packaged
+Release DLL/manifest hashes separately establish which outputs were tested.
+Current results and native discovery/creation acceptance belong in the
+[active Toolbox plan](../../17-TOOLBOX-ITEM-DEFINITION-PLAN.md#t2a--implementation-and-evidence-2026-10-15).
+
+#### T2b creation-default alignment — 2026-10-15
+
+`NewItemDefaults` holds a model-independent new-item policy; `DesignModel.NewItems`
+maps it to string-type Model API properties/collections. Root/item/supported-command
+initializers and editor/context factories share it. Guard writes with IsSet, not
+effective Value; also check collection occupancy and ItemsSource before inserting
+native starter children. Explicit empty/null assignments remain author choices.
+Never seed application-menu command Content merely to provide a preview: Content
+changes a plain command into a pane entry. Keep arbitrary custom content intact.
+
+Create raw children with CreateOptions.None, then apply the shared defaults once
+inside the caller's existing creation scope. Otherwise SDK initializers and manual
+parent seeding can duplicate tabs/groups/menu items. Context Add Tab/Backstage no
+longer insert their own second starters. Group Add includes combo, galleries,
+scrollbar and separator; registered leaf verbs resolve Items versus panel Children.
+The editor exposes scrollbar range/orientation fields without invented dimensions.
+
+Focused contracts execute the compiled net472 policy in a consumer test process
+without loading the VS SDK. Independent authored-XAML checks cover semantic native
+children and Simplified presentation; these cannot establish IsSet/serialization
+mapping or Visual Studio transaction/undo behavior. Normal Release/Debug deployment
+and package checks belong with the corresponding DLL hashes. Current evidence and
+the native acceptance boundary are recorded once in the
+[T2b plan section](../../17-TOOLBOX-ITEM-DEFINITION-PLAN.md#t2b--existing-creation-paths-2026-10-15).
+
+Toolbox TabItem pitfall: the host's generic designer initialization runs before
+custom InitializeDefaults unless the provider opts out. A direct RibbonTab drop
+produced an empty gray Grid, fixed dimensions and centered alignment; the log
+showed Header/Groups already set, so the preservation guards correctly refused to
+seed. Raw context-menu creation did not have that state. RibbonTab now has its own
+provider with SkipDesignerInitialization=true set in its constructor, before the
+host checks it; do not clear Content or relax IsSet guards to remove a suspected
+placeholder. A compiled-metadata/SDK regression covers the selected provider and
+skip policy; actual Toolbox drop and undo/serialization remain native gates.
+
+The initializer opt-out covers content, not the designer's subsequent layout
+placement. User testing confirmed group/no Grid while fixed dimensions and center
+alignment still hid the tab header. Keep those phases separate: Ribbon's
+`RibbonTabsPlacementAdapter` declines free position/size writes for its
+collection-owned children, and RibbonTab's DefaultSizeMode.None suppresses default
+sizing. Register the placement adapter on the parent that owns the affected
+collection: Ribbon governs tabs, RibbonTab governs groups and RibbonGroup governs
+commands. Read selection bounds through ModelItem.View;
+do not clear authored geometry or attach a delayed cleanup to every tab. SDK
+metadata/edge-permission regression evidence is distinct from live drop acceptance.
+
+#### Owner authoring and native namespace resolution — 2026-10-15
+
+Live review narrowed the direct-drop list to useful visible destinations. Owner
+context/editor actions handle File children, group separators, messages and QAT
+commands; host XAML handles options/customization pages. Generated panels/hosts
+remain template-owned. Standard ToolboxItem/DesignTimeVisible exclusions on runtime
+and Writer visual types supplement SDK metadata for reflected project discovery;
+package manifest validation cannot establish whether a native host honors them.
+
+Group and combo drops need both collection-owned placement and no default outer
+size. New combo InputWidth is guarded independently so an existing/bound input
+width survives. Native ComboBoxItem creation had silently failed because the SDK
+can return an unresolved RibbonKit-namespace model without throwing. Select the
+known WPF native namespace before creation; exception fallback is insufficient.
+Do not relax IsSet or ItemsSource preservation to compensate for an unresolved type.
+
+Message singleton creation, QAT children and the editor tree use existing Model
+API edit scopes. Preview context submenus reuse primitive tab/File coordinators;
+they do not author selection/open-state changes or instantiate replacement pages.
+Current checks and remaining native acceptance are recorded in the
+[T2c plan section](../../17-TOOLBOX-ITEM-DEFINITION-PLAN.md#t2c--owner-authoring-and-live-review-corrections-2026-10-15).
+
+#### File-page preview realization — 2026-10-15
+
+A page preview requested before its File surface had a live visible designer node
+raised XDG0005, although the surface itself rendered. First-chance capture in
+WpfSurface located the null dereference in TapTypeUtilities.GetTypeConverter /
+TapInstanceManager.TypeConvertInstance. Reapplying the same page after realization
+worked; a regular WPF design-mode host did not reproduce the isolated failure.
+
+Keep the primitive preview coordinators. FilePagePreviewRequest waits for the
+SDK ViewService.LayoutUpdated event and ViewItem.IsVisible before invalidating
+Backstage.SelectedIndex or ApplicationMenu.DesignPreviewActiveIndex. Do not
+invalidate a hidden alternate surface just to reset its session choice. Switching
+or closing cancels the pending subscription; completed requests unsubscribe before
+applying, so nested layout cannot apply them twice. This uses no polling, delay,
+new runtime API or serialized preview value. The active plan owns the exact
+native and automated verification scope; retained traces and checks are under
+TestResults/designer-file-preview-20261015.

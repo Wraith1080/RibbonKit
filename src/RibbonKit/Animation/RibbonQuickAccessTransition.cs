@@ -1,0 +1,324 @@
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Documents;
+using System.Windows.Media;
+using System.Windows.Media.Effects;
+
+namespace RibbonKit.Animation;
+
+// Detached vector visuals preserve child Effect -> ancestor Clip ordering. No live
+// control, binding, focus target or popup is moved into the presentation layer.
+internal sealed class RibbonVectorSnapshot
+{
+    internal ContainerVisual Visual { get; }
+    internal Rect Bounds { get; }
+    private RibbonVectorSnapshot(ContainerVisual visual, Rect bounds) { Visual = visual; Bounds = bounds; }
+    internal RibbonVectorSnapshot WithBounds(Rect? bounds) => bounds is { } value ? new(Visual, value) : this;
+
+    internal static RibbonVectorSnapshot? Capture(Visual? source, Visual root, Visual? exclude = null, bool includeAncestors = true,
+        Visual? excludeAlso = null, bool useDrawingBounds = false)
+    {
+        if (source is null || ContainsUnsupported(source, exclude)) return null;
+        try
+        {
+            Rect bounds = !useDrawingBounds && source is FrameworkElement element ? new Rect(element.RenderSize)
+                : VisualTreeHelper.GetDescendantBounds(source);
+            if (bounds.IsEmpty || bounds.Width <= 0 || bounds.Height <= 0) return null;
+            GeneralTransform transform = source.TransformToVisual(root);
+            var wrapper = new ContainerVisual { Transform = new MatrixTransform(Matrix(transform)) };
+            if (includeAncestors && !ReferenceEquals(source, root))
+            {
+                DependencyObject? common = source.FindCommonVisualAncestor(root);
+                for (DependencyObject? parent = VisualTreeHelper.GetParent(source); parent is Visual ancestor && parent != common;
+                     parent = VisualTreeHelper.GetParent(parent)) wrapper.Opacity *= VisualTreeHelper.GetOpacity(ancestor);
+            }
+            wrapper.Children.Add(Clone(source, exclude, excludeAlso));
+            return new RibbonVectorSnapshot(wrapper, transform.TransformBounds(bounds));
+        }
+        catch (InvalidOperationException) { return null; }
+    }
+
+    internal static bool ContainsUnsupported(DependencyObject source, Visual? exclude = null)
+    {
+        if (ReferenceEquals(source, exclude)) return false;
+        if (source is System.Windows.Interop.HwndHost or MediaElement or System.Windows.Media.Media3D.Visual3D) return true;
+        // A VisualBrush still referencing live UI cannot be a frozen old frame.
+        if (source is Visual visual && VisualTreeHelper.GetDrawing(visual) is { } drawing
+            && !drawing.CloneCurrentValue().CanFreeze) return true;
+        if (source is UIElement { OpacityMask: { } mask } && !mask.CloneCurrentValue().CanFreeze) return true;
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(source); i++)
+            if (ContainsUnsupported(VisualTreeHelper.GetChild(source, i), exclude)) return true;
+        return false;
+    }
+
+    internal static ContainerVisual Clone(Visual source, Visual? exclude = null, Visual? excludeAlso = null)
+    {
+        var result = new DrawingVisual
+        {
+            Opacity = VisualTreeHelper.GetOpacity(source),
+            Clip = VisualTreeHelper.GetClip(source)?.CloneCurrentValue(),
+            Effect = (source as UIElement)?.Effect?.CloneCurrentValue()
+                ?? (source as ContainerVisual)?.Effect?.CloneCurrentValue(),
+            OpacityMask = (source as UIElement)?.OpacityMask?.CloneCurrentValue()
+                ?? (source as ContainerVisual)?.OpacityMask?.CloneCurrentValue(),
+        };
+        using (var drawing = result.RenderOpen())
+        if (VisualTreeHelper.GetDrawing(source) is { } own) drawing.DrawDrawing(own.CloneCurrentValue());
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(source); i++)
+        {
+            if (VisualTreeHelper.GetChild(source, i) is not Visual child || ReferenceEquals(child, exclude) || ReferenceEquals(child, excludeAlso)
+                || child is UIElement { Visibility: not Visibility.Visible }) continue;
+            ContainerVisual copy = Clone(child, exclude, excludeAlso);
+            copy.Transform = new MatrixTransform(Matrix(child.TransformToAncestor(source)));
+            result.Children.Add(copy);
+        }
+        return result;
+    }
+
+    private static Matrix Matrix(GeneralTransform transform)
+    {
+        Point origin = transform.Transform(new Point());
+        Point x = transform.Transform(new Point(1, 0));
+        Point y = transform.Transform(new Point(0, 1));
+        return new Matrix(x.X - origin.X, x.Y - origin.Y, y.X - origin.X, y.Y - origin.Y, origin.X, origin.Y);
+    }
+}
+
+internal sealed class RibbonQuickAccessFrame
+{
+    internal bool IsSafe { get; init; } = true;
+    internal RibbonVectorSnapshot? Header { get; init; }
+    internal RibbonVectorSnapshot? Caption { get; init; }
+    internal RibbonVectorSnapshot? CaptionBackground { get; init; }
+    internal RibbonVectorSnapshot? Background { get; init; }
+    internal Rect BackgroundBounds { get; init; }
+    internal RibbonVectorSnapshot? Strip { get; init; }
+    internal RibbonVectorSnapshot? Panel { get; init; }
+    internal Rect Occupied { get; init; }
+    internal bool CanTranslate { get; init; } = true;
+}
+
+internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
+{
+    private readonly AdornerLayer _layer;
+    private readonly FrameworkElement _root;
+    private readonly VisualCollection _visuals;
+    private readonly ContainerVisual _headers = new(), _captions = new();
+    private readonly ContainerVisual _oldHeader = new(), _newHeader = new(), _oldCaption = new(), _newCaption = new();
+    private readonly ContainerVisual _captionBackground = new();
+    private Rect? _captionBackgroundBounds;
+    private readonly ContainerVisual _background = new();
+    private readonly ContainerVisual _backgroundViewport = new();
+    private readonly FrameworkElement? _backgroundHost;
+    private Rect? _presentedHeader;
+    private Rect? _backgroundDrawingBounds;
+    private readonly ContainerVisual _panels = new();
+    private readonly ContainerVisual _strips = new();
+    private readonly ContainerVisual _oldPanel = new();
+    private readonly ContainerVisual _newPanel = new();
+    private readonly ContainerVisual _oldStrip = new();
+    private readonly ContainerVisual _newStrip = new();
+    private RibbonQuickAccessFrame _previous;
+    private RibbonQuickAccessFrame? _current;
+    private RibbonLayoutTransitionMotion? _boundary;
+    private RibbonLayoutTransitionMotion? _motion;
+    private bool _modeOnly;
+    private bool _disposed;
+    private readonly Size _rootSize;
+    private readonly DpiScale _dpi;
+    private readonly FlowDirection _direction;
+
+    internal RibbonQuickAccessTransition(FrameworkElement root, AdornerLayer layer, RibbonQuickAccessFrame previous,
+        FrameworkElement? backgroundHost) : base(root)
+    {
+        _root = root; _layer = layer; _previous = previous;
+        _rootSize = root.RenderSize; _dpi = VisualTreeHelper.GetDpi(root); _direction = root.FlowDirection;
+        IsHitTestVisible = false; Focusable = false;
+        Opacity = RibbonLayoutDrawing.OpacityBelowLayer(root, layer);
+        _visuals = new VisualCollection(this) { _backgroundViewport, _captions, _headers, _panels, _strips };
+        _backgroundViewport.Children.Add(_background);
+        if (previous.Background is { } surface)
+        { _background.Children.Add(surface.Visual); _backgroundDrawingBounds = surface.Bounds; }
+        _backgroundHost = backgroundHost; _presentedHeader = previous.Header?.Bounds;
+        _root.LayoutUpdated += OnLayoutUpdated;
+        UpdateBackgroundClip();
+        _headers.Children.Add(_oldHeader); _headers.Children.Add(_newHeader);
+        _captions.Children.Add(_captionBackground); _captions.Children.Add(_oldCaption); _captions.Children.Add(_newCaption);
+        if (previous.Header is { } header) _oldHeader.Children.Add(header.Visual);
+        if (previous.Caption is { } caption) _oldCaption.Children.Add(caption.Visual);
+        if (previous.CaptionBackground is { } backdrop)
+        { _captionBackground.Children.Add(backdrop.Visual); _captionBackgroundBounds = backdrop.Bounds; }
+        _panels.Children.Add(_oldPanel); _panels.Children.Add(_newPanel);
+        _strips.Children.Add(_oldStrip); _strips.Children.Add(_newStrip);
+        if (previous.Panel is { } panel) _oldPanel.Children.Add(panel.Visual);
+        if (previous.Strip is { } strip) _oldStrip.Children.Add(strip.Visual);
+        layer.Add(this);
+    }
+
+    internal bool MatchesRoot => _root.RenderSize == _rootSize && _root.FlowDirection == _direction
+        && VisualTreeHelper.GetDpi(_root).Equals(_dpi);
+    internal bool HasPresentation => _previous.Strip is not null || _previous.Panel is not null
+        || _current?.Strip is not null || _current?.Panel is not null;
+    private Rect? StationaryStripBounds => _modeOnly && _previous.Strip is { } before && _current?.Strip is { } after
+        && before.Bounds == after.Bounds ? after.Bounds : null;
+
+    internal void Start(RibbonQuickAccessFrame current, RibbonLayoutTransitionMotion boundary, RibbonLayoutTransitionMotion motion, bool modeOnly)
+    {
+        _current = current; _boundary = boundary; _motion = motion; _modeOnly = modeOnly;
+        if (current.Background is { } surface)
+        {
+            _background.Children.Clear(); _background.Children.Add(surface.Visual);
+            _backgroundDrawingBounds = surface.Bounds;
+        }
+        if (current.Header is { } header) _newHeader.Children.Add(header.Visual);
+        if (current.Caption is { } caption) _newCaption.Children.Add(caption.Visual);
+        if (current.CaptionBackground is { } backdrop)
+        {
+            _captionBackground.Children.Clear(); _captionBackground.Children.Add(backdrop.Visual);
+            _captionBackgroundBounds = backdrop.Bounds;
+        }
+        if (current.Panel is { } panel) _newPanel.Children.Add(panel.Visual);
+        if (current.Strip is { } strip) _newStrip.Children.Add(strip.Visual);
+        boundary.Changed += OnProgress;
+        if (!ReferenceEquals(boundary, motion)) motion.Changed += OnProgress;
+        OnProgress(this, EventArgs.Empty);
+    }
+
+    private void OnProgress(object? sender, EventArgs e)
+    {
+        if (_disposed || _current is not { } current || _boundary is null || _motion is null) return;
+        double p = _motion.IsAnimated ? _motion.Progress : 1;
+        double alpha = Math.Clamp(p, 0, 1);
+        bool continuous = _previous.CanTranslate && current.CanTranslate
+            && _previous.Strip is not null && current.Strip is not null;
+        Vector delta = (_current.Strip?.Bounds.TopLeft ?? _previous.Strip?.Bounds.TopLeft ?? new Point())
+            - (_previous.Strip?.Bounds.TopLeft ?? _current.Strip?.Bounds.TopLeft ?? new Point());
+        double travel = RibbonAnimation.GetSlideOffset(RibbonAnimationAction.QuickAccessMove);
+        _oldStrip.Transform = continuous ? new TranslateTransform(delta.X * p, delta.Y * p)
+            : new TranslateTransform(0, -travel * alpha);
+        _newStrip.Transform = continuous ? new TranslateTransform(-delta.X * (1 - p), -delta.Y * (1 - p))
+            : new TranslateTransform(0, travel * (1 - alpha));
+        _oldStrip.Opacity = 1 - alpha;
+        _newStrip.Opacity = alpha;
+        if (StationaryStripBounds is not null)
+        {
+            // Mode-only changes do not move the QAT. Its icons need the same
+            // single-presentation treatment as stationary caption/header ink.
+            _oldStrip.Transform = null; _newStrip.Transform = null;
+            _oldStrip.Opacity = 0; _newStrip.Opacity = 1;
+        }
+
+        double b = _boundary.IsAnimated ? Math.Clamp(_boundary.Progress, 0, 1) : 1;
+        // The transparent tab row relies on the ribbon's outer backdrop. Move
+        // that decoration with the boundary too, rather than exposing the window
+        // backing between the animated caption and the committed ribbon origin.
+        if (_backgroundDrawingBounds is { Width: > 0, Height: > 0 } surfaceBounds)
+            PlaceBackground(_background, surfaceBounds, Interpolate(_previous.BackgroundBounds, current.BackgroundBounds, b));
+        if (_previous.Header?.Bounds is { } oldHeader && current.Header?.Bounds is { } newHeader)
+            _presentedHeader = Interpolate(oldHeader, newHeader, b);
+        UpdateBackgroundClip();
+        PlaceChrome(_oldHeader, _newHeader, _previous.Header?.Bounds, current.Header?.Bounds, b, false, _modeOnly);
+        PlaceChrome(_oldCaption, _newCaption, _previous.Caption?.Bounds, current.Caption?.Bounds, b, true, _modeOnly);
+        // Fade caption content over one continuous background. Fading two whole
+        // opaque bands with (1-b, b) leaves an alpha hole over the window backing.
+        if (_captionBackgroundBounds is { Width: > 0, Height: > 0 } background
+            && _previous.Caption?.Bounds is { } beforeCaption && current.Caption?.Bounds is { } afterCaption)
+        {
+            Rect bounds = Interpolate(beforeCaption, afterCaption, b);
+            PlaceBackground(_captionBackground, background, bounds);
+        }
+        Rect? old = _previous.Panel?.Bounds, final = current.Panel?.Bounds;
+        double top = (old?.Top ?? _previous.Occupied.Bottom) * (1 - b)
+            + (final?.Top ?? current.Occupied.Bottom) * b;
+        double height = (old?.Height ?? 0) * (1 - b) + (final?.Height ?? 0) * b;
+        PlacePanel(_oldPanel, old, top, height);
+        PlacePanel(_newPanel, final, top, height);
+        _oldPanel.Opacity = height <= 0.01 ? 0 : final is null ? 1 : 1 - b;
+        _newPanel.Opacity = height <= 0.01 ? 0 : old is null ? 1 : b;
+    }
+
+    private void OnLayoutUpdated(object? sender, EventArgs e) => UpdateBackgroundClip();
+
+    private void UpdateBackgroundClip()
+    {
+        // The real backdrop remains behind the body and keeps its authored alpha.
+        // Paint only the header gap outside its committed bounds; a full backdrop
+        // in this window-wide layer would obscure body adorners or double opacity.
+        _backgroundViewport.Clip = Geometry.Empty;
+        if (_presentedHeader is not { } header || _backgroundHost is null
+            || _backgroundHost.FindCommonVisualAncestor(_root) is null) return;
+        Rect live = _backgroundHost.TransformToVisual(_root).TransformBounds(new Rect(_backgroundHost.RenderSize));
+        _backgroundViewport.Clip = new CombinedGeometry(GeometryCombineMode.Exclude,
+            new RectangleGeometry(header), new RectangleGeometry(live));
+    }
+
+    private static void PlaceBackground(ContainerVisual visual, Rect source, Rect target)
+    {
+        double sx = target.Width / source.Width, sy = target.Height / source.Height;
+        visual.Transform = new MatrixTransform(new Matrix(sx, 0, 0, sy,
+            target.X - source.X * sx, target.Y - source.Y * sy));
+    }
+
+    private static void PlaceChrome(ContainerVisual old, ContainerVisual final, Rect? before, Rect? after, double p, bool clip, bool modeOnly)
+    {
+        if (before is not { } start || after is not { } end) return;
+        Vector delta = end.TopLeft - start.TopLeft;
+        old.Transform = new TranslateTransform(delta.X * p, delta.Y * p);
+        final.Transform = new TranslateTransform(-delta.X * (1 - p), -delta.Y * (1 - p));
+        // A mode-only change leaves the caption/header in place. Carry one
+        // committed foreground at authored opacity: cross-fading identical ink
+        // dims it at mid-motion, particularly over a dark background.
+        bool stationary = modeOnly && start == end;
+        old.Opacity = stationary ? 0 : 1 - p; final.Opacity = stationary ? 1 : p;
+        if (clip && VisualTreeHelper.GetParent(old) is ContainerVisual parent)
+            parent.Clip = new RectangleGeometry(new Rect(start.X + delta.X * p, start.Y + delta.Y * p,
+                start.Width + (end.Width - start.Width) * p, start.Height + (end.Height - start.Height) * p));
+    }
+
+    private static void PlacePanel(ContainerVisual visual, Rect? bounds, double top, double height)
+    {
+        if (bounds is not { Height: > 0 } rect) return;
+        // Only panel chrome (including its clipping/shadow tree) scales. Command
+        // visuals are separate children and always retain their native geometry.
+        double scale = Math.Max(0.00001, height / rect.Height);
+        visual.Transform = new MatrixTransform(new Matrix(1, 0, 0, scale, 0, top - rect.Top * scale));
+        visual.Opacity = height <= 0.01 ? 0 : 1;
+    }
+
+    internal RibbonQuickAccessFrame CapturePresentation() => new()
+    {
+        Header = RibbonVectorSnapshot.Capture(_headers, _root, includeAncestors: false)?.WithBounds(_presentedHeader),
+        // Foreground descendant bounds omit empty caption padding. Preserve the
+        // presented band rectangle when a reversal samples this composed tree.
+        Caption = RibbonVectorSnapshot.Capture(_captions, _root, _captionBackground, includeAncestors: false)
+            ?.WithBounds((_captions.Clip as RectangleGeometry)?.Rect ?? _previous.Caption?.Bounds),
+        CaptionBackground = RibbonVectorSnapshot.Capture(_captionBackground, _root, includeAncestors: false),
+        Background = RibbonVectorSnapshot.Capture(_background, _root, includeAncestors: false),
+        BackgroundBounds = _current is null || _boundary is null ? _previous.BackgroundBounds
+            : Interpolate(_previous.BackgroundBounds, _current.BackgroundBounds, Math.Clamp(_boundary.Progress, 0, 1)),
+        Strip = RibbonVectorSnapshot.Capture(_strips, _root, includeAncestors: false)
+            ?.WithBounds(_current is null ? _previous.Strip?.Bounds : StationaryStripBounds),
+        Panel = RibbonVectorSnapshot.Capture(_panels, _root, includeAncestors: false),
+        Occupied = _current is null || _boundary is null ? _previous.Occupied
+            : Interpolate(_previous.Occupied, _current.Occupied, Math.Clamp(_boundary.Progress, 0, 1)),
+        CanTranslate = false, // A composed interrupted drawing departs/arrives without stretching.
+    };
+
+    private static Rect Interpolate(Rect old, Rect final, double p) => new(
+        old.X + (final.X - old.X) * p, old.Y + (final.Y - old.Y) * p,
+        old.Width + (final.Width - old.Width) * p, old.Height + (final.Height - old.Height) * p);
+
+    protected override int VisualChildrenCount => _visuals?.Count ?? 0;
+    protected override Visual GetVisualChild(int index) => _visuals[index];
+    protected override Size MeasureOverride(Size constraint) => _root.RenderSize;
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        if (_boundary is not null) _boundary.Changed -= OnProgress;
+        if (_motion is not null && !ReferenceEquals(_motion, _boundary)) _motion.Changed -= OnProgress;
+        _root.LayoutUpdated -= OnLayoutUpdated;
+        _layer.Remove(this);
+    }
+}

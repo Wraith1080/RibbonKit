@@ -391,16 +391,15 @@
                 <rk:RibbonGroup Header="Selection Preview" Icon="{StaticResource Icon.Font}"
                                 rk:Ribbon.CommandId="loc.group.choicepreview" CanResize="False">
                     <StackPanel Width="220" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding SelectedItem.Content, ElementName=RtlFontCombo, StringFormat='Font: {0}'}" />
-                        <TextBlock Text="{Binding SelectedValue, ElementName=RtlStylesGallery, StringFormat='Style: {0}'}" />
-                        <TextBlock Text="RibbonKit — تجربة النص" FontSize="18" Margin="0,6,0,0"
-                                   FontFamily="{Binding SelectedItem.Content, ElementName=RtlFontCombo}" />
+                        <TextBlock x:Name="RtlFontSelectionText" Text="Font:" />
+                        <TextBlock x:Name="RtlStyleSelectionText" Text="Style:" />
+                        <TextBlock x:Name="RtlFontPreviewText" Text="RibbonKit — تجربة النص" FontSize="18" Margin="0,6,0,0" />
                     </StackPanel>
                 </rk:RibbonGroup>
             </rk:RibbonTab>
         </rk:Ribbon>
 
-        <Grid Margin="16">
+        <Grid x:Name="LabContentSurface" Margin="16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="3*" />
                 <ColumnDefinition Width="16" />

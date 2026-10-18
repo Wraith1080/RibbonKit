@@ -9,7 +9,7 @@ namespace RibbonKit.Design;
 /// <summary>
 /// Small helpers over the designer Model API so the type-creation details live in ONE place.
 /// </summary>
-internal static class DesignModel
+internal static partial class DesignModel
 {
     /// <summary>
     /// The XAML namespace the ribbon controls live under — RibbonKit declares
@@ -23,44 +23,15 @@ internal static class DesignModel
     /// <summary>Creates a new design-time <see cref="ModelItem"/> for one of our controls by simple type name.</summary>
     public static ModelItem Create(ModelItem context, string typeName)
     {
-        var id = new TypeIdentifier(Xmlns, typeName);
-        ModelItem item = ModelFactory.CreateItem(context.Context, id);
-        InitializeSimplifiedDefaults(item);
+        ModelItem item = CreateRaw(context, typeName);
+        InitializeNewItemDefaults(item);
         return item;
     }
 
-    internal static bool IsSimplifiedCommand(ModelItem item) => TypeName(item) is
-        "RibbonButton" or "RibbonToggleButton" or "RibbonSplitButton" or "RibbonDropDownButton"
-        or "RibbonComboBox" or "RibbonGallery" or "InRibbonGallery";
+    private static ModelItem CreateRaw(ModelItem context, string typeName) =>
+        ModelFactory.CreateItem(context.Context, new TypeIdentifier(Xmlns, typeName), CreateOptions.None);
 
-    // Called only for new model items, inside their existing creation transaction.
-    // Toolbox drops and the editor/context-menu factories share the same defaults.
-    internal static void InitializeSimplifiedDefaults(ModelItem item)
-    {
-        if (!IsSimplifiedCommand(item)) return;
-        SetDefault("SimplifiedPlacement", "Inline");
-        SetDefault("SimplifiedSize", "Medium");
-
-        void SetDefault(string name, string value)
-        {
-            try
-            {
-                ModelProperty? property = FindAttached(item, "RibbonKit.Controls.Ribbon", name);
-                if (property is null)
-                    DesignLog.Error("InitializeSimplifiedDefaults", new InvalidOperationException("Could not resolve Ribbon." + name));
-                else
-                {
-                    // Toolbox models can expose the effective default through
-                    // Value even when no attribute exists. Only IsSet tells us
-                    // whether the author already supplied a local assignment.
-                    DesignLog.Write("Simplified default " + TypeName(item) + "." + name
-                        + ": IsSet=" + property.IsSet + ", effective=" + property.ComputedValue);
-                    if (!property.IsSet) property.SetValue(value);
-                }
-            }
-            catch (Exception ex) { DesignLog.Error("InitializeSimplifiedDefaults " + name, ex); }
-        }
-    }
+    internal static bool IsSimplifiedCommand(ModelItem item) => NewItemDefaults.IsSimplifiedCommand(TypeName(item));
 
     /// <summary>
     /// Adds <paramref name="child"/> into the named collection property of <paramref name="parent"/>
@@ -74,15 +45,10 @@ internal static class DesignModel
     /// Reorders <paramref name="item"/> within its parent's <paramref name="parentCollectionProperty"/>
     /// collection by <paramref name="delta"/> (-1 = left/earlier, +1 = right/later). No-op at the ends.
     /// </summary>
-    public static void Move(ModelItem item, string parentCollectionProperty, int delta)
+    public static void Move(ModelItem item, string? parentCollectionProperty, int delta)
     {
-        ModelItem parent = item.Parent;
-        if (parent is null)
-        {
-            return;
-        }
-
-        ModelItemCollection collection = parent.Properties[parentCollectionProperty].Collection;
+        ModelItemCollection? collection = ParentCollection(item, parentCollectionProperty);
+        if (collection is null) return;
         int from = collection.IndexOf(item);
         int to = from + delta;
         if (from < 0 || to < 0 || to >= collection.Count)
@@ -149,19 +115,28 @@ internal static class DesignModel
     }
 
     /// <summary>Removes <paramref name="item"/> from its parent's <paramref name="parentCollectionProperty"/> collection.</summary>
-    public static void Delete(ModelItem item, string parentCollectionProperty)
+    public static void Delete(ModelItem item, string? parentCollectionProperty)
     {
-        ModelItem parent = item.Parent;
-        if (parent is null)
-        {
-            return;
-        }
+        ModelItemCollection? collection = ParentCollection(item, parentCollectionProperty);
+        if (collection is null) return;
 
         using (ModelEditingScope scope = item.BeginEdit("Delete"))
         {
-            parent.Properties[parentCollectionProperty].Collection.Remove(item);
+            collection.Remove(item);
             scope.Complete();
         }
+    }
+
+    private static ModelItemCollection? ParentCollection(ModelItem item, string? propertyName)
+    {
+        if (item.Parent is not { } parent) return null;
+        foreach (string name in propertyName is null ? new[] { "Items", "Children", "QuickAccessItems" } : new[] { propertyName })
+        {
+            var property = FindProperty(parent, name);
+            if (property is { IsCollection: true } && !property.Collection.IsReadOnly
+                && property.Collection.IndexOf(item) >= 0) return property.Collection;
+        }
+        return null;
     }
 
     /// <summary>Clears a scalar child property as one undo operation.</summary>
@@ -496,11 +471,6 @@ internal static class DesignModel
         using (ModelEditingScope scope = ribbon.BeginEdit("Add Tab"))
         {
             ModelItem tab = Create(ribbon, "RibbonTab");
-            tab.Properties["Header"].SetValue("New Tab");
-
-            ModelItem group = Create(ribbon, "RibbonGroup");
-            group.Properties["Header"].SetValue("New Group");
-            Add(tab, "Groups", group);
 
             Add(ribbon, "Tabs", tab);
             scope.Complete();
@@ -617,7 +587,6 @@ internal static class DesignModel
         using (ModelEditingScope scope = tab.BeginEdit("Add Group"))
         {
             ModelItem group = Create(tab, "RibbonGroup");
-            group.Properties["Header"].SetValue("New Group");
             Add(tab, "Groups", group);
             scope.Complete();
             return group;
@@ -660,16 +629,18 @@ internal static class DesignModel
     /// <summary>Creates a control by simple type name, trying the RibbonKit xmlns first, then WPF framework types (for <c>Separator</c> etc.).</summary>
     private static ModelItem? CreateAny(ModelItem context, string typeName)
     {
-        try
-        {
-            return Create(context, typeName);
-        }
-        catch
-        {
-            // Not a RibbonKit type — fall through to the framework namespaces.
-        }
+        ModelItem? item = CreateRawAny(context, typeName);
+        if (item is not null) InitializeNewItemDefaults(item);
+        return item;
+    }
 
-        return CreateFramework(context, typeName);
+    private static ModelItem? CreateRawAny(ModelItem context, string typeName)
+    {
+        // The SDK can return an unresolved model instead of throwing for a type
+        // in the wrong xmlns. Route native WPF items before creating that model.
+        return NewItemDefaults.IsFrameworkType(typeName)
+            ? CreateFramework(context, typeName, initializeDefaults: false)
+            : CreateRaw(context, typeName);
     }
 
     /// <summary>
@@ -697,7 +668,7 @@ internal static class DesignModel
     }
 
     /// <summary>Creates a WPF framework element (e.g. <c>StackPanel</c>) by simple type name, trying the presentation xmlns then the CLR name.</summary>
-    private static ModelItem? CreateFramework(ModelItem context, string typeName)
+    private static ModelItem? CreateFramework(ModelItem context, string typeName, bool initializeDefaults = true)
     {
         const string PresentationNs = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
         var attempts = new[]
@@ -708,14 +679,18 @@ internal static class DesignModel
 
         foreach (TypeIdentifier id in attempts)
         {
+            ModelItem item;
             try
             {
-                return ModelFactory.CreateItem(context.Context, id);
+                item = ModelFactory.CreateItem(context.Context, id, CreateOptions.None);
             }
             catch (Exception ex)
             {
                 DesignLog.Write("create framework " + id + " failed: " + ex.Message);
+                continue;
             }
+            if (initializeDefaults) InitializeNewItemDefaults(item);
+            return item;
         }
 
         return null;
@@ -747,6 +722,7 @@ internal static class DesignModel
     /// </summary>
     public static string? CaptionProperty(ModelItem item)
     {
+        if (TypeName(item) == "RibbonMessage") return "Title";
         if (IsScalarValue(FindProperty(item, "Header")))
         {
             return "Header";
@@ -833,6 +809,7 @@ internal static class DesignModel
     /// </summary>
     public static ModelItem? AddItem(ModelItem container, string typeName, string captionProperty, string label)
     {
+        if (FindProperty(container, "ItemsSource")?.IsSet == true) return null;
         using (ModelEditingScope scope = container.BeginEdit("Add " + label))
         {
             ModelItem? item = CreateAny(container, typeName);

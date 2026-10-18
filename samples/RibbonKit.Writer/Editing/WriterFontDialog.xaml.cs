@@ -18,6 +18,8 @@ public sealed record WriterFontDialogResult(
     Color Color);
 
 /// <summary>A RibbonKit-themed Writer font dialog with transactional Apply/OK behavior.</summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public partial class WriterFontDialog : Window
 {
     private static readonly DependencyPropertyDescriptor ComboBoxTextDescriptor =

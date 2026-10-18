@@ -29,6 +29,8 @@ namespace RibbonKit.Controls;
 /// &lt;/rk:Ribbon.MessageBar&gt;
 /// </code>
 /// </example>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonMessageBar : ItemsControl
 {
     private static readonly DependencyPropertyKey HasOpenMessagesPropertyKey =
@@ -274,6 +276,8 @@ public class RibbonMessageBar : ItemsControl
 [TemplatePart(Name = RootPartName, Type = typeof(FrameworkElement))]
 [TemplatePart(Name = ActionButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = CloseButtonPartName, Type = typeof(ButtonBase))]
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonMessage : Control
 {
     internal const string RootPartName = "PART_Root";

@@ -195,7 +195,7 @@ internal static class CrystalQuickAccessPortabilityChecks
                     message.IsOpen = notice;
                     Layout();
                     Assert.Equal(0, Panel.GetZIndex(tabs));
-                    Assert.Equal(0, drawer.MinHeight);
+                    Assert.Equal(theme == RibbonTheme.Office2024Flat ? 32 : 0, drawer.MinHeight);
                     Assert.Equal((Thickness)ribbon.FindResource("RibbonKit.Metrics.QatExtenderMargin" +
                         (notice ? "MessageBar" : minimized ? "Minimized" : "")), drawer.Margin);
                     string cornerSuffix = minimized && notice ? "MinimizedMessageBar"

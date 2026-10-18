@@ -111,7 +111,7 @@ follows the global None/Subtle/Expressive level and reduced-motion policy, and c
 be overridden with `RibbonAnimation.SetActionLevel`. Subtle uses 130 ms; Expressive
 uses 182 ms, matching the group-expansion cadence and easing. The card edge reveals/contracts, columns move between their committed
 slots, and the lower QAT follows the height change. Text and icons keep their natural
-scale. An anchored popup uses an opacity-only settle. Initial density, including preferences restored during
+scale. A persistent anchored popup settles immediately. Initial density, including preferences restored during
 `Loaded` before the first render, appears immediately.
 
 Classic/Simplified changes use the same presentation through
@@ -124,6 +124,38 @@ stay-open behavior. Simplified commands are prepared during the incoming row's
 first measure, so an animation-free switch can show the commands in its first
 render. For motion details and acceptance, see the
 [simplified-ribbon plan](docs/15-SIMPLIFIED-RIBBON-PLAN.md#s5-motion-trial--2026-10-13).
+
+### Synchronizing application content
+
+`Ribbon.LayoutTransitionPreparing`, `LayoutTransitionStarting` and
+`LayoutTransitionEnded` let an application animate its own content alongside
+Classic/Simplified, Compact/Touch and QAT placement changes. RibbonKit animates
+the QAT in both directions between TitleBar/BelowRibbon and TabRow/BelowRibbon
+without application handlers. Real layout and command ownership commit once;
+temporary inert drawings move while text/icons keep their natural size.
+
+```csharp
+// contentAnimator is application code; the Showcase main window and RTL Lab
+// demonstrate an animator without making RibbonWindow own application content.
+ribbon.LayoutTransitionPreparing += (_, e) =>
+    contentAnimator.Hold(e.TransitionId, e.CoordinateRoot);
+ribbon.LayoutTransitionStarting += (_, e) =>
+    contentAnimator.Start(e.TransitionId, e.BoundaryMotion);
+ribbon.LayoutTransitionEnded += (_, e) =>
+    contentAnimator.Release(e.TransitionId, e.Outcome);
+```
+
+Starting supplies committed geometry and read-only eased Progress driven by
+RibbonKit's shared clock. Bind render-only drawing, translation or clipping to
+that source; do not animate layout properties or start an independent timer.
+Preparing has no final geometry. Every prepared identity ends once, including
+work superseded or skipped before Starting; cleanup must use TransitionId.
+Handlers cannot defer or complete RibbonKit's transition. Bounds use the explicit
+CoordinateRoot's local DIPs and distinguish occupied space from shadow paint.
+Global/per-action/reduced-motion policy applies. Unsafe custom/native capture
+snaps, while composed interruptions use short departure/arrival. Applications
+without an animator take their final content layout immediately. See the
+[host transition contract and acceptance](docs/18-HOST-LAYOUT-TRANSITION-PLAN.md).
 
 `Ribbon.Density` is also an inherited attached property: use
 `Ribbon.SetDensity(scope, RibbonDensity.Touch)` for standalone ribbon controls or
@@ -138,6 +170,25 @@ preferences; customization import/reset does not change
 density. Application-authored fixed-size content and native window/document UI
 remain host-owned. See the [touch plan](docs/14-TOUCH-DENSITY-PLAN.md#verification-and-acceptance)
 for automated evidence and pending native touch, visual and DPI acceptance.
+
+### Feature availability and user permissions
+
+Ribbon policy properties default to true and support authored XAML and bindings.
+`IsSimplifiedRibbonEnabled="False"` enforces Classic while retaining the requested
+layout/binding and saved profiles for re-enable.
+
+`CanUserCustomizeRibbon`, `CanUserCustomizeQuickAccess`,
+`CanUserRepositionQuickAccess`, `CanUserToggleQuickAccessVisibility`,
+`CanUserMinimizeRibbon`, `CanUserChangeLayoutMode` and `CanUserChangeDensity`
+control user actions independently. They preserve application configuration and
+startup restoration. For example, set QAT placement to BelowRibbon and disable
+`CanUserRepositionQuickAccess` to keep user-facing placement fixed. Disabling
+minimization permission does not force an application-minimized Ribbon open.
+
+Built-in menus/pages enforce these permissions, including user imports/resets;
+host-owned layout/density selectors bind their availability to the corresponding
+properties. Serializer `Apply` remains an application restoration API. Policy is
+not saved in customization JSON. See the [contract and current verification](docs/16-RIBBON-FEATURE-AVAILABILITY-PLAN.md).
 
 ### Simplified ribbon
 

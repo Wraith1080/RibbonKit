@@ -48,6 +48,23 @@ internal static class PropertyMetadata
             "Selected tab index — a RUNTIME property (sets the startup tab). For a design-time-only preview that won't affect runtime, add d:SelectedIndex=\"N\" in XAML.");
 
         // ── Button family (shared properties) ────────────────────────────────────────────
+        Describe(b, "RibbonKit.Controls.Ribbon", "IsSimplifiedRibbonEnabled",
+            "Enable Simplified Ribbon; false enforces Classic without replacing the layout binding. Authored policy; defaults to true. Application configuration remains available.");
+        Describe(b, "RibbonKit.Controls.Ribbon", "CanUserCustomizeRibbon",
+            "Allow Classic and Simplified Ribbon customization. Authored policy; defaults to true. Application configuration remains available.");
+        Describe(b, "RibbonKit.Controls.Ribbon", "CanUserCustomizeQuickAccess",
+            "Allow QAT item addition, removal and reordering. Authored policy; defaults to true. Application configuration remains available.");
+        Describe(b, "RibbonKit.Controls.Ribbon", "CanUserRepositionQuickAccess",
+            "Allow user changes to QAT placement. Authored policy; defaults to true. Application configuration remains available.");
+        Describe(b, "RibbonKit.Controls.Ribbon", "CanUserToggleQuickAccessVisibility",
+            "Allow user Show/Hide QAT actions. Authored policy; defaults to true. Application configuration remains available.");
+        Describe(b, "RibbonKit.Controls.Ribbon", "CanUserMinimizeRibbon",
+            "Allow user minimize and restore actions. Authored policy; defaults to true. Application configuration remains available.");
+        Describe(b, "RibbonKit.Controls.Ribbon", "CanUserChangeLayoutMode",
+            "Allow user changes between Classic and Simplified. Authored policy; defaults to true. Application configuration remains available.");
+        Describe(b, "RibbonKit.Controls.Ribbon", "CanUserChangeDensity",
+            "Allow user changes between Compact and Touch. Authored policy; defaults to true. Application configuration remains available.");
+
         foreach (string type in new[]
         {
             "RibbonKit.Controls.RibbonButton",

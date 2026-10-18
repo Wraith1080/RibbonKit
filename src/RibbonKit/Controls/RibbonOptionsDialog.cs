@@ -36,6 +36,8 @@ namespace RibbonKit.Controls;
 [TemplatePart(Name = OkButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = CancelButtonPartName, Type = typeof(ButtonBase))]
 [TemplatePart(Name = CloseButtonPartName, Type = typeof(ButtonBase))]
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonOptionsDialog : Window
 {
     private const string WindowRootPartName = "PART_WindowRoot";
@@ -98,7 +100,7 @@ public class RibbonOptionsDialog : Window
             if (args.NewItems is not null)
                 foreach (RibbonOptionsPage page in args.NewItems)
                 {
-                    if (page.Content is RibbonCustomizePage or RibbonSimplifiedCustomizePage
+                    if (page.Content is RibbonCustomizePage or RibbonSimplifiedCustomizePage or RibbonQuickAccessPage
                         && page.ReadLocalValue(IsEnabledProperty) == DependencyProperty.UnsetValue)
                         page.SetBinding(IsEnabledProperty, new System.Windows.Data.Binding(nameof(IsEnabled)) { Source = page.Content });
                     if (page.Content is RibbonCustomizePage or RibbonSimplifiedCustomizePage
@@ -345,6 +347,8 @@ public interface IRibbonFillPage
 /// application's own user control, or a RibbonKit customization page. The page's own template
 /// renders ONLY the header (it is the nav entry); the dialog presents the content separately.
 /// </summary>
+[System.ComponentModel.ToolboxItem(false)]
+[System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonOptionsPage : HeaderedContentControl
 {
     static RibbonOptionsPage()
