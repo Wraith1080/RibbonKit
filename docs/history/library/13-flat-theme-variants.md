@@ -386,3 +386,41 @@ separator without changing HeaderBand's padding or page measurement. It follows
 the heading's visibility so a headerless page reserves no extra row. Geometry
 checks use the measured divider edges at fractional DPI and the menu's logical
 coordinates in both directions; the host reflects the whole surface for RTL.
+
+### 3.266 Persistent Showcase application-menu choice — 2026-10-18
+
+Showcase's ApplyTheme no longer assigns ApplicationMenuToggle.IsChecked. The
+existing `2007 Menu` toggle and saved FileSurface preference alone select between
+the application menu and Backstage, including Office 2007 and Crystal. The
+existing selector handler still closes the old surface before changing ownership;
+the modeless RTL lab follows the same explicit choice through the existing event.
+Startup restoration, settings schema and factory Backstage default are unchanged.
+This supersedes the conventional theme-driven live surface described in §3.71.
+No runtime library or public API changed.
+
+New selector regressions fail with the old automatic assignment and cover both
+choices through all seven themes and light/dark mode. Serializer checks cover both
+saved choices for every theme. Keep tests from writing real user preferences.
+The existing Crystal comparison fixture now expects the accepted 2024 inner
+rounding and borderless active page from §3.265 rather than the superseded square,
+separately framed page. Current evidence and native review limits are in the
+[active theme plan](../../09-FUTURE-THEMES-PLAN.md#persistent-application-menu-choice).
+
+### 3.267 Showcase theme-preferred Backstage layouts — 2026-10-18
+
+Showcase's ApplyTheme selects a preferred Backstage design and refreshes the
+existing layout selector label before publishing its application-surface state.
+Crystal uses CrystalSidebar; 2024/Flat use Modern; 2013/2019 use Classic;
+2010 uses Classic2010; 2007 uses Classic2007. This is host policy rather than
+ThemeManager or Backstage runtime behavior. The RTL lab receives the design
+through the existing application-surface event.
+
+The application-menu toggle remains independent, including while the preferred
+Backstage is inactive behind it. Manual layout selection still works and survives
+dark-mode changes until another theme selection. Startup restores the explicit
+saved layout after applying the theme, preserving manual choices between runs.
+No public API, runtime source, settings schema or new selector was required.
+
+Seven mapping regressions fail before the change and pass afterward. Current
+focused evidence and native limits are in the
+[active theme plan](../../09-FUTURE-THEMES-PLAN.md#theme-preferred-backstage-layouts).

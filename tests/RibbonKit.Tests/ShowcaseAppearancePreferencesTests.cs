@@ -7,6 +7,22 @@ namespace RibbonKit.Tests;
 
 public class ShowcaseAppearancePreferencesTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void File_surface_round_trips_independently_of_theme(bool useMenu)
+    {
+        var surface = useMenu ? ShowcaseFileSurface.ApplicationMenu : ShowcaseFileSurface.Backstage;
+        foreach (var theme in Enum.GetValues<RibbonTheme>())
+        {
+            string json = ShowcaseAppearancePreferencesSerializer.Serialize(
+                new ShowcaseAppearancePreferences { Theme = theme, FileSurface = surface });
+            Assert.True(ShowcaseAppearancePreferencesSerializer.TryDeserialize(json, out var restored));
+            Assert.Equal(theme, restored.Theme);
+            Assert.Equal(surface, restored.FileSurface);
+        }
+    }
+
     [Fact]
     public void Crystal_light_selection_round_trips_as_a_theme_preference()
     {

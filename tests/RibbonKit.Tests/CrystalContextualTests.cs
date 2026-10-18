@@ -1774,10 +1774,12 @@ public class CrystalContextualTests
         Assert.Equal(Visibility.Collapsed, shadowLayer.Visibility);
         Assert.NotNull(frame.Effect);
         Assert.Equal(new Thickness(), separator.Margin);
-        Assert.Equal(new CornerRadius(), innerOutline.CornerRadius);
-        Assert.Null(innerContent.Clip);
-        Assert.Equal(new Thickness(1), activePage.BorderThickness);
-        Assert.Equal(new Thickness(0, 0, 2, 2), activePage.Margin);
+        Assert.Equal(new CornerRadius(5), innerOutline.CornerRadius);
+        Assert.Equal(new CornerRadius(6), innerRim.CornerRadius);
+        Assert.Equal(4d, Assert.IsType<RectangleGeometry>(innerContent.Clip).RadiusX);
+        Assert.Equal(new Rect(innerContent.RenderSize), Assert.IsType<RectangleGeometry>(innerContent.Clip).Rect);
+        Assert.Equal(new Thickness(), activePage.BorderThickness);
+        Assert.Equal(new Thickness(), activePage.Margin);
         Assert.Null(((Grid)split.Template.FindName("Root", split)).Clip);
         compare.IsChecked = false;
         compare.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

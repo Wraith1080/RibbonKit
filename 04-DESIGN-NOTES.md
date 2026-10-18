@@ -1038,6 +1038,16 @@ technical evidence warrants them; preserve existing dated records.
 [Shared frame tokens, transparent Glass hover and stable connected-tab chrome](docs/history/library/13-flat-theme-variants.md#3265-office-menu-hover-and-transition-polish--2026-10-18).
 [Current review status](docs/09-FUTURE-THEMES-PLAN.md#office-menu-hover-and-transition-polish).
 
+### 3.266 Persistent Showcase application-menu choice — 2026-10-18
+
+[Keep the existing toggle independent of theme changes](docs/history/library/13-flat-theme-variants.md#3266-persistent-showcase-application-menu-choice--2026-10-18).
+[Current evidence](docs/09-FUTURE-THEMES-PLAN.md#persistent-application-menu-choice).
+
+### 3.267 Showcase theme-preferred Backstage layouts — 2026-10-18
+
+[Pair theme selection with a host-owned Backstage design](docs/history/library/13-flat-theme-variants.md#3267-showcase-theme-preferred-backstage-layouts--2026-10-18).
+[Current mapping and evidence](docs/09-FUTURE-THEMES-PLAN.md#theme-preferred-backstage-layouts).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.

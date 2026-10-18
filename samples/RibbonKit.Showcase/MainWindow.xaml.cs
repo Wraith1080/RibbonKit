@@ -56,8 +56,8 @@ public partial class MainWindow : RibbonWindow
     // The Office 2007 application menu, declared in XAML so the designer renders it, then parked
     // here. Ribbon.ApplicationMenu WINS over Ribbon.Backstage whenever it is set, and this app
     // wants the backstage by default — so it is detached at startup and handed back by the
-    // "2007 Menu" toggle or by switching to Office 2007 or Crystal Light. A real app that ships
-    // one File surface just leaves the one it wants assigned in XAML and never touches this.
+    // saved File-surface choice or the "2007 Menu" toggle, independently of theme. A real app
+    // that ships one File surface just leaves it assigned in XAML and never touches this.
     private readonly RibbonApplicationMenu _applicationMenu;
     private CrystalMainWindowPresentation? _crystalPresentation;
     private AcrylicGlassPresentation? _acrylicGlassPresentation;
@@ -219,8 +219,7 @@ public partial class MainWindow : RibbonWindow
         try
         {
             _glassTreatmentOverride = preferences.GlassTreatment;
-            // Theme first: ApplyTheme intentionally selects that generation's conventional File
-            // surface. The explicit saved surface is restored later so the user's choice wins.
+            // Restore the palette before the independent, saved File-surface choice.
             ApplyTheme(preferences.Theme);
 
             DarkModeToggle.IsChecked = preferences.DarkMode;
@@ -386,6 +385,18 @@ public partial class MainWindow : RibbonWindow
         }
         else
             _crystalPresentation?.Apply(false);
+        // Showcase pairs each palette with a starting Backstage design. The
+        // File-surface toggle remains independent, and manual layout choices
+        // still override this until another theme is selected.
+        ShowcaseBackstage.Design = theme switch
+        {
+            RibbonTheme.CrystalLight => RibbonBackstageDesign.CrystalSidebar,
+            RibbonTheme.Office2013 or RibbonTheme.Office2019 => RibbonBackstageDesign.Classic,
+            RibbonTheme.Office2010 => RibbonBackstageDesign.Classic2010,
+            RibbonTheme.Office2007 => RibbonBackstageDesign.Classic2007,
+            _ => RibbonBackstageDesign.Modern, // Office 2024 and Office 2024 Flat.
+        };
+        SyncBackstageLayoutLabel();
         UpdateDetachedDemoThemes();
         bool supportsDarkMode = ThemeManager.SupportsDarkMode(theme);
         DarkModeToggle.IsEnabled = supportsDarkMode;
@@ -400,9 +411,6 @@ public partial class MainWindow : RibbonWindow
         Office2010AeroFrameToggle.Visibility = is2010
             ? Visibility.Visible
             : Visibility.Collapsed;
-        // Crystal uses the application menu too. Keep the existing toggle as the
-        // single path for swapping File surfaces; restored explicit preferences still win.
-        ApplicationMenuToggle.IsChecked = is2007 || theme == RibbonTheme.CrystalLight;
         ApplyFrameAppearancePreference();
         ApplyAeroFrameTintPreference();
         UpdateBackdropSurfaceTransparency();

@@ -19,6 +19,90 @@ namespace RibbonKit.Tests;
 public sealed class ShowcaseViewChoiceTests
 {
     [Theory]
+    [InlineData(RibbonTheme.CrystalLight, RibbonBackstageDesign.CrystalSidebar, "Crystal Sidebar")]
+    [InlineData(RibbonTheme.Office2024, RibbonBackstageDesign.Modern, "2024 Rail")]
+    [InlineData(RibbonTheme.Office2024Flat, RibbonBackstageDesign.Modern, "2024 Rail")]
+    [InlineData(RibbonTheme.Office2019, RibbonBackstageDesign.Classic, "2013 Rail")]
+    [InlineData(RibbonTheme.Office2013, RibbonBackstageDesign.Classic, "2013 Rail")]
+    [InlineData(RibbonTheme.Office2010, RibbonBackstageDesign.Classic2010, "2010 Glass")]
+    [InlineData(RibbonTheme.Office2007, RibbonBackstageDesign.Classic2007, "2007 Classic")]
+    public void Selecting_a_theme_applies_its_preferred_backstage_layout(
+        RibbonTheme theme, RibbonBackstageDesign design, string label) => Sta.Run(() =>
+    {
+        var application = Sta.UseApplication(showcaseResources: true);
+        ThemeManager.Apply(application, RibbonTheme.Office2024);
+        var window = new MainWindow();
+        var demo = new LocalizationRtlDemo();
+        try
+        {
+            typeof(MainWindow).GetField("_restoringAppearance", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .SetValue(window, true);
+            demo.AttachApplicationSurfaceSource(window);
+            window.ApplicationMenuToggle.IsChecked = true;
+            if (theme == RibbonTheme.Office2024) SelectTheme(RibbonTheme.Office2019);
+            SelectLayout(RibbonBackstageDesign.CrystalFloating);
+            SelectTheme(theme);
+            Assert.Equal(design, window.ShowcaseBackstage.Design);
+            Assert.Equal(label, window.BackstageLayoutSelector.Header);
+            Assert.Equal(design, demo.DemoBackstage.Design);
+            Assert.True(window.ApplicationMenuToggle.IsChecked);
+            Assert.NotNull(window.MainRibbon.ApplicationMenu);
+
+            // A manual choice still takes effect and survives a dark-mode change.
+            SelectLayout(RibbonBackstageDesign.CrystalFloating);
+            window.DarkModeToggle.IsChecked = true;
+            Assert.Equal(RibbonBackstageDesign.CrystalFloating, window.ShowcaseBackstage.Design);
+            Assert.Equal("Crystal Floating", window.BackstageLayoutSelector.Header);
+            Assert.Equal(RibbonBackstageDesign.CrystalFloating, demo.DemoBackstage.Design);
+
+            void SelectTheme(RibbonTheme value) => window.ThemeGallery.SelectedItem = window.ThemeGallery.Items
+                .Cast<RibbonGalleryItem>().Single(item => Equals(item.Tag, value.ToString()));
+            void SelectLayout(RibbonBackstageDesign value) => window.BackstageLayoutSelector.Items
+                .Cast<RibbonMenuItem>().Single(item => Equals(item.Tag, value.ToString()))
+                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        }
+        finally { demo.Close(); window.Close(); Sta.ResetApplication(); }
+    });
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Application_menu_toggle_survives_theme_and_dark_mode_changes(bool useMenu) => Sta.Run(() =>
+    {
+        var application = Sta.UseApplication(showcaseResources: true);
+        ThemeManager.Apply(application, RibbonTheme.Office2024);
+        var window = new MainWindow();
+        var demo = new LocalizationRtlDemo();
+        try
+        {
+            // Exercise the real selector handlers without writing user preferences.
+            typeof(MainWindow).GetField("_restoringAppearance", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .SetValue(window, true);
+            window.ApplicationMenuToggle.IsChecked = useMenu;
+            demo.AttachApplicationSurfaceSource(window);
+            var menu = (RibbonApplicationMenu)window.FindName("ShowcaseApplicationMenu");
+            foreach (var theme in Enum.GetValues<RibbonTheme>())
+            {
+                window.ThemeGallery.SelectedItem = window.ThemeGallery.Items.Cast<RibbonGalleryItem>()
+                    .Single(item => Equals(item.Tag, theme.ToString()));
+                foreach (bool dark in new[] { false, true })
+                {
+                    window.DarkModeToggle.IsChecked = dark;
+                    Assert.Equal(useMenu, window.ApplicationMenuToggle.IsChecked);
+                    Assert.Same(useMenu ? menu : null, window.MainRibbon.ApplicationMenu);
+                    Assert.Equal(useMenu, window.ApplicationSurfaceState.UsesApplicationMenu);
+                    Assert.Equal(useMenu, demo.DemoRibbon.ApplicationMenu is not null);
+                }
+            }
+            // The existing toggle still changes both windows explicitly.
+            window.ApplicationMenuToggle.IsChecked = !useMenu;
+            Assert.Equal(!useMenu, window.MainRibbon.ApplicationMenu is not null);
+            Assert.Equal(!useMenu, demo.DemoRibbon.ApplicationMenu is not null);
+        }
+        finally { demo.Close(); window.Close(); Sta.ResetApplication(); }
+    });
+
+    [Theory]
     [InlineData(RibbonTheme.Office2007, RibbonBackdrop.Acrylic)]
     [InlineData(RibbonTheme.Office2010, RibbonBackdrop.Acrylic)]
     [InlineData(RibbonTheme.Office2007, RibbonBackdrop.Mica)]

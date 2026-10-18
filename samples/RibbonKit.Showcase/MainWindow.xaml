@@ -299,8 +299,8 @@
 
                  Declared here so the XAML designer shows it, then DETACHED in the constructor:
                  Ribbon.ApplicationMenu wins over Ribbon.Backstage whenever it is set, and the
-                 showcase wants the backstage by default. Switching to the Office 2007 theme (or
-                 the "2007 Menu" toggle in the Backstage group) hands it back.
+                 showcase wants the backstage by default. The saved "2007 Menu" toggle in the
+                 Backstage group hands it back, independently of the selected theme.
 
                  The row shapes on show here are all three:
                    New / Open / Save / Close  — plain commands, no arrow, click closes the menu.
@@ -1109,7 +1109,7 @@
                                            Checked="OnToggleApplicationMenu"
                                            Unchecked="OnToggleApplicationMenu"
                                            ScreenTipTitle="Office 2007 application menu"
-                                           ScreenTipText="Swap the File button's surface from the backstage overlay to the Office 2007 two-pane application menu — a drop-down rendered behind the orb. Switching to the Office 2007 theme turns this on for you." />
+                                           ScreenTipText="Use the two-pane application menu for the File button instead of Backstage. This saved choice stays on or off until you change this toggle, including when switching themes." />
                     <rk:RibbonToggleButton x:Name="BackstageTranslucentToggle"
                                            Header="Translucent Backstage"
                                            Size="Large"

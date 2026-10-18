@@ -892,9 +892,10 @@ remain open before calling this a complete shipped theme.
 The first main-window visual check showed that tokens alone left the QAT drawer and
 message panels looking like Office. Showcase now applies the existing Crystal
 presentation adapters and local control styles only while Crystal Light is selected.
-The Crystal menu is the default File surface, with an explicit saved File choice still
-respected. Switching back removes the local styles and restores the Office template
-parts. The document-under-QAT layout remains a separate host option.
+The saved `2007 Menu` toggle selects the File surface independently of the theme;
+switching themes keeps its on/off choice. Switching back removes the local styles
+and restores the Office template parts. The document-under-QAT layout remains a
+separate host option.
 
 The next first-phase screenshot review found seven gaps in the main Showcase:
 contextual and merged contextual tabs, scrollbars, customization, split-button
@@ -1317,3 +1318,43 @@ body chrome; backdrop-only changes skip the ribbon theme fade.
 | Native review | Pending user review of all six reported fixes in Showcase, especially real Mica/Acrylic toggles and the live connected notch during Simplified/Touch transitions. Native pointer input, mixed-monitor DPI and reduced-motion review were not run. |
 | Broader validation | Full solution suite and release/package gates were not run for this bounded fix. |
 | Heading join follow-up | Corrected 2026-10-18: the heading background covers the divider's one-DIP highlight strip, preserving text inset and page layout. The independent ThemePolish consumer passed all 28 palette/direction combinations plus a headerless-page check; 16 selected Release menu scenes passed after actual/diff inspection and approval updates. Normal Debug runtime/Showcase builds passed. Native review of this seam remains open. Earlier runtime/motion evidence above was retained. |
+
+## Persistent application-menu choice
+
+Implemented 2026-10-18: the existing `2007 Menu` toggle retains its on/off state
+through every theme and dark-mode change, including Office 2007 and Crystal.
+The File-surface choice continues to save and restore with appearance preferences;
+the RTL lab follows the same explicit choice. No new toggle, settings schema or
+runtime API was added.
+
+Focused automated evidence: 46 selector/preferences checks and two menu-comparison/
+RTL checks passed in separate runs. New cases cover both on/off choices through
+all 14 theme/palette combinations and saved choices for all seven themes. Normal
+Debug Showcase built with zero warnings/errors. The older Crystal comparison
+assertions were updated for the already accepted menu geometry from the preceding
+slice. Native click/relaunch review and the full solution suite were not run.
+[Implementation record](history/library/13-flat-theme-variants.md#3266-persistent-showcase-application-menu-choice--2026-10-18).
+
+## Theme-preferred Backstage layouts
+
+Implemented 2026-10-18 in Showcase only. Selecting a theme updates the existing
+Backstage layout selector and RTL lab using this mapping:
+
+| Theme | Preferred Backstage layout |
+| --- | --- |
+| Crystal | Crystal Sidebar |
+| Office 2024 / Office 2024 Flat | 2024 Rail |
+| Office 2013 / Office 2019 | 2013 Rail |
+| Office 2010 | 2010 Glass |
+| Office 2007 | 2007 Classic |
+
+The `2007 Menu` on/off choice stays independent. A manual Backstage layout can
+replace the preferred choice until the next theme selection, and its saved value
+still restores at startup. The runtime library owns no theme-to-layout policy.
+
+All 28 focused Showcase selector checks passed, including seven mapping cases,
+manual overrides through dark-mode changes, RTL lab synchronization and both
+application-menu toggle states across every theme/palette. Normal Debug Showcase
+built with zero warnings/errors. Live selection/relaunch review and the full
+solution suite were not run.
+[Implementation record](history/library/13-flat-theme-variants.md#3267-showcase-theme-preferred-backstage-layouts--2026-10-18).

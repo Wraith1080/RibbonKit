@@ -437,3 +437,7 @@ status updates and investigation narration were removed during compaction.
 ### [3.264 Stable caption and content paint during layout transitions — 2026-10-18](library/16-host-layout-transitions.md#3264-stable-caption-and-content-paint-during-layout-transitions--2026-10-18)
 
 ### [3.265 Office menu, hover and transition polish — 2026-10-18](library/13-flat-theme-variants.md#3265-office-menu-hover-and-transition-polish--2026-10-18)
+
+### [3.266 Persistent Showcase application-menu choice — 2026-10-18](library/13-flat-theme-variants.md#3266-persistent-showcase-application-menu-choice--2026-10-18)
+
+### [3.267 Showcase theme-preferred Backstage layouts — 2026-10-18](library/13-flat-theme-variants.md#3267-showcase-theme-preferred-backstage-layouts--2026-10-18)
