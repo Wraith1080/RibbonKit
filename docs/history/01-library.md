@@ -445,3 +445,5 @@ status updates and investigation narration were removed during compaction.
 ### [3.268 Concentric radio indicators at fractional DPI — 2026-10-18](library/11-touch-density-and-gallery-projections.md#3268-concentric-radio-indicators-at-fractional-dpi--2026-10-18)
 
 ### [3.269 Optional color-preserving QAT icon glow — 2026-10-19](library/01-core-controls.md#3269-optional-color-preserving-qat-icon-glow--2026-10-19)
+
+### [3.270 Adaptive QAT vector colors — 2026-10-19](library/01-core-controls.md#3270-adaptive-qat-vector-colors--2026-10-19)

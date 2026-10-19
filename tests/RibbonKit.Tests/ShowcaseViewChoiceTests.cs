@@ -21,6 +21,7 @@ public sealed class ShowcaseViewChoiceTests
     [Theory]
     [InlineData(RibbonQuickAccessIconAppearance.WhiteOverlay, "White Overlay")]
     [InlineData(RibbonQuickAccessIconAppearance.ColorWithGlow, "Color with Glow")]
+    [InlineData(RibbonQuickAccessIconAppearance.AdaptiveColor, "Adaptive Color")]
     public void Qat_icon_choice_survives_theme_and_colored_title_bar_changes(
         RibbonQuickAccessIconAppearance appearance, string label) => Sta.Run(() =>
     {

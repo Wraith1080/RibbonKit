@@ -1057,6 +1057,11 @@ technical evidence warrants them; preserve existing dated records.
 [Shared appearance choice with host-owned selection and persistence](docs/history/library/01-core-controls.md#3269-optional-color-preserving-qat-icon-glow--2026-10-19).
 [Current evidence and review](docs/09-FUTURE-THEMES-PLAN.md#qat-icon-appearance-choice).
 
+### 3.270 Adaptive QAT vector colors — 2026-10-19
+
+[Cached, layer-aware contrast adjustment with original artwork fallback](docs/history/library/01-core-controls.md#3270-adaptive-qat-vector-colors--2026-10-19).
+[Current evidence and review](docs/09-FUTURE-THEMES-PLAN.md#adaptive-qat-icon-colors).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.

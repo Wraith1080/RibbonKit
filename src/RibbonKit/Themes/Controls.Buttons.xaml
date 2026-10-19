@@ -99,7 +99,7 @@
                                        Width="16" Height="16" Stretch="Uniform" Visibility="Collapsed"
                                        IsHitTestVisible="False" Effect="{DynamicResource RibbonKit.Effects.Qat.IconGlow}" />
                                 <Image x:Name="SmallImage"
-                                       Source="{TemplateBinding Icon}"
+                                       controls:QatAdaptiveIcon.Source="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}"
                                        Width="16" Height="16"
                                        Stretch="Uniform" />
                                 <Rectangle x:Name="SmallImageTint" Width="16" Height="16"
@@ -128,6 +128,10 @@
                             <Setter TargetName="SmallImageTint" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="SmallImageGlow" Property="Visibility" Value="Visible" />
                         </MultiTrigger>
+                        <Trigger Property="controls:QatAdaptiveIcon.Active" Value="True">
+                            <Setter TargetName="SmallImage" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="SmallImageTint" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
                         <Trigger Property="LargeIcon" Value="{x:Null}">
                             <Setter TargetName="LargeImage" Property="Source"
                                     Value="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}" />
@@ -367,7 +371,7 @@
                                        Width="16" Height="16" Stretch="Uniform" Visibility="Collapsed"
                                        IsHitTestVisible="False" Effect="{DynamicResource RibbonKit.Effects.Qat.IconGlow}" />
                                 <Image x:Name="SmallImage"
-                                       Source="{TemplateBinding Icon}"
+                                       controls:QatAdaptiveIcon.Source="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}"
                                        Width="16" Height="16"
                                        Stretch="Uniform" />
                                 <Rectangle x:Name="SmallImageTint" Width="16" Height="16"
@@ -426,6 +430,10 @@
                             <Setter TargetName="SmallImageTint" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="SmallImageGlow" Property="Visibility" Value="Visible" />
                         </MultiTrigger>
+                        <Trigger Property="controls:QatAdaptiveIcon.Active" Value="True">
+                            <Setter TargetName="SmallImage" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="SmallImageTint" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsMouseOver" Value="True" />

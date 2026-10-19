@@ -7,6 +7,18 @@ namespace RibbonKit.Tests;
 
 public class ShowcaseAppearancePreferencesTests
 {
+    [Theory]
+    [InlineData(RibbonQuickAccessIconAppearance.WhiteOverlay)]
+    [InlineData(RibbonQuickAccessIconAppearance.ColorWithGlow)]
+    [InlineData(RibbonQuickAccessIconAppearance.AdaptiveColor)]
+    public void Qat_icon_appearance_round_trips(RibbonQuickAccessIconAppearance appearance)
+    {
+        string json = ShowcaseAppearancePreferencesSerializer.Serialize(
+            new ShowcaseAppearancePreferences { QuickAccessIconAppearance = appearance });
+        Assert.True(ShowcaseAppearancePreferencesSerializer.TryDeserialize(json, out var restored));
+        Assert.Equal(appearance, restored.QuickAccessIconAppearance);
+    }
+
     [Fact]
     public void Legacy_preferences_keep_the_white_overlay_default()
     {

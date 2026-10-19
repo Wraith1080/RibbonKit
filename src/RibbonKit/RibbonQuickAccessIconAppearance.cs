@@ -8,4 +8,11 @@ public enum RibbonQuickAccessIconAppearance
 
     /// <summary>Keep the original icon colors with a small white glow behind the icon.</summary>
     ColorWithGlow,
+
+    /// <summary>
+    /// Adjust solid vector fills and strokes for contrast while retaining colored accents and
+    /// internal detail. Generated black parts become partially transparent openings.
+    /// Unsupported image and drawing types retain their original appearance.
+    /// </summary>
+    AdaptiveColor,
 }

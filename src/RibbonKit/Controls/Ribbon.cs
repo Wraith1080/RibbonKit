@@ -3680,6 +3680,9 @@ public partial class Ribbon : Control
             : tabRowColored ? "RibbonKit.Brushes.Tab.HoverBackground"
             : null;
 
+        var iconSurface = TryFindResource(titleBarColored ? "RibbonKit.Brushes.TitleBar.Background"
+            : "RibbonKit.Brushes.Ribbon.Background") as Brush ?? Brushes.Transparent;
+
         foreach (object entry in QuickAccessItems)
         {
             if (entry is not FrameworkElement element)
@@ -3688,6 +3691,9 @@ public partial class Ribbon : Control
             }
 
             SetQatOnColoredSurface(element, colored);
+            QatAdaptiveIcon.SetSurface(element, iconSurface);
+            QatAdaptiveIcon.SetActive(element,
+                colored && QuickAccessIconAppearance == RibbonQuickAccessIconAppearance.AdaptiveColor);
             UtilityChrome.SetQatIconGlow(element,
                 colored && QuickAccessIconAppearance == RibbonQuickAccessIconAppearance.ColorWithGlow);
             // Carry a ribbon-scoped glow into the detached title-bar host as well.

@@ -491,8 +491,12 @@ public partial class MainWindow : RibbonWindow
     }
 
     private void SyncQatIconAppearanceLabel() =>
-        QatIconAppearanceSelector.Header = MainRibbon.QuickAccessIconAppearance == RibbonQuickAccessIconAppearance.ColorWithGlow
-            ? "Color with Glow" : "White Overlay";
+        QatIconAppearanceSelector.Header = MainRibbon.QuickAccessIconAppearance switch
+        {
+            RibbonQuickAccessIconAppearance.ColorWithGlow => "Color with Glow",
+            RibbonQuickAccessIconAppearance.AdaptiveColor => "Adaptive Color",
+            _ => "White Overlay",
+        };
 
     private void OnAccentGalleryChanged(object sender, SelectionChangedEventArgs e)
     {

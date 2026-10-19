@@ -252,6 +252,11 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("QuickAccessScopePortabilityChecks.Verify", () => QuickAccessScopePortabilityChecks.Verify(application));
             return;
         }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "QatIconAppearance")
+        {
+            VerifyScope("QuickAccessIconAppearanceChecks.Verify", () => QuickAccessIconAppearanceChecks.Verify(application));
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "ColoredQat")
         {
             VerifyScope("QuickAccessIconAppearanceChecks.Verify", () => QuickAccessIconAppearanceChecks.Verify(application));

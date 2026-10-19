@@ -1409,7 +1409,63 @@ Evidence is in `TestResults/qat-glow-full`, `qat-glow-colored-final.log`,
 `qat-glow-glass-recheck.log`, `qat-glow-touch-recheck.log` and the four
 `qat-glow-visual-*.log` files. The isolated focus results are in
 `TestResults/qat-glow-focus-retry/{gallery,overflow}.trx`. The full-suite gate
-remains open for the uncompleted full consumer continuation. Native icon-glow
-visual review and real monitor/DPI transitions remain
-pending; the Debug Showcase is ready for review.
+remains open for the uncompleted full consumer continuation. The user's
+2026-10-19 visual review rejected the glow's appearance; it remains an available
+comparison while Adaptive Color is tried below. Real monitor/DPI transitions
+remain pending.
 [Implementation record](history/library/01-core-controls.md#3269-optional-color-preserving-qat-icon-glow--2026-10-19).
+
+## Adaptive QAT icon colors
+
+Implemented 2026-10-19 as a third **View → Accent → QAT icon appearance** choice,
+**Adaptive Color**. It adjusts solid vector fills/strokes for contrast against
+the colored band and earlier icon layers. Original geometry and internal details
+are retained; colored accents keep their hue where possible. Newly generated
+black parts instead use the source color at 25% of its original alpha, with true
+openings through earlier icon layers. Authored black details stay unchanged.
+The neutral/overflow treatment and White Overlay default remain unchanged.
+Bitmaps, unsupported/complex drawings and gradient icon fills keep their original
+appearance. This is a heuristic; it does not infer which white shapes are holes.
+
+The reusable library enum adds one compatible Unshipped member. Shared templates
+and a bounded weak palette cache own rendering; Showcase owns the selector and
+existing schema-4 preference. A mutable icon refreshes on drawing changes, and a
+different accent or scoped surface selects another cached palette. No glow or
+toolbar background is added by this choice.
+
+Initial implementation verification passed: Debug Showcase and Release solution builds
+have zero warnings/errors; all 12 final Release vector/binding/render checks pass,
+including mutable-source invalidation, freezing a live source, geometry/alpha
+retention and unsupported-artwork fallback. Showcase selector/theme round trips
+and schema-4 preference checks pass. The RibbonKit-only consumer passed 336 theme/
+palette/density/placement/simulated-DPI contexts with Glow/Overlay/Adaptive/Glow
+round trips, plus scoped palettes, live icon replacement, overflow neutrality and
+the existing colored-button matrix.
+
+Authored Save/Undo/Redo/Mouse/Touch/Copy/Paste/Bold/Find captures cover Office2024
+and Office2007 with blue, purple and yellow accents at simulated 100/125/150/200%
+DPI. Selected flat/gradient and fractional-DPI strips were inspected. The initial
+capture aggregate exceeded the 30-second STA limit; the sweep passes split by
+palette. Captures are in `TestResults/qat-adaptive`, focused results in
+`qat-adaptive-final-vectors.log` and `qat-adaptive-consumer.log`. Native visual
+acceptance and real monitor/DPI transitions remain pending.
+
+The partial-transparency refinement passed all 16 focused renderer checks in
+Debug, including pixel-alpha assertions through earlier layers and a stroke's
+own fill, transformed geometry, later accents and authored-black preservation.
+The affected Debug Showcase built successfully. The dedicated Release
+`QatIconAppearance` consumer scope passed all 336 contexts and a live replacement
+with partial stroke coverage. Captures in `TestResults/qat-adaptive-alpha` were
+reviewed on blue, purple and yellow flat/gradient bands. Results are in
+`qat-adaptive-alpha-final.log` and `qat-adaptive-alpha-consumer-final.log`.
+Only icon-specific checks ran for this refinement; live visual acceptance remains
+pending.
+
+A broader attempt preceded the user's instruction to test only this change:
+runtime passed 1042/1043 (the failed focus case passed a fresh isolated retry),
+Writer passed 482/483 (the lifecycle timeout also reproduces on starting commit
+`144fe110`), and full consumer/visual aggregates stopped at Touch fixtures/the
+60-second visual limit. Further broad checks were stopped at the user's request;
+an incidental Touch fixture edit was removed. These results are not a clean full
+suite pass. No approvals, Writer code or unrelated runtime behavior were changed.
+[Implementation record](history/library/01-core-controls.md#3270-adaptive-qat-vector-colors--2026-10-19).

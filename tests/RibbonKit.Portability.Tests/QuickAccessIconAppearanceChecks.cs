@@ -60,7 +60,8 @@ internal static class QuickAccessIconAppearanceChecks
                     ribbon.QuickAccessPosition = position; Layout();
                     var sizes = ribbon.QuickAccessItems.Cast<FrameworkElement>().Select(item => item.RenderSize).ToArray();
                     foreach (var appearance in new[] { RibbonQuickAccessIconAppearance.ColorWithGlow,
-                        RibbonQuickAccessIconAppearance.WhiteOverlay, RibbonQuickAccessIconAppearance.ColorWithGlow })
+                        RibbonQuickAccessIconAppearance.WhiteOverlay, RibbonQuickAccessIconAppearance.AdaptiveColor,
+                        RibbonQuickAccessIconAppearance.ColorWithGlow })
                     {
                         ribbon.QuickAccessIconAppearance = appearance; Layout();
                         int index = 0;
@@ -70,13 +71,32 @@ internal static class QuickAccessIconAppearanceChecks
                             bool colored = Ribbon.GetQatOnColoredSurface(proxy);
                             if (position == RibbonQuickAccessPosition.BelowRibbon) Assert.False(colored);
                             bool glow = colored && appearance == RibbonQuickAccessIconAppearance.ColorWithGlow;
+                            bool adaptive = colored && appearance == RibbonQuickAccessIconAppearance.AdaptiveColor;
+                            bool overlay = colored && appearance == RibbonQuickAccessIconAppearance.WhiteOverlay;
                             var image = Part<Image>(proxy, "SmallImage");
                             var halo = Part<Image>(proxy, "SmallImageGlow");
                             var tint = Part<Rectangle>(proxy, "SmallImageTint");
-                            Assert.Same(icon, image.Source); Assert.Null(image.Effect);
+                            if (adaptive)
+                            {
+                                var adapted = Assert.IsType<DrawingImage>(image.Source);
+                                Assert.NotSame(icon, adapted);
+                                Assert.True(adapted.IsFrozen);
+                                Assert.Equal(icon.Width, adapted.Width);
+                                Assert.Equal(icon.Height, adapted.Height);
+                                var body = Shape(((DrawingGroup)adapted.Drawing).Children[0]);
+                                var inset = Shape(((DrawingGroup)adapted.Drawing).Children[1]);
+                                Assert.NotEqual(((SolidColorBrush)body.Brush).Color, ((SolidColorBrush)inset.Brush).Color);
+                                if (((SolidColorBrush)inset.Brush).Color.A < 255)
+                                {
+                                    Assert.Equal(64, ((SolidColorBrush)inset.Brush).Color.A);
+                                    Assert.NotNull(Assert.IsType<DrawingGroup>(((DrawingGroup)adapted.Drawing).Children[0]).ClipGeometry);
+                                }
+                            }
+                            else Assert.Same(icon, image.Source);
+                            Assert.Null(image.Effect);
                             Assert.Same(icon, halo.Source);
-                            Assert.Equal(colored && !glow ? Visibility.Collapsed : Visibility.Visible, image.Visibility);
-                            Assert.Equal(colored && !glow ? Visibility.Visible : Visibility.Collapsed, tint.Visibility);
+                            Assert.Equal(overlay ? Visibility.Collapsed : Visibility.Visible, image.Visibility);
+                            Assert.Equal(overlay ? Visibility.Visible : Visibility.Collapsed, tint.Visibility);
                             Assert.Equal(glow ? Visibility.Visible : Visibility.Collapsed, halo.Visibility);
                             var effect = Assert.IsType<DropShadowEffect>(halo.Effect);
                             Assert.Equal(Colors.White, effect.Color); Assert.Equal(0, effect.ShadowDepth);
@@ -98,6 +118,17 @@ internal static class QuickAccessIconAppearanceChecks
                 Assert.Equal(Visibility.Collapsed, Part<Image>(proxy, "SmallImageGlow").Visibility));
             Assert.Equal(RibbonQuickAccessIconAppearance.ColorWithGlow, ribbon.QuickAccessIconAppearance);
 
+            ribbon.QuickAccessIconAppearance = RibbonQuickAccessIconAppearance.AdaptiveColor;
+            ThemeManager.SetAccentedTitleBar(application, true); Layout();
+            var firstAdaptive = Part<Image>((Control)ribbon.QuickAccessItems[0], "SmallImage").Source;
+            ribbon.Resources["RibbonKit.Brushes.TitleBar.Background"] = Brushes.Gold;
+            ThemeManager.Apply(application, RibbonTheme.Office2024); Layout();
+            var scopedAdaptive = Part<Image>((Control)ribbon.QuickAccessItems[0], "SmallImage").Source;
+            Assert.NotSame(firstAdaptive, scopedAdaptive);
+            foreach (Control proxy in ribbon.QuickAccessItems)
+                Assert.Same(scopedAdaptive, Part<Image>(proxy, "SmallImage").Source);
+            ribbon.Resources.Remove("RibbonKit.Brushes.TitleBar.Background");
+
             ThemeManager.Apply(application, RibbonTheme.Office2019);
             ThemeManager.SetAccentedTitleBar(application, true);
             ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TabRow;
@@ -111,10 +142,28 @@ internal static class QuickAccessIconAppearanceChecks
             foreach (Control entry in overflow.Items)
             {
                 Assert.False(Ribbon.GetQatOnColoredSurface(entry));
+                Assert.Same(icon, Part<Image>(entry, "SmallImage").Source);
                 Assert.Equal(Visibility.Collapsed, Part<Image>(entry, "SmallImageGlow").Visibility);
                 Assert.Equal(Visibility.Collapsed, Part<Rectangle>(entry, "SmallImageTint").Visibility);
             }
             Part<ToggleButton>(toolbar, "PART_OverflowButton").IsChecked = false;
+
+            ribbon.QuickAccessMaxWidth = 400;
+            ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TitleBar;
+            ThemeManager.Apply(application, RibbonTheme.Office2024); Layout();
+            var replacement = new DrawingImage(new GeometryDrawing(Brushes.White, new Pen(Brushes.White, 2),
+                new RectangleGeometry(new Rect(0, 0, 16, 16)))); replacement.Freeze();
+            button.Icon = replacement; Layout();
+            var buttonProxy = Assert.IsType<RibbonButton>(ribbon.QuickAccessItems[0]);
+            Assert.Same(replacement, buttonProxy.Icon);
+            var replacementImage = Part<Image>(buttonProxy, "SmallImage").Source;
+            Assert.NotSame(replacement, replacementImage);
+            Assert.NotSame(scopedAdaptive, replacementImage);
+            var layers = Shapes(Assert.IsType<DrawingImage>(replacementImage).Drawing).ToArray();
+            Assert.Contains(layers, layer => layer.Pen?.Brush is SolidColorBrush pen && pen.Color.A == 64);
+            Assert.Contains(layers, layer => layer.Brush is SolidColorBrush fill && fill.Color.A == 255);
+            Layout();
+            Assert.Same(replacementImage, Part<Image>(buttonProxy, "SmallImage").Source);
         }
         finally
         {
@@ -131,6 +180,17 @@ internal static class QuickAccessIconAppearanceChecks
 
     private static T Part<T>(Control owner, string name) where T : FrameworkElement =>
         Assert.IsType<T>(owner.Template.FindName(name, owner));
+
+    private static GeometryDrawing Shape(Drawing drawing) => drawing is DrawingGroup group
+        ? Shape(Assert.Single(group.Children)) : Assert.IsType<GeometryDrawing>(drawing);
+
+    private static IEnumerable<GeometryDrawing> Shapes(Drawing drawing)
+    {
+        if (drawing is GeometryDrawing geometry) yield return geometry;
+        if (drawing is DrawingGroup group)
+            foreach (var child in group.Children)
+                foreach (var shape in Shapes(child)) yield return shape;
+    }
 
     private static void Capture(RibbonWindow window, string name, double scale)
     {
