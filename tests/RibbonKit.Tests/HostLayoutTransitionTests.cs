@@ -74,6 +74,39 @@ public sealed class HostLayoutTransitionTests
         }
     });
 
+    [Theory]
+    [InlineData(RibbonTheme.Office2007, false)]
+    [InlineData(RibbonTheme.Office2007, true)]
+    [InlineData(RibbonTheme.Office2010, false)]
+    [InlineData(RibbonTheme.Office2010, true)]
+    [InlineData(RibbonTheme.Office2013, false)]
+    [InlineData(RibbonTheme.Office2013, true)]
+    [InlineData(RibbonTheme.Office2019, false)]
+    [InlineData(RibbonTheme.Office2019, true)]
+    [InlineData(RibbonTheme.Office2024, false)]
+    [InlineData(RibbonTheme.Office2024, true)]
+    [InlineData(RibbonTheme.Office2024Flat, false)]
+    [InlineData(RibbonTheme.Office2024Flat, true)]
+    [InlineData(RibbonTheme.CrystalLight, false)]
+    [InlineData(RibbonTheme.CrystalLight, true)]
+    public void Colored_caption_changes_do_not_start_a_ribbon_theme_fade(RibbonTheme theme, bool dark) => Run((window, ribbon) =>
+    {
+        ThemeManager.Apply(Application.Current, theme);
+        ThemeManager.SetDarkMode(Application.Current, dark);
+        Settle(window);
+        var tabs = (RibbonTabControl)ribbon.Template.FindName("TabControlHost", ribbon);
+        // A completed theme fade retains its WPF clock. Isolate the caption toggle.
+        tabs.BeginAnimation(UIElement.OpacityProperty, null);
+        Assert.False(tabs.HasAnimatedProperties);
+        foreach (bool enabled in new[] { true, false, true, false })
+        {
+            ThemeManager.SetAccentedTitleBar(Application.Current, enabled);
+            Assert.False(tabs.HasAnimatedProperties);
+            Assert.Equal(1, tabs.Opacity);
+            Assert.Equal(enabled, ThemeManager.IsAccentedTitleBar);
+        }
+    });
+
     [Fact]
     public void Backdrop_updates_do_not_start_a_ribbon_theme_fade() => Run((window, ribbon) =>
     {

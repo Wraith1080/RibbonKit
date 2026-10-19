@@ -1035,7 +1035,7 @@ technical evidence warrants them; preserve existing dated records.
 
 ### 3.265 Office menu, hover and transition polish — 2026-10-18
 
-[Shared frame tokens, transparent Glass hover and stable connected-tab chrome](docs/history/library/13-flat-theme-variants.md#3265-office-menu-hover-and-transition-polish--2026-10-18).
+[Shared frame/hover polish, stable connected tabs and fade-free caption/backdrop toggles](docs/history/library/13-flat-theme-variants.md#3265-office-menu-hover-and-transition-polish--2026-10-18).
 [Current review status](docs/09-FUTURE-THEMES-PLAN.md#office-menu-hover-and-transition-polish).
 
 ### 3.266 Persistent Showcase application-menu choice — 2026-10-18

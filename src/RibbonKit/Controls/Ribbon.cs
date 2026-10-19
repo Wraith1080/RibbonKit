@@ -3630,7 +3630,7 @@ public partial class Ribbon : Control
         CancelDensityTransition();
         UpdateQatButtonContext();
         // Soften a theme/accent swap with a quick opacity settle on the ribbon strip.
-        if (!Theming.ThemeManager.IsBackdropOnlyChange)
+        if (Theming.ThemeManager.ShouldAnimateRibbon)
             RibbonMotion.PlayThemeCrossfade(_ribbonTabControl, RibbonAnimationAction.ThemeSwitch);
 
         // A theme whose selected tab connects into the body does so with a themed negative body

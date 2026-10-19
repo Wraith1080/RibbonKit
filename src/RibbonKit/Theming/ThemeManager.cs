@@ -219,16 +219,16 @@ public static class ThemeManager
     /// </summary>
     public static event EventHandler? Changed;
 
-    // The public notification also covers native-backdrop paint changes. Those
-    // must refresh resources without starting the theme-switch opacity settle.
-    internal static bool IsBackdropOnlyChange { get; private set; }
+    // Caption coloring and native-backdrop changes still notify consumers, but
+    // only palette/accent changes request the ribbon's theme-switch opacity settle.
+    internal static bool ShouldAnimateRibbon { get; private set; } = true;
 
-    private static void RaiseChanged(bool backdropOnly = false)
+    private static void RaiseChanged(bool animateRibbon = true)
     {
-        bool previous = IsBackdropOnlyChange;
-        IsBackdropOnlyChange = backdropOnly;
+        bool previous = ShouldAnimateRibbon;
+        ShouldAnimateRibbon = animateRibbon;
         try { Changed?.Invoke(null, EventArgs.Empty); }
-        finally { IsBackdropOnlyChange = previous; }
+        finally { ShouldAnimateRibbon = previous; }
     }
 
     /// <summary>
@@ -372,7 +372,7 @@ public static class ThemeManager
         // then layer the title-bar/strip colors on top.
         ApplyAccentOverrides(application);
         ApplyTitleBarOverride(application);
-        RaiseChanged();
+        RaiseChanged(animateRibbon: false);
     }
 
     /// <summary>
@@ -399,7 +399,7 @@ public static class ThemeManager
         // system also writes, so the two passes must always run in that order.
         ApplyAccentOverrides(application);
         ApplyTitleBarOverride(application);
-        RaiseChanged(backdropOnly: true);
+        RaiseChanged(animateRibbon: false);
     }
 
     private static void ApplyAccentOverrides(Application application) =>

@@ -387,6 +387,26 @@ the heading's visibility so a headerless page reserves no extra row. Geometry
 checks use the measured divider edges at fractional DPI and the menu's logical
 coordinates in both directions; the host reflects the whole surface for RTL.
 
+**Colored-caption fade follow-up — 2026-10-20.** The supplied recording shows
+caption-color toggles in both dark and light 2024 Flat. They still entered the
+ordinary ThemeSwitch path, dipping the entire RibbonTabControl to 85% opacity.
+The internal notification hint now expresses whether to animate the ribbon.
+Caption-color and backdrop-only changes opt out of that opacity settle while
+retaining public Changed notifications, resource/QAT updates and selection-geometry
+refresh. Actual theme, dark-palette and accent changes retain their motion.
+No public API, host animation workaround or QAT relocation behavior changed.
+
+Fourteen caption cases cover every theme in light/dark, including repeated on/off
+switches. They fail with the old caption notification and pass with the correction;
+the existing backdrop/no-fade and real-accent/fade check also passed. Clear the
+preceding palette animation's retained WPF clock before checking caption changes:
+a completed HoldEnd clock otherwise makes HasAnimatedProperties report an older
+animation. The independent `CaptionMotion` scope passed 28 theme/light-dark/
+Subtle-Expressive combinations and confirms that real accent changes still start
+the fade. Normal Debug runtime net8/net9 and Showcase builds passed. The supplied
+clip was sampled and inspected; live input review of the corrected build, native
+Mica/Acrylic and mixed-monitor checks were not run. The full suite was not rerun.
+
 ### 3.266 Persistent Showcase application-menu choice — 2026-10-18
 
 Showcase's ApplyTheme no longer assigns ApplicationMenuToggle.IsChecked. The

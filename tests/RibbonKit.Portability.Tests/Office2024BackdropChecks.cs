@@ -14,6 +14,48 @@ namespace RibbonKit.Portability.Tests;
 // Authored underlays prove WPF paint continuity without claiming native DWM activation.
 internal static class Office2024BackdropChecks
 {
+    internal static void VerifyCaptionMotion(Application application)
+    {
+        var motion = RibbonAnimation.GlobalLevel;
+        bool respect = RibbonAnimation.RespectSystemReduceMotion;
+        var ribbon = new Ribbon(); ribbon.Tabs.Add(new RibbonTab { Header = "Home" });
+        var window = new RibbonWindow { Content = ribbon, Width = 800, Height = 260,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            ThemeManager.Apply(application, RibbonTheme.Office2024);
+            RibbonAnimation.GlobalLevel = RibbonAnimationLevel.Subtle;
+            RibbonAnimation.RespectSystemReduceMotion = false;
+            window.Show(); window.UpdateLayout();
+            foreach (var level in new[] { RibbonAnimationLevel.Subtle, RibbonAnimationLevel.Expressive })
+            foreach (RibbonTheme theme in Enum.GetValues<RibbonTheme>())
+            foreach (bool dark in new[] { false, true })
+            {
+                RibbonAnimation.GlobalLevel = level;
+                ThemeManager.Apply(application, theme); ThemeManager.SetDarkMode(application, dark);
+                var tabs = Part<RibbonTabControl>(ribbon, "TabControlHost");
+                // Isolate caption changes from the preceding real palette animation.
+                tabs.BeginAnimation(UIElement.OpacityProperty, null);
+                foreach (bool colored in new[] { true, false, true, false })
+                {
+                    ThemeManager.SetAccentedTitleBar(application, colored);
+                    Assert.False(tabs.HasAnimatedProperties, $"{theme}/{dark}/{level}: caption coloring started a ribbon animation.");
+                    Assert.Equal(1, tabs.Opacity);
+                    Assert.Equal(colored, ThemeManager.IsAccentedTitleBar);
+                }
+                ThemeManager.SetAccent(application, Colors.Purple);
+                Assert.True(tabs.HasAnimatedProperties); // Palette motion remains available.
+                tabs.BeginAnimation(UIElement.OpacityProperty, null);
+            }
+        }
+        finally
+        {
+            window.Close(); ThemeManager.ClearAccent(application);
+            ThemeManager.SetAccentedTitleBar(application, false); ThemeManager.SetDarkMode(application, false);
+            RibbonAnimation.GlobalLevel = motion; RibbonAnimation.RespectSystemReduceMotion = respect;
+        }
+    }
+
     internal static void Verify(Application application)
     {
         var motion = RibbonAnimation.GlobalLevel;

@@ -156,6 +156,11 @@ public sealed class ApplicationButtonShapeThemeTests
     public void Theme_default_and_local_value_follow_wpf_precedence() => RunSta(() =>
     {
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "CaptionMotion")
+        {
+            VerifyScope("Office2024BackdropChecks.VerifyCaptionMotion", () => Office2024BackdropChecks.VerifyCaptionMotion(application));
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "Office2024Backdrop")
         {
             VerifyScope("Office2024BackdropChecks.Verify", () => Office2024BackdropChecks.Verify(application));
@@ -410,6 +415,7 @@ public sealed class ApplicationButtonShapeThemeTests
                 VerifyScope("GroupQuickAccessPortabilityChecks.Verify", () => GroupQuickAccessPortabilityChecks.Verify(application));
                 VerifyScope("GalleryPopupViewportChecks.Verify", () => GalleryPopupViewportChecks.Verify(application));
                 VerifyScope("Office2024BackdropChecks.Verify", () => Office2024BackdropChecks.Verify(application));
+                VerifyScope("Office2024BackdropChecks.VerifyCaptionMotion", () => Office2024BackdropChecks.VerifyCaptionMotion(application));
                 VerifyScope("CollapsedGroupPressChecks.Verify", () => CollapsedGroupPressChecks.Verify(application));
                 ThemeManager.Apply(application, RibbonTheme.Office2024);
                 VerifyScope("KeyboardFocusPortabilityChecks.Verify", () => KeyboardFocusPortabilityChecks.Verify(application));
