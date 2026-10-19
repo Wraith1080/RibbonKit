@@ -679,6 +679,36 @@ Visual evidence, original-binding fixture instability, normal builds and remaini
 live review are maintained in the
 [hover binding follow-up](../../08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#hover-binding-follow-up--2026-10-12).
 
+### 3.272 Colored Office 2024 captions preserve the ribbon backdrop — 2026-10-19
+
+`ApplyTitleBarOverride` cleared the ribbon-wide background override whenever a
+colored caption was enabled. Office 2024 light defaults to transparent ribbon
+paint, but both dark 2024 variants default to opaque #181818. The same caption
+toggle therefore covered the backdrop only in dark mode. With Glass look enabled,
+the overlay also regenerated its tab-band wash from that opaque fallback.
+
+The Office 2024/Flat backdrop branch now establishes a transparent ribbon-wide
+background independently of caption coloring. The non-colored-caption branch
+still owns transparent caption paint and material hover/press washes; the colored
+branch retains its accent caption and QAT treatment. Disabling the backdrop clears
+the override normally. The public backdrop remarks describe this distinction.
+Native Mica/Acrylic activation and optional Glass overlay ownership remain with
+the host; no Showcase-only correction or new public API was added.
+
+Eight focused Showcase regressions cover both 2024 themes, light/dark, Mica/Acrylic
+derived state, Glass look on/off and colored-caption round trips. Before the fix,
+the four dark cases failed with fully opaque ribbon paint while the four light
+cases passed; all eight passed afterwards. These tests inject post-activation
+state and do not activate DWM.
+
+The RibbonKit-only `Office2024Backdrop` scope passed 16 theme/light-dark/glass/
+authored-underlay contexts. It compares actual tab-band/body pixels before and
+after caption coloring, checks the accent caption, backdrop removal and consumer
+resource precedence. Dark 2024/Flat on/off captures under
+`TestResults/office2024-backdrop` were inspected. Normal Debug runtime net8/net9
+and Showcase builds passed. No full suite, native Mica/Acrylic or mixed-monitor
+acceptance was performed; current review belongs to the Office glass status table.
+
 ### 3.253 Crystal utility snapshots initialize native rendering — 2026-10-12
 
 Selecting `crystal-light-utility-scrollbars-100` in a fresh process could measure

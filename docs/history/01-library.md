@@ -449,3 +449,5 @@ status updates and investigation narration were removed during compaction.
 ### [3.270 Adaptive QAT vector colors — 2026-10-19](library/01-core-controls.md#3270-adaptive-qat-vector-colors--2026-10-19)
 
 ### [3.271 Gallery copy popup sizing and scrollbar parity — 2026-10-19](library/11-touch-density-and-gallery-projections.md#3271-gallery-copy-popup-sizing-and-scrollbar-parity--2026-10-19)
+
+### [3.272 Colored Office 2024 captions preserve the ribbon backdrop — 2026-10-19](library/12-keytips-layout-and-validation.md#3272-colored-office-2024-captions-preserve-the-ribbon-backdrop--2026-10-19)

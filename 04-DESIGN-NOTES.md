@@ -1067,6 +1067,11 @@ technical evidence warrants them; preserve existing dated records.
 [Use the native popup budget and scrollbar style in QAT/custom-group gallery copies](docs/history/library/11-touch-density-and-gallery-projections.md#3271-gallery-copy-popup-sizing-and-scrollbar-parity--2026-10-19).
 [Current evidence and review](docs/09-FUTURE-THEMES-PLAN.md#gallery-header-and-section-layout).
 
+### 3.272 Colored Office 2024 captions preserve the ribbon backdrop — 2026-10-19
+
+[Keep the material underlay independent of caption coloring in light and dark 2024 themes](docs/history/library/12-keytips-layout-and-validation.md#3272-colored-office-2024-captions-preserve-the-ribbon-backdrop--2026-10-19).
+[Current evidence and review](docs/09-FUTURE-THEMES-PLAN.md#office-glass-iteration).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.

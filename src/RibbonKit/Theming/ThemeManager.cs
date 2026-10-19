@@ -380,7 +380,9 @@ public static class ThemeManager
     /// it. The transparency is applied <b>only</b> for the Office 2024 look with a non-colored
     /// title bar; other themes keep their light band, and a colored title bar
     /// (<see cref="SetAccentedTitleBar"/>) keeps its accent — matching where a solid title bar is
-    /// expected. In that transparent mode the hover/press washes of the caption buttons, the
+    /// expected. The Office 2024 ribbon background remains transparent with either title-bar
+    /// choice, so coloring the caption does not cover the backdrop behind the ribbon.
+    /// In that transparent mode the hover/press washes of the caption buttons, the
     /// tab-strip chrome buttons and the File button also go translucent, so they tint the
     /// backdrop instead of covering it. Persists across <see cref="Apply"/>, so switching themes
     /// re-derives it correctly
@@ -757,18 +759,21 @@ public static class ThemeManager
             resources.Remove(AppButtonPressedKey);
         }
 
+        // The ribbon's material underlay is independent of caption coloring. In dark
+        // 2024 palettes, clearing this override restores an opaque ribbon-wide fill.
+        bool ribbonBackdrop = _titleBarBackdrop
+            && (CurrentTheme ?? RibbonTheme.Office2024) is RibbonTheme.Office2024 or RibbonTheme.Office2024Flat;
+        if (ribbonBackdrop) resources[RibbonBackgroundKey] = Brushes.Transparent;
+
         // Transparent title bar so a window backdrop (Mica) shows through — but ONLY for the
         // Office 2024 look with a NON-colored title bar. A colored title bar falls through to
         // the accent branch below (opaque accent); any other theme with a non-colored title bar
         // returns with no override, keeping that theme's solid light band. The caption
         // foreground stays at the active light/dark theme default. Hover/press use translucent
         // black washes in light mode and white washes in dark mode, so both tint the material.
-        if (_titleBarBackdrop
-            && !_accentTitleBar
-            && (CurrentTheme ?? RibbonTheme.Office2024) is RibbonTheme.Office2024 or RibbonTheme.Office2024Flat)
+        if (ribbonBackdrop && !_accentTitleBar)
         {
             resources[TitleBarBackgroundKey] = Brushes.Transparent;
-            resources[RibbonBackgroundKey] = Brushes.Transparent;
             Brush backdropHover = _darkMode ? DarkBackdropControlHover : BackdropControlHover;
             Brush backdropPressed = _darkMode ? DarkBackdropControlPressed : BackdropControlPressed;
             // Every hover/press chip that sits on a surface the backdrop shows through has to

@@ -25,7 +25,7 @@ param(
         'QatOverflowKeyboard', 'AfterKeyboardNavigation', 'AfterSimplifiedDesignerDefaults', 'AfterCustomizationScrollSpacing', 'AfterApplicationMenuViewport', 'AfterCrystalApplicationMenu',
         'ComboQuickAccess', 'ComboQuickAccessKeyboard', 'GroupedGalleries',
         'GalleryHeadersAndQatCommands', 'DensitySelector', 'MessageTransition', 'ThemePolish',
-        'QatThemeRestore', 'ColoredQat', 'QatIconAppearance', 'QatBackdrop', 'QatCommandInteraction', 'QatVisibility', 'CustomizationLayout', 'MinimizedDivider', 'TouchChrome', 'TouchOptions', 'TouchAdaptive', 'GroupLauncher',
+        'QatThemeRestore', 'ColoredQat', 'QatIconAppearance', 'QatBackdrop', 'Office2024Backdrop', 'QatCommandInteraction', 'QatVisibility', 'CustomizationLayout', 'MinimizedDivider', 'TouchChrome', 'TouchOptions', 'TouchAdaptive', 'GroupLauncher',
         'DensityTransition', 'DensityTransitionLifecycle', 'HostLayoutTransition', 'QatRowGeometry', 'ContextualMarker', 'LayoutMotion', 'LayoutMotionPopup', 'LayoutMotionPaint', 'ModePopupDismissal', 'SimplifiedTabReadiness', 'GlassOverlay', 'BackstageCaption', 'Flat2024', 'SimplifiedRibbon', 'SimplifiedDesignerDefaults', 'FeatureAvailability', 'SimplifiedCustomization', 'TabMoveCustomization', 'OverflowMenus', 'Touch', IgnoreCase = $false)]
     [string]$Scope,
     [ValidateSet('Debug', 'Release')]

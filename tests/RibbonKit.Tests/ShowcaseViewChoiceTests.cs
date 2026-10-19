@@ -19,6 +19,59 @@ namespace RibbonKit.Tests;
 public sealed class ShowcaseViewChoiceTests
 {
     [Theory]
+    [InlineData(RibbonTheme.Office2024, false, RibbonBackdrop.Mica)]
+    [InlineData(RibbonTheme.Office2024, true, RibbonBackdrop.Mica)]
+    [InlineData(RibbonTheme.Office2024, false, RibbonBackdrop.Acrylic)]
+    [InlineData(RibbonTheme.Office2024, true, RibbonBackdrop.Acrylic)]
+    [InlineData(RibbonTheme.Office2024Flat, false, RibbonBackdrop.Mica)]
+    [InlineData(RibbonTheme.Office2024Flat, true, RibbonBackdrop.Mica)]
+    [InlineData(RibbonTheme.Office2024Flat, false, RibbonBackdrop.Acrylic)]
+    [InlineData(RibbonTheme.Office2024Flat, true, RibbonBackdrop.Acrylic)]
+    public void Colored_2024_caption_keeps_the_backdrop_visible_behind_the_ribbon(
+        RibbonTheme theme, bool dark, RibbonBackdrop backdrop) => Sta.Run(() =>
+    {
+        var application = Sta.UseApplication(showcaseResources: true);
+        ThemeManager.Apply(application, RibbonTheme.Office2024);
+        var window = new MainWindow();
+        try
+        {
+            var type = typeof(MainWindow);
+            type.GetField("_restoringAppearance", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(window, true);
+            window.ThemeGallery.SelectedItem = window.ThemeGallery.Items.Cast<RibbonGalleryItem>()
+                .Single(item => Equals(item.Tag, theme.ToString()));
+            window.DarkModeToggle.IsChecked = dark;
+            var backdropKey = (DependencyPropertyKey)typeof(RibbonWindow).GetField("ActiveBackdropPropertyKey",
+                BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+            // Exercise the host's post-activation path without requesting native DWM state.
+            window.SetValue(backdropKey, backdrop);
+            ThemeManager.SetTitleBarBackdrop(application, true);
+            type.GetMethod("UpdateBackdropSurfaceTransparency", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(window, null);
+            window.MainRibbon.ApplyTemplate();
+            foreach (bool glass in new[] { false, true })
+            {
+                window.GlassTreatmentToggle.IsChecked = glass;
+                type.GetMethod("RefreshGlassTreatment", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(window, null);
+                foreach (bool colored in new[] { false, true, false })
+                {
+                    window.AccentedTitleBarToggle.IsChecked = colored;
+                    Assert.Equal(0, Alpha(window.MainRibbon.Background));
+                    Assert.Equal(0, Alpha((Brush)window.FindResource("RibbonKit.Brushes.Ribbon.TabStripBackground")));
+                    Assert.Equal(0, Alpha(window.Background));
+                    Assert.Equal(0, Alpha(window.MainContentArea.Background));
+                    if (colored)
+                    {
+                        var caption = Assert.IsType<SolidColorBrush>(window.FindResource("RibbonKit.Brushes.TitleBar.Background"));
+                        var accent = Assert.IsType<SolidColorBrush>(window.FindResource("RibbonKit.Brushes.Accent"));
+                        Assert.Equal(accent.Color, caption.Color);
+                    }
+                }
+            }
+        }
+        finally { window.Close(); Sta.ResetApplication(); }
+        static double Alpha(Brush brush) => Assert.IsType<SolidColorBrush>(brush).Color.A * brush.Opacity;
+    });
+
+    [Theory]
     [InlineData(RibbonQuickAccessIconAppearance.WhiteOverlay, "White Overlay")]
     [InlineData(RibbonQuickAccessIconAppearance.ColorWithGlow, "Color with Glow")]
     [InlineData(RibbonQuickAccessIconAppearance.AdaptiveColor, "Adaptive Color")]
