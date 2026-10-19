@@ -745,3 +745,33 @@ source's menu items while open:
   inert. Chose the focus trap over disabling the background content (the note's other option) because
   it's self-contained on the control and needs no open/close state on the ribbon. Only plain Tab was
   trapped (`ControlTabNavigation` left alone so the TabControl's Ctrl+Tab page switching is unchanged).
+
+### 3.269 Optional color-preserving QAT icon glow — 2026-10-19
+
+`Ribbon.QuickAccessIconAppearance` adds an opt-in `ColorWithGlow` alternative to
+the existing `WhiteOverlay` default on colored QAT surfaces. The enum, its two
+values and the property's field/accessors add six documented Unshipped symbols;
+the Shipped baseline is unchanged. A ribbon-level choice gives independent
+consumers a portable per-window policy without requiring icon replacement.
+
+The ribbon carries an internal inherited selector and the scoped
+`RibbonKit.Effects.Qat.IconGlow` resource directly to QAT entries, including the
+detached title-bar host. All fourteen token dictionaries define the same small,
+zero-depth white shadow. Button, toggle, dropdown and split templates keep the
+original image in front of a separate effect copy, preserving foreground detail
+and dimensions. Both colored-surface and glow conditions must hold; neutral
+surfaces and overflow retain their normal icon treatment. Existing band washes,
+chevrons and command behavior stay independent of the icon choice.
+
+Showcase exposes the choice under View / Accent and stores it separately from
+customization, in appearance schema 4. Older preferences default to WhiteOverlay;
+invalid enum values are rejected. Theme and title-bar toggles preserve the choice.
+The broader runtime gate exposed an older Glass assertion that required matching
+tab/File hover brushes to be the same object. The existing factory creates them
+separately, so that assertion now checks color and opacity instead of identity;
+the Glass runtime behavior is unchanged.
+Its dark Office2024 expectation also now preserves transparent tab hover while
+checking the QAT drawer's separate glass tint. The Touch fixture queries the
+existing `QatBelowShadowHost` context-menu owner rather than its inner frame.
+Current verification and live acceptance belong to the
+[theme plan](../../09-FUTURE-THEMES-PLAN.md#qat-icon-appearance-choice).

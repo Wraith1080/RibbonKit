@@ -1,4 +1,10 @@
 #nullable enable
+RibbonKit.RibbonQuickAccessIconAppearance
+RibbonKit.RibbonQuickAccessIconAppearance.WhiteOverlay = 0 -> RibbonKit.RibbonQuickAccessIconAppearance
+RibbonKit.RibbonQuickAccessIconAppearance.ColorWithGlow = 1 -> RibbonKit.RibbonQuickAccessIconAppearance
+RibbonKit.Controls.Ribbon.QuickAccessIconAppearance.get -> RibbonKit.RibbonQuickAccessIconAppearance
+RibbonKit.Controls.Ribbon.QuickAccessIconAppearance.set -> void
+static readonly RibbonKit.Controls.Ribbon.QuickAccessIconAppearanceProperty -> System.Windows.DependencyProperty!
 override RibbonKit.Controls.RibbonQuickAccessToolBar.OnContextMenuOpening(System.Windows.Controls.ContextMenuEventArgs! e) -> void
 RibbonKit.Controls.RibbonSimplifiedCustomizePage
 RibbonKit.Controls.RibbonSimplifiedCustomizePage.RibbonSimplifiedCustomizePage() -> void

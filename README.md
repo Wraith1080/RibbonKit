@@ -48,10 +48,18 @@ below describes the current checkout, including post-release additions; see
   Classic, Classic2010, Glass2007, Classic2007, CrystalSidebar and CrystalFloating designs.
 - Repeatable message bars with actions/dismissal; Backstage page/footer/recent patterns.
 - Three QAT placements, overflow and source-linked button/toggle/split/dropdown/combo/gallery/group proxies.
+- Colored-surface QAT icons can use white silhouettes or retain their colors with a white glow.
 - Contextual tabs, tab/group merging and modal-tab lifetimes.
 - Ribbon/QAT customization with JSON Import/Export/Reset and application-controlled storage.
 
 ![Backstage with Windows material](docs/images/backstage-mica.png)
+
+For colored QAT surfaces, `Ribbon.QuickAccessIconAppearance` defaults to
+`RibbonQuickAccessIconAppearance.WhiteOverlay`. Select `ColorWithGlow` to retain
+the supplied icon colors with a small white halo. Neutral surfaces and overflow
+menus keep their normal icons. The effect is customizable through
+`RibbonKit.Effects.Qat.IconGlow`; applications own selection and persistence.
+Showcase demonstrates both choices under **View → Accent**.
 
 ### Input & accessibility
 

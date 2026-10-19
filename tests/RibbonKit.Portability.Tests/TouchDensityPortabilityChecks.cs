@@ -188,7 +188,7 @@ internal static class TouchDensityPortabilityChecks
                 {
                     RibbonQuickAccessPosition.TitleBar => Assert.IsType<RibbonQuickAccessToolBar>(window.TitleBarContent),
                     RibbonQuickAccessPosition.TabRow => Part<RibbonQuickAccessToolBar>(Part<RibbonTabControl>(ribbon, "TabControlHost"), "QatTabRowHost"),
-                    _ => Part<Border>(ribbon, "QatBelowHost"),
+                    _ => Part<Grid>(ribbon, "QatBelowShadowHost"),
                 };
                 if (position == RibbonQuickAccessPosition.TitleBar)
                 {
@@ -344,7 +344,7 @@ internal static class TouchDensityPortabilityChecks
         }
     }
 
-    private static void VerifyAdaptiveRefresh()
+    internal static void VerifyAdaptiveRefresh()
     {
         var home = new RibbonTab { Header = "Home" };
         for (int g = 0; g < 2; g++)
@@ -375,11 +375,51 @@ internal static class TouchDensityPortabilityChecks
             Assert.All(collapsed.Items.OfType<RibbonButton>(), b => Assert.True(b.ActualHeight >= 44));
             Part<ToggleButton>(collapsed, "PART_CollapsedButton").IsChecked = false;
             ribbon.Width = 120; Layout(window);
-            var content = Part<Border>(Part<RibbonTabControl>(ribbon, "TabControlHost"), "ContentHost");
+            var tabs = Part<RibbonTabControl>(ribbon, "TabControlHost");
+            // ContentHost paints the background only; live controls are siblings
+            // in ContentForeground so the body's shadow cannot blur their ink.
+            var content = Part<Border>(tabs, "ContentForeground");
+            var scroll = Part<RibbonKit.Layout.RibbonScrollContentHost>(tabs, "PART_ContentScroll");
+            if (Environment.GetEnvironmentVariable("RIBBONKIT_TOUCH_DIAGNOSTICS") is { Length: > 0 } directory)
+            {
+                Directory.CreateDirectory(directory);
+                var details = new
+                {
+                    Theme = ThemeManager.CurrentTheme?.ToString(), Dark = ThemeManager.IsDarkMode,
+                    RibbonWidth = ribbon.ActualWidth, scroll.ViewportWidth, scroll.ExtentWidth,
+                    scroll.Offset, scroll.CanScrollLeft, scroll.CanScrollRight,
+                    BackgroundChildren = VisualTreeHelper.GetChildrenCount(Part<Border>(tabs, "ContentHost")),
+                    Groups = home.Groups.Select(group => new { group.Header, group.SizeState,
+                        Width = group.ActualWidth, DesiredWidth = group.DesiredSize.Width }).ToArray(),
+                    Arrows = Descendants(content).OfType<RepeatButton>()
+                        .Where(button => Equals(button.Tag, "BodyScroll"))
+                        .Select(button => new { button.Visibility, button.IsVisible, Width = button.ActualWidth,
+                            Height = button.ActualHeight }).ToArray(),
+                };
+                string json = System.Text.Json.JsonSerializer.Serialize(details,
+                    new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(Path.Combine(directory, "touch-adaptive-120.json"), json);
+                Console.WriteLine(json);
+                SavePreview(window, "touch-adaptive-120");
+            }
             var scrollArrows = Descendants(content).OfType<RepeatButton>()
                 .Where(b => Equals(b.Tag, "BodyScroll") && b.IsVisible).ToArray();
+            Assert.True(scroll.ExtentWidth > scroll.ViewportWidth + 0.5);
             Assert.NotEmpty(scrollArrows);
             Assert.All(scrollArrows, b => Assert.True(b.ActualWidth >= 44));
+            Assert.True(scroll.CanScrollRight);
+            scroll.ScrollRightCommand.Execute(null); Layout(window);
+            Assert.True(scroll.Offset > 0);
+            Assert.True(scroll.CanScrollLeft);
+            Assert.False(scroll.CanScrollRight);
+            Assert.Contains(Descendants(content).OfType<RepeatButton>(), button =>
+                Equals(button.Tag, "BodyScroll") && button.IsVisible
+                && ReferenceEquals(button.Command, scroll.ScrollLeftCommand) && button.ActualWidth >= 44);
+            SavePreview(window, "touch-adaptive-120-scrolled");
+            scroll.ScrollLeftCommand.Execute(null); Layout(window);
+            Assert.InRange(scroll.Offset, 0, 0.5);
+            Assert.False(scroll.CanScrollLeft);
+            Assert.True(scroll.CanScrollRight);
             ribbon.ClearValue(FrameworkElement.WidthProperty);
             ribbon.Density = RibbonDensity.Compact; Layout(window);
             Assert.All(home.Groups, g => Assert.NotEqual(RibbonGroupSizeState.Collapsed, g.SizeState));

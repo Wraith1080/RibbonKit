@@ -7,6 +7,13 @@ namespace RibbonKit.Controls;
 // Internal material and surface selectors for the shared templates.
 internal static class UtilityChrome
 {
+    internal const string QatIconGlowKey = "RibbonKit.Effects.Qat.IconGlow";
+    public static readonly DependencyProperty QatIconGlowProperty = DependencyProperty.RegisterAttached(
+        "QatIconGlow", typeof(bool), typeof(UtilityChrome),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits));
+    public static bool GetQatIconGlow(DependencyObject target) => (bool)target.GetValue(QatIconGlowProperty);
+    public static void SetQatIconGlow(DependencyObject target, bool value) => target.SetValue(QatIconGlowProperty, value);
+
     // Caption continuation follows the realized Backstage surfaces, including scoped palettes
     // and retemplating. These are private template plumbing, not a host-facing API.
     public static readonly DependencyProperty BackstageCaptionSourceProperty = DependencyProperty.RegisterAttached(

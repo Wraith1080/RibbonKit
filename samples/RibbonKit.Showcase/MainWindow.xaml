@@ -934,6 +934,20 @@
                                            Unchecked="OnToggleAccentTitleBar"
                                            ScreenTipTitle="Colored title bar"
                                            ScreenTipText="Color the title bar with the accent color (best in the Office 2024 theme)." />
+                    <rk:RibbonDropDownButton x:Name="QatIconAppearanceSelector"
+                                             rk:Ribbon.CommandId="command.view.qatIconAppearance"
+                                             Header="White Overlay" Size="Large"
+                                             Icon="{StaticResource Icon.Palette}" LargeIcon="{StaticResource Icon.Palette}"
+                                             DropDownHeader="QAT icons on colored surfaces"
+                                             ScreenTipTitle="QAT icon appearance"
+                                             ScreenTipText="Choose white silhouettes or the original icon colors with a small white glow on colored title bars and tab strips.">
+                        <rk:RibbonMenuItem Header="White Overlay"
+                                           Description="Draw icons as white silhouettes."
+                                           Tag="{x:Static rk:RibbonQuickAccessIconAppearance.WhiteOverlay}" Click="OnSelectQatIconAppearance" />
+                        <rk:RibbonMenuItem Header="Color with Glow"
+                                           Description="Keep the original colors with a subtle white halo."
+                                           Tag="{x:Static rk:RibbonQuickAccessIconAppearance.ColorWithGlow}" Click="OnSelectQatIconAppearance" />
+                    </rk:RibbonDropDownButton>
                     <!-- Accent swatches as a gallery: pick a color to recolor the theme -->
                     <rk:InRibbonGallery x:Name="AccentGallery"
                                         Header="Accent" Icon="{StaticResource Icon.ColorDrop}"

@@ -254,6 +254,7 @@ public sealed class ApplicationButtonShapeThemeTests
         }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "ColoredQat")
         {
+            VerifyScope("QuickAccessIconAppearanceChecks.Verify", () => QuickAccessIconAppearanceChecks.Verify(application));
             VerifyScope("ColoredQuickAccessPortabilityChecks.Verify", () => ColoredQuickAccessPortabilityChecks.Verify(application));
             return;
         }
@@ -285,6 +286,16 @@ public sealed class ApplicationButtonShapeThemeTests
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "TouchOptions")
         {
             VerifyScope("RadioIndicatorPortabilityChecks.Verify", () => RadioIndicatorPortabilityChecks.Verify(application));
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "TouchAdaptive")
+        {
+            ThemeManager.Apply(application, RibbonTheme.Office2024Flat);
+            ThemeManager.SetDarkMode(application, true);
+            var motion = RibbonKit.Animation.RibbonAnimation.GlobalLevel;
+            RibbonKit.Animation.RibbonAnimation.GlobalLevel = RibbonKit.Animation.RibbonAnimationLevel.None;
+            try { VerifyScope("TouchDensityPortabilityChecks.VerifyAdaptiveRefresh", TouchDensityPortabilityChecks.VerifyAdaptiveRefresh); }
+            finally { RibbonKit.Animation.RibbonAnimation.GlobalLevel = motion; }
             return;
         }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "TouchChrome")
@@ -629,6 +640,7 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("CapturedBackdropPortabilityChecks.Verify", () => CapturedBackdropPortabilityChecks.Verify(application));
             VerifyScope("GallerySelectionPortabilityChecks.Verify", () => GallerySelectionPortabilityChecks.Verify(application));
             VerifyScope("QuickAccessScopePortabilityChecks.Verify", () => QuickAccessScopePortabilityChecks.Verify(application));
+            VerifyScope("QuickAccessIconAppearanceChecks.Verify", () => QuickAccessIconAppearanceChecks.Verify(application));
             VerifyScope("ColoredQuickAccessPortabilityChecks.Verify", () => ColoredQuickAccessPortabilityChecks.Verify(application));
             VerifyScope("QuickAccessBackdropPortabilityChecks.Verify", () => QuickAccessBackdropPortabilityChecks.Verify(application));
         }

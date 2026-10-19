@@ -19,6 +19,35 @@ namespace RibbonKit.Tests;
 public sealed class ShowcaseViewChoiceTests
 {
     [Theory]
+    [InlineData(RibbonQuickAccessIconAppearance.WhiteOverlay, "White Overlay")]
+    [InlineData(RibbonQuickAccessIconAppearance.ColorWithGlow, "Color with Glow")]
+    public void Qat_icon_choice_survives_theme_and_colored_title_bar_changes(
+        RibbonQuickAccessIconAppearance appearance, string label) => Sta.Run(() =>
+    {
+        var application = Sta.UseApplication(showcaseResources: true);
+        ThemeManager.Apply(application, RibbonTheme.Office2024);
+        var window = new MainWindow();
+        try
+        {
+            typeof(MainWindow).GetField("_restoringAppearance", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .SetValue(window, true);
+            window.QatIconAppearanceSelector.Items.Cast<RibbonMenuItem>()
+                .Single(item => Equals(item.Tag, appearance))
+                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            foreach (var theme in Enum.GetValues<RibbonTheme>())
+            {
+                window.ThemeGallery.SelectedItem = window.ThemeGallery.Items.Cast<RibbonGalleryItem>()
+                    .Single(item => Equals(item.Tag, theme.ToString()));
+                window.AccentedTitleBarToggle.IsChecked = true;
+                window.AccentedTitleBarToggle.IsChecked = false;
+                Assert.Equal(appearance, window.MainRibbon.QuickAccessIconAppearance);
+                Assert.Equal(label, window.QatIconAppearanceSelector.Header);
+            }
+        }
+        finally { window.Close(); Sta.ResetApplication(); }
+    });
+
+    [Theory]
     [InlineData(RibbonTheme.CrystalLight, RibbonBackstageDesign.CrystalSidebar, "Crystal Sidebar")]
     [InlineData(RibbonTheme.Office2024, RibbonBackstageDesign.Modern, "2024 Rail")]
     [InlineData(RibbonTheme.Office2024Flat, RibbonBackstageDesign.Modern, "2024 Rail")]

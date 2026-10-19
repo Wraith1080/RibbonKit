@@ -25,7 +25,7 @@ internal enum ShowcaseBackdropPreference
 /// </summary>
 internal sealed record ShowcaseAppearancePreferences
 {
-    internal const int CurrentSchemaVersion = 3;
+    internal const int CurrentSchemaVersion = 4;
     internal const double DefaultAeroFrameTintIntensity = 0.16;
 
     public int SchemaVersion { get; init; } = CurrentSchemaVersion;
@@ -41,6 +41,8 @@ internal sealed record ShowcaseAppearancePreferences
     public bool SimplifiedRibbon { get; init; }
 
     public bool AccentedTitleBar { get; init; }
+
+    public RibbonQuickAccessIconAppearance QuickAccessIconAppearance { get; init; }
 
     public RibbonWindowFrameAppearance FrameAppearance { get; init; }
 
@@ -111,6 +113,7 @@ internal static class ShowcaseAppearancePreferencesSerializer
         if (parsed is null
             || parsed.SchemaVersion is < 1 or > ShowcaseAppearancePreferences.CurrentSchemaVersion
             || !Enum.IsDefined(parsed.Theme)
+            || !Enum.IsDefined(parsed.QuickAccessIconAppearance)
             || !Enum.IsDefined(parsed.FrameAppearance)
             || !IsValidAeroFrameTintIntensity(parsed.AeroFrameTintIntensity)
             || !Enum.IsDefined(parsed.BackstageDesign)

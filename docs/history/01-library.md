@@ -443,3 +443,5 @@ status updates and investigation narration were removed during compaction.
 ### [3.267 Showcase theme-preferred Backstage layouts — 2026-10-18](library/13-flat-theme-variants.md#3267-showcase-theme-preferred-backstage-layouts--2026-10-18)
 
 ### [3.268 Concentric radio indicators at fractional DPI — 2026-10-18](library/11-touch-density-and-gallery-projections.md#3268-concentric-radio-indicators-at-fractional-dpi--2026-10-18)
+
+### [3.269 Optional color-preserving QAT icon glow — 2026-10-19](library/01-core-controls.md#3269-optional-color-preserving-qat-icon-glow--2026-10-19)

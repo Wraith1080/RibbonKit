@@ -1052,6 +1052,11 @@ technical evidence warrants them; preserve existing dated records.
 
 [Keep the selected dot and focus ring centered through density changes](docs/history/library/11-touch-density-and-gallery-projections.md#3268-concentric-radio-indicators-at-fractional-dpi--2026-10-18).
 
+### 3.269 Optional color-preserving QAT icon glow — 2026-10-19
+
+[Shared appearance choice with host-owned selection and persistence](docs/history/library/01-core-controls.md#3269-optional-color-preserving-qat-icon-glow--2026-10-19).
+[Current evidence and review](docs/09-FUTURE-THEMES-PLAN.md#qat-icon-appearance-choice).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.

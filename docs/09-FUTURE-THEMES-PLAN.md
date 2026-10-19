@@ -1358,3 +1358,58 @@ application-menu toggle states across every theme/palette. Normal Debug Showcase
 built with zero warnings/errors. Live selection/relaunch review and the full
 solution suite were not run.
 [Implementation record](history/library/13-flat-theme-variants.md#3267-showcase-theme-preferred-backstage-layouts--2026-10-18).
+
+## QAT icon appearance choice
+
+Implemented 2026-10-19. **View → Accent** offers **White Overlay** (the existing
+default) and **Color with Glow**. Glow keeps the original icon colors with a tight
+white halo behind the icon on colored title bars and the colored Office 2019 tab
+strip. The foreground image remains sharp. Neutral placements and overflow menus
+use their normal icon treatment. Theme changes and title-bar toggles preserve the
+choice; Showcase restores it from appearance preferences at startup.
+
+The reusable `Ribbon.QuickAccessIconAppearance` property and
+`RibbonQuickAccessIconAppearance` enum belong to RibbonKit. Their six documented
+symbols are compatible Unshipped additions; the shipped API is unchanged. Hosts
+own the selector and persistence. The glow effect is a shared theme token and
+also follows ribbon-scoped resource overrides into the detached title-bar QAT.
+
+Final focused Release consumer verification passed 336 theme/palette/density/
+placement/simulated-DPI combinations, each with Glow/Overlay/Glow round trips,
+plus overflow neutrality, ribbon-scoped effects and the existing colored split/
+dropdown-state matrix. Office2007/2024 overlay/glow renders were inspected at
+100/125/150/200%. Normal Debug Showcase and Release solution builds passed with
+zero warnings/errors. Appearance schema 4 round trips, legacy defaults, invalid
+values and both real selector choices passed in the runtime suite.
+
+The full runtime run passed 1024 of 1027 cases. Its stale Glass brush-identity
+and dark transparent-hover expectations were corrected, and that case passed
+its focused recheck. On 2026-10-19, at the user's request, the two deferred focus
+cases each passed in a separate fresh Release process: native gallery restoration
+(native popup, browsed row, LTR) and title-bar QAT overflow navigation (RTL).
+Combined evidence now covers all 1027 runtime cases; this is assembled coverage,
+not a new clean full-suite run. No focus runtime change was required. All 483
+Writer tests passed.
+
+The full consumer initially stopped at the Touch fixture's old lower-QAT menu
+host lookup. After aligning that fixture with the existing runtime wrapper, the
+Touch recheck passed that point but stopped at the adaptive body's scroll-arrow
+visibility assertion. The 2026-10-19 visual investigation confirmed that arrows
+were visible and functional; that assertion also searched the paint-only layer.
+Its live-foreground lookup and focused reproduction now pass; the
+[Touch acceptance record](14-TOUCH-DENSITY-PLAN.md#verification-and-acceptance)
+owns the measurements and visual evidence. Full consumer continuation remains
+unverified; no adaptive behavior or focus runtime was changed.
+The full visual aggregate hit its 60-second timeout, then all 195 unique approved
+scenes passed in four smaller batches with unchanged references and tolerances.
+Repeated Office2007/2010 default-DPI scenes supplied the established WPF warmup;
+the four non-rendering visual tests had passed in the full attempt.
+
+Evidence is in `TestResults/qat-glow-full`, `qat-glow-colored-final.log`,
+`qat-glow-glass-recheck.log`, `qat-glow-touch-recheck.log` and the four
+`qat-glow-visual-*.log` files. The isolated focus results are in
+`TestResults/qat-glow-focus-retry/{gallery,overflow}.trx`. The full-suite gate
+remains open for the uncompleted full consumer continuation. Native icon-glow
+visual review and real monitor/DPI transitions remain
+pending; the Debug Showcase is ready for review.
+[Implementation record](history/library/01-core-controls.md#3269-optional-color-preserving-qat-icon-glow--2026-10-19).

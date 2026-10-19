@@ -1094,4 +1094,7 @@
     <sys:Double x:Key="RibbonKit.Metrics.MenuItemMinHeight">32</sys:Double>
     <sys:Double x:Key="RibbonKit.Metrics.MenuItemMinWidth">200</sys:Double>
     <sys:Double x:Key="RibbonKit.Metrics.MenuSubmenuButtonWidth">32</sys:Double>
+    <!-- Optional contrast halo, behind the unchanged full-color QAT icon. -->
+    <DropShadowEffect x:Key="RibbonKit.Effects.Qat.IconGlow" Color="#FFFFFF"
+                      BlurRadius="3" ShadowDepth="0" Opacity="1" RenderingBias="Quality" />
 </ResourceDictionary>

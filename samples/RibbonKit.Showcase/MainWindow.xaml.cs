@@ -226,6 +226,8 @@ public partial class MainWindow : RibbonWindow
             MainRibbon.Density = preferences.TouchMode ? RibbonDensity.Touch : RibbonDensity.Compact;
             MainRibbon.LayoutMode = preferences.SimplifiedRibbon ? RibbonLayoutMode.Simplified : RibbonLayoutMode.Classic;
             AccentedTitleBarToggle.IsChecked = preferences.AccentedTitleBar;
+            MainRibbon.QuickAccessIconAppearance = preferences.QuickAccessIconAppearance;
+            SyncQatIconAppearanceLabel();
             ApplyAccentPreference(preferences.Accent);
 
             _preferredFrameAppearance = preferences.FrameAppearance;
@@ -285,6 +287,7 @@ public partial class MainWindow : RibbonWindow
             TouchMode = MainRibbon.Density == RibbonDensity.Touch,
             SimplifiedRibbon = MainRibbon.LayoutMode == RibbonLayoutMode.Simplified,
             AccentedTitleBar = ThemeManager.IsAccentedTitleBar,
+            QuickAccessIconAppearance = MainRibbon.QuickAccessIconAppearance,
             FrameAppearance = _preferredFrameAppearance,
             UseAccentForAeroFrame = _useAccentForAeroFrame,
             AeroFrameTintIntensity = _aeroFrameTintIntensity,
@@ -478,6 +481,18 @@ public partial class MainWindow : RibbonWindow
         RefreshGlassTreatment();
         SaveAppearancePreferences();
     }
+
+    private void OnSelectQatIconAppearance(object sender, RoutedEventArgs e)
+    {
+        if ((sender as RibbonMenuItem)?.Tag is not RibbonQuickAccessIconAppearance appearance) return;
+        MainRibbon.QuickAccessIconAppearance = appearance;
+        SyncQatIconAppearanceLabel();
+        SaveAppearancePreferences();
+    }
+
+    private void SyncQatIconAppearanceLabel() =>
+        QatIconAppearanceSelector.Header = MainRibbon.QuickAccessIconAppearance == RibbonQuickAccessIconAppearance.ColorWithGlow
+            ? "Color with Glow" : "White Overlay";
 
     private void OnAccentGalleryChanged(object sender, SelectionChangedEventArgs e)
     {

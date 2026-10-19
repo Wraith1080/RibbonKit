@@ -7,6 +7,14 @@ namespace RibbonKit.Tests;
 
 public class ShowcaseAppearancePreferencesTests
 {
+    [Fact]
+    public void Legacy_preferences_keep_the_white_overlay_default()
+    {
+        Assert.True(ShowcaseAppearancePreferencesSerializer.TryDeserialize(
+            "{\"schemaVersion\":3,\"accentedTitleBar\":true}", out var restored));
+        Assert.Equal(RibbonQuickAccessIconAppearance.WhiteOverlay, restored.QuickAccessIconAppearance);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -43,6 +51,7 @@ public class ShowcaseAppearancePreferencesTests
             DarkMode = true,
             TouchMode = true,
             AccentedTitleBar = true,
+            QuickAccessIconAppearance = RibbonQuickAccessIconAppearance.ColorWithGlow,
             FrameAppearance = RibbonWindowFrameAppearance.Office2010Aero,
             UseAccentForAeroFrame = true,
             AeroFrameTintIntensity = 0.42,
@@ -62,6 +71,7 @@ public class ShowcaseAppearancePreferencesTests
         Assert.True(restored.DarkMode);
         Assert.True(restored.TouchMode);
         Assert.True(restored.AccentedTitleBar);
+        Assert.Equal(RibbonQuickAccessIconAppearance.ColorWithGlow, restored.QuickAccessIconAppearance);
         Assert.Equal(RibbonWindowFrameAppearance.Office2010Aero, restored.FrameAppearance);
         Assert.True(restored.UseAccentForAeroFrame);
         Assert.Equal(0.42, restored.AeroFrameTintIntensity);
@@ -88,6 +98,7 @@ public class ShowcaseAppearancePreferencesTests
         Assert.False(defaults.DarkMode);
         Assert.False(defaults.TouchMode);
         Assert.False(defaults.AccentedTitleBar);
+        Assert.Equal(RibbonQuickAccessIconAppearance.WhiteOverlay, defaults.QuickAccessIconAppearance);
         Assert.Equal(RibbonWindowFrameAppearance.Default, defaults.FrameAppearance);
         Assert.False(defaults.UseAccentForAeroFrame);
         Assert.Equal(
@@ -104,7 +115,9 @@ public class ShowcaseAppearancePreferencesTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("not json")]
-    [InlineData("{\"schemaVersion\":4}")]
+    [InlineData("{\"schemaVersion\":5}")]
+    [InlineData("{\"schemaVersion\":4,\"quickAccessIconAppearance\":99}")]
+    [InlineData("{\"schemaVersion\":4,\"quickAccessIconAppearance\":\"Unknown\"}")]
     [InlineData("{\"schemaVersion\":1,\"theme\":\"FutureTheme\"}")]
     [InlineData("{\"schemaVersion\":2,\"frameAppearance\":\"FutureFrame\"}")]
     [InlineData("{\"schemaVersion\":3,\"aeroFrameTintIntensity\":-0.01}")]

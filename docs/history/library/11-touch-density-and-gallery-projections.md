@@ -50,6 +50,10 @@ Adaptive/lifecycle pitfalls retained:
   Reclaim content before measuring or an empty normal host produces a false width.
   Cached scroller reports survive unchanged child measures; empty/replaced content
   clears the report. The regressions reproduced both failures.
+- Body-scroll buttons live in `ContentForeground`; `ContentHost` only paints the
+  background after foreground/shadow separation. Searching the background's empty
+  subtree falsely reported missing arrows. Query the live layer, compare true
+  extent with viewport width, and exercise both scroll directions.
 - LayoutUpdated orb reconciliation must skip equal assignments and valid measured
   bounds. Repeated template/focus/direction assignments created a Classic2007 loop.
 - Consumer fixtures wait for the closing Backstage adorner to detach before replacing

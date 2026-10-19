@@ -211,4 +211,7 @@
     <Thickness x:Key="RibbonKit.Metrics.SplitHorizontalPrimaryBorderThickness">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.SplitHorizontalPrimaryPadding">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryPadding">0</Thickness>
+    <!-- Optional contrast halo, behind the unchanged full-color QAT icon. -->
+    <DropShadowEffect x:Key="RibbonKit.Effects.Qat.IconGlow" Color="#FFFFFF"
+                      BlurRadius="3" ShadowDepth="0" Opacity="1" RenderingBias="Quality" />
 </ResourceDictionary>

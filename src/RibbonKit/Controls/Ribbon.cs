@@ -125,6 +125,14 @@ public partial class Ribbon : Control
                 RibbonQuickAccessPosition.TabRow,
                 OnQuickAccessPositionChanged));
 
+    /// <summary>Identifies the <see cref="QuickAccessIconAppearance"/> dependency property.</summary>
+    public static readonly DependencyProperty QuickAccessIconAppearanceProperty =
+        DependencyProperty.Register(
+            nameof(QuickAccessIconAppearance), typeof(RibbonQuickAccessIconAppearance), typeof(Ribbon),
+            new FrameworkPropertyMetadata(RibbonQuickAccessIconAppearance.WhiteOverlay,
+                static (target, _) => ((Ribbon)target).UpdateQatButtonContext()),
+            static value => Enum.IsDefined((RibbonQuickAccessIconAppearance)value));
+
     /// <summary>Identifies the <see cref="IsQuickAccessVisible"/> dependency property.</summary>
     public static readonly DependencyProperty IsQuickAccessVisibleProperty =
         DependencyProperty.Register(
@@ -272,7 +280,7 @@ public partial class Ribbon : Control
     /// <summary>
     /// Attached flag the ribbon sets on a QAT button while it sits on a colored surface
     /// (an accent title bar, or the colored Office 2019 tab strip). The button template
-    /// then draws its icon as a white silhouette and uses the brushes published under
+    /// then applies <see cref="QuickAccessIconAppearance"/> and uses the brushes published under
     /// <see cref="QatColoredHoverBackgroundKey"/> / <see cref="QatColoredPressedBackgroundKey"/>
     /// for its hover/pressed states, so the QAT blends with the colored band like Office.
     /// </summary>
@@ -450,6 +458,17 @@ public partial class Ribbon : Control
     {
         get => (RibbonQuickAccessPosition)GetValue(QuickAccessPositionProperty);
         set => SetValue(QuickAccessPositionProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets how QAT icons contrast with colored title bars and tab strips.
+    /// The default is <see cref="RibbonQuickAccessIconAppearance.WhiteOverlay"/>.
+    /// Neutral surfaces and the overflow menu retain the original icon colors.
+    /// </summary>
+    public RibbonQuickAccessIconAppearance QuickAccessIconAppearance
+    {
+        get => (RibbonQuickAccessIconAppearance)GetValue(QuickAccessIconAppearanceProperty);
+        set => SetValue(QuickAccessIconAppearanceProperty, value);
     }
 
     /// <summary>
@@ -3633,8 +3652,7 @@ public partial class Ribbon : Control
 
     /// <summary>
     /// Sets, on each QAT button, whether it currently sits on a colored surface and the
-    /// hover brush to use there — so the button template can white-out its icon and match
-    /// the surrounding band's hover. Applied directly (not via inheritance) so it is robust
+    /// icon appearance and hover brush to use there. Applied directly (not via inheritance) so it is robust
     /// regardless of how the items are hosted.
     /// </summary>
     internal void UpdateQatButtonContext()
@@ -3670,6 +3688,13 @@ public partial class Ribbon : Control
             }
 
             SetQatOnColoredSurface(element, colored);
+            UtilityChrome.SetQatIconGlow(element,
+                colored && QuickAccessIconAppearance == RibbonQuickAccessIconAppearance.ColorWithGlow);
+            // Carry a ribbon-scoped glow into the detached title-bar host as well.
+            if (colored && TryFindResource(UtilityChrome.QatIconGlowKey) is System.Windows.Media.Effects.Effect glow)
+                element.Resources[UtilityChrome.QatIconGlowKey] = glow;
+            else
+                element.Resources.Remove(UtilityChrome.QatIconGlowKey);
             if (colored && hoverKey is not null)
             {
                 // Publish the band's brushes as RESOURCES on the proxy, not as attached-property

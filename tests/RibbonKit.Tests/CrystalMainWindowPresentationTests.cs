@@ -252,8 +252,10 @@ public sealed class CrystalMainWindowPresentationTests
             Assert.Equal(Assert.IsType<SolidColorBrush>(foot.Background).Color,
                 Assert.IsType<SolidColorBrush>(notch.Background).Color);
             var file = Assert.IsType<ToggleButton>(tabs.Template.FindName("PART_ApplicationButton", tabs));
-            Assert.Same(tab.FindResource("RibbonKit.Brushes.Tab.HoverBackground"),
-                file.FindResource("RibbonKit.Brushes.ApplicationButton.HoverBackground"));
+            var tabHoverPaint = (Brush)tab.FindResource("RibbonKit.Brushes.Tab.HoverBackground");
+            var fileHoverPaint = (Brush)file.FindResource("RibbonKit.Brushes.ApplicationButton.HoverBackground");
+            AssertSamePaint(tabHoverPaint, fileHoverPaint);
+            Assert.Equal(tabHoverPaint.Opacity, fileHoverPaint.Opacity);
             glass.Apply(false, darkMode: false);
             Sta.Drain();
             AssertSamePaint(opaqueBody, (Brush)window.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground"));
@@ -377,8 +379,9 @@ public sealed class CrystalMainWindowPresentationTests
             Assert.True(darkGlassHover.B > darkGlassHover.R);
             var darkTabHover = Assert.IsType<SolidColorBrush>(tab.FindResource(
                 "RibbonKit.Brushes.Tab.HoverBackground")).Color;
-            Assert.Equal((byte)0x30, darkTabHover.A);
-            Assert.Equal(darkTabHover, Assert.IsType<SolidColorBrush>(drawer.Background).Color);
+            Assert.Equal((byte)0, darkTabHover.A);
+            Assert.Equal(Color.FromArgb(0x30, darkGlassHover.R, darkGlassHover.G, darkGlassHover.B),
+                Assert.IsType<SolidColorBrush>(drawer.Background).Color);
             glass.Apply(false, darkMode: true);
             ThemeManager.SetDarkMode(application, false);
         }
