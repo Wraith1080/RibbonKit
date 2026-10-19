@@ -1131,6 +1131,14 @@ consumer checks as part of its assembled validation. This does not establish nat
 press/hold behavior, perceived speed, measured latency or Visual Studio acceptance;
 see [host-layout evidence](18-HOST-LAYOUT-TRANSITION-PLAN.md#h3--verification-and-acceptance-2026-10-16).
 
+Collapsed-group follow-up implemented 2026-10-19: the shared collapsed group button
+also opens on mouse-down, with the same hold-and-cancel tradeoff. The independent
+`CollapsedGroupPress` scope failed before the fix and passed afterwards across all
+seven themes and both densities; three related group interaction regressions also
+passed. Normal Debug runtime net8 and Showcase builds passed. Physical input and
+perceived speed remain pending user review; no full suite was run.
+[Implementation and focused evidence](history/library/04-office2007-and-popup-motion.md#3258-dropdown-opener-paint-precedes-native-popup-creation--2026-10-15).
+
 ## Gallery header and section layout
 
 Implemented 2026-10-11 after the user's legacy dark gallery screenshots. Shared
@@ -1159,6 +1167,16 @@ The user accepted the updated Theme/Accent gallery appearance on 2026-10-11,
 including the legacy dark heading contrast and balanced section spacing. This
 confirmation does not establish physical touch, multiple-section overflow input,
 or native mixed-monitor DPI acceptance. [Implementation record](history/library/12-keytips-layout-and-validation.md#3241-gallery-header-contrast-and-balanced-section-spacing--2026-10-11).
+
+Copy popup follow-up implemented 2026-10-19: QAT/custom-group galleries now follow
+the native popup's height budget, section spacing and scrollbar style. The focused
+RibbonKit-only `GalleryPopupViewport` reproduction failed before the fix and passed
+afterwards across all seven themes in Compact/LTR and Touch/RTL, including fitting
+Theme and overflowing Accent-like content, custom-group/QAT copies and dark palette
+refresh. Thirteen relevant gallery runtime cases passed; Office 2010/Crystal popup
+captures were inspected. Normal Debug runtime net8/net9 and Showcase builds passed.
+User live review and native mixed-monitor DPI remain pending; no full suite ran.
+[Sizing, style lookup and focused evidence](history/library/11-touch-density-and-gallery-projections.md#3271-gallery-copy-popup-sizing-and-scrollbar-parity--2026-10-19).
 
 ## Classic Backstage caption continuation
 

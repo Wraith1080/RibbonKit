@@ -19,6 +19,36 @@ namespace RibbonKit.Tests;
 public sealed class GalleryQuickAccessTests
 {
     [Theory]
+    [InlineData(false, 96)]
+    [InlineData(true, 96)]
+    [InlineData(false, double.PositiveInfinity)]
+    [InlineData(true, double.PositiveInfinity)]
+    public void Custom_template_viewport_limits_and_scrollbar_style_survive_the_copy(bool inRibbon, double maxHeight) => Sta.Run(() =>
+    {
+        RibbonGallery source = inRibbon ? new InRibbonGallery() : new RibbonGallery();
+        source.Header = "Styles"; source.Width = 200;
+        var scroll = new FrameworkElementFactory(typeof(ScrollViewer), "PART_ScrollViewer");
+        scroll.SetValue(FrameworkElement.MaxHeightProperty, maxHeight);
+        scroll.AppendChild(new FrameworkElementFactory(typeof(ItemsPresenter), "PART_ItemsPresenter"));
+        source.Template = new ControlTemplate(typeof(RibbonGallery)) { VisualTree = scroll };
+        for (int i = 0; i < 30; i++) source.Items.Add(new RibbonGalleryItem { Content = "Style " + i });
+        var ribbon = RibbonFor(source); ribbon.AddToQuickAccess(source);
+        var copy = Assert.IsAssignableFrom<RibbonDropDownButton>(Assert.Single(ribbon.QuickAccessItems));
+        using var host = new Host(copy);
+        source.ApplyTemplate();
+        var original = Assert.IsType<ScrollViewer>(source.Template.FindName("PART_ScrollViewer", source));
+        var style = new Style(typeof(ScrollBar)); style.Setters.Add(new Setter(Control.BackgroundProperty, Brushes.Coral));
+        original.Resources[typeof(ScrollBar)] = style;
+        copy.IsDropDownOpen = true; host.Layout();
+        var viewport = Assert.IsAssignableFrom<ScrollViewer>(Assert.Single(copy.Items));
+        Assert.Equal(double.IsFinite(maxHeight) ? maxHeight : 300d, viewport.MaxHeight);
+        Assert.True(viewport.ActualHeight <= viewport.MaxHeight);
+        Assert.Same(style, viewport.Resources[typeof(ScrollBar)]);
+        copy.IsDropDownOpen = false; host.Layout();
+        Assert.Null(viewport.Content); Assert.IsType<ItemsPresenter>(original.Content);
+    });
+
+    [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public void ScreenTips_follow_gallery_metadata_in_custom_qat_and_overflow_copies(bool inRibbon) => Sta.Run(() =>

@@ -743,6 +743,7 @@
                              reduction algorithm, so the older themes must keep their historic 1px. -->
                         <ToggleButton x:Name="PART_CollapsedButton"
                                       Grid.Column="0"
+                                      ClickMode="Press"
                                       Margin="{DynamicResource RibbonKit.Metrics.GroupCollapsedMargin}"
                                       Visibility="Collapsed">
                             <ToggleButton.Style>

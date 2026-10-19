@@ -1005,7 +1005,7 @@ technical evidence warrants them; preserve existing dated records.
 
 ### 3.258 Dropdown opener paint precedes native popup creation — 2026-10-15
 
-[Preserve pressed feedback through dropdown and split-button opening](docs/history/library/04-office2007-and-popup-motion.md#3258-dropdown-opener-paint-precedes-native-popup-creation--2026-10-15).
+[Preserve pressed feedback and mouse-down activation for dropdown, overflow and collapsed-group openers](docs/history/library/04-office2007-and-popup-motion.md#3258-dropdown-opener-paint-precedes-native-popup-creation--2026-10-15).
 [Current acceptance](docs/09-FUTURE-THEMES-PLAN.md#colored-qat-split-and-dropdown-states).
 
 ### 3.259 Ribbon-owned lifecycle and QAT relocation presentation — 2026-10-16
@@ -1061,6 +1061,11 @@ technical evidence warrants them; preserve existing dated records.
 
 [Cached, layer-aware contrast adjustment with original artwork fallback](docs/history/library/01-core-controls.md#3270-adaptive-qat-vector-colors--2026-10-19).
 [Current evidence and review](docs/09-FUTURE-THEMES-PLAN.md#adaptive-qat-icon-colors).
+
+### 3.271 Gallery copy popup sizing and scrollbar parity — 2026-10-19
+
+[Use the native popup budget and scrollbar style in QAT/custom-group gallery copies](docs/history/library/11-touch-density-and-gallery-projections.md#3271-gallery-copy-popup-sizing-and-scrollbar-parity--2026-10-19).
+[Current evidence and review](docs/09-FUTURE-THEMES-PLAN.md#gallery-header-and-section-layout).
 
 ## 5. Current State & Next Steps
 

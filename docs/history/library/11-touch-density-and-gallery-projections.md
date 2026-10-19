@@ -505,3 +505,38 @@ Actual before/after renders were inspected, and the normal Debug Showcase build
 passed with zero warnings/errors. Current live review is tracked in the
 [Touch acceptance table](../../14-TOUCH-DENSITY-PLAN.md#verification-and-acceptance);
 the full suite and native monitor transitions were not rerun for this fix.
+
+### 3.271 Gallery copy popup sizing and scrollbar parity — 2026-10-19
+
+QAT/custom-group gallery copies imposed a separate 300-DIP viewport limit. A
+seven-choice grouped Theme reproduction needed 306.4 DIP at the current display
+scale, so the original popup fitted while its copy acquired a scrollbar. The copy
+also searched for scrollbar styling on the strip viewport that held the borrowed
+presenter. The theme-aware style belongs to the expanded viewport; Crystal's
+application-level implicit ScrollBar style masked the missing local style.
+
+`RibbonGallery.BeginQuickAccess` now takes scrollbar styling, viewport limits and
+section margins from the expanded viewport, falling back to the original viewport
+for plain/legacy templates. Missing styles clear the previous local resource.
+Finite custom viewport limits remain intact; an unbounded custom template without
+a recognized popup card retains the former 300-DIP fallback.
+
+The shared projection uses a one-child Grid items panel to propagate the card's
+finite height to its native ScrollViewer. For InRibbonGallery, the copy follows
+the native popup card's maximum height, padding, border thickness and rounding,
+including the caption/section budget. Use Border's padding/border dependency
+properties when copying these values; Control's similarly named properties are
+different registrations. The outer dropdown scroller stays disabled, so only the
+gallery's viewport scrolls. Presenter borrowing, selection and strip restoration
+remain on the existing paths. No public API or Showcase workaround was added.
+
+The new RibbonKit-only `GalleryPopupViewport` scope failed on the 300-DIP cutoff
+before the fix, then passed all seven themes in Compact/LTR and Touch/RTL. It
+compares native/QAT/custom-group fitting and overflowing popups, identical viewport
+heights and scrollbar styles/templates, one scrolling surface, last-item reach,
+dark palette refresh and presenter return. Office 2010/Crystal native and copied
+popup captures under `TestResults/gallery-popup-viewport` were inspected. Thirteen
+focused runtime cases passed for custom-template limits/styles, authored and bound
+items, selection/preview, native handoff and visible-strip/overflow retention at
+simulated 125%/200% DPI. Normal Debug runtime net8/net9 and Showcase builds passed.
+Full-suite, physical input and native mixed-monitor acceptance were not performed.

@@ -694,6 +694,23 @@ Hold-and-cancel is no longer available on these openers. No build, automated tes
 or live UI checks ran for this change; the earlier release-mode evidence does not
 validate the new input timing or establish a latency improvement.
 
+**Collapsed-group press activation — 2026-10-19.** At the user's request, the shared
+`PART_CollapsedButton` now uses `ClickMode.Press`, matching the dropdown/overflow
+openers. Its direct checked-state popup binding, content reparenting and explicit
+light-dismiss remain unchanged. Opening starts on mouse-down and hold-and-cancel
+is no longer available on this opener.
+
+The focused RibbonKit-only `CollapsedGroupPress` scope reproduced a closed popup
+after mouse-down before the change, then passed all seven themes in Compact and
+Touch (14 contexts). It checks opening before release, no second toggle on release,
+checked/pressed paint during native placement, re-click close, immediate reopen,
+outside and command dismissal, binding retention and content restoration. The
+offscreen fixture supplies press state and invokes WPF mouse handlers; it does not
+inject physical input. Three existing runtime cases passed for source-opener QAT
+takeover and toggle/option retention in both group routes. Normal Debug runtime
+net8, Showcase and selected test projects built successfully. No full suite,
+physical mouse review or measured latency/Visual Studio acceptance is claimed.
+
 ### 3.262 Refresh popup text when opening motion settles — 2026-10-17
 
 The user clarified that text stays soft after animation has stopped, then sharpens

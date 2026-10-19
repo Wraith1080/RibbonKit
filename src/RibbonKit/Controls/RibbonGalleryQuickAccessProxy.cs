@@ -32,8 +32,10 @@ internal sealed class RibbonGalleryQuickAccessProxy : RibbonDropDownButton
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             PanningMode = PanningMode.VerticalOnly,
             Focusable = false,
-            MaxHeight = 300,
         };
+        // This one-item panel must pass the popup's height constraint to the
+        // gallery viewport. A StackPanel measures it with unlimited height.
+        ItemsPanel = new ItemsPanelTemplate(new FrameworkElementFactory(typeof(Grid)));
         Loaded += (_, _) => SetBinding(FlowDirectionProperty, new Binding(nameof(FlowDirection)) { Source = owner });
         SetBinding(IconProperty, new Binding(nameof(source.Icon)) { Source = source });
         SetBinding(LargeIconProperty, new Binding(nameof(source.Icon)) { Source = source });
@@ -74,6 +76,7 @@ internal sealed class RibbonGalleryQuickAccessProxy : RibbonDropDownButton
                     Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(Close));
                 else
                 {
+                    ConfigurePopupViewport();
                     _source.ItemPreview += OnPreview;
                     _source.AddHandler(MouseLeftButtonUpEvent, new MouseButtonEventHandler(OnItemMouseUp), true);
                     _source.PreviewKeyDown += OnGalleryKeyDown;
@@ -111,6 +114,21 @@ internal sealed class RibbonGalleryQuickAccessProxy : RibbonDropDownButton
                 return true;
             }
         return false;
+    }
+
+    private void ConfigurePopupViewport()
+    {
+        // Use the native gallery's complete card budget, including its caption
+        // and section spacing, rather than imposing a separate 300-DIP cutoff.
+        if (_source is InRibbonGallery
+            && _source.Template?.FindName("PART_PopupHost", _source) is Border sourceHost
+            && GetTemplateChild("PART_MenuHost") is Border host)
+        {
+            host.SetCurrentValue(MaxHeightProperty, sourceHost.MaxHeight);
+            host.SetCurrentValue(Border.PaddingProperty, sourceHost.Padding);
+            host.SetCurrentValue(Border.BorderThicknessProperty, sourceHost.BorderThickness);
+            host.SetCurrentValue(UseLayoutRoundingProperty, sourceHost.UseLayoutRounding);
+        }
     }
 
     private void OnPopupOpened(object? sender, EventArgs e)
