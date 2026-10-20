@@ -1072,6 +1072,11 @@ technical evidence warrants them; preserve existing dated records.
 [Keep the material underlay independent of caption coloring in light and dark 2024 themes](docs/history/library/12-keytips-layout-and-validation.md#3272-colored-office-2024-captions-preserve-the-ribbon-backdrop--2026-10-19).
 [Current evidence and review](docs/09-FUTURE-THEMES-PLAN.md#office-glass-iteration).
 
+### 3.273 Themed native text-editor context menus — 2026-10-20
+
+[Style the native editable combo and RibbonTextBox menus without replacing their commands](docs/history/library/02-designer-and-context-menus.md#3273-themed-native-text-editor-context-menus--2026-10-20).
+[Current evidence and review](docs/09-FUTURE-THEMES-PLAN.md#text-editor-context-menus).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.
@@ -1138,6 +1143,8 @@ technical evidence warrants them; preserve existing dated records.
   [glass iteration status](docs/09-FUTURE-THEMES-PLAN.md#office-glass-iteration).
 - **Gallery headers and spacing:** current evidence and native review are in the
   [gallery header status](docs/09-FUTURE-THEMES-PLAN.md#gallery-header-and-section-layout).
+- **Text-editor context menus:** shared theming and focused evidence are in the
+  [text-menu status](docs/09-FUTURE-THEMES-PLAN.md#text-editor-context-menus).
 - **Classic Backstage caption and merge demo:** current evidence and remaining
   live review are in the [caption status](docs/09-FUTURE-THEMES-PLAN.md#classic-backstage-caption-continuation).
 - **Colored QAT split/dropdown states:** focused evidence and live review are in

@@ -451,3 +451,5 @@ status updates and investigation narration were removed during compaction.
 ### [3.271 Gallery copy popup sizing and scrollbar parity — 2026-10-19](library/11-touch-density-and-gallery-projections.md#3271-gallery-copy-popup-sizing-and-scrollbar-parity--2026-10-19)
 
 ### [3.272 Colored Office 2024 captions preserve the ribbon backdrop — 2026-10-19](library/12-keytips-layout-and-validation.md#3272-colored-office-2024-captions-preserve-the-ribbon-backdrop--2026-10-19)
+
+### [3.273 Themed native text-editor context menus — 2026-10-20](library/02-designer-and-context-menus.md#3273-themed-native-text-editor-context-menus--2026-10-20)

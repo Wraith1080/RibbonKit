@@ -84,6 +84,7 @@ public class RibbonComboBox : ComboBox
 
     static RibbonComboBox()
     {
+        RibbonTextEditMenu.EnsureRegistered();
         DefaultStyleKeyProperty.OverrideMetadata(
             typeof(RibbonComboBox),
             new FrameworkPropertyMetadata(typeof(RibbonComboBox)));

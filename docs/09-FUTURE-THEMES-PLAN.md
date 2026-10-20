@@ -1489,3 +1489,24 @@ Writer passed 482/483 (the lifecycle timeout also reproduces on starting commit
 an incidental Touch fixture edit was removed. These results are not a clean full
 suite pass. No approvals, Writer code or unrelated runtime behavior were changed.
 [Implementation record](history/library/01-core-controls.md#3270-adaptive-qat-vector-colors--2026-10-19).
+
+## Text-editor context menus
+
+Implemented 2026-10-20 for editable `RibbonComboBox` and `RibbonTextBox`. The
+native edit menu uses shared menu chrome, row styling and shortcut labels.
+Authored menus and explicit null overrides retain precedence.
+
+Five focused runtime checks passed, including native command targets, selection,
+read-only enabled states, custom menus and ordinary-text-box isolation. The
+RibbonKit-only `TextEditMenus` consumer passed 56 theme/palette/density/control
+combinations: all seven themes, light/dark, Compact LTR and Touch RTL, both input
+types. Open-popup palette changes and scoped brush precedence also passed.
+All 28 captured native menu appearances were reviewed. Normal Debug runtime
+net8/net9, Showcase and consumer builds passed; the final builds have zero
+warnings/errors. Only menu-related tests ran; no full suite or visual approval
+updates were needed. Captures are in `TestResults/text-edit-menus`.
+
+Live pointer/Shift+F10 acceptance, OS spelling/IME behavior and mixed-monitor DPI
+remain unverified. Automated opening raises the real WPF routed event without
+physical input. WPF's native menu entrance remains in place.
+[Implementation record](history/library/02-designer-and-context-menus.md#3273-themed-native-text-editor-context-menus--2026-10-20).

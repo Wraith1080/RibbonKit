@@ -47,6 +47,7 @@ public class RibbonTextBox : TextBox
 
     static RibbonTextBox()
     {
+        RibbonTextEditMenu.EnsureRegistered();
         DefaultStyleKeyProperty.OverrideMetadata(
             typeof(RibbonTextBox),
             new FrameworkPropertyMetadata(typeof(RibbonTextBox)));

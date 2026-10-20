@@ -156,6 +156,11 @@ public sealed class ApplicationButtonShapeThemeTests
     public void Theme_default_and_local_value_follow_wpf_precedence() => RunSta(() =>
     {
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "TextEditMenus")
+        {
+            VerifyScope("TextEditMenuChecks.Verify", () => TextEditMenuChecks.Verify(application));
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "CaptionMotion")
         {
             VerifyScope("Office2024BackdropChecks.VerifyCaptionMotion", () => Office2024BackdropChecks.VerifyCaptionMotion(application));
@@ -672,6 +677,7 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("QuickAccessIconAppearanceChecks.Verify", () => QuickAccessIconAppearanceChecks.Verify(application));
             VerifyScope("ColoredQuickAccessPortabilityChecks.Verify", () => ColoredQuickAccessPortabilityChecks.Verify(application));
             VerifyScope("QuickAccessBackdropPortabilityChecks.Verify", () => QuickAccessBackdropPortabilityChecks.Verify(application));
+            VerifyScope("TextEditMenuChecks.Verify", () => TextEditMenuChecks.Verify(application));
         }
         finally
         {

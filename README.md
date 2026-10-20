@@ -458,6 +458,11 @@ or accessible name, so each original item keeps its parent. Editable combos also
 offer their existing choices in QAT; typing and the text-editing context menu
 remain on the original input. Assign a stable command ID for saved customization.
 
+Editable `RibbonComboBox` and `RibbonTextBox` use the current theme for their native
+text-editing menus, including shortcut labels and Touch spacing. Authored
+`ContextMenu` values keep precedence; an explicit `ContextMenu="{x:Null}"` on the
+text editor disables its menu.
+
 ### Galleries in QAT
 
 `RibbonGallery.Header` and `Icon` provide the customization caption and optional

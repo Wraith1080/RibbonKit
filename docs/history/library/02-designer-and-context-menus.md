@@ -321,3 +321,27 @@ applying, so nested layout cannot apply them twice. This uses no polling, delay,
 new runtime API or serialized preview value. The active plan owns the exact
 native and automated verification scope; retained traces and checks are under
 TestResults/designer-file-preview-20261015.
+
+### 3.273 Themed native text-editor context menus — 2026-10-20
+
+Editable `RibbonComboBox` and `RibbonTextBox` now style WPF's generated editing
+menu through the shared `Menus.xaml` dictionary. WPF creates a temporary menu
+without assigning `TextBox.ContextMenu`; a scoped `ContextMenu.Opened` class
+handler exposes that instance through public events. It only accepts framework
+menu subclasses targeting either ribbon editor. Ordinary text boxes, host-owned
+menus, and explicit null overrides keep their existing behavior.
+
+Keep the original menu and row objects. WPF owns localized commands, enabled
+states, selection/caret handling, spelling suggestions and IME reconversion.
+Native rows are derived MenuItems, so they explicitly reference the base-type
+row style injected into the menu resources. The shared row template adds an
+automatic shortcut column that collapses when empty. Density and flow direction
+come from the editor; brushes and metrics remain dynamic and honor scoped tokens.
+The native entrance is already in progress at Opened, so do not layer a second
+RibbonPopupMotion animation onto it.
+
+Focused regressions exercise the real WPF editor class handler through a routed
+opening event. The independent `TextEditMenus` consumer verifies palette, density,
+direction, shortcut geometry and live resource changes without Showcase. Current
+evidence and remaining live gates are in the
+[theme plan](../../09-FUTURE-THEMES-PLAN.md#text-editor-context-menus).
