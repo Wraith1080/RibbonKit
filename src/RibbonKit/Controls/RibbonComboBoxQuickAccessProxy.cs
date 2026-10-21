@@ -1,4 +1,6 @@
+using System.Collections;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Automation;
@@ -19,6 +21,7 @@ internal sealed class RibbonComboBoxQuickAccessProxy : RibbonDropDownButton
     private bool _listening;
     private bool _refreshPending;
     private Popup? _popup;
+    private INotifyCollectionChanged? _groupDescriptions;
 
     internal RibbonComboBoxQuickAccessProxy(RibbonComboBox source, Ribbon owner)
     {
@@ -32,7 +35,11 @@ internal sealed class RibbonComboBoxQuickAccessProxy : RibbonDropDownButton
         caption.Bindings.Add(new Binding(nameof(source.Header)) { Source = source });
         caption.Bindings.Add(new Binding(nameof(source.ScreenTipTitle)) { Source = source });
         SetBinding(HeaderProperty, caption);
-        SetBinding(DropDownHeaderProperty, new Binding(nameof(Header)) { Source = this });
+        var heading = new MultiBinding { Converter = HeadingConverter.Instance };
+        heading.Bindings.Add(new Binding(nameof(Header)) { Source = this });
+        heading.Bindings.Add(new Binding(nameof(IsGrouping)) { Source = this });
+        SetBinding(DropDownHeaderProperty, heading);
+        SetBinding(GroupStyleSelectorProperty, new Binding(nameof(GroupStyleSelector)) { Source = source });
         SetBinding(ScreenTipTitleProperty, new Binding(nameof(Header)) { Source = this });
         SetBinding(ScreenTipTextProperty, new Binding(nameof(source.ScreenTipText)) { Source = source });
         Unloaded += (_, _) =>
@@ -53,7 +60,9 @@ internal sealed class RibbonComboBoxQuickAccessProxy : RibbonDropDownButton
                 if (!_listening)
                 {
                     CollectionChangedEventManager.AddHandler(_source.Items, OnItemsChanged);
+                    CollectionChangedEventManager.AddHandler(_source.GroupStyle, OnItemsChanged);
                     _listening = true;
+                    ListenForGroupingChanges();
                 }
             }
             else StopListening();
@@ -76,8 +85,8 @@ internal sealed class RibbonComboBoxQuickAccessProxy : RibbonDropDownButton
     internal override bool TryFocusInitialMenuItem(bool last)
     {
         int index = _source.SelectedIndex;
-        return !last && index >= 0 && index < Items.Count
-            && Items[index] is RibbonComboBoxQuickAccessItem { IsEnabled: true, IsVisible: true } selected
+        return !last && Items.OfType<RibbonComboBoxQuickAccessItem>()
+            .FirstOrDefault(row => row.SourceIndex == index) is { IsEnabled: true, IsVisible: true } selected
             && selected.Focus();
     }
 
@@ -97,7 +106,21 @@ internal sealed class RibbonComboBoxQuickAccessProxy : RibbonDropDownButton
     {
         if (!_listening) return;
         CollectionChangedEventManager.RemoveHandler(_source.Items, OnItemsChanged);
+        CollectionChangedEventManager.RemoveHandler(_source.GroupStyle, OnItemsChanged);
+        if (_groupDescriptions is not null)
+            CollectionChangedEventManager.RemoveHandler(_groupDescriptions, OnItemsChanged);
+        _groupDescriptions = null;
         _listening = false;
+    }
+
+    private void ListenForGroupingChanges()
+    {
+        if (!_listening || ReferenceEquals(_groupDescriptions, _source.Items.GroupDescriptions)) return;
+        if (_groupDescriptions is not null)
+            CollectionChangedEventManager.RemoveHandler(_groupDescriptions, OnItemsChanged);
+        _groupDescriptions = _source.Items.GroupDescriptions;
+        if (_groupDescriptions is not null)
+            CollectionChangedEventManager.AddHandler(_groupDescriptions, OnItemsChanged);
     }
 
     private void OnItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -114,12 +137,16 @@ internal sealed class RibbonComboBoxQuickAccessProxy : RibbonDropDownButton
     private void RefreshRows()
     {
         object? focusedItem = (Keyboard.FocusedElement as RibbonComboBoxQuickAccessItem)?.SourceItem;
+        SetCurrentValue(ItemsSourceProperty, null);
         Items.Clear();
+        var rows = new List<RibbonComboBoxQuickAccessItem>();
+        using var paths = GroupPaths(_source.Items.Groups, Array.Empty<object?>()).GetEnumerator();
         for (int index = 0; index < _source.Items.Count; index++)
         {
             object item = _source.Items[index];
             int selectionIndex = index;
-            var row = new RibbonComboBoxQuickAccessItem { SourceItem = item };
+            var row = new RibbonComboBoxQuickAccessItem { SourceItem = item, SourceIndex = index,
+                GroupNames = paths.MoveNext() ? paths.Current : Array.Empty<object?>() };
             row.SetBinding(Ribbon.DensityProperty, new Binding
                 { Source = this, Path = new PropertyPath(Ribbon.DensityProperty) });
             if (item is ComboBoxItem container)
@@ -153,11 +180,64 @@ internal sealed class RibbonComboBoxQuickAccessProxy : RibbonDropDownButton
                     && Equals(_source.Items[selectionIndex], item))
                     _source.SetCurrentValue(Selector.SelectedIndexProperty, selectionIndex);
             };
-            Items.Add(row);
+            rows.Add(row);
         }
+        GroupStyle.Clear();
+        foreach (GroupStyle style in _source.GroupStyle) GroupStyle.Add(style);
+        DropDownGrouping.ApplyDefault(this);
+        if (_source.Items.GroupDescriptions is { Count: > 0 } descriptions)
+        {
+            var view = new ListCollectionView((IList)rows);
+            if (_source.Items.Culture is { } culture) view.Culture = culture;
+            using (view.DeferRefresh())
+            {
+                foreach (GroupDescription original in descriptions)
+                {
+                    var projected = new ChoiceGroupDescription(original) { CustomSort = original.CustomSort };
+                    foreach (object name in original.GroupNames) projected.GroupNames.Add(name);
+                    foreach (SortDescription sort in original.SortDescriptions) projected.SortDescriptions.Add(sort);
+                    view.GroupDescriptions.Add(projected);
+                }
+            }
+            SetCurrentValue(ItemsSourceProperty, view);
+        }
+        else foreach (var row in rows) Items.Add(row);
+        ListenForGroupingChanges();
         if (focusedItem is not null)
             Items.OfType<RibbonComboBoxQuickAccessItem>().FirstOrDefault(row => ReferenceEquals(row.SourceItem, focusedItem) && row.IsEnabled)?.Focus();
         RefreshPopupLayout();
+    }
+
+    private static IEnumerable<object?[]> GroupPaths(IEnumerable? groups, object?[] ancestors)
+    {
+        if (groups is null) yield break;
+        foreach (CollectionViewGroup group in groups)
+        {
+            object?[] path = ancestors.Append(group.Name).ToArray();
+            if (group.IsBottomLevel)
+            {
+                for (int index = 0; index < group.Items.Count; index++) yield return path;
+            }
+            else foreach (var nested in GroupPaths(group.Items, path)) yield return nested;
+        }
+    }
+
+    private sealed class ChoiceGroupDescription(GroupDescription source) : GroupDescription
+    {
+        // Use the source view's resolved path, not its grouping converter again.
+        // A choice can occur in multiple sections; each occurrence needs its own
+        // independent visual row, not the same Button parented into two groups.
+        public override object GroupNameFromItem(object item, int level, CultureInfo culture) =>
+            ((RibbonComboBoxQuickAccessItem)item).GroupNames.ElementAtOrDefault(level)!;
+        public override bool NamesMatch(object groupName, object itemName) => source.NamesMatch(groupName, itemName);
+    }
+
+    private sealed class HeadingConverter : IMultiValueConverter
+    {
+        internal static readonly HeadingConverter Instance = new();
+        public object? Convert(object[] values, Type targetType, object parameter, CultureInfo culture) =>
+            values[1] is true ? null : values[0];
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotSupportedException();
     }
 
     private void SetPresentationBinding(RibbonComboBoxQuickAccessItem row, DependencyProperty property,
@@ -248,6 +328,8 @@ internal sealed class RibbonComboBoxQuickAccessProxy : RibbonDropDownButton
 internal sealed class RibbonComboBoxQuickAccessItem : Button
 {
     internal object? SourceItem { get; init; }
+    internal int SourceIndex { get; init; }
+    internal object?[] GroupNames { get; init; } = Array.Empty<object?>();
     public static readonly DependencyProperty IsSelectedProperty =
         DependencyProperty.Register(nameof(IsSelected), typeof(bool), typeof(RibbonComboBoxQuickAccessItem), new FrameworkPropertyMetadata(false));
     public bool IsSelected { get => (bool)GetValue(IsSelectedProperty); set => SetValue(IsSelectedProperty, value); }

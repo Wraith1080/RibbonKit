@@ -86,6 +86,18 @@ public partial class MainWindow : RibbonWindow
     public MainWindow()
     {
         InitializeComponent();
+        var fonts = new ListCollectionView(new[]
+        {
+            new FontChoice("Calibri", "Common fonts"),
+            new FontChoice("Segoe UI", "Common fonts"),
+            new FontChoice("Arial", "Other fonts"),
+            new FontChoice("Times New Roman", "Other fonts"),
+            new FontChoice("Consolas", "Other fonts"),
+            new FontChoice("Georgia", "Other fonts"),
+        });
+        fonts.GroupDescriptions.Add(new PropertyGroupDescription(nameof(FontChoice.Section)));
+        FontFamilyCombo.ItemsSource = fonts;
+        FontFamilyCombo.SelectedIndex = 0;
         InitializeFeatureSelectors();
         var documentTransition = new ShowcaseContentTransition(MainRibbon, DocumentSurface);
         Closed += (_, _) => documentTransition.Dispose();

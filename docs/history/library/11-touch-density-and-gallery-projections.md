@@ -540,3 +540,44 @@ focused runtime cases passed for custom-template limits/styles, authored and bou
 items, selection/preview, native handoff and visible-strip/overflow retention at
 simulated 125%/200% DPI. Normal Debug runtime net8/net9 and Showcase builds passed.
 Full-suite, physical input and native mixed-monitor acceptance were not performed.
+
+### 3.274 Grouped combo dropdown sections — 2026-10-21
+
+`RibbonComboBox`, dropdown and split templates now supply a default themed native
+`GroupStyle` when the consumer has not authored one. Configure sections through
+ordinary collection-view `GroupDescriptions`. Section headers are nonselectable
+and scroll with their items under one viewport. Appearance review settled on
+uniform one-DIP space above/below rows and headings, except the first top and last
+bottom edge. The internal `DropDownItemsPanel` implements the equivalent two-DIP
+gaps through `DropDownRowSpacing`, without outer space or a larger section gap.
+Use it for the native/copy dropdown items and default group panels; the group
+template also spaces its heading from its children. Empty presenters and collapsed
+rows consume no gaps. Round the gap before summing measured heights when layout
+rounding is enabled; otherwise fractional DPI can let nested group content overrun
+its slot and squeeze the next section boundary. Ordinary dropdown/split captions
+use the matching lower `DropDownHeaderMargin`. Touch `DropDownItemMargin` retains
+horizontal insets without adding duplicate vertical gaps. Every base palette
+supplies the tokens, with dark/Flat inheritance; authored WPF panels/styles retain
+their existing precedence. No public layout API was added.
+
+Combo projections build their own grouped ListCollectionView over choice rows.
+Resolve each row's section path from the source's actual group tree: invoking a
+multi-membership grouping converter again would multiply rows and put one Button
+into multiple parents. Preserve native leaf indices for selection and initial
+focus, including sorted sections and repeated source-item occurrences. Copy group
+names, sort policy, styles and selectors, while retaining source data/containers,
+binding ownership and editable text. A null ItemCollection culture uses the
+new view's default culture rather than being assigned to its non-null property.
+
+Weak item, grouping-description and style collection listeners refresh an open
+copy; detach on close/unload and rebind when its source view changes. The copy's
+own IsGrouping controls its automatic overall caption, so unrealized source tabs
+and grouped/flat round trips do not leave a duplicate Font heading. Explicit
+authored captions/styles retain precedence. No new RibbonKit public API was added.
+
+Showcase owns only FontChoice sample data and its Common fonts/Other fonts view.
+Rendering, spacing, selection and copy behavior remain in RibbonKit. The
+independent consumer creates custom-group copies through public customization UI,
+without a Showcase reference or private factory. Current focused evidence and
+remaining native review are in the
+[integration plan](../../08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#grouped-combo-dropdowns).

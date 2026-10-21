@@ -76,6 +76,23 @@ mode. Every palette supplies that token; classic layout and native QAT retain
 their existing styles and metrics. Body-card margins remain shared with the
 lower-QAT/message continuation surfaces.
 
+#### Square Small inline actions — 2026-10-21
+
+Small action and toggle copies stretched vertically with the simplified row but
+kept their icon's narrower natural width. `RibbonQuickAccessPanel` now reserves
+their square width during overflow measurement and uses the same rule during
+arrange. Subtract vertical margins from the row height, then add horizontal
+margins to the resulting slot width; Touch's unequal margins must not produce
+rectangular chrome. Explicit widths and minimum/maximum constraints retain
+precedence. Labeled controls, dropdown/split arrows, classic groups, native QAT
+and labeled overflow entries keep their existing sizing paths.
+
+The focused consumer checks the actual control and Chrome dimensions, priority
+overflow, explicit width and classic/QAT restoration. Its overflow boundary
+allows a few physical pixels for independently rounded margins at fractional
+DPI; before/after native text sizes allow one pixel. Current verification and
+live review are in the [active plan](../../15-SIMPLIFIED-RIBBON-PLAN.md#small-inline-button-shape--2026-10-21).
+
 #### Menu-sized overflow and side popups
 
 Both QAT and simplified overflow copies acquire an internal, non-inherited menu

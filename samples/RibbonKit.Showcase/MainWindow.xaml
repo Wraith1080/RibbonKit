@@ -543,20 +543,14 @@
                                 DialogLauncherClick="OnFontDialogLauncher">
                     <StackPanel VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                            <rk:RibbonComboBox InputWidth="128"
+                            <rk:RibbonComboBox x:Name="FontFamilyCombo" InputWidth="128"
                                                rk:Ribbon.CommandId="command.home.font.family"
                                                rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="90"
                                                Icon="{StaticResource Icon.Font}"
                                                IsEditable="True"
-                                               SelectedIndex="0"
+                                               DisplayMemberPath="Name" TextSearch.TextPath="Name"
                                                ScreenTipTitle="Font"
                                                ScreenTipText="Pick a font for your text.">
-                                <ComboBoxItem Content="Calibri" />
-                                <ComboBoxItem Content="Segoe UI" />
-                                <ComboBoxItem Content="Arial" />
-                                <ComboBoxItem Content="Times New Roman" />
-                                <ComboBoxItem Content="Consolas" />
-                                <ComboBoxItem Content="Georgia" />
                             </rk:RibbonComboBox>
                             <rk:RibbonComboBox InputWidth="48"
                                                rk:Ribbon.CommandId="command.home.font.size"

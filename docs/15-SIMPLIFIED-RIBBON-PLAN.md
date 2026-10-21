@@ -340,6 +340,28 @@ commands more usable height without increasing the ribbon height.
 Logs are `TestResults/simplified-spacing-*.log`. Human review of this spacing and
 native mixed-monitor/input acceptance remain open.
 
+### Small inline button shape — 2026-10-21
+
+Corrected the narrow Compact icon-only action/toggle targets. Width now follows
+the simplified row's usable height, with outer margins accounted for during both
+overflow measurement and arrangement. Explicit width constraints and other
+presentations retain their existing sizing policy.
+
+Two focused runtime cases passed for Small/Medium presentation and labeled
+overflow in Compact/Touch. The independent `SimplifiedButtonShape` scope passed
+224 theme/light-dark/density/direction/simulated-DPI combinations at
+100/125/150/200%, including actual control/Chrome square geometry and priority
+overflow. Labeled overflow, explicit widths and classic/QAT size restoration
+also passed. Fourteen light-palette Compact/Touch captures were inspected at
+simulated 150%; artifacts are in `TestResults/simplified-button-shape`.
+
+Normal Debug runtime net8/net9 and Showcase builds passed without warnings in
+the final targeted builds. The initial test build reported Visual Studio's lock
+on the unchanged designer DLL; later focused builds reused that existing project
+output through `BuildProjectReferences=false`. Only button-shape tests ran; no
+full suite or snapshot approval updates. Native Showcase acceptance and real
+mixed-monitor DPI review remain open.
+
 ### S1 overflow menu presentation — 2026-10-13
 
 The user requested normal menu spacing for QAT/simplified overflow and combo

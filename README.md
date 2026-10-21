@@ -224,7 +224,8 @@ row. Classic is the default; Compact/Touch density applies to either layout.
 
 Higher priorities stay inline longer when space runs out; ties overflow from the
 end. Set `Ribbon.SimplifiedSize="Small"` for an icon-only inline command (supply an
-icon); the default Medium size includes its label. Changing the property updates
+icon); Small action/toggle buttons have square targets, and the default Medium
+size includes its label. Changing the property updates
 the existing copy, and overflow entries keep their labels. Commands retain their
 original tab/group ordering. **More Ribbon Commands**
 offers displaced inline commands and each group's original full-content flyout,
@@ -457,6 +458,21 @@ presentation. Directly authored visual elements are represented by their text
 or accessible name, so each original item keeps its parent. Editable combos also
 offer their existing choices in QAT; typing and the text-editing context menu
 remain on the original input. Assign a stable command ID for saved customization.
+
+Use WPF collection-view `GroupDescriptions` to organize combo choices into named
+sections. RibbonKit supplies themed, nonselectable headings and uniform vertical
+spacing: one DIP above and below each row, without extra space at the outer edges.
+Native, QAT, Simplified and
+custom-group combo dropdowns retain the grouping and source selection. Authored
+`GroupStyle` values take precedence. Showcase's Font combo demonstrates
+**Common fonts** and **Other fonts**.
+
+```csharp
+var view = new ListCollectionView(fontChoices);
+view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(FontChoice.Section)));
+fontCombo.ItemsSource = view;
+fontCombo.DisplayMemberPath = nameof(FontChoice.Name);
+```
 
 Editable `RibbonComboBox` and `RibbonTextBox` use the current theme for their native
 text-editing menus, including shortcut labels and Touch spacing. Authored

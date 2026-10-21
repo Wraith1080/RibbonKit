@@ -832,6 +832,9 @@
     <Thickness x:Key="RibbonKit.Metrics.Touch.ClassicRailPadding">0,16,0,0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.InRibbonGalleryMargin">4,0,4,0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.GallerySectionPadding">0,4,0,4</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.DropDownHeaderMargin">0,0,0,2</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.DropDownRowSpacing">2</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.Touch.DropDownItemMargin">2,0</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.Touch.MessageRowHeight">52</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.Touch.MessageActionPadding">12,6</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.Touch.TitleBarHeight">46</system:Double>

@@ -141,7 +141,7 @@ public class RibbonQuickAccessPanel : Panel
         foreach (UIElement child in inline.OrderBy(Ribbon.GetSimplifiedPriority)
                      .ThenByDescending(child => InternalChildren.IndexOf(child)).ToArray())
         {
-            if (kept.Sum(item => item.DesiredSize.Width) <= availableSize.Width) break;
+            if (kept.Sum(item => SimplifiedWidth(item, availableSize.Height)) <= availableSize.Width) break;
             inline.Remove(child);
             kept = WithSeparators();
         }
@@ -149,13 +149,29 @@ public class RibbonQuickAccessPanel : Panel
         foreach (UIElement child in InternalChildren)
             if (!kept.Contains(child)) _overflow.Add(child);
         owner.OnOverflowChanged(this, _overflow.Any(child => child.Visibility == Visibility.Visible && child is not RibbonGroupSeparator));
-        return new Size(kept.Sum(child => child.DesiredSize.Width), kept.Count == 0 ? 0 : kept.Max(child => child.DesiredSize.Height));
+        return new Size(kept.Sum(child => SimplifiedWidth(child, availableSize.Height)),
+            kept.Count == 0 ? 0 : kept.Max(child => child.DesiredSize.Height));
+    }
+
+    private static double SimplifiedWidth(UIElement child, double rowHeight)
+    {
+        if (child is not (RibbonButton { Size: RibbonControlSize.Small } or RibbonToggleButton { Size: RibbonControlSize.Small })
+            || child is not FrameworkElement element || !double.IsNaN(element.Width) || !double.IsFinite(rowHeight))
+            return child.DesiredSize.Width;
+
+        // Small actions stretch to the row's height. Reserve the same width for
+        // their chrome before deciding overflow; outer margins need not be equal.
+        Thickness margin = element.Margin;
+        double height = Math.Max(0, rowHeight - margin.Top - margin.Bottom);
+        double width = Math.Max(element.MinWidth, Math.Min(height, element.MaxWidth));
+        return Math.Max(child.DesiredSize.Width, width + margin.Left + margin.Right);
     }
 
     /// <inheritdoc />
     protected override Size ArrangeOverride(Size finalSize)
     {
         double x = 0;
+        bool simplified = ItemsControl.GetItemsOwner(this) is RibbonQuickAccessToolBar { IsSimplified: true };
 
         foreach (var child in _overflowFocus.Keys.ToArray())
         {
@@ -178,8 +194,9 @@ public class RibbonQuickAccessPanel : Panel
                 continue;
             }
 
-            child.Arrange(new Rect(x, 0, child.DesiredSize.Width, finalSize.Height));
-            x += child.DesiredSize.Width;
+            double width = simplified ? SimplifiedWidth(child, finalSize.Height) : child.DesiredSize.Width;
+            child.Arrange(new Rect(x, 0, width, finalSize.Height));
+            x += width;
         }
 
         return finalSize;

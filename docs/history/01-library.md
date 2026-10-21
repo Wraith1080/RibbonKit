@@ -453,3 +453,5 @@ status updates and investigation narration were removed during compaction.
 ### [3.272 Colored Office 2024 captions preserve the ribbon backdrop — 2026-10-19](library/12-keytips-layout-and-validation.md#3272-colored-office-2024-captions-preserve-the-ribbon-backdrop--2026-10-19)
 
 ### [3.273 Themed native text-editor context menus — 2026-10-20](library/02-designer-and-context-menus.md#3273-themed-native-text-editor-context-menus--2026-10-20)
+
+### [3.274 Grouped combo dropdown sections — 2026-10-21](library/11-touch-density-and-gallery-projections.md#3274-grouped-combo-dropdown-sections--2026-10-21)

@@ -122,6 +122,7 @@ public class RibbonComboBox : ComboBox
     public override void OnApplyTemplate()
     {
         base.OnApplyTemplate();
+        DropDownGrouping.ApplyDefault(this);
         _popupRoot = GetTemplateChild(PopupRootPartName) as FrameworkElement;
         _popupScrollViewer = GetTemplateChild(PopupScrollViewerPartName) as ScrollViewer;
         ApplyPopupScrollBarStyle();

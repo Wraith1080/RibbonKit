@@ -303,6 +303,12 @@ public sealed class SimplifiedRibbonTests
         Assert.Equal(RibbonControlSize.Small, action.Size);
         Assert.Equal(RibbonControlSize.Small, toggle.Size);
         Assert.Equal(RibbonControlSize.Small, split.Size);
+        foreach (Control button in new Control[] { action, toggle })
+        {
+            Assert.InRange(Math.Abs(button.ActualWidth - button.ActualHeight), 0, 0.01);
+            var chrome = (Border)button.Template.FindName("Chrome", button);
+            Assert.InRange(Math.Abs(chrome.ActualWidth - chrome.ActualHeight), 0, 0.01);
+        }
         Assert.Equal(Visibility.Visible, ((FrameworkElement)action.Template.FindName("SmallLayout", action)).Visibility);
         Assert.Equal(Visibility.Collapsed, ((FrameworkElement)action.Template.FindName("MediumLayout", action)).Visibility);
         Assert.Equal("Save", System.Windows.Automation.Peers.UIElementAutomationPeer.CreatePeerForElement(action)!.GetName());

@@ -23,10 +23,10 @@ param(
     [ValidateSet('SplitButtonDensity', 'StackedCustomGroups', 'NativeGalleryPopup',
         'GalleryQuickAccess', 'GalleryQuickAccessKeyboard', 'GalleryQuickAccessVisible', 'GalleryPopupViewport', 'GroupQuickAccess', 'CollapsedGroupPress', 'AfterGalleryQuickAccess', 'AfterCrystalTint',
         'QatOverflowKeyboard', 'AfterKeyboardNavigation', 'AfterSimplifiedDesignerDefaults', 'AfterCustomizationScrollSpacing', 'AfterApplicationMenuViewport', 'AfterCrystalApplicationMenu',
-        'ComboQuickAccess', 'ComboQuickAccessKeyboard', 'GroupedGalleries',
+        'ComboQuickAccess', 'ComboQuickAccessKeyboard', 'GroupedGalleries', 'GroupedCombos',
         'GalleryHeadersAndQatCommands', 'DensitySelector', 'MessageTransition', 'ThemePolish',
         'QatThemeRestore', 'ColoredQat', 'QatIconAppearance', 'QatBackdrop', 'Office2024Backdrop', 'CaptionMotion', 'TextEditMenus', 'QatCommandInteraction', 'QatVisibility', 'CustomizationLayout', 'MinimizedDivider', 'TouchChrome', 'TouchOptions', 'TouchAdaptive', 'GroupLauncher',
-        'DensityTransition', 'DensityTransitionLifecycle', 'HostLayoutTransition', 'QatRowGeometry', 'ContextualMarker', 'LayoutMotion', 'LayoutMotionPopup', 'LayoutMotionPaint', 'ModePopupDismissal', 'SimplifiedTabReadiness', 'GlassOverlay', 'BackstageCaption', 'Flat2024', 'SimplifiedRibbon', 'SimplifiedDesignerDefaults', 'FeatureAvailability', 'SimplifiedCustomization', 'TabMoveCustomization', 'OverflowMenus', 'Touch', IgnoreCase = $false)]
+        'DensityTransition', 'DensityTransitionLifecycle', 'HostLayoutTransition', 'QatRowGeometry', 'ContextualMarker', 'LayoutMotion', 'LayoutMotionPopup', 'LayoutMotionPaint', 'ModePopupDismissal', 'SimplifiedTabReadiness', 'GlassOverlay', 'BackstageCaption', 'Flat2024', 'SimplifiedRibbon', 'SimplifiedButtonShape', 'SimplifiedDesignerDefaults', 'FeatureAvailability', 'SimplifiedCustomization', 'TabMoveCustomization', 'OverflowMenus', 'Touch', IgnoreCase = $false)]
     [string]$Scope,
     [ValidateSet('Debug', 'Release')]
     [string]$Configuration = 'Debug'

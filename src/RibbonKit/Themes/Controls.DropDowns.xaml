@@ -12,10 +12,41 @@
          RibbonDropDownButton, RibbonSplitButton, RibbonMenuItem, RibbonComboBox, RibbonTextBox.
          Colours/metrics come from Tokens.Office20XX.xaml via {DynamicResource}. -->
 
+    <ItemsPanelTemplate x:Key="RibbonKit.DropDownItemsPanel">
+        <layout:DropDownItemsPanel Spacing="{DynamicResource RibbonKit.Metrics.DropDownRowSpacing}" />
+    </ItemsPanelTemplate>
+
+    <!-- Grouping uses native collection-view groups, leaving selectable item
+         identity and editing on their original controls. -->
+    <Style x:Key="RibbonKit.DropDownGroupStyle" TargetType="{x:Type GroupItem}">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type GroupItem}">
+                    <layout:DropDownItemsPanel Spacing="{DynamicResource RibbonKit.Metrics.DropDownRowSpacing}">
+                        <Border x:Name="SectionHeader" Padding="8,6" IsHitTestVisible="False"
+                                Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.HeaderBackground}"
+                                CornerRadius="{DynamicResource RibbonKit.Metrics.DropDownHeaderCornerRadius}">
+                            <TextBlock Text="{Binding Content.Name, RelativeSource={RelativeSource TemplatedParent}}"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Foreground}" />
+                        </Border>
+                        <ItemsPresenter x:Name="SectionItems" />
+                    </layout:DropDownItemsPanel>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ============================================================
          RibbonDropDownButton — button that opens a menu flyout
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonDropDownButton}">
+        <Style.Resources>
+            <Style x:Key="RibbonKit.DropDownGroupStyle" TargetType="{x:Type GroupItem}"
+                   BasedOn="{StaticResource RibbonKit.DropDownGroupStyle}" />
+        </Style.Resources>
+        <Setter Property="ItemsPanel" Value="{StaticResource RibbonKit.DropDownItemsPanel}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="Focusable" Value="False" />
         <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
@@ -241,6 +272,7 @@
                                             <RowDefinition Height="*" />
                                         </Grid.RowDefinitions>
                                         <Border x:Name="DropDownHeaderHost" Padding="8,6"
+                                                Margin="{DynamicResource RibbonKit.Metrics.DropDownHeaderMargin}"
                                                 Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.HeaderBackground}"
                                                 CornerRadius="{DynamicResource RibbonKit.Metrics.DropDownHeaderCornerRadius}"
                                                 IsHitTestVisible="False">
@@ -381,6 +413,11 @@
          TemplateBinding — inside the Button's own ControlTemplate, TemplatedParent is the BUTTON.
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonSplitButton}">
+        <Style.Resources>
+            <Style x:Key="RibbonKit.DropDownGroupStyle" TargetType="{x:Type GroupItem}"
+                   BasedOn="{StaticResource RibbonKit.DropDownGroupStyle}" />
+        </Style.Resources>
+        <Setter Property="ItemsPanel" Value="{StaticResource RibbonKit.DropDownItemsPanel}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="Focusable" Value="False" />
         <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
@@ -805,6 +842,7 @@
                                             <RowDefinition Height="*" />
                                         </Grid.RowDefinitions>
                                         <Border x:Name="DropDownHeaderHost" Padding="8,6"
+                                                Margin="{DynamicResource RibbonKit.Metrics.DropDownHeaderMargin}"
                                                 Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.HeaderBackground}"
                                                 CornerRadius="{DynamicResource RibbonKit.Metrics.DropDownHeaderCornerRadius}"
                                                 IsHitTestVisible="False">
@@ -1089,7 +1127,7 @@
             <Trigger Property="controls:Ribbon.Density" Value="Touch">
                 <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
                 <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.MenuItemMinWidth}" />
-                <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ControlMargin}" />
+                <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.DropDownItemMargin}" />
             </Trigger>
         </Style.Triggers>
     </Style>
@@ -1144,12 +1182,17 @@
             <Trigger Property="controls:Ribbon.Density" Value="Touch">
                 <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
                 <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.MenuItemMinWidth}" />
-                <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ControlMargin}" />
+                <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.DropDownItemMargin}" />
             </Trigger>
         </Style.Triggers>
     </Style>
 
     <Style TargetType="{x:Type controls:RibbonComboBox}">
+        <Style.Resources>
+            <Style x:Key="RibbonKit.DropDownGroupStyle" TargetType="{x:Type GroupItem}"
+                   BasedOn="{StaticResource RibbonKit.DropDownGroupStyle}" />
+        </Style.Resources>
+        <Setter Property="ItemsPanel" Value="{StaticResource RibbonKit.DropDownItemsPanel}" />
         <Setter Property="Foreground" Value="{DynamicResource RibbonKit.Brushes.Text.Primary}" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
@@ -1198,7 +1241,7 @@
                         <Trigger Property="controls:Ribbon.Density" Value="Touch">
                             <Setter Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
                             <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.MenuItemMinWidth}" />
-                            <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ControlMargin}" />
+                            <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.DropDownItemMargin}" />
                         </Trigger>
                     </Style.Triggers>
                 </Style>

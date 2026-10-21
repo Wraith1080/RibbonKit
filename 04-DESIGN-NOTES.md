@@ -995,6 +995,8 @@ technical evidence warrants them; preserve existing dated records.
 
 [End-of-feature enabled-state, style-scope and QAT navigation repairs](docs/history/library/14-simplified-ribbon.md#end-of-feature-validation-repairs--2026-10-14).
 
+[Square Small inline actions and toggle buttons](docs/history/library/14-simplified-ribbon.md#square-small-inline-actions--2026-10-21).
+
 ### 3.256 Ribbon capability and user-operation policy — 2026-10-15
 
 [Default-true capability, independent user permissions, binding preservation and locked import scopes](docs/history/library/15-feature-availability.md#3256-ribbon-capability-and-user-operation-policy--2026-10-15).
@@ -1077,6 +1079,11 @@ technical evidence warrants them; preserve existing dated records.
 [Style the native editable combo and RibbonTextBox menus without replacing their commands](docs/history/library/02-designer-and-context-menus.md#3273-themed-native-text-editor-context-menus--2026-10-20).
 [Current evidence and review](docs/09-FUTURE-THEMES-PLAN.md#text-editor-context-menus).
 
+### 3.274 Grouped combo dropdown sections — 2026-10-21
+
+[Native collection-view sections, themed heading spacing and source-linked combo copies](docs/history/library/11-touch-density-and-gallery-projections.md#3274-grouped-combo-dropdown-sections--2026-10-21).
+[Current evidence and review](docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#grouped-combo-dropdowns).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.
@@ -1157,6 +1164,8 @@ technical evidence warrants them; preserve existing dated records.
   live review are in the [group QAT status](docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#group-qat-implementation-and-acceptance).
 - **Custom-group commands in QAT:** menu ownership and duplicate prevention are in
   the [current status](docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#custom-group-command-copies-in-qat).
+- **Grouped combo dropdowns:** section headings, copied views and the Font sample
+  are tracked in the [current status](docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#grouped-combo-dropdowns).
 - **Gallery ScreenTips:** source descriptions, copy propagation and live hover review
   are in the [current status](docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#gallery-screentips).
 - **Crystal portability and Office 2007 orb defaults:** use the

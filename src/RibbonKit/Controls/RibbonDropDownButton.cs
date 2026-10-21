@@ -227,6 +227,8 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
 
         base.OnApplyTemplate();
 
+        DropDownGrouping.ApplyDefault(this);
+
         _menuHost = GetTemplateChild(MenuHostPartName) as UIElement;
         _menuHost?.AddHandler(ButtonBase.ClickEvent, new RoutedEventHandler(OnMenuItemClicked));
         if (_menuHost is not null)
