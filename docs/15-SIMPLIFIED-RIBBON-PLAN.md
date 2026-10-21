@@ -29,8 +29,10 @@
 - The original controls, bindings, commands, data and group structure remain
   source-owned. Shared command copies render supported inline buttons, toggles,
   splits, dropdowns, combo selectors and galleries. Arbitrary/native editors
-  remain available in their original group flyout; an editable combo's inline
-  copy opens its source-linked choice list rather than a second text editor.
+  remain available in their original group flyout. Combo boxes in their original
+  authored tab/group use source-linked native combo editors, preserving editable
+  text and configured input widths at either command size. Custom-tab/group,
+  QAT and overflow copies retain the dropdown choice-list presentation.
 - Sources are temporarily collapsed while their simplified full-group opener
   exists. Switching back releases that constraint, preserving QAT membership and
   the normal adaptive policy. No classic layout or customization is serialized
@@ -339,6 +341,43 @@ commands more usable height without increasing the ribbon height.
 
 Logs are `TestResults/simplified-spacing-*.log`. Human review of this spacing and
 native mixed-monitor/input acceptance remain open.
+
+### Native combo editors in original slots — 2026-10-21
+
+Implemented after user approval. Only original combo declarations in non-custom
+tabs/groups receive native inline editors. The existing source/group identity,
+selection ordering, priority overflow and customization persistence stay in place;
+no public API or serialized-format change was needed. Custom copies retain their
+menu presentation, including when selected for the Simplified row. Native editors
+keep their normal fields at Small/Medium command sizes.
+
+The source keeps its bindings, original data/containers and selection events.
+Independent choice containers share the existing presentation/grouping helpers.
+Editable text and selection commit explicitly, with refresh/reentrancy guards,
+so rebuilding rows cannot clear application state and duplicate labels retain
+their source index. The original full-group editor stays synchronized. An open
+inline picker closes on overflow; focus moves to More Commands when necessary.
+Returning to Classic restores the source editor's focus without replacing a later
+user focus choice. Listeners detach on unload and refresh on reload.
+
+Focused evidence is assembled across separate runs: 30 distinct runtime cases
+passed (nine new editor cases, seven existing QAT combo cases, twelve grouped-menu
+cases, the affected Simplified KeyTip case and the populated Showcase declaration).
+The focus return/open-picker check passed in a fresh process after a combined
+run lost its popup/focus state; no clean single aggregate pass is claimed.
+The public-only `SimplifiedCombos` consumer scope passed 56 theme/light-dark/
+density/direction cases, covering editable and read-only fields, authored items,
+duplicate labels, grouping, custom/QAT copies, native popup closure on resize,
+overflow menus and Classic restoration. Window root DPI was simulated at 100/150%;
+this does not establish physical mixed-monitor behavior.
+
+All 28 Compact/Touch light/dark renders in `TestResults/simplified-combos` and the
+populated Showcase Home render were inspected. Normal Debug runtime net8/net9 and
+Showcase builds passed with zero warnings/errors, reusing existing designer output.
+No unrelated suites, Writer checks, package gates or snapshot approvals ran.
+Native pointer/keyboard/IME, mixed-monitor DPI and user appearance review remain
+open. Implementation details are in
+[library history](history/library/14-simplified-ribbon.md#native-combo-editors-in-original-slots--2026-10-21).
 
 ### Small inline button shape — 2026-10-21
 

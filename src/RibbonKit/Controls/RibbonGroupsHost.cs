@@ -139,7 +139,9 @@ public class RibbonGroupsHost : ItemsControl
             retained.Add(entry.Declaration);
             if (!_copies.TryGetValue(entry.Declaration, out FrameworkElement? copy))
             {
-                copy = owner.CreateCommandProxy(source, choice.Size);
+                bool originalEditor = source is RibbonComboBox && ReferenceEquals(source, entry.Declaration)
+                    && !Ribbon.GetIsCustom(group) && !Ribbon.GetIsCustom(tab);
+                copy = owner.CreateCommandProxy(source, choice.Size, originalEditor);
                 copy.SetBinding(KeyTip.KeysProperty, new Binding { Source = source, Path = new PropertyPath(KeyTip.KeysProperty) });
                 _copies.Add(entry.Declaration, copy);
             }
@@ -229,6 +231,7 @@ public class RibbonGroupsHost : ItemsControl
 
     private static void CloseCopy(FrameworkElement copy)
     {
+        if (copy is RibbonComboBoxSimplifiedProxy editor) editor.Release();
         if (copy is RibbonDropDownButton menu) menu.EnsureBorrowedItemsReturned();
     }
 

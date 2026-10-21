@@ -1281,7 +1281,7 @@ public partial class Ribbon : Control
     /// it, at the given <paramref name="size"/>. Small proxies serve the quick access toolbar;
     /// Medium ones (icon + label) serve custom ribbon groups built by the customize page.
     /// </summary>
-    internal FrameworkElement CreateCommandProxy(FrameworkElement source, RibbonControlSize size)
+    internal FrameworkElement CreateCommandProxy(FrameworkElement source, RibbonControlSize size, bool simplifiedEditor = false)
     {
         FrameworkElement proxy;
         switch (source)
@@ -1296,7 +1296,8 @@ public partial class Ribbon : Control
                 break;
 
             case RibbonComboBox combo:
-                proxy = new RibbonComboBoxQuickAccessProxy(combo, this) { Size = size };
+                proxy = simplifiedEditor ? new RibbonComboBoxSimplifiedProxy(combo)
+                    : new RibbonComboBoxQuickAccessProxy(combo, this) { Size = size };
                 // Title-bar and overflow hosts can be outside this ribbon's tree.
                 proxy.SetBinding(FlowDirectionProperty, new Binding(nameof(FlowDirection)) { Source = this });
                 break;

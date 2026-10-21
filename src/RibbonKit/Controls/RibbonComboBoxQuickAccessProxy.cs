@@ -149,26 +149,7 @@ internal sealed class RibbonComboBoxQuickAccessProxy : RibbonDropDownButton
                 GroupNames = paths.MoveNext() ? paths.Current : Array.Empty<object?>() };
             row.SetBinding(Ribbon.DensityProperty, new Binding
                 { Source = this, Path = new PropertyPath(Ribbon.DensityProperty) });
-            if (item is ComboBoxItem container)
-            {
-                row.SetBinding(ContentProperty, new Binding(nameof(container.Content))
-                    { Source = container, Converter = VisualLabelConverter.Instance });
-                SetPresentationBinding(row, ContentTemplateProperty, container, nameof(container.ContentTemplate), nameof(_source.ItemTemplate));
-                SetPresentationBinding(row, ContentTemplateSelectorProperty, container, nameof(container.ContentTemplateSelector), nameof(_source.ItemTemplateSelector));
-                SetPresentationBinding(row, ContentStringFormatProperty, container, nameof(container.ContentStringFormat), nameof(_source.ItemStringFormat));
-            }
-            else
-            {
-                row.Content = VisualLabelConverter.Label(item);
-                SetPresentationBinding(row, ContentTemplateProperty, null, null, nameof(_source.ItemTemplate));
-                SetPresentationBinding(row, ContentTemplateSelectorProperty, null, null, nameof(_source.ItemTemplateSelector));
-                SetPresentationBinding(row, ContentStringFormatProperty, null, null, nameof(_source.ItemStringFormat));
-            }
-            if (item is UIElement element)
-            {
-                row.SetBinding(IsEnabledProperty, new Binding(nameof(IsEnabled)) { Source = element });
-                row.SetBinding(VisibilityProperty, new Binding(nameof(Visibility)) { Source = element });
-            }
+            BindChoicePresentation(row, _source, item);
             row.SetBinding(RibbonComboBoxQuickAccessItem.IsSelectedProperty,
                 new Binding(nameof(_source.SelectedIndex)) { Source = _source,
                     Converter = SelectedIndexConverter.Instance, ConverterParameter = index });
@@ -208,7 +189,7 @@ internal sealed class RibbonComboBoxQuickAccessProxy : RibbonDropDownButton
         RefreshPopupLayout();
     }
 
-    private static IEnumerable<object?[]> GroupPaths(IEnumerable? groups, object?[] ancestors)
+    internal static IEnumerable<object?[]> GroupPaths(IEnumerable? groups, object?[] ancestors)
     {
         if (groups is null) yield break;
         foreach (CollectionViewGroup group in groups)
@@ -222,13 +203,13 @@ internal sealed class RibbonComboBoxQuickAccessProxy : RibbonDropDownButton
         }
     }
 
-    private sealed class ChoiceGroupDescription(GroupDescription source) : GroupDescription
+    internal sealed class ChoiceGroupDescription(GroupDescription source, Func<object, int, object?>? groupName = null) : GroupDescription
     {
         // Use the source view's resolved path, not its grouping converter again.
         // A choice can occur in multiple sections; each occurrence needs its own
         // independent visual row, not the same Button parented into two groups.
         public override object GroupNameFromItem(object item, int level, CultureInfo culture) =>
-            ((RibbonComboBoxQuickAccessItem)item).GroupNames.ElementAtOrDefault(level)!;
+            groupName is null ? ((RibbonComboBoxQuickAccessItem)item).GroupNames.ElementAtOrDefault(level)! : groupName(item, level)!;
         public override bool NamesMatch(object groupName, object itemName) => source.NamesMatch(groupName, itemName);
     }
 
@@ -240,16 +221,43 @@ internal sealed class RibbonComboBoxQuickAccessProxy : RibbonDropDownButton
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotSupportedException();
     }
 
-    private void SetPresentationBinding(RibbonComboBoxQuickAccessItem row, DependencyProperty property,
+    // Shared by menu choices and the native Simplified editor, without reparenting source items.
+    internal static void BindChoicePresentation(ContentControl row, RibbonComboBox source, object item)
+    {
+        if (item is ComboBoxItem container)
+        {
+            row.SetBinding(ContentProperty, new Binding(nameof(container.Content))
+                { Source = container, Converter = VisualLabelConverter.Instance });
+            SetPresentationBinding(row, source, ContentTemplateProperty, container, nameof(container.ContentTemplate), nameof(source.ItemTemplate));
+            SetPresentationBinding(row, source, ContentTemplateSelectorProperty, container, nameof(container.ContentTemplateSelector), nameof(source.ItemTemplateSelector));
+            SetPresentationBinding(row, source, ContentStringFormatProperty, container, nameof(container.ContentStringFormat), nameof(source.ItemStringFormat));
+        }
+        else
+        {
+            row.Content = VisualLabelConverter.Label(item);
+            SetPresentationBinding(row, source, ContentTemplateProperty, null, null, nameof(source.ItemTemplate));
+            SetPresentationBinding(row, source, ContentTemplateSelectorProperty, null, null, nameof(source.ItemTemplateSelector));
+            SetPresentationBinding(row, source, ContentStringFormatProperty, null, null, nameof(source.ItemStringFormat));
+        }
+        if (item is UIElement element)
+        {
+            row.SetBinding(IsEnabledProperty, new Binding(nameof(IsEnabled)) { Source = element });
+            row.SetBinding(VisibilityProperty, new Binding(nameof(Visibility)) { Source = element });
+        }
+    }
+
+    internal static object? ChoiceLabel(object? item) => VisualLabelConverter.Label(item);
+
+    private static void SetPresentationBinding(ContentControl row, RibbonComboBox source, DependencyProperty property,
         ComboBoxItem? container, string? containerPath, string sourcePath)
     {
         var binding = new MultiBinding { Converter = new PresentationConverter(property, container is not null) };
         if (container is not null) binding.Bindings.Add(new Binding(containerPath) { Source = container });
-        binding.Bindings.Add(new Binding(sourcePath) { Source = _source });
+        binding.Bindings.Add(new Binding(sourcePath) { Source = source });
         if (property == ContentTemplateProperty)
         {
-            binding.Bindings.Add(new Binding(nameof(_source.DisplayMemberPath)) { Source = _source });
-            binding.Bindings.Add(new Binding(nameof(_source.ItemTemplateSelector)) { Source = _source });
+            binding.Bindings.Add(new Binding(nameof(source.DisplayMemberPath)) { Source = source });
+            binding.Bindings.Add(new Binding(nameof(source.ItemTemplateSelector)) { Source = source });
             if (container is not null)
                 binding.Bindings.Add(new Binding(nameof(container.ContentTemplateSelector)) { Source = container });
         }

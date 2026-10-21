@@ -137,10 +137,12 @@ Compact/Touch and flat/grouped view changes. The same 56 independent-consumer
 combinations (168 surfaces) passed, now checking every row gap and both outer edges.
 All 28 updated renders in `TestResults/grouped-combos-uniform-spacing` were inspected.
 Previously passed keyboard and unrelated behavior checks were not repeated.
+User appearance review 2026-10-21: accepted the uniform vertical spacing in the
+Font dropdown.
 
 Normal Debug runtime net8/net9 and Showcase builds passed with zero warnings/errors,
 reusing the unchanged designer project output held open by Visual Studio. Native
-pointer/IME and mixed-monitor review, user appearance acceptance and full-suite
+pointer/IME and mixed-monitor review and full-suite
 release/package gates remain open. Implementation details are in
 [library history §3.274](history/library/11-touch-density-and-gallery-projections.md#3274-grouped-combo-dropdown-sections--2026-10-21).
 

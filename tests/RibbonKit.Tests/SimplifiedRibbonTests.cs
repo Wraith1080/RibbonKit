@@ -245,9 +245,9 @@ public sealed class SimplifiedRibbonTests
         combo.Items.Add(new ComboBoxItem { Content = "Calibri" }); combo.Items.Add(new ComboBoxItem { Content = "Arial" });
         Ribbon.SetSimplifiedPlacement(combo, RibbonSimplifiedPlacement.Inline); host.Group.Items.Add(combo);
         host.Ribbon.LayoutMode = RibbonLayoutMode.Simplified; host.Layout();
-        var copy = (RibbonDropDownButton)host.Copy(combo);
+        var copy = Assert.IsAssignableFrom<RibbonComboBox>(host.Copy(combo));
         copy.IsDropDownOpen = true; host.Layout();
-        KeyTipService.InvokeControl((UIElement)copy.Items[1]); host.Layout();
+        copy.SelectedIndex = 1; copy.IsDropDownOpen = false; host.Layout();
         Assert.Equal(1, combo.SelectedIndex);
         Assert.Equal("Arial", combo.Text);
         Assert.Equal(2, combo.Items.Count);
@@ -257,6 +257,7 @@ public sealed class SimplifiedRibbonTests
             .Select(item => (UIElement)item.GetType().GetProperty("Target")!.GetValue(item)!).ToArray();
         Assert.Contains(host.ToolBar.OverflowButton!, targets);
         Assert.Contains(host.Copy(host.Action), targets);
+        Assert.Contains(copy, targets);
         Assert.DoesNotContain(host.Action, targets);
         host.ToolBar.Width = 65; host.Layout();
         level = typeof(KeyTipService).GetMethod("BuildTabGroupsLevel", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(service, new object[] { host.Tab })!;
@@ -418,6 +419,18 @@ public sealed class SimplifiedRibbonTests
             document.Root!.Attributes().Where(attribute => attribute.IsNamespaceDeclaration).Select(attribute => new XAttribute(attribute)), home);
         var ribbon = (Ribbon)XamlReader.Parse(declaration.ToString(), new ParserContext
             { BaseUri = new Uri("pack://application:,,,/RibbonKit.Showcase;component/MainWindow.xaml") });
+        // The host supplies these data choices after InitializeComponent; seed
+        // them here without running its window lifecycle or preference restore.
+        var font = ribbon.Tabs[0].Groups.SelectMany(RibbonGroupsHost.Commands).OfType<RibbonComboBox>()
+            .Single(combo => combo.Name == "FontFamilyCombo");
+        var fonts = new System.Windows.Data.ListCollectionView(new[]
+        {
+            new RibbonKit.Showcase.FontChoice("Calibri", "Common fonts"), new RibbonKit.Showcase.FontChoice("Segoe UI", "Common fonts"),
+            new RibbonKit.Showcase.FontChoice("Arial", "Other fonts"), new RibbonKit.Showcase.FontChoice("Times New Roman", "Other fonts"),
+            new RibbonKit.Showcase.FontChoice("Consolas", "Other fonts"), new RibbonKit.Showcase.FontChoice("Georgia", "Other fonts"),
+        });
+        fonts.GroupDescriptions.Add(new System.Windows.Data.PropertyGroupDescription(nameof(RibbonKit.Showcase.FontChoice.Section)));
+        font.ItemsSource = fonts; font.SelectedIndex = 0;
         var window = new RibbonWindow { Content = ribbon, Width = 1200, Height = 400,
             Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
         try
@@ -427,11 +440,12 @@ public sealed class SimplifiedRibbonTests
             ribbon.LayoutMode = RibbonLayoutMode.Simplified; Sta.Drain(); window.UpdateLayout(); Sta.Drain();
             var toolbar = ((RibbonGroupsHost)ribbon.Tabs[0].Content).SimplifiedToolBar!;
             Assert.Contains(toolbar.Items.OfType<RibbonSplitButton>(), split => split.Header == "Paste");
-            Assert.Equal(2, toolbar.Items.OfType<RibbonComboBoxQuickAccessProxy>().Count());
+            Assert.Equal(2, toolbar.Items.OfType<RibbonComboBoxSimplifiedProxy>().Count());
+            Assert.Equal("Calibri", toolbar.Items.OfType<RibbonComboBoxSimplifiedProxy>().Single(combo => Ribbon.GetQuickAccessSource(combo) == font).Text);
             Save(ribbon, "showcase-simplified");
             var bold = toolbar.Items.OfType<RibbonToggleButton>().Single(button => button.Header == "Bold");
             bold.IsChecked = true;
-            var fontSize = toolbar.Items.OfType<RibbonComboBoxQuickAccessProxy>().Single(button => button.Header == "Font Size");
+            var fontSize = toolbar.Items.OfType<RibbonComboBoxSimplifiedProxy>().Single(combo => combo.ScreenTipTitle == "Font Size");
             fontSize.IsDropDownOpen = true; Sta.Drain(); window.UpdateLayout(); Sta.Drain();
             Save(ribbon, "showcase-simplified-spacing");
             fontSize.IsDropDownOpen = false;

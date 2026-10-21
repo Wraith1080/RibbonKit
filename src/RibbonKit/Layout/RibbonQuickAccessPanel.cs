@@ -189,7 +189,11 @@ public class RibbonQuickAccessPanel : Panel
                 // the element out of sight and out of hit-testing. Its original subtree also
                 // needs to leave keyboard navigation while a separate overflow proxy is used.
                 if (IsVisible && !_overflowFocus.ContainsKey(child))
+                {
+                    if (child is RibbonComboBoxSimplifiedProxy editor && ItemsControl.GetItemsOwner(this) is RibbonQuickAccessToolBar toolBar)
+                        editor.OnOverflow(toolBar.OverflowButton);
                     _overflowFocus.Add(child, new OverflowFocusState(child));
+                }
                 child.Arrange(new Rect(0, 0, 0, 0));
                 continue;
             }

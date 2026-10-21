@@ -987,6 +987,8 @@ technical evidence warrants them; preserve existing dated records.
 
 [Source-linked single-row commands, native group access and a separate draft customization page](docs/history/library/14-simplified-ribbon.md#3255-simplified-ribbon-first-layout-slice--2026-10-13).
 
+[Native combo editors in original slots](docs/history/library/14-simplified-ribbon.md#native-combo-editors-in-original-slots--2026-10-21), with [current verification and review](docs/15-SIMPLIFIED-RIBBON-PLAN.md#native-combo-editors-in-original-slots--2026-10-21).
+
 [Shared layout/density motion trial](docs/history/library/14-simplified-ribbon.md#visible-layoutdensity-motion-trial--2026-10-13).
 
 [Simplified defaults in designer authoring](docs/history/library/14-simplified-ribbon.md#simplified-defaults-in-designer-authoring--2026-10-14).

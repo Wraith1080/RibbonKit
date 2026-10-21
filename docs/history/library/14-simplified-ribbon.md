@@ -76,6 +76,40 @@ mode. Every palette supplies that token; classic layout and native QAT retain
 their existing styles and metrics. Body-card margins remain shared with the
 lower-QAT/message continuation surfaces.
 
+#### Native combo editors in original slots — 2026-10-21
+
+`RibbonGroupsHost` selects a native `RibbonComboBoxSimplifiedProxy` only when a
+combo source is its original declaration in a non-custom tab/group. The internal
+factory flag is opt-in at that call site; QAT, custom copies and overflow keep
+their menu projections. Original-slot fields keep their configured input widths
+and native presentation at either Small/Medium command size. Existing group and
+declaration identities still drive customization and priority; no public API or
+persistence format was added.
+
+The inline editor owns independent ComboBoxItem containers and borrows no source
+visuals. Reuse choice-presentation bindings and resolved source group paths from
+the menu projection, including source styles, grouping order and leaf occurrences.
+TextSearch labels let native editing/selection display the source's data labels.
+Explicit Text/SelectedIndex binding commits are guarded during rebuilds and
+reentrancy. A plain TwoWay refresh can publish an empty value while clearing rows;
+publishing selection-driven text before its index can pick the first duplicate
+label instead of the selected occurrence. Keep both operations guarded.
+
+Weak collection/group/style listeners follow loaded lifetime. Closing an inline
+picker on overflow prevents a popup anchored to its zero-width slot; transfer
+focused input to More Commands after layout. Classic restoration remembers WPF's
+tab-control fallback when hiding the old presenter, but never adopts an unrelated
+user focus choice as that fallback. A native editable ComboBox.Focus() can return
+false while redirecting focus successfully to its TextBox; assert focus within
+the editor instead. Window.Hide() does not establish Unloaded; detach/reconnect
+content when testing listener teardown and reconstruction.
+
+Showcase's existing inline Font/Font Size declarations demonstrate the shared
+behavior without consumer template patches. The standalone XAML render fixture
+seeds host font data because its code-behind is intentionally not run. Focused
+evidence and native review limits are in the
+[active plan](../../15-SIMPLIFIED-RIBBON-PLAN.md#native-combo-editors-in-original-slots--2026-10-21).
+
 #### Square Small inline actions — 2026-10-21
 
 Small action and toggle copies stretched vertically with the simplified row but

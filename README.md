@@ -230,9 +230,12 @@ the existing copy, and overflow entries keep their labels. Commands retain their
 original tab/group ordering. **More Ribbon Commands**
 offers displaced inline commands and each group's original full-content flyout,
 so editors, arbitrary content and dialog launchers remain accessible. Inline
-buttons/toggles/splits/dropdowns retain source state and actions; combos and
-galleries use source-linked dropdown copies. Editable combo text entry remains
-available in the native group flyout.
+buttons/toggles/splits/dropdowns retain source state and actions. Combo boxes in
+their original authored tab/group stay combo editors, including editable text,
+current values and configured input widths. They keep their normal field
+presentation at either command size. QAT, custom-tab/group and overflow copies
+remain dropdown menus; galleries also retain their dropdown presentation.
+The original full-group flyout remains available.
 
 QAT and simplified overflow use menu-sized rows (32 DIP minimum height, 44 in
 Touch, and 200 DIP minimum width). Dropdown, split, combo, gallery and group
