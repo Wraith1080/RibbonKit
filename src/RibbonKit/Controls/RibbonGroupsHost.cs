@@ -129,6 +129,7 @@ public class RibbonGroupsHost : ItemsControl
             if (group != previous)
             {
                 var separator = new RibbonGroupSeparator();
+                separator.SetValue(RibbonSimplifiedRow.UseMetricsProperty, true);
                 ((IRibbonSizeAware)separator).ApplySizeState(RibbonGroupSizeState.Small);
                 separator.SetBinding(VisibilityProperty, new Binding(nameof(Visibility)) { Source = group });
                 _separators.Add(separator);
@@ -142,6 +143,7 @@ public class RibbonGroupsHost : ItemsControl
                 bool originalEditor = source is RibbonComboBox && ReferenceEquals(source, entry.Declaration)
                     && !Ribbon.GetIsCustom(group) && !Ribbon.GetIsCustom(tab);
                 copy = owner.CreateCommandProxy(source, choice.Size, originalEditor);
+                if (originalEditor) copy.SetValue(RibbonSimplifiedRow.UseMetricsProperty, true);
                 copy.SetBinding(KeyTip.KeysProperty, new Binding { Source = source, Path = new PropertyPath(KeyTip.KeysProperty) });
                 _copies.Add(entry.Declaration, copy);
             }

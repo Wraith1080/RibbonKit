@@ -206,6 +206,11 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("OverflowMenuPortabilityChecks.Verify", () => OverflowMenuPortabilityChecks.Verify(application));
             return;
         }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "SimplifiedSpacing")
+        {
+            VerifyScope("SimplifiedSpacingChecks.Verify", () => SimplifiedSpacingChecks.Verify(application));
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "SimplifiedCombos")
         {
             VerifyScope("SimplifiedComboEditorChecks.Verify", () => SimplifiedComboEditorChecks.Verify(application));
@@ -452,6 +457,7 @@ public sealed class ApplicationButtonShapeThemeTests
                 VerifyScope("SimplifiedRibbonPortabilityChecks.Verify", () => SimplifiedRibbonPortabilityChecks.Verify(application));
                 VerifyScope("SimplifiedButtonShapeChecks.Verify", () => SimplifiedButtonShapeChecks.Verify(application));
                 VerifyScope("SimplifiedComboEditorChecks.Verify", () => SimplifiedComboEditorChecks.Verify(application));
+                VerifyScope("SimplifiedSpacingChecks.Verify", () => SimplifiedSpacingChecks.Verify(application));
                 VerifyScope("SimplifiedDesignerDefaultsPortabilityChecks.Verify", () => SimplifiedDesignerDefaultsPortabilityChecks.Verify(application));
             }
             ThemeManager.Apply(application, RibbonTheme.Office2024);

@@ -110,6 +110,35 @@ seeds host font data because its code-behind is intentionally not run. Focused
 evidence and native review limits are in the
 [active plan](../../15-SIMPLIFIED-RIBBON-PLAN.md#native-combo-editors-in-original-slots--2026-10-21).
 
+#### Measured inline clearance — 2026-10-21
+
+After the user reset the blanket-margin experiment, measured painted bounds
+showed two-DIP Compact button gaps versus three-DIP clearance on either side of
+the group divider stroke. Touch already had four DIP for both. Keep the existing
+five-DIP Small separator slot: its one-DIP stroke already has two DIP beside it.
+Do not use the full inter-group gap as a per-command margin or widen that slot.
+
+`RibbonQuickAccessPanel` adds `RibbonSimplifiedRow.Spacing` only between kept
+neighboring commands, excluding dividers and row edges. Measure/overflow and
+arrange use the same span calculation. Shared Simplified toolbar styles supply
+one DIP in Compact and zero in Touch through dynamic palette tokens; native QAT
+uses its existing layout branch. All six base palettes supply the new metrics.
+
+Only original native combo copies and generated dividers receive the row-metrics
+marker. Shared combo chrome grows to 28 DIP in Compact, with one-DIP side margins
+to compensate for the field's flush chrome. Touch's existing 44-DIP field and
+2,1 margins win. Separator control height grows to 36 DIP in Compact, producing
+a 28-DIP line after its existing vertical inset; Touch's 44-DIP minimum remains.
+Ordinary buttons/gallery padding and margins, Classic/full-group controls, QAT
+and overflow presentation retain their prior metrics. No public API was added.
+
+The focused consumer checks painted bounds rather than only control margins,
+including nested dropdown/split chrome, both directions and simulated DPI.
+Diagnostic strips must capture the toolbar's parent allocation with an explicit
+viewbox so its vertical margin and effects do not clip or scale Touch fields.
+Current evidence and rounding limits are in the
+[active plan](../../15-SIMPLIFIED-RIBBON-PLAN.md#measured-inline-spacing-and-field-height--2026-10-21).
+
 #### Square Small inline actions — 2026-10-21
 
 Small action and toggle copies stretched vertically with the simplified row but

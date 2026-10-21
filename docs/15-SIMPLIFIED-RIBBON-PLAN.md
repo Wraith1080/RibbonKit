@@ -43,6 +43,10 @@
   `RibbonKit.Metrics.SimplifiedCommandsMargin` (0,3) within the existing 42/52-DIP
   row. Its body scroller keeps `RibbonKit.Metrics.SimplifiedGroupsRowMargin` (4,1),
   with no extra horizontal toolbar inset. Touch commands retain 44-DIP targets.
+  Visible inline clearance targets three DIP in Compact and four DIP in Touch,
+  using the gallery-to-divider clearance as the reference. Dividers keep their
+  five-DIP slot width; command spacing is not added beside them. Compact native
+  combo fields and visible divider lines are 28 DIP tall.
   Body-card and lower-QAT/message continuation metrics keep their shared policy.
 
 ## Customize Simplified Ribbon
@@ -378,6 +382,50 @@ No unrelated suites, Writer checks, package gates or snapshot approvals ran.
 Native pointer/keyboard/IME, mixed-monitor DPI and user appearance review remain
 open. Implementation details are in
 [library history](history/library/14-simplified-ribbon.md#native-combo-editors-in-original-slots--2026-10-21).
+
+### Measured inline spacing and field height — 2026-10-21
+
+Implemented after the user reset the earlier margin experiment. Measurements
+use transformed painted bounds, including the dropdown's inner ToggleButton
+chrome and the separator's actual one-DIP stroke. Compact buttons originally
+had two DIP between their chrome edges, whereas the gallery sat three DIP from
+the divider stroke. Touch already had four DIP for both clearances. The divider
+slot was five DIP, including two DIP of its own space on each side of the line.
+
+The row now adds one DIP only between adjacent Compact commands and no extra
+gap beside dividers or row edges. Compact native combo copies get a one-DIP
+side inset to compensate for their flush field chrome. Ordinary button/gallery
+margins and internal padding stay unchanged. Touch uses its existing two-DIP
+outer margins and zero additional row gap. Both densities therefore target
+clearance consistent with the existing gallery/divider reference. The same gap
+budget is used for measurement, priority overflow and arrangement; hidden or
+overflowed items do not leave orphan gaps.
+
+| Geometry | Compact | Touch |
+| --- | --- | --- |
+| Target painted clearance between commands / to divider stroke | 3 DIP | 4 DIP |
+| Native combo field height | 24 → 28 DIP | 44 DIP retained |
+| Visible divider height | 20 → 28 DIP | 36 DIP retained |
+| Divider slot width | 5 DIP retained | 5 DIP retained |
+
+Debug runtime net8/net9 and Showcase builds passed with zero warnings/errors,
+reusing unchanged designer output. Three focused runtime cases passed: the
+populated Showcase Home render and both density cases for small square commands.
+The public-only `SimplifiedSpacing` consumer scope passed 112 theme/light-dark/
+density/direction/simulated 100/150% DPI cases. It checks actual painted gaps,
+field/divider heights, gallery margins, square chrome, the resize overflow
+boundary, hidden-command spacing, scoped gap tokens, and source/QAT geometry
+restoration in both Classic densities. Bounds allow one physical pixel for
+rounding after simulated DPI changes; the first Compact 100% sample measured
+two DIP between buttons against the three-DIP target, within that tolerance.
+
+Inspected all 28 consumer strips in `TestResults/simplified-spacing-measured/after`
+and the updated Showcase Home capture. Capture framing includes the toolbar's
+vertical margin and an explicit viewbox; earlier diagnostic strips clipped the
+bottom of Touch fields. No snapshot approvals changed. User appearance review
+and physical mixed-monitor/touch acceptance remain open; no unrelated suites or
+keyboard-focus retries ran. Details are in
+[library history](history/library/14-simplified-ribbon.md#measured-inline-clearance--2026-10-21).
 
 ### Small inline button shape — 2026-10-21
 

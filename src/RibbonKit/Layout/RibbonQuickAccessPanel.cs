@@ -141,7 +141,7 @@ public class RibbonQuickAccessPanel : Panel
         foreach (UIElement child in inline.OrderBy(Ribbon.GetSimplifiedPriority)
                      .ThenByDescending(child => InternalChildren.IndexOf(child)).ToArray())
         {
-            if (kept.Sum(item => SimplifiedWidth(item, availableSize.Height)) <= availableSize.Width) break;
+            if (SimplifiedSpan(kept, availableSize.Height) <= availableSize.Width) break;
             inline.Remove(child);
             kept = WithSeparators();
         }
@@ -149,9 +149,27 @@ public class RibbonQuickAccessPanel : Panel
         foreach (UIElement child in InternalChildren)
             if (!kept.Contains(child)) _overflow.Add(child);
         owner.OnOverflowChanged(this, _overflow.Any(child => child.Visibility == Visibility.Visible && child is not RibbonGroupSeparator));
-        return new Size(kept.Sum(child => SimplifiedWidth(child, availableSize.Height)),
+        return new Size(SimplifiedSpan(kept, availableSize.Height),
             kept.Count == 0 ? 0 : kept.Max(child => child.DesiredSize.Height));
     }
+
+    private double SimplifiedSpan(IEnumerable<UIElement> items, double rowHeight)
+    {
+        double width = 0;
+        UIElement? previous = null;
+        foreach (UIElement item in items)
+        {
+            width += SimplifiedGap(previous, item) + SimplifiedWidth(item, rowHeight);
+            previous = item;
+        }
+        return width;
+    }
+
+    // A divider already supplies clearance on both sides. Add row spacing only
+    // between neighboring commands, with the same budget for measure/overflow.
+    private double SimplifiedGap(UIElement? previous, UIElement item) =>
+        previous is null or RibbonGroupSeparator || item is RibbonGroupSeparator
+            ? 0 : Math.Max(0, (double)GetValue(RibbonSimplifiedRow.SpacingProperty));
 
     private static double SimplifiedWidth(UIElement child, double rowHeight)
     {
@@ -172,6 +190,7 @@ public class RibbonQuickAccessPanel : Panel
     {
         double x = 0;
         bool simplified = ItemsControl.GetItemsOwner(this) is RibbonQuickAccessToolBar { IsSimplified: true };
+        UIElement? previous = null;
 
         foreach (var child in _overflowFocus.Keys.ToArray())
         {
@@ -199,8 +218,10 @@ public class RibbonQuickAccessPanel : Panel
             }
 
             double width = simplified ? SimplifiedWidth(child, finalSize.Height) : child.DesiredSize.Width;
+            if (simplified) x += SimplifiedGap(previous, child);
             child.Arrange(new Rect(x, 0, width, finalSize.Height));
             x += width;
+            previous = child;
         }
 
         return finalSize;

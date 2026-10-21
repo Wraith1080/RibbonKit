@@ -1337,6 +1337,9 @@
                             <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible" />
                             <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden" />
                         </Trigger>
+                        <DataTrigger Binding="{Binding Path={x:Static controls:RibbonSimplifiedRow.UseMetricsPath}, RelativeSource={RelativeSource Self}}" Value="True">
+                            <Setter TargetName="InputBox" Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.SimplifiedComboHeight}" />
+                        </DataTrigger>
                         <Trigger Property="controls:Ribbon.Density" Value="Touch">
                             <Setter TargetName="InputBox" Property="MinHeight" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
                             <Setter TargetName="PART_EditableTextBox" Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ComboEditMargin}" />
@@ -1366,6 +1369,13 @@
                 <Setter Property="MinWidth" Value="{DynamicResource RibbonKit.Metrics.Touch.TargetSize}" />
                 <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.Touch.ControlMargin}" />
             </Trigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding Path={x:Static controls:RibbonSimplifiedRow.UseMetricsPath}, RelativeSource={RelativeSource Self}}" Value="True" />
+                    <Condition Binding="{Binding Path=(controls:Ribbon.Density), RelativeSource={RelativeSource Self}}" Value="Compact" />
+                </MultiDataTrigger.Conditions>
+                <Setter Property="Margin" Value="{DynamicResource RibbonKit.Metrics.SimplifiedComboMargin}" />
+            </MultiDataTrigger>
         </Style.Triggers>
     </Style>
 
