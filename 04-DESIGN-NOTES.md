@@ -1120,6 +1120,10 @@ technical evidence warrants them; preserve existing dated records.
 
 ### Remaining or intentionally deferred
 
+- **RibbonKit 1.1 acceptance and release:** campaign scope, inherited Writer
+  evidence and execution gates are in the
+  [acceptance plan](docs/20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md).
+
 - **Writer 1.1 host integration:** current focused evidence and remaining live review
   are in the [Writer checkpoint](docs/19-WRITER-HOST-INTEGRATION.md). Overall 1.1
   release acceptance remains separate.
