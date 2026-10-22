@@ -23,6 +23,73 @@ namespace RibbonKit.Writer.Tests.Shell;
 
 public sealed partial class MainWindowIntegrationTests
 {
+    [Theory]
+    [InlineData(RibbonTheme.Office2024Flat, false)]
+    [InlineData(RibbonTheme.CrystalLight, true)]
+    public async Task WriterInputModeDropdownMatchesShowcaseAndWorksFromQuickAccess(RibbonTheme theme, bool dark)
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var directory = new TemporaryDirectory();
+            var store = new WriterSettingsStore(new WriterSettingsPaths(directory.File("appearance.json"), directory.File("ribbon.json")));
+            store.SaveAppearance(new WriterAppearancePreferences { Theme = theme, DarkPalette = dark,
+                Density = RibbonDensity.Touch, AnimationLevel = RibbonAnimationLevel.None });
+            using var fixture = new WindowFixture(settings: store);
+            fixture.Show(); fixture.Window.Opacity = 1;
+            fixture.Ribbon.SelectedTab = (RibbonTab)fixture.Window.FindName("ViewTab");
+            await PumpAsync();
+            var selector = (RibbonDropDownButton)fixture.Window.FindName("InputModeSelector");
+            var mouse = (RibbonMenuItem)fixture.Window.FindName("MouseModeChoice");
+            var touch = (RibbonMenuItem)fixture.Window.FindName("TouchModeChoice");
+            Assert.Equal("Touch/Mouse Mode", selector.Header);
+            Assert.Equal("Optimize spacing between commands", selector.DropDownHeader);
+            Assert.Equal("Writer.View.InputMode", Ribbon.GetCommandId(selector));
+            Assert.Equal(RibbonControlSize.Large, selector.Size);
+            Assert.Equal(2, selector.Items.Count);
+            Assert.NotNull(mouse.LargeIcon); Assert.NotNull(touch.LargeIcon);
+            Assert.Contains("Optimized for use with mouse.", mouse.Description);
+            Assert.Contains("Optimized for use with touch.", touch.Description);
+            selector.IsDropDownOpen = true; await PumpAsync();
+            Assert.Same(selector.FindResource("RibbonKit.Brushes.Control.CheckedBackground"), touch.Background);
+            SaveMenu(selector, "Touch");
+            SelectWriterDensity(fixture, RibbonDensity.Compact); await PumpAsync();
+            Assert.False(selector.IsDropDownOpen);
+            Assert.Equal(RibbonDensity.Compact, fixture.Ribbon.Density);
+            Assert.Equal(RibbonDensity.Compact, store.LoadAppearance().Density);
+
+            fixture.Ribbon.AddToQuickAccess(selector); await PumpAsync();
+            var proxy = fixture.Ribbon.QuickAccessItems.OfType<RibbonDropDownButton>().Single(item =>
+                ReferenceEquals(Ribbon.GetQuickAccessSource(item), selector));
+            proxy.IsDropDownOpen = true; await PumpAsync();
+            Assert.Equal(selector.DropDownHeader, ((TextBlock)proxy.Template.FindName("DropDownHeaderText", proxy)).Text);
+            Assert.Same(proxy.FindResource("RibbonKit.Brushes.Control.CheckedBackground"), mouse.Background);
+            SaveMenu(proxy, "Mouse-QAT");
+            SelectWriterDensity(fixture, RibbonDensity.Touch); await PumpAsync();
+            Assert.False(proxy.IsDropDownOpen);
+            Assert.Equal(RibbonDensity.Touch, store.LoadAppearance().Density);
+            Assert.Equal(2, selector.Items.Count); Assert.Empty(proxy.Items);
+            fixture.Ribbon.CanUserChangeDensity = false;
+            await PumpAsync();
+            Assert.False(selector.IsEnabled);
+            SelectWriterDensity(fixture, RibbonDensity.Compact);
+            Assert.Equal(RibbonDensity.Touch, fixture.Ribbon.Density);
+
+            void SaveMenu(RibbonDropDownButton owner, string state)
+            {
+                var menu = (Border)owner.Template.FindName("PART_MenuHost", owner);
+                Assert.True(menu.ActualWidth > 0 && menu.ActualHeight > 0);
+                var bitmap = new RenderTargetBitmap((int)Math.Ceiling(menu.ActualWidth),
+                    (int)Math.Ceiling(menu.ActualHeight), 96, 96, PixelFormats.Pbgra32);
+                bitmap.Render(menu);
+                var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
+                string folder = Path.Combine(AppContext.BaseDirectory, "writer-theme-diagnostics");
+                Directory.CreateDirectory(folder);
+                using var file = File.Create(Path.Combine(folder, $"WriterInputMode-{theme}-{state}.png"));
+                encoder.Save(file);
+            }
+        }, TimeSpan.FromSeconds(45));
+    }
+
     [Fact]
     public async Task WriterHostPreferencesReachEveryDetachedDialogAndNestedColorPicker()
     {
@@ -93,10 +160,9 @@ public sealed partial class MainWindowIntegrationTests
                 await PumpAsync();
                 Assert.Equal(0, started);
                 fixture.Editor.AppendText("Writer host preferences retain document text and selection.");
-                var mode = (ComboBox)fixture.Window.FindName("InputModeCombo");
-                SelectHostChoice(mode, RibbonDensity.Compact);
+                SelectWriterDensity(fixture, RibbonDensity.Compact);
                 Assert.Equal(RibbonDensity.Compact, store.LoadAppearance().Density);
-                SelectHostChoice(mode, RibbonDensity.Touch);
+                SelectWriterDensity(fixture, RibbonDensity.Touch);
 
                 fixture.Editor.Selection.Select(fixture.Editor.Document.ContentStart, fixture.Editor.Document.ContentEnd);
                 string text = fixture.Editor.Selection.Text;
@@ -188,7 +254,7 @@ public sealed partial class MainWindowIntegrationTests
                 fixture.Ribbon.SelectedTab = (RibbonTab)window.FindName("ViewTab");
                 await PumpAsync();
                 Assert.Equal(density, fixture.Ribbon.Density);
-                Assert.Equal(density, Ribbon.GetDensity((DependencyObject)window.FindName("InputModeCombo")));
+                Assert.Equal(density, Ribbon.GetDensity((DependencyObject)window.FindName("InputModeSelector")));
                 Assert.Equal(icons, fixture.Ribbon.QuickAccessIconAppearance);
                 var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
                 bitmap.Render(window);
@@ -246,6 +312,9 @@ public sealed partial class MainWindowIntegrationTests
 
     private static void SelectHostChoice(ComboBox combo, object value) => combo.SelectedItem = combo.Items.Cast<ComboBoxItem>()
         .Single(item => Equals(item.Tag, value));
+
+    private static void SelectWriterDensity(WindowFixture fixture, RibbonDensity density) =>
+        ClickHostButton((RibbonMenuItem)fixture.Window.FindName(density == RibbonDensity.Touch ? "TouchModeChoice" : "MouseModeChoice"));
 
     private static void ClickHostButton(ButtonBase button) => button.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
 }

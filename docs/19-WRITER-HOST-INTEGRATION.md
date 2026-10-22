@@ -7,7 +7,9 @@
 
 ## Preferences and presentation
 
-- View's Mouse / Touch choice maps to `RibbonDensity.Compact` / `Touch`.
+- View's Touch/Mouse Mode dropdown matches Showcase's large button, heading,
+  illustrated Mouse/Touch rows, descriptions and selected-row highlight. Its
+  choices map to `RibbonDensity.Compact` / `Touch`.
   Writer saves it in appearance.json and restores it in window construction,
   before Show and RibbonKit's first-render readiness. Detached settings/dialog
   scopes receive it explicitly; a Window Owner does not supply inheritance.
@@ -77,7 +79,8 @@ required for this slice.
 | Document animation | Three `WriterDocumentMotion*` tests passed; 13 mode/density/QAT/preview/Crystal changes, three sampled frames each; source properties, playing supersession, resize, disabled motion, synthetic composition and unsafe-capture/root-transform fallback |
 | Existing Writer interactions | Simplified settings draft/Apply/Cancel/restart, Crystal settings checkpoint/restart, view toggle persistence and Crystal native-scroll/underlay: 4/4 passed |
 | Find/Replace | Existing service regressions: 14/14 passed; dialog participates in the detached-family rendering check |
-| Writer total | 44 distinct tests passed across focused runs; no full Writer/release campaign |
+| Dropdown presentation follow-up | Normal Debug build: 0 warnings/errors. Five affected checks passed across focused runs: direct/QAT menu behavior in Flat light and Crystal dark, persistence/checkpoint/restart, appearance rendering and shared document motion. Menu renders inspected; stable command identity retained |
+| Writer total | 46 distinct tests passed across the original and dropdown follow-up focused runs; no full Writer/release campaign |
 | Focused runtime | Read-only label regression, existing Simplified combo editors and dropdown grouping: 23/23 passed |
 | Independent RibbonKit-only consumer | `SimplifiedCombos`: 1/1 aggregate passed in 84.0 seconds; 56 theme × palette × density × direction combinations, with simulated 150% root DPI in Touch |
 | Render inspection | Inspected Appearance light/dark, Flat density/QAT examples, and representative paper/preview/Crystal motion frames. These are offscreen WPF renders and synthetic interaction, not human/native acceptance |
@@ -93,7 +96,7 @@ public API, theme template or grouped Writer font UI changed.
 - Writer preferences/UI: `WriterAppearancePreferences.cs`,
   `WriterAppearancePage.xaml`, `WriterAppearancePage.xaml.cs`,
   `WriterAppearanceScope.cs` under `samples/RibbonKit.Writer/Appearance/`;
-  `MainWindow.xaml`, `MainWindow.xaml.cs`, `MainWindow.Appearance.cs`;
+  `MainWindow.xaml`, `MainWindow.xaml.cs`, `MainWindow.Appearance.cs`, `Icons.xaml`;
   `Editing/WriterFindReplaceDialog.xaml`; `View/WriterDocumentTransition.cs`.
 - Focused shared fix: `src/RibbonKit/Controls/RibbonComboBoxSimplifiedProxy.cs`.
 - Tests: `tests/RibbonKit.Tests/SimplifiedComboReadOnlyLabelTests.cs`;

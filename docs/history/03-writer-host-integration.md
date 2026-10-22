@@ -12,6 +12,12 @@ retains the selected View density through edits/defaults. New preference fields
 are additive schema-v1 properties, with Compact and WhiteOverlay defaults, so
 existing settings remain readable without a schema migration.
 
+The follow-up selector presentation uses the same shared RibbonDropDownButton
+and descriptive, illustrated Mouse/Touch menu pattern as Showcase. Writer owns
+the icon resources and preference handler. Density inheritance highlights the
+active row even when the menu is borrowed by QAT; the `Writer.View.InputMode`
+command identity remains stable for saved customization.
+
 Office2024Flat follows all generic backdrop/glass/accent APIs. The only 2024-only
 Writer presentation branch requiring extension was active-backdrop ruler
 transparency. The Office workspace and paper edge remain neutral; Crystal's

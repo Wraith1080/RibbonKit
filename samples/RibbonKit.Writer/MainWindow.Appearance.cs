@@ -2,6 +2,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Threading;
 using RibbonKit.Animation;
@@ -31,6 +32,8 @@ public partial class MainWindow
 
     private void InitializeWriterSettings()
     {
+        InputModeSelector.SetBinding(IsEnabledProperty,
+            new Binding(nameof(Ribbon.CanUserChangeDensity)) { Source = MainRibbon });
         // Real Writer startup always has App.Current. Isolated window tests intentionally do not;
         // keep them hermetic rather than reading or writing the interactive user's settings.
         if (Application.Current is null && !_hasInjectedSettings)
@@ -113,9 +116,9 @@ public partial class MainWindow
         _writerSettings.SaveRibbonLayout(RibbonCustomizationSerializer.Serialize(MainRibbon));
     }
 
-    private void OnInputModeChanged(object sender, SelectionChangedEventArgs e)
+    private void OnInputModeChanged(object sender, RoutedEventArgs e)
     {
-        if (InputModeCombo.SelectedItem is not ComboBoxItem { Tag: RibbonDensity density }
+        if (!MainRibbon.CanUserChangeDensity || sender is not RibbonMenuItem { Tag: RibbonDensity density }
             || density == _appearancePreferences.Density)
             return;
 
@@ -131,8 +134,6 @@ public partial class MainWindow
         Ribbon.SetDensity(this, density);
         foreach (var dialog in _dialogAppearanceScopes.Keys)
             Ribbon.SetDensity(dialog, density);
-        InputModeCombo.SelectedItem = InputModeCombo.Items.Cast<ComboBoxItem>()
-            .Single(item => Equals(item.Tag, density));
     }
 
     private void OnBackstageSettings(object sender, RoutedEventArgs e)

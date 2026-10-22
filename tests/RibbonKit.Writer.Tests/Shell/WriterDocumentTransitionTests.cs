@@ -55,8 +55,8 @@ public sealed partial class MainWindowIntegrationTests
                 {
                     () => fixture.Ribbon.LayoutMode = RibbonLayoutMode.Simplified,
                     () => fixture.Ribbon.LayoutMode = RibbonLayoutMode.Classic,
-                    () => SelectHostChoice((ComboBox)fixture.Window.FindName("InputModeCombo"), RibbonDensity.Touch),
-                    () => SelectHostChoice((ComboBox)fixture.Window.FindName("InputModeCombo"), RibbonDensity.Compact),
+                    () => SelectWriterDensity(fixture, RibbonDensity.Touch),
+                    () => SelectWriterDensity(fixture, RibbonDensity.Compact),
                     () => fixture.Ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TabRow,
                     () => fixture.Ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon,
                     () => fixture.Ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TabRow,

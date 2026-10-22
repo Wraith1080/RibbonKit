@@ -61,7 +61,7 @@ instead of repeatedly appending them to the current-status summary.
 
 - First seen: 2026-10-22, Writer 1.1 integration; host responsibility.
 - Reproduction: select Touch, then open an owned Writer dialog. Window Owner relationships do not inherit `Ribbon.Density`. Find/Replace also retained native white controls under a dark palette.
-- Correction: the existing Writer appearance scope applies the saved density to each registered window, including nested color pickers. Find/Replace consumes shared input, checkbox, action-button and surface resources. The View selection is restored before Show and saved separately from ribbon structure; Appearance defaults retain that View preference.
+- Correction: the existing Writer appearance scope applies the saved density to each registered window, including nested color pickers. Find/Replace consumes shared input, checkbox, action-button and surface resources. The View selection is restored before Show and saved separately from ribbon structure; Appearance defaults retain that View preference. The Showcase-style dropdown binds its density permission explicitly to MainRibbon so it follows ribbon hosting and QAT participation.
 - Evidence: all ten detached Writer dialog types re-theme and resize through Touch → Compact → Touch, including the nested color picker. Actual Windows file/print pickers remain OS-owned. Mixed-monitor review remains manual.
 
 ### RKWF-052 — Writer document presentation needs its own ribbon-boundary animator
