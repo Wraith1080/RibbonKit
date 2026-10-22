@@ -422,8 +422,10 @@ two DIP between buttons against the three-DIP target, within that tolerance.
 Inspected all 28 consumer strips in `TestResults/simplified-spacing-measured/after`
 and the updated Showcase Home capture. Capture framing includes the toolbar's
 vertical margin and an explicit viewbox; earlier diagnostic strips clipped the
-bottom of Touch fields. No snapshot approvals changed. User appearance review
-and physical mixed-monitor/touch acceptance remain open; no unrelated suites or
+bottom of Touch fields. No snapshot approvals changed. On 2026-10-22 the user
+accepted the measured Simplified spacing and combo/divider height changes and
+said they would merge the branch into main. This appearance approval does not
+establish physical mixed-monitor/touch acceptance. No unrelated suites or
 keyboard-focus retries ran. Details are in
 [library history](history/library/14-simplified-ribbon.md#measured-inline-clearance--2026-10-21).
 
