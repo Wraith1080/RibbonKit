@@ -29,8 +29,10 @@
 - The original controls, bindings, commands, data and group structure remain
   source-owned. Shared command copies render supported inline buttons, toggles,
   splits, dropdowns, combo selectors and galleries. Arbitrary/native editors
-  remain available in their original group flyout; an editable combo's inline
-  copy opens its source-linked choice list rather than a second text editor.
+  remain available in their original group flyout. Combo boxes in their original
+  authored tab/group use source-linked native combo editors, preserving editable
+  text and configured input widths at either command size. Custom-tab/group,
+  QAT and overflow copies retain the dropdown choice-list presentation.
 - Sources are temporarily collapsed while their simplified full-group opener
   exists. Switching back releases that constraint, preserving QAT membership and
   the normal adaptive policy. No classic layout or customization is serialized
@@ -41,6 +43,10 @@
   `RibbonKit.Metrics.SimplifiedCommandsMargin` (0,3) within the existing 42/52-DIP
   row. Its body scroller keeps `RibbonKit.Metrics.SimplifiedGroupsRowMargin` (4,1),
   with no extra horizontal toolbar inset. Touch commands retain 44-DIP targets.
+  Visible inline clearance targets three DIP in Compact and four DIP in Touch,
+  using the gallery-to-divider clearance as the reference. Dividers keep their
+  five-DIP slot width; command spacing is not added beside them. Compact native
+  combo fields and visible divider lines are 28 DIP tall.
   Body-card and lower-QAT/message continuation metrics keep their shared policy.
 
 ## Customize Simplified Ribbon
@@ -339,6 +345,111 @@ commands more usable height without increasing the ribbon height.
 
 Logs are `TestResults/simplified-spacing-*.log`. Human review of this spacing and
 native mixed-monitor/input acceptance remain open.
+
+### Native combo editors in original slots — 2026-10-21
+
+Implemented after user approval. Only original combo declarations in non-custom
+tabs/groups receive native inline editors. The existing source/group identity,
+selection ordering, priority overflow and customization persistence stay in place;
+no public API or serialized-format change was needed. Custom copies retain their
+menu presentation, including when selected for the Simplified row. Native editors
+keep their normal fields at Small/Medium command sizes.
+
+The source keeps its bindings, original data/containers and selection events.
+Independent choice containers share the existing presentation/grouping helpers.
+Editable text and selection commit explicitly, with refresh/reentrancy guards,
+so rebuilding rows cannot clear application state and duplicate labels retain
+their source index. The original full-group editor stays synchronized. An open
+inline picker closes on overflow; focus moves to More Commands when necessary.
+Returning to Classic restores the source editor's focus without replacing a later
+user focus choice. Listeners detach on unload and refresh on reload.
+
+Focused evidence is assembled across separate runs: 30 distinct runtime cases
+passed (nine new editor cases, seven existing QAT combo cases, twelve grouped-menu
+cases, the affected Simplified KeyTip case and the populated Showcase declaration).
+The focus return/open-picker check passed in a fresh process after a combined
+run lost its popup/focus state; no clean single aggregate pass is claimed.
+The public-only `SimplifiedCombos` consumer scope passed 56 theme/light-dark/
+density/direction cases, covering editable and read-only fields, authored items,
+duplicate labels, grouping, custom/QAT copies, native popup closure on resize,
+overflow menus and Classic restoration. Window root DPI was simulated at 100/150%;
+this does not establish physical mixed-monitor behavior.
+
+All 28 Compact/Touch light/dark renders in `TestResults/simplified-combos` and the
+populated Showcase Home render were inspected. Normal Debug runtime net8/net9 and
+Showcase builds passed with zero warnings/errors, reusing existing designer output.
+No unrelated suites, Writer checks, package gates or snapshot approvals ran.
+Native pointer/keyboard/IME, mixed-monitor DPI and user appearance review remain
+open. Implementation details are in
+[library history](history/library/14-simplified-ribbon.md#native-combo-editors-in-original-slots--2026-10-21).
+
+### Measured inline spacing and field height — 2026-10-21
+
+Implemented after the user reset the earlier margin experiment. Measurements
+use transformed painted bounds, including the dropdown's inner ToggleButton
+chrome and the separator's actual one-DIP stroke. Compact buttons originally
+had two DIP between their chrome edges, whereas the gallery sat three DIP from
+the divider stroke. Touch already had four DIP for both clearances. The divider
+slot was five DIP, including two DIP of its own space on each side of the line.
+
+The row now adds one DIP only between adjacent Compact commands and no extra
+gap beside dividers or row edges. Compact native combo copies get a one-DIP
+side inset to compensate for their flush field chrome. Ordinary button/gallery
+margins and internal padding stay unchanged. Touch uses its existing two-DIP
+outer margins and zero additional row gap. Both densities therefore target
+clearance consistent with the existing gallery/divider reference. The same gap
+budget is used for measurement, priority overflow and arrangement; hidden or
+overflowed items do not leave orphan gaps.
+
+| Geometry | Compact | Touch |
+| --- | --- | --- |
+| Target painted clearance between commands / to divider stroke | 3 DIP | 4 DIP |
+| Native combo field height | 24 → 28 DIP | 44 DIP retained |
+| Visible divider height | 20 → 28 DIP | 36 DIP retained |
+| Divider slot width | 5 DIP retained | 5 DIP retained |
+
+Debug runtime net8/net9 and Showcase builds passed with zero warnings/errors,
+reusing unchanged designer output. Three focused runtime cases passed: the
+populated Showcase Home render and both density cases for small square commands.
+The public-only `SimplifiedSpacing` consumer scope passed 112 theme/light-dark/
+density/direction/simulated 100/150% DPI cases. It checks actual painted gaps,
+field/divider heights, gallery margins, square chrome, the resize overflow
+boundary, hidden-command spacing, scoped gap tokens, and source/QAT geometry
+restoration in both Classic densities. Bounds allow one physical pixel for
+rounding after simulated DPI changes; the first Compact 100% sample measured
+two DIP between buttons against the three-DIP target, within that tolerance.
+
+Inspected all 28 consumer strips in `TestResults/simplified-spacing-measured/after`
+and the updated Showcase Home capture. Capture framing includes the toolbar's
+vertical margin and an explicit viewbox; earlier diagnostic strips clipped the
+bottom of Touch fields. No snapshot approvals changed. On 2026-10-22 the user
+accepted the measured Simplified spacing and combo/divider height changes and
+said they would merge the branch into main. This appearance approval does not
+establish physical mixed-monitor/touch acceptance. No unrelated suites or
+keyboard-focus retries ran. Details are in
+[library history](history/library/14-simplified-ribbon.md#measured-inline-clearance--2026-10-21).
+
+### Small inline button shape — 2026-10-21
+
+Corrected the narrow Compact icon-only action/toggle targets. Width now follows
+the simplified row's usable height, with outer margins accounted for during both
+overflow measurement and arrangement. Explicit width constraints and other
+presentations retain their existing sizing policy.
+
+Two focused runtime cases passed for Small/Medium presentation and labeled
+overflow in Compact/Touch. The independent `SimplifiedButtonShape` scope passed
+224 theme/light-dark/density/direction/simulated-DPI combinations at
+100/125/150/200%, including actual control/Chrome square geometry and priority
+overflow. Labeled overflow, explicit widths and classic/QAT size restoration
+also passed. Fourteen light-palette Compact/Touch captures were inspected at
+simulated 150%; artifacts are in `TestResults/simplified-button-shape`.
+
+Normal Debug runtime net8/net9 and Showcase builds passed without warnings in
+the final targeted builds. The initial test build reported Visual Studio's lock
+on the unchanged designer DLL; later focused builds reused that existing project
+output through `BuildProjectReferences=false`. Only button-shape tests ran; no
+full suite or snapshot approval updates. Native Showcase acceptance and real
+mixed-monitor DPI review remain open.
 
 ### S1 overflow menu presentation — 2026-10-13
 

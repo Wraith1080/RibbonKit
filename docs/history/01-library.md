@@ -435,3 +435,23 @@ status updates and investigation narration were removed during compaction.
 ### [3.263 Shared text refresh after control animation — 2026-10-17](library/04-office2007-and-popup-motion.md#3263-shared-text-refresh-after-control-animation--2026-10-17)
 
 ### [3.264 Stable caption and content paint during layout transitions — 2026-10-18](library/16-host-layout-transitions.md#3264-stable-caption-and-content-paint-during-layout-transitions--2026-10-18)
+
+### [3.265 Office menu, hover and transition polish — 2026-10-18](library/13-flat-theme-variants.md#3265-office-menu-hover-and-transition-polish--2026-10-18)
+
+### [3.266 Persistent Showcase application-menu choice — 2026-10-18](library/13-flat-theme-variants.md#3266-persistent-showcase-application-menu-choice--2026-10-18)
+
+### [3.267 Showcase theme-preferred Backstage layouts — 2026-10-18](library/13-flat-theme-variants.md#3267-showcase-theme-preferred-backstage-layouts--2026-10-18)
+
+### [3.268 Concentric radio indicators at fractional DPI — 2026-10-18](library/11-touch-density-and-gallery-projections.md#3268-concentric-radio-indicators-at-fractional-dpi--2026-10-18)
+
+### [3.269 Optional color-preserving QAT icon glow — 2026-10-19](library/01-core-controls.md#3269-optional-color-preserving-qat-icon-glow--2026-10-19)
+
+### [3.270 Adaptive QAT vector colors — 2026-10-19](library/01-core-controls.md#3270-adaptive-qat-vector-colors--2026-10-19)
+
+### [3.271 Gallery copy popup sizing and scrollbar parity — 2026-10-19](library/11-touch-density-and-gallery-projections.md#3271-gallery-copy-popup-sizing-and-scrollbar-parity--2026-10-19)
+
+### [3.272 Colored Office 2024 captions preserve the ribbon backdrop — 2026-10-19](library/12-keytips-layout-and-validation.md#3272-colored-office-2024-captions-preserve-the-ribbon-backdrop--2026-10-19)
+
+### [3.273 Themed native text-editor context menus — 2026-10-20](library/02-designer-and-context-menus.md#3273-themed-native-text-editor-context-menus--2026-10-20)
+
+### [3.274 Grouped combo dropdown sections — 2026-10-21](library/11-touch-density-and-gallery-projections.md#3274-grouped-combo-dropdown-sections--2026-10-21)

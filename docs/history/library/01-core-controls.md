@@ -745,3 +745,73 @@ source's menu items while open:
   inert. Chose the focus trap over disabling the background content (the note's other option) because
   it's self-contained on the control and needs no open/close state on the ribbon. Only plain Tab was
   trapped (`ControlTabNavigation` left alone so the TabControl's Ctrl+Tab page switching is unchanged).
+
+### 3.269 Optional color-preserving QAT icon glow — 2026-10-19
+
+`Ribbon.QuickAccessIconAppearance` adds an opt-in `ColorWithGlow` alternative to
+the existing `WhiteOverlay` default on colored QAT surfaces. The enum, its two
+values and the property's field/accessors add six documented Unshipped symbols;
+the Shipped baseline is unchanged. A ribbon-level choice gives independent
+consumers a portable per-window policy without requiring icon replacement.
+
+The ribbon carries an internal inherited selector and the scoped
+`RibbonKit.Effects.Qat.IconGlow` resource directly to QAT entries, including the
+detached title-bar host. All fourteen token dictionaries define the same small,
+zero-depth white shadow. Button, toggle, dropdown and split templates keep the
+original image in front of a separate effect copy, preserving foreground detail
+and dimensions. Both colored-surface and glow conditions must hold; neutral
+surfaces and overflow retain their normal icon treatment. Existing band washes,
+chevrons and command behavior stay independent of the icon choice.
+
+Showcase exposes the choice under View / Accent and stores it separately from
+customization, in appearance schema 4. Older preferences default to WhiteOverlay;
+invalid enum values are rejected. Theme and title-bar toggles preserve the choice.
+The broader runtime gate exposed an older Glass assertion that required matching
+tab/File hover brushes to be the same object. The existing factory creates them
+separately, so that assertion now checks color and opacity instead of identity;
+the Glass runtime behavior is unchanged.
+Its dark Office2024 expectation also now preserves transparent tab hover while
+checking the QAT drawer's separate glass tint. The Touch fixture queries the
+existing `QatBelowShadowHost` context-menu owner rather than its inner frame.
+Current verification and live acceptance belong to the
+[theme plan](../../09-FUTURE-THEMES-PLAN.md#qat-icon-appearance-choice).
+
+### 3.270 Adaptive QAT vector colors — 2026-10-19
+
+`RibbonQuickAccessIconAppearance.AdaptiveColor = 2` is an additive Unshipped
+enum member; existing values/defaults and the Shipped baseline are unchanged.
+The shared button, toggle, dropdown and split templates adapt only their small
+colored-QAT image. Command icon sources and bindings remain application-owned.
+Showcase adds **Adaptive Color** to View / Accent and persists the existing enum
+preference without changing schema 4.
+
+`AdaptiveIconDrawing` clones solid vector fills/pens and samples earlier paint
+in drawing order to estimate each part's background. Low-contrast neutral colors
+become white/dark; colored parts move toward white/black only as needed for the
+heuristic's 3:1 target. Internal layers can therefore remain distinct instead of
+becoming one white alpha mask. Source geometry, clipping, transforms and pen
+metrics are retained without changing the supplied icon.
+
+The user's transparency refinement replaces newly generated black with the
+source color at 25% of its original alpha. Earlier cloned layers acquire vector
+exclusion clips in their own coordinate spaces, so the region reveals the real
+surface instead of an opaque body behind it. Later colored details still paint
+normally. Filled/stroked shapes use separate draw operations so a partial stroke
+can also reveal the surface through its own fill. Authored black details remain
+unchanged. This selective alpha treatment does not guarantee contrast for every
+part of arbitrary artwork.
+
+The surface comes from the ribbon-scoped title-bar or ribbon background resource;
+legacy caption gradients use their midpoint color. Unsupported drawings,
+non-solid fills/pens, bitmaps and drawings above 128 nodes retain their originals.
+Neutral placements and overflow also retain their originals. A weak source cache
+holds up to eight palettes per icon, independent of density/DPI; mutable drawing
+changes invalidate it. The image bridge also invalidates before responding to a
+WPF Freezable subproperty callback, which may precede Changed event subscribers.
+Loaded mutable-source observation detaches on unload; freezing a live source
+clears its WPF handlers without attempting a forbidden removal afterward. Static
+icons need no per-frame color scan, and no new theme-specific template/token is
+needed.
+
+Current evidence and visual acceptance belong to the
+[adaptive color status](../../09-FUTURE-THEMES-PLAN.md#adaptive-qat-icon-colors).

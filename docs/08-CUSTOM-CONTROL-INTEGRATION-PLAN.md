@@ -104,6 +104,48 @@ that the gallery ScreenTips look good on 2026-10-11; further user checks and fin
 live hover acceptance remain pending. Full validation remains deferred by user direction.
 Details and additive API rationale: [library history §3.251](history/library/12-keytips-layout-and-validation.md#3251-gallery-screentips-follow-qat-and-custom-group-copies--2026-10-11).
 
+## Grouped combo dropdowns
+
+Implemented 2026-10-21. Native combo boxes and their QAT/custom-group/Simplified
+copies retain collection-view sections, themed nonselectable headings and source
+selection. Headings scroll with the choices; one scrollbar serves the full list.
+The current spacing gives rows and headings one DIP above/below, except at the
+first top and last bottom edge: uniform two-DIP gaps, with no larger section gap.
+Shared panels/tokens also avoid doubling Touch margins and account for fractional
+display scaling.
+An automatic overall Font caption is omitted for grouped copies. Explicit
+GroupStyle/caption overrides remain available through existing WPF properties.
+The Showcase Font combo now demonstrates Common fonts and Other fonts, using
+host-owned sample data and shared RibbonKit presentation. No public API addition.
+
+Focused validation passed across separate runs: seven new grouping/sample cases,
+seven existing combo-projection cases, and ten affected KeyTip/keyboard-handoff
+cases. Coverage includes source identity and selection events, editable combos,
+nested groups, group sorting, multiple membership, dynamic collection/grouping
+changes, custom style precedence and the actual Showcase sample without loading
+user preferences. The independent `GroupedCombos` scope passed 56 theme/light-dark/
+density/direction combinations across native, QAT and custom-group surfaces, using
+simulated 100/150% root DPI. It checks section gaps, paint, one scrollbar,
+scrolling headings, last-item selection and open-view refresh. All 28 full-frame
+Compact/Touch, light/dark popup captures were inspected in
+`TestResults/grouped-combos`. Existing passed checks were retained while failed
+or changed scopes were repaired; no unrelated suite or snapshot approvals ran.
+
+The uniform-spacing refinement on 2026-10-21 passed nine focused native/copy/
+dropdown/split geometry cases, including nested/empty groups, collapsed rows,
+Compact/Touch and flat/grouped view changes. The same 56 independent-consumer
+combinations (168 surfaces) passed, now checking every row gap and both outer edges.
+All 28 updated renders in `TestResults/grouped-combos-uniform-spacing` were inspected.
+Previously passed keyboard and unrelated behavior checks were not repeated.
+User appearance review 2026-10-21: accepted the uniform vertical spacing in the
+Font dropdown.
+
+Normal Debug runtime net8/net9 and Showcase builds passed with zero warnings/errors,
+reusing the unchanged designer project output held open by Visual Studio. Native
+pointer/IME and mixed-monitor review and full-suite
+release/package gates remain open. Implementation details are in
+[library history §3.274](history/library/11-touch-density-and-gallery-projections.md#3274-grouped-combo-dropdown-sections--2026-10-21).
+
 ## Capability and lifetime contract
 
 Customization eligibility needs stable `Ribbon.CommandId`, display name and small

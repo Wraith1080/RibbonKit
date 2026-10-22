@@ -1063,6 +1063,9 @@
     <Thickness x:Key="RibbonKit.Metrics.Touch.ClassicRailPadding">0,16,0,0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.InRibbonGalleryMargin">4,0,4,0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.GallerySectionPadding">0,4,0,4</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.DropDownHeaderMargin">0,0,0,2</Thickness>
+    <sys:Double x:Key="RibbonKit.Metrics.DropDownRowSpacing">2</sys:Double>
+    <Thickness x:Key="RibbonKit.Metrics.Touch.DropDownItemMargin">2,0</Thickness>
     <sys:Double x:Key="RibbonKit.Metrics.Touch.MessageRowHeight">52</sys:Double>
     <Thickness x:Key="RibbonKit.Metrics.Touch.MessageActionPadding">12,6</Thickness>
     <sys:Double x:Key="RibbonKit.Metrics.Touch.TitleBarHeight">46</sys:Double>
@@ -1089,9 +1092,18 @@
     <sys:Double x:Key="RibbonKit.Metrics.SimplifiedRowHeight">42</sys:Double>
     <Thickness x:Key="RibbonKit.Metrics.SimplifiedGroupsRowMargin">4,1</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.SimplifiedCommandsMargin">0,3</Thickness>
+    <!-- Command-to-command gap only; dividers already include side clearance. -->
+    <sys:Double x:Key="RibbonKit.Metrics.SimplifiedItemSpacing">1</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.Touch.SimplifiedItemSpacing">0</sys:Double>
+    <Thickness x:Key="RibbonKit.Metrics.SimplifiedComboMargin">1,0</Thickness>
+    <sys:Double x:Key="RibbonKit.Metrics.SimplifiedComboHeight">28</sys:Double>
+    <sys:Double x:Key="RibbonKit.Metrics.SimplifiedSeparatorHeight">36</sys:Double>
     <sys:Double x:Key="RibbonKit.Metrics.Touch.SimplifiedRowHeight">52</sys:Double>
     <sys:Double x:Key="RibbonKit.Metrics.SimplifiedMoreButtonWidth">32</sys:Double>
     <sys:Double x:Key="RibbonKit.Metrics.MenuItemMinHeight">32</sys:Double>
     <sys:Double x:Key="RibbonKit.Metrics.MenuItemMinWidth">200</sys:Double>
     <sys:Double x:Key="RibbonKit.Metrics.MenuSubmenuButtonWidth">32</sys:Double>
+    <!-- Optional contrast halo, behind the unchanged full-color QAT icon. -->
+    <DropShadowEffect x:Key="RibbonKit.Effects.Qat.IconGlow" Color="#FFFFFF"
+                      BlurRadius="3" ShadowDepth="0" Opacity="1" RenderingBias="Quality" />
 </ResourceDictionary>

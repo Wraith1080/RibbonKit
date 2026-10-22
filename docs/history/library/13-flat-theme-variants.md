@@ -343,3 +343,104 @@ scopes rather than rerunning the large prefix. Sixteen Flat approvals were revie
 for the intentional lower-row reserve, including state scenes and the message bar
 behind File menus. Their menu paint/state and command scale did not change.
 The two previously open Crystal QAT comparisons were left untouched.
+
+### 3.265 Office menu, hover and transition polish — 2026-10-18
+
+Office 2024 light/dark now use 6/5-DIP inner rim/outline corners; Flat inherits
+those metrics. The existing rounded content clip shapes only the four outer
+corners, leaving the navigation/page join square. Office 2007 through 2024 use
+zero active-page border and margin, matching Crystal's existing shared-frame
+policy while retaining the heading band and navigation separator.
+
+Glass preserves a palette's transparent tab hover rather than adding a wash to
+2024's underline-only state. QAT and File washes remain independent. Office 2013
+colors its reserved hover border with the hover fill, bringing its top edge up
+to the selected outline without moving labels. Its dark and Glass edges follow
+the same effective fill.
+
+Backdrop-only ThemeManager notifications still refresh resources, QAT state and
+selection geometry but skip Ribbon's ThemeSwitch opacity settle. An internal
+notification flag is scoped and restored around each synchronous public Changed
+event, including nested notifications; actual palette/accent changes keep motion.
+No public API or native backdrop ownership changed.
+
+Body snapshots now carry the sibling PART_ConnectNotch alongside opaque chrome.
+An adorner otherwise draws the complete top border above the live notch. Keep
+the cut outside fading command content, including transition holds and reversals.
+The regression renders the body presentation separately so the header's matching
+ConnectFoot cannot conceal a missing cut; it samples fractional animation frames.
+
+The two new flicker regressions failed with their fixes temporarily removed.
+Focused automated checks passed; current counts and native review limits are in
+the [active theme plan](../../09-FUTURE-THEMES-PLAN.md#office-menu-hover-and-transition-polish).
+Visual review inspected actual/diff and first/repeated captures before changing
+seven existing approvals and adding 24 focused scenes. Tolerances are unchanged.
+A fixed hover slot isolates vertical paint from disconnected text auto-sizing.
+Include the eight Office 2007/2010 default DPI scenes when comparing the older
+2013/2024 fixtures: omitting their font/DPI warm-up produced unrelated geometry
+diffs that disappeared with that prefix; their approvals remain unchanged.
+
+The follow-up heading gap was the separator's one-DIP highlight, outside the
+page. HeaderBandJoin paints that strip with the header background and bottom
+separator without changing HeaderBand's padding or page measurement. It follows
+the heading's visibility so a headerless page reserves no extra row. Geometry
+checks use the measured divider edges at fractional DPI and the menu's logical
+coordinates in both directions; the host reflects the whole surface for RTL.
+
+**Colored-caption fade follow-up — 2026-10-20.** The supplied recording shows
+caption-color toggles in both dark and light 2024 Flat. They still entered the
+ordinary ThemeSwitch path, dipping the entire RibbonTabControl to 85% opacity.
+The internal notification hint now expresses whether to animate the ribbon.
+Caption-color and backdrop-only changes opt out of that opacity settle while
+retaining public Changed notifications, resource/QAT updates and selection-geometry
+refresh. Actual theme, dark-palette and accent changes retain their motion.
+No public API, host animation workaround or QAT relocation behavior changed.
+
+Fourteen caption cases cover every theme in light/dark, including repeated on/off
+switches. They fail with the old caption notification and pass with the correction;
+the existing backdrop/no-fade and real-accent/fade check also passed. Clear the
+preceding palette animation's retained WPF clock before checking caption changes:
+a completed HoldEnd clock otherwise makes HasAnimatedProperties report an older
+animation. The independent `CaptionMotion` scope passed 28 theme/light-dark/
+Subtle-Expressive combinations and confirms that real accent changes still start
+the fade. Normal Debug runtime net8/net9 and Showcase builds passed. The supplied
+clip was sampled and inspected; live input review of the corrected build, native
+Mica/Acrylic and mixed-monitor checks were not run. The full suite was not rerun.
+
+### 3.266 Persistent Showcase application-menu choice — 2026-10-18
+
+Showcase's ApplyTheme no longer assigns ApplicationMenuToggle.IsChecked. The
+existing `2007 Menu` toggle and saved FileSurface preference alone select between
+the application menu and Backstage, including Office 2007 and Crystal. The
+existing selector handler still closes the old surface before changing ownership;
+the modeless RTL lab follows the same explicit choice through the existing event.
+Startup restoration, settings schema and factory Backstage default are unchanged.
+This supersedes the conventional theme-driven live surface described in §3.71.
+No runtime library or public API changed.
+
+New selector regressions fail with the old automatic assignment and cover both
+choices through all seven themes and light/dark mode. Serializer checks cover both
+saved choices for every theme. Keep tests from writing real user preferences.
+The existing Crystal comparison fixture now expects the accepted 2024 inner
+rounding and borderless active page from §3.265 rather than the superseded square,
+separately framed page. Current evidence and native review limits are in the
+[active theme plan](../../09-FUTURE-THEMES-PLAN.md#persistent-application-menu-choice).
+
+### 3.267 Showcase theme-preferred Backstage layouts — 2026-10-18
+
+Showcase's ApplyTheme selects a preferred Backstage design and refreshes the
+existing layout selector label before publishing its application-surface state.
+Crystal uses CrystalSidebar; 2024/Flat use Modern; 2013/2019 use Classic;
+2010 uses Classic2010; 2007 uses Classic2007. This is host policy rather than
+ThemeManager or Backstage runtime behavior. The RTL lab receives the design
+through the existing application-surface event.
+
+The application-menu toggle remains independent, including while the preferred
+Backstage is inactive behind it. Manual layout selection still works and survives
+dark-mode changes until another theme selection. Startup restores the explicit
+saved layout after applying the theme, preserving manual choices between runs.
+No public API, runtime source, settings schema or new selector was required.
+
+Seven mapping regressions fail before the change and pass afterward. Current
+focused evidence and native limits are in the
+[active theme plan](../../09-FUTURE-THEMES-PLAN.md#theme-preferred-backstage-layouts).

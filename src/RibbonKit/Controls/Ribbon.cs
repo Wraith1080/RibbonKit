@@ -125,6 +125,14 @@ public partial class Ribbon : Control
                 RibbonQuickAccessPosition.TabRow,
                 OnQuickAccessPositionChanged));
 
+    /// <summary>Identifies the <see cref="QuickAccessIconAppearance"/> dependency property.</summary>
+    public static readonly DependencyProperty QuickAccessIconAppearanceProperty =
+        DependencyProperty.Register(
+            nameof(QuickAccessIconAppearance), typeof(RibbonQuickAccessIconAppearance), typeof(Ribbon),
+            new FrameworkPropertyMetadata(RibbonQuickAccessIconAppearance.WhiteOverlay,
+                static (target, _) => ((Ribbon)target).UpdateQatButtonContext()),
+            static value => Enum.IsDefined((RibbonQuickAccessIconAppearance)value));
+
     /// <summary>Identifies the <see cref="IsQuickAccessVisible"/> dependency property.</summary>
     public static readonly DependencyProperty IsQuickAccessVisibleProperty =
         DependencyProperty.Register(
@@ -272,7 +280,7 @@ public partial class Ribbon : Control
     /// <summary>
     /// Attached flag the ribbon sets on a QAT button while it sits on a colored surface
     /// (an accent title bar, or the colored Office 2019 tab strip). The button template
-    /// then draws its icon as a white silhouette and uses the brushes published under
+    /// then applies <see cref="QuickAccessIconAppearance"/> and uses the brushes published under
     /// <see cref="QatColoredHoverBackgroundKey"/> / <see cref="QatColoredPressedBackgroundKey"/>
     /// for its hover/pressed states, so the QAT blends with the colored band like Office.
     /// </summary>
@@ -450,6 +458,17 @@ public partial class Ribbon : Control
     {
         get => (RibbonQuickAccessPosition)GetValue(QuickAccessPositionProperty);
         set => SetValue(QuickAccessPositionProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets how QAT icons contrast with colored title bars and tab strips.
+    /// The default is <see cref="RibbonQuickAccessIconAppearance.WhiteOverlay"/>.
+    /// Neutral surfaces and the overflow menu retain the original icon colors.
+    /// </summary>
+    public RibbonQuickAccessIconAppearance QuickAccessIconAppearance
+    {
+        get => (RibbonQuickAccessIconAppearance)GetValue(QuickAccessIconAppearanceProperty);
+        set => SetValue(QuickAccessIconAppearanceProperty, value);
     }
 
     /// <summary>
@@ -1262,7 +1281,7 @@ public partial class Ribbon : Control
     /// it, at the given <paramref name="size"/>. Small proxies serve the quick access toolbar;
     /// Medium ones (icon + label) serve custom ribbon groups built by the customize page.
     /// </summary>
-    internal FrameworkElement CreateCommandProxy(FrameworkElement source, RibbonControlSize size)
+    internal FrameworkElement CreateCommandProxy(FrameworkElement source, RibbonControlSize size, bool simplifiedEditor = false)
     {
         FrameworkElement proxy;
         switch (source)
@@ -1277,7 +1296,8 @@ public partial class Ribbon : Control
                 break;
 
             case RibbonComboBox combo:
-                proxy = new RibbonComboBoxQuickAccessProxy(combo, this) { Size = size };
+                proxy = simplifiedEditor ? new RibbonComboBoxSimplifiedProxy(combo)
+                    : new RibbonComboBoxQuickAccessProxy(combo, this) { Size = size };
                 // Title-bar and overflow hosts can be outside this ribbon's tree.
                 proxy.SetBinding(FlowDirectionProperty, new Binding(nameof(FlowDirection)) { Source = this });
                 break;
@@ -3611,7 +3631,8 @@ public partial class Ribbon : Control
         CancelDensityTransition();
         UpdateQatButtonContext();
         // Soften a theme/accent swap with a quick opacity settle on the ribbon strip.
-        RibbonMotion.PlayThemeCrossfade(_ribbonTabControl, RibbonAnimationAction.ThemeSwitch);
+        if (Theming.ThemeManager.ShouldAnimateRibbon)
+            RibbonMotion.PlayThemeCrossfade(_ribbonTabControl, RibbonAnimationAction.ThemeSwitch);
 
         // A theme whose selected tab connects into the body does so with a themed negative body
         // margin (+ the tab strip's ZIndex). The margin token updates on the swap, but the overlap
@@ -3632,8 +3653,7 @@ public partial class Ribbon : Control
 
     /// <summary>
     /// Sets, on each QAT button, whether it currently sits on a colored surface and the
-    /// hover brush to use there — so the button template can white-out its icon and match
-    /// the surrounding band's hover. Applied directly (not via inheritance) so it is robust
+    /// icon appearance and hover brush to use there. Applied directly (not via inheritance) so it is robust
     /// regardless of how the items are hosted.
     /// </summary>
     internal void UpdateQatButtonContext()
@@ -3661,6 +3681,9 @@ public partial class Ribbon : Control
             : tabRowColored ? "RibbonKit.Brushes.Tab.HoverBackground"
             : null;
 
+        var iconSurface = TryFindResource(titleBarColored ? "RibbonKit.Brushes.TitleBar.Background"
+            : "RibbonKit.Brushes.Ribbon.Background") as Brush ?? Brushes.Transparent;
+
         foreach (object entry in QuickAccessItems)
         {
             if (entry is not FrameworkElement element)
@@ -3669,6 +3692,16 @@ public partial class Ribbon : Control
             }
 
             SetQatOnColoredSurface(element, colored);
+            QatAdaptiveIcon.SetSurface(element, iconSurface);
+            QatAdaptiveIcon.SetActive(element,
+                colored && QuickAccessIconAppearance == RibbonQuickAccessIconAppearance.AdaptiveColor);
+            UtilityChrome.SetQatIconGlow(element,
+                colored && QuickAccessIconAppearance == RibbonQuickAccessIconAppearance.ColorWithGlow);
+            // Carry a ribbon-scoped glow into the detached title-bar host as well.
+            if (colored && TryFindResource(UtilityChrome.QatIconGlowKey) is System.Windows.Media.Effects.Effect glow)
+                element.Resources[UtilityChrome.QatIconGlowKey] = glow;
+            else
+                element.Resources.Remove(UtilityChrome.QatIconGlowKey);
             if (colored && hoverKey is not null)
             {
                 // Publish the band's brushes as RESOURCES on the proxy, not as attached-property

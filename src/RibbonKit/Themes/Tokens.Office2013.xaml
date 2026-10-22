@@ -105,7 +105,7 @@
          already used, so nothing changes here. -->
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ScrollButtonBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#E8EEF7" />
-    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBorder" Color="Transparent" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBorder" Color="#E8EEF7" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverUnderline" Color="Transparent" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedUnderline" Color="Transparent" />
@@ -503,8 +503,8 @@
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuItemOutlineCornerRadius">0</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuItemMargin">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuSeparatorMargin">0</Thickness>
-    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageBorderThickness">1</Thickness>
-    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageMargin">0,0,2,2</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageBorderThickness">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageMargin">0</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneMinimumWidth">0</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneViewportInset">0</system:Double>
 
@@ -591,6 +591,9 @@
     <Thickness x:Key="RibbonKit.Metrics.Touch.ClassicRailPadding">0,16,0,0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.InRibbonGalleryMargin">4,0,4,0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.GallerySectionPadding">0,4,0,4</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.DropDownHeaderMargin">0,0,0,2</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.DropDownRowSpacing">2</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.Touch.DropDownItemMargin">2,0</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.Touch.MessageRowHeight">52</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.Touch.MessageActionPadding">12,6</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.Touch.TitleBarHeight">46</system:Double>
@@ -616,9 +619,18 @@
     <system:Double x:Key="RibbonKit.Metrics.SimplifiedRowHeight">42</system:Double>
     <Thickness x:Key="RibbonKit.Metrics.SimplifiedGroupsRowMargin">4,1</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.SimplifiedCommandsMargin">0,3</Thickness>
+    <!-- Command-to-command gap only; dividers already include side clearance. -->
+    <system:Double x:Key="RibbonKit.Metrics.SimplifiedItemSpacing">1</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.Touch.SimplifiedItemSpacing">0</system:Double>
+    <Thickness x:Key="RibbonKit.Metrics.SimplifiedComboMargin">1,0</Thickness>
+    <system:Double x:Key="RibbonKit.Metrics.SimplifiedComboHeight">28</system:Double>
+    <system:Double x:Key="RibbonKit.Metrics.SimplifiedSeparatorHeight">36</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.Touch.SimplifiedRowHeight">52</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.SimplifiedMoreButtonWidth">32</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.MenuItemMinHeight">32</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.MenuItemMinWidth">200</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.MenuSubmenuButtonWidth">32</system:Double>
+    <!-- Optional contrast halo, behind the unchanged full-color QAT icon. -->
+    <DropShadowEffect x:Key="RibbonKit.Effects.Qat.IconGlow" Color="#FFFFFF"
+                      BlurRadius="3" ShadowDepth="0" Opacity="1" RenderingBias="Quality" />
 </ResourceDictionary>

@@ -84,6 +84,7 @@ public class RibbonComboBox : ComboBox
 
     static RibbonComboBox()
     {
+        RibbonTextEditMenu.EnsureRegistered();
         DefaultStyleKeyProperty.OverrideMetadata(
             typeof(RibbonComboBox),
             new FrameworkPropertyMetadata(typeof(RibbonComboBox)));
@@ -121,6 +122,7 @@ public class RibbonComboBox : ComboBox
     public override void OnApplyTemplate()
     {
         base.OnApplyTemplate();
+        DropDownGrouping.ApplyDefault(this);
         _popupRoot = GetTemplateChild(PopupRootPartName) as FrameworkElement;
         _popupScrollViewer = GetTemplateChild(PopupScrollViewerPartName) as ScrollViewer;
         ApplyPopupScrollBarStyle();

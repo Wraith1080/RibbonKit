@@ -620,8 +620,8 @@
                                                                                   Margin="10,8,10,10" />
                                                             </ScrollViewer>
 
-                                                            <!-- A nav item's page is FRAMED and gets the
-                                                                 shaded header band. -->
+                                                            <!-- A nav item's page shares the content frame
+                                                                 and gets a shaded header band. -->
                                                             <Border x:Name="ActivePage"
                                                                     Visibility="Collapsed"
                                                                     Margin="{DynamicResource RibbonKit.Metrics.ApplicationMenuActivePageMargin}"
@@ -633,6 +633,15 @@
                                                                         <RowDefinition Height="Auto" />
                                                                         <RowDefinition Height="*" />
                                                                     </Grid.RowDefinitions>
+                                                                    <!-- Cover the separator's highlight only beside
+                                                                         the heading, without moving its text. -->
+                                                                    <Border x:Name="HeaderBandJoin" Grid.Row="0"
+                                                                            Width="1" HorizontalAlignment="Left"
+                                                                            Margin="-1,0,0,0" IsHitTestVisible="False"
+                                                                            Visibility="{Binding Visibility, ElementName=HeaderBand}"
+                                                                            Background="{DynamicResource RibbonKit.Brushes.ApplicationMenu.HeaderBackground}"
+                                                                            BorderBrush="{DynamicResource RibbonKit.Brushes.ApplicationMenu.Separator}"
+                                                                            BorderThickness="0,0,0,1" />
                                                                     <Border x:Name="HeaderBand"
                                                                             Grid.Row="0"
                                                                             Padding="10,5"

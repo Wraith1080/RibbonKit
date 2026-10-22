@@ -156,6 +156,41 @@ public sealed class ApplicationButtonShapeThemeTests
     public void Theme_default_and_local_value_follow_wpf_precedence() => RunSta(() =>
     {
         var application = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "TextEditMenus")
+        {
+            VerifyScope("TextEditMenuChecks.Verify", () => TextEditMenuChecks.Verify(application));
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "GroupedCombos")
+        {
+            VerifyScope("GroupedComboBoxChecks.Verify", () => GroupedComboBoxChecks.Verify(application));
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "CaptionMotion")
+        {
+            VerifyScope("Office2024BackdropChecks.VerifyCaptionMotion", () => Office2024BackdropChecks.VerifyCaptionMotion(application));
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "Office2024Backdrop")
+        {
+            VerifyScope("Office2024BackdropChecks.Verify", () => Office2024BackdropChecks.Verify(application));
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "GalleryPopupViewport")
+        {
+            VerifyScope("GalleryPopupViewportChecks.Verify", () => GalleryPopupViewportChecks.Verify(application));
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "CollapsedGroupPress")
+        {
+            VerifyScope("CollapsedGroupPressChecks.Verify", () => CollapsedGroupPressChecks.Verify(application));
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "ThemePolish")
+        {
+            VerifyScope("ThemePolishPortabilityChecks.Verify", () => ThemePolishPortabilityChecks.Verify(application));
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "TabMoveCustomization")
         {
             VerifyScope("TabMoveCustomizationChecks.Verify", () => TabMoveCustomizationChecks.Verify(application));
@@ -169,6 +204,21 @@ public sealed class ApplicationButtonShapeThemeTests
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "OverflowMenus")
         {
             VerifyScope("OverflowMenuPortabilityChecks.Verify", () => OverflowMenuPortabilityChecks.Verify(application));
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "SimplifiedSpacing")
+        {
+            VerifyScope("SimplifiedSpacingChecks.Verify", () => SimplifiedSpacingChecks.Verify(application));
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "SimplifiedCombos")
+        {
+            VerifyScope("SimplifiedComboEditorChecks.Verify", () => SimplifiedComboEditorChecks.Verify(application));
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "SimplifiedButtonShape")
+        {
+            VerifyScope("SimplifiedButtonShapeChecks.Verify", () => SimplifiedButtonShapeChecks.Verify(application));
             return;
         }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "SimplifiedRibbon")
@@ -247,8 +297,14 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("QuickAccessScopePortabilityChecks.Verify", () => QuickAccessScopePortabilityChecks.Verify(application));
             return;
         }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "QatIconAppearance")
+        {
+            VerifyScope("QuickAccessIconAppearanceChecks.Verify", () => QuickAccessIconAppearanceChecks.Verify(application));
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "ColoredQat")
         {
+            VerifyScope("QuickAccessIconAppearanceChecks.Verify", () => QuickAccessIconAppearanceChecks.Verify(application));
             VerifyScope("ColoredQuickAccessPortabilityChecks.Verify", () => ColoredQuickAccessPortabilityChecks.Verify(application));
             return;
         }
@@ -275,6 +331,21 @@ public sealed class ApplicationButtonShapeThemeTests
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "MinimizedDivider")
         {
             VerifyScope("TouchDensityPortabilityChecks.VerifyMinimizedDivider", () => TouchDensityPortabilityChecks.VerifyMinimizedDivider(application));
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "TouchOptions")
+        {
+            VerifyScope("RadioIndicatorPortabilityChecks.Verify", () => RadioIndicatorPortabilityChecks.Verify(application));
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "TouchAdaptive")
+        {
+            ThemeManager.Apply(application, RibbonTheme.Office2024Flat);
+            ThemeManager.SetDarkMode(application, true);
+            var motion = RibbonKit.Animation.RibbonAnimation.GlobalLevel;
+            RibbonKit.Animation.RibbonAnimation.GlobalLevel = RibbonKit.Animation.RibbonAnimationLevel.None;
+            try { VerifyScope("TouchDensityPortabilityChecks.VerifyAdaptiveRefresh", TouchDensityPortabilityChecks.VerifyAdaptiveRefresh); }
+            finally { RibbonKit.Animation.RibbonAnimation.GlobalLevel = motion; }
             return;
         }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "TouchChrome")
@@ -350,6 +421,7 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("QatAndContextualGeometryChecks.VerifyMarker", () => QatAndContextualGeometryChecks.VerifyMarker(application));
             VerifyScope("MessageTransitionPortabilityChecks.Verify", () => MessageTransitionPortabilityChecks.Verify(application));
             VerifyScope("DropDownHeaderPortabilityChecks.Verify", () => DropDownHeaderPortabilityChecks.Verify(application));
+            VerifyScope("ThemePolishPortabilityChecks.Verify", () => ThemePolishPortabilityChecks.Verify(application));
             VerifyScope("GalleryHeaderAndQatCommandChecks.Verify", () => GalleryHeaderAndQatCommandChecks.Verify(application));
             VerifyScope("QuickAccessCommandInteractionChecks.Verify", () => QuickAccessCommandInteractionChecks.Verify(application));
 
@@ -359,6 +431,7 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("GroupedGalleryPortabilityChecks.Verify", () => GroupedGalleryPortabilityChecks.Verify(application));
             VerifyScope("NativeGalleryPopupPortabilityChecks.Verify", () => NativeGalleryPopupPortabilityChecks.Verify(application));
             VerifyScope("ComboBoxQuickAccessPortabilityChecks.Verify", () => ComboBoxQuickAccessPortabilityChecks.Verify(application));
+            VerifyScope("GroupedComboBoxChecks.Verify", () => GroupedComboBoxChecks.Verify(application));
             VerifyScope("GalleryQuickAccessPortabilityChecks.Verify", () => GalleryQuickAccessPortabilityChecks.Verify(application));
         }
         if (scope is not ("AfterCrystalTint" or "AfterApplicationMenuViewport" or "AfterCrystalApplicationMenu"))
@@ -366,6 +439,10 @@ public sealed class ApplicationButtonShapeThemeTests
             if (scope is not ("AfterKeyboardNavigation" or "AfterSimplifiedDesignerDefaults" or "AfterCustomizationScrollSpacing"))
             {
                 VerifyScope("GroupQuickAccessPortabilityChecks.Verify", () => GroupQuickAccessPortabilityChecks.Verify(application));
+                VerifyScope("GalleryPopupViewportChecks.Verify", () => GalleryPopupViewportChecks.Verify(application));
+                VerifyScope("Office2024BackdropChecks.Verify", () => Office2024BackdropChecks.Verify(application));
+                VerifyScope("Office2024BackdropChecks.VerifyCaptionMotion", () => Office2024BackdropChecks.VerifyCaptionMotion(application));
+                VerifyScope("CollapsedGroupPressChecks.Verify", () => CollapsedGroupPressChecks.Verify(application));
                 ThemeManager.Apply(application, RibbonTheme.Office2024);
                 VerifyScope("KeyboardFocusPortabilityChecks.Verify", () => KeyboardFocusPortabilityChecks.Verify(application));
                 VerifyScope("KeyboardNavigationPortabilityChecks.Verify", () => KeyboardNavigationPortabilityChecks.Verify(application));
@@ -378,6 +455,9 @@ public sealed class ApplicationButtonShapeThemeTests
                 VerifyScope("Flat2024ThemeChecks.Verify", () => Flat2024ThemeChecks.Verify(application));
                 ThemeManager.Apply(application, RibbonTheme.Office2024);
                 VerifyScope("SimplifiedRibbonPortabilityChecks.Verify", () => SimplifiedRibbonPortabilityChecks.Verify(application));
+                VerifyScope("SimplifiedButtonShapeChecks.Verify", () => SimplifiedButtonShapeChecks.Verify(application));
+                VerifyScope("SimplifiedComboEditorChecks.Verify", () => SimplifiedComboEditorChecks.Verify(application));
+                VerifyScope("SimplifiedSpacingChecks.Verify", () => SimplifiedSpacingChecks.Verify(application));
                 VerifyScope("SimplifiedDesignerDefaultsPortabilityChecks.Verify", () => SimplifiedDesignerDefaultsPortabilityChecks.Verify(application));
             }
             ThemeManager.Apply(application, RibbonTheme.Office2024);
@@ -618,8 +698,10 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("CapturedBackdropPortabilityChecks.Verify", () => CapturedBackdropPortabilityChecks.Verify(application));
             VerifyScope("GallerySelectionPortabilityChecks.Verify", () => GallerySelectionPortabilityChecks.Verify(application));
             VerifyScope("QuickAccessScopePortabilityChecks.Verify", () => QuickAccessScopePortabilityChecks.Verify(application));
+            VerifyScope("QuickAccessIconAppearanceChecks.Verify", () => QuickAccessIconAppearanceChecks.Verify(application));
             VerifyScope("ColoredQuickAccessPortabilityChecks.Verify", () => ColoredQuickAccessPortabilityChecks.Verify(application));
             VerifyScope("QuickAccessBackdropPortabilityChecks.Verify", () => QuickAccessBackdropPortabilityChecks.Verify(application));
+            VerifyScope("TextEditMenuChecks.Verify", () => TextEditMenuChecks.Verify(application));
         }
         finally
         {

@@ -48,10 +48,24 @@ below describes the current checkout, including post-release additions; see
   Classic, Classic2010, Glass2007, Classic2007, CrystalSidebar and CrystalFloating designs.
 - Repeatable message bars with actions/dismissal; Backstage page/footer/recent patterns.
 - Three QAT placements, overflow and source-linked button/toggle/split/dropdown/combo/gallery/group proxies.
+- Colored-surface QAT icons support white silhouettes, original colors with glow, or adaptive vector colors.
 - Contextual tabs, tab/group merging and modal-tab lifetimes.
 - Ribbon/QAT customization with JSON Import/Export/Reset and application-controlled storage.
 
 ![Backstage with Windows material](docs/images/backstage-mica.png)
+
+For colored QAT surfaces, `Ribbon.QuickAccessIconAppearance` defaults to
+`RibbonQuickAccessIconAppearance.WhiteOverlay`. Select `ColorWithGlow` to retain
+the supplied icon colors with a small white halo, or `AdaptiveColor` to adjust
+solid vector fills/strokes for contrast while retaining internal details and
+colored accents where possible. Adaptive drawings are cached, preserve geometry
+and existing transparency, and leave unsupported artwork (including bitmaps and
+gradient fills) unchanged. Parts that would be recolored black instead become
+partially transparent openings at 25% of their original opacity. This is a color
+heuristic, not semantic icon recognition.
+Neutral surfaces and overflow menus keep their normal icons. The glow effect is
+customizable through `RibbonKit.Effects.Qat.IconGlow`; applications own selection
+and persistence. Showcase demonstrates all three choices under **View → Accent**.
 
 ### Input & accessibility
 
@@ -210,14 +224,18 @@ row. Classic is the default; Compact/Touch density applies to either layout.
 
 Higher priorities stay inline longer when space runs out; ties overflow from the
 end. Set `Ribbon.SimplifiedSize="Small"` for an icon-only inline command (supply an
-icon); the default Medium size includes its label. Changing the property updates
+icon); Small action/toggle buttons have square targets, and the default Medium
+size includes its label. Changing the property updates
 the existing copy, and overflow entries keep their labels. Commands retain their
 original tab/group ordering. **More Ribbon Commands**
 offers displaced inline commands and each group's original full-content flyout,
 so editors, arbitrary content and dialog launchers remain accessible. Inline
-buttons/toggles/splits/dropdowns retain source state and actions; combos and
-galleries use source-linked dropdown copies. Editable combo text entry remains
-available in the native group flyout.
+buttons/toggles/splits/dropdowns retain source state and actions. Combo boxes in
+their original authored tab/group stay combo editors, including editable text,
+current values and configured input widths. They keep their normal field
+presentation at either command size. QAT, custom-tab/group and overflow copies
+remain dropdown menus; galleries also retain their dropdown presentation.
+The original full-group flyout remains available.
 
 QAT and simplified overflow use menu-sized rows (32 DIP minimum height, 44 in
 Touch, and 200 DIP minimum width). Dropdown, split, combo, gallery and group
@@ -443,6 +461,26 @@ presentation. Directly authored visual elements are represented by their text
 or accessible name, so each original item keeps its parent. Editable combos also
 offer their existing choices in QAT; typing and the text-editing context menu
 remain on the original input. Assign a stable command ID for saved customization.
+
+Use WPF collection-view `GroupDescriptions` to organize combo choices into named
+sections. RibbonKit supplies themed, nonselectable headings and uniform vertical
+spacing: one DIP above and below each row, without extra space at the outer edges.
+Native, QAT, Simplified and
+custom-group combo dropdowns retain the grouping and source selection. Authored
+`GroupStyle` values take precedence. Showcase's Font combo demonstrates
+**Common fonts** and **Other fonts**.
+
+```csharp
+var view = new ListCollectionView(fontChoices);
+view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(FontChoice.Section)));
+fontCombo.ItemsSource = view;
+fontCombo.DisplayMemberPath = nameof(FontChoice.Name);
+```
+
+Editable `RibbonComboBox` and `RibbonTextBox` use the current theme for their native
+text-editing menus, including shortcut labels and Touch spacing. Authored
+`ContextMenu` values keep precedence; an explicit `ContextMenu="{x:Null}"` on the
+text editor disables its menu.
 
 ### Galleries in QAT
 

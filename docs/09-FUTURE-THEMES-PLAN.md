@@ -892,9 +892,10 @@ remain open before calling this a complete shipped theme.
 The first main-window visual check showed that tokens alone left the QAT drawer and
 message panels looking like Office. Showcase now applies the existing Crystal
 presentation adapters and local control styles only while Crystal Light is selected.
-The Crystal menu is the default File surface, with an explicit saved File choice still
-respected. Switching back removes the local styles and restores the Office template
-parts. The document-under-QAT layout remains a separate host option.
+The saved `2007 Menu` toggle selects the File surface independently of the theme;
+switching themes keeps its on/off choice. Switching back removes the local styles
+and restores the Office template parts. The document-under-QAT layout remains a
+separate host option.
 
 The next first-phase screenshot review found seven gaps in the main Showcase:
 contextual and merged contextual tabs, scrollbars, customization, split-button
@@ -1047,6 +1048,7 @@ supported themes. Native Mica/Acrylic activation and Aero remain host choices.
 | --- | --- |
 | Selector and restoration | Implemented 2026-10-11. Legacy themes cannot activate the overlay; returning to a supported theme restores the saved on/off choice. Focused Release selector, preference and Crystal presentation checks passed 35/35. |
 | Mica combination | Implemented 2026-10-11. Glass look applies after either Mica or Acrylic activation, through the same shared overlay. Eleven focused cases passed for modern Office light/dark, Crystal's default, on/off and Mica/Acrylic/None switching, and legacy Aero suspension/restoration. Repeated refresh keeps one overlay without compounding opacity. The independent `GlassOverlay` scope passed, and normal Debug Showcase built cleanly. Derived backdrop state was injected for selector coverage. User approved the Mica and Glass look combination on 2026-10-11; this records the reported review scope. [Implementation record](history/library/12-keytips-layout-and-validation.md#3248-glass-look-over-mica-and-acrylic--2026-10-11). |
+| Colored caption over a 2024 backdrop | Corrected 2026-10-19. Office 2024/Flat keep the ribbon-wide underlay transparent when the caption is colored, including dark mode and Glass look on/off. Eight targeted host cases passed after reproducing the four dark failures; the independent `Office2024Backdrop` scope passed 16 rendered underlay combinations, removal and scoped precedence checks. Dark captures were inspected; normal Debug runtime net8/net9 and Showcase builds passed. Native Mica/Acrylic and mixed-monitor review remain pending; no full suite ran. [Correction and focused evidence](history/library/12-keytips-layout-and-validation.md#3272-colored-office-2024-captions-preserve-the-ribbon-backdrop--2026-10-19). |
 | Shared ribbon paint | Implemented 2026-10-11. A neutral shared tab-strip token separates the native band from the translucent body. Office 2013/2019 use the title bar's 0.48 glass-opacity multiplier in both light and dark modes. After the user's Office 2019 dark screenshot showed the surfaces blending, its body now uses 0.64 through a scoped theme metric; other bodies retain 0.44. Office 2013's white File label keeps its colored hover. Independent consumer checks passed across 12 palettes, scoped Office 2013 light/2019 dark inside Crystal, and rendered gray-backdrop separation. |
 | Deterministic visual evidence | Latest body adjustment passed 35 selected scenes on 2026-10-11: 14 glass light/dark scenes at 100% and narrow RTL at 200%, including two new Office 2019 dark gray-backdrop cases, plus 21 existing Office and Crystal comparisons. The two affected dark captures and diffs and two new gray captures were inspected before refreshing/creating baselines; existing non-glass approvals, other glass baselines and tolerances were retained. These fixtures use authored WPF paint. |
 | Native appearance acceptance | Office 2019 dark header/body separation confirmed by the user on 2026-10-11 after the body-opacity adjustment. Other review remains open: on the normal Debug Showcase build, compare Mica and Acrylic with Glass look on/off in each supported Office theme and dark variant. Review title/status bars, ribbon body, tab markers, command and split-button states, and Backstage at normal/narrow widths; check repeated switches through legacy Aero and Crystal. Open-surface DPI/mixed-monitor and broader motion acceptance are separate gates. |
@@ -1130,6 +1132,14 @@ consumer checks as part of its assembled validation. This does not establish nat
 press/hold behavior, perceived speed, measured latency or Visual Studio acceptance;
 see [host-layout evidence](18-HOST-LAYOUT-TRANSITION-PLAN.md#h3--verification-and-acceptance-2026-10-16).
 
+Collapsed-group follow-up implemented 2026-10-19: the shared collapsed group button
+also opens on mouse-down, with the same hold-and-cancel tradeoff. The independent
+`CollapsedGroupPress` scope failed before the fix and passed afterwards across all
+seven themes and both densities; three related group interaction regressions also
+passed. Normal Debug runtime net8 and Showcase builds passed. Physical input and
+perceived speed remain pending user review; no full suite was run.
+[Implementation and focused evidence](history/library/04-office2007-and-popup-motion.md#3258-dropdown-opener-paint-precedes-native-popup-creation--2026-10-15).
+
 ## Gallery header and section layout
 
 Implemented 2026-10-11 after the user's legacy dark gallery screenshots. Shared
@@ -1158,6 +1168,16 @@ The user accepted the updated Theme/Accent gallery appearance on 2026-10-11,
 including the legacy dark heading contrast and balanced section spacing. This
 confirmation does not establish physical touch, multiple-section overflow input,
 or native mixed-monitor DPI acceptance. [Implementation record](history/library/12-keytips-layout-and-validation.md#3241-gallery-header-contrast-and-balanced-section-spacing--2026-10-11).
+
+Copy popup follow-up implemented 2026-10-19: QAT/custom-group galleries now follow
+the native popup's height budget, section spacing and scrollbar style. The focused
+RibbonKit-only `GalleryPopupViewport` reproduction failed before the fix and passed
+afterwards across all seven themes in Compact/LTR and Touch/RTL, including fitting
+Theme and overflowing Accent-like content, custom-group/QAT copies and dark palette
+refresh. Thirteen relevant gallery runtime cases passed; Office 2010/Crystal popup
+captures were inspected. Normal Debug runtime net8/net9 and Showcase builds passed.
+User live review and native mixed-monitor DPI remain pending; no full suite ran.
+[Sizing, style lookup and focused evidence](history/library/11-touch-density-and-gallery-projections.md#3271-gallery-copy-popup-sizing-and-scrollbar-parity--2026-10-19).
 
 ## Classic Backstage caption continuation
 
@@ -1298,3 +1318,195 @@ Colored QAT commands use corresponding light state outlines.
 
 Implementation rationale and verification limits are recorded in
 [§3.254](history/library/13-flat-theme-variants.md#3254-office-2024-flat-theme--2026-10-12).
+
+## Office menu, hover and transition polish
+
+Implemented 2026-10-18 from the supplied screenshots and backdrop recording:
+2024/Flat inner menu corners are rounded around the combined content surface;
+Office menu pages share that frame; Glass retains 2024's transparent tab hover;
+2013 hover reaches the selected header's top edge; connected-tab cuts travel with
+body chrome; backdrop-only changes skip the ribbon theme fade.
+[Implementation and regression pitfalls](history/library/13-flat-theme-variants.md#3265-office-menu-hover-and-transition-polish--2026-10-18).
+
+| Gate | Current evidence |
+| --- | --- |
+| Build | Normal Debug runtime builds for net8.0-windows and net9.0-windows and normal Debug Showcase build passed with zero warnings/errors. |
+| Focused runtime | 78/78 passed: host/layout transitions, application-menu visual states/dark palettes and Showcase backdrop/Glass preferences. Six notch cases exercise both mode and density directions in 2007/2010/2013, LTR/RTL, with 72 paused rendered samples. Both new flicker regressions failed against the old behavior. |
+| Caption toggle fade, 2026-10-20 | Corrected: caption-color toggles skip the ribbon theme fade while keeping resource/QAT updates. Fourteen caption regressions and the existing backdrop/accent-motion check passed; the separate `CaptionMotion` consumer passed 28 theme/light-dark/Subtle-Expressive combinations. Actual accent changes still animate. Normal Debug runtime net8/net9 and Showcase builds passed. The supplied recording was inspected; live review of the corrected build remains pending. No full suite ran. |
+| Independent consumer | ThemePolish passed 28 theme/light-dark/direction combinations without Showcase; GlassOverlay passed all 14 light/dark palettes plus scoped resource precedence checks. |
+| Selected visuals | 43 Release scenes passed repeated rendering and approval comparison after actual/diff review: 24 new scenes, seven updated menu approvals and 12 retained references, including the required theme/DPI warm-up prefix. Covers 100/150/200%, RTL, both palettes, 2013 hover, 2024/Flat Glass hover and Office menu pages. |
+| Native review | Pending user review of all six reported fixes in Showcase, especially real Mica/Acrylic toggles and the live connected notch during Simplified/Touch transitions. Native pointer input, mixed-monitor DPI and reduced-motion review were not run. |
+| Broader validation | Full solution suite and release/package gates were not run for this bounded fix. |
+| Heading join follow-up | Corrected 2026-10-18: the heading background covers the divider's one-DIP highlight strip, preserving text inset and page layout. The independent ThemePolish consumer passed all 28 palette/direction combinations plus a headerless-page check; 16 selected Release menu scenes passed after actual/diff inspection and approval updates. Normal Debug runtime/Showcase builds passed. Native review of this seam remains open. Earlier runtime/motion evidence above was retained. |
+
+## Persistent application-menu choice
+
+Implemented 2026-10-18: the existing `2007 Menu` toggle retains its on/off state
+through every theme and dark-mode change, including Office 2007 and Crystal.
+The File-surface choice continues to save and restore with appearance preferences;
+the RTL lab follows the same explicit choice. No new toggle, settings schema or
+runtime API was added.
+
+Focused automated evidence: 46 selector/preferences checks and two menu-comparison/
+RTL checks passed in separate runs. New cases cover both on/off choices through
+all 14 theme/palette combinations and saved choices for all seven themes. Normal
+Debug Showcase built with zero warnings/errors. The older Crystal comparison
+assertions were updated for the already accepted menu geometry from the preceding
+slice. Native click/relaunch review and the full solution suite were not run.
+[Implementation record](history/library/13-flat-theme-variants.md#3266-persistent-showcase-application-menu-choice--2026-10-18).
+
+## Theme-preferred Backstage layouts
+
+Implemented 2026-10-18 in Showcase only. Selecting a theme updates the existing
+Backstage layout selector and RTL lab using this mapping:
+
+| Theme | Preferred Backstage layout |
+| --- | --- |
+| Crystal | Crystal Sidebar |
+| Office 2024 / Office 2024 Flat | 2024 Rail |
+| Office 2013 / Office 2019 | 2013 Rail |
+| Office 2010 | 2010 Glass |
+| Office 2007 | 2007 Classic |
+
+The `2007 Menu` on/off choice stays independent. A manual Backstage layout can
+replace the preferred choice until the next theme selection, and its saved value
+still restores at startup. The runtime library owns no theme-to-layout policy.
+
+All 28 focused Showcase selector checks passed, including seven mapping cases,
+manual overrides through dark-mode changes, RTL lab synchronization and both
+application-menu toggle states across every theme/palette. Normal Debug Showcase
+built with zero warnings/errors. Live selection/relaunch review and the full
+solution suite were not run.
+[Implementation record](history/library/13-flat-theme-variants.md#3267-showcase-theme-preferred-backstage-layouts--2026-10-18).
+
+## QAT icon appearance choice
+
+Implemented 2026-10-19. **View → Accent** offers **White Overlay** (the existing
+default) and **Color with Glow**. Glow keeps the original icon colors with a tight
+white halo behind the icon on colored title bars and the colored Office 2019 tab
+strip. The foreground image remains sharp. Neutral placements and overflow menus
+use their normal icon treatment. Theme changes and title-bar toggles preserve the
+choice; Showcase restores it from appearance preferences at startup.
+
+The reusable `Ribbon.QuickAccessIconAppearance` property and
+`RibbonQuickAccessIconAppearance` enum belong to RibbonKit. Their six documented
+symbols are compatible Unshipped additions; the shipped API is unchanged. Hosts
+own the selector and persistence. The glow effect is a shared theme token and
+also follows ribbon-scoped resource overrides into the detached title-bar QAT.
+
+Final focused Release consumer verification passed 336 theme/palette/density/
+placement/simulated-DPI combinations, each with Glow/Overlay/Glow round trips,
+plus overflow neutrality, ribbon-scoped effects and the existing colored split/
+dropdown-state matrix. Office2007/2024 overlay/glow renders were inspected at
+100/125/150/200%. Normal Debug Showcase and Release solution builds passed with
+zero warnings/errors. Appearance schema 4 round trips, legacy defaults, invalid
+values and both real selector choices passed in the runtime suite.
+
+The full runtime run passed 1024 of 1027 cases. Its stale Glass brush-identity
+and dark transparent-hover expectations were corrected, and that case passed
+its focused recheck. On 2026-10-19, at the user's request, the two deferred focus
+cases each passed in a separate fresh Release process: native gallery restoration
+(native popup, browsed row, LTR) and title-bar QAT overflow navigation (RTL).
+Combined evidence now covers all 1027 runtime cases; this is assembled coverage,
+not a new clean full-suite run. No focus runtime change was required. All 483
+Writer tests passed.
+
+The full consumer initially stopped at the Touch fixture's old lower-QAT menu
+host lookup. After aligning that fixture with the existing runtime wrapper, the
+Touch recheck passed that point but stopped at the adaptive body's scroll-arrow
+visibility assertion. The 2026-10-19 visual investigation confirmed that arrows
+were visible and functional; that assertion also searched the paint-only layer.
+Its live-foreground lookup and focused reproduction now pass; the
+[Touch acceptance record](14-TOUCH-DENSITY-PLAN.md#verification-and-acceptance)
+owns the measurements and visual evidence. Full consumer continuation remains
+unverified; no adaptive behavior or focus runtime was changed.
+The full visual aggregate hit its 60-second timeout, then all 195 unique approved
+scenes passed in four smaller batches with unchanged references and tolerances.
+Repeated Office2007/2010 default-DPI scenes supplied the established WPF warmup;
+the four non-rendering visual tests had passed in the full attempt.
+
+Evidence is in `TestResults/qat-glow-full`, `qat-glow-colored-final.log`,
+`qat-glow-glass-recheck.log`, `qat-glow-touch-recheck.log` and the four
+`qat-glow-visual-*.log` files. The isolated focus results are in
+`TestResults/qat-glow-focus-retry/{gallery,overflow}.trx`. The full-suite gate
+remains open for the uncompleted full consumer continuation. The user's
+2026-10-19 visual review rejected the glow's appearance; it remains an available
+comparison while Adaptive Color is tried below. Real monitor/DPI transitions
+remain pending.
+[Implementation record](history/library/01-core-controls.md#3269-optional-color-preserving-qat-icon-glow--2026-10-19).
+
+## Adaptive QAT icon colors
+
+Implemented 2026-10-19 as a third **View → Accent → QAT icon appearance** choice,
+**Adaptive Color**. It adjusts solid vector fills/strokes for contrast against
+the colored band and earlier icon layers. Original geometry and internal details
+are retained; colored accents keep their hue where possible. Newly generated
+black parts instead use the source color at 25% of its original alpha, with true
+openings through earlier icon layers. Authored black details stay unchanged.
+The neutral/overflow treatment and White Overlay default remain unchanged.
+Bitmaps, unsupported/complex drawings and gradient icon fills keep their original
+appearance. This is a heuristic; it does not infer which white shapes are holes.
+
+The reusable library enum adds one compatible Unshipped member. Shared templates
+and a bounded weak palette cache own rendering; Showcase owns the selector and
+existing schema-4 preference. A mutable icon refreshes on drawing changes, and a
+different accent or scoped surface selects another cached palette. No glow or
+toolbar background is added by this choice.
+
+Initial implementation verification passed: Debug Showcase and Release solution builds
+have zero warnings/errors; all 12 final Release vector/binding/render checks pass,
+including mutable-source invalidation, freezing a live source, geometry/alpha
+retention and unsupported-artwork fallback. Showcase selector/theme round trips
+and schema-4 preference checks pass. The RibbonKit-only consumer passed 336 theme/
+palette/density/placement/simulated-DPI contexts with Glow/Overlay/Adaptive/Glow
+round trips, plus scoped palettes, live icon replacement, overflow neutrality and
+the existing colored-button matrix.
+
+Authored Save/Undo/Redo/Mouse/Touch/Copy/Paste/Bold/Find captures cover Office2024
+and Office2007 with blue, purple and yellow accents at simulated 100/125/150/200%
+DPI. Selected flat/gradient and fractional-DPI strips were inspected. The initial
+capture aggregate exceeded the 30-second STA limit; the sweep passes split by
+palette. Captures are in `TestResults/qat-adaptive`, focused results in
+`qat-adaptive-final-vectors.log` and `qat-adaptive-consumer.log`. Native visual
+acceptance and real monitor/DPI transitions remain pending.
+
+The partial-transparency refinement passed all 16 focused renderer checks in
+Debug, including pixel-alpha assertions through earlier layers and a stroke's
+own fill, transformed geometry, later accents and authored-black preservation.
+The affected Debug Showcase built successfully. The dedicated Release
+`QatIconAppearance` consumer scope passed all 336 contexts and a live replacement
+with partial stroke coverage. Captures in `TestResults/qat-adaptive-alpha` were
+reviewed on blue, purple and yellow flat/gradient bands. Results are in
+`qat-adaptive-alpha-final.log` and `qat-adaptive-alpha-consumer-final.log`.
+Only icon-specific checks ran for this refinement; live visual acceptance remains
+pending.
+
+A broader attempt preceded the user's instruction to test only this change:
+runtime passed 1042/1043 (the failed focus case passed a fresh isolated retry),
+Writer passed 482/483 (the lifecycle timeout also reproduces on starting commit
+`144fe110`), and full consumer/visual aggregates stopped at Touch fixtures/the
+60-second visual limit. Further broad checks were stopped at the user's request;
+an incidental Touch fixture edit was removed. These results are not a clean full
+suite pass. No approvals, Writer code or unrelated runtime behavior were changed.
+[Implementation record](history/library/01-core-controls.md#3270-adaptive-qat-vector-colors--2026-10-19).
+
+## Text-editor context menus
+
+Implemented 2026-10-20 for editable `RibbonComboBox` and `RibbonTextBox`. The
+native edit menu uses shared menu chrome, row styling and shortcut labels.
+Authored menus and explicit null overrides retain precedence.
+
+Five focused runtime checks passed, including native command targets, selection,
+read-only enabled states, custom menus and ordinary-text-box isolation. The
+RibbonKit-only `TextEditMenus` consumer passed 56 theme/palette/density/control
+combinations: all seven themes, light/dark, Compact LTR and Touch RTL, both input
+types. Open-popup palette changes and scoped brush precedence also passed.
+All 28 captured native menu appearances were reviewed. Normal Debug runtime
+net8/net9, Showcase and consumer builds passed; the final builds have zero
+warnings/errors. Only menu-related tests ran; no full suite or visual approval
+updates were needed. Captures are in `TestResults/text-edit-menus`.
+
+Live pointer/Shift+F10 acceptance, OS spelling/IME behavior and mixed-monitor DPI
+remain unverified. Automated opening raises the real WPF routed event without
+physical input. WPF's native menu entrance remains in place.
+[Implementation record](history/library/02-designer-and-context-menus.md#3273-themed-native-text-editor-context-menus--2026-10-20).

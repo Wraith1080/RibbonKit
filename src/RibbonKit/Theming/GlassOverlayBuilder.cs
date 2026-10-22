@@ -32,10 +32,14 @@ internal static class GlassOverlayBuilder
         overlay["RibbonKit.Brushes.Control.HoverBackground"] = new SolidColorBrush(hover);
         overlay["RibbonKit.Brushes.Control.CompanionBackground"] = new SolidColorBrush(hover);
         overlay["RibbonKit.Brushes.Control.SplitActiveHover"] = new SolidColorBrush(splitActive);
-        overlay["RibbonKit.Brushes.Tab.HoverBackground"] = new SolidColorBrush(tabHover);
+        // Underline-only palettes keep their transparent tab surface in Glass.
+        var tabBackground = (Brush)scope.FindResource("RibbonKit.Brushes.Tab.HoverBackground");
+        overlay["RibbonKit.Brushes.Tab.HoverBackground"] = tabBackground.Opacity == 0
+            || tabBackground is SolidColorBrush { Color.A: 0 }
+                ? tabBackground.Clone() : new SolidColorBrush(tabHover);
         overlay["RibbonKit.Brushes.QatExtender.Background"] = new SolidColorBrush(tabHover);
         overlay["RibbonKit.Brushes.ApplicationButton.HoverBackground"] =
-            overlay["RibbonKit.Brushes.Tab.HoverBackground"];
+            new SolidColorBrush(tabHover);
         // Light palettes can give File its own colored block with white text.
         // Preserve that block's hover contrast instead of borrowing a pale tab wash.
         if (scope.FindResource("RibbonKit.Brushes.ApplicationButton.Foreground") is SolidColorBrush fileText
@@ -45,7 +49,14 @@ internal static class GlassOverlayBuilder
         {
             ScaleOpacity(scope, overlay, "RibbonKit.Brushes.ApplicationButton.HoverBackground", 1.0);
         }
-        ScaleOpacity(scope, overlay, "RibbonKit.Brushes.Tab.HoverBorder", 1.0);
+        // A palette can extend its hover fill through the reserved tab border
+        // (Office 2013). Keep that edge on the same wash under Glass as well.
+        if (tabBackground is SolidColorBrush tabFill && tabFill.Color.A != 0
+            && scope.FindResource("RibbonKit.Brushes.Tab.HoverBorder") is SolidColorBrush tabBorder
+            && tabFill.Color == tabBorder.Color && tabFill.Opacity == tabBorder.Opacity)
+            overlay["RibbonKit.Brushes.Tab.HoverBorder"] = overlay["RibbonKit.Brushes.Tab.HoverBackground"];
+        else
+            ScaleOpacity(scope, overlay, "RibbonKit.Brushes.Tab.HoverBorder", 1.0);
 
         return overlay;
     }

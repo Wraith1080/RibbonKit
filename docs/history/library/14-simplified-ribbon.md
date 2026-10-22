@@ -76,6 +76,86 @@ mode. Every palette supplies that token; classic layout and native QAT retain
 their existing styles and metrics. Body-card margins remain shared with the
 lower-QAT/message continuation surfaces.
 
+#### Native combo editors in original slots — 2026-10-21
+
+`RibbonGroupsHost` selects a native `RibbonComboBoxSimplifiedProxy` only when a
+combo source is its original declaration in a non-custom tab/group. The internal
+factory flag is opt-in at that call site; QAT, custom copies and overflow keep
+their menu projections. Original-slot fields keep their configured input widths
+and native presentation at either Small/Medium command size. Existing group and
+declaration identities still drive customization and priority; no public API or
+persistence format was added.
+
+The inline editor owns independent ComboBoxItem containers and borrows no source
+visuals. Reuse choice-presentation bindings and resolved source group paths from
+the menu projection, including source styles, grouping order and leaf occurrences.
+TextSearch labels let native editing/selection display the source's data labels.
+Explicit Text/SelectedIndex binding commits are guarded during rebuilds and
+reentrancy. A plain TwoWay refresh can publish an empty value while clearing rows;
+publishing selection-driven text before its index can pick the first duplicate
+label instead of the selected occurrence. Keep both operations guarded.
+
+Weak collection/group/style listeners follow loaded lifetime. Closing an inline
+picker on overflow prevents a popup anchored to its zero-width slot; transfer
+focused input to More Commands after layout. Classic restoration remembers WPF's
+tab-control fallback when hiding the old presenter, but never adopts an unrelated
+user focus choice as that fallback. A native editable ComboBox.Focus() can return
+false while redirecting focus successfully to its TextBox; assert focus within
+the editor instead. Window.Hide() does not establish Unloaded; detach/reconnect
+content when testing listener teardown and reconstruction.
+
+Showcase's existing inline Font/Font Size declarations demonstrate the shared
+behavior without consumer template patches. The standalone XAML render fixture
+seeds host font data because its code-behind is intentionally not run. Focused
+evidence and native review limits are in the
+[active plan](../../15-SIMPLIFIED-RIBBON-PLAN.md#native-combo-editors-in-original-slots--2026-10-21).
+
+#### Measured inline clearance — 2026-10-21
+
+After the user reset the blanket-margin experiment, measured painted bounds
+showed two-DIP Compact button gaps versus three-DIP clearance on either side of
+the group divider stroke. Touch already had four DIP for both. Keep the existing
+five-DIP Small separator slot: its one-DIP stroke already has two DIP beside it.
+Do not use the full inter-group gap as a per-command margin or widen that slot.
+
+`RibbonQuickAccessPanel` adds `RibbonSimplifiedRow.Spacing` only between kept
+neighboring commands, excluding dividers and row edges. Measure/overflow and
+arrange use the same span calculation. Shared Simplified toolbar styles supply
+one DIP in Compact and zero in Touch through dynamic palette tokens; native QAT
+uses its existing layout branch. All six base palettes supply the new metrics.
+
+Only original native combo copies and generated dividers receive the row-metrics
+marker. Shared combo chrome grows to 28 DIP in Compact, with one-DIP side margins
+to compensate for the field's flush chrome. Touch's existing 44-DIP field and
+2,1 margins win. Separator control height grows to 36 DIP in Compact, producing
+a 28-DIP line after its existing vertical inset; Touch's 44-DIP minimum remains.
+Ordinary buttons/gallery padding and margins, Classic/full-group controls, QAT
+and overflow presentation retain their prior metrics. No public API was added.
+
+The focused consumer checks painted bounds rather than only control margins,
+including nested dropdown/split chrome, both directions and simulated DPI.
+Diagnostic strips must capture the toolbar's parent allocation with an explicit
+viewbox so its vertical margin and effects do not clip or scale Touch fields.
+Current evidence and rounding limits are in the
+[active plan](../../15-SIMPLIFIED-RIBBON-PLAN.md#measured-inline-spacing-and-field-height--2026-10-21).
+
+#### Square Small inline actions — 2026-10-21
+
+Small action and toggle copies stretched vertically with the simplified row but
+kept their icon's narrower natural width. `RibbonQuickAccessPanel` now reserves
+their square width during overflow measurement and uses the same rule during
+arrange. Subtract vertical margins from the row height, then add horizontal
+margins to the resulting slot width; Touch's unequal margins must not produce
+rectangular chrome. Explicit widths and minimum/maximum constraints retain
+precedence. Labeled controls, dropdown/split arrows, classic groups, native QAT
+and labeled overflow entries keep their existing sizing paths.
+
+The focused consumer checks the actual control and Chrome dimensions, priority
+overflow, explicit width and classic/QAT restoration. Its overflow boundary
+allows a few physical pixels for independently rounded margins at fractional
+DPI; before/after native text sizes allow one pixel. Current verification and
+live review are in the [active plan](../../15-SIMPLIFIED-RIBBON-PLAN.md#small-inline-button-shape--2026-10-21).
+
 #### Menu-sized overflow and side popups
 
 Both QAT and simplified overflow copies acquire an internal, non-inherited menu

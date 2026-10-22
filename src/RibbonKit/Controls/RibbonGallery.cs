@@ -114,8 +114,21 @@ public class RibbonGallery : ListBox
         _originalViewport = original;
         QuickAccessViewport = viewport;
         _closeQuickAccess = close;
-        if (original.TryFindResource(typeof(ScrollBar)) is Style scrollBarStyle)
+        // The presenter comes from the strip, but its expanded viewport owns the
+        // gallery scrollbar style and section spacing. Crystal's global style can
+        // otherwise hide this missing local style in dropdown copies.
+        var expanded = this is InRibbonGallery
+            ? Template?.FindName("PART_PopupScrollViewer", this) as ScrollViewer ?? original
+            : original;
+        if (expanded.TryFindResource(typeof(ScrollBar)) is Style scrollBarStyle)
             viewport.Resources[typeof(ScrollBar)] = scrollBarStyle;
+        else viewport.Resources.Remove(typeof(ScrollBar));
+        // Legacy/custom templates may have no bounded popup card. Preserve the
+        // previous fallback there rather than measuring an unlimited dropdown.
+        bool hasPopupCard = this is InRibbonGallery && Template?.FindName("PART_PopupHost", this) is Border;
+        viewport.SetCurrentValue(MaxHeightProperty,
+            hasPopupCard || double.IsFinite(expanded.MaxHeight) ? expanded.MaxHeight : 300d);
+        viewport.SetCurrentValue(MarginProperty, expanded.Margin);
         // Keep the ribbon's visible strip painted while its live presenter is in
         // the QAT popup. Capture before expanded layout changes headings/wrapping.
         // A DrawingImage retains vector glyphs/geometry at the destination DPI.

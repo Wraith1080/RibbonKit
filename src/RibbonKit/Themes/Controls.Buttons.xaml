@@ -89,15 +89,17 @@
                             </StackPanel>
                             <!-- Small: 16px icon only. Tight vertical margin so a stack of
                                  three small buttons plus the group caption fits the fixed
-                                 groups row. Two renderings: the normal colour icon, and a
-                                 flat white silhouette shown when Ribbon.QatOnColoredSurface
-                                 is set (QAT on a colored title bar / strip). -->
+                                 groups row. Colored QAT surfaces can use a white silhouette
+                                 or the normal color image above a separate glow copy. -->
                             <Grid x:Name="SmallLayout"
                                   Margin="5,3"
                                   VerticalAlignment="Center"
                                   Visibility="Collapsed">
+                                <Image x:Name="SmallImageGlow" Source="{TemplateBinding Icon}"
+                                       Width="16" Height="16" Stretch="Uniform" Visibility="Collapsed"
+                                       IsHitTestVisible="False" Effect="{DynamicResource RibbonKit.Effects.Qat.IconGlow}" />
                                 <Image x:Name="SmallImage"
-                                       Source="{TemplateBinding Icon}"
+                                       controls:QatAdaptiveIcon.Source="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}"
                                        Width="16" Height="16"
                                        Stretch="Uniform" />
                                 <Rectangle x:Name="SmallImageTint" Width="16" Height="16"
@@ -116,6 +118,19 @@
                         <Trigger Property="controls:Ribbon.QatOnColoredSurface" Value="True">
                             <Setter TargetName="SmallImage" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="SmallImageTint" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                <Condition Property="controls:UtilityChrome.QatIconGlow" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="SmallImage" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="SmallImageTint" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="SmallImageGlow" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
+                        <Trigger Property="controls:QatAdaptiveIcon.Active" Value="True">
+                            <Setter TargetName="SmallImage" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="SmallImageTint" Property="Visibility" Value="Collapsed" />
                         </Trigger>
                         <Trigger Property="LargeIcon" Value="{x:Null}">
                             <Setter TargetName="LargeImage" Property="Source"
@@ -165,6 +180,8 @@
                             <Setter TargetName="SmallImage" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
                             <Setter TargetName="SmallImageTint" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
                             <Setter TargetName="SmallImageTint" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="SmallImageGlow" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="SmallImageGlow" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
                             <Setter TargetName="MediumImage" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
                             <Setter TargetName="MediumImage" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
                             <Setter TargetName="LargeImage" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.LargeIconSize}" />
@@ -350,8 +367,11 @@
                                   Margin="5,3"
                                   VerticalAlignment="Center"
                                   Visibility="Collapsed">
+                                <Image x:Name="SmallImageGlow" Source="{TemplateBinding Icon}"
+                                       Width="16" Height="16" Stretch="Uniform" Visibility="Collapsed"
+                                       IsHitTestVisible="False" Effect="{DynamicResource RibbonKit.Effects.Qat.IconGlow}" />
                                 <Image x:Name="SmallImage"
-                                       Source="{TemplateBinding Icon}"
+                                       controls:QatAdaptiveIcon.Source="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}"
                                        Width="16" Height="16"
                                        Stretch="Uniform" />
                                 <Rectangle x:Name="SmallImageTint" Width="16" Height="16"
@@ -403,6 +423,19 @@
                         </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
+                                <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
+                                <Condition Property="controls:UtilityChrome.QatIconGlow" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="SmallImage" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="SmallImageTint" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="SmallImageGlow" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
+                        <Trigger Property="controls:QatAdaptiveIcon.Active" Value="True">
+                            <Setter TargetName="SmallImage" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="SmallImageTint" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
                                 <Condition Property="IsMouseOver" Value="True" />
                                 <Condition Property="controls:RibbonPopupInteraction.SuppressHover" Value="False" />
                                 <Condition Property="controls:Ribbon.QatOnColoredSurface" Value="True" />
@@ -434,6 +467,8 @@
                             <Setter TargetName="SmallImage" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
                             <Setter TargetName="SmallImageTint" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
                             <Setter TargetName="SmallImageTint" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="SmallImageGlow" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
+                            <Setter TargetName="SmallImageGlow" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
                             <Setter TargetName="MediumImage" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
                             <Setter TargetName="MediumImage" Property="Height" Value="{DynamicResource RibbonKit.Metrics.Touch.IconSize}" />
                             <Setter TargetName="LargeImage" Property="Width" Value="{DynamicResource RibbonKit.Metrics.Touch.LargeIconSize}" />
@@ -627,18 +662,25 @@
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <Ellipse x:Name="FocusRing" Width="18" Height="18" Margin="-2,0"
-                                         VerticalAlignment="Center" StrokeThickness="1"
-                                         Stroke="{DynamicResource RibbonKit.Brushes.Option.FocusBorder}"
-                                         Opacity="0" IsHitTestVisible="False" />
-                                <Ellipse x:Name="Indicator" Width="14" Height="14"
-                                         VerticalAlignment="Center"
-                                         Fill="{DynamicResource RibbonKit.Brushes.Option.IdleSurface}"
-                                         Stroke="{DynamicResource RibbonKit.Brushes.Option.IdleBorder}"
-                                         StrokeThickness="1" />
-                                <Ellipse x:Name="SelectionMark" Width="6" Height="6"
-                                         Fill="{DynamicResource RibbonKit.Brushes.Option.Glyph}"
-                                         VerticalAlignment="Center" Visibility="Collapsed" />
+                                <!-- Keep the nested circles on one shared center. Independently
+                                     rounding centered circles can move the dot by a device pixel
+                                     at fractional DPI, especially in a 44-DIP Touch row. -->
+                                <Grid x:Name="IndicatorHost" Width="14" Height="14"
+                                      VerticalAlignment="Center" UseLayoutRounding="False"
+                                      SnapsToDevicePixels="False">
+                                    <Ellipse x:Name="FocusRing" Width="18" Height="18" Margin="-2,0"
+                                             VerticalAlignment="Center" StrokeThickness="1"
+                                             Stroke="{DynamicResource RibbonKit.Brushes.Option.FocusBorder}"
+                                             Opacity="0" IsHitTestVisible="False" />
+                                    <Ellipse x:Name="Indicator" Width="14" Height="14"
+                                             VerticalAlignment="Center"
+                                             Fill="{DynamicResource RibbonKit.Brushes.Option.IdleSurface}"
+                                             Stroke="{DynamicResource RibbonKit.Brushes.Option.IdleBorder}"
+                                             StrokeThickness="1" />
+                                    <Ellipse x:Name="SelectionMark" Width="6" Height="6"
+                                             Fill="{DynamicResource RibbonKit.Brushes.Option.Glyph}"
+                                             VerticalAlignment="Center" Visibility="Collapsed" />
+                                </Grid>
                                 <ContentPresenter x:Name="HeaderPresenter" Grid.Column="1"
                                                   Content="{TemplateBinding Header}"
                                                   ContentTemplate="{TemplateBinding ContentTemplate}"

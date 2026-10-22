@@ -141,7 +141,7 @@ public class RibbonQuickAccessPanel : Panel
         foreach (UIElement child in inline.OrderBy(Ribbon.GetSimplifiedPriority)
                      .ThenByDescending(child => InternalChildren.IndexOf(child)).ToArray())
         {
-            if (kept.Sum(item => item.DesiredSize.Width) <= availableSize.Width) break;
+            if (SimplifiedSpan(kept, availableSize.Height) <= availableSize.Width) break;
             inline.Remove(child);
             kept = WithSeparators();
         }
@@ -149,13 +149,48 @@ public class RibbonQuickAccessPanel : Panel
         foreach (UIElement child in InternalChildren)
             if (!kept.Contains(child)) _overflow.Add(child);
         owner.OnOverflowChanged(this, _overflow.Any(child => child.Visibility == Visibility.Visible && child is not RibbonGroupSeparator));
-        return new Size(kept.Sum(child => child.DesiredSize.Width), kept.Count == 0 ? 0 : kept.Max(child => child.DesiredSize.Height));
+        return new Size(SimplifiedSpan(kept, availableSize.Height),
+            kept.Count == 0 ? 0 : kept.Max(child => child.DesiredSize.Height));
+    }
+
+    private double SimplifiedSpan(IEnumerable<UIElement> items, double rowHeight)
+    {
+        double width = 0;
+        UIElement? previous = null;
+        foreach (UIElement item in items)
+        {
+            width += SimplifiedGap(previous, item) + SimplifiedWidth(item, rowHeight);
+            previous = item;
+        }
+        return width;
+    }
+
+    // A divider already supplies clearance on both sides. Add row spacing only
+    // between neighboring commands, with the same budget for measure/overflow.
+    private double SimplifiedGap(UIElement? previous, UIElement item) =>
+        previous is null or RibbonGroupSeparator || item is RibbonGroupSeparator
+            ? 0 : Math.Max(0, (double)GetValue(RibbonSimplifiedRow.SpacingProperty));
+
+    private static double SimplifiedWidth(UIElement child, double rowHeight)
+    {
+        if (child is not (RibbonButton { Size: RibbonControlSize.Small } or RibbonToggleButton { Size: RibbonControlSize.Small })
+            || child is not FrameworkElement element || !double.IsNaN(element.Width) || !double.IsFinite(rowHeight))
+            return child.DesiredSize.Width;
+
+        // Small actions stretch to the row's height. Reserve the same width for
+        // their chrome before deciding overflow; outer margins need not be equal.
+        Thickness margin = element.Margin;
+        double height = Math.Max(0, rowHeight - margin.Top - margin.Bottom);
+        double width = Math.Max(element.MinWidth, Math.Min(height, element.MaxWidth));
+        return Math.Max(child.DesiredSize.Width, width + margin.Left + margin.Right);
     }
 
     /// <inheritdoc />
     protected override Size ArrangeOverride(Size finalSize)
     {
         double x = 0;
+        bool simplified = ItemsControl.GetItemsOwner(this) is RibbonQuickAccessToolBar { IsSimplified: true };
+        UIElement? previous = null;
 
         foreach (var child in _overflowFocus.Keys.ToArray())
         {
@@ -173,13 +208,20 @@ public class RibbonQuickAccessPanel : Panel
                 // the element out of sight and out of hit-testing. Its original subtree also
                 // needs to leave keyboard navigation while a separate overflow proxy is used.
                 if (IsVisible && !_overflowFocus.ContainsKey(child))
+                {
+                    if (child is RibbonComboBoxSimplifiedProxy editor && ItemsControl.GetItemsOwner(this) is RibbonQuickAccessToolBar toolBar)
+                        editor.OnOverflow(toolBar.OverflowButton);
                     _overflowFocus.Add(child, new OverflowFocusState(child));
+                }
                 child.Arrange(new Rect(0, 0, 0, 0));
                 continue;
             }
 
-            child.Arrange(new Rect(x, 0, child.DesiredSize.Width, finalSize.Height));
-            x += child.DesiredSize.Width;
+            double width = simplified ? SimplifiedWidth(child, finalSize.Height) : child.DesiredSize.Width;
+            if (simplified) x += SimplifiedGap(previous, child);
+            child.Arrange(new Rect(x, 0, width, finalSize.Height));
+            x += width;
+            previous = child;
         }
 
         return finalSize;

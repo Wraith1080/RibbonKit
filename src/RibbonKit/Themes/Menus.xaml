@@ -5,7 +5,7 @@
     xmlns:animation="clr-namespace:RibbonKit.Animation">
 
     <!-- ============================================================
-         Modern context menu (ribbon-item + QAT right-click). Restyles the stock WPF
+         Modern context menu (ribbon-item, QAT and text editing). Restyles the stock WPF
          ContextMenu/MenuItem/Separator to match the RibbonMenuItem dropdown look instead
          of the dated native menu.
 
@@ -38,6 +38,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="24" SharedSizeGroup="RK_MenuIcon" />
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="RK_MenuGesture" />
                                 <ColumnDefinition Width="Auto" SharedSizeGroup="RK_MenuArrow" />
                             </Grid.ColumnDefinitions>
 
@@ -60,8 +61,13 @@
                                               VerticalAlignment="Center"
                                               Margin="2,0,8,0" />
 
+                            <TextBlock x:Name="Gesture" Grid.Column="2"
+                                       Text="{TemplateBinding InputGestureText}"
+                                       Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
+                                       Margin="16,0,2,0" VerticalAlignment="Center" />
+
                             <!-- Submenu arrow (only when the item has children) -->
-                            <Path x:Name="Arrow" Grid.Column="2"
+                            <Path x:Name="Arrow" Grid.Column="3"
                                   Data="M0,0 L4,4 L0,8"
                                   Stroke="{DynamicResource RibbonKit.Brushes.Text.Secondary}"
                                   StrokeThickness="1.3"
@@ -98,6 +104,9 @@
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="InputGestureText" Value="">
+                            <Setter TargetName="Gesture" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
                         <Trigger Property="Icon" Value="{x:Null}">
                             <Setter TargetName="Icon" Property="Visibility" Value="Collapsed" />
                         </Trigger>

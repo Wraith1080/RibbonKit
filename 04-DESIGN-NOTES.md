@@ -987,6 +987,10 @@ technical evidence warrants them; preserve existing dated records.
 
 [Source-linked single-row commands, native group access and a separate draft customization page](docs/history/library/14-simplified-ribbon.md#3255-simplified-ribbon-first-layout-slice--2026-10-13).
 
+[Native combo editors in original slots](docs/history/library/14-simplified-ribbon.md#native-combo-editors-in-original-slots--2026-10-21), with [current verification and review](docs/15-SIMPLIFIED-RIBBON-PLAN.md#native-combo-editors-in-original-slots--2026-10-21).
+
+[Measured inline clearance and field/divider heights](docs/history/library/14-simplified-ribbon.md#measured-inline-clearance--2026-10-21).
+
 [Shared layout/density motion trial](docs/history/library/14-simplified-ribbon.md#visible-layoutdensity-motion-trial--2026-10-13).
 
 [Simplified defaults in designer authoring](docs/history/library/14-simplified-ribbon.md#simplified-defaults-in-designer-authoring--2026-10-14).
@@ -994,6 +998,8 @@ technical evidence warrants them; preserve existing dated records.
 [MDI command defaults and RTL/Writer host dialog integration](docs/history/library/14-simplified-ribbon.md#mdi-rtl-and-writer-host-integration--2026-10-14).
 
 [End-of-feature enabled-state, style-scope and QAT navigation repairs](docs/history/library/14-simplified-ribbon.md#end-of-feature-validation-repairs--2026-10-14).
+
+[Square Small inline actions and toggle buttons](docs/history/library/14-simplified-ribbon.md#square-small-inline-actions--2026-10-21).
 
 ### 3.256 Ribbon capability and user-operation policy — 2026-10-15
 
@@ -1005,7 +1011,7 @@ technical evidence warrants them; preserve existing dated records.
 
 ### 3.258 Dropdown opener paint precedes native popup creation — 2026-10-15
 
-[Preserve pressed feedback through dropdown and split-button opening](docs/history/library/04-office2007-and-popup-motion.md#3258-dropdown-opener-paint-precedes-native-popup-creation--2026-10-15).
+[Preserve pressed feedback and mouse-down activation for dropdown, overflow and collapsed-group openers](docs/history/library/04-office2007-and-popup-motion.md#3258-dropdown-opener-paint-precedes-native-popup-creation--2026-10-15).
 [Current acceptance](docs/09-FUTURE-THEMES-PLAN.md#colored-qat-split-and-dropdown-states).
 
 ### 3.259 Ribbon-owned lifecycle and QAT relocation presentation — 2026-10-16
@@ -1032,6 +1038,55 @@ technical evidence warrants them; preserve existing dated records.
 ### 3.264 Stable caption and content paint during layout transitions — 2026-10-18
 
 [Continuous caption paint, transparent-header gap coverage and application card decoration](docs/history/library/16-host-layout-transitions.md#3264-stable-caption-and-content-paint-during-layout-transitions--2026-10-18).
+
+### 3.265 Office menu, hover and transition polish — 2026-10-18
+
+[Shared frame/hover polish, stable connected tabs and fade-free caption/backdrop toggles](docs/history/library/13-flat-theme-variants.md#3265-office-menu-hover-and-transition-polish--2026-10-18).
+[Current review status](docs/09-FUTURE-THEMES-PLAN.md#office-menu-hover-and-transition-polish).
+
+### 3.266 Persistent Showcase application-menu choice — 2026-10-18
+
+[Keep the existing toggle independent of theme changes](docs/history/library/13-flat-theme-variants.md#3266-persistent-showcase-application-menu-choice--2026-10-18).
+[Current evidence](docs/09-FUTURE-THEMES-PLAN.md#persistent-application-menu-choice).
+
+### 3.267 Showcase theme-preferred Backstage layouts — 2026-10-18
+
+[Pair theme selection with a host-owned Backstage design](docs/history/library/13-flat-theme-variants.md#3267-showcase-theme-preferred-backstage-layouts--2026-10-18).
+[Current mapping and evidence](docs/09-FUTURE-THEMES-PLAN.md#theme-preferred-backstage-layouts).
+
+### 3.268 Concentric radio indicators at fractional DPI — 2026-10-18
+
+[Keep the selected dot and focus ring centered through density changes](docs/history/library/11-touch-density-and-gallery-projections.md#3268-concentric-radio-indicators-at-fractional-dpi--2026-10-18).
+
+### 3.269 Optional color-preserving QAT icon glow — 2026-10-19
+
+[Shared appearance choice with host-owned selection and persistence](docs/history/library/01-core-controls.md#3269-optional-color-preserving-qat-icon-glow--2026-10-19).
+[Current evidence and review](docs/09-FUTURE-THEMES-PLAN.md#qat-icon-appearance-choice).
+
+### 3.270 Adaptive QAT vector colors — 2026-10-19
+
+[Cached, layer-aware contrast adjustment with original artwork fallback](docs/history/library/01-core-controls.md#3270-adaptive-qat-vector-colors--2026-10-19).
+[Current evidence and review](docs/09-FUTURE-THEMES-PLAN.md#adaptive-qat-icon-colors).
+
+### 3.271 Gallery copy popup sizing and scrollbar parity — 2026-10-19
+
+[Use the native popup budget and scrollbar style in QAT/custom-group gallery copies](docs/history/library/11-touch-density-and-gallery-projections.md#3271-gallery-copy-popup-sizing-and-scrollbar-parity--2026-10-19).
+[Current evidence and review](docs/09-FUTURE-THEMES-PLAN.md#gallery-header-and-section-layout).
+
+### 3.272 Colored Office 2024 captions preserve the ribbon backdrop — 2026-10-19
+
+[Keep the material underlay independent of caption coloring in light and dark 2024 themes](docs/history/library/12-keytips-layout-and-validation.md#3272-colored-office-2024-captions-preserve-the-ribbon-backdrop--2026-10-19).
+[Current evidence and review](docs/09-FUTURE-THEMES-PLAN.md#office-glass-iteration).
+
+### 3.273 Themed native text-editor context menus — 2026-10-20
+
+[Style the native editable combo and RibbonTextBox menus without replacing their commands](docs/history/library/02-designer-and-context-menus.md#3273-themed-native-text-editor-context-menus--2026-10-20).
+[Current evidence and review](docs/09-FUTURE-THEMES-PLAN.md#text-editor-context-menus).
+
+### 3.274 Grouped combo dropdown sections — 2026-10-21
+
+[Native collection-view sections, themed heading spacing and source-linked combo copies](docs/history/library/11-touch-density-and-gallery-projections.md#3274-grouped-combo-dropdown-sections--2026-10-21).
+[Current evidence and review](docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#grouped-combo-dropdowns).
 
 ## 5. Current State & Next Steps
 
@@ -1099,6 +1154,8 @@ technical evidence warrants them; preserve existing dated records.
   [glass iteration status](docs/09-FUTURE-THEMES-PLAN.md#office-glass-iteration).
 - **Gallery headers and spacing:** current evidence and native review are in the
   [gallery header status](docs/09-FUTURE-THEMES-PLAN.md#gallery-header-and-section-layout).
+- **Text-editor context menus:** shared theming and focused evidence are in the
+  [text-menu status](docs/09-FUTURE-THEMES-PLAN.md#text-editor-context-menus).
 - **Classic Backstage caption and merge demo:** current evidence and remaining
   live review are in the [caption status](docs/09-FUTURE-THEMES-PLAN.md#classic-backstage-caption-continuation).
 - **Colored QAT split/dropdown states:** focused evidence and live review are in
@@ -1111,6 +1168,8 @@ technical evidence warrants them; preserve existing dated records.
   live review are in the [group QAT status](docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#group-qat-implementation-and-acceptance).
 - **Custom-group commands in QAT:** menu ownership and duplicate prevention are in
   the [current status](docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#custom-group-command-copies-in-qat).
+- **Grouped combo dropdowns:** section headings, copied views and the Font sample
+  are tracked in the [current status](docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#grouped-combo-dropdowns).
 - **Gallery ScreenTips:** source descriptions, copy propagation and live hover review
   are in the [current status](docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#gallery-screentips).
 - **Crystal portability and Office 2007 orb defaults:** use the

@@ -282,8 +282,8 @@
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuItemOutlineCornerRadius">3</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuItemMargin">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuSeparatorMargin">0</Thickness>
-    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageBorderThickness">1</Thickness>
-    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageMargin">0,0,2,2</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageBorderThickness">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageMargin">0</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneMinimumWidth">0</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneViewportInset">0</system:Double>
 
@@ -315,4 +315,7 @@
     <Thickness x:Key="RibbonKit.Metrics.SplitHorizontalPrimaryPadding">0,0,1,0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryPadding">0,0,0,1</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryBorderThickness">1,1,1,0</Thickness>
+    <!-- Optional contrast halo, behind the unchanged full-color QAT icon. -->
+    <DropShadowEffect x:Key="RibbonKit.Effects.Qat.IconGlow" Color="#FFFFFF"
+                      BlurRadius="3" ShadowDepth="0" Opacity="1" RenderingBias="Quality" />
 </ResourceDictionary>

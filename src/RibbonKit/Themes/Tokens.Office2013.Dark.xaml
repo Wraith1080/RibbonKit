@@ -51,6 +51,7 @@
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ControlPressedBackground" Color="#575757" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.TabStrip.ScrollButtonBackground" Color="#3B3B3B" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBackground" Color="#484848" />
+    <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.HoverBorder" Color="#484848" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBackground" Color="#3B3B3B" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedForeground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="RibbonKit.Brushes.Tab.SelectedBorderBrush" Color="#737373" />
@@ -179,8 +180,8 @@
     <CornerRadius x:Key="RibbonKit.Metrics.ApplicationMenuItemOutlineCornerRadius">0</CornerRadius>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuItemMargin">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuSeparatorMargin">0</Thickness>
-    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageBorderThickness">1</Thickness>
-    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageMargin">0,0,2,2</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageBorderThickness">0</Thickness>
+    <Thickness x:Key="RibbonKit.Metrics.ApplicationMenuActivePageMargin">0</Thickness>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneMinimumWidth">0</system:Double>
     <system:Double x:Key="RibbonKit.Metrics.ApplicationMenuPaneViewportInset">0</system:Double>
 
@@ -210,4 +211,7 @@
     <Thickness x:Key="RibbonKit.Metrics.SplitHorizontalPrimaryBorderThickness">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.SplitHorizontalPrimaryPadding">0</Thickness>
     <Thickness x:Key="RibbonKit.Metrics.SplitVerticalPrimaryPadding">0</Thickness>
+    <!-- Optional contrast halo, behind the unchanged full-color QAT icon. -->
+    <DropShadowEffect x:Key="RibbonKit.Effects.Qat.IconGlow" Color="#FFFFFF"
+                      BlurRadius="3" ShadowDepth="0" Opacity="1" RenderingBias="Quality" />
 </ResourceDictionary>

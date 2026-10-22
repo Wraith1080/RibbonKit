@@ -299,8 +299,8 @@
 
                  Declared here so the XAML designer shows it, then DETACHED in the constructor:
                  Ribbon.ApplicationMenu wins over Ribbon.Backstage whenever it is set, and the
-                 showcase wants the backstage by default. Switching to the Office 2007 theme (or
-                 the "2007 Menu" toggle in the Backstage group) hands it back.
+                 showcase wants the backstage by default. The saved "2007 Menu" toggle in the
+                 Backstage group hands it back, independently of the selected theme.
 
                  The row shapes on show here are all three:
                    New / Open / Save / Close  — plain commands, no arrow, click closes the menu.
@@ -543,20 +543,14 @@
                                 DialogLauncherClick="OnFontDialogLauncher">
                     <StackPanel VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                            <rk:RibbonComboBox InputWidth="128"
+                            <rk:RibbonComboBox x:Name="FontFamilyCombo" InputWidth="128"
                                                rk:Ribbon.CommandId="command.home.font.family"
                                                rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedPriority="90"
                                                Icon="{StaticResource Icon.Font}"
                                                IsEditable="True"
-                                               SelectedIndex="0"
+                                               DisplayMemberPath="Name" TextSearch.TextPath="Name"
                                                ScreenTipTitle="Font"
                                                ScreenTipText="Pick a font for your text.">
-                                <ComboBoxItem Content="Calibri" />
-                                <ComboBoxItem Content="Segoe UI" />
-                                <ComboBoxItem Content="Arial" />
-                                <ComboBoxItem Content="Times New Roman" />
-                                <ComboBoxItem Content="Consolas" />
-                                <ComboBoxItem Content="Georgia" />
                             </rk:RibbonComboBox>
                             <rk:RibbonComboBox InputWidth="48"
                                                rk:Ribbon.CommandId="command.home.font.size"
@@ -934,6 +928,23 @@
                                            Unchecked="OnToggleAccentTitleBar"
                                            ScreenTipTitle="Colored title bar"
                                            ScreenTipText="Color the title bar with the accent color (best in the Office 2024 theme)." />
+                    <rk:RibbonDropDownButton x:Name="QatIconAppearanceSelector"
+                                             rk:Ribbon.CommandId="command.view.qatIconAppearance"
+                                             Header="White Overlay" Size="Large"
+                                             Icon="{StaticResource Icon.Palette}" LargeIcon="{StaticResource Icon.Palette}"
+                                             DropDownHeader="QAT icons on colored surfaces"
+                                             ScreenTipTitle="QAT icon appearance"
+                                             ScreenTipText="Choose white silhouettes, original colors with glow, or adaptive vector colors on colored title bars and tab strips.">
+                        <rk:RibbonMenuItem Header="White Overlay"
+                                           Description="Draw icons as white silhouettes."
+                                           Tag="{x:Static rk:RibbonQuickAccessIconAppearance.WhiteOverlay}" Click="OnSelectQatIconAppearance" />
+                        <rk:RibbonMenuItem Header="Color with Glow"
+                                           Description="Keep the original colors with a subtle white halo."
+                                           Tag="{x:Static rk:RibbonQuickAccessIconAppearance.ColorWithGlow}" Click="OnSelectQatIconAppearance" />
+                        <rk:RibbonMenuItem Header="Adaptive Color"
+                                           Description="Adjust vector colors for contrast while keeping internal details."
+                                           Tag="{x:Static rk:RibbonQuickAccessIconAppearance.AdaptiveColor}" Click="OnSelectQatIconAppearance" />
+                    </rk:RibbonDropDownButton>
                     <!-- Accent swatches as a gallery: pick a color to recolor the theme -->
                     <rk:InRibbonGallery x:Name="AccentGallery"
                                         Header="Accent" Icon="{StaticResource Icon.ColorDrop}"
@@ -1109,7 +1120,7 @@
                                            Checked="OnToggleApplicationMenu"
                                            Unchecked="OnToggleApplicationMenu"
                                            ScreenTipTitle="Office 2007 application menu"
-                                           ScreenTipText="Swap the File button's surface from the backstage overlay to the Office 2007 two-pane application menu — a drop-down rendered behind the orb. Switching to the Office 2007 theme turns this on for you." />
+                                           ScreenTipText="Use the two-pane application menu for the File button instead of Backstage. This saved choice stays on or off until you change this toggle, including when switching themes." />
                     <rk:RibbonToggleButton x:Name="BackstageTranslucentToggle"
                                            Header="Translucent Backstage"
                                            Size="Large"

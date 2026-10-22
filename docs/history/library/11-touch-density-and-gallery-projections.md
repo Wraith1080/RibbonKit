@@ -50,6 +50,10 @@ Adaptive/lifecycle pitfalls retained:
   Reclaim content before measuring or an empty normal host produces a false width.
   Cached scroller reports survive unchanged child measures; empty/replaced content
   clears the report. The regressions reproduced both failures.
+- Body-scroll buttons live in `ContentForeground`; `ContentHost` only paints the
+  background after foreground/shadow separation. Searching the background's empty
+  subtree falsely reported missing arrows. Query the live layer, compare true
+  extent with viewport width, and exercise both scroll directions.
 - LayoutUpdated orb reconciliation must skip equal assignments and valid measured
   bounds. Repeated template/focus/direction assignments created a Classic2007 loop.
 - Consumer fixtures wait for the closing Backstage adorner to detach before replacing
@@ -481,3 +485,99 @@ comparisons were inspected; no snapshot approvals changed.
 Release solution and normal Debug Showcase builds passed with zero warnings and
 errors. Live retesting of this sibling-popup correction remains pending; the full
 suite and native mixed-monitor DPI review remain deferred.
+
+### 3.268 Concentric radio indicators at fractional DPI — 2026-10-18
+
+The Touch radio selection dot reproduced a one-device-pixel downward shift at
+125% scaling. Independently arranging the 14-DIP circle and six-DIP dot in the
+full row let layout rounding choose different centers. Their shared template
+now places the circle, dot and focus ring in one 14-DIP host, with rounding and
+pixel snapping disabled inside that host. Vector dimensions and row targets
+remain the same; the correction also applies to Compact fractional-DPI paint.
+
+The new `TouchOptions` RibbonKit-only consumer scope checks concentric dot and
+focus geometry, selected/unselected/disabled visibility and target heights across
+all seven themes, light/dark, LTR/RTL and 100/125/150/200% simulated DPI, each with
+a Compact/Touch/Compact round trip. The initial regression failed at 125% Touch;
+all 112 combinations passed after the fix. Six existing option-control tests and
+three existing Release input-control snapshots passed without approval changes.
+Actual before/after renders were inspected, and the normal Debug Showcase build
+passed with zero warnings/errors. Current live review is tracked in the
+[Touch acceptance table](../../14-TOUCH-DENSITY-PLAN.md#verification-and-acceptance);
+the full suite and native monitor transitions were not rerun for this fix.
+
+### 3.271 Gallery copy popup sizing and scrollbar parity — 2026-10-19
+
+QAT/custom-group gallery copies imposed a separate 300-DIP viewport limit. A
+seven-choice grouped Theme reproduction needed 306.4 DIP at the current display
+scale, so the original popup fitted while its copy acquired a scrollbar. The copy
+also searched for scrollbar styling on the strip viewport that held the borrowed
+presenter. The theme-aware style belongs to the expanded viewport; Crystal's
+application-level implicit ScrollBar style masked the missing local style.
+
+`RibbonGallery.BeginQuickAccess` now takes scrollbar styling, viewport limits and
+section margins from the expanded viewport, falling back to the original viewport
+for plain/legacy templates. Missing styles clear the previous local resource.
+Finite custom viewport limits remain intact; an unbounded custom template without
+a recognized popup card retains the former 300-DIP fallback.
+
+The shared projection uses a one-child Grid items panel to propagate the card's
+finite height to its native ScrollViewer. For InRibbonGallery, the copy follows
+the native popup card's maximum height, padding, border thickness and rounding,
+including the caption/section budget. Use Border's padding/border dependency
+properties when copying these values; Control's similarly named properties are
+different registrations. The outer dropdown scroller stays disabled, so only the
+gallery's viewport scrolls. Presenter borrowing, selection and strip restoration
+remain on the existing paths. No public API or Showcase workaround was added.
+
+The new RibbonKit-only `GalleryPopupViewport` scope failed on the 300-DIP cutoff
+before the fix, then passed all seven themes in Compact/LTR and Touch/RTL. It
+compares native/QAT/custom-group fitting and overflowing popups, identical viewport
+heights and scrollbar styles/templates, one scrolling surface, last-item reach,
+dark palette refresh and presenter return. Office 2010/Crystal native and copied
+popup captures under `TestResults/gallery-popup-viewport` were inspected. Thirteen
+focused runtime cases passed for custom-template limits/styles, authored and bound
+items, selection/preview, native handoff and visible-strip/overflow retention at
+simulated 125%/200% DPI. Normal Debug runtime net8/net9 and Showcase builds passed.
+Full-suite, physical input and native mixed-monitor acceptance were not performed.
+
+### 3.274 Grouped combo dropdown sections — 2026-10-21
+
+`RibbonComboBox`, dropdown and split templates now supply a default themed native
+`GroupStyle` when the consumer has not authored one. Configure sections through
+ordinary collection-view `GroupDescriptions`. Section headers are nonselectable
+and scroll with their items under one viewport. Appearance review settled on
+uniform one-DIP space above/below rows and headings, except the first top and last
+bottom edge. The internal `DropDownItemsPanel` implements the equivalent two-DIP
+gaps through `DropDownRowSpacing`, without outer space or a larger section gap.
+Use it for the native/copy dropdown items and default group panels; the group
+template also spaces its heading from its children. Empty presenters and collapsed
+rows consume no gaps. Round the gap before summing measured heights when layout
+rounding is enabled; otherwise fractional DPI can let nested group content overrun
+its slot and squeeze the next section boundary. Ordinary dropdown/split captions
+use the matching lower `DropDownHeaderMargin`. Touch `DropDownItemMargin` retains
+horizontal insets without adding duplicate vertical gaps. Every base palette
+supplies the tokens, with dark/Flat inheritance; authored WPF panels/styles retain
+their existing precedence. No public layout API was added.
+
+Combo projections build their own grouped ListCollectionView over choice rows.
+Resolve each row's section path from the source's actual group tree: invoking a
+multi-membership grouping converter again would multiply rows and put one Button
+into multiple parents. Preserve native leaf indices for selection and initial
+focus, including sorted sections and repeated source-item occurrences. Copy group
+names, sort policy, styles and selectors, while retaining source data/containers,
+binding ownership and editable text. A null ItemCollection culture uses the
+new view's default culture rather than being assigned to its non-null property.
+
+Weak item, grouping-description and style collection listeners refresh an open
+copy; detach on close/unload and rebind when its source view changes. The copy's
+own IsGrouping controls its automatic overall caption, so unrealized source tabs
+and grouped/flat round trips do not leave a duplicate Font heading. Explicit
+authored captions/styles retain precedence. No new RibbonKit public API was added.
+
+Showcase owns only FontChoice sample data and its Common fonts/Other fonts view.
+Rendering, spacing, selection and copy behavior remain in RibbonKit. The
+independent consumer creates custom-group copies through public customization UI,
+without a Showcase reference or private factory. Current focused evidence and
+remaining native review are in the
+[integration plan](../../08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#grouped-combo-dropdowns).
