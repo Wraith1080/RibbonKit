@@ -106,12 +106,19 @@ The host dialog is **Settings** with an app-owned **Appearance** page and built-
 **Customize Ribbon**/**Quick Access Toolbar** pages. Separate versioned files hold
 appearance and ribbon structure. Appearance covers enabled themes/palettes, accent,
 title bar, Backstage/translucency, compatible backdrop/frame/File shape, motion and
-view preferences. Unsupported combinations keep a valid fallback and clear disabled state.
+view preferences. It includes Office 2024 Flat and all three shared QAT icon
+appearances. View's Mouse / Touch choice is Writer-owned and also reaches detached
+dialogs. Unsupported combinations keep a valid fallback and clear disabled state.
 
-Preview changes transactionally: Apply/OK persists, Cancel restores the opening
-snapshot, and Appearance defaults do not reset ribbon structure or documents.
+Preview changes transactionally: Apply/OK persists, Cancel restores the latest
+applied checkpoint (or opening snapshot), and Appearance defaults do not reset
+View density, ribbon structure or documents.
 Retheme the open dialog without losing its page, focus or pending values.
 Structural Import/Export/Reset cannot leak appearance or transient merge/modal state.
+
+The [Writer 1.1 host integration checkpoint](19-WRITER-HOST-INTEGRATION.md) owns
+current evidence and remaining live review for these additions and the approved
+Writer-owned document animation.
 
 ## 6. Boundaries and remaining acceptance
 

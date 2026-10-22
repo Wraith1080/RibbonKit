@@ -1033,6 +1033,17 @@
                                      ScreenTipTitle="Zoom In" ScreenTipText="Increase the current document view zoom by ten percent."
                                      AutomationProperties.AutomationId="ZoomIn" AutomationProperties.Name="Zoom In" />
                 </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Interaction" rk:Ribbon.CommandId="Writer.View.Interaction" rk:KeyTip.Keys="I"
+                                Icon="{StaticResource Icon.WriterOptions}">
+                    <rk:RibbonComboBox x:Name="InputModeCombo" Header="Mouse / Touch" InputWidth="116"
+                                       Icon="{StaticResource Icon.WriterOptions}" SelectionChanged="OnInputModeChanged"
+                                       rk:Ribbon.CommandId="Writer.View.InputMode" rk:KeyTip.Keys="TM"
+                                       AutomationProperties.AutomationId="ViewInputMode" AutomationProperties.Name="Mouse or Touch mode"
+                                       ToolTip="Mouse uses compact controls; Touch uses larger command targets.">
+                        <ComboBoxItem Content="Mouse" Tag="{x:Static rk:RibbonDensity.Compact}" />
+                        <ComboBoxItem Content="Touch" Tag="{x:Static rk:RibbonDensity.Touch}" />
+                    </rk:RibbonComboBox>
+                </rk:RibbonGroup>
                 <rk:RibbonGroup x:Name="ViewDisplayGroup" Header="Show" rk:Ribbon.CommandId="Writer.View.Show" rk:KeyTip.Keys="S"
                                 Icon="{StaticResource Icon.WriterRuler}"
                                 AutomationProperties.AutomationId="ViewDisplayGroup" AutomationProperties.Name="Show">

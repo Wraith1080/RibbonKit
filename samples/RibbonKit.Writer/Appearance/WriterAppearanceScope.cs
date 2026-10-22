@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Media;
+using RibbonKit.Controls;
 using RibbonKit.Theming;
 
 namespace RibbonKit.Writer.Appearance;
@@ -25,6 +26,7 @@ internal sealed class WriterAppearanceScope : IDisposable
     internal void Apply(WriterAppearancePreferences preferences, bool nativeBackdrop = false)
     {
         Dispose();
+        Ribbon.SetDensity(_owner, preferences.Density);
         if (preferences.Theme == RibbonTheme.CrystalLight || Application.Current is null)
         {
             Color? accent = preferences.Accent is { } value

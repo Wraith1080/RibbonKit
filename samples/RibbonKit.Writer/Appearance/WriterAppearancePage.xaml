@@ -7,7 +7,7 @@
         </ResourceDictionary>
     </UserControl.Resources>
     <StackPanel MaxWidth="820" HorizontalAlignment="Stretch">
-        <TextBlock Margin="0,0,0,14" TextWrapping="Wrap" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" Text="Preview Writer's theme, File surface, window material, and motion. Apply or OK saves these separately from document and ribbon customization." />
+        <TextBlock Margin="0,0,0,10" TextWrapping="Wrap" Foreground="{DynamicResource RibbonKit.Brushes.Text.Secondary}" Text="Preview Writer's theme, File surface, window material, and motion. Apply or OK saves these separately from document and ribbon customization." />
         <Grid x:Name="AppearanceColumns">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -19,32 +19,33 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <StackPanel x:Name="AppearanceLeftColumn" Grid.Column="0">
-                <StackPanel Margin="0,0,0,8">
+                <StackPanel Margin="0,0,0,5">
                     <TextBlock Text="Theme" Margin="0,0,0,3" />
                     <controls:RibbonComboBox x:Name="ThemeCombo" InputWidth="{Binding ActualWidth, RelativeSource={RelativeSource Self}}" MinHeight="26" SelectionChanged="OnValueChanged" AutomationProperties.AutomationId="AppearanceTheme" AutomationProperties.Name="Ribbon theme">
                         <ComboBoxItem Content="Crystal" Tag="{x:Static theming:RibbonTheme.CrystalLight}" />
                         <ComboBoxItem Content="Office 2024" Tag="{x:Static theming:RibbonTheme.Office2024}" />
+                        <ComboBoxItem Content="Office 2024 Flat" Tag="{x:Static theming:RibbonTheme.Office2024Flat}" />
                         <ComboBoxItem Content="Office 2019" Tag="{x:Static theming:RibbonTheme.Office2019}" />
                         <ComboBoxItem Content="Office 2013" Tag="{x:Static theming:RibbonTheme.Office2013}" />
                         <ComboBoxItem Content="Office 2010" Tag="{x:Static theming:RibbonTheme.Office2010}" />
                         <ComboBoxItem Content="Office 2007" Tag="{x:Static theming:RibbonTheme.Office2007}" />
                     </controls:RibbonComboBox>
                 </StackPanel>
-                <StackPanel Margin="0,0,0,8">
+                <StackPanel Margin="0,0,0,5">
                     <TextBlock Text="Palette" Margin="0,0,0,3" />
                     <controls:RibbonComboBox x:Name="PaletteCombo" InputWidth="{Binding ActualWidth, RelativeSource={RelativeSource Self}}" MinHeight="26" SelectionChanged="OnValueChanged" AutomationProperties.AutomationId="AppearancePalette" AutomationProperties.Name="Light or dark palette">
                         <ComboBoxItem Content="Light" Tag="False" />
                         <ComboBoxItem Content="Dark / Black" Tag="True" />
                     </controls:RibbonComboBox>
                 </StackPanel>
-                <StackPanel Margin="0,0,0,8">
+                <StackPanel Margin="0,0,0,5">
                     <TextBlock Text="Accent" Margin="0,0,0,3" />
                     <StackPanel Orientation="Horizontal">
                         <controls:RibbonCheckBox x:Name="CustomAccentCheck" MinHeight="28" Margin="0,1,0,1" VerticalAlignment="Center" Content="Custom" Checked="OnAccentModeChanged" Unchecked="OnAccentModeChanged" AutomationProperties.AutomationId="AppearanceCustomAccent" AutomationProperties.Name="Use custom accent" />
                         <Button x:Name="AccentButton" Margin="10,0,0,0" Padding="10,4" Style="{DynamicResource OptionsDialogActionButtonStyle}" Click="OnChooseAccent" Content="#FF2B579A" AutomationProperties.AutomationId="AppearanceAccentColor" AutomationProperties.Name="Choose accent color" />
                     </StackPanel>
                 </StackPanel>
-                <StackPanel Margin="0,0,0,8">
+                <StackPanel Margin="0,0,0,5">
                     <TextBlock Text="Backstage design" Margin="0,0,0,3" />
                     <controls:RibbonComboBox x:Name="BackstageCombo" InputWidth="{Binding ActualWidth, RelativeSource={RelativeSource Self}}" MinHeight="26" SelectionChanged="OnValueChanged" AutomationProperties.AutomationId="AppearanceBackstageDesign" AutomationProperties.Name="Backstage design">
                         <ComboBoxItem Content="Crystal Sidebar" Tag="{x:Static rk:RibbonBackstageDesign.CrystalSidebar}" />
@@ -62,7 +63,15 @@
                 <controls:RibbonCheckBox x:Name="BackstageTranslucentCheck" MinHeight="28" Margin="0,1,0,1" Content="Translucent Backstage" Checked="OnValueChanged" Unchecked="OnValueChanged" AutomationProperties.AutomationId="AppearanceBackstageTranslucent" AutomationProperties.Name="Use translucent Backstage" />
             </StackPanel>
             <StackPanel x:Name="AppearanceRightColumn" Grid.Column="2">
-                <StackPanel Margin="0,0,0,8">
+                <StackPanel Margin="0,0,0,5">
+                    <TextBlock Text="QAT icon appearance" Margin="0,0,0,3" />
+                    <controls:RibbonComboBox x:Name="QatIconCombo" InputWidth="{Binding ActualWidth, RelativeSource={RelativeSource Self}}" MinHeight="26" SelectionChanged="OnValueChanged" AutomationProperties.AutomationId="AppearanceQatIcons" AutomationProperties.Name="Quick Access Toolbar icon appearance">
+                        <ComboBoxItem Content="White Overlay" Tag="{x:Static rk:RibbonQuickAccessIconAppearance.WhiteOverlay}" />
+                        <ComboBoxItem Content="Color with Glow" Tag="{x:Static rk:RibbonQuickAccessIconAppearance.ColorWithGlow}" />
+                        <ComboBoxItem Content="Adaptive Color" Tag="{x:Static rk:RibbonQuickAccessIconAppearance.AdaptiveColor}" />
+                    </controls:RibbonComboBox>
+                </StackPanel>
+                <StackPanel Margin="0,0,0,5">
                     <TextBlock Text="Window backdrop" Margin="0,0,0,3" />
                     <controls:RibbonComboBox x:Name="BackdropCombo" InputWidth="{Binding ActualWidth, RelativeSource={RelativeSource Self}}" MinHeight="26" SelectionChanged="OnValueChanged" AutomationProperties.AutomationId="AppearanceBackdrop" AutomationProperties.Name="Window backdrop">
                         <ComboBoxItem Content="None" Tag="{x:Static interop:RibbonBackdrop.None}" />
@@ -71,7 +80,7 @@
                         <ComboBoxItem Content="Tabbed / Mica Alt" Tag="{x:Static interop:RibbonBackdrop.Tabbed}" />
                     </controls:RibbonComboBox>
                 </StackPanel>
-                <StackPanel Margin="0,0,0,8">
+                <StackPanel Margin="0,0,0,5">
                     <TextBlock Text="Window frame" Margin="0,0,0,3" />
                     <controls:RibbonComboBox x:Name="FrameCombo" InputWidth="{Binding ActualWidth, RelativeSource={RelativeSource Self}}" MinHeight="26" SelectionChanged="OnValueChanged" AutomationProperties.AutomationId="AppearanceFrame" AutomationProperties.Name="Window frame presentation">
                         <ComboBoxItem Content="Theme default" Tag="{x:Static controls:RibbonWindowFrameAppearance.Default}" />
@@ -79,14 +88,14 @@
                         <ComboBoxItem Content="Office 2010 Aero" Tag="{x:Static controls:RibbonWindowFrameAppearance.Office2010Aero}" />
                     </controls:RibbonComboBox>
                 </StackPanel>
-                <StackPanel Margin="0,0,0,8">
+                <StackPanel Margin="0,0,0,5">
                     <TextBlock Text="Application button" Margin="0,0,0,3" />
                     <controls:RibbonComboBox x:Name="ApplicationButtonCombo" InputWidth="{Binding ActualWidth, RelativeSource={RelativeSource Self}}" MinHeight="26" SelectionChanged="OnValueChanged" AutomationProperties.AutomationId="AppearanceApplicationButton" AutomationProperties.Name="Application button presentation">
                         <ComboBoxItem Content="File tab" Tag="{x:Static rk:RibbonApplicationButtonShape.Tab}" />
                         <ComboBoxItem Content="Office orb" Tag="{x:Static rk:RibbonApplicationButtonShape.Orb}" />
                     </controls:RibbonComboBox>
                 </StackPanel>
-                <StackPanel Margin="0,0,0,8">
+                <StackPanel Margin="0,0,0,5">
                     <TextBlock Text="Ribbon motion" Margin="0,0,0,3" />
                     <controls:RibbonComboBox x:Name="AnimationCombo" InputWidth="{Binding ActualWidth, RelativeSource={RelativeSource Self}}" MinHeight="26" SelectionChanged="OnValueChanged" AutomationProperties.AutomationId="AppearanceAnimation" AutomationProperties.Name="Ribbon animation level">
                         <ComboBoxItem Content="None" Tag="{x:Static animation:RibbonAnimationLevel.None}" />

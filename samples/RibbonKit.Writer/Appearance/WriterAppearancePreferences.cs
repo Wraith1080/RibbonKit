@@ -18,6 +18,12 @@ internal sealed record WriterAppearancePreferences
 
     public bool DarkPalette { get; init; }
 
+    // Additive v1 fields: missing values retain the pre-1.1 presentation.
+    public RibbonDensity Density { get; init; } = RibbonDensity.Compact;
+
+    public RibbonQuickAccessIconAppearance QuickAccessIconAppearance { get; init; } =
+        RibbonQuickAccessIconAppearance.WhiteOverlay;
+
     /// <summary>A canonical #AARRGGBB color, or null for the theme default.</summary>
     public string? Accent { get; init; }
 
@@ -85,6 +91,8 @@ internal static class WriterAppearancePreferencesSerializer
         if (parsed is null
             || parsed.SchemaVersion != WriterAppearancePreferences.CurrentSchemaVersion
             || !Enum.IsDefined(parsed.Theme)
+            || !Enum.IsDefined(parsed.Density)
+            || !Enum.IsDefined(parsed.QuickAccessIconAppearance)
             || !Enum.IsDefined(parsed.BackstageDesign)
             || !Enum.IsDefined(parsed.Backdrop)
             || !Enum.IsDefined(parsed.FrameAppearance)
@@ -148,7 +156,7 @@ internal static class WriterAppearanceCompatibility
     public static RibbonBackstageDesign DefaultBackstageDesign(RibbonTheme theme) => theme switch
     {
         RibbonTheme.CrystalLight => RibbonBackstageDesign.CrystalSidebar,
-        RibbonTheme.Office2024 => RibbonBackstageDesign.Modern,
+        RibbonTheme.Office2024 or RibbonTheme.Office2024Flat => RibbonBackstageDesign.Modern,
         RibbonTheme.Office2019 or RibbonTheme.Office2013 => RibbonBackstageDesign.Classic,
         RibbonTheme.Office2010 or RibbonTheme.Office2007 => RibbonBackstageDesign.Classic2010,
         _ => RibbonBackstageDesign.Modern,
