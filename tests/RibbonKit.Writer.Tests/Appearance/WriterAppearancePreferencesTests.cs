@@ -12,6 +12,63 @@ namespace RibbonKit.Writer.Tests.Appearance;
 public sealed class WriterAppearancePreferencesTests
 {
     [Theory]
+    [InlineData(RibbonQuickAccessIconAppearance.WhiteOverlay)]
+    [InlineData(RibbonQuickAccessIconAppearance.ColorWithGlow)]
+    [InlineData(RibbonQuickAccessIconAppearance.AdaptiveColor)]
+    public void FlatTouchAndQatChoicesRoundTripWithoutChangingOtherPreferences(RibbonQuickAccessIconAppearance icons)
+    {
+        var expected = new WriterAppearancePreferences
+        {
+            Theme = RibbonTheme.Office2024Flat, Density = RibbonDensity.Touch,
+            QuickAccessIconAppearance = icons, DarkPalette = true, Accent = "#FF7030A0",
+            Backdrop = RibbonBackdrop.Acrylic, GlassSurfaces = true, BackstageTranslucent = true,
+            CapturedPopupBackdrop = true, ShowRuler = false, ShowMarginGuides = false,
+        };
+        Assert.True(WriterAppearancePreferencesSerializer.TryDeserialize(
+            WriterAppearancePreferencesSerializer.Serialize(expected), out var actual));
+        Assert.Equal(expected, actual);
+        Assert.Equal(RibbonBackdrop.Acrylic, WriterAppearanceCompatibility.ResolveBackdrop(actual, true));
+        Assert.True(MainWindow.ShouldUseTransparentRulerSurface(actual.Theme, true, false));
+        Assert.False(MainWindow.ShouldUseTransparentRulerSurface(actual.Theme, false, false));
+        Assert.False(MainWindow.ShouldUseTransparentRulerSurface(actual.Theme, true, true));
+    }
+
+    [Fact]
+    public void OldVersionOneSettingsPreserveAllFieldsAndGainCompatibleDefaults()
+    {
+        const string json = """
+            {"SchemaVersion":1,"Theme":"CrystalLight","DarkPalette":true,"Accent":"#FF7030A0",
+             "AccentedTitleBar":true,"BackstageDesign":"CrystalFloating","Backdrop":"Acrylic",
+             "BackstageTranslucent":true,"GlassSurfaces":true,"CapturedPopupBackdrop":true,
+             "AnimationLevel":"Expressive","RespectSystemReducedMotion":false,
+             "ShowRuler":false,"ShowMarginGuides":false}
+            """;
+        Assert.True(WriterAppearancePreferencesSerializer.TryDeserialize(json, out var restored));
+        Assert.Equal(new WriterAppearancePreferences
+        {
+            Theme = RibbonTheme.CrystalLight, DarkPalette = true, Accent = "#FF7030A0",
+            AccentedTitleBar = true, BackstageDesign = RibbonBackstageDesign.CrystalFloating,
+            Backdrop = RibbonBackdrop.Acrylic, BackstageTranslucent = true, GlassSurfaces = true,
+            CapturedPopupBackdrop = true, AnimationLevel = RibbonAnimationLevel.Expressive,
+            RespectSystemReducedMotion = false, ShowRuler = false, ShowMarginGuides = false,
+        }, restored);
+        Assert.Equal(RibbonDensity.Compact, restored.Density);
+        Assert.Equal(RibbonQuickAccessIconAppearance.WhiteOverlay, restored.QuickAccessIconAppearance);
+    }
+
+    [Theory]
+    [InlineData("Density", "FutureMode")]
+    [InlineData("Density", "17")]
+    [InlineData("QuickAccessIconAppearance", "FutureIcons")]
+    [InlineData("QuickAccessIconAppearance", "17")]
+    public void InvalidNewPreferencesAreRejected(string name, string value)
+    {
+        Assert.False(WriterAppearancePreferencesSerializer.TryDeserialize(
+            $"{{\"SchemaVersion\":1,\"{name}\":\"{value}\"}}", out var actual));
+        Assert.Equal(new WriterAppearancePreferences(), actual);
+    }
+
+    [Theory]
     [InlineData(false, RibbonBackstageDesign.CrystalSidebar)]
     [InlineData(true, RibbonBackstageDesign.CrystalFloating)]
     public void CrystalSettingsRoundTripAndRestartWithCompatibleDefaults(bool dark, RibbonBackstageDesign design)

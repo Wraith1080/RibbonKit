@@ -129,6 +129,7 @@ public partial class MainWindow : RibbonWindow
         PreviewView.StateChanged += OnPreviewViewStateChanged;
         ApplyWriterViewMode(CurrentViewMode, restoreEditorFocus: false);
         InitializeCrystalPaperPresentation();
+        _documentTransition = new WriterDocumentTransition(MainRibbon, DocumentPresentationHost, DocumentEditor);
         DocumentEditor.TextChanged += OnEditorTextChanged;
         ContentRendered += OnInitialContentRendered;
         Closing += OnClosing;
@@ -314,6 +315,7 @@ public partial class MainWindow : RibbonWindow
     }
     private void ReplaceEditorDocument()
     {
+        _documentTransition?.Reset();
         _pictureInteractionController?.ReplaceDocument(Shell.CurrentDocument.Content);
         _tableResizeController?.ReplaceDocument();
         _writerImageService.ResetUndoHistory(Shell.CurrentDocument.Content);
@@ -398,6 +400,7 @@ public partial class MainWindow : RibbonWindow
         HorizontalRuler.PageSettingsDragCancelled -= OnRulerPageSettingsDragCancelled;
         HorizontalRuler.ParagraphIndentDragCompleted -= OnParagraphIndentDragCompleted;
         DisposeCrystalPaperPresentation();
+        _documentTransition?.Dispose();
         HorizontalRuler.Dispose();
         MarginGuide.Dispose();
         PreviewView.SetSnapshot(null);
@@ -723,6 +726,7 @@ public partial class MainWindow : RibbonWindow
 
     internal void ApplyWriterViewMode(WriterViewMode mode, bool restoreEditorFocus = true)
     {
+        _documentTransition?.Reset();
         if (!Enum.IsDefined(mode))
             throw new ArgumentOutOfRangeException(nameof(mode), mode, "Unknown Writer view mode.");
 

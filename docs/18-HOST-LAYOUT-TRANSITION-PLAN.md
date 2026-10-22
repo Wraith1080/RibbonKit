@@ -18,6 +18,9 @@ General resizing, tab switching, popup-opening motion, Writer/MDI integration an
 a generic document animation framework remain outside this track. Existing input
 policies and Crystal capture-registration optimization are retained.
 
+The separately scoped [Writer integration](19-WRITER-HOST-INTEGRATION.md) now
+consumes this lifecycle; it does not change the contract or this track's acceptance.
+
 ## H1 — accepted architecture and visual direction
 
 `Ribbon` owns a private per-instance coordinator. It observes effective property

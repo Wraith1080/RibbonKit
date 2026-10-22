@@ -565,6 +565,17 @@ preview rollback remains independent. This is host integration using existing
 public APIs, with no runtime or preference-schema changes. Focused real event,
 draft, persistence/restart and MDI target checks are recorded in the active plan.
 
+#### Read-only choice labels — 2026-10-22
+
+Writer's existing Simplified Home integration reproduced a shared combo failure:
+`TextSearch.Text` inherited TwoWay mode and attempted to write to the read-only
+`WriterFontChoice.DisplayName`. Explicit OneWay bindings on both display-label
+branches fix object choices and authored containers; source-owned editable Text
+and selection retain their explicit TwoWay synchronization. No API or Writer
+Simplified default changed. Runtime regression/adjacent combo and grouping checks
+pass 23/23; the independent SimplifiedCombos matrix passes 56 combinations.
+See RKWF-050 and the [Writer checkpoint](../../19-WRITER-HOST-INTEGRATION.md).
+
 #### End-of-feature validation repairs — 2026-10-14
 
 First-measure realization exposed a detached custom-group declaration's enabled

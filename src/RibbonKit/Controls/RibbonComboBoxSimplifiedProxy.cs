@@ -184,9 +184,9 @@ internal sealed class RibbonComboBoxSimplifiedProxy : RibbonComboBox
             string path = TextSearch.GetTextPath(_source);
             if (string.IsNullOrEmpty(path)) path = _source.DisplayMemberPath;
             if (item is ComboBoxItem container && !string.IsNullOrEmpty(TextSearch.GetText(container)))
-                row.SetBinding(TextSearch.TextProperty, new Binding { Source = container, Path = new PropertyPath(TextSearch.TextProperty) });
+                row.SetBinding(TextSearch.TextProperty, new Binding { Source = container, Path = new PropertyPath(TextSearch.TextProperty), Mode = BindingMode.OneWay });
             else row.SetBinding(TextSearch.TextProperty, new Binding(string.IsNullOrEmpty(path) ? nameof(ContentControl.Content) : $"Content.{path}")
-                { Source = row, Converter = ChoiceTextConverter.Instance });
+                { Source = row, Converter = ChoiceTextConverter.Instance, Mode = BindingMode.OneWay });
             rows.Add(row);
             pathsByRow[row] = paths.MoveNext() ? paths.Current : Array.Empty<object?>();
         }

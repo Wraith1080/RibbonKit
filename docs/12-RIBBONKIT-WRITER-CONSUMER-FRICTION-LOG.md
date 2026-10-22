@@ -50,6 +50,27 @@ instead of repeatedly appending them to the current-status summary.
 
 ## 4. Observations by ID
 
+### RKWF-050 — Simplified combo display labels attempt to write to read-only font names
+
+- First seen: 2026-10-22, Writer 1.1 host integration; shared runtime defect.
+- Focused reproduction: run the existing Writer test `SimplifiedSettingsRequestsDraftApplyCancelAndRestartUseSharedPage` alone in a fresh process. Entering Simplified with Home selected aborts the test host: `A TwoWay or OneWayToSource binding cannot work on the read-only property 'DisplayName'` of `WriterFontChoice`.
+- Cause: `RibbonComboBoxSimplifiedProxy.RefreshRows` binds `TextSearch.Text` to a display-label path without an explicit mode; its inherited default is TwoWay. The label is presentation only. The precise runtime correction is `Mode = BindingMode.OneWay` on both display-label binding branches, with a read-only-item regression. Selection/Text synchronization must retain its explicit TwoWay behavior.
+- Correction: after reproduction, the user explicitly authorized focused straggler fixes in this chat. Only those two runtime binding modes changed; selection/Text synchronization and Writer's Simplified defaults are intact. The focused regression and existing combo/grouping cases pass 23/23; the independent `SimplifiedCombos` consumer passes its 56 theme/palette/density/direction cases, including simulated 150% Touch DPI. Writer's original Simplified draft/Apply/Cancel/restart test now passes. The earlier aborted run is not reported as a pass.
+
+### RKWF-051 — Detached Writer dialogs need explicit density and appearance scopes
+
+- First seen: 2026-10-22, Writer 1.1 integration; host responsibility.
+- Reproduction: select Touch, then open an owned Writer dialog. Window Owner relationships do not inherit `Ribbon.Density`. Find/Replace also retained native white controls under a dark palette.
+- Correction: the existing Writer appearance scope applies the saved density to each registered window, including nested color pickers. Find/Replace consumes shared input, checkbox, action-button and surface resources. The View selection is restored before Show and saved separately from ribbon structure; Appearance defaults retain that View preference. The Showcase-style dropdown binds its density permission explicitly to MainRibbon so it follows ribbon hosting and QAT participation.
+- Evidence: all ten detached Writer dialog types re-theme and resize through Touch → Compact → Touch, including the nested color picker. Actual Windows file/print pickers remain OS-owned. Mixed-monitor review remains manual.
+
+### RKWF-052 — Writer document presentation needs its own ribbon-boundary animator
+
+- First seen: 2026-10-22; optional application integration, not a library gap.
+- Existing behavior: the ribbon animates, but Writer's paper/ruler/preview immediately takes its final available bounds. The user approved a bounded presenter after reviewing the proposal.
+- Correction: Writer captures only realized WPF document visuals, holds old paint in Preparing, binds its own translation/clip to BoundaryMotion in Starting, and releases by identity in Ended. Real editor/document ownership never changes. No Showcase helper, runtime API, host completion callback or independent playback timer is used.
+- Limits: active composition, unsafe native/media/live-brush visuals, nontrivial root transforms and capture work above 4,000 visual nodes snap. Crystal's live underlay remains host-owned; temporary drawing clips below the occupied ribbon/QAT boundary. Synthetic composition checks fallback cleanup; simulated DPI and offscreen rendering provide automated evidence. Current evidence and review scope live in the [Writer integration checkpoint](19-WRITER-HOST-INTEGRATION.md).
+
 ### RKWF-001 — KeyTip leaf activation has no consumer focus-handoff contract
 
 Open focus-handoff candidate. Writer defers post-KeyTip focus to ContextIdle to avoid leaking terminating key input. A minimal cross-control/QAT/editable-input reproduction is still needed.

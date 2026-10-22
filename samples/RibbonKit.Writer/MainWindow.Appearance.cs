@@ -2,6 +2,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Threading;
 using RibbonKit.Animation;
@@ -10,6 +11,7 @@ using RibbonKit.Interop;
 using RibbonKit.Localization;
 using RibbonKit.Theming;
 using RibbonKit.Writer.Appearance;
+using RibbonKit.Writer.View;
 
 namespace RibbonKit.Writer;
 
@@ -24,15 +26,21 @@ public partial class MainWindow
     private bool _suppressRibbonPersistence;
     private bool _hasInjectedSettings;
     private WriterAppearanceScope? _appearanceScope;
+    private WriterDocumentTransition? _documentTransition;
     private readonly Dictionary<Window, WriterAppearanceScope> _dialogAppearanceScopes = new();
     private readonly Dictionary<Control, CapturedBackdrop> _capturedPopups = new();
 
     private void InitializeWriterSettings()
     {
+        InputModeSelector.SetBinding(IsEnabledProperty,
+            new Binding(nameof(Ribbon.CanUserChangeDensity)) { Source = MainRibbon });
         // Real Writer startup always has App.Current. Isolated window tests intentionally do not;
         // keep them hermetic rather than reading or writing the interactive user's settings.
         if (Application.Current is null && !_hasInjectedSettings)
+        {
+            ApplyWriterDensity(_appearancePreferences.Density);
             return;
+        }
 
         _appearancePreferences = _writerSettings.LoadAppearance();
         ApplyAppearance(_appearancePreferences);
@@ -106,6 +114,26 @@ public partial class MainWindow
             return;
 
         _writerSettings.SaveRibbonLayout(RibbonCustomizationSerializer.Serialize(MainRibbon));
+    }
+
+    private void OnInputModeChanged(object sender, RoutedEventArgs e)
+    {
+        if (!MainRibbon.CanUserChangeDensity || sender is not RibbonMenuItem { Tag: RibbonDensity density }
+            || density == _appearancePreferences.Density)
+            return;
+
+        _appearancePreferences = _appearancePreferences with { Density = density };
+        ApplyWriterDensity(density);
+        if (_settingsDialog is null && (Application.Current is not null || _hasInjectedSettings))
+            _writerSettings.SaveAppearance(_appearancePreferences);
+    }
+
+    private void ApplyWriterDensity(RibbonDensity density)
+    {
+        // Owner does not supply property inheritance to detached windows.
+        Ribbon.SetDensity(this, density);
+        foreach (var dialog in _dialogAppearanceScopes.Keys)
+            Ribbon.SetDensity(dialog, density);
     }
 
     private void OnBackstageSettings(object sender, RoutedEventArgs e)
@@ -244,8 +272,12 @@ public partial class MainWindow
         WriterAppearancePreferences preferences,
         RibbonOptionsDialog? openDialog = null)
     {
+        _documentTransition?.Reset();
         preferences = WriterAppearanceCompatibility.Normalize(preferences);
         _appearancePreferences = preferences;
+
+        ApplyWriterDensity(preferences.Density);
+        MainRibbon.QuickAccessIconAppearance = preferences.QuickAccessIconAppearance;
 
         if (Application.Current is { } application)
         {
@@ -389,7 +421,8 @@ public partial class MainWindow
         RibbonTheme theme,
         bool isBackdropActive,
         bool highContrast) =>
-        theme is RibbonTheme.Office2024 or RibbonTheme.CrystalLight && isBackdropActive && !highContrast;
+        theme is RibbonTheme.Office2024 or RibbonTheme.Office2024Flat or RibbonTheme.CrystalLight
+            && isBackdropActive && !highContrast;
 
     internal void RegisterAppearanceDialog(Window dialog)
     {

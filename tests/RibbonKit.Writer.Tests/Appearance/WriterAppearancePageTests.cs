@@ -18,6 +18,19 @@ namespace RibbonKit.Writer.Tests.Appearance;
 public sealed class WriterAppearancePageTests
 {
     [Fact]
+    public void AppearanceDefaultsRetainViewDensityAndResetQatAppearance()
+    {
+        StaTestHelper.Run(() =>
+        {
+            var page = new WriterAppearancePage();
+            page.SetPreferences(new WriterAppearancePreferences { Density = RibbonDensity.Touch,
+                Theme = RibbonTheme.Office2024Flat, QuickAccessIconAppearance = RibbonQuickAccessIconAppearance.AdaptiveColor });
+            ((Button)page.FindName("AppearanceDefaultsButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Assert.Equal(new WriterAppearancePreferences { Density = RibbonDensity.Touch }, page.Preferences);
+        });
+    }
+
+    [Fact]
     public void TwoColumnAppearanceUsesSharedOptionsWithoutOverlapAndStacksInNarrowWindows()
     {
         StaTestHelper.Run(() =>
@@ -47,7 +60,7 @@ public sealed class WriterAppearancePageTests
                         var rightPosition = right.TranslatePoint(new Point(), page);
                         Assert.True(width == 680 ? rightPosition.X > leftPosition.X + left.ActualWidth
                             : rightPosition.Y >= leftPosition.Y + left.ActualHeight);
-                        foreach (string name in new[] { "ThemeCombo", "PaletteCombo", "BackdropCombo", "FrameCombo", "BackstageCombo", "ApplicationButtonCombo", "AnimationCombo" })
+                        foreach (string name in new[] { "ThemeCombo", "PaletteCombo", "BackdropCombo", "FrameCombo", "BackstageCombo", "ApplicationButtonCombo", "AnimationCombo", "QatIconCombo" })
                         {
                             var combo = Assert.IsType<RibbonComboBox>(page.FindName(name));
                             Assert.True(combo.ActualWidth > 100);

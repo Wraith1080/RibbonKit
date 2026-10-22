@@ -848,6 +848,11 @@ Writer includes native persistence, page settings, preview/printing, tables/pict
 contextual editing and Settings. Paper opens as one centered sheet that grows downward
 with the document; its dotted margin guide grows with it. Print Preview and printing
 retain physical pagination. View > Continuous provides a workspace-filling editor.
+Writer's View menu offers Mouse / Touch mode; Appearance includes Office 2024 Flat
+and the shared QAT icon choices. Preferences survive restart and support preview,
+Apply/OK/Cancel. Writer synchronizes document presentation with ribbon layout,
+density and QAT transitions through the existing optional lifecycle; its
+[integration checkpoint](docs/19-WRITER-HOST-INTEGRATION.md) records the remaining live gates.
 Editable multipage editing was canceled due to bloat. Outstanding acceptance gates and
 the distribution decision remain detailed in the current-status page.
 Library work includes the remaining MDI milestones and separately scoped projection,

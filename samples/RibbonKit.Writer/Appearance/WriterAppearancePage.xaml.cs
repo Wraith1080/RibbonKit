@@ -13,6 +13,7 @@ internal partial class WriterAppearancePage : UserControl
 {
     private bool _updating;
     private string? _accent;
+    private RibbonDensity _density;
 
     public WriterAppearancePage()
     {
@@ -46,6 +47,8 @@ internal partial class WriterAppearancePage : UserControl
         try
         {
             Select(ThemeCombo, preferences.Theme);
+            _density = preferences.Density;
+            Select(QatIconCombo, preferences.QuickAccessIconAppearance);
             Select(PaletteCombo, preferences.DarkPalette.ToString());
             _accent = preferences.Accent;
             CustomAccentCheck.IsChecked = _accent is not null;
@@ -75,6 +78,8 @@ internal partial class WriterAppearancePage : UserControl
         var preferences = new WriterAppearancePreferences
         {
             Theme = Selected<RibbonTheme>(ThemeCombo),
+            Density = _density,
+            QuickAccessIconAppearance = Selected<RibbonQuickAccessIconAppearance>(QatIconCombo),
             DarkPalette = string.Equals(
                 SelectedTag(PaletteCombo)?.ToString(),
                 bool.TrueString,
@@ -124,7 +129,7 @@ internal partial class WriterAppearancePage : UserControl
 
     private void OnDefaults(object sender, RoutedEventArgs e)
     {
-        SetPreferences(new WriterAppearancePreferences());
+        SetPreferences(new WriterAppearancePreferences { Density = _density });
         PreferencesChanged?.Invoke(this, Preferences);
     }
 

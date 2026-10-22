@@ -1033,6 +1033,45 @@
                                      ScreenTipTitle="Zoom In" ScreenTipText="Increase the current document view zoom by ten percent."
                                      AutomationProperties.AutomationId="ZoomIn" AutomationProperties.Name="Zoom In" />
                 </rk:RibbonGroup>
+                <rk:RibbonGroup Header="Interaction" rk:Ribbon.CommandId="Writer.View.Interaction" rk:KeyTip.Keys="I"
+                                Icon="{StaticResource Icon.WriterTouch}">
+                    <rk:RibbonDropDownButton x:Name="InputModeSelector" Header="Touch/Mouse Mode" Size="Large"
+                                             DropDownHeader="Optimize spacing between commands"
+                                             Icon="{StaticResource Icon.WriterTouch}" LargeIcon="{StaticResource Icon.WriterTouch}"
+                                             rk:Ribbon.CommandId="Writer.View.InputMode" rk:KeyTip.Keys="TM"
+                                             AutomationProperties.AutomationId="ViewInputMode" AutomationProperties.Name="Mouse or Touch mode"
+                                             ScreenTipTitle="Touch/Mouse Mode"
+                                             ScreenTipText="Choose Mouse for standard spacing or Touch for larger command targets and more space between commands.">
+                        <rk:RibbonMenuItem x:Name="MouseModeChoice" Header="Mouse"
+                                           Description="Standard ribbon and commands.&#x0a;Optimized for use with mouse."
+                                           LargeIcon="{StaticResource Icon.WriterMouse}"
+                                           Tag="{x:Static rk:RibbonDensity.Compact}" Click="OnInputModeChanged">
+                            <rk:RibbonMenuItem.Style>
+                                <Style TargetType="{x:Type rk:RibbonMenuItem}" BasedOn="{StaticResource {x:Type rk:RibbonMenuItem}}">
+                                    <Style.Triggers>
+                                        <Trigger Property="rk:Ribbon.Density" Value="Compact">
+                                            <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </rk:RibbonMenuItem.Style>
+                        </rk:RibbonMenuItem>
+                        <rk:RibbonMenuItem x:Name="TouchModeChoice" Header="Touch"
+                                           Description="More space between commands.&#x0a;Optimized for use with touch."
+                                           LargeIcon="{StaticResource Icon.WriterTouch}"
+                                           Tag="{x:Static rk:RibbonDensity.Touch}" Click="OnInputModeChanged">
+                            <rk:RibbonMenuItem.Style>
+                                <Style TargetType="{x:Type rk:RibbonMenuItem}" BasedOn="{StaticResource {x:Type rk:RibbonMenuItem}}">
+                                    <Style.Triggers>
+                                        <Trigger Property="rk:Ribbon.Density" Value="Touch">
+                                            <Setter Property="Background" Value="{DynamicResource RibbonKit.Brushes.Control.CheckedBackground}" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </rk:RibbonMenuItem.Style>
+                        </rk:RibbonMenuItem>
+                    </rk:RibbonDropDownButton>
+                </rk:RibbonGroup>
                 <rk:RibbonGroup x:Name="ViewDisplayGroup" Header="Show" rk:Ribbon.CommandId="Writer.View.Show" rk:KeyTip.Keys="S"
                                 Icon="{StaticResource Icon.WriterRuler}"
                                 AutomationProperties.AutomationId="ViewDisplayGroup" AutomationProperties.Name="Show">

@@ -39,7 +39,7 @@ public sealed class WriterUiCollectionDefinition
 }
 
 [Collection("Writer UI")]
-public sealed class MainWindowIntegrationTests
+public sealed partial class MainWindowIntegrationTests
 {
     [Fact]
     public async Task ViewTogglesPersistAndSurviveAppearancePreviewCancelAndRestart()

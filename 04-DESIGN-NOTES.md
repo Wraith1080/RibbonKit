@@ -989,6 +989,8 @@ technical evidence warrants them; preserve existing dated records.
 
 [Native combo editors in original slots](docs/history/library/14-simplified-ribbon.md#native-combo-editors-in-original-slots--2026-10-21), with [current verification and review](docs/15-SIMPLIFIED-RIBBON-PLAN.md#native-combo-editors-in-original-slots--2026-10-21).
 
+[Read-only choice label binding correction](docs/history/library/14-simplified-ribbon.md#read-only-choice-labels--2026-10-22).
+
 [Measured inline clearance and field/divider heights](docs/history/library/14-simplified-ribbon.md#measured-inline-clearance--2026-10-21).
 
 [Shared layout/density motion trial](docs/history/library/14-simplified-ribbon.md#visible-layoutdensity-motion-trial--2026-10-13).
@@ -1088,6 +1090,10 @@ technical evidence warrants them; preserve existing dated records.
 [Native collection-view sections, themed heading spacing and source-linked combo copies](docs/history/library/11-touch-density-and-gallery-projections.md#3274-grouped-combo-dropdown-sections--2026-10-21).
 [Current evidence and review](docs/08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#grouped-combo-dropdowns).
 
+### 3.275 Writer 1.1 host integration — 2026-10-22
+
+[Preferences, shared presentation, document animation and consumer pitfalls](docs/history/03-writer-host-integration.md).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.
@@ -1113,6 +1119,10 @@ technical evidence warrants them; preserve existing dated records.
   “Corrected” does not establish every theme/DPI/RTL gate.
 
 ### Remaining or intentionally deferred
+
+- **Writer 1.1 host integration:** current focused evidence and remaining live review
+  are in the [Writer checkpoint](docs/19-WRITER-HOST-INTEGRATION.md). Overall 1.1
+  release acceptance remains separate.
 
 - **Simplified ribbon:** layout/customization evidence and remaining acceptance are in the
   [active plan](docs/15-SIMPLIFIED-RIBBON-PLAN.md#delivery-and-acceptance).
