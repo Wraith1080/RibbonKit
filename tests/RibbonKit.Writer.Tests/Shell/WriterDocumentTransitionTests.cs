@@ -22,6 +22,70 @@ namespace RibbonKit.Writer.Tests.Shell;
 
 public sealed partial class MainWindowIntegrationTests
 {
+    [Theory]
+    [InlineData(RibbonQuickAccessPosition.TitleBar, false)]
+    [InlineData(RibbonQuickAccessPosition.TitleBar, true)]
+    [InlineData(RibbonQuickAccessPosition.TabRow, false)]
+    [InlineData(RibbonQuickAccessPosition.TabRow, true)]
+    [InlineData(RibbonQuickAccessPosition.BelowRibbon, false)]
+    [InlineData(RibbonQuickAccessPosition.BelowRibbon, true)]
+    public async Task WriterDensityMenuKeepsSharedMotionForMouseTouchRoundTrips(RibbonQuickAccessPosition placement, bool copied)
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var directory = new TemporaryDirectory();
+            var store = new WriterSettingsStore(new WriterSettingsPaths(directory.File("appearance.json"), directory.File("ribbon.json")));
+            store.SaveAppearance(new WriterAppearancePreferences { Theme = RibbonTheme.CrystalLight,
+                ShowRuler = false, AnimationLevel = RibbonAnimationLevel.Subtle, RespectSystemReducedMotion = false });
+            using var fixture = new WindowFixture(settings: store);
+            var originalLevel = RibbonAnimation.GlobalLevel;
+            bool originalReduce = RibbonAnimation.RespectSystemReduceMotion;
+            try
+            {
+                fixture.Ribbon.QuickAccessPosition = placement;
+                fixture.Ribbon.SelectedTab = (RibbonTab)fixture.Window.FindName("ViewTab");
+                var selector = (RibbonDropDownButton)fixture.Window.FindName("InputModeSelector");
+                if (copied)
+                {
+                    fixture.Ribbon.QuickAccessItems.Clear();
+                    fixture.Ribbon.AddToQuickAccess(selector);
+                }
+                fixture.Show(); fixture.Window.Opacity = 1; await PumpAsync();
+                var opener = copied ? fixture.Ribbon.QuickAccessItems.OfType<RibbonDropDownButton>()
+                    .Single(item => ReferenceEquals(Ribbon.GetQuickAccessSource(item), selector)) : selector;
+                foreach (var density in new[] { RibbonDensity.Touch, RibbonDensity.Compact })
+                {
+                    opener.IsDropDownOpen = true; await PumpAsync();
+                    Assert.True(opener.IsDropDownOpen);
+                    var events = new List<string>();
+                    RibbonLayoutTransitionEventArgs? ending = null;
+                    void Preparing(object? sender, RibbonLayoutTransitionEventArgs e) => events.Add($"Prepare {e.BoundaryMotion.IsAnimated}");
+                    void Starting(object? sender, RibbonLayoutTransitionEventArgs e) => events.Add($"Start {e.BoundaryMotion.IsAnimated}");
+                    void Ended(object? sender, RibbonLayoutTransitionEventArgs e) { ending = e; events.Add($"End {e.Outcome} {e.BoundaryMotion.Progress}"); }
+                    fixture.Ribbon.LayoutTransitionPreparing += Preparing;
+                    fixture.Ribbon.LayoutTransitionStarting += Starting;
+                    fixture.Ribbon.LayoutTransitionEnded += Ended;
+                    try
+                    {
+                        SelectWriterDensity(fixture, density);
+                        await PumpAsync();
+                        Assert.False(opener.IsDropDownOpen);
+                        Assert.Equal(density, fixture.Ribbon.Density);
+                        Assert.True(ending?.Outcome == RibbonLayoutTransitionOutcome.Completed,
+                            $"{placement}/{copied}/{density}: {string.Join("; ", events)}");
+                    }
+                    finally
+                    {
+                        fixture.Ribbon.LayoutTransitionPreparing -= Preparing;
+                        fixture.Ribbon.LayoutTransitionStarting -= Starting;
+                        fixture.Ribbon.LayoutTransitionEnded -= Ended;
+                    }
+                }
+            }
+            finally { RibbonAnimation.GlobalLevel = originalLevel; RibbonAnimation.RespectSystemReduceMotion = originalReduce; }
+        }, TimeSpan.FromSeconds(45));
+    }
+
     [Fact]
     public async Task WriterDocumentMotionFollowsSharedClockForModesDensityQatAndPreviewWithoutScalingText()
     {
@@ -74,9 +138,13 @@ public sealed partial class MainWindowIntegrationTests
 
                 // The existing Crystal overlap must not be painted above the moving QAT.
                 fixture.Window.ApplyAppearance(new WriterAppearancePreferences { Theme = RibbonTheme.CrystalLight,
-                    ShowRuler = false, AnimationLevel = RibbonAnimationLevel.Subtle, RespectSystemReducedMotion = false });
+                    Density = RibbonDensity.Touch, ShowRuler = false,
+                    AnimationLevel = RibbonAnimationLevel.Subtle, RespectSystemReducedMotion = false });
                 await PumpAsync();
                 await Verify(() => fixture.Ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TabRow);
+                await Verify(() => fixture.Ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TitleBar);
+                await Verify(() => fixture.Ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon);
+                await Verify(() => fixture.Ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TitleBar);
                 await Verify(() => fixture.Ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon);
 
                 async Task Verify(Action change)

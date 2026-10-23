@@ -23,6 +23,7 @@ internal sealed class RibbonLayoutTransition : Adorner, IDisposable
     private readonly AnimationClock _hide;
     private readonly Action _completed;
     private readonly double _travel;
+    private readonly bool _fadeIncomingContent;
     private readonly FlowDirection _direction;
     private readonly DpiScale _dpi;
     private readonly Matrix _transform;
@@ -58,6 +59,7 @@ internal sealed class RibbonLayoutTransition : Adorner, IDisposable
         _coordinateRoot = coordinateRoot ?? layer;
         _origin = origin ?? surface.TranslatePoint(new Point(), _coordinateRoot);
         _travel = RibbonAnimation.GetSlideOffset(action);
+        _fadeIncomingContent = action != RibbonAnimationAction.LayoutModeChange;
         _direction = surface.FlowDirection;
         _dpi = VisualTreeHelper.GetDpi(surface);
         _transform = surface.RenderTransform.Value;
@@ -69,12 +71,15 @@ internal sealed class RibbonLayoutTransition : Adorner, IDisposable
         // The adorner can sit above an ancestor with consumer-owned opacity.
         Opacity = RibbonLayoutDrawing.OpacityBelowLayer(surface, layer);
         _hide = RibbonLayoutDrawing.HideImmediately(surface);
-        layer.Add(this);
         var motion = new DoubleAnimation(0d, 1d, RibbonAnimation.GetDuration(action))
         { EasingFunction = RibbonAnimation.GetEase(action) };
         motion.Completed += (_, _) => { if (!_disposed) _completed(); };
         if (shared is null) BeginAnimation(ProgressProperty, motion);
         else SetBinding(ProgressProperty, new Binding(nameof(RibbonLayoutTransitionMotion.Progress)) { Source = shared });
+        // Seed both drawings before publishing them. WPF may not call OnRender
+        // until the next timing/layout pass; the unseeded chrome is the end state.
+        UpdatePresentation();
+        layer.Add(this);
     }
 
     internal static RibbonLayoutTransition? Start(FrameworkElement surface,
@@ -94,7 +99,9 @@ internal sealed class RibbonLayoutTransition : Adorner, IDisposable
     protected override int VisualChildrenCount => _visuals?.Count ?? 0;
     protected override Visual GetVisualChild(int index) => _visuals[index];
 
-    protected override void OnRender(DrawingContext drawing)
+    protected override void OnRender(DrawingContext drawing) => UpdatePresentation();
+
+    private void UpdatePresentation()
     {
         double progress = (double)GetValue(ProgressProperty);
         double height = _previous.Size.Height + (_current.Size.Height - _previous.Size.Height) * progress;
@@ -134,7 +141,9 @@ internal sealed class RibbonLayoutTransition : Adorner, IDisposable
         drawing.DrawDrawing(_previous.FullContent);
         drawing.Pop();
         drawing.Pop();
-        drawing.PushOpacity(Math.Min(1, 0.35 + 1.65 * progress));
+        // Mode changes already reveal and move the new command drawings with
+        // the boundary. Fading that entire layer dims the returning ribbon.
+        drawing.PushOpacity(_fadeIncomingContent ? Math.Min(1, 0.35 + 1.65 * progress) : 1);
         drawing.DrawDrawing(_current.Content);
         foreach (var item in _current.Items)
         {
@@ -198,6 +207,8 @@ internal sealed class RibbonLayoutHold : Adorner, IDisposable
     private readonly AnimationClock _hide;
     private readonly AnimationClock? _hideFooter;
     private readonly VisualCollection _visuals;
+    private readonly ContainerVisual _presentation = new();
+    private readonly TranslateTransform _originCorrection = new();
     private bool _disposed;
 
     private RibbonLayoutHold(FrameworkElement surface, AdornerLayer layer,
@@ -220,11 +231,15 @@ internal sealed class RibbonLayoutHold : Adorner, IDisposable
             _hideFooter = RibbonLayoutDrawing.HideImmediately(footer);
         }
         _hide = RibbonLayoutDrawing.HideImmediately(surface);
-        _visuals = new VisualCollection(this);
+        _visuals = new VisualCollection(this) { _presentation };
+        _presentation.Transform = _originCorrection;
         AddPresentation(snapshot, _bodyOpacity, new Point());
         if (_footerSnapshot is { } footerSnapshot)
             AddPresentation(footerSnapshot, _footerOpacity, _footerPosition);
+        OnCoordinateLayoutUpdated(this, EventArgs.Empty);
         layer.Add(this);
+        _coordinateRoot.LayoutUpdated += OnCoordinateLayoutUpdated;
+        CompositionTarget.Rendering += OnCoordinateLayoutUpdated;
     }
 
     internal static RibbonLayoutHold? Start(FrameworkElement surface,
@@ -232,12 +247,21 @@ internal sealed class RibbonLayoutHold : Adorner, IDisposable
         AdornerLayer.GetAdornerLayer(surface) is { } layer
             ? new RibbonLayoutHold(surface, layer, previous, footer, origin, coordinateRoot, opacity) : null;
 
-    public override GeneralTransform GetDesiredTransform(GeneralTransform transform)
+    private void OnCoordinateLayoutUpdated(object? sender, EventArgs e)
     {
-        if (AdornedElement.FindCommonVisualAncestor(_layer) is null) return base.GetDesiredTransform(transform);
-        Point current = ((FrameworkElement)AdornedElement).TranslatePoint(new Point(), _layer);
+        if (_disposed || AdornedElement.FindCommonVisualAncestor(_layer) is null
+            || _coordinateRoot.FindCommonVisualAncestor(_layer) is null) return;
+        // A control can finish arranging before AdornerLayer publishes its cached
+        // placement. Compensate the adorner actually being drawn, not that newer
+        // live control position; otherwise density reflow overshoots for a frame.
+        Point current = FindCommonVisualAncestor(_layer) is not null
+            ? TranslatePoint(new Point(), _layer)
+            : ((FrameworkElement)AdornedElement).TranslatePoint(new Point(), _layer);
         Point previous = _coordinateRoot.TranslatePoint(Origin, _layer);
-        return new GeneralTransformGroup { Children = { base.GetDesiredTransform(transform), new TranslateTransform(previous.X - current.X, previous.Y - current.Y) } };
+        // Recheck at rendering as well: placement/ancestor transforms can advance
+        // after the layout callback. Only the inert drawing receives this offset.
+        _originCorrection.X = previous.X - current.X;
+        _originCorrection.Y = previous.Y - current.Y;
     }
 
     protected override Size MeasureOverride(Size constraint) => new(_snapshot.Size.Width,
@@ -258,13 +282,15 @@ internal sealed class RibbonLayoutHold : Adorner, IDisposable
             drawing.DrawDrawing(snapshot.FullContent);
         }
         layer.Children.Add(foreground);
-        _visuals.Add(layer);
+        _presentation.Children.Add(layer);
     }
 
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
+        _coordinateRoot.LayoutUpdated -= OnCoordinateLayoutUpdated;
+        CompositionTarget.Rendering -= OnCoordinateLayoutUpdated;
         RibbonLayoutDrawing.ReleaseHide(_hide);
         if (_hideFooter is { } footerClock)
         {

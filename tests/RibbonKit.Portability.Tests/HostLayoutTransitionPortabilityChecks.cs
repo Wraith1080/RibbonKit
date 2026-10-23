@@ -59,27 +59,40 @@ internal static class HostLayoutTransitionPortabilityChecks
         var dock = new DockPanel(); DockPanel.SetDock(ribbon, Dock.Top); dock.Children.Add(ribbon);
         dock.Children.Add(new Border { Background = Brushes.White });
         var window = new RibbonWindow { Content = dock, Title = "Steady consumer title", Width = 700, Height = 350,
-            Background = Brushes.White, Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+            Background = Brushes.White, Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false,
+            Icon = new DrawingImage(new GeometryDrawing(Brushes.Lime, null, new RectangleGeometry(new Rect(0, 0, 16, 16)))) };
         window.Resources["RibbonKit.Brushes.TitleBar.Background"] = new SolidColorBrush(color);
         RibbonLayoutTransitionMotion? motion = null;
         RibbonLayoutTransitionEventArgs? transition = null;
         bool ended = false; int samples = 0;
+        bool samplePending = false;
         byte[]? titleInk = null, qatInk = null;
+        Rect beforeIcon = Rect.Empty, afterIcon = Rect.Empty;
         var progressProperty = DependencyPropertyDescriptor.FromProperty(RibbonLayoutTransitionMotion.ProgressProperty, typeof(RibbonLayoutTransitionMotion));
         ribbon.LayoutTransitionStarting += (_, e) =>
         {
             motion = e.BoundaryMotion; transition = e;
+            afterIcon = IconBounds();
             titleInk = motion.Action == RibbonAnimationAction.LayoutModeChange ? TitlePixels() : null;
             qatInk = titleInk is not null ? QatPixels() : null;
-            progressProperty.AddValueChanged(motion, SamplePaint);
+            progressProperty.AddValueChanged(motion, SchedulePaint);
         };
         ribbon.LayoutTransitionEnded += (_, e) =>
         {
-            progressProperty.RemoveValueChanged(e.BoundaryMotion, SamplePaint);
+            progressProperty.RemoveValueChanged(e.BoundaryMotion, SchedulePaint);
             Console.WriteLine($"Caption paint {e.Reason}: {e.Outcome}, progress={motion?.Progress}, samples={samples}.");
             ended = true;
         };
-        void SamplePaint(object? sender, EventArgs args)
+        void SchedulePaint(object? sender, EventArgs args)
+        {
+            // Progress notifies public DP observers before the renderer updates
+            // its drawing. Sample after that same tick has placed the visuals.
+            if (samplePending) return;
+            samplePending = true;
+            window.Dispatcher.BeginInvoke(DispatcherPriority.Render, (Action)(() =>
+            { samplePending = false; SamplePaint(); }));
+        }
+        void SamplePaint()
         {
             if (motion is null || ended || motion.Progress <= 0 || motion.Progress >= 1) return;
             var bitmap = new RenderTargetBitmap(700, 350, 96, 96, PixelFormats.Pbgra32); bitmap.Render(window);
@@ -90,11 +103,28 @@ internal static class HostLayoutTransitionPortabilityChecks
             Point header = transition.CoordinateRoot.TranslatePoint(new Point(450, top + 2), window);
             bitmap.CopyPixels(new Int32Rect((int)header.X, (int)header.Y, 1, 1), pixel, 4, 0);
             Assert.Equal(Colors.Navy, Color.FromArgb(pixel[3], pixel[2], pixel[1], pixel[0]));
+            byte[] iconPixels = new byte[700 * 50 * 4];
+            bitmap.CopyPixels(new Int32Rect(0, 0, 700, 50), iconPixels, 700 * 4, 0);
+            int[] rows = Enumerable.Range(0, 50).Where(y => Enumerable.Range((int)beforeIcon.X, 16).Any(x =>
+            {
+                int offset = (y * 700 + x) * 4;
+                return iconPixels[offset + 1] > iconPixels[offset] + 50
+                    && iconPixels[offset + 1] > iconPixels[offset + 2] + 50;
+            })).ToArray();
+            Assert.NotEmpty(rows);
+            Assert.InRange(rows.Last() - rows.First() + 1, 15, 17);
+            double expectedTop = beforeIcon.Y + (afterIcon.Y - beforeIcon.Y) * motion.Progress;
+            Assert.InRange(Math.Abs(rows.First() - expectedTop), 0, 1);
             if (titleInk is not null) Assert.Equal(titleInk, TitlePixels());
             if (qatInk is not null) Assert.Equal(qatInk, QatPixels());
         }
         byte[] TitlePixels()
             => Pixels(new Int32Rect(220, 10, 200, 16));
+        Rect IconBounds()
+        {
+            var icon = (FrameworkElement)window.Template.FindName("PART_WindowIcon", window);
+            return icon.TransformToVisual(window).TransformBounds(new Rect(icon.RenderSize));
+        }
         byte[] QatPixels()
         {
             var qat = (FrameworkElement)ribbon.QuickAccessItems[0];
@@ -115,15 +145,23 @@ internal static class HostLayoutTransitionPortabilityChecks
             bool rendered = false; EventHandler onRender = (_, _) => rendered = true;
             CompositionTarget.Rendering += onRender;
             try { PumpUntil(() => rendered); } finally { CompositionTarget.Rendering -= onRender; }
-            ribbon.LayoutMode = RibbonLayoutMode.Simplified;
+            beforeIcon = IconBounds(); ribbon.LayoutMode = RibbonLayoutMode.Simplified;
             PumpUntil(() => ended); Assert.True(samples > 0);
-            ended = false; samples = 0; motion = null; ribbon.Density = RibbonDensity.Touch;
+            beforeIcon = IconBounds(); ended = false; samples = 0; motion = null; ribbon.Density = RibbonDensity.Touch;
             PumpUntil(() => ended); Assert.True(samples > 0);
+            foreach (var placement in new[] { RibbonQuickAccessPosition.BelowRibbon, RibbonQuickAccessPosition.TitleBar,
+                RibbonQuickAccessPosition.TabRow, RibbonQuickAccessPosition.TitleBar })
+            {
+                Drain(); window.UpdateLayout();
+                beforeIcon = IconBounds(); ended = false; samples = 0; motion = null;
+                ribbon.QuickAccessPosition = placement;
+                PumpUntil(() => ended); Assert.True(samples > 0);
+            }
             Console.WriteLine($"Independent accent-caption paint: {samples} intermediate samples passed.");
         }
         finally
         {
-            if (motion is not null) progressProperty.RemoveValueChanged(motion, SamplePaint);
+            if (motion is not null) progressProperty.RemoveValueChanged(motion, SchedulePaint);
             window.Close(); Drain();
         }
     }
@@ -136,6 +174,8 @@ internal static class HostLayoutTransitionPortabilityChecks
         var group = new RibbonGroup { Header = "Consumer commands" };
         var command = new RibbonButton { Header = "Save", Icon = new DrawingImage(new GeometryDrawing(Brushes.SteelBlue, null, new RectangleGeometry(new Rect(0, 0, 16, 16)))) };
         Ribbon.SetSimplifiedPlacement(command, RibbonSimplifiedPlacement.Inline); group.Items.Add(command);
+        group.Items.Add(new RibbonButton { Header = "Body marker",
+            Icon = new DrawingImage(new GeometryDrawing(Brushes.Lime, null, new RectangleGeometry(new Rect(0, 0, 16, 16)))) });
         var tab = new RibbonTab { Header = "Home" }; tab.Groups.Add(group); ribbon.Tabs.Add(tab); ribbon.SelectedTab = tab;
         ribbon.AddToQuickAccess(command);
         var text = new TextBox { Text = "Public-only consumer content\nText and icons stay at their natural scale.", AcceptsReturn = true, Padding = new Thickness(20) };
@@ -144,6 +184,9 @@ internal static class HostLayoutTransitionPortabilityChecks
         var window = new RibbonWindow { Content = dock, FlowDirection = direction, Width = 900, Height = 550,
             Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
         ConsumerAnimator? animator = synchronize ? new ConsumerAnimator(ribbon, content) : null;
+        bool started = false;
+        ribbon.LayoutTransitionPreparing += (_, _) => started = false;
+        ribbon.LayoutTransitionStarting += (_, _) => started = true;
         try
         {
             window.Show(); Drain(); window.UpdateLayout();
@@ -157,12 +200,21 @@ internal static class HostLayoutTransitionPortabilityChecks
             {
                 FrameworkElement original = (FrameworkElement)ribbon.QuickAccessItems[0];
                 Size before = content.RenderSize;
+                int[] markerBefore = MarkerRows(window);
                 ribbon.SetCurrentValue(Ribbon.QuickAccessPositionProperty, position);
                 Assert.Single(QatScenes(window));
                 // Force a destination layout/render before Background/ContextIdle.
                 // The old inert presentation must still cover the real controls.
                 Dispatcher.CurrentDispatcher.Invoke(() => window.UpdateLayout(), DispatcherPriority.Render);
                 Assert.Single(QatScenes(window));
+                Dispatcher.CurrentDispatcher.Invoke(() =>
+                {
+                    window.UpdateLayout(); Assert.False(started);
+                    int[] held = MarkerRows(window);
+                    Assert.InRange(Math.Abs(markerBefore.First() - held.First()), 0, 1);
+                    Assert.InRange(Math.Abs(markerBefore.Last() - held.Last()), 0, 1);
+                    Assert.InRange(Math.Abs(markerBefore.Length - held.Length), 0, 1);
+                }, DispatcherPriority.Background);
                 Drain(); window.UpdateLayout();
                 Assert.Single(QatScenes(window));
                 Assert.Same(original, ribbon.QuickAccessItems[0]); Assert.NotNull(VisualTreeHelper.GetParent(original));
@@ -196,6 +248,20 @@ internal static class HostLayoutTransitionPortabilityChecks
         bitmap.Render(window);
         var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap));
         using var output = File.Create(Path.Combine(folder, $"{theme}-{direction}-{density}-{synchronize}-{position}.png")); png.Save(output);
+    }
+
+    private static int[] MarkerRows(Window window)
+    {
+        var image = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+        image.Render(window);
+        byte[] pixels = new byte[image.PixelWidth * image.PixelHeight * 4];
+        image.CopyPixels(pixels, image.PixelWidth * 4, 0);
+        int[] rows = Enumerable.Range(0, image.PixelHeight).Where(y => Enumerable.Range(0, image.PixelWidth).Any(x =>
+        {
+            int offset = (y * image.PixelWidth + x) * 4;
+            return pixels[offset + 1] > 200 && pixels[offset] < 10 && pixels[offset + 2] < 10;
+        })).ToArray();
+        Assert.NotEmpty(rows); return rows;
     }
 
     private static Adorner[] QatScenes(Window window) => Descendants(window).OfType<AdornerDecorator>()

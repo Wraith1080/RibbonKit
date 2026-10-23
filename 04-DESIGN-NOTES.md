@@ -1020,7 +1020,7 @@ technical evidence warrants them; preserve existing dated records.
 
 ### 3.259 Ribbon-owned lifecycle and QAT relocation presentation — 2026-10-16
 
-[Shared start/progress, inert QAT relocation and optional application content animation](docs/history/library/16-host-layout-transitions.md#3259-ribbon-owned-lifecycle-and-qat-relocation-presentation--2026-10-16).
+[Shared start/progress, inert QAT relocation, held drawing position, seeded body handoff and optional application content animation](docs/history/library/16-host-layout-transitions.md#3259-ribbon-owned-lifecycle-and-qat-relocation-presentation--2026-10-16).
 
 ### 3.260 Stable lower QAT and contextual selection geometry — 2026-10-16
 
@@ -1041,7 +1041,7 @@ technical evidence warrants them; preserve existing dated records.
 
 ### 3.264 Stable caption and content paint during layout transitions — 2026-10-18
 
-[Continuous caption paint, transparent-header gap coverage and application card decoration](docs/history/library/16-host-layout-transitions.md#3264-stable-caption-and-content-paint-during-layout-transitions--2026-10-18).
+[Continuous caption paint, centered Touch caption foreground, steady mode-change command/lower-QAT ink, header gap coverage and application card decoration](docs/history/library/16-host-layout-transitions.md#3264-stable-caption-and-content-paint-during-layout-transitions--2026-10-18).
 
 ### 3.265 Office menu, hover and transition polish — 2026-10-18
 

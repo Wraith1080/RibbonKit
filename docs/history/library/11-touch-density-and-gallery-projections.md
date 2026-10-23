@@ -290,13 +290,19 @@ that closed branch or its captured/window fallback. An open replacement popup
 and an application's explicit focus target take precedence. The ordinary child
 focus-return rule remains in use for cancel/return and standalone dropdowns.
 
-The initial menu/ownership slice passes 61 cases; the final focus/commit slice
-passes 37, including explicit focus changes from source-selection and routed
-command handlers. Those scopes overlap. Repeat/cached opens preserve source
-ownership and execute each borrowed command once. The independent combo keyboard
+Final menu/focus coverage includes 89 unique cases across completed runs, including
+explicit focus changes from source-selection and routed command handlers. A
+combined run passed 86 and failed three focus-setup assertions before invocation;
+only those failures were retried fresh and passed 3/3. The separate final
+focus/commit selection passes 37/37; counts overlap, with no single clean 89-case
+run claimed. User computer activity makes interference plausible, not confirmed.
+Repeat/cached opens preserve source ownership and execute each borrowed command
+once. The independent combo keyboard
 consumer covers Enter/Space, disabled rows, Escape and 24 KeyTip scenarios across
 Office2007/Crystal, Compact/Touch, LTR/RTL and QAT/overflow/custom copies. These are
-managed input/UIA checks, not human input acceptance. Remaining evidence and native
+managed input/UIA checks, not human input acceptance. The OverflowMenus consumer
+and eight Writer font-choice regressions also pass; normal Release net8/net9 and
+Debug Writer builds have zero warnings/errors. Remaining evidence and native
 review are owned by the
 [1.1 acceptance plan](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#shared-overflow-choice-dismissal--2026-10-23).
 

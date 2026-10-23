@@ -591,6 +591,206 @@ public sealed class HostLayoutTransitionTests
     });
 
     [Theory]
+    [InlineData(RibbonDensity.Compact, RibbonQuickAccessPosition.TitleBar)]
+    [InlineData(RibbonDensity.Touch, RibbonQuickAccessPosition.TitleBar)]
+    [InlineData(RibbonDensity.Compact, RibbonQuickAccessPosition.BelowRibbon)]
+    [InlineData(RibbonDensity.Touch, RibbonQuickAccessPosition.BelowRibbon)]
+    public void Pending_density_hold_uses_presented_placement_when_live_geometry_advances_first(
+        RibbonDensity from, RibbonQuickAccessPosition placement) => Run((window, ribbon) =>
+    {
+        Ribbon.SetDensity(window, from);
+        ribbon.QuickAccessPosition = placement; Settle(window);
+        Ribbon.SetDensity(window, from == RibbonDensity.Touch ? RibbonDensity.Compact : RibbonDensity.Touch);
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var pending = (DispatcherOperation)typeof(Ribbon).GetField("_pendingDensityTransition", flags)!.GetValue(ribbon)!;
+        pending.Priority = DispatcherPriority.Inactive;
+        var hold = (FrameworkElement)typeof(Ribbon).GetField("_layoutHold", flags)!.GetValue(ribbon)!;
+        var origin = (Point)hold.GetType().GetProperty("Origin", flags)!.GetValue(hold)!;
+        var picture = (ContainerVisual)hold.GetType().GetField("_presentation", flags)!.GetValue(hold)!;
+        var root = window.RibbonPresentationSurface!.Value.Root;
+        var body = (FrameworkElement)typeof(Ribbon).GetField("_ribbonContentHost", flags)!.GetValue(ribbon)!;
+        Rect originalSlot = Rect.Empty;
+        var positions = new List<Point>();
+        EventHandler sample = (_, _) => positions.Add(picture.TransformToVisual(root).Transform(new Point()));
+        CompositionTarget.Rendering += sample;
+        try
+        {
+            PumpUntil(() => positions.Count >= 3);
+            Assert.All(positions, point => Assert.InRange((point - origin).Length, 0, .01));
+            // The native recording/trace shows the control's new arrange before
+            // the adorner publishes its cached placement. Reproduce that ordering
+            // without forcing a whole-window layout that would conceal the gap.
+            originalSlot = System.Windows.Controls.Primitives.LayoutInformation.GetLayoutSlot(body);
+            Point oldAdorner = hold.TranslatePoint(new Point(), root);
+            double oldBodyY = body.TranslatePoint(new Point(), root).Y;
+            var advancedSlot = originalSlot; advancedSlot.Offset(0, 12);
+            body.Arrange(advancedSlot);
+            Assert.Equal(oldBodyY + 12, body.TranslatePoint(new Point(), root).Y, 6);
+            Assert.Equal(oldAdorner, hold.TranslatePoint(new Point(), root));
+            hold.GetType().GetMethod("OnCoordinateLayoutUpdated", flags)!.Invoke(hold, [null, EventArgs.Empty]);
+            Point painted = picture.TransformToVisual(root).Transform(new Point());
+            Assert.InRange((painted - origin).Length, 0, .01);
+        }
+        finally
+        {
+            CompositionTarget.Rendering -= sample;
+            if (!originalSlot.IsEmpty) body.Arrange(originalSlot);
+            pending.Priority = DispatcherPriority.ContextIdle;
+        }
+    });
+
+    [Theory]
+    [InlineData(RibbonDensity.Compact, RibbonQuickAccessPosition.TitleBar)]
+    [InlineData(RibbonDensity.Touch, RibbonQuickAccessPosition.TitleBar)]
+    [InlineData(RibbonDensity.Compact, RibbonQuickAccessPosition.BelowRibbon)]
+    [InlineData(RibbonDensity.Touch, RibbonQuickAccessPosition.BelowRibbon)]
+    public void Density_body_presentation_is_seeded_before_first_render_or_clock_tick(
+        RibbonDensity from, RibbonQuickAccessPosition placement) => Run((window, ribbon) =>
+    {
+        Ribbon.SetDensity(window, from);
+        ribbon.QuickAccessPosition = placement; Settle(window);
+        var body = (FrameworkElement)typeof(Ribbon).GetField("_ribbonContentHost", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(ribbon)!;
+        double previousHeight = body.ActualHeight;
+        Point previousOrigin = body.TranslatePoint(new Point(), window.RibbonPresentationSurface!.Value.Root);
+        bool inspected = false;
+        ribbon.LayoutTransitionStarting += (_, _) =>
+        {
+            var motion = typeof(Ribbon).GetField("_layoutMotion", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(ribbon)!;
+            var chrome = (ContainerVisual)motion.GetType().GetField("_chrome", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(motion)!;
+            var foreground = (DrawingVisual)motion.GetType().GetField("_foreground", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(motion)!;
+            // The historical FLIP contract requires the start values before a
+            // visual is published, even when layout has already produced its end.
+            Assert.NotNull(chrome.Transform);
+            Assert.Equal(previousHeight / body.ActualHeight, chrome.Transform.Value.M22, 6);
+            double delta = previousOrigin.Y - body.TranslatePoint(new Point(), window.RibbonPresentationSurface.Value.Root).Y;
+            Assert.Equal(delta, chrome.Transform.Value.OffsetY, 6);
+            Assert.NotNull(foreground.Drawing);
+            Assert.NotEmpty(foreground.Drawing.Children);
+            inspected = true;
+        };
+        Ribbon.SetDensity(window, from == RibbonDensity.Touch ? RibbonDensity.Compact : RibbonDensity.Touch);
+        Drain(); Assert.True(inspected);
+    });
+
+    [Theory]
+    [InlineData(RibbonQuickAccessPosition.BelowRibbon, RibbonQuickAccessPosition.TitleBar)]
+    [InlineData(RibbonQuickAccessPosition.TitleBar, RibbonQuickAccessPosition.BelowRibbon)]
+    [InlineData(RibbonQuickAccessPosition.TabRow, RibbonQuickAccessPosition.TitleBar)]
+    [InlineData(RibbonQuickAccessPosition.TitleBar, RibbonQuickAccessPosition.TabRow)]
+    public void Pending_body_hold_keeps_its_window_position_after_deferred_caption_reflow(
+        RibbonQuickAccessPosition from, RibbonQuickAccessPosition to) => Run((window, ribbon) =>
+    {
+        ThemeManager.Apply(Sta.UseApplication(), RibbonTheme.CrystalLight);
+        Ribbon.SetDensity(window, RibbonDensity.Touch);
+        var command = (RibbonButton)ribbon.Tabs[0].Groups[0].Items[0];
+        command.Icon = new DrawingImage(new GeometryDrawing(Brushes.Lime, null, new RectangleGeometry(new Rect(0, 0, 16, 16))));
+        ribbon.QuickAccessItems.Clear();
+        ribbon.QuickAccessItems.Add(new RibbonButton { Header = "Separate QAT command", Size = RibbonControlSize.Small,
+            Icon = new DrawingImage(new GeometryDrawing(Brushes.Magenta, null, new RectangleGeometry(new Rect(0, 0, 16, 16)))) });
+        ribbon.QuickAccessPosition = from; Settle(window);
+        int[] before = MarkerRows();
+        bool started = false;
+        ribbon.LayoutTransitionStarting += (_, _) => started = true;
+        ribbon.QuickAccessPosition = to;
+        // The placement claim runs at Background. Inspect a rendered destination
+        // layout after that claim, before ContextIdle starts the shared clock.
+        Dispatcher.CurrentDispatcher.Invoke(() =>
+        {
+            window.UpdateLayout();
+            Assert.False(started);
+            SaveFrame(window, $"pending-caption-{from}-{to}");
+            int[] held = MarkerRows();
+            // The detached vector capture can round an edge by one pixel. The
+            // reported failure moves the whole command by the 12-DIP caption delta.
+            Assert.InRange(Math.Abs(before.First() - held.First()), 0, 1);
+            Assert.InRange(Math.Abs(before.Last() - held.Last()), 0, 1);
+            Assert.InRange(Math.Abs(before.Length - held.Length), 0, 1);
+        }, DispatcherPriority.Background);
+
+        int[] MarkerRows()
+        {
+            var image = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+            image.Render(window);
+            byte[] pixels = new byte[image.PixelWidth * image.PixelHeight * 4];
+            image.CopyPixels(pixels, image.PixelWidth * 4, 0);
+            int[] rows = Enumerable.Range(0, image.PixelHeight).Where(y => Enumerable.Range(0, image.PixelWidth).Any(x =>
+            {
+                int offset = (y * image.PixelWidth + x) * 4;
+                return pixels[offset + 1] > 200 && pixels[offset] < 10 && pixels[offset + 2] < 10;
+            })).ToArray();
+            Assert.NotEmpty(rows); return rows;
+        }
+    });
+
+    [Theory]
+    [InlineData(RibbonQuickAccessPosition.TitleBar, RibbonQuickAccessPosition.BelowRibbon, RibbonTheme.CrystalLight)]
+    [InlineData(RibbonQuickAccessPosition.BelowRibbon, RibbonQuickAccessPosition.TitleBar, RibbonTheme.CrystalLight)]
+    [InlineData(RibbonQuickAccessPosition.TitleBar, RibbonQuickAccessPosition.TabRow, RibbonTheme.CrystalLight)]
+    [InlineData(RibbonQuickAccessPosition.TabRow, RibbonQuickAccessPosition.TitleBar, RibbonTheme.CrystalLight)]
+    [InlineData(RibbonQuickAccessPosition.TitleBar, RibbonQuickAccessPosition.BelowRibbon, RibbonTheme.Office2024Flat)]
+    [InlineData(RibbonQuickAccessPosition.BelowRibbon, RibbonQuickAccessPosition.TitleBar, RibbonTheme.Office2024Flat)]
+    [InlineData(RibbonQuickAccessPosition.TitleBar, RibbonQuickAccessPosition.TabRow, RibbonTheme.Office2024Flat)]
+    [InlineData(RibbonQuickAccessPosition.TabRow, RibbonQuickAccessPosition.TitleBar, RibbonTheme.Office2024Flat)]
+    public void Touch_Qat_relocation_animates_caption_height(RibbonQuickAccessPosition from, RibbonQuickAccessPosition to, RibbonTheme theme) => Run((window, ribbon) =>
+    {
+        ThemeManager.Apply(Sta.UseApplication(), theme);
+        window.Icon = new DrawingImage(new GeometryDrawing(Brushes.Lime, null, new RectangleGeometry(new Rect(0, 0, 16, 16))));
+        Ribbon.SetDensity(window, RibbonDensity.Touch);
+        ribbon.QuickAccessPosition = from; Settle(window);
+        window.Resources["RibbonKit.Brushes.TitleBar.Background"] = Brushes.Black;
+        ribbon.Background = Brushes.Navy;
+        Drain();
+        double oldHeight = window.RibbonPresentationCaption!.ActualHeight;
+        var icon = (FrameworkElement)window.Template.FindName("PART_WindowIcon", window);
+        Rect oldIcon = icon.TransformToVisual(window).TransformBounds(new Rect(icon.RenderSize));
+        Color header = PaintPixel(window, new Point(window.ActualWidth * .65, oldHeight + 2));
+        RibbonLayoutTransitionEventArgs? started = null;
+        ribbon.LayoutTransitionStarting += (_, e) => started = e;
+        ribbon.QuickAccessPosition = to;
+        SaveFrame(window, $"touch-{from}-{to}-prepared");
+        Drain(); Assert.NotNull(started);
+        var clock = SharedClock(started); clock.Controller!.Pause();
+        double finalHeight = window.RibbonPresentationCaption!.ActualHeight;
+        Assert.NotEqual(oldHeight, finalHeight);
+        Verify(oldHeight, finalHeight);
+        // A reversal samples the currently presented band and ink, rather than
+        // restarting from either endpoint's committed caption height.
+        clock.Controller.SeekAlignedToLastTick(TimeSpan.FromMilliseconds(started.BoundaryMotion.Duration.TimeSpan.TotalMilliseconds * .4), TimeSeekOrigin.BeginTime);
+        double presentedHeight = oldHeight + (finalHeight - oldHeight) * started.BoundaryMotion.Progress;
+        ribbon.QuickAccessPosition = from; Drain();
+        clock = SharedClock(started); clock.Controller!.Pause();
+        Verify(presentedHeight, window.RibbonPresentationCaption.ActualHeight);
+        clock.Controller.Resume(); Settle(window);
+        Assert.Empty(QatScenes(window));
+        Assert.Equal(1, window.RibbonPresentationCaption.Opacity);
+
+        void Verify(double beforeHeight, double afterHeight)
+        {
+            foreach (double progress in new[] { 0d, .25d, .5d, .75d })
+            {
+                clock.Controller.SeekAlignedToLastTick(TimeSpan.FromMilliseconds(started.BoundaryMotion.Duration.TimeSpan.TotalMilliseconds * progress), TimeSeekOrigin.BeginTime);
+                double height = beforeHeight + (afterHeight - beforeHeight) * started.BoundaryMotion.Progress;
+                SaveFrame(window, $"touch-{theme}-{from}-{to}-{beforeHeight}-{progress}");
+                Assert.Equal(Colors.Black, PaintPixel(window, new Point(window.ActualWidth * .65, height - 2)));
+                Assert.Equal(header, PaintPixel(window, new Point(window.ActualWidth * .65, height + 2)));
+                var image = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+                image.Render(window);
+                byte[] pixels = new byte[image.PixelWidth * image.PixelHeight * 4];
+                image.CopyPixels(pixels, image.PixelWidth * 4, 0);
+                var rows = Enumerable.Range(0, (int)Math.Max(beforeHeight, afterHeight))
+                    .Where(y => Enumerable.Range((int)oldIcon.Left, (int)oldIcon.Width).Any(x =>
+                    {
+                        int offset = (y * image.PixelWidth + x) * 4;
+                        return pixels[offset + 1] > 25 && pixels[offset] < 5 && pixels[offset + 2] < 5;
+                    })).ToArray();
+                Assert.NotEmpty(rows);
+                Assert.InRange(rows.Last() - rows.First() + 1, oldIcon.Height - 1, oldIcon.Height + 1);
+                Assert.InRange(Math.Abs(rows.First() - (oldIcon.Top + (height - oldHeight) / 2)), 0, 1);
+            }
+        }
+    });
+
+    [Theory]
     [InlineData(RibbonQuickAccessPosition.TitleBar, false, 1d)]
     [InlineData(RibbonQuickAccessPosition.TitleBar, true, 1d)]
     [InlineData(RibbonQuickAccessPosition.TitleBar, true, 0.7d)]
@@ -712,6 +912,79 @@ public sealed class HostLayoutTransitionTests
                 (int)Math.Floor(bounds.Width) - 2, (int)Math.Floor(bounds.Height) - 2);
             byte[] result = new byte[rect.Width * rect.Height * 4]; bitmap.CopyPixels(rect, result, rect.Width * 4, 0);
             return result;
+        }
+    });
+
+    [Theory]
+    [InlineData(RibbonTheme.Office2024Flat, RibbonDensity.Compact)]
+    [InlineData(RibbonTheme.Office2024Flat, RibbonDensity.Touch)]
+    [InlineData(RibbonTheme.CrystalLight, RibbonDensity.Compact)]
+    [InlineData(RibbonTheme.CrystalLight, RibbonDensity.Touch)]
+    public void Returning_Classic_commands_keep_full_ink_contrast(RibbonTheme theme, RibbonDensity density) => Run((window, ribbon) =>
+    {
+        ThemeManager.Apply(Application.Current, theme);
+        ribbon.Density = density;
+        var command = (RibbonButton)ribbon.Tabs[0].Groups[0].Items[0];
+        command.Icon = new DrawingImage(new GeometryDrawing(Brushes.Lime, null, new RectangleGeometry(new Rect(0, 0, 16, 16))));
+        // This command is absent from the outgoing inline row, so outgoing ink
+        // cannot conceal a fade of the newly revealed Classic command.
+        Ribbon.SetSimplifiedPlacement(command, RibbonSimplifiedPlacement.Overflow);
+        Settle(window);
+        ribbon.LayoutMode = RibbonLayoutMode.Simplified; Settle(window);
+        RibbonLayoutTransitionEventArgs? started = null;
+        ribbon.LayoutTransitionStarting += (_, e) => started = e;
+        ribbon.LayoutMode = RibbonLayoutMode.Classic; Drain(); Assert.NotNull(started);
+        var tabs = (RibbonTabControl)ribbon.Template.FindName("TabControlHost", ribbon);
+        var body = (FrameworkElement)tabs.Template.FindName("ContentPresentationHost", tabs);
+        var scene = Assert.Single(AdornerLayer.GetAdornerLayer(body)!.GetAdorners(body)!.OfType<RibbonLayoutTransition>());
+        var clock = SharedClock(started); clock.Controller!.Pause();
+        foreach (double time in new[] { .06, .12, .18 })
+        {
+            clock.Controller.SeekAlignedToLastTick(TimeSpan.FromMilliseconds(started.BoundaryMotion.Duration.TimeSpan.TotalMilliseconds * time), TimeSeekOrigin.BeginTime);
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Render);
+            var image = new RenderTargetBitmap(900, 400, 96, 96, PixelFormats.Pbgra32);
+            var visual = new ContainerVisual { Transform = new TranslateTransform(0, 100) };
+            visual.Children.Add(RibbonVectorSnapshot.Clone(scene)); image.Render(visual);
+            byte[] pixels = new byte[900 * 400 * 4]; image.CopyPixels(pixels, 900 * 4, 0);
+            Assert.True(Enumerable.Range(0, pixels.Length / 4).Any(i =>
+                pixels[i * 4 + 1] >= 253 && pixels[i * 4] <= 2 && pixels[i * 4 + 2] <= 2),
+                $"{theme}/{density}, progress={started.BoundaryMotion.Progress}: Classic ink was faded as a whole.");
+        }
+        clock.Controller.Resume(); Settle(window);
+    });
+
+    [Theory]
+    [InlineData(RibbonTheme.Office2024Flat, RibbonDensity.Compact, false)]
+    [InlineData(RibbonTheme.Office2024Flat, RibbonDensity.Touch, false)]
+    [InlineData(RibbonTheme.CrystalLight, RibbonDensity.Compact, false)]
+    [InlineData(RibbonTheme.CrystalLight, RibbonDensity.Touch, false)]
+    [InlineData(RibbonTheme.Office2024Flat, RibbonDensity.Compact, true)]
+    [InlineData(RibbonTheme.Office2024Flat, RibbonDensity.Touch, true)]
+    [InlineData(RibbonTheme.CrystalLight, RibbonDensity.Compact, true)]
+    [InlineData(RibbonTheme.CrystalLight, RibbonDensity.Touch, true)]
+    public void Lower_Qat_ink_keeps_its_opacity_during_mode_motion(RibbonTheme theme, RibbonDensity density, bool reverse) => Run((window, ribbon) =>
+    {
+        ThemeManager.Apply(Application.Current, theme);
+        ribbon.Density = density; ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
+        Settle(window);
+        RibbonLayoutTransitionEventArgs? started = null;
+        ribbon.LayoutTransitionStarting += (_, e) => started = e;
+        foreach (var mode in new[] { RibbonLayoutMode.Simplified, RibbonLayoutMode.Classic })
+        {
+            started = null; ribbon.LayoutMode = mode; Drain(); Assert.NotNull(started);
+            var clock = SharedClock(started); clock.Controller!.Pause();
+            var scene = Assert.Single(QatScenes(window));
+            var strip = (ContainerVisual)scene.GetType().GetField("_strips", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(scene)!;
+            foreach (double time in new[] { .15, .3, .5 })
+            {
+                clock.Controller.SeekAlignedToLastTick(TimeSpan.FromMilliseconds(started.BoundaryMotion.Duration.TimeSpan.TotalMilliseconds * time), TimeSeekOrigin.BeginTime);
+                var image = new RenderTargetBitmap(900, 550, 96, 96, PixelFormats.Pbgra32);
+                image.Render(RibbonVectorSnapshot.Clone(strip));
+                byte[] pixels = new byte[900 * 550 * 4]; image.CopyPixels(pixels, 900 * 4, 0);
+                Assert.Equal(255, Enumerable.Range(0, pixels.Length / 4).Max(i => pixels[i * 4 + 3]));
+            }
+            if (reverse && mode == RibbonLayoutMode.Simplified) continue;
+            clock.Controller.Resume(); Settle(window);
         }
     });
 
