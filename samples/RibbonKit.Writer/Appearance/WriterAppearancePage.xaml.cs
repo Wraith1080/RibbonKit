@@ -14,6 +14,7 @@ internal partial class WriterAppearancePage : UserControl
     private bool _updating;
     private string? _accent;
     private RibbonDensity _density;
+    private bool _glassSurfacesChoice;
 
     public WriterAppearancePage()
     {
@@ -60,7 +61,9 @@ internal partial class WriterAppearancePage : UserControl
             Select(ApplicationButtonCombo, preferences.ApplicationButtonShape);
             Select(AnimationCombo, preferences.AnimationLevel);
             BackstageTranslucentCheck.IsChecked = preferences.BackstageTranslucent;
-            GlassSurfacesCheck.IsChecked = preferences.GlassSurfaces;
+            _glassSurfacesChoice = preferences.GlassSurfaces;
+            GlassSurfacesCheck.IsEnabled = preferences.Theme is not (RibbonTheme.Office2007 or RibbonTheme.Office2010);
+            GlassSurfacesCheck.IsChecked = GlassSurfacesCheck.IsEnabled && preferences.GlassSurfaces;
             CapturedPopupBackdropCheck.IsChecked = preferences.CapturedPopupBackdrop;
             RespectReducedMotionCheck.IsChecked = preferences.RespectSystemReducedMotion;
             ShowRulerCheck.IsChecked = preferences.ShowRuler;
@@ -92,7 +95,7 @@ internal partial class WriterAppearancePage : UserControl
             ApplicationButtonShape = Selected<RibbonApplicationButtonShape>(ApplicationButtonCombo),
             AnimationLevel = Selected<RibbonAnimationLevel>(AnimationCombo),
             BackstageTranslucent = BackstageTranslucentCheck.IsChecked == true,
-            GlassSurfaces = GlassSurfacesCheck.IsChecked == true,
+            GlassSurfaces = GlassSurfacesCheck.IsEnabled ? GlassSurfacesCheck.IsChecked == true : _glassSurfacesChoice,
             CapturedPopupBackdrop = CapturedPopupBackdropCheck.IsChecked == true,
             RespectSystemReducedMotion = RespectReducedMotionCheck.IsChecked == true,
             ShowRuler = ShowRulerCheck.IsChecked == true,
@@ -198,7 +201,7 @@ internal partial class WriterAppearancePage : UserControl
             : "The File tab is used automatically outside Office 2007.");
         if (!translucent)
             notes.Add("Backstage translucency needs an active supported backdrop and is unavailable for Classic 2007.");
-        notes.Add("Glass treatment and ribbon popup blur are optional and work without native Acrylic. Popup blur applies to supported dropdowns and collapsed groups; Backstage keeps its shared theme surface.");
+        notes.Add("Glass is available in modern themes and follows collapsed groups and ribbon overflow. Office 2007/2010 keep Aero and preserve the saved modern Glass choice. Optional popup blur also supports dropdowns; Backstage keeps its shared theme surface.");
 
         CompatibilityText.Text = string.Join(" ", notes);
     }

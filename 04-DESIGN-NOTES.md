@@ -802,7 +802,8 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 ### 3.212 Optional captured backdrops and scoped glass overlays — 2026-10-01
 
-[Provide per-control host capture and cross-theme glass paint with explicit lifecycle ownership](docs/history/library/10-host-effects-and-keyboard-focus.md#3212-optional-captured-backdrops-and-scoped-glass-overlays--2026-10-01).
+[Provide per-control host capture, scoped Glass ribbon continuations and explicit lifecycle ownership](docs/history/library/10-host-effects-and-keyboard-focus.md#3212-optional-captured-backdrops-and-scoped-glass-overlays--2026-10-01).
+[Modern Office ribbon continuation follow-up](docs/history/library/17-glass-continuations.md#modern-office-ribbon-continuations--2026-10-24).
 
 ### 3.213 Main Showcase consolidation — 2026-10-01
 

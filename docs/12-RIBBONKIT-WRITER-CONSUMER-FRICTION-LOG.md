@@ -50,6 +50,13 @@ instead of repeatedly appending them to the current-status summary.
 
 ## 4. Observations by ID
 
+### RKWF-061 — Modern Office Glass stops at the ribbon body
+
+- First seen: 2026-10-24, the user's Showcase screenshots and material-policy review. Glass does not carry into collapsed groups or ribbon/QAT overflow. The user approved those continuations following Glass, retained ordinary selection surfaces and Crystal, and explicitly excluded Office 2007/2010.
+- Shared correction: the existing CapturedBackdrop constructor accepts a Ribbon or overflow toolbar. A Ribbon registration follows the scoped modern Glass overlay, owns only group/QAT/Simplified registrations, and retires them on disable/removal/unload/disposal. The host still supplies the capture source. No new public member, setting or Writer-specific popup template.
+- Writer glue: the appearance scope owns the registration; the separate explicit popup-blur option retains dropdowns without duplicating modern Glass group capture. Legacy Glass is suspended in rendering and the checkbox while its saved modern choice survives. The preferences schema and Apply/Cancel behavior remain compatible.
+- Focused material, Writer rollback/legacy, independent-consumer and selected visual checks pass. Visible-window renders are inspected separately from offscreen fallback. Exact evidence and pending user review are in the [Glass plan](09-FUTURE-THEMES-PLAN.md#ribbon-continuation-material--2026-10-24). W5's accepted motion scope is retained.
+
 ### RKWF-060 — Returning from Simplified briefly dims ribbon ink
 
 - First seen: 2026-10-23, the user's W5 recording after the density correction. A visible Writer context-menu probe reproduces the contrast change while RibbonTabControl opacity remains 1, without theme notifications or per-group restore clocks.

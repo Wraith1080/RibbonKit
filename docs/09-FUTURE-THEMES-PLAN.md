@@ -1047,6 +1047,7 @@ supported themes. Native Mica/Acrylic activation and Aero remain host choices.
 | Review item | Current status |
 | --- | --- |
 | Selector and restoration | Implemented 2026-10-11. Legacy themes cannot activate the overlay; returning to a supported theme restores the saved on/off choice. Focused Release selector, preference and Crystal presentation checks passed 35/35. |
+| Ribbon continuation material | Passed user review, 2026-10-24: user accepted the implemented Glass continuation behavior and requested resuming Writer acceptance. The change covers collapsed groups, QAT overflow and Simplified overflow in Office 2013/2019/2024/Flat. Standard menus, combo lists and galleries retain their normal material. Office 2007/2010 remain excluded; Crystal retains its existing path. [Implementation and bounded evidence](#ribbon-continuation-material--2026-10-24). |
 | Mica combination | Implemented 2026-10-11. Glass look applies after either Mica or Acrylic activation, through the same shared overlay. Eleven focused cases passed for modern Office light/dark, Crystal's default, on/off and Mica/Acrylic/None switching, and legacy Aero suspension/restoration. Repeated refresh keeps one overlay without compounding opacity. The independent `GlassOverlay` scope passed, and normal Debug Showcase built cleanly. Derived backdrop state was injected for selector coverage. User approved the Mica and Glass look combination on 2026-10-11; this records the reported review scope. [Implementation record](history/library/12-keytips-layout-and-validation.md#3248-glass-look-over-mica-and-acrylic--2026-10-11). |
 | Colored caption over a 2024 backdrop | Corrected 2026-10-19. Office 2024/Flat keep the ribbon-wide underlay transparent when the caption is colored, including dark mode and Glass look on/off. Eight targeted host cases passed after reproducing the four dark failures; the independent `Office2024Backdrop` scope passed 16 rendered underlay combinations, removal and scoped precedence checks. Dark captures were inspected; normal Debug runtime net8/net9 and Showcase builds passed. Native Mica/Acrylic and mixed-monitor review remain pending; no full suite ran. [Correction and focused evidence](history/library/12-keytips-layout-and-validation.md#3272-colored-office-2024-captions-preserve-the-ribbon-backdrop--2026-10-19). |
 | Shared ribbon paint | Implemented 2026-10-11. A neutral shared tab-strip token separates the native band from the translucent body. Office 2013/2019 use the title bar's 0.48 glass-opacity multiplier in both light and dark modes. After the user's Office 2019 dark screenshot showed the surfaces blending, its body now uses 0.64 through a scoped theme metric; other bodies retain 0.44. Office 2013's white File label keeps its colored hover. Independent consumer checks passed across 12 palettes, scoped Office 2013 light/2019 dark inside Crystal, and rendered gray-backdrop separation. |
@@ -1056,6 +1057,41 @@ supported themes. Native Mica/Acrylic activation and Aero remain host choices.
 The normal Debug Showcase build and both normal Release runtime targets passed
 with zero warnings/errors. The full solution suite and package gate were not rerun
 for this bounded appearance slice. [Implementation and rendering pitfalls](history/library/12-keytips-layout-and-validation.md#3240-modern-office-glass-surfaces-and-legacy-aero-choices--2026-10-11).
+
+### Ribbon continuation material — 2026-10-24
+
+The user approved Glass for ribbon continuations, with solid ordinary selection
+menus/lists/galleries, and explicitly retained the Office 2007/2010 exclusion.
+Showcase and Writer reuse the existing host-supplied CapturedBackdrop integration
+with a Ribbon target. No new public member, per-control user switch or preference
+schema is added. Implementation and lifecycle details are in
+[the continuation record](history/library/17-glass-continuations.md#modern-office-ribbon-continuations--2026-10-24).
+
+Focused evidence: 14 new runtime cases pass across all seven themes in light/dark;
+the eight modern cases additionally pass queued-disposal and live-background
+restoration checks. Eleven retained capture/Crystal/Showcase Glass checks and 12
+Writer material/settings/legacy-choice cases pass. The independent GlassOverlay
+scope passes 14 theme/palette combinations, each checking group, detached
+title-bar QAT and Simplified overflow plus overlay removal, alongside its retained
+palette/scoped-precedence checks. Its first draft expected a blue command in a
+group-only Simplified overflow entry; the corrected fixture puts the marker
+commands inline so they genuinely overflow. The failed fixture log is retained.
+
+Four additional visible-window Office 2024/Flat light/dark cases pass and produce
+12 inspected popup renders. Offscreen HWND placement exercises opaque fallback;
+the visible captures show source colors through the frost with sharp command ink.
+Direct RTL frame bitmaps omit their ancestor transform context, so native RTL text
+appearance is not accepted from them. All 22 selected Glass visual comparisons
+pass at 100/200%, including RTL scenes, without approval or tolerance changes.
+Logs and renders are under `TestResults/v1.1-glass-flyouts-20261024/`.
+Normal Release solution and Debug Showcase/Writer builds pass with zero warnings
+or errors. This is focused test coverage, not a new full candidate run.
+
+The current user-review result is recorded in the Ribbon continuation material
+row above. It does not establish an exhaustive theme, native RTL or mixed-monitor
+acceptance matrix. Native Mica/Acrylic appearance and physical input remain
+separate from the programmatic consumer renders above. Existing W5 motion
+acceptance is retained.
 
 ## Colored QAT split and dropdown states
 

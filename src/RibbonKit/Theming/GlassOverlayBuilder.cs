@@ -8,6 +8,10 @@ internal static class GlassOverlayBuilder
     internal static ResourceDictionary Create(FrameworkElement scope, bool darkMode)
     {
         var overlay = new ResourceDictionary();
+        // Only modern Office ribbon continuations inherit this optional glass
+        // treatment. Crystal and the two legacy Aero generations keep theirs.
+        if (scope.TryFindResource("RibbonKit.Metrics.Ribbon.SupportsGlassFlyouts") is true)
+            overlay["RibbonKit.Metrics.Ribbon.FlyoutGlassOpacity"] = 0.84d;
         // Let each palette choose the tab band's glass translucency without an
         // opaque ribbon-wide fill covering the command surface below it.
         double tabStripOpacity = (double)scope.FindResource("RibbonKit.Metrics.Ribbon.TabStripGlassOpacity");

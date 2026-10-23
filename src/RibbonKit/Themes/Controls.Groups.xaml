@@ -492,7 +492,7 @@
                                PlacementTarget="{Binding ElementName=PART_OverflowButton}"
                                IsOpen="{Binding IsChecked, ElementName=PART_OverflowButton, Mode=TwoWay}">
                             <AdornerDecorator>
-                                <Border controls:Ribbon.QatOnColoredSurface="False"
+                                <Border x:Name="PART_OverflowPopupHost" controls:Ribbon.QatOnColoredSurface="False"
                                         Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                         BorderBrush="{DynamicResource RibbonKit.Brushes.Popup.Border}" BorderThickness="1"
                                         CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"

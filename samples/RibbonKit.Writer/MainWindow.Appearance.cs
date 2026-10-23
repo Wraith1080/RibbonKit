@@ -451,10 +451,14 @@ public partial class MainWindow
         }
         // Writer has Backstage rather than a RibbonApplicationMenu. Register only
         // supported dropdown/split buttons and collapsed groups, never Backstage.
+        bool glassFlyouts = _appearancePreferences.GlassSurfaces
+            && _appearancePreferences.Theme is RibbonTheme.Office2013 or RibbonTheme.Office2019
+                or RibbonTheme.Office2024 or RibbonTheme.Office2024Flat
+            && !SystemParameters.HighContrast;
         var controls = MainRibbon.Tabs.SelectMany(tab => tab.Groups)
             .SelectMany(group => new Control[] { group }.Concat(FindLogicalDescendants<Control>(group)))
             .Concat(MainRibbon.QuickAccessItems.OfType<Control>())
-            .Where(control => control is RibbonDropDownButton or RibbonGroup).ToHashSet();
+            .Where(control => control is RibbonDropDownButton || control is RibbonGroup && !glassFlyouts).ToHashSet();
         foreach (Control obsolete in _capturedPopups.Keys.Except(controls).ToArray())
         {
             _capturedPopups[obsolete].Dispose();

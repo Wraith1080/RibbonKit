@@ -653,7 +653,7 @@ menu/popup capture is available through `CapturedBackdrop` in `RibbonKit.Control
 
 ```csharp
 var capture = new CapturedBackdrop(fileMenu, window);
-capture.Apply(true);       // Also supports dropdown/split buttons and ribbon groups.
+capture.Apply(true);       // Also supports dropdown/split buttons, groups and overflow toolbars.
 capture.Refresh();         // After the host changes document paint.
 capture.Apply(false);      // Restores the ordinary shared surface.
 capture.Dispose();         // When the registration/host is retired.
@@ -676,8 +676,13 @@ The separate optional cross-theme glass treatment is a scoped resource overlay:
 ```csharp
 var glass = ThemeManager.CreateGlassOverlay(window, dark: true);
 window.Resources.MergedDictionaries.Add(glass);
+// Let ribbon continuations follow this overlay, using the host's capture source.
+var flyouts = new CapturedBackdrop(ribbon, window);
+flyouts.Apply(true);
 // Remove glass before regenerating after theme/accent/palette changes.
+flyouts.Apply(false);
 window.Resources.MergedDictionaries.Remove(glass);
+flyouts.Dispose();
 ```
 
 The factory clones the scope's effective brushes without changing global state.
@@ -691,6 +696,20 @@ including dark variants; other palettes retain 0.88.
 `RibbonKit.Metrics.Ribbon.BodyGlassOpacity` defaults to 0.44. Office 2019 dark
 uses 0.64 so the command body stays visibly darker than the header over gray
 backdrops while remaining translucent.
+The ribbon registration follows collapsed groups, constrained QAT overflow
+(including the title bar) and Simplified overflow. Office 2013, 2019, 2024 and
+2024 Flat opt in through the overlay; normal dropdown menus, combo lists and
+galleries keep their theme material. Office 2007/2010 keep Aero, and Crystal
+keeps its existing popup treatment. All palettes define
+`RibbonKit.Metrics.Ribbon.SupportsGlassFlyouts` and
+`RibbonKit.Metrics.Ribbon.FlyoutGlassOpacity`; the modern overlay changes the
+latter from 1 to 0.84. Only the background tint is attenuated; command ink keeps
+its authored opacity. Capture retains its opaque fallback outside the host
+source. Custom overflow templates need `PART_OverflowPopup` and a Border named
+`PART_OverflowPopupHost` to receive this optional material. The host owns the
+registration and disposes it when retired. Showcase and Writer connect this to
+their existing Glass choice; Writer also suspends Glass in legacy themes while
+retaining the saved modern choice.
 Direct scoped and child resources keep normal WPF precedence. The host owns
 replacement/removal and the decision to use glass after native Mica or Acrylic
 activation succeeds; the factory itself does not activate either backdrop. WPF

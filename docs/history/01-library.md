@@ -334,6 +334,8 @@ status updates and investigation narration were removed during compaction.
 
 ### [3.212 Optional captured backdrops and scoped glass overlays — 2026-10-01](library/10-host-effects-and-keyboard-focus.md#3212-optional-captured-backdrops-and-scoped-glass-overlays--2026-10-01)
 
+[Modern Office ribbon continuation follow-up](library/17-glass-continuations.md#modern-office-ribbon-continuations--2026-10-24).
+
 ### [3.213 Main Showcase consolidation — 2026-10-01](library/10-host-effects-and-keyboard-focus.md#3213-main-showcase-consolidation--2026-10-01)
 
 ### [3.214 Theme gallery clipping and deferred test corrections — 2026-10-01](library/10-host-effects-and-keyboard-focus.md#3214-theme-gallery-clipping-and-deferred-test-corrections--2026-10-01)

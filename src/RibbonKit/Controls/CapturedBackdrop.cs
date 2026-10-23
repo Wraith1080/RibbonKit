@@ -12,6 +12,9 @@ namespace RibbonKit.Controls;
 /// <see cref="Dispose"/> when the registration is no longer needed. Unload releases capture
 /// resources; a subsequent load reattaches while enabled. Custom templates without the shared
 /// surface parts retain their ordinary paint.
+/// A <see cref="Ribbon"/> registration follows its scoped Glass overlay and owns only group,
+/// QAT-overflow and Simplified-overflow registrations. Ordinary command menus, combo lists and
+/// galleries retain their material. Legacy Aero and Crystal palettes keep their existing paths.
 /// </remarks>
 public sealed class CapturedBackdrop : IDisposable
 {
@@ -22,22 +25,28 @@ public sealed class CapturedBackdrop : IDisposable
     private Border? _frame;
     private bool _enabled;
     private bool _disposed;
+    private readonly bool _continuation;
+    private readonly Dictionary<Control, CapturedBackdrop> _continuations = new();
 
-    /// <summary>Registers one application menu, dropdown/split button, or ribbon group.</summary>
+    /// <summary>Registers a menu, dropdown/split button, group, overflow toolbar, or a ribbon's Glass flyouts.</summary>
     /// <param name="control">The control whose shared surface should receive captured paint.</param>
     /// <param name="source">The host visual to sample; use an ancestor for an application menu.</param>
     /// <exception cref="ArgumentException">The control is unsupported or uses another dispatcher.</exception>
-    public CapturedBackdrop(Control control, FrameworkElement source)
+    public CapturedBackdrop(Control control, FrameworkElement source) : this(control, source, control is RibbonQuickAccessToolBar) { }
+
+    private CapturedBackdrop(Control control, FrameworkElement source, bool continuation)
     {
         ArgumentNullException.ThrowIfNull(control);
         ArgumentNullException.ThrowIfNull(source);
-        if (control is not RibbonApplicationMenu and not RibbonDropDownButton and not RibbonGroup)
-            throw new ArgumentException("Use an application menu, dropdown/split button, or ribbon group.", nameof(control));
+        if (control is not RibbonApplicationMenu and not RibbonDropDownButton and not RibbonGroup
+            and not RibbonQuickAccessToolBar and not Ribbon)
+            throw new ArgumentException("Use a ribbon, application menu, dropdown/split button, group, or overflow toolbar.", nameof(control));
         if (control.Dispatcher != source.Dispatcher)
             throw new ArgumentException("Capture source and control must share a dispatcher.", nameof(source));
         control.VerifyAccess();
         _control = control;
         _source = source;
+        _continuation = continuation;
         control.Loaded += OnLoaded;
         control.Unloaded += OnUnloaded;
         source.Loaded += OnLoaded;
@@ -64,12 +73,40 @@ public sealed class CapturedBackdrop : IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (!_enabled || !_source.IsLoaded || !_control.IsLoaded) return;
         Attach();
+        foreach (var capture in _continuations.Values.ToArray()) capture.Refresh();
         _menu?.Refresh();
         _popup?.Refresh();
     }
 
     private void Attach()
     {
+        if (_disposed || !_enabled) return;
+        if (_control is Ribbon ribbon)
+        {
+            // Hosts opt in once with their own capture source. Discover only
+            // ribbon continuations, including the detached title-bar QAT.
+            bool glass = ribbon.TryFindResource("RibbonKit.Metrics.Ribbon.SupportsGlassFlyouts") is true
+                && ribbon.TryFindResource("RibbonKit.Metrics.Ribbon.FlyoutGlassOpacity") is double opacity && opacity < 1;
+            var targets = new HashSet<Control>();
+            if (glass)
+            {
+                foreach (var tab in ribbon.Tabs)
+                {
+                    foreach (var group in tab.Groups) targets.Add(group);
+                    if (tab.Content is RibbonGroupsHost { SimplifiedToolBar: { } simplified }) targets.Add(simplified);
+                }
+                if (ribbon.ActiveQuickAccessToolBar is { } qat) targets.Add(qat);
+            }
+            foreach (var obsolete in _continuations.Keys.Except(targets).ToArray())
+            { _continuations[obsolete].Dispose(); _continuations.Remove(obsolete); }
+            foreach (var target in targets)
+                if (!_continuations.ContainsKey(target))
+                {
+                    var capture = new CapturedBackdrop(target, _source, true);
+                    _continuations.Add(target, capture); capture.Apply(true);
+                }
+            return;
+        }
         _control.ApplyTemplate();
         if (_control is RibbonApplicationMenu)
         {
@@ -87,7 +124,9 @@ public sealed class CapturedBackdrop : IDisposable
             if (_popup == null)
             {
                 _popup = new CapturedPopupBackdrop(_source, _control,
-                    _control is RibbonGroup ? "PART_PopupHost" : "PART_MenuHost");
+                    _control is RibbonQuickAccessToolBar ? "PART_OverflowPopupHost"
+                        : _control is RibbonGroup ? "PART_PopupHost" : "PART_MenuHost",
+                    _control is RibbonQuickAccessToolBar ? "PART_OverflowPopup" : "PART_Popup", _continuation);
                 _popup.Apply(true);
             }
             else _popup.Attach();
@@ -104,6 +143,8 @@ public sealed class CapturedBackdrop : IDisposable
 
     private void Release()
     {
+        foreach (var capture in _continuations.Values.ToArray()) capture.Dispose();
+        _continuations.Clear();
         _menu?.Remove();
         _popup?.Remove();
         _menu = null;

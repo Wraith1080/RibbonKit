@@ -622,7 +622,7 @@ public partial class MainWindow : RibbonWindow
             && SupportsGlassTreatment(ThemeManager.CurrentTheme)
             && (_glassTreatmentOverride
                 ?? ThemeManager.CurrentTheme == RibbonTheme.CrystalLight);
-        (_acrylicGlassPresentation ??= new AcrylicGlassPresentation(this))
+        (_acrylicGlassPresentation ??= new AcrylicGlassPresentation(this, MainRibbon))
             .Apply(enabled, ThemeManager.IsDarkMode);
     }
 

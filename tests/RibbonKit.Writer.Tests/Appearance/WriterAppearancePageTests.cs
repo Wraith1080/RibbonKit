@@ -17,6 +17,20 @@ namespace RibbonKit.Writer.Tests.Appearance;
 [Collection("Writer UI")]
 public sealed class WriterAppearancePageTests
 {
+    [Theory]
+    [InlineData(RibbonTheme.Office2007)]
+    [InlineData(RibbonTheme.Office2010)]
+    public void LegacyThemesSuspendGlassAndRetainTheModernChoice(RibbonTheme theme) => StaTestHelper.Run(() =>
+    {
+        var page = new WriterAppearancePage();
+        page.SetPreferences(new WriterAppearancePreferences { Theme = theme, GlassSurfaces = true });
+        var glass = (CheckBox)page.FindName("GlassSurfacesCheck");
+        Assert.False(glass.IsEnabled); Assert.False(glass.IsChecked);
+        Assert.True(page.Preferences.GlassSurfaces);
+        page.SetPreferences(page.Preferences with { Theme = RibbonTheme.Office2024 });
+        Assert.True(glass.IsEnabled); Assert.True(glass.IsChecked);
+    });
+
     [Fact]
     public void AppearanceDefaultsRetainViewDensityAndResetQatAppearance()
     {
