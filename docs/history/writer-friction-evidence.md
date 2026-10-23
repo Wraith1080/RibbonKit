@@ -164,6 +164,14 @@
 
 ### RKWF-008 — The single real-window STA integration case needs a parallel-load timeout allowance
 
+- **2026-10-22 release-harness update:** the broad lifecycle case's nested View
+  assertion still omitted the new Interaction group. After correcting that stale
+  expectation, the same case exceeded its twenty-second ceiling in a fresh process.
+  Phase timings then measured a complete passing body at 20.3s (startup, File,
+  editing, page views, structured content and save/close). Only that case now has
+  a bounded sixty-second ceiling; the default stays ten seconds. No assertions
+  were removed and production behavior was unchanged. See the [1.1 execution record](../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#a2-release-execution)
+  for the original failed run and assembled follow-up evidence.
 - **2026-10-02 update:** Writer's previously excluded tests now run unfiltered on
   one serialized STA dispatcher. This keeps WPF's cached, unfrozen WindowChrome
   on its owning thread. Nested persistence fixtures reuse that dispatcher instead
@@ -185,7 +193,7 @@
   project ran concurrently. The same assertions passed after the harness allowed that case twenty seconds.
 - **Friction:** splitting the case across fresh STA threads previously triggered WPF `WindowChrome` cross-thread
   ownership failures, while increasing the global timeout would weaken feedback for every small STA test.
-- **Current app-owned resolution:** `StaTestHelper.RunAsync` accepts an optional timeout; only the combined real-window
+- **Original app-owned resolution:** `StaTestHelper.RunAsync` accepts an optional timeout; only the combined real-window
   case requests twenty seconds. The default remains ten seconds and production code is unchanged.
 - **Evidence still required:** keep watching the case duration in full parallel solution runs; investigate subdivision
   only if WPF chrome ownership can remain on one dispatcher or the duration approaches the bounded allowance.

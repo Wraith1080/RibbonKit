@@ -194,7 +194,7 @@ internal static class CrystalApplicationMenuPortabilityChecks
             Assert.Equal(300, pane.Width);
             Assert.Equal(new Thickness(4, 2, 4, 2), split.Margin);
 
-            // Every Office palette restores its original geometry and whole-frame shadow.
+            // Each Office palette restores its own geometry and whole-frame shadow.
             foreach (RibbonTheme theme in Enum.GetValues<RibbonTheme>().Where(t => t != RibbonTheme.CrystalLight))
             foreach (bool dark in new[] { false, true })
             {
@@ -204,12 +204,18 @@ internal static class CrystalApplicationMenuPortabilityChecks
                 Assert.Equal(menu.FindResource("RibbonKit.Metrics.ApplicationMenuCornerRadius"), frame.CornerRadius);
                 Assert.Equal(Visibility.Collapsed, shadow.Visibility);
                 Assert.Same(menu.FindResource("RibbonKit.Effects.ApplicationMenuShadow"), frame.Effect);
-                Assert.Null(inner.Clip);
+                if (theme is RibbonTheme.Office2024 or RibbonTheme.Office2024Flat)
+                {
+                    var clip = Assert.IsType<RectangleGeometry>(inner.Clip);
+                    Assert.Equal(4d, clip.RadiusX);
+                    Assert.Equal(4d, clip.RadiusY);
+                }
+                else Assert.Null(inner.Clip);
                 Assert.Null(Part<Grid>(split, "Root").Clip);
                 Assert.Equal(new Thickness(), split.Margin);
                 Assert.Equal(new Thickness(), separator.Margin);
                 Assert.Equal(menu.FindResource("RibbonKit.Metrics.ApplicationMenuPaneWidth"), pane.Width);
-                Assert.Equal(new Thickness(1), Part<Border>(menu, "ActivePage").BorderThickness);
+                Assert.Equal(new Thickness(0), Part<Border>(menu, "ActivePage").BorderThickness);
             }
 
             ThemeManager.Apply(application, RibbonTheme.Office2024);
@@ -228,7 +234,7 @@ internal static class CrystalApplicationMenuPortabilityChecks
                 menu.Resources.MergedDictionaries.Remove(scope);
                 Layout();
                 Assert.Equal(new CornerRadius(8), frame.CornerRadius);
-                Assert.Null(inner.Clip);
+                Assert.Equal(4d, Assert.IsType<RectangleGeometry>(inner.Clip).RadiusX);
                 Assert.Equal(340d, pane.Width);
             }
 

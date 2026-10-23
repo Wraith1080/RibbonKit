@@ -128,6 +128,11 @@ internal sealed class RibbonGalleryQuickAccessProxy : RibbonDropDownButton
             host.SetCurrentValue(Border.PaddingProperty, sourceHost.Padding);
             host.SetCurrentValue(Border.BorderThicknessProperty, sourceHost.BorderThickness);
             host.SetCurrentValue(UseLayoutRoundingProperty, sourceHost.UseLayoutRounding);
+            // A generic dropdown heading can reserve different spacing. Gallery copies
+            // must keep the native heading's budget as well as the outer card's.
+            if (_source.Template.FindName("DropDownHeaderHost", _source) is Border sourceHeader
+                && GetTemplateChild("DropDownHeaderHost") is Border header)
+                header.SetCurrentValue(MarginProperty, sourceHeader.Margin);
         }
     }
 

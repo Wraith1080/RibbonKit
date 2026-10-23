@@ -352,6 +352,15 @@ corners, leaving the navigation/page join square. Office 2007 through 2024 use
 zero active-page border and margin, matching Crystal's existing shared-frame
 policy while retaining the heading band and navigation separator.
 
+Release acceptance on 2026-10-23 found that the Crystal application-menu consumer
+still expected the preceding Office geometry during theme/scoped-token restoration.
+Its check now retains Office2024/Flat's four-DIP inner clip and all Office palettes'
+zero active-page border, while older square inner surfaces still require no clip.
+The old assertions failed both after the viewport checks and at a fresh checkpoint;
+the corrected menu scope passed in 6.2s. This was a test-only contract correction;
+current aggregate results and limits belong to the
+[release campaign](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#a2-release-execution).
+
 Glass preserves a palette's transparent tab hover rather than adding a wash to
 2024's underline-only state. QAT and File washes remain independent. Office 2013
 colors its reserved hover border with the hover fill, bringing its top edge up

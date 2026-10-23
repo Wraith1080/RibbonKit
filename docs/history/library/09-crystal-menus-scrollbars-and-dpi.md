@@ -326,6 +326,21 @@ was established; it and the distinct 200% gallery-layout report remain deferred.
 The accepted slice 6 menu sizing, footer, capture-measurement and click-routing
 contracts and bounded live reviews remain in force.
 
+Dropdown/split popup follow-up, 2026-10-23 (RKWF-053): Writer's font-color
+popup exposed an unstyled native ScrollViewer. Both standalone dropdown and split
+popups failed a focused reproduction before correction. The existing combo-box
+viewport styling was extracted into internal `PopupScrollBarStyle` and shared
+with `RibbonDropDownButton`, including its split-button derivatives. Keep native
+scroll ownership and explicit viewport scrollbar styles; deferred template scopes
+still need the local shared-dictionary fallback when sibling lookup fails. No
+public API, template or token changed. The 27 focused runtime cases, 112 independent
+theme/palette/density/direction/control combinations and existing gallery viewport
+scope passed. The width assertion verifies the exact metric and allows one physical
+pixel of native layout rounding at fractional DPI. Release net8/net9 runtime and
+Debug Writer builds passed without warnings/errors; before/after and representative
+renders were inspected. Current human acceptance belongs to the
+[1.1 plan](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#shared-dropdown-scrollbar-correction--2026-10-23).
+
 ### 3.205 Customization scrollbar insets and slice 7 live review — 2026-09-30
 
 The user accepted slice 7 review checks 1 and 2: utility/arrows and modal/merged

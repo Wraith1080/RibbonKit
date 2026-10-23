@@ -462,7 +462,7 @@ internal static class TouchDensityPortabilityChecks
                 var scroll = Part<RibbonKit.Layout.RibbonScrollContentHost>(tabs, "PART_ContentScroll");
                 Assert.True(scroll.ExtentWidth > scroll.ViewportWidth);
                 Assert.True(scroll.CanScrollRight);
-                Assert.Contains(Descendants(Part<Border>(tabs, "ContentHost")).OfType<RepeatButton>(),
+                Assert.Contains(Descendants(Part<Border>(tabs, "ContentForeground")).OfType<RepeatButton>(),
                     b => Equals(b.Tag, "BodyScroll") && b.IsVisible);
                 SavePreview(ribbon, $"{theme}-adaptive-overflow-{startTouch}");
                 scroll.InvalidateMeasure(); Layout(window);

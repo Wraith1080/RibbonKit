@@ -267,6 +267,39 @@ and the existing ordinary dropdown borrowing checks. The 288-case combo consumer
 matrix and its overflow/keyboard checks passed again. Full-suite and user live
 acceptance remain separate from these synthetic-input results.
 
+#### Overflow choice completion and focus — 2026-10-23
+
+W4 acceptance exposed RKWF-057: combo, dropdown and split-menu choices close
+their child popup while leaving QAT/Simplified overflow open. Six standalone
+reproductions and an independent consumer's Enter path failed at parent dismissal.
+The user explicitly authorized the focused shared correction.
+
+RibbonDropDownButton now sends an internal menu-choice notification with the
+menu's pre-close focus state. Cached overflow entries subscribe once and reuse
+CloseOverflow, keeping the overflow toggle synchronized and borrowed items on
+their existing guarded return path. A repeat choice dismisses even when the
+source SelectedIndex does not change. Opening, navigating, returning or canceling
+a submenu does not send this notification. No public API or Writer handler is
+added; templates, paint and animation policy remain unchanged.
+
+After a committed choice, the parent manages focus instead of returning it to
+an entry that is unloading. Native teardown can temporarily focus that closed
+entry's opener before falling back to the window. The parent restores its visible
+overflow button at Input priority only while closed and while focus is still in
+that closed branch or its captured/window fallback. An open replacement popup
+and an application's explicit focus target take precedence. The ordinary child
+focus-return rule remains in use for cancel/return and standalone dropdowns.
+
+The initial menu/ownership slice passes 61 cases; the final focus/commit slice
+passes 37, including explicit focus changes from source-selection and routed
+command handlers. Those scopes overlap. Repeat/cached opens preserve source
+ownership and execute each borrowed command once. The independent combo keyboard
+consumer covers Enter/Space, disabled rows, Escape and 24 KeyTip scenarios across
+Office2007/Crystal, Compact/Touch, LTR/RTL and QAT/overflow/custom copies. These are
+managed input/UIA checks, not human input acceptance. Remaining evidence and native
+review are owned by the
+[1.1 acceptance plan](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#shared-overflow-choice-dismissal--2026-10-23).
+
 ### 3.230 Gallery dropdown copies for QAT and customization — 2026-10-08
 
 `RibbonGallery` now exposes optional `Header` and `Icon` metadata. Both gallery
@@ -540,6 +573,19 @@ focused runtime cases passed for custom-template limits/styles, authored and bou
 items, selection/preview, native handoff and visible-strip/overflow retention at
 simulated 125%/200% DPI. Normal Debug runtime net8/net9 and Showcase builds passed.
 Full-suite, physical input and native mixed-monitor acceptance were not performed.
+
+Release acceptance follow-up, 2026-10-23: the generic dropdown header gained a
+bottom margin after the original popup-budget work. Gallery copies inherited it
+while the native gallery header did not, removing 1.6 DIP of viewport height at
+the review display's 125% DPI. The existing consumer failed both in a continuation
+and alone; its native/QAT captures were inspected before changing code. The copy
+now takes the native header margin alongside the card's existing geometry budget.
+No assertion, tolerance, public API or theme token was changed. The same consumer
+then passed all seven themes in Compact/LTR and Touch/RTL, including QAT/custom
+copies; 19 GalleryQuickAccess runtime cases and the normal Release solution build
+passed with zero warnings/errors. Corrected Office2010/Crystal captures were
+inspected. The earlier full-suite failure and remaining campaign scope stay in the
+[1.1 acceptance record](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#a2-release-execution).
 
 ### 3.274 Grouped combo dropdown sections — 2026-10-21
 

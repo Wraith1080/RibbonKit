@@ -122,6 +122,8 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
     private bool _returnFocusOnClose;
     private bool _focusLastItem;
 
+    internal event Action<bool>? MenuItemInvoked;
+
     static RibbonDropDownButton()
     {
         DefaultStyleKeyProperty.OverrideMetadata(
@@ -228,6 +230,7 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
         base.OnApplyTemplate();
 
         DropDownGrouping.ApplyDefault(this);
+        PopupScrollBarStyle.Apply(GetTemplateChild("PART_PopupScrollViewer") as ScrollViewer);
 
         _menuHost = GetTemplateChild(MenuHostPartName) as UIElement;
         _menuHost?.AddHandler(ButtonBase.ClickEvent, new RoutedEventHandler(OnMenuItemClicked));
@@ -513,7 +516,12 @@ public class RibbonDropDownButton : ItemsControl, IRibbonSizeAware
     private void OnMenuItemClicked(object sender, RoutedEventArgs e)
     {
         // Any button click inside the dropdown closes it (menu semantics).
+        bool hadFocus = _menuHost?.IsKeyboardFocusWithin == true;
+        // A containing overflow owns focus after a completed choice; its entry is
+        // about to unload. Cancel/return paths keep the ordinary submenu focus rule.
+        if (MenuItemInvoked is not null) _focusBeforeOpen = null;
         SetCurrentValue(IsDropDownOpenProperty, false);
+        MenuItemInvoked?.Invoke(hadFocus);
     }
 
     private static void OnScreenTipChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

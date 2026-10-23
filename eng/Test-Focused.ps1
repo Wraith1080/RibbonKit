@@ -21,10 +21,10 @@ param(
     [string]$Filter,
     [string[]]$Scenes,
     [ValidateSet('SplitButtonDensity', 'StackedCustomGroups', 'NativeGalleryPopup',
-        'GalleryQuickAccess', 'GalleryQuickAccessKeyboard', 'GalleryQuickAccessVisible', 'GalleryPopupViewport', 'GroupQuickAccess', 'CollapsedGroupPress', 'AfterGalleryQuickAccess', 'AfterCrystalTint',
+        'GalleryQuickAccess', 'GalleryQuickAccessKeyboard', 'GalleryQuickAccessVisible', 'GalleryPopupViewport', 'GroupQuickAccess', 'CollapsedGroupPress', 'AfterQuickAccessScope', 'AfterThemePolish', 'AfterGalleryQuickAccess', 'AfterGalleryPopupViewport', 'AfterCrystalTint',
         'QatOverflowKeyboard', 'AfterKeyboardNavigation', 'AfterSimplifiedDesignerDefaults', 'AfterCustomizationScrollSpacing', 'AfterApplicationMenuViewport', 'AfterCrystalApplicationMenu',
         'ComboQuickAccess', 'ComboQuickAccessKeyboard', 'GroupedGalleries', 'GroupedCombos', 'SimplifiedCombos', 'SimplifiedSpacing',
-        'GalleryHeadersAndQatCommands', 'DensitySelector', 'MessageTransition', 'ThemePolish',
+        'GalleryHeadersAndQatCommands', 'DropDownScrollbars', 'CommandCopies', 'DensitySelector', 'MessageTransition', 'ThemePolish', 'ThemePolishAfterHeaders', 'ThemePolishReleaseOrder', 'OverflowMenusAfterTint', 'OverflowMenusReleaseOrder',
         'QatThemeRestore', 'ColoredQat', 'QatIconAppearance', 'QatBackdrop', 'Office2024Backdrop', 'CaptionMotion', 'TextEditMenus', 'QatCommandInteraction', 'QatVisibility', 'CustomizationLayout', 'MinimizedDivider', 'TouchChrome', 'TouchOptions', 'TouchAdaptive', 'GroupLauncher',
         'DensityTransition', 'DensityTransitionLifecycle', 'HostLayoutTransition', 'QatRowGeometry', 'ContextualMarker', 'LayoutMotion', 'LayoutMotionPopup', 'LayoutMotionPaint', 'ModePopupDismissal', 'SimplifiedTabReadiness', 'GlassOverlay', 'BackstageCaption', 'Flat2024', 'SimplifiedRibbon', 'SimplifiedButtonShape', 'SimplifiedDesignerDefaults', 'FeatureAvailability', 'SimplifiedCustomization', 'TabMoveCustomization', 'OverflowMenus', 'Touch', IgnoreCase = $false)]
     [string]$Scope,

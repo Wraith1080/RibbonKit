@@ -363,8 +363,10 @@ public class RibbonQuickAccessToolBar : ItemsControl
         {
             case RibbonSplitButton split:
                 split.Click += OnOverflowEntryInvoked;
+                split.MenuItemInvoked += OnOverflowMenuItemInvoked;
                 break;
-            case RibbonDropDownButton:
+            case RibbonDropDownButton dropDown:
+                dropDown.MenuItemInvoked += OnOverflowMenuItemInvoked;
                 break;
             case ButtonBase button:
                 button.Click += OnOverflowEntryInvoked;
@@ -425,7 +427,28 @@ public class RibbonQuickAccessToolBar : ItemsControl
         // The entries themselves are kept — see GetOrCreateEntry for why rebuilding is unsafe.
     }
 
-    private void OnOverflowEntryInvoked(object sender, RoutedEventArgs e) => CloseOverflow();
+    private void OnOverflowEntryInvoked(object sender, RoutedEventArgs e)
+        => OnOverflowMenuItemInvoked(_overflowHost?.IsKeyboardFocusWithin == true);
+
+    private void OnOverflowMenuItemInvoked(bool returnFocus)
+    {
+        CloseOverflow();
+        if (!returnFocus) return;
+        var window = Window.GetWindow(this);
+        var focusAtClose = Keyboard.FocusedElement;
+        // Closing the containing popup unloads its focused entry. Keep keyboard
+        // navigation on a visible opener after native popup teardown. A newer
+        // open/close or a host command's focus choice takes precedence.
+        Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
+        {
+            if (_overflowPopup is { IsOpen: true }
+                || _overflowButton is not { IsVisible: true, IsEnabled: true }) return;
+            if (Keyboard.FocusedElement is null || ReferenceEquals(Keyboard.FocusedElement, window)
+                || ReferenceEquals(Keyboard.FocusedElement, focusAtClose)
+                || Keyboard.FocusedElement is DependencyObject focused && _overflowHost?.IsAncestorOf(focused) == true)
+                _overflowButton.Focus();
+        }));
+    }
 
     // Always closes through the BUTTON's IsChecked, never the popup's IsOpen: the two are bound
     // two-way, and driving the popup directly would leave the button stuck looking pressed.

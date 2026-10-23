@@ -1179,6 +1179,14 @@ captures were inspected. Normal Debug runtime net8/net9 and Showcase builds pass
 User live review and native mixed-monitor DPI remain pending; no full suite ran.
 [Sizing, style lookup and focused evidence](history/library/11-touch-density-and-gallery-projections.md#3271-gallery-copy-popup-sizing-and-scrollbar-parity--2026-10-19).
 
+2026-10-23 release follow-up: gallery copies also inherit the native header margin,
+removing an extra generic dropdown-header gap that reduced the scrolling viewport.
+The existing independent viewport check failed before the correction and passed
+all seven themes in Compact/LTR and Touch/RTL afterward; 19 gallery runtime cases
+and the normal Release solution build passed. Office2010/Crystal captures were
+inspected; tolerances and approvals are unchanged. Overall full-run reconciliation
+remains in the [1.1 campaign](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#a2-release-execution).
+
 ## Classic Backstage caption continuation
 
 Implemented 2026-10-11. Classic (Office 2013) Backstage continues its live rail
@@ -1338,6 +1346,7 @@ body chrome; backdrop-only changes skip the ribbon theme fade.
 | Native review | Pending user review of all six reported fixes in Showcase, especially real Mica/Acrylic toggles and the live connected notch during Simplified/Touch transitions. Native pointer input, mixed-monitor DPI and reduced-motion review were not run. |
 | Broader validation | Full solution suite and release/package gates were not run for this bounded fix. |
 | Heading join follow-up | Corrected 2026-10-18: the heading background covers the divider's one-DIP highlight strip, preserving text inset and page layout. The independent ThemePolish consumer passed all 28 palette/direction combinations plus a headerless-page check; 16 selected Release menu scenes passed after actual/diff inspection and approval updates. Normal Debug runtime/Showcase builds passed. Native review of this seam remains open. Earlier runtime/motion evidence above was retained. |
+| Crystal/Office restoration check, 2026-10-23 | Corrected stale consumer assertions to retain the already implemented Office2024/Flat rounded inner clip and zero Office active-page border through theme/scoped-token restoration. The old check failed from a fresh checkpoint; the repaired menu scope passed in 6.2s with no runtime/template/token change. Its normal Release test-project rebuild had zero warnings/errors. The [release campaign](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#a2-release-execution) retains the failed full run and current continuation limits. |
 
 ## Persistent application-menu choice
 

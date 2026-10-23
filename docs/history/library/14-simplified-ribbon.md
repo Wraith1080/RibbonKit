@@ -110,6 +110,15 @@ seeds host font data because its code-behind is intentionally not run. Focused
 evidence and native review limits are in the
 [active plan](../../15-SIMPLIFIED-RIBBON-PLAN.md#native-combo-editors-in-original-slots--2026-10-21).
 
+Release acceptance on 2026-10-23 exposed a stale designer-defaults consumer
+assertion: original-slot combos no longer have the menu projection's MediumLayout
+and SmallLayout parts. Check the native combo type, authored InputWidth and visible
+field at either size; retain those template-part assertions for the other command
+families. The unchanged check failed both after the preceding matrices and alone;
+the corrected 12-case scope passed. No runtime behavior changed for this repair.
+The [release campaign](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#a2-release-execution)
+owns the current aggregate result and its limits.
+
 #### Measured inline clearance — 2026-10-21
 
 After the user reset the blanket-margin experiment, measured painted bounds

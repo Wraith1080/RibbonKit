@@ -634,6 +634,30 @@ One RTL QAT-page scene passed after actual/diff inspection showed only the inten
 disabled Add-button change. Current builds and live acceptance are in the
 [custom command QAT status](../../08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#custom-group-command-copies-in-qat).
 
+Command activation follow-up, 2026-10-23 (RKWF-054): copied toggles mirrored state
+and raised source Click but skipped ICommand execution. The focused Writer and
+library-only reproductions failed while event-only Showcase-style cases passed.
+`ButtonCommandInvocation` now completes Click and the current source command,
+parameter and explicit target (or source fallback), honoring CanExecute after
+Click handlers. Do not call OnClick again after the copy already changed state:
+that would double-toggle and repeat Checked/Unchecked. No public API changed.
+
+The audit reproduced the same missing command stage in KeyTip's no-peer button
+fallback and stock WPF toggle/checkbox/radio state-only automation paths. Those
+now share completion; only exact stock peer types receive extra stages, preserving
+custom providers that already click/execute. Ribbon button/split copies, menu rows,
+RibbonKit toggle/check/radio activation, disabled handling and native three-state/
+radio-group behavior pass. Message/split template command bindings and the deliberate
+application-menu pane-only Click route do not need this correction.
+
+Recorded verification: 42 focused runtime checks, two Writer formatting checks,
+and the independent public-customization consumer across 72 layouts (144 formatting
+round trips, 288 ordinary/split executions). Consumer activation is staged UIA
+Toggle plus routed Click; native mouse acceptance remains separate. Normal Release
+runtime net8/net9 and Debug Writer builds passed without warnings/errors. No
+templates, tokens, visual approvals or tolerances changed. Current human review
+belongs to [W4](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#writer-manual-acceptance).
+
 ### 3.251 Gallery ScreenTips follow QAT and custom-group copies — 2026-10-11
 
 `RibbonGallery` adds optional `ScreenTipTitle` and `ScreenTipText` dependency

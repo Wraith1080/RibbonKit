@@ -51,3 +51,32 @@ and human visual acceptance remain separate.
 The two-line shared Simplified label binding correction is recorded in
 [library history](library/14-simplified-ribbon.md#read-only-choice-labels--2026-10-22)
 and RKWF-050; it was authorized after a fresh-process reproduction.
+
+## 2026-10-23 — Caret formatting and copied font commit boundaries
+
+RKWF-055/056 separate native editor formatting from host combo commit glue. A
+plain TextRange at empty selection endpoints cannot replace TextSelection's
+pending insertion properties. The adapter's inline, Font dialog and Clear
+Formatting paths now mutate TextSelection and project its effective values at a
+caret. WPF owns word formatting, subsequent typing, caret movement and replacement
+document defaults. Empty-document toggles now report native uniform values.
+
+QAT/custom/overflow font menus deliberately project selection only; their source
+does not open or raise DropDownClosed. Writer commits source SelectionChanged
+only outside an active native edit and ignores state-projection changes. Classic
+and Simplified native editors keep their explicit close/Enter/focus-loss
+boundaries. The controller finds the related Simplified editor through the public
+QuickAccessSource link during preview focus, subscribes once and removes its
+handlers on disposal. Partial editor text survives state refresh. No private
+RibbonKit member, new runtime API, selection snapshot or host timing delay is used.
+
+The original ten reproductions failed at the formatting assertions, including all
+six family/size menu-copy combinations; retained selection assertions passed.
+The later Simplified boundary check caught eager source-selection commits during
+native editing and drove the explicit projected-editor handling. Synthetic text
+insertion requires initial dispatcher/window readiness. Editable input tests use
+PART_EditableTextBox rather than assigning the projected ComboBox.Text property,
+which exercises a different binding-update order. These checks do not establish
+physical keyboard/OS IME acceptance. Current evidence, normal Debug rebuild and
+native recheck remain in the
+[active acceptance plan](../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#writer-caret-formatting-and-copied-font-commits--2026-10-23).

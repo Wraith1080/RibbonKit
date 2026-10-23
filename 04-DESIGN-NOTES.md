@@ -871,6 +871,8 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 ### 3.229 Combo-box dropdown copies for QAT and customization — 2026-10-08
 
 [Optional combo icons, source-owned choices and selection, overflow and independent-consumer checks](docs/history/library/11-touch-density-and-gallery-projections.md#3229-combo-box-dropdown-copies-for-qat-and-customization--2026-10-08).
+[Overflow choice completion and focus](docs/history/library/11-touch-density-and-gallery-projections.md#overflow-choice-completion-and-focus--2026-10-23)
+records the 2026-10-23 shared dismissal correction.
 
 ### 3.230 Gallery dropdown copies for QAT and customization — 2026-10-08
 

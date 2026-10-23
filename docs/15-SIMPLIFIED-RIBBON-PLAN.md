@@ -379,6 +379,16 @@ All 28 Compact/Touch light/dark renders in `TestResults/simplified-combos` and t
 populated Showcase Home render were inspected. Normal Debug runtime net8/net9 and
 Showcase builds passed with zero warnings/errors, reusing existing designer output.
 No unrelated suites, Writer checks, package gates or snapshot approvals ran.
+
+On 2026-10-23, release acceptance corrected the designer-defaults consumer's stale
+expectation of Small/Medium menu-layout parts on these original-slot combos. The
+12 authored-XAML cases now verify their native field, authored width and visible
+geometry at either command size, retaining the existing assertions for the other
+six command families. The focused Release check passed in 5.2s after reproducing
+the old failure alone; its test-project rebuild had zero warnings/errors. This
+changes only the test contract. Current full/continuation results are in the
+[release campaign](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#a2-release-execution).
+
 Native pointer/keyboard/IME, mixed-monitor DPI and user appearance review remain
 open. Implementation details are in
 [library history](history/library/14-simplified-ribbon.md#native-combo-editors-in-original-slots--2026-10-21).

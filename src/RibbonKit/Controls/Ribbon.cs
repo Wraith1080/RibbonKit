@@ -1326,12 +1326,9 @@ public partial class Ribbon : Control
                         Mode = System.Windows.Data.BindingMode.TwoWay,
                     });
 
-                // Also raise the source's Click so a Click-wired action runs (the two-way binding above
-                // only fires the source's Checked/Unchecked). This makes clicking the proxy equivalent to
-                // clicking the source. RaiseEvent does NOT re-toggle IsChecked (the binding already did),
-                // so there's no double-toggle; by the time this runs the source's IsChecked is updated.
-                proxyToggle.Click += (_, _) =>
-                    toggle.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent, toggle));
+                // The binding already toggled the source. Complete its Click/Command stages without
+                // calling OnClick again, which would toggle twice and duplicate Checked/Unchecked.
+                proxyToggle.Click += (_, _) => ButtonCommandInvocation.RaiseClickAndExecute(toggle);
 
                 proxy = proxyToggle;
                 break;

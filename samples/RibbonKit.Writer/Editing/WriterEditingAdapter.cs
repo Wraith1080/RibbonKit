@@ -370,7 +370,7 @@ public sealed class WriterEditingAdapter : IDisposable
 
         using (BeginChange())
         {
-            var range = new TextRange(Editor.Selection.Start, Editor.Selection.End);
+            var range = Editor.Selection;
             range.ApplyPropertyValue(TextElement.FontFamilyProperty, Editor.Document.FontFamily);
             range.ApplyPropertyValue(TextElement.FontSizeProperty, Editor.Document.FontSize);
             range.ApplyPropertyValue(TextElement.FontWeightProperty, FontWeights.Normal);
@@ -400,7 +400,7 @@ public sealed class WriterEditingAdapter : IDisposable
 
         using (BeginChange())
         {
-            var range = new TextRange(Editor.Selection.Start, Editor.Selection.End);
+            var range = Editor.Selection;
             if (family is not null)
                 range.ApplyPropertyValue(TextElement.FontFamilyProperty, family);
             if (sizeInDips.HasValue)
@@ -698,7 +698,9 @@ public sealed class WriterEditingAdapter : IDisposable
         if (!CanFormat)
             return;
         using (BeginChange())
-            new TextRange(Editor.Selection.Start, Editor.Selection.End).ApplyPropertyValue(property, value);
+            // TextSelection retains WPF's pending typing properties at an empty caret.
+            // A new TextRange at the same endpoints does not carry that insertion state.
+            Editor.Selection.ApplyPropertyValue(property, value);
         RefreshState();
     }
 
@@ -768,27 +770,28 @@ public sealed class WriterEditingAdapter : IDisposable
         var insertionOnly = !hasSelection && !hasTextContext;
         var paragraphs = hasTextContext ? GetSelectedParagraphs() : new List<Paragraph>();
         var alignmentParagraphs = insertionOnly ? GetSelectedParagraphs() : paragraphs;
-        var inline = contextRange is null || !hasTextContext;
-        var fontFamily = insertionOnly
+        var inline = hasSelection && (contextRange is null || !hasTextContext);
+        var inlineRange = Editor.Selection;
+        var fontFamily = !hasSelection
             ? ReadInsertionInline(TextElement.FontFamilyProperty, TryFontFamily, Editor.Document.FontFamily)
             : inline ? WriterSelectionValue<FontFamily>.Unset() :
-                ReadInline<FontFamily>(contextRange!, TextElement.FontFamilyProperty, TryFontFamily);
-        var fontSize = insertionOnly
+                ReadInline<FontFamily>(inlineRange, TextElement.FontFamilyProperty, TryFontFamily);
+        var fontSize = !hasSelection
             ? ReadInsertionInline(TextElement.FontSizeProperty, TryDouble, Editor.Document.FontSize)
             : inline ? WriterSelectionValue<double>.Unset() :
-                ReadInline<double>(contextRange!, TextElement.FontSizeProperty, TryDouble);
-        var bold = inline ? WriterSelectionValue<bool>.Unset() : ReadInline<bool>(contextRange!, TextElement.FontWeightProperty, TryBold);
-        var italic = inline ? WriterSelectionValue<bool>.Unset() : ReadInline<bool>(contextRange!, TextElement.FontStyleProperty, TryItalic);
-        var underline = inline ? WriterSelectionValue<bool>.Unset() : ReadInline<bool>(contextRange!, Inline.TextDecorationsProperty, TryUnderline);
+                ReadInline<double>(inlineRange, TextElement.FontSizeProperty, TryDouble);
+        var bold = inline ? WriterSelectionValue<bool>.Unset() : ReadInline<bool>(inlineRange, TextElement.FontWeightProperty, TryBold);
+        var italic = inline ? WriterSelectionValue<bool>.Unset() : ReadInline<bool>(inlineRange, TextElement.FontStyleProperty, TryItalic);
+        var underline = inline ? WriterSelectionValue<bool>.Unset() : ReadInline<bool>(inlineRange, Inline.TextDecorationsProperty, TryUnderline);
         var strikethrough = inline ? WriterSelectionValue<WriterStrikethroughStyle>.Unset() :
-            ReadInline<WriterStrikethroughStyle>(contextRange!, Inline.TextDecorationsProperty, TryStrikethrough);
+            ReadInline<WriterStrikethroughStyle>(inlineRange, Inline.TextDecorationsProperty, TryStrikethrough);
         var baselineEffect = inline ? WriterSelectionValue<WriterBaselineEffect>.Unset() :
-            ReadInline<WriterBaselineEffect>(contextRange!, Inline.BaselineAlignmentProperty,
+            ReadInline<WriterBaselineEffect>(inlineRange, Inline.BaselineAlignmentProperty,
                 WriterFontEffects.TryReadBaselineEffect, unsupportedValue: true);
         var foreground = inline ? WriterSelectionValue<Color?>.Unset() :
-            ReadInline<Color?>(contextRange!, TextElement.ForegroundProperty, TryColor, unsupportedValue: true);
+            ReadInline<Color?>(inlineRange, TextElement.ForegroundProperty, TryColor, unsupportedValue: true);
         var highlight = inline ? WriterSelectionValue<Color?>.Unset() :
-            ReadInline<Color?>(contextRange!, TextElement.BackgroundProperty, TryColor, unsupportedValue: true);
+            ReadInline<Color?>(inlineRange, TextElement.BackgroundProperty, TryColor, unsupportedValue: true);
         var alignment = ReadParagraph(alignmentParagraphs, p => p.TextAlignment);
         if (insertionOnly && alignment.Kind == WriterSelectionValueKind.Unset)
             alignment = WriterSelectionValue<TextAlignment>.Uniform(Editor.Document.TextAlignment);
