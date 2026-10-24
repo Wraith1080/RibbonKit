@@ -50,6 +50,13 @@ instead of repeatedly appending them to the current-status summary.
 
 ## 4. Observations by ID
 
+### RKWF-065 — Clicking the unchanged caret discards pending font choices
+
+- First seen: 2026-10-24, W8 formatting review. The user confirmed the reset occurs at the same caret position or in an empty document, rather than only after moving to differently formatted text. The other contextual-tab and Undo/Redo checks worked.
+- Classification: Writer-owned native-editor adaptation, following RKWF-055. WPF's mouse-placement path clears pending typing properties. Six inline/Font-dialog/Clear Formatting reproductions lose their chosen values after that reset, while the different-position/intervening-edit guard case passes.
+- Correction: remember explicit caret formatting and retain effective inline properties across a plain left click only while the document and insertion point stay unchanged. Skip already-equal property writes; discard retention after caret/selection movement, edits/replacement, availability changes or disposal. Preserve native selection, word formatting and Undo; no shared runtime, settings or public API change.
+- Focused caret/adapter/copied-font checks pass, including no extra same-word Undo step. Tests simulate the native reset without moving the desktop pointer; the separate human click/type review is recorded in the [acceptance plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#writer-same-caret-mouse-formatting--2026-10-24).
+
 ### RKWF-064 — Find matches lose their visible highlight while the dialog owns focus
 
 - First seen: 2026-10-24, W7 Find/Replace review. The user reports the other checks work, but the main window stays inactive after a search and requests focus there to show the match.
@@ -61,8 +68,8 @@ instead of repeatedly appending them to the current-status summary.
 
 - First seen: 2026-10-24, W7 Table/Picture review; screenshots `codex-clipboard-a26baf13-442c-4dad-a948-f741b372acc4.png` and `codex-clipboard-7c9a98fe-f72f-4ddc-a607-e5b1d5ab1318.png`. The user reports the other checks look good.
 - Classification: Writer-owned table-picker layout adaptation. Source inspection shows the 24 choices retain three logical rows of eight columns, but use a general-purpose wrapping gallery with a wide Custom Table footer. The Touch strip's equal-cell measurement includes that footer, resulting in a single visible tile. Expanded Touch items have a 44-DIP minimum while the gallery retains its 278-DIP width; six visual columns wrap the eight-column logical selection into a zigzag.
-- Proposed direction: give the table picker a semantic eight-column layout, keeping its full-width Custom Table footer outside quick-cell sizing. Retain a single visible strip row with several cells, enlarge Touch targets and size the expanded popup for the full three-by-eight grid. Preserve selection, insertion, keyboard mapping, QAT/Simplified command identity and Compact behavior through existing public authoring points; no runtime change is proposed.
-- Evidence: supplied images and implementation inspection; no new automated reproduction or fix is claimed. The Touch table-picker recheck remains open in W7 of the [acceptance plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#writer-manual-acceptance).
+- Correction: after initially deferring the change, the user authorized implementation on 2026-10-24. Writer now uses the public ItemsPanel extension with an eight-column WPF Grid and a separate full-width footer row. Touch-sized cells fit a wider popup; the ribbon retains one visible row. The footer reuses the shared themed Touch action style. Existing preview/selection/insertion handlers, keyboard mapping, item identities and QAT/custom/Simplified borrowing stay intact. No runtime source or API change.
+- Focused layout/copy and insertion checks pass; final enabled-state renders are inspected separately from pointer acceptance. Geometry accounts for fractional column rounding. See the [implementation pitfalls](history/03-writer-host-integration.md#2026-10-24--semantic-table-picker-layout) and [current evidence/pending Writer recheck](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#writer-table-picker-layout--2026-10-24).
 
 ### RKWF-062 — Height resizing shifts the ribbon and document
 

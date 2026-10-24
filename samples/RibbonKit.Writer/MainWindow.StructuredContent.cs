@@ -453,6 +453,8 @@ public partial class MainWindow
                         Description = "Insert this live table. RibbonKit Writer files preserve its supported structure and formatting."
                     }
                 };
+                Grid.SetRow(item, rows - 1);
+                Grid.SetColumn(item, columns - 1);
                 item.PreviewMouseLeftButtonUp += OnTableGridItemMouseUp;
                 Ribbon.SetCommandId(item, $"Writer.Insert.Table.{rows}x{columns}");
                 AutomationProperties.SetAutomationId(item, $"InsertTable{rows}x{columns}");
@@ -466,11 +468,10 @@ public partial class MainWindow
         var customButton = new Button
         {
             Content = "Custom Table…",
-            Width = 236,
-            Height = 30,
             HorizontalContentAlignment = HorizontalAlignment.Left,
             Padding = new Thickness(9, 0, 9, 0)
         };
+        customButton.SetResourceReference(StyleProperty, "OptionsDialogTouchActionButtonStyle");
         customButton.Click += OnCustomTableSizeClick;
         Ribbon.SetCommandId(customButton, "Writer.Insert.Table.Custom");
         AutomationProperties.SetAutomationId(customButton, "InsertCustomTableSize");
@@ -478,13 +479,12 @@ public partial class MainWindow
         AutomationProperties.SetHelpText(customButton,
             "Enter a table size from 1 through 8 rows and columns.");
 
-        var footer = new StackPanel { Width = 236 };
+        var footer = new StackPanel();
         footer.Children.Add(new Separator { Margin = new Thickness(0, 0, 0, 5) });
         footer.Children.Add(customButton);
         var footerItem = new RibbonGalleryItem
         {
             Content = footer,
-            Width = 256,
             Focusable = false,
             IsTabStop = false,
             ToolTip = new RibbonScreenTip
@@ -493,6 +493,9 @@ public partial class MainWindow
                 Description = "Enter rows and columns manually for another supported table size."
             }
         };
+        footerItem.SetResourceReference(StyleProperty, "WriterTableGridFooterStyle");
+        Grid.SetRow(footerItem, QuickTableGridRowCount);
+        Grid.SetColumnSpan(footerItem, WriterTableService.MaximumStructuralCount);
         AutomationProperties.SetAutomationId(footerItem, "InsertCustomTableFooter");
         AutomationProperties.SetName(footerItem, "Custom table size");
         TableGridPicker.Items.Add(footerItem);

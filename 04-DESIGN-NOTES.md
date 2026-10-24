@@ -454,6 +454,7 @@ Includes the 2026-09-16 animated Backstage badge-placement correction and focuse
 ### 3.103 RibbonKit Writer W1-A formatting command and selection-state engine — 2026-08-20
 
 [Decision, pitfalls and evidence](docs/history/02-writer-foundation.md#3103-ribbonkit-writer-w1-a-formatting-command-and-selection-state-engine--2026-08-20).
+[Pending formatting across same-caret clicks, 2026-10-24](docs/history/03-writer-host-integration.md#2026-10-24--same-caret-mouse-click-formatting).
 
 ### 3.104 RibbonKit Writer W1-B editing utilities and status state — 2026-08-20
 
@@ -523,6 +524,7 @@ Includes the 2026-09-16 animated Backstage badge-placement correction and focuse
 ### 3.117 RibbonKit Writer W3-C Insert, table interaction and contextual Table Tools — 2026-08-26
 
 [Decision, pitfalls and evidence](docs/history/02-writer-foundation.md#3117-ribbonkit-writer-w3-c-insert-table-interaction-and-contextual-table-tools--2026-08-26).
+[Semantic eight-column table picker, 2026-10-24](docs/history/03-writer-host-integration.md#2026-10-24--semantic-table-picker-layout).
 
 ### 3.118 RibbonKit Writer structured-object interaction planning correction — 2026-08-27
 

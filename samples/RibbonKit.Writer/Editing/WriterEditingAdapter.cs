@@ -24,9 +24,10 @@ internal interface IWriterEditingUndoExtension
 /// </summary>
 /// <remarks>
 /// The adapter deliberately leaves document ownership, selection ownership, IME handling, clipboard
-/// storage and the native undo stack with WPF. It only installs command bindings, reads a snapshot of
-/// the current selection, and applies a requested operation when the caller executes a command. A
-/// mixed selection is reported as mixed; observing <see cref="State"/> never applies a formatting
+/// storage and the native undo stack with WPF. It installs command bindings, reads selection state,
+/// and applies requested operations. Explicit insertion formatting survives mouse clicks that leave
+/// the caret and document unchanged. A mixed selection is reported as mixed;
+/// observing <see cref="State"/> never applies a formatting
 /// value to the document.
 /// </remarks>
 public sealed class WriterEditingAdapter : IDisposable
@@ -35,6 +36,7 @@ public sealed class WriterEditingAdapter : IDisposable
     public const double IndentationStep = 18d;
 
     private readonly List<CommandBinding> _commandBindings = new();
+    private readonly WriterCaretFormattingRetention _caretFormatting;
     private readonly DependencyPropertyDescriptor? _isEnabledDescriptor;
     private readonly DependencyPropertyDescriptor? _isReadOnlyDescriptor;
     private bool _disposed;
@@ -47,6 +49,7 @@ public sealed class WriterEditingAdapter : IDisposable
     public WriterEditingAdapter(RichTextBox editor)
     {
         Editor = editor ?? throw new ArgumentNullException(nameof(editor));
+        _caretFormatting = new WriterCaretFormattingRetention(Editor, RefreshState);
         _isEnabledDescriptor = DependencyPropertyDescriptor.FromProperty(
             UIElement.IsEnabledProperty, typeof(UIElement));
         _isReadOnlyDescriptor = DependencyPropertyDescriptor.FromProperty(
@@ -381,6 +384,7 @@ public sealed class WriterEditingAdapter : IDisposable
             range.ApplyPropertyValue(TextElement.ForegroundProperty, Editor.Document.Foreground);
             range.ApplyPropertyValue(TextElement.BackgroundProperty, null);
         }
+        _caretFormatting.Remember();
         RefreshState();
     }
 
@@ -428,6 +432,7 @@ public sealed class WriterEditingAdapter : IDisposable
                     WriterFontEffects.ToBaselineAlignment(baselineEffect.Value));
             }
         }
+        _caretFormatting.Remember();
         RefreshState();
     }
 
@@ -531,6 +536,7 @@ public sealed class WriterEditingAdapter : IDisposable
         if (_disposed)
             return;
         _disposed = true;
+        _caretFormatting.Dispose();
         CommandManager.RequerySuggested -= OnCommandManagerRequerySuggested;
         _isEnabledDescriptor?.RemoveValueChanged(Editor, EditorAvailabilityChanged);
         _isReadOnlyDescriptor?.RemoveValueChanged(Editor, EditorAvailabilityChanged);
@@ -701,6 +707,7 @@ public sealed class WriterEditingAdapter : IDisposable
             // TextSelection retains WPF's pending typing properties at an empty caret.
             // A new TextRange at the same endpoints does not carry that insertion state.
             Editor.Selection.ApplyPropertyValue(property, value);
+        _caretFormatting.Remember();
         RefreshState();
     }
 
@@ -1046,7 +1053,11 @@ public sealed class WriterEditingAdapter : IDisposable
 
     private void EditorStateChanged(object? sender, TextChangedEventArgs e) => RefreshState();
 
-    private void EditorAvailabilityChanged(object? sender, EventArgs e) => RefreshState();
+    private void EditorAvailabilityChanged(object? sender, EventArgs e)
+    {
+        _caretFormatting.Clear();
+        RefreshState();
+    }
 
     private void OnCommandManagerRequerySuggested(object? sender, EventArgs e)
     {
