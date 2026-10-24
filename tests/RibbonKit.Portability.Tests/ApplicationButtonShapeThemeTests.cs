@@ -166,6 +166,11 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("GroupedComboBoxChecks.Verify", () => GroupedComboBoxChecks.Verify(application));
             return;
         }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "NativeResizePaint")
+        {
+            VerifyScope("NativeResizePaintChecks.Verify", () => NativeResizePaintChecks.Verify(application));
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "CaptionMotion")
         {
             VerifyScope("Office2024BackdropChecks.VerifyCaptionMotion", () => Office2024BackdropChecks.VerifyCaptionMotion(application));
@@ -468,6 +473,7 @@ public sealed class ApplicationButtonShapeThemeTests
                 }
                 VerifyScope("Office2024BackdropChecks.Verify", () => Office2024BackdropChecks.Verify(application));
                 VerifyScope("Office2024BackdropChecks.VerifyCaptionMotion", () => Office2024BackdropChecks.VerifyCaptionMotion(application));
+                VerifyScope("NativeResizePaintChecks.Verify", () => NativeResizePaintChecks.Verify(application));
                 VerifyScope("CollapsedGroupPressChecks.Verify", () => CollapsedGroupPressChecks.Verify(application));
                 ThemeManager.Apply(application, RibbonTheme.Office2024);
                 VerifyScope("KeyboardFocusPortabilityChecks.Verify", () => KeyboardFocusPortabilityChecks.Verify(application));

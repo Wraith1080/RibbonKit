@@ -332,6 +332,9 @@ Includes the 2026-09-16 animated Backstage badge-placement correction and focuse
 
 [Decision, pitfalls and evidence](docs/history/library/06-messages-release-and-window-frames.md#374-visual-studio-debugger-distorted-live-resize-performance--2026-08-10).
 
+[Fractional-DPI caption stability correction, 2026-10-24](docs/history/library/18-window-layout.md#height-resize-caption-stability--2026-10-24).
+[Temporary ribbon paint cache during native resizing, 2026-10-24](docs/history/library/18-window-layout.md#native-resize-paint-reuse--2026-10-24).
+
 ### 3.75 Phase 8 API review and freeze — 2026-08-10
 
 [Decision, pitfalls and evidence](docs/history/library/06-messages-release-and-window-frames.md#375-phase-8-api-review-and-freeze--2026-08-10).
@@ -455,6 +458,7 @@ Includes the 2026-09-16 animated Backstage badge-placement correction and focuse
 ### 3.104 RibbonKit Writer W1-B editing utilities and status state — 2026-08-20
 
 [Decision, pitfalls and evidence](docs/history/02-writer-foundation.md#3104-ribbonkit-writer-w1-b-editing-utilities-and-status-state--2026-08-20).
+[Successful search returns focus to the editor, 2026-10-24](docs/history/03-writer-host-integration.md#2026-10-24--search-result-focus).
 
 ### 3.105 RibbonKit Writer W1-C editing ribbon integration — 2026-08-21
 

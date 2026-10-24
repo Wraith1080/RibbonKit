@@ -149,6 +149,7 @@ public class RibbonWindow : Window
     // one-shot LayoutUpdated handler that consumes it is currently subscribed.
     private double _titleShiftFrom;
     private bool _titleShiftPending;
+    private RibbonResizePaintCache? _resizePaintCache;
     private readonly HashSet<Ribbon> _orbApplicationButtonOwners = [];
     private Ribbon? _aeroFrameHighlightOwner;
 
@@ -183,10 +184,12 @@ public class RibbonWindow : Window
         // resolution/DPI while maximized.
         SizeChanged += (_, _) => UpdateMaximizeInset();
         Loaded += (_, _) => TrackTitleBarIconVisibility();
-        Unloaded += (_, _) => StopTrackingTitleBarIconVisibility();
+        Unloaded += (_, _) => { EndResizePaintCache(); StopTrackingTitleBarIconVisibility(); };
+        Deactivated += (_, _) => EndResizePaintCache();
         ThemeManager.Changed += OnThemeManagerChanged;
         Closed += (_, _) =>
         {
+            EndResizePaintCache();
             ThemeManager.Changed -= OnThemeManagerChanged;
             StopTrackingTitleBarIconVisibility();
         };
@@ -612,6 +615,7 @@ public class RibbonWindow : Window
 
     private void OnThemeManagerChanged(object? sender, EventArgs e)
     {
+        EndResizePaintCache();
         if (new WindowInteropHelper(this).Handle != IntPtr.Zero)
         {
             ApplyNativeDarkMode();
@@ -628,6 +632,7 @@ public class RibbonWindow : Window
     /// <inheritdoc />
     protected override void OnStateChanged(EventArgs e)
     {
+        EndResizePaintCache();
         base.OnStateChanged(e);
         _snapButtonPressed = false;
         SetSnapButtonVisualState(SnapButtonVisualState.Normal);
@@ -637,6 +642,7 @@ public class RibbonWindow : Window
     /// <inheritdoc />
     protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
     {
+        EndResizePaintCache();
         base.OnDpiChanged(oldDpi, newDpi);
         UpdateMaximizeInset();
     }
@@ -741,6 +747,15 @@ public class RibbonWindow : Window
         const int WmNcMouseLeave = 0x02a2;
         const int HtMaxButton = 9;
 
+        const int WmEnterSizeMove = 0x0231;
+        const int WmExitSizeMove = 0x0232;
+        if (msg == WmEnterSizeMove)
+        {
+            EndResizePaintCache();
+            _resizePaintCache = new RibbonResizePaintCache(this);
+        }
+        else if (msg == WmExitSizeMove || msg == WmCancelMode) EndResizePaintCache();
+
         // Windows 11 discovers the Snap Layout hover surface through non-client hit testing.
         // WindowChrome.IsHitTestVisibleInChrome deliberately makes our themed caption buttons
         // ordinary WPF client controls, so advertise just the visible maximize/restore bounds as
@@ -820,6 +835,12 @@ public class RibbonWindow : Window
         }
 
         return IntPtr.Zero;
+    }
+
+    private void EndResizePaintCache()
+    {
+        _resizePaintCache?.Dispose();
+        _resizePaintCache = null;
     }
 
     private void SetSnapButtonVisualState(SnapButtonVisualState state)

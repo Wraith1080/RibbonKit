@@ -50,6 +50,28 @@ instead of repeatedly appending them to the current-status summary.
 
 ## 4. Observations by ID
 
+### RKWF-064 — Find matches lose their visible highlight while the dialog owns focus
+
+- First seen: 2026-10-24, W7 Find/Replace review. The user reports the other checks work, but the main window stays inactive after a search and requests focus there to show the match.
+- Classification: Writer-owned modeless-dialog completion. The search service selects the correct native TextRange; Find Next never activates or focuses its editor, whose inactive selection uses WPF's existing hidden-highlight behavior.
+- Correction: after a successful Find Next, activate the editor's window and focus the editor. Keep the dialog open and its query unchanged. Empty/missing searches retain dialog focus. Replacement and general popup selection-display behavior are unchanged; no RibbonKit runtime change.
+- Focused dialog regressions reproduce the inactive owner before correction and pass afterward alongside the service regressions. Automated focus and final visual review remain distinct; see the [current evidence and pending recheck](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#writer-search-result-focus--2026-10-24).
+
+### RKWF-063 — Touch table picker collapses to one cell and wraps its highlight
+
+- First seen: 2026-10-24, W7 Table/Picture review; screenshots `codex-clipboard-a26baf13-442c-4dad-a948-f741b372acc4.png` and `codex-clipboard-7c9a98fe-f72f-4ddc-a607-e5b1d5ab1318.png`. The user reports the other checks look good.
+- Classification: Writer-owned table-picker layout adaptation. Source inspection shows the 24 choices retain three logical rows of eight columns, but use a general-purpose wrapping gallery with a wide Custom Table footer. The Touch strip's equal-cell measurement includes that footer, resulting in a single visible tile. Expanded Touch items have a 44-DIP minimum while the gallery retains its 278-DIP width; six visual columns wrap the eight-column logical selection into a zigzag.
+- Proposed direction: give the table picker a semantic eight-column layout, keeping its full-width Custom Table footer outside quick-cell sizing. Retain a single visible strip row with several cells, enlarge Touch targets and size the expanded popup for the full three-by-eight grid. Preserve selection, insertion, keyboard mapping, QAT/Simplified command identity and Compact behavior through existing public authoring points; no runtime change is proposed.
+- Evidence: supplied images and implementation inspection; no new automated reproduction or fix is claimed. The Touch table-picker recheck remains open in W7 of the [acceptance plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#writer-manual-acceptance).
+
+### RKWF-062 — Height resizing shifts the ribbon and document
+
+- First seen: 2026-10-24, W6 mouse review and `20261023-2331-03.2494863.mp4`. The user identifies jumping/flicker, rather than slow dragging, and observes it without a debugger. Exact short-transition interruption timing cannot be established by the manual mouse attempt.
+- Shared reproduction: a minimal RibbonWindow at native 125% alternates its Compact caption between 42 and 43 pixels during height-only changes. It does not require Writer, capture, a popup or a ribbon transition. This is distinct from the old debugger-only resize slowdown.
+- Caption correction: move the existing 34-DIP minimum from the window grid's Auto row to TitleBarBand, so its rounded desired height is stable before remaining space is divided.
+- The user clarified that the larger symptom is the whole window image moving in jumps, supplied a stronger Showcase recording, authorized minimizing it and preferred the cached diagnostic variant. RibbonWindow now temporarily caches ribbon and detached title-bar QAT paint during the native move/resize loop, preserving live controls and authored CacheMode values. It releases the cache on exit/cancel and lifecycle changes. No Writer workaround, document capture, shadow suppression or public API change.
+- Focused runtime, Writer and independent-consumer checks pass, with cached/uncached renders inspected. Native timing varies; the integrated Writer probe improved, while one minimal-consumer run did not. Final visual review of the integrated mitigation remains open. [Exact evidence and pending W6 review](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#native-resize-paint-mitigation--2026-10-24).
+
 ### RKWF-061 — Modern Office Glass stops at the ribbon body
 
 - First seen: 2026-10-24, the user's Showcase screenshots and material-policy review. Glass does not carry into collapsed groups or ribbon/QAT overflow. The user approved those continuations following Glass, retained ordinary selection surfaces and Crystal, and explicitly excluded Office 2007/2010.

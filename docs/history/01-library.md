@@ -186,6 +186,9 @@ status updates and investigation narration were removed during compaction.
 
 ### [3.74 Visual Studio debugger distorted live-resize performance — 2026-08-10](library/06-messages-release-and-window-frames.md#374-visual-studio-debugger-distorted-live-resize-performance--2026-08-10)
 
+[Height-resize caption stability follow-up, 2026-10-24](library/18-window-layout.md#height-resize-caption-stability--2026-10-24).
+[Native resize paint reuse, 2026-10-24](library/18-window-layout.md#native-resize-paint-reuse--2026-10-24).
+
 ### [3.75 Phase 8 API review and freeze — 2026-08-10](library/06-messages-release-and-window-frames.md#375-phase-8-api-review-and-freeze--2026-08-10)
 
 ### [3.76 Repository-native v1 documentation gate — 2026-08-10](library/06-messages-release-and-window-frames.md#376-repository-native-v1-documentation-gate--2026-08-10)

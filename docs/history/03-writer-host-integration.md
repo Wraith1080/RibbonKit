@@ -80,3 +80,23 @@ which exercises a different binding-update order. These checks do not establish
 physical keyboard/OS IME acceptance. Current evidence, normal Debug rebuild and
 native recheck remain in the
 [active acceptance plan](../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#writer-caret-formatting-and-copied-font-commits--2026-10-23).
+
+## 2026-10-24 — Search-result focus
+
+W7's Find/Replace review found that selecting a search match while its modeless
+dialog retains activation hides the editor's normal blue selection. Writer's
+dialog now activates the window containing the editor and focuses the editor
+after a successful Find Next. The dialog remains open with its query intact;
+repeated invocation advances and wraps normally. Empty or missing queries keep
+dialog focus so the user can correct them.
+
+Focus belongs to the dialog's completion path, leaving the deterministic search
+service and shared RibbonKit controls unchanged. This does not enable inactive
+selection highlighting for other Writer popups or alter replacement behavior.
+Regression coverage uses the real dialog and a separate native editor window,
+checking window activation, keyboard focus, preserved query, repeated/wrapped
+matches and failed-search focus in Find-only and Replace presentations. These
+are synthetic button invocations, not physical input or final visual acceptance.
+Current evidence and the user's recheck belong in the
+[acceptance plan](../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#writer-search-result-focus--2026-10-24),
+with the consumer observation tracked as RKWF-064.

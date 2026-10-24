@@ -732,6 +732,11 @@ glyph template is instantiated separately in each button.
 
 `RibbonWindow` supports compatible Mica/Acrylic backdrops and separate optional
 frame appearance. Theme selection does not silently enable a material.
+During native window move/resize, it temporarily caches ribbon paint and detached
+title-bar QAT paint to reduce rendering work. Controls remain live, and ordinary
+rendering resumes when the drag ends. Authored `CacheMode` values and bindings are
+preserved; an explicit `CacheMode="{x:Null}"` opts that element out. Host document
+content is not cached by this behavior.
 Contextual tabs can optionally set `RibbonTab.ContextualSelectionBrush` for a distinct
 selection marker; null uses the contextual tint or Crystal's reflective treatment
 of it. Showcase's **Samples** tab compares Crystal with Office 2024 and demonstrates
