@@ -257,6 +257,8 @@ public enum RibbonString
     TabPositionLabel,
     /// <summary>Label for the tab used as a positioning anchor.</summary>
     TargetTabLabel,
+    /// <summary>Remove the selected custom tab from a customization draft.</summary>
+    RemoveTab,
 }
 
 /// <summary>

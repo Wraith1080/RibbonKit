@@ -490,7 +490,7 @@ public partial class Ribbon : Control
     /// small buttons.
     /// <para>
     /// Ignored for <see cref="RibbonQuickAccessPosition.BelowRibbon"/>: that placement owns a
-    /// full-width row of its own, so it stretches instead of overflowing.
+    /// full-width row of its own. It overflows only when that available row width is exhausted.
     /// </para>
     /// </summary>
     public double QuickAccessMaxWidth
@@ -1972,6 +1972,7 @@ public partial class Ribbon : Control
     // items are projected into the host RibbonWindow's TitleBarContent via this host; the
     // shared context menu lets the user move the QAT between placements (like Office).
     private RibbonQuickAccessToolBar? _titleBarQatHost;
+    private RibbonQuickAccessToolBar? _belowRibbonQatHost;
     private DispatcherOperation? _pendingQuickAccessPlacement;
     private readonly Dictionary<FrameworkElement, ResourceDictionary> _qatBackdropPalettes = new();
     private object? _savedTitleBarContent;
@@ -1980,7 +1981,7 @@ public partial class Ribbon : Control
     private System.Windows.Controls.ContextMenu? _openRibbonContextMenu;
 
     /// <summary>
-    /// The constrained QAT host currently on screen, if this placement can overflow. The title-bar
+    /// The QAT host currently on screen. The title-bar
     /// host lives outside this ribbon's visual tree, so KeyTips cannot discover it by walking from
     /// the ribbon; this is the deliberate bridge back to the owning service.
     /// </summary>
@@ -1989,6 +1990,7 @@ public partial class Ribbon : Control
         RibbonQuickAccessPosition.TitleBar => _titleBarQatHost,
         RibbonQuickAccessPosition.TabRow => _qatTabRowHost as RibbonQuickAccessToolBar
             ?? FindDescendantByType<RibbonQuickAccessToolBar>(this),
+        RibbonQuickAccessPosition.BelowRibbon => _belowRibbonQatHost,
         _ => null,
     };
 
@@ -3357,6 +3359,7 @@ public partial class Ribbon : Control
         DetachRibbonTabControl();
         _ribbonContentHost = null;
         _qatBelowHost = null;
+        _belowRibbonQatHost = null;
         if (_qatTabRowHost is not null)
             _qatTabRowHost.SizeChanged -= OnTabRowQatSizeChanged;
         _qatTabRowHost = null;
@@ -3392,6 +3395,9 @@ public partial class Ribbon : Control
             _qatBelowHost = belowHost;
             AttachQatContextMenu(belowHost);
         }
+        _belowRibbonQatHost = GetTemplateChild("QatBelowItems") as RibbonQuickAccessToolBar;
+        if (_belowRibbonQatHost is not null)
+            AttachQatOwner(_belowRibbonQatHost);
 
         _designBackstageHost = GetTemplateChild("PART_DesignBackstageHost") as Border;
 
@@ -3906,6 +3912,7 @@ public partial class Ribbon : Control
         {
             ribbon._titleBarQatHost?.CloseOverflow();
             (ribbon._qatTabRowHost as RibbonQuickAccessToolBar)?.CloseOverflow();
+            ribbon._belowRibbonQatHost?.CloseOverflow();
             foreach (var menu in ribbon.QuickAccessItems.OfType<RibbonDropDownButton>())
                 menu.EnsureBorrowedItemsReturned();
         }
@@ -4179,14 +4186,16 @@ public partial class Ribbon : Control
         host.ContextMenuOpening -= OnQatHostContextMenuOpening;
         host.ContextMenuOpening += OnQatHostContextMenuOpening;
 
-        // Every quick-access host passes through here, which makes it the one place that can hand
-        // the toolbar its owning ribbon. It can't find us by walking up: in the TitleBar placement
-        // the toolbar lives in the window's title bar, outside the ribbon's visual tree.
+        // The title-bar toolbar lives outside the ribbon's visual tree, so each toolbar
+        // receives its owner explicitly. BelowRibbon keeps its context menu on the outer drawer.
         if (host is RibbonQuickAccessToolBar toolBar)
-        {
-            toolBar.Owner = this;
-            toolBar.SetBinding(DensityProperty, new Binding(nameof(Density)) { Source = this });
-        }
+            AttachQatOwner(toolBar);
+    }
+
+    private void AttachQatOwner(RibbonQuickAccessToolBar toolBar)
+    {
+        toolBar.Owner = this;
+        toolBar.SetBinding(DensityProperty, new Binding(nameof(Density)) { Source = this });
     }
 
     private void OnQatHostContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)

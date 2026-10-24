@@ -171,6 +171,8 @@ Includes the 2026-09-16 animated Backstage badge-placement correction and focuse
 ### 3.35 Quick access toolbar overflow — 2026-07-27
 
 [Decision, pitfalls and evidence](docs/history/library/03-office-themes-and-layout.md#335-quick-access-toolbar-overflow--2026-07-27).
+[Shared QAT/Simplified menu scrolling](docs/history/library/11-touch-density-and-gallery-projections.md#overflow-menu-scrolling-and-native-combobox-escape--2026-10-24).
+[Below-ribbon full-row overflow](docs/history/library/11-touch-density-and-gallery-projections.md#below-ribbon-qat-overflow--2026-10-24).
 
 ### 3.36 Selection visuals: the tab-strip-row reflow rule
 
@@ -219,6 +221,7 @@ Includes the 2026-09-16 animated Backstage badge-placement correction and focuse
 ### 3.47 Nested popup Escape is a stack, not five independent window handlers — 2026-08-01
 
 [Decision, pitfalls and evidence](docs/history/library/05-application-menu-localization-and-snapshots.md#347-nested-popup-escape-is-a-stack-not-five-independent-window-handlers--2026-08-01).
+[Native ComboBox Escape ordering](docs/history/library/11-touch-density-and-gallery-projections.md#overflow-menu-scrolling-and-native-combobox-escape--2026-10-24).
 
 ### 3.48 Visual-regression snapshots: the complete theme × DPI matrix — 2026-08-01
 
@@ -842,6 +845,7 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 ### 3.220 File-first entry, QAT overflow and Backstage opening focus — 2026-10-04
 
 [Enter the ribbon at File, skip hidden QAT originals and focus Backstage actions](docs/history/library/10-host-effects-and-keyboard-focus.md#3220-file-first-entry-qat-overflow-and-backstage-opening-focus--2026-10-04).
+[Overflow arrow-key row navigation](docs/history/library/11-touch-density-and-gallery-projections.md#overflow-arrow-key-row-navigation--2026-10-24).
 
 ### 3.221 Active Backstage entry and a single focus outline — 2026-10-04
 
@@ -1011,6 +1015,8 @@ technical evidence warrants them; preserve existing dated records.
 [End-of-feature enabled-state, style-scope and QAT navigation repairs](docs/history/library/14-simplified-ribbon.md#end-of-feature-validation-repairs--2026-10-14).
 
 [Square Small inline actions and toggle buttons](docs/history/library/14-simplified-ribbon.md#square-small-inline-actions--2026-10-21).
+
+[Draft custom-tab/group removal and Classic settings synchronization](docs/history/library/14-simplified-ribbon.md#custom-structure-removal--2026-10-24).
 
 ### 3.256 Ribbon capability and user-operation policy — 2026-10-15
 

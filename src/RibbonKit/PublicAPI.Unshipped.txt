@@ -48,6 +48,7 @@ RibbonKit.Localization.RibbonString.Before = 86 -> RibbonKit.Localization.Ribbon
 RibbonKit.Localization.RibbonString.After = 87 -> RibbonKit.Localization.RibbonString
 RibbonKit.Localization.RibbonString.TabPositionLabel = 88 -> RibbonKit.Localization.RibbonString
 RibbonKit.Localization.RibbonString.TargetTabLabel = 89 -> RibbonKit.Localization.RibbonString
+RibbonKit.Localization.RibbonString.RemoveTab = 90 -> RibbonKit.Localization.RibbonString
 override RibbonKit.Controls.RibbonComboBox.ClearContainerForItemOverride(System.Windows.DependencyObject! element, object! item) -> void
 override RibbonKit.Controls.RibbonComboBox.PrepareContainerForItemOverride(System.Windows.DependencyObject! element, object! item) -> void
 static readonly RibbonKit.Controls.Ribbon.SimplifiedSizeProperty -> System.Windows.DependencyProperty!

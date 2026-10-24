@@ -218,6 +218,16 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("SimplifiedCustomizationPortabilityChecks.Verify", () => SimplifiedCustomizationPortabilityChecks.Verify(application));
             return;
         }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "SimplifiedStructureRemoval")
+        {
+            VerifyScope("SimplifiedStructureRemovalChecks.Verify", () => SimplifiedStructureRemovalChecks.Verify(application));
+            return;
+        }
+        if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "OverflowScrolling")
+        {
+            VerifyScope("OverflowScrollingChecks.Verify", () => OverflowScrollingChecks.Verify(application));
+            return;
+        }
         if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") is "OverflowMenus" or "OverflowMenusAfterTint")
         {
             if (Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE") == "OverflowMenusAfterTint")
@@ -495,6 +505,7 @@ public sealed class ApplicationButtonShapeThemeTests
             ThemeManager.Apply(application, RibbonTheme.Office2024);
             VerifyScope("FeatureAvailabilityPortabilityChecks.Verify", () => FeatureAvailabilityPortabilityChecks.Verify(application));
             VerifyScope("SimplifiedCustomizationPortabilityChecks.Verify", () => SimplifiedCustomizationPortabilityChecks.Verify(application));
+            VerifyScope("SimplifiedStructureRemovalChecks.Verify", () => SimplifiedStructureRemovalChecks.Verify(application));
             ThemeManager.Apply(application, RibbonTheme.Office2024);
             VerifyScope("TabMoveCustomizationChecks.Verify", () => TabMoveCustomizationChecks.Verify(application));
             ThemeManager.Apply(application, RibbonTheme.Office2024);
@@ -502,6 +513,7 @@ public sealed class ApplicationButtonShapeThemeTests
             ThemeManager.Apply(application, RibbonTheme.Office2024);
             VerifyScope("OverflowMenuPortabilityChecks.Verify", () => OverflowMenuPortabilityChecks.Verify(application));
             if (stopAfterOverflowMenus) return;
+            VerifyScope("OverflowScrollingChecks.Verify", () => OverflowScrollingChecks.Verify(application));
         }
         ThemeManager.Apply(application, RibbonTheme.Office2024);
         if (scope is not ("AfterApplicationMenuViewport" or "AfterCrystalApplicationMenu"))

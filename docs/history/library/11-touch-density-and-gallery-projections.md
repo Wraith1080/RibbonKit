@@ -633,3 +633,97 @@ independent consumer creates custom-group copies through public customization UI
 without a Showcase reference or private factory. Current focused evidence and
 remaining native review are in the
 [integration plan](../../08-CUSTOM-CONTROL-INTEGRATION-PLAN.md#grouped-combo-dropdowns).
+
+### Overflow menu scrolling and native ComboBox Escape — 2026-10-24
+
+Showcase acceptance exposed Simplified overflow's unthemed scrollbar and Escape
+closing a collapsed group before its native combo list. The approved shared
+correction gives QAT and Simplified the same screen-bounded viewport with themed
+up/down bands in their own rows. Existing theme metrics supply Compact and 44-DIP
+Touch sizing; no command row is overlaid. Internal OverflowMenuScroller handles
+350-ms hover delay/90-ms repeat, row-wise movement, wheel/focus visibility, child
+popup pause and close/unload/template cleanup. Short menus reserve no bands.
+The original proxy cache, command routing and toggle-owned dismissal are retained;
+there is no new public API or Showcase presentation dependency.
+
+Resource-scope pitfall: placing the keyed scroller style only in Controls.Shared
+is insufficient for the separately loaded Simplified template. The initial probe
+aborted on that missing StaticResource. Both Shared and Groups now merge the same
+Controls.OverflowScrolling dictionary; the final consumer succeeds without any
+application-side style registration. Simplified appends a full-group access entry,
+so a test must not assume its final overflow item is an ordinary command button.
+
+Native ComboBox does not register a PopupDismissHelper. The top helper's window
+preview handler and the group's preview handler must both yield while an open
+native combo is inside that popup, allowing WPF's own Escape handling to run.
+Closing the combo by force or changing its capture ownership is unnecessary.
+The next Escape then follows the existing inside-out helper stack.
+
+Dated focused evidence: 12 pre-fix reproductions fail; the combined Release scope
+passes 104 runtime cases, with all 12 scroll cases passing after the final unload
+adjustment. The new independent consumer passes eight public-control/template
+cases and produces eight inspected popup renders; two retained Crystal overflow
+visual comparisons pass unchanged. Release runtime net8/net9 and normal Debug
+Showcase/Writer builds pass with zero warnings/errors. Full-suite, physical input
+and native mixed-monitor/DPI acceptance are separate. Current human status and
+artifact locations belong to [S4 in the release plan](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#s4-overflow-scrolling-and-native-combobox-escape--2026-10-24).
+
+### Overflow arrow-key row navigation — 2026-10-24
+
+The next Showcase keyboard review found that Down opened each overflow dropdown
+rather than moving between menu rows. Tab remained usable. RibbonQuickAccessToolBar
+now handles plain Up/Down on its overflow ItemsControl before the entry's ribbon
+opener handler, skipping disabled/hidden rows, wrapping and bringing the focused
+row into view. This shared path covers QAT and Simplified, including split, combo,
+gallery and full-group copies. Actual child-popup content and embedded editors
+retain their own keys; forward-arrow/Enter and Tab behavior remain intact.
+OnApplyTemplate detaches the previous host handler. No public API or paint changed.
+
+Focused keyboard fixtures construct native Window.FlowDirection before Show,
+establish real WPF focus and route preview/bubbling key phases. The independent
+consumer returns the mouse-scrolled viewport to the top before establishing its
+keyboard starting point. These setup details prevent confusing native owner
+reconfiguration or a clipped initial focus target with the row-navigation defect;
+they are test setup, not application integration requirements or physical input.
+
+All eight original traversal reproductions failed. The final Release runtime scope
+passes 116 cases, including the eight traversal and four submenu/return/Enter/Escape
+regressions and retained overflow/group-copy/scrolling/native-combo checks. The
+expanded library-only consumer passes eight representative theme/density/direction
+and host cases. Release runtime net8/net9 and normal Debug Showcase/Writer builds
+pass with zero warnings/errors. Earlier S4 visual evidence is retained; templates,
+tokens and approvals are unchanged by this correction. Current human review and
+logs belong to [S5 in the release plan](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#s5-overflow-keyboard-navigation--2026-10-24).
+
+### Below-ribbon QAT overflow — 2026-10-24
+
+A crowded QAT moved BelowRibbon clipped commands because its ItemsControl used a
+horizontal StackPanel. The original §3.35 decision assumed that owning a full row
+made overflow unnecessary; the row still has a finite window width. QatBelowItems
+now uses the shared RibbonQuickAccessToolBar, stretched across that available row.
+QuickAccessMaxWidth continues to cap only TitleBar/TabRow. The drawer's paint,
+shadow, insets and outer context-menu owner remain in place; toolbar ownership,
+density, active KeyTip host and visibility dismissal now cover BelowRibbon too.
+This reuses the same proxy cache, nested-popup dismissal, scrolling and keyboard
+behavior, with no new public API or consumer-specific integration.
+
+Four actual-template cases reproduced the missing toolbar in Crystal dark across
+Compact/Touch and LTR/RTL. Focused runtime evidence retains 111 passing cases from
+the combined run and a final 4/4 below-ribbon run. Two initial Touch resize checks
+exceeded the native monitor's maximum tracking width; the final fixture uses a
+bounded command list and 320/640-DIP windows to verify actual width recovery.
+The independent OverflowScrolling scope now covers 12 cases, including full-row
+BelowRibbon without an artificial toolbar width. QatVisibility and QatRowGeometry
+also pass. Six selected Crystal/Flat lower-QAT snapshots pass unchanged, including
+minimized, 200% render scale and RTL cases. Release net8/net9 and normal Debug
+Showcase/Writer builds pass with zero warnings/errors. Native input, mixed-monitor
+DPI and the full suite remain separate. Current review and logs are in
+[S6 in the release plan](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#s6-below-ribbon-qat-overflow--2026-10-24).
+
+The later S9 solution-wide attempt exposed a one-pixel lower-QAT icon shift in
+the Flat state scene: the toolbar's default vertical centering differed from the
+old ItemsControl's stretch. QatBelowItems now explicitly stretches vertically too.
+All 16 affected Crystal/Flat state, below-row, minimized, DPI-scale and RTL visual
+comparisons pass unchanged; the focused lower-QAT runtime and independent row
+geometry checks also pass. Approvals/tolerances remain intact. Evidence is in S9's
+artifact directory; this correction preserves the existing S6 appearance.

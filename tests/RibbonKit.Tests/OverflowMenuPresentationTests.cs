@@ -15,7 +15,7 @@ using Xunit;
 
 namespace RibbonKit.Tests;
 
-public sealed class OverflowMenuPresentationTests
+public sealed partial class OverflowMenuPresentationTests
 {
     [Theory]
     [InlineData(false, "combo")]
@@ -318,7 +318,7 @@ public sealed class OverflowMenuPresentationTests
         internal RibbonQuickAccessToolBar Toolbar { get; }
         internal Popup Popup => (Popup)Toolbar.Template.FindName("PART_OverflowPopup", Toolbar);
         internal FrameworkElement Entry(FrameworkElement source) => Toolbar.OverflowEntries.Single(entry => Ribbon.GetQuickAccessSource(entry) == source);
-        internal Host(bool simplified, RibbonDensity density, FlowDirection direction, bool rightEdge = false)
+        internal Host(bool simplified, RibbonDensity density, FlowDirection direction, bool rightEdge = false, bool windowFlow = false)
         {
             ThemeManager.Apply(Sta.UseApplication(), RibbonTheme.Office2024); RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
             Ribbon.Density = density; Ribbon.FlowDirection = direction;
@@ -328,7 +328,8 @@ public sealed class OverflowMenuPresentationTests
             var tab = new RibbonTab { Header = "Home" }; tab.Groups.Add(Group); Ribbon.Tabs.Add(tab); Ribbon.SelectedTab = tab;
             foreach (var item in new FrameworkElement[] { Dropdown, Split, Combo, Group }) Ribbon.AddToQuickAccess(item);
             Panel.Children.Add(Ribbon);
-            Window = new RibbonWindow { Content = Panel, Width = 850, Height = 330, Left = rightEdge ? 10000 : -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+            Window = new RibbonWindow { Content = Panel, Width = 850, Height = 330, Left = rightEdge ? 10000 : -10000, Top = -10000,
+                FlowDirection = windowFlow ? direction : FlowDirection.LeftToRight, ShowActivated = false, ShowInTaskbar = false };
             Window.Show(); Layout();
             if (simplified)
             { Ribbon.LayoutMode = RibbonLayoutMode.Simplified; Layout(); Toolbar = ((RibbonGroupsHost)tab.Content).SimplifiedToolBar!; Toolbar.Width = 36; }

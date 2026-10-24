@@ -106,6 +106,9 @@ status updates and investigation narration were removed during compaction.
 
 ### [3.35 Quick access toolbar overflow — 2026-07-27](library/03-office-themes-and-layout.md#335-quick-access-toolbar-overflow--2026-07-27)
 
+[Shared overflow scrolling and native ComboBox Escape follow-up](library/11-touch-density-and-gallery-projections.md#overflow-menu-scrolling-and-native-combobox-escape--2026-10-24).
+[Below-ribbon full-row overflow follow-up](library/11-touch-density-and-gallery-projections.md#below-ribbon-qat-overflow--2026-10-24).
+
 ### [3.36 Selection visuals: the tab-strip-row reflow rule](library/03-office-themes-and-layout.md#336-selection-visuals-the-tab-strip-row-reflow-rule)
 
 ### [3.37 Splitting Office2024.xaml into Controls.*.xaml parts — 2026-07-27 — ⚗ EXPERIMENTAL](library/03-office-themes-and-layout.md#337-splitting-office2024xaml-into-controlsxaml-parts--2026-07-27---experimental)
@@ -353,6 +356,8 @@ status updates and investigation narration were removed during compaction.
 
 ### [3.220 File-first entry, QAT overflow and Backstage opening focus — 2026-10-04](library/10-host-effects-and-keyboard-focus.md#3220-file-first-entry-qat-overflow-and-backstage-opening-focus--2026-10-04)
 
+[Overflow arrow-key row navigation follow-up](library/11-touch-density-and-gallery-projections.md#overflow-arrow-key-row-navigation--2026-10-24).
+
 ### [3.221 Active Backstage entry and a single focus outline — 2026-10-04](library/10-host-effects-and-keyboard-focus.md#3221-active-backstage-entry-and-a-single-focus-outline--2026-10-04)
 
 ### [3.222 Animated focus placement and collapsed-group navigation — 2026-10-04](library/10-host-effects-and-keyboard-focus.md#3222-animated-focus-placement-and-collapsed-group-navigation--2026-10-04)
@@ -422,6 +427,8 @@ status updates and investigation narration were removed during compaction.
 ### [3.254 Office 2024 Flat theme — 2026-10-12](library/13-flat-theme-variants.md#3254-office-2024-flat-theme--2026-10-12)
 
 ### [3.255 Simplified ribbon first layout slice — 2026-10-13](library/14-simplified-ribbon.md#3255-simplified-ribbon-first-layout-slice--2026-10-13)
+
+[Custom structure removal follow-up](library/14-simplified-ribbon.md#custom-structure-removal--2026-10-24).
 
 ### [3.256 Ribbon capability and user-operation policy — 2026-10-15](library/15-feature-availability.md#3256-ribbon-capability-and-user-operation-policy--2026-10-15)
 

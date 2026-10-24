@@ -54,6 +54,9 @@ below describes the current checkout, including post-release additions; see
 
 ![Backstage with Windows material](docs/images/backstage-mica.png)
 
+The QAT below the ribbon uses the full available row width, with extra commands in
+its overflow menu. `Ribbon.QuickAccessMaxWidth` caps only the title-bar and tab-row placements.
+
 For colored QAT surfaces, `Ribbon.QuickAccessIconAppearance` defaults to
 `RibbonQuickAccessIconAppearance.WhiteOverlay`. Select `ColorWithGlow` to retain
 the supplied icon colors with a small white halo, or `AdaptiveColor` to adjust
@@ -264,6 +267,10 @@ The selected list has selectable group headers, including empty groups as Add
 targets. Drag commands to reorder them, or use Move Up/Down. Ordering can cross
 groups; repeated headers preserve contiguous group sections. Add/Remove retain
 source/group identity and shared command membership.
+Select a custom-group header and use the middle Remove button to delete the group;
+use Edit → Remove tab for the selected custom tab. Authored structures are protected.
+These deletions remain drafts until Apply/OK and update the shared structure in
+both Classic and Simplified, including their customization pages and saved layout.
 Group flyouts and arbitrary editors are access surfaces rather than pinnable commands.
 
 The page edits a draft. Its Apply button and `ApplyChanges()` commit it;

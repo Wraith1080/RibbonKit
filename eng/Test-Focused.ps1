@@ -22,9 +22,9 @@ param(
     [string[]]$Scenes,
     [ValidateSet('SplitButtonDensity', 'StackedCustomGroups', 'NativeGalleryPopup',
         'GalleryQuickAccess', 'GalleryQuickAccessKeyboard', 'GalleryQuickAccessVisible', 'GalleryPopupViewport', 'GroupQuickAccess', 'CollapsedGroupPress', 'AfterQuickAccessScope', 'AfterThemePolish', 'AfterGalleryQuickAccess', 'AfterGalleryPopupViewport', 'AfterCrystalTint',
-        'QatOverflowKeyboard', 'AfterKeyboardNavigation', 'AfterSimplifiedDesignerDefaults', 'AfterCustomizationScrollSpacing', 'AfterApplicationMenuViewport', 'AfterCrystalApplicationMenu',
+        'QatOverflowKeyboard', 'OverflowScrolling', 'AfterKeyboardNavigation', 'AfterSimplifiedDesignerDefaults', 'AfterCustomizationScrollSpacing', 'AfterApplicationMenuViewport', 'AfterCrystalApplicationMenu',
         'ComboQuickAccess', 'ComboQuickAccessKeyboard', 'GroupedGalleries', 'GroupedCombos', 'SimplifiedCombos', 'SimplifiedSpacing',
-        'GalleryHeadersAndQatCommands', 'DropDownScrollbars', 'CommandCopies', 'DensitySelector', 'MessageTransition', 'ThemePolish', 'ThemePolishAfterHeaders', 'ThemePolishReleaseOrder', 'OverflowMenusAfterTint', 'OverflowMenusReleaseOrder',
+        'SimplifiedStructureRemoval', 'GalleryHeadersAndQatCommands', 'DropDownScrollbars', 'CommandCopies', 'DensitySelector', 'MessageTransition', 'ThemePolish', 'ThemePolishAfterHeaders', 'ThemePolishReleaseOrder', 'OverflowMenusAfterTint', 'OverflowMenusReleaseOrder',
         'QatThemeRestore', 'ColoredQat', 'QatIconAppearance', 'QatBackdrop', 'Office2024Backdrop', 'CaptionMotion', 'NativeResizePaint', 'TextEditMenus', 'QatCommandInteraction', 'QatVisibility', 'CustomizationLayout', 'MinimizedDivider', 'TouchChrome', 'TouchOptions', 'TouchAdaptive', 'GroupLauncher',
         'DensityTransition', 'DensityTransitionLifecycle', 'HostLayoutTransition', 'QatRowGeometry', 'ContextualMarker', 'LayoutMotion', 'LayoutMotionPopup', 'LayoutMotionPaint', 'ModePopupDismissal', 'SimplifiedTabReadiness', 'GlassOverlay', 'BackstageCaption', 'Flat2024', 'SimplifiedRibbon', 'SimplifiedButtonShape', 'SimplifiedDesignerDefaults', 'FeatureAvailability', 'SimplifiedCustomization', 'TabMoveCustomization', 'OverflowMenus', 'Touch', IgnoreCase = $false)]
     [string]$Scope,

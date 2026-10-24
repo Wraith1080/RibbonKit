@@ -613,3 +613,40 @@ durations now exceed the old full timeout; allow 20 minutes for the full consume
 and 10 for its large continuations. Current results, the two reproduced
 pre-feature Crystal QAT approval mismatches and native limits remain solely in
 the active plan's end-of-feature record.
+
+### Custom structure removal — 2026-10-24
+
+The S9 review found creation/rename without a corresponding structure-removal path
+in the Simplified editor. The middle Remove button now deletes a selected custom
+group header; a selected command retains its existing profile-removal behavior.
+Edit → Remove tab deletes the destination custom tab. Built-in and transient
+structures remain protected. The Classic editor's existing deletion code is unchanged.
+
+Removal records stay detached until Apply/OK, scoped by tab/group identity and
+stable IDs. Cancel discards them; draft export/import removes deleted structures
+and profiles. Apply preserves remaining live structures, source commands and
+unrelated QAT copies. Newly created then removed anchors must not be attached just
+to place later creations/moves: use the surviving draft order for those insertions.
+Actual shared collections change on Apply, so both ribbon modes and settings
+reflect deletion. A loaded Simplified page now refreshes on re-enablement, covering
+Classic edits while that page remains in the visual tree; Loaded alone missed
+that case. Saved layouts retain the deletion without a schema change.
+
+The only public addition is the appended localization identifier
+RibbonString.RemoveTab (90), with XML documentation, a default resource and an
+unshipped API entry. It gives providers one complete action label without changing
+existing identifiers or adding a control API.
+
+All seven initial structure-removal cases failed. Final focused Release validation
+passes 145 runtime cases, including eleven removal/import/order/synchronization
+regressions and existing editor, serializer, policy and binding checks. Four
+independent-consumer cases cover modern/legacy/Crystal palettes, Compact/Touch,
+LTR/RTL and simulated 150% Touch root DPI without Showcase helpers. Release solution
+and normal Debug Showcase/Writer builds pass with zero warnings/errors. The broad
+test attempt was stopped after reported failures; it is not a clean full-suite
+pass. The lower-QAT alignment correction and 16 unchanged visual comparisons belong
+to the related QAT record. Current manual review, logs and remaining release gates
+are in [S9 of the acceptance plan](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#s9-custom-structure-removal--2026-10-24).
+
+Menu captures render the ContextMenu itself; capturing its native owner root at
+open can produce an empty image during the native fade, even with valid geometry.

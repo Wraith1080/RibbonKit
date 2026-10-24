@@ -198,15 +198,10 @@
                                         BorderThickness="{Binding BorderThickness, ElementName=QatBelowHost}"
                                         Visibility="{Binding Visibility, ElementName=QatBelowHost}">
                                     <!-- ItemsSource bound only by the BelowRibbon trigger. -->
-                                    <ItemsControl x:Name="QatBelowItems"
-                                                  Focusable="False"
-                                                  Margin="4,0">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <StackPanel Orientation="Horizontal" />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                    </ItemsControl>
+                                    <controls:RibbonQuickAccessToolBar x:Name="QatBelowItems"
+                                                                      HorizontalAlignment="Stretch"
+                                                                      VerticalAlignment="Stretch"
+                                                                      Margin="4,0" />
                                 </Border>
                             </Grid>
 
