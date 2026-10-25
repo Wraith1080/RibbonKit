@@ -1109,6 +1109,22 @@ technical evidence warrants them; preserve existing dated records.
 
 [Preferences, shared presentation, document animation and consumer pitfalls](docs/history/03-writer-host-integration.md).
 
+### 3.276 Selected-tab command accessibility — 2026-10-24
+
+[Restore the standard selected-content part while retaining layout and consumer bindings](docs/history/library/19-accessibility.md#3276-selected-tab-command-accessibility--2026-10-24).
+
+### 3.277 Actionable QAT and overflow automation — 2026-10-24
+
+[Forward real command patterns through item peers and retain tab-row QAT discovery](docs/history/library/19-accessibility.md#3277-actionable-qat-and-overflow-automation--2026-10-24).
+
+### 3.278 Source toggle automation completes host actions — 2026-10-25
+
+[Use native click activation for existing Toggle providers while retaining bindings and command targets](docs/history/library/19-accessibility.md#3278-source-toggle-automation-completes-host-actions--2026-10-25).
+
+### 3.279 Backstage page-content automation — 2026-10-25
+
+[Expose native page controls in navigation/page regions while preserving layout and bindings](docs/history/library/19-accessibility.md#3279-backstage-page-content-automation--2026-10-25).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.

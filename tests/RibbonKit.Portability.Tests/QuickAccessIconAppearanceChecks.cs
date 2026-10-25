@@ -137,7 +137,7 @@ internal static class QuickAccessIconAppearanceChecks
             var toolbar = Assert.IsType<RibbonQuickAccessToolBar>(tabs.Template.FindName("QatTabRowHost", tabs));
             Assert.True(toolbar.HasOverflow);
             Part<ToggleButton>(toolbar, "PART_OverflowButton").IsChecked = true; Layout();
-            var overflow = Part<ItemsControl>(toolbar, "PART_OverflowHost");
+            var overflow = Assert.IsAssignableFrom<ItemsControl>(toolbar.Template.FindName("PART_OverflowHost", toolbar));
             Assert.NotEmpty(overflow.Items);
             foreach (Control entry in overflow.Items)
             {

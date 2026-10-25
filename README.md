@@ -78,6 +78,16 @@ provider refresh, mirroring, popup edges and customization. Application-authored
 labels remain the application's responsibility. A complete Windows contrast-theme
 mode is **not supported**; gallery/scrollbar system-color fallbacks are narrower.
 
+QAT commands and overflow rows expose their controls' UI Automation patterns and
+live names/enabled state. UI Automation Toggle actions on ribbon toggle buttons,
+checkboxes and their copies use the established state/Click/Command path, retaining
+source bindings, command parameters and targets.
+
+Backstage exposes a named navigation Group and an active-page Pane containing the
+page's native WPF controls and automation patterns. The pane takes the selected
+page's accessible name; page selection, content bindings and layout are preserved.
+`RibbonString.BackstageNavigation` localizes the navigation group's name.
+
 Ribbon actions use a solid theme-colored keyboard-focus outline. The ribbon container
 is excluded from the tab order. Application-menu commands and dropdown rows have one
 Tab stop; split rows expose their command and arrow separately. Enter or Space invokes

@@ -20,6 +20,10 @@
          ============================================================ -->
     <controls:ContextualMaterialConverter x:Key="RibbonKit.ContextualMaterial" />
     <Style TargetType="{x:Type controls:RibbonTab}">
+        <!-- The standard selected-content part inherits these alignments from its
+             selected tab. Preserve the existing stretched body; authored bindings win. -->
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Stretch" />
         <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
         <Setter Property="controls:FocusVisualTracking.Background" Value="{DynamicResource RibbonKit.Brushes.Ribbon.Background}" />
         <Setter Property="controls:ContextualMaterial.Enabled" Value="{DynamicResource RibbonKit.Metrics.ContextualUseCrystalMaterial}" />
@@ -500,7 +504,7 @@
                                         Padding="4" Margin="4,2,8,8" MinWidth="160"
                                         Effect="{DynamicResource RibbonKit.Effects.PopupShadow}">
                                     <ScrollViewer x:Name="PART_OverflowScrollViewer" Style="{StaticResource RibbonKit.OverflowMenuScrollViewer}">
-                                        <ItemsControl x:Name="PART_OverflowHost" Focusable="False"
+                                        <controls:RibbonOverflowItemsHost x:Name="PART_OverflowHost" Focusable="False"
                                                       KeyboardNavigation.TabNavigation="Cycle" />
                                     </ScrollViewer>
                                 </Border>

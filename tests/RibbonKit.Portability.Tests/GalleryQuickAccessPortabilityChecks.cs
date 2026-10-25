@@ -203,18 +203,19 @@ internal static class GalleryQuickAccessPortabilityChecks
             var overflowButton = Part<ToggleButton>(toolbar, "PART_OverflowButton"); overflowButton.IsChecked = true; Layout(window);
             var entry = Assert.Single(Part<ItemsControl>(toolbar, "PART_OverflowHost").Items.OfType<RibbonDropDownButton>());
             var opener = Part<ToggleButton>(entry, "PART_Toggle"); Assert.True(opener.Focus());
-            Press(Key.Down); Layout(window); Assert.True(entry.IsDropDownOpen);
+            // Overflow reserves Up/Down for rows; Forward enters the gallery submenu.
+            Press(Key.Right); Layout(window); Assert.True(entry.IsDropDownOpen);
             Assert.Same(source.Items[1], Keyboard.FocusedElement);
             Press(Key.Right); Layout(window); Assert.Equal(2, source.SelectedIndex);
             Assert.Same(source.Items[2], Keyboard.FocusedElement); Assert.True(entry.IsDropDownOpen);
             Press(Key.Enter); Layout(window); Assert.False(entry.IsDropDownOpen); Assert.Same(opener, Keyboard.FocusedElement);
-            Press(Key.Down); Layout(window); Press(Key.Escape); Layout(window); Assert.False(entry.IsDropDownOpen); Assert.True(overflowButton.IsChecked);
-            Press(Key.Up); Layout(window); Assert.Same(source.Items[^1], Keyboard.FocusedElement);
+            Press(Key.Right); Layout(window); Press(Key.Escape); Layout(window); Assert.False(entry.IsDropDownOpen); Assert.True(overflowButton.IsChecked);
+            Press(Key.Right); Layout(window); Press(Key.End); Layout(window); Assert.Same(source.Items[^1], Keyboard.FocusedElement);
             Press(Key.Space); Layout(window); Assert.Same(source.Items[^1], source.SelectedItem); Assert.False(entry.IsDropDownOpen);
             source.SelectedIndex = 0;
-            Press(Key.Down); Layout(window); Assert.Same(source.Items[1], Keyboard.FocusedElement);
+            Press(Key.Right); Layout(window); Assert.Same(source.Items[1], Keyboard.FocusedElement);
             Press(Key.Enter); Layout(window); Assert.Equal(1, source.SelectedIndex);
-            Press(Key.Down); Layout(window); Assert.True(entry.IsDropDownOpen);
+            Press(Key.Right); Layout(window); Assert.True(entry.IsDropDownOpen);
             overflowButton.IsChecked = false; Layout(window); Assert.False(entry.IsDropDownOpen);
             Assert.Equal(15, source.Items.Count);
             Assert.NotNull(Part<ScrollViewer>(source, "PART_ScrollViewer").Content);

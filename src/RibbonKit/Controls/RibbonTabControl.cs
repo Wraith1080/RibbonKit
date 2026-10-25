@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
@@ -10,6 +11,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using RibbonKit.Animation;
+using RibbonKit.Automation;
 
 namespace RibbonKit.Controls;
 
@@ -39,6 +41,9 @@ namespace RibbonKit.Controls;
 [System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonTabControl : TabControl
 {
+    /// <inheritdoc />
+    protected override AutomationPeer OnCreateAutomationPeer() => new RibbonTabControlAutomationPeer(this);
+
     internal const string ApplicationMenuLayerPartName = "ApplicationMenuLayer";
     internal const string ApplicationMenuPresenterPartName = "PART_ApplicationMenuPresenter";
     internal const string TabHeaderHostPartName = "PART_TabHeaderHost";

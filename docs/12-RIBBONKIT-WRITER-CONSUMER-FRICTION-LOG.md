@@ -22,7 +22,7 @@ obtain explicit authorization unless already supplied. Follow `AGENTS.md` and
 | --- | --- | --- |
 | 1 | RKWF-002 | Make editable ComboBox commits predictable. Reproduce typing, selection, Enter, Escape and focus loss; document a reusable pattern before deciding whether an optional commit event is needed. Preserve native behavior and IME composition. |
 | 2 | RKWF-001 | Return focus safely after KeyTip activation without leaking the final key into the editor. Reproduce across buttons, toggles, menus and QAT before choosing documentation or a general completion hook. |
-| 3 | RKWF-003/004/006 | Improve external UI Automation discovery and actions for QAT, Backstage and ribbon commands. Start with one missing main-ribbon leaf and a second independent client; these remain investigations, not confirmed library defects. |
+| 3 | RKWF-003/004/006 | Shared main-ribbon, QAT and Backstage page-content discovery/action defects have bounded corrections and independent-client evidence. Complete actual-consumer/presentation acceptance in the 1.1 plan. |
 
 These candidates benefit ribbon consumers generally. This review does not implement
 or approve new runtime APIs; first establish the focused reproduction and scope.
@@ -178,13 +178,13 @@ Open commit-semantics candidate. Writer's native editable font combos commit on 
 
 ### RKWF-003 — QAT external UIA action semantics need an isolated reproduction
 
-Open external-UIA investigation, not a confirmed library defect. Compare hand-authored, source-linked and overflow QAT Invoke/Toggle/name/enabled behavior with a second client.
+Bounded shared correction implemented: QAT and overflow item peers forward real control roles/patterns, and Toggle completes the existing source state/Click/Command path once. A tab-peer bridge exposes the tab-row QAT. Binding/activation regressions and an independent external client cover all three placements; actual consumer and remaining overflow review stay in the [1.1 plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md). Discovery alone is not an action pass; Backstage remains separate.
 
 [Recorded evidence](history/writer-friction-evidence.md#rkwf-003--qat-external-uia-action-semantics-need-an-isolated-reproduction).
 
 ### RKWF-004 — Backstage custom page actions are absent from external UIA traversal
 
-Open external-UIA investigation. Custom Backstage page content needs external-client comparison across Modern/Classic2010/Classic2007; keyboard focus is not traversal proof.
+Bounded shared correction implemented: Backstage groups navigation and native page controls separately, reusing existing template elements and native providers. The navigation Group owns its native item peers, preserving File's selection interface; region resets run after discovery/presenter realization to avoid recursive notification callbacks. No Writer workaround, template/layout or binding changes are needed. Focused runtime/Writer tests and a notification-subscribed independent client cover Modern, Classic2010, Classic2007 and both Crystal layouts. See the [implementation record](history/library/19-accessibility.md#3279-backstage-page-content-automation--2026-10-25); current Inspect hierarchy review and remaining presentation acceptance stay in the [1.1 plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md).
 
 [Recorded evidence](history/writer-friction-evidence.md#rkwf-004--backstage-custom-page-actions-are-absent-from-external-uia-traversal).
 
@@ -196,7 +196,7 @@ Corrected and accepted. RibbonGroupSeparator now supplies adaptive in-group chro
 
 ### RKWF-006 — Main-ribbon leaf commands are absent from external UIA traversal
 
-Open main-ribbon leaf traversal investigation; runtime scope is not approved. Compare expanded/collapsed/minimized Writer and Showcase with an independent UIA client.
+Bounded shared corrections implemented: the standard selected-content presenter name restores discovery with binding-safe stretched layout defaults. The existing source Toggle providers now also run native Click/Command activation; Writer's document-formatting comparison exposed the earlier state-only behavior despite correct discovery. No Writer workaround or new public API is added. See the [activation pitfall](history/library/19-accessibility.md#3278-source-toggle-automation-completes-host-actions--2026-10-25) and the [1.1 plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md) for focused evidence and remaining actual-consumer/presentation acceptance; QAT wrapper semantics remain in RKWF-003.
 
 [Recorded evidence](history/writer-friction-evidence.md#rkwf-006--main-ribbon-leaf-commands-are-absent-from-external-uia-traversal).
 

@@ -467,3 +467,11 @@ status updates and investigation narration were removed during compaction.
 ### [3.273 Themed native text-editor context menus — 2026-10-20](library/02-designer-and-context-menus.md#3273-themed-native-text-editor-context-menus--2026-10-20)
 
 ### [3.274 Grouped combo dropdown sections — 2026-10-21](library/11-touch-density-and-gallery-projections.md#3274-grouped-combo-dropdown-sections--2026-10-21)
+
+### [3.276 Selected-tab command accessibility — 2026-10-24](library/19-accessibility.md#3276-selected-tab-command-accessibility--2026-10-24)
+
+### [3.277 Actionable QAT and overflow automation — 2026-10-24](library/19-accessibility.md#3277-actionable-qat-and-overflow-automation--2026-10-24)
+
+### [3.278 Source toggle automation completes host actions — 2026-10-25](library/19-accessibility.md#3278-source-toggle-automation-completes-host-actions--2026-10-25)
+
+### [3.279 Backstage page-content automation — 2026-10-25](library/19-accessibility.md#3279-backstage-page-content-automation--2026-10-25)

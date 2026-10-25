@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
@@ -47,6 +48,9 @@ public enum BackstageItemPlacement
 [System.ComponentModel.DesignTimeVisible(false)]
 public class Backstage : TabControl
 {
+    /// <inheritdoc />
+    protected override AutomationPeer OnCreateAutomationPeer() => new RibbonKit.Automation.BackstageAutomationPeer(this);
+
     private const string BackButtonPartName = "PART_BackButton";
     private const string Classic2007AeroJoinBevelPartName = "Classic2007AeroJoinBevel";
 
@@ -312,6 +316,7 @@ public class Backstage : TabControl
 
         UpdatePlacementChrome();
         UpdateHostFrameChrome();
+        (UIElementAutomationPeer.FromElement(this) as RibbonKit.Automation.BackstageAutomationPeer)?.InvalidateRegions();
     }
 
     /// <summary>Esc leaves the backstage, matching Office.</summary>
@@ -349,6 +354,8 @@ public class Backstage : TabControl
         }
 
         base.OnSelectionChanged(e);
+        if (ReferenceEquals(e.Source, this))
+            (UIElementAutomationPeer.FromElement(this) as RibbonKit.Automation.BackstageAutomationPeer)?.InvalidateRegions();
 
         // Slide the newly-selected page in (no fade — it's freshly shown at full opacity, so a fade
         // would flash it). Skipped while bouncing off a button item.

@@ -297,13 +297,13 @@
                                         MinWidth="160"
                                         Effect="{DynamicResource RibbonKit.Effects.PopupShadow}">
                                     <ScrollViewer x:Name="PART_OverflowScrollViewer" Style="{StaticResource RibbonKit.OverflowMenuScrollViewer}">
-                                        <ItemsControl x:Name="PART_OverflowHost" Focusable="False">
+                                        <controls:RibbonOverflowItemsHost x:Name="PART_OverflowHost" Focusable="False">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
                                                     <StackPanel Orientation="Vertical" />
                                                 </ItemsPanelTemplate>
                                             </ItemsControl.ItemsPanel>
-                                        </ItemsControl>
+                                        </controls:RibbonOverflowItemsHost>
                                     </ScrollViewer>
                                 </Border>
                             </AdornerDecorator>

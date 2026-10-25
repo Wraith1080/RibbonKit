@@ -136,7 +136,7 @@ internal static class KeyboardNavigationPortabilityChecks
             opener.IsChecked = true;
             Drain();
             Assert.True(popup.IsOpen);
-            var host = Assert.IsType<ItemsControl>(qat.Template.FindName("PART_OverflowHost", qat));
+            var host = Assert.IsAssignableFrom<ItemsControl>(qat.Template.FindName("PART_OverflowHost", qat));
             var nested = Assert.Single(host.Items.OfType<RibbonDropDownButton>());
             var nestedOpener = Assert.IsType<ToggleButton>(nested.Template.FindName("PART_Toggle", nested));
             Assert.True(nestedOpener.Focus(), $"Nested opener: visible={nestedOpener.IsVisible}, enabled={nestedOpener.IsEnabled}, focusable={nestedOpener.Focusable}, popup={popup.IsOpen}");

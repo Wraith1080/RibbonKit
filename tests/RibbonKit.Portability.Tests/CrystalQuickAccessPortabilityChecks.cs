@@ -157,7 +157,7 @@ internal static class CrystalQuickAccessPortabilityChecks
             opener.IsChecked = true;
             Layout();
             Assert.True(popup.IsOpen);
-            var overflow = Part<ItemsControl>(tabToolbar, "PART_OverflowHost");
+            var overflow = Assert.IsAssignableFrom<ItemsControl>(tabToolbar.Template.FindName("PART_OverflowHost", tabToolbar));
             var dropdownEntry = Assert.Single(overflow.Items.OfType<RibbonDropDownButton>(),
                 item => item is not RibbonSplitButton);
             var splitEntry = Assert.Single(overflow.Items.OfType<RibbonSplitButton>());

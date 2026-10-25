@@ -6,7 +6,9 @@ using System.Windows.Documents;
 using System.Windows.Shell;
 using System.Windows.Threading;
 using System.Windows.Input;
+using System.Windows.Automation.Peers;
 using RibbonKit.Animation;
+using RibbonKit.Automation;
 using RibbonKit.Layout;
 
 namespace RibbonKit.Controls;
@@ -72,6 +74,10 @@ public class RibbonQuickAccessToolBar : ItemsControl
 
     /// <summary>Initializes the interactive QAT surface.</summary>
     public RibbonQuickAccessToolBar() => RibbonPopupInteraction.SetSuppressHover(this, false);
+
+    /// <inheritdoc />
+    protected override AutomationPeer OnCreateAutomationPeer() =>
+        new RibbonCommandItemsAutomationPeer(this, AutomationControlType.ToolBar);
 
     /// <summary>Whether one or more items currently don't fit and live in the overflow flyout.</summary>
     public bool HasOverflow => (bool)GetValue(HasOverflowProperty);

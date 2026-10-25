@@ -931,7 +931,9 @@
                                     <layout:RibbonScrollContentHost x:Name="PART_ContentScroll"
                                                                     ConstrainChildWidth="True"
                                                                     Margin="{DynamicResource RibbonKit.Metrics.GroupsRowMargin}">
-                                        <ContentPresenter ContentSource="SelectedContent" />
+                                        <!-- WPF's TabItem automation peer discovers the selected
+                                             commands through this standard TabControl part. -->
+                                        <ContentPresenter x:Name="PART_SelectedContentHost" ContentSource="SelectedContent" />
                                     </layout:RibbonScrollContentHost>
                                     <RepeatButton Style="{StaticResource RibbonKit.ScrollLeftButton}"
                                                   Tag="BodyScroll"

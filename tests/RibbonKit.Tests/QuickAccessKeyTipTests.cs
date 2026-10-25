@@ -28,7 +28,7 @@ public class QuickAccessKeyTipTests
             "ToggleButton",
             Named(document, RibbonQuickAccessToolBar.OverflowButtonPartName).Name.LocalName);
         Assert.Equal(
-            "ItemsControl",
+            nameof(RibbonOverflowItemsHost),
             Named(document, RibbonQuickAccessToolBar.OverflowHostPartName).Name.LocalName);
     }
 

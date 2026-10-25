@@ -259,6 +259,8 @@ public enum RibbonString
     TargetTabLabel,
     /// <summary>Remove the selected custom tab from a customization draft.</summary>
     RemoveTab,
+    /// <summary>Accessible name of the Backstage navigation group.</summary>
+    BackstageNavigation,
 }
 
 /// <summary>
