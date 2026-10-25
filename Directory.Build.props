@@ -9,6 +9,7 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <Company>RibbonKit</Company>
     <Product>RibbonKit</Product>
+    <VersionPrefix>1.1.0</VersionPrefix>
     <Copyright>Copyright (c) 2026 RibbonKit contributors</Copyright>
   </PropertyGroup>
 

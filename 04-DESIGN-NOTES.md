@@ -1133,6 +1133,10 @@ technical evidence warrants them; preserve existing dated records.
 
 [Name collapsed-group openers and expose the minimize chevron through its existing native activation path](docs/history/library/19-accessibility.md#3281-collapsed-opener-and-minimize-accessibility--2026-10-25).
 
+### 3.282 Shared 1.1 version and API baseline promotion — 2026-10-25
+
+[Decision, pitfalls and evidence](docs/history/library/20-release-preparation.md#3282-shared-11-version-and-api-baseline-promotion--2026-10-25).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.

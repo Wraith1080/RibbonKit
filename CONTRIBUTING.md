@@ -13,13 +13,14 @@ discussion of additive post-v1 features.
 
 ## Public API compatibility
 
-`src/RibbonKit/PublicAPI.Shipped.txt` is the frozen v1 baseline. The
+`src/RibbonKit/PublicAPI.Shipped.txt` contains the frozen 1.0 and 1.1 API contracts. The
 `Microsoft.CodeAnalysis.PublicApiAnalyzers` checks run for all runtime target frameworks and fail the
 build when a public symbol is added, removed, or changes nullability without an explicit baseline
 update.
 
 - Compatible, intentional additions go in `src/RibbonKit/PublicAPI.Unshipped.txt` and require API-review justification in the pull request.
 - Do not edit `PublicAPI.Shipped.txt` to hide a breaking change. Removals and signature/nullability changes require a versioning decision.
+- Release preparation promotes reviewed compatible additions from Unshipped into Shipped while preserving every earlier entry. New work starts in Unshipped again.
 - Public members require XML documentation; missing or broken `cref` references fail the runtime build.
 
 ## Workflow

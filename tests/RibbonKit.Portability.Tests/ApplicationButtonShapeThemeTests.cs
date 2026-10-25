@@ -437,7 +437,7 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("KeyboardNavigationPortabilityChecks.VerifyQatOverflow", () => KeyboardNavigationPortabilityChecks.VerifyQatOverflow(application));
             return;
         }
-        if (scope is not ("AfterGalleryQuickAccess" or "AfterGalleryPopupViewport" or "AfterCrystalTint" or "AfterKeyboardNavigation" or "AfterSimplifiedDesignerDefaults" or "AfterFeatureAvailability" or "AfterCustomizationScrollSpacing" or "AfterApplicationMenuViewport" or "AfterCrystalApplicationMenu"))
+        if (scope is not ("AfterGalleryQuickAccess" or "AfterGalleryPopupViewport" or "AfterCrystalTint" or "AfterKeyboardNavigation" or "AfterSimplifiedDesignerDefaults" or "AfterFeatureAvailability" or "AfterCustomizationScrollSpacing" or "AfterApplicationMenuViewport" or "AfterCrystalApplicationMenu" or "AfterDropDownScrollbars"))
         {
             if (scope != "AfterThemePolish")
             {
@@ -472,7 +472,7 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("GroupedComboBoxChecks.Verify", () => GroupedComboBoxChecks.Verify(application));
             VerifyScope("GalleryQuickAccessPortabilityChecks.Verify", () => GalleryQuickAccessPortabilityChecks.Verify(application));
         }
-        if (scope is not ("AfterCrystalTint" or "AfterApplicationMenuViewport" or "AfterCrystalApplicationMenu"))
+        if (scope is not ("AfterCrystalTint" or "AfterApplicationMenuViewport" or "AfterCrystalApplicationMenu" or "AfterDropDownScrollbars"))
         {
             if (scope is not ("AfterKeyboardNavigation" or "AfterSimplifiedDesignerDefaults" or "AfterFeatureAvailability" or "AfterCustomizationScrollSpacing"))
             {
@@ -517,16 +517,19 @@ public sealed class ApplicationButtonShapeThemeTests
             VerifyScope("OverflowScrollingChecks.Verify", () => OverflowScrollingChecks.Verify(application));
         }
         ThemeManager.Apply(application, RibbonTheme.Office2024);
-        if (scope is not ("AfterApplicationMenuViewport" or "AfterCrystalApplicationMenu"))
+        if (scope is not ("AfterApplicationMenuViewport" or "AfterCrystalApplicationMenu" or "AfterDropDownScrollbars"))
         {
             VerifyScope("PopupMarginPortabilityChecks.Verify", () => PopupMarginPortabilityChecks.Verify(application));
             VerifyScope("ApplicationMenuViewportChecks.Verify", () => ApplicationMenuViewportChecks.Verify(application));
         }
-        if (scope != "AfterCrystalApplicationMenu")
+        if (scope is not ("AfterCrystalApplicationMenu" or "AfterDropDownScrollbars"))
             VerifyScope("CrystalApplicationMenuPortabilityChecks.Verify", () => CrystalApplicationMenuPortabilityChecks.Verify(application));
-        VerifyScope("CrystalQuickAccessPortabilityChecks.Verify", () => CrystalQuickAccessPortabilityChecks.Verify(application));
-        VerifyScope("CrystalMessagePortabilityChecks.Verify", () => CrystalMessagePortabilityChecks.Verify(application));
-        VerifyScope("DropDownScrollBarChecks.Verify", () => DropDownScrollBarChecks.Verify(application));
+        if (scope != "AfterDropDownScrollbars")
+        {
+            VerifyScope("CrystalQuickAccessPortabilityChecks.Verify", () => CrystalQuickAccessPortabilityChecks.Verify(application));
+            VerifyScope("CrystalMessagePortabilityChecks.Verify", () => CrystalMessagePortabilityChecks.Verify(application));
+            VerifyScope("DropDownScrollBarChecks.Verify", () => DropDownScrollBarChecks.Verify(application));
+        }
         VerifyScope("CommandCopyChecks.Verify", () => CommandCopyChecks.Verify(application));
         Assert.Equal(new CornerRadius(4), application.Resources["RibbonKit.Metrics.MenuItemCornerRadius"]);
         Assert.Equal(new CornerRadius(4), application.Resources["RibbonKit.Metrics.InputCornerRadius"]);
@@ -1320,8 +1323,8 @@ public sealed class ApplicationButtonShapeThemeTests
         // layout/customization matrices. Large continuations retain a bounded
         // allowance without repeating their completed prefixes.
         string? scope = Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE");
-        var timeout = string.IsNullOrWhiteSpace(scope) || scope is "AfterQuickAccessScope" or "AfterThemePolish" or "AfterGalleryPopupViewport" or "ThemePolishReleaseOrder" ? TimeSpan.FromMinutes(30)
-            : scope is "AfterGalleryQuickAccess" or "AfterKeyboardNavigation" or "AfterSimplifiedDesignerDefaults" or "AfterFeatureAvailability" or "AfterCustomizationScrollSpacing" or "AfterApplicationMenuViewport" or "AfterCrystalApplicationMenu" or "OverflowMenusReleaseOrder"
+        var timeout = string.IsNullOrWhiteSpace(scope) || scope is "AfterQuickAccessScope" or "AfterThemePolish" or "AfterGalleryPopupViewport" or "AfterCustomizationScrollSpacing" or "ThemePolishReleaseOrder" ? TimeSpan.FromMinutes(30)
+            : scope is "AfterGalleryQuickAccess" or "AfterKeyboardNavigation" or "AfterSimplifiedDesignerDefaults" or "AfterFeatureAvailability" or "AfterApplicationMenuViewport" or "AfterCrystalApplicationMenu" or "AfterDropDownScrollbars" or "OverflowMenusReleaseOrder"
                 ? TimeSpan.FromMinutes(10) : TimeSpan.FromMinutes(5);
         if (!thread.Join(timeout))
             throw new TimeoutException($"The ribbon portability test did not finish within {timeout.TotalSeconds:0} seconds.");

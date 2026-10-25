@@ -136,6 +136,17 @@ and QAT roles/actions, command counts, parameters, disabled guards and retained
 bindings without desktop input or user-app operation. Focused results and remaining
 manual acceptance belong to S18 in the [active plan](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md).
 
+The final candidate continuation exposed CommandCopyChecks' obsolete ToggleAndClick
+helper: public UIA Toggle already completes activation, so its added synthetic
+Click executed the formatting command twice. The fixture now sends one Toggle
+request and checks one source Click, alongside retained selection, formatting,
+state and ordinary/split assertions. Its 72-layout independent consumer matrix
+passes 144 Bold round trips and 288 ordinary/split executions. No provider/runtime
+change is needed. The AfterDropDownScrollbars continuation preserves prior passes
+and runs the remaining common assertions and later scopes; the default unfiltered
+chain is unchanged. The [final candidate record](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#final-candidate-validation--2026-10-25)
+owns the failed attempts and assembled evidence.
+
 ### 3.279 Backstage page-content automation — 2026-10-25
 
 Backstage inherited the stock TabControl peer but its templates did not name the
@@ -317,3 +328,13 @@ exist in the current implementation. Minimize/restore uses the chevron, tab doub
 click or Ctrl+F1; this slice tests that shipped behavior rather than adding a new
 presentation. Focused evidence and actual-consumer acceptance belong to S23 in the
 [active plan](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md).
+
+The final candidate consumer run found one further exact-type assumption in
+CrystalUtilityPortabilityChecks' MinimizeToggle lookup. That lookup now accepts
+the ToggleButton base contract; other part-type checks and the full utility
+paint/native-action assertions remain intact. This is a fixture correction, not
+a chevron/runtime change. The existing continuation from CrystalUtility receives
+the full consumer's bounded 30-minute allowance for its large remaining Simplified,
+customization and popup matrices. Actual
+run/build results and retained-prefix limits belong to the
+[final candidate record](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#final-candidate-validation--2026-10-25).

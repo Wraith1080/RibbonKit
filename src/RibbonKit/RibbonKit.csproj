@@ -17,11 +17,10 @@
 
   <PropertyGroup Label="Packaging">
     <PackageId>RibbonKit</PackageId>
-    <VersionPrefix>1.0.0</VersionPrefix>
     <Authors>RibbonKit contributors</Authors>
     <Description>Open-source Office Fluent UI-style Ribbon control library for WPF on modern .NET: adaptive button sizing, galleries, backstage, contextual tabs, quick access toolbar, KeyTips, and Office 2007-2024 themes.</Description>
     <PackageTags>wpf;ribbon;fluent;office;ui;controls</PackageTags>
-    <PackageReleaseNotes>Initial stable release. Distributed as a downloadable GitHub Release package.</PackageReleaseNotes>
+    <PackageReleaseNotes>RibbonKit 1.1 adds Simplified Ribbon customization, Touch density, Crystal and Office 2024 Flat themes, richer Quick Access Toolbar projections, feature policies, coordinated layout motion and accessibility improvements. See RELEASE_NOTES.md for compatibility notes and accepted limits. Distributed through GitHub Releases.</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>RibbonKit.png</PackageIcon>

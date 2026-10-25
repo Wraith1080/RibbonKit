@@ -16,9 +16,10 @@ RibbonKit uses lookless controls, WPF commands/binding and one shared template s
 for five Office generations. Vector chrome remains sharp when the host enables
 per-monitor DPI awareness. Applications own their command icons and document model.
 
-`v1.0.0` is distributed through GitHub Releases, not NuGet.org. The feature summary
-below describes the current checkout, including post-release additions; see
-[release notes](RELEASE_NOTES.md) for the published package and
+This checkout prepares `v1.1.0`; the published `v1.0.0` remains available through
+GitHub Releases. NuGet.org publication is not planned. The feature summary below
+describes the current checkout; see the [1.1 release notes](RELEASE_NOTES.md) and
+the preserved [1.0 release record](RELEASE_NOTES.md#ribbonkit-v100), plus
 [current progress](04-DESIGN-NOTES.md#5-current-state--next-steps) for dated acceptance limits.
 
 ## Feature status
@@ -807,6 +808,9 @@ dotnet add package RibbonKit --version 1.0.0 --source C:\path\to\downloaded-pack
 ```
 
 For source development, reference `src/RibbonKit/RibbonKit.csproj` instead.
+Local 1.1 candidate packages use `RibbonKit.1.1.0.nupkg` and `--version 1.1.0`
+with the same local-source command. The link above remains the published 1.0
+download until 1.1 publication is confirmed.
 Use `urn:ribbonkit`; Office 2024 light is the default. A minimal window:
 
 ```xml

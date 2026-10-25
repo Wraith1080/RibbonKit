@@ -23,6 +23,8 @@ internal static class CommandCopyChecks
         RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
         var editor = new RichTextBox(new FlowDocument(new Paragraph(new Run("portable selected text"))));
         var bold = new RibbonToggleButton { Header = "Bold", CommandTarget = editor, Command = EditingCommands.ToggleBold };
+        int boldClicks = 0;
+        bold.Click += (_, _) => boldClicks++;
         var parameter = new object();
         int actions = 0, splitActions = 0;
         var action = new RibbonButton { Header = "Action", CommandParameter = parameter,
@@ -67,12 +69,15 @@ internal static class CommandCopyChecks
                 foreach (var host in new[] { ribbon.QuickAccessItems.OfType<FrameworkElement>().ToArray(), custom.Items.OfType<FrameworkElement>().ToArray() })
                 {
                     var copy = Assert.Single(host.OfType<RibbonToggleButton>());
-                    // Public UIA Toggle performs OnToggle only. Follow it with public Click routing
-                    // to exercise both stages of activation; native mouse acceptance stays separate.
-                    ToggleAndClick(copy); Layout();
+                    // RibbonKit's public Toggle provider completes the native click/command path.
+                    // One request must produce one source Click and one formatting change.
+                    int beforeBold = boldClicks;
+                    Toggle(copy); Layout();
+                    Assert.Equal(beforeBold + 1, boldClicks);
                     Assert.Equal(FontWeights.Bold, editor.Selection.GetPropertyValue(TextElement.FontWeightProperty));
                     Assert.True(bold.IsChecked);
-                    ToggleAndClick(copy); Layout();
+                    Toggle(copy); Layout();
+                    Assert.Equal(beforeBold + 2, boldClicks);
                     Assert.Equal(FontWeights.Normal, editor.Selection.GetPropertyValue(TextElement.FontWeightProperty));
                     Assert.False(bold.IsChecked);
                     Assert.Equal("portable selected text", editor.Selection.Text.TrimEnd('\r', '\n'));
@@ -102,10 +107,9 @@ internal static class CommandCopyChecks
         }
     }
 
-    private static void ToggleAndClick(RibbonToggleButton copy)
+    private static void Toggle(RibbonToggleButton copy)
     {
         ((IToggleProvider)UIElementAutomationPeer.CreatePeerForElement(copy)!.GetPattern(PatternInterface.Toggle)).Toggle();
-        copy.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
     }
 
     private sealed class CallbackCommand(Action<object?> execute) : ICommand

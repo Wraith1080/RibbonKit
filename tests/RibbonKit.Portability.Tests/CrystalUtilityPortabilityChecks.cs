@@ -48,7 +48,8 @@ internal static class CrystalUtilityPortabilityChecks
             window.Show();
             Layout();
             var tabs = Part<RibbonTabControl>(ribbon, "TabControlHost");
-            var minimize = Part<ToggleButton>(tabs, "MinimizeToggle");
+            tabs.ApplyTemplate();
+            var minimize = Assert.IsAssignableFrom<ToggleButton>(tabs.Template.FindName("MinimizeToggle", tabs));
             var qat = Part<RibbonQuickAccessToolBar>(tabs, "QatTabRowHost");
             Assert.True(qat.HasOverflow);
             var overflow = Part<ToggleButton>(qat, "PART_OverflowButton");

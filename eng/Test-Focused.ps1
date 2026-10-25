@@ -22,7 +22,7 @@ param(
     [string[]]$Scenes,
     [ValidateSet('SplitButtonDensity', 'StackedCustomGroups', 'NativeGalleryPopup',
         'GalleryQuickAccess', 'GalleryQuickAccessKeyboard', 'GalleryQuickAccessVisible', 'GalleryPopupViewport', 'GroupQuickAccess', 'CollapsedGroupPress', 'AfterQuickAccessScope', 'AfterThemePolish', 'AfterGalleryQuickAccess', 'AfterGalleryPopupViewport', 'AfterCrystalTint',
-        'QatOverflowKeyboard', 'OverflowScrolling', 'AfterKeyboardNavigation', 'AfterSimplifiedDesignerDefaults', 'AfterFeatureAvailability', 'AfterCustomizationScrollSpacing', 'AfterApplicationMenuViewport', 'AfterCrystalApplicationMenu',
+        'QatOverflowKeyboard', 'OverflowScrolling', 'AfterKeyboardNavigation', 'AfterSimplifiedDesignerDefaults', 'AfterFeatureAvailability', 'AfterCustomizationScrollSpacing', 'AfterApplicationMenuViewport', 'AfterCrystalApplicationMenu', 'AfterDropDownScrollbars',
         'ComboQuickAccess', 'ComboQuickAccessKeyboard', 'GroupedGalleries', 'GroupedCombos', 'SimplifiedCombos', 'SimplifiedSpacing',
         'SimplifiedStructureRemoval', 'GalleryHeadersAndQatCommands', 'DropDownScrollbars', 'CommandCopies', 'DensitySelector', 'MessageTransition', 'ThemePolish', 'ThemePolishAfterHeaders', 'ThemePolishReleaseOrder', 'OverflowMenusAfterTint', 'OverflowMenusReleaseOrder',
         'QatThemeRestore', 'ColoredQat', 'QatIconAppearance', 'QatBackdrop', 'Office2024Backdrop', 'CaptionMotion', 'NativeResizePaint', 'TextEditMenus', 'QatCommandInteraction', 'QatVisibility', 'CustomizationLayout', 'MinimizedDivider', 'TouchChrome', 'TouchOptions', 'TouchAdaptive', 'GroupLauncher',

@@ -479,3 +479,5 @@ status updates and investigation narration were removed during compaction.
 ### [3.280 Simplified row automation discovery — 2026-10-25](library/19-accessibility.md#3280-simplified-row-automation-discovery--2026-10-25)
 
 ### [3.281 Collapsed opener and minimize accessibility — 2026-10-25](library/19-accessibility.md#3281-collapsed-opener-and-minimize-accessibility--2026-10-25)
+
+### [3.282 Shared 1.1 version and API baseline promotion — 2026-10-25](library/20-release-preparation.md#3282-shared-11-version-and-api-baseline-promotion--2026-10-25)
