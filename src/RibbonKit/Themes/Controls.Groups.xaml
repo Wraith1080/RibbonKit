@@ -753,6 +753,7 @@
                              reusing GroupMargin because the collapsed button's width feeds the
                              reduction algorithm, so the older themes must keep their historic 1px. -->
                         <ToggleButton x:Name="PART_CollapsedButton"
+                                      AutomationProperties.Name="{Binding Header, RelativeSource={RelativeSource TemplatedParent}}"
                                       Grid.Column="0"
                                       ClickMode="Press"
                                       Margin="{DynamicResource RibbonKit.Metrics.GroupCollapsedMargin}"

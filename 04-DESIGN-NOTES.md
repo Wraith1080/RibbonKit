@@ -1125,6 +1125,14 @@ technical evidence warrants them; preserve existing dated records.
 
 [Expose native page controls in navigation/page regions while preserving layout and bindings](docs/history/library/19-accessibility.md#3279-backstage-page-content-automation--2026-10-25).
 
+### 3.280 Simplified row automation discovery — 2026-10-25
+
+[Publish the visible native toolbar while preserving Classic item peers and command bindings](docs/history/library/19-accessibility.md#3280-simplified-row-automation-discovery--2026-10-25).
+
+### 3.281 Collapsed opener and minimize accessibility — 2026-10-25
+
+[Name collapsed-group openers and expose the minimize chevron through its existing native activation path](docs/history/library/19-accessibility.md#3281-collapsed-opener-and-minimize-accessibility--2026-10-25).
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.

@@ -58,7 +58,7 @@ public class KeyboardFocusInteractionTests
                 window.UpdateLayout();
                 var tabs = Assert.IsType<RibbonTabControl>(ribbon.Template.FindName("TabControlHost", ribbon));
                 var file = Assert.IsType<ToggleButton>(tabs.Template.FindName("PART_ApplicationButton", tabs));
-                var collapse = Assert.IsType<ToggleButton>(tabs.Template.FindName("MinimizeToggle", tabs));
+                var collapse = Assert.IsAssignableFrom<ToggleButton>(tabs.Template.FindName("MinimizeToggle", tabs));
                 Color band = ColorOf(ribbon.FindResource("RibbonKit.Brushes.Ribbon.Background"));
                 AssertVisible(file, EffectiveBackground(file, band), "file");
                 AssertVisible(collapse, EffectiveBackground(collapse, band), "collapse");

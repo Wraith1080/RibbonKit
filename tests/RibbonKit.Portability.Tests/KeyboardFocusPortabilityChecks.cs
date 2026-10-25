@@ -185,7 +185,7 @@ internal static class KeyboardFocusPortabilityChecks
                 {
                     // All color and geometry come from RibbonKit in this consumer:
                     // no Showcase resources, templates or focus helper participate.
-                    var collapse = Assert.IsType<ToggleButton>(tabs.Template.FindName("MinimizeToggle", tabs));
+                    var collapse = Assert.IsAssignableFrom<ToggleButton>(tabs.Template.FindName("MinimizeToggle", tabs));
                     foreach (bool colored in new[] { true, false })
                     {
                         ThemeManager.SetAccentedTitleBar(application, colored);

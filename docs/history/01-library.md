@@ -475,3 +475,7 @@ status updates and investigation narration were removed during compaction.
 ### [3.278 Source toggle automation completes host actions — 2026-10-25](library/19-accessibility.md#3278-source-toggle-automation-completes-host-actions--2026-10-25)
 
 ### [3.279 Backstage page-content automation — 2026-10-25](library/19-accessibility.md#3279-backstage-page-content-automation--2026-10-25)
+
+### [3.280 Simplified row automation discovery — 2026-10-25](library/19-accessibility.md#3280-simplified-row-automation-discovery--2026-10-25)
+
+### [3.281 Collapsed opener and minimize accessibility — 2026-10-25](library/19-accessibility.md#3281-collapsed-opener-and-minimize-accessibility--2026-10-25)

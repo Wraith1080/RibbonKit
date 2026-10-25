@@ -769,7 +769,8 @@
                                 </Button.Style>
                             </Button>
                             <!-- Minimize chevron: toggles Ribbon.IsMinimized -->
-                            <ToggleButton x:Name="MinimizeToggle"
+                            <controls:RibbonToggleButton x:Name="MinimizeToggle"
+                                          AutomationProperties.Name="{localization:RibbonString Key=MinimizeRibbon}"
                                           KeyboardNavigation.TabIndex="3"
                                           Width="24" Height="22"
                                           Margin="0,6,8,0"
@@ -851,7 +852,7 @@
                                         </Style.Triggers>
                                     </Style>
                                 </ToggleButton.Style>
-                            </ToggleButton>
+                            </controls:RibbonToggleButton>
                             <!-- Merged-caption window buttons (classic MDI's maximized child).
                                  Visible only while a caption is docked; the ribbon reports the
                                  press and the host decides what it means. Placed AFTER the

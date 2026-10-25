@@ -239,3 +239,81 @@ layouts. The earlier traversal-only passes did not cover these notification path
 the initial listener probes did not reproduce the exact debugger stop. Actual
 Inspect acceptance remains in S21 of the
 [active plan](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md).
+
+### 3.280 Simplified row automation discovery — 2026-10-25
+
+Actual Showcase Inspect traversal found an empty Home ListView in Simplified mode.
+RibbonGroupsHost inherited WPF's generic ItemsControl peer, which enumerates source
+items. Those Classic groups are hidden while a sibling RibbonQuickAccessToolBar
+displays Simplified command copies. Direct leaf-provider tests miss this parent-tree
+discovery gap.
+
+An internal RibbonGroupsHostAutomationPeer now publishes that existing toolbar's
+native peer in Simplified mode, reusing its existing item providers and source-linked
+commands. Classic uses ItemsControlAutomationPeer traversal with item roles/classes
+equivalent to WPF's internal generic wrapper: List/ItemsControl and
+DataItem/ItemsControlItem. The peer getter only reads; the existing Simplified refresh
+invalidates an already-created peer after rebuilding. It does not reset child caches
+inside discovery or add another refresh coordinator.
+
+The standard protected OnCreateAutomationPeer override is the sole additive API,
+recorded in Unshipped with Shipped unchanged. A custom peer is necessary because
+the default source-items traversal cannot discover this sibling toolbar. No XAML,
+visual layout, host glue, persistence or command-binding changes are needed.
+
+Four parent-tree regressions reproduce the failure, then cover Office2024/Crystal
+in LTR/RTL, Toggle/Invoke, disabled guards, live names, retained bindings and
+tab/Classic/Simplified round trips. The existing selected-tab/QAT cases also pass.
+WPF's generic wrapper/item peers are internal; the replacement supplies a matching
+item factory rather than borrowing a separate peer's item children.
+The final round-trip assertion filters actionable Button roles: native label Text
+peers may share a command's name and do not represent duplicate actions.
+
+A separate public-only consumer/client checks Control View with native structure
+and property subscriptions across the same four scopes, including Touch in
+Crystal RTL, QAT synchronization, capability coercion/re-enable, delivered events
+and zero recorded recursive peer errors. It never resets provider caches or operates
+user applications. Focused evidence, the Debug designer-copy lock limitation and
+actual Showcase recheck remain in S22 of the
+[active plan](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md).
+
+### 3.281 Collapsed opener and minimize accessibility — 2026-10-25
+
+The final bounded accessibility preparation reproduced three gaps: a collapsed
+group's native ToggleButton opener had no accessible name; the TabControl peer
+omitted its sibling minimize chevron; and that chevron's native state-only Toggle
+provider skipped the Click handler that changes Ribbon.IsMinimized. Merely naming
+or publishing the old chevron would leave its action ineffective.
+
+The collapsed opener now binds AutomationProperties.Name to its group header.
+The existing tab peer also publishes MinimizeToggle's own native peer, retaining
+hidden parts so WPF's visibility filtering can reconnect after policy changes.
+The shared chevron uses the existing RibbonToggleButton with the same explicit
+ToggleButton style/template and one-way IsChecked binding. Its native activation
+already runs OnClick once, then the existing policy-guarded handler changes the
+host state and refreshes the part binding. The accessible name reuses the existing
+localized MinimizeRibbon string. No new public API, strings, theme tokens, layout,
+host glue or persistence are added.
+
+Keep the part contract compatible with ToggleButton subclasses. Three fixtures
+that required the exact ToggleButton type now accept its base contract, retaining
+their focus geometry and visual assertions. Six new regressions reproduce the
+name/action gaps; their corrected run also covers live/explicit names, Toggle
+state, single Click completion, policy rejection and both host/part bindings.
+Existing affected focus/utility cases and selected utility snapshots pass without
+changing approvals or tolerances.
+
+A public-only consumer and separate UIA client traverse the owned main HWND and
+its owned collapsed-popup HWND, with native structure/property subscriptions.
+They verify popup command discovery, toggle stay-open policy, ordinary Invoke
+dismissal, QAT synchronization/use while minimized, restoration and the named
+chevron's Toggle/policy behavior across Office/Crystal and LTR/RTL, including
+Crystal RTL Touch density. Providers are never reset by the client. Windows file
+readers must permit delete sharing when the harness atomically replaces state
+files; a transient locked-state failure was harness-only and its log is retained.
+
+The S23 checklist's proposed single-click temporary minimized ribbon does not
+exist in the current implementation. Minimize/restore uses the chevron, tab double
+click or Ctrl+F1; this slice tests that shipped behavior rather than adding a new
+presentation. Focused evidence and actual-consumer acceptance belong to S23 in the
+[active plan](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md).

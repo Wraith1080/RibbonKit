@@ -1547,7 +1547,7 @@ public sealed class VisualSnapshotTests
         root.Arrange(new Rect(0, 0, Width, 350));
         root.UpdateLayout();
         var tabs = Assert.IsType<RibbonTabControl>(ribbon.Template.FindName("TabControlHost", ribbon));
-        var minimize = Assert.IsType<ToggleButton>(tabs.Template.FindName("MinimizeToggle", tabs));
+        var minimize = Assert.IsAssignableFrom<ToggleButton>(tabs.Template.FindName("MinimizeToggle", tabs));
         ForceState(minimize, typeof(UIElement), "IsMouseOverPropertyKey", true);
         ForceState(minimize, typeof(ButtonBase), "IsPressedPropertyKey", true);
         var qat = Assert.IsType<RibbonQuickAccessToolBar>(tabs.Template.FindName("QatTabRowHost", tabs));

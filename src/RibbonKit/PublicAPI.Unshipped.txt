@@ -2,6 +2,7 @@
 RibbonKit.Localization.RibbonString.BackstageNavigation = 91 -> RibbonKit.Localization.RibbonString
 override RibbonKit.Controls.Backstage.OnCreateAutomationPeer() -> System.Windows.Automation.Peers.AutomationPeer!
 override RibbonKit.Controls.RibbonTabControl.OnCreateAutomationPeer() -> System.Windows.Automation.Peers.AutomationPeer!
+override RibbonKit.Controls.RibbonGroupsHost.OnCreateAutomationPeer() -> System.Windows.Automation.Peers.AutomationPeer!
 override RibbonKit.Controls.RibbonQuickAccessToolBar.OnCreateAutomationPeer() -> System.Windows.Automation.Peers.AutomationPeer!
 RibbonKit.RibbonQuickAccessIconAppearance
 RibbonKit.RibbonQuickAccessIconAppearance.WhiteOverlay = 0 -> RibbonKit.RibbonQuickAccessIconAppearance

@@ -83,6 +83,11 @@ live names/enabled state. UI Automation Toggle actions on ribbon toggle buttons,
 checkboxes and their copies use the established state/Click/Command path, retaining
 source bindings, command parameters and targets.
 
+The selected tab exposes Simplified mode's visible command toolbar to UI Automation,
+using the existing command providers. Switching back to Classic restores its group tree.
+Collapsed-group openers take their accessible names from group headers. The minimize
+chevron exposes a named Toggle action that follows the existing click/policy path.
+
 Backstage exposes a named navigation Group and an active-page Pane containing the
 page's native WPF controls and automation patterns. The pane takes the selected
 page's accessible name; page selection, content bindings and layout are preserved.

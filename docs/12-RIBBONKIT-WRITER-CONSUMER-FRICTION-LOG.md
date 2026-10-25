@@ -196,9 +196,16 @@ Corrected and accepted. RibbonGroupSeparator now supplies adaptive in-group chro
 
 ### RKWF-006 — Main-ribbon leaf commands are absent from external UIA traversal
 
-Bounded shared corrections implemented: the standard selected-content presenter name restores discovery with binding-safe stretched layout defaults. The existing source Toggle providers now also run native Click/Command activation; Writer's document-formatting comparison exposed the earlier state-only behavior despite correct discovery. No Writer workaround or new public API is added. See the [activation pitfall](history/library/19-accessibility.md#3278-source-toggle-automation-completes-host-actions--2026-10-25) and the [1.1 plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md) for focused evidence and remaining actual-consumer/presentation acceptance; QAT wrapper semantics remain in RKWF-003.
+Bounded shared corrections implemented: the standard selected-content presenter name restores discovery with binding-safe stretched layout defaults. The existing source Toggle providers now also run native Click/Command activation; Writer's document-formatting comparison exposed the earlier state-only behavior despite correct discovery. Simplified mode now publishes its existing visible toolbar instead of only hidden Classic source groups, through one protected groups-host peer override recorded in Unshipped. No Writer workaround is needed. See the [activation pitfall](history/library/19-accessibility.md#3278-source-toggle-automation-completes-host-actions--2026-10-25), [Simplified bridge](history/library/19-accessibility.md#3280-simplified-row-automation-discovery--2026-10-25) and [1.1 plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md) for focused evidence, the scoped testing exception and remaining actual-consumer/presentation acceptance; QAT wrapper semantics remain in RKWF-003.
 
 [Recorded evidence](history/writer-friction-evidence.md#rkwf-006--main-ribbon-leaf-commands-are-absent-from-external-uia-traversal).
+
+The final collapsed/minimized slice also names native group openers and exposes
+the minimize chevron through the existing tab peer and RibbonToggleButton
+activation. Host/part bindings and user-policy guards are retained; no Writer
+workaround or new API is needed. See the [implementation](history/library/19-accessibility.md#3281-collapsed-opener-and-minimize-accessibility--2026-10-25)
+and S23 in the [1.1 plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md) for focused evidence
+and pending actual-consumer review.
 
 ### RKWF-007 — Windows WPF print picker cannot host Writer's existing fixed preview
 
