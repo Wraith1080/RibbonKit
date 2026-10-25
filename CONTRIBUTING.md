@@ -113,7 +113,8 @@ Use `tests/RibbonKit.Portability.Tests/RibbonKit.Portability.Tests.csproj` for
 consumer checks that must load only RibbonKit resources, without Showcase.
 Confirm the filter discovered and executed the intended tests; zero matches is not a pass.
 
-The full validation sequence mirrors `.github/workflows/ci.yml`:
+The local full validation sequence covers the same build/test/package gates as
+`.github/workflows/ci.yml`:
 
 ```powershell
 dotnet restore RibbonKit.sln
@@ -129,7 +130,14 @@ dotnet pack src/RibbonKit/RibbonKit.csproj --no-build --configuration Release --
 ```
 
 CI retains the full build/test/package gate on pushes and pull requests to `main`,
-with local selections and capture/update flags explicitly cleared.
+and supports a manual run through Actions → CI → Run workflow once enabled and
+the dispatch-enabled workflow is present on `main`. A preview pull request to
+`main` can exercise the updated workflow before merging it. CI
+runs all four test projects in separate sequential processes, with local selections
+and capture/update flags explicitly cleared. A failed project fails the job while
+the other projects still run after a successful build. The `test-results` artifact
+retains each project's TRX report; failed visual runs also upload
+`visual-snapshot-diagnostics`. Packaging requires all earlier steps to succeed.
 Report focused tests, the full suite, and live acceptance separately. On a visual
 mismatch, inspect the failure artifact's actual/diff PNGs before changing approvals.
 

@@ -35,3 +35,20 @@ Dirty-checkout assets are local candidates: NuSpec/Source Link still identify
 HEAD. Commit reviewed changes and rebuild/revalidate before publishing, so package
 provenance identifies the exact release source. A9 owns asset hashes, current
 evidence and remaining release actions; this history is not a second sign-off list.
+
+#### CI diagnostics follow-up — 2026-10-25
+
+Added manual dispatch and separate sequential steps for all four test projects,
+without filters or continuation scopes. Each writes its own TRX report, uploaded
+even after failure. Test-step conditions explicitly allow execution after another
+test fails, provided Build succeeded and the run was not canceled; they do not use
+`continue-on-error`, so failed tests still prevent packaging and fail the job.
+Selection/capture variables are cleared at job scope and the existing failure PNG
+artifact remains. The workflow uses read-only repository permissions.
+
+Checkout 7.0.1, setup-dotnet 6.0.0 and upload-artifact 7.0.2 were checked against
+their official manifests for Node 24 support. The old Node deprecation warning
+does not establish the cause of the failing Test step. Actionlint 1.7.12 and local
+PowerShell parsing pass; actual hosted execution is a separate pending result in
+A9. Do not substitute syntax checks for a passing GitHub run or weaken snapshots
+without inspecting failure diagnostics.

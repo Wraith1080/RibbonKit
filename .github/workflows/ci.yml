@@ -1,20 +1,29 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: windows-latest
+    env:
+      RIBBONKIT_VISUAL_SCENES: ''
+      RIBBONKIT_PORTABILITY_SCOPE: ''
+      RIBBONKIT_CAPTURE_SNAPSHOTS: ''
+      RIBBONKIT_UPDATE_SNAPSHOTS: ''
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6.0.0
         with:
           dotnet-version: |
             8.0.x
@@ -24,19 +33,54 @@ jobs:
         run: dotnet restore RibbonKit.sln
 
       - name: Build
+        id: build
         run: dotnet build RibbonKit.sln --no-restore --configuration Release
 
-      - name: Test
-        env:
-          RIBBONKIT_VISUAL_SCENES: ''
-          RIBBONKIT_PORTABILITY_SCOPE: ''
-          RIBBONKIT_CAPTURE_SNAPSHOTS: ''
-          RIBBONKIT_UPDATE_SNAPSHOTS: ''
-        run: dotnet test RibbonKit.sln --no-build --configuration Release --verbosity normal
+      # Keep WPF projects sequential in fresh processes. A failed project still
+      # fails the job, but does not hide the remaining projects' results.
+      - name: Test runtime
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: >-
+          dotnet test tests/RibbonKit.Tests/RibbonKit.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --logger "trx;LogFileName=runtime.trx"
+          --results-directory TestResults/ci/runtime
+
+      - name: Test Writer
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: >-
+          dotnet test tests/RibbonKit.Writer.Tests/RibbonKit.Writer.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --logger "trx;LogFileName=writer.trx"
+          --results-directory TestResults/ci/writer
+
+      - name: Test visual snapshots
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: >-
+          dotnet test tests/RibbonKit.VisualTests/RibbonKit.VisualTests.csproj
+          --no-build --configuration Release --verbosity normal
+          --logger "trx;LogFileName=visual.trx"
+          --results-directory TestResults/ci/visual
+
+      - name: Test independent consumer
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: >-
+          dotnet test tests/RibbonKit.Portability.Tests/RibbonKit.Portability.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --logger "trx;LogFileName=portability.trx"
+          --results-directory TestResults/ci/portability
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: test-results
+          path: TestResults/ci/**/*.trx
+          if-no-files-found: ignore
 
       - name: Upload visual snapshot diagnostics
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: visual-snapshot-diagnostics
           path: TestResults/visual/*.png
@@ -50,7 +94,7 @@ jobs:
         run: ./eng/Validate-Package.ps1 -PackageDirectory artifacts
 
       - name: Upload package artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: nuget-package
           path: |
