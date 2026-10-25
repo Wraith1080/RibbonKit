@@ -4,7 +4,7 @@ An MIT-licensed, Office Fluent UI-style **WPF ribbon library** for
 `net8.0-windows` and `net9.0-windows`.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Release](https://img.shields.io/badge/release-v1.0.0-blue)](https://github.com/Wraith1080/RibbonKit/releases/tag/v1.0.0)
+[![Version](https://img.shields.io/badge/version-v1.1.0-blue)](RELEASE_NOTES.md)
 
 [Getting started](#getting-started) · [Features](#feature-status) ·
 [Theming](#theming--rendering) · [Design tools](#developer-experience) ·
@@ -16,9 +16,8 @@ RibbonKit uses lookless controls, WPF commands/binding and one shared template s
 for five Office generations. Vector chrome remains sharp when the host enables
 per-monitor DPI awareness. Applications own their command icons and document model.
 
-This checkout prepares `v1.1.0`; the published `v1.0.0` remains available through
-GitHub Releases. NuGet.org publication is not planned. The feature summary below
-describes the current checkout; see the [1.1 release notes](RELEASE_NOTES.md) and
+This is RibbonKit `v1.1.0`, with package distribution through GitHub Releases.
+NuGet.org publication is not planned. See the [1.1 release notes](RELEASE_NOTES.md) and
 the preserved [1.0 release record](RELEASE_NOTES.md#ribbonkit-v100), plus
 [current progress](04-DESIGN-NOTES.md#5-current-state--next-steps) for dated acceptance limits.
 
@@ -799,18 +798,15 @@ remain in the [MDI plan](docs/05-MDI-EMULATION-PLAN.md).
 
 ## Getting started
 
-Download `RibbonKit.1.0.0.nupkg` from the
-[v1.0.0 release](https://github.com/Wraith1080/RibbonKit/releases/tag/v1.0.0) into a local
+Download `RibbonKit.1.1.0.nupkg` from the
+[v1.1.0 release](https://github.com/Wraith1080/RibbonKit/releases/tag/v1.1.0) into a local
 package folder, then run in your WPF application project:
 
 ```powershell
-dotnet add package RibbonKit --version 1.0.0 --source C:\path\to\downloaded-packages
+dotnet add package RibbonKit --version 1.1.0 --source C:\path\to\downloaded-packages
 ```
 
 For source development, reference `src/RibbonKit/RibbonKit.csproj` instead.
-Local 1.1 candidate packages use `RibbonKit.1.1.0.nupkg` and `--version 1.1.0`
-with the same local-source command. The link above remains the published 1.0
-download until 1.1 publication is confirmed.
 Use `urn:ribbonkit`; Office 2024 light is the default. A minimal window:
 
 ```xml

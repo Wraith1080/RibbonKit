@@ -1,7 +1,6 @@
 # RibbonKit v1.1.0
 
-Local release candidate prepared on 2026-10-25. Publication and the rebuild from
-the chosen release commit remain pending. Distribution remains GitHub Releases;
+Release notes finalized on 2026-10-26. Distribution uses GitHub Releases;
 NuGet.org publication is not planned.
 
 RibbonKit 1.1 expands the shared ribbon controls and the Writer/Showcase consumers
@@ -75,18 +74,17 @@ from the shared `VersionPrefix=1.1.0`.
 The [1.1 acceptance record](docs/20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md) distinguishes
 automated coverage, actual-user review and unavailable hardware scopes.
 
-- Release builds and API/XML checks pass. Runtime 1,290/1,290, Writer 564/564 and
-  visual 5/5 checks pass, including the full 195-scene approved inventory.
-- All 58 independent-consumer sections and final assertions have passing coverage
-  in the retained full-run prefix and continuations. Two obsolete test assumptions
-  were corrected after accessibility changes. Original failed attempts remain
-  recorded; this is assembled coverage, not a clean single full-suite pass.
+- Full hosted CI passed, user-confirmed on 2026-10-25: Release build and API/XML
+  checks, plus the unfiltered runtime, Writer, visual and independent-consumer
+  projects. Visual coverage includes the full 195-scene approved inventory.
+  Earlier failed attempts and their bounded corrections remain in the acceptance
+  record; the complete hosted pass supersedes the earlier assembled-only checkpoint.
 - Writer/Showcase manual acceptance, the critical package/designer review and
   available single-monitor display/motion checks passed at their recorded scopes.
-- The local 1.1 package pair passes layout/metadata checks, clean net8/net9 builds
-  and runtime smokes, assembly/symbol provenance checks and checksums. A consumer
-  binary built against 1.0 also launches with the replacement 1.1 runtime. The
-  committed-source rebuild remains pending; A9 records that release boundary.
+- Package verification covers layout/metadata, clean net8/net9 consumption and
+  runtime smokes, assembly/symbol provenance and checksums. A consumer binary
+  built against 1.0 also launches with the replacement 1.1 runtime. A9 identifies
+  the release-source revision and final artifact verification record.
 - A local fixed-content comparison measured median startup at 571 ms with the
   1.0 library and 720 ms with the current library, plus a 33% longer paced resize
   workload despite lower process CPU. This measured cost is accepted for 1.1.
@@ -101,15 +99,15 @@ automated coverage, actual-user review and unavailable hardware scopes.
 
 ## Distribution and provenance
 
-Local candidate assets are `RibbonKit.1.1.0.nupkg`, `RibbonKit.1.1.0.snupkg`, these
+Release assets are `RibbonKit.1.1.0.nupkg`, `RibbonKit.1.1.0.snupkg`, these
 notes and `SHA256SUMS.txt`. The runtime package includes XML docs, the toolbox
 manifest and per-TFM design tooling; the symbol package includes portable PDBs
 with Source Link.
 
-Uncommitted release preparation still records the current HEAD in NuSpec/Source
-Link. Commit the reviewed release changes and rebuild the assets before tagging
-or publishing so those records identify the exact release source. No tag, upload
-or GitHub Release is created by local preparation.
+NuSpec repository metadata and embedded Source Link identify the exact release
+source commit. `SHA256SUMS.txt` records the SHA-256 hashes of both packages. The
+local preparation helper builds and validates these files; GitHub tagging and
+publication are separate release actions.
 
 RibbonKit remains MIT-licensed and attributed to **RibbonKit contributors**.
 Development primarily used AI coding assistants under human direction, visual
