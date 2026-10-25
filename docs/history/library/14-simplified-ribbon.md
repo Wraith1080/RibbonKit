@@ -650,3 +650,26 @@ are in [S9 of the acceptance plan](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#
 
 Menu captures render the ContextMenu itself; capturing its native owner root at
 open can produce an empty image during the native fade, even with valid geometry.
+
+#### Minimum-width reorder column at fractional DPI — 2026-10-25
+
+The hosted consumer and an owned 96-DPI process reproduce Crystal Compact at
+simulated 150%, minimum dialog width 560: both reorder buttons end at 321.667
+DIP in a 320.667-DIP viewport. Rounded star/auto columns grow the inner grid by
+0.667 DIP, and the glyph-sized button extends another 0.333 beyond its column.
+The logical overflow and inspected capture establish actual edge clipping.
+
+Reserve one trailing DIP only in the Simplified page's auto-sized reorder stack.
+This budgets rounding before the star columns receive their space, retaining
+layout rounding, pixel snapping, target sizes, templates, bindings and handlers.
+Classic and QAT use separate stacks. Do not loosen the viewport tolerance or
+disable rounding across the page. The consumer now checks both reorder buttons
+within 0.01 DIP at all three dialog widths; other containment assertions remain.
+
+Impact checks cover RTL mirroring, Compact/Touch, neighboring selector/list/footer
+widths, reordering and Apply/Cancel/QAT isolation, with adjacent Classic/QAT
+presentation guards. Run the same 112-case consumer under both the hosted-like
+96-DPI context and the ordinary local context. Its recorded CI pace projects
+beyond the usual five-minute focused deadline, so only SimplifiedCustomization
+gets ten minutes and runs first in CI. Other budgets remain unchanged. Current
+results and the required hosted rerun belong to the 1.1 acceptance plan.

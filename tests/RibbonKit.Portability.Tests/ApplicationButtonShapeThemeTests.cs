@@ -1321,11 +1321,12 @@ public sealed class ApplicationButtonShapeThemeTests
         thread.Start();
         // Hosted run 40181137769 passed 37 sections in 28 minutes, then hit the
         // old aggregate deadline during customization. Only the unfiltered full
-        // run gets an hour; focused and continuation budgets stay unchanged.
+        // run gets an hour. The 112-case customization focus needs ten minutes
+        // at the recorded hosted pace; other scope budgets stay unchanged.
         string? scope = Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE");
         var timeout = string.IsNullOrWhiteSpace(scope) ? TimeSpan.FromMinutes(60)
             : scope is "AfterQuickAccessScope" or "AfterThemePolish" or "AfterGalleryPopupViewport" or "AfterCustomizationScrollSpacing" or "ThemePolishReleaseOrder" ? TimeSpan.FromMinutes(30)
-            : scope is "AfterGalleryQuickAccess" or "AfterKeyboardNavigation" or "AfterSimplifiedDesignerDefaults" or "AfterFeatureAvailability" or "AfterApplicationMenuViewport" or "AfterCrystalApplicationMenu" or "AfterDropDownScrollbars" or "OverflowMenusReleaseOrder"
+            : scope is "AfterGalleryQuickAccess" or "AfterKeyboardNavigation" or "AfterSimplifiedDesignerDefaults" or "AfterFeatureAvailability" or "AfterApplicationMenuViewport" or "AfterCrystalApplicationMenu" or "AfterDropDownScrollbars" or "OverflowMenusReleaseOrder" or "SimplifiedCustomization"
                 ? TimeSpan.FromMinutes(10) : TimeSpan.FromMinutes(5);
         if (!thread.Join(timeout))
             throw new TimeoutException($"The ribbon portability test did not finish within {timeout.TotalSeconds:0} seconds.");

@@ -999,6 +999,8 @@ technical evidence warrants them; preserve existing dated records.
 ### 3.255 Simplified ribbon layout and customization — 2026-10-13
 
 [Source-linked single-row commands, native group access and a separate draft customization page](docs/history/library/14-simplified-ribbon.md#3255-simplified-ribbon-first-layout-slice--2026-10-13).
+[Minimum-width reorder-column clipping](docs/history/library/14-simplified-ribbon.md#minimum-width-reorder-column-at-fractional-dpi--2026-10-25)
+records the scoped rounding allowance and affected-check selection.
 
 [Native combo editors in original slots](docs/history/library/14-simplified-ribbon.md#native-combo-editors-in-original-slots--2026-10-21), with [current verification and review](docs/15-SIMPLIFIED-RIBBON-PLAN.md#native-combo-editors-in-original-slots--2026-10-21).
 

@@ -96,6 +96,9 @@ internal static class SimplifiedCustomizationPortabilityChecks
                             Rect bounds = part.TransformToVisual(viewport).TransformBounds(new Rect(part.RenderSize));
                             Assert.True(bounds.Left >= -0.75 && bounds.Right <= viewport.ActualWidth + 0.75 && bounds.Top >= -0.75 && bounds.Bottom <= viewport.ActualHeight + 0.75,
                                 $"{theme}/{dark}/{density}/{direction}/{scale}/width={width}/{name}: {bounds}, viewport={viewport.RenderSize}");
+                            if (name is "PART_UpButton" or "PART_DownButton")
+                                Assert.True(bounds.Left >= -0.01 && bounds.Right <= viewport.ActualWidth + 0.01,
+                                    $"Reorder button clipped: {theme}/{dark}/{density}/{direction}/{scale}/width={width}/{name}: {bounds}, viewport={viewport.RenderSize}");
                         }
                     }
                     var available = Part<ListBox>(page, "PART_AvailableList"); var current = Part<ListBox>(page, "PART_CurrentList");

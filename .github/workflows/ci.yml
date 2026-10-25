@@ -38,6 +38,19 @@ jobs:
 
       # Check repaired groups before the long full gate, newest failure first.
       # Collect every repair result, even if another repaired group fails.
+      - name: Verify repaired Simplified customization consumer
+        id: repair_simplified_customization
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          RIBBONKIT_PORTABILITY_SCOPE: SimplifiedCustomization
+        run: >-
+          dotnet test tests/RibbonKit.Portability.Tests/RibbonKit.Portability.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --filter "FullyQualifiedName~Theme_default_and_local_value_follow_wpf_precedence"
+          --logger "trx;LogFileName=repair-simplified-customization.trx"
+          --results-directory TestResults/ci/repair-simplified-customization
+          -- RunConfiguration.TreatNoTestsAsError=true
+
       - name: Verify repaired runtime checks
         id: repair_runtime
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
@@ -103,6 +116,7 @@ jobs:
         id: repair_gate
         if: >-
           ${{ !cancelled()
+              && steps.repair_simplified_customization.outcome == 'success'
               && steps.repair_qat_gallery.outcome == 'success'
               && steps.repair_visual.outcome == 'success'
               && steps.repair_runtime.outcome == 'success'
