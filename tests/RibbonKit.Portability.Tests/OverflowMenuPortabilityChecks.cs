@@ -98,8 +98,10 @@ internal static class OverflowMenuPortabilityChecks
                         var parentChrome = (FrameworkElement)((AdornerDecorator)root.Child).Child;
                         Rect parentRect = Bounds(parentChrome), childRect = Bounds(popup.Child is AdornerDecorator decorator
                             ? (FrameworkElement)decorator.Child : (FrameworkElement)popup.Child);
-                        Assert.True(Math.Abs(childRect.Left - parentRect.Right) <= 1 || Math.Abs(parentRect.Left - childRect.Right) <= 1,
-                            $"Detached {header}: {theme}, {direction}, {mode}, parent={parentRect}, child={childRect}");
+                        Rect frameRect = Bounds((FrameworkElement)PresentationSource.FromVisual(popup.Child)!.RootVisual);
+                        Rect rowRect = Bounds(entry);
+                        OverflowPopupPlacement.AssertPlacement(parentRect, childRect, frameRect, rowRect,
+                            OverflowPopupPlacement.WorkArea(rowRect), context);
                         var arrow = header == "Paste"
                             ? (System.Windows.Shapes.Path)((ToggleButton)entry.Template.FindName("PART_Toggle", entry)).Template.FindName("ToggleChevron", (ToggleButton)entry.Template.FindName("PART_Toggle", entry))
                             : (System.Windows.Shapes.Path)entry.Template.FindName("OverflowChevron", entry);

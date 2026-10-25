@@ -133,13 +133,14 @@ CI retains the full build/test/package gate on pushes and pull requests to `main
 and supports a manual run through Actions → CI → Run workflow once enabled and
 the dispatch-enabled workflow is present on `main`. A preview pull request to
 `main` can exercise the updated workflow before merging it. During the 1.1 CI
-repair, the six `Verify repaired ...` steps first exercise the Simplified
-customization consumer (minimum-width/DPI geometry), the runtime cases
-(including first-theme cleanup and the long focus-contrast matrix), the QAT-gallery
+repair, the seven `Verify repaired ...` steps first exercise the overflow consumer
+(including its preceding Crystal tint state and screen-space assertion checks), the runtime cases
+(including text-motion completion, first-theme cleanup and the long focus-contrast
+matrix), the Simplified customization consumer (minimum-width/DPI geometry), the QAT-gallery
 consumer, the first failing visual scene, Writer cases and the native-gallery
-consumer matrix. All six focused results are collected; zero matched tests is an
+consumer matrix. All seven focused results are collected; zero matched tests is an
 error. A failure stops
-the longer full phase. Only when all six pass does CI run
+the longer full phase. Only when all seven pass does CI run
 all four unfiltered test projects in separate sequential processes, with local
 selections and capture/update flags explicitly cleared. A full-project failure
 still lets the other full projects report, while failing the job. Focused results

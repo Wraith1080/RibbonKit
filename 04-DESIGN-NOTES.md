@@ -173,6 +173,7 @@ Includes the 2026-09-16 animated Backstage badge-placement correction and focuse
 [Decision, pitfalls and evidence](docs/history/library/03-office-themes-and-layout.md#335-quick-access-toolbar-overflow--2026-07-27).
 [Shared QAT/Simplified menu scrolling](docs/history/library/11-touch-density-and-gallery-projections.md#overflow-menu-scrolling-and-native-combobox-escape--2026-10-24).
 [Below-ribbon full-row overflow](docs/history/library/11-touch-density-and-gallery-projections.md#below-ribbon-qat-overflow--2026-10-24).
+[Screen-space-aware independent-consumer placement assertions](docs/history/library/20-release-preparation.md#overflow-popup-screen-space-assertions--2026-10-25).
 
 ### 3.36 Selection visuals: the tab-strip-row reflow rule
 
@@ -1053,6 +1054,7 @@ records the scoped rounding allowance and affected-check selection.
 ### 3.263 Shared text refresh after control animation — 2026-10-17
 
 [Shared completion repaint for ribbon text, including both tab layouts](docs/history/library/04-office2007-and-popup-motion.md#3263-shared-text-refresh-after-control-animation--2026-10-17).
+[Queued scroll completion ordering and visible-text regression fixtures](docs/history/library/20-release-preparation.md#scroll-completion-repaint-ordering--2026-10-25).
 
 ### 3.264 Stable caption and content paint during layout transitions — 2026-10-18
 

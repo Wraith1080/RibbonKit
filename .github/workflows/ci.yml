@@ -38,6 +38,30 @@ jobs:
 
       # Check repaired groups before the long full gate, newest failure first.
       # Collect every repair result, even if another repaired group fails.
+      - name: Verify repaired overflow consumer
+        id: repair_overflow
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          RIBBONKIT_PORTABILITY_SCOPE: OverflowMenusAfterTint
+        run: >-
+          dotnet test tests/RibbonKit.Portability.Tests/RibbonKit.Portability.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --filter "FullyQualifiedName~Theme_default_and_local_value_follow_wpf_precedence|FullyQualifiedName~OverflowPopupPlacementTests"
+          --logger "trx;LogFileName=repair-overflow.trx"
+          --results-directory TestResults/ci/repair-overflow
+          -- RunConfiguration.TreatNoTestsAsError=true
+
+      - name: Verify repaired runtime checks
+        id: repair_runtime
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: >-
+          dotnet test tests/RibbonKit.Tests/RibbonKit.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --filter "FullyQualifiedName~BackstageAutomationTests.Page_content_keeps_native_actions_selection_bindings_and_geometry|FullyQualifiedName~WriterConsumerFrictionTests.In_ribbon_gallery_popup_uses_system_window_background_without_theme_tokens|FullyQualifiedName~TouchModeShowcaseTests.Touch_commands_are_consistent_and_the_body_fits_its_content|FullyQualifiedName~InRibbonGalleryPopupTests.Wide_popup_card_anchors_to_the_gallery_upper_leading_corner|FullyQualifiedName~HostLayoutTransitionTests.Main_window_document_uses_shared_progress_for_mode_density_and_both_Qat_routes|FullyQualifiedName~CrystalThemeManagerTests.Crystal_light_switches_with_office_without_flattening_glass_tokens|FullyQualifiedName~KeyboardFocusInteractionTests.Native_focus_remains_visible_on_accent_rails_and_colored_headers|FullyQualifiedName~TextMotionCompletionTests"
+          --logger "trx;LogFileName=repair-runtime.trx"
+          --results-directory TestResults/ci/repair-runtime
+          -- RunConfiguration.TreatNoTestsAsError=true
+
       - name: Verify repaired Simplified customization consumer
         id: repair_simplified_customization
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
@@ -49,17 +73,6 @@ jobs:
           --filter "FullyQualifiedName~Theme_default_and_local_value_follow_wpf_precedence"
           --logger "trx;LogFileName=repair-simplified-customization.trx"
           --results-directory TestResults/ci/repair-simplified-customization
-          -- RunConfiguration.TreatNoTestsAsError=true
-
-      - name: Verify repaired runtime checks
-        id: repair_runtime
-        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
-        run: >-
-          dotnet test tests/RibbonKit.Tests/RibbonKit.Tests.csproj
-          --no-build --configuration Release --verbosity normal
-          --filter "FullyQualifiedName~BackstageAutomationTests.Page_content_keeps_native_actions_selection_bindings_and_geometry|FullyQualifiedName~WriterConsumerFrictionTests.In_ribbon_gallery_popup_uses_system_window_background_without_theme_tokens|FullyQualifiedName~TouchModeShowcaseTests.Touch_commands_are_consistent_and_the_body_fits_its_content|FullyQualifiedName~InRibbonGalleryPopupTests.Wide_popup_card_anchors_to_the_gallery_upper_leading_corner|FullyQualifiedName~HostLayoutTransitionTests.Main_window_document_uses_shared_progress_for_mode_density_and_both_Qat_routes|FullyQualifiedName~CrystalThemeManagerTests.Crystal_light_switches_with_office_without_flattening_glass_tokens|FullyQualifiedName~KeyboardFocusInteractionTests.Native_focus_remains_visible_on_accent_rails_and_colored_headers"
-          --logger "trx;LogFileName=repair-runtime.trx"
-          --results-directory TestResults/ci/repair-runtime
           -- RunConfiguration.TreatNoTestsAsError=true
 
       - name: Verify repaired QAT gallery consumer
@@ -116,6 +129,7 @@ jobs:
         id: repair_gate
         if: >-
           ${{ !cancelled()
+              && steps.repair_overflow.outcome == 'success'
               && steps.repair_simplified_customization.outcome == 'success'
               && steps.repair_qat_gallery.outcome == 'success'
               && steps.repair_visual.outcome == 'success'

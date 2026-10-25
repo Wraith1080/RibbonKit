@@ -121,3 +121,43 @@ budgets or drop later sections. Per-theme customization progress distinguishes
 continued work from a silent stall. The runtime repair group now runs first and
 includes the new failing cases. Current results and the retained failed logs
 belong to the active acceptance plan.
+
+#### Scroll completion repaint ordering — 2026-10-25
+
+`ScrollToVerticalOffset` queues layout work. The animation driver's Completed
+event can therefore repaint text at the penultimate actual offset, with no later
+glyph repaint when the final offset arrives. An owned 96-DPI software-rendered
+process reproduced a last paint at 19.9866 while the driver had reached 20.
+Defer only scroll completion's text refresh to ContextIdle; skip it if a newer
+animation, driver target or direct scroll has taken over. Keep the final offset,
+easing, duration, other motion helpers and normal-QAT refresh exclusion intact.
+
+The original Scroll fixture centered its observed text outside the viewport.
+Place it visibly throughout the motion and assert actual viewport containment;
+retain the two-second wait, natural-size/render-mode checks and diagnostic paint
+state. Add direct-scroll and animated-replacement guards against stale refresh.
+Focused text-motion and gallery row/state regressions pass (40 cases), as do
+the corrected Scroll test and a RibbonKit-only public-API consumer in fresh
+96-DPI software-rendered processes. Release net8/net9 builds pass. CI frontloads
+the full text-motion class in its existing runtime repair group; no deadline,
+assertion or visual comparison threshold is relaxed. Hosted status remains in
+the active acceptance plan.
+
+#### Overflow popup screen-space assertions — 2026-10-25
+
+The independent overflow matrix required every submenu to join a side, including
+the wide full-group popup. Its policy already permits an overlay below the row
+when neither side fits the nearest monitor's work area. A forced-wide native
+group reproduces the assertion failure without a popup placement defect.
+
+The consumer now measures physical-pixel chrome/frame/row bounds and the nearest
+monitor's work area. Keep the one-pixel side-join assertion whenever either side
+fits, including shadow allocation. Otherwise require horizontal overlap with the
+row, the below-row/vertically clamped anchor and a frame inside the work area.
+Six synthetic geometry cases retain rejection of unnecessary overlays, detached
+side popups, incorrect anchors and out-of-bounds frames at negative origins and
+150% scale. The normal matrix after Crystal tint, 16 forced-wide group cases in
+a fresh 96-DPI consumer and 15 adjacent runtime placement cases pass. CI adds
+this bounded consumer scope and its geometry checks as the first required repair
+group. Popup runtime behavior, public APIs and timeouts are unchanged by this
+test correction; current hosted status belongs to the active acceptance plan.
