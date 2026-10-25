@@ -99,3 +99,25 @@ The 96-DPI visible-strip/input/ScreenTip scope passes; no product source changes
 CI places the complete GalleryQuickAccess scope first and adds it to the repair
 success gate. The full consumer remains mandatory; current results and remaining
 hosted validation belong to the active plan.
+
+#### First-Apply fixtures and long matrix deadlines — 2026-10-25
+
+Replacing Application.Resources alone does not reset ThemeManager's previous
+Apply. A test of first-Apply cleanup must explicitly reset that shared state
+before merging its manual startup dictionary; otherwise test order determines
+whether the manager takes the first-call cleanup branch. Seeding a previous
+Apply reproduced the Crystal fixture failure without a product defect.
+
+Keep native focus fixtures intact across palette sweeps: creating a window per
+palette introduced a missing-focus-adorner setup failure. The original long
+contrast matrix instead opts into a measured 60-second body allowance through
+the test helper's RunWithTimeout; default Sta.Run remains 30 seconds and all
+assertions/render waits remain. Per-palette timing identifies slow combinations.
+
+The full hosted consumer's 37 passing sections consumed 28 minutes, leaving too
+little of its old aggregate deadline for customization and the remaining chain.
+Give only the unfiltered run a bounded hour; do not extend focused/continuation
+budgets or drop later sections. Per-theme customization progress distinguishes
+continued work from a silent stall. The runtime repair group now runs first and
+includes the new failing cases. Current results and the retained failed logs
+belong to the active acceptance plan.

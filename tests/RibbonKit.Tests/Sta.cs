@@ -34,7 +34,10 @@ internal static class Sta
     private static Application? _application;
 
     /// <summary>Runs <paramref name="body"/> on the shared STA, rethrowing any failure here.</summary>
-    public static void Run(Action body)
+    public static void Run(Action body) => RunWithTimeout(body, BodyTimeout);
+
+    /// <summary>Runs a measured long matrix with its own explicit body deadline.</summary>
+    public static void RunWithTimeout(Action body, TimeSpan timeout)
     {
         lock (Gate)
         {
@@ -55,10 +58,10 @@ internal static class Sta
                 finally { completed.SetResult(failure); }
             }));
 
-            if (!completed.Task.Wait(BodyTimeout))
+            if (!completed.Task.Wait(timeout))
             {
                 throw new TimeoutException(
-                    $"The STA test body did not finish within {BodyTimeout.TotalSeconds:0}s — most likely " +
+                    $"The STA test body did not finish within {timeout.TotalSeconds:0}s — most likely " +
                     "it is waiting on dispatcher work that never gets pumped.");
             }
 

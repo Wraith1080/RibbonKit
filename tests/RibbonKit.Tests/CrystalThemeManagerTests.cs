@@ -37,6 +37,9 @@ public sealed class CrystalThemeManagerTests
     public void Crystal_light_switches_with_office_without_flattening_glass_tokens() => Sta.Run(() =>
     {
         var application = Sta.UseApplication();
+        // This exercises first-Apply cleanup of an App.xaml token dictionary.
+        // UseApplication replaces resources but retains the manager's previous Apply.
+        Sta.ResetApplication();
         try
         {
             var manuallyMergedCrystal = new ResourceDictionary

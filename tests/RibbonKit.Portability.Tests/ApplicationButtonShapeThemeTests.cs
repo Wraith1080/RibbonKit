@@ -1319,11 +1319,12 @@ public sealed class ApplicationButtonShapeThemeTests
         thread.SetApartmentState(ApartmentState.STA);
         thread.IsBackground = true;
         thread.Start();
-        // The measured full consumer exceeds twenty minutes with simplified
-        // layout/customization matrices. Large continuations retain a bounded
-        // allowance without repeating their completed prefixes.
+        // Hosted run 40181137769 passed 37 sections in 28 minutes, then hit the
+        // old aggregate deadline during customization. Only the unfiltered full
+        // run gets an hour; focused and continuation budgets stay unchanged.
         string? scope = Environment.GetEnvironmentVariable("RIBBONKIT_PORTABILITY_SCOPE");
-        var timeout = string.IsNullOrWhiteSpace(scope) || scope is "AfterQuickAccessScope" or "AfterThemePolish" or "AfterGalleryPopupViewport" or "AfterCustomizationScrollSpacing" or "ThemePolishReleaseOrder" ? TimeSpan.FromMinutes(30)
+        var timeout = string.IsNullOrWhiteSpace(scope) ? TimeSpan.FromMinutes(60)
+            : scope is "AfterQuickAccessScope" or "AfterThemePolish" or "AfterGalleryPopupViewport" or "AfterCustomizationScrollSpacing" or "ThemePolishReleaseOrder" ? TimeSpan.FromMinutes(30)
             : scope is "AfterGalleryQuickAccess" or "AfterKeyboardNavigation" or "AfterSimplifiedDesignerDefaults" or "AfterFeatureAvailability" or "AfterApplicationMenuViewport" or "AfterCrystalApplicationMenu" or "AfterDropDownScrollbars" or "OverflowMenusReleaseOrder"
                 ? TimeSpan.FromMinutes(10) : TimeSpan.FromMinutes(5);
         if (!thread.Join(timeout))

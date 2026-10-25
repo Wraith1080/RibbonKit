@@ -1138,6 +1138,8 @@ technical evidence warrants them; preserve existing dated records.
 [Decision, pitfalls and evidence](docs/history/library/20-release-preparation.md#3282-shared-11-version-and-api-baseline-promotion--2026-10-25).
 [QAT live/frozen raster-position check](docs/history/library/20-release-preparation.md#qat-gallery-raster-position-assertions--2026-10-25)
 records the bounded one-pixel test allowance and early CI gate.
+[First-Apply fixtures and long matrix deadlines](docs/history/library/20-release-preparation.md#first-apply-fixtures-and-long-matrix-deadlines--2026-10-25)
+records shared-state isolation and bounded test-only timeout exceptions.
 
 ## 5. Current State & Next Steps
 
