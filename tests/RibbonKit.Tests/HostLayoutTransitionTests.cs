@@ -333,6 +333,10 @@ public sealed class HostLayoutTransitionTests
         try
         {
             window.Show(); Settle(window);
+            // InitializeComponent raises the sample's checked motion selectors.
+            // Apply the test policy afterwards, including on reduced-motion runners.
+            RibbonAnimation.GlobalLevel = RibbonAnimationLevel.Subtle;
+            RibbonAnimation.RespectSystemReduceMotion = false;
             string text = new TextRange(window.DocumentEditor.Document.ContentStart, window.DocumentEditor.Document.ContentEnd).Text;
             RibbonLayoutTransitionEventArgs? starting = null;
             window.MainRibbon.LayoutTransitionStarting += (_, e) => starting = e;

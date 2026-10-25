@@ -132,10 +132,16 @@ dotnet pack src/RibbonKit/RibbonKit.csproj --no-build --configuration Release --
 CI retains the full build/test/package gate on pushes and pull requests to `main`,
 and supports a manual run through Actions → CI → Run workflow once enabled and
 the dispatch-enabled workflow is present on `main`. A preview pull request to
-`main` can exercise the updated workflow before merging it. CI
-runs all four test projects in separate sequential processes, with local selections
-and capture/update flags explicitly cleared. A failed project fails the job while
-the other projects still run after a successful build. The `test-results` artifact
+`main` can exercise the updated workflow before merging it. During the 1.1 CI
+repair, the four `Verify repaired ...` steps first exercise the previously failing
+runtime/Writer cases, the first failing visual scene and the native-gallery
+consumer matrix. All four focused results are collected; zero matched tests is an
+error. A failure stops the longer full phase. Only when all four pass does CI run
+all four unfiltered test projects in separate sequential processes, with local
+selections and capture/update flags explicitly cleared. A full-project failure
+still lets the other full projects report, while failing the job. Focused results
+and full results are separate scopes; duplicated checks are not additional unique
+coverage. The `test-results` artifact
 retains each project's TRX report; failed visual runs also upload
 `visual-snapshot-diagnostics`. Packaging requires all earlier steps to succeed.
 Report focused tests, the full suite, and live acceptance separately. On a visual

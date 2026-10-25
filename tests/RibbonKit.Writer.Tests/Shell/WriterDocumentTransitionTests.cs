@@ -69,6 +69,13 @@ public sealed partial class MainWindowIntegrationTests
                     {
                         SelectWriterDensity(fixture, density);
                         await PumpAsync();
+                        // Dispatcher/composition scheduling on a hosted runner can exceed 300 ms.
+                        var completionWait = System.Diagnostics.Stopwatch.StartNew();
+                        while (ending is null && completionWait.Elapsed < TimeSpan.FromSeconds(5))
+                        {
+                            await Task.Delay(20);
+                            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+                        }
                         Assert.False(opener.IsDropDownOpen);
                         Assert.Equal(density, fixture.Ribbon.Density);
                         Assert.True(ending?.Outcome == RibbonLayoutTransitionOutcome.Completed,

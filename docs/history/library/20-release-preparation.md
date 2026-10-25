@@ -49,6 +49,34 @@ artifact remains. The workflow uses read-only repository permissions.
 Checkout 7.0.1, setup-dotnet 6.0.0 and upload-artifact 7.0.2 were checked against
 their official manifests for Node 24 support. The old Node deprecation warning
 does not establish the cause of the failing Test step. Actionlint 1.7.12 and local
-PowerShell parsing pass; actual hosted execution is a separate pending result in
-A9. Do not substitute syntax checks for a passing GitHub run or weaken snapshots
+PowerShell parsing pass; actual hosted execution is tracked separately in A9.
+Do not substitute syntax checks for a passing GitHub run or weaken snapshots
 without inspecting failure diagnostics.
+
+#### Hosted WPF fixture assumptions and early repair checks — 2026-10-25
+
+The first preview CI run completed all four projects and exposed assumptions
+hidden by the local desktop: a connected UIA root, an empty shared Application
+resource scope, expanded window tracking width, native popup room and a sample
+motion policy initialized before its XAML checked handlers. Correct those fixture
+preconditions explicitly. Writer density cases wait for the real End event, while
+the 40-case dialog/theme/palette matrix keeps all assertions with its own 60-second bound
+and phase timings; the shared STA timeout is unchanged. No product source changed.
+
+Simulated root DPI did not isolate snapshot glyph/native-window paint from the
+desktop DPI. An owned 96-DPI process reproduced the downloaded first CI PNG
+byte-for-byte. The capture STA now scopes/restores its own canonical 96-DPI
+awareness context while retaining every requested render scale, font policy and
+pixel threshold. After actual/diff inspection, the 195 references were recalibrated;
+all 195 images then matched byte-for-byte across 96/120-DPI process contexts and
+each scene's repeated capture. Original references and diagnostics are retained.
+This does not claim native display or mixed-monitor acceptance.
+
+CI now frontloads four focused repair steps and records each result even if a
+sibling fails. Every focus selection rejects zero matches. Their success gate
+precedes all four original unfiltered projects; a failed prefix avoids the longer
+phase while keeping CI red and uploading diagnostics. Once the full phase starts,
+its projects still report after sibling failures. Step-scoped selection variables
+cannot restrict the full phase. Focused/full reports stay separate and duplicate
+execution must not be counted as new unique coverage. Current passing local scopes
+and the required hosted rerun belong to A2/A3/A9 in the active acceptance plan.

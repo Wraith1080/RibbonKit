@@ -217,6 +217,13 @@ App-resolved with WriterPrintSetupDialog and isolated preview/print submission. 
 
 Retained harness exception: the default remains ten seconds, with explicit allowances for combined window and theme/DPI matrices. Writer tests now share one serialized STA dispatcher to avoid WPF's cached WindowChrome crossing threads, and nested STA fixtures reuse it. See the 2026-10-02 update in the evidence record.
 
+2026-10-25 CI follow-up: the 40-case dialog/theme/palette matrix has its own 60-second
+allowance and phase timings after exceeding ten seconds on the hosted runner.
+Density-menu tests wait for the real transition End event with a five-second
+bound instead of assuming a 300-ms dispatcher wait is sufficient. All assertions
+and the shared ten-second default remain; these are test-only exceptions, with
+no Writer/runtime timing workaround. [Focused verification and hosted limits](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#hosted-ci-failure-and-focused-corrections--2026-10-25).
+
 [Recorded evidence](history/writer-friction-evidence.md#rkwf-008--the-single-real-window-sta-integration-case-needs-a-parallel-load-timeout-allowance).
 
 ### RKWF-009 — Initial paper margins need a post-Loaded invariant

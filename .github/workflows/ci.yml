@@ -36,10 +36,70 @@ jobs:
         id: build
         run: dotnet build RibbonKit.sln --no-restore --configuration Release
 
-      # Keep WPF projects sequential in fresh processes. A failed project still
-      # fails the job, but does not hide the remaining projects' results.
-      - name: Test runtime
+      # Check the groups repaired after run 40173249374 before the long full gate.
+      # Collect every repair result, even if another repaired group fails.
+      - name: Verify repaired visual scene
+        id: repair_visual
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          RIBBONKIT_VISUAL_SCENES: office2007-default-100
+        run: >-
+          dotnet test tests/RibbonKit.VisualTests/RibbonKit.VisualTests.csproj
+          --no-build --configuration Release --verbosity normal
+          --filter "FullyQualifiedName~VisualSnapshotTests.Every_approved_office_theme_variant_and_dpi_matches_its_snapshot"
+          --logger "trx;LogFileName=repair-visual.trx"
+          --results-directory TestResults/ci/repair-visual
+          -- RunConfiguration.TreatNoTestsAsError=true
+
+      - name: Verify repaired runtime checks
+        id: repair_runtime
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: >-
+          dotnet test tests/RibbonKit.Tests/RibbonKit.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --filter "FullyQualifiedName~BackstageAutomationTests.Page_content_keeps_native_actions_selection_bindings_and_geometry|FullyQualifiedName~WriterConsumerFrictionTests.In_ribbon_gallery_popup_uses_system_window_background_without_theme_tokens|FullyQualifiedName~TouchModeShowcaseTests.Touch_commands_are_consistent_and_the_body_fits_its_content|FullyQualifiedName~InRibbonGalleryPopupTests.Wide_popup_card_anchors_to_the_gallery_upper_leading_corner|FullyQualifiedName~HostLayoutTransitionTests.Main_window_document_uses_shared_progress_for_mode_density_and_both_Qat_routes"
+          --logger "trx;LogFileName=repair-runtime.trx"
+          --results-directory TestResults/ci/repair-runtime
+          -- RunConfiguration.TreatNoTestsAsError=true
+
+      - name: Verify repaired Writer checks
+        id: repair_writer
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: >-
+          dotnet test tests/RibbonKit.Writer.Tests/RibbonKit.Writer.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --filter "FullyQualifiedName~WriterDensityMenuKeepsSharedMotionForMouseTouchRoundTrips|FullyQualifiedName~InsertDialogsResolveThemeChangesIncludingCalendarPopupAndFormatItems"
+          --logger "trx;LogFileName=repair-writer.trx"
+          --results-directory TestResults/ci/repair-writer
+          -- RunConfiguration.TreatNoTestsAsError=true
+
+      - name: Verify repaired gallery consumer
+        id: repair_gallery
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          RIBBONKIT_PORTABILITY_SCOPE: NativeGalleryPopup
+        run: >-
+          dotnet test tests/RibbonKit.Portability.Tests/RibbonKit.Portability.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --filter "FullyQualifiedName~Theme_default_and_local_value_follow_wpf_precedence"
+          --logger "trx;LogFileName=repair-gallery.trx"
+          --results-directory TestResults/ci/repair-gallery
+          -- RunConfiguration.TreatNoTestsAsError=true
+
+      - name: Continue after all repaired groups pass
+        id: repair_gate
+        if: >-
+          ${{ !cancelled()
+              && steps.repair_visual.outcome == 'success'
+              && steps.repair_runtime.outcome == 'success'
+              && steps.repair_writer.outcome == 'success'
+              && steps.repair_gallery.outcome == 'success' }}
+        run: Write-Host "All repaired groups passed; continuing with full release validation."
+
+      # Full projects remain unfiltered. Once this gate starts, a failed project
+      # still fails the job while the remaining projects report their results.
+      - name: Test runtime
+        if: ${{ !cancelled() && steps.repair_gate.outcome == 'success' }}
         run: >-
           dotnet test tests/RibbonKit.Tests/RibbonKit.Tests.csproj
           --no-build --configuration Release --verbosity normal
@@ -47,7 +107,7 @@ jobs:
           --results-directory TestResults/ci/runtime
 
       - name: Test Writer
-        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.repair_gate.outcome == 'success' }}
         run: >-
           dotnet test tests/RibbonKit.Writer.Tests/RibbonKit.Writer.Tests.csproj
           --no-build --configuration Release --verbosity normal
@@ -55,7 +115,7 @@ jobs:
           --results-directory TestResults/ci/writer
 
       - name: Test visual snapshots
-        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.repair_gate.outcome == 'success' }}
         run: >-
           dotnet test tests/RibbonKit.VisualTests/RibbonKit.VisualTests.csproj
           --no-build --configuration Release --verbosity normal
@@ -63,7 +123,7 @@ jobs:
           --results-directory TestResults/ci/visual
 
       - name: Test independent consumer
-        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.repair_gate.outcome == 'success' }}
         run: >-
           dotnet test tests/RibbonKit.Portability.Tests/RibbonKit.Portability.Tests.csproj
           --no-build --configuration Release --verbosity normal

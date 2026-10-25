@@ -180,6 +180,18 @@ public sealed class BackstageAutomationTests
             Assert.IsAssignableFrom<IInvokeProvider>(peer.GetPattern(PatternInterface.Invoke)).Invoke(); Layout();
             Assert.Equal(1, count); Assert.False(ribbon.IsBackstageOpen);
             ribbon.IsBackstageOpen = true; Layout();
+            // ProviderFromPeer needs a native automation root. A desktop UIA client
+            // may create it implicitly; a hosted runner has no such client.
+            var source = Assert.IsType<HwndSource>(PresentationSource.FromVisual(stage));
+            IntPtr handle = source.Handle;
+            var connected = Task.Run(() => AutomationElement.FromHandle(handle).Current.Name);
+            var connectWait = Stopwatch.StartNew();
+            while (!connected.IsCompleted && connectWait.Elapsed < TimeSpan.FromSeconds(10))
+            {
+                Sta.Drain(); Thread.Sleep(1);
+            }
+            Assert.True(connected.IsCompleted, "Owned native automation root did not connect.");
+            connected.GetAwaiter().GetResult();
             state.Enabled = false; state.Title = "Renamed document"; Layout();
             Assert.False(Find("page-action").IsEnabled()); Assert.Equal("Renamed document", Find("page-action").GetName());
             state.Enabled = true; state.Alignment = HorizontalAlignment.Right; Layout();

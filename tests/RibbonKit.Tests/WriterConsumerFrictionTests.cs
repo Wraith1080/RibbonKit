@@ -220,6 +220,8 @@ public sealed class WriterConsumerFrictionTests
     [Fact]
     public void In_ribbon_gallery_popup_uses_system_window_background_without_theme_tokens() => Sta.Run(() =>
     {
+        // Other cases on the shared STA may already have created/themed Application.
+        Sta.UseApplication();
         var gallery = new InRibbonGallery
         {
             Width = 240d,
@@ -234,8 +236,7 @@ public sealed class WriterConsumerFrictionTests
             Sta.Drain(DispatcherPriority.Render);
             gallery.UpdateLayout();
 
-            // This STA owns no WPF Application and the window deliberately supplies no RibbonKit
-            // token dictionary, reproducing a tokenless consumer without disturbing the Showcase.
+            // Neither the fresh application resources nor this window supplies theme tokens.
             Assert.Null(gallery.TryFindResource(RibbonContentBackgroundKey));
 
             var popupHost = Assert.IsType<Border>(
@@ -251,6 +252,7 @@ public sealed class WriterConsumerFrictionTests
         finally
         {
             window.Close();
+            Sta.ResetApplication();
         }
     });
 

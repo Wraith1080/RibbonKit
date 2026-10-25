@@ -2,6 +2,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -1829,13 +1830,23 @@ public sealed class VisualSnapshotTests
         // The full matrix renders every scene twice and now includes real caption windows.
         private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(60);
 
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern IntPtr SetThreadDpiAwarenessContext(IntPtr dpiContext);
+
         public static void Run(Action body)
         {
             ExceptionDispatchInfo? failure = null;
             var thread = new Thread(() =>
             {
+                IntPtr previousDpi = IntPtr.Zero;
                 try
                 {
+                    // Canonicalize only this owned capture thread. Otherwise native window
+                    // metrics and pixel-fitted glyphs retain the machine's desktop DPI,
+                    // despite SetRootDpi selecting an explicit snapshot scale.
+                    previousDpi = SetThreadDpiAwarenessContext(new IntPtr(-1));
+                    if (previousDpi == IntPtr.Zero)
+                        throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
                     body();
                 }
                 catch (Exception exception)
@@ -1845,6 +1856,7 @@ public sealed class VisualSnapshotTests
                 finally
                 {
                     Dispatcher.CurrentDispatcher.InvokeShutdown();
+                    if (previousDpi != IntPtr.Zero) SetThreadDpiAwarenessContext(previousDpi);
                 }
             });
 
