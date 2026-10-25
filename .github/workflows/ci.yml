@@ -36,8 +36,21 @@ jobs:
         id: build
         run: dotnet build RibbonKit.sln --no-restore --configuration Release
 
-      # Check the groups repaired after run 40173249374 before the long full gate.
+      # Check repaired groups before the long full gate, newest failure first.
       # Collect every repair result, even if another repaired group fails.
+      - name: Verify repaired QAT gallery consumer
+        id: repair_qat_gallery
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          RIBBONKIT_PORTABILITY_SCOPE: GalleryQuickAccess
+        run: >-
+          dotnet test tests/RibbonKit.Portability.Tests/RibbonKit.Portability.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --filter "FullyQualifiedName~Theme_default_and_local_value_follow_wpf_precedence"
+          --logger "trx;LogFileName=repair-qat-gallery.trx"
+          --results-directory TestResults/ci/repair-qat-gallery
+          -- RunConfiguration.TreatNoTestsAsError=true
+
       - name: Verify repaired visual scene
         id: repair_visual
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
@@ -90,6 +103,7 @@ jobs:
         id: repair_gate
         if: >-
           ${{ !cancelled()
+              && steps.repair_qat_gallery.outcome == 'success'
               && steps.repair_visual.outcome == 'success'
               && steps.repair_runtime.outcome == 'success'
               && steps.repair_writer.outcome == 'success'

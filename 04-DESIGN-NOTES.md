@@ -1136,6 +1136,8 @@ technical evidence warrants them; preserve existing dated records.
 ### 3.282 Shared 1.1 version and API baseline promotion — 2026-10-25
 
 [Decision, pitfalls and evidence](docs/history/library/20-release-preparation.md#3282-shared-11-version-and-api-baseline-promotion--2026-10-25).
+[QAT live/frozen raster-position check](docs/history/library/20-release-preparation.md#qat-gallery-raster-position-assertions--2026-10-25)
+records the bounded one-pixel test allowance and early CI gate.
 
 ## 5. Current State & Next Steps
 

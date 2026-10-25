@@ -135,10 +135,13 @@ internal static class GalleryQuickAccessPortabilityChecks
                 VisualTreeHelper.SetRootDpi(window, new DpiScale(scale, scale)); source.SelectedIndex = 5; Layout(window);
                 var strip = Part<ScrollViewer>(source, "PART_ScrollViewer"); var live = strip.Content;
                 var before = RenderStrip(strip, window, scale);
+                Rect beforeStripBounds = Bounds(strip, window);
                 Assert.True(RedBounds(before).Width > 50, $"{theme}/{density}/{flow}/{scale}/{placement}: visible={source.IsVisible}, selected={source.SelectedIndex}, viewport={strip.RenderSize}, offset={strip.VerticalOffset}, red={RedBounds(before)}");
                 proxy.IsDropDownOpen = true; Layout(window); Assert.True(proxy.IsDropDownOpen);
                 var during = RenderStrip(strip, window, scale);
-                Assert.Equal(RedBounds(before), RedBounds(during)); Assert.Same(choices[5], source.SelectedItem);
+                AssertStripPreserved(before, during, beforeStripBounds, Bounds(strip, window),
+                    $"{theme}-{density}-{flow}-{scale}-{placement}");
+                Assert.Same(choices[5], source.SelectedItem);
                 if (flow == FlowDirection.RightToLeft && scale == 2 && placement == RibbonQuickAccessPosition.TitleBar)
                 {
                     Save(before, $"{theme}-{density}-visible-strip-before"); Save(during, $"{theme}-{density}-visible-strip-qat-open");
@@ -151,11 +154,13 @@ internal static class GalleryQuickAccessPortabilityChecks
             ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TabRow; ribbon.QuickAccessMaxWidth = 55; ribbon.AddToQuickAccess(source); Layout(window);
             var sourceStrip = Part<ScrollViewer>(source, "PART_ScrollViewer"); var sourcePresenter = sourceStrip.Content;
             var original = RenderStrip(sourceStrip, window, 2);
+            Rect originalStripBounds = Bounds(sourceStrip, window);
             var toolbar = Part<RibbonQuickAccessToolBar>(Part<RibbonTabControl>(ribbon, "TabControlHost"), "QatTabRowHost");
             var overflow = Part<ToggleButton>(toolbar, "PART_OverflowButton"); overflow.IsChecked = true; Layout(window);
             var entry = Assert.Single(Part<ItemsControl>(toolbar, "PART_OverflowHost").Items.OfType<RibbonDropDownButton>());
             entry.IsDropDownOpen = true; Layout(window);
-            Assert.Equal(RedBounds(original), RedBounds(RenderStrip(sourceStrip, window, 2)));
+            AssertStripPreserved(original, RenderStrip(sourceStrip, window, 2), originalStripBounds,
+                Bounds(sourceStrip, window), "overflow");
             source.SelectedItem = choices[^1]; overflow.IsChecked = false; Layout(window);
             Assert.Same(sourcePresenter, sourceStrip.Content); Assert.Same(choices[^1], source.SelectedItem);
             var last = Assert.IsType<RibbonGalleryItem>(source.ItemContainerGenerator.ContainerFromItem(choices[^1]));
@@ -163,6 +168,29 @@ internal static class GalleryQuickAccessPortabilityChecks
             Assert.True(bounds.Top >= -1 && bounds.Bottom <= sourceStrip.ActualHeight + 1);
         }
         finally { window.Close(); Layout(window); }
+    }
+
+    private static void AssertStripPreserved(BitmapSource before, BitmapSource during,
+        Rect beforeViewport, Rect duringViewport, string scenario)
+    {
+        Rect beforeRed = RedBounds(before), duringRed = RedBounds(during);
+        if (beforeRed != duringRed)
+        {
+            Save(before, scenario + "-before"); Save(during, scenario + "-open");
+            Console.WriteLine($"Gallery strip {scenario}: red before={beforeRed}, open={duringRed}; " +
+                $"viewport before={beforeViewport}, open={duringViewport}");
+        }
+        Assert.True(beforeViewport == duringViewport,
+            $"{scenario}: viewport moved from {beforeViewport} to {duringViewport}");
+        Assert.Equal(before.PixelWidth, during.PixelWidth); Assert.Equal(before.PixelHeight, during.PixelHeight);
+        Assert.False(beforeRed.IsEmpty, $"{scenario}: source swatch is missing");
+        Assert.False(duringRed.IsEmpty, $"{scenario}: frozen swatch is missing");
+        Assert.Equal(beforeRed.Size, duringRed.Size);
+        // Live visuals and the frozen DrawingImage can snap their identical
+        // logical geometry to adjacent pixels at fractional DPI. Keep size and
+        // layout exact; allow at most one output-bitmap pixel of translation.
+        Assert.True(Math.Abs(beforeRed.X - duringRed.X) <= 1 && Math.Abs(beforeRed.Y - duringRed.Y) <= 1,
+            $"{scenario}: swatch moved from {beforeRed} to {duringRed}");
     }
 
     private static BitmapSource RenderStrip(FrameworkElement element, Window window, double scale)

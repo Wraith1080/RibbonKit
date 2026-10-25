@@ -80,3 +80,22 @@ its projects still report after sibling failures. Step-scoped selection variable
 cannot restrict the full phase. Focused/full reports stay separate and duplicate
 execution must not be counted as new unique coverage. Current passing local scopes
 and the required hosted rerun belong to A2/A3/A9 in the active acceptance plan.
+
+#### QAT gallery raster-position assertions — 2026-10-25
+
+The hosted consumer passed its repaired native-gallery origin matrix, then failed
+the visible source strip's exact raster bounds during QAT borrowing. An owned
+96-DPI process reproduced `(105,10,72,28)` versus `(105,9,72,28)` at simulated
+125%: the viewport's logical bounds and the painted size were identical. The
+ordinary local process passed the stricter comparison. Before/open captures
+confirm adjacent-pixel snapping between live visuals and the frozen DrawingImage.
+
+Keep logical viewport bounds, bitmap dimensions and swatch size exact, but allow
+one output-bitmap pixel of painted translation in this live/frozen comparison.
+Apply the same rule to nested overflow, retain selection/presenter-return checks,
+and log matrix context with optional before/open images. This is a test-only
+allowance; do not generalize it to snapshot thresholds, popup anchors or layout.
+The 96-DPI visible-strip/input/ScreenTip scope passes; no product source changes.
+CI places the complete GalleryQuickAccess scope first and adds it to the repair
+success gate. The full consumer remains mandatory; current results and remaining
+hosted validation belong to the active plan.
