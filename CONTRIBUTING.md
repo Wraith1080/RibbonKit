@@ -13,13 +13,14 @@ discussion of additive post-v1 features.
 
 ## Public API compatibility
 
-`src/RibbonKit/PublicAPI.Shipped.txt` is the frozen v1 baseline. The
+`src/RibbonKit/PublicAPI.Shipped.txt` contains the frozen 1.0 and 1.1 API contracts. The
 `Microsoft.CodeAnalysis.PublicApiAnalyzers` checks run for all runtime target frameworks and fail the
 build when a public symbol is added, removed, or changes nullability without an explicit baseline
 update.
 
 - Compatible, intentional additions go in `src/RibbonKit/PublicAPI.Unshipped.txt` and require API-review justification in the pull request.
 - Do not edit `PublicAPI.Shipped.txt` to hide a breaking change. Removals and signature/nullability changes require a versioning decision.
+- Release preparation promotes reviewed compatible additions from Unshipped into Shipped while preserving every earlier entry. New work starts in Unshipped again.
 - Public members require XML documentation; missing or broken `cref` references fail the runtime build.
 
 ## Workflow
@@ -112,7 +113,8 @@ Use `tests/RibbonKit.Portability.Tests/RibbonKit.Portability.Tests.csproj` for
 consumer checks that must load only RibbonKit resources, without Showcase.
 Confirm the filter discovered and executed the intended tests; zero matches is not a pass.
 
-The full validation sequence mirrors `.github/workflows/ci.yml`:
+The local full validation sequence covers the same build/test/package gates as
+`.github/workflows/ci.yml`:
 
 ```powershell
 dotnet restore RibbonKit.sln
@@ -128,7 +130,32 @@ dotnet pack src/RibbonKit/RibbonKit.csproj --no-build --configuration Release --
 ```
 
 CI retains the full build/test/package gate on pushes and pull requests to `main`,
-with local selections and capture/update flags explicitly cleared.
+and supports a manual run through Actions → CI → Run workflow once enabled and
+the dispatch-enabled workflow is present on `main`. A preview pull request to
+`main` can exercise the updated workflow before merging it. During the 1.1 CI
+repair, the seven `Verify repaired ...` steps first exercise the overflow consumer
+(including its preceding Crystal tint state and screen-space assertion checks), the runtime cases
+(including text-motion completion, first-theme cleanup and the long focus-contrast
+matrix), the Simplified customization consumer (minimum-width/DPI geometry), the QAT-gallery
+consumer, the first failing visual scene, Writer cases and the native-gallery
+consumer matrix. All seven focused results are collected; zero matched tests is an
+error. A failure stops
+the longer full phase. Only when all seven pass does CI run
+all four unfiltered test projects in separate sequential processes, with local
+selections and capture/update flags explicitly cleared. A full-project failure
+still lets the other full projects report, while failing the job. Focused results
+and full results are separate scopes; duplicated checks are not additional unique
+coverage. The `test-results` artifact
+retains each project's TRX report; failed visual runs also upload
+`visual-snapshot-diagnostics`. Packaging requires all earlier steps to succeed.
+
+The unfiltered consumer has a bounded 60-minute allowance because the hosted
+run exceeded 30 minutes while still completing its large matrices. The focused
+112-case Simplified customization matrix has ten minutes: its recorded hosted
+pace projects beyond the usual five-minute focus limit. Other focused and
+continuation allowances are unchanged; assertions and automatic failure handling
+remain in force.
+
 Report focused tests, the full suite, and live acceptance separately. On a visual
 mismatch, inspect the failure artifact's actual/diff PNGs before changing approvals.
 

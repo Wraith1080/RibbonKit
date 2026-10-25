@@ -159,7 +159,8 @@ internal static class ComboBoxQuickAccessPortabilityChecks
             Assert.Same(ribbon.QuickAccessItems[^1], Ribbon.GetQuickAccessOverflowItem(entry));
             var opener = Part<ToggleButton>(entry, "PART_Toggle");
             Assert.True(opener.Focus(), $"visible={opener.IsVisible}, enabled={opener.IsEnabled}, focusable={opener.Focusable}, render={opener.RenderSize}, parent={entry.Parent}, popup={Part<Popup>(toolbar, "PART_OverflowPopup").IsOpen}, windowActive={window.IsActive}");
-            Press(Key.Down); Layout(window); Assert.True(entry.IsDropDownOpen);
+            // Overflow uses Up/Down for sibling rows; Forward enters its submenu.
+            Press(Key.Right); Layout(window); Assert.True(entry.IsDropDownOpen);
             var rows = entry.Items.OfType<Button>().ToArray();
             Assert.Same(rows[3], Keyboard.FocusedElement); // Start at the current source choice.
             Hover(rows[4]); Layout(window);
@@ -173,17 +174,22 @@ internal static class ComboBoxQuickAccessPortabilityChecks
             Press(Key.End); Layout(window); Assert.Same(rows[^1], Keyboard.FocusedElement);
             var viewer = Part<ScrollViewer>(entry, "PART_PopupScrollViewer"); Assert.True(viewer.VerticalOffset > 0);
             Press(Key.Enter); Layout(window); Assert.Equal(24, combo.SelectedIndex); Assert.False(entry.IsDropDownOpen);
-            Assert.Same(opener, Keyboard.FocusedElement);
-            Press(Key.Down); Layout(window); Press(Key.Escape); Layout(window);
+            Assert.False(Part<Popup>(toolbar, "PART_OverflowPopup").IsOpen);
+            Assert.Same(overflowButton, Keyboard.FocusedElement);
+            overflowButton.IsChecked = true; Layout(window); Assert.True(opener.Focus());
+            Press(Key.Right); Layout(window); Press(Key.Escape); Layout(window);
             Assert.False(entry.IsDropDownOpen); Assert.Same(opener, Keyboard.FocusedElement);
-            Press(Key.Up); Layout(window); Assert.Same(entry.Items[^1], Keyboard.FocusedElement);
+            Press(Key.Right); Layout(window); Press(Key.End); Layout(window); Assert.Same(entry.Items[^1], Keyboard.FocusedElement);
             Press(Key.Escape); Layout(window);
             combo.SelectedIndex = 0; // A disabled selection cannot become the active choice.
-            Press(Key.Down); Layout(window); Assert.Same(entry.Items[1], Keyboard.FocusedElement);
+            Press(Key.Right); Layout(window); Assert.Same(entry.Items[1], Keyboard.FocusedElement);
             Press(Key.Escape); Layout(window); combo.SelectedIndex = 1;
-            Press(Key.Down); Layout(window); Press(Key.Down); Layout(window); Press(Key.Space); Layout(window);
+            Press(Key.Right); Layout(window); Press(Key.Down); Layout(window); Press(Key.Space); Layout(window);
             Assert.False(entry.IsDropDownOpen); Assert.Equal(2, combo.SelectedIndex);
-            Press(Key.Down); Layout(window); Assert.True(entry.IsDropDownOpen);
+            Assert.False(Part<Popup>(toolbar, "PART_OverflowPopup").IsOpen);
+            Assert.Same(overflowButton, Keyboard.FocusedElement);
+            overflowButton.IsChecked = true; Layout(window); Assert.True(opener.Focus());
+            Press(Key.Right); Layout(window); Assert.True(entry.IsDropDownOpen);
             Part<ToggleButton>(toolbar, "PART_OverflowButton").IsChecked = false; Layout(window);
             Assert.False(entry.IsDropDownOpen);
             Assert.Equal(25, combo.Items.Count);
@@ -253,8 +259,18 @@ internal static class ComboBoxQuickAccessPortabilityChecks
                     Assert.DoesNotContain(AdornerLayer.GetAdornerLayer(row)?.GetAdorners(row) ?? Array.Empty<Adorner>(), a => a.GetType().Name == "KeyTipAdorner");
                 Press(Key.Down); Layout(window); Assert.Same(rows[1], Keyboard.FocusedElement);
                 Press(Key.Enter); Layout(window); Assert.Equal(1, combo.SelectedIndex); Assert.False(copy.IsDropDownOpen);
+                if (placement == "Overflow")
+                {
+                    var overflowButton = Part<ToggleButton>(toolbar, "PART_OverflowButton");
+                    Assert.False(Part<Popup>(toolbar, "PART_OverflowPopup").IsOpen);
+                    Assert.Same(overflowButton, Keyboard.FocusedElement);
+                    overflowButton.IsChecked = true; Layout(window);
+                    Assert.True(Part<ToggleButton>(copy, "PART_Toggle").Focus());
+                }
                 Assert.Same(Part<ToggleButton>(copy, "PART_Toggle"), Keyboard.FocusedElement);
-                Press(Key.Down); Layout(window); Assert.True(copy.IsDropDownOpen);
+                Press(placement == "Overflow"
+                    ? flow == FlowDirection.LeftToRight ? Key.Right : Key.Left : Key.Down);
+                Layout(window); Assert.True(copy.IsDropDownOpen);
                 Press(Key.Escape); Layout(window); Assert.False(copy.IsDropDownOpen); Assert.Equal(1, combo.SelectedIndex);
                 if (placement == "Overflow") Part<ToggleButton>(toolbar, "PART_OverflowButton").IsChecked = false;
                 Layout(window);

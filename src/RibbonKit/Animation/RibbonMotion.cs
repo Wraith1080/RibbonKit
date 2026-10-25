@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
 
 namespace RibbonKit.Animation;
 
@@ -760,7 +761,17 @@ public static class RibbonMotion
             scrollViewer.SetValue(AnimatedVerticalOffsetProperty, targetOffset);
             scrollViewer.BeginAnimation(AnimatedVerticalOffsetProperty, null);
             scrollViewer.ScrollToVerticalOffset(targetOffset);
-            RefreshSettledText(scrollViewer);
+            // ScrollToVerticalOffset queues layout work. Repainting inline can
+            // capture the penultimate offset and leave those moving glyphs cached.
+            scrollViewer.Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, new Action(() =>
+            {
+                // A newer animation or direct scroll owns its own presentation.
+                if (DependencyPropertyHelper.GetValueSource(scrollViewer, AnimatedVerticalOffsetProperty).IsAnimated
+                    || Math.Abs(GetAnimatedVerticalOffset(scrollViewer) - targetOffset) > 0.01
+                    || Math.Abs(scrollViewer.VerticalOffset - Math.Clamp(targetOffset, 0d, scrollViewer.ScrollableHeight)) > 0.01)
+                    return;
+                RefreshSettledText(scrollViewer);
+            }));
         };
         scrollViewer.BeginAnimation(AnimatedVerticalOffsetProperty, anim);
     }

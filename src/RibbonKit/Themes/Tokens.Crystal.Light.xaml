@@ -1106,4 +1106,6 @@
     <!-- Optional contrast halo, behind the unchanged full-color QAT icon. -->
     <DropShadowEffect x:Key="RibbonKit.Effects.Qat.IconGlow" Color="#FFFFFF"
                       BlurRadius="3" ShadowDepth="0" Opacity="1" RenderingBias="Quality" />
+    <sys:Boolean x:Key="RibbonKit.Metrics.Ribbon.SupportsGlassFlyouts">false</sys:Boolean>
+    <sys:Double x:Key="RibbonKit.Metrics.Ribbon.FlyoutGlassOpacity">1</sys:Double>
 </ResourceDictionary>

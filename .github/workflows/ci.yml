@@ -1,20 +1,29 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: windows-latest
+    env:
+      RIBBONKIT_VISUAL_SCENES: ''
+      RIBBONKIT_PORTABILITY_SCOPE: ''
+      RIBBONKIT_CAPTURE_SNAPSHOTS: ''
+      RIBBONKIT_UPDATE_SNAPSHOTS: ''
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6.0.0
         with:
           dotnet-version: |
             8.0.x
@@ -24,19 +33,156 @@ jobs:
         run: dotnet restore RibbonKit.sln
 
       - name: Build
+        id: build
         run: dotnet build RibbonKit.sln --no-restore --configuration Release
 
-      - name: Test
+      # Check repaired groups before the long full gate, newest failure first.
+      # Collect every repair result, even if another repaired group fails.
+      - name: Verify repaired overflow consumer
+        id: repair_overflow
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         env:
-          RIBBONKIT_VISUAL_SCENES: ''
-          RIBBONKIT_PORTABILITY_SCOPE: ''
-          RIBBONKIT_CAPTURE_SNAPSHOTS: ''
-          RIBBONKIT_UPDATE_SNAPSHOTS: ''
-        run: dotnet test RibbonKit.sln --no-build --configuration Release --verbosity normal
+          RIBBONKIT_PORTABILITY_SCOPE: OverflowMenusAfterTint
+        run: >-
+          dotnet test tests/RibbonKit.Portability.Tests/RibbonKit.Portability.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --filter "FullyQualifiedName~Theme_default_and_local_value_follow_wpf_precedence|FullyQualifiedName~OverflowPopupPlacementTests"
+          --logger "trx;LogFileName=repair-overflow.trx"
+          --results-directory TestResults/ci/repair-overflow
+          -- RunConfiguration.TreatNoTestsAsError=true
+
+      - name: Verify repaired runtime checks
+        id: repair_runtime
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: >-
+          dotnet test tests/RibbonKit.Tests/RibbonKit.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --filter "FullyQualifiedName~BackstageAutomationTests.Page_content_keeps_native_actions_selection_bindings_and_geometry|FullyQualifiedName~WriterConsumerFrictionTests.In_ribbon_gallery_popup_uses_system_window_background_without_theme_tokens|FullyQualifiedName~TouchModeShowcaseTests.Touch_commands_are_consistent_and_the_body_fits_its_content|FullyQualifiedName~InRibbonGalleryPopupTests.Wide_popup_card_anchors_to_the_gallery_upper_leading_corner|FullyQualifiedName~HostLayoutTransitionTests.Main_window_document_uses_shared_progress_for_mode_density_and_both_Qat_routes|FullyQualifiedName~CrystalThemeManagerTests.Crystal_light_switches_with_office_without_flattening_glass_tokens|FullyQualifiedName~KeyboardFocusInteractionTests.Native_focus_remains_visible_on_accent_rails_and_colored_headers|FullyQualifiedName~TextMotionCompletionTests"
+          --logger "trx;LogFileName=repair-runtime.trx"
+          --results-directory TestResults/ci/repair-runtime
+          -- RunConfiguration.TreatNoTestsAsError=true
+
+      - name: Verify repaired Simplified customization consumer
+        id: repair_simplified_customization
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          RIBBONKIT_PORTABILITY_SCOPE: SimplifiedCustomization
+        run: >-
+          dotnet test tests/RibbonKit.Portability.Tests/RibbonKit.Portability.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --filter "FullyQualifiedName~Theme_default_and_local_value_follow_wpf_precedence"
+          --logger "trx;LogFileName=repair-simplified-customization.trx"
+          --results-directory TestResults/ci/repair-simplified-customization
+          -- RunConfiguration.TreatNoTestsAsError=true
+
+      - name: Verify repaired QAT gallery consumer
+        id: repair_qat_gallery
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          RIBBONKIT_PORTABILITY_SCOPE: GalleryQuickAccess
+        run: >-
+          dotnet test tests/RibbonKit.Portability.Tests/RibbonKit.Portability.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --filter "FullyQualifiedName~Theme_default_and_local_value_follow_wpf_precedence"
+          --logger "trx;LogFileName=repair-qat-gallery.trx"
+          --results-directory TestResults/ci/repair-qat-gallery
+          -- RunConfiguration.TreatNoTestsAsError=true
+
+      - name: Verify repaired visual scene
+        id: repair_visual
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          RIBBONKIT_VISUAL_SCENES: office2007-default-100
+        run: >-
+          dotnet test tests/RibbonKit.VisualTests/RibbonKit.VisualTests.csproj
+          --no-build --configuration Release --verbosity normal
+          --filter "FullyQualifiedName~VisualSnapshotTests.Every_approved_office_theme_variant_and_dpi_matches_its_snapshot"
+          --logger "trx;LogFileName=repair-visual.trx"
+          --results-directory TestResults/ci/repair-visual
+          -- RunConfiguration.TreatNoTestsAsError=true
+
+      - name: Verify repaired Writer checks
+        id: repair_writer
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: >-
+          dotnet test tests/RibbonKit.Writer.Tests/RibbonKit.Writer.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --filter "FullyQualifiedName~WriterDensityMenuKeepsSharedMotionForMouseTouchRoundTrips|FullyQualifiedName~InsertDialogsResolveThemeChangesIncludingCalendarPopupAndFormatItems"
+          --logger "trx;LogFileName=repair-writer.trx"
+          --results-directory TestResults/ci/repair-writer
+          -- RunConfiguration.TreatNoTestsAsError=true
+
+      - name: Verify repaired gallery consumer
+        id: repair_gallery
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          RIBBONKIT_PORTABILITY_SCOPE: NativeGalleryPopup
+        run: >-
+          dotnet test tests/RibbonKit.Portability.Tests/RibbonKit.Portability.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --filter "FullyQualifiedName~Theme_default_and_local_value_follow_wpf_precedence"
+          --logger "trx;LogFileName=repair-gallery.trx"
+          --results-directory TestResults/ci/repair-gallery
+          -- RunConfiguration.TreatNoTestsAsError=true
+
+      - name: Continue after all repaired groups pass
+        id: repair_gate
+        if: >-
+          ${{ !cancelled()
+              && steps.repair_overflow.outcome == 'success'
+              && steps.repair_simplified_customization.outcome == 'success'
+              && steps.repair_qat_gallery.outcome == 'success'
+              && steps.repair_visual.outcome == 'success'
+              && steps.repair_runtime.outcome == 'success'
+              && steps.repair_writer.outcome == 'success'
+              && steps.repair_gallery.outcome == 'success' }}
+        run: Write-Host "All repaired groups passed; continuing with full release validation."
+
+      # Full projects remain unfiltered. Once this gate starts, a failed project
+      # still fails the job while the remaining projects report their results.
+      - name: Test runtime
+        if: ${{ !cancelled() && steps.repair_gate.outcome == 'success' }}
+        run: >-
+          dotnet test tests/RibbonKit.Tests/RibbonKit.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --logger "trx;LogFileName=runtime.trx"
+          --results-directory TestResults/ci/runtime
+
+      - name: Test Writer
+        if: ${{ !cancelled() && steps.repair_gate.outcome == 'success' }}
+        run: >-
+          dotnet test tests/RibbonKit.Writer.Tests/RibbonKit.Writer.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --logger "trx;LogFileName=writer.trx"
+          --results-directory TestResults/ci/writer
+
+      - name: Test visual snapshots
+        if: ${{ !cancelled() && steps.repair_gate.outcome == 'success' }}
+        run: >-
+          dotnet test tests/RibbonKit.VisualTests/RibbonKit.VisualTests.csproj
+          --no-build --configuration Release --verbosity normal
+          --logger "trx;LogFileName=visual.trx"
+          --results-directory TestResults/ci/visual
+
+      - name: Test independent consumer
+        if: ${{ !cancelled() && steps.repair_gate.outcome == 'success' }}
+        run: >-
+          dotnet test tests/RibbonKit.Portability.Tests/RibbonKit.Portability.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --logger "trx;LogFileName=portability.trx"
+          --results-directory TestResults/ci/portability
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: test-results
+          path: TestResults/ci/**/*.trx
+          if-no-files-found: ignore
 
       - name: Upload visual snapshot diagnostics
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: visual-snapshot-diagnostics
           path: TestResults/visual/*.png
@@ -50,7 +196,7 @@ jobs:
         run: ./eng/Validate-Package.ps1 -PackageDirectory artifacts
 
       - name: Upload package artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: nuget-package
           path: |

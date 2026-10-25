@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Collections.Specialized;
 using System.Windows.Data;
@@ -16,6 +17,9 @@ namespace RibbonKit.Controls;
 [System.ComponentModel.DesignTimeVisible(false)]
 public class RibbonGroupsHost : ItemsControl
 {
+    /// <inheritdoc />
+    protected override AutomationPeer OnCreateAutomationPeer() => new RibbonKit.Automation.RibbonGroupsHostAutomationPeer(this);
+
     private RibbonQuickAccessToolBar? _simplified;
     private readonly Dictionary<FrameworkElement, FrameworkElement> _copies = new();
     private readonly Dictionary<RibbonGroup, RibbonGroupQuickAccessProxy> _groups = new();
@@ -94,7 +98,11 @@ public class RibbonGroupsHost : ItemsControl
         if (_refreshing) return;
         _refreshing = true;
         try { BuildSimplified(allowUnloaded); }
-        finally { _refreshing = false; }
+        finally
+        {
+            _refreshing = false;
+            UIElementAutomationPeer.FromElement(this)?.InvalidatePeer();
+        }
     }
 
     private void BuildSimplified(bool allowUnloaded)

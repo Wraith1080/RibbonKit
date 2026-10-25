@@ -7,6 +7,7 @@
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Focus.xaml" />
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.OverflowScrolling.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
@@ -19,6 +20,10 @@
          ============================================================ -->
     <controls:ContextualMaterialConverter x:Key="RibbonKit.ContextualMaterial" />
     <Style TargetType="{x:Type controls:RibbonTab}">
+        <!-- The standard selected-content part inherits these alignments from its
+             selected tab. Preserve the existing stretched body; authored bindings win. -->
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Stretch" />
         <Setter Property="FocusVisualStyle" Value="{StaticResource RibbonKit.KeyboardFocusVisual}" />
         <Setter Property="controls:FocusVisualTracking.Background" Value="{DynamicResource RibbonKit.Brushes.Ribbon.Background}" />
         <Setter Property="controls:ContextualMaterial.Enabled" Value="{DynamicResource RibbonKit.Metrics.ContextualUseCrystalMaterial}" />
@@ -492,14 +497,14 @@
                                PlacementTarget="{Binding ElementName=PART_OverflowButton}"
                                IsOpen="{Binding IsChecked, ElementName=PART_OverflowButton, Mode=TwoWay}">
                             <AdornerDecorator>
-                                <Border controls:Ribbon.QatOnColoredSurface="False"
+                                <Border x:Name="PART_OverflowPopupHost" controls:Ribbon.QatOnColoredSurface="False"
                                         Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                         BorderBrush="{DynamicResource RibbonKit.Brushes.Popup.Border}" BorderThickness="1"
                                         CornerRadius="{DynamicResource RibbonKit.Metrics.PopupCornerRadius}"
                                         Padding="4" Margin="4,2,8,8" MinWidth="160"
                                         Effect="{DynamicResource RibbonKit.Effects.PopupShadow}">
-                                    <ScrollViewer MaxHeight="480" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                                        <ItemsControl x:Name="PART_OverflowHost" Focusable="False"
+                                    <ScrollViewer x:Name="PART_OverflowScrollViewer" Style="{StaticResource RibbonKit.OverflowMenuScrollViewer}">
+                                        <controls:RibbonOverflowItemsHost x:Name="PART_OverflowHost" Focusable="False"
                                                       KeyboardNavigation.TabNavigation="Cycle" />
                                     </ScrollViewer>
                                 </Border>
@@ -748,6 +753,7 @@
                              reusing GroupMargin because the collapsed button's width feeds the
                              reduction algorithm, so the older themes must keep their historic 1px. -->
                         <ToggleButton x:Name="PART_CollapsedButton"
+                                      AutomationProperties.Name="{Binding Header, RelativeSource={RelativeSource TemplatedParent}}"
                                       Grid.Column="0"
                                       ClickMode="Press"
                                       Margin="{DynamicResource RibbonKit.Metrics.GroupCollapsedMargin}"

@@ -69,6 +69,11 @@ public partial class WriterFindReplaceDialog : Window
             : result.Found
                 ? result.Wrapped ? "Match found after wrapping to the start." : "Match found."
                 : "No match found.";
+        if (result.Found)
+        {
+            Window.GetWindow(_service.Editor)?.Activate();
+            _service.Editor.Focus();
+        }
     }
 
     private void OnReplace(object sender, RoutedEventArgs e)

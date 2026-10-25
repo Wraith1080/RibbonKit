@@ -18,7 +18,7 @@ public partial class RibbonSimplifiedCustomizePage
     private readonly Dictionary<RibbonGroup, List<FrameworkElement>> _memberships = new();
     private Selector? _groups;
     private RibbonGroup? _group;
-    private bool HasDraft => _drafts.Count > 0 || _tabPlacements.Count > 0 || _newGroups.Count > 0 || _renames.Count > 0 || _groupEdits.Count > 0 || _memberships.Count > 0 || _pendingLayout is not null || _pendingQat is not null;
+    private bool HasDraft => _drafts.Count > 0 || _tabPlacements.Count > 0 || _newGroups.Count > 0 || _renames.Count > 0 || _groupEdits.Count > 0 || _memberships.Count > 0 || _removedTabs.Count > 0 || _removedGroups.Count > 0 || _pendingLayout is not null || _pendingQat is not null;
 
     private ImageSource? DraftIcon(RibbonGroup group) => _groupEdits.TryGetValue(group, out var edit) ? edit.Icon : group.Icon;
     private RibbonGroupLayout DraftLayout(RibbonGroup group) => _groupEdits.TryGetValue(group, out var edit) ? edit.Layout : group.Layout;
@@ -43,6 +43,7 @@ public partial class RibbonSimplifiedCustomizePage
             tabs.Remove(moving);
             tabs.Insert(anchor is not null ? tabs.IndexOf(anchor) + (placement.After ? 1 : 0) : tabs.Count, moving);
         }
+        tabs.RemoveAll(IsRemovedTab);
         return tabs;
     }
 
@@ -86,6 +87,7 @@ public partial class RibbonSimplifiedCustomizePage
         if (_newGroups.TryGetValue(tab, out var additions))
             foreach (var pair in additions)
                 groups.Insert(pair.Anchor is not null && groups.IndexOf(pair.Anchor) is >= 0 and var index ? index + 1 : groups.Count, pair.Group);
+        groups.RemoveAll(group => IsRemovedGroup(tab, group));
         return groups;
     }
 
@@ -234,16 +236,20 @@ public partial class RibbonSimplifiedCustomizePage
         var selectedTab = ribbon.SelectedTab;
         foreach (var placement in _tabPlacements)
         {
+            if (IsRemovedTab(placement.Tab)) continue;
             var eligible = ribbon.Tabs.Where(RibbonCustomizePage.IsCustomizableTab).ToList();
             var anchor = ResolveTab(eligible, placement.Anchor);
             if (placement.Create)
             {
                 if (!ribbon.Tabs.Contains(placement.Tab))
-                    ribbon.Tabs.Insert(anchor is not null ? ribbon.Tabs.IndexOf(anchor) + (placement.After ? 1 : 0) : ribbon.Tabs.Count, placement.Tab);
+                    ribbon.Tabs.Insert(anchor is not null ? ribbon.Tabs.IndexOf(anchor) + (placement.After ? 1 : 0)
+                        : placement.Anchor is not null && IsRemovedTab(placement.Anchor) ? DraftInsertionIndex(ribbon.Tabs, DraftTabs(), placement.Tab) : ribbon.Tabs.Count, placement.Tab);
             }
-            else if (ResolveTab(eligible, placement.Tab) is { } moving && Controls.Ribbon.GetIsCustom(moving) && anchor is not null && moving != anchor)
+            else if (ResolveTab(eligible, placement.Tab) is { } moving && Controls.Ribbon.GetIsCustom(moving) && moving != anchor)
             {
-                int from = ribbon.Tabs.IndexOf(moving), to = ribbon.Tabs.IndexOf(anchor) + (placement.After ? 1 : 0);
+                if (anchor is null && (placement.Anchor is null || !IsRemovedTab(placement.Anchor))) continue;
+                int from = ribbon.Tabs.IndexOf(moving), to = anchor is not null ? ribbon.Tabs.IndexOf(anchor) + (placement.After ? 1 : 0)
+                    : DraftInsertionIndex(ribbon.Tabs, DraftTabs(), moving);
                 if (from < to) to--;
                 if (from != to) ribbon.Tabs.Move(from, to);
             }
@@ -251,9 +257,11 @@ public partial class RibbonSimplifiedCustomizePage
         // The tab strip can reset selection when an item moves; retain activation.
         if (selectedTab is not null && ribbon.Tabs.Contains(selectedTab) && selectedTab.Visibility == Visibility.Visible)
             ribbon.SelectedTab = selectedTab;
-        foreach (var addition in _newGroups.Where(pair => ribbon.Tabs.Contains(pair.Key) && RibbonCustomizePage.IsCustomizableTab(pair.Key)))
-            foreach (var pair in addition.Value)
-                addition.Key.Groups.Insert(pair.Anchor is not null && addition.Key.Groups.IndexOf(pair.Anchor) is >= 0 and var index ? index + 1 : addition.Key.Groups.Count, pair.Group);
+        foreach (var addition in _newGroups.Where(pair => ribbon.Tabs.Contains(pair.Key) && RibbonCustomizePage.IsCustomizableTab(pair.Key) && !IsRemovedTab(pair.Key)))
+            foreach (var pair in addition.Value.Where(pair => !IsRemovedGroup(addition.Key, pair.Group)))
+                addition.Key.Groups.Insert(pair.Anchor is not null && addition.Key.Groups.IndexOf(pair.Anchor) is >= 0 and var index ? index + 1
+                    : pair.Anchor is not null && IsRemovedGroup(addition.Key, pair.Anchor) ? DraftInsertionIndex(addition.Key.Groups, DraftGroups(addition.Key), pair.Group) : addition.Key.Groups.Count, pair.Group);
+        ApplyRemovals(ribbon);
         var live = ribbon.Tabs.Where(RibbonCustomizePage.IsCustomizableTab).SelectMany(tab => tab.Groups.Where(group => !Controls.Ribbon.GetIsMerged(group))).ToHashSet();
         foreach (var pair in _renames)
             switch (pair.Key)
@@ -277,6 +285,7 @@ public partial class RibbonSimplifiedCustomizePage
     private void ClearDraft()
     {
         _drafts.Clear(); _tabPlacements.Clear(); _newGroups.Clear(); _renames.Clear(); _groupEdits.Clear(); _memberships.Clear();
+        _removedTabs.Clear(); _removedGroups.Clear();
         ClearPersistenceDraft();
     }
 }

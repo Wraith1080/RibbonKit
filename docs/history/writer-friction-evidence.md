@@ -44,6 +44,9 @@
 
 ### RKWF-003 — QAT external UIA action semantics need an isolated reproduction
 
+- **2026-10-24 shared correction:** the isolated wrapper defect is confirmed. Shared QAT and overflow item peers now forward native command roles/patterns; toggle activation follows the existing source-linked Click/Command path once, preserving bindings and parameters. A stock-compatible tab peer also publishes its adjacent tab-row QAT. An independent public-only consumer and separate UIA client verify all three placements, live state/names/enabled changes and native collection notifications. See the [implementation and regression pitfalls](library/19-accessibility.md#3277-actionable-qat-and-overflow-automation--2026-10-24); actual-consumer acceptance remains in the [1.1 plan](../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md).
+- **2026-10-24 external reproduction:** a separate managed UIA client traversing an owned public-only RibbonKit consumer finds a named QAT Bold `ItemsControlItem` DataItem with no Toggle pattern. Source-to-copy binding/state synchronization remains intact. This isolates wrapper/action semantics without operating a user app; actual consumer and overflow comparisons remain open. See `TestResults/v1.1-tab-accessibility-20261024/external-final/`.
+
 - **First seen / packet:** 2026-08-21, Writer W1-C live minimized-ribbon/QAT verification.
 - **Status:** Open investigation; not yet a confirmed RibbonKit defect.
 - **Consumer goal:** external UI Automation clients should discover named QAT commands as actionable
@@ -64,6 +67,36 @@
   source/proxy consistency.
 
 ### RKWF-004 — Backstage custom page actions are absent from external UIA traversal
+
+- **2026-10-25 notification correction:** the actual Inspect/debugger recheck
+  stopped on a recursive peer API call during the navigation cache reset. Shared
+  discovery now queues all resets; the navigation Group owns its native item
+  peers, while File retains the original selection interface. A native-listener
+  regression and separate notification-subscribed client check for first-chance
+  errors, stable selection and working page actions without a host workaround.
+  Earlier traversal-only evidence did not cover notifications. See the
+  [pitfall record](library/19-accessibility.md#notification-safe-region-refresh-and-native-item-ownership--2026-10-25)
+  and S21 in the [1.1 plan](../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md).
+
+- **2026-10-25 hierarchy refinement:** shared internal peers expose navigation as
+  a Group and the active page as a named Pane, preserving native selection/action
+  providers and authored bindings. External traversal exposed an empty page cache
+  when refreshed before presenter realization; RibbonKit now coalesces a refresh
+  after layout. Writer needs no production glue or timing workaround. The new
+  navigation label is localizable through an appended RibbonString key. See the
+  [implementation/pitfall record](library/19-accessibility.md#navigation-and-active-page-regions--2026-10-25)
+  and S21 in the [1.1 plan](../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md).
+
+- **2026-10-25 shared correction:** the actual Writer review again exposed only
+  navigation labels. Parent-peer regressions reproduced missing native page
+  actions in five layouts/LTR/RTL and missing Writer recent-document buttons in
+  Office2024/Crystal. Backstage now bridges its existing ContentArea's native peers
+  while retaining stock navigation/selection, layout and authored bindings. The
+  helper is internal; one additive protected WPF automation hook is in Unshipped.
+  Focused runtime/Writer checks and a separate UIA client against an owned
+  public-only consumer pass. See [implementation details](library/19-accessibility.md#3279-backstage-page-content-automation--2026-10-25)
+  and the [1.1 plan](../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md) for current evidence
+  and actual-consumer recheck. Original investigation observations follow.
 
 - **First seen / packet:** 2026-08-21, Writer W1-D recent-document live verification.
 - **Status:** Open investigation; not yet a confirmed RibbonKit defect.
@@ -121,8 +154,11 @@
 
 ### RKWF-006 — Main-ribbon leaf commands are absent from external UIA traversal
 
+- **2026-10-25 collapsed/minimized correction:** focused preparation reproduced unnamed collapsed openers and a missing minimize chevron whose native Toggle also skipped the host's Click handler. Shared header/localized names, the existing tab-peer bridge and the existing RibbonToggleButton activation correct those gaps without Writer glue or new APIs. Host and part bindings remain intact. External popup checks use only owned HWNDs because Inspect interaction can dismiss transient surfaces; current evidence and that manual-review limit remain in S23 of the [1.1 plan](../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md). See the [implementation and type-contract pitfall](library/19-accessibility.md#3281-collapsed-opener-and-minimize-accessibility--2026-10-25).
+- **2026-10-25 Simplified correction:** Showcase's Home ListView was empty because the generic groups-host peer enumerated hidden source items instead of the sibling Simplified toolbar. A shared peer now exposes the existing native toolbar; Classic item semantics and source/copy bindings remain intact. No Writer glue is needed. Parent-tree regressions and a notification-subscribed public-only consumer cover Office/Crystal, LTR/RTL, native actions and mode/capability round trips. Per the user's relevant-tests-only instruction, validation is focused despite the single protected hook addition; the final candidate aggregate remains open. See the [implementation](library/19-accessibility.md#3280-simplified-row-automation-discovery--2026-10-25) and S22 in the [1.1 plan](../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md).
+- **2026-10-25 activation correction:** after discovery was repaired, Writer's original Bold still changed only UIA checked state and skipped the Click-driven document command; QAT's full activation worked. The actual Writer original/QAT regression reproduces that difference. Existing shared toggle/checkbox peers now privately reimplement the existing Toggle operation through native OnClick, preserving state bindings, command targets/parameters and disabled guards. No Writer timing workaround or public API addition is needed. See the [source activation pitfall](library/19-accessibility.md#3278-source-toggle-automation-completes-host-actions--2026-10-25); current results and manual recheck belong to S18 in the [1.1 plan](../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md).
 - **First seen / packet:** 2026-08-24, Writer W2-E Page/View live verification.
-- **Status:** Open investigation; not yet a confirmed RibbonKit defect and no runtime change is approved.
+- **Status:** Shared selected-content template correction implemented 2026-10-24; actual consumer post-fix acceptance remains in the [1.1 plan](../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md). Historical observations below retain their original scope.
 - **Consumer goal:** external UI Automation clients should discover the visible Page/View ribbon commands with
   their assigned names, IDs, enabled state and Invoke/Toggle/ExpandCollapse patterns.
 - **Reproduction and evidence:** an exact-process `UIAutomationClient` traversal of the live 125%-scale Writer
@@ -136,8 +172,7 @@
   in-process peer semantics and separately exercise the real mouse/keyboard paths.
 - **Application impact:** external test clients and assistive technologies may not discover Page/View commands even
   though sighted pointer and keyboard operation work.
-- **Smallest possible library direction:** isolate the `RibbonAutomationPeer`/`RibbonGroupAutomationPeer` child
-  hierarchy with a minimal consumer before considering an additive peer bridge. Do not special-case Writer.
+- **Focused shared correction:** name the existing selected-content presenter `PART_SelectedContentHost`, allowing WPF's stock tab peer to traverse it. Stretch defaults on the tab style preserve prior layout; explicit consumer bindings still win. No peer bridge, public API or Writer-specific change is added. See the [implementation and binding pitfall](library/19-accessibility.md#3276-selected-tab-command-accessibility--2026-10-24).
 - **Evidence still required:** Inspect.exe or equivalent captures across expanded, narrow/collapsed and minimized
   ribbon states, plus comparison with the Showcase and a second UIA client.
 
@@ -164,6 +199,14 @@
 
 ### RKWF-008 — The single real-window STA integration case needs a parallel-load timeout allowance
 
+- **2026-10-22 release-harness update:** the broad lifecycle case's nested View
+  assertion still omitted the new Interaction group. After correcting that stale
+  expectation, the same case exceeded its twenty-second ceiling in a fresh process.
+  Phase timings then measured a complete passing body at 20.3s (startup, File,
+  editing, page views, structured content and save/close). Only that case now has
+  a bounded sixty-second ceiling; the default stays ten seconds. No assertions
+  were removed and production behavior was unchanged. See the [1.1 execution record](../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#a2-release-execution)
+  for the original failed run and assembled follow-up evidence.
 - **2026-10-02 update:** Writer's previously excluded tests now run unfiltered on
   one serialized STA dispatcher. This keeps WPF's cached, unfrozen WindowChrome
   on its owning thread. Nested persistence fixtures reuse that dispatcher instead
@@ -185,7 +228,7 @@
   project ran concurrently. The same assertions passed after the harness allowed that case twenty seconds.
 - **Friction:** splitting the case across fresh STA threads previously triggered WPF `WindowChrome` cross-thread
   ownership failures, while increasing the global timeout would weaken feedback for every small STA test.
-- **Current app-owned resolution:** `StaTestHelper.RunAsync` accepts an optional timeout; only the combined real-window
+- **Original app-owned resolution:** `StaTestHelper.RunAsync` accepts an optional timeout; only the combined real-window
   case requests twenty seconds. The default remains ten seconds and production code is unchanged.
 - **Evidence still required:** keep watching the case duration in full parallel solution runs; investigate subdivision
   only if WPF chrome ownership can remain on one dispatcher or the duration approaches the bounded allowance.

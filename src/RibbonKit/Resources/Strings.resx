@@ -230,4 +230,6 @@
   <data name="After" xml:space="preserve"><value>After</value></data>
   <data name="TabPositionLabel" xml:space="preserve"><value>Position:</value></data>
   <data name="TargetTabLabel" xml:space="preserve"><value>Target tab:</value></data>
+  <data name="RemoveTab" xml:space="preserve"><value>Remove tab</value></data>
+  <data name="BackstageNavigation" xml:space="preserve"><value>File navigation</value></data>
 </root>

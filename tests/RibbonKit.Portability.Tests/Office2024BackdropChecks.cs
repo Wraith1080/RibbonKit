@@ -16,6 +16,7 @@ internal static class Office2024BackdropChecks
 {
     internal static void VerifyCaptionMotion(Application application)
     {
+        VerifyHeightResize(application);
         var motion = RibbonAnimation.GlobalLevel;
         bool respect = RibbonAnimation.RespectSystemReduceMotion;
         var ribbon = new Ribbon(); ribbon.Tabs.Add(new RibbonTab { Header = "Home" });
@@ -54,6 +55,50 @@ internal static class Office2024BackdropChecks
             ThemeManager.SetAccentedTitleBar(application, false); ThemeManager.SetDarkMode(application, false);
             RibbonAnimation.GlobalLevel = motion; RibbonAnimation.RespectSystemReduceMotion = respect;
         }
+    }
+
+    private static void VerifyHeightResize(Application application)
+    {
+        var motion = RibbonAnimation.GlobalLevel;
+        RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
+        var titleContent = new Border { Width = 80, Height = 20 };
+        var content = new Border { Background = Brushes.White };
+        var window = new RibbonWindow { Content = content, TitleBarContent = titleContent,
+            UseLayoutRounding = true, Width = 840, Height = 400,
+            Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        try
+        {
+            ThemeManager.Apply(application, RibbonTheme.Office2024);
+            window.Show(); window.UpdateLayout();
+            var caption = Part<Grid>(window, "TitleBarBand");
+            double scale = VisualTreeHelper.GetDpi(window).DpiScaleY;
+            foreach (RibbonTheme theme in Enum.GetValues<RibbonTheme>())
+            foreach (bool dark in new[] { false, true })
+            foreach (var direction in new[] { FlowDirection.LeftToRight, FlowDirection.RightToLeft })
+            foreach (bool touch in new[] { false, true })
+            {
+                ThemeManager.Apply(application, theme); ThemeManager.SetDarkMode(application, dark);
+                window.FlowDirection = direction;
+                titleContent.Height = touch ? 46 : 20;
+                Ribbon.SetDensity(titleContent, touch ? RibbonDensity.Touch : RibbonDensity.Compact);
+                window.Height = 400;
+                window.UpdateLayout();
+                Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+                window.UpdateLayout();
+                double top = content.TranslatePoint(new Point(), window).Y;
+                double captionHeight = caption.ActualHeight;
+                foreach (int pixel in new[] { 1, 2, 3, 7, 16, 31, 16, 7, 3, 2, 1, 0 })
+                {
+                    window.Height = 400 + pixel / scale;
+                    window.UpdateLayout();
+                    Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+                    Assert.True(Math.Abs(content.TranslatePoint(new Point(), window).Y - top) < .01,
+                        $"{theme}/{dark}/{direction}/Touch={touch}/DPI={scale}/pixel={pixel}: content {content.TranslatePoint(new Point(), window).Y} vs {top}; caption {caption.ActualHeight} vs {captionHeight}.");
+                    Assert.Equal(captionHeight, caption.ActualHeight, 4);
+                }
+            }
+        }
+        finally { window.Close(); ThemeManager.SetDarkMode(application, false); RibbonAnimation.GlobalLevel = motion; }
     }
 
     internal static void Verify(Application application)

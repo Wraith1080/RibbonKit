@@ -1182,16 +1182,23 @@ internal sealed class KeyTipService
         else if (peer?.GetPattern(PatternInterface.Toggle) is IToggleProvider toggle)
         {
             toggle.Toggle();
+            // WPF's native state-only peers omit Click/Command. Custom providers retain their
+            // own activation semantics, which may already include those stages.
+            if (element is ButtonBase toggleSource && (peer?.GetType() == typeof(ToggleButtonAutomationPeer)
+                || peer?.GetType() == typeof(CheckBoxAutomationPeer)))
+                ButtonCommandInvocation.RaiseClickAndExecute(toggleSource);
         }
         else if (peer?.GetPattern(PatternInterface.SelectionItem) is ISelectionItemProvider selection)
         {
             // RadioButton exposes SelectionItem rather than Toggle. Use its UIA contract so a
             // KeyTip selects it exactly like keyboard Space/click, including GroupName exclusivity.
             selection.Select();
+            if (element is ButtonBase selectionSource && peer?.GetType() == typeof(RadioButtonAutomationPeer))
+                ButtonCommandInvocation.RaiseClickAndExecute(selectionSource);
         }
         else if (element is ButtonBase button)
         {
-            button.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+            ButtonCommandInvocation.RaiseClickAndExecute(button);
         }
     }
 

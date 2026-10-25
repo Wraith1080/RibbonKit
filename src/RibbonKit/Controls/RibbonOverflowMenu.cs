@@ -129,6 +129,13 @@ internal static class RibbonOverflowMenu
         return new Rect(info.Work.Left, info.Work.Top, info.Work.Right - info.Work.Left, info.Work.Bottom - info.Work.Top);
     }
 
+    internal static double WorkAreaHeight(FrameworkElement anchor)
+    {
+        Rect work = MonitorWorkArea(ScreenBounds(anchor));
+        return work.IsEmpty ? SystemParameters.WorkArea.Height
+            : work.Height / VisualTreeHelper.GetDpi(anchor).DpiScaleY;
+    }
+
     [DllImport("user32.dll")]
     private static extern IntPtr MonitorFromRect(ref NativeRect rect, int flags);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]

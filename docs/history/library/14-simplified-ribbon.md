@@ -110,6 +110,15 @@ seeds host font data because its code-behind is intentionally not run. Focused
 evidence and native review limits are in the
 [active plan](../../15-SIMPLIFIED-RIBBON-PLAN.md#native-combo-editors-in-original-slots--2026-10-21).
 
+Release acceptance on 2026-10-23 exposed a stale designer-defaults consumer
+assertion: original-slot combos no longer have the menu projection's MediumLayout
+and SmallLayout parts. Check the native combo type, authored InputWidth and visible
+field at either size; retain those template-part assertions for the other command
+families. The unchanged check failed both after the preceding matrices and alone;
+the corrected 12-case scope passed. No runtime behavior changed for this repair.
+The [release campaign](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#a2-release-execution)
+owns the current aggregate result and its limits.
+
 #### Measured inline clearance — 2026-10-21
 
 After the user reset the blanket-margin experiment, measured painted bounds
@@ -604,3 +613,63 @@ durations now exceed the old full timeout; allow 20 minutes for the full consume
 and 10 for its large continuations. Current results, the two reproduced
 pre-feature Crystal QAT approval mismatches and native limits remain solely in
 the active plan's end-of-feature record.
+
+### Custom structure removal — 2026-10-24
+
+The S9 review found creation/rename without a corresponding structure-removal path
+in the Simplified editor. The middle Remove button now deletes a selected custom
+group header; a selected command retains its existing profile-removal behavior.
+Edit → Remove tab deletes the destination custom tab. Built-in and transient
+structures remain protected. The Classic editor's existing deletion code is unchanged.
+
+Removal records stay detached until Apply/OK, scoped by tab/group identity and
+stable IDs. Cancel discards them; draft export/import removes deleted structures
+and profiles. Apply preserves remaining live structures, source commands and
+unrelated QAT copies. Newly created then removed anchors must not be attached just
+to place later creations/moves: use the surviving draft order for those insertions.
+Actual shared collections change on Apply, so both ribbon modes and settings
+reflect deletion. A loaded Simplified page now refreshes on re-enablement, covering
+Classic edits while that page remains in the visual tree; Loaded alone missed
+that case. Saved layouts retain the deletion without a schema change.
+
+The only public addition is the appended localization identifier
+RibbonString.RemoveTab (90), with XML documentation, a default resource and an
+unshipped API entry. It gives providers one complete action label without changing
+existing identifiers or adding a control API.
+
+All seven initial structure-removal cases failed. Final focused Release validation
+passes 145 runtime cases, including eleven removal/import/order/synchronization
+regressions and existing editor, serializer, policy and binding checks. Four
+independent-consumer cases cover modern/legacy/Crystal palettes, Compact/Touch,
+LTR/RTL and simulated 150% Touch root DPI without Showcase helpers. Release solution
+and normal Debug Showcase/Writer builds pass with zero warnings/errors. The broad
+test attempt was stopped after reported failures; it is not a clean full-suite
+pass. The lower-QAT alignment correction and 16 unchanged visual comparisons belong
+to the related QAT record. Current manual review, logs and remaining release gates
+are in [S9 of the acceptance plan](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#s9-custom-structure-removal--2026-10-24).
+
+Menu captures render the ContextMenu itself; capturing its native owner root at
+open can produce an empty image during the native fade, even with valid geometry.
+
+#### Minimum-width reorder column at fractional DPI — 2026-10-25
+
+The hosted consumer and an owned 96-DPI process reproduce Crystal Compact at
+simulated 150%, minimum dialog width 560: both reorder buttons end at 321.667
+DIP in a 320.667-DIP viewport. Rounded star/auto columns grow the inner grid by
+0.667 DIP, and the glyph-sized button extends another 0.333 beyond its column.
+The logical overflow and inspected capture establish actual edge clipping.
+
+Reserve one trailing DIP only in the Simplified page's auto-sized reorder stack.
+This budgets rounding before the star columns receive their space, retaining
+layout rounding, pixel snapping, target sizes, templates, bindings and handlers.
+Classic and QAT use separate stacks. Do not loosen the viewport tolerance or
+disable rounding across the page. The consumer now checks both reorder buttons
+within 0.01 DIP at all three dialog widths; other containment assertions remain.
+
+Impact checks cover RTL mirroring, Compact/Touch, neighboring selector/list/footer
+widths, reordering and Apply/Cancel/QAT isolation, with adjacent Classic/QAT
+presentation guards. Run the same 112-case consumer under both the hosted-like
+96-DPI context and the ordinary local context. Its recorded CI pace projects
+beyond the usual five-minute focused deadline, so only SimplifiedCustomization
+gets ten minutes and runs first in CI. Other budgets remain unchanged. Current
+results and the required hosted rerun belong to the 1.1 acceptance plan.

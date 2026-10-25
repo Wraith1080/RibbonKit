@@ -92,7 +92,7 @@ internal static class CrystalQuickAccessPortabilityChecks
                     {
                         AssertDrawer(minimized, notice);
                         Assert.Equal(new CornerRadius(14), body.CornerRadius);
-                        Assert.Equal(3, Part<ItemsControl>(ribbon, "QatBelowItems").Items.Count);
+                        Assert.Equal(3, Part<RibbonQuickAccessToolBar>(ribbon, "QatBelowItems").Items.Count);
                         // BelowRibbon retains its full row; the title/tab width cap does not apply.
                         Assert.True(drawer.ActualWidth > ribbon.QuickAccessMaxWidth);
                         // Compare in the LTR window's physical coordinates, not the mirrored host.
@@ -157,7 +157,7 @@ internal static class CrystalQuickAccessPortabilityChecks
             opener.IsChecked = true;
             Layout();
             Assert.True(popup.IsOpen);
-            var overflow = Part<ItemsControl>(tabToolbar, "PART_OverflowHost");
+            var overflow = Assert.IsAssignableFrom<ItemsControl>(tabToolbar.Template.FindName("PART_OverflowHost", tabToolbar));
             var dropdownEntry = Assert.Single(overflow.Items.OfType<RibbonDropDownButton>(),
                 item => item is not RibbonSplitButton);
             var splitEntry = Assert.Single(overflow.Items.OfType<RibbonSplitButton>());

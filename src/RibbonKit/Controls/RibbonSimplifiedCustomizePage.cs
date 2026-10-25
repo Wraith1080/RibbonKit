@@ -84,7 +84,7 @@ internal sealed class SimplifiedCustomizeEntry : INotifyPropertyChanged
 /// A lookless, tab-based simplified ribbon editor. Changes stay in a draft until
 /// <see cref="ApplyChanges"/>; <see cref="CancelChanges"/> discards that draft.
 /// <see cref="RibbonOptionsDialog"/> commits it on OK and cancels it on other close paths.
-/// Eligible only in Simplified mode. New/renamed tabs and groups and custom-group
+/// Eligible only in Simplified mode. New, renamed and removed tabs and groups and custom-group
 /// membership are shared with Classic; simplified order, labels and QAT stay independent.
 /// </summary>
 [TemplatePart(Name = "PART_TabSelector", Type = typeof(Selector))]
@@ -149,6 +149,7 @@ public partial class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
     public RibbonSimplifiedCustomizePage()
     {
         Loaded += (_, _) => { RebasePending(); ObserveRibbon(); RefreshTabs(); };
+        IsEnabledChanged += (_, _) => { if (IsEnabled && IsLoaded) { RebasePending(); RefreshTabs(); } };
         Unloaded += (_, _) => { StopObserving(); CloseActions(); ClearInsertion(); };
     }
 
@@ -406,7 +407,13 @@ public partial class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
 
     private void Remove()
     {
-        if (!IsEnabled || _current?.SelectedItem is not SimplifiedCustomizeEntry entry) return;
+        if (!IsEnabled) return;
+        if (_current?.SelectedItem is SimplifiedGroupChoice { Group: { } group })
+        {
+            RemoveCustomGroup(group);
+            return;
+        }
+        if (_current?.SelectedItem is not SimplifiedCustomizeEntry entry) return;
         var choices = Choices(); choices.RemoveAll(choice => SameChoice(choice, entry.Control, entry.Group));
         SaveDraft(choices); RefreshLists();
     }
@@ -441,7 +448,7 @@ public partial class RibbonSimplifiedCustomizePage : Control, IRibbonFillPage
         int index = _current?.SelectedItem is SimplifiedCustomizeEntry selected ? commands.IndexOf(selected) : -1;
         Enable("PART_AddButton", _available?.SelectedItem is SimplifiedCustomizeEntry available && TargetGroup(available.Control) is { } group
             && !choices.Any(choice => SameChoice(choice, available.Control, group)));
-        Enable("PART_RemoveButton", index >= 0);
+        Enable("PART_RemoveButton", index >= 0 || _current?.SelectedItem is SimplifiedGroupChoice { Group: { } selectedGroup } && CanRemoveGroup(selectedGroup));
         Enable("PART_UpButton", index > 0);
         Enable("PART_DownButton", index >= 0 && index < commands.Count - 1);
         Enable("PART_ResetButton", _tab is not null);

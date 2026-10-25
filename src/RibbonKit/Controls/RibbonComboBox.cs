@@ -25,12 +25,8 @@ public class RibbonComboBox : ComboBox
 {
     private const string PopupRootPartName = "PART_PopupRoot";
     private const string PopupScrollViewerPartName = "PART_PopupScrollViewer";
-    private const string ScrollBarStyleResourceKey = "RibbonKit.ScrollBarStyle";
     private static readonly DependencyProperty DetachedGeneratedContainerProperty = DependencyProperty.RegisterAttached(
         "DetachedGeneratedContainer", typeof(bool), typeof(RibbonComboBox), new PropertyMetadata(false));
-    private static readonly Uri ScrollBarResourcesUri = new(
-        "/RibbonKit;component/Themes/Controls.ScrollBars.xaml",
-        UriKind.RelativeOrAbsolute);
 
     /// <summary>Identifies the <see cref="Icon"/> dependency property.</summary>
     public static readonly DependencyProperty IconProperty =
@@ -80,7 +76,6 @@ public class RibbonComboBox : ComboBox
             new FrameworkPropertyMetadata(null, OnScreenTipChanged));
 
     private FrameworkElement? _popupRoot;
-    private ScrollViewer? _popupScrollViewer;
 
     static RibbonComboBox()
     {
@@ -124,8 +119,7 @@ public class RibbonComboBox : ComboBox
         base.OnApplyTemplate();
         DropDownGrouping.ApplyDefault(this);
         _popupRoot = GetTemplateChild(PopupRootPartName) as FrameworkElement;
-        _popupScrollViewer = GetTemplateChild(PopupScrollViewerPartName) as ScrollViewer;
-        ApplyPopupScrollBarStyle();
+        PopupScrollBarStyle.Apply(GetTemplateChild(PopupScrollViewerPartName) as ScrollViewer);
     }
 
     /// <inheritdoc />
@@ -156,34 +150,6 @@ public class RibbonComboBox : ComboBox
             element.ClearValue(DetachedGeneratedContainerProperty);
         }
         base.PrepareContainerForItemOverride(element, item);
-    }
-
-    private void ApplyPopupScrollBarStyle()
-    {
-        if (_popupScrollViewer is null
-            || _popupScrollViewer.Resources.Contains(typeof(ScrollBar)))
-        {
-            return;
-        }
-
-        Style? scrollBarStyle = _popupScrollViewer.TryFindResource(ScrollBarStyleResourceKey) as Style;
-        if (scrollBarStyle is null)
-        {
-            // The popup lives in a deferred template scope, where keyed resources from an
-            // aggregate sibling are not available through ordinary element lookup. Import the
-            // existing shared dictionary into this viewport only; its DynamicResources continue
-            // to follow the host's active generation and High Contrast state.
-            var resources = new ResourceDictionary { Source = ScrollBarResourcesUri };
-            _popupScrollViewer.Resources.MergedDictionaries.Add(resources);
-            scrollBarStyle = resources[ScrollBarStyleResourceKey] as Style;
-        }
-
-        if (scrollBarStyle is not null)
-        {
-            // ScrollViewer retains ownership of its generated native ScrollBars. Registering the
-            // exact shared style under the implicit native type key changes chrome only.
-            _popupScrollViewer.Resources[typeof(ScrollBar)] = scrollBarStyle;
-        }
     }
 
     /// <inheritdoc />

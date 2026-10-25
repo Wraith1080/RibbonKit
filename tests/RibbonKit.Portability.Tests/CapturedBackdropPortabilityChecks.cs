@@ -224,6 +224,7 @@ internal static class CapturedBackdropPortabilityChecks
 
     internal static void VerifyGlass(Application application)
     {
+        RibbonGlassFlyoutPortabilityChecks.Verify(application);
         var first = new Border { Background = new SolidColorBrush(Color.FromRgb(0x95, 0x95, 0x95)) };
         var second = new Border();
         var ribbon = new Ribbon();

@@ -7,6 +7,7 @@
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.Focus.xaml" />
+        <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.OverflowScrolling.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!-- Part of the shared RibbonKit control-template dictionary; merged by Office2024.xaml.
@@ -130,7 +131,7 @@
          left, which is exactly the signal RibbonQuickAccessPanel needs.
 
          The toolbar only overflows if something constrains its width. Below
-         the ribbon nothing does (it owns a full-width row); in the tab row and
+         the ribbon it uses the available full-row width; in the tab row and
          the title bar the ribbon caps it at Ribbon.QuickAccessMaxWidth.
          ============================================================ -->
     <Style TargetType="{x:Type controls:RibbonQuickAccessToolBar}">
@@ -286,7 +287,7 @@
                                      (a split button's chevron vanished into the white popup). The flyout
                                      is an ordinary popup surface, never part of the band. A local value
                                      beats the inherited one and re-propagates False to the subtree. -->
-                                <Border controls:Ribbon.QatOnColoredSurface="False"
+                                <Border x:Name="PART_OverflowPopupHost" controls:Ribbon.QatOnColoredSurface="False"
                                         Background="{DynamicResource RibbonKit.Brushes.Ribbon.ContentBackground}"
                                         BorderBrush="{DynamicResource RibbonKit.Brushes.Popup.Border}"
                                         BorderThickness="1"
@@ -295,13 +296,15 @@
                                         Margin="4,2,8,8"
                                         MinWidth="160"
                                         Effect="{DynamicResource RibbonKit.Effects.PopupShadow}">
-                                    <ItemsControl x:Name="PART_OverflowHost" Focusable="False">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <StackPanel Orientation="Vertical" />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                    </ItemsControl>
+                                    <ScrollViewer x:Name="PART_OverflowScrollViewer" Style="{StaticResource RibbonKit.OverflowMenuScrollViewer}">
+                                        <controls:RibbonOverflowItemsHost x:Name="PART_OverflowHost" Focusable="False">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel Orientation="Vertical" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                        </controls:RibbonOverflowItemsHost>
+                                    </ScrollViewer>
                                 </Border>
                             </AdornerDecorator>
                         </Popup>

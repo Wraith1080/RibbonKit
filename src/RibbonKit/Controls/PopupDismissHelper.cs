@@ -280,10 +280,24 @@ internal sealed class PopupDismissHelper : IDisposable
             return false;
         }
 
+        // Native ComboBox popups do not register a dismiss helper. Let their own
+        // Escape handling run before either this window-preview hook or the
+        // containing group's preview handler can dismiss the parent surface.
+        if (_getPopup()?.Child is { } child && HasOpenCombo(child)) return false;
+
         _close();
         if (_afterEscape is not null)
             _owner.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, _afterEscape);
         return true;
+    }
+
+    private static bool HasOpenCombo(DependencyObject node)
+    {
+        if (node is ComboBox { IsDropDownOpen: true }) return true;
+        if (node is not (Visual or Visual3D)) return false;
+        for (int index = 0; index < VisualTreeHelper.GetChildrenCount(node); index++)
+            if (HasOpenCombo(VisualTreeHelper.GetChild(node, index))) return true;
+        return false;
     }
 
     private void OnWindowDeactivated(object? sender, EventArgs e) => _close();

@@ -62,12 +62,23 @@ internal static class SimplifiedDesignerDefaultsPortabilityChecks
                         }
                         var copy = Assert.IsAssignableFrom<Control>(toolbar.Items.OfType<FrameworkElement>()
                             .Single(item => ReferenceEquals(Ribbon.GetQuickAccessSource(item), source)));
-                        var medium = Assert.IsAssignableFrom<FrameworkElement>(copy.Template.FindName("MediumLayout", copy));
-                        var small = Assert.IsAssignableFrom<FrameworkElement>(copy.Template.FindName("SmallLayout", copy));
-                        Assert.Equal(size == RibbonControlSize.Medium ? Visibility.Visible : Visibility.Collapsed, medium.Visibility);
-                        Assert.Equal(size == RibbonControlSize.Small ? Visibility.Visible : Visibility.Collapsed, small.Visibility);
+                        if (source is RibbonComboBox)
+                        {
+                            // Original-slot combos retain their native field at either command size.
+                            var editor = Assert.IsAssignableFrom<RibbonComboBox>(copy);
+                            Assert.Equal(130d, editor.InputWidth);
+                            Assert.True(Assert.IsType<Border>(editor.Template.FindName("Chrome", editor)).IsVisible);
+                        }
+                        else
+                        {
+                            var medium = Assert.IsAssignableFrom<FrameworkElement>(copy.Template.FindName("MediumLayout", copy));
+                            var small = Assert.IsAssignableFrom<FrameworkElement>(copy.Template.FindName("SmallLayout", copy));
+                            Assert.Equal(size == RibbonControlSize.Medium ? Visibility.Visible : Visibility.Collapsed, medium.Visibility);
+                            Assert.Equal(size == RibbonControlSize.Small ? Visibility.Visible : Visibility.Collapsed, small.Visibility);
+                        }
                         Assert.Equal(direction, copy.FlowDirection);
                         Assert.True(copy.ActualWidth > 0);
+                        Assert.True(copy.IsVisible && copy.ActualHeight > 0);
                         if (source is ItemsControl container && StarterChild(source.GetType().Name).Length > 0)
                         {
                             Assert.Single(container.Items);

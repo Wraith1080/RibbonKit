@@ -106,6 +106,9 @@ status updates and investigation narration were removed during compaction.
 
 ### [3.35 Quick access toolbar overflow — 2026-07-27](library/03-office-themes-and-layout.md#335-quick-access-toolbar-overflow--2026-07-27)
 
+[Shared overflow scrolling and native ComboBox Escape follow-up](library/11-touch-density-and-gallery-projections.md#overflow-menu-scrolling-and-native-combobox-escape--2026-10-24).
+[Below-ribbon full-row overflow follow-up](library/11-touch-density-and-gallery-projections.md#below-ribbon-qat-overflow--2026-10-24).
+
 ### [3.36 Selection visuals: the tab-strip-row reflow rule](library/03-office-themes-and-layout.md#336-selection-visuals-the-tab-strip-row-reflow-rule)
 
 ### [3.37 Splitting Office2024.xaml into Controls.*.xaml parts — 2026-07-27 — ⚗ EXPERIMENTAL](library/03-office-themes-and-layout.md#337-splitting-office2024xaml-into-controlsxaml-parts--2026-07-27---experimental)
@@ -185,6 +188,9 @@ status updates and investigation narration were removed during compaction.
 ### [3.73 Reduction thresholds, priority order, and malformed-width coverage — 2026-08-10](library/06-messages-release-and-window-frames.md#373-reduction-thresholds-priority-order-and-malformed-width-coverage--2026-08-10)
 
 ### [3.74 Visual Studio debugger distorted live-resize performance — 2026-08-10](library/06-messages-release-and-window-frames.md#374-visual-studio-debugger-distorted-live-resize-performance--2026-08-10)
+
+[Height-resize caption stability follow-up, 2026-10-24](library/18-window-layout.md#height-resize-caption-stability--2026-10-24).
+[Native resize paint reuse, 2026-10-24](library/18-window-layout.md#native-resize-paint-reuse--2026-10-24).
 
 ### [3.75 Phase 8 API review and freeze — 2026-08-10](library/06-messages-release-and-window-frames.md#375-phase-8-api-review-and-freeze--2026-08-10)
 
@@ -334,6 +340,8 @@ status updates and investigation narration were removed during compaction.
 
 ### [3.212 Optional captured backdrops and scoped glass overlays — 2026-10-01](library/10-host-effects-and-keyboard-focus.md#3212-optional-captured-backdrops-and-scoped-glass-overlays--2026-10-01)
 
+[Modern Office ribbon continuation follow-up](library/17-glass-continuations.md#modern-office-ribbon-continuations--2026-10-24).
+
 ### [3.213 Main Showcase consolidation — 2026-10-01](library/10-host-effects-and-keyboard-focus.md#3213-main-showcase-consolidation--2026-10-01)
 
 ### [3.214 Theme gallery clipping and deferred test corrections — 2026-10-01](library/10-host-effects-and-keyboard-focus.md#3214-theme-gallery-clipping-and-deferred-test-corrections--2026-10-01)
@@ -347,6 +355,8 @@ status updates and investigation narration were removed during compaction.
 ### [3.219 QAT order, menu traversal and Backstage focus cycling — 2026-10-04](library/10-host-effects-and-keyboard-focus.md#3219-qat-order-menu-traversal-and-backstage-focus-cycling--2026-10-04)
 
 ### [3.220 File-first entry, QAT overflow and Backstage opening focus — 2026-10-04](library/10-host-effects-and-keyboard-focus.md#3220-file-first-entry-qat-overflow-and-backstage-opening-focus--2026-10-04)
+
+[Overflow arrow-key row navigation follow-up](library/11-touch-density-and-gallery-projections.md#overflow-arrow-key-row-navigation--2026-10-24).
 
 ### [3.221 Active Backstage entry and a single focus outline — 2026-10-04](library/10-host-effects-and-keyboard-focus.md#3221-active-backstage-entry-and-a-single-focus-outline--2026-10-04)
 
@@ -418,6 +428,8 @@ status updates and investigation narration were removed during compaction.
 
 ### [3.255 Simplified ribbon first layout slice — 2026-10-13](library/14-simplified-ribbon.md#3255-simplified-ribbon-first-layout-slice--2026-10-13)
 
+[Custom structure removal follow-up](library/14-simplified-ribbon.md#custom-structure-removal--2026-10-24).
+
 ### [3.256 Ribbon capability and user-operation policy — 2026-10-15](library/15-feature-availability.md#3256-ribbon-capability-and-user-operation-policy--2026-10-15)
 
 ### [3.257 Toolbox definitions and discovery metadata — 2026-10-15](library/02-designer-and-context-menus.md#3257-toolbox-definitions-and-discovery-metadata--2026-10-15)
@@ -455,3 +467,17 @@ status updates and investigation narration were removed during compaction.
 ### [3.273 Themed native text-editor context menus — 2026-10-20](library/02-designer-and-context-menus.md#3273-themed-native-text-editor-context-menus--2026-10-20)
 
 ### [3.274 Grouped combo dropdown sections — 2026-10-21](library/11-touch-density-and-gallery-projections.md#3274-grouped-combo-dropdown-sections--2026-10-21)
+
+### [3.276 Selected-tab command accessibility — 2026-10-24](library/19-accessibility.md#3276-selected-tab-command-accessibility--2026-10-24)
+
+### [3.277 Actionable QAT and overflow automation — 2026-10-24](library/19-accessibility.md#3277-actionable-qat-and-overflow-automation--2026-10-24)
+
+### [3.278 Source toggle automation completes host actions — 2026-10-25](library/19-accessibility.md#3278-source-toggle-automation-completes-host-actions--2026-10-25)
+
+### [3.279 Backstage page-content automation — 2026-10-25](library/19-accessibility.md#3279-backstage-page-content-automation--2026-10-25)
+
+### [3.280 Simplified row automation discovery — 2026-10-25](library/19-accessibility.md#3280-simplified-row-automation-discovery--2026-10-25)
+
+### [3.281 Collapsed opener and minimize accessibility — 2026-10-25](library/19-accessibility.md#3281-collapsed-opener-and-minimize-accessibility--2026-10-25)
+
+### [3.282 Shared 1.1 version and API baseline promotion — 2026-10-25](library/20-release-preparation.md#3282-shared-11-version-and-api-baseline-promotion--2026-10-25)

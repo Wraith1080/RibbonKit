@@ -23,7 +23,7 @@ public class KeyboardFocusInteractionTests
     [InlineData(RibbonTheme.Office2013, FlowDirection.RightToLeft)]
     [InlineData(RibbonTheme.Office2019, FlowDirection.LeftToRight)]
     [InlineData(RibbonTheme.Office2019, FlowDirection.RightToLeft)]
-    public void Native_focus_remains_visible_on_accent_rails_and_colored_headers(RibbonTheme theme, FlowDirection flow) => Sta.Run(() =>
+    public void Native_focus_remains_visible_on_accent_rails_and_colored_headers(RibbonTheme theme, FlowDirection flow) => Sta.RunWithTimeout(() =>
     {
         var application = Sta.UseApplication();
         var animationLevel = RibbonAnimation.GlobalLevel;
@@ -51,6 +51,7 @@ public class KeyboardFocusInteractionTests
             foreach (bool dark in new[] { false, true })
             foreach (Color accent in new[] { Color.FromRgb(43, 87, 154), Color.FromRgb(138, 62, 129), Color.FromRgb(255, 224, 138) })
             {
+                var paletteElapsed = System.Diagnostics.Stopwatch.StartNew();
                 ThemeManager.SetDarkMode(application, dark);
                 ThemeManager.SetAccent(application, accent);
                 ThemeManager.SetAccentedTitleBar(application, true);
@@ -58,7 +59,7 @@ public class KeyboardFocusInteractionTests
                 window.UpdateLayout();
                 var tabs = Assert.IsType<RibbonTabControl>(ribbon.Template.FindName("TabControlHost", ribbon));
                 var file = Assert.IsType<ToggleButton>(tabs.Template.FindName("PART_ApplicationButton", tabs));
-                var collapse = Assert.IsType<ToggleButton>(tabs.Template.FindName("MinimizeToggle", tabs));
+                var collapse = Assert.IsAssignableFrom<ToggleButton>(tabs.Template.FindName("MinimizeToggle", tabs));
                 Color band = ColorOf(ribbon.FindResource("RibbonKit.Brushes.Ribbon.Background"));
                 AssertVisible(file, EffectiveBackground(file, band), "file");
                 AssertVisible(collapse, EffectiveBackground(collapse, band), "collapse");
@@ -93,6 +94,7 @@ public class KeyboardFocusInteractionTests
                 AssertVisible(back, rail, "back");
                 ribbon.IsBackstageOpen = false;
                 Sta.Drain();
+                Console.WriteLine($"Focus contrast {theme}/{flow}/dark={dark}/accent={accent}: passed in {paletteElapsed.Elapsed.TotalSeconds:0.0}s.");
             }
         }
         finally { window.Close(); Sta.ResetApplication(); RibbonAnimation.GlobalLevel = animationLevel; }
@@ -110,7 +112,7 @@ public class KeyboardFocusInteractionTests
             SaveReview(window, $"contrast-{theme}-{flow}-{ThemeManager.IsDarkMode}-{ColorOf(target.FindResource("RibbonKit.Brushes.Accent"))}-{name}");
             Assert.True(contrast >= 3, $"{name}: outline={ColorOf(stroke)}, background={background}, contrast={contrast}");
         }
-    });
+    }, TimeSpan.FromSeconds(60));
 
     private static Color EffectiveBackground(Control target, Color band) =>
         (target.Template.FindName("Chrome", target) ?? target.Template.FindName("HeaderChrome", target))

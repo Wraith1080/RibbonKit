@@ -318,7 +318,7 @@ public sealed class GalleryQuickAccessTests
             var toolbar = Assert.IsType<RibbonQuickAccessToolBar>(tabs.Template.FindName("QatTabRowHost", tabs));
             var overflow = Assert.IsType<ToggleButton>(toolbar.Template.FindName("PART_OverflowButton", toolbar));
             overflow.IsChecked = true; host.Layout();
-            var entries = Assert.IsType<ItemsControl>(toolbar.Template.FindName("PART_OverflowHost", toolbar));
+            var entries = Assert.IsAssignableFrom<ItemsControl>(toolbar.Template.FindName("PART_OverflowHost", toolbar));
             var entry = Assert.Single(entries.Items.OfType<RibbonDropDownButton>());
             entry.IsDropDownOpen = true; host.Layout();
             Assert.True(RedPixels(Render(strip, scale)) >= RedPixels(before) * .9);

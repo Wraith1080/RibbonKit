@@ -16,9 +16,10 @@ RibbonKit uses lookless controls, WPF commands/binding and one shared template s
 for five Office generations. Vector chrome remains sharp when the host enables
 per-monitor DPI awareness. Applications own their command icons and document model.
 
-`v1.0.0` is distributed through GitHub Releases, not NuGet.org. The feature summary
-below describes the current checkout, including post-release additions; see
-[release notes](RELEASE_NOTES.md) for the published package and
+This checkout prepares `v1.1.0`; the published `v1.0.0` remains available through
+GitHub Releases. NuGet.org publication is not planned. The feature summary below
+describes the current checkout; see the [1.1 release notes](RELEASE_NOTES.md) and
+the preserved [1.0 release record](RELEASE_NOTES.md#ribbonkit-v100), plus
 [current progress](04-DESIGN-NOTES.md#5-current-state--next-steps) for dated acceptance limits.
 
 ## Feature status
@@ -54,6 +55,9 @@ below describes the current checkout, including post-release additions; see
 
 ![Backstage with Windows material](docs/images/backstage-mica.png)
 
+The QAT below the ribbon uses the full available row width, with extra commands in
+its overflow menu. `Ribbon.QuickAccessMaxWidth` caps only the title-bar and tab-row placements.
+
 For colored QAT surfaces, `Ribbon.QuickAccessIconAppearance` defaults to
 `RibbonQuickAccessIconAppearance.WhiteOverlay`. Select `ColorWithGlow` to retain
 the supplied icon colors with a small white halo, or `AdaptiveColor` to adjust
@@ -74,6 +78,21 @@ surfaces have recorded verification. Showcase's Localization/RTL lab exercises
 provider refresh, mirroring, popup edges and customization. Application-authored
 labels remain the application's responsibility. A complete Windows contrast-theme
 mode is **not supported**; gallery/scrollbar system-color fallbacks are narrower.
+
+QAT commands and overflow rows expose their controls' UI Automation patterns and
+live names/enabled state. UI Automation Toggle actions on ribbon toggle buttons,
+checkboxes and their copies use the established state/Click/Command path, retaining
+source bindings, command parameters and targets.
+
+The selected tab exposes Simplified mode's visible command toolbar to UI Automation,
+using the existing command providers. Switching back to Classic restores its group tree.
+Collapsed-group openers take their accessible names from group headers. The minimize
+chevron exposes a named Toggle action that follows the existing click/policy path.
+
+Backstage exposes a named navigation Group and an active-page Pane containing the
+page's native WPF controls and automation patterns. The pane takes the selected
+page's accessible name; page selection, content bindings and layout are preserved.
+`RibbonString.BackstageNavigation` localizes the navigation group's name.
 
 Ribbon actions use a solid theme-colored keyboard-focus outline. The ribbon container
 is excluded from the tab order. Application-menu commands and dropdown rows have one
@@ -264,6 +283,10 @@ The selected list has selectable group headers, including empty groups as Add
 targets. Drag commands to reorder them, or use Move Up/Down. Ordering can cross
 groups; repeated headers preserve contiguous group sections. Add/Remove retain
 source/group identity and shared command membership.
+Select a custom-group header and use the middle Remove button to delete the group;
+use Edit → Remove tab for the selected custom tab. Authored structures are protected.
+These deletions remain drafts until Apply/OK and update the shared structure in
+both Classic and Simplified, including their customization pages and saved layout.
 Group flyouts and arbitrary editors are access surfaces rather than pinnable commands.
 
 The page edits a draft. Its Apply button and `ApplyChanges()` commit it;
@@ -653,7 +676,7 @@ menu/popup capture is available through `CapturedBackdrop` in `RibbonKit.Control
 
 ```csharp
 var capture = new CapturedBackdrop(fileMenu, window);
-capture.Apply(true);       // Also supports dropdown/split buttons and ribbon groups.
+capture.Apply(true);       // Also supports dropdown/split buttons, groups and overflow toolbars.
 capture.Refresh();         // After the host changes document paint.
 capture.Apply(false);      // Restores the ordinary shared surface.
 capture.Dispose();         // When the registration/host is retired.
@@ -676,8 +699,13 @@ The separate optional cross-theme glass treatment is a scoped resource overlay:
 ```csharp
 var glass = ThemeManager.CreateGlassOverlay(window, dark: true);
 window.Resources.MergedDictionaries.Add(glass);
+// Let ribbon continuations follow this overlay, using the host's capture source.
+var flyouts = new CapturedBackdrop(ribbon, window);
+flyouts.Apply(true);
 // Remove glass before regenerating after theme/accent/palette changes.
+flyouts.Apply(false);
 window.Resources.MergedDictionaries.Remove(glass);
+flyouts.Dispose();
 ```
 
 The factory clones the scope's effective brushes without changing global state.
@@ -691,6 +719,20 @@ including dark variants; other palettes retain 0.88.
 `RibbonKit.Metrics.Ribbon.BodyGlassOpacity` defaults to 0.44. Office 2019 dark
 uses 0.64 so the command body stays visibly darker than the header over gray
 backdrops while remaining translucent.
+The ribbon registration follows collapsed groups, constrained QAT overflow
+(including the title bar) and Simplified overflow. Office 2013, 2019, 2024 and
+2024 Flat opt in through the overlay; normal dropdown menus, combo lists and
+galleries keep their theme material. Office 2007/2010 keep Aero, and Crystal
+keeps its existing popup treatment. All palettes define
+`RibbonKit.Metrics.Ribbon.SupportsGlassFlyouts` and
+`RibbonKit.Metrics.Ribbon.FlyoutGlassOpacity`; the modern overlay changes the
+latter from 1 to 0.84. Only the background tint is attenuated; command ink keeps
+its authored opacity. Capture retains its opaque fallback outside the host
+source. Custom overflow templates need `PART_OverflowPopup` and a Border named
+`PART_OverflowPopupHost` to receive this optional material. The host owns the
+registration and disposes it when retired. Showcase and Writer connect this to
+their existing Glass choice; Writer also suspends Glass in legacy themes while
+retaining the saved modern choice.
 Direct scoped and child resources keep normal WPF precedence. The host owns
 replacement/removal and the decision to use glass after native Mica or Acrylic
 activation succeeds; the factory itself does not activate either backdrop. WPF
@@ -713,6 +755,11 @@ glyph template is instantiated separately in each button.
 
 `RibbonWindow` supports compatible Mica/Acrylic backdrops and separate optional
 frame appearance. Theme selection does not silently enable a material.
+During native window move/resize, it temporarily caches ribbon paint and detached
+title-bar QAT paint to reduce rendering work. Controls remain live, and ordinary
+rendering resumes when the drag ends. Authored `CacheMode` values and bindings are
+preserved; an explicit `CacheMode="{x:Null}"` opts that element out. Host document
+content is not cached by this behavior.
 Contextual tabs can optionally set `RibbonTab.ContextualSelectionBrush` for a distinct
 selection marker; null uses the contextual tint or Crystal's reflective treatment
 of it. Showcase's **Samples** tab compares Crystal with Office 2024 and demonstrates
@@ -761,6 +808,9 @@ dotnet add package RibbonKit --version 1.0.0 --source C:\path\to\downloaded-pack
 ```
 
 For source development, reference `src/RibbonKit/RibbonKit.csproj` instead.
+Local 1.1 candidate packages use `RibbonKit.1.1.0.nupkg` and `--version 1.1.0`
+with the same local-source command. The link above remains the published 1.0
+download until 1.1 publication is confirmed.
 Use `urn:ribbonkit`; Office 2024 light is the default. A minimal window:
 
 ```xml

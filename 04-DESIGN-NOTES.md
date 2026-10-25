@@ -171,6 +171,9 @@ Includes the 2026-09-16 animated Backstage badge-placement correction and focuse
 ### 3.35 Quick access toolbar overflow — 2026-07-27
 
 [Decision, pitfalls and evidence](docs/history/library/03-office-themes-and-layout.md#335-quick-access-toolbar-overflow--2026-07-27).
+[Shared QAT/Simplified menu scrolling](docs/history/library/11-touch-density-and-gallery-projections.md#overflow-menu-scrolling-and-native-combobox-escape--2026-10-24).
+[Below-ribbon full-row overflow](docs/history/library/11-touch-density-and-gallery-projections.md#below-ribbon-qat-overflow--2026-10-24).
+[Screen-space-aware independent-consumer placement assertions](docs/history/library/20-release-preparation.md#overflow-popup-screen-space-assertions--2026-10-25).
 
 ### 3.36 Selection visuals: the tab-strip-row reflow rule
 
@@ -219,6 +222,7 @@ Includes the 2026-09-16 animated Backstage badge-placement correction and focuse
 ### 3.47 Nested popup Escape is a stack, not five independent window handlers — 2026-08-01
 
 [Decision, pitfalls and evidence](docs/history/library/05-application-menu-localization-and-snapshots.md#347-nested-popup-escape-is-a-stack-not-five-independent-window-handlers--2026-08-01).
+[Native ComboBox Escape ordering](docs/history/library/11-touch-density-and-gallery-projections.md#overflow-menu-scrolling-and-native-combobox-escape--2026-10-24).
 
 ### 3.48 Visual-regression snapshots: the complete theme × DPI matrix — 2026-08-01
 
@@ -331,6 +335,9 @@ Includes the 2026-09-16 animated Backstage badge-placement correction and focuse
 ### 3.74 Visual Studio debugger distorted live-resize performance — 2026-08-10
 
 [Decision, pitfalls and evidence](docs/history/library/06-messages-release-and-window-frames.md#374-visual-studio-debugger-distorted-live-resize-performance--2026-08-10).
+
+[Fractional-DPI caption stability correction, 2026-10-24](docs/history/library/18-window-layout.md#height-resize-caption-stability--2026-10-24).
+[Temporary ribbon paint cache during native resizing, 2026-10-24](docs/history/library/18-window-layout.md#native-resize-paint-reuse--2026-10-24).
 
 ### 3.75 Phase 8 API review and freeze — 2026-08-10
 
@@ -451,10 +458,12 @@ Includes the 2026-09-16 animated Backstage badge-placement correction and focuse
 ### 3.103 RibbonKit Writer W1-A formatting command and selection-state engine — 2026-08-20
 
 [Decision, pitfalls and evidence](docs/history/02-writer-foundation.md#3103-ribbonkit-writer-w1-a-formatting-command-and-selection-state-engine--2026-08-20).
+[Pending formatting across same-caret clicks, 2026-10-24](docs/history/03-writer-host-integration.md#2026-10-24--same-caret-mouse-click-formatting).
 
 ### 3.104 RibbonKit Writer W1-B editing utilities and status state — 2026-08-20
 
 [Decision, pitfalls and evidence](docs/history/02-writer-foundation.md#3104-ribbonkit-writer-w1-b-editing-utilities-and-status-state--2026-08-20).
+[Successful search returns focus to the editor, 2026-10-24](docs/history/03-writer-host-integration.md#2026-10-24--search-result-focus).
 
 ### 3.105 RibbonKit Writer W1-C editing ribbon integration — 2026-08-21
 
@@ -519,6 +528,7 @@ Includes the 2026-09-16 animated Backstage badge-placement correction and focuse
 ### 3.117 RibbonKit Writer W3-C Insert, table interaction and contextual Table Tools — 2026-08-26
 
 [Decision, pitfalls and evidence](docs/history/02-writer-foundation.md#3117-ribbonkit-writer-w3-c-insert-table-interaction-and-contextual-table-tools--2026-08-26).
+[Semantic eight-column table picker, 2026-10-24](docs/history/03-writer-host-integration.md#2026-10-24--semantic-table-picker-layout).
 
 ### 3.118 RibbonKit Writer structured-object interaction planning correction — 2026-08-27
 
@@ -802,7 +812,8 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 
 ### 3.212 Optional captured backdrops and scoped glass overlays — 2026-10-01
 
-[Provide per-control host capture and cross-theme glass paint with explicit lifecycle ownership](docs/history/library/10-host-effects-and-keyboard-focus.md#3212-optional-captured-backdrops-and-scoped-glass-overlays--2026-10-01).
+[Provide per-control host capture, scoped Glass ribbon continuations and explicit lifecycle ownership](docs/history/library/10-host-effects-and-keyboard-focus.md#3212-optional-captured-backdrops-and-scoped-glass-overlays--2026-10-01).
+[Modern Office ribbon continuation follow-up](docs/history/library/17-glass-continuations.md#modern-office-ribbon-continuations--2026-10-24).
 
 ### 3.213 Main Showcase consolidation — 2026-10-01
 
@@ -835,6 +846,7 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 ### 3.220 File-first entry, QAT overflow and Backstage opening focus — 2026-10-04
 
 [Enter the ribbon at File, skip hidden QAT originals and focus Backstage actions](docs/history/library/10-host-effects-and-keyboard-focus.md#3220-file-first-entry-qat-overflow-and-backstage-opening-focus--2026-10-04).
+[Overflow arrow-key row navigation](docs/history/library/11-touch-density-and-gallery-projections.md#overflow-arrow-key-row-navigation--2026-10-24).
 
 ### 3.221 Active Backstage entry and a single focus outline — 2026-10-04
 
@@ -871,6 +883,8 @@ Canceled due to bloat. Implementation, dedicated tests and obsolete documentatio
 ### 3.229 Combo-box dropdown copies for QAT and customization — 2026-10-08
 
 [Optional combo icons, source-owned choices and selection, overflow and independent-consumer checks](docs/history/library/11-touch-density-and-gallery-projections.md#3229-combo-box-dropdown-copies-for-qat-and-customization--2026-10-08).
+[Overflow choice completion and focus](docs/history/library/11-touch-density-and-gallery-projections.md#overflow-choice-completion-and-focus--2026-10-23)
+records the 2026-10-23 shared dismissal correction.
 
 ### 3.230 Gallery dropdown copies for QAT and customization — 2026-10-08
 
@@ -986,6 +1000,8 @@ technical evidence warrants them; preserve existing dated records.
 ### 3.255 Simplified ribbon layout and customization — 2026-10-13
 
 [Source-linked single-row commands, native group access and a separate draft customization page](docs/history/library/14-simplified-ribbon.md#3255-simplified-ribbon-first-layout-slice--2026-10-13).
+[Minimum-width reorder-column clipping](docs/history/library/14-simplified-ribbon.md#minimum-width-reorder-column-at-fractional-dpi--2026-10-25)
+records the scoped rounding allowance and affected-check selection.
 
 [Native combo editors in original slots](docs/history/library/14-simplified-ribbon.md#native-combo-editors-in-original-slots--2026-10-21), with [current verification and review](docs/15-SIMPLIFIED-RIBBON-PLAN.md#native-combo-editors-in-original-slots--2026-10-21).
 
@@ -1003,6 +1019,8 @@ technical evidence warrants them; preserve existing dated records.
 
 [Square Small inline actions and toggle buttons](docs/history/library/14-simplified-ribbon.md#square-small-inline-actions--2026-10-21).
 
+[Draft custom-tab/group removal and Classic settings synchronization](docs/history/library/14-simplified-ribbon.md#custom-structure-removal--2026-10-24).
+
 ### 3.256 Ribbon capability and user-operation policy — 2026-10-15
 
 [Default-true capability, independent user permissions, binding preservation and locked import scopes](docs/history/library/15-feature-availability.md#3256-ribbon-capability-and-user-operation-policy--2026-10-15).
@@ -1018,7 +1036,7 @@ technical evidence warrants them; preserve existing dated records.
 
 ### 3.259 Ribbon-owned lifecycle and QAT relocation presentation — 2026-10-16
 
-[Shared start/progress, inert QAT relocation and optional application content animation](docs/history/library/16-host-layout-transitions.md#3259-ribbon-owned-lifecycle-and-qat-relocation-presentation--2026-10-16).
+[Shared start/progress, inert QAT relocation, held drawing position, seeded body handoff and optional application content animation](docs/history/library/16-host-layout-transitions.md#3259-ribbon-owned-lifecycle-and-qat-relocation-presentation--2026-10-16).
 
 ### 3.260 Stable lower QAT and contextual selection geometry — 2026-10-16
 
@@ -1036,10 +1054,11 @@ technical evidence warrants them; preserve existing dated records.
 ### 3.263 Shared text refresh after control animation — 2026-10-17
 
 [Shared completion repaint for ribbon text, including both tab layouts](docs/history/library/04-office2007-and-popup-motion.md#3263-shared-text-refresh-after-control-animation--2026-10-17).
+[Queued scroll completion ordering and visible-text regression fixtures](docs/history/library/20-release-preparation.md#scroll-completion-repaint-ordering--2026-10-25).
 
 ### 3.264 Stable caption and content paint during layout transitions — 2026-10-18
 
-[Continuous caption paint, transparent-header gap coverage and application card decoration](docs/history/library/16-host-layout-transitions.md#3264-stable-caption-and-content-paint-during-layout-transitions--2026-10-18).
+[Continuous caption paint, centered Touch caption foreground, steady mode-change command/lower-QAT ink, header gap coverage and application card decoration](docs/history/library/16-host-layout-transitions.md#3264-stable-caption-and-content-paint-during-layout-transitions--2026-10-18).
 
 ### 3.265 Office menu, hover and transition polish — 2026-10-18
 
@@ -1094,6 +1113,38 @@ technical evidence warrants them; preserve existing dated records.
 
 [Preferences, shared presentation, document animation and consumer pitfalls](docs/history/03-writer-host-integration.md).
 
+### 3.276 Selected-tab command accessibility — 2026-10-24
+
+[Restore the standard selected-content part while retaining layout and consumer bindings](docs/history/library/19-accessibility.md#3276-selected-tab-command-accessibility--2026-10-24).
+
+### 3.277 Actionable QAT and overflow automation — 2026-10-24
+
+[Forward real command patterns through item peers and retain tab-row QAT discovery](docs/history/library/19-accessibility.md#3277-actionable-qat-and-overflow-automation--2026-10-24).
+
+### 3.278 Source toggle automation completes host actions — 2026-10-25
+
+[Use native click activation for existing Toggle providers while retaining bindings and command targets](docs/history/library/19-accessibility.md#3278-source-toggle-automation-completes-host-actions--2026-10-25).
+
+### 3.279 Backstage page-content automation — 2026-10-25
+
+[Expose native page controls in navigation/page regions while preserving layout and bindings](docs/history/library/19-accessibility.md#3279-backstage-page-content-automation--2026-10-25).
+
+### 3.280 Simplified row automation discovery — 2026-10-25
+
+[Publish the visible native toolbar while preserving Classic item peers and command bindings](docs/history/library/19-accessibility.md#3280-simplified-row-automation-discovery--2026-10-25).
+
+### 3.281 Collapsed opener and minimize accessibility — 2026-10-25
+
+[Name collapsed-group openers and expose the minimize chevron through its existing native activation path](docs/history/library/19-accessibility.md#3281-collapsed-opener-and-minimize-accessibility--2026-10-25).
+
+### 3.282 Shared 1.1 version and API baseline promotion — 2026-10-25
+
+[Decision, pitfalls and evidence](docs/history/library/20-release-preparation.md#3282-shared-11-version-and-api-baseline-promotion--2026-10-25).
+[QAT live/frozen raster-position check](docs/history/library/20-release-preparation.md#qat-gallery-raster-position-assertions--2026-10-25)
+records the bounded one-pixel test allowance and early CI gate.
+[First-Apply fixtures and long matrix deadlines](docs/history/library/20-release-preparation.md#first-apply-fixtures-and-long-matrix-deadlines--2026-10-25)
+records shared-state isolation and bounded test-only timeout exceptions.
+
 ## 5. Current State & Next Steps
 
 > Subsystem summary; linked active plans own current slice and acceptance status.
@@ -1119,6 +1170,10 @@ technical evidence warrants them; preserve existing dated records.
   “Corrected” does not establish every theme/DPI/RTL gate.
 
 ### Remaining or intentionally deferred
+
+- **RibbonKit 1.1 acceptance and release:** campaign scope, inherited Writer
+  evidence and execution gates are in the
+  [acceptance plan](docs/20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md).
 
 - **Writer 1.1 host integration:** current focused evidence and remaining live review
   are in the [Writer checkpoint](docs/19-WRITER-HOST-INTEGRATION.md). Overall 1.1

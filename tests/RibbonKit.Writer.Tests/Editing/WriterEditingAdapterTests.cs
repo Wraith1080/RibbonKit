@@ -21,7 +21,7 @@ public sealed class WriterEditingAdapterTests
             using var fixture = CreateFixture(new FlowDocument());
 
             Assert.False(fixture.Adapter.State.HasTextContext);
-            Assert.Equal(WriterSelectionValueKind.Unset, fixture.Adapter.State.Bold.Kind);
+            Assert.True(fixture.Adapter.State.Bold.IsUniform && !fixture.Adapter.State.Bold.Value);
             Assert.True(fixture.Adapter.State.FontFamily.IsUniform);
             Assert.Equal(fixture.Editor.Document.FontFamily.Source,
                 fixture.Adapter.State.FontFamily.Value.Source);
@@ -36,7 +36,7 @@ public sealed class WriterEditingAdapterTests
             Assert.True(fixture.Adapter.CanExecute(EditingCommands.ToggleBold));
             fixture.Adapter.ToggleBold();
             fixture.Adapter.SetAlignment(TextAlignment.Center);
-            Assert.Equal(WriterSelectionValueKind.Unset, fixture.Adapter.State.Bold.Kind);
+            Assert.True(fixture.Adapter.State.Bold.IsUniform && fixture.Adapter.State.Bold.Value);
             Assert.True(fixture.Adapter.State.Alignment.IsUniform);
             Assert.Equal(TextAlignment.Center, fixture.Adapter.State.Alignment.Value);
         });

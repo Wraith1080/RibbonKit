@@ -38,6 +38,16 @@ internal static class OverflowMenuPortabilityChecks
         var nativeCombo = new RibbonComboBox { ItemsSource = new[] { "11", "12" }, SelectedIndex = 0 };
         var window = new RibbonWindow { Content = new StackPanel { Children = { ribbon, nativeCombo } }, Width = 1000, Height = 400,
             Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        string context = "startup";
+        var events = new Queue<string>();
+        void Trace(string reason)
+        {
+            if (events.Count == 12) events.Dequeue();
+            events.Enqueue($"{context}: {reason}, windowActive={window.IsActive}");
+        }
+        window.Deactivated += (_, _) => Trace("window deactivated");
+        window.LocationChanged += (_, _) => Trace("window moved");
+        window.SizeChanged += (_, e) => Trace($"window resized {e.PreviousSize}->{e.NewSize}");
         try
         {
             ThemeManager.Apply(application, RibbonTheme.Office2024); window.Show(); window.Activate(); Layout(window);
@@ -79,6 +89,7 @@ internal static class OverflowMenuPortabilityChecks
                     foreach (var row in entries.Items.OfType<FrameworkElement>()) CheckRow(row, minimum);
                     foreach (string header in new[] { "Select", "Paste", "Size", "Shapes", "Styles", "Editing" })
                     {
+                        context = $"{theme}/{dark}/{density}/{direction}/{mode}/{header}";
                         var entry = entries.Items.OfType<RibbonDropDownButton>().Single(item => item.Header == header);
                         entry.IsDropDownOpen = true; Layout(window);
                         var popup = (Popup)(header == "Editing" ? group.Template.FindName("PART_Popup", group) : entry.Template.FindName("PART_Popup", entry));
@@ -87,8 +98,10 @@ internal static class OverflowMenuPortabilityChecks
                         var parentChrome = (FrameworkElement)((AdornerDecorator)root.Child).Child;
                         Rect parentRect = Bounds(parentChrome), childRect = Bounds(popup.Child is AdornerDecorator decorator
                             ? (FrameworkElement)decorator.Child : (FrameworkElement)popup.Child);
-                        Assert.True(Math.Abs(childRect.Left - parentRect.Right) <= 1 || Math.Abs(parentRect.Left - childRect.Right) <= 1,
-                            $"Detached {header}: {theme}, {direction}, {mode}, parent={parentRect}, child={childRect}");
+                        Rect frameRect = Bounds((FrameworkElement)PresentationSource.FromVisual(popup.Child)!.RootVisual);
+                        Rect rowRect = Bounds(entry);
+                        OverflowPopupPlacement.AssertPlacement(parentRect, childRect, frameRect, rowRect,
+                            OverflowPopupPlacement.WorkArea(rowRect), context);
                         var arrow = header == "Paste"
                             ? (System.Windows.Shapes.Path)((ToggleButton)entry.Template.FindName("PART_Toggle", entry)).Template.FindName("ToggleChevron", (ToggleButton)entry.Template.FindName("PART_Toggle", entry))
                             : (System.Windows.Shapes.Path)entry.Template.FindName("OverflowChevron", entry);
@@ -99,7 +112,7 @@ internal static class OverflowMenuPortabilityChecks
                             Assert.IsType<ItemsPresenter>(Assert.IsAssignableFrom<ScrollViewer>(Assert.Single(entry.Items)).Content);
                         if (header is "Select" or "Paste") CheckRow((FrameworkElement)entry.Items[0], minimum);
                         entry.IsDropDownOpen = false; Layout(window);
-                        Assert.True(root.IsOpen);
+                        Assert.True(root.IsOpen, $"{context}: parent overflow closed after child close; currentPart={ReferenceEquals(root, toolbar.Template.FindName("PART_OverflowPopup", toolbar))}, checked={more.IsChecked}, hasOverflow={toolbar.HasOverflow}, focused={Keyboard.FocusedElement}. Events: {string.Join(" | ", events)}");
                     }
                     Assert.Single(drop.Items); Assert.Single(split.Items);
                     Assert.Equal(0, combo.SelectedIndex); Assert.Single(gallery.Items); Assert.Single(strip.Items);

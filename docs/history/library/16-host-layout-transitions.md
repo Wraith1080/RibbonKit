@@ -78,6 +78,36 @@ Exact final build/test/package results and native limits remain in the active pl
 Older full-run-plus-repair evidence is not reclassified as a clean suite pass, and
 the two residual Crystal QAT comparisons remain open unless separately reconciled.
 
+The 2026-10-23 Writer follow-up exposed two pending-cover coordinate cases
+(RKWF-059). Moving Touch QAT into/out of the title bar moves the content adorner
+layer with the ribbon, so its cached relative transform can omit the changed
+outer-coordinate anchor. Density reflow also permits the live body to arrange
+before the adorner publishes its new placement. Compensating against that newer
+control position then overshoots: a native trace held origin 70.4 DIP, adorner
+70.4, live body 84.8, correction -14.4, and painted origin 56.0. At 125% this is
+the user's 18-pixel upward jump before expansion; contraction reverses the error.
+Calling layer.Update or testing after UpdateLayout can miss that intermediate
+placement, because the complete layout flush reconciles the two positions.
+
+The inert hold now computes correction from the adorner's actual presented origin
+to the saved outer-coordinate origin, using the live source only before attachment.
+Refresh on LayoutUpdated and CompositionTarget.Rendering; remove both listeners
+on disposal. This covers cached placement and ancestor movement without changing
+the local layer, stacking, opacity, separated shadows/foreground or real layout.
+Regression coverage advances the live arrange while leaving the adorner placement
+cached and requires held paint to stay fixed, rather than relying on settled
+geometry or animation-start notifications alone. Native before/after captures
+reproduce the opposite-direction jump and verify its absence in both directions.
+
+[§3.41's two-part FLIP repair](04-office2007-and-popup-motion.md#341-two-ordering-bugs-an-effect-painted-over-and-a-flip-that-flashed--2026-07-28)
+and the [S5 density-selector repair](14-simplified-ribbon.md#visible-layoutdensity-motion-trial--2026-10-13)
+also remain applicable. RibbonLayoutTransition initializes its start transform and
+foreground before layer.Add and reuses the same routine during OnRender; holding
+the old picture and seeding playback are separate protections. Native review still
+failed after adding seeding alone, so that repair did not establish density acceptance.
+The [1.1 plan](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#deferred-caption-reflow-destination-frame--2026-10-23)
+owns current evidence, native capture limits and the user's remaining recheck.
+
 ### 3.261 Foreground stays outside decorative shadow effects — 2026-10-17
 
 The user's Crystal 100% comparison isolated a soft foreground despite corrected
@@ -157,3 +187,30 @@ relocation, density or combined requests. Preserve the strip's band rectangle fo
 pending holds and stationary sampled reversals; descendant ink bounds alone can
 otherwise trigger a false departure/arrival. Extend pixel checks to actual QAT
 icons, since stable caption text does not prove stability in that separate layer.
+
+The 2026-10-23 Writer W5 recording exposed another independent foreground gap:
+Touch QAT relocation changes caption height, but the caption's top-left stays
+fixed. Top-left translation therefore left old/final ink at different vertical
+centers while only the background and clip followed the moving boundary. All
+four title-bar routes passed background pixels yet failed a marker-size check
+(a 16-pixel icon occupied 22 rows during the fade). Translate each caption
+foreground to the interpolated band center, without scaling text/icons or moving
+the clip's top by that center correction. Reversals retain the sampled band
+rectangle and natural-size ink. The existing shared clock, one-time layout commit,
+QAT ownership and motion-off/custom-template fallbacks remain authoritative.
+Current evidence and the remaining Writer recheck are in
+[1.1 acceptance](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#touch-caption-height-motion--2026-10-23).
+
+The later Simplified-exit recording exposed two other contrast paths. The body
+presentation faded the whole incoming command layer despite already clipping and
+translating its reveal; mode changes now keep that ink at authored opacity. The
+lower QAT also moves during mode-only changes, so the earlier identical-rectangle
+rule excluded it. Matching strip/panel sizes can carry one final drawing along
+the interpolated position without complementary-alpha dimming. Preserve those
+interpolated band bounds on reversal and retain translation eligibility only for
+a single carried strip; other composed drawings retain their departure/arrival
+path. Density, placement, combined QAT changes and genuine palette-change policy
+remain separate. A native Writer trace ruled out ThemeSwitch and per-group clocks;
+inspect each paint layer rather than attributing every ribbon flash to a theme
+notification. New paint regressions fail before the correction. Current evidence
+and review limits are in the [1.1 plan](../../20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#simplified-exit-ink-contrast--2026-10-23).

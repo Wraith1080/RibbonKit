@@ -192,9 +192,14 @@ public sealed class InRibbonGalleryPopupTests
     {
         Sta.UseApplication();
         var motion = RibbonAnimation.GlobalLevel; RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
-        var gallery = new InRibbonGallery { Width = 258, Height = 54, PopupWidth = 650, FlowDirection = flow, VerticalAlignment = VerticalAlignment.Top };
+        var gallery = new InRibbonGallery { Width = 258, Height = 54, PopupWidth = 650, FlowDirection = flow,
+            HorizontalAlignment = flow == FlowDirection.LeftToRight ? HorizontalAlignment.Left : HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Top };
         for (int i = 0; i < 9; i++) gallery.Items.Add(new RibbonGalleryItem { Content = $"Style {i}", Width = 100, Height = 48 });
-        var window = new Window { Content = gallery, Width = 1000, Height = 400, Left = 50, Top = 100, WindowStyle = WindowStyle.None, ShowActivated = false, ShowInTaskbar = false };
+        Rect workArea = SystemParameters.WorkArea;
+        var window = new Window { Content = gallery, Width = Math.Min(1000, workArea.Width - 40), Height = 400,
+            Left = workArea.Left + 20, Top = workArea.Top + 20,
+            WindowStyle = WindowStyle.None, ShowActivated = false, ShowInTaskbar = false };
         try
         {
             window.Show(); Sta.Drain(); gallery.IsDropDownOpen = true; Sta.Drain(); window.UpdateLayout(); Sta.Drain();

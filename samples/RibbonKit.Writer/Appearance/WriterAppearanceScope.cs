@@ -11,6 +11,7 @@ internal sealed class WriterAppearanceScope : IDisposable
     private readonly FrameworkElement _owner;
     private ResourceDictionary? _palette;
     private ResourceDictionary? _glass;
+    private CapturedBackdrop? _flyouts;
 
     internal WriterAppearanceScope(FrameworkElement owner)
     {
@@ -39,15 +40,22 @@ internal sealed class WriterAppearanceScope : IDisposable
                     _palette[key] = app.FindResource(key);
             _owner.Resources.MergedDictionaries.Add(_palette);
         }
-        if (preferences.GlassSurfaces && !SystemParameters.HighContrast)
+        if (preferences.GlassSurfaces && preferences.Theme is not (RibbonTheme.Office2007 or RibbonTheme.Office2010)
+            && !SystemParameters.HighContrast)
         {
             _glass = ThemeManager.CreateGlassOverlay(_owner, preferences.DarkPalette);
             _owner.Resources.MergedDictionaries.Add(_glass);
+            if (_owner is RibbonKit.Writer.MainWindow writer && writer.FindName("MainRibbon") is Ribbon ribbon)
+            {
+                _flyouts = new CapturedBackdrop(ribbon, _owner);
+                _flyouts.Apply(true);
+            }
         }
     }
 
     public void Dispose()
     {
+        _flyouts?.Dispose(); _flyouts = null;
         if (_glass is not null) _owner.Resources.MergedDictionaries.Remove(_glass);
         if (_palette is not null) _owner.Resources.MergedDictionaries.Remove(_palette);
         _glass = null;

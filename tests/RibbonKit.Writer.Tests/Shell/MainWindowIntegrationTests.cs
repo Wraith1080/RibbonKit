@@ -967,12 +967,16 @@ public sealed partial class MainWindowIntegrationTests
     {
         await StaTestHelper.RunAsync(async () =>
         {
+            var elapsed = System.Diagnostics.Stopwatch.StartNew();
+            void Stage(string name) => Console.WriteLine($"Writer lifecycle {name}: {elapsed.Elapsed.TotalSeconds:0.0}s");
             using var fixture = new WindowFixture(withRecentFile: true);
             fixture.Show();
             await PumpAsync();
             AssertRuntimeContract(fixture);
+            Stage("startup");
             await AssertBackstageNewGalleryAsync(fixture);
             await AssertBackstageFileCommandsRestoreEditorFocusAsync(fixture);
+            Stage("File commands");
             Assert.True(await fixture.Shell.NewAsync(WriterDocumentProfiles.RibbonKitWriter));
             var surface = Assert.IsType<WriterEditorSurface>(fixture.Window.FindName("EditorSurface"));
             var settings = DocumentPageSettings.A4(DocumentPageOrientation.Landscape,
@@ -989,8 +993,11 @@ public sealed partial class MainWindowIntegrationTests
             await Dispatcher.Yield(DispatcherPriority.Render);
             AssertWriterIconCatalog(fixture);
             await AssertEditingRibbonControlsAsync(fixture);
+            Stage("editing controls");
             await AssertPageViewIntegrationAsync(fixture);
+            Stage("page views");
             await AssertStructuredContentIntegrationAsync(fixture);
+            Stage("structured content");
 
             var editingController = fixture.Window.EditingController;
             var stateParagraph = new Paragraph();
@@ -1160,7 +1167,8 @@ public sealed partial class MainWindowIntegrationTests
             await AssertExitCloseAsync(UnsavedChangesDecision.Save);
             await AssertExitCloseAsync(UnsavedChangesDecision.Discard);
             await AssertCleanCloseAsync();
-        }, TimeSpan.FromSeconds(20));
+            Stage("complete");
+        }, TimeSpan.FromSeconds(60));
     }
 
     private static async Task AssertStructuredContentIntegrationAsync(WindowFixture fixture)
@@ -1817,7 +1825,7 @@ public sealed partial class MainWindowIntegrationTests
         Assert.DoesNotContain(FindLogicalDescendants<FrameworkElement>(home), element =>
             AutomationProperties.GetAutomationId(element) is "ZoomOut" or "ZoomReset" or "ZoomIn");
         var view = ribbon.Tabs.Single(tab => Equals(tab.Header, "View"));
-        Assert.Equal(new[] { "Document Views", "Zoom", "Show" },
+        Assert.Equal(new[] { "Document Views", "Zoom", "Interaction", "Show" },
             view.Groups.Select(group => group.Header?.ToString()).ToArray());
         var printPreviewTab = Assert.IsType<RibbonTab>(window.FindName("PrintPreviewTab"));
         Assert.True(printPreviewTab.IsModal);

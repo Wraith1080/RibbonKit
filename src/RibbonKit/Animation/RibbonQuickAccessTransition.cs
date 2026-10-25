@@ -159,8 +159,12 @@ internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
         && VisualTreeHelper.GetDpi(_root).Equals(_dpi);
     internal bool HasPresentation => _previous.Strip is not null || _previous.Panel is not null
         || _current?.Strip is not null || _current?.Panel is not null;
-    private Rect? StationaryStripBounds => _modeOnly && _previous.Strip is { } before && _current?.Strip is { } after
-        && before.Bounds == after.Bounds ? after.Bounds : null;
+    private Rect? CarriedModeStripBounds => _modeOnly && _previous.CanTranslate && _current?.CanTranslate == true
+        && _previous.Strip is { } before && _current.Strip is { } after && before.Bounds.Size == after.Bounds.Size
+        ? Interpolate(before.Bounds, after.Bounds, Math.Clamp(_motion?.Progress ?? 0, 0, 1)) : null;
+    private Rect? CarriedModePanelBounds => _modeOnly && _previous.Panel is { } before && _current?.Panel is { } after
+        && before.Bounds.Size == after.Bounds.Size
+        ? Interpolate(before.Bounds, after.Bounds, Math.Clamp(_boundary?.Progress ?? 0, 0, 1)) : null;
 
     internal void Start(RibbonQuickAccessFrame current, RibbonLayoutTransitionMotion boundary, RibbonLayoutTransitionMotion motion, bool modeOnly)
     {
@@ -200,11 +204,11 @@ internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
             : new TranslateTransform(0, travel * (1 - alpha));
         _oldStrip.Opacity = 1 - alpha;
         _newStrip.Opacity = alpha;
-        if (StationaryStripBounds is not null)
+        if (CarriedModeStripBounds is not null)
         {
-            // Mode-only changes do not move the QAT. Its icons need the same
-            // single-presentation treatment as stationary caption/header ink.
-            _oldStrip.Transform = null; _newStrip.Transform = null;
+            // Mode-only changes keep the same QAT ink even when the lower row
+            // moves vertically. Translate one copy at its authored opacity;
+            // overlapping complementary-alpha copies lose icon contrast.
             _oldStrip.Opacity = 0; _newStrip.Opacity = 1;
         }
 
@@ -235,6 +239,10 @@ internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
         PlacePanel(_newPanel, final, top, height);
         _oldPanel.Opacity = height <= 0.01 ? 0 : final is null ? 1 : 1 - b;
         _newPanel.Opacity = height <= 0.01 ? 0 : old is null ? 1 : b;
+        if (CarriedModePanelBounds is not null)
+        {
+            _oldPanel.Opacity = 0; _newPanel.Opacity = 1;
+        }
     }
 
     private void OnLayoutUpdated(object? sender, EventArgs e) => UpdateBackgroundClip();
@@ -263,6 +271,11 @@ internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
     {
         if (before is not { } start || after is not { } end) return;
         Vector delta = end.TopLeft - start.TopLeft;
+        // Caption ink is centered in the band. Carry both endpoint drawings at
+        // the moving center as its height changes; a fade at their resting
+        // centers makes Touch QAT relocation appear to snap/double the caption.
+        // Only translate foreground: the separate background owns band scaling.
+        if (clip) delta.Y += (end.Height - start.Height) / 2;
         old.Transform = new TranslateTransform(delta.X * p, delta.Y * p);
         final.Transform = new TranslateTransform(-delta.X * (1 - p), -delta.Y * (1 - p));
         // A mode-only change leaves the caption/header in place. Carry one
@@ -271,8 +284,7 @@ internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
         bool stationary = modeOnly && start == end;
         old.Opacity = stationary ? 0 : 1 - p; final.Opacity = stationary ? 1 : p;
         if (clip && VisualTreeHelper.GetParent(old) is ContainerVisual parent)
-            parent.Clip = new RectangleGeometry(new Rect(start.X + delta.X * p, start.Y + delta.Y * p,
-                start.Width + (end.Width - start.Width) * p, start.Height + (end.Height - start.Height) * p));
+            parent.Clip = new RectangleGeometry(Interpolate(start, end, p));
     }
 
     private static void PlacePanel(ContainerVisual visual, Rect? bounds, double top, double height)
@@ -297,11 +309,14 @@ internal sealed class RibbonQuickAccessTransition : Adorner, IDisposable
         BackgroundBounds = _current is null || _boundary is null ? _previous.BackgroundBounds
             : Interpolate(_previous.BackgroundBounds, _current.BackgroundBounds, Math.Clamp(_boundary.Progress, 0, 1)),
         Strip = RibbonVectorSnapshot.Capture(_strips, _root, includeAncestors: false)
-            ?.WithBounds(_current is null ? _previous.Strip?.Bounds : StationaryStripBounds),
-        Panel = RibbonVectorSnapshot.Capture(_panels, _root, includeAncestors: false),
+            ?.WithBounds(_current is null ? _previous.Strip?.Bounds : CarriedModeStripBounds),
+        Panel = RibbonVectorSnapshot.Capture(_panels, _root, includeAncestors: false)
+            ?.WithBounds(_current is null ? _previous.Panel?.Bounds : CarriedModePanelBounds),
         Occupied = _current is null || _boundary is null ? _previous.Occupied
             : Interpolate(_previous.Occupied, _current.Occupied, Math.Clamp(_boundary.Progress, 0, 1)),
-        CanTranslate = false, // A composed interrupted drawing departs/arrives without stretching.
+        // A single carried strip remains a natural-size drawing on reversal.
+        // Other composed drawings still depart/arrive without stretching.
+        CanTranslate = _current is null ? _previous.CanTranslate : CarriedModeStripBounds is not null,
     };
 
     private static Rect Interpolate(Rect old, Rect final, double p) => new(

@@ -22,8 +22,7 @@ public class QuickAccessOverflowTests
     [Fact]
     public void An_unconstrained_strip_never_overflows() => Sta.Run(() =>
     {
-        // Below the ribbon the strip owns a full-width row and is measured with infinity. Office
-        // never shows a » there, and neither do we.
+        // An unconstrained custom host must retain the strip's natural width.
         RibbonQuickAccessPanel panel = Strip(100, 100, 100);
 
         panel.Measure(new Size(double.PositiveInfinity, 22));

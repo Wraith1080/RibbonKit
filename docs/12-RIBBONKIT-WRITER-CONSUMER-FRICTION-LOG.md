@@ -22,7 +22,7 @@ obtain explicit authorization unless already supplied. Follow `AGENTS.md` and
 | --- | --- | --- |
 | 1 | RKWF-002 | Make editable ComboBox commits predictable. Reproduce typing, selection, Enter, Escape and focus loss; document a reusable pattern before deciding whether an optional commit event is needed. Preserve native behavior and IME composition. |
 | 2 | RKWF-001 | Return focus safely after KeyTip activation without leaking the final key into the editor. Reproduce across buttons, toggles, menus and QAT before choosing documentation or a general completion hook. |
-| 3 | RKWF-003/004/006 | Improve external UI Automation discovery and actions for QAT, Backstage and ribbon commands. Start with one missing main-ribbon leaf and a second independent client; these remain investigations, not confirmed library defects. |
+| 3 | RKWF-003/004/006 | Shared main-ribbon, QAT and Backstage page-content discovery/action defects have bounded corrections and independent-client evidence. Complete actual-consumer/presentation acceptance in the 1.1 plan. |
 
 These candidates benefit ribbon consumers generally. This review does not implement
 or approve new runtime APIs; first establish the focused reproduction and scope.
@@ -49,6 +49,99 @@ put long diagnostic history in the evidence file. Preserve prior results with da
 instead of repeatedly appending them to the current-status summary.
 
 ## 4. Observations by ID
+
+### RKWF-065 — Clicking the unchanged caret discards pending font choices
+
+- First seen: 2026-10-24, W8 formatting review. The user confirmed the reset occurs at the same caret position or in an empty document, rather than only after moving to differently formatted text. The other contextual-tab and Undo/Redo checks worked.
+- Classification: Writer-owned native-editor adaptation, following RKWF-055. WPF's mouse-placement path clears pending typing properties. Six inline/Font-dialog/Clear Formatting reproductions lose their chosen values after that reset, while the different-position/intervening-edit guard case passes.
+- Correction: remember explicit caret formatting and retain effective inline properties across a plain left click only while the document and insertion point stay unchanged. Skip already-equal property writes; discard retention after caret/selection movement, edits/replacement, availability changes or disposal. Preserve native selection, word formatting and Undo; no shared runtime, settings or public API change.
+- Focused caret/adapter/copied-font checks pass, including no extra same-word Undo step. Tests simulate the native reset without moving the desktop pointer; the separate human click/type review is recorded in the [acceptance plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#writer-same-caret-mouse-formatting--2026-10-24).
+
+### RKWF-064 — Find matches lose their visible highlight while the dialog owns focus
+
+- First seen: 2026-10-24, W7 Find/Replace review. The user reports the other checks work, but the main window stays inactive after a search and requests focus there to show the match.
+- Classification: Writer-owned modeless-dialog completion. The search service selects the correct native TextRange; Find Next never activates or focuses its editor, whose inactive selection uses WPF's existing hidden-highlight behavior.
+- Correction: after a successful Find Next, activate the editor's window and focus the editor. Keep the dialog open and its query unchanged. Empty/missing searches retain dialog focus. Replacement and general popup selection-display behavior are unchanged; no RibbonKit runtime change.
+- Focused dialog regressions reproduce the inactive owner before correction and pass afterward alongside the service regressions. Automated focus and final visual review remain distinct; see the [current evidence and pending recheck](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#writer-search-result-focus--2026-10-24).
+
+### RKWF-063 — Touch table picker collapses to one cell and wraps its highlight
+
+- First seen: 2026-10-24, W7 Table/Picture review; screenshots `codex-clipboard-a26baf13-442c-4dad-a948-f741b372acc4.png` and `codex-clipboard-7c9a98fe-f72f-4ddc-a607-e5b1d5ab1318.png`. The user reports the other checks look good.
+- Classification: Writer-owned table-picker layout adaptation. Source inspection shows the 24 choices retain three logical rows of eight columns, but use a general-purpose wrapping gallery with a wide Custom Table footer. The Touch strip's equal-cell measurement includes that footer, resulting in a single visible tile. Expanded Touch items have a 44-DIP minimum while the gallery retains its 278-DIP width; six visual columns wrap the eight-column logical selection into a zigzag.
+- Correction: after initially deferring the change, the user authorized implementation on 2026-10-24. Writer now uses the public ItemsPanel extension with an eight-column WPF Grid and a separate full-width footer row. Touch-sized cells fit a wider popup; the ribbon retains one visible row. The footer reuses the shared themed Touch action style. Existing preview/selection/insertion handlers, keyboard mapping, item identities and QAT/custom/Simplified borrowing stay intact. No runtime source or API change.
+- Focused layout/copy and insertion checks pass; final enabled-state renders are inspected separately from pointer acceptance. Geometry accounts for fractional column rounding. See the [implementation pitfalls](history/03-writer-host-integration.md#2026-10-24--semantic-table-picker-layout) and [current evidence/pending Writer recheck](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#writer-table-picker-layout--2026-10-24).
+
+### RKWF-062 — Height resizing shifts the ribbon and document
+
+- First seen: 2026-10-24, W6 mouse review and `20261023-2331-03.2494863.mp4`. The user identifies jumping/flicker, rather than slow dragging, and observes it without a debugger. Exact short-transition interruption timing cannot be established by the manual mouse attempt.
+- Shared reproduction: a minimal RibbonWindow at native 125% alternates its Compact caption between 42 and 43 pixels during height-only changes. It does not require Writer, capture, a popup or a ribbon transition. This is distinct from the old debugger-only resize slowdown.
+- Caption correction: move the existing 34-DIP minimum from the window grid's Auto row to TitleBarBand, so its rounded desired height is stable before remaining space is divided.
+- The user clarified that the larger symptom is the whole window image moving in jumps, supplied a stronger Showcase recording, authorized minimizing it and preferred the cached diagnostic variant. RibbonWindow now temporarily caches ribbon and detached title-bar QAT paint during the native move/resize loop, preserving live controls and authored CacheMode values. It releases the cache on exit/cancel and lifecycle changes. No Writer workaround, document capture, shadow suppression or public API change.
+- Focused runtime, Writer and independent-consumer checks pass, with cached/uncached renders inspected. Native timing varies; the integrated Writer probe improved, while one minimal-consumer run did not. Final visual review of the integrated mitigation remains open. [Exact evidence and pending W6 review](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#native-resize-paint-mitigation--2026-10-24).
+
+### RKWF-061 — Modern Office Glass stops at the ribbon body
+
+- First seen: 2026-10-24, the user's Showcase screenshots and material-policy review. Glass does not carry into collapsed groups or ribbon/QAT overflow. The user approved those continuations following Glass, retained ordinary selection surfaces and Crystal, and explicitly excluded Office 2007/2010.
+- Shared correction: the existing CapturedBackdrop constructor accepts a Ribbon or overflow toolbar. A Ribbon registration follows the scoped modern Glass overlay, owns only group/QAT/Simplified registrations, and retires them on disable/removal/unload/disposal. The host still supplies the capture source. No new public member, setting or Writer-specific popup template.
+- Writer glue: the appearance scope owns the registration; the separate explicit popup-blur option retains dropdowns without duplicating modern Glass group capture. Legacy Glass is suspended in rendering and the checkbox while its saved modern choice survives. The preferences schema and Apply/Cancel behavior remain compatible.
+- Focused material, Writer rollback/legacy, independent-consumer and selected visual checks pass. Visible-window renders are inspected separately from offscreen fallback. Exact evidence and pending user review are in the [Glass plan](09-FUTURE-THEMES-PLAN.md#ribbon-continuation-material--2026-10-24). W5's accepted motion scope is retained.
+
+### RKWF-060 — Returning from Simplified briefly dims ribbon ink
+
+- First seen: 2026-10-23, the user's W5 recording after the density correction. A visible Writer context-menu probe reproduces the contrast change while RibbonTabControl opacity remains 1, without theme notifications or per-group restore clocks.
+- Cause: the shared body presentation fades its entire incoming command layer. Separately, the earlier stationary-QAT fix excludes BelowRibbon because its bounds move vertically; complementary-alpha copies of the same icon dim during that movement.
+- Correction: mode changes reveal incoming commands at authored opacity. Mode-only QAT motion with unchanged strip/panel sizes translates one drawing; reversal retains its interpolated band bounds. No Writer workaround, new public API or change to real theme-switch policy.
+- Twelve new runtime paint cases fail before and pass after; the surrounding host-motion cases and independent consumer paint checks pass. Native before/after captures show the Save icon retaining its original contrast after correction. Exact evidence and remaining user review are in the [1.1 plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#simplified-exit-ink-contrast--2026-10-23); implementation pitfalls are in [library history](history/library/16-host-layout-transitions.md#3264-stable-caption-and-content-paint-during-layout-transitions--2026-10-18).
+
+### RKWF-059 — Touch caption reflow exposes a destination frame before animation
+
+- First seen: 2026-10-23, the user's W5 follow-up recording after RKWF-058. The ribbon briefly shows its final position, returns to the start and animates. This is a shared pending-cover defect, separate from caption foreground alignment; RKWF-058's change did not alter the hold.
+- Focused reproduction: all four Touch title-bar routes move a unique body marker by 12 DIPs after the deferred Background placement claim but before LayoutTransitionStarting. Previous Render-priority coverage inspected the hold before that claim. The supplied recording contains the same destination → start → destination sequence.
+- Cause/correction: title-bar placement can move the local adorner layer with the ribbon, and density reflow can arrange the live body before the adorner publishes its cached placement. Correct the inert drawing from the adorner's actual presented origin to the saved outer-coordinate origin, with a live-source fallback only before attachment. Refresh at LayoutUpdated and Rendering and remove both listeners on disposal. Retain local stacking/opacity/shadows, one real layout commit and shared timing; no host workaround or public API change.
+- Related protection: the historical [two-part FLIP repair](history/library/04-office2007-and-popup-motion.md#341-two-ordering-bugs-an-effect-painted-over-and-a-flip-that-flashed--2026-07-28) and [density-selector repair](history/library/14-simplified-ribbon.md#visible-layoutdensity-motion-trial--2026-10-13) require old-layout coverage and synchronous start seeding. Body paint is staged before attachment, using its existing presentation routine. The four seed-contract cases and earlier hold checks remain valid but did not establish native density acceptance; their evidence is retained under `TestResults/v1.1-density-motion-contract-20261023/`.
+- Latest video: native density review still failed after seeding. At 125%, the supplied recording shows expansion top 82 → 64 → 82 → 100 pixels, and contraction 100 → 118 → 100 → 82. A visible Writer probe reproduced the 18-pixel opposite-direction jump: correction used new live geometry while the adorner was still at its old placement. The revised anchor eliminates that displacement in four native programmed density changes (187 valid screen captures; 16 held-render samples with zero origin error). This is controlled native paint, not physical-input or user acceptance; obscured before-capture frames were excluded.
+- Current verification and the remaining native recheck are in the [1.1 plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#deferred-caption-reflow-destination-frame--2026-10-23). Latest recording analysis, probe source, traces and before/after native evidence are under `TestResults/v1.1-density-video-20261023/`; previous evidence remains in the earlier directories above. The implementation pitfall is in [library history](history/library/16-host-layout-transitions.md#3259-ribbon-owned-lifecycle-and-qat-relocation-presentation--2026-10-16).
+
+### RKWF-058 — Touch QAT relocation makes the title-bar height change look abrupt
+
+- First seen: 2026-10-23, W5 manual motion review and the user's recording. Shared runtime presentation defect; the other reviewed W5 behavior passed. The user requested smooth expansion/contraction when QAT enters or leaves the title bar.
+- Focused reproduction: all four Touch TitleBar ↔ TabRow/BelowRibbon routes pass caption-background boundary checks, but fail a foreground pixel check. A 16-pixel window-icon marker occupies 22 rows during the crossfade: old and final caption content remain at different vertical centers while the band height interpolates. Background-only assertions missed this.
+- Correction: translate both caption foreground drawings to the interpolated band center on the existing shared boundary clock. Scale only the separate background and keep clipping at the interpolated band bounds. Real layout still commits once; Writer owns no title-bar animation or completion workaround. No public API or animation-policy change.
+- Evidence and the remaining native recheck are recorded in the [1.1 acceptance plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#touch-caption-height-motion--2026-10-23). Reproduction logs, supplied-video frame extracts and focused renders are under `TestResults/v1.1-touch-caption-20261023/`. The implementation pitfall is in [library history](history/library/16-host-layout-transitions.md#3264-stable-caption-and-content-paint-during-layout-transitions--2026-10-18).
+
+### RKWF-057 — Committing a nested menu choice leaves its containing overflow open
+
+- First seen: 2026-10-23, W4 follow-up after the user passed RKWF-055/056. Shared runtime reproduction: combo, dropdown and split-button menu choices close their own popup but leave QAT/Simplified overflow open. All six standalone cases reach the failing parent-close assertion after a single action and successful child close. The independent ComboQuickAccessKeyboard consumer reproduces it after Enter; later cases were not reached.
+- Cause: RibbonDropDownButton closes its menu on the child Click route, while RibbonQuickAccessToolBar only observes direct ButtonBase and split-primary clicks. It deliberately ignores dropdown openers, but receives no separate child-choice completion notification. Prior keyboard expectations returned to the still-open overflow entry instead of requiring dismissal after a committed action.
+- Correction: explicitly authorized and implemented on 2026-10-23. An internal dropdown completion notification lets the containing toolbar use CloseOverflow for combo/dropdown/split leaves in both overflow types. Opening or canceling a child keeps its parent available. The parent owns post-choice focus so a hidden child opener cannot overwrite an application command's explicit focus target; keyboard fallback returns to the visible overflow opener. No public API, Writer-specific handler or timer is added.
+- Verification: assembled runtime coverage includes 89 unique menu/focus cases; a combined run passed 86, with three pre-invocation focus-setup failures passing a fresh 3/3 retry. A separate final focus/commit selection passes 37/37; counts overlap. Repeat choices, source ownership, one command execution and explicit host focus are covered. Both independent combo keyboard/OverflowMenus scopes and all eight Writer font-choice cases pass. Release net8/net9 and Debug Writer builds have zero warnings/errors. Computer-use interference is plausible but unconfirmed. Original failure/proposal and correction logs remain in `TestResults/v1.1-overflow-dismissal-20261023/`. Implementation is in [library history](history/library/11-touch-density-and-gallery-projections.md#overflow-choice-completion-and-focus--2026-10-23); current evidence and native review remain in the [acceptance plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#shared-overflow-choice-dismissal--2026-10-23).
+
+### RKWF-055 — Caret-only font choices revert instead of updating native typing state
+
+- First seen: 2026-10-23, W4 manual review; Writer responsibility. With no selected text, size, Bold and other inline choices reverted. Focused adapter cases reproduced both size and Bold failures in empty documents and at a caret in existing text.
+- Cause/correction: a new TextRange at the selection endpoints does not preserve TextSelection's pending typing properties. Inline mutations, Font dialog commits and Clear Formatting now use the native TextSelection; state reads its effective insertion values instead of adjacent text. Native WPF word/caret semantics remain authoritative, without cached formatting or selection ownership in Writer.
+- Evidence: caret regressions cover empty/whitespace insertion, current-word formatting, toggling, family/size/style/colors, dialog/clear, focus return, state refresh, caret movement and document replacement. Synthetic WPF text composition checks subsequent insertion after initial window/dispatcher readiness; it is not physical keyboard or OS IME acceptance. Logs are in `TestResults/v1.1-writer-font-20261023/`; current verification and native recheck belong in the [acceptance plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#writer-caret-formatting-and-copied-font-commits--2026-10-23).
+
+### RKWF-056 — Font presets copied into QAT/custom/overflow change selection without formatting
+
+- First seen: 2026-10-23, W4 manual review; Writer command integration. Font family and size choices in all three menu-copy locations reproduced the failure. Editor selection endpoints/text stayed intact while opening overflow and choosing a preset; inactive blue highlighting was a separate display state.
+- Cause/correction: Writer listened to source DropDownClosed, Enter and LostKeyboardFocus, but a selection-only menu updates the source selection without those events. Writer now commits completed source selection changes while preserving active native edits. It binds the Classic/Simplified native font editors' explicit boundaries, identifying Simplified editors through Ribbon.GetQuickAccessSource on focus, and preserves their partial text during state refresh. This is bounded host glue for the existing RKWF-002 commit-semantics candidate; no runtime API or library edit is introduced.
+- Test scope: source-linked font family/size menus in QAT, custom groups and QAT overflow; caret-only overflow; Classic/Simplified dropdown close, partial typing, Enter and focus loss. QAT remains selection-only even for an editable source: the earlier manual instruction to type there was invalid. Native review remains in the same acceptance plan; personal settings are not touched by the temporary test fixtures.
+
+### RKWF-054 — Copied toggle buttons forward events but skip the source command
+
+- First seen: 2026-10-23, W4 manual review. Writer's original Bold formats selected text, but its QAT and custom-group copies do not. Shared runtime defect, reproduced without Writer resources or glue.
+- Cause: the toggle branch of `Ribbon.CreateCommandProxy` mirrors IsChecked and raises the source Click event, but never executes the source ICommand. `ButtonBase.RaiseEvent(Click)` does not run the native OnClick command stage. Writer correctly sets Bold's Command and editor CommandTarget. Showcase's Bold sample has no formatting Command; its other switches use Checked/Unchecked or Click handlers, so those copies can work despite this gap.
+- Focused reproduction: two standalone command-copy cases and both Writer paths failed, while two event-only cases passed. Writer's original-button checks passed before the copied formatting assertion failed. The subsequent audit also reproduced skipped commands in the KeyTip fallback for a button without an automation peer and in stock WPF toggle/checkbox/radio state-only peers. Original logs are retained in `TestResults/v1.1-toggle-proxy-20261023/`; fixtures do not change personal settings.
+- Correction: the user explicitly authorized the focused library fix and audit. Internal `ButtonCommandInvocation` raises Click, then reads and executes the source's current Command/CommandParameter/CommandTarget with CanExecute honored. It preserves the single checked-state update and source event handlers. Toggle copies and the affected KeyTip paths share this completion step. Added Click/Command stages apply only to the exact stock WPF state-only peer types; custom providers retain their own activation semantics. No Writer workaround, public API, template or token change.
+- Verification: 42 focused runtime cases and both Writer Bold regressions pass. The independent `CommandCopies` consumer passes 72 layouts, 144 Bold on/off round trips and 288 ordinary/split executions after public customization restore. It uses staged public UIA Toggle plus Click routing, not native mouse input. Normal Release runtime builds for net8/net9 and normal Debug Writer build pass with zero warnings/errors. Writer was rebuilt/reopened; native recheck and remaining W4 workflows stay in the [acceptance plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#writer-manual-acceptance).
+
+### RKWF-053 — Dropdown and split-button popups retain native scrollbar chrome
+
+- First seen: 2026-10-23, Writer 1.1 manual review; shared runtime defect. The user's font-color split-button screenshot shows the OS scrollbar inside the themed menu. The user explicitly authorized correction in the main control project.
+- Focused reproduction: overflowing standalone `RibbonDropDownButton` and `RibbonSplitButton` popups, using only library resources, both failed the shared-style assertion. Before captures show native rectangular scrollbar chrome. Combo boxes already had the required viewport styling mechanism.
+- Correction: extract that existing mechanism into internal `PopupScrollBarStyle` and use it from dropdowns (including derived split buttons) and combos. Register the existing shared style on the native viewport, with the existing local resource-dictionary fallback for deferred popup lookup. Authored viewport scrollbar styles retain precedence. No Writer workaround, public API, token or template change.
+- Evidence: 27 focused runtime passes; the independent library-only consumer passes 112 theme/palette/density/direction/control combinations and the existing gallery popup viewport scope. Normal Release runtime builds for net8/net9 and normal Debug Writer build have zero warnings/errors. Before/after and six representative consumer renders were inspected without changing approvals/tolerances. Evidence: `TestResults/v1.1-dropdown-scrollbars-20261023/`. Writer was rebuilt/reopened; user appearance and pointer-scrolling review remains pending in the [1.1 acceptance plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#shared-dropdown-scrollbar-correction--2026-10-23).
 
 ### RKWF-050 — Simplified combo display labels attempt to write to read-only font names
 
@@ -79,19 +172,19 @@ Open focus-handoff candidate. Writer defers post-KeyTip focus to ContextIdle to 
 
 ### RKWF-002 — Editable RibbonComboBox has no single semantic commit boundary
 
-Open commit-semantics candidate. Writer commits editable combos on dropdown close, Enter or focus loss, not intermediate selection. Typing, refresh, cancellation and IME need a reusable minimal proof.
+Open commit-semantics candidate. Writer's native editable font combos commit on dropdown close, Enter or focus loss; selection-only menu copies now commit a completed source choice (RKWF-056). A general reusable contract, cancellation and OS composition remain separate from this bounded host correction.
 
 [Recorded evidence](history/writer-friction-evidence.md#rkwf-002--editable-ribboncombobox-has-no-single-semantic-commit-boundary).
 
 ### RKWF-003 — QAT external UIA action semantics need an isolated reproduction
 
-Open external-UIA investigation, not a confirmed library defect. Compare hand-authored, source-linked and overflow QAT Invoke/Toggle/name/enabled behavior with a second client.
+Bounded shared correction implemented: QAT and overflow item peers forward real control roles/patterns, and Toggle completes the existing source state/Click/Command path once. A tab-peer bridge exposes the tab-row QAT. Binding/activation regressions and an independent external client cover all three placements; actual consumer and remaining overflow review stay in the [1.1 plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md). Discovery alone is not an action pass; Backstage remains separate.
 
 [Recorded evidence](history/writer-friction-evidence.md#rkwf-003--qat-external-uia-action-semantics-need-an-isolated-reproduction).
 
 ### RKWF-004 — Backstage custom page actions are absent from external UIA traversal
 
-Open external-UIA investigation. Custom Backstage page content needs external-client comparison across Modern/Classic2010/Classic2007; keyboard focus is not traversal proof.
+Bounded shared correction implemented: Backstage groups navigation and native page controls separately, reusing existing template elements and native providers. The navigation Group owns its native item peers, preserving File's selection interface; region resets run after discovery/presenter realization to avoid recursive notification callbacks. No Writer workaround, template/layout or binding changes are needed. Focused runtime/Writer tests and a notification-subscribed independent client cover Modern, Classic2010, Classic2007 and both Crystal layouts. See the [implementation record](history/library/19-accessibility.md#3279-backstage-page-content-automation--2026-10-25); current Inspect hierarchy review and remaining presentation acceptance stay in the [1.1 plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md).
 
 [Recorded evidence](history/writer-friction-evidence.md#rkwf-004--backstage-custom-page-actions-are-absent-from-external-uia-traversal).
 
@@ -103,9 +196,16 @@ Corrected and accepted. RibbonGroupSeparator now supplies adaptive in-group chro
 
 ### RKWF-006 — Main-ribbon leaf commands are absent from external UIA traversal
 
-Open main-ribbon leaf traversal investigation; runtime scope is not approved. Compare expanded/collapsed/minimized Writer and Showcase with an independent UIA client.
+Bounded shared corrections implemented: the standard selected-content presenter name restores discovery with binding-safe stretched layout defaults. The existing source Toggle providers now also run native Click/Command activation; Writer's document-formatting comparison exposed the earlier state-only behavior despite correct discovery. Simplified mode now publishes its existing visible toolbar instead of only hidden Classic source groups, through one protected groups-host peer override recorded in Unshipped. No Writer workaround is needed. See the [activation pitfall](history/library/19-accessibility.md#3278-source-toggle-automation-completes-host-actions--2026-10-25), [Simplified bridge](history/library/19-accessibility.md#3280-simplified-row-automation-discovery--2026-10-25) and [1.1 plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md) for focused evidence, the scoped testing exception and remaining actual-consumer/presentation acceptance; QAT wrapper semantics remain in RKWF-003.
 
 [Recorded evidence](history/writer-friction-evidence.md#rkwf-006--main-ribbon-leaf-commands-are-absent-from-external-uia-traversal).
+
+The final collapsed/minimized slice also names native group openers and exposes
+the minimize chevron through the existing tab peer and RibbonToggleButton
+activation. Host/part bindings and user-policy guards are retained; no Writer
+workaround or new API is needed. See the [implementation](history/library/19-accessibility.md#3281-collapsed-opener-and-minimize-accessibility--2026-10-25)
+and S23 in the [1.1 plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md) for focused evidence
+and pending actual-consumer review.
 
 ### RKWF-007 — Windows WPF print picker cannot host Writer's existing fixed preview
 
@@ -116,6 +216,13 @@ App-resolved with WriterPrintSetupDialog and isolated preview/print submission. 
 ### RKWF-008 — The single real-window STA integration case needs a parallel-load timeout allowance
 
 Retained harness exception: the default remains ten seconds, with explicit allowances for combined window and theme/DPI matrices. Writer tests now share one serialized STA dispatcher to avoid WPF's cached WindowChrome crossing threads, and nested STA fixtures reuse it. See the 2026-10-02 update in the evidence record.
+
+2026-10-25 CI follow-up: the 40-case dialog/theme/palette matrix has its own 60-second
+allowance and phase timings after exceeding ten seconds on the hosted runner.
+Density-menu tests wait for the real transition End event with a five-second
+bound instead of assuming a 300-ms dispatcher wait is sufficient. All assertions
+and the shared ten-second default remain; these are test-only exceptions, with
+no Writer/runtime timing workaround. [Focused verification and hosted limits](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md#hosted-ci-failure-and-focused-corrections--2026-10-25).
 
 [Recorded evidence](history/writer-friction-evidence.md#rkwf-008--the-single-real-window-sta-integration-case-needs-a-parallel-load-timeout-allowance).
 

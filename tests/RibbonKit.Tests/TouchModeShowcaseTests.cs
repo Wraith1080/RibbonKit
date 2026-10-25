@@ -218,7 +218,8 @@ public class TouchModeShowcaseTests
         try
         {
             ThemeManager.Apply(application, theme);
-            window = new MainWindow { Width = 1540, Height = 900, Left = -10000, Top = -10000,
+            // This checks the expanded layout, independently of the desktop's tracking limits.
+            window = new MainWindow { Width = 1540, MinWidth = 1540, Height = 900, Left = -10000, Top = -10000,
                 ShowActivated = false, ShowInTaskbar = false };
             // Realize the factory UI without reading/writing the user's saved layouts.
             var type = typeof(MainWindow);
@@ -226,6 +227,7 @@ public class TouchModeShowcaseTests
                 BindingFlags.Instance | BindingFlags.NonPublic)!.CreateDelegate(typeof(RoutedEventHandler), window);
             type.GetField("_restoringAppearance", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(window, true);
             window.Show();
+            RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
             window.ThemeGallery.SelectedItem = window.ThemeGallery.Items.OfType<RibbonGalleryItem>()
                 .Single(item => Equals(item.Tag, theme.ToString()));
             window.MainRibbon.SelectedTab = window.MainRibbon.Tabs.Single(tab => Equals(tab.Header, "View"));

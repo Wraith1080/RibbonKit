@@ -50,7 +50,11 @@ internal static class NativeGalleryPopupPortabilityChecks
         ribbon.SelectedTab = home;
         ribbon.AddToQuickAccess(gallery);
         var proxy = Assert.IsAssignableFrom<RibbonDropDownButton>(Assert.Single(ribbon.QuickAccessItems));
-        var window = new Window { Content = ribbon, Width = 1000, Height = 400, Left = 50, Top = 50,
+        // Leave room for the native popup on the hosted runner's smaller desktop.
+        // WPF intentionally nudges popups at screen edges; this matrix checks the unconstrained origin.
+        Rect workArea = SystemParameters.WorkArea;
+        var window = new Window { Content = ribbon, Width = Math.Min(1000, workArea.Width - 40), Height = 400,
+            Left = workArea.Left + 20, Top = workArea.Top + 20,
             WindowStyle = WindowStyle.None, ShowActivated = false, ShowInTaskbar = false };
         ThemeManager.Apply(application, RibbonTheme.Office2024);
         try

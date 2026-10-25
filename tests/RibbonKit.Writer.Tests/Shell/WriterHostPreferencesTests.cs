@@ -24,6 +24,37 @@ namespace RibbonKit.Writer.Tests.Shell;
 public sealed partial class MainWindowIntegrationTests
 {
     [Theory]
+    [InlineData(RibbonTheme.Office2024, false)]
+    [InlineData(RibbonTheme.Office2024Flat, true)]
+    [InlineData(RibbonTheme.Office2007, false)]
+    [InlineData(RibbonTheme.Office2010, true)]
+    [InlineData(RibbonTheme.CrystalLight, false)]
+    public async Task WriterGlassFlyoutsFollowSupportedThemesWithoutExtraPopupBlur(RibbonTheme theme, bool dark)
+    {
+        await StaTestHelper.RunAsync(async () =>
+        {
+            using var fixture = new WindowFixture();
+            var preferences = new WriterAppearancePreferences { Theme = theme, DarkPalette = dark,
+                GlassSurfaces = true, CapturedPopupBackdrop = false, AnimationLevel = RibbonAnimationLevel.None };
+            fixture.Window.ApplyAppearance(preferences); fixture.Show(); fixture.Window.Opacity = 1;
+            fixture.Ribbon.SelectedTab = fixture.Ribbon.Tabs[0];
+            ((FrameworkElement)fixture.Ribbon.SelectedTab.Content).Width = 50;
+            await PumpAsync();
+            var group = fixture.Ribbon.SelectedTab.Groups[0]; group.ApplyTemplate();
+            var popup = (Popup)group.Template.FindName("PART_Popup", group);
+            popup.IsOpen = true; await PumpAsync();
+            var frame = (Border)group.Template.FindName("PART_PopupHost", group);
+            bool supported = theme is RibbonTheme.Office2024 or RibbonTheme.Office2024Flat;
+            Assert.Equal(supported, frame.Background is DrawingBrush);
+            if (theme is RibbonTheme.Office2007 or RibbonTheme.Office2010)
+                Assert.Equal(1, ((Brush)fixture.Window.FindResource("RibbonKit.Brushes.Ribbon.BodyBackground")).Opacity);
+            fixture.Window.ApplyAppearance(preferences with { GlassSurfaces = false }); await PumpAsync();
+            Assert.Same(group.FindResource("RibbonKit.Brushes.Ribbon.ContentBackground"), frame.Background);
+            popup.IsOpen = false;
+        });
+    }
+
+    [Theory]
     [InlineData(RibbonTheme.Office2024Flat, false)]
     [InlineData(RibbonTheme.CrystalLight, true)]
     public async Task WriterInputModeDropdownMatchesShowcaseAndWorksFromQuickAccess(RibbonTheme theme, bool dark)

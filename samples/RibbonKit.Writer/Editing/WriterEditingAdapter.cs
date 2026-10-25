@@ -24,9 +24,10 @@ internal interface IWriterEditingUndoExtension
 /// </summary>
 /// <remarks>
 /// The adapter deliberately leaves document ownership, selection ownership, IME handling, clipboard
-/// storage and the native undo stack with WPF. It only installs command bindings, reads a snapshot of
-/// the current selection, and applies a requested operation when the caller executes a command. A
-/// mixed selection is reported as mixed; observing <see cref="State"/> never applies a formatting
+/// storage and the native undo stack with WPF. It installs command bindings, reads selection state,
+/// and applies requested operations. Explicit insertion formatting survives mouse clicks that leave
+/// the caret and document unchanged. A mixed selection is reported as mixed;
+/// observing <see cref="State"/> never applies a formatting
 /// value to the document.
 /// </remarks>
 public sealed class WriterEditingAdapter : IDisposable
@@ -35,6 +36,7 @@ public sealed class WriterEditingAdapter : IDisposable
     public const double IndentationStep = 18d;
 
     private readonly List<CommandBinding> _commandBindings = new();
+    private readonly WriterCaretFormattingRetention _caretFormatting;
     private readonly DependencyPropertyDescriptor? _isEnabledDescriptor;
     private readonly DependencyPropertyDescriptor? _isReadOnlyDescriptor;
     private bool _disposed;
@@ -47,6 +49,7 @@ public sealed class WriterEditingAdapter : IDisposable
     public WriterEditingAdapter(RichTextBox editor)
     {
         Editor = editor ?? throw new ArgumentNullException(nameof(editor));
+        _caretFormatting = new WriterCaretFormattingRetention(Editor, RefreshState);
         _isEnabledDescriptor = DependencyPropertyDescriptor.FromProperty(
             UIElement.IsEnabledProperty, typeof(UIElement));
         _isReadOnlyDescriptor = DependencyPropertyDescriptor.FromProperty(
@@ -370,7 +373,7 @@ public sealed class WriterEditingAdapter : IDisposable
 
         using (BeginChange())
         {
-            var range = new TextRange(Editor.Selection.Start, Editor.Selection.End);
+            var range = Editor.Selection;
             range.ApplyPropertyValue(TextElement.FontFamilyProperty, Editor.Document.FontFamily);
             range.ApplyPropertyValue(TextElement.FontSizeProperty, Editor.Document.FontSize);
             range.ApplyPropertyValue(TextElement.FontWeightProperty, FontWeights.Normal);
@@ -381,6 +384,7 @@ public sealed class WriterEditingAdapter : IDisposable
             range.ApplyPropertyValue(TextElement.ForegroundProperty, Editor.Document.Foreground);
             range.ApplyPropertyValue(TextElement.BackgroundProperty, null);
         }
+        _caretFormatting.Remember();
         RefreshState();
     }
 
@@ -400,7 +404,7 @@ public sealed class WriterEditingAdapter : IDisposable
 
         using (BeginChange())
         {
-            var range = new TextRange(Editor.Selection.Start, Editor.Selection.End);
+            var range = Editor.Selection;
             if (family is not null)
                 range.ApplyPropertyValue(TextElement.FontFamilyProperty, family);
             if (sizeInDips.HasValue)
@@ -428,6 +432,7 @@ public sealed class WriterEditingAdapter : IDisposable
                     WriterFontEffects.ToBaselineAlignment(baselineEffect.Value));
             }
         }
+        _caretFormatting.Remember();
         RefreshState();
     }
 
@@ -531,6 +536,7 @@ public sealed class WriterEditingAdapter : IDisposable
         if (_disposed)
             return;
         _disposed = true;
+        _caretFormatting.Dispose();
         CommandManager.RequerySuggested -= OnCommandManagerRequerySuggested;
         _isEnabledDescriptor?.RemoveValueChanged(Editor, EditorAvailabilityChanged);
         _isReadOnlyDescriptor?.RemoveValueChanged(Editor, EditorAvailabilityChanged);
@@ -698,7 +704,10 @@ public sealed class WriterEditingAdapter : IDisposable
         if (!CanFormat)
             return;
         using (BeginChange())
-            new TextRange(Editor.Selection.Start, Editor.Selection.End).ApplyPropertyValue(property, value);
+            // TextSelection retains WPF's pending typing properties at an empty caret.
+            // A new TextRange at the same endpoints does not carry that insertion state.
+            Editor.Selection.ApplyPropertyValue(property, value);
+        _caretFormatting.Remember();
         RefreshState();
     }
 
@@ -768,27 +777,28 @@ public sealed class WriterEditingAdapter : IDisposable
         var insertionOnly = !hasSelection && !hasTextContext;
         var paragraphs = hasTextContext ? GetSelectedParagraphs() : new List<Paragraph>();
         var alignmentParagraphs = insertionOnly ? GetSelectedParagraphs() : paragraphs;
-        var inline = contextRange is null || !hasTextContext;
-        var fontFamily = insertionOnly
+        var inline = hasSelection && (contextRange is null || !hasTextContext);
+        var inlineRange = Editor.Selection;
+        var fontFamily = !hasSelection
             ? ReadInsertionInline(TextElement.FontFamilyProperty, TryFontFamily, Editor.Document.FontFamily)
             : inline ? WriterSelectionValue<FontFamily>.Unset() :
-                ReadInline<FontFamily>(contextRange!, TextElement.FontFamilyProperty, TryFontFamily);
-        var fontSize = insertionOnly
+                ReadInline<FontFamily>(inlineRange, TextElement.FontFamilyProperty, TryFontFamily);
+        var fontSize = !hasSelection
             ? ReadInsertionInline(TextElement.FontSizeProperty, TryDouble, Editor.Document.FontSize)
             : inline ? WriterSelectionValue<double>.Unset() :
-                ReadInline<double>(contextRange!, TextElement.FontSizeProperty, TryDouble);
-        var bold = inline ? WriterSelectionValue<bool>.Unset() : ReadInline<bool>(contextRange!, TextElement.FontWeightProperty, TryBold);
-        var italic = inline ? WriterSelectionValue<bool>.Unset() : ReadInline<bool>(contextRange!, TextElement.FontStyleProperty, TryItalic);
-        var underline = inline ? WriterSelectionValue<bool>.Unset() : ReadInline<bool>(contextRange!, Inline.TextDecorationsProperty, TryUnderline);
+                ReadInline<double>(inlineRange, TextElement.FontSizeProperty, TryDouble);
+        var bold = inline ? WriterSelectionValue<bool>.Unset() : ReadInline<bool>(inlineRange, TextElement.FontWeightProperty, TryBold);
+        var italic = inline ? WriterSelectionValue<bool>.Unset() : ReadInline<bool>(inlineRange, TextElement.FontStyleProperty, TryItalic);
+        var underline = inline ? WriterSelectionValue<bool>.Unset() : ReadInline<bool>(inlineRange, Inline.TextDecorationsProperty, TryUnderline);
         var strikethrough = inline ? WriterSelectionValue<WriterStrikethroughStyle>.Unset() :
-            ReadInline<WriterStrikethroughStyle>(contextRange!, Inline.TextDecorationsProperty, TryStrikethrough);
+            ReadInline<WriterStrikethroughStyle>(inlineRange, Inline.TextDecorationsProperty, TryStrikethrough);
         var baselineEffect = inline ? WriterSelectionValue<WriterBaselineEffect>.Unset() :
-            ReadInline<WriterBaselineEffect>(contextRange!, Inline.BaselineAlignmentProperty,
+            ReadInline<WriterBaselineEffect>(inlineRange, Inline.BaselineAlignmentProperty,
                 WriterFontEffects.TryReadBaselineEffect, unsupportedValue: true);
         var foreground = inline ? WriterSelectionValue<Color?>.Unset() :
-            ReadInline<Color?>(contextRange!, TextElement.ForegroundProperty, TryColor, unsupportedValue: true);
+            ReadInline<Color?>(inlineRange, TextElement.ForegroundProperty, TryColor, unsupportedValue: true);
         var highlight = inline ? WriterSelectionValue<Color?>.Unset() :
-            ReadInline<Color?>(contextRange!, TextElement.BackgroundProperty, TryColor, unsupportedValue: true);
+            ReadInline<Color?>(inlineRange, TextElement.BackgroundProperty, TryColor, unsupportedValue: true);
         var alignment = ReadParagraph(alignmentParagraphs, p => p.TextAlignment);
         if (insertionOnly && alignment.Kind == WriterSelectionValueKind.Unset)
             alignment = WriterSelectionValue<TextAlignment>.Uniform(Editor.Document.TextAlignment);
@@ -1043,7 +1053,11 @@ public sealed class WriterEditingAdapter : IDisposable
 
     private void EditorStateChanged(object? sender, TextChangedEventArgs e) => RefreshState();
 
-    private void EditorAvailabilityChanged(object? sender, EventArgs e) => RefreshState();
+    private void EditorAvailabilityChanged(object? sender, EventArgs e)
+    {
+        _caretFormatting.Clear();
+        RefreshState();
+    }
 
     private void OnCommandManagerRequerySuggested(object? sender, EventArgs e)
     {

@@ -255,29 +255,7 @@ public sealed class WriterEditingRibbonController : IDisposable
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(combo);
         ApplyFontCatalog(combo);
-        EventHandler dropDownClosed = (_, _) => CommitFontFamily(combo, SelectedText(combo));
-        KeyEventHandler keyDown = (_, e) =>
-        {
-            if (e.Key == Key.Enter)
-            {
-                CommitFontFamily(combo, combo.Text);
-                e.Handled = true;
-            }
-        };
-        KeyboardFocusChangedEventHandler lostFocus = (_, _) =>
-        {
-            if (!combo.IsKeyboardFocusWithin)
-                CommitFontFamily(combo, combo.Text);
-        };
-        combo.DropDownClosed += dropDownClosed;
-        combo.KeyDown += keyDown;
-        combo.LostKeyboardFocus += lostFocus;
-        _unbinders.Add(() =>
-        {
-            combo.DropDownClosed -= dropDownClosed;
-            combo.KeyDown -= keyDown;
-            combo.LostKeyboardFocus -= lostFocus;
-        });
+        BindFontCommit(combo, text => CommitFontFamily(combo, text));
         _stateUpdaters.Add(() =>
         {
             combo.IsEnabled = State.CanFormat;
@@ -299,29 +277,7 @@ public sealed class WriterEditingRibbonController : IDisposable
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(combo);
-        EventHandler dropDownClosed = (_, _) => CommitFontSize(SelectedText(combo));
-        KeyEventHandler keyDown = (_, e) =>
-        {
-            if (e.Key == Key.Enter)
-            {
-                CommitFontSize(combo.Text);
-                e.Handled = true;
-            }
-        };
-        KeyboardFocusChangedEventHandler lostFocus = (_, _) =>
-        {
-            if (!combo.IsKeyboardFocusWithin)
-                CommitFontSize(combo.Text);
-        };
-        combo.DropDownClosed += dropDownClosed;
-        combo.KeyDown += keyDown;
-        combo.LostKeyboardFocus += lostFocus;
-        _unbinders.Add(() =>
-        {
-            combo.DropDownClosed -= dropDownClosed;
-            combo.KeyDown -= keyDown;
-            combo.LostKeyboardFocus -= lostFocus;
-        });
+        BindFontCommit(combo, CommitFontSize);
         _stateUpdaters.Add(() =>
         {
             combo.IsEnabled = State.CanFormat;
@@ -429,6 +385,70 @@ public sealed class WriterEditingRibbonController : IDisposable
         Editing.Dispose();
     }
 
+    private void BindFontCommit(RibbonComboBox source, Action<string> commit)
+    {
+        var editors = new HashSet<RibbonComboBox>();
+        void BindEditor(RibbonComboBox editor)
+        {
+            if (!editors.Add(editor)) return;
+            EventHandler closed = (_, _) => commit(SelectedText(source));
+            KeyEventHandler keyDown = (_, e) =>
+            {
+                if (e.Key != Key.Enter) return;
+                commit(editor.Text);
+                e.Handled = true;
+            };
+            KeyboardFocusChangedEventHandler lostFocus = (_, _) =>
+            {
+                if (!editor.IsKeyboardFocusWithin) commit(editor.Text);
+            };
+            editor.DropDownClosed += closed;
+            editor.KeyDown += keyDown;
+            editor.LostKeyboardFocus += lostFocus;
+            _unbinders.Add(() =>
+            {
+                editor.DropDownClosed -= closed;
+                editor.KeyDown -= keyDown;
+                editor.LostKeyboardFocus -= lostFocus;
+            });
+        }
+        BindEditor(source);
+        // Simplified uses a separate native ComboBox. Bind its explicit edit boundaries
+        // when it receives focus, resolving identity through RibbonKit's public source link.
+        if (Window.GetWindow(Editor) is { } window)
+        {
+            KeyboardFocusChangedEventHandler gotFocus = (_, e) =>
+            {
+                if (FindFontEditor(source, e.NewFocus) is { } editor) BindEditor(editor);
+            };
+            window.PreviewGotKeyboardFocus += gotFocus;
+            _unbinders.Add(() => window.PreviewGotKeyboardFocus -= gotFocus);
+        }
+        SelectionChangedEventHandler selectionChanged = (_, e) =>
+        {
+            // Selection-only QAT/custom/overflow menus update the source without a
+            // native DropDownClosed. Editable controls must finish their edit first.
+            if (e.AddedItems.Count > 0 && !ShouldPreserveComboEdit(source))
+                commit(SelectedText(source));
+        };
+        source.SelectionChanged += selectionChanged;
+        _unbinders.Add(() => source.SelectionChanged -= selectionChanged);
+    }
+
+    private static RibbonComboBox? FindFontEditor(RibbonComboBox source, IInputElement? focus)
+    {
+        for (var node = focus as DependencyObject; node is not null;)
+        {
+            if (node is RibbonComboBox combo)
+                return ReferenceEquals(combo, source) || ReferenceEquals(Ribbon.GetQuickAccessSource(combo), source)
+                    ? combo : null;
+            node = node is Visual
+                ? VisualTreeHelper.GetParent(node) ?? LogicalTreeHelper.GetParent(node)
+                : LogicalTreeHelper.GetParent(node);
+        }
+        return null;
+    }
+
     private void CommitFontFamily(RibbonComboBox combo, string text)
     {
         if (_applyingState || string.IsNullOrWhiteSpace(text) || !State.CanFormat)
@@ -454,10 +474,12 @@ public sealed class WriterEditingRibbonController : IDisposable
         _ => combo.Text
     };
 
-    internal static bool ShouldPreserveComboEdit(ComboBox combo)
+    internal static bool ShouldPreserveComboEdit(RibbonComboBox combo)
     {
         ArgumentNullException.ThrowIfNull(combo);
-        return combo.IsKeyboardFocusWithin || combo.IsDropDownOpen;
+        return combo.IsKeyboardFocusWithin || combo.IsDropDownOpen ||
+            FindFontEditor(combo, Keyboard.FocusedElement) is { } editor &&
+                (editor.IsKeyboardFocusWithin || editor.IsDropDownOpen);
     }
 
     private void CommitFontSize(string text)

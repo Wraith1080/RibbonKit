@@ -155,7 +155,8 @@ internal static class GroupQuickAccessPortabilityChecks
                 Part<ToggleButton>(toolbar, "PART_OverflowButton").IsChecked = true; Layout(window);
                 var overflow = Part<ItemsControl>(toolbar, "PART_OverflowHost");
                 var proxy = overflow.Items.OfType<RibbonDropDownButton>().Single();
-                var opener = Part<ToggleButton>(proxy, "PART_Toggle"); Assert.True(opener.Focus()); Press(Key.Down); Layout(window);
+                var opener = Part<ToggleButton>(proxy, "PART_Toggle"); Assert.True(opener.Focus());
+                Press(rtl ? Key.Left : Key.Right); Layout(window);
                 Assert.True(Part<Popup>(group, "PART_Popup").IsOpen);
                 Assert.False(Part<Popup>(proxy, "PART_Popup").IsOpen);
                 Assert.Same(first, Keyboard.FocusedElement);
@@ -167,7 +168,8 @@ internal static class GroupQuickAccessPortabilityChecks
                 nested.IsDropDownOpen = true; Layout(window); Press(Key.Escape); Layout(window);
                 Assert.False(nested.IsDropDownOpen); Assert.True(proxy.IsDropDownOpen);
                 Press(Key.Escape); Layout(window); Assert.False(proxy.IsDropDownOpen); Assert.Same(opener, Keyboard.FocusedElement);
-                opener.Focus(); Press(Key.Up); Layout(window); Assert.Same(last, Keyboard.FocusedElement);
+                opener.Focus(); Press(rtl ? Key.Left : Key.Right); Layout(window);
+                Press(Key.End); Layout(window); Assert.Same(last, Keyboard.FocusedElement);
                 int invoked = 0; last.Click += (_, _) => invoked++;
                 Press(Key.Enter); Layout(window); Assert.Equal(1, invoked); Assert.False(proxy.IsDropDownOpen);
                 proxy.IsDropDownOpen = true; Layout(window);

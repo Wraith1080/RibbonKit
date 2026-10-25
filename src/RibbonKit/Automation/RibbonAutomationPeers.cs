@@ -110,11 +110,19 @@ public class RibbonButtonAutomationPeer : ButtonAutomationPeer
 }
 
 /// <summary>UIA peer for <see cref="RibbonToggleButton"/>: names the button from its Header.</summary>
-public class RibbonToggleButtonAutomationPeer : ToggleButtonAutomationPeer
+public class RibbonToggleButtonAutomationPeer : ToggleButtonAutomationPeer, IToggleProvider
 {
     /// <summary>Creates the peer.</summary>
     public RibbonToggleButtonAutomationPeer(RibbonToggleButton owner) : base(owner)
     {
+    }
+
+    // Native Toggle runs OnToggle only. Use the existing click path so application
+    // handlers and commands run too; inherited ToggleState and pattern metadata stay native.
+    void IToggleProvider.Toggle()
+    {
+        if (!IsEnabled()) throw new ElementNotEnabledException();
+        ((RibbonToggleButton)Owner).InvokeFromKeyTip();
     }
 
     /// <inheritdoc />
@@ -128,11 +136,17 @@ public class RibbonToggleButtonAutomationPeer : ToggleButtonAutomationPeer
 }
 
 /// <summary>UIA peer for <see cref="RibbonCheckBox"/>: names it from its Header.</summary>
-public class RibbonCheckBoxAutomationPeer : CheckBoxAutomationPeer
+public class RibbonCheckBoxAutomationPeer : CheckBoxAutomationPeer, IToggleProvider
 {
     /// <summary>Creates the peer.</summary>
     public RibbonCheckBoxAutomationPeer(RibbonCheckBox owner) : base(owner)
     {
+    }
+
+    void IToggleProvider.Toggle()
+    {
+        if (!IsEnabled()) throw new ElementNotEnabledException();
+        ((RibbonCheckBox)Owner).InvokeFromKeyTip();
     }
 
     /// <inheritdoc />

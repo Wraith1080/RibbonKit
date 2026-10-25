@@ -9,17 +9,19 @@ using RibbonKit.Controls;
 using RibbonKit.Writer.Editing;
 using RibbonKit.Writer.Tests.Document;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace RibbonKit.Writer.Tests.Editing;
 
 [Collection("Writer UI")]
-public sealed class WriterStructuredContentDialogTests
+public sealed class WriterStructuredContentDialogTests(ITestOutputHelper output)
 {
     [Fact]
-    public void InsertDialogsResolveThemeChangesIncludingCalendarPopupAndFormatItems()
+    public async Task InsertDialogsResolveThemeChangesIncludingCalendarPopupAndFormatItems()
     {
-        StaTestHelper.Run(() =>
+        await StaTestHelper.RunAsync(() =>
         {
+            var timing = System.Diagnostics.Stopwatch.StartNew();
             var dialogs = new Window[]
             {
                 new WriterTableSizeDialog(), new WriterPictureInsertDialog(),
@@ -45,6 +47,8 @@ public sealed class WriterStructuredContentDialogTests
                 foreach (var palette in new[] { "", ".Dark" })
                 foreach (var dialog in dialogs)
                 {
+                    if (ReferenceEquals(dialog, dialogs[0]))
+                        output.WriteLine("Insert dialog matrix {0}{1} at {2:0.0}s", theme, palette, timing.Elapsed.TotalSeconds);
                     var tokens = new ResourceDictionary();
                     tokens.MergedDictionaries.Add(new ResourceDictionary
                     {
@@ -117,7 +121,9 @@ public sealed class WriterStructuredContentDialogTests
             {
                 foreach (var dialog in dialogs) dialog.Close();
             }
-        });
+            output.WriteLine("Insert dialog matrix completed in {0:0.0}s", timing.Elapsed.TotalSeconds);
+            return Task.CompletedTask;
+        }, TimeSpan.FromSeconds(60));
     }
 
     [Fact]

@@ -198,15 +198,10 @@
                                         BorderThickness="{Binding BorderThickness, ElementName=QatBelowHost}"
                                         Visibility="{Binding Visibility, ElementName=QatBelowHost}">
                                     <!-- ItemsSource bound only by the BelowRibbon trigger. -->
-                                    <ItemsControl x:Name="QatBelowItems"
-                                                  Focusable="False"
-                                                  Margin="4,0">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <StackPanel Orientation="Horizontal" />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                    </ItemsControl>
+                                    <controls:RibbonQuickAccessToolBar x:Name="QatBelowItems"
+                                                                      HorizontalAlignment="Stretch"
+                                                                      VerticalAlignment="Stretch"
+                                                                      Margin="4,0" />
                                 </Border>
                             </Grid>
 
@@ -774,7 +769,8 @@
                                 </Button.Style>
                             </Button>
                             <!-- Minimize chevron: toggles Ribbon.IsMinimized -->
-                            <ToggleButton x:Name="MinimizeToggle"
+                            <controls:RibbonToggleButton x:Name="MinimizeToggle"
+                                          AutomationProperties.Name="{localization:RibbonString Key=MinimizeRibbon}"
                                           KeyboardNavigation.TabIndex="3"
                                           Width="24" Height="22"
                                           Margin="0,6,8,0"
@@ -856,7 +852,7 @@
                                         </Style.Triggers>
                                     </Style>
                                 </ToggleButton.Style>
-                            </ToggleButton>
+                            </controls:RibbonToggleButton>
                             <!-- Merged-caption window buttons (classic MDI's maximized child).
                                  Visible only while a caption is docked; the ribbon reports the
                                  press and the host decides what it means. Placed AFTER the
@@ -936,7 +932,9 @@
                                     <layout:RibbonScrollContentHost x:Name="PART_ContentScroll"
                                                                     ConstrainChildWidth="True"
                                                                     Margin="{DynamicResource RibbonKit.Metrics.GroupsRowMargin}">
-                                        <ContentPresenter ContentSource="SelectedContent" />
+                                        <!-- WPF's TabItem automation peer discovers the selected
+                                             commands through this standard TabControl part. -->
+                                        <ContentPresenter x:Name="PART_SelectedContentHost" ContentSource="SelectedContent" />
                                     </layout:RibbonScrollContentHost>
                                     <RepeatButton Style="{StaticResource RibbonKit.ScrollLeftButton}"
                                                   Tag="BodyScroll"

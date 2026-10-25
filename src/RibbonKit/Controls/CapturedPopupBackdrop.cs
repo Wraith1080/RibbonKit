@@ -16,6 +16,9 @@ internal sealed class CapturedPopupBackdrop
     private readonly FrameworkElement _owner;
     private readonly Control _control;
     private readonly string _hostPart;
+    private readonly string _popupPart;
+    private readonly bool _continuation;
+    private double _tintOpacity = 1;
     private readonly ScrollChangedEventHandler _scrollChanged;
     private Popup? _popup;
     private Border? _host;
@@ -30,11 +33,14 @@ internal sealed class CapturedPopupBackdrop
     private Brush? _tint;
     private Brush? _fallback;
 
-    public CapturedPopupBackdrop(FrameworkElement owner, Control control, string hostPart)
+    public CapturedPopupBackdrop(FrameworkElement owner, Control control, string hostPart,
+        string popupPart = "PART_Popup", bool continuation = false)
     {
         _owner = owner;
         _control = control;
         _hostPart = hostPart;
+        _popupPart = popupPart;
+        _continuation = continuation;
         _control.Loaded += OnControlLoaded;
         _owner.SizeChanged += OnOwnerSizeChanged;
         _scrollChanged = (_, _) => Refresh();
@@ -59,7 +65,7 @@ internal sealed class CapturedPopupBackdrop
     {
         if (_removed) return;
         _control.ApplyTemplate();
-        var popup = _control.Template?.FindName("PART_Popup", _control) as Popup;
+        var popup = _control.Template?.FindName(_popupPart, _control) as Popup;
         var host = _control.Template?.FindName(_hostPart, _control) as Border;
         if (ReferenceEquals(_popup, popup) && ReferenceEquals(_host, host)) return;
 
@@ -95,6 +101,7 @@ internal sealed class CapturedPopupBackdrop
         if (bounds != _lastBounds || !VisualTreeHelper.GetDpi(_owner).Equals(_lastDpi) ||
             !VisualTreeHelper.GetDpi(_host!).Equals(_lastHostDpi) ||
             !ReferenceEquals(_host!.TryFindResource("RibbonKit.Brushes.ApplicationMenu.FrameBand"), _tint) ||
+            TintOpacity() != _tintOpacity ||
             !ReferenceEquals(_host.TryFindResource("RibbonKit.Brushes.Ribbon.ContentBackground"), _fallback) ||
             !ReferenceEquals(_host.Background, _material))
             Refresh();
@@ -111,6 +118,10 @@ internal sealed class CapturedPopupBackdrop
         return !((valueSource.BaseValueSource == BaseValueSource.Local || valueSource.IsCurrent) && !ownPaint) &&
             valueSource.BaseValueSource is not BaseValueSource.Style and not BaseValueSource.StyleTrigger;
     }
+
+    private double TintOpacity() => _continuation
+        && _host?.TryFindResource("RibbonKit.Metrics.Ribbon.FlyoutGlassOpacity") is double opacity
+            ? Math.Clamp(opacity, 0, 1) : 1;
 
     private Rect Bounds()
     {
@@ -141,6 +152,10 @@ internal sealed class CapturedPopupBackdrop
 
             var surface = new Rect(0, 0, host.ActualWidth, host.ActualHeight);
             var tint = host.TryFindResource("RibbonKit.Brushes.ApplicationMenu.FrameBand") as Brush;
+            _tintOpacity = TintOpacity();
+            var paintedTint = tint;
+            if (tint is not null && _tintOpacity < 1)
+            { paintedTint = tint.CloneCurrentValue(); paintedTint.Opacity *= _tintOpacity; }
             var fallback = host.TryFindResource("RibbonKit.Brushes.Ribbon.ContentBackground") as Brush;
             var material = new DrawingGroup();
             using (var context = material.Open())
@@ -149,7 +164,7 @@ internal sealed class CapturedPopupBackdrop
                 // opaque where the owner has no content to sample.
                 context.DrawRectangle(fallback, null, surface);
                 context.DrawImage(crop, surface);
-                context.DrawRectangle(tint, null, surface);
+                context.DrawRectangle(paintedTint, null, surface);
             }
             _material = new DrawingBrush(material)
             {

@@ -1,5 +1,7 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
@@ -13,8 +15,82 @@ using Xunit;
 
 namespace RibbonKit.Tests;
 
-public sealed class OverflowMenuPresentationTests
+public sealed partial class OverflowMenuPresentationTests
 {
+    [Theory]
+    [InlineData(false, "combo")]
+    [InlineData(true, "combo")]
+    [InlineData(false, "dropdown")]
+    [InlineData(true, "dropdown")]
+    [InlineData(false, "split")]
+    [InlineData(true, "split")]
+    public void Committing_a_nested_choice_closes_its_containing_overflow(bool simplified, string kind) => Sta.Run(() =>
+    {
+        using var host = new Host(simplified, RibbonDensity.Compact, FlowDirection.LeftToRight);
+        var source = kind switch { "combo" => (FrameworkElement)host.Combo, "dropdown" => host.Dropdown, _ => host.Split };
+        int choices = 0, commands = 0;
+        if (kind == "combo") host.Combo.SelectionChanged += (_, _) => choices++;
+        else
+        {
+            var item = (RibbonMenuItem)((RibbonDropDownButton)source).Items[0];
+            item.Click += (_, _) => choices++;
+            host.Window.CommandBindings.Add(new CommandBinding(ApplicationCommands.Copy,
+                (_, e) => { commands++; e.Handled = true; }, (_, e) => e.CanExecute = true));
+            item.Command = ApplicationCommands.Copy;
+            item.CommandTarget = host.Window;
+        }
+        host.Toolbar.OpenOverflow(); host.Layout();
+        var entry = Assert.IsAssignableFrom<RibbonDropDownButton>(host.Entry(source));
+        entry.IsDropDownOpen = true; host.Layout();
+        Assert.True(host.Popup.IsOpen); // Opening a submenu must keep the containing menu.
+        entry.IsDropDownOpen = false; host.Layout();
+        Assert.True(host.Popup.IsOpen); // Canceling a submenu also leaves its parent available.
+        for (int round = 0; round < 2; round++)
+        {
+            if (round > 0) { host.Toolbar.OpenOverflow(); host.Layout(); Assert.Same(entry, host.Entry(source)); }
+            entry.IsDropDownOpen = true; host.Layout();
+            var row = Assert.IsAssignableFrom<Button>(entry.Items[kind == "combo" ? 1 : 0]);
+            var peer = UIElementAutomationPeer.CreatePeerForElement(row)!;
+            ((IInvokeProvider)peer.GetPattern(PatternInterface.Invoke)!).Invoke(); host.Layout();
+            // Selecting the current combo choice must dismiss too, without inventing
+            // another SelectionChanged. Borrowed action commands still execute once.
+            Assert.Equal(kind == "combo" ? 1 : round + 1, choices);
+            Assert.Equal(kind == "combo" ? 0 : round + 1, commands);
+            Assert.False(entry.IsDropDownOpen);
+            Assert.False(host.Popup.IsOpen);
+            Assert.False(Assert.IsType<ToggleButton>(host.Toolbar.Template.FindName("PART_OverflowButton", host.Toolbar)).IsChecked);
+            if (kind != "combo") Assert.Single(((RibbonDropDownButton)source).Items);
+        }
+    });
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Completing_a_choice_preserves_the_hosts_explicit_focus_target(bool combo) => Sta.Run(() =>
+    {
+        using var host = new Host(false, RibbonDensity.Compact, FlowDirection.LeftToRight);
+        var target = new TextBox { Text = "Host editor" }; host.Panel.Children.Add(target);
+        host.Window.Activate(); host.Layout();
+        var source = combo ? (FrameworkElement)host.Combo : host.Dropdown;
+        if (combo) host.Combo.SelectionChanged += (_, _) => target.Focus();
+        else
+        {
+            var item = (RibbonMenuItem)host.Dropdown.Items[0];
+            host.Window.CommandBindings.Add(new CommandBinding(ApplicationCommands.Copy,
+                (_, e) => { target.Focus(); e.Handled = true; }, (_, e) => e.CanExecute = true));
+            item.Command = ApplicationCommands.Copy; item.CommandTarget = host.Window;
+        }
+        host.Toolbar.OpenOverflow(); host.Layout();
+        var entry = (RibbonDropDownButton)host.Entry(source);
+        entry.IsDropDownOpen = true; host.Layout();
+        var row = Assert.IsAssignableFrom<Button>(entry.Items[combo ? 1 : 0]);
+        Assert.True(row.Focus());
+        var peer = UIElementAutomationPeer.CreatePeerForElement(row)!;
+        ((IInvokeProvider)peer.GetPattern(PatternInterface.Invoke)!).Invoke(); host.Layout();
+        Assert.False(host.Popup.IsOpen);
+        Assert.Same(target, Keyboard.FocusedElement);
+    });
+
     [Theory]
     [InlineData(FlowDirection.LeftToRight, 300, 200, PlacementMode.Right)]
     [InlineData(FlowDirection.RightToLeft, 300, 200, PlacementMode.Left)]
@@ -242,7 +318,7 @@ public sealed class OverflowMenuPresentationTests
         internal RibbonQuickAccessToolBar Toolbar { get; }
         internal Popup Popup => (Popup)Toolbar.Template.FindName("PART_OverflowPopup", Toolbar);
         internal FrameworkElement Entry(FrameworkElement source) => Toolbar.OverflowEntries.Single(entry => Ribbon.GetQuickAccessSource(entry) == source);
-        internal Host(bool simplified, RibbonDensity density, FlowDirection direction, bool rightEdge = false)
+        internal Host(bool simplified, RibbonDensity density, FlowDirection direction, bool rightEdge = false, bool windowFlow = false)
         {
             ThemeManager.Apply(Sta.UseApplication(), RibbonTheme.Office2024); RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
             Ribbon.Density = density; Ribbon.FlowDirection = direction;
@@ -252,7 +328,8 @@ public sealed class OverflowMenuPresentationTests
             var tab = new RibbonTab { Header = "Home" }; tab.Groups.Add(Group); Ribbon.Tabs.Add(tab); Ribbon.SelectedTab = tab;
             foreach (var item in new FrameworkElement[] { Dropdown, Split, Combo, Group }) Ribbon.AddToQuickAccess(item);
             Panel.Children.Add(Ribbon);
-            Window = new RibbonWindow { Content = Panel, Width = 850, Height = 330, Left = rightEdge ? 10000 : -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+            Window = new RibbonWindow { Content = Panel, Width = 850, Height = 330, Left = rightEdge ? 10000 : -10000, Top = -10000,
+                FlowDirection = windowFlow ? direction : FlowDirection.LeftToRight, ShowActivated = false, ShowInTaskbar = false };
             Window.Show(); Layout();
             if (simplified)
             { Ribbon.LayoutMode = RibbonLayoutMode.Simplified; Layout(); Toolbar = ((RibbonGroupsHost)tab.Content).SimplifiedToolBar!; Toolbar.Width = 36; }

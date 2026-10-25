@@ -43,6 +43,7 @@ internal static class LayoutMotionPortabilityChecks
             }
             if (scope == "LayoutMotionPaint")
             {
+                VerifyModeInk(application);
                 foreach (var mode in new[] { RibbonLayoutMode.Classic, RibbonLayoutMode.Simplified })
                     VerifyLayout(application, RibbonTheme.Office2024Flat, FlowDirection.LeftToRight, RibbonDensity.Compact, mode);
                 VerifyInterruptions(application);
@@ -70,6 +71,84 @@ internal static class LayoutMotionPortabilityChecks
                 if (overrides[action] is { } value) RibbonAnimation.SetActionLevel(action, value);
                 else RibbonAnimation.ClearActionLevel(action);
         }
+    }
+
+    private static void VerifyModeInk(Application application)
+    {
+        var level = RibbonAnimation.GlobalLevel;
+        try
+        {
+            RibbonAnimation.GlobalLevel = RibbonAnimationLevel.Expressive;
+            foreach (var theme in new[] { RibbonTheme.Office2024Flat, RibbonTheme.CrystalLight })
+            foreach (var density in new[] { RibbonDensity.Compact, RibbonDensity.Touch })
+            {
+                ThemeManager.Apply(application, theme);
+                var (window, ribbon) = Create();
+                ribbon.Density = density; ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
+                while (ribbon.Tabs[0].Groups.Count > 1) ribbon.Tabs[0].Groups.RemoveAt(1);
+                var source = (RibbonButton)ribbon.Tabs[0].Groups[0].Items[0];
+                source.Icon = new DrawingImage(new GeometryDrawing(Brushes.Blue, null, new RectangleGeometry(new Rect(0, 0, 16, 16))));
+                ribbon.QuickAccessItems.Clear();
+                ribbon.AddToQuickAccess(source);
+                var returning = new RibbonButton { Header = "Classic marker", Size = RibbonControlSize.Large,
+                    Icon = new DrawingImage(new GeometryDrawing(Brushes.Lime, null, new RectangleGeometry(new Rect(0, 0, 16, 16)))) };
+                ribbon.Tabs[0].Groups[0].Items.Add(returning);
+                Ribbon.SetSimplifiedPlacement(returning, RibbonSimplifiedPlacement.Overflow);
+                var progressProperty = System.ComponentModel.DependencyPropertyDescriptor.FromProperty(
+                    RibbonLayoutTransitionMotion.ProgressProperty, typeof(RibbonLayoutTransitionMotion));
+                RibbonLayoutTransitionEventArgs? active = null;
+                Point finalCenter = new();
+                bool pending = false, ended = true;
+                int qatSamples = 0, classicSamples = 0;
+                void Sample()
+                {
+                    if (ended || active is null || active.BoundaryMotion.Progress is < 0 or >= 1) return;
+                    double p = active.BoundaryMotion.Progress;
+                    Rect old = active.PreviousGeometry.QuickAccessBounds!.Value, final = active.FinalGeometry!.QuickAccessBounds!.Value;
+                    Point point = new(finalCenter.X + (old.X - final.X) * (1 - p), finalCenter.Y + (old.Y - final.Y) * (1 - p));
+                    var bitmap = new RenderTargetBitmap(900, 500, 96, 96, PixelFormats.Pbgra32); bitmap.Render(window);
+                    byte[] pixel = new byte[4];
+                    bitmap.CopyPixels(new Int32Rect((int)point.X, (int)point.Y, 1, 1), pixel, 4, 0);
+                    Assert.Equal(Colors.Blue, Color.FromArgb(pixel[3], pixel[2], pixel[1], pixel[0]));
+                    if (p > 0) qatSamples++;
+                    if (active.TargetState.LayoutMode != RibbonLayoutMode.Classic || p > .34) return;
+                    byte[] pixels = new byte[900 * 500 * 4]; bitmap.CopyPixels(pixels, 900 * 4, 0);
+                    Assert.True(Enumerable.Range(0, pixels.Length / 4).Any(i => pixels[i * 4 + 1] >= 253
+                        && pixels[i * 4] <= 2 && pixels[i * 4 + 2] <= 2), $"{theme}/{density}: returning Classic ink dimmed.");
+                    classicSamples++;
+                }
+                void Schedule(object? sender, EventArgs args)
+                {
+                    if (pending) return;
+                    pending = true;
+                    window.Dispatcher.BeginInvoke(DispatcherPriority.Render, (Action)(() => { pending = false; Sample(); }));
+                }
+                ribbon.LayoutTransitionStarting += (_, e) =>
+                {
+                    active = e; ended = false;
+                    var copy = (FrameworkElement)ribbon.QuickAccessItems[0];
+                    finalCenter = copy.TranslatePoint(new Point(copy.ActualWidth / 2, copy.ActualHeight / 2), window);
+                    progressProperty.AddValueChanged(e.BoundaryMotion, Schedule);
+                    // The quintic clock may skip the short early-opacity phase
+                    // between render ticks. Public Starting exposes its seeded
+                    // zero frame deterministically; later samples check QAT ink.
+                    Sample();
+                };
+                ribbon.LayoutTransitionEnded += (_, e) => { ended = true; progressProperty.RemoveValueChanged(e.BoundaryMotion, Schedule); };
+                try
+                {
+                    window.Show(); Layout(window); WaitForRender(window);
+                    foreach (var mode in new[] { RibbonLayoutMode.Simplified, RibbonLayoutMode.Classic })
+                    {
+                        ended = false; ribbon.LayoutMode = mode; Layout(window); PumpUntil(() => ended);
+                    }
+                    Assert.True(qatSamples > 0); Assert.True(classicSamples > 0, $"{theme}/{density}: no early Classic paint sample.");
+                    Console.WriteLine($"Mode ink {theme}/{density}: QAT={qatSamples}, early Classic={classicSamples}.");
+                }
+                finally { window.Close(); }
+            }
+        }
+        finally { RibbonAnimation.GlobalLevel = level; }
     }
 
     private static void VerifyTabReadiness(Application application)

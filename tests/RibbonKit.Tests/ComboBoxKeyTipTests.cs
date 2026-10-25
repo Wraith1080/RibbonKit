@@ -106,6 +106,11 @@ public sealed class ComboBoxKeyTipTests
                 // The group owns arrow navigation on its opener buttons.
                 KeyTipPress(Key.F10); KeyTipPress(Key.C); KeyTipPress(Key.G); KeyTipPress(Key.F);
             }
+            else if (placement == "Overflow")
+            {
+                // Overflow reserves Up/Down for sibling rows; Forward enters a submenu.
+                Press(flow == FlowDirection.LeftToRight ? Key.Right : Key.Left); Layout();
+            }
             else { Press(Key.Down); Layout(); }
             Assert.True(copy.IsDropDownOpen); Assert.False(IsKeyTipActive(ribbon));
             Press(Key.Down); Layout(); Assert.Same(copy.Items[2], Keyboard.FocusedElement);

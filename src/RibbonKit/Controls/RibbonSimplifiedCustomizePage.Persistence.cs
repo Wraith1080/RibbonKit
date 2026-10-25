@@ -167,6 +167,7 @@ public partial class RibbonSimplifiedCustomizePage
             // A later edit in the live Classic/Simplified surface supersedes the older imported scope.
             _pendingLayout = null; _pendingRibbonBase = null; ClearLayoutProjection();
             _drafts.Clear(); _tabPlacements.Clear(); _newGroups.Clear(); _renames.Clear(); _groupEdits.Clear(); _memberships.Clear();
+            _removedTabs.Clear(); _removedGroups.Clear();
             changed = true;
         }
         if (_pendingQatBase is not null && !SameQatScope(live, _pendingQatBase))
@@ -240,6 +241,8 @@ public partial class RibbonSimplifiedCustomizePage
         }
         layout.Simplified ??= new SimplifiedDto();
         foreach (var pair in _drafts) WriteChoices(layout.Simplified, pair.Key, pair.Value);
+        var retainedTabs = DraftTabs();
+        layout.Simplified.Tabs.RemoveAll(data => !retainedTabs.Any(tab => Controls.Ribbon.GetCommandId(tab) == data.TabId));
         return layout;
     }
     private void WriteChoices(SimplifiedDto simplified, RibbonTab tab, List<SimplifiedCommandChoice>? choices)

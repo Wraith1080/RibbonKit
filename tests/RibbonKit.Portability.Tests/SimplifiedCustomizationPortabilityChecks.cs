@@ -22,6 +22,7 @@ internal static class SimplifiedCustomizationPortabilityChecks
     {
         RibbonAnimation.GlobalLevel = RibbonAnimationLevel.None;
         int cases = 0;
+        var elapsed = System.Diagnostics.Stopwatch.StartNew();
         try
         {
             foreach (RibbonTheme theme in Enum.GetValues<RibbonTheme>())
@@ -95,6 +96,9 @@ internal static class SimplifiedCustomizationPortabilityChecks
                             Rect bounds = part.TransformToVisual(viewport).TransformBounds(new Rect(part.RenderSize));
                             Assert.True(bounds.Left >= -0.75 && bounds.Right <= viewport.ActualWidth + 0.75 && bounds.Top >= -0.75 && bounds.Bottom <= viewport.ActualHeight + 0.75,
                                 $"{theme}/{dark}/{density}/{direction}/{scale}/width={width}/{name}: {bounds}, viewport={viewport.RenderSize}");
+                            if (name is "PART_UpButton" or "PART_DownButton")
+                                Assert.True(bounds.Left >= -0.01 && bounds.Right <= viewport.ActualWidth + 0.01,
+                                    $"Reorder button clipped: {theme}/{dark}/{density}/{direction}/{scale}/width={width}/{name}: {bounds}, viewport={viewport.RenderSize}");
                         }
                     }
                     var available = Part<ListBox>(page, "PART_AvailableList"); var current = Part<ListBox>(page, "PART_CurrentList");
@@ -192,6 +196,8 @@ internal static class SimplifiedCustomizationPortabilityChecks
                     ResetScope(page, RibbonString.ResetAllCustomizations); Assert.Equal(beforeFullReset, RibbonCustomizationSerializer.Serialize(ribbon));
                     page.ApplyChanges(); Layout(dialog); Assert.Single(ribbon.Tabs); Assert.Equal(page.ResetLayout, RibbonCustomizationSerializer.Serialize(ribbon));
                     cases++;
+                    if (cases % 16 == 0)
+                        Console.WriteLine($"Simplified customization: {cases} combinations passed through {theme}, elapsed={elapsed.Elapsed.TotalSeconds:0.0}s.");
                 }
                 finally { dialog.Close(); Layout(dialog); }
             }

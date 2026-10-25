@@ -73,8 +73,7 @@ public class RibbonQuickAccessPanel : Panel
 
         _overflow.Clear();
 
-        // An unconstrained host (below the ribbon, where the strip owns a full-width row) never
-        // overflows — which is exactly the behaviour that placement wants.
+        // An unconstrained custom host retains the strip's natural width.
         if (double.IsInfinity(availableSize.Width) || natural <= availableSize.Width)
         {
             UpdateOwner();

@@ -24,6 +24,17 @@ internal static class ThemePolishPortabilityChecks
         ribbon.Tabs.Add(new RibbonTab { Header = "Home" });
         var window = new RibbonWindow { Content = ribbon, Width = 850, Height = 600,
             Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false };
+        string context = "startup";
+        var events = new Queue<string>();
+        void Trace(string reason)
+        {
+            if (events.Count == 12) events.Dequeue();
+            events.Enqueue($"{context}: {reason}, open={ribbon.IsBackstageOpen}, visible={menu.IsVisible}, windowActive={window.IsActive}");
+        }
+        window.Deactivated += (_, _) => Trace("window deactivated");
+        window.LocationChanged += (_, _) => Trace("window moved");
+        window.SizeChanged += (_, e) => Trace($"window resized {e.PreviousSize}->{e.NewSize}");
+        menu.CloseRequested += (_, _) => Trace("menu close requested");
         try
         {
             window.Show();
@@ -31,6 +42,7 @@ internal static class ThemePolishPortabilityChecks
             foreach (bool dark in new[] { false, true })
             foreach (var flow in new[] { FlowDirection.LeftToRight, FlowDirection.RightToLeft })
             {
+                context = $"{theme}/{dark}/{flow}";
                 ThemeManager.Apply(application, theme);
                 ThemeManager.SetDarkMode(application, dark);
                 ribbon.FlowDirection = flow;
@@ -56,7 +68,7 @@ internal static class ThemePolishPortabilityChecks
                 Part<Button>(item, "PART_Arrow").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 Layout();
                 Assert.Same(item, menu.ActiveItem);
-                Assert.True(active.IsVisible, $"{theme}, dark={dark}, {flow}: active page must remain visible.");
+                Assert.True(active.IsVisible, $"{context}: active page must remain visible; currentPart={ReferenceEquals(active, menu.Template.FindName("ActivePage", menu))}, currentVisible={(menu.Template.FindName("ActivePage", menu) as FrameworkElement)?.IsVisible}, open={ribbon.IsBackstageOpen}, menuVisible={menu.IsVisible}. Events: {string.Join(" | ", events)}");
                 Assert.Equal(pane.ActualWidth, active.ActualWidth, 3);
                 var heading = Part<Border>(menu, "HeaderBand");
                 var join = Part<Border>(menu, "HeaderBandJoin");

@@ -6,7 +6,9 @@ using System.Windows.Documents;
 using System.Windows.Shell;
 using System.Windows.Threading;
 using System.Windows.Input;
+using System.Windows.Automation.Peers;
 using RibbonKit.Animation;
+using RibbonKit.Automation;
 using RibbonKit.Layout;
 
 namespace RibbonKit.Controls;
@@ -19,7 +21,7 @@ namespace RibbonKit.Controls;
 /// <remarks>
 /// <para>
 /// Whether overflow can happen at all is decided by the width the placement gives the toolbar.
-/// Below the ribbon the strip owns a full-width row, so it is unconstrained and never overflows.
+/// Below the ribbon the strip uses the full available row width before overflowing.
 /// In the tab-strip row and the title bar it competes with the tabs and the window title, so the
 /// ribbon caps it at <see cref="Ribbon.QuickAccessMaxWidth"/> and the overflow button appears as
 /// soon as that cap is reached.
@@ -53,6 +55,7 @@ public class RibbonQuickAccessToolBar : ItemsControl
     private ToggleButton? _overflowButton;
     private Popup? _overflowPopup;
     private ItemsControl? _overflowHost;
+    private OverflowMenuScroller? _overflowScroller;
     private PopupDismissHelper? _dismiss;
     private bool _overflowUpdatePending;
     private bool _focusLastOnOpen;
@@ -71,6 +74,10 @@ public class RibbonQuickAccessToolBar : ItemsControl
 
     /// <summary>Initializes the interactive QAT surface.</summary>
     public RibbonQuickAccessToolBar() => RibbonPopupInteraction.SetSuppressHover(this, false);
+
+    /// <inheritdoc />
+    protected override AutomationPeer OnCreateAutomationPeer() =>
+        new RibbonCommandItemsAutomationPeer(this, AutomationControlType.ToolBar);
 
     /// <summary>Whether one or more items currently don't fit and live in the overflow flyout.</summary>
     public bool HasOverflow => (bool)GetValue(HasOverflowProperty);
@@ -113,6 +120,9 @@ public class RibbonQuickAccessToolBar : ItemsControl
     public override void OnApplyTemplate()
     {
         CloseOverflow();
+        _overflowScroller?.Dispose();
+        _overflowScroller = null;
+        if (_overflowHost is not null) _overflowHost.PreviewKeyDown -= OnOverflowHostKeyDown;
         _dismiss?.OnClosed();
         _panel?.RestoreOverflowFocus();
         _panel = null;
@@ -127,6 +137,9 @@ public class RibbonQuickAccessToolBar : ItemsControl
         _overflowButton = GetTemplateChild(OverflowButtonPartName) as ToggleButton;
         _overflowPopup = GetTemplateChild(OverflowPopupPartName) as Popup;
         _overflowHost = GetTemplateChild(OverflowHostPartName) as ItemsControl;
+        if (_overflowHost is not null) _overflowHost.PreviewKeyDown += OnOverflowHostKeyDown;
+        if (_overflowHost is not null && GetTemplateChild("PART_OverflowScrollViewer") is ScrollViewer viewer)
+            _overflowScroller = new OverflowMenuScroller(viewer, _overflowHost);
 
         // The flyout is StaysOpen=True and dismissed explicitly, like every other RibbonKit popup.
         // With WPF's own light-dismiss, clicking the » button a SECOND time does nothing visible:
@@ -176,6 +189,32 @@ public class RibbonQuickAccessToolBar : ItemsControl
                 if (entry.Focus() || entry.MoveFocus(new TraversalRequest(last ? FocusNavigationDirection.Last : FocusNavigationDirection.First))) break;
             }
         }));
+    }
+
+    private void OnOverflowHostKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Handled || Keyboard.Modifiers != ModifierKeys.None || e.Key is not (Key.Down or Key.Up)
+            || _overflowPopup is not { IsOpen: true } || Keyboard.FocusedElement is not ButtonBase focused
+            || _overflowHost?.IsAncestorOf(focused) != true) return;
+
+        var rows = OverflowEntries.Where(entry => entry.IsEnabled && entry.IsVisible).ToArray();
+        int current = Array.FindIndex(rows, row => row.IsKeyboardFocusWithin);
+        // An open child owns its own keys, including editors in borrowed groups.
+        if (current < 0 || rows[current] is RibbonDropDownButton { IsDropDownOpen: true }) return;
+
+        int direction = e.Key == Key.Down ? 1 : -1;
+        for (int step = 1; step <= rows.Length; step++)
+        {
+            var next = rows[(current + step * direction + rows.Length) % rows.Length];
+            if (next.Focus() || next.MoveFocus(new TraversalRequest(FocusNavigationDirection.First)))
+            {
+                next.BringIntoView();
+                break;
+            }
+        }
+        // Handle before dropdown/group row openers interpret Up/Down as a
+        // ribbon-button request to enter their submenu. Forward/Enter stay native.
+        e.Handled = true;
     }
 
     /// <inheritdoc />
@@ -277,6 +316,7 @@ public class RibbonQuickAccessToolBar : ItemsControl
             entry.SetValue(RibbonOverflowMenu.ParentSurfaceProperty, surface);
 
         _overflowHost.ItemsSource = entries;
+        _overflowScroller?.Open(_overflowButton ?? (FrameworkElement)this, surface);
 
         // Unfold the whole flyout surface, like every other RibbonKit popup (§3.42). Done here
         // rather than through RibbonPopupMotion because this control already owns the popup's
@@ -363,8 +403,10 @@ public class RibbonQuickAccessToolBar : ItemsControl
         {
             case RibbonSplitButton split:
                 split.Click += OnOverflowEntryInvoked;
+                split.MenuItemInvoked += OnOverflowMenuItemInvoked;
                 break;
-            case RibbonDropDownButton:
+            case RibbonDropDownButton dropDown:
+                dropDown.MenuItemInvoked += OnOverflowMenuItemInvoked;
                 break;
             case ButtonBase button:
                 button.Click += OnOverflowEntryInvoked;
@@ -402,6 +444,7 @@ public class RibbonQuickAccessToolBar : ItemsControl
 
     private void OnOverflowClosed(object? sender, EventArgs e)
     {
+        _overflowScroller?.Close();
         _overflowFocusRequest++;
         _focusLastOnOpen = false;
         _dismiss?.OnClosed();
@@ -425,7 +468,28 @@ public class RibbonQuickAccessToolBar : ItemsControl
         // The entries themselves are kept — see GetOrCreateEntry for why rebuilding is unsafe.
     }
 
-    private void OnOverflowEntryInvoked(object sender, RoutedEventArgs e) => CloseOverflow();
+    private void OnOverflowEntryInvoked(object sender, RoutedEventArgs e)
+        => OnOverflowMenuItemInvoked(_overflowHost?.IsKeyboardFocusWithin == true);
+
+    private void OnOverflowMenuItemInvoked(bool returnFocus)
+    {
+        CloseOverflow();
+        if (!returnFocus) return;
+        var window = Window.GetWindow(this);
+        var focusAtClose = Keyboard.FocusedElement;
+        // Closing the containing popup unloads its focused entry. Keep keyboard
+        // navigation on a visible opener after native popup teardown. A newer
+        // open/close or a host command's focus choice takes precedence.
+        Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
+        {
+            if (_overflowPopup is { IsOpen: true }
+                || _overflowButton is not { IsVisible: true, IsEnabled: true }) return;
+            if (Keyboard.FocusedElement is null || ReferenceEquals(Keyboard.FocusedElement, window)
+                || ReferenceEquals(Keyboard.FocusedElement, focusAtClose)
+                || Keyboard.FocusedElement is DependencyObject focused && _overflowHost?.IsAncestorOf(focused) == true)
+                _overflowButton.Focus();
+        }));
+    }
 
     // Always closes through the BUTTON's IsChecked, never the popup's IsOpen: the two are bound
     // two-way, and driving the popup directly would leave the button stuck looking pressed.

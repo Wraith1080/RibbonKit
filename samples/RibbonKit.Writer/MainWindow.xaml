@@ -18,6 +18,15 @@
                 <ResourceDictionary Source="Icons.xaml" />
                 <ResourceDictionary Source="/RibbonKit;component/Themes/Controls.OptionsDialog.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            <Style x:Key="WriterTableGridFooterStyle" TargetType="{x:Type rk:RibbonGalleryItem}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type rk:RibbonGalleryItem}">
+                            <ContentPresenter Content="{TemplateBinding Content}" Margin="6,4" />
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
             <Style x:Key="RecentDocumentButtonStyle" TargetType="{x:Type Button}">
                 <Setter Property="Focusable" Value="True" />
                 <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -662,7 +671,7 @@
                                 rk:KeyTip.Keys="TB" Icon="{StaticResource Icon.WriterTable}"
                                 AutomationProperties.AutomationId="InsertTablesGroup" AutomationProperties.Name="Table"
                                 AutomationProperties.HelpText="Insert a native table whose supported structure and formatting are preserved in RibbonKit Writer files.">
-                    <rk:InRibbonGallery x:Name="TableGridPicker" Header="Table" Icon="{StaticResource Icon.WriterTable}" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="100" Width="278" Height="54"
+                    <rk:InRibbonGallery x:Name="TableGridPicker" Header="Table" Icon="{StaticResource Icon.WriterTable}" rk:Ribbon.SimplifiedPlacement="Inline" rk:Ribbon.SimplifiedSize="Medium" rk:Ribbon.SimplifiedPriority="100" Height="54"
                                         FlowDirection="LeftToRight"
                                         SelectionChanged="OnTableGridSelectionChanged"
                                         ItemPreview="OnTableGridItemPreview"
@@ -672,6 +681,38 @@
                                         AutomationProperties.AutomationId="InsertTableGrid"
                                         AutomationProperties.Name="Table grid picker"
                                         AutomationProperties.HelpText="Use arrow keys for a quick table up to 3 by 8, or choose Custom Table for another supported size. RibbonKit Writer files preserve supported tables.">
+                        <rk:InRibbonGallery.Style>
+                            <Style TargetType="{x:Type rk:InRibbonGallery}">
+                                <!-- Eight natural cells plus opener/popup chrome and a small
+                                     allowance for per-monitor rounding of individual columns. -->
+                                <Setter Property="Width" Value="298" />
+                                <Setter Property="PopupWidth" Value="288" />
+                                <Style.Triggers>
+                                    <Trigger Property="rk:Ribbon.Density" Value="Touch">
+                                        <Setter Property="Width" Value="408" />
+                                        <Setter Property="PopupWidth" Value="368" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </rk:InRibbonGallery.Style>
+                        <rk:InRibbonGallery.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <!-- Table dimensions are semantic; density must not rewrap rows.
+                                     The command footer spans the grid without sizing its cells. -->
+                                <Grid HorizontalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                </Grid>
+                            </ItemsPanelTemplate>
+                        </rk:InRibbonGallery.ItemsPanel>
                         <rk:InRibbonGallery.ToolTip>
                             <rk:RibbonScreenTip Title="Insert Table"
                                                 Description="Choose a quick 1 × 1 through 3 × 8 table, or enter another supported size with Custom Table. RibbonKit Writer files preserve supported tables." />
