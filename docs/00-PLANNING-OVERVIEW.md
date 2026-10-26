@@ -23,6 +23,7 @@ matrix. Their measured failures and fixes belong in the design history.
 | Locate implementation and architectural contracts | [Architecture](01-ARCHITECTURE.md) |
 | Current progress and remaining gates | [Design notes §5](../04-DESIGN-NOTES.md#5-current-state--next-steps) |
 | RibbonKit 1.1 acceptance and release preparation | [1.1 acceptance plan](20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md) |
+| Native WinForms scope and first implementation milestone | [WinForms plan](21-NATIVE-WINFORMS-PLAN.md), [native acceptance](../winforms/docs/M1-STATUS.md) |
 | Completed phases and candidate tracks | [Roadmap](03-ROADMAP.md) |
 | Planned ribbon follow-ons, in order | [Feature availability](16-RIBBON-FEATURE-AVAILABILITY-PLAN.md), [Toolbox definitions](17-TOOLBOX-ITEM-DEFINITION-PLAN.md), [Ribbon/host animation synchronization](18-HOST-LAYOUT-TRANSITION-PLAN.md) |
 | Work and validate a change | [AGENTS.md](../AGENTS.md), [CONTRIBUTING.md](../CONTRIBUTING.md) |

@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>WinExe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/RibbonKit.WinForms/RibbonKit.WinForms.csproj" />
+    <ProjectReference Include="../../src/RibbonKit.WinForms.Design/RibbonKit.WinForms.Design.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <Target Name="CopyDesignSupport" AfterTargets="Build">
+    <Copy SourceFiles="../../src/RibbonKit.WinForms.Design/bin/$(Configuration)/$(TargetFramework)/RibbonKit.WinForms.Design.dll" DestinationFolder="$(OutDir)" />
+  </Target>
+</Project>

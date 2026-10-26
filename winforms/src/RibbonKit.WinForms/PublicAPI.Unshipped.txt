@@ -1,0 +1,285 @@
+#nullable enable
+~override RibbonKit.WinForms.RibbonFill.Equals(object obj) -> bool
+~override RibbonKit.WinForms.RibbonFill.ToString() -> string
+~override RibbonKit.WinForms.RibbonIconContext.Equals(object obj) -> bool
+~override RibbonKit.WinForms.RibbonIconContext.ToString() -> string
+~override RibbonKit.WinForms.RibbonPaintContext.Equals(object obj) -> bool
+~override RibbonKit.WinForms.RibbonPaintContext.ToString() -> string
+~override RibbonKit.WinForms.RibbonSizePolicy.Equals(object obj) -> bool
+abstract RibbonKit.WinForms.RibbonItem.PerformClick() -> void
+override RibbonKit.WinForms.RibbonButtonItem.PerformClick() -> void
+override RibbonKit.WinForms.RibbonControl.CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject!
+override RibbonKit.WinForms.RibbonControl.Dispose(bool disposing) -> void
+override RibbonKit.WinForms.RibbonControl.IsInputKey(System.Windows.Forms.Keys keyData) -> bool
+override RibbonKit.WinForms.RibbonControl.OnBindingContextChanged(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonControl.OnDpiChangedAfterParent(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonControl.OnEnabledChanged(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonControl.OnFontChanged(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonControl.OnGotFocus(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonControl.OnHandleCreated(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonControl.OnHandleDestroyed(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonControl.OnLostFocus(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonControl.OnMouseCaptureChanged(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonControl.OnMouseDown(System.Windows.Forms.MouseEventArgs! e) -> void
+override RibbonKit.WinForms.RibbonControl.OnMouseLeave(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonControl.OnMouseMove(System.Windows.Forms.MouseEventArgs! e) -> void
+override RibbonKit.WinForms.RibbonControl.OnMouseUp(System.Windows.Forms.MouseEventArgs! e) -> void
+override RibbonKit.WinForms.RibbonControl.OnMouseWheel(System.Windows.Forms.MouseEventArgs! e) -> void
+override RibbonKit.WinForms.RibbonControl.OnPaint(System.Windows.Forms.PaintEventArgs! e) -> void
+override RibbonKit.WinForms.RibbonControl.OnParentChanged(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonControl.OnResize(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonControl.OnVisibleChanged(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonControl.ProcessCmdKey(ref System.Windows.Forms.Message msg, System.Windows.Forms.Keys keyData) -> bool
+override RibbonKit.WinForms.RibbonControl.WndProc(ref System.Windows.Forms.Message m) -> void
+override RibbonKit.WinForms.RibbonDropDownItem.PerformClick() -> void
+override RibbonKit.WinForms.RibbonElement.Dispose(bool disposing) -> void
+override RibbonKit.WinForms.RibbonElement.ToString() -> string!
+override RibbonKit.WinForms.RibbonFill.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonIconContext.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonPaintContext.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonSizePolicy.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonSizePolicy.ToString() -> string!
+override RibbonKit.WinForms.RibbonSizePolicyConverter.CanConvertFrom(System.ComponentModel.ITypeDescriptorContext? context, System.Type! sourceType) -> bool
+override RibbonKit.WinForms.RibbonSizePolicyConverter.CanConvertTo(System.ComponentModel.ITypeDescriptorContext? context, System.Type? destinationType) -> bool
+override RibbonKit.WinForms.RibbonSizePolicyConverter.ConvertFrom(System.ComponentModel.ITypeDescriptorContext? context, System.Globalization.CultureInfo? culture, object! value) -> object?
+override RibbonKit.WinForms.RibbonSizePolicyConverter.ConvertTo(System.ComponentModel.ITypeDescriptorContext? context, System.Globalization.CultureInfo? culture, object? value, System.Type! destinationType) -> object?
+override RibbonKit.WinForms.RibbonTheme.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonTheme.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonTheme.ToString() -> string!
+RibbonKit.WinForms.Accessibility.IExpandProvider
+RibbonKit.WinForms.Accessibility.IExpandProvider.Collapse() -> void
+RibbonKit.WinForms.Accessibility.IExpandProvider.Expand() -> void
+RibbonKit.WinForms.Accessibility.IExpandProvider.ExpandCollapseState.get -> int
+RibbonKit.WinForms.Accessibility.IFragmentProvider
+RibbonKit.WinForms.Accessibility.IFragmentProvider.BoundingRectangle.get -> RibbonKit.WinForms.Accessibility.UiaRectangle
+RibbonKit.WinForms.Accessibility.IFragmentProvider.FragmentRoot.get -> RibbonKit.WinForms.Accessibility.IFragmentRootProvider!
+RibbonKit.WinForms.Accessibility.IFragmentProvider.GetEmbeddedFragmentRoots() -> RibbonKit.WinForms.Accessibility.IFragmentRootProvider![]?
+RibbonKit.WinForms.Accessibility.IFragmentProvider.GetRuntimeId() -> int[]!
+RibbonKit.WinForms.Accessibility.IFragmentProvider.Navigate(int direction) -> RibbonKit.WinForms.Accessibility.IFragmentProvider?
+RibbonKit.WinForms.Accessibility.IFragmentProvider.SetFocus() -> void
+RibbonKit.WinForms.Accessibility.IFragmentRootProvider
+RibbonKit.WinForms.Accessibility.IFragmentRootProvider.ElementProviderFromPoint(double x, double y) -> RibbonKit.WinForms.Accessibility.IFragmentProvider?
+RibbonKit.WinForms.Accessibility.IFragmentRootProvider.GetFocus() -> RibbonKit.WinForms.Accessibility.IFragmentProvider?
+RibbonKit.WinForms.Accessibility.IInvokeProvider
+RibbonKit.WinForms.Accessibility.IInvokeProvider.Invoke() -> void
+RibbonKit.WinForms.Accessibility.IRawProvider
+RibbonKit.WinForms.Accessibility.IRawProvider.GetPatternProvider(int patternId) -> object?
+RibbonKit.WinForms.Accessibility.IRawProvider.GetPropertyValue(int propertyId) -> object?
+RibbonKit.WinForms.Accessibility.IRawProvider.HostRawElementProvider.get -> RibbonKit.WinForms.Accessibility.IRawProvider?
+RibbonKit.WinForms.Accessibility.IRawProvider.ProviderOptions.get -> int
+RibbonKit.WinForms.Accessibility.ISelectionItemProvider
+RibbonKit.WinForms.Accessibility.ISelectionItemProvider.AddToSelection() -> void
+RibbonKit.WinForms.Accessibility.ISelectionItemProvider.IsSelected.get -> bool
+RibbonKit.WinForms.Accessibility.ISelectionItemProvider.RemoveFromSelection() -> void
+RibbonKit.WinForms.Accessibility.ISelectionItemProvider.Select() -> void
+RibbonKit.WinForms.Accessibility.ISelectionItemProvider.SelectionContainer.get -> RibbonKit.WinForms.Accessibility.IRawProvider!
+RibbonKit.WinForms.Accessibility.ISelectionProvider
+RibbonKit.WinForms.Accessibility.ISelectionProvider.CanSelectMultiple.get -> bool
+RibbonKit.WinForms.Accessibility.ISelectionProvider.GetSelection() -> RibbonKit.WinForms.Accessibility.IRawProvider![]!
+RibbonKit.WinForms.Accessibility.ISelectionProvider.IsSelectionRequired.get -> bool
+RibbonKit.WinForms.Accessibility.IToggleProvider
+RibbonKit.WinForms.Accessibility.IToggleProvider.Toggle() -> void
+RibbonKit.WinForms.Accessibility.IToggleProvider.ToggleState.get -> int
+RibbonKit.WinForms.Accessibility.UiaRectangle
+RibbonKit.WinForms.Accessibility.UiaRectangle.Height -> double
+RibbonKit.WinForms.Accessibility.UiaRectangle.Left -> double
+RibbonKit.WinForms.Accessibility.UiaRectangle.Top -> double
+RibbonKit.WinForms.Accessibility.UiaRectangle.UiaRectangle() -> void
+RibbonKit.WinForms.Accessibility.UiaRectangle.Width -> double
+RibbonKit.WinForms.IRibbonIcon
+RibbonKit.WinForms.IRibbonIcon.Draw(System.Drawing.Graphics! graphics, System.Drawing.Rectangle bounds, RibbonKit.WinForms.RibbonIconContext context) -> void
+RibbonKit.WinForms.RibbonButtonItem
+RibbonKit.WinForms.RibbonButtonItem.Click -> System.EventHandler?
+RibbonKit.WinForms.RibbonButtonItem.RibbonButtonItem() -> void
+RibbonKit.WinForms.RibbonControl
+RibbonKit.WinForms.RibbonControl.BeginInit() -> void
+RibbonKit.WinForms.RibbonControl.BeginUpdate() -> void
+RibbonKit.WinForms.RibbonControl.EndInit() -> void
+RibbonKit.WinForms.RibbonControl.EndUpdate() -> void
+RibbonKit.WinForms.RibbonControl.Renderer.get -> RibbonKit.WinForms.RibbonRenderer?
+RibbonKit.WinForms.RibbonControl.Renderer.set -> void
+RibbonKit.WinForms.RibbonControl.RibbonControl() -> void
+RibbonKit.WinForms.RibbonControl.SelectedTab.get -> RibbonKit.WinForms.RibbonTab?
+RibbonKit.WinForms.RibbonControl.SelectedTab.set -> void
+RibbonKit.WinForms.RibbonControl.SelectedTabChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonControl.Tabs.get -> RibbonKit.WinForms.RibbonTabCollection!
+RibbonKit.WinForms.RibbonControl.Theme.get -> RibbonKit.WinForms.RibbonTheme!
+RibbonKit.WinForms.RibbonControl.Theme.set -> void
+RibbonKit.WinForms.RibbonDropDownItem
+RibbonKit.WinForms.RibbonDropDownItem.CloseDropDown() -> void
+RibbonKit.WinForms.RibbonDropDownItem.DropDownClosed -> System.EventHandler?
+RibbonKit.WinForms.RibbonDropDownItem.DropDownOpening -> System.ComponentModel.CancelEventHandler?
+RibbonKit.WinForms.RibbonDropDownItem.Items.get -> RibbonKit.WinForms.RibbonItemCollection!
+RibbonKit.WinForms.RibbonDropDownItem.RibbonDropDownItem() -> void
+RibbonKit.WinForms.RibbonDropDownItem.ShowDropDown() -> void
+RibbonKit.WinForms.RibbonElement
+RibbonKit.WinForms.RibbonElement.BindingContext.get -> System.Windows.Forms.BindingContext!
+RibbonKit.WinForms.RibbonElement.BindingContext.set -> void
+RibbonKit.WinForms.RibbonElement.BindingContextChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonElement.DataBindings.get -> System.Windows.Forms.ControlBindingsCollection!
+RibbonKit.WinForms.RibbonElement.Enabled.get -> bool
+RibbonKit.WinForms.RibbonElement.Enabled.set -> void
+RibbonKit.WinForms.RibbonElement.EnabledChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonElement.Id.get -> string!
+RibbonKit.WinForms.RibbonElement.Id.set -> void
+RibbonKit.WinForms.RibbonElement.IdChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonElement.KeyTip.get -> string!
+RibbonKit.WinForms.RibbonElement.KeyTip.set -> void
+RibbonKit.WinForms.RibbonElement.KeyTipChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonElement.RibbonElement() -> void
+RibbonKit.WinForms.RibbonElement.Text.get -> string!
+RibbonKit.WinForms.RibbonElement.Text.set -> void
+RibbonKit.WinForms.RibbonElement.TextChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonElement.Visible.get -> bool
+RibbonKit.WinForms.RibbonElement.Visible.set -> void
+RibbonKit.WinForms.RibbonElement.VisibleChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonElementCollection<T>
+RibbonKit.WinForms.RibbonElementCollection<T>.AddRange(params T![]! items) -> void
+RibbonKit.WinForms.RibbonFill
+RibbonKit.WinForms.RibbonFill.Deconstruct(out System.Drawing.Color Start, out System.Drawing.Color End) -> void
+RibbonKit.WinForms.RibbonFill.End.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonFill.End.init -> void
+RibbonKit.WinForms.RibbonFill.Equals(RibbonKit.WinForms.RibbonFill other) -> bool
+RibbonKit.WinForms.RibbonFill.RibbonFill() -> void
+RibbonKit.WinForms.RibbonFill.RibbonFill(System.Drawing.Color color) -> void
+RibbonKit.WinForms.RibbonFill.RibbonFill(System.Drawing.Color Start, System.Drawing.Color End) -> void
+RibbonKit.WinForms.RibbonFill.Start.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonFill.Start.init -> void
+RibbonKit.WinForms.RibbonGroup
+RibbonKit.WinForms.RibbonGroup.CanResize.get -> bool
+RibbonKit.WinForms.RibbonGroup.CanResize.set -> void
+RibbonKit.WinForms.RibbonGroup.Items.get -> RibbonKit.WinForms.RibbonItemCollection!
+RibbonKit.WinForms.RibbonGroup.ReductionMode.get -> RibbonKit.WinForms.RibbonGroupReductionMode
+RibbonKit.WinForms.RibbonGroup.ReductionMode.set -> void
+RibbonKit.WinForms.RibbonGroup.ReductionPriority.get -> int?
+RibbonKit.WinForms.RibbonGroup.ReductionPriority.set -> void
+RibbonKit.WinForms.RibbonGroup.RibbonGroup() -> void
+RibbonKit.WinForms.RibbonGroupCollection
+RibbonKit.WinForms.RibbonGroupReductionMode
+RibbonKit.WinForms.RibbonGroupReductionMode.Collapse = 0 -> RibbonKit.WinForms.RibbonGroupReductionMode
+RibbonKit.WinForms.RibbonGroupReductionMode.Resize = 1 -> RibbonKit.WinForms.RibbonGroupReductionMode
+RibbonKit.WinForms.RibbonGroupReductionMode.ResizeThenCollapse = 2 -> RibbonKit.WinForms.RibbonGroupReductionMode
+RibbonKit.WinForms.RibbonIconContext
+RibbonKit.WinForms.RibbonIconContext.Deconstruct(out int DeviceDpi, out System.Drawing.Color Foreground, out bool Enabled) -> void
+RibbonKit.WinForms.RibbonIconContext.DeviceDpi.get -> int
+RibbonKit.WinForms.RibbonIconContext.DeviceDpi.init -> void
+RibbonKit.WinForms.RibbonIconContext.Enabled.get -> bool
+RibbonKit.WinForms.RibbonIconContext.Enabled.init -> void
+RibbonKit.WinForms.RibbonIconContext.Equals(RibbonKit.WinForms.RibbonIconContext other) -> bool
+RibbonKit.WinForms.RibbonIconContext.Foreground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonIconContext.Foreground.init -> void
+RibbonKit.WinForms.RibbonIconContext.RibbonIconContext() -> void
+RibbonKit.WinForms.RibbonIconContext.RibbonIconContext(int DeviceDpi, System.Drawing.Color Foreground, bool Enabled) -> void
+RibbonKit.WinForms.RibbonItem
+RibbonKit.WinForms.RibbonItem.AccessibleDescription.get -> string!
+RibbonKit.WinForms.RibbonItem.AccessibleDescription.set -> void
+RibbonKit.WinForms.RibbonItem.AccessibleName.get -> string!
+RibbonKit.WinForms.RibbonItem.AccessibleName.set -> void
+RibbonKit.WinForms.RibbonItem.Icon.get -> RibbonKit.WinForms.IRibbonIcon?
+RibbonKit.WinForms.RibbonItem.Icon.set -> void
+RibbonKit.WinForms.RibbonItem.Image.get -> System.Drawing.Image?
+RibbonKit.WinForms.RibbonItem.Image.set -> void
+RibbonKit.WinForms.RibbonItem.LargeImage.get -> System.Drawing.Image?
+RibbonKit.WinForms.RibbonItem.LargeImage.set -> void
+RibbonKit.WinForms.RibbonItem.RibbonItem() -> void
+RibbonKit.WinForms.RibbonItem.SizePolicy.get -> RibbonKit.WinForms.RibbonSizePolicy
+RibbonKit.WinForms.RibbonItem.SizePolicy.set -> void
+RibbonKit.WinForms.RibbonItemCollection
+RibbonKit.WinForms.RibbonItemSize
+RibbonKit.WinForms.RibbonItemSize.Large = 0 -> RibbonKit.WinForms.RibbonItemSize
+RibbonKit.WinForms.RibbonItemSize.Medium = 1 -> RibbonKit.WinForms.RibbonItemSize
+RibbonKit.WinForms.RibbonItemSize.Small = 2 -> RibbonKit.WinForms.RibbonItemSize
+RibbonKit.WinForms.RibbonPaintContext
+RibbonKit.WinForms.RibbonPaintContext.Bounds.get -> System.Drawing.Rectangle
+RibbonKit.WinForms.RibbonPaintContext.Bounds.init -> void
+RibbonKit.WinForms.RibbonPaintContext.Deconstruct(out System.Drawing.Graphics! Graphics, out System.Drawing.Rectangle Bounds, out RibbonKit.WinForms.RibbonTheme! Theme, out System.Drawing.Font! Font, out int DeviceDpi, out bool Hot, out bool Pressed, out bool Focused, out bool ReserveIcon) -> void
+RibbonKit.WinForms.RibbonPaintContext.DeviceDpi.get -> int
+RibbonKit.WinForms.RibbonPaintContext.DeviceDpi.init -> void
+RibbonKit.WinForms.RibbonPaintContext.Equals(RibbonKit.WinForms.RibbonPaintContext other) -> bool
+RibbonKit.WinForms.RibbonPaintContext.Focused.get -> bool
+RibbonKit.WinForms.RibbonPaintContext.Focused.init -> void
+RibbonKit.WinForms.RibbonPaintContext.Font.get -> System.Drawing.Font!
+RibbonKit.WinForms.RibbonPaintContext.Font.init -> void
+RibbonKit.WinForms.RibbonPaintContext.Graphics.get -> System.Drawing.Graphics!
+RibbonKit.WinForms.RibbonPaintContext.Graphics.init -> void
+RibbonKit.WinForms.RibbonPaintContext.Hot.get -> bool
+RibbonKit.WinForms.RibbonPaintContext.Hot.init -> void
+RibbonKit.WinForms.RibbonPaintContext.Pressed.get -> bool
+RibbonKit.WinForms.RibbonPaintContext.Pressed.init -> void
+RibbonKit.WinForms.RibbonPaintContext.ReserveIcon.get -> bool
+RibbonKit.WinForms.RibbonPaintContext.ReserveIcon.init -> void
+RibbonKit.WinForms.RibbonPaintContext.RibbonPaintContext() -> void
+RibbonKit.WinForms.RibbonPaintContext.RibbonPaintContext(System.Drawing.Graphics! Graphics, System.Drawing.Rectangle Bounds, RibbonKit.WinForms.RibbonTheme! Theme, System.Drawing.Font! Font, int DeviceDpi, bool Hot = false, bool Pressed = false, bool Focused = false, bool ReserveIcon = false) -> void
+RibbonKit.WinForms.RibbonPaintContext.Theme.get -> RibbonKit.WinForms.RibbonTheme!
+RibbonKit.WinForms.RibbonPaintContext.Theme.init -> void
+RibbonKit.WinForms.RibbonRenderer
+RibbonKit.WinForms.RibbonRenderer.Dispose() -> void
+RibbonKit.WinForms.RibbonRenderer.DrawRounded(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonFill fill, System.Drawing.Color border) -> void
+RibbonKit.WinForms.RibbonRenderer.RibbonRenderer() -> void
+RibbonKit.WinForms.RibbonSizePolicy
+RibbonKit.WinForms.RibbonSizePolicy.Equals(RibbonKit.WinForms.RibbonSizePolicy other) -> bool
+RibbonKit.WinForms.RibbonSizePolicy.Large.get -> RibbonKit.WinForms.RibbonItemSize
+RibbonKit.WinForms.RibbonSizePolicy.Medium.get -> RibbonKit.WinForms.RibbonItemSize
+RibbonKit.WinForms.RibbonSizePolicy.RibbonSizePolicy() -> void
+RibbonKit.WinForms.RibbonSizePolicy.Small.get -> RibbonKit.WinForms.RibbonItemSize
+RibbonKit.WinForms.RibbonSizePolicyConverter
+RibbonKit.WinForms.RibbonSizePolicyConverter.RibbonSizePolicyConverter() -> void
+RibbonKit.WinForms.RibbonTab
+RibbonKit.WinForms.RibbonTab.Groups.get -> RibbonKit.WinForms.RibbonGroupCollection!
+RibbonKit.WinForms.RibbonTab.RibbonTab() -> void
+RibbonKit.WinForms.RibbonTabCollection
+RibbonKit.WinForms.RibbonTheme
+RibbonKit.WinForms.RibbonTheme.<Clone>$() -> RibbonKit.WinForms.RibbonTheme!
+RibbonKit.WinForms.RibbonTheme.Accent.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.Accent.init -> void
+RibbonKit.WinForms.RibbonTheme.Background.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.Background.init -> void
+RibbonKit.WinForms.RibbonTheme.BodyHeight.get -> int
+RibbonKit.WinForms.RibbonTheme.BodyHeight.init -> void
+RibbonKit.WinForms.RibbonTheme.Border.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.Border.init -> void
+RibbonKit.WinForms.RibbonTheme.Checked.get -> RibbonKit.WinForms.RibbonFill
+RibbonKit.WinForms.RibbonTheme.Checked.init -> void
+RibbonKit.WinForms.RibbonTheme.CornerRadius.get -> int
+RibbonKit.WinForms.RibbonTheme.CornerRadius.init -> void
+RibbonKit.WinForms.RibbonTheme.Equals(RibbonKit.WinForms.RibbonTheme? other) -> bool
+RibbonKit.WinForms.RibbonTheme.Foreground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.Foreground.init -> void
+RibbonKit.WinForms.RibbonTheme.Hover.get -> RibbonKit.WinForms.RibbonFill
+RibbonKit.WinForms.RibbonTheme.Hover.init -> void
+RibbonKit.WinForms.RibbonTheme.Pressed.get -> RibbonKit.WinForms.RibbonFill
+RibbonKit.WinForms.RibbonTheme.Pressed.init -> void
+RibbonKit.WinForms.RibbonTheme.RibbonTheme() -> void
+RibbonKit.WinForms.RibbonTheme.SecondaryText.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.SecondaryText.init -> void
+RibbonKit.WinForms.RibbonTheme.Surface.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.Surface.init -> void
+RibbonKit.WinForms.RibbonTheme.TabHeight.get -> int
+RibbonKit.WinForms.RibbonTheme.TabHeight.init -> void
+RibbonKit.WinForms.RibbonThemes
+RibbonKit.WinForms.RibbonToggleItem
+RibbonKit.WinForms.RibbonToggleItem.Checked.get -> bool
+RibbonKit.WinForms.RibbonToggleItem.Checked.set -> void
+RibbonKit.WinForms.RibbonToggleItem.CheckedChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonToggleItem.RibbonToggleItem() -> void
+static RibbonKit.WinForms.RibbonFill.operator !=(RibbonKit.WinForms.RibbonFill left, RibbonKit.WinForms.RibbonFill right) -> bool
+static RibbonKit.WinForms.RibbonFill.operator ==(RibbonKit.WinForms.RibbonFill left, RibbonKit.WinForms.RibbonFill right) -> bool
+static RibbonKit.WinForms.RibbonIconContext.operator !=(RibbonKit.WinForms.RibbonIconContext left, RibbonKit.WinForms.RibbonIconContext right) -> bool
+static RibbonKit.WinForms.RibbonIconContext.operator ==(RibbonKit.WinForms.RibbonIconContext left, RibbonKit.WinForms.RibbonIconContext right) -> bool
+static RibbonKit.WinForms.RibbonPaintContext.operator !=(RibbonKit.WinForms.RibbonPaintContext left, RibbonKit.WinForms.RibbonPaintContext right) -> bool
+static RibbonKit.WinForms.RibbonPaintContext.operator ==(RibbonKit.WinForms.RibbonPaintContext left, RibbonKit.WinForms.RibbonPaintContext right) -> bool
+static RibbonKit.WinForms.RibbonSizePolicy.Adaptive(RibbonKit.WinForms.RibbonItemSize largeState, RibbonKit.WinForms.RibbonItemSize mediumState, RibbonKit.WinForms.RibbonItemSize smallState) -> RibbonKit.WinForms.RibbonSizePolicy
+static RibbonKit.WinForms.RibbonSizePolicy.Fixed(RibbonKit.WinForms.RibbonItemSize size) -> RibbonKit.WinForms.RibbonSizePolicy
+static RibbonKit.WinForms.RibbonSizePolicy.operator !=(RibbonKit.WinForms.RibbonSizePolicy left, RibbonKit.WinForms.RibbonSizePolicy right) -> bool
+static RibbonKit.WinForms.RibbonSizePolicy.operator ==(RibbonKit.WinForms.RibbonSizePolicy left, RibbonKit.WinForms.RibbonSizePolicy right) -> bool
+static RibbonKit.WinForms.RibbonTheme.operator !=(RibbonKit.WinForms.RibbonTheme? left, RibbonKit.WinForms.RibbonTheme? right) -> bool
+static RibbonKit.WinForms.RibbonTheme.operator ==(RibbonKit.WinForms.RibbonTheme? left, RibbonKit.WinForms.RibbonTheme? right) -> bool
+static RibbonKit.WinForms.RibbonThemes.Office2024Light.get -> RibbonKit.WinForms.RibbonTheme!
+virtual RibbonKit.WinForms.RibbonButtonItem.BeforeClick() -> void
+virtual RibbonKit.WinForms.RibbonRenderer.Dispose(bool disposing) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawFocus(RibbonKit.WinForms.RibbonPaintContext context) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawGroup(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonGroup! group, bool collapsed) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawItem(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonItem! item, RibbonKit.WinForms.RibbonItemSize size, bool menu) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawKeyTip(RibbonKit.WinForms.RibbonPaintContext context, string! keys) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawSurface(RibbonKit.WinForms.RibbonPaintContext context, bool popup) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawTab(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonTab! tab, bool selected) -> void
