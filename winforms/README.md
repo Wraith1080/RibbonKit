@@ -7,8 +7,9 @@ records its remaining review; [M2](docs/M2-STATUS.md) adds
 split buttons and native TextBox/ComboBox editing. The current [M3 slice](docs/M3-STATUS.md)
 adds button/toggle Quick Access, checkbox/radio icon references, ComboBox choosers
 and dropdown/split/group references.
-The current [M4 slice](docs/M4-STATUS.md) adds contextual-tab header colors with
-application-controlled visibility and the existing tab-selection rules.
+The current [M4 slice](docs/M4-STATUS.md) adds contextual-tab header colors and
+the File command-menu foundation. [Remaining slices](docs/M4-STATUS.md#remaining-slices)
+record the working sequence through galleries, customization and window integration.
 Accessibility compatibility is deferred
 while the control structure is implemented; it remains possible future work.
 
@@ -73,6 +74,30 @@ compatibility are later work. Ordinary application controls remain native Forms
 controls. The runtime references neither WPF nor the designer SDK.
 
 ## Application contract
+
+`FileMenu` is an owned, stable `RibbonDropDownItem` declaration. It starts hidden;
+enable it and supply application commands through its normal Items collection:
+
+```csharp
+ribbon.FileMenu.Id = "file";
+ribbon.FileMenu.Visible = true;
+var open = new RibbonButtonItem { Id = "file.open", Text = "Open", KeyTip = "O" };
+open.Click += (_, _) => OpenDocument();
+ribbon.FileMenu.Items.Add(open);
+```
+
+The default header is File with KeyTip F. It has a measured slot before TabRow QAT
+and the tabs, using `BodyMargin.Left` to align its button and popup with the body.
+It remains available while minimized. BelowRibbon QAT keeps its
+full-width row. The existing owned popup stack supplies described/nested commands,
+native fields, cancellation through DropDownOpening, closed events and Escape.
+Opening File retains tab selection. Hide/disable/dispose closes its open stack.
+`DrawFileButton` lets custom renderers paint the header using measured bounds.
+The header uses Text; command rows use normal icons. FileMenu itself is owned by
+the ribbon and cannot be reparented; its direct disposal permanently releases that
+stable declaration. Images/renderers remain borrowed. This slice is a command
+dropdown; Backstage pages and the legacy two-pane application menu/orb follow
+separately. New File accessibility and actual VS acceptance remain deferred.
 
 Contextual tools use ordinary `RibbonTab` components:
 
@@ -573,7 +598,7 @@ applications should use Windows UIA clients rather than implement those types.
 Run these commands from `winforms/`. Native keyboard/mouse checks briefly operate
 their own test Form; let that process retain focus until it finishes.
 
-The unit/STA suite contains 102 essential cases: the [test review](docs/M2-STATUS.md#essential-test-review--2026-10-26)
+The unit/STA suite contains 106 essential cases: the [test review](docs/M2-STATUS.md#essential-test-review--2026-10-26)
 reduced the earlier set to 56; M2C adds three ComboBox cases and M2D adds three
 check/radio state, grouping/binding and compact-rendering cases. M2E adds three
 ScreenTip metadata, cancellation/lifetime and measurement/rendering cases.
@@ -617,6 +642,11 @@ commands/KeyTips, minimized teardown, live tint, theme fallback and narrow strip
 Use `--contextual-checks` / `--contextual-checks-flat` on the native host, or
 `--validate-contextual` / `--validate-contextual-flat` on the independent consumer,
 followed by an evidence directory. These are focused scopes, not full acceptance.
+M4B adds four File ownership, layout, activation/lifetime and renderer-state cases.
+Its public consumer checks lazy/cancelled opening, commands/KeyTips, native field
+binding and handle reuse, nested dismissal, minimized/narrow placement and disposal.
+Use `--file-checks` / `--file-checks-flat` on the native host, or `--validate-file` /
+`--validate-file-flat` on the independent consumer, followed by an evidence folder.
 The existing editor alignment case also covers mixed rows. For routine changes, run the affected
 test classes. Reserve the full native/package sequence for changes that need those
 gates. Add cases for distinct failure modes and use representative DPI/font rows;

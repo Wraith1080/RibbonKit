@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><UseWPF>true</UseWPF></PropertyGroup>
   <ItemGroup><ProjectReference Include="../../src/RibbonKit.WinForms/RibbonKit.WinForms.csproj" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/FileMenuInteractionChecks.cs" Link="PublicFileMenuInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/ContextualTabInteractionChecks.cs" Link="PublicContextualTabInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/QuickAccessOptionInteractionChecks.cs" Link="PublicQuickAccessOptionInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/QuickAccessGroupInteractionChecks.cs" Link="PublicQuickAccessGroupInteractionChecks.cs" /></ItemGroup>

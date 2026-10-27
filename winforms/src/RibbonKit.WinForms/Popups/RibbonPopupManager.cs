@@ -225,6 +225,7 @@ internal sealed class RibbonPopupManager : IDisposable
         {
             if (!_sessions.Contains(session)) continue;
             if (!CurrentProjection(session.Owner, session.MenuSource, session.Surface.GroupSource)
+                || ReferenceEquals(session.Owner, _ribbon.FileMenu) && (!session.Owner.EffectiveEnabled || !session.Owner.Visible)
                 || session.Surface.GroupSource is { } group && (!group.EffectiveEnabled || !group.Visible || !ReferenceEquals(group.Ribbon, _ribbon)))
             { Close(session.Owner, false); continue; }
             session.Surface.Invalidate();

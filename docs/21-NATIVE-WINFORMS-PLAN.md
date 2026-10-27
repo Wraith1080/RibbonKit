@@ -1,9 +1,11 @@
 # Native RibbonKit.WinForms assessment and implementation plan
 
-> Implementation through M4A contextual tabs,
+> Implementation through M4B File command-menu foundation,
 > 2026-10-27. Current bounded
 > scope, evidence and remaining review are in the [M4 ledger](../winforms/docs/M4-STATUS.md).
 > The [M3 ledger](../winforms/docs/M3-STATUS.md) retains QAT/projection evidence.
+> [Remaining slice sequence](../winforms/docs/M4-STATUS.md#remaining-slices) is a
+> bounded working decomposition of the milestones below.
 > Comprehensive theming is deferred
 > until most component slices are implemented; see the sequencing decision in §6.
 > [M2 scope and evidence](../winforms/docs/M2-STATUS.md) records the bounded API and

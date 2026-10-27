@@ -8,6 +8,8 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--validate-file" or "--validate-file-flat")
+            return FileMenuInteractionChecks.Run(args[1], args[0] == "--validate-file-flat");
         if (args.Length == 2 && args[0] is "--validate-contextual" or "--validate-contextual-flat")
             return ContextualTabInteractionChecks.Run(args[1], args[0] == "--validate-contextual-flat");
         if (args.Length == 2 && args[0] is "--validate-qat-options" or "--validate-qat-options-flat")

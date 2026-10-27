@@ -255,6 +255,18 @@ public class RibbonRenderer : IDisposable
         DrawText(context with { Bounds = new(context.Bounds.Left, context.Bounds.Top, Math.Max(0, editorBounds.Left - context.Bounds.Left - RibbonLayoutEngine.Scale(6, context.DeviceDpi)), context.Bounds.Height) },
             item.Text, item.EffectiveEnabled ? context.Theme.Foreground : SystemColors.GrayText,
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding);
+    /// <summary>Paints the File menu header using library-measured bounds and its original open/availability state.</summary>
+    public virtual void DrawFileButton(RibbonPaintContext context, RibbonDropDownItem menu)
+    {
+        bool enabled = menu.EffectiveEnabled;
+        context = EnabledContext(context, enabled);
+        bool open = enabled && menu.IsDropDownOpen;
+        if (open || context.Hot || context.Pressed)
+            DrawChrome(context, open || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
+        DrawText(context, menu.Text, !enabled ? SystemColors.GrayText : open ? context.Theme.Accent : context.Theme.Foreground,
+            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.EndEllipsis);
+        if (context.Focused) DrawFocus(context);
+    }
     /// <summary>Paints a tab using library-measured bounds.</summary>
     public virtual void DrawTab(RibbonPaintContext context, RibbonTab tab, bool selected)
     {

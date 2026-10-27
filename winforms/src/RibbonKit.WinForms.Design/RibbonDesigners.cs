@@ -6,7 +6,7 @@ namespace RibbonKit.WinForms.Design;
 
 public sealed class RibbonControlDesigner : ControlDesigner
 {
-    public override IReadOnlyCollection<IComponent> AssociatedComponents => ((RibbonControl)Component).Tabs.Cast<RibbonElement>().Concat(((RibbonControl)Component).QuickAccessItems).SelectMany(t => t.TreeForDesigner()).ToArray();
+    public override IReadOnlyCollection<IComponent> AssociatedComponents => ((RibbonControl)Component).Tabs.Cast<RibbonElement>().Concat(((RibbonControl)Component).QuickAccessItems).Append(((RibbonControl)Component).FileMenu).SelectMany(t => t.TreeForDesigner()).ToArray();
 }
 public sealed class RibbonElementDesigner : ComponentDesigner
 {

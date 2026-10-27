@@ -1,4 +1,6 @@
 #nullable enable
+RibbonKit.WinForms.RibbonControl.FileMenu.get -> RibbonKit.WinForms.RibbonDropDownItem!
+virtual RibbonKit.WinForms.RibbonRenderer.DrawFileButton(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonDropDownItem! menu) -> void
 RibbonKit.WinForms.RibbonTab.IsContextual.get -> bool
 RibbonKit.WinForms.RibbonTab.IsContextual.set -> void
 RibbonKit.WinForms.RibbonTab.IsContextualChanged -> System.EventHandler?

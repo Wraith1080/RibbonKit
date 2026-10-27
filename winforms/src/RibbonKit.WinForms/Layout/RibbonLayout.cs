@@ -2,7 +2,7 @@ namespace RibbonKit.WinForms.Layout;
 
 internal enum TargetKind
 {
-    Tab, Group, Item, TabBack, TabNext, BodyBack, BodyNext, Minimize, QuickAccess, QuickAccessOverflow, OverflowUp, OverflowDown
+    Tab, Group, Item, TabBack, TabNext, BodyBack, BodyNext, Minimize, QuickAccess, QuickAccessOverflow, OverflowUp, OverflowDown, FileMenu
 }
 internal sealed record RibbonTarget(TargetKind Kind, RibbonElement? Element, Rectangle Bounds, Rectangle Clip, RibbonItemSize Size = RibbonItemSize.Large, bool ReserveIcon = false, bool DropDownPart = false, int LabelWidth = 0, string? AutomaticKeyTip = null)
 {
@@ -139,16 +139,30 @@ internal sealed class RibbonLayoutEngine
         var widths = tabs.Select(t => Math.Max(S(58), TextRenderer.MeasureText(t.Text, ribbon.Font).Width + S(28))).ToArray();
         int tabTotal = widths.Sum(), utilityWidth = Math.Min(S(28), client.Width);
         int tabsStart = 0;
+        if (ribbon.HasFileMenu)
+        {
+            int keepQuickAccess = ribbon.HasQuickAccess && ribbon.QuickAccessPosition == RibbonQuickAccessPosition.TabRow ? S(RibbonQuickAccess.ButtonWidth + 4) : 0;
+            int available = Math.Max(0, client.Width - utilityWidth - S(24) - keepQuickAccess);
+            int left = Math.Min(S(ribbon.LayoutTheme.BodyMargin.Left), available);
+            int width = Math.Min(Math.Max(S(50), TextRenderer.MeasureText(ribbon.FileMenu.Text, ribbon.Font, Size.Empty,
+                TextFormatFlags.SingleLine | TextFormatFlags.NoPadding).Width + S(28)), Math.Max(0, available - left));
+            if (width > 0)
+            {
+                var bounds = new Rectangle(left, 0, width, tabHeight);
+                result.Targets.Add(new(TargetKind.FileMenu, ribbon.FileMenu, bounds, bounds));
+                tabsStart = bounds.Right;
+            }
+        }
         if (ribbon.HasQuickAccess)
         {
             bool below = ribbon.QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon;
-            int available = below ? client.Width : Math.Min(S(ribbon.QuickAccessMaxWidth), Math.Max(0, client.Width - utilityWidth - S(24)));
+            int available = below ? client.Width : Math.Min(S(ribbon.QuickAccessMaxWidth), Math.Max(0, client.Width - tabsStart - utilityWidth - S(24)));
             int top = below ? client.Height - ribbon.QuickAccessHeight : 0;
-            var quickAccess = RibbonQuickAccessLayout.Build(ribbon, new(0, top, available, below ? ribbon.QuickAccessHeight : tabHeight), below);
+            var quickAccess = RibbonQuickAccessLayout.Build(ribbon, new(below ? 0 : tabsStart, top, available, below ? ribbon.QuickAccessHeight : tabHeight), below);
             result.QuickAccessBounds = quickAccess.QuickAccessBounds;
             result.QuickAccessOverflowItems.AddRange(quickAccess.QuickAccessOverflowItems);
             result.Targets.AddRange(quickAccess.Targets);
-            if (!below) tabsStart = result.QuickAccessBounds.Width;
+            if (!below) tabsStart += result.QuickAccessBounds.Width;
         }
         int tabsWidth = Math.Max(0, client.Width - utilityWidth - tabsStart);
         bool tabOverflow = tabTotal > tabsWidth;

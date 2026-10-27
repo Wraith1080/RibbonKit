@@ -11,6 +11,8 @@ internal static partial class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--file-checks" or "--file-checks-flat")
+            return IndependentConsumer.FileMenuInteractionChecks.Run(args[1], args[0] == "--file-checks-flat");
         if (args.Length == 2 && args[0] is "--contextual-checks" or "--contextual-checks-flat")
             return IndependentConsumer.ContextualTabInteractionChecks.Run(args[1], args[0] == "--contextual-checks-flat");
         if (args.Length == 2 && args[0] is "--qat-option-checks" or "--qat-option-checks-flat")

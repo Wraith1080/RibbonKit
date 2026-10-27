@@ -7,6 +7,10 @@ try {
     if ($LASTEXITCODE) { throw 'Native build failed.' }
     dotnet test tests/RibbonKit.WinForms.Tests -c $Configuration --no-build
     if ($LASTEXITCODE) { throw 'Native unit/STA tests failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --file-checks TestResults/visual/file-native
+    if ($LASTEXITCODE) { throw 'Native File menu checks failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --file-checks-flat TestResults/visual/file-flat-native
+    if ($LASTEXITCODE) { throw 'Native neutral File menu checks failed.' }
     dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --contextual-checks TestResults/visual/contextual-native
     if ($LASTEXITCODE) { throw 'Native contextual tab checks failed.' }
     dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --contextual-checks-flat TestResults/visual/contextual-flat-native
@@ -79,6 +83,11 @@ try {
         dotnet build (Join-Path $consumerRoot 'RibbonKit.WinForms.Consumer.csproj') -c $Configuration --no-restore
         if ($LASTEXITCODE) { throw 'Isolated package consumer build failed.' }
         $consumerExe = Join-Path $consumerRoot "bin/$Configuration/net10.0-windows/RibbonKit.WinForms.Consumer.exe"
+        foreach ($fileMode in @('file', 'file-flat')) {
+            $fileEvidence = Join-Path $nativeRoot ('TestResults/visual/m4b-package-' + $fileMode)
+            $fileProcess = Start-Process -FilePath $consumerExe -ArgumentList @(('--validate-' + $fileMode), ('"' + $fileEvidence + '"')) -PassThru -Wait
+            if ($fileProcess.ExitCode) { throw "Package File menu checks failed: $fileEvidence/result.log" }
+        }
         foreach ($contextualMode in @('contextual', 'contextual-flat')) {
             $contextualEvidence = Join-Path $nativeRoot ('TestResults/visual/m4a-package-' + $contextualMode)
             $contextualProcess = Start-Process -FilePath $consumerExe -ArgumentList @(('--validate-' + $contextualMode), ('"' + $contextualEvidence + '"')) -PassThru -Wait
