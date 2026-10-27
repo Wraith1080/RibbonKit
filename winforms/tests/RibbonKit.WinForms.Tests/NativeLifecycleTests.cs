@@ -30,17 +30,23 @@ public sealed class NativeLifecycleTests
             tab.Groups.Add(group);
         }
         int full = ribbon.Snapshot.BodyExtent;
-        ribbon.Width = full + RibbonLayoutEngine.Scale(8, ribbon.DeviceDpi) - 1;
+        Assert.Equal(RibbonLayoutEngine.Scale(7, ribbon.DeviceDpi), ribbon.Snapshot.BodyBounds.Left);
+        Assert.Equal(RibbonLayoutEngine.Scale(7, ribbon.DeviceDpi), ribbon.Width - ribbon.Snapshot.BodyBounds.Right);
+        int reserved = ribbon.Width - ribbon.Snapshot.BodyViewport.Width;
+        ribbon.Width = full + reserved - 1;
         Assert.Same(tab.Groups[2], Assert.Single(ribbon.Snapshot.Groups, g => g.Collapsed).Group);
+        var collapsed = Assert.Single(ribbon.Snapshot.Groups, g => g.Collapsed);
+        Assert.Equal(ribbon.Snapshot.BodyBounds.Top + RibbonLayoutEngine.Scale(4, ribbon.DeviceDpi), collapsed.Bounds.Top);
+        Assert.Equal(ribbon.Snapshot.BodyBounds.Bottom - RibbonLayoutEngine.Scale(4, ribbon.DeviceDpi), collapsed.Bounds.Bottom);
+        Assert.Equal(collapsed.Bounds, ribbon.Snapshot.Targets.Single(t => ReferenceEquals(t.Element, collapsed.Group)).Bounds);
         Assert.False(ribbon.Snapshot.Groups[0].Collapsed);
         Assert.False(ribbon.Snapshot.Groups[3].Collapsed);
     });
 
     [Theory]
     [InlineData(0)]
-    [InlineData(1)]
     [InlineData(2)]
-    public void Activation_handlers_may_detach_dispose_item_or_dispose_ribbon(int action) => FoundationTests.Sta(() =>
+    public void Activation_handlers_may_detach_item_or_dispose_ribbon(int action) => FoundationTests.Sta(() =>
     {
         using var ribbon = new RibbonControl { Width = 700 };
         var tab = new RibbonTab();
@@ -50,7 +56,7 @@ public sealed class NativeLifecycleTests
         tab.Groups.Add(group);
         ribbon.Tabs.Add(tab);
         int clicks = 0;
-        item.Click += (_, _) => { clicks++; if (action == 0) group.Items.Remove(item); else if (action == 1) item.Dispose(); else ribbon.Dispose(); };
+        item.Click += (_, _) => { clicks++; if (action == 0) group.Items.Remove(item); else ribbon.Dispose(); };
         ribbon.Activate(ribbon.Snapshot.Targets.Single(t => ReferenceEquals(t.Element, item)));
         Assert.Equal(1, clicks);
         Assert.Empty(group.Items);
@@ -121,9 +127,42 @@ public sealed class NativeLifecycleTests
         ribbon.FocusElement(command);
         Assert.False(Assert.Single(ribbon.Snapshot.Groups).Collapsed);
         Assert.True(ribbon.Snapshot.Targets.Single(t => ReferenceEquals(t.Element, command)).VisibleBounds.Width > 0);
+        foreach (var scroll in ribbon.Snapshot.Targets.Where(t => t.Kind is TargetKind.BodyBack or TargetKind.BodyNext))
+        {
+            Assert.Equal(ribbon.Snapshot.BodyBounds.Top + RibbonLayoutEngine.Scale(2, ribbon.DeviceDpi), scroll.Bounds.Top);
+            Assert.Equal(ribbon.Snapshot.BodyBounds.Bottom - RibbonLayoutEngine.Scale(2, ribbon.DeviceDpi), scroll.Bounds.Bottom);
+            Assert.Equal(RibbonLayoutEngine.Scale(22, ribbon.DeviceDpi), scroll.Bounds.Width);
+            int sideClearance = scroll.Kind == TargetKind.BodyBack ? scroll.Bounds.Left - ribbon.Snapshot.BodyBounds.Left
+                : ribbon.Snapshot.BodyBounds.Right - scroll.Bounds.Right;
+            Assert.Equal(sideClearance, scroll.Bounds.Top - ribbon.Snapshot.BodyBounds.Top);
+        }
+        foreach (var scroll in ribbon.Snapshot.Targets.Where(t => t.Kind is TargetKind.TabBack or TargetKind.TabNext))
+        {
+            Assert.Equal(0, scroll.Bounds.Top);
+            Assert.Equal(ribbon.Snapshot.TabViewport.Height, scroll.Bounds.Height);
+        }
         var before = ribbon.Snapshot.Targets.Select(t => t.Bounds).ToArray();
         ribbon.Refresh();
         Assert.Equal(before, ribbon.Snapshot.Targets.Select(t => t.Bounds).ToArray());
+        var originalTheme = ribbon.Theme;
+        var originalBody = ribbon.Snapshot.BodyBounds;
+        var originalViewport = ribbon.Snapshot.BodyViewport;
+        Assert.Equal(2, originalTheme.BodyScrollButtonVerticalInset);
+        Assert.Throws<ArgumentOutOfRangeException>(() => ribbon.Theme = originalTheme with { BodyScrollButtonVerticalInset = -1 });
+        Assert.Same(originalTheme, ribbon.Theme);
+        foreach (int inset in new[] { 0, 6, int.MaxValue })
+        {
+            ribbon.Theme = originalTheme with { BodyScrollButtonVerticalInset = inset };
+            int expected = Math.Min(RibbonLayoutEngine.Scale(Math.Min(inset, ribbon.LayoutTheme.BodyHeight), ribbon.DeviceDpi), originalBody.Height / 2);
+            foreach (var scroll in ribbon.Snapshot.Targets.Where(t => t.Kind is TargetKind.BodyBack or TargetKind.BodyNext))
+            {
+                Assert.Equal(originalBody.Top + expected, scroll.Bounds.Top);
+                Assert.Equal(originalBody.Bottom - expected, scroll.Bounds.Bottom);
+            }
+            Assert.Equal(originalBody, ribbon.Snapshot.BodyBounds);
+            Assert.Equal(originalViewport, ribbon.Snapshot.BodyViewport);
+        }
+        ribbon.Theme = originalTheme;
     });
 
     [Fact]

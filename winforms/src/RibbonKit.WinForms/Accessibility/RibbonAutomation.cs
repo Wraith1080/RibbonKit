@@ -22,7 +22,7 @@ internal class RibbonAutomationNode : IRawProvider, IFragmentProvider, IInvokePr
         if (Element is RibbonTab tab && ReferenceEquals(tab, Root.Ribbon.SelectedTab))
             return tab.Groups.Where(g => g.Visible).Select(Root.Node).ToArray();
         if (Element is RibbonGroup group && !Root.Ribbon.Snapshot.Groups.Any(g => ReferenceEquals(g.Group, group) && g.Collapsed))
-            return Root.Targets.Where(t => t.Element is RibbonItem item && ReferenceEquals(item.Parent, group)).Select(t => Root.Node(t.Element!)).ToArray();
+            return Root.Targets.Where(t => t.Element is RibbonItem item && ReferenceEquals(item.Parent, group)).Select(t => t.Element!).Distinct().Select(e => Root.Node(e)).ToArray();
         return [];
     });
     internal virtual Rectangle ScreenBounds => Root.Read(() =>
@@ -81,7 +81,7 @@ internal class RibbonAutomationNode : IRawProvider, IFragmentProvider, IInvokePr
     public int[] GetRuntimeId() => [3, _runtimeId];
     public UiaRectangle BoundingRectangle => new(ScreenBounds);
     public virtual IFragmentRootProvider[]? GetEmbeddedFragmentRoots() => null;
-    public void SetFocus() => Root.Run(() => { CheckEnabled(); if (Root.Surface is { } surface && Element is { } element) surface.FocusElement(element); else if (Element is { } node) Root.Ribbon.FocusElement(node); else Root.Control.Focus(); });
+    public void SetFocus() => Root.Run(() => { CheckEnabled(); Root.Ribbon.SetKeyboardFocusCues(true); if (Root.Surface is { } surface && Element is { } element) surface.FocusElement(element); else if (Element is { } node) Root.Ribbon.FocusElement(node); else Root.Control.Focus(); });
     public IFragmentRootProvider FragmentRoot => Root;
     private void CheckEnabled()
     {
@@ -158,7 +158,7 @@ internal sealed class RibbonAutomationRoot : RibbonAutomationNode, IFragmentRoot
         TabsNode = new(this, null, true);
     }
     internal override RibbonAutomationNode? Parent => null;
-    internal override IReadOnlyList<RibbonAutomationNode> Children => Read(() => Surface is null ? new[] { TabsNode } : Targets.Where(t => t.Element is not null).Select(t => Node(t.Element!)).ToArray());
+    internal override IReadOnlyList<RibbonAutomationNode> Children => Read(() => Surface is null ? new[] { TabsNode } : Targets.Where(t => t.Element is not null).Select(t => t.Element!).Distinct().Select(e => Node(e)).ToArray());
     internal override Rectangle ScreenBounds => Read(() => Control.Visible ? Control.RectangleToScreen(Control.ClientRectangle) : Rectangle.Empty);
     public override IRawProvider? HostRawElementProvider => Read(() => { UiaNative.UiaHostProviderFromHwnd(Control.Handle, out var host); return host; });
     public override object? GetPropertyValue(int propertyId) => propertyId switch { 30003 => Surface is null ? 50033 : 50009, 30005 => Surface?.OwnerElement.Text ?? Ribbon.AccessibleName ?? "Ribbon", 30011 => Surface is null ? Ribbon.Name is { Length: > 0 } name ? name : "ribbon" : "popup:" + Surface.OwnerElement.Id, 30012 => "RibbonControl", _ => base.GetPropertyValue(propertyId) };

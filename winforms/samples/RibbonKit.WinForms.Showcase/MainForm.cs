@@ -11,6 +11,12 @@ public partial class MainForm : Form
         InitializeComponent();
         formattingSource.DataSource = _formatting;
         bold.DataBindings.Add(new Binding(nameof(RibbonToggleItem.Checked), formattingSource, nameof(FormattingState.Bold), true, DataSourceUpdateMode.OnPropertyChanged));
+        nameInput.DataBindings.Add(new Binding(nameof(RibbonTextBoxItem.Value), formattingSource, nameof(FormattingState.Name), true, DataSourceUpdateMode.OnPropertyChanged));
+        fontInput.DataBindings.Add(new Binding(nameof(RibbonComboBoxItem.Value), formattingSource, nameof(FormattingState.FontName), true, DataSourceUpdateMode.OnPropertyChanged));
+        zoomInput.DataBindings.Add(new Binding(nameof(RibbonComboBoxItem.Value), formattingSource, nameof(FormattingState.Zoom), true, DataSourceUpdateMode.OnPropertyChanged));
+        showRuler.DataBindings.Add(new Binding(nameof(RibbonCheckBoxItem.Checked), formattingSource, nameof(FormattingState.Ruler), true, DataSourceUpdateMode.OnPropertyChanged));
+        popupRuler.DataBindings.Add(new Binding(nameof(RibbonCheckBoxItem.Checked), formattingSource, nameof(FormattingState.Ruler), true, DataSourceUpdateMode.OnPropertyChanged));
+        showGrid.DataBindings.Add(new Binding(nameof(RibbonCheckBoxItem.CheckState), formattingSource, nameof(FormattingState.Grid), false, DataSourceUpdateMode.OnPropertyChanged));
         copy.Icon = new SampleIcon(0);
         paste.Icon = new SampleIcon(1);
         cut.Icon = new SampleIcon(2);
@@ -20,12 +26,35 @@ public partial class MainForm : Form
         shapes.Icon = new SampleIcon(6);
         picture.Icon = new SampleIcon(7);
         link.Icon = new SampleIcon(8);
-        document.Text = "Native RibbonKit.WinForms foundation\r\n\r\nResize the window to exercise adaptive groups and collapsed flyouts.\r\n\r\nUse Alt or F10 for KeyTips. F6 moves between the ribbon and this editor.\r\n\r\nThe editor, status text and icons belong to this application.";
+        trackChanges.Icon = new SampleIcon(9);
+        document.Text = "Native RibbonKit.WinForms\r\n\r\nInputs demonstrates native TextBox and ComboBox editing, binding, read-only/disabled fields and popup ownership. Font selects a choice; Zoom also accepts typed percentages (25% to 500%). Resize to open the same editors in collapsed groups.\r\n\r\nF4 or Alt+Down opens the choice popup. Escape closes that list first, then its containing ribbon popup. Enter validates and commits; Escape outside a list restores the last committed value. Tab visits fields; F6 returns to this document. Alt/F10, E, F focuses Font.\r\n\r\nThe document, status text, validation rules and data belong to this application. Home still demonstrates split buttons.";
+        document.AppendText("\r\n\r\nOptions demonstrates compact check/radio choices. Gridlines cycles through three states. Ruler and its popup entry share an application binding. Resize to open the same options in collapsed groups.");
+        ribbon.SelectedTab = options;
     }
+    private void NameValidating(object? sender, CancelEventArgs e)
+    {
+        e.Cancel = string.IsNullOrWhiteSpace(nameInput.Value);
+        if (e.Cancel) status.Text = "Enter a name, or press Escape to restore it.";
+    }
+    private void NameCommitted(object? sender, EventArgs e) => status.Text = $"Name committed: {_formatting.Name}";
+    private void ZoomValidating(object? sender, CancelEventArgs e)
+    {
+        e.Cancel = !int.TryParse(zoomInput.Value.Trim().TrimEnd('%'), out int value) || value is < 25 or > 500;
+        if (e.Cancel) status.Text = "Enter a zoom from 25% to 500%, or press Escape.";
+    }
+    private void ChoiceCommitted(object? sender, EventArgs e) => status.Text = $"Font: {_formatting.FontName}; Zoom: {_formatting.Zoom}";
+    private void ResetNameClick(object? sender, EventArgs e) { _formatting.Name = "Untitled document"; status.Text = "Bound name reset by the application."; }
     private void CopyClick(object? sender, EventArgs e) => status.Text = "Copy requested";
     private void PasteClick(object? sender, EventArgs e) => status.Text = "Paste requested";
     private void ActionClick(object? sender, EventArgs e) => status.Text = (sender as RibbonItem)?.Text + " requested";
     private void BoldChanged(object? sender, EventArgs e) => status.Text = "Bold: " + bold.Checked;
+    private void TrackChangesChanged(object? sender, EventArgs e) => status.Text = "Track changes: " + trackChanges.Checked;
+    private void OptionClick(object? sender, EventArgs e) => status.Text = sender switch
+    {
+        RibbonCheckBoxItem check => check.Text + ": " + check.CheckState,
+        RibbonRadioButtonItem radio => radio.Text + ": selected",
+        _ => "Ready"
+    };
     internal void PaintRibbonForMeasurement() => ribbon.Refresh();
     internal void CaptureSnapshots(string directory)
     {
@@ -44,6 +73,19 @@ public partial class MainForm : Form
     private sealed class FormattingState : INotifyPropertyChanged
     {
         private bool _bold;
+        private string _name = "Untitled document";
+        private string _fontName = "Segoe UI", _zoom = "100%";
+        private bool _ruler = true;
+        private CheckState _grid = CheckState.Indeterminate;
+        public bool Ruler { get => _ruler; set { if (_ruler == value) return; _ruler = value; PropertyChanged?.Invoke(this, new(nameof(Ruler))); } }
+        public CheckState Grid { get => _grid; set { if (_grid == value) return; _grid = value; PropertyChanged?.Invoke(this, new(nameof(Grid))); } }
+        public string FontName { get => _fontName; set { if (_fontName == value) return; _fontName = value; PropertyChanged?.Invoke(this, new(nameof(FontName))); } }
+        public string Zoom { get => _zoom; set { if (_zoom == value) return; _zoom = value; PropertyChanged?.Invoke(this, new(nameof(Zoom))); } }
+        public string Name
+        {
+            get => _name;
+            set { if (_name == value) return; _name = value; PropertyChanged?.Invoke(this, new(nameof(Name))); }
+        }
         public bool Bold
         {
             get => _bold; set
@@ -68,6 +110,11 @@ public partial class MainForm : Form
                 var r = Rectangle.Inflate(bounds, -Math.Max(2, bounds.Width / 6), -Math.Max(2, bounds.Height / 6));
                 if (kind is 3 or 4)
                     TextRenderer.DrawText(graphics, kind == 3 ? "B" : "I", SystemFonts.DefaultFont, bounds, context.Foreground, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+                else if (kind == 9)
+                {
+                    graphics.DrawLines(pen, new Point[] { new(r.Left, r.Bottom), new(r.Left + r.Width / 5, r.Bottom - r.Height / 2), new(r.Right - r.Width / 5, r.Top), new(r.Right, r.Top + r.Height / 5), new(r.Left + r.Width / 2, r.Bottom - r.Height / 5), new(r.Left, r.Bottom) });
+                    graphics.DrawLine(pen, r.Left + r.Width / 5, r.Bottom - r.Height / 2, r.Left + r.Width / 2, r.Bottom - r.Height / 5);
+                }
                 else if (kind is 5 or 8)
                 {
                     graphics.DrawEllipse(pen, r);

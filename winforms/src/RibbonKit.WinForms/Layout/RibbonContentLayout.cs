@@ -17,7 +17,7 @@ internal readonly record struct RibbonContentLayout(Rectangle Icon, Rectangle Te
         {
             icon.Location = new(bounds.Left + (bounds.Width - iconSize) / 2, bounds.Top + S(8));
             text.Y = bounds.Top + S(45);
-            text.Height = Math.Max(0, bounds.Bottom - text.Top - S(4));
+            text.Height = Math.Max(0, bounds.Bottom - text.Top - S(3));
             flags |= TextFormatFlags.Top | TextFormatFlags.HorizontalCenter | TextFormatFlags.WordBreak;
         }
         else

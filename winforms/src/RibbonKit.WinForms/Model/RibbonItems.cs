@@ -223,8 +223,11 @@ public sealed class RibbonToggleItem : RibbonButtonItem
 }
 
 /// <summary>A command that opens owned popup rows without a primary Click action.</summary>
-public sealed class RibbonDropDownItem : RibbonItem
+public class RibbonDropDownItem : RibbonItem
 {
+    /// <summary>Gets whether this item's owned popup is currently open.</summary>
+    [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public bool IsDropDownOpen => Ribbon?.Popups.IsExpanded(this) ?? false;
     /// <summary>Initializes a RibbonDropDownItem instance.</summary>
     public RibbonDropDownItem() => Items = new(this);
     /// <summary>Gets the stable, owned command collection.</summary>
@@ -256,7 +259,7 @@ public sealed class RibbonDropDownItem : RibbonItem
     {
         var e = new CancelEventArgs();
         DropDownOpening?.Invoke(this, e);
-        return !e.Cancel && !IsDisposed;
+        return !e.Cancel && EffectiveEnabled && Visible && Ribbon is not null;
     }
     internal void OnClosed() => DropDownClosed?.Invoke(this, EventArgs.Empty);
     internal override IEnumerable<RibbonElement> Children => Items;

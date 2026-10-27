@@ -1,6 +1,13 @@
 # Native RibbonKit.WinForms assessment and implementation plan
 
-> M1 implementation in progress, 2026-10-26. The user authorized the foundation
+> Implementation through M2D compact check/radio options, 2026-10-27, following
+> the user's acceptance of the M2C editor and startup polish. M2E ScreenTips is
+> staged as the proposed next component slice. Comprehensive theming is deferred
+> until most component slices are implemented; see the sequencing decision in §6.
+> [M2 scope and evidence](../winforms/docs/M2-STATUS.md) records the bounded API and
+> implementation gates. Accessibility compatibility is deferred while the necessary
+> control structure is implemented, by user direction. Outstanding M1 review gates
+> remain recorded separately. The user authorized the foundation
 > on their `codex/Ribbonkit-Winform` branch. Native projects are isolated under
 > [winforms/](../winforms/README.md); [the M1 ledger](../winforms/docs/M1-STATUS.md)
 > records current evidence and open gates. WPF v1.1.0 remains a reference, not a dependency.
@@ -284,6 +291,13 @@ gradient fills in the value model prevents a later legacy theme from requiring a
 second renderer architecture. Public custom rendering is library capability; the
 sample must not patch internal rectangles or subclass controls for essential paint.
 
+Implemented refinement, 2026-10-26: `RibbonRenderer` is the flat rendering
+foundation; `RibbonOffice2024Renderer` owns the current Office presentation and
+remains the default. Body/scroll painting and shared text/image/dropdown-arrow/
+chrome hooks are renderer-owned. The control retains measurement, geometry,
+clipping and input. See the [current renderer/arrow evidence](../winforms/docs/M2-STATUS.md#renderer-and-arrow-refinement)
+and [public renderer guidance](../winforms/README.md#renderer-customization).
+
 Use `TextRenderer.MeasureText/DrawText` with matching flags, font, padding,
 mnemonic policy, wrapping and ellipsis. Measure large labels consistently with
 painting. Do not assume GDI text equals WPF glyph rasterization pixel for pixel;
@@ -487,6 +501,17 @@ integration. The library owns reusable ribbon behavior. Optional future host
 contracts must work without Showcase helpers and must not let a host complete
 library transitions or dismiss library popups on its behalf.
 
+**Optional native window, proposed 2026-10-26:** `RibbonForm : Form` is the intended
+counterpart to `RibbonWindow` for a later window-integration slice. It would own
+reusable title-bar painting, ribbon/chrome placement, caption interaction and
+DPI-aware frame geometry. Applications would retain their document Controls,
+commands, process DPI declaration and window lifetime; an ordinary Form would
+remain supported. Preserve native resizing, system menus, maximize/Snap and
+accessibility before adding advanced chrome. Inheriting Form does not provide a
+different rendering backend: client-area Mica and animation still need their own
+feasibility and native acceptance. This records the proposed direction without
+adding a new M1 runtime API.
+
 ### WinForms-specific development rules
 
 Use these as the seed for the native repository's own instructions:
@@ -631,6 +656,50 @@ automation, binding/lifetime and independent-consumer evidence before it is call
 portable. Native WinForms MDI/document hosting is a separate host concern even if
 it later consumes the merge service.
 
+Current phase override, 2026-10-26: the user explicitly prioritized necessary
+structure and deferred accessibility compatibility. New accessibility providers,
+patterns, screen-reader work and accessibility sign-off are future work, rather
+than gates for the current structural slices. Retain the existing foundation bridge
+and its recorded evidence; do not claim new items are accessibility-compatible.
+The M1/M2 status ledgers separate these deferred compatibility gates from current
+mouse/keyboard/layout/public-consumer verification.
+
+### Deferred theming consolidation
+
+User sequencing decision, **2026-10-27**: continue the main component slices
+first. Consolidate appearance settings after most components exist, before final
+visual polishing and native public API stabilization. This is a cross-milestone
+checkpoint, not the next M2 slice or authorization to build additional themes now.
+Later theme/palette expansion should build on that consolidated contract.
+
+During component work, keep reusable appearance in shared renderers and keep
+measurement/spacing centralized and DPI-aware. Preserve the existing theme
+settings and extension points; add a setting only where the current slice needs
+it. Record any remaining appearance constants for the later inventory without
+starting a comprehensive theme API refactor in each component slice.
+
+The later pass will audit all implemented ribbon surfaces, hosted-editor frames,
+menus, popups and interaction states, then propose a bounded theme contract for:
+
+- Colors/fills, gradients, text and separators; normal, hover, pressed, checked,
+  open, disabled and keyboard-focus states.
+- Border color, thickness and visible sides; component-specific roles with shared
+  defaults/fallbacks rather than accidental coupling between unrelated controls.
+- Content padding, outer margins, icon/text gaps, row spacing and scroll-button
+  insets; independent body, button, editor and popup corner radii.
+- Shadow enablement, color/opacity, blur radius and offset, with matching reserved
+  drawing space; typography roles and arrow/check/radio/tab-indicator metrics.
+
+Themes supply appearance values; renderers draw them. Layout, clipping, popup
+placement and hit targets must consume the same relevant geometry. Keep values
+in 96-DPI logical units and preserve the four-corner raster verification rule.
+Validate coverage using the existing Office 2024 presentation and a deliberately
+different neutral configuration, including another public-API consumer. Inspect
+remaining hardcoded values and every implemented state before calling the pass
+complete. Future components must join the same contract and coverage inventory.
+Backdrop blur/Mica remains an optional M6 host/window feature; this pass's blur
+settings describe shadow softness and do not expand backdrop scope.
+
 ## 7. Implementation-ready M1 work package
 
 ### Fixed scope and work sequence
@@ -681,7 +750,7 @@ animated transition or custom Form chrome is required for M1.
 | F4 Commands/binding | Mouse, Enter/Space, KeyTip, PerformClick and external Invoke/Toggle each execute once; disabled does nothing. CheckedChanged precedes Click; Checked assignment does not Click. Two-way BindingSource state survives tab switch, resize, group popup and reopen. Removal/disposal during handlers is safe. |
 | F5 Popups/lifetime | First open and repeat open, opener re-click, outside press, nested Escape, deactivate, move/resize, owner removal and Form disposal. Dropdown inside collapsed popup closes first; keyboard returns focus, outside click retains the clicked target's focus. No orphan HWND/filter/capture or duplicate item model. Anchors stay within work area at each reviewed DPI. |
 | F6 Keyboard/KeyTips | Alt press/release and F10 enter/exit; tab -> commands -> dropdown levels; Escape ascends then restores prior content focus. Tab/Shift+Tab/F6, arrows/Home/End, disabled/hidden skipping and focus reveal pass. Resolver handles explicit conflicts/prefix collisions/non-Latin fallback; badges are typeable and aligned. Only one input dispatcher handles each message; unrelated Form shortcuts and AltGr are not consumed. |
-| F7 Accessibility | External-process UIA tree traversal and actions with a real Form: names/IDs/roles/patterns/states/bounds; visible selected-tab content and open popup discovery; closed/inactive/offscreen distinctions; focus and state/structure events; disabled invocation. Include a brief Narrator review. In-process AccessibleObject calls alone do not close this gate. Record any unsupported pattern as a failure/gap. |
+| F7 Accessibility | External-process UIA tree traversal and actions with a real Form: names/IDs/roles/patterns/states/bounds; visible selected-tab content and open popup discovery; closed/inactive/offscreen distinctions; focus and state/structure events; disabled invocation. In-process AccessibleObject calls alone do not close this gate. Record any unsupported pattern as a failure/gap. Narrator-specific work and manual Narrator review are outside scope by user direction, 2026-10-26. |
 | F8 Designer | Supported VS/.NET/SDK tuple: add ribbon; collection-edit two tabs/groups/heterogeneous rows; set Text/KeyTip/IDs/size/Checked and image resource; wire Click and a binding. Reorder/remove with one-step undo/redo; save, close/reopen designer and VS, inspect generated C#/resx, build/run. No duplicate IDs/items, lost resources/events/bindings, runtime-only state or designer dependency in running app. Repeat key round-trip against package consumer. |
 | F9 Native appearance/DPI | Human inspect 100%, 125%, 150%, 200% on available display(s): wide/narrow, long text, hover/press/checked/disabled/focus, tab scroll/body scroll, collapsed popup and nested dropdown. Include the four-corner symmetry/edge-join checks specified in the rendering section, with filled/stroked shapes and odd/even bounds. Compare the fixed Office2024 light WPF reference scenario to native screenshots for geometry/state semantics; approve native rasterization separately. Verify actual Windows scale, not just synthetic dimensions. Restore original display settings. |
 | F10 Monitor boundary | If two different-scale monitors are available: move the Form with popup closed/open, re-open at destination and verify sizing/placement/focus. Otherwise record hardware inventory and mark genuine movement **Unavailable**, with an explicit disposition before M1 closure; simulated DPI does not pass this row. |
@@ -764,7 +833,7 @@ dotnet pack src/RibbonKit.WinForms/RibbonKit.WinForms.csproj --configuration Rel
 ```
 
 Run native tests sequentially on an available interactive desktop; a headless
-run cannot close focus/Narrator/designer/hardware gates. The independent consumer
+run cannot close native focus/designer/hardware gates. The independent consumer
 must restore the produced package through its own isolated-source build, rather
 than a project reference. `eng/Test-Native.ps1 -Configuration Release -Package`
 provides that isolated restore/build/native-input check. These commands do not alter WPF CI.
@@ -792,8 +861,11 @@ change them before committing to the corresponding API/compatibility contract.
 | D5 Persistence compatibility, before M5 | Independent WinForms schema and uniform draft/Apply/Cancel-to-latest-Apply semantics. | WPF JSON interchange, importing Writer settings or retaining live-edit classic/QAT semantics requires an explicit migration/transaction design and tests. |
 | D6 Visual/platform expansion | Office2024 light/Compact/LTR/instant M1; add later palettes, RTL, Touch, custom content and chrome in bounded slices. | Requiring any of them in M1 expands its native review, API and lifetime gates. Full pixel equality with WPF text is not a defensible acceptance metric. |
 
-The current implementation covers only M1 under these recorded decisions.
+The implementation covers the M1 foundation, M2A split buttons and the bounded
+M2B TextBox/M2C ComboBox/M2D check/radio slices
+under these recorded decisions; [the M2 ledger](../winforms/docs/M2-STATUS.md) owns
+the current slice scope and remaining review.
 Its [acceptance ledger](../winforms/docs/M1-STATUS.md) keeps the remaining designer,
-human appearance, Narrator and hardware gates open; M1 is not yet accepted.
-Broader shared-core extraction and every later roadmap milestone remain separate
-work proposals. Do not expand the roadmap before the foundation gates are resolved.
+human appearance and hardware gates open; M1 is not yet accepted.
+Broader shared-core extraction and other roadmap features remain separate work
+proposals. The user authorized M2 continuation without claiming full M1 acceptance.

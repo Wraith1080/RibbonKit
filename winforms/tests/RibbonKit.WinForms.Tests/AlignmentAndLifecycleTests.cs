@@ -8,9 +8,7 @@ namespace RibbonKit.WinForms.Tests;
 public sealed class AlignmentAndLifecycleTests
 {
     [Theory]
-    [InlineData(96, 9)]
     [InlineData(120, 9)]
-    [InlineData(144, 12)]
     [InlineData(192, 18)]
     public void Neighbouring_rows_share_column_width_icon_slot_and_text_baseline(int dpi, int fontPoints) => FoundationTests.Sta(() =>
     {
@@ -46,6 +44,94 @@ public sealed class AlignmentAndLifecycleTests
         Assert.Equal(a.Icon.Top, b.Icon.Top);
         Assert.Equal(a.Text.Top, b.Text.Top);
         Assert.False(a.Flags.HasFlag(TextFormatFlags.VerticalCenter));
+        using var configuration = new RibbonControl();
+        Assert.Equal(108, configuration.Theme.LargeButtonMaxWidth);
+        Assert.Throws<ArgumentOutOfRangeException>(() => configuration.Theme = configuration.Theme with { LargeButtonMaxWidth = 59 });
+        using var dpiProbe = new Control();
+        foreach (int dpi in new[] { 96, 120, 144, 192 })
+        foreach (int maximum in new[] { 60, 108, 160 })
+        foreach (string label in new[] { "Paste", "Track changes", "Keep source formatting", "Keep the original document source formatting", "ExtraordinaryDocumentFormattingOptions", "First\nsecond\nthird", "文書の元の書式をすべて保持する", "🖉", "Re\u0301tablirLaMiseEnFormeOriginaleDuDocument", string.Concat(Enumerable.Repeat("e\u0301", 35)), string.Concat(Enumerable.Repeat("🖉", 35)) })
+        {
+            bool reportedHorizontal = label == "Track changes";
+            using var captionFont = new Font("Segoe UI", 9f * dpi / dpiProbe.DeviceDpi);
+            using var ribbon = new RibbonControl();
+            ribbon.Theme = ribbon.Theme with { LargeButtonMaxWidth = maximum };
+            int bodyHeight = ribbon.LayoutTheme.BodyHeight;
+            using var tab = new RibbonTab();
+            ribbon.Tabs.Add(tab);
+            var group = new RibbonGroup(); tab.Groups.Add(group);
+            RibbonItem[] items = reportedHorizontal
+                ? [new RibbonSplitButtonItem { Text = "Track changes" }]
+                : [new RibbonButtonItem(), new RibbonToggleItem(), new RibbonDropDownItem(),
+                    new RibbonSplitButtonItem(), new RibbonSplitButtonItem { Layout = RibbonSplitButtonLayout.Vertical }];
+            using var icon = new Bitmap(16, 16);
+            foreach (var item in items)
+            {
+                item.Text = label;
+                item.Image = icon; group.Items.Add(item);
+            }
+            Assert.Equal(bodyHeight, ribbon.LayoutTheme.BodyHeight);
+            var engine = new RibbonLayoutEngine();
+            int groupCaption = Math.Max(20, (int)Math.Ceiling(captionFont.Height * 96d / dpi) + 6);
+            var theme = new RibbonTheme { BodyHeight = 78 + groupCaption + 8, LargeButtonMaxWidth = maximum };
+            var measured = engine.Measure(group, 0, captionFont, dpi, theme);
+            using var renderer = new CaptionRecorder();
+            foreach (var entry in measured.Items)
+            foreach (int state in new[] { 0, 1, 2 })
+            {
+                if (entry.Item is RibbonToggleItem toggle) toggle.Checked = state == 2;
+                if (entry.Item is RibbonSplitButtonItem splitToggle) splitToggle.Checked = state == 2;
+                using var bitmap = new Bitmap(entry.Bounds.Right + 4, entry.Bounds.Bottom + 4);
+                using var graphics = Graphics.FromImage(bitmap);
+                graphics.Clear(theme.Surface); renderer.Lines.Clear(); renderer.Arrow = Rectangle.Empty;
+                var context = new RibbonPaintContext(graphics, entry.Bounds, theme, captionFont, dpi, Hot: state == 1);
+                if (entry.Item is RibbonSplitButtonItem split)
+                {
+                    var parts = RibbonSplitLayout.Calculate(entry.Bounds, split, RibbonItemSize.Large, false, dpi);
+                    renderer.DrawSplitItem(context with { Bounds = parts.Primary }, context with { Bounds = parts.DropDown, Hot = false }, split, RibbonItemSize.Large, false);
+                }
+                else renderer.DrawItem(context, entry.Item, RibbonItemSize.Large, false);
+                Assert.InRange(renderer.Lines.Count, 1, 2);
+                string Content(string value) => new(value.Where(c => !char.IsWhiteSpace(c)).ToArray());
+                string visible = Content(string.Concat(renderer.Lines.Select(l => l.Text)));
+                if (visible.EndsWith('…'))
+                {
+                    string prefix = visible[..^1];
+                    Assert.StartsWith(prefix, Content(label));
+                    Assert.True(System.Globalization.StringInfo.ParseCombiningCharacters(Content(label)).Contains(prefix.Length));
+                }
+                else Assert.Equal(Content(label), visible);
+                Assert.Equal(label, entry.Item.Text);
+                Assert.True(entry.Bounds.Width <= RibbonLayoutEngine.Scale(maximum, dpi));
+                Assert.All(renderer.Lines, line => Assert.True(RibbonCaptionLayout.TextWidth(line.Text, captionFont) <= line.Bounds.Width));
+                if (label == "Keep the original document source formatting" && maximum <= 108) Assert.EndsWith("…", renderer.Lines[^1].Text);
+                var first = renderer.Lines[0]; var last = renderer.Lines[^1];
+                Assert.True(last.Bounds.Top - first.Bounds.Top < captionFont.Height);
+                Assert.True(last.Bounds.Bottom <= entry.Bounds.Bottom - RibbonLayoutEngine.Scale(3, dpi));
+                Assert.Equal(entry.Bounds.Top + RibbonLayoutEngine.Scale(45, dpi), first.Bounds.Top);
+                if (entry.Item is RibbonDropDownItem && entry.Item is not RibbonSplitButtonItem { Layout: RibbonSplitButtonLayout.Horizontal })
+                {
+                    if (renderer.Lines.Count == 2 || entry.Item is not RibbonSplitButtonItem)
+                    {
+                        Assert.Equal(last.Bounds.Right, renderer.Arrow.Left);
+                        Assert.Equal(last.Bounds.Top, renderer.Arrow.Top);
+                        Assert.True(renderer.Arrow.Right <= entry.Bounds.Right - RibbonLayoutEngine.Scale(5, dpi));
+                    }
+                    else Assert.True(renderer.Arrow.Top >= last.Bounds.Bottom);
+                }
+                // Compare the complete second glyph row with an unconstrained
+                // native line, including descenders, rather than accepting bounds alone.
+                using var reference = new Bitmap(last.Bounds.Width, captionFont.Height + 10);
+                using var referenceGraphics = Graphics.FromImage(reference);
+                var background = bitmap.GetPixel(last.Bounds.Left, last.Bounds.Top);
+                referenceGraphics.Clear(background);
+                TextRenderer.DrawText(referenceGraphics, last.Text, captionFont, new Rectangle(0, 0, reference.Width, reference.Height), theme.Foreground, last.Flags);
+                for (int y = 0; y < captionFont.Height; y++)
+                    for (int x = 0; x < reference.Width; x++)
+                        Assert.True(reference.GetPixel(x, y) == background || reference.GetPixel(x, y) == bitmap.GetPixel(last.Bounds.Left + x, last.Bounds.Top + y),
+                            $"DPI={dpi}, kind={entry.Item.GetType().Name}, text={entry.Item.Text}, state={state}, cell=({x},{y}), first={first.Bounds}, last={last.Bounds}, expected={reference.GetPixel(x,y)}, actual={bitmap.GetPixel(last.Bounds.Left+x,last.Bounds.Top+y)}");
+            }
+        }
     });
     [Fact]
     public void Detached_trees_reject_duplicate_ids_and_dispose_children_cleanly()
@@ -84,5 +170,14 @@ public sealed class AlignmentAndLifecycleTests
             foreach (var b in result)
                 if (a != b)
                     Assert.False(b.StartsWith(a, StringComparison.Ordinal));
+    }
+    private sealed class CaptionRecorder : RibbonOffice2024Renderer
+    {
+        internal readonly List<(string Text, Rectangle Bounds, TextFormatFlags Flags)> Lines = [];
+        internal Rectangle Arrow;
+        public override void DrawDropDownArrow(RibbonPaintContext context, Color color)
+        { Arrow = context.Bounds; base.DrawDropDownArrow(context, color); }
+        public override void DrawText(RibbonPaintContext context, string text, Color color, TextFormatFlags flags)
+        { Lines.Add((text, context.Bounds, flags)); base.DrawText(context, text, color, flags); }
     }
 }

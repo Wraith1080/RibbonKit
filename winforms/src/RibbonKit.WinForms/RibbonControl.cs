@@ -9,18 +9,21 @@ namespace RibbonKit.WinForms;
 public partial class RibbonControl : Control, ISupportInitialize
 {
     private readonly RibbonLayoutEngine _engine = new();
-    private readonly RibbonRenderer _defaultRenderer = new();
+    private readonly RibbonRenderer _defaultRenderer = new RibbonOffice2024Renderer();
     private readonly RibbonInputFilter _input;
     private readonly RibbonPopupManager _popups;
+    private readonly RibbonEditorManager _editors;
     private readonly int _threadId = Environment.CurrentManagedThreadId;
     private RibbonLayoutSnapshot _snapshot = new();
     private RibbonTab? _selectedTab;
     private RibbonTheme _theme = RibbonThemes.Office2024Light;
     private RibbonRenderer? _renderer;
     private RibbonElement? _focused, _hot, _pressed;
+    private bool _focusedDropDown, _hotDropDown, _pressedDropDown;
+    private TargetKind? _hotScroll, _pressedScroll;
     private Control? _priorFocus;
     private int _tabOffset, _bodyOffset, _updateDepth, _fallbackTabIndex = -1;
-    private bool _layoutDirty = true, _disposing, _keyTips, _topTips;
+    private bool _layoutDirty = true, _disposing, _keyTips, _topTips, _keyboardFocusCues;
     private string _keyPrefix = "";
     /// <summary>Initializes a RibbonControl instance.</summary>
     public RibbonControl()
@@ -31,6 +34,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         TabStop = true;
         AccessibleName = "Ribbon";
         _popups = new(this);
+        _editors = new(this);
         _input = new(this);
         UpdateHeight();
     }
@@ -57,7 +61,11 @@ public partial class RibbonControl : Control, ISupportInitialize
             _bodyOffset = 0;
             _layoutDirty = true;
             if (_focused is not RibbonTab)
+            {
                 _focused = value;
+                _focusedDropDown = false;
+            }
+            SyncEditors();
             Invalidate();
             SelectedTabChanged?.Invoke(this, EventArgs.Empty);
             AccessibilityChanged();
@@ -73,7 +81,8 @@ public partial class RibbonControl : Control, ISupportInitialize
         {
             VerifyAccess();
             ArgumentNullException.ThrowIfNull(value);
-            if (value.TabHeight <= 0 || value.BodyHeight <= 0 || value.CornerRadius < 0)
+            if (value.TabHeight <= 0 || value.BodyHeight <= 0 || value.BodyScrollButtonVerticalInset < 0 || value.LargeButtonMaxWidth < 60 || value.CornerRadius < 0 || value.PopupCornerRadius < 0 ||
+                value.BodyMargin.Left < 0 || value.BodyMargin.Top < 0 || value.BodyMargin.Right < 0 || value.BodyMargin.Bottom < 0)
                 throw new ArgumentOutOfRangeException(nameof(value));
             if (Equals(_theme, value))
                 return;
@@ -81,7 +90,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             ModelChanged();
         }
     }
-    /// <summary>Gets or sets a borrowed renderer; null selects the library renderer.</summary>
+    /// <summary>Gets or sets a borrowed renderer; null selects RibbonOffice2024Renderer.</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public RibbonRenderer? Renderer
     {
@@ -89,6 +98,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         {
             VerifyAccess();
             _renderer = value;
+            SyncEditors();
             Invalidate();
             _popups.InvalidateAll();
         }
@@ -98,10 +108,11 @@ public partial class RibbonControl : Control, ISupportInitialize
         get
         {
             int text = (int)Math.Ceiling(Font.Height * 96d / DeviceDpi);
+            int rows = Math.Max(26, text + 8) * 3 + Math.Max(20, text + 6) + 8;
             return _theme with
             {
                 TabHeight = Math.Max(_theme.TabHeight, text + 12),
-                BodyHeight = Math.Max(_theme.BodyHeight, Math.Max(26, text + 8) * 3 + Math.Max(20, text + 6) + 8)
+                BodyHeight = Math.Max(_theme.BodyHeight, rows)
             };
         }
     }
@@ -116,6 +127,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         }
     }
     internal RibbonPopupManager Popups => _popups;
+    internal RibbonEditorManager Editors => _editors;
     internal bool KeyTipsActive => _keyTips;
     internal IEnumerable<RibbonElement> AllElements => Tabs.SelectMany(t => t.Tree());
     internal void VerifyAccess()
@@ -184,10 +196,14 @@ public partial class RibbonControl : Control, ISupportInitialize
             }
         }
         if (_focused is { } focused && (!AllElements.Contains(focused) || !focused.Visible || !focused.EffectiveEnabled))
+        {
             _focused = null;
+            _focusedDropDown = false;
+        }
         if (_updateDepth == 0)
         {
             UpdateHeight();
+            SyncEditors();
             Invalidate();
             _popups.InvalidateAll();
             AccessibilityChanged();
@@ -216,7 +232,9 @@ public partial class RibbonControl : Control, ISupportInitialize
     {
         if (_theme is null || _disposing)
             return;
-        Height = RibbonLayoutEngine.Scale(LayoutTheme.TabHeight + LayoutTheme.BodyHeight + 2, DeviceDpi);
+        var layout = LayoutTheme;
+        Height = RibbonLayoutEngine.Scale(layout.TabHeight, DeviceDpi) + RibbonLayoutEngine.Scale(layout.BodyHeight, DeviceDpi)
+            + RibbonLayoutEngine.Scale(_theme.BodyMargin.Top, DeviceDpi) + RibbonLayoutEngine.Scale(_theme.BodyMargin.Bottom, DeviceDpi);
     }
     private void EnsureLayout()
     {
@@ -226,6 +244,18 @@ public partial class RibbonControl : Control, ISupportInitialize
         _layoutDirty = false;
         _tabOffset = Math.Clamp(_tabOffset, 0, Math.Max(0, _snapshot.TabExtent - _snapshot.TabViewport.Width));
         _bodyOffset = Math.Clamp(_bodyOffset, 0, Math.Max(0, _snapshot.BodyExtent - _snapshot.BodyViewport.Width));
+    }
+    internal void SyncEditors()
+    {
+        if (_editors is null || _disposing || _updateDepth > 0) return;
+        EnsureLayout();
+        _editors.Sync();
+    }
+    /// <inheritdoc />
+    protected override void OnLayout(LayoutEventArgs e)
+    {
+        base.OnLayout(e);
+        SyncEditors();
     }
     /// <inheritdoc />
     protected override void OnResize(EventArgs e)
@@ -275,8 +305,10 @@ public partial class RibbonControl : Control, ISupportInitialize
         if (!Visible)
         {
             _popups.CloseAll(false);
+            _editors.Release(this);
             ExitKeyTips(false);
         }
+        else SyncEditors();
         AccessibilityChanged();
     }
     /// <inheritdoc />
@@ -307,25 +339,27 @@ public partial class RibbonControl : Control, ISupportInitialize
         EnsureLayout();
         var context = new RibbonPaintContext(e.Graphics, ClientRectangle, Theme, Font, DeviceDpi);
         Painter.DrawSurface(context, false);
+        Painter.DrawBody(context with { Bounds = _snapshot.BodyBounds });
         var state = e.Graphics.Save();
         try
         {
             e.Graphics.SetClip(_snapshot.BodyViewport);
-            using var brush = new SolidBrush(Theme.Surface);
-            e.Graphics.FillRectangle(brush, _snapshot.BodyViewport);
             foreach (var slot in _snapshot.Groups)
                 Painter.DrawGroup(context with
                 {
                     Bounds = slot.Bounds,
-                    Hot = ReferenceEquals(slot.Group, _hot),
-                    Pressed = ReferenceEquals(slot.Group, _pressed),
-                    Focused = Focused && ReferenceEquals(slot.Group, _focused)
+                    Hot = slot.Group.EffectiveEnabled && ReferenceEquals(slot.Group, _hot),
+                    Pressed = slot.Group.EffectiveEnabled && ReferenceEquals(slot.Group, _pressed),
+                    Focused = slot.Group.EffectiveEnabled && _keyboardFocusCues && Focused && ReferenceEquals(slot.Group, _focused)
                 }, slot.Group, slot.Collapsed);
         }
         finally { e.Graphics.Restore(state); }
         foreach (var target in _snapshot.Targets)
         {
-            if (target.VisibleBounds.IsEmpty)
+            if (target.DropDownPart || target.Element is IRibbonEditorItem)
+                continue;
+            var arrow = target.Element is RibbonSplitButtonItem ? _snapshot.Targets.First(t => ReferenceEquals(t.Element, target.Element) && t.DropDownPart) : null;
+            if (target.VisibleBounds.IsEmpty && (arrow is null || arrow.VisibleBounds.IsEmpty))
                 continue;
             state = e.Graphics.Save();
             try
@@ -334,21 +368,29 @@ public partial class RibbonControl : Control, ISupportInitialize
                 var ctx = context with
                 {
                     Bounds = target.Bounds,
-                    Hot = ReferenceEquals(target.Element, _hot),
-                    Pressed = ReferenceEquals(target.Element, _pressed),
-                    Focused = Focused && target.Element is not null && ReferenceEquals(target.Element, _focused),
+                    Hot = target.Enabled && !_hotDropDown && ReferenceEquals(target.Element, _hot),
+                    Pressed = target.Enabled && !_pressedDropDown && ReferenceEquals(target.Element, _pressed),
+                    Focused = target.Enabled && !_focusedDropDown && _keyboardFocusCues && Focused && target.Element is not null && ReferenceEquals(target.Element, _focused),
                     ReserveIcon = target.ReserveIcon
                 };
                 if (target.Element is RibbonTab tab)
                     Painter.DrawTab(ctx, tab, ReferenceEquals(tab, SelectedTab));
+                else if (target.Element is RibbonSplitButtonItem split && arrow is not null)
+                    Painter.DrawSplitItem(ctx, ctx with
+                    {
+                        Bounds = arrow.Bounds,
+                        Hot = target.Enabled && _hotDropDown && ReferenceEquals(target.Element, _hot),
+                        Pressed = target.Enabled && _pressedDropDown && ReferenceEquals(target.Element, _pressed),
+                        Focused = target.Enabled && _focusedDropDown && _keyboardFocusCues && Focused && ReferenceEquals(target.Element, _focused)
+                    }, split, target.Size, false);
                 else if (target.Element is RibbonItem item)
                     Painter.DrawItem(ctx, item, target.Size, false);
                 else if (target.Element is null)
-                {
-                    using var b = new SolidBrush(Theme.Background);
-                    e.Graphics.FillRectangle(b, target.Bounds);
-                    TextRenderer.DrawText(e.Graphics, target.Kind is TargetKind.TabBack or TargetKind.BodyBack ? "‹" : "›", Font, target.Bounds, Theme.Foreground, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-                }
+                    Painter.DrawScrollButton(ctx with
+                    {
+                        Hot = _hotScroll == target.Kind, Pressed = _pressedScroll == target.Kind, Focused = false,
+                        IsBodyScrollButton = target.Kind is TargetKind.BodyBack or TargetKind.BodyNext
+                    }, target.Kind is TargetKind.TabBack or TargetKind.BodyBack);
             }
             finally { e.Graphics.Restore(state); }
         }
@@ -357,7 +399,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     }
     internal void DrawTips(Graphics graphics, IReadOnlyList<RibbonTarget> targets)
     {
-        var keys = KeyTipResolver.Resolve(targets.Select(t => (t.Element?.Text ?? "", t.Element?.KeyTip ?? "")));
+        var keys = KeyTipResolver.Resolve(targets.Select(t => (t.TipText, t.PreferredKeyTip)));
         for (int i = 0; i < targets.Count; i++)
         {
             if (targets[i].VisibleBounds.IsEmpty || !keys[i].StartsWith(_keyPrefix, StringComparison.Ordinal))
@@ -369,15 +411,18 @@ public partial class RibbonControl : Control, ISupportInitialize
         }
     }
     private IReadOnlyList<RibbonTarget> TipTargets() => _popups.Top?.Targets.Where(t => t.Element is not null && t.Enabled).ToArray() ?? Snapshot.Targets.Where(t => t.Element is not null && (_topTips ? t.Kind == TargetKind.Tab : t.Kind != TargetKind.Tab)).ToArray();
-    private RibbonTarget? Hit(Point point) => Snapshot.Targets.LastOrDefault(t => t.VisibleBounds.Contains(point));
+    private RibbonTarget? Hit(Point point) => Snapshot.Targets.LastOrDefault(t => t.Enabled && t.VisibleBounds.Contains(point));
     /// <inheritdoc />
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
-        var target = Hit(e.Location)?.Element;
-        if (!ReferenceEquals(target, _hot))
+        var target = Hit(e.Location);
+        TargetKind? scroll = target?.Element is null ? target?.Kind : null;
+        if (!ReferenceEquals(target?.Element, _hot) || (target?.DropDownPart ?? false) != _hotDropDown || scroll != _hotScroll)
         {
-            _hot = target;
+            _hot = target?.Element;
+            _hotDropDown = target?.DropDownPart ?? false;
+            _hotScroll = scroll;
             Invalidate();
         }
     }
@@ -386,20 +431,30 @@ public partial class RibbonControl : Control, ISupportInitialize
     {
         base.OnMouseLeave(e);
         _hot = null;
+        _hotScroll = null;
         Invalidate();
     }
     /// <inheritdoc />
     protected override void OnMouseDown(MouseEventArgs e)
     {
+        SetKeyboardFocusCues(false);
         base.OnMouseDown(e);
         if (e.Button != MouseButtons.Left)
             return;
         _keyTips = false;
         var hit = Hit(e.Location);
-        _pressed = hit?.Element;
+        if (hit is null)
+        {
+            _pressed = null;
+            Capture = false;
+            return;
+        }
+        _pressed = hit.Element;
+        _pressedScroll = hit.Element is null ? hit.Kind : null;
+        _pressedDropDown = hit.DropDownPart;
         Capture = true;
         if (hit?.Element is { } element)
-            FocusElement(element);
+            FocusElement(element, hit.DropDownPart);
         Invalidate();
     }
     /// <inheritdoc />
@@ -410,9 +465,10 @@ public partial class RibbonControl : Control, ISupportInitialize
             return;
         var hit = Hit(e.Location);
         var pressed = _pressed;
+        var pressedScroll = _pressedScroll;
         _pressed = null;
         Capture = false;
-        if (hit is not null && ReferenceEquals(pressed, hit.Element))
+        if (hit is not null && ReferenceEquals(pressed, hit.Element) && _pressedDropDown == hit.DropDownPart && (hit.Element is not null || pressedScroll == hit.Kind))
             Activate(hit);
         Invalidate();
     }
@@ -421,6 +477,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     {
         base.OnMouseCaptureChanged(e);
         _pressed = null;
+        _pressedScroll = null;
         Invalidate();
     }
     /// <inheritdoc />
@@ -435,6 +492,9 @@ public partial class RibbonControl : Control, ISupportInitialize
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData) => ProcessRibbonKey(keyData) || base.ProcessCmdKey(ref msg, keyData);
     internal bool ProcessRibbonKey(Keys keys)
     {
+        if (keys is Keys.Escape or Keys.Enter or Keys.Space or Keys.Tab or (Keys.Tab | Keys.Shift)
+            or Keys.Left or Keys.Right or Keys.Up or Keys.Down or Keys.Home or Keys.End)
+            SetKeyboardFocusCues(true);
         if (keys == Keys.Escape)
         {
             if (_popups.HasOpen)
@@ -454,7 +514,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             var character = keys is >= Keys.A and <= Keys.Z ? (char)('A' + keys - Keys.A) : (char)('0' + keys - Keys.D0);
             var prefix = _keyPrefix + character;
             var candidates = TipTargets();
-            var tips = KeyTipResolver.Resolve(candidates.Select(t => (t.Element?.Text ?? "", t.Element?.KeyTip ?? "")));
+            var tips = KeyTipResolver.Resolve(candidates.Select(t => (t.TipText, t.PreferredKeyTip)));
             int match = Array.FindIndex(tips, t => t == prefix);
             if (match >= 0)
             {
@@ -464,7 +524,7 @@ public partial class RibbonControl : Control, ISupportInitialize
                 {
                     if (target.Element is RibbonTab)
                         _topTips = false;
-                    else if (target.Element is not RibbonDropDownItem && target.Element is not RibbonGroup)
+                    else if (target.Element is not RibbonGroup && (target.Element is not RibbonDropDownItem || target.Element is RibbonSplitButtonItem && !target.DropDownPart))
                         _keyTips = false;
                     Activate(target);
                 }
@@ -478,7 +538,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         if (!Focused)
             return false;
         var targets = Snapshot.Targets.Where(t => t.Element is not null && t.Enabled).ToArray();
-        int current = Array.FindIndex(targets, t => ReferenceEquals(t.Element, _focused));
+        int current = Array.FindIndex(targets, t => ReferenceEquals(t.Element, _focused) && t.DropDownPart == _focusedDropDown);
         if (keys is Keys.Enter or Keys.Space)
         {
             if (current >= 0)
@@ -489,7 +549,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         {
             int next = current + (keys.HasFlag(Keys.Shift) ? -1 : 1);
             if (next >= 0 && next < targets.Length)
-                FocusElement(targets[next].Element!);
+                FocusElement(targets[next].Element!, targets[next].DropDownPart);
             else
             {
                 ExitKeyTips(false);
@@ -511,11 +571,11 @@ public partial class RibbonControl : Control, ISupportInitialize
                 return true;
             }
             var scope = targets.Where(t => current < 0 || (t.Kind == TargetKind.Tab) == (targets[current].Kind == TargetKind.Tab)).ToArray();
-            int index = Array.FindIndex(scope, t => ReferenceEquals(t.Element, _focused));
+            int index = Array.FindIndex(scope, t => ReferenceEquals(t.Element, _focused) && t.DropDownPart == _focusedDropDown);
             int next = keys == Keys.Home ? 0 : keys == Keys.End ? scope.Length - 1 : (index + (keys is Keys.Left or Keys.Up ? -1 : 1) + scope.Length) % Math.Max(1, scope.Length);
             if (scope.Length > 0)
             {
-                FocusElement(scope[next].Element!);
+                FocusElement(scope[next].Element!, scope[next].DropDownPart);
                 if (scope[next].Element is RibbonTab tab)
                     SelectedTab = tab;
             }
@@ -527,6 +587,8 @@ public partial class RibbonControl : Control, ISupportInitialize
     {
         if (!target.Enabled)
             return;
+        if (target.Element is not IRibbonEditorItem && !_editors.CommitFocused()) return;
+        if (target.Element is { } element && !ReferenceEquals(element.Ribbon, this)) return;
         switch (target.Element)
         {
             case RibbonTab tab:
@@ -536,8 +598,14 @@ public partial class RibbonControl : Control, ISupportInitialize
             case RibbonGroup group:
                 _popups.Toggle(group, this, target.VisibleBounds);
                 break;
+            case RibbonSplitButtonItem split when !target.DropDownPart:
+                ActivateSplitPrimary(split);
+                break;
             case RibbonDropDownItem drop:
                 OpenDropDown(drop);
+                break;
+            case RibbonItem editor when editor is IRibbonEditorItem:
+                editor.PerformClick();
                 break;
             case RibbonItem item:
                 item.PerformClick();
@@ -556,14 +624,33 @@ public partial class RibbonControl : Control, ISupportInitialize
         else
             _bodyOffset = Math.Clamp(_bodyOffset + amount, 0, Math.Max(0, _snapshot.BodyExtent - _snapshot.BodyViewport.Width));
         _layoutDirty = true;
+        SyncEditors();
         Invalidate();
         AccessibilityChanged();
     }
-    internal void FocusElement(RibbonElement element)
+    internal void ActivateSplitPrimary(RibbonSplitButtonItem split)
     {
+        split.PerformClick();
+        _popups.CloseAll(true);
+    }
+    internal bool KeyboardFocusCues => _keyboardFocusCues;
+    internal void SetKeyboardFocusCues(bool visible)
+    {
+        if (_keyboardFocusCues == visible)
+            return;
+        // Logical/native focus remains available to keyboard and UI Automation.
+        // Only the painted cue follows keyboard navigation versus pointer presses.
+        _keyboardFocusCues = visible;
+        Invalidate();
+        _popups.InvalidateAll();
+    }
+    internal void FocusElement(RibbonElement element, bool dropDownPart = false, bool enterEditor = true)
+    {
+        if (!ReferenceEquals(element, _focused) && !_editors.CommitFocused()) return;
         _focused = element;
+        _focusedDropDown = element is RibbonSplitButtonItem && dropDownPart;
         Focus();
-        var target = Snapshot.Targets.FirstOrDefault(t => ReferenceEquals(t.Element, element));
+        var target = Snapshot.Targets.FirstOrDefault(t => ReferenceEquals(t.Element, element) && t.DropDownPart == _focusedDropDown);
         if (target is not null)
         {
             int delta = target.Bounds.Left < target.Clip.Left ? target.Bounds.Left - target.Clip.Left : target.Bounds.Right > target.Clip.Right ? target.Bounds.Right - target.Clip.Right : 0;
@@ -571,9 +658,27 @@ public partial class RibbonControl : Control, ISupportInitialize
                 Scroll(target.Kind == TargetKind.Tab, delta);
         }
         Invalidate();
+        if (enterEditor && element is RibbonItem editor && editor is IRibbonEditorItem) _editors.Focus(editor);
         AccessibilityFocusChanged(element);
     }
+    internal void EditorFocused(RibbonItem item)
+    {
+        _focused = item;
+        _focusedDropDown = false;
+        Invalidate();
+    }
+    internal void FocusEditor(RibbonItem item)
+    {
+        foreach (var popup in _popups.Surfaces.Reverse())
+            if (popup.Targets.Any(t => ReferenceEquals(t.Element, item)))
+            {
+                popup.FocusElement(item);
+                return;
+            }
+        if (Snapshot.Targets.Any(t => ReferenceEquals(t.Element, item))) FocusElement(item);
+    }
     internal RibbonElement? FocusedElement => _popups.Top?.FocusedElement ?? _focused;
+    internal bool FocusedDropDownPart => _popups.Top?.FocusedDropDownPart ?? _focusedDropDown;
     /// <inheritdoc />
     protected override void OnGotFocus(EventArgs e)
     {
@@ -589,6 +694,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     }
     internal void ToggleKeyTips()
     {
+        SetKeyboardFocusCues(true);
         if (_keyTips)
         {
             ExitKeyTips(true);
@@ -615,14 +721,19 @@ public partial class RibbonControl : Control, ISupportInitialize
     {
         if (IsInDesignMode)
             return;
+        if (!_editors.CommitFocused() || !ReferenceEquals(item.Ribbon, this) || !item.EffectiveEnabled || !item.Visible) return;
         foreach (var surface in _popups.Surfaces.Reverse())
-            if (surface.Targets.FirstOrDefault(t => ReferenceEquals(t.Element, item)) is { } row)
+            if (surface.Targets.Where(t => ReferenceEquals(t.Element, item)).ToArray() is { Length: > 0 } rows)
             {
-                _popups.Toggle(item, surface, row.VisibleBounds);
+                var anchor = rows.Select(t => t.VisibleBounds).Where(r => !r.IsEmpty).Aggregate(Rectangle.Empty, (a, b) => a.IsEmpty ? b : Rectangle.Union(a, b));
+                if (!anchor.IsEmpty)
+                    _popups.Toggle(item, surface, anchor);
                 return;
             }
-        if (Snapshot.Targets.FirstOrDefault(t => ReferenceEquals(t.Element, item)) is { } target && !target.VisibleBounds.IsEmpty)
-            _popups.Toggle(item, this, target.VisibleBounds);
+        var bounds = Snapshot.Targets.Where(t => ReferenceEquals(t.Element, item)).Select(t => t.VisibleBounds).Where(r => !r.IsEmpty)
+            .Aggregate(Rectangle.Empty, (a, b) => a.IsEmpty ? b : Rectangle.Union(a, b));
+        if (!bounds.IsEmpty)
+            _popups.Toggle(item, this, bounds);
     }
     internal void CloseDropDown(RibbonDropDownItem item) => _popups.Close(item, true);
     internal bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime || DesignMode;
@@ -634,6 +745,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             _disposing = true;
             _input.Dispose();
             _popups.Dispose();
+            _editors.Dispose();
             foreach (var tab in Tabs.ToArray())
                 tab.Dispose();
             Tabs.Clear();

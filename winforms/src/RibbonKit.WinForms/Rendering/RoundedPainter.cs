@@ -40,12 +40,27 @@ internal sealed class RoundedPainter : IDisposable
         {
             double t = key.Height == 1 ? 0 : (double)y / (key.Height - 1);
             var fill = Color.FromArgb(Lerp(key.Fill.Start.A, key.Fill.End.A, t), Lerp(key.Fill.Start.R, key.Fill.End.R, t), Lerp(key.Fill.Start.G, key.Fill.End.G, t), Lerp(key.Fill.Start.B, key.Fill.End.B, t));
+            // The central band has full coverage, including the top/bottom
+            // stroke. Only the narrow edge bands need per-pixel coverage math.
+            int edge = Math.Max(key.Radius, key.Stroke);
+            var solid = y >= key.Stroke && y < key.Height - key.Stroke ? fill : key.Border;
+            byte blue = (byte)Math.Round(solid.B * solid.A / 255d);
+            byte green = (byte)Math.Round(solid.G * solid.A / 255d);
+            byte red = (byte)Math.Round(solid.R * solid.A / 255d);
             for (int x = 0; x < key.Width; x++)
             {
+                int offset = (y * key.Width + x) * 4;
+                if (x >= edge && x < key.Width - edge)
+                {
+                    bytes[offset] = blue;
+                    bytes[offset + 1] = green;
+                    bytes[offset + 2] = red;
+                    bytes[offset + 3] = solid.A;
+                    continue;
+                }
                 double outer = Coverage(x, y, key.Width, key.Height, key.Radius);
                 double inner = key.Stroke == 0 ? outer : Coverage(x - key.Stroke, y - key.Stroke, key.Width - 2 * key.Stroke, key.Height - 2 * key.Stroke, Math.Max(0, key.Radius - key.Stroke));
                 double f = inner * fill.A / 255d, b = (outer - inner) * key.Border.A / 255d;
-                int offset = (y * key.Width + x) * 4;
                 bytes[offset] = (byte)Math.Clamp((int)Math.Round(fill.B * f + key.Border.B * b), 0, 255);
                 bytes[offset + 1] = (byte)Math.Clamp((int)Math.Round(fill.G * f + key.Border.G * b), 0, 255);
                 bytes[offset + 2] = (byte)Math.Clamp((int)Math.Round(fill.R * f + key.Border.R * b), 0, 255);
@@ -62,6 +77,28 @@ internal sealed class RoundedPainter : IDisposable
         return bitmap;
     }
     private static int Lerp(int start, int end, double t) => (int)Math.Round(start + (end - start) * t);
+    // Opaque HWNDs occupy only fully covered pixels. The layered frame behind
+    // them supplies partial edge coverage without blending it against fake white.
+    internal static Region CreateOpaqueRegion(Size size, int radius)
+    {
+        var region = new Region();
+        region.MakeEmpty();
+        if (size.Width <= 0 || size.Height <= 0) return region;
+        radius = Math.Clamp(radius, 0, Math.Min(size.Width, size.Height) / 2);
+        if (size.Height > 2 * radius)
+            region.Union(new Rectangle(0, radius, size.Width, size.Height - 2 * radius));
+        for (int y = 0; y < radius; y++)
+        {
+            int inset = 0;
+            while (inset < radius && Coverage(inset, y, size.Width, size.Height, radius) < 1) inset++;
+            if (size.Width > 2 * inset)
+            {
+                region.Union(new Rectangle(inset, y, size.Width - 2 * inset, 1));
+                region.Union(new Rectangle(inset, size.Height - 1 - y, size.Width - 2 * inset, 1));
+            }
+        }
+        return region;
+    }
     private static double Coverage(int x, int y, int width, int height, int radius)
     {
         if (x < 0 || y < 0 || x >= width || y >= height)

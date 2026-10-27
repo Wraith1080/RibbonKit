@@ -43,6 +43,7 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
         item.Parent = _owner;
         if (Ribbon is { } ribbon)
             item.BindingContext = ribbon.BindingContext;
+        RibbonRadioButtonItem.NormalizeAttached(item);
         Ribbon?.ModelChanged();
     }
     /// <inheritdoc />
@@ -58,6 +59,7 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
         item.Parent = _owner;
         if (Ribbon is { } ribbon)
             item.BindingContext = ribbon.BindingContext;
+        RibbonRadioButtonItem.NormalizeAttached(item);
         Ribbon?.ModelChanged();
     }
     /// <inheritdoc />

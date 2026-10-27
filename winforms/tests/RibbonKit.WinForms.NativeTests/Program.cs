@@ -6,11 +6,19 @@ using WF = System.Windows.Forms;
 
 namespace RibbonKit.WinForms.NativeTests;
 
-internal static class Program
+internal static partial class Program
 {
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--option-checks" or "--option-checks-flat")
+            return IndependentConsumer.OptionInteractionChecks.Run(args[1], args[0] == "--option-checks-flat");
+        if (args.Length == 2 && args[0] is "--combo-checks" or "--combo-checks-flat")
+            return IndependentConsumer.ComboBoxInteractionChecks.Run(args[1], args[0] == "--combo-checks-flat");
+        if (args.Length == 2 && args[0] == "--editor-checks")
+            return IndependentConsumer.TextBoxInteractionChecks.Run(args[1]);
+        if (args.Length == 2 && args[0] is "--split-checks" or "--split-checks-flat")
+            return IndependentConsumer.SplitInteractionChecks.Run(args[1], args[0] == "--split-checks-flat");
         if (args.Contains("--server"))
         {
             Server();
@@ -22,6 +30,8 @@ internal static class Program
             return Benchmark.Run(args[1], false);
         if (args.Length == 2 && args[0] == "--benchmark-first-popups")
             return Benchmark.Run(args[1], false, 0);
+        if (args.Length == 2 && args[0] == "--capture-popups")
+            return PopupCapture.Run(args[1]);
         int appArgument = Array.IndexOf(args, "--app");
         string app = appArgument >= 0 && args.Length > appArgument + 1 ? args[appArgument + 1] : Environment.ProcessPath!;
         using var process = Process.Start(new ProcessStartInfo(app, "--server") { UseShellExecute = false })!;
@@ -31,6 +41,17 @@ internal static class Program
             Wait(() => (window = AutomationElement.RootElement.FindFirst(TreeScope.Children, new PropertyCondition(AutomationElement.ProcessIdProperty, process.Id))) is not null);
             var root = window!.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, "native.ribbon"));
             Check(root is not null, "Native ribbon root is discoverable");
+            int focusArgument = Array.IndexOf(args, "--focus-cues");
+            if (focusArgument >= 0)
+            {
+                FocusCues(window, root!, process, args[focusArgument + 1]);
+                return 0;
+            }
+            if (args.Contains("--popup-dismissal"))
+            {
+                PopupDismissal(window, root!, process);
+                return 0;
+            }
             if (args.Contains("--keyboard"))
             {
                 Keyboard(window, root!, process);
@@ -235,6 +256,17 @@ internal static class Program
         ribbon.Tabs.AddRange(home, insert);
         form.Controls.Add(new WF.TextBox { Name = "document", Dock = WF.DockStyle.Fill, Multiline = true, Text = "Document focus target" });
         form.Controls.Add(ribbon);
+        WF.Form? otherWindow = null;
+        var openOther = new WF.Button { Name = "other.window", Text = "Open another window", Dock = WF.DockStyle.Bottom, Height = 28, TabStop = false };
+        openOther.Click += (_, _) =>
+        {
+            if (otherWindow is null || otherWindow.IsDisposed)
+                otherWindow = new WF.Form { Name = "native.other", Text = "Another window in the ribbon process", Width = 400, Height = 250 };
+            otherWindow.Show();
+            otherWindow.Activate();
+        };
+        form.Controls.Add(openOther);
+        form.FormClosed += (_, _) => otherWindow?.Dispose();
         UpdateTitle();
         WF.Application.Run(form);
     }

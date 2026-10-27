@@ -4,15 +4,18 @@ internal enum TargetKind
 {
     Tab, Group, Item, TabBack, TabNext, BodyBack, BodyNext
 }
-internal sealed record RibbonTarget(TargetKind Kind, RibbonElement? Element, Rectangle Bounds, Rectangle Clip, RibbonItemSize Size = RibbonItemSize.Large, bool ReserveIcon = false)
+internal sealed record RibbonTarget(TargetKind Kind, RibbonElement? Element, Rectangle Bounds, Rectangle Clip, RibbonItemSize Size = RibbonItemSize.Large, bool ReserveIcon = false, bool DropDownPart = false, int LabelWidth = 0)
 {
     internal Rectangle VisibleBounds => Rectangle.Intersect(Bounds, Clip);
     internal bool Enabled => Element?.EffectiveEnabled ?? true;
-    internal string Identity => Element?.Id ?? Kind.ToString();
+    internal string Identity => (Element?.Id ?? Kind.ToString()) + (DropDownPart ? ":dropdown" : "");
+    internal string TipText => (Element?.Text ?? "") + (DropDownPart ? " options" : "");
+    internal string PreferredKeyTip => DropDownPart && Element is RibbonSplitButtonItem split ? split.DropDownKeyTip : Element?.KeyTip ?? "";
 }
 internal sealed record GroupSlot(RibbonGroup Group, Rectangle Bounds, bool Collapsed);
 internal sealed class RibbonLayoutSnapshot
 {
+    internal Rectangle BodyBounds { get; set; }
     internal List<RibbonTarget> Targets { get; } = [];
     internal List<GroupSlot> Groups { get; } = [];
     internal Rectangle BodyViewport
@@ -32,13 +35,20 @@ internal sealed class RibbonLayoutSnapshot
         get; set;
     }
 }
-internal sealed record MeasuredItem(RibbonItem Item, Rectangle Bounds, RibbonItemSize Size, bool ReserveIcon = false);
+internal sealed record MeasuredItem(RibbonItem Item, Rectangle Bounds, RibbonItemSize Size, bool ReserveIcon = false, int LabelWidth = 0);
 internal sealed record MeasuredGroup(int Width, List<MeasuredItem> Items);
 
 internal sealed class RibbonLayoutEngine
 {
     private readonly Dictionary<(RibbonGroup, int, int), MeasuredGroup> _cache = [];
     internal void Clear() => _cache.Clear();
+    private static int LargeItemWidth(RibbonItem item, Font font, int dpi, RibbonTheme theme)
+    {
+        int S(double n) => Scale(n, dpi);
+        int label = RibbonCaptionLayout.TextWidth(item.Text, font);
+        int padding = item is RibbonDropDownItem and not RibbonSplitButtonItem ? 30 : 14;
+        return Math.Clamp(label + S(padding), S(60), S(theme.LargeButtonMaxWidth));
+    }
     internal static int Scale(double value, int dpi) => (int)Math.Round(value * dpi / 96d);
     internal MeasuredGroup Measure(RibbonGroup group, int state, Font font, int dpi, RibbonTheme theme)
     {
@@ -55,7 +65,11 @@ internal sealed class RibbonLayoutEngine
         {
             if (row == 0)
                 return;
-            bool reserve = items.Skip(columnStart).Any(entry => entry.Item.Icon is not null || entry.Item.Image is not null || entry.Item.LargeImage is not null);
+            bool reserve = items.Skip(columnStart).Any(entry => entry.Item is RibbonCheckBoxItem or RibbonRadioButtonItem || entry.Item.Icon is not null || entry.Item.Image is not null || entry.Item.LargeImage is not null);
+            int labelWidth = items.Skip(columnStart).Where(entry => entry.Item is IRibbonEditorItem)
+                .Select(entry => RibbonEditorLayout.LabelWidth(entry.Item, font, dpi)).DefaultIfEmpty(0).Max();
+            foreach (var entry in items.Skip(columnStart).Where(entry => entry.Item is IRibbonEditorItem))
+                columnWidth = Math.Max(columnWidth, labelWidth + S(((IRibbonEditorItem)entry.Item).InputWidth + 6));
             for (int index = columnStart; index < items.Count; index++)
             {
                 var entry = items[index];
@@ -65,7 +79,8 @@ internal sealed class RibbonLayoutEngine
                     {
                         Width = entry.Size == RibbonItemSize.Small ? entry.Bounds.Width : columnWidth
                     },
-                    ReserveIcon = reserve
+                    ReserveIcon = reserve,
+                    LabelWidth = entry.Item is IRibbonEditorItem ? labelWidth : 0
                 };
             }
             x += columnWidth + S(3);
@@ -75,10 +90,17 @@ internal sealed class RibbonLayoutEngine
         }
         foreach (var item in group.Items.Where(i => i.Visible))
         {
-            var size = item.SizePolicy.At(state);
+            var size = item is IRibbonEditorItem or RibbonCheckBoxItem or RibbonRadioButtonItem ? RibbonItemSize.Medium : item.SizePolicy.At(state);
             bool large = size == RibbonItemSize.Large;
             int label = TextRenderer.MeasureText(item.Text, font, new Size(1000, 1000), TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine).Width;
-            int width = large ? Math.Max(S(60), Math.Min(S(108), label + S(14))) : size == RibbonItemSize.Small ? S(28) : Math.Max(S(54), Math.Min(S(180), label + S(38)));
+            bool dropDownOnly = item is RibbonDropDownItem and not RibbonSplitButtonItem;
+            int width = large ? LargeItemWidth(item, font, dpi, theme) : size == RibbonItemSize.Small ? S(28) : Math.Max(S(54), Math.Min(S(180), label + S(38)));
+            if (item is IRibbonEditorItem editor)
+                width = RibbonEditorLayout.LabelWidth(item, font, dpi) + S(editor.InputWidth + 6);
+            if (item is RibbonSplitButtonItem && !large)
+                width += S(20);
+            else if (dropDownOnly && !large)
+                width += S(16);
             if (large)
             {
                 FinishColumn();
@@ -131,7 +153,12 @@ internal sealed class RibbonLayoutEngine
         var order = groups.Select((g, i) => (g, i)).Where(p => p.g.CanResize)
             .OrderByDescending(p => p.g.ReductionPriority.HasValue).ThenByDescending(p => p.g.ReductionPriority ?? int.MinValue)
             .ThenByDescending(p => p.g.ReductionPriority.HasValue ? 0 : tables[p.i][0]).ThenByDescending(p => p.i).Select(p => p.i).ToArray();
-        int available = Math.Max(0, client.Width - S(8));
+        var margin = ribbon.LayoutTheme.BodyMargin;
+        var body = new Rectangle(S(margin.Left), tabHeight + S(margin.Top),
+            Math.Max(0, client.Width - S(margin.Left) - S(margin.Right)), bodyHeight);
+        result.BodyBounds = body;
+        int inset = Math.Min(S(2), body.Width / 2);
+        int available = Math.Max(0, body.Width - 2 * inset);
         int[] states = ReductionAlgorithm.ComputeStates(available, tables, order);
         int total = groups.Select((g, i) => (int)tables[i][states[i]]).Sum();
         bool overflow = total > available;
@@ -141,7 +168,7 @@ internal sealed class RibbonLayoutEngine
             states = ReductionAlgorithm.ComputeStates(available, tables, order);
             total = groups.Select((g, i) => (int)tables[i][states[i]]).Sum();
         }
-        var viewport = new Rectangle(S(4) + (overflow ? S(22) : 0), tabHeight, available, bodyHeight);
+        var viewport = new Rectangle(body.Left + inset + (overflow ? S(22) : 0), body.Top, available, bodyHeight);
         result.BodyViewport = viewport;
         result.BodyExtent = total;
         int x = viewport.Left - Math.Clamp(bodyOffset, 0, Math.Max(0, total - available));
@@ -149,19 +176,22 @@ internal sealed class RibbonLayoutEngine
         {
             int state = maps[i][states[i]];
             var measure = Measure(groups[i], state, ribbon.Font, dpi, ribbon.LayoutTheme);
-            var bounds = new Rectangle(x, tabHeight, measure.Width, bodyHeight);
+            var bounds = new Rectangle(x, body.Top, measure.Width, bodyHeight);
+            if (state == 3) bounds = Rectangle.Inflate(bounds, -S(3), -S(4));
             result.Groups.Add(new(groups[i], bounds, state == 3));
             if (state == 3)
-                result.Targets.Add(new(TargetKind.Group, groups[i], Rectangle.Inflate(bounds, -S(3), -S(3)), viewport));
+                result.Targets.Add(new(TargetKind.Group, groups[i], bounds, viewport));
             else
                 foreach (var item in measure.Items)
-                    result.Targets.Add(new(TargetKind.Item, item.Item, new(x + item.Bounds.X, tabHeight + item.Bounds.Y, item.Bounds.Width, item.Bounds.Height), viewport, item.Size, item.ReserveIcon));
+                    result.Targets.AddRange(RibbonSplitLayout.Expand(new(TargetKind.Item, item.Item, new(x + item.Bounds.X, body.Top + item.Bounds.Y, item.Bounds.Width, item.Bounds.Height), viewport, item.Size, item.ReserveIcon, LabelWidth: item.LabelWidth), dpi, false));
             x += measure.Width;
         }
         if (overflow)
         {
-            result.Targets.Add(new(TargetKind.BodyBack, null, new(0, tabHeight, S(22), bodyHeight), client));
-            result.Targets.Add(new(TargetKind.BodyNext, null, new(client.Width - S(22), tabHeight, S(22), bodyHeight), client));
+            int scrollInset = Math.Min(S(Math.Min(ribbon.LayoutTheme.BodyScrollButtonVerticalInset, ribbon.LayoutTheme.BodyHeight)), bodyHeight / 2);
+            int scrollHeight = bodyHeight - 2 * scrollInset;
+            result.Targets.Add(new(TargetKind.BodyBack, null, new(body.Left + inset, body.Top + scrollInset, S(22), scrollHeight), body));
+            result.Targets.Add(new(TargetKind.BodyNext, null, new(body.Right - inset - S(22), body.Top + scrollInset, S(22), scrollHeight), body));
         }
         return result;
     }

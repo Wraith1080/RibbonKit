@@ -10,7 +10,15 @@ public sealed class FoundationTests
     internal static void Sta(Action action)
     {
         Exception? failure = null;
-        var thread = new Thread(() => { try { action(); } catch (Exception e) { failure = e; } });
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
+                action();
+            }
+            catch (Exception e) { failure = e; }
+        });
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
         thread.Join();
@@ -76,6 +84,13 @@ public sealed class FoundationTests
         toggle.PerformClick();
         Assert.Empty(events);
         Assert.Single(toggle.DataBindings);
+        var split = new RibbonSplitButtonItem { CheckOnClick = true };
+        group.Items.Add(split);
+        split.DataBindings.Add(new Binding(nameof(split.Checked), source, nameof(state.Checked), true, DataSourceUpdateMode.OnPropertyChanged));
+        split.PerformClick(); Application.DoEvents();
+        Assert.True(state.Checked);
+        state.Checked = false; Application.DoEvents();
+        Assert.False(split.Checked);
         form.Close();
     });
     [Fact]
@@ -131,6 +146,38 @@ public sealed class FoundationTests
                 Assert.Equal(bitmap.GetPixel(x, y).ToArgb(), bitmap.GetPixel(width - 1 - x, y).ToArgb());
                 Assert.Equal(bitmap.GetPixel(x, y).ToArgb(), bitmap.GetPixel(x, height - 1 - y).ToArgb());
             }
+        graphics.Clear(Color.White);
+        using var shadow = new ShadowPainter();
+        int blur = Math.Max(1, 4 * dpi / 96);
+        shadow.Draw(graphics, new(blur, blur, width - 2 * blur, height - 2 * blur), 6 * dpi / 96, blur, Color.FromArgb(32, Color.Black));
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+            {
+                Assert.Equal(bitmap.GetPixel(x, y).ToArgb(), bitmap.GetPixel(width - 1 - x, y).ToArgb());
+                Assert.Equal(bitmap.GetPixel(x, y).ToArgb(), bitmap.GetPixel(x, height - 1 - y).ToArgb());
+            }
+        using var office = new RibbonOffice2024Renderer();
+        using var flat = new RibbonRenderer();
+        foreach (var renderer in new RibbonRenderer[] { office, flat })
+        {
+            var theme = RibbonThemes.Office2024Light;
+            int radius = renderer.GetPopupCornerRadius(theme, dpi);
+            using var region = RoundedPainter.CreateOpaqueRegion(bitmap.Size, radius);
+            graphics.Clear(Color.Transparent);
+            renderer.DrawPopupFrame(new(graphics, new(0, 0, width, height), theme, SystemFonts.DefaultFont, dpi));
+            bool partialEdge = false;
+            for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
+                {
+                    var color = bitmap.GetPixel(x, y);
+                    Assert.Equal(color, bitmap.GetPixel(width - 1 - x, y));
+                    Assert.Equal(color, bitmap.GetPixel(x, height - 1 - y));
+                    Assert.True((color.A == 255) == region.IsVisible(x, y), $"DPI={dpi}, radius={radius}, pixel=({x},{y}), alpha={color.A}, region={region.IsVisible(x, y)}");
+                    partialEdge |= color.A is > 0 and < 255;
+                }
+            Assert.Equal(radius > 0, partialEdge);
+            Assert.Equal(radius == 0, region.IsVisible(.5f, .5f));
+        }
     }
     [Theory]
     [InlineData(true)]

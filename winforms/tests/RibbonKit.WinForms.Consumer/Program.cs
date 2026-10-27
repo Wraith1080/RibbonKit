@@ -6,13 +6,22 @@ namespace IndependentConsumer;
 internal static class Program
 {
     [STAThread]
-    private static void Main()
+    private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--validate-options" or "--validate-options-flat")
+            return OptionInteractionChecks.Run(args[1], args[0] == "--validate-options-flat");
+        if (args.Length == 2 && args[0] is "--validate-combo" or "--validate-combo-flat")
+            return ComboBoxInteractionChecks.Run(args[1], args[0] == "--validate-combo-flat");
+        if (args.Length == 2 && args[0] == "--validate-editors")
+            return TextBoxInteractionChecks.Run(args[1]);
+        if (args.Length == 2 && args[0] is "--validate-split" or "--validate-split-flat")
+            return SplitInteractionChecks.Run(args[1], args[0] == "--validate-split-flat");
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
         Application.EnableVisualStyles();
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
         using var form = new ConsumerForm();
         Application.Run(form);
+        return 0;
     }
 }
 

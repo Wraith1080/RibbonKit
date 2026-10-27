@@ -1,4 +1,64 @@
 #nullable enable
+override RibbonKit.WinForms.RibbonOffice2024Renderer.DrawCheckBoxIndicator(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonCheckBoxItem! item) -> void
+RibbonKit.WinForms.RibbonCheckBoxItem
+RibbonKit.WinForms.RibbonCheckBoxItem.RibbonCheckBoxItem() -> void
+RibbonKit.WinForms.RibbonCheckBoxItem.Checked.get -> bool
+RibbonKit.WinForms.RibbonCheckBoxItem.Checked.set -> void
+RibbonKit.WinForms.RibbonCheckBoxItem.CheckedChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonCheckBoxItem.CheckState.get -> System.Windows.Forms.CheckState
+RibbonKit.WinForms.RibbonCheckBoxItem.CheckState.set -> void
+RibbonKit.WinForms.RibbonCheckBoxItem.CheckStateChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonCheckBoxItem.ThreeState.get -> bool
+RibbonKit.WinForms.RibbonCheckBoxItem.ThreeState.set -> void
+RibbonKit.WinForms.RibbonRadioButtonItem
+RibbonKit.WinForms.RibbonRadioButtonItem.RibbonRadioButtonItem() -> void
+RibbonKit.WinForms.RibbonRadioButtonItem.Checked.get -> bool
+RibbonKit.WinForms.RibbonRadioButtonItem.Checked.set -> void
+RibbonKit.WinForms.RibbonRadioButtonItem.CheckedChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonRadioButtonItem.GroupName.get -> string!
+RibbonKit.WinForms.RibbonRadioButtonItem.GroupName.set -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawCheckBoxIndicator(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonCheckBoxItem! item) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawRadioButtonIndicator(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonRadioButtonItem! item) -> void
+RibbonKit.WinForms.RibbonTheme.LargeButtonMaxWidth.get -> int
+RibbonKit.WinForms.RibbonTheme.LargeButtonMaxWidth.init -> void
+RibbonKit.WinForms.RibbonTheme.PopupCornerRadius.get -> int
+RibbonKit.WinForms.RibbonTheme.PopupCornerRadius.init -> void
+virtual RibbonKit.WinForms.RibbonRenderer.GetPopupCornerRadius(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int
+override RibbonKit.WinForms.RibbonOffice2024Renderer.GetPopupCornerRadius(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int
+RibbonKit.WinForms.RibbonDropDownItem.IsDropDownOpen.get -> bool
+RibbonKit.WinForms.RibbonSplitButtonItem.CheckOnClick.get -> bool
+RibbonKit.WinForms.RibbonSplitButtonItem.CheckOnClick.set -> void
+RibbonKit.WinForms.RibbonSplitButtonItem.Checked.get -> bool
+RibbonKit.WinForms.RibbonSplitButtonItem.Checked.set -> void
+RibbonKit.WinForms.RibbonSplitButtonItem.CheckedChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonTheme.PopupShadowColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.PopupShadowColor.init -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawPopupShadow(RibbonKit.WinForms.RibbonPaintContext context) -> void
+RibbonKit.WinForms.RibbonOffice2024Renderer
+RibbonKit.WinForms.RibbonOffice2024Renderer.RibbonOffice2024Renderer() -> void
+override RibbonKit.WinForms.RibbonOffice2024Renderer.DrawChrome(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonFill fill, System.Drawing.Color border) -> void
+override RibbonKit.WinForms.RibbonOffice2024Renderer.DrawFocus(RibbonKit.WinForms.RibbonPaintContext context) -> void
+override RibbonKit.WinForms.RibbonOffice2024Renderer.DrawGroup(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonGroup! group, bool collapsed) -> void
+override RibbonKit.WinForms.RibbonOffice2024Renderer.DrawKeyTip(RibbonKit.WinForms.RibbonPaintContext context, string! keys) -> void
+override RibbonKit.WinForms.RibbonOffice2024Renderer.DrawTab(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonTab! tab, bool selected) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawBody(RibbonKit.WinForms.RibbonPaintContext context) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawChrome(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonFill fill, System.Drawing.Color border) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawDropDownArrow(RibbonKit.WinForms.RibbonPaintContext context, System.Drawing.Color color) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawItemImage(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonItem! item, RibbonKit.WinForms.RibbonItemSize size) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawScrollButton(RibbonKit.WinForms.RibbonPaintContext context, bool backward) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawText(RibbonKit.WinForms.RibbonPaintContext context, string! text, System.Drawing.Color color, System.Windows.Forms.TextFormatFlags flags) -> void
+RibbonKit.WinForms.RibbonSplitButtonLayout
+RibbonKit.WinForms.RibbonSplitButtonLayout.Horizontal = 0 -> RibbonKit.WinForms.RibbonSplitButtonLayout
+RibbonKit.WinForms.RibbonSplitButtonLayout.Vertical = 1 -> RibbonKit.WinForms.RibbonSplitButtonLayout
+RibbonKit.WinForms.RibbonSplitButtonItem
+RibbonKit.WinForms.RibbonSplitButtonItem.RibbonSplitButtonItem() -> void
+RibbonKit.WinForms.RibbonSplitButtonItem.Click -> System.EventHandler?
+RibbonKit.WinForms.RibbonSplitButtonItem.Layout.get -> RibbonKit.WinForms.RibbonSplitButtonLayout
+RibbonKit.WinForms.RibbonSplitButtonItem.Layout.set -> void
+RibbonKit.WinForms.RibbonSplitButtonItem.DropDownKeyTip.get -> string!
+RibbonKit.WinForms.RibbonSplitButtonItem.DropDownKeyTip.set -> void
+override RibbonKit.WinForms.RibbonSplitButtonItem.PerformClick() -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawSplitItem(RibbonKit.WinForms.RibbonPaintContext primary, RibbonKit.WinForms.RibbonPaintContext dropDown, RibbonKit.WinForms.RibbonSplitButtonItem! item, RibbonKit.WinForms.RibbonItemSize size, bool menu) -> void
 ~override RibbonKit.WinForms.RibbonFill.Equals(object obj) -> bool
 ~override RibbonKit.WinForms.RibbonFill.ToString() -> string
 ~override RibbonKit.WinForms.RibbonIconContext.Equals(object obj) -> bool
@@ -228,6 +288,64 @@ RibbonKit.WinForms.RibbonTab
 RibbonKit.WinForms.RibbonTab.Groups.get -> RibbonKit.WinForms.RibbonGroupCollection!
 RibbonKit.WinForms.RibbonTab.RibbonTab() -> void
 RibbonKit.WinForms.RibbonTabCollection
+RibbonKit.WinForms.RibbonTextBoxItem
+RibbonKit.WinForms.RibbonComboBoxItem
+RibbonKit.WinForms.RibbonComboBoxItem.RibbonComboBoxItem() -> void
+RibbonKit.WinForms.RibbonComboBoxItem.Items.get -> RibbonKit.WinForms.RibbonComboBoxChoiceCollection!
+RibbonKit.WinForms.RibbonComboBoxItem.Value.get -> string!
+RibbonKit.WinForms.RibbonComboBoxItem.Value.set -> void
+RibbonKit.WinForms.RibbonComboBoxItem.SelectedIndex.get -> int
+RibbonKit.WinForms.RibbonComboBoxItem.SelectedIndex.set -> void
+RibbonKit.WinForms.RibbonComboBoxItem.IsEditable.get -> bool
+RibbonKit.WinForms.RibbonComboBoxItem.IsEditable.set -> void
+RibbonKit.WinForms.RibbonComboBoxItem.InputWidth.get -> int
+RibbonKit.WinForms.RibbonComboBoxItem.InputWidth.set -> void
+RibbonKit.WinForms.RibbonComboBoxItem.MaxLength.get -> int
+RibbonKit.WinForms.RibbonComboBoxItem.MaxLength.set -> void
+RibbonKit.WinForms.RibbonComboBoxItem.IsDropDownOpen.get -> bool
+RibbonKit.WinForms.RibbonComboBoxItem.ValueChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonComboBoxItem.SelectedIndexChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonComboBoxItem.ValueValidating -> System.ComponentModel.CancelEventHandler?
+RibbonKit.WinForms.RibbonComboBoxItem.ValueValidated -> System.EventHandler?
+RibbonKit.WinForms.RibbonComboBoxItem.ValueCommitted -> System.EventHandler?
+RibbonKit.WinForms.RibbonComboBoxItem.EditCanceled -> System.EventHandler?
+override RibbonKit.WinForms.RibbonComboBoxItem.PerformClick() -> void
+RibbonKit.WinForms.RibbonComboBoxItem.ShowDropDown() -> void
+RibbonKit.WinForms.RibbonComboBoxItem.CloseDropDown() -> void
+RibbonKit.WinForms.RibbonComboBoxChoiceCollection
+RibbonKit.WinForms.RibbonComboBoxChoiceCollection.AddRange(params string![]! values) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawComboBox(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonComboBoxItem! item, System.Drawing.Rectangle editorBounds) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawComboBoxItem(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonComboBoxItem! item, int index, bool selected) -> void
+RibbonKit.WinForms.RibbonTheme.BodyMargin.get -> System.Windows.Forms.Padding
+RibbonKit.WinForms.RibbonTheme.BodyMargin.init -> void
+RibbonKit.WinForms.RibbonTheme.BodyScrollButtonVerticalInset.get -> int
+RibbonKit.WinForms.RibbonTheme.BodyScrollButtonVerticalInset.init -> void
+RibbonKit.WinForms.RibbonTheme.BodyShadowColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.BodyShadowColor.init -> void
+RibbonKit.WinForms.RibbonTheme.PopupBorder.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.PopupBorder.init -> void
+RibbonKit.WinForms.RibbonTheme.PopupShadowEnabled.get -> bool
+RibbonKit.WinForms.RibbonTheme.PopupShadowEnabled.init -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawPopupFrame(RibbonKit.WinForms.RibbonPaintContext context) -> void
+override RibbonKit.WinForms.RibbonOffice2024Renderer.DrawBody(RibbonKit.WinForms.RibbonPaintContext context) -> void
+override RibbonKit.WinForms.RibbonOffice2024Renderer.DrawScrollButton(RibbonKit.WinForms.RibbonPaintContext context, bool backward) -> void
+RibbonKit.WinForms.RibbonTextBoxItem.RibbonTextBoxItem() -> void
+RibbonKit.WinForms.RibbonTextBoxItem.Value.get -> string!
+RibbonKit.WinForms.RibbonTextBoxItem.Value.set -> void
+RibbonKit.WinForms.RibbonTextBoxItem.InputWidth.get -> int
+RibbonKit.WinForms.RibbonTextBoxItem.InputWidth.set -> void
+RibbonKit.WinForms.RibbonTextBoxItem.ReadOnly.get -> bool
+RibbonKit.WinForms.RibbonTextBoxItem.ReadOnly.set -> void
+RibbonKit.WinForms.RibbonTextBoxItem.MaxLength.get -> int
+RibbonKit.WinForms.RibbonTextBoxItem.MaxLength.set -> void
+RibbonKit.WinForms.RibbonTextBoxItem.ValueChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonTextBoxItem.ValueValidating -> System.ComponentModel.CancelEventHandler?
+RibbonKit.WinForms.RibbonTextBoxItem.ValueValidated -> System.EventHandler?
+RibbonKit.WinForms.RibbonTextBoxItem.ValueCommitted -> System.EventHandler?
+RibbonKit.WinForms.RibbonTextBoxItem.EditCanceled -> System.EventHandler?
+override RibbonKit.WinForms.RibbonTextBoxItem.PerformClick() -> void
+override RibbonKit.WinForms.RibbonControl.OnLayout(System.Windows.Forms.LayoutEventArgs! e) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawTextBox(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonTextBoxItem! item, System.Drawing.Rectangle editorBounds) -> void
 RibbonKit.WinForms.RibbonTheme
 RibbonKit.WinForms.RibbonTheme.<Clone>$() -> RibbonKit.WinForms.RibbonTheme!
 RibbonKit.WinForms.RibbonTheme.Accent.get -> System.Drawing.Color
