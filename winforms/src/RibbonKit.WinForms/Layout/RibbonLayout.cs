@@ -40,6 +40,9 @@ internal sealed record MeasuredGroup(int Width, List<MeasuredItem> Items);
 
 internal sealed class RibbonLayoutEngine
 {
+    internal const int CommandTopInset = 6;
+    internal const int CommandBottomInset = 8;
+    internal const int CommandVerticalInset = CommandTopInset + CommandBottomInset;
     private readonly Dictionary<(RibbonGroup, int, int), MeasuredGroup> _cache = [];
     internal void Clear() => _cache.Clear();
     private static int LargeItemWidth(RibbonItem item, Font font, int dpi, RibbonTheme theme)
@@ -104,13 +107,13 @@ internal sealed class RibbonLayoutEngine
             if (large)
             {
                 FinishColumn();
-                items.Add(new(item, new(x, S(4), width, S(theme.BodyHeight - captionLogical - 8)), size));
+                items.Add(new(item, new(x, S(CommandTopInset), width, S(theme.BodyHeight - captionLogical - CommandVerticalInset)), size));
                 x += width + S(3);
                 columnStart = items.Count;
             }
             else
             {
-                items.Add(new(item, new(x, S(4 + row * rowLogical), width, S(rowLogical - 1)), size));
+                items.Add(new(item, new(x, S(CommandTopInset + row * rowLogical), width, S(rowLogical - 1)), size));
                 columnWidth = Math.Max(columnWidth, width);
                 if (++row == 3)
                     FinishColumn();
@@ -177,7 +180,8 @@ internal sealed class RibbonLayoutEngine
             int state = maps[i][states[i]];
             var measure = Measure(groups[i], state, ribbon.Font, dpi, ribbon.LayoutTheme);
             var bounds = new Rectangle(x, body.Top, measure.Width, bodyHeight);
-            if (state == 3) bounds = Rectangle.Inflate(bounds, -S(3), -S(4));
+            if (state == 3) bounds = Rectangle.FromLTRB(bounds.Left + S(3), bounds.Top + S(CommandTopInset),
+                bounds.Right - S(3), bounds.Bottom - S(CommandBottomInset));
             result.Groups.Add(new(groups[i], bounds, state == 3));
             if (state == 3)
                 result.Targets.Add(new(TargetKind.Group, groups[i], bounds, viewport));

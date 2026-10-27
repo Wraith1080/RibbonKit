@@ -22,6 +22,7 @@ internal sealed class RibbonInputFilter(RibbonControl ribbon) : IMessageFilter, 
     }
     public bool PreFilterMessage(ref Message m)
     {
+        ribbon.ScreenTips.Observe(ref m);
         if (ribbon.FindForm() is not { } form || (!form.ContainsFocus && !ribbon.Popups.ContainsFocus && !ribbon.Editors.HasOpenList))
             return false;
         if (m.Msg is 0x201 or 0x204 or 0x207)

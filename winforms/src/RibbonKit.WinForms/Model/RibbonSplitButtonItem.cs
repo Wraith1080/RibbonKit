@@ -80,6 +80,7 @@ public sealed class RibbonSplitButtonItem : RibbonDropDownItem
     public override void PerformClick()
     {
         Ribbon?.VerifyAccess();
+        Ribbon?.ScreenTips.Cancel();
         if (!EffectiveEnabled || !Visible) return;
         if (CheckOnClick) Checked = !Checked;
         if (!IsDisposed) Click?.Invoke(this, EventArgs.Empty);

@@ -16,8 +16,9 @@ internal sealed class PopupChromeWindow : NativeWindow, IDisposable
     private int _dpi;
     private int _radius;
     private bool _shadowEnabled;
+    private nint _owner;
 
-    internal void Update(ToolStripDropDown popup, RibbonControl ribbon, int radius)
+    internal void Update(Control popup, RibbonControl ribbon, int radius)
     {
         bool shadow = ribbon.Theme.PopupShadowEnabled && SystemInformation.IsDropShadowEnabled;
         if (!popup.Visible || (!shadow && radius == 0))
@@ -25,14 +26,20 @@ internal sealed class PopupChromeWindow : NativeWindow, IDisposable
             Dispose();
             return;
         }
+        nint owner = GetWindow(popup.Handle, 4); // GW_OWNER
+        if (owner == 0) owner = ribbon.FindForm()?.Handle ?? 0;
+        if (Handle != 0 && _owner != owner) Dispose();
         if (Handle == 0)
+        {
             CreateHandle(new CreateParams
             {
                 Caption = "Ribbon popup frame and shadow",
                 Style = unchecked((int)0x80000000), // WS_POPUP
                 ExStyle = 0x080800A0, // NOACTIVATE | LAYERED | TOOLWINDOW | TRANSPARENT
-                Parent = ribbon.FindForm()?.Handle ?? 0
+                Parent = owner
             });
+            _owner = owner;
+        }
         int padding = RibbonLayoutEngine.Scale(8, ribbon.DeviceDpi);
         var bounds = Rectangle.Inflate(popup.Bounds, padding, padding);
         if (_size != bounds.Size || _theme != ribbon.Theme || !ReferenceEquals(_renderer, ribbon.Painter) || _dpi != ribbon.DeviceDpi || _radius != radius || _shadowEnabled != shadow)
@@ -52,8 +59,11 @@ internal sealed class PopupChromeWindow : NativeWindow, IDisposable
             _radius = radius;
             _shadowEnabled = shadow;
         }
-        // An owned window must stay above its owner, so the owner is the host
-        // Form, not the popup. Explicitly place this window just below the popup.
+        // Share the popup's native owner, rather than owning this from the
+        // popup itself (owned windows must stay above their owner). A nested
+        // popup's frame must follow that nested ownership level too: keeping
+        // every frame on the host Form lets later owned tips lift a nested
+        // frame above its own opaque content.
         SetWindowPos(Handle, popup.Handle, bounds.X, bounds.Y, bounds.Width, bounds.Height, 0x0050); // NOACTIVATE | SHOWWINDOW
     }
 
@@ -85,6 +95,7 @@ internal sealed class PopupChromeWindow : NativeWindow, IDisposable
         _theme = null;
         _renderer = null;
         _size = Size.Empty;
+        _owner = 0;
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -97,4 +108,5 @@ internal sealed class PopupChromeWindow : NativeWindow, IDisposable
     [DllImport("gdi32.dll")] private static extern bool DeleteObject(nint image);
     [DllImport("user32.dll", SetLastError = true)] private static extern bool UpdateLayeredWindow(nint window, nint screen, ref Point location, ref Size size, nint sourceDC, ref Point source, uint key, ref Blend blend, uint flags);
     [DllImport("user32.dll")] private static extern bool SetWindowPos(nint window, nint insertAfter, int x, int y, int width, int height, uint flags);
+    [DllImport("user32.dll")] private static extern nint GetWindow(nint window, uint command);
 }

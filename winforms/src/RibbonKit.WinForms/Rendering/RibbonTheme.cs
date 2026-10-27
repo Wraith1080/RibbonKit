@@ -45,7 +45,7 @@ public sealed record RibbonTheme
     /// <summary>Gets the minimum tab height in 96-DPI logical pixels.</summary>
     public int TabHeight { get; init; } = 32;
     /// <summary>Gets the minimum command body height in 96-DPI logical pixels.</summary>
-    public int BodyHeight { get; init; } = 104;
+    public int BodyHeight { get; init; } = 110;
     /// <summary>Gets the maximum total width of a Large button in 96-DPI logical pixels; must be at least 60. Captions wrap to two rows and ellipsize within this width.</summary>
     public int LargeButtonMaxWidth { get; init; } = 108;
     /// <summary>Gets the corner radius in 96-DPI logical pixels.</summary>

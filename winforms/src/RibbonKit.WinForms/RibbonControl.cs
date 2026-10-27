@@ -13,6 +13,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     private readonly RibbonInputFilter _input;
     private readonly RibbonPopupManager _popups;
     private readonly RibbonEditorManager _editors;
+    private readonly RibbonScreenTipManager _screenTips;
     private readonly int _threadId = Environment.CurrentManagedThreadId;
     private RibbonLayoutSnapshot _snapshot = new();
     private RibbonTab? _selectedTab;
@@ -35,6 +36,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         AccessibleName = "Ribbon";
         _popups = new(this);
         _editors = new(this);
+        _screenTips = new(this);
         _input = new(this);
         UpdateHeight();
     }
@@ -57,6 +59,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             if (ReferenceEquals(_selectedTab, value))
                 return;
             _popups.CloseAll(false);
+            _screenTips.Cancel();
             _selectedTab = value;
             _bodyOffset = 0;
             _layoutDirty = true;
@@ -98,6 +101,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         {
             VerifyAccess();
             _renderer = value;
+            _screenTips.Cancel();
             SyncEditors();
             Invalidate();
             _popups.InvalidateAll();
@@ -108,7 +112,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         get
         {
             int text = (int)Math.Ceiling(Font.Height * 96d / DeviceDpi);
-            int rows = Math.Max(26, text + 8) * 3 + Math.Max(20, text + 6) + 8;
+            int rows = Math.Max(26, text + 8) * 3 + Math.Max(20, text + 6) + RibbonLayoutEngine.CommandVerticalInset;
             return _theme with
             {
                 TabHeight = Math.Max(_theme.TabHeight, text + 12),
@@ -128,6 +132,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     }
     internal RibbonPopupManager Popups => _popups;
     internal RibbonEditorManager Editors => _editors;
+    internal RibbonScreenTipManager ScreenTips => _screenTips;
     internal bool KeyTipsActive => _keyTips;
     internal IEnumerable<RibbonElement> AllElements => Tabs.SelectMany(t => t.Tree());
     internal void VerifyAccess()
@@ -177,6 +182,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         if (_disposing)
             return;
         VerifyAccess();
+        _screenTips?.Cancel();
         if (layout)
         {
             _engine.Clear();
@@ -254,6 +260,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     /// <inheritdoc />
     protected override void OnLayout(LayoutEventArgs e)
     {
+        _screenTips?.Cancel();
         base.OnLayout(e);
         SyncEditors();
     }
@@ -261,6 +268,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     protected override void OnResize(EventArgs e)
     {
         _layoutDirty = true;
+        _screenTips?.Cancel();
         _popups?.CloseAll(false);
         base.OnResize(e);
     }
@@ -304,6 +312,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             return;
         if (!Visible)
         {
+            _screenTips.Cancel();
             _popups.CloseAll(false);
             _editors.Release(this);
             ExitKeyTips(false);
@@ -315,19 +324,23 @@ public partial class RibbonControl : Control, ISupportInitialize
     protected override void OnParentChanged(EventArgs e)
     {
         _popups?.ResetOwner();
+        _screenTips?.ResetOwner();
         base.OnParentChanged(e);
+        if (IsHandleCreated) _screenTips?.Attach();
     }
     /// <inheritdoc />
     protected override void OnHandleCreated(EventArgs e)
     {
         base.OnHandleCreated(e);
         _input.Attach();
+        _screenTips.Attach();
         ModelChanged();
     }
     /// <inheritdoc />
     protected override void OnHandleDestroyed(EventArgs e)
     {
         _input.Detach();
+        _screenTips.ResetOwner();
         _popups.CloseAll(false);
         DisposeAutomation();
         base.OnHandleDestroyed(e);
@@ -492,6 +505,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData) => ProcessRibbonKey(keyData) || base.ProcessCmdKey(ref msg, keyData);
     internal bool ProcessRibbonKey(Keys keys)
     {
+        _screenTips.Cancel();
         if (keys is Keys.Escape or Keys.Enter or Keys.Space or Keys.Tab or (Keys.Tab | Keys.Shift)
             or Keys.Left or Keys.Right or Keys.Up or Keys.Down or Keys.Home or Keys.End)
             SetKeyboardFocusCues(true);
@@ -585,6 +599,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     }
     internal void Activate(RibbonTarget target)
     {
+        _screenTips.Cancel();
         if (!target.Enabled)
             return;
         if (target.Element is not IRibbonEditorItem && !_editors.CommitFocused()) return;
@@ -618,6 +633,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     }
     internal void Scroll(bool tabs, int amount)
     {
+        _screenTips.Cancel();
         EnsureLayout();
         if (tabs)
             _tabOffset = Math.Clamp(_tabOffset + amount, 0, Math.Max(0, _snapshot.TabExtent - _snapshot.TabViewport.Width));
@@ -669,6 +685,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     }
     internal void FocusEditor(RibbonItem item)
     {
+        _screenTips.Cancel();
         foreach (var popup in _popups.Surfaces.Reverse())
             if (popup.Targets.Any(t => ReferenceEquals(t.Element, item)))
             {
@@ -694,6 +711,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     }
     internal void ToggleKeyTips()
     {
+        _screenTips.Cancel();
         SetKeyboardFocusCues(true);
         if (_keyTips)
         {
@@ -744,6 +762,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         {
             _disposing = true;
             _input.Dispose();
+            _screenTips.Dispose();
             _popups.Dispose();
             _editors.Dispose();
             foreach (var tab in Tabs.ToArray())

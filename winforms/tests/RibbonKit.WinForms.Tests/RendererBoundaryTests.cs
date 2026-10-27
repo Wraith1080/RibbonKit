@@ -67,6 +67,27 @@ public sealed class RendererBoundaryTests
             tab.Enabled = true;
         }
         flatGraphics.Clear(theme.Surface); officeGraphics.Clear(theme.Surface);
+        using var group = new RibbonGroup();
+        foreach (int dpi in new[] { 96, 120, 144, 192 })
+        foreach (int extra in new[] { 0, 1 })
+        foreach (bool collapsed in new[] { false, true })
+        foreach (var painter in new[] { flat, office })
+        {
+            int S(int n) => (int)Math.Round(n * dpi / 96d);
+            var bounds = new Rectangle(3, 5, S(120) + extra, S(112) + extra);
+            using var bitmap = new Bitmap(bounds.Right + 3, bounds.Bottom + 3);
+            using var graphics = Graphics.FromImage(bitmap);
+            var separatorTheme = theme with { Border = Color.Magenta };
+            graphics.Clear(separatorTheme.Surface);
+            painter.DrawGroup(new(graphics, bounds, separatorTheme, ribbon.Font, dpi), group, collapsed);
+            for (int y = 0; y < bitmap.Height; y++)
+            {
+                bool line = ReferenceEquals(painter, office) && !collapsed && y >= bounds.Top + S(12) && y < bounds.Bottom - S(12);
+                Assert.Equal((line ? separatorTheme.Border : separatorTheme.Surface).ToArgb(), bitmap.GetPixel(bounds.Right - 1, y).ToArgb());
+                Assert.Equal(separatorTheme.Surface.ToArgb(), bitmap.GetPixel(bounds.Right - 2, y).ToArgb());
+                Assert.Equal(separatorTheme.Surface.ToArgb(), bitmap.GetPixel(bounds.Right, y).ToArgb());
+            }
+        }
         using var button = new RibbonButtonItem();
         flat.DrawItem(context with { Hot = true }, button, RibbonItemSize.Medium, false);
         office.DrawItem(context with { Graphics = officeGraphics, Hot = true }, button, RibbonItemSize.Medium, false);

@@ -113,7 +113,18 @@ partial class MainForm
         bold.Id = "cmd.bold"; bold.Text = "Bold"; bold.KeyTip = "B"; bold.SizePolicy = RibbonSizePolicy.Fixed(RibbonItemSize.Medium); bold.CheckedChanged += BoldChanged;
         italic.Id = "cmd.italic"; italic.Text = "Italic"; italic.KeyTip = "I"; italic.SizePolicy = RibbonSizePolicy.Fixed(RibbonItemSize.Medium);
         disabled.Id = "cmd.disabled"; disabled.Text = "Unavailable"; disabled.Enabled = false; disabled.SizePolicy = RibbonSizePolicy.Fixed(RibbonItemSize.Medium);
-        find.Id = "cmd.find"; find.Text = "Find in document"; find.KeyTip = "F"; find.Click += ActionClick;
+        find.Id = "cmd.find"; find.Text = "Find matching text throughout this document"; find.KeyTip = "F"; find.Click += ActionClick;
+        copy.ScreenTipDescription = "Copy the current selection to the clipboard.";
+        paste.ScreenTipTitle = "Paste"; paste.ScreenTipDescription = "Paste the clipboard contents, or open the menu for other paste formats.";
+        pasteText.ScreenTipDescription = "Insert clipboard text without its original formatting.";
+        disabled.ScreenTipDescription = "This command is unavailable until a document selection is available.";
+        showRuler.ScreenTipDescription = "Show or hide the document ruler. The menu entry shares the same bound value.";
+        unavailableOption.ScreenTipDescription = "This option is unavailable for the current document.";
+        printView.ScreenTipDescription = "Display pages as they will appear when printed.";
+        nameInput.ScreenTipDescription = "Edit the document name. Hover tips preserve the caret and selected text.";
+        fontInput.ScreenTipDescription = "Choose the font used by the document.";
+        popupInput.ScreenTipDescription = "This is the same native editor in a library-owned popup.";
+        popupChoice.ScreenTipDescription = "Choose a value in the popup. Individual choice rows have no ScreenTip metadata.";
         select.Id = "cmd.select"; select.Text = "Select"; select.KeyTip = "S";
         selectAll.Id = "cmd.selectAll"; selectAll.Text = "Select all"; selectAll.KeyTip = "A"; selectAll.Click += ActionClick;
         selectNone.Id = "cmd.selectNone"; selectNone.Text = "Clear selection"; selectNone.KeyTip = "C"; selectNone.Click += ActionClick;
@@ -128,7 +139,7 @@ partial class MainForm
         home.Groups.AddRange(new RibbonGroup[] { clipboard, font, editing }); insert.Groups.AddRange(new RibbonGroup[] { illustrations, links }); ribbon.Tabs.AddRange(new RibbonTab[] { home, insert, inputs, options });
         document.Dock = DockStyle.Fill; document.Multiline = true; document.ScrollBars = ScrollBars.Vertical; document.Name = "document";
         statusStrip.Items.AddRange(new ToolStripItem[] { status }); status.Text = "Ready";
-        AutoScaleMode = AutoScaleMode.Dpi; ClientSize = new Size(1080, 540); MinimumSize = new Size(240, 300); StartPosition = FormStartPosition.CenterScreen; Text = "RibbonKit.WinForms — check and radio options";
+        AutoScaleMode = AutoScaleMode.Dpi; ClientSize = new Size(1080, 540); MinimumSize = new Size(240, 300); StartPosition = FormStartPosition.CenterScreen; Text = "RibbonKit.WinForms — ScreenTips";
         Controls.Add(document); Controls.Add(ribbon); Controls.Add(statusStrip);
         ((System.ComponentModel.ISupportInitialize)ribbon).EndInit(); ResumeLayout(false); PerformLayout();
     }

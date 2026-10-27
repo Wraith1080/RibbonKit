@@ -24,6 +24,7 @@ internal sealed class RibbonPopupManager : IDisposable
     internal bool IsExpanded(RibbonElement element) => _sessions.Any(s => ReferenceEquals(s.Owner, element));
     internal void Toggle(RibbonElement owner, Control opener, Rectangle anchor)
     {
+        _ribbon.ScreenTips.Cancel();
         if (_ribbon.IsInDesignMode)
             return;
         if (IsExpanded(owner))
@@ -128,6 +129,7 @@ internal sealed class RibbonPopupManager : IDisposable
     }
     internal void CloseTop(bool restoreFocus)
     {
+        _ribbon.ScreenTips.Cancel();
         if (_sessions.Count == 0)
             return;
         var session = _sessions[^1];
@@ -387,6 +389,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     }
     protected override void OnScroll(ScrollEventArgs se)
     {
+        _ribbon.ScreenTips.Cancel();
         base.OnScroll(se);
         _ribbon.SyncEditors();
     }

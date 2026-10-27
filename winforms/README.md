@@ -30,7 +30,7 @@ origin; `DrawText` receives each measured line separately. Captions use tighter
 baseline spacing and three logical pixels of bottom clearance. Large buttons grow
 up to `RibbonTheme.LargeButtonMaxWidth` (108 logical pixels by default), wrap to at
 most two rows and end the last row with an ellipsis when needed. The original
-`Text` remains intact for future ScreenTips. Caption length does not increase ribbon
+`Text` remains intact and supplies the default ScreenTip title. Caption length does not increase ribbon
 body height. Wrapped dropdowns and vertical splits centre the second row and its
 arrow together; a single-row vertical split keeps its arrow below the caption.
 Horizontal splits retain their separate arrow column. Medium/Small and menu rows
@@ -116,7 +116,7 @@ peers are cleared too, while their own input activation remains disabled.
 slots through the shared renderer. Office uses softly rounded checkboxes; neutral
 uses square ones. Both use circular radio indicators. The Showcase's Options tab
 demonstrates checkbox binding, mixed state, radio choices, menus and collapse.
-Accessibility compatibility and ScreenTips remain deferred.
+Accessibility compatibility remains deferred.
 
 ## Native TextBox items
 
@@ -191,6 +191,53 @@ remain unverified. Inputs shows
 selection-only Font, editable Zoom, a disabled chooser and a popup chooser using
 ordinary application-owned data and validation.
 
+## Passive ScreenTips
+
+Every `RibbonItem` supports localizable, designer-editable `ScreenTipTitle` and
+`ScreenTipDescription` strings. An empty title uses the complete `Text` caption,
+including captions shortened with an ellipsis on screen. An empty description
+gives a title-only tip; an item with no title/caption or description has no tip.
+These properties are separate from command state and accessible descriptions.
+
+```csharp
+var find = new RibbonButtonItem {
+    Text = "Find matching text throughout this document",
+    ScreenTipDescription = "Search the current document."
+};
+var unavailable = new RibbonButtonItem {
+    Text = "Export", Enabled = false,
+    ScreenTipDescription = "Open a document before exporting."
+};
+```
+
+Pause over an item for approximately 600 ms to show its tip. Buttons, toggles,
+dropdowns, both split-button halves, check/radio options and native TextBox/
+ComboBox item slots share this behavior on the ribbon, command menus and
+collapsed-group popups. Disabled items may describe themselves without gaining
+hover/press visuals or command execution. Split halves use one item-level tip.
+The tip takes no focus or capture and preserves native editor selection.
+
+Leaving the item, keyboard/press/wheel input, command or menu activation,
+model changes/removal, layout/DPI changes, owner movement/deactivation, hiding
+and disposal cancel pending/visible tips. After keyboard/press cancellation,
+real pointer movement is required before another hover starts. Placement fits
+the monitor working area and flips above the item near its bottom edge. Tips
+remain above library menus without activating them. Very large descriptions are
+clipped to the available working area; this first version has no scrolling.
+
+`RibbonRenderer.DrawScreenTip` receives the full title/description and measured
+content rectangles. It draws a bold title and optional wrapped description using
+the ribbon font and theme foreground. Existing `DrawPopupFrame`,
+`GetPopupCornerRadius` and `DrawPopupShadow` hooks supply the shared frame:
+rounded Office or square neutral. Another Form can use these public APIs without
+Showcase resources. Images, help links, pinned/interactive tips, keyboard-triggered
+help and per-choice ComboBox row tips are later work. While a choice list is open,
+item tips are suppressed. Accessibility compatibility remains deferred.
+
+The Showcase starts on Home: Find demonstrates full-caption fallback, Copy/Paste
+authored descriptions and Unavailable a disabled explanation. Inputs and its
+menu demonstrate native editors; Options supplies check/radio examples.
+
 ## Renderer customization
 
 `RibbonRenderer` is the flat foundation. It shares measured content, image
@@ -204,12 +251,21 @@ The default ribbon background is white. The shared `BodyMargin` defaults to
 7,1,7,7 logical pixels. Layout reserves these
 margins for the panel, scrolling and hit targets. Office paints that panel as a
 rounded card with a border and a soft `BodyShadowColor` shadow; the neutral
-renderer retains its flat surface. Office tab headers use text and blue underlines
+renderer retains its flat surface. The default `BodyHeight` minimum is 110 logical
+pixels; font-dependent measurement reserves three command rows, a group caption,
+six logical pixels above commands and eight below them. Compared with the earlier
+default, the body extends six logical pixels downward, with its top edge and tabs
+anchored. Command/icon/editor sizes stay the same; the added height supplies
+padding and caption clearance. Explicit taller `BodyHeight` settings retain their
+minimum-height meaning. Office tab headers use text and blue underlines
 for selection/hover/press/keyboard focus, with transparent backgrounds. The
 underline follows the measured label width plus four logical pixels per side,
 is three logical pixels thick, and has rounded ends. Scroll
 controls use themed hover/pressed chrome. The body panel bounds supplied to
 `DrawBody` are separate from the inner content viewport.
+Office group dividers follow the WPF reference's inset proportions: a crisp
+one-device-pixel `Border` hairline with 12 logical pixels of clearance at both
+ends, scaled with DPI. The neutral renderer retains its separator-free surface.
 Body scrollers use `PopupBorder` at rest and an accent border on hover/press.
 Their top and bottom clearance is controlled by
 `RibbonTheme.BodyScrollButtonVerticalInset`: two logical pixels by default,
@@ -217,7 +273,7 @@ matching the side clearance. Themes can use zero for full-height scrollers or
 another nonnegative value; layout caps it at half the body height. For example,
 `ribbon.Theme = ribbon.Theme with { BodyScrollButtonVerticalInset = 0 };`.
 Collapsed group openers use the same inset rectangle for painting, focus, hit
-testing and popup anchoring, with four logical pixels of space above and below.
+testing and popup anchoring, with six logical pixels above and eight below.
 
 Floating ribbon menus, collapsed groups and ComboBox choice popups share a
 one-device-pixel frame.
@@ -246,7 +302,7 @@ styling should now derive from the named Office renderer. Instances assigned to
 `Renderer` remain borrowed and must outlive their ribbon/popups.
 
 The shared hooks are `DrawSurface`, `DrawBody`, `DrawPopupFrame`, `DrawPopupShadow`, `DrawScrollButton`, `DrawText`,
-`DrawDropDownArrow`, `DrawTextBox`, `DrawComboBox`, `DrawComboBoxItem`, and protected
+`DrawDropDownArrow`, `DrawTextBox`, `DrawComboBox`, `DrawComboBoxItem`, `DrawScreenTip`, and protected
 `DrawItemImage`/`DrawChrome`, in addition to
 whole tab/group/item/split/focus/KeyTip methods. Content callbacks receive the
 library's measured slots. Respect those rectangles, font and clipping; painting
@@ -269,9 +325,12 @@ applications should use Windows UIA clients rather than implement those types.
 Run these commands from `winforms/`. Native keyboard/mouse checks briefly operate
 their own test Form; let that process retain focus until it finishes.
 
-The unit/STA suite contains 62 essential cases: the [test review](docs/M2-STATUS.md#essential-test-review--2026-10-26)
+The unit/STA suite contains 66 essential cases: the [test review](docs/M2-STATUS.md#essential-test-review--2026-10-26)
 reduced the earlier set to 56; M2C adds three ComboBox cases and M2D adds three
-check/radio state, grouping/binding and compact-rendering cases.
+check/radio state, grouping/binding and compact-rendering cases. M2E adds three
+ScreenTip metadata, cancellation/lifetime and measurement/rendering cases.
+One body-spacing case checks downward growth, retained content/editor sizes and
+collapsed-group geometry across representative fonts and synthetic DPI scales.
 The existing editor alignment case also covers mixed rows. For routine changes, run the affected
 test classes. Reserve the full native/package sequence for changes that need those
 gates. Add cases for distinct failure modes and use representative DPI/font rows;
@@ -282,6 +341,14 @@ the four-corner symmetry regression deliberately keeps all four scales.
 ./eng/Test-Native.ps1 -Configuration Release -Package
 ./eng/Measure-Baseline.ps1
 ```
+
+For the bounded shown ScreenTip scope, run the native test host with
+`--screentip-checks TestResults/visual/screentips-office` or
+`--screentip-checks-flat TestResults/visual/screentips-flat`. The independent
+consumer accepts `--validate-screentips` / `--validate-screentips-flat` followed
+by an evidence directory. Both paths check delayed cancellation, native editor
+selection, disabled commands, popup stacking and nested Escape; captures include
+the popup and overlaid tip. They do not imply full native/UIA acceptance.
 
 The package gate restores from an isolated local feed/cache into a fresh temporary
 directory outside the checkout, builds the independent consumer and drives it

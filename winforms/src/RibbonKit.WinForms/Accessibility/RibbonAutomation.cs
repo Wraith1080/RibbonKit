@@ -131,6 +131,7 @@ internal class RibbonAutomationNode : IRawProvider, IFragmentProvider, IInvokePr
 internal sealed class RibbonAutomationRoot : RibbonAutomationNode, IFragmentRootProvider
 {
     private readonly Dictionary<RibbonElement, RibbonAutomationNode> _nodes = [];
+    private bool _disconnecting;
     internal RibbonControl Ribbon
     {
         get;
@@ -188,7 +189,7 @@ internal sealed class RibbonAutomationRoot : RibbonAutomationNode, IFragmentRoot
     public IFragmentProvider? GetFocus() => Read<IFragmentProvider?>(() => Control.ContainsFocus && Ribbon.FocusedElement is { } item ? Node(item) : null);
     internal void Changed()
     {
-        if (Disconnected || !Control.IsHandleCreated)
+        if (Disconnected || _disconnecting || !Control.IsHandleCreated)
             return;
         foreach (var entry in _nodes.ToArray())
         {
@@ -204,12 +205,23 @@ internal sealed class RibbonAutomationRoot : RibbonAutomationNode, IFragmentRoot
     }
     internal void Disconnect()
     {
-        if (Disconnected)
+        if (Disconnected || _disconnecting)
             return;
-        Disconnected = true;
-        foreach (var node in _nodes.Values)
-            _ = UiaNative.UiaDisconnectProvider(node);
-        _nodes.Clear();
-        _ = UiaNative.UiaDisconnectProvider(this);
+        _disconnecting = true;
+        try
+        {
+            // UIAutomationCore reenters property/navigation/host callbacks while
+            // disconnecting. Keep the live HWND and cached tree available until
+            // those callbacks finish; subsequent stale client calls still fail.
+            foreach (var node in _nodes.Values.ToArray())
+                _ = UiaNative.UiaDisconnectProvider(node);
+            _ = UiaNative.UiaDisconnectProvider(this);
+        }
+        finally
+        {
+            Disconnected = true;
+            _nodes.Clear();
+            _disconnecting = false;
+        }
     }
 }

@@ -1,8 +1,8 @@
 # Native RibbonKit.WinForms assessment and implementation plan
 
-> Implementation through M2D compact check/radio options, 2026-10-27, following
-> the user's acceptance of the M2C editor and startup polish. M2E ScreenTips is
-> staged as the proposed next component slice. Comprehensive theming is deferred
+> Implementation through M2E passive ScreenTips, 2026-10-27, following
+> the user's acceptance of the M2C editor and startup polish. Current bounded
+> evidence and remaining review are in the M2 ledger. Comprehensive theming is deferred
 > until most component slices are implemented; see the sequencing decision in §6.
 > [M2 scope and evidence](../winforms/docs/M2-STATUS.md) records the bounded API and
 > implementation gates. Accessibility compatibility is deferred while the necessary

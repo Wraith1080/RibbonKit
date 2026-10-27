@@ -1,8 +1,8 @@
 # M2 editing and richer interaction
 
-Status: **M2A core, M2B TextBox, M2C ComboBox and M2D check/radio implementation**, 2026-10-27.
+Status: **M2A core, M2B TextBox, M2C ComboBox, M2D check/radio and M2E passive ScreenTip implementation**, 2026-10-27.
 The user accepted the demonstrated M2C startup/editor polish and authorized M2D.
-M2D awaits user visual review; outstanding designer, display-scale and monitor
+M2D/M2E await user visual review; outstanding designer, display-scale and monitor
 gates remain in [the M1 ledger](M1-STATUS.md).
 Accessibility compatibility is deferred by explicit user direction: this phase
 prioritizes the necessary control structure. No new split accessibility providers,
@@ -12,13 +12,11 @@ That is a current limitation, not a decision against future accessibility work.
 
 ## Next component slice
 
-2026-10-27: **proposed M2E ScreenTips**, followed by the remaining bounded M2
-menu/minimize work; optional ICommand remains separate. ScreenTips should expose
-full captions for truncated Large labels and optional authored descriptive text,
-using shared library behavior in the ribbon and its popups. The next session
-should state the small API/interaction contract before implementing it.
-The [continuation prompt](NEXT-SLICE-PROMPT.md) carries the current constraints,
-preserved fixes, verification checkpoint and next-slice boundaries.
+2026-10-27: **M2E passive ScreenTips are implemented for review**; remaining bounded
+M2 menu/minimize work follows, with optional ICommand separate. The
+[M2E record below](#m2e-passive-screentips--2026-10-27) owns current scope and evidence.
+The [prior continuation prompt](NEXT-SLICE-PROMPT.md) records the starting
+constraints; its proposed-slice wording and earlier checkpoint are historical.
 
 The user deferred comprehensive theming until most component slices exist,
 before final visual polishing/API stabilization. The authoritative scope and
@@ -1059,3 +1057,154 @@ Current evidence: `TestResults/body-scroll-refinement-{tests,release,debug,packa
 `TestResults/visual/body-scroll-refined-package-{office,flat}/` and
 `TestResults/body-scroll-refinement-consumer-path.txt`. Initial native/package
 evidence remains in `TestResults/visual/body-scroll-{office,flat,package-office,package-flat}/`.
+
+## M2E passive ScreenTips — 2026-10-27
+
+Started from the user's committed `547693b` baseline with a clean checkout. The
+new provisional API is `RibbonItem.ScreenTipTitle` and `ScreenTipDescription`,
+localizable designer strings, plus `RibbonRenderer.DrawScreenTip` with measured
+title/description slots. Empty title uses the full model `Text`; captions are
+never replaced by their displayed ellipsis. Metadata is separate from command
+state and accessibility descriptions. Both split halves share one tip.
+
+A per-ribbon manager uses existing layout targets, including native editor
+slots, command menus and collapsed groups. Passive hover waits 600 ms; disabled
+items may explain themselves without gaining interaction state or activation.
+The window takes no focus/capture, stays outside the menu stack and cancels on
+pointer departure, keyboard/press/wheel input, command/menu activation, model
+mutation/removal, layout/DPI changes, hiding, movement/deactivation and disposal.
+Real pointer movement restarts a hover after input cancellation. Native text
+selection and nested Escape/focus behavior are retained. Working-area placement
+flips above an item when needed. Choice-list rows have no separate metadata and
+suppress item tips while open. Images, help links, interactive/pinned tips and
+keyboard-triggered help remain later work; accessibility compatibility is deferred.
+
+Frame/radius/shadow painting uses the existing shared popup hooks; Office is
+rounded and neutral square. The later theme inventory should include the current
+320-logical-pixel width ceiling, 12-pixel padding, six-pixel description gap,
+eight-pixel placement/work-area clearance and bold title font treatment. This
+slice does not start the comprehensive theming pass. The Showcase starts on Home
+with full-caption Find, authored Copy/Paste and disabled explanations; Inputs,
+its popup and Options demonstrate editors and check/radio tips.
+
+Two user-reported follow-ups were reproduced and repaired:
+
+- Tips initially fell behind ToolStrip's topmost menus. The tip is now raised
+  after passive showing with `SWP_NOACTIVATE`. Capturing both surfaces exposed
+  a second ownership error: a nested popup's decorative frame could rise over
+  its own content. Frames now share their popup's immediate native owner.
+  Checks verify tip/frame order and unchanged nested command-row pixels.
+- Clicking/closing a popup raised first-chance COM `0x80040201` ("Element is no
+  longer available"). UIAutomationCore reenters provider property/navigation/host
+  callbacks during disconnection. The existing bridge now remains live until
+  those calls finish, with a reentrancy guard; later stale-client calls still
+  reject access. The existing popup lifecycle case failed before this repair
+  and passed afterward. No new provider, pattern or accessibility acceptance
+  scope was introduced.
+
+Verification:
+
+- Normal Debug/Release solution builds, XML and API analysis passed without
+  warnings/errors. **65/65 Release unit/STA cases passed**. Three new essential
+  cases cover metadata/fallback, pending cancellation/lifetime and bounded
+  layout/renderer frames. The existing popup-lifecycle case additionally checks
+  exception-free disconnect and stale-provider rejection. Synthetic frame and
+  working-area coverage includes 96/120/144/192 DPI and odd/even bounds.
+- Shown native Office checks confirmed layering and zero unavailable-element
+  exceptions after the repairs. Fresh isolated Release package restore/build
+  and Office/neutral ScreenTip scopes verify mouse/keyboard cancellation,
+  disabled commands, intact full captions, native editor focus/selection,
+  menus/collapsed groups, row-pixel retention, command clicks, nested Escape,
+  deactivation, removal/disposal and work-area bounds. These are bounded
+  structural checks at actual **120 DPI (125%)**, not the full native/UIA suite.
+  Both package scopes recorded zero unavailable-element exceptions. The existing
+  external package popup-dismissal check also passed ordinary/nested window
+  switching and focus preservation after the bridge/frame fixes.
+- Actual Office/neutral popup/tip captures were inspected. Early captures/checks
+  missed overlap and were superseded by the stacking/pixel assertions; some
+  earlier hover attempts stopped before completion, with input cancellation
+  observed in one diagnostic run. They are not counted as final passes.
+  The normal Debug Showcase is rebuilt for user review. Actual VS authoring,
+  other physical scales/monitor movement and human acceptance remain pending.
+
+Current evidence: `TestResults/screentips-{debug,release,tests,package-final}.log`,
+`TestResults/visual/m2e-final-package-screentips{,-flat}/` and
+`TestResults/screentips-consumer-path.txt`. Failing stacking/disconnect
+reproductions remain in `visual/screentips-zorder-before/` and
+`screentips-disconnect-before.log`; focused repaired evidence is in
+`screentips-disconnect-focused.log` and `visual/screentips-layer-fixed/`.
+
+### Ribbon body padding and downward height — 2026-10-27
+
+The user approved a small spacing refinement using the WPF body as a visual
+reference. The shared native body now grows six logical pixels downward; tab
+geometry, its top edge and outer margins retain their anchors. `BodyHeight`'s
+default minimum increases from 104 to 110, and the font-dependent three-row
+minimum also gains six. Central layout insets increase from 4/4 to 6/8 logical
+pixels above/below commands, giving two more above and four more between commands
+and group captions. Large command/icon, compact-row and editor sizes are retained
+at the default layout; captions follow the lower body edge. Explicit taller theme
+minimums retain their meaning. The later theme inventory should include these
+shared inner insets; no new public API or comprehensive theming work was added.
+
+Collapsed group openers use the same 6/8 inset for painting, focus, hit testing
+and popup anchoring. Body scrollers follow the taller body with their existing
+two-pixel clearance. Group flyouts retain their own compact padding and command
+sizes; native editors keep their field metrics and selection behavior.
+
+Normal Debug/Release builds and API/XML checks passed without warnings/errors.
+**18 focused Release cases passed across two runs**: 17 existing alignment,
+caption, option, editor, popup, renderer and scroll/layout cases passed in the
+initial selection; the new body-geometry case then passed separately. It verifies
+retained sizes and added clearance at synthetic 96/120/144/192 DPI and two font
+sizes, plus fixed top/tab anchors, collapsed bounds and flyout sizing. Its first
+clearance assertion assumed independently rounded pixel edges would reproduce an
+absolute inset; it now compares the added clearance against the prior geometry
+at the same DPI. The full 66-case suite was not repeated for this bounded change.
+
+Fresh isolated Release package restore/build and shown Office/neutral split/body
+scopes passed at actual **120 DPI (125%)**, including Large-caption retention,
+collapsed/nested popups, scroller geometry/frame/spacing, gap clicks and scrolling.
+The package native-editor scope also passed focus, selection, binding, resize and
+popup ownership. Debug Showcase before/after captures at 1080/720/420/260 widths
+and package Office/neutral captures were inspected. The ordinary Debug Showcase
+is rebuilt. The user accepted the body-spacing result and requested the separator
+follow-up below. Additional physical DPI/monitor/VS gates remain pending. WPF
+runtime/build/CI and the prior ScreenTip work are preserved.
+
+Evidence: `TestResults/body-spacing-{focused,geometry,debug,release,package}.log`,
+`TestResults/body-spacing-{before,after}/`,
+`TestResults/visual/body-spacing-package-{split,split-flat,editors}/` and
+`TestResults/body-spacing-consumer-path.txt`.
+
+### Group separator aligned with the WPF reference — 2026-10-27
+
+The user requested the WPF reference's separator treatment for the native ribbon.
+Its shared group template uses ten logical pixels of vertical separator margin
+inside a two-pixel groups-row inset. Native Office now uses that combined
+12-logical-pixel clearance from each body edge, replacing six fixed device pixels.
+The existing light `Border` color and one-device-pixel hairline are retained;
+integer rectangle painting makes both endpoint gaps exact. Group widths, command
+geometry, body height, collapsed buttons and popup separators retain their prior
+contracts. Neutral keeps its separator-free presentation. The vertical inset and
+separate separator color role belong in the deferred theming inventory; no public
+API or WPF runtime changes were made for this follow-up.
+
+**4/4 focused Release cases passed**, including the extended Office/neutral
+renderer regression at synthetic 96/120/144/192 DPI and odd/even bounds. It checks
+both endpoint gaps, a single-pixel stroke, theme color, collapsed absence and
+neutral absence; the inset assertion failed before the change. No cases were
+added. Normal Debug/Release/API/XML builds passed without warnings/errors.
+
+Fresh isolated package restore/build and Office/neutral split/body scopes passed
+at actual **120 DPI (125%)**, including separator pixels, body geometry, captions,
+collapsed/nested popups and scrollers. The first shown attempt stopped at its
+foreground-ownership guard before sending input; both subsequent guarded scopes
+completed. Debug Showcase wide/compact and package captures were inspected.
+The normal Debug Showcase is rebuilt for user review. This is a bounded visual
+refinement; full-suite, other physical DPI/monitor and VS acceptance were not run.
+
+Evidence: `TestResults/group-separator-{before-test,focused,debug,release,package}.log`,
+`TestResults/group-separator-showcase/`,
+`TestResults/visual/group-separator-package-{split,split-flat}-review/` and
+`TestResults/group-separator-consumer-path.txt`.

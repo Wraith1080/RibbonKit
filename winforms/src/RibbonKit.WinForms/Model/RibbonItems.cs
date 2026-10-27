@@ -99,9 +99,38 @@ public sealed class RibbonGroup : RibbonElement
 public abstract class RibbonItem : RibbonElement
 {
     private string _accessibleName = "", _description = "";
+    private string _screenTipTitle = "", _screenTipDescription = "";
     private Image? _image, _largeImage;
     private IRibbonIcon? _icon;
     private RibbonSizePolicy _sizePolicy = RibbonSizePolicy.Fixed(RibbonItemSize.Large);
+    /// <summary>Gets or sets the passive hover tip title. Empty uses the complete Text caption, including text ellipsized on screen.</summary>
+    [DefaultValue(""), Localizable(true), Category("Appearance")]
+    public string ScreenTipTitle
+    {
+        get => _screenTipTitle;
+        set
+        {
+            Ribbon?.VerifyAccess();
+            value ??= "";
+            if (_screenTipTitle == value) return;
+            _screenTipTitle = value;
+            Changed(false);
+        }
+    }
+    /// <summary>Gets or sets optional descriptive text for the passive hover tip, including for disabled items. This does not change command or accessibility state.</summary>
+    [DefaultValue(""), Localizable(true), Category("Appearance")]
+    public string ScreenTipDescription
+    {
+        get => _screenTipDescription;
+        set
+        {
+            Ribbon?.VerifyAccess();
+            value ??= "";
+            if (_screenTipDescription == value) return;
+            _screenTipDescription = value;
+            Changed(false);
+        }
+    }
     /// <summary>Gets or sets the accessible label; empty uses Text.</summary>
     [DefaultValue(""), Localizable(true), Category("Accessibility")]
     public string AccessibleName
@@ -186,6 +215,7 @@ public class RibbonButtonItem : RibbonItem
     public override void PerformClick()
     {
         Ribbon?.VerifyAccess();
+        Ribbon?.ScreenTips.Cancel();
         if (!EffectiveEnabled || !Visible)
             return;
         BeforeClick();

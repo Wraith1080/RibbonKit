@@ -36,8 +36,8 @@ public sealed class NativeLifecycleTests
         ribbon.Width = full + reserved - 1;
         Assert.Same(tab.Groups[2], Assert.Single(ribbon.Snapshot.Groups, g => g.Collapsed).Group);
         var collapsed = Assert.Single(ribbon.Snapshot.Groups, g => g.Collapsed);
-        Assert.Equal(ribbon.Snapshot.BodyBounds.Top + RibbonLayoutEngine.Scale(4, ribbon.DeviceDpi), collapsed.Bounds.Top);
-        Assert.Equal(ribbon.Snapshot.BodyBounds.Bottom - RibbonLayoutEngine.Scale(4, ribbon.DeviceDpi), collapsed.Bounds.Bottom);
+        Assert.Equal(ribbon.Snapshot.BodyBounds.Top + RibbonLayoutEngine.Scale(6, ribbon.DeviceDpi), collapsed.Bounds.Top);
+        Assert.Equal(ribbon.Snapshot.BodyBounds.Bottom - RibbonLayoutEngine.Scale(8, ribbon.DeviceDpi), collapsed.Bounds.Bottom);
         Assert.Equal(collapsed.Bounds, ribbon.Snapshot.Targets.Single(t => ReferenceEquals(t.Element, collapsed.Group)).Bounds);
         Assert.False(ribbon.Snapshot.Groups[0].Collapsed);
         Assert.False(ribbon.Snapshot.Groups[3].Collapsed);
@@ -86,13 +86,31 @@ public sealed class NativeLifecycleTests
         menu.ShowDropDown();
         Assert.False(ribbon.Popups.HasOpen);
         menu.DropDownOpening -= cancel;
-        for (int i = 0; i < 5; i++)
+        var unavailable = new List<Exception>();
+        int uiThread = Environment.CurrentManagedThreadId;
+        void FirstChance(object? sender, System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs e)
         {
-            menu.ShowDropDown();
-            Assert.True(ribbon.Popups.HasOpen);
-            menu.CloseDropDown();
-            Assert.False(ribbon.Popups.HasOpen);
+            if (Environment.CurrentManagedThreadId == uiThread && e.Exception is System.Runtime.InteropServices.COMException { HResult: unchecked((int)0x80040201) })
+                unavailable.Add(e.Exception);
         }
+        AppDomain.CurrentDomain.FirstChanceException += FirstChance;
+        RibbonKit.WinForms.Accessibility.RibbonAutomationRoot? closedProvider = null;
+        try
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                menu.ShowDropDown();
+                Assert.True(ribbon.Popups.HasOpen);
+                var provider = ribbon.Popups.Top!.AutomationRoot;
+                closedProvider = provider;
+                menu.CloseDropDown();
+                Assert.True(provider.Disconnected);
+                Assert.False(ribbon.Popups.HasOpen);
+            }
+        }
+        finally { AppDomain.CurrentDomain.FirstChanceException -= FirstChance; }
+        Assert.Empty(unavailable);
+        Assert.Throws<System.Runtime.InteropServices.COMException>(() => { _ = closedProvider!.HostRawElementProvider; });
         Assert.Equal(5, closed);
         menu.ShowDropDown();
         ribbon.Visible = false;

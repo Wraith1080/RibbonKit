@@ -29,7 +29,8 @@ public partial class MainForm : Form
         trackChanges.Icon = new SampleIcon(9);
         document.Text = "Native RibbonKit.WinForms\r\n\r\nInputs demonstrates native TextBox and ComboBox editing, binding, read-only/disabled fields and popup ownership. Font selects a choice; Zoom also accepts typed percentages (25% to 500%). Resize to open the same editors in collapsed groups.\r\n\r\nF4 or Alt+Down opens the choice popup. Escape closes that list first, then its containing ribbon popup. Enter validates and commits; Escape outside a list restores the last committed value. Tab visits fields; F6 returns to this document. Alt/F10, E, F focuses Font.\r\n\r\nThe document, status text, validation rules and data belong to this application. Home still demonstrates split buttons.";
         document.AppendText("\r\n\r\nOptions demonstrates compact check/radio choices. Gridlines cycles through three states. Ruler and its popup entry share an application binding. Resize to open the same options in collapsed groups.");
-        ribbon.SelectedTab = options;
+        document.AppendText("\r\n\r\nScreenTips: pause over Home's shortened Find caption to read it in full. Copy/Paste have descriptions; Unavailable explains its disabled state. Inputs and popup editors retain focus and selection while their tips are shown. Options includes check/radio examples.");
+        ribbon.SelectedTab = home;
     }
     private void NameValidating(object? sender, CancelEventArgs e)
     {

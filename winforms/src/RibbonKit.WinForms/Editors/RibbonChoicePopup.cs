@@ -22,6 +22,7 @@ internal sealed class RibbonChoicePopup : IDisposable
     internal RibbonChoicePopup(RibbonControl ribbon, RibbonComboBoxItem item, Rectangle anchor,
         Action<int> preview, Action accept, Action cancel)
     {
+        ribbon.ScreenTips.Cancel();
         _ribbon = ribbon; _item = item; _anchor = anchor; _theme = ribbon.Theme;
         _dpi = ribbon.DeviceDpi;
         _preview = preview; _accept = accept; _cancel = cancel;

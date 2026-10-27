@@ -7,6 +7,75 @@ namespace RibbonKit.WinForms.Tests;
 
 public sealed class AlignmentAndLifecycleTests
 {
+    [Fact]
+    public void Body_padding_grows_downward_and_retains_command_and_editor_sizes() => FoundationTests.Sta(() =>
+    {
+        using var ribbon = new RibbonControl { Width = 1600 };
+        Assert.Equal(110, ribbon.Theme.BodyHeight);
+        var tab = new RibbonTab { Text = "Home" }; var group = new RibbonGroup { Text = "Commands" };
+        var large = new RibbonButtonItem { Text = "Large command" };
+        var split = new RibbonSplitButtonItem { Text = "Split", Layout = RibbonSplitButtonLayout.Vertical };
+        var text = new RibbonTextBoxItem { Text = "Name" }; var combo = new RibbonComboBoxItem { Text = "Font" };
+        group.Items.AddRange(large, split, text, combo, new RibbonCheckBoxItem { Text = "Ruler" });
+        tab.Groups.Add(group); ribbon.Tabs.Add(tab);
+        using var dpiProbe = new Control();
+        foreach (int dpi in new[] { 96, 120, 144, 192 })
+        foreach (int points in new[] { 9, 14 })
+        {
+            using var font = new Font("Segoe UI", points * dpi / (float)dpiProbe.DeviceDpi);
+            int S(int n) => RibbonLayoutEngine.Scale(n, dpi);
+            int fontHeight = (int)Math.Ceiling(font.Height * 96d / dpi);
+            int row = Math.Max(26, fontHeight + 8), caption = Math.Max(20, fontHeight + 6);
+            // Previous geometry is the reference: added space must not stretch commands.
+            int oldHeight = Math.Max(104, 3 * row + caption + 8);
+            var theme = ribbon.Theme with { BodyHeight = oldHeight + 6 };
+            var measured = new RibbonLayoutEngine().Measure(group, 0, font, dpi, theme);
+            foreach (var item in measured.Items.Where(i => i.Size == RibbonItemSize.Large))
+            {
+                Assert.Equal(S(6), item.Bounds.Top);
+                Assert.Equal(S(oldHeight - caption - 8), item.Bounds.Height);
+                var oldBounds = new Rectangle(item.Bounds.X, S(4), item.Bounds.Width, item.Bounds.Height);
+                var before = RibbonContentLayout.Calculate(oldBounds, item.Size, false, true, dpi, font);
+                var after = RibbonContentLayout.Calculate(item.Bounds, item.Size, false, true, dpi, font);
+                Assert.Equal(before.Icon.Size, after.Icon.Size); Assert.Equal(before.Text.Size, after.Text.Size);
+                int captionHeight = Math.Max(font.Height + S(6), S(20));
+                int oldGap = S(oldHeight) - captionHeight - oldBounds.Bottom;
+                int newGap = S(theme.BodyHeight) - captionHeight - item.Bounds.Bottom;
+                // Body and command edges round separately; compare the added
+                // clearance with the previous raster bounds at the same DPI.
+                Assert.InRange(newGap - oldGap, S(4) - 1, S(4) + 1);
+            }
+            int index = 0;
+            foreach (var item in measured.Items.Where(i => i.Item is IRibbonEditorItem))
+            {
+                Assert.Equal(S(6 + index * row), item.Bounds.Top);
+                var oldBounds = new Rectangle(item.Bounds.X, S(4 + index * row), item.Bounds.Width, S(row - 1));
+                var before = RibbonEditorLayout.Field(oldBounds, item.Item, item.LabelWidth, font, dpi);
+                var after = RibbonEditorLayout.Field(item.Bounds, item.Item, item.LabelWidth, font, dpi);
+                Assert.Equal(before.Size, after.Size); index++;
+            }
+        }
+        int actualDpi = ribbon.DeviceDpi;
+        int A(int n) => RibbonLayoutEngine.Scale(n, actualDpi);
+        int logicalFont = (int)Math.Ceiling(ribbon.Font.Height * 96d / actualDpi);
+        int previousHeight = Math.Max(104, 3 * Math.Max(26, logicalFont + 8) + Math.Max(20, logicalFont + 6) + 8);
+        int tabHeight = A(Math.Max(32, logicalFont + 12));
+        Assert.Equal(tabHeight, ribbon.Snapshot.TabViewport.Height);
+        Assert.Equal(tabHeight + A(1), ribbon.Snapshot.BodyBounds.Top);
+        Assert.Equal(A(previousHeight + 6), ribbon.Snapshot.BodyBounds.Height);
+        Assert.Equal(tabHeight + A(previousHeight + 6) + A(1) + A(7), ribbon.Height);
+        var full = ribbon.Snapshot.Targets.Single(t => ReferenceEquals(t.Element, large));
+        ribbon.Width = 130;
+        var collapsed = Assert.Single(ribbon.Snapshot.Groups);
+        Assert.True(collapsed.Collapsed);
+        Assert.Equal(ribbon.Snapshot.BodyBounds.Top + A(6), collapsed.Bounds.Top);
+        Assert.Equal(ribbon.Snapshot.BodyBounds.Bottom - A(8), collapsed.Bounds.Bottom);
+        using var popup = new RibbonPopupSurface(ribbon, group, new Size(1600, 1000));
+        var popupLarge = popup.Targets.Single(t => ReferenceEquals(t.Element, large));
+        Assert.Equal(full.Bounds.Size, popupLarge.Bounds.Size);
+        Assert.Equal(A(4), popupLarge.Bounds.Top); // Group flyout retains its own compact padding.
+    });
+
     [Theory]
     [InlineData(120, 9)]
     [InlineData(192, 18)]
@@ -73,7 +142,7 @@ public sealed class AlignmentAndLifecycleTests
             Assert.Equal(bodyHeight, ribbon.LayoutTheme.BodyHeight);
             var engine = new RibbonLayoutEngine();
             int groupCaption = Math.Max(20, (int)Math.Ceiling(captionFont.Height * 96d / dpi) + 6);
-            var theme = new RibbonTheme { BodyHeight = 78 + groupCaption + 8, LargeButtonMaxWidth = maximum };
+            var theme = new RibbonTheme { BodyHeight = 78 + groupCaption + 14, LargeButtonMaxWidth = maximum };
             var measured = engine.Measure(group, 0, captionFont, dpi, theme);
             using var renderer = new CaptionRecorder();
             foreach (var entry in measured.Items)

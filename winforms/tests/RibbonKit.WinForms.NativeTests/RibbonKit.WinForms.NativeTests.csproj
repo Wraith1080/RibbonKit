@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><UseWPF>true</UseWPF></PropertyGroup>
   <ItemGroup><ProjectReference Include="../../src/RibbonKit.WinForms/RibbonKit.WinForms.csproj" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/ScreenTipInteractionChecks.cs" Link="PublicScreenTipInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/OptionInteractionChecks.cs" Link="PublicOptionInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/SplitInteractionChecks.cs" Link="PublicSplitInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/TextBoxInteractionChecks.cs" Link="PublicTextBoxInteractionChecks.cs" /></ItemGroup>

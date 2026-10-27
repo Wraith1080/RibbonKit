@@ -3,6 +3,9 @@ namespace RibbonKit.WinForms;
 /// <summary>Office 2024 inspired rounded chrome over the shared ribbon rendering foundation.</summary>
 public class RibbonOffice2024Renderer : RibbonRenderer
 {
+    // WPF reference: two logical pixels around the groups row plus ten
+    // inside the group separator. Retain a crisp one-device-pixel hairline.
+    private const int GroupSeparatorInset = 12;
     /// <summary>Initializes the default Office 2024 inspired renderer.</summary>
     public RibbonOffice2024Renderer() { }
     /// <inheritdoc />
@@ -55,8 +58,13 @@ public class RibbonOffice2024Renderer : RibbonRenderer
         base.DrawGroup(context, group, collapsed);
         if (!collapsed)
         {
-            using var pen = new Pen(context.Theme.Border);
-            context.Graphics.DrawLine(pen, context.Bounds.Right - 1, context.Bounds.Top + 6, context.Bounds.Right - 1, context.Bounds.Bottom - 6);
+            int inset = Layout.RibbonLayoutEngine.Scale(GroupSeparatorInset, context.DeviceDpi);
+            int height = context.Bounds.Height - 2 * inset;
+            if (context.Bounds.Width > 0 && height > 0)
+            {
+                using var brush = new SolidBrush(context.Theme.Border);
+                context.Graphics.FillRectangle(brush, context.Bounds.Right - 1, context.Bounds.Top + inset, 1, height);
+            }
         }
     }
     /// <inheritdoc />

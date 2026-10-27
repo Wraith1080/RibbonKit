@@ -57,6 +57,14 @@ public class RibbonRenderer : IDisposable
     /// <summary>Paints text inside a measured content slot, preserving its layout flags.</summary>
     public virtual void DrawText(RibbonPaintContext context, string text, Color color, TextFormatFlags flags) =>
         TextRenderer.DrawText(context.Graphics, text, context.Font, context.Bounds, color, flags);
+    /// <summary>Paints passive ScreenTip content in library-measured title and description slots. The popup frame and shadow use the existing popup hooks.</summary>
+    public virtual void DrawScreenTip(RibbonPaintContext context, string title, string description, Rectangle titleBounds, Rectangle descriptionBounds)
+    {
+        using var titleFont = new Font(context.Font, context.Font.Style | FontStyle.Bold);
+        DrawText(context with { Bounds = titleBounds, Font = titleFont }, title, context.Theme.Foreground, RibbonScreenTipLayout.TextFlags);
+        if (!descriptionBounds.IsEmpty)
+            DrawText(context with { Bounds = descriptionBounds }, description, context.Theme.Foreground, RibbonScreenTipLayout.TextFlags);
+    }
     /// <summary>Paints a DPI-scaled dropdown indicator centered inside a measured slot.</summary>
     public virtual void DrawDropDownArrow(RibbonPaintContext context, Color color) =>
         RibbonArrowPainter.DrawDown(context.Graphics, context.Bounds, context.DeviceDpi, color);

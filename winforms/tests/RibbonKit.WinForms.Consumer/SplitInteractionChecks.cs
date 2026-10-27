@@ -179,9 +179,10 @@ internal static class SplitInteractionChecks
                 form.Width = 130;
                 ribbon.Refresh();
                 Check(recording.Collapsed, "Narrow layout collapses the shared group");
-                int groupInset = (int)Math.Round(4 * ribbon.DeviceDpi / 96.0);
-                Check(recording.GroupBounds.Top == recording.BodyBounds.Top + groupInset
-                    && recording.GroupBounds.Bottom == recording.BodyBounds.Bottom - groupInset,
+                int groupTopInset = (int)Math.Round(6 * ribbon.DeviceDpi / 96.0);
+                int groupBottomInset = (int)Math.Round(8 * ribbon.DeviceDpi / 96.0);
+                Check(recording.GroupBounds.Top == recording.BodyBounds.Top + groupTopInset
+                    && recording.GroupBounds.Bottom == recording.BodyBounds.Bottom - groupBottomInset,
                     "Collapsed opener painting stays inset from both body edges");
                 Click(ribbon, recording.GroupBounds);
                 var groupPopup = Popup();
@@ -287,12 +288,29 @@ internal static class SplitInteractionChecks
         }
         void CheckRibbonSurface()
         {
+            int S(int value) => (int)Math.Round(value * ribbon.DeviceDpi / 96d);
+            int logicalFont = (int)Math.Ceiling(ribbon.Font.Height * 96d / ribbon.DeviceDpi);
+            int rowHeight = Math.Max(26, logicalFont + 8), captionHeight = Math.Max(20, logicalFont + 6);
+            int previousBodyHeight = Math.Max(104, 3 * rowHeight + captionHeight + 8);
+            var large = Rectangle.Union(recording.Parts[split].Primary.Bounds, recording.Parts[split].Arrow.Bounds);
+            Check(ribbon.Theme.BodyHeight == 110 && recording.BodyBounds.Top == S(Math.Max(32, logicalFont + 12)) + S(1)
+                && recording.BodyBounds.Height == S(previousBodyHeight + 6)
+                && large.Top == recording.BodyBounds.Top + S(6)
+                && large.Height == S(previousBodyHeight - captionHeight - 8),
+                "Shared body grows downward by six logical pixels, retaining tab anchoring and Large command height");
             using var bitmap = new Bitmap(ribbon.Width, ribbon.Height);
             ribbon.DrawToBitmap(bitmap, ribbon.ClientRectangle);
             Check(ribbon.Theme.Background == Color.White && bitmap.GetPixel(ribbon.Width - 1, 0).ToArgb() == Color.White.ToArgb()
                 && bitmap.GetPixel(0, ribbon.Height - 1).ToArgb() == Color.White.ToArgb(), "Shared ribbon background and outer margins are white");
+            var groupBounds = recording.GroupBounds;
+            bool separatorMatches = true;
+            for (int y = groupBounds.Top + 2; y < groupBounds.Bottom - 2; y++)
+            {
+                bool line = !flat && y >= groupBounds.Top + S(12) && y < groupBounds.Bottom - S(12);
+                separatorMatches &= bitmap.GetPixel(groupBounds.Right - 1, y).ToArgb() == (line ? ribbon.Theme.Border : ribbon.Theme.Surface).ToArgb();
+            }
+            Check(separatorMatches, flat ? "Neutral renderer retains its separator-free surface" : "Office separator matches WPF-reference clearance at both ends");
             if (flat) return;
-            int S(int value) => (int)Math.Round(value * ribbon.DeviceDpi / 96d);
             var tabBounds = recording.TabBounds;
             var ink = Rectangle.Empty;
             for (int y = tabBounds.Bottom - S(6); y < tabBounds.Bottom; y++)

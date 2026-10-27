@@ -11,6 +11,8 @@ internal static partial class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--screentip-checks" or "--screentip-checks-flat")
+            return IndependentConsumer.ScreenTipInteractionChecks.Run(args[1], args[0] == "--screentip-checks-flat");
         if (args.Length == 2 && args[0] is "--option-checks" or "--option-checks-flat")
             return IndependentConsumer.OptionInteractionChecks.Run(args[1], args[0] == "--option-checks-flat");
         if (args.Length == 2 && args[0] is "--combo-checks" or "--combo-checks-flat")

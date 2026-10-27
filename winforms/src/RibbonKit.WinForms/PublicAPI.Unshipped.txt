@@ -1,4 +1,9 @@
 #nullable enable
+RibbonKit.WinForms.RibbonItem.ScreenTipTitle.get -> string!
+RibbonKit.WinForms.RibbonItem.ScreenTipTitle.set -> void
+RibbonKit.WinForms.RibbonItem.ScreenTipDescription.get -> string!
+RibbonKit.WinForms.RibbonItem.ScreenTipDescription.set -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawScreenTip(RibbonKit.WinForms.RibbonPaintContext context, string! title, string! description, System.Drawing.Rectangle titleBounds, System.Drawing.Rectangle descriptionBounds) -> void
 override RibbonKit.WinForms.RibbonOffice2024Renderer.DrawCheckBoxIndicator(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonCheckBoxItem! item) -> void
 RibbonKit.WinForms.RibbonCheckBoxItem
 RibbonKit.WinForms.RibbonCheckBoxItem.RibbonCheckBoxItem() -> void

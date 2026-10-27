@@ -7,6 +7,10 @@ try {
     if ($LASTEXITCODE) { throw 'Native build failed.' }
     dotnet test tests/RibbonKit.WinForms.Tests -c $Configuration --no-build
     if ($LASTEXITCODE) { throw 'Native unit/STA tests failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --screentip-checks TestResults/visual/screentips-native
+    if ($LASTEXITCODE) { throw 'Native ScreenTip hover/lifetime/focus checks failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --screentip-checks-flat TestResults/visual/screentips-flat-native
+    if ($LASTEXITCODE) { throw 'Native neutral ScreenTip checks failed.' }
     dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --option-checks TestResults/visual/m2d-native
     if ($LASTEXITCODE) { throw 'Native check/radio interaction checks failed.' }
     dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --option-checks-flat TestResults/visual/m2d-flat-native
@@ -43,6 +47,11 @@ try {
         dotnet build (Join-Path $consumerRoot 'RibbonKit.WinForms.Consumer.csproj') -c $Configuration --no-restore
         if ($LASTEXITCODE) { throw 'Isolated package consumer build failed.' }
         $consumerExe = Join-Path $consumerRoot "bin/$Configuration/net10.0-windows/RibbonKit.WinForms.Consumer.exe"
+        foreach ($tipMode in @('screentips', 'screentips-flat')) {
+            $tipEvidence = Join-Path $nativeRoot ('TestResults/visual/m2e-package-' + $tipMode)
+            $tipProcess = Start-Process -FilePath $consumerExe -ArgumentList @(('--validate-' + $tipMode), ('"' + $tipEvidence + '"')) -PassThru -Wait
+            if ($tipProcess.ExitCode) { throw "Package ScreenTip checks failed: $tipEvidence/result.log" }
+        }
         foreach ($optionMode in @('options', 'options-flat')) {
             $optionEvidence = Join-Path $nativeRoot ('TestResults/visual/m2d-package-' + $optionMode)
             $optionProcess = Start-Process -FilePath $consumerExe -ArgumentList @(('--validate-' + $optionMode), ('"' + $optionEvidence + '"')) -PassThru -Wait
