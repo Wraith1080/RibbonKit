@@ -9,6 +9,16 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     /// <summary>Initializes the default Office 2024 inspired renderer.</summary>
     public RibbonOffice2024Renderer() { }
     /// <inheritdoc />
+    public override void DrawGalleryHeading(RibbonPaintContext context, string text)
+    {
+        context = context with { Hot = false, Pressed = false, Focused = false };
+        DrawChrome(context, context.Theme.GalleryHeadingBackground, Color.Transparent);
+        int inset = Layout.RibbonLayoutEngine.Scale(6, context.DeviceDpi);
+        using var font = new Font(context.Font, context.Font.Style | FontStyle.Bold);
+        DrawText(context with { Bounds = Rectangle.Inflate(context.Bounds, -inset, 0), Font = font }, text, context.Theme.GalleryHeadingForeground,
+            TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
+    }
+    /// <inheritdoc />
     public override int GetPopupCornerRadius(RibbonTheme theme, int deviceDpi) => Layout.RibbonLayoutEngine.Scale(theme.PopupCornerRadius, deviceDpi);
     /// <inheritdoc />
     protected override void DrawChrome(RibbonPaintContext context, RibbonFill fill, Color border) => DrawRounded(context, fill, border);

@@ -324,6 +324,8 @@ public partial class RibbonRenderer : IDisposable
         }
         bool enabled = item.EffectiveEnabled;
         context = EnabledContext(context, enabled);
+        if (item is RibbonGalleryItem { IsInRibbon: true } && size == RibbonItemSize.Large && !menu)
+        { DrawGalleryStripFrame(context); return; }
         if (item is RibbonCheckBoxItem or RibbonRadioButtonItem)
         {
             if (context.Hot || context.Pressed)

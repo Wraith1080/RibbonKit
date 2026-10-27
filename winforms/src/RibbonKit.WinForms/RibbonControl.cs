@@ -13,6 +13,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     private readonly RibbonInputFilter _input;
     private readonly RibbonPopupManager _popups;
     private readonly RibbonEditorManager _editors;
+    private readonly RibbonGalleryStripManager _galleryStrips;
     private readonly RibbonScreenTipManager _screenTips;
     private readonly int _threadId = Environment.CurrentManagedThreadId;
     private RibbonLayoutSnapshot _snapshot = new();
@@ -42,6 +43,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         AccessibleName = "Ribbon";
         _popups = new(this);
         _editors = new(this);
+        _galleryStrips = new(this);
         _screenTips = new(this);
         _input = new(this);
         UpdateHeight();
@@ -139,6 +141,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     }
     internal RibbonPopupManager Popups => _popups;
     internal RibbonEditorManager Editors => _editors;
+    internal RibbonGalleryStripManager GalleryStrips => _galleryStrips;
     internal RibbonScreenTipManager ScreenTips => _screenTips;
     internal bool KeyTipsActive => _keyTips;
     internal IEnumerable<RibbonElement> AllElements => Tabs.SelectMany(t => t.Tree()).Concat(QuickAccessItems.SelectMany(e => e.Tree())).Concat(FileMenu.Tree()).Concat(Backstage.Tree());
@@ -208,6 +211,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             return;
         VerifyAccess();
         _screenTips?.Cancel();
+        foreach (var gallery in AllElements.OfType<RibbonGalleryItem>().ToArray()) gallery.Reconcile();
         RefreshBackstage();
         if (layout)
         {
@@ -283,6 +287,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         if (_editors is null || _disposing || _updateDepth > 0) return;
         EnsureLayout();
         _editors.Sync();
+        _galleryStrips.Sync();
     }
     /// <inheritdoc />
     protected override void OnLayout(LayoutEventArgs e)
@@ -343,6 +348,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             _screenTips.Cancel();
             _popups.CloseAll(false);
             _editors.Release(this);
+            _galleryStrips.Release(this);
             ExitKeyTips(false);
         }
         else SyncEditors();
@@ -753,6 +759,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         }
         Invalidate();
         if (enterEditor && element is RibbonItem editor && editor is IRibbonEditorItem) _editors.Focus(editor);
+        if (enterEditor && element is RibbonGalleryItem { IsInRibbon: true } gallery) _galleryStrips.Focus(gallery);
         AccessibilityFocusChanged(element);
     }
     internal void EditorFocused(RibbonItem item)
@@ -854,6 +861,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             _input.Dispose();
             _screenTips.Dispose();
             _popups.Dispose();
+            _galleryStrips.Dispose();
             _editors.Dispose();
             foreach (var tab in Tabs.ToArray())
                 tab.Dispose();

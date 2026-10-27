@@ -54,6 +54,7 @@ public partial class RibbonControl
             if (!FileMenu.CanOpen() || !CanShowBackstage || !Backstage.CanOpen() || !CanShowBackstage || !ReferenceEquals(FindForm(), form) || form.IsDisposed) return;
             _backstagePriorFocus = _keyTips ? _priorFocus : FocusedControl(form);
             _screenTips.Cancel();
+            _galleryStrips.CancelPreviews();
             _editors.CloseLists();
             _popups.CloseAll(false);
             bool tips = _keyTips;

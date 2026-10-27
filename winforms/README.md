@@ -8,7 +8,7 @@ split buttons and native TextBox/ComboBox editing. The current [M3 slice](docs/M
 adds button/toggle Quick Access, checkbox/radio icon references, ComboBox choosers
 and dropdown/split/group references.
 The current [M4 slice](docs/M4-STATUS.md) adds contextual-tab header colors,
-the File command menu and native Backstage pages. [Remaining slices](docs/M4-STATUS.md#remaining-slices)
+the File command menu, native Backstage pages and dropdown galleries. [Remaining slices](docs/M4-STATUS.md#remaining-slices)
 record the working sequence through galleries, customization and window integration.
 Accessibility compatibility is deferred
 while the control structure is implemented; it remains possible future work.
@@ -98,6 +98,111 @@ the ribbon and cannot be reparented; its direct disposal permanently releases th
 stable declaration. Images/renderers remain borrowed. The legacy two-pane
 application menu/orb remains separate. New accessibility compatibility and actual
 VS acceptance remain deferred.
+
+### Galleries in dropdowns, the ribbon and Quick Access
+
+`RibbonGalleryItem` is a native gallery command owning `RibbonGalleryTile`
+declarations through its content-serialized Items collection. Put it in a ribbon
+group or a normal menu. Tiles retain normal IDs, captions, KeyTips, availability,
+binding context and borrowed `Icon` / `Image` / `LargeImage` assets. Tile models
+belong only to a gallery; ordinary commands cannot be placed in gallery Items.
+
+```csharp
+var gallery = new RibbonGalleryItem {
+    Text = "Styles", KeyTip = "GS", ColumnCount = 3,
+    TileWidth = 100, TileHeight = 80, MaxVisibleRows = 3
+};
+var normal = new RibbonGalleryTile { Text = "Normal", GroupName = "Document" };
+var heading = new RibbonGalleryTile { Text = "Heading", GroupName = "Headings" };
+gallery.Items.AddRange(normal, heading);
+group.Items.Add(gallery);
+gallery.SelectedItem = normal;
+gallery.SelectedItemChanged += (_, _) => ApplyStyle(gallery.SelectedItem);
+gallery.ItemPreview += (_, e) => PreviewStyle(e.Item);
+gallery.ItemPreviewCancelled += (_, _) => ApplyStyle(gallery.SelectedItem);
+gallery.SelectionCommitted += (_, _) => RecordStyleAction(gallery.SelectedItem);
+```
+
+`SelectedItem` is bindable and starts null. Setting it from code/binding raises
+SelectedItemChanged, with no user commit. Activating an available tile updates
+selection/binding and raises SelectionCommitted once, including reselecting the
+current tile; the latter does not raise SelectedItemChanged again. Removing or
+disposing a selected tile clears selection. Hiding/disabling it retains authored
+selection, while preventing user activation. Direct tile PerformClick uses the
+same commit path; direct gallery PerformClick/ShowDropDown uses the popup stack.
+
+Preview never writes SelectedItem. Pointer hover and keyboard navigation raise
+ItemPreview; leaving, user scrolling, Escape, outside dismissal, source loss,
+collection mutation and programmatic selection cancel an active preview once.
+Successful commit ends preview without cancellation. The application owns its
+document preview, baseline/rollback, action and settings persistence. Painting and
+stationary-pointer messages must not override keyboard preview.
+
+Consecutive visible tiles with the same nonempty GroupName share a noninteractive
+heading. Authored order and blank-heading groups are retained. ColumnCount is a
+preferred count (1–32); TileWidth/TileHeight are logical-pixel metrics (32–512),
+and MaxVisibleRows is a preferred upper row budget (1–32). Fonts, headings and
+screen work-area limits constrain the actual grid/viewport; long contents use
+native scrolling. Images retain aspect ratio; a renderer can override
+`DrawGalleryTile` and `DrawGalleryHeading`. Another application can provide rich
+tile artwork through IRibbonIcon without Showcase helpers or native page hosting.
+Office 2024 section headings use a rounded theme band and bold text, with paired
+`GalleryHeadingBackground` / `GalleryHeadingForeground` settings. The neutral
+renderer uses bold text on a transparent background. Headings remain
+noninteractive and scroll with their tiles.
+
+Opening reveals an available selected tile. Arrow keys move preview through the
+grid, Home/End and PageUp/PageDown navigate long content, Enter/Space and tile
+KeyTips commit, and Escape dismisses one popup level. Opening respects native
+editor validation and normal DropDownOpening cancellation. Layout-affecting
+mutation closes stale geometry; native editors/command models are not cloned.
+Showcase Home → Galleries demonstrates Styles and Text color with host-owned
+document preview and commit actions.
+
+Set `IsInRibbon = true` to display a single-row strip in Large presentations.
+`InRibbonColumnCount` (1–12, default 3) sets its columns independently of popup
+ColumnCount. TileWidth determines its logical width; ribbon body height determines
+its height. Existing SizePolicy reductions to Medium/Small display the dropdown
+command. Up/down buttons and the mouse wheel browse whole realized rows, with
+disabled endpoint buttons. Arrow keys/Home/End preview tiles, PageUp/PageDown
+browse rows, and Enter/Space commit. F4, Alt+Down or the expand button opens the
+ordinary gallery popup. Cancelling expansion retains the strip's browsed row;
+programmatic selection changes reveal the selected row.
+The three utility buttons share equal heights within a four-logical-pixel inset,
+filling the gallery interior while preserving its frame in hover/pressed states.
+
+```csharp
+gallery.IsInRibbon = true;
+gallery.InRibbonColumnCount = 3;
+ribbon.QuickAccessItems.Add(new RibbonQuickAccessDropDownReference {
+    Source = gallery
+});
+```
+
+QAT references open the same source gallery, including through overflow or while
+its source tab is inactive. Selection, bindings, preview and commit handlers stay
+on the source. Copies do not clone tiles, change the active tab or dispose the
+source when removed. One reusable library strip presenter follows a source into
+borrowed group/minimized-tab popups; application editors keep their existing
+ownership. Only the active presentation owns temporary preview cancellation.
+Showcase exposes Styles as a strip and Styles/Text color as its first QAT entries.
+
+Filtering controls, user-resizable popup geometry,
+additional themes and new accessibility providers remain separate refinements.
+Designer metadata/collection authoring is included; actual VS acceptance is
+deferred to the designer slice.
+
+After the normal Debug build, focused shown checks are available as
+`--gallery-checks` / `--gallery-checks-flat` on the native runner, each followed by
+an evidence directory. The same public-only fixture is included in the independent
+consumer as `--validate-gallery` / `--validate-gallery-flat`. A project-run pass
+does not establish a newly packed consumer or physical monitor acceptance.
+The additional strip/QAT scope uses `--in-ribbon-gallery-checks` /
+`--in-ribbon-gallery-checks-flat`, with consumer equivalents
+`--validate-in-ribbon-gallery` / `--validate-in-ribbon-gallery-flat`.
+Use `--gallery-strip-checks[-flat]` or `--qat-gallery-checks[-flat]` for separate
+strip or projection scopes; their consumer flags are
+`--validate-gallery-strip[-flat]` and `--validate-qat-gallery[-flat]`.
 
 ### Native Backstage
 

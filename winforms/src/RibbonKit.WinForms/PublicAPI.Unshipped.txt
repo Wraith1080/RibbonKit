@@ -1,4 +1,20 @@
 #nullable enable
+RibbonKit.WinForms.RibbonGalleryItem.IsInRibbon.get -> bool
+RibbonKit.WinForms.RibbonGalleryItem.IsInRibbon.set -> void
+RibbonKit.WinForms.RibbonGalleryItem.IsInRibbonChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonGalleryItem.InRibbonColumnCount.get -> int
+RibbonKit.WinForms.RibbonGalleryItem.InRibbonColumnCount.set -> void
+RibbonKit.WinForms.RibbonGalleryStripButton
+RibbonKit.WinForms.RibbonGalleryStripButton.Up = 0 -> RibbonKit.WinForms.RibbonGalleryStripButton
+RibbonKit.WinForms.RibbonGalleryStripButton.Down = 1 -> RibbonKit.WinForms.RibbonGalleryStripButton
+RibbonKit.WinForms.RibbonGalleryStripButton.Expand = 2 -> RibbonKit.WinForms.RibbonGalleryStripButton
+virtual RibbonKit.WinForms.RibbonRenderer.DrawGalleryStripFrame(RibbonKit.WinForms.RibbonPaintContext context) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawGalleryStripButton(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonGalleryStripButton button, bool enabled) -> void
+override RibbonKit.WinForms.RibbonOffice2024Renderer.DrawGalleryHeading(RibbonKit.WinForms.RibbonPaintContext context, string! text) -> void
+RibbonKit.WinForms.RibbonTheme.GalleryHeadingBackground.get -> RibbonKit.WinForms.RibbonFill
+RibbonKit.WinForms.RibbonTheme.GalleryHeadingBackground.init -> void
+RibbonKit.WinForms.RibbonTheme.GalleryHeadingForeground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.GalleryHeadingForeground.init -> void
 RibbonKit.WinForms.RibbonBackstage
 RibbonKit.WinForms.RibbonBackstage.RibbonBackstage() -> void
 RibbonKit.WinForms.RibbonBackstage.Items.get -> RibbonKit.WinForms.RibbonItemCollection!
@@ -507,3 +523,30 @@ virtual RibbonKit.WinForms.RibbonRenderer.DrawItem(RibbonKit.WinForms.RibbonPain
 virtual RibbonKit.WinForms.RibbonRenderer.DrawKeyTip(RibbonKit.WinForms.RibbonPaintContext context, string! keys) -> void
 virtual RibbonKit.WinForms.RibbonRenderer.DrawSurface(RibbonKit.WinForms.RibbonPaintContext context, bool popup) -> void
 virtual RibbonKit.WinForms.RibbonRenderer.DrawTab(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonTab! tab, bool selected) -> void
+override RibbonKit.WinForms.RibbonGalleryTile.PerformClick() -> void
+RibbonKit.WinForms.RibbonGalleryItem
+RibbonKit.WinForms.RibbonGalleryItem.ColumnCount.get -> int
+RibbonKit.WinForms.RibbonGalleryItem.ColumnCount.set -> void
+RibbonKit.WinForms.RibbonGalleryItem.ItemPreview -> System.EventHandler<RibbonKit.WinForms.RibbonGalleryPreviewEventArgs!>?
+RibbonKit.WinForms.RibbonGalleryItem.ItemPreviewCancelled -> System.EventHandler?
+RibbonKit.WinForms.RibbonGalleryItem.Items.get -> RibbonKit.WinForms.RibbonItemCollection!
+RibbonKit.WinForms.RibbonGalleryItem.MaxVisibleRows.get -> int
+RibbonKit.WinForms.RibbonGalleryItem.MaxVisibleRows.set -> void
+RibbonKit.WinForms.RibbonGalleryItem.RibbonGalleryItem() -> void
+RibbonKit.WinForms.RibbonGalleryItem.SelectedItem.get -> RibbonKit.WinForms.RibbonGalleryTile?
+RibbonKit.WinForms.RibbonGalleryItem.SelectedItem.set -> void
+RibbonKit.WinForms.RibbonGalleryItem.SelectedItemChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonGalleryItem.SelectionCommitted -> System.EventHandler?
+RibbonKit.WinForms.RibbonGalleryItem.TileHeight.get -> int
+RibbonKit.WinForms.RibbonGalleryItem.TileHeight.set -> void
+RibbonKit.WinForms.RibbonGalleryItem.TileWidth.get -> int
+RibbonKit.WinForms.RibbonGalleryItem.TileWidth.set -> void
+RibbonKit.WinForms.RibbonGalleryPreviewEventArgs
+RibbonKit.WinForms.RibbonGalleryPreviewEventArgs.Item.get -> RibbonKit.WinForms.RibbonGalleryTile!
+RibbonKit.WinForms.RibbonGalleryPreviewEventArgs.RibbonGalleryPreviewEventArgs(RibbonKit.WinForms.RibbonGalleryTile! item) -> void
+RibbonKit.WinForms.RibbonGalleryTile
+RibbonKit.WinForms.RibbonGalleryTile.GroupName.get -> string!
+RibbonKit.WinForms.RibbonGalleryTile.GroupName.set -> void
+RibbonKit.WinForms.RibbonGalleryTile.RibbonGalleryTile() -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawGalleryHeading(RibbonKit.WinForms.RibbonPaintContext context, string! text) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawGalleryTile(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonGalleryTile! tile, bool selected) -> void

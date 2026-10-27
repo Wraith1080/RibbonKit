@@ -14,6 +14,8 @@ internal static class Program
         Application.SetCompatibleTextRenderingDefault(false);
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
         using var form = new MainForm();
+        if (args.Length == 2 && args[0] == "--capture-galleries")
+            form.Shown += async (_, _) => { await Task.Yield(); await form.CaptureGalleries(args[1]); form.Close(); };
         if (args.Length == 2 && args[0] == "--capture-backstage")
             form.Shown += async (_, _) => { await Task.Yield(); await form.CaptureBackstage(args[1]); form.Close(); };
         if (args.Length == 2 && args[0] == "--capture")

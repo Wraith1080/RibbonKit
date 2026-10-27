@@ -12,6 +12,10 @@ public sealed record RibbonTheme
 {
     /// <summary>Gets the opaque Office 2024 Backstage navigation rail color.</summary>
     public Color BackstageNavigationBackground { get; init; } = Color.FromArgb(245, 244, 243);
+    /// <summary>Gets the paired background fill for Office 2024 noninteractive gallery section headings.</summary>
+    public RibbonFill GalleryHeadingBackground { get; init; } = new(Color.FromArgb(240, 240, 240));
+    /// <summary>Gets the Office 2024 text color paired with GalleryHeadingBackground.</summary>
+    public Color GalleryHeadingForeground { get; init; } = Color.FromArgb(32, 31, 30);
     /// <summary>Gets the ribbon background color.</summary>
     public Color Background { get; init; } = Color.White;
     /// <summary>Gets the command and popup surface color.</summary>

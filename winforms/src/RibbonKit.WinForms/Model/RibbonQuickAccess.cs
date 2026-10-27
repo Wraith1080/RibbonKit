@@ -60,12 +60,12 @@ public sealed class RibbonQuickAccessComboBoxReference : RibbonElement
     public bool IsDropDownOpen => Ribbon?.Editors.IsQuickAccessOpen(this) ?? false;
 }
 
-/// <summary>A Quick Access presentation of a borrowed dropdown or split button, with its own popup and optional split-menu KeyTip.</summary>
+/// <summary>A Quick Access presentation of a borrowed dropdown, gallery or split button, with its own popup and optional split-menu KeyTip.</summary>
 public sealed class RibbonQuickAccessDropDownReference : RibbonElement
 {
     private RibbonDropDownItem? _source;
     private string _dropDownKeyTip = "";
-    /// <summary>Gets or sets the borrowed dropdown or split source. Its commands retain their original owner.</summary>
+    /// <summary>Gets or sets the borrowed dropdown, gallery or split source. Its commands and gallery selection retain their original owner.</summary>
     [Category("Data"), DefaultValue(null)]
     public RibbonDropDownItem? Source
     {

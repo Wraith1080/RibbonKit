@@ -21,6 +21,7 @@ public partial class MainForm : Form
         ribbon.FileMenu.Items.AddRange(newDocument, openDocument, saveDocument, new RibbonMenuSeparatorItem(), recentDocuments);
         formattingSource.DataSource = _formatting;
         InitializeBackstage();
+        InitializeGalleries();
         bold.DataBindings.Add(new Binding(nameof(RibbonToggleItem.Checked), formattingSource, nameof(FormattingState.Bold), true, DataSourceUpdateMode.OnPropertyChanged));
         nameInput.DataBindings.Add(new Binding(nameof(RibbonTextBoxItem.Value), formattingSource, nameof(FormattingState.Name), true, DataSourceUpdateMode.OnPropertyChanged));
         fontInput.DataBindings.Add(new Binding(nameof(RibbonComboBoxItem.Value), formattingSource, nameof(FormattingState.FontName), true, DataSourceUpdateMode.OnPropertyChanged));
@@ -71,6 +72,7 @@ public partial class MainForm : Form
         document.AppendText("\r\n\r\nChoose Insert > Picture to show the colored Picture Format tab. Close picture tools hides it and returns to a visible tab. The application decides when picture tools apply.");
         document.AppendText("\r\n\r\nFile opens native Backstage. Info and Print retain their native fields when switching pages or reopening; Save and New run application commands. F10, F enters Backstage, F6 moves to its page, and Escape returns to this document. File remains available while the ribbon is minimized.");
         ribbon.SelectedTab = home;
+        document.AppendText("\r\n\r\nHome > Galleries shows Styles inside the ribbon. Use its up/down buttons to browse a row, and the bottom button or F4 to expand all styles. Preview leaves selection unchanged; click or Enter applies the style. The first two Quick Access buttons open the same Styles and Text color galleries, including while another tab is active.");
     }
     private void NameValidating(object? sender, CancelEventArgs e)
     {

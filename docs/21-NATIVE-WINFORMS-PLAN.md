@@ -1,6 +1,6 @@
 # Native RibbonKit.WinForms assessment and implementation plan
 
-> Implementation through M4C native Backstage foundation,
+> Implementation through M4E in-ribbon galleries and QAT projection,
 > 2026-10-27. Current bounded
 > scope, evidence and remaining review are in the [M4 ledger](../winforms/docs/M4-STATUS.md).
 > The [M3 ledger](../winforms/docs/M3-STATUS.md) retains QAT/projection evidence.

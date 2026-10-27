@@ -8,6 +8,14 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--validate-gallery-strip" or "--validate-gallery-strip-flat")
+            return InRibbonGalleryInteractionChecks.Run(args[1], args[0] == "--validate-gallery-strip-flat", stripOnly: true);
+        if (args.Length == 2 && args[0] is "--validate-qat-gallery" or "--validate-qat-gallery-flat")
+            return InRibbonGalleryInteractionChecks.Run(args[1], args[0] == "--validate-qat-gallery-flat", true);
+        if (args.Length == 2 && args[0] is "--validate-in-ribbon-gallery" or "--validate-in-ribbon-gallery-flat")
+            return InRibbonGalleryInteractionChecks.Run(args[1], args[0] == "--validate-in-ribbon-gallery-flat");
+        if (args.Length == 2 && args[0] is "--validate-gallery" or "--validate-gallery-flat")
+            return GalleryInteractionChecks.Run(args[1], args[0] == "--validate-gallery-flat");
         if (args.Length == 2 && args[0] is "--validate-backstage-width" or "--validate-backstage-width-flat")
             return BackstageInteractionChecks.Run(args[1], args[0] == "--validate-backstage-width-flat", true);
         if (args.Length == 2 && args[0] is "--validate-backstage" or "--validate-backstage-flat")

@@ -11,6 +11,14 @@ internal static partial class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--gallery-strip-checks" or "--gallery-strip-checks-flat")
+            return IndependentConsumer.InRibbonGalleryInteractionChecks.Run(args[1], args[0] == "--gallery-strip-checks-flat", stripOnly: true);
+        if (args.Length == 2 && args[0] is "--qat-gallery-checks" or "--qat-gallery-checks-flat")
+            return IndependentConsumer.InRibbonGalleryInteractionChecks.Run(args[1], args[0] == "--qat-gallery-checks-flat", true);
+        if (args.Length == 2 && args[0] is "--in-ribbon-gallery-checks" or "--in-ribbon-gallery-checks-flat")
+            return IndependentConsumer.InRibbonGalleryInteractionChecks.Run(args[1], args[0] == "--in-ribbon-gallery-checks-flat");
+        if (args.Length == 2 && args[0] is "--gallery-checks" or "--gallery-checks-flat")
+            return IndependentConsumer.GalleryInteractionChecks.Run(args[1], args[0] == "--gallery-checks-flat");
         if (args.Length == 2 && args[0] is "--backstage-width-checks" or "--backstage-width-checks-flat")
             return IndependentConsumer.BackstageInteractionChecks.Run(args[1], args[0] == "--backstage-width-checks-flat", true);
         if (args.Length == 2 && args[0] is "--backstage-checks" or "--backstage-checks-flat")

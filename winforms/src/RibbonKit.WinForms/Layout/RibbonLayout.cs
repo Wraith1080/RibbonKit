@@ -105,6 +105,8 @@ internal sealed class RibbonLayoutEngine
             int width = large ? LargeItemWidth(item, font, dpi, theme) : size == RibbonItemSize.Small ? S(28) : Math.Max(S(54), Math.Min(S(180), label + S(38)));
             if (item is IRibbonEditorItem editor)
                 width = RibbonEditorLayout.LabelWidth(item, font, dpi) + S(editor.InputWidth + 6);
+            if (large && item is RibbonGalleryItem { IsInRibbon: true } gallery)
+                width = S(gallery.InRibbonColumnCount * gallery.TileWidth + RibbonGalleryStripLayout.UtilityWidth + 3 * RibbonGalleryStripLayout.Padding);
             if (item is RibbonSplitButtonItem && !large)
                 width += S(20);
             else if (dropDownOnly && !large)

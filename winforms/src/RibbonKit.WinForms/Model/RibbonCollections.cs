@@ -11,11 +11,16 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
     private RibbonControl? Ribbon => _owner is RibbonControl r ? r : (_owner as RibbonElement)?.Ribbon;
     private void Changed()
     {
+        if (_owner is RibbonGalleryItem gallery) gallery.Reconcile();
         if (Ribbon is { } ribbon) ribbon.ModelChanged(preservePopups: ribbon.Popups.IsPreparingContent(_owner as RibbonElement, true));
     }
     private void Verify(T item, T? replacing = null)
     {
         ArgumentNullException.ThrowIfNull(item);
+        if (item is RibbonGalleryTile && _owner is not RibbonGalleryItem)
+            throw new ArgumentException("Gallery tiles belong to a gallery's Items collection.", nameof(item));
+        if (_owner is RibbonGalleryItem && item is not RibbonGalleryTile)
+            throw new ArgumentException("Gallery Items must contain gallery tiles.", nameof(item));
         if (item is RibbonBackstagePageItem && _owner is not RibbonBackstage)
             throw new ArgumentException("Backstage pages belong to Backstage.Items.", nameof(item));
         if (_owner is RibbonBackstage && item is not RibbonBackstagePageItem && item.GetType() != typeof(RibbonButtonItem))
