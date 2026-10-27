@@ -105,8 +105,8 @@ internal static class ComboBoxInteractionChecks
                 await ClickArrow(combo); CaptureList(combo, "choice-list"); CheckChoiceChrome(combo);
                 var hover = List(combo).GetItemRectangle(2);
                 WF.Cursor.Position = List(combo).PointToScreen(new(hover.Left + 20, hover.Top + hover.Height / 2)); await Task.Delay(80);
-                Check(choice.Value == "Gamma" && commits == 2 && combo.ContainsFocus, "Pointer hover previews a row while preserving native editor focus");
-                choice.CloseDropDown(); Check(choice.Value == "Alpha" && state.Choice == "Alpha" && commits == 2, "Closing an unaccepted popup rolls back pointer preview");
+                Check(choice.Value == "Alpha" && state.Choice == "Alpha" && commits == 2 && combo.ContainsFocus, "Pointer hover highlights without changing source selection, binding or editor focus");
+                choice.CloseDropDown(); Check(choice.Value == "Alpha" && state.Choice == "Alpha" && commits == 2, "Closing after pointer hover preserves the source value");
                 await ClickArrow(combo); await ClickChoice(combo, 1);
                 Check(choice.Value == "Beta" && state.Choice == "Beta" && commits == 3,
                     $"Choice list mouse selection commits the selected value once (value={choice.Value}, native={combo.Text}, commits={commits})");

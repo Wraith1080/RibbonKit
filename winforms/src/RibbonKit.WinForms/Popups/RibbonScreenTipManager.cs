@@ -61,10 +61,11 @@ internal sealed class RibbonScreenTipManager(RibbonControl ribbon) : IDisposable
             var point = surface.PointToClient(screen);
             if (!surface.ClientRectangle.Contains(point)) continue;
             var targets = surface is RibbonPopupSurface popup ? popup.Targets : ribbon.Snapshot.Targets;
-            var target = targets.FirstOrDefault(t => t.Element is RibbonItem && t.VisibleBounds.Contains(point));
-            if (target?.Element is not RibbonItem item || item is RibbonMenuSeparatorItem || item.IsDisposed || !item.Visible || !ReferenceEquals(item.Ribbon, ribbon)) return null;
+            var target = targets.FirstOrDefault(t => t.Element is RibbonItem or RibbonQuickAccessReference or RibbonQuickAccessComboBoxReference or RibbonQuickAccessDropDownReference && t.VisibleBounds.Contains(point));
+            var item = target?.Kind == TargetKind.QuickAccess ? RibbonQuickAccess.Command(target.Element!) : target?.Element as RibbonItem;
+            if (item is null || item is RibbonMenuSeparatorItem || item.IsDisposed || !item.Visible || !ReferenceEquals(item.Ribbon, ribbon)) return null;
             if (string.IsNullOrEmpty(RibbonScreenTipLayout.TitleFor(item)) && string.IsNullOrEmpty(item.ScreenTipDescription)) return null;
-            var anchor = targets.Where(t => ReferenceEquals(t.Element, item)).Select(t => t.VisibleBounds).Where(b => !b.IsEmpty)
+            var anchor = targets.Where(t => ReferenceEquals(t.Element, target!.Element)).Select(t => t.VisibleBounds).Where(b => !b.IsEmpty)
                 .Aggregate(Rectangle.Empty, (a, b) => a.IsEmpty ? b : Rectangle.Union(a, b));
             return (surface, item, surface.RectangleToScreen(anchor));
         }

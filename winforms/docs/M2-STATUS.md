@@ -2,7 +2,7 @@
 
 Status: **Implementation through M2G minimize/expand**, 2026-10-27.
 The user accepted the demonstrated M2C startup/editor polish and authorized M2D.
-M2D/M2E/M2F/M2G await user visual review; outstanding designer, display-scale and monitor
+M2D/M2E/M2F retain their bounded review gates; outstanding designer, display-scale and monitor
 gates remain in [the M1 ledger](M1-STATUS.md).
 Accessibility compatibility is deferred by explicit user direction: this phase
 prioritizes the necessary control structure. No new split accessibility providers,
@@ -12,8 +12,8 @@ That is a current limitation, not a decision against future accessibility work.
 
 ## Next component slice
 
-2026-10-27: **M2G minimize/expand is implemented for review**. The next roadmap
-milestone is M3 QAT/projections; optional ICommand remains a separate proposal.
+2026-10-27: **M2G implementation and review are recorded below**.
+Work continues with [M3A Quick Access](M3-STATUS.md); optional ICommand remains a separate proposal.
 The [M2G record below](#m2g-minimizeexpand--2026-10-27) owns current scope and evidence.
 The [prior continuation prompt](NEXT-SLICE-PROMPT.md) records the starting
 constraints; its proposed-slice wording and earlier checkpoint are historical.
@@ -1362,6 +1362,9 @@ Evidence: `tests/RibbonKit.WinForms.Tests/TestResults/m2g-{release,fallback,batc
 `TestResults/visual/m2g-complete-{minimize,minimize-flat}/`,
 `TestResults/visual/m2g-final-{menus,menus-flat,screentips,screentips-flat}/`,
 `TestResults/m2g-package-{keyboard,dismissal}.log` and
-`TestResults/m2g-complete-consumer-path.txt`. Human appearance, actual VS
-round-trip and other physical DPI/monitor gates remain open. The next roadmap
-milestone is **M3 QAT/projections**; optional ICommand remains a separate proposal.
+`TestResults/m2g-complete-consumer-path.txt`.
+
+Human review, 2026-10-27: the user confirmed "it works now" for the demonstrated
+minimize/expand behavior and authorized continuation. Actual VS round-trip and
+other physical DPI/monitor gates remain open. The next roadmap milestone is
+**M3 QAT/projections**; optional ICommand remains a separate proposal.

@@ -64,6 +64,7 @@ internal sealed partial class RibbonPopupSurface
     {
         if (disposing)
         {
+            DisposeOverflowScrolling();
             _automation?.Disconnect();
             _automation = null;
         }

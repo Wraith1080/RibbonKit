@@ -5,6 +5,7 @@ partial class MainForm
 {
     private System.ComponentModel.IContainer? components;
     private RibbonTab options = null!;
+    private RibbonTab pictureFormat = null!;
     private RibbonCheckBoxItem showRuler = null!, showGrid = null!, unavailableOption = null!, popupRuler = null!;
     private RibbonRadioButtonItem printView = null!, webView = null!, draftView = null!, whitePage = null!, sepiaPage = null!;
     private RibbonControl ribbon = null!;
@@ -147,6 +148,11 @@ partial class MainForm
         clipboard.Items.AddRange(new RibbonItem[] { paste, copy, cut }); font.Items.AddRange(new RibbonItem[] { bold, italic, disabled }); editing.Items.AddRange(new RibbonItem[] { find, select, trackChanges });
         illustrations.Items.AddRange(new RibbonItem[] { picture, shapes }); links.Items.Add(link);
         home.Groups.AddRange(new RibbonGroup[] { clipboard, font, editing }); insert.Groups.AddRange(new RibbonGroup[] { illustrations, links }); ribbon.Tabs.AddRange(new RibbonTab[] { home, insert, inputs, options });
+        pictureFormat = new RibbonTab { Id = "tab.pictureFormat", Text = "Picture Format", KeyTip = "JP", IsContextual = true, ContextualColor = Color.FromArgb(196, 62, 150), Visible = false }; components.Add(pictureFormat, "pictureFormat");
+        var pictureTools = new RibbonGroup { Id = "picture.tools", Text = "Picture", KeyTip = "ZP" }; components.Add(pictureTools, "pictureTools");
+        var crop = new RibbonButtonItem { Id = "picture.crop", Text = "Crop", KeyTip = "C" }; components.Add(crop, "crop"); crop.Click += ActionClick;
+        var closePictureTools = new RibbonButtonItem { Id = "picture.close", Text = "Close picture tools", KeyTip = "X" }; components.Add(closePictureTools, "closePictureTools"); closePictureTools.Click += ClosePictureTools;
+        pictureTools.Items.AddRange(crop, closePictureTools); pictureFormat.Groups.Add(pictureTools); ribbon.Tabs.Add(pictureFormat); picture.Click += ShowPictureTools;
         document.Dock = DockStyle.Fill; document.Multiline = true; document.ScrollBars = ScrollBars.Vertical; document.Name = "document";
         statusStrip.Items.AddRange(new ToolStripItem[] { status }); status.Text = "Ready";
         AutoScaleMode = AutoScaleMode.Dpi; ClientSize = new Size(1080, 540); MinimumSize = new Size(240, 300); StartPosition = FormStartPosition.CenterScreen; Text = "RibbonKit.WinForms — ScreenTips";

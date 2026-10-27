@@ -2,20 +2,25 @@ namespace RibbonKit.WinForms.Layout;
 
 internal enum TargetKind
 {
-    Tab, Group, Item, TabBack, TabNext, BodyBack, BodyNext, Minimize
+    Tab, Group, Item, TabBack, TabNext, BodyBack, BodyNext, Minimize, QuickAccess, QuickAccessOverflow, OverflowUp, OverflowDown
 }
-internal sealed record RibbonTarget(TargetKind Kind, RibbonElement? Element, Rectangle Bounds, Rectangle Clip, RibbonItemSize Size = RibbonItemSize.Large, bool ReserveIcon = false, bool DropDownPart = false, int LabelWidth = 0)
+internal sealed record RibbonTarget(TargetKind Kind, RibbonElement? Element, Rectangle Bounds, Rectangle Clip, RibbonItemSize Size = RibbonItemSize.Large, bool ReserveIcon = false, bool DropDownPart = false, int LabelWidth = 0, string? AutomaticKeyTip = null)
 {
     internal Rectangle VisibleBounds => Rectangle.Intersect(Bounds, Clip);
-    internal bool Enabled => Element is not RibbonMenuSeparatorItem && (Element?.EffectiveEnabled ?? true);
+    internal bool Enabled => Kind == TargetKind.QuickAccess ? Element is not null && RibbonQuickAccess.Available(Element) : Element is not RibbonMenuSeparatorItem && (Element?.EffectiveEnabled ?? true);
     internal string Identity => (Element?.Id ?? Kind.ToString()) + (DropDownPart ? ":dropdown" : "");
-    internal string TipText => (Element?.Text ?? "") + (DropDownPart ? " options" : "");
-    internal string PreferredKeyTip => DropDownPart && Element is RibbonSplitButtonItem split ? split.DropDownKeyTip : Element?.KeyTip ?? "";
+    internal string TipText => (Kind == TargetKind.QuickAccess && Element is not null ? RibbonQuickAccess.Caption(Element) : Element?.Text ?? "") + (DropDownPart ? " options" : "");
+    internal string PreferredKeyTip => Element is RibbonQuickAccessDropDownReference { Source: RibbonSplitButtonItem } reference && DropDownPart
+        ? reference.DropDownKeyTip.Length > 0 ? reference.DropDownKeyTip : reference.KeyTip.Length > 0 ? "" : AutomaticKeyTip ?? ""
+        : DropDownPart && Element is RibbonSplitButtonItem split ? split.DropDownKeyTip
+        : Element?.KeyTip is { Length: > 0 } authored ? authored : AutomaticKeyTip ?? "";
 }
 internal sealed record GroupSlot(RibbonGroup Group, Rectangle Bounds, bool Collapsed);
 internal sealed class RibbonLayoutSnapshot
 {
     internal Rectangle BodyBounds { get; set; }
+    internal Rectangle QuickAccessBounds { get; set; }
+    internal List<RibbonElement> QuickAccessOverflowItems { get; } = [];
     internal List<RibbonTarget> Targets { get; } = [];
     internal List<GroupSlot> Groups { get; } = [];
     internal Rectangle BodyViewport
@@ -133,12 +138,24 @@ internal sealed class RibbonLayoutEngine
         var tabs = ribbon.Tabs.Where(t => t.Visible).ToArray();
         var widths = tabs.Select(t => Math.Max(S(58), TextRenderer.MeasureText(t.Text, ribbon.Font).Width + S(28))).ToArray();
         int tabTotal = widths.Sum(), utilityWidth = Math.Min(S(28), client.Width);
-        int tabsWidth = Math.Max(0, client.Width - utilityWidth);
+        int tabsStart = 0;
+        if (ribbon.HasQuickAccess)
+        {
+            bool below = ribbon.QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon;
+            int available = below ? client.Width : Math.Min(S(ribbon.QuickAccessMaxWidth), Math.Max(0, client.Width - utilityWidth - S(24)));
+            int top = below ? client.Height - ribbon.QuickAccessHeight : 0;
+            var quickAccess = RibbonQuickAccessLayout.Build(ribbon, new(0, top, available, below ? ribbon.QuickAccessHeight : tabHeight), below);
+            result.QuickAccessBounds = quickAccess.QuickAccessBounds;
+            result.QuickAccessOverflowItems.AddRange(quickAccess.QuickAccessOverflowItems);
+            result.Targets.AddRange(quickAccess.Targets);
+            if (!below) tabsStart = result.QuickAccessBounds.Width;
+        }
+        int tabsWidth = Math.Max(0, client.Width - utilityWidth - tabsStart);
         bool tabOverflow = tabTotal > tabsWidth;
         // Keep part of a tab reachable when the utility and two full-size
         // scrollers would otherwise consume the complete narrow tab strip.
         int tabScrollWidth = tabOverflow ? Math.Min(S(22), Math.Max(0, (tabsWidth - S(24)) / 2)) : 0;
-        var tabViewport = new Rectangle(tabScrollWidth, 0, Math.Max(0, tabsWidth - 2 * tabScrollWidth), tabHeight);
+        var tabViewport = new Rectangle(tabsStart + tabScrollWidth, 0, Math.Max(0, tabsWidth - 2 * tabScrollWidth), tabHeight);
         result.TabExtent = tabTotal;
         result.TabViewport = tabViewport;
         int tx = tabViewport.Left - Math.Clamp(tabOffset, 0, Math.Max(0, tabTotal - tabViewport.Width));
@@ -149,11 +166,11 @@ internal sealed class RibbonLayoutEngine
         }
         if (tabOverflow)
         {
-            var tabsClip = new Rectangle(0, 0, tabsWidth, tabHeight);
-            result.Targets.Add(new(TargetKind.TabBack, null, new(0, 0, tabScrollWidth, tabHeight), tabsClip));
-            result.Targets.Add(new(TargetKind.TabNext, null, new(tabsWidth - tabScrollWidth, 0, tabScrollWidth, tabHeight), tabsClip));
+            var tabsClip = new Rectangle(tabsStart, 0, tabsWidth, tabHeight);
+            result.Targets.Add(new(TargetKind.TabBack, null, new(tabsStart, 0, tabScrollWidth, tabHeight), tabsClip));
+            result.Targets.Add(new(TargetKind.TabNext, null, new(tabsStart + tabsWidth - tabScrollWidth, 0, tabScrollWidth, tabHeight), tabsClip));
         }
-        result.Targets.Add(new(TargetKind.Minimize, null, new(tabsWidth, 0, utilityWidth, tabHeight), client));
+        result.Targets.Add(new(TargetKind.Minimize, null, new(client.Width - utilityWidth, 0, utilityWidth, tabHeight), client));
         if (ribbon.IsMinimized || ribbon.SelectedTab is not { } selected) return result;
         var bodyLayout = BuildBody(ribbon, selected, client.Width, bodyOffset, tabHeight);
         result.BodyBounds = bodyLayout.BodyBounds; result.BodyViewport = bodyLayout.BodyViewport; result.BodyExtent = bodyLayout.BodyExtent;
@@ -168,9 +185,9 @@ internal sealed class RibbonLayoutEngine
         int S(double n) => Scale(n, dpi);
         int bodyHeight = S(ribbon.LayoutTheme.BodyHeight);
         var groups = selected.Groups.Where(g => g.Visible).ToArray();
-        var maps = groups.Select(g => !g.CanResize ? new[] { 0 } : g.ReductionMode switch { RibbonGroupReductionMode.Resize => new[] { 0, 1, 2 }, RibbonGroupReductionMode.ResizeThenCollapse => new[] { 0, 1, 2, 3 }, _ => new[] { 0, 3 } }).ToArray();
+        var maps = groups.Select(g => RibbonQuickAccess.RetainsGroup(g) ? new[] { 3 } : !g.CanResize ? new[] { 0 } : g.ReductionMode switch { RibbonGroupReductionMode.Resize => new[] { 0, 1, 2 }, RibbonGroupReductionMode.ResizeThenCollapse => new[] { 0, 1, 2, 3 }, _ => new[] { 0, 3 } }).ToArray();
         var tables = groups.Select((g, i) => maps[i].Select(s => (double)Measure(g, s, ribbon.Font, dpi, ribbon.LayoutTheme).Width).ToArray()).ToArray();
-        var order = groups.Select((g, i) => (g, i)).Where(p => p.g.CanResize)
+        var order = groups.Select((g, i) => (g, i)).Where(p => p.g.CanResize && !RibbonQuickAccess.RetainsGroup(p.g))
             .OrderByDescending(p => p.g.ReductionPriority.HasValue).ThenByDescending(p => p.g.ReductionPriority ?? int.MinValue)
             .ThenByDescending(p => p.g.ReductionPriority.HasValue ? 0 : tables[p.i][0]).ThenByDescending(p => p.i).Select(p => p.i).ToArray();
         var margin = ribbon.LayoutTheme.BodyMargin;

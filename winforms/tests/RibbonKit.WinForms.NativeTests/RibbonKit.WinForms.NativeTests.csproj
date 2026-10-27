@@ -1,6 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><UseWPF>true</UseWPF></PropertyGroup>
   <ItemGroup><ProjectReference Include="../../src/RibbonKit.WinForms/RibbonKit.WinForms.csproj" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/ContextualTabInteractionChecks.cs" Link="PublicContextualTabInteractionChecks.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/QuickAccessOptionInteractionChecks.cs" Link="PublicQuickAccessOptionInteractionChecks.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/QuickAccessGroupInteractionChecks.cs" Link="PublicQuickAccessGroupInteractionChecks.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/QuickAccessMenuInteractionChecks.cs" Link="PublicQuickAccessMenuInteractionChecks.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/QuickAccessComboInteractionChecks.cs" Link="PublicQuickAccessComboInteractionChecks.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/QuickAccessInteractionChecks.cs" Link="PublicQuickAccessInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/MinimizeInteractionChecks.cs" Link="PublicMinimizeInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/MenuInteractionChecks.cs" Link="PublicMenuInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/ScreenTipInteractionChecks.cs" Link="PublicScreenTipInteractionChecks.cs" /></ItemGroup>

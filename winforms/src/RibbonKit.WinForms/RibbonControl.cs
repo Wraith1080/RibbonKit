@@ -30,6 +30,8 @@ public partial class RibbonControl : Control, ISupportInitialize
     public RibbonControl()
     {
         Tabs = new(this);
+        QuickAccessItems = new(this);
+        QuickAccessOverflow = new(this);
         SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.Selectable | ControlStyles.ResizeRedraw, true);
         Dock = DockStyle.Top;
         TabStop = true;
@@ -134,7 +136,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     internal RibbonEditorManager Editors => _editors;
     internal RibbonScreenTipManager ScreenTips => _screenTips;
     internal bool KeyTipsActive => _keyTips;
-    internal IEnumerable<RibbonElement> AllElements => Tabs.SelectMany(t => t.Tree());
+    internal IEnumerable<RibbonElement> AllElements => Tabs.SelectMany(t => t.Tree()).Concat(QuickAccessItems.SelectMany(e => e.Tree()));
     internal void VerifyAccess()
     {
         if (Environment.CurrentManagedThreadId != _threadId)
@@ -151,8 +153,14 @@ public partial class RibbonControl : Control, ISupportInitialize
         var excluded = replacing?.Tree().ToHashSet() ?? [];
         var ids = AllElements.Where(n => !excluded.Contains(n)).Select(n => n.Id).ToHashSet(StringComparer.Ordinal);
         foreach (var node in element.Tree())
+        {
+            if (node is RibbonQuickAccessReference reference) RibbonQuickAccess.ValidateSource(reference.Source, this);
+            if (node is RibbonQuickAccessComboBoxReference comboReference) RibbonQuickAccess.ValidateComboSource(comboReference.Source, this);
+            if (node is RibbonQuickAccessDropDownReference menuReference) RibbonQuickAccess.ValidateMenuSource(menuReference.Source, this);
+            if (node is RibbonQuickAccessGroupReference groupReference) RibbonQuickAccess.ValidateGroupSource(groupReference.Source, this);
             if (!ids.Add(node.Id))
                 throw new ArgumentException("Duplicate ribbon identity: " + node.Id);
+        }
     }
     internal static void DetachElement(RibbonElement element)
     {
@@ -160,6 +168,9 @@ public partial class RibbonControl : Control, ISupportInitialize
         {
             case RibbonControl r when element is RibbonTab tab:
                 r.Tabs.Remove(tab);
+                break;
+            case RibbonControl r:
+                r.QuickAccessItems.Remove(element);
                 break;
             case RibbonTab t when element is RibbonGroup group:
                 t.Groups.Remove(group);
@@ -177,7 +188,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         if (ReferenceEquals(tab, _selectedTab))
             _fallbackTabIndex = index;
     }
-    internal void ModelChanged(bool layout = true)
+    internal void ModelChanged(bool layout = true, bool preservePopups = false)
     {
         if (_disposing)
             return;
@@ -187,7 +198,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         {
             _engine.Clear();
             _layoutDirty = true;
-            _popups.CloseAll(false);
+            if (!preservePopups) _popups.CloseAll(false);
         }
         if (_selectedTab is null || !Tabs.Contains(_selectedTab) || !_selectedTab.Visible || !_selectedTab.EffectiveEnabled)
         {
@@ -241,7 +252,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             return;
         var layout = LayoutTheme;
         Height = RibbonLayoutEngine.Scale(layout.TabHeight, DeviceDpi) + (IsMinimized ? 0 : RibbonLayoutEngine.Scale(layout.BodyHeight, DeviceDpi)
-            + RibbonLayoutEngine.Scale(_theme.BodyMargin.Top, DeviceDpi) + RibbonLayoutEngine.Scale(_theme.BodyMargin.Bottom, DeviceDpi));
+            + RibbonLayoutEngine.Scale(_theme.BodyMargin.Top, DeviceDpi) + RibbonLayoutEngine.Scale(_theme.BodyMargin.Bottom, DeviceDpi)) + QuickAccessHeight;
     }
     private void EnsureLayout()
     {
@@ -291,8 +302,8 @@ public partial class RibbonControl : Control, ISupportInitialize
     {
         base.OnBindingContextChanged(e);
         if (Tabs is not null)
-            foreach (var tab in Tabs)
-                tab.BindingContext = BindingContext;
+            foreach (var element in Tabs.Cast<RibbonElement>().Concat(QuickAccessItems))
+                element.BindingContext = BindingContext;
     }
     /// <inheritdoc />
     protected override void OnEnabledChanged(EventArgs e)
@@ -354,6 +365,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         var context = new RibbonPaintContext(e.Graphics, ClientRectangle, Theme, Font, DeviceDpi);
         Painter.DrawSurface(context, false);
         if (!_snapshot.BodyBounds.IsEmpty) Painter.DrawBody(context with { Bounds = _snapshot.BodyBounds });
+        if (!_snapshot.QuickAccessBounds.IsEmpty) Painter.DrawQuickAccessToolbar(context with { Bounds = _snapshot.QuickAccessBounds }, QuickAccessPosition);
         var state = e.Graphics.Save();
         try
         {
@@ -372,7 +384,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         {
             if (target.DropDownPart || target.Element is IRibbonEditorItem)
                 continue;
-            var arrow = target.Element is RibbonSplitButtonItem ? _snapshot.Targets.First(t => ReferenceEquals(t.Element, target.Element) && t.DropDownPart) : null;
+            var arrow = RibbonSplitLayout.IsSplit(target.Element) ? _snapshot.Targets.First(t => ReferenceEquals(t.Element, target.Element) && t.DropDownPart) : null;
             if (target.VisibleBounds.IsEmpty && (arrow is null || arrow.VisibleBounds.IsEmpty))
                 continue;
             state = e.Graphics.Save();
@@ -387,7 +399,16 @@ public partial class RibbonControl : Control, ISupportInitialize
                     Focused = target.Enabled && !_focusedDropDown && _keyboardFocusCues && Focused && target.Element is not null && ReferenceEquals(target.Element, _focused),
                     ReserveIcon = target.ReserveIcon
                 };
-                if (target.Element is RibbonTab tab)
+                if (target.Kind == TargetKind.QuickAccess && target.Element is RibbonQuickAccessDropDownReference splitReference && arrow is not null)
+                    Painter.DrawQuickAccessSplitItem(ctx, ctx with { Bounds = arrow.Bounds,
+                        Hot = target.Enabled && _hotDropDown && ReferenceEquals(target.Element, _hot),
+                        Pressed = target.Enabled && _pressedDropDown && ReferenceEquals(target.Element, _pressed),
+                        Focused = target.Enabled && _focusedDropDown && _keyboardFocusCues && Focused && ReferenceEquals(target.Element, _focused) }, splitReference, false);
+                else if (target.Kind == TargetKind.QuickAccess)
+                    Painter.DrawQuickAccessItem(ctx, target.Element!, false);
+                else if (target.Kind == TargetKind.QuickAccessOverflow)
+                    Painter.DrawQuickAccessOverflow(ctx);
+                else if (target.Element is RibbonTab tab)
                     Painter.DrawTab(ctx, tab, ReferenceEquals(tab, SelectedTab));
                 else if (target.Element is RibbonSplitButtonItem split && arrow is not null)
                     Painter.DrawSplitItem(ctx, ctx with
@@ -426,7 +447,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             Painter.DrawKeyTip(new(graphics, badge, Theme, Font, DeviceDpi), keys[i]);
         }
     }
-    private IReadOnlyList<RibbonTarget> TipTargets() => _popups.Top?.Targets.Where(t => t.Element is not null && t.Enabled).ToArray() ?? Snapshot.Targets.Where(t => t.Element is not null && (_topTips ? t.Kind == TargetKind.Tab : t.Kind != TargetKind.Tab)).ToArray();
+    private IReadOnlyList<RibbonTarget> TipTargets() => _popups.Top?.Targets.Where(t => t.Element is not null && t.Enabled).ToArray() ?? Snapshot.Targets.Where(t => t.Element is not null && (_topTips ? t.Kind is TargetKind.Tab or TargetKind.QuickAccess or TargetKind.QuickAccessOverflow : t.Kind is TargetKind.Item or TargetKind.Group)).ToArray();
     private RibbonTarget? Hit(Point point) => Snapshot.Targets.LastOrDefault(t => t.Enabled && t.VisibleBounds.Contains(point));
     /// <inheritdoc />
     protected override void OnMouseMove(MouseEventArgs e)
@@ -549,7 +570,9 @@ public partial class RibbonControl : Control, ISupportInitialize
                 {
                     if (target.Element is RibbonTab)
                         _topTips = false;
-                    else if (target.Element is not RibbonGroup && (target.Element is not RibbonDropDownItem || target.Element is RibbonSplitButtonItem && !target.DropDownPart))
+                    else if (target.Kind != TargetKind.QuickAccessOverflow && target.Element is not RibbonGroup and not RibbonQuickAccessGroupReference
+                        && !(target.Element is RibbonQuickAccessDropDownReference menuReference && (menuReference.Source is not RibbonSplitButtonItem || target.DropDownPart))
+                        && (target.Element is not RibbonDropDownItem || target.Element is RibbonSplitButtonItem && !target.DropDownPart))
                         _keyTips = false;
                     Activate(target);
                 }
@@ -596,7 +619,13 @@ public partial class RibbonControl : Control, ISupportInitialize
                 dropDown.ShowDropDown();
                 return true;
             }
-            var scope = targets.Where(t => current < 0 || (t.Kind == TargetKind.Tab) == (targets[current].Kind == TargetKind.Tab)).ToArray();
+            if (current >= 0 && targets[current].Element is RibbonQuickAccessDropDownReference or RibbonQuickAccessGroupReference && keys == Keys.Down)
+            {
+                Activate(targets[current] with { DropDownPart = true });
+                return true;
+            }
+            static int Scope(RibbonTarget t) => t.Kind == TargetKind.Tab ? 0 : t.Kind is TargetKind.QuickAccess or TargetKind.QuickAccessOverflow ? 1 : 2;
+            var scope = targets.Where(t => current < 0 || Scope(t) == Scope(targets[current])).ToArray();
             int index = Array.FindIndex(scope, t => ReferenceEquals(t.Element, _focused) && t.DropDownPart == _focusedDropDown);
             int next = keys == Keys.Home ? 0 : keys == Keys.End ? scope.Length - 1 : (index + (keys is Keys.Left or Keys.Up ? -1 : 1) + scope.Length) % Math.Max(1, scope.Length);
             if (scope.Length > 0)
@@ -614,8 +643,17 @@ public partial class RibbonControl : Control, ISupportInitialize
         _screenTips.Cancel();
         if (!target.Enabled)
             return;
+        if (target.Element is RibbonQuickAccessComboBoxReference openReference && _editors.IsQuickAccessOpen(openReference))
+        { _editors.CloseQuickAccess(openReference); return; }
         if (target.Element is not IRibbonEditorItem && !_editors.CommitFocused()) return;
         if (target.Element is { } element && !ReferenceEquals(element.Ribbon, this)) return;
+        if (target.Kind == TargetKind.QuickAccess)
+        {
+            Control quickAccessOpener = opener ?? (Control?)_popups.Surfaces.LastOrDefault(s => s.Targets.Any(t => ReferenceEquals(t.Element, target.Element))) ?? this;
+            ActivateQuickAccess(target.Element!, quickAccessOpener, target.VisibleBounds, target.DropDownPart);
+            return;
+        }
+        if (target.Kind == TargetKind.QuickAccessOverflow) { _popups.Toggle(QuickAccessOverflow, this, target.VisibleBounds); return; }
         switch (target.Element)
         {
             case RibbonTab tab:
@@ -628,7 +666,7 @@ public partial class RibbonControl : Control, ISupportInitialize
                 _popups.Toggle(group, groupOpener, target.VisibleBounds);
                 break;
             case RibbonSplitButtonItem split when !target.DropDownPart:
-                ActivateSplitPrimary(split);
+                ActivateSplitPrimary(split, opener);
                 break;
             case RibbonDropDownItem drop:
                 OpenDropDown(drop);
@@ -637,8 +675,9 @@ public partial class RibbonControl : Control, ISupportInitialize
                 editor.PerformClick();
                 break;
             case RibbonItem item:
+                bool keepGroup = KeepQuickAccessGroupOpen(item, opener);
                 item.PerformClick();
-                _popups.CloseAll(true);
+                if (!keepGroup) _popups.CloseAll(true);
                 break;
             default:
                 if (target.Kind == TargetKind.Minimize) IsMinimized = !IsMinimized;
@@ -659,10 +698,11 @@ public partial class RibbonControl : Control, ISupportInitialize
         Invalidate();
         AccessibilityChanged();
     }
-    internal void ActivateSplitPrimary(RibbonSplitButtonItem split)
+    internal void ActivateSplitPrimary(RibbonSplitButtonItem split, Control? opener = null)
     {
+        bool keepGroup = KeepQuickAccessGroupOpen(split, opener);
         split.PerformClick();
-        _popups.CloseAll(true);
+        if (!keepGroup) _popups.CloseAll(true);
     }
     internal bool KeyboardFocusCues => _keyboardFocusCues;
     internal void SetKeyboardFocusCues(bool visible)
@@ -679,7 +719,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     {
         if (!ReferenceEquals(element, _focused) && !_editors.CommitFocused()) return;
         _focused = element;
-        _focusedDropDown = element is RibbonSplitButtonItem && dropDownPart;
+        _focusedDropDown = RibbonSplitLayout.IsSplit(element) && dropDownPart;
         Focus();
         var target = Snapshot.Targets.FirstOrDefault(t => ReferenceEquals(t.Element, element) && t.DropDownPart == _focusedDropDown);
         if (target is not null)
@@ -768,7 +808,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         if (!bounds.IsEmpty)
             _popups.Toggle(item, this, bounds);
     }
-    internal void CloseDropDown(RibbonDropDownItem item) => _popups.Close(item, true);
+    internal void CloseDropDown(RibbonDropDownItem item) => _popups.CloseMenu(item, true);
     internal bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime || DesignMode;
     /// <inheritdoc />
     protected override void Dispose(bool disposing)
@@ -783,6 +823,9 @@ public partial class RibbonControl : Control, ISupportInitialize
             foreach (var tab in Tabs.ToArray())
                 tab.Dispose();
             Tabs.Clear();
+            foreach (var entry in QuickAccessItems.ToArray()) entry.Dispose();
+            QuickAccessItems.Clear();
+            QuickAccessOverflow.Dispose();
             _defaultRenderer.Dispose();
             DisposeAutomation();
         }

@@ -13,7 +13,24 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
     internal TextBox? EditorFor(RibbonTextBoxItem item) => _editors.GetValueOrDefault(item)?.Editor as TextBox;
     internal ComboBox? EditorFor(RibbonComboBoxItem item) => _editors.GetValueOrDefault(item)?.Editor as ComboBox;
     internal bool CommitFocused() => _editors.Values.FirstOrDefault(p => p.Editor.ContainsFocus || p.ListOpen)?.CommitAndCloseList() ?? true;
-    internal bool IsDropDownOpen(RibbonComboBoxItem item) => _editors.GetValueOrDefault(item)?.ListOpen ?? false;
+    internal bool IsDropDownOpen(RibbonComboBoxItem item) => _editors.GetValueOrDefault(item) is { ListOpen: true, QuickReference: null };
+    internal bool IsQuickAccessOpen(RibbonQuickAccessComboBoxReference reference) => _editors.Values.Any(p => p.ListOpen && ReferenceEquals(p.QuickReference, reference));
+    internal void CloseQuickAccess(RibbonQuickAccessComboBoxReference reference)
+    {
+        foreach (var presenter in _editors.Values.Where(p => ReferenceEquals(p.QuickReference, reference)).ToArray()) presenter.SetDropDown(false);
+    }
+    internal void OpenQuickAccess(RibbonQuickAccessComboBoxReference reference, Control opener, Rectangle anchor)
+    {
+        if (_disposed || ribbon.IsInDesignMode || !RibbonQuickAccess.Available(reference) || reference.Source is not { } source) return;
+        CloseLists();
+        ribbon.Popups.PrepareChoice(opener);
+        if (!RibbonQuickAccess.Available(reference) || !ReferenceEquals(reference.Source, source) || opener.IsDisposed || !opener.Visible) return;
+        var targets = opener is RibbonPopupSurface popup ? popup.Targets : ribbon.Snapshot.Targets;
+        if (targets.FirstOrDefault(t => ReferenceEquals(t.Element, reference)) is not { } target || target.VisibleBounds.IsEmpty) return;
+        anchor = target.VisibleBounds;
+        if (!_editors.TryGetValue(source, out var presenter)) _editors[source] = presenter = new(ribbon, source);
+        presenter.OpenQuickAccess(reference, opener, anchor);
+    }
     internal void SetDropDown(RibbonComboBoxItem item, bool open)
     {
         if (_editors.TryGetValue(item, out var presenter)) presenter.SetDropDown(open);
@@ -77,8 +94,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
     }
     internal void Release(Control surface)
     {
-        foreach (var presenter in _editors.Values.Where(p => ReferenceEquals(p.Parent, surface)).ToArray())
-            presenter.Park();
+        foreach (var presenter in _editors.Values.ToArray()) presenter.Release(surface);
     }
     public void Dispose()
     {
@@ -99,14 +115,18 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
         private int _labelWidth, _choicesVersion = -1;
         private Rectangle _clip, _field;
         private bool _comboPressed;
+        internal RibbonQuickAccessComboBoxReference? QuickReference { get; private set; }
+        private Control? _quickOpener;
+        private Rectangle _quickAnchor;
+        private int _listChoicesVersion;
         private Region? _ownedRegion;
         internal Control Editor => _editor;
         internal RibbonChoicePopup? Choice { get; private set; }
         internal bool ListOpen => Choice?.Visible ?? false;
-        internal Rectangle ScreenField => RectangleToScreen(_field);
+        internal Rectangle ScreenField => QuickReference is not null && _quickOpener is { IsDisposed: false } opener ? opener.RectangleToScreen(_quickAnchor) : RectangleToScreen(_field);
         internal bool ProcessCharacter(char value)
         {
-            if (_item is not RibbonComboBoxItem { IsEditable: false } || !ListOpen) return false;
+            if ((_item is not RibbonComboBoxItem { IsEditable: false } && QuickReference is null) || !ListOpen) return false;
             Choice!.Character(value); return true;
         }
         internal Presenter(RibbonControl ribbon, RibbonItem item)
@@ -165,6 +185,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
         }
         internal void Present(Control surface, RibbonTarget target)
         {
+            SyncQuickAccess();
             if (!_item.EffectiveEnabled && ListOpen) CloseChoice(true);
             if (!_item.EffectiveEnabled && _dirty && !TryCommit()) CancelEdit();
             if (IsDisposed) return;
@@ -227,7 +248,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
                     _editor.Bounds = new(field.Left + inset, field.Top + (field.Height - Font.Height) / 2,
                         Math.Max(1, field.Width - 2 * inset), Font.Height);
                 }
-                if (Choice is { } currentChoice && !currentChoice.Matches(RectangleToScreen(field))) CloseChoice(true);
+                if (Choice is { } currentChoice && !currentChoice.Matches(QuickReference is null ? RectangleToScreen(field) : ScreenField)) CloseChoice(true);
                 if (IsDisposed) return;
                 if (_editor is ComboBox combo && _item is RibbonComboBoxItem model)
                 {
@@ -265,8 +286,12 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
         }
         internal void Park()
         {
-            CloseChoice(true);
-            if (_dirty && !TryCommit()) CancelEdit();
+            SyncQuickAccess();
+            if (QuickReference is null)
+            {
+                CloseChoice(true);
+                if (_dirty && !TryCommit()) CancelEdit();
+            }
             if (IsDisposed) return;
             var (start, length) = Selection;
             bool focused = _editor.ContainsFocus;
@@ -275,6 +300,49 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
             SelectText(start, length);
             _editing = false;
             if (focused && _ribbon.CanFocus) _ribbon.Focus();
+        }
+        internal void Release(Control surface)
+        {
+            if (ReferenceEquals(_quickOpener, surface)) CloseChoice(true);
+            if (ReferenceEquals(Parent, surface)) Park();
+        }
+        private void SyncQuickAccess()
+        {
+            if (QuickReference is not { } reference || _changingValue || _ending) return;
+            if (_value.IsEditChanged(_lastModel) || _item is RibbonComboBoxItem combo && combo.ChoicesVersion != _listChoicesVersion)
+            {
+                CloseChoice(false); _accepted = _lastModel = _value.CaptureEdit(); _dirty = false;
+                return;
+            }
+            var targets = _quickOpener is RibbonPopupSurface popup ? popup.Targets : _ribbon.Snapshot.Targets;
+            var target = targets.FirstOrDefault(t => ReferenceEquals(t.Element, reference));
+            if (!RibbonQuickAccess.Available(reference) || !ReferenceEquals(reference.Source, _item) || _quickOpener is not { IsDisposed: false, Visible: true }
+                || target is null || target.VisibleBounds != _quickAnchor || Choice is { } choice && !choice.Matches(ScreenField)) CloseChoice(true);
+        }
+        internal void OpenQuickAccess(RibbonQuickAccessComboBoxReference reference, Control opener, Rectangle anchor)
+        {
+            if (_item is not RibbonComboBoxItem model || IsDisposed) return;
+            QuickReference = reference; _quickOpener = opener; _quickAnchor = anchor;
+            _accepted = _lastModel = _value.CaptureEdit(); _listStart = _accepted; _dirty = false; _listChoicesVersion = model.ChoicesVersion;
+            Choice = new(_ribbon, model, opener.RectangleToScreen(anchor), index =>
+            {
+                if (IsDisposed || !RibbonQuickAccess.Available(reference) || !ReferenceEquals(reference.Source, model)) return;
+                var before = _value.CaptureEdit(); _changingValue = true;
+                try { model.SelectedIndex = index; _dirty |= _value.IsEditChanged(before); _lastModel = _value.CaptureEdit(); }
+                finally { _changingValue = false; }
+            }, () =>
+            {
+                if (!CommitAndCloseList()) CloseChoice(true);
+                FocusChoiceOpener(reference, opener);
+            }, () => CloseChoice(true), opener is RibbonPopupSurface);
+            _ribbon.Invalidate(); opener.Invalidate();
+        }
+        private void FocusChoiceOpener(RibbonQuickAccessComboBoxReference? reference, Control? opener)
+        {
+            if (IsDisposed || _ribbon.IsDisposed) return;
+            if (reference is null) { FocusEditor(); return; }
+            if (opener is RibbonPopupSurface { IsDisposed: false } popup && RibbonQuickAccess.Available(reference)) popup.FocusElement(reference);
+            else if (opener is { IsDisposed: false } && RibbonQuickAccess.Available(reference)) _ribbon.FocusElement(reference, enterEditor: false);
         }
         internal bool FocusEditor()
         {
@@ -323,9 +391,14 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
             _ending = true;
             try
             {
+                var reference = QuickReference;
                 var args = new CancelEventArgs();
                 _value.ValidateEdit(args);
                 if (args.Cancel || IsDisposed || _item.IsDisposed) return false;
+                if (reference is not null && (!ReferenceEquals(reference, QuickReference) || !ReferenceEquals(reference.Source, _item) || !RibbonQuickAccess.Available(reference)))
+                { CloseChoice(true); return false; }
+                if (reference is not null && _item is RibbonComboBoxItem model && model.ChoicesVersion != _listChoicesVersion)
+                { CloseChoice(false); return false; }
                 // Accepted callbacks may close/reparent this presentation. They
                 // must not roll a successfully committed list preview back.
                 _listStart = null;
@@ -352,15 +425,20 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
         {
             var popup = Choice;
             Choice = null;
+            var opener = _quickOpener;
+            QuickReference = null; _quickOpener = null;
             if (cancel) RestoreList();
             _listStart = null;
             popup?.Dispose();
             if (!IsDisposed) Invalidate();
+            if (opener is { IsDisposed: false }) opener.Invalidate();
+            _ribbon.Invalidate();
         }
         internal void SetDropDown(bool open)
         {
             if (_editor is not ComboBox combo || IsDisposed) return;
             if (!open) { CloseChoice(true); return; }
+            if (QuickReference is not null) CloseChoice(true);
             if (ListOpen || !Visible || !Enabled || !combo.CanFocus) return;
             _ribbon.Editors.CloseLists(_item);
             _ribbon.Popups.PrepareChoice(Parent!);
@@ -384,14 +462,20 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
         internal bool ProcessListKey(Keys keys)
         {
             if (!ListOpen) return false;
+            var reference = QuickReference; var opener = _quickOpener;
             if (keys is Keys.Up or Keys.Down or Keys.Home or Keys.End or Keys.PageUp or Keys.PageDown)
             { Choice!.Move(keys); return true; }
-            if (keys == Keys.Escape) { CloseChoice(true); if (!IsDisposed) FocusEditor(); return true; }
+            if (keys == Keys.Escape) { CloseChoice(true); FocusChoiceOpener(reference, opener); return true; }
             if (keys is Keys.Enter or Keys.F4 or (Keys.Alt | Keys.Down) or (Keys.Alt | Keys.Up))
             { CommitAndCloseList(); return true; }
             if (keys is Keys.Tab or (Keys.Tab | Keys.Shift))
             {
-                if (CommitAndCloseList() && !IsDisposed) NavigateEditor(keys);
+                if (CommitAndCloseList() && !IsDisposed)
+                {
+                    if (reference is null) NavigateEditor(keys);
+                    else if (opener is RibbonPopupSurface { IsDisposed: false } popup) popup.NavigateFromElement(reference, keys);
+                    else { _ribbon.FocusElement(reference, enterEditor: false); _ribbon.ProcessRibbonKey(keys); }
+                }
                 return true;
             }
             return false;

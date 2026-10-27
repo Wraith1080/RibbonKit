@@ -1,4 +1,53 @@
 #nullable enable
+RibbonKit.WinForms.RibbonTab.IsContextual.get -> bool
+RibbonKit.WinForms.RibbonTab.IsContextual.set -> void
+RibbonKit.WinForms.RibbonTab.IsContextualChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonTab.ContextualColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTab.ContextualColor.set -> void
+RibbonKit.WinForms.RibbonTab.ContextualColorChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonQuickAccessGroupReference
+RibbonKit.WinForms.RibbonQuickAccessGroupReference.RibbonQuickAccessGroupReference() -> void
+RibbonKit.WinForms.RibbonQuickAccessGroupReference.Source.get -> RibbonKit.WinForms.RibbonGroup?
+RibbonKit.WinForms.RibbonQuickAccessGroupReference.Source.set -> void
+RibbonKit.WinForms.RibbonQuickAccessGroupReference.SourceChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonQuickAccessGroupReference.IsDropDownOpen.get -> bool
+virtual RibbonKit.WinForms.RibbonRenderer.DrawOverflowScrollButton(RibbonKit.WinForms.RibbonPaintContext context, bool upward, bool enabled) -> void
+RibbonKit.WinForms.RibbonQuickAccessDropDownReference
+RibbonKit.WinForms.RibbonQuickAccessDropDownReference.RibbonQuickAccessDropDownReference() -> void
+RibbonKit.WinForms.RibbonQuickAccessDropDownReference.Source.get -> RibbonKit.WinForms.RibbonDropDownItem?
+RibbonKit.WinForms.RibbonQuickAccessDropDownReference.Source.set -> void
+RibbonKit.WinForms.RibbonQuickAccessDropDownReference.SourceChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonQuickAccessDropDownReference.IsDropDownOpen.get -> bool
+RibbonKit.WinForms.RibbonQuickAccessDropDownReference.DropDownKeyTip.get -> string!
+RibbonKit.WinForms.RibbonQuickAccessDropDownReference.DropDownKeyTip.set -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawQuickAccessSplitItem(RibbonKit.WinForms.RibbonPaintContext primary, RibbonKit.WinForms.RibbonPaintContext dropDown, RibbonKit.WinForms.RibbonQuickAccessDropDownReference! entry, bool menu) -> void
+RibbonKit.WinForms.RibbonQuickAccessComboBoxReference
+RibbonKit.WinForms.RibbonQuickAccessComboBoxReference.RibbonQuickAccessComboBoxReference() -> void
+RibbonKit.WinForms.RibbonQuickAccessComboBoxReference.Source.get -> RibbonKit.WinForms.RibbonComboBoxItem?
+RibbonKit.WinForms.RibbonQuickAccessComboBoxReference.Source.set -> void
+RibbonKit.WinForms.RibbonQuickAccessComboBoxReference.SourceChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonQuickAccessComboBoxReference.IsDropDownOpen.get -> bool
+RibbonKit.WinForms.RibbonControl.QuickAccessItems.get -> RibbonKit.WinForms.RibbonQuickAccessCollection!
+RibbonKit.WinForms.RibbonControl.QuickAccessVisible.get -> bool
+RibbonKit.WinForms.RibbonControl.QuickAccessVisible.set -> void
+RibbonKit.WinForms.RibbonControl.QuickAccessVisibleChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonControl.QuickAccessPosition.get -> RibbonKit.WinForms.RibbonQuickAccessPosition
+RibbonKit.WinForms.RibbonControl.QuickAccessPosition.set -> void
+RibbonKit.WinForms.RibbonControl.QuickAccessPositionChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonControl.QuickAccessMaxWidth.get -> int
+RibbonKit.WinForms.RibbonControl.QuickAccessMaxWidth.set -> void
+RibbonKit.WinForms.RibbonQuickAccessCollection
+RibbonKit.WinForms.RibbonQuickAccessPosition
+RibbonKit.WinForms.RibbonQuickAccessPosition.TabRow = 0 -> RibbonKit.WinForms.RibbonQuickAccessPosition
+RibbonKit.WinForms.RibbonQuickAccessPosition.BelowRibbon = 1 -> RibbonKit.WinForms.RibbonQuickAccessPosition
+RibbonKit.WinForms.RibbonQuickAccessReference
+RibbonKit.WinForms.RibbonQuickAccessReference.RibbonQuickAccessReference() -> void
+RibbonKit.WinForms.RibbonQuickAccessReference.Source.get -> RibbonKit.WinForms.RibbonButtonItem?
+RibbonKit.WinForms.RibbonQuickAccessReference.Source.set -> void
+RibbonKit.WinForms.RibbonQuickAccessReference.SourceChanged -> System.EventHandler?
+virtual RibbonKit.WinForms.RibbonRenderer.DrawQuickAccessToolbar(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonQuickAccessPosition position) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawQuickAccessItem(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonElement! entry, bool menu) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawQuickAccessOverflow(RibbonKit.WinForms.RibbonPaintContext context) -> void
 RibbonKit.WinForms.RibbonControl.IsMinimized.get -> bool
 RibbonKit.WinForms.RibbonControl.IsMinimized.set -> void
 RibbonKit.WinForms.RibbonControl.IsMinimizedChanged -> System.EventHandler?

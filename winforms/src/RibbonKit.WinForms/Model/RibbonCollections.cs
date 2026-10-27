@@ -9,6 +9,10 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
     private readonly object _owner;
     internal RibbonElementCollection(object owner) => _owner = owner;
     private RibbonControl? Ribbon => _owner is RibbonControl r ? r : (_owner as RibbonElement)?.Ribbon;
+    private void Changed()
+    {
+        if (Ribbon is { } ribbon) ribbon.ModelChanged(preservePopups: ribbon.Popups.IsPreparingContent(_owner as RibbonElement, true));
+    }
     private void Verify(T item, T? replacing = null)
     {
         ArgumentNullException.ThrowIfNull(item);
@@ -46,7 +50,7 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
         if (Ribbon is { } ribbon)
             item.BindingContext = ribbon.BindingContext;
         RibbonRadioButtonItem.NormalizeAttached(item);
-        Ribbon?.ModelChanged();
+        Changed();
     }
     /// <inheritdoc />
     protected override void SetItem(int index, T item)
@@ -62,7 +66,7 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
         if (Ribbon is { } ribbon)
             item.BindingContext = ribbon.BindingContext;
         RibbonRadioButtonItem.NormalizeAttached(item);
-        Ribbon?.ModelChanged();
+        Changed();
     }
     /// <inheritdoc />
     protected override void RemoveItem(int index)
@@ -74,7 +78,7 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
             ribbon?.RemovingTab(tab, index);
         item.Parent = null;
         base.RemoveItem(index);
-        ribbon?.ModelChanged();
+        Changed();
     }
     /// <inheritdoc />
     protected override void ClearItems()
@@ -83,7 +87,7 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
         foreach (var item in this)
             item.Parent = null;
         base.ClearItems();
-        Ribbon?.ModelChanged();
+        Changed();
     }
     /// <summary>Adds authored components in order.</summary>
     public void AddRange(params T[] items)

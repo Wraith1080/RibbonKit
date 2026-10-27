@@ -8,6 +8,18 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--validate-contextual" or "--validate-contextual-flat")
+            return ContextualTabInteractionChecks.Run(args[1], args[0] == "--validate-contextual-flat");
+        if (args.Length == 2 && args[0] is "--validate-qat-options" or "--validate-qat-options-flat")
+            return QuickAccessOptionInteractionChecks.Run(args[1], args[0] == "--validate-qat-options-flat");
+        if (args.Length == 2 && args[0] is "--validate-qat-groups" or "--validate-qat-groups-flat")
+            return QuickAccessGroupInteractionChecks.Run(args[1], args[0] == "--validate-qat-groups-flat");
+        if (args.Length == 2 && args[0] is "--validate-qat-menus" or "--validate-qat-menus-flat")
+            return QuickAccessMenuInteractionChecks.Run(args[1], args[0] == "--validate-qat-menus-flat");
+        if (args.Length == 2 && args[0] is "--validate-qat-combo" or "--validate-qat-combo-flat")
+            return QuickAccessComboInteractionChecks.Run(args[1], args[0] == "--validate-qat-combo-flat");
+        if (args.Length == 2 && args[0] is "--validate-qat" or "--validate-qat-flat")
+            return QuickAccessInteractionChecks.Run(args[1], args[0] == "--validate-qat-flat");
         if (args.Length == 2 && args[0] is "--validate-minimize" or "--validate-minimize-flat")
             return MinimizeInteractionChecks.Run(args[1], args[0] == "--validate-minimize-flat");
         if (args.Length == 2 && args[0] is "--validate-menus" or "--validate-menus-flat")

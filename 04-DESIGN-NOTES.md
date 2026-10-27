@@ -1171,6 +1171,9 @@ records shared-state isolation and bounded test-only timeout exceptions.
 
 ### Remaining or intentionally deferred
 
+- **Future WPF improvements:** deferred checkbox/radio QAT icon-button ideas are
+  recorded in the [future improvements plan](docs/22-FUTURE-WPF-IMPROVEMENTS.md).
+
 - **RibbonKit 1.1 acceptance and release:** campaign scope, inherited Writer
   evidence and execution gates are in the
   [acceptance plan](docs/20-V1.1-ACCEPTANCE-AND-RELEASE-PLAN.md).

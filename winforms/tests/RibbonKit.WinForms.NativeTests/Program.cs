@@ -11,6 +11,18 @@ internal static partial class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--contextual-checks" or "--contextual-checks-flat")
+            return IndependentConsumer.ContextualTabInteractionChecks.Run(args[1], args[0] == "--contextual-checks-flat");
+        if (args.Length == 2 && args[0] is "--qat-option-checks" or "--qat-option-checks-flat")
+            return IndependentConsumer.QuickAccessOptionInteractionChecks.Run(args[1], args[0] == "--qat-option-checks-flat");
+        if (args.Length == 2 && args[0] is "--qat-group-checks" or "--qat-group-checks-flat")
+            return IndependentConsumer.QuickAccessGroupInteractionChecks.Run(args[1], args[0] == "--qat-group-checks-flat");
+        if (args.Length == 2 && args[0] is "--qat-menu-checks" or "--qat-menu-checks-flat")
+            return IndependentConsumer.QuickAccessMenuInteractionChecks.Run(args[1], args[0] == "--qat-menu-checks-flat");
+        if (args.Length == 2 && args[0] is "--qat-combo-checks" or "--qat-combo-checks-flat")
+            return IndependentConsumer.QuickAccessComboInteractionChecks.Run(args[1], args[0] == "--qat-combo-checks-flat");
+        if (args.Length == 2 && args[0] is "--qat-checks" or "--qat-checks-flat")
+            return IndependentConsumer.QuickAccessInteractionChecks.Run(args[1], args[0] == "--qat-checks-flat");
         if (args.Length == 2 && args[0] is "--minimize-checks" or "--minimize-checks-flat")
             return IndependentConsumer.MinimizeInteractionChecks.Run(args[1], args[0] == "--minimize-checks-flat");
         if (args.Length == 2 && args[0] is "--menu-checks" or "--menu-checks-flat")

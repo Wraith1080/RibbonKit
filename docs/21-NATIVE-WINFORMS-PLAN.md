@@ -1,8 +1,10 @@
 # Native RibbonKit.WinForms assessment and implementation plan
 
-> Implementation through M2G minimize/expand, 2026-10-27, following
-> the user's acceptance of the M2C editor and startup polish. Current bounded
-> evidence and remaining review are in the M2 ledger. Comprehensive theming is deferred
+> Implementation through M4A contextual tabs,
+> 2026-10-27. Current bounded
+> scope, evidence and remaining review are in the [M4 ledger](../winforms/docs/M4-STATUS.md).
+> The [M3 ledger](../winforms/docs/M3-STATUS.md) retains QAT/projection evidence.
+> Comprehensive theming is deferred
 > until most component slices are implemented; see the sequencing decision in §6.
 > [M2 scope and evidence](../winforms/docs/M2-STATUS.md) records the bounded API and
 > implementation gates. Accessibility compatibility is deferred while the necessary
@@ -649,6 +651,15 @@ designer/accessibility feasibility. Each milestone closes only its stated scope.
 | M4: broader surfaces | M2/M3 foundations. Additional themes/accents/gradients, Compact/Touch, localization/RTL, galleries, File/application menu/Backstage, contextual tabs, merge/modal services. Deliver as separate bounded slices. | Per-slice native visuals/input/DPI/UIA/designer gates; mixed-direction editors differ from mirrored layout; gallery preview/cancel/commit proven. Merge/modal state/order/restoration and transient provenance tested before M5 persistence integration. Full contrast-theme support needs its own defined slice. |
 | M5: customization and Simplified Ribbon | M3 and relevant M4 services; stable IDs from M1. Versioned structural persistence, draft/Apply/Cancel, custom tabs/groups, QAT commands, Simplified pin/overflow/customization, feature policies. | Malformed/foreign/unknown/future schema cases, restart and stable IDs, Reset/Import/Export, Apply -> further edits -> Cancel checkpoint, transient exclusion, projection sync and independent app acceptance. Groups remain QAT-only available entries. Storage and appearance mode persistence remain host-owned. |
 | M6: motion and optional window integration | Stable earlier geometry/lifetimes; explicit new scope. Reduced-motion-aware presentation, interruptions, host synchronization, title-bar QAT, optional chrome/backdrop integration. | Meet the later-motion frame-pacing protocol below, including first-use and concurrent resize/popup activity. Cleanup and immediate final geometry under interruption/reduced motion; command ownership/input/UIA remain coherent. Independent ordinary Form still works. Validate native hit testing, maximize/Snap/DPI and genuine mixed-monitor behavior for each optional host integration. |
+
+**M3A hosting boundary, 2026-10-27:** command declarations, borrowed source
+references, row measurement and rendering remain independent of placement.
+The current API supports TabRow/BelowRibbon in an ordinary Form. The user
+explicitly requested future title-bar QAT support; M6's optional RibbonForm/window
+integration must reuse those declarations and state, without requiring command
+recreation, model reparenting or a second owner. An unsupported TitleBar value
+is not exposed ahead of that host. No title-bar/chrome implementation is included
+in M3A. [Current implementation and next projection scope](../winforms/docs/M3-STATUS.md).
 
 Milestones are dependency groups, not invitations to implement all deferred features
 at once. Each new item type needs public-API review, designer serialization,

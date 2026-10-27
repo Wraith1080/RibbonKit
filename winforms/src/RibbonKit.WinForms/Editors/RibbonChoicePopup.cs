@@ -20,7 +20,7 @@ internal sealed class RibbonChoicePopup : IDisposable
     private bool _silent, _disposed, _activationPending;
     internal bool Visible => !_disposed && _window.Visible;
     internal RibbonChoicePopup(RibbonControl ribbon, RibbonComboBoxItem item, Rectangle anchor,
-        Action<int> preview, Action accept, Action cancel)
+        Action<int> preview, Action accept, Action cancel, bool submenu = false)
     {
         ribbon.ScreenTips.Cancel();
         _ribbon = ribbon; _item = item; _anchor = anchor; _theme = ribbon.Theme;
@@ -36,10 +36,14 @@ internal sealed class RibbonChoicePopup : IDisposable
         _list.Items.AddRange(item.Items.Cast<object>().ToArray());
         _list.SelectedIndex = item.SelectedIndex;
         _list.SelectedIndexChanged += (_, _) => { if (!_silent && !_disposed && _list.SelectedIndex >= 0) _preview(_list.SelectedIndex); };
-        int width = Math.Max(anchor.Width, item.Items.Select(text => RibbonCaptionLayout.TextWidth(text, ribbon.Font)
-            + RibbonLayoutEngine.Scale(12, ribbon.DeviceDpi)).DefaultIfEmpty(anchor.Width).Max());
+        // A QAT anchor may be narrower than every choice. Measure on the
+        // owning surface's DPI-aware DC, including both text insets and frame.
+        using var measure = ribbon.CreateGraphics();
+        int width = Math.Max(anchor.Width, item.Items.Select(text => TextRenderer.MeasureText(measure, text, ribbon.Font,
+            new(int.MaxValue, int.MaxValue), TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding).Width
+            + 2 * RibbonLayoutEngine.Scale(6, ribbon.DeviceDpi) + 2).DefaultIfEmpty(anchor.Width).Max());
         if (item.Items.Count > 8) width += SystemInformation.GetVerticalScrollBarWidthForDpi(ribbon.DeviceDpi);
-        var bounds = CalculateBounds(anchor, Screen.FromRectangle(anchor).WorkingArea, width, _list.ItemHeight, item.Items.Count, ribbon.DeviceDpi);
+        var bounds = CalculateBounds(anchor, Screen.FromRectangle(anchor).WorkingArea, width, _list.ItemHeight, item.Items.Count, ribbon.DeviceDpi, submenu);
         _list.Size = new(bounds.Width - 2, bounds.Height - 2);
         var host = new ToolStripControlHost(_list) { AutoSize = false, Size = _list.Size, Margin = Padding.Empty, Padding = Padding.Empty };
         _window = new(ribbon, QueueActivationCheck) { Size = bounds.Size, Name = item.Id + ".popup" };
@@ -54,8 +58,9 @@ internal sealed class RibbonChoicePopup : IDisposable
         }
         _window.Show(bounds.Location);
     }
-    internal static Rectangle CalculateBounds(Rectangle anchor, Rectangle work, int width, int rowHeight, int count, int dpi)
+    internal static Rectangle CalculateBounds(Rectangle anchor, Rectangle work, int width, int rowHeight, int count, int dpi, bool submenu = false)
     {
+        if (submenu) return RibbonPopupManager.CalculateBounds(anchor, work, new(width, Math.Max(1, Math.Min(count, 8)) * rowHeight + 2), true, dpi);
         int inset = RibbonLayoutEngine.Scale(8, dpi);
         if (work.Width > 2 * inset + 2 && work.Height > 2 * inset + rowHeight + 2) work.Inflate(-inset, -inset);
         int below = Math.Max(0, work.Bottom - anchor.Bottom), above = Math.Max(0, anchor.Top - work.Top);
@@ -82,6 +87,7 @@ internal sealed class RibbonChoicePopup : IDisposable
     internal void Move(Keys key)
     {
         if (_disposed || _list.Items.Count == 0) return;
+        _list.ClearHot();
         int page = Math.Max(1, _list.ClientSize.Height / _list.ItemHeight);
         int index = _list.SelectedIndex;
         index = key switch { Keys.Home => 0, Keys.End => _list.Items.Count - 1,
@@ -90,7 +96,7 @@ internal sealed class RibbonChoicePopup : IDisposable
     }
     internal void Character(char value)
     {
-        if (!_disposed) SendMessage(_list.Handle, 0x102, value, 1); // native ListBox incremental search
+        if (!_disposed) { _list.ClearHot(); SendMessage(_list.Handle, 0x102, value, 1); } // native ListBox incremental search
     }
     private void OnMove(object? sender, EventArgs e) => _cancel();
     private void OnDeactivate(object? sender, EventArgs e) => QueueActivationCheck();
@@ -122,25 +128,45 @@ internal sealed class RibbonChoicePopup : IDisposable
     private sealed class ChoiceList(RibbonChoicePopup owner) : ListBox
     {
         private int _pressed = -1;
+        private int _hot = -1;
         private Point _pointer = MousePosition;
         protected override void OnDrawItem(DrawItemEventArgs e)
         {
             if (owner._disposed || e.Index < 0 || e.Index >= owner._item.Items.Count) return;
             var ribbon = owner._ribbon;
-            ribbon.Painter.DrawComboBoxItem(new(e.Graphics, e.Bounds, ribbon.Theme, Font, ribbon.DeviceDpi),
-                owner._item, e.Index, e.Index == SelectedIndex);
+            // DRAWITEM carries the row's current native state even during a
+            // selection transition, when querying SelectedIndex can still
+            // return the previous row and leave its selected paint behind.
+            ribbon.Painter.DrawComboBoxItem(new(e.Graphics, e.Bounds, ribbon.Theme, Font, ribbon.DeviceDpi,
+                Hot: e.Index == _hot, Pressed: e.Index == _pressed && Capture),
+                owner._item, e.Index, (e.State & DrawItemState.Selected) != 0);
         }
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
-            // Opening, scrolling and repainting can synthesize WM_MOUSEMOVE for
-            // a stationary pointer. Those messages must not replace typed text
-            // or a keyboard preview with the row underneath the old pointer.
+            // Opening, scrolling and repainting can synthesize WM_MOUSEMOVE.
+            // Only real motion resumes pointer highlighting after keyboard use.
             var pointer = MousePosition;
             if (_pointer == pointer) return;
             _pointer = pointer;
             int index = IndexFromPoint(e.Location);
-            if (ClientRectangle.Contains(e.Location) && index >= 0) SelectedIndex = index;
+            SetHot(ClientRectangle.Contains(e.Location) ? index : -1);
+        }
+        internal void ClearHot() => SetHot(-1);
+        private void SetHot(int index)
+        {
+            if (_hot == index) return;
+            int previous = _hot; _hot = index;
+            InvalidateRow(previous); InvalidateRow(index);
+        }
+        private void InvalidateRow(int index)
+        {
+            if (index >= 0 && index < Items.Count) Invalidate(GetItemRectangle(index));
+        }
+        protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); ClearHot(); }
+        protected override void OnMouseCaptureChanged(EventArgs e)
+        {
+            base.OnMouseCaptureChanged(e); int previous = _pressed; _pressed = -1; InvalidateRow(previous);
         }
         protected override void WndProc(ref Message m)
         {
@@ -153,13 +179,19 @@ internal sealed class RibbonChoicePopup : IDisposable
                 if (m.Msg == 0x201)
                 {
                     _pressed = index; Capture = index >= 0;
-                    if (index >= 0) SelectedIndex = index;
+                    SetHot(index); InvalidateRow(index);
                 }
                 else
                 {
                     bool accept = index >= 0 && index == _pressed;
+                    int pressed = _pressed;
                     _pressed = -1; Capture = false;
-                    if (accept) owner._accept();
+                    InvalidateRow(pressed);
+                    if (accept)
+                    {
+                        SelectedIndex = index;
+                        if (!owner._disposed) owner._accept();
+                    }
                 }
                 m.Result = 0; return;
             }

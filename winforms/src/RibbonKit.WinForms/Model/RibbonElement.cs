@@ -141,7 +141,10 @@ public abstract class RibbonElement : Component, IBindableComponent
     /// <summary>Occurs after the binding context changes.</summary>
     public event EventHandler? BindingContextChanged;
     internal bool EffectiveEnabled => !IsDisposed && Enabled && (Parent is RibbonElement parent ? parent.EffectiveEnabled : Ribbon?.Enabled ?? true);
-    internal void Changed(bool layout = true) => Ribbon?.ModelChanged(layout);
+    internal void Changed(bool layout = true)
+    {
+        if (Ribbon is { } ribbon) ribbon.ModelChanged(layout, ribbon.Popups.IsPreparingContent(this));
+    }
     internal IEnumerable<RibbonElement> Tree()
     {
         yield return this;

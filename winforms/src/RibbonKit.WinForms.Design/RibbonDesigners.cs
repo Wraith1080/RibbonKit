@@ -6,7 +6,7 @@ namespace RibbonKit.WinForms.Design;
 
 public sealed class RibbonControlDesigner : ControlDesigner
 {
-    public override IReadOnlyCollection<IComponent> AssociatedComponents => ((RibbonControl)Component).Tabs.SelectMany(t => t.TreeForDesigner()).ToArray();
+    public override IReadOnlyCollection<IComponent> AssociatedComponents => ((RibbonControl)Component).Tabs.Cast<RibbonElement>().Concat(((RibbonControl)Component).QuickAccessItems).SelectMany(t => t.TreeForDesigner()).ToArray();
 }
 public sealed class RibbonElementDesigner : ComponentDesigner
 {
@@ -32,6 +32,10 @@ internal static class ComponentTree
 public sealed class TabCollectionEditor(IServiceProvider serviceProvider, Type type) : CollectionEditor(serviceProvider, type)
 {
     protected override Type[] CreateNewItemTypes() => [typeof(RibbonTab)];
+}
+public sealed class QuickAccessCollectionEditor(IServiceProvider serviceProvider, Type type) : CollectionEditor(serviceProvider, type)
+{
+    protected override Type[] CreateNewItemTypes() => [typeof(RibbonButtonItem), typeof(RibbonToggleItem), typeof(RibbonQuickAccessReference), typeof(RibbonQuickAccessComboBoxReference), typeof(RibbonQuickAccessDropDownReference), typeof(RibbonQuickAccessGroupReference)];
 }
 public sealed class GroupCollectionEditor(IServiceProvider serviceProvider, Type type) : CollectionEditor(serviceProvider, type)
 {

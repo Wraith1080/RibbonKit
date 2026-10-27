@@ -26,6 +26,8 @@ public enum RibbonItemSize
 /// <summary>A tab owning a collection of ribbon groups.</summary>
 public sealed class RibbonTab : RibbonElement
 {
+    private bool _isContextual;
+    private Color _contextualColor = Color.Empty;
     /// <summary>Initializes a RibbonTab instance.</summary>
     public RibbonTab() => Groups = new(this);
     /// <summary>Gets the stable, owned group collection.</summary>
@@ -34,6 +36,34 @@ public sealed class RibbonTab : RibbonElement
     {
         get;
     }
+    /// <summary>Gets or sets whether this tab uses contextual header colors. Visibility and selection remain application-controlled.</summary>
+    [Category("Appearance"), Bindable(true), DefaultValue(false)]
+    public bool IsContextual
+    {
+        get => _isContextual;
+        set
+        {
+            Ribbon?.VerifyAccess();
+            if (_isContextual == value) return;
+            _isContextual = value; Changed(false); IsContextualChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+    /// <summary>Gets or sets the contextual header tint. Color.Empty uses the current ribbon theme accent; ordinary tabs ignore this value.</summary>
+    [Category("Appearance"), Bindable(true), DefaultValue(typeof(Color), "")]
+    public Color ContextualColor
+    {
+        get => _contextualColor;
+        set
+        {
+            Ribbon?.VerifyAccess();
+            if (_contextualColor == value) return;
+            _contextualColor = value; Changed(false); ContextualColorChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+    /// <summary>Occurs after IsContextual changes.</summary>
+    public event EventHandler? IsContextualChanged;
+    /// <summary>Occurs after ContextualColor changes.</summary>
+    public event EventHandler? ContextualColorChanged;
     internal override IEnumerable<RibbonElement> Children => Groups;
 }
 

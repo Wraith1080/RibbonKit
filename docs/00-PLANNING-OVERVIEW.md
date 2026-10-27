@@ -26,6 +26,7 @@ matrix. Their measured failures and fixes belong in the design history.
 | Native WinForms scope and first implementation milestone | [WinForms plan](21-NATIVE-WINFORMS-PLAN.md), [native acceptance](../winforms/docs/M1-STATUS.md) |
 | Completed phases and candidate tracks | [Roadmap](03-ROADMAP.md) |
 | Planned ribbon follow-ons, in order | [Feature availability](16-RIBBON-FEATURE-AVAILABILITY-PLAN.md), [Toolbox definitions](17-TOOLBOX-ITEM-DEFINITION-PLAN.md), [Ribbon/host animation synchronization](18-HOST-LAYOUT-TRANSITION-PLAN.md) |
+| Deferred WPF ideas for later review | [Future WPF improvements](22-FUTURE-WPF-IMPROVEMENTS.md) |
 | Work and validate a change | [AGENTS.md](../AGENTS.md), [CONTRIBUTING.md](../CONTRIBUTING.md) |
 
 Original name-selection, package-name reservation, competitor comparisons and

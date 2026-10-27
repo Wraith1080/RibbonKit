@@ -7,6 +7,30 @@ try {
     if ($LASTEXITCODE) { throw 'Native build failed.' }
     dotnet test tests/RibbonKit.WinForms.Tests -c $Configuration --no-build
     if ($LASTEXITCODE) { throw 'Native unit/STA tests failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --contextual-checks TestResults/visual/contextual-native
+    if ($LASTEXITCODE) { throw 'Native contextual tab checks failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --contextual-checks-flat TestResults/visual/contextual-flat-native
+    if ($LASTEXITCODE) { throw 'Native neutral contextual tab checks failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --qat-option-checks TestResults/visual/qat-options-native
+    if ($LASTEXITCODE) { throw 'Native Quick Access option checks failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --qat-option-checks-flat TestResults/visual/qat-options-flat-native
+    if ($LASTEXITCODE) { throw 'Native neutral Quick Access option checks failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --qat-group-checks TestResults/visual/qat-groups-native
+    if ($LASTEXITCODE) { throw 'Native Quick Access group checks failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --qat-group-checks-flat TestResults/visual/qat-groups-flat-native
+    if ($LASTEXITCODE) { throw 'Native neutral Quick Access group checks failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --qat-menu-checks TestResults/visual/qat-menus-native
+    if ($LASTEXITCODE) { throw 'Native Quick Access menu/split checks failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --qat-menu-checks-flat TestResults/visual/qat-menus-flat-native
+    if ($LASTEXITCODE) { throw 'Native neutral Quick Access menu/split checks failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --qat-combo-checks TestResults/visual/qat-combo-native
+    if ($LASTEXITCODE) { throw 'Native Quick Access ComboBox checks failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --qat-combo-checks-flat TestResults/visual/qat-combo-flat-native
+    if ($LASTEXITCODE) { throw 'Native neutral Quick Access ComboBox checks failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --qat-checks TestResults/visual/qat-native
+    if ($LASTEXITCODE) { throw 'Native Quick Access checks failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --qat-checks-flat TestResults/visual/qat-flat-native
+    if ($LASTEXITCODE) { throw 'Native neutral Quick Access checks failed.' }
     dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --minimize-checks TestResults/visual/minimize-native
     if ($LASTEXITCODE) { throw 'Native minimize checks failed.' }
     dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --minimize-checks-flat TestResults/visual/minimize-flat-native
@@ -55,6 +79,18 @@ try {
         dotnet build (Join-Path $consumerRoot 'RibbonKit.WinForms.Consumer.csproj') -c $Configuration --no-restore
         if ($LASTEXITCODE) { throw 'Isolated package consumer build failed.' }
         $consumerExe = Join-Path $consumerRoot "bin/$Configuration/net10.0-windows/RibbonKit.WinForms.Consumer.exe"
+        foreach ($contextualMode in @('contextual', 'contextual-flat')) {
+            $contextualEvidence = Join-Path $nativeRoot ('TestResults/visual/m4a-package-' + $contextualMode)
+            $contextualProcess = Start-Process -FilePath $consumerExe -ArgumentList @(('--validate-' + $contextualMode), ('"' + $contextualEvidence + '"')) -PassThru -Wait
+            if ($contextualProcess.ExitCode) { throw "Package contextual tab checks failed: $contextualEvidence/result.log" }
+        }
+        foreach ($qatMode in @('qat', 'qat-flat', 'qat-combo', 'qat-combo-flat', 'qat-menus', 'qat-menus-flat', 'qat-groups', 'qat-groups-flat', 'qat-options', 'qat-options-flat')) {
+            $qatEvidence = Join-Path $nativeRoot ('TestResults/visual/m3a-package-' + $qatMode)
+            # This is an interactive native-input fixture: its Form must paint
+            # and retain foreground focus, and runs must wait for each other.
+            $qatProcess = Start-Process -FilePath $consumerExe -ArgumentList @(('--validate-' + $qatMode), ('"' + $qatEvidence + '"')) -PassThru -Wait
+            if ($qatProcess.ExitCode) { throw "Package Quick Access checks failed: $qatEvidence/result.log" }
+        }
         foreach ($minimizeMode in @('minimize', 'minimize-flat')) {
             $minimizeEvidence = Join-Path $nativeRoot ('TestResults/visual/m2g-package-' + $minimizeMode)
             $minimizeProcess = Start-Process -FilePath $consumerExe -ArgumentList @(('--validate-' + $minimizeMode), ('"' + $minimizeEvidence + '"')) -PassThru -Wait

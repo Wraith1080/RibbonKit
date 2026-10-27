@@ -54,6 +54,16 @@ public class RibbonRenderer : IDisposable
             context.Hot || context.Pressed ? context.Theme.Accent : context.Theme.PopupBorder);
         RibbonArrowPainter.DrawHorizontal(context.Graphics, context.Bounds, context.DeviceDpi, context.Theme.Foreground, backward);
     }
+    /// <summary>Paints an opaque vertical overflow-menu scroll band in device-pixel bounds, including its direction and endpoint availability.</summary>
+    public virtual void DrawOverflowScrollButton(RibbonPaintContext context, bool upward, bool enabled)
+    {
+        using (var background = new SolidBrush(Color.FromArgb(255, context.Theme.Surface)))
+            context.Graphics.FillRectangle(background, context.Bounds);
+        if (enabled && (context.Hot || context.Pressed))
+            DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
+        RibbonArrowPainter.DrawVertical(context.Graphics, context.Bounds, context.DeviceDpi,
+            enabled ? context.Theme.Foreground : SystemColors.GrayText, upward);
+    }
     /// <summary>Paints the measured tab-row minimize/expand button. A minimized ribbon shows a downward chevron.</summary>
     public virtual void DrawMinimizeButton(RibbonPaintContext context, bool minimized)
     {
@@ -62,6 +72,118 @@ public class RibbonRenderer : IDisposable
         using (var background = new SolidBrush(context.Theme.Background)) context.Graphics.FillRectangle(background, context.Bounds);
         if (context.Hot || context.Pressed) DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
         RibbonArrowPainter.DrawVertical(context.Graphics, context.Bounds, context.DeviceDpi, context.Theme.Foreground, !minimized);
+    }
+    /// <summary>Paints the measured Quick Access strip using the shared palette.</summary>
+    public virtual void DrawQuickAccessToolbar(RibbonPaintContext context, RibbonQuickAccessPosition position)
+    {
+        using var brush = new SolidBrush(context.Theme.Background);
+        context.Graphics.FillRectangle(brush, context.Bounds);
+        using var border = new SolidBrush(context.Theme.Border);
+        if (position == RibbonQuickAccessPosition.TabRow)
+            context.Graphics.FillRectangle(border, context.Bounds.Right - 1, context.Bounds.Top + 6, 1, Math.Max(0, context.Bounds.Height - 12));
+    }
+    /// <summary>Paints a toolbar entry or overflow row. References read command state without changing its owner or model.</summary>
+    public virtual void DrawQuickAccessItem(RibbonPaintContext context, RibbonElement entry, bool menu)
+    {
+        bool enabled = RibbonQuickAccess.Available(entry);
+        context = EnabledContext(context, enabled);
+        var command = RibbonQuickAccess.Command(entry);
+        bool check = command is RibbonToggleItem { Checked: true } or RibbonCheckBoxItem { Checked: true } or RibbonRadioButtonItem { Checked: true } or RibbonSplitButtonItem { Checked: true };
+        bool open = entry is RibbonQuickAccessComboBoxReference { IsDropDownOpen: true } or RibbonQuickAccessDropDownReference { IsDropDownOpen: true } or RibbonQuickAccessGroupReference { IsDropDownOpen: true };
+        if (check || open || context.Hot || context.Pressed)
+            DrawChrome(context, open || context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, Color.Transparent);
+        DrawQuickAccessContent(context, entry, menu);
+        if (command is RibbonCheckBoxItem { CheckState: CheckState.Indeterminate })
+        {
+            // Preserve the action icon; a small bar below it distinguishes mixed from checked.
+            int S(double value) => RibbonLayoutEngine.Scale(value, context.DeviceDpi);
+            int center = menu ? context.Bounds.Left + S(14) : context.Bounds.Left + context.Bounds.Width / 2;
+            int top = Math.Min(context.Bounds.Bottom - S(3), context.Bounds.Top + context.Bounds.Height / 2 + S(9));
+            using var mark = new SolidBrush(enabled ? context.Theme.Foreground : SystemColors.GrayText);
+            context.Graphics.FillRectangle(mark, center - S(3), top, S(6), S(2));
+        }
+        if (context.Focused) DrawFocus(context);
+    }
+    /// <summary>Paints a borrowed split command with separate measured primary and menu states. The source's checked state belongs to the primary half.</summary>
+    public virtual void DrawQuickAccessSplitItem(RibbonPaintContext primary, RibbonPaintContext dropDown, RibbonQuickAccessDropDownReference entry, bool menu)
+    {
+        bool enabled = RibbonQuickAccess.Available(entry);
+        primary = EnabledContext(primary, enabled); dropDown = EnabledContext(dropDown, enabled);
+        bool check = entry.Source is RibbonSplitButtonItem { Checked: true };
+        var whole = primary with { Bounds = Rectangle.Union(primary.Bounds, dropDown.Bounds), Hot = false, Pressed = false, Focused = false };
+        bool open = enabled && entry.IsDropDownOpen;
+        if (check || open || primary.Hot || dropDown.Hot || primary.Pressed || dropDown.Pressed)
+        {
+            Half(primary, check, false); Half(dropDown, false, open);
+            using var separator = new SolidBrush(primary.Theme.Border);
+            primary.Graphics.FillRectangle(separator, dropDown.Bounds.Left, whole.Bounds.Top + 1, 1, Math.Max(0, whole.Bounds.Height - 2));
+        }
+        DrawQuickAccessContent(primary, entry, menu);
+        var color = enabled ? primary.Theme.Foreground : SystemColors.GrayText;
+        if (menu) DrawSubmenuArrow(dropDown, color); else DrawDropDownArrow(dropDown, color);
+        if (primary.Focused) DrawFocus(primary);
+        if (dropDown.Focused) DrawFocus(dropDown);
+
+        void Half(RibbonPaintContext part, bool marked, bool expanded)
+        {
+            var saved = whole.Graphics.Save();
+            try
+            {
+                whole.Graphics.SetClip(part.Bounds, CombineMode.Intersect);
+                DrawChrome(whole, part.Pressed || expanded ? whole.Theme.Pressed : part.Hot ? whole.Theme.Hover : marked ? whole.Theme.Checked : new(whole.Theme.Surface), Color.Transparent);
+            }
+            finally { whole.Graphics.Restore(saved); }
+        }
+    }
+    private void DrawQuickAccessContent(RibbonPaintContext context, RibbonElement entry, bool menu)
+    {
+        bool enabled = RibbonQuickAccess.Available(entry);
+        var command = RibbonQuickAccess.Command(entry);
+        bool chooser = entry is RibbonQuickAccessComboBoxReference or RibbonQuickAccessGroupReference || entry is RibbonQuickAccessDropDownReference { Source: not RibbonSplitButtonItem };
+        var caption = RibbonQuickAccess.Caption(entry);
+        var color = enabled ? context.Theme.Foreground : SystemColors.GrayText;
+        var contentContext = context;
+        if (chooser) contentContext = context with { Bounds = context.Bounds with { Width = Math.Max(0, context.Bounds.Width - RibbonLayoutEngine.Scale(menu ? 16 : 12, context.DeviceDpi)) } };
+        if (menu && entry is RibbonQuickAccessGroupReference)
+        {
+            var label = contentContext with { Bounds = Rectangle.FromLTRB(contentContext.Bounds.Left + RibbonLayoutEngine.Scale(34, context.DeviceDpi),
+                contentContext.Bounds.Top, contentContext.Bounds.Right, contentContext.Bounds.Bottom) };
+            DrawText(label, caption, color, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
+        }
+        else if (menu && command is not null)
+            DrawItemContent(contentContext, command, RibbonItemSize.Medium, true, appendArrow: false, textOverride: caption, enabledOverride: enabled);
+        else
+        {
+            int iconSize = RibbonLayoutEngine.Scale(16, context.DeviceDpi);
+            var icon = new Rectangle(contentContext.Bounds.Left + (contentContext.Bounds.Width - iconSize) / 2, context.Bounds.Top + (context.Bounds.Height - iconSize) / 2, iconSize, iconSize);
+            if (command is not null && (command.Icon is not null || command.Image is not null || command.LargeImage is not null))
+                DrawQuickAccessImage(context with { Bounds = icon }, command, enabled);
+            else
+                DrawText(contentContext, menu ? caption : caption.Length == 0 ? "" : System.Globalization.StringInfo.GetNextTextElement(caption), color,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
+        }
+        if (chooser)
+        {
+            var arrow = context with { Bounds = Rectangle.FromLTRB(contentContext.Bounds.Right, context.Bounds.Top, context.Bounds.Right, context.Bounds.Bottom) };
+            if (menu) DrawSubmenuArrow(arrow, color); else DrawDropDownArrow(arrow, color);
+        }
+    }
+    private void DrawQuickAccessImage(RibbonPaintContext context, RibbonItem command, bool enabled)
+    {
+        if (enabled == command.EffectiveEnabled) { DrawItemImage(context, command, RibbonItemSize.Small); return; }
+        if (command.Icon is { } icon) icon.Draw(context.Graphics, context.Bounds, new(context.DeviceDpi, SystemColors.GrayText, false));
+        else if ((command.Image ?? command.LargeImage) is { } image)
+        {
+            using var bitmap = new Bitmap(image, context.Bounds.Size);
+            ControlPaint.DrawImageDisabled(context.Graphics, bitmap, context.Bounds.X, context.Bounds.Y, context.Theme.Background);
+        }
+    }
+    /// <summary>Paints the measured overflow opener. Keyboard and pointer activation open the same owned popup.</summary>
+    public virtual void DrawQuickAccessOverflow(RibbonPaintContext context)
+    {
+        if (context.Hot || context.Pressed) DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
+        DrawDropDownArrow(context, context.Theme.Foreground);
+        if (context.Focused) DrawFocus(context);
     }
     /// <summary>Paints text inside a measured content slot, preserving its layout flags.</summary>
     public virtual void DrawText(RibbonPaintContext context, string text, Color color, TextFormatFlags flags) =>
@@ -117,12 +239,14 @@ public class RibbonRenderer : IDisposable
         }
         DrawDropDownArrow(context with { Bounds = button }, item.EffectiveEnabled ? context.Theme.Foreground : SystemColors.GrayText);
     }
-    /// <summary>Paints one measured ComboBox choice row in the native ListBox. Selected indicates the current pointer or keyboard preview.</summary>
+    /// <summary>Paints a native choice row. Selected is the native selection or keyboard preview; Hot and Pressed describe pointer interaction separately.</summary>
     public virtual void DrawComboBoxItem(RibbonPaintContext context, RibbonComboBoxItem item, int index, bool selected)
     {
         using var surface = new SolidBrush(context.Theme.Surface);
         context.Graphics.FillRectangle(surface, context.Bounds);
-        DrawChrome(context, selected && item.EffectiveEnabled ? context.Theme.Hover : new(context.Theme.Surface), Color.Transparent);
+        context = EnabledContext(context, item.EffectiveEnabled);
+        if (selected || context.Hot || context.Pressed)
+            DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, Color.Transparent);
         DrawText(context with { Bounds = Rectangle.Inflate(context.Bounds, -RibbonLayoutEngine.Scale(6, context.DeviceDpi), 0) },
             item.Items[index], item.EffectiveEnabled ? context.Theme.Foreground : SystemColors.GrayText,
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.EndEllipsis);
@@ -137,9 +261,19 @@ public class RibbonRenderer : IDisposable
         context = EnabledContext(context, tab.EffectiveEnabled);
         if (selected || context.Hot)
             DrawChrome(context, selected ? new(context.Theme.Surface) : context.Theme.Hover, Color.Transparent);
-        DrawText(context, tab.Text, tab.EffectiveEnabled ? context.Theme.Foreground : SystemColors.GrayText, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
+        var color = !tab.EffectiveEnabled ? SystemColors.GrayText : tab.IsContextual ? ContextualTabColor(context, tab, selected) : context.Theme.Foreground;
+        DrawText(context, tab.Text, color, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
         if (context.Focused)
             DrawFocus(context);
+    }
+    internal static Color ContextualTabColor(RibbonPaintContext context, RibbonTab tab, bool selected)
+    {
+        var color = tab.ContextualColor.IsEmpty ? context.Theme.Accent : tab.ContextualColor;
+        // WPF Office 2024 ContextualUnselectedOpacity: composite before GDI text drawing.
+        double opacity = color.A / 255d * (selected ? 1 : 0.6);
+        var background = context.Theme.Background;
+        int Mix(int foreground, int behind) => (int)Math.Round(foreground * opacity + behind * (1 - opacity));
+        return Color.FromArgb(Mix(color.R, background.R), Mix(color.G, background.G), Mix(color.B, background.B));
     }
     /// <summary>Paints the group caption or collapsed opener.</summary>
     public virtual void DrawGroup(RibbonPaintContext context, RibbonGroup group, bool collapsed)
@@ -295,10 +429,11 @@ public class RibbonRenderer : IDisposable
             finally { whole.Graphics.Restore(state); }
         }
     }
-    private void DrawItemContent(RibbonPaintContext context, RibbonItem item, RibbonItemSize size, bool menu, bool appendArrow = true, bool arrowBelowSingle = false)
+    private void DrawItemContent(RibbonPaintContext context, RibbonItem item, RibbonItemSize size, bool menu, bool appendArrow = true, bool arrowBelowSingle = false, string? textOverride = null, bool? enabledOverride = null)
     {
-        bool enabled = item.EffectiveEnabled;
-        bool check = item is RibbonToggleItem { Checked: true } or RibbonSplitButtonItem { Checked: true };
+        bool enabled = enabledOverride ?? item.EffectiveEnabled;
+        bool check = item is RibbonToggleItem { Checked: true } or RibbonSplitButtonItem { Checked: true }
+            || enabledOverride.HasValue && item is RibbonCheckBoxItem { CheckState: CheckState.Checked } or RibbonRadioButtonItem { Checked: true };
         bool hasIcon = item.Icon is not null || item.Image is not null || item.LargeImage is not null;
         var content = RibbonContentLayout.Calculate(context.Bounds, size, menu, context.ReserveIcon || hasIcon, context.DeviceDpi, context.Font);
         if (menu) content = RibbonMenuLayout.Content(content, item, context.Bounds, context.Font, context.DeviceDpi);
@@ -319,7 +454,8 @@ public class RibbonRenderer : IDisposable
         try
         {
             context.Graphics.SetClip(iconBounds, CombineMode.Intersect);
-            DrawItemImage(context with { Bounds = iconBounds }, item, size);
+            if (enabledOverride.HasValue) DrawQuickAccessImage(context with { Bounds = iconBounds }, item, enabled);
+            else DrawItemImage(context with { Bounds = iconBounds }, item, size);
             if (!hasIcon && menu && check)
                 DrawText(context with { Bounds = iconBounds }, "✓", color, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
         }
@@ -350,21 +486,21 @@ public class RibbonRenderer : IDisposable
                         DrawText(context with { Bounds = line }, caption.Lines[index], color, (flags & ~(TextFormatFlags.WordBreak | TextFormatFlags.EndEllipsis)) | TextFormatFlags.SingleLine);
                 }
             }
-            else DrawText(context with { Bounds = textBounds }, item.Text, color, flags);
+            else DrawText(context with { Bounds = textBounds }, textOverride ?? item.Text, color, flags);
         }
-        if (menu) DrawMenuDescription(context, item, textBounds);
+        if (menu) DrawMenuDescription(context, item, textBounds, enabledOverride);
         if (!arrow.IsEmpty)
         {
             if (menu) DrawSubmenuArrow(context with { Bounds = arrow }, color);
             else DrawDropDownArrow(context with { Bounds = arrow }, color);
         }
     }
-    private void DrawMenuDescription(RibbonPaintContext context, RibbonItem item, Rectangle title)
+    private void DrawMenuDescription(RibbonPaintContext context, RibbonItem item, Rectangle title, bool? enabledOverride = null)
     {
         if (!RibbonMenuLayout.HasDescription(item)) return;
         var bounds = RibbonMenuLayout.Description(title, context.Bounds, context.Font, context.DeviceDpi);
         if (bounds.Width > 0 && bounds.Height > 0)
-            DrawText(context with { Bounds = bounds }, item.MenuDescription, item.EffectiveEnabled ? context.Theme.SecondaryText : SystemColors.GrayText, RibbonMenuLayout.DescriptionFlags);
+            DrawText(context with { Bounds = bounds }, item.MenuDescription, (enabledOverride ?? item.EffectiveEnabled) ? context.Theme.SecondaryText : SystemColors.GrayText, RibbonMenuLayout.DescriptionFlags);
     }
     /// <summary>Paints a borrowed icon or image in its measured and clipped icon slot.</summary>
     protected virtual void DrawItemImage(RibbonPaintContext context, RibbonItem item, RibbonItemSize size)

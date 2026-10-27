@@ -27,9 +27,37 @@ public partial class MainForm : Form
         picture.Icon = new SampleIcon(7);
         link.Icon = new SampleIcon(8);
         trackChanges.Icon = new SampleIcon(9);
+        showRuler.Icon = new SampleIcon(10);
+        showGrid.Icon = new SampleIcon(11);
+        printView.Icon = new SampleIcon(12);
+        webView.Icon = new SampleIcon(13);
+        ribbon.QuickAccessItems.AddRange(
+            new RibbonQuickAccessReference { Source = copy },
+            new RibbonQuickAccessReference { Source = bold },
+            new RibbonQuickAccessReference { Source = italic },
+            new RibbonQuickAccessReference { Source = find },
+            new RibbonQuickAccessReference { Source = picture },
+            new RibbonQuickAccessReference { Source = cut },
+            new RibbonQuickAccessComboBoxReference { Source = fontInput },
+            new RibbonQuickAccessComboBoxReference { Source = zoomInput },
+            new RibbonQuickAccessDropDownReference { Source = select },
+            new RibbonQuickAccessDropDownReference { Source = paste },
+            new RibbonQuickAccessDropDownReference { Source = trackChanges },
+            new RibbonQuickAccessGroupReference { Source = fields, Text = "Input fields" },
+            new RibbonQuickAccessReference { Source = showRuler },
+            new RibbonQuickAccessReference { Source = showGrid },
+            new RibbonQuickAccessReference { Source = printView },
+            new RibbonQuickAccessReference { Source = webView });
+        var moveQuickAccess = new RibbonButtonItem { Text = "Move Quick Access Toolbar", ScreenTipDescription = "Move the toolbar between the tab row and below the ribbon. Title-bar hosting is planned with window integration." };
+        moveQuickAccess.Click += (_, _) => ribbon.QuickAccessPosition = ribbon.QuickAccessPosition == RibbonQuickAccessPosition.TabRow ? RibbonQuickAccessPosition.BelowRibbon : RibbonQuickAccessPosition.TabRow;
+        ribbon.QuickAccessItems.Add(moveQuickAccess);
         document.Text = "Native RibbonKit.WinForms\r\n\r\nInputs demonstrates native TextBox and ComboBox editing, binding, read-only/disabled fields and popup ownership. Font selects a choice; Zoom also accepts typed percentages (25% to 500%). Resize to open the same editors in collapsed groups.\r\n\r\nF4 or Alt+Down opens the choice popup. Escape closes that list first, then its containing ribbon popup. Enter validates and commits; Escape outside a list restores the last committed value. Tab visits fields; F6 returns to this document. Alt/F10, E, F focuses Font.\r\n\r\nThe document, status text, validation rules and data belong to this application. Home still demonstrates split buttons.";
         document.AppendText("\r\n\r\nOptions demonstrates compact check/radio choices. Gridlines cycles through three states. Ruler and its popup entry share an application binding. Resize to open the same options in collapsed groups.");
         document.AppendText("\r\n\r\nScreenTips: pause over Home's shortened Find caption to read it in full. Copy/Paste have descriptions; Unavailable explains its disabled state. Inputs and popup editors retain focus and selection while their tips are shown. Options includes check/radio examples.");
+        document.AppendText("\r\n\r\nQuick Access shares the source commands, including commands on inactive tabs. Font and Zoom open choice lists; editing stays in the Inputs fields. Select opens its source menu. Paste and Track changes keep separate primary and menu halves, including in overflow. Its M button moves the toolbar below the ribbon and back. Narrow the window to reach remaining commands through the overflow arrow. F10 shows toolbar KeyTips; 0 opens overflow, and automatic split KeyTips end in A/B for primary/menu.");
+        document.AppendText("\r\n\r\nInput fields in Quick Access opens the original Fields group, including on another tab. That group stays collapsed while its QAT reference is attached, and its native fields retain the same values and bindings.");
+        document.AppendText("\r\n\r\nRuler, Gridlines, Print layout and Web layout appear as icon toggle buttons in Quick Access. Gridlines keeps its three-state binding, with a small bar for mixed state. Layout choices retain their original radio group. Their ordinary checkbox/radio visuals remain on Options.");
+        document.AppendText("\r\n\r\nChoose Insert > Picture to show the colored Picture Format tab. Close picture tools hides it and returns to a visible tab. The application decides when picture tools apply.");
         ribbon.SelectedTab = home;
     }
     private void NameValidating(object? sender, CancelEventArgs e)
@@ -48,6 +76,8 @@ public partial class MainForm : Form
     private void CopyClick(object? sender, EventArgs e) => status.Text = "Copy requested";
     private void PasteClick(object? sender, EventArgs e) => status.Text = "Paste requested";
     private void ActionClick(object? sender, EventArgs e) => status.Text = (sender as RibbonItem)?.Text + " requested";
+    private void ShowPictureTools(object? sender, EventArgs e) { pictureFormat.Visible = true; ribbon.SelectedTab = pictureFormat; status.Text = "Picture tools available"; }
+    private void ClosePictureTools(object? sender, EventArgs e) { pictureFormat.Visible = false; status.Text = "Picture context cleared"; }
     private void BoldChanged(object? sender, EventArgs e) => status.Text = "Bold: " + bold.Checked;
     private void TrackChangesChanged(object? sender, EventArgs e) => status.Text = "Track changes: " + trackChanges.Checked;
     private void OptionClick(object? sender, EventArgs e) => status.Text = sender switch
@@ -111,6 +141,23 @@ public partial class MainForm : Form
                 var r = Rectangle.Inflate(bounds, -Math.Max(2, bounds.Width / 6), -Math.Max(2, bounds.Height / 6));
                 if (kind is 3 or 4)
                     TextRenderer.DrawText(graphics, kind == 3 ? "B" : "I", SystemFonts.DefaultFont, bounds, context.Foreground, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+                else if (kind == 10)
+                {
+                    graphics.DrawRectangle(pen, r.Left, r.Top + r.Height / 3, r.Width, r.Height / 2);
+                    for (int i = 1; i < 5; i++) graphics.DrawLine(pen, r.Left + r.Width * i / 5, r.Top + r.Height / 3, r.Left + r.Width * i / 5, r.Top + r.Height / 2);
+                }
+                else if (kind == 11)
+                {
+                    graphics.DrawRectangle(pen, r);
+                    graphics.DrawLine(pen, r.Left + r.Width / 2, r.Top, r.Left + r.Width / 2, r.Bottom);
+                    graphics.DrawLine(pen, r.Left, r.Top + r.Height / 2, r.Right, r.Top + r.Height / 2);
+                }
+                else if (kind == 13)
+                {
+                    graphics.DrawRectangle(pen, r);
+                    graphics.DrawLine(pen, r.Left, r.Top + r.Height / 4, r.Right, r.Top + r.Height / 4);
+                    graphics.DrawLine(pen, r.Left + r.Width / 3, r.Top + r.Height / 4, r.Left + r.Width / 3, r.Bottom);
+                }
                 else if (kind == 9)
                 {
                     graphics.DrawLines(pen, new Point[] { new(r.Left, r.Bottom), new(r.Left + r.Width / 5, r.Bottom - r.Height / 2), new(r.Right - r.Width / 5, r.Top), new(r.Right, r.Top + r.Height / 5), new(r.Left + r.Width / 2, r.Bottom - r.Height / 5), new(r.Left, r.Bottom) });

@@ -3,8 +3,13 @@
 A separate native Windows Forms implementation, developed in `winforms/` on the
 user's `codex/Ribbonkit-Winform` branch. WPF v1.1.0 is the behavioral reference.
 This is an unpublished preview. The [M1 foundation ledger](docs/M1-STATUS.md)
-records its remaining review; the current [M2 slices](docs/M2-STATUS.md) add
-split buttons and native TextBox/ComboBox editing. Accessibility compatibility is deferred
+records its remaining review; [M2](docs/M2-STATUS.md) adds
+split buttons and native TextBox/ComboBox editing. The current [M3 slice](docs/M3-STATUS.md)
+adds button/toggle Quick Access, checkbox/radio icon references, ComboBox choosers
+and dropdown/split/group references.
+The current [M4 slice](docs/M4-STATUS.md) adds contextual-tab header colors with
+application-controlled visibility and the existing tab-selection rules.
+Accessibility compatibility is deferred
 while the control structure is implemented; it remains possible future work.
 
 Requires Windows and the .NET 10 SDK selected by `global.json`. Open
@@ -62,12 +67,33 @@ The retained foundation bridge does not provide complete accessibility semantics
 for this new item; no split accessibility compatibility is claimed.
 
 Office2024 light, Compact density, LTR and immediate transitions are the initial
-scope. Mica client transparency, animation, custom window chrome, QAT,
+scope. Mica client transparency, animation, custom window chrome, title-bar QAT,
 customization, galleries and WPF template/resource
 compatibility are later work. Ordinary application controls remain native Forms
 controls. The runtime references neither WPF nor the designer SDK.
 
 ## Application contract
+
+Contextual tools use ordinary `RibbonTab` components:
+
+```csharp
+var pictureFormat = new RibbonTab {
+    Text = "Picture Format", KeyTip = "JP", IsContextual = true,
+    ContextualColor = Color.FromArgb(196, 62, 150), Visible = false
+};
+ribbon.Tabs.Add(pictureFormat);
+// When the application selects a picture:
+pictureFormat.Visible = true;
+ribbon.SelectedTab = pictureFormat;
+```
+
+`IsContextual` enables tinted text; `ContextualColor=Color.Empty` uses the current
+theme accent. Unselected contextual labels are subdued; selected labels use the
+full tint, including Office's selection underline. No extra header band is added.
+Both properties support ordinary binding and change events. The application owns
+context applicability through `Visible` and decides when to select a tab. Hiding,
+disabling or removing a selected contextual tab uses normal selection fallback.
+Showcase's Insert > Picture opens Picture Format; Close picture tools hides it.
 
 Set `HighDpiMode.PerMonitorV2` before creating windows, and enable visual styles.
 Add a `RibbonControl` to a normal Form; it docks to the top. Compose its get-only
@@ -226,6 +252,158 @@ remain unverified. Inputs shows
 selection-only Font, editable Zoom, a disabled chooser and a popup chooser using
 ordinary application-owned data and validation.
 
+## Quick Access Toolbar
+
+`QuickAccessItems` owns toolbar-only `RibbonButtonItem`/`RibbonToggleItem` commands
+or `RibbonQuickAccessReference` declarations borrowing existing buttons, toggles,
+checkboxes or radio options:
+
+```csharp
+ribbon.QuickAccessItems.AddRange(
+    new RibbonQuickAccessReference { Source = copy },
+    new RibbonQuickAccessReference { Source = bold },
+    new RibbonButtonItem { Text = "Save", Icon = saveIcon });
+ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
+```
+
+The default placement is `TabRow`, before the tabs. `BelowRibbon` adds a full-width
+row beneath the body, or beneath the tabs while minimized. `QuickAccessMaxWidth`
+defaults to 240 logical pixels and caps only the tab-row placement. Overflow opens
+a library-owned command menu. Long QAT menus use separate opaque up/down scroll
+bands, with hover/pressed feedback, disabled endpoints, row-wise clicks and
+hover/held repeat. Short menus reserve no bands; native scrollbars are absent.
+The wheel and keyboard keep commands reachable, and scrolling pauses while a
+child menu or chooser is open. Arrows/Home/End/Tab navigate it; Enter/
+Space activate, and Escape returns to the opener. F10/Alt shows automatic numeric
+entry KeyTips (preferred 1-9, then Q1, Q2, ... with equal-width numeric suffixes
+for larger collections); 0 opens overflow. These preferences and explicit entry
+`KeyTip` values participate in the existing conflict resolver, which may substitute
+a key and reserves the 9 prefix on large levels.
+
+Toggle, checkbox and radio entries and the primary half of a `CheckOnClick` split keep QAT overflow
+open, retaining focus for repeated mouse, Space, Enter or KeyTip activation.
+Ordinary commands and nonchecking split primaries dismiss overflow. Escape
+still closes it.
+
+References retain separate IDs, visibility and optional `Text` caption overrides.
+They read source label, borrowed icon, checked/enabled state and ScreenTip metadata
+without moving or copying the source. An inactive tab does not prevent activation.
+A hidden/disabled ancestor, hidden/disabled source, detached source or disposed
+source disables the declaration in place. Reinserting the same live source in
+the same ribbon restores it. A reference never owns or disposes its source;
+directly declared commands are owned by `QuickAccessItems`. Changing
+`QuickAccessVisible` retains placement and order. Collection Insert/Remove supports
+application-authored ordering; customization UI and persistence remain M5.
+
+Showcase's M toolbar command moves it between placements. Narrow the window to
+open overflow. Buttons, toggles, checkbox/radio references, ComboBox choosers and
+dropdown/split/group references are supported. New QAT
+accessibility support and actual VS save/reopen remain pending. Model ownership,
+row measurement and painting are separated from placement so later optional
+title-bar hosting can reuse the same declarations; it requires the future
+RibbonForm/window integration and is not exposed by the current placement enum.
+
+Checkbox/radio references use the source's borrowed `Icon`, `Image` or `LargeImage`
+with the same checked/hover/pressed button chrome as toggles. Without an icon,
+the strip uses the caption's first text element; overflow shows its full caption.
+An indeterminate checkbox adds a small bar below the action icon. Ordinary body
+and group-flyout checkbox/radio indicators keep their existing presentation.
+
+```csharp
+gridlines.Icon = gridIcon;
+printLayout.Icon = printIcon;
+ribbon.QuickAccessItems.AddRange(
+    new RibbonQuickAccessReference { Source = gridlines },
+    new RibbonQuickAccessReference { Source = printLayout });
+```
+
+Activation uses the original source once, preserving its checkbox state cycle,
+binding and event order. Radios retain their original named/unnamed group;
+clicking a selected radio keeps it selected. These options are borrowed references;
+directly adding checkbox/radio models to `QuickAccessItems` remains unsupported.
+WPF's corresponding extension is deferred in the
+[future WPF improvements plan](../docs/22-FUTURE-WPF-IMPROVEMENTS.md).
+
+`RibbonQuickAccessComboBoxReference` adds a chooser for an existing ComboBox:
+
+```csharp
+ribbon.QuickAccessItems.Add(
+    new RibbonQuickAccessComboBoxReference { Source = fontInput });
+```
+
+It shares the source choices, selection, bindings, validation and ScreenTip, and
+works while the source tab is inactive. It opens at its own QAT button, or beside
+its row in QAT overflow. Its `IsDropDownOpen` reports that presentation's popup;
+the source field retains its own open state. An editable source is still a chooser
+in QAT; typing stays in its original native field. No second editor is created.
+Showcase demonstrates Font and Zoom, including Zoom's unmatched typed percentages.
+
+Pointer hover highlights a choice without changing selection or binding. A matching
+row press/release accepts it; dragging to another row cancels the press. Leaving
+clears pointer highlight. The actual selected/keyboard-preview row uses the checked
+fill; pointer hover uses the hover fill. `DrawComboBoxItem` receives those states
+separately through its `selected` argument and context `Hot`/`Pressed`. Keyboard
+arrows and native incremental search retain tentative preview, source validation
+and Escape rollback. This pointer policy applies to ordinary field choice lists
+as well as QAT choosers. List widths measure text and both separately rounded DPI
+insets, rather than assuming the small QAT button can fit a choice label.
+
+`RibbonQuickAccessDropDownReference` borrows a dropdown or split button:
+
+```csharp
+ribbon.QuickAccessItems.AddRange(
+    new RibbonQuickAccessDropDownReference { Source = selectMenu },
+    new RibbonQuickAccessDropDownReference {
+        Source = pasteSplit, KeyTip = "P", DropDownKeyTip = "V" });
+```
+
+Its menu opens beneath the QAT entry or beside its overflow row, including when
+the source tab is inactive. Commands, checked state, handlers and native editors
+stay with the original source. A split source has separate horizontal primary
+and menu targets in both presentations: the primary calls the source once, while
+the arrow opens its menu. Default split KeyTips append A/B to the entry number
+(for example 3A/3B); explicit `KeyTip` and `DropDownKeyTip` values use the same
+conflict resolver. Custom renderers receive both halves through
+`DrawQuickAccessSplitItem`.
+
+`IsDropDownOpen` belongs to each presentation. Only one presentation of the same
+source menu opens at once; native editor instances are retained across them.
+The source's cancellable `DropDownOpening` and `DropDownClosed` events also run
+for its references, and `source.CloseDropDown()` closes its current presentation.
+Opening handlers may populate source items before the menu is measured. Nested
+KeyTips and Escape preserve the popup stack. Disabling, removing or replacing a
+reference/source closes stale menus without transferring source ownership.
+
+`RibbonQuickAccessGroupReference` opens an existing group's native flyout:
+
+```csharp
+ribbon.QuickAccessItems.Add(
+    new RibbonQuickAccessGroupReference { Source = formattingGroup });
+```
+
+The source group stays collapsed for the entire attached QAT membership,
+including hidden/disabled references or a hidden toolbar. This derived constraint
+also applies when `CanResize=false`; its authored reduction settings remain intact.
+Removing the last reference releases the constraint and restores normal adaptive
+sizing. Groups belong only in future Customize QAT's available list, not Customize
+Ribbon's command list.
+
+The compact caption-initial/arrow entry opens below the strip or beside its
+overflow row, including inactive source tabs and minimized/below-ribbon placement.
+Commands, handlers, values and bindings remain source-owned. Only one presentation
+of a group opens at once; switching between references and its collapsed source
+opener reuses the same native editor controls. Detaching the group follows the
+existing editor contract: native presenters are disposed, while models, values
+and bindings survive for reinsertion. `IsDropDownOpen` describes each reference.
+Source/reference disable, replacement, removal and disposal close stale flyouts.
+
+Toggles, checkboxes, radios and checking split primaries keep the retained group
+flyout open; ordinary commands dismiss it. KeyTips and nested Escape navigation
+use the original command level and restore each opener. Showcase's Input fields
+reference demonstrates this with the Fields group. Group-specific icon/ScreenTip
+metadata is not added in this slice; custom renderers can override
+`DrawQuickAccessItem` for the group declaration.
+
 ## Richer command menus
 
 `RibbonItem.MenuDescription` adds localizable inline text below a command-menu
@@ -371,6 +549,7 @@ styling should now derive from the named Office renderer. Instances assigned to
 `Renderer` remain borrowed and must outlive their ribbon/popups.
 
 The shared hooks are `DrawSurface`, `DrawBody`, `DrawPopupFrame`, `DrawPopupShadow`, `DrawScrollButton`, `DrawMinimizeButton`, `DrawText`,
+`DrawQuickAccessToolbar`, `DrawQuickAccessItem`, `DrawQuickAccessSplitItem`, `DrawQuickAccessOverflow`, `DrawOverflowScrollButton`,
 `DrawDropDownArrow`, `DrawSubmenuArrow`, `DrawMenuSeparator`, `DrawTextBox`, `DrawComboBox`, `DrawComboBoxItem`, `DrawScreenTip`, and protected
 `DrawItemImage`/`DrawChrome`, in addition to
 whole tab/group/item/split/focus/KeyTip methods. Content callbacks receive the
@@ -394,7 +573,7 @@ applications should use Windows UIA clients rather than implement those types.
 Run these commands from `winforms/`. Native keyboard/mouse checks briefly operate
 their own test Form; let that process retain focus until it finishes.
 
-The unit/STA suite contains 72 essential cases: the [test review](docs/M2-STATUS.md#essential-test-review--2026-10-26)
+The unit/STA suite contains 102 essential cases: the [test review](docs/M2-STATUS.md#essential-test-review--2026-10-26)
 reduced the earlier set to 56; M2C adds three ComboBox cases and M2D adds three
 check/radio state, grouping/binding and compact-rendering cases. M2E adds three
 ScreenTip metadata, cancellation/lifetime and measurement/rendering cases.
@@ -406,6 +585,38 @@ public consumer rather than relying on foreground focus during unit tests.
 M2G adds three minimized-state/metadata, shared body geometry/reachability and
 utility-slot/vector-direction cases. Its shown consumer covers native mode
 gestures, binding, validation, native editor transfer, KeyTips and popup lifetime.
+M3A adds seven source/lifetime/ownership, placement, overflow, host-independent row
+and ScreenTip-anchor cases. Its shown consumer covers shared binding and native
+pointer/keyboard input in both placements and overflow.
+M3B adds three ComboBox-reference metadata/geometry, shared validation/binding and
+mutation/lifetime cases. Its native consumer covers pointer-only hover, press/
+drag cancellation, paint-state cleanup, inactive sources, editable-source choices,
+overflow anchoring and one retained native editor per source.
+M3C adds four menu/split-reference geometry/KeyTip, source activation/state,
+cancellation/lifetime and retained-editor cases. Its shown consumer exercises
+inactive sources, nested menus, callback-populated overflow, split halves,
+source events and shared native fields through public APIs.
+Two follow-up cases cover retained toggle overflow and handler-driven removal/
+hiding; the affected native QAT fixtures also cover repeated mouse/keyboard toggles.
+Four scroller cases cover row/band clipping and reachability, short-menu sizing,
+opaque hover/pressed rendering and child-popup pause/lifetime. The shown QAT
+consumer checks actual hover/held repeat, wheel, endpoints and command activation.
+M3D adds four group membership/layout, shared native editor/action, source lifetime
+and inactive overflow-stack cases. Its public consumer covers native fields,
+binding, group/ComboBox QAT interaction, KeyTips, toggles, nested dismissal and
+last-reference sizing restoration in both renderers.
+M3E adds three checkbox binding/event-order, radio-scope and icon-toggle rendering
+cases. The shown public consumer checks mouse/keyboard options, overflow retention,
+mixed state, inactive sources, BelowRibbon/minimize and source lifetime in both
+renderers. Run `--qat-option-checks` / `--qat-option-checks-flat` on the native host,
+or `--validate-qat-options` / `--validate-qat-options-flat` on the independent
+consumer, followed by an evidence directory.
+M4A adds three contextual binding/metadata, visibility/selection/QAT lifetime and
+renderer-state cases. Its shown public consumer covers context changes, tab
+commands/KeyTips, minimized teardown, live tint, theme fallback and narrow strips.
+Use `--contextual-checks` / `--contextual-checks-flat` on the native host, or
+`--validate-contextual` / `--validate-contextual-flat` on the independent consumer,
+followed by an evidence directory. These are focused scopes, not full acceptance.
 The existing editor alignment case also covers mixed rows. For routine changes, run the affected
 test classes. Reserve the full native/package sequence for changes that need those
 gates. Add cases for distinct failure modes and use representative DPI/font rows;

@@ -39,7 +39,8 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     public override void DrawTab(RibbonPaintContext context, RibbonTab tab, bool selected)
     {
         bool enabled = tab.EffectiveEnabled;
-        DrawText(context, tab.Text, !enabled ? SystemColors.GrayText : selected ? context.Theme.Accent : context.Theme.Foreground,
+        var tint = tab.IsContextual ? ContextualTabColor(context, tab, true) : context.Theme.Accent;
+        DrawText(context, tab.Text, !enabled ? SystemColors.GrayText : tab.IsContextual ? ContextualTabColor(context, tab, selected) : selected ? context.Theme.Accent : context.Theme.Foreground,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
         if (enabled && (selected || context.Hot || context.Pressed || context.Focused))
         {
@@ -49,7 +50,7 @@ public class RibbonOffice2024Renderer : RibbonRenderer
             int height = Math.Min(S(3), Math.Max(0, context.Bounds.Height - S(1)));
             var underline = new Rectangle(context.Bounds.Left + (context.Bounds.Width - width) / 2,
                 context.Bounds.Bottom - height - S(1), width, height);
-            PaintRounded(context with { Bounds = underline }, height / 2, new(context.Theme.Accent), Color.Transparent, 0);
+            PaintRounded(context with { Bounds = underline }, height / 2, new(tint), Color.Transparent, 0);
         }
     }
     /// <inheritdoc />
