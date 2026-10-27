@@ -34,6 +34,8 @@ public partial class RibbonControl : Control, ISupportInitialize
         QuickAccessOverflow = new(this);
         FileMenu = new() { Text = "File", KeyTip = "F", Visible = false };
         FileMenu.Parent = this;
+        Backstage = new() { Text = "Backstage" };
+        Backstage.Parent = this;
         SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.Selectable | ControlStyles.ResizeRedraw, true);
         Dock = DockStyle.Top;
         TabStop = true;
@@ -105,6 +107,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         {
             VerifyAccess();
             _renderer = value;
+            RefreshBackstage();
             _screenTips.Cancel();
             SyncEditors();
             Invalidate();
@@ -138,7 +141,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     internal RibbonEditorManager Editors => _editors;
     internal RibbonScreenTipManager ScreenTips => _screenTips;
     internal bool KeyTipsActive => _keyTips;
-    internal IEnumerable<RibbonElement> AllElements => Tabs.SelectMany(t => t.Tree()).Concat(QuickAccessItems.SelectMany(e => e.Tree())).Concat(FileMenu.Tree());
+    internal IEnumerable<RibbonElement> AllElements => Tabs.SelectMany(t => t.Tree()).Concat(QuickAccessItems.SelectMany(e => e.Tree())).Concat(FileMenu.Tree()).Concat(Backstage.Tree());
     internal void VerifyAccess()
     {
         if (Environment.CurrentManagedThreadId != _threadId)
@@ -174,6 +177,12 @@ public partial class RibbonControl : Control, ISupportInitialize
             case RibbonControl r when ReferenceEquals(element, r.FileMenu):
                 r.ModelChanged();
                 break;
+            case RibbonControl r when ReferenceEquals(element, r.Backstage):
+                r.ModelChanged();
+                break;
+            case RibbonBackstage backstage when element is RibbonItem entry:
+                backstage.Items.Remove(entry);
+                break;
             case RibbonControl r:
                 r.QuickAccessItems.Remove(element);
                 break;
@@ -199,6 +208,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             return;
         VerifyAccess();
         _screenTips?.Cancel();
+        RefreshBackstage();
         if (layout)
         {
             _engine.Clear();
@@ -307,7 +317,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     {
         base.OnBindingContextChanged(e);
         if (Tabs is not null)
-            foreach (var element in Tabs.Cast<RibbonElement>().Concat(QuickAccessItems).Append(FileMenu))
+            foreach (var element in Tabs.Cast<RibbonElement>().Concat(QuickAccessItems).Append(FileMenu).Append(Backstage))
                 element.BindingContext = BindingContext;
     }
     /// <inheritdoc />
@@ -327,6 +337,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         base.OnVisibleChanged(e);
         if (_popups is null)
             return;
+        RefreshBackstage();
         if (!Visible)
         {
             _screenTips.Cancel();
@@ -340,6 +351,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     /// <inheritdoc />
     protected override void OnParentChanged(EventArgs e)
     {
+        ReleaseBackstageSurface();
         _popups?.ResetOwner();
         _screenTips?.ResetOwner();
         base.OnParentChanged(e);
@@ -356,6 +368,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     /// <inheritdoc />
     protected override void OnHandleDestroyed(EventArgs e)
     {
+        ReleaseBackstageSurface();
         _input.Detach();
         _screenTips.ResetOwner();
         _popups.CloseAll(false);
@@ -543,6 +556,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     internal bool ProcessRibbonKey(Keys keys)
     {
         _screenTips.Cancel();
+        if (IsBackstageOpen) return ProcessBackstageKey(keys);
         if (keys == (Keys.Control | Keys.F1)) { ToggleMinimizedByUser(); return true; }
         if (keys is Keys.Escape or Keys.Enter or Keys.Space or Keys.Tab or (Keys.Tab | Keys.Shift)
             or Keys.Left or Keys.Right or Keys.Up or Keys.Down or Keys.Home or Keys.End)
@@ -647,6 +661,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     }
     internal void Activate(RibbonTarget target, Control? opener = null)
     {
+        if (IsBackstageOpen) return;
         _screenTips.Cancel();
         if (!target.Enabled)
             return;
@@ -724,6 +739,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     }
     internal void FocusElement(RibbonElement element, bool dropDownPart = false, bool enterEditor = true)
     {
+        if (IsBackstageOpen) return;
         if (!ReferenceEquals(element, _focused) && !_editors.CommitFocused()) return;
         _focused = element;
         _focusedDropDown = RibbonSplitLayout.IsSplit(element) && dropDownPart;
@@ -773,6 +789,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     }
     internal void ToggleKeyTips()
     {
+        if (IsBackstageOpen) { _backstageSurface?.ToggleKeyTips(); return; }
         _screenTips.Cancel();
         SetKeyboardFocusCues(true);
         if (_keyTips)
@@ -801,6 +818,12 @@ public partial class RibbonControl : Control, ISupportInitialize
     {
         if (IsInDesignMode)
             return;
+        if (ReferenceEquals(item, FileMenu) && FileMenuMode == RibbonFileMenuMode.Backstage)
+        {
+            IsBackstageOpen = !IsBackstageOpen;
+            return;
+        }
+        if (IsBackstageOpen) return;
         if (!_editors.CommitFocused() || !ReferenceEquals(item.Ribbon, this) || !item.EffectiveEnabled || !item.Visible) return;
         foreach (var surface in _popups.Surfaces.Reverse())
             if (surface.Targets.Where(t => ReferenceEquals(t.Element, item)).ToArray() is { Length: > 0 } rows)
@@ -815,7 +838,11 @@ public partial class RibbonControl : Control, ISupportInitialize
         if (!bounds.IsEmpty)
             _popups.Toggle(item, this, bounds);
     }
-    internal void CloseDropDown(RibbonDropDownItem item) => _popups.CloseMenu(item, true);
+    internal void CloseDropDown(RibbonDropDownItem item)
+    {
+        if (ReferenceEquals(item, FileMenu) && IsBackstageOpen) IsBackstageOpen = false;
+        else _popups.CloseMenu(item, true);
+    }
     internal bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime || DesignMode;
     /// <inheritdoc />
     protected override void Dispose(bool disposing)
@@ -823,6 +850,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         if (disposing && !_disposing)
         {
             _disposing = true;
+            ReleaseBackstageSurface();
             _input.Dispose();
             _screenTips.Dispose();
             _popups.Dispose();
@@ -833,6 +861,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             foreach (var entry in QuickAccessItems.ToArray()) entry.Dispose();
             QuickAccessItems.Clear();
             FileMenu.Dispose();
+            Backstage.Dispose();
             QuickAccessOverflow.Dispose();
             _defaultRenderer.Dispose();
             DisposeAutomation();

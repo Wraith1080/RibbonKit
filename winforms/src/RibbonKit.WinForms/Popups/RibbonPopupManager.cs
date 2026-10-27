@@ -36,7 +36,7 @@ internal sealed class RibbonPopupManager : IDisposable
     internal void Toggle(RibbonElement owner, Control opener, Rectangle anchor)
     {
         _ribbon.ScreenTips.Cancel();
-        if (_ribbon.IsInDesignMode)
+        if (_ribbon.IsInDesignMode || _ribbon.IsBackstageOpen)
             return;
         if (IsExpanded(owner))
         {

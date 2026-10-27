@@ -11,6 +11,10 @@ internal static partial class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--backstage-width-checks" or "--backstage-width-checks-flat")
+            return IndependentConsumer.BackstageInteractionChecks.Run(args[1], args[0] == "--backstage-width-checks-flat", true);
+        if (args.Length == 2 && args[0] is "--backstage-checks" or "--backstage-checks-flat")
+            return IndependentConsumer.BackstageInteractionChecks.Run(args[1], args[0] == "--backstage-checks-flat");
         if (args.Length == 2 && args[0] is "--file-checks" or "--file-checks-flat")
             return IndependentConsumer.FileMenuInteractionChecks.Run(args[1], args[0] == "--file-checks-flat");
         if (args.Length == 2 && args[0] is "--contextual-checks" or "--contextual-checks-flat")

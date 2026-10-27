@@ -10,6 +10,8 @@ public readonly record struct RibbonFill(Color Start, Color End)
 /// <summary>Immutable named appearance and 96-DPI metrics for one ribbon.</summary>
 public sealed record RibbonTheme
 {
+    /// <summary>Gets the opaque Office 2024 Backstage navigation rail color.</summary>
+    public Color BackstageNavigationBackground { get; init; } = Color.FromArgb(245, 244, 243);
     /// <summary>Gets the ribbon background color.</summary>
     public Color Background { get; init; } = Color.White;
     /// <summary>Gets the command and popup surface color.</summary>

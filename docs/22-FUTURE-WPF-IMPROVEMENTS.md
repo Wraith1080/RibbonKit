@@ -53,3 +53,48 @@ and disposal, icons/fallbacks, overflow retention, keyboard/KeyTips and the affe
 automation contract. Review representative theme/DPI/RTL visuals and all supported
 QAT placements, including the title bar. Historical WinForms results do not establish
 WPF acceptance. No WPF build or tests are required for this deferred document.
+
+## Backstage navigation width in designer properties
+
+Deferred proposal, **2026-10-27**. The user requested a WPF counterpart to the
+native WinForms designer-configurable navigation width. This means authoring
+properties with Auto and explicit sizes; it does not introduce a draggable
+divider or user-resize interaction. WPF implementation remains a later slice.
+
+### Proposed authoring contract
+
+- Add a designer-visible navigation-width dependency property with an Auto value
+  and explicit widths in WPF device-independent pixels (96-DPI logical units).
+  Review the exact WPF type/name before implementation; native nullable-integer
+  APIs need not be copied into WPF. Include normal binding, styles, Reset/default
+  metadata and XAML/designer serialization.
+- Include minimum/maximum navigation widths with consistent validation and a
+  deterministic assignment-order policy. Preserve each design's current baseline
+  (for example, Modern's 200 and Classic's 220 logical pixels) when Auto has room.
+- Auto measures visible navigation captions using the actual font, reserved
+  icon/picture slot, item padding and scroll clearance. Re-evaluate for caption,
+  visibility, font, localization and design changes; retain aligned no-icon rows.
+- Constrain the displayed rail to leave useful page space when the host narrows.
+  Keep the authored width/binding value unchanged by this temporary constraint,
+  so widening restores it. Convert/round once at the layout/render boundary;
+  measurement, hit testing, focus/KeyTips and any connected chrome use the same
+  resulting geometry across DPI and RTL.
+- Keep layout and presentation in shared Backstage controls/templates/resources.
+  A Showcase sample may demonstrate the public properties, but must not implement
+  navigation width with a template-part patch or local layout helper. Application
+  settings persistence remains host-owned.
+
+### Later implementation and acceptance
+
+Map the contract deliberately to each supported Backstage design, including the
+rail-based Office/Crystal layouts; floating designs require their own applicability
+decision. Preserve selected page, content identity, bindings, editor state,
+keyboard navigation, open/close behavior and theme switching while width changes.
+No animation, runtime drag interaction or new persistence schema is implied.
+
+Verify property metadata and XAML/designer round-trips for Auto/explicit values,
+style/binding changes, bounds and assignment order, narrow/wide restoration,
+long/localized/hidden labels, large fonts, icons/pictures/fallbacks and DPI/RTL
+geometry. Include a RibbonKit-only consumer and inspect representative rendered
+results. WinForms evidence is a reference, not WPF acceptance. This record changes
+documentation only; no WPF runtime, build or tests are part of the current task.

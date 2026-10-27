@@ -4,7 +4,7 @@ using RibbonKit.WinForms.Layout;
 namespace RibbonKit.WinForms;
 
 /// <summary>Flat rendering foundation with shared content drawing over library-measured device-pixel geometry.</summary>
-public class RibbonRenderer : IDisposable
+public partial class RibbonRenderer : IDisposable
 {
     private readonly RoundedPainter _rounded = new();
     private readonly ShadowPainter _shadow = new();

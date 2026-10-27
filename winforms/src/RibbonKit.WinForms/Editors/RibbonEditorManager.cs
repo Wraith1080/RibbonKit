@@ -21,7 +21,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
     }
     internal void OpenQuickAccess(RibbonQuickAccessComboBoxReference reference, Control opener, Rectangle anchor)
     {
-        if (_disposed || ribbon.IsInDesignMode || !RibbonQuickAccess.Available(reference) || reference.Source is not { } source) return;
+        if (_disposed || ribbon.IsInDesignMode || ribbon.IsBackstageOpen || !RibbonQuickAccess.Available(reference) || reference.Source is not { } source) return;
         CloseLists();
         ribbon.Popups.PrepareChoice(opener);
         if (!RibbonQuickAccess.Available(reference) || !ReferenceEquals(reference.Source, source) || opener.IsDisposed || !opener.Visible) return;
@@ -33,6 +33,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
     }
     internal void SetDropDown(RibbonComboBoxItem item, bool open)
     {
+        if (open && ribbon.IsBackstageOpen) return;
         if (_editors.TryGetValue(item, out var presenter)) presenter.SetDropDown(open);
     }
     internal bool ProcessListKey(Keys keys) => _editors.Values.FirstOrDefault(p => p.ListOpen)?.ProcessListKey(keys) ?? false;
@@ -89,6 +90,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
     }
     internal bool Focus(RibbonItem item)
     {
+        if (ribbon.IsBackstageOpen) return false;
         Sync();
         return _editors.TryGetValue(item, out var presenter) && presenter.FocusEditor();
     }

@@ -302,7 +302,7 @@ public class RibbonDropDownItem : RibbonItem
 {
     /// <summary>Gets whether this item's owned popup is currently open.</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public bool IsDropDownOpen => Ribbon?.Popups.IsExpanded(this) ?? false;
+    public bool IsDropDownOpen => Ribbon is { } ribbon && (ribbon.Popups.IsExpanded(this) || ReferenceEquals(this, ribbon.FileMenu) && ribbon.IsBackstageOpen);
     /// <summary>Initializes a RibbonDropDownItem instance.</summary>
     public RibbonDropDownItem() => Items = new(this);
     /// <summary>Gets the stable, owned command collection.</summary>

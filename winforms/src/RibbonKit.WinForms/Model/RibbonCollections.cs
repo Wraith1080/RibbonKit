@@ -16,6 +16,10 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
     private void Verify(T item, T? replacing = null)
     {
         ArgumentNullException.ThrowIfNull(item);
+        if (item is RibbonBackstagePageItem && _owner is not RibbonBackstage)
+            throw new ArgumentException("Backstage pages belong to Backstage.Items.", nameof(item));
+        if (_owner is RibbonBackstage && item is not RibbonBackstagePageItem && item.GetType() != typeof(RibbonButtonItem))
+            throw new ArgumentException("Backstage entries must be pages or button commands.", nameof(item));
         if (item is RibbonMenuSeparatorItem && _owner is not RibbonDropDownItem)
             throw new ArgumentException("Menu separators belong to a dropdown's Items collection.", nameof(item));
         if (item.IsDisposed)
@@ -60,6 +64,7 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
             return;
         Verify(item, previous);
         Ribbon?.VerifyAccess();
+        if (_owner is RibbonBackstage backstage) backstage.Removing(previous, index);
         previous.Parent = null;
         base.SetItem(index, item);
         item.Parent = _owner;
@@ -74,6 +79,7 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
         Ribbon?.VerifyAccess();
         var ribbon = Ribbon;
         var item = this[index];
+        if (_owner is RibbonBackstage backstage) backstage.Removing(item, index);
         if (item is RibbonTab tab)
             ribbon?.RemovingTab(tab, index);
         item.Parent = null;

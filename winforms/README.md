@@ -7,8 +7,8 @@ records its remaining review; [M2](docs/M2-STATUS.md) adds
 split buttons and native TextBox/ComboBox editing. The current [M3 slice](docs/M3-STATUS.md)
 adds button/toggle Quick Access, checkbox/radio icon references, ComboBox choosers
 and dropdown/split/group references.
-The current [M4 slice](docs/M4-STATUS.md) adds contextual-tab header colors and
-the File command-menu foundation. [Remaining slices](docs/M4-STATUS.md#remaining-slices)
+The current [M4 slice](docs/M4-STATUS.md) adds contextual-tab header colors,
+the File command menu and native Backstage pages. [Remaining slices](docs/M4-STATUS.md#remaining-slices)
 record the working sequence through galleries, customization and window integration.
 Accessibility compatibility is deferred
 while the control structure is implemented; it remains possible future work.
@@ -95,9 +95,132 @@ Opening File retains tab selection. Hide/disable/dispose closes its open stack.
 `DrawFileButton` lets custom renderers paint the header using measured bounds.
 The header uses Text; command rows use normal icons. FileMenu itself is owned by
 the ribbon and cannot be reparented; its direct disposal permanently releases that
-stable declaration. Images/renderers remain borrowed. This slice is a command
-dropdown; Backstage pages and the legacy two-pane application menu/orb follow
-separately. New File accessibility and actual VS acceptance remain deferred.
+stable declaration. Images/renderers remain borrowed. The legacy two-pane
+application menu/orb remains separate. New accessibility compatibility and actual
+VS acceptance remain deferred.
+
+### Native Backstage
+
+`FileMenuMode` defaults to `CommandMenu`, preserving existing File consumers.
+Choose `Backstage` to route the same File header, pointer/keyboard activation and
+`FileMenu.ShowDropDown()` to the library-owned surface. `FileMenu.Items` remains
+the command-menu declaration; `Backstage.Items` owns separate page/button models.
+No header duplication, custom Form subclass or Showcase helper is required.
+
+```csharp
+var infoContent = new UserControl(); // Application supplies and owns native content.
+var printContent = new UserControl();
+var infoImage = SystemIcons.Information.ToBitmap(); // Borrowed by the navigation item.
+ribbon.Backstage.Items.AddRange(
+    new RibbonBackstagePageItem { Text = "Info", KeyTip = "I", Content = infoContent, Image = infoImage },
+    new RibbonBackstagePageItem { Text = "Print", KeyTip = "P", Content = printContent });
+var save = new RibbonButtonItem { Text = "Save", KeyTip = "S" };
+save.Click += (_, _) => SaveDocument();
+ribbon.Backstage.Items.Add(save);
+ribbon.FileMenu.Visible = true;
+ribbon.FileMenuMode = RibbonFileMenuMode.Backstage;
+// Dispose application content after the ribbon/Form has released it.
+form.Disposed += (_, _) => { infoContent.Dispose(); printContent.Dispose(); infoImage.Dispose(); };
+```
+
+`Backstage` is a stable, content-serialized owned component. Its Items collection
+accepts `RibbonBackstagePageItem` and plain `RibbonButtonItem` commands. IDs,
+binding contexts, change events and owned-model disposal follow the ribbon tree.
+`Backstage.SelectedPage` is bindable; the first available page is initially
+selected. Hiding, disabling, removing or disposing the selected page selects the
+next available page, then the previous page, then none. Navigation focus and
+commands do not change selection; commands close Backstage before invoking Click.
+
+Navigation items reserve the same left icon slot with or without an image. Set
+`Image` for an application-owned full-color bitmap/picture, or `Icon` for an
+application-owned vector provider (`Icon` takes precedence when both are set).
+The library scales that slot with DPI and borrows either asset. Showcase Info uses
+a full-color information image; Print and the commands use vector icons.
+
+In the Visual Studio property grid, expand the ribbon's **Backstage** property,
+then its **Layout** properties:
+
+| Property | Default | Authoring behavior |
+| --- | --- | --- |
+| `NavigationWidth` | `Auto` | Enter a positive logical-pixel width, or choose/type Auto. Reset or an empty value also restores Auto. |
+| `MinimumNavigationWidth` | `160` | Preferred lower limit, at least 80 logical pixels. |
+| `MaximumNavigationWidth` | `320` | Preferred upper limit, at least 80 logical pixels. A larger minimum takes precedence, so designer assignments can occur in either order. |
+
+These are designer-serializable, bindable component properties with Changed
+events. Numeric values use 96-DPI logical pixels: 200 becomes 250 device pixels
+at 125% scaling. Auto starts at 200 and measures visible captions, the reserved
+icon slot, padding and scrollbar clearance, then applies the limits. A narrow
+Form can temporarily display less than the preferred minimum to preserve page
+space. Neither resizing the Form nor a DPI change rewrites the authored value.
+No runtime drag handle or width-setting UI is added.
+
+```csharp
+ribbon.Backstage.NavigationWidth = 224; // Or null for Auto.
+ribbon.Backstage.MinimumNavigationWidth = 160;
+ribbon.Backstage.MaximumNavigationWidth = 320;
+```
+
+When binding the nullable width, use `formattingEnabled: true` and
+`DataSourceNullValue = null` so Auto round-trips as null. The library owns
+measurement; the application owns any settings storage. Property metadata, Auto
+conversion and reset behavior are checked; an actual VS round-trip remains a
+separate pending gate.
+
+Set the bindable `IsBackstageOpen` to request visibility. File's existing
+`DropDownOpening` cancellation runs first, followed by `Backstage.Opening`.
+`Opened`, `Closing`, `Closed` and `IsBackstageOpenChanged` report the lifecycle;
+`FileMenu.IsDropDownOpen`, `CloseDropDown()` and `DropDownClosed` also describe the
+active File surface. Cancelled opening raises no closed event. Page validation
+or `Closing` cancellation retains the current surface/mode. Hiding/disabling/
+disposing File, Backstage or the ribbon, or changing the ribbon's parent/handle,
+forces close without validation or Closing; an open surface still raises Closed.
+Switching File mode closes its current surface while retaining both declarations.
+
+Each Content must initially be an unparented, undisposed, non-top-level native
+Control used by exactly one page declaration. The library borrows it, temporarily
+docks it in a persistent page slot and retains that parent across page switches,
+close and reopen. Values, established binding contexts, HWNDs and text selection
+survive those operations. Do not reparent or dispose assigned content. Setting
+Content to null/replacing it, removing the page, or disposing its page/ribbon/Form
+detaches it, restores its authored Dock/Bounds/Visible and never disposes it.
+The application must eventually dispose its content. The Control reference is
+designer-serializable; actual VS page-authoring/round-trip acceptance is pending.
+
+The overlay covers its ordinary Form's client area, leaving document Controls
+in place. It follows client resizing and DPI changes, with scrollable navigation;
+page-specific scrolling/styling remains with application content. Opening commits
+pending ribbon edits and closes menus/choice lists/ScreenTips. Underlying ribbon
+popups and editor activation are blocked while Backstage is open. Page changes,
+commands and requested close validate visible enabled native page fields.
+Back/Escape returns focus to the previous available control, or File. Escape first
+closes an open native page ComboBox list. Tab/Shift+Tab cycle inside the surface;
+arrows/Home/End move navigation focus, Enter/Space activate entries, F6 switches
+navigation/page focus, and Alt/F10 displays navigation KeyTips. Covered Form default
+buttons/mnemonics stay outside Backstage's dialog-key scope. Selected ribbon tab
+and minimized mode survive opening/closing. Transitions remain immediate.
+
+`DrawBackstageBackground` and `DrawBackstageEntry` are shared renderer hooks;
+`BackstageNavigationBackground` supplies the initial Office 2024 rail color.
+Rail/row/back metrics and appearance constants join M4I's deferred consolidation.
+Showcase's File demonstrates Info, Print and application commands through these
+same public APIs; document storage, print jobs and native page styling stay in
+the application. This foundation adds no new accessibility provider/patterns.
+
+Focused shown checks, using the normal Debug project runner after building:
+
+```powershell
+winforms/tests/RibbonKit.WinForms.NativeTests/bin/Debug/net10.0-windows/RibbonKit.WinForms.NativeTests.exe --backstage-checks winforms/TestResults/visual/backstage-office
+winforms/tests/RibbonKit.WinForms.NativeTests/bin/Debug/net10.0-windows/RibbonKit.WinForms.NativeTests.exe --backstage-checks-flat winforms/TestResults/visual/backstage-neutral
+```
+
+The public-only fixture also ships with the independent consumer as
+`--validate-backstage` / `--validate-backstage-flat`. Running the project fixture
+does not establish new package, VS, accessibility or physical monitor acceptance.
+
+The same runner also provides `--backstage-width-checks` /
+`--backstage-width-checks-flat` for Auto, explicit/limited widths, narrow/wide
+restoration, bindings and native page-state retention. Independent consumer names
+are `--validate-backstage-width` / `--validate-backstage-width-flat`.
 
 Contextual tools use ordinary `RibbonTab` components:
 

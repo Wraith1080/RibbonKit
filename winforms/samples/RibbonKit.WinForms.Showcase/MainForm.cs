@@ -20,6 +20,7 @@ public partial class MainForm : Form
         newDocument.Click += ActionClick; openDocument.Click += ActionClick; saveDocument.Click += ActionClick;
         ribbon.FileMenu.Items.AddRange(newDocument, openDocument, saveDocument, new RibbonMenuSeparatorItem(), recentDocuments);
         formattingSource.DataSource = _formatting;
+        InitializeBackstage();
         bold.DataBindings.Add(new Binding(nameof(RibbonToggleItem.Checked), formattingSource, nameof(FormattingState.Bold), true, DataSourceUpdateMode.OnPropertyChanged));
         nameInput.DataBindings.Add(new Binding(nameof(RibbonTextBoxItem.Value), formattingSource, nameof(FormattingState.Name), true, DataSourceUpdateMode.OnPropertyChanged));
         fontInput.DataBindings.Add(new Binding(nameof(RibbonComboBoxItem.Value), formattingSource, nameof(FormattingState.FontName), true, DataSourceUpdateMode.OnPropertyChanged));
@@ -68,7 +69,7 @@ public partial class MainForm : Form
         document.AppendText("\r\n\r\nInput fields in Quick Access opens the original Fields group, including on another tab. That group stays collapsed while its QAT reference is attached, and its native fields retain the same values and bindings.");
         document.AppendText("\r\n\r\nRuler, Gridlines, Print layout and Web layout appear as icon toggle buttons in Quick Access. Gridlines keeps its three-state binding, with a small bar for mixed state. Layout choices retain their original radio group. Their ordinary checkbox/radio visuals remain on Options.");
         document.AppendText("\r\n\r\nChoose Insert > Picture to show the colored Picture Format tab. Close picture tools hides it and returns to a visible tab. The application decides when picture tools apply.");
-        document.AppendText("\r\n\r\nFile opens document commands and a Recent submenu. F10, F enters the same menu; Escape closes one level at a time. File remains available while the ribbon is minimized.");
+        document.AppendText("\r\n\r\nFile opens native Backstage. Info and Print retain their native fields when switching pages or reopening; Save and New run application commands. F10, F enters Backstage, F6 moves to its page, and Escape returns to this document. File remains available while the ribbon is minimized.");
         ribbon.SelectedTab = home;
     }
     private void NameValidating(object? sender, CancelEventArgs e)

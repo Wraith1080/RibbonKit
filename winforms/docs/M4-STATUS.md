@@ -1,6 +1,6 @@
 # M4 broader native surfaces
 
-Status: **M4A contextual tabs accepted; M4B File menu implemented for review**, 2026-10-27. Continuation follows the
+Status: **M4C Backstage implemented; human review pending**, 2026-10-27. Continuation follows the
 accepted [M3E option icon presentation](M3-STATUS.md#m3e-option-references--2026-10-27).
 M4 is a collection of bounded slices, not blanket implementation of every roadmap
 feature. Existing accessibility, full theming, animation, touch/IME and optional
@@ -140,10 +140,12 @@ Relevant verification only, 2026-10-27:
   package consumer. This slice ran the Debug project runner, not a newly packed
   consumer. Debug Showcase is refreshed for local review.
 
-Human visual acceptance remains open. Release/package, unrelated/full-suite,
-actual VS, physical mixed-DPI/monitor, RTL and new accessibility compatibility
-scopes were not run. No native touch/IME was added. WPF runtime/build/CI remain
-unchanged. Next is M4C's Backstage ownership/page contract after this review.
+Current human review is recorded in the left-inset follow-up below.
+Release/package, unrelated/full-suite, actual VS, physical mixed-DPI/monitor, RTL
+and new accessibility compatibility scopes were not run. No native touch/IME was
+added. WPF runtime/build/CI remain unchanged. The M4C starting
+[continuation prompt](NEXT-SLICE-PROMPT.md) retains its original scope; current
+implementation and evidence follow below.
 
 ### File left-inset follow-up — 2026-10-27
 
@@ -163,7 +165,167 @@ Evidence: `TestResults/visual/m4b-file-inset-{office,neutral}/result.log`.
 Office root and narrow/BelowRibbon captures were inspected; Debug Showcase is
 refreshed for review. Previous results remain separate. Unrelated/full-suite,
 Release/package and deferred native/VS/accessibility gates were not rerun.
-Human review of this padding correction remains open.
+The user accepted the File menu presentation, including this padding correction,
+on 2026-10-27. This records visual review at the available scope; it does not close
+the separate VS, hardware or accessibility gates.
+
+## M4C native Backstage — 2026-10-27
+
+The bounded API/ownership proposal was stated before runtime edits, after reading
+WPF's Modern Backstage, command-versus-page selection, initial focus, Tab cycling
+and Back/Escape contracts. WPF remains a behavioral reference without shared code,
+hosting, templates or runtime dependencies.
+
+- `RibbonControl.Backstage` is a stable, owned, content-serialized
+  `RibbonBackstage`. Its Items own page and plain button models; page Controls
+  are borrowed. `FileMenuMode` defaults to `CommandMenu`; the explicit Backstage
+  value routes the same File header and ShowDropDown/CloseDropDown path. Existing
+  FileMenu consumers retain their default behavior, metadata and commands.
+- `RibbonBackstagePageItem.Content` accepts one initially unparented, non-top-level
+  native Control per page. A persistent library slot keeps its parent across page
+  changes/close/reopen, preserving HWNDs, values, bindings and selection. Content
+  replacement, page removal and page/ribbon/Form disposal detach and restore
+  Dock/Bounds/Visible without disposing application content. Applications must not
+  move/dispose assigned Controls and retain eventual disposal responsibility.
+- Bindable `SelectedPage`, FileMenuMode and IsBackstageOpen use ordinary events.
+  Available page fallback is next, previous, none. Commands retain page selection
+  and close before Click. File DropDownOpening cancellation precedes Backstage
+  Opening; Opened/Closing/Closed and visibility events describe the new surface.
+  File's IsDropDownOpen/DropDownClosed also follow its active Backstage route.
+- The library overlays the ordinary Form's complete client area. It owns navigation,
+  page hosting, scrollable rail, sizing, keyboard/KeyTips and focus restoration.
+  Application documents stay in place; no host click handler, custom chrome or
+  coordinator is required. Selected tab and minimized state are retained.
+- Opening commits pending ribbon edits and closes menus/choice lists/ScreenTips.
+  Covered ribbon menu/editor activation is blocked. Visible enabled native page
+  validation can veto navigation, commands, requested close or mode switching;
+  Closing can also cancel. Availability/lifetime teardown forces close. Escape
+  closes a native page ComboBox list first, then Backstage. Tab cycles internally,
+  arrows/Home/End move navigation focus, Enter/Space activate, F6 switches regions,
+  Alt/F10 shows KeyTips, and covered Form default buttons/mnemonics are excluded.
+- Thirty additive Unshipped entries cover the required model/state APIs, two
+  renderer hooks and the rail color. XML/API checks pass. Designer association and
+  a bounded page/button collection editor are included; borrowed Control references
+  serialize normally. Rail/row/back metrics and state appearance constants remain
+  part of M4I's planned inventory, not comprehensive theme consolidation.
+- Showcase File demonstrates Info (bound name and retained notes), Print (native
+  copies/paper and a local preview action), New and Save. The unrelated ordinary
+  Form fixture uses public APIs only. Page content, icons, business actions,
+  bindings, storage and disposal remain application-owned.
+
+Relevant verification, 2026-10-27:
+
+- Normal Debug native solution build passed with **zero warnings/errors**, including
+  runtime API/XML and the separate designer. Six new STA cases cover ownership,
+  metadata/binding, cancellation/routing, handle/selection reuse, validation,
+  commands, availability/fallback/content replacement/visibility/disposal and shared
+  rendering/geometry at synthetic 96/120/144/192 DPI. A separate focus case verifies
+  programmatic page changes/removal keep focus inside the open surface and closed
+  changes retain document focus. The existing File lifecycle
+  regression is the seventh selected case. Initial recorded selection passed 4/5;
+  its binding fixture needed CreateControl before binding a native Control. Only
+  that failed fixture was rerun (1/1), then the added lifetime and focus cases each
+  passed (1/1).
+  These are separate focused results, not an aggregate or full-suite pass:
+  `tests/RibbonKit.WinForms.Tests/TestResults/m4c-backstage-{focused,metadata,lifecycle,focus}.trx`.
+- Shown public-only Office and neutral scopes passed at **120 DPI** after the final
+  dialog-key/lifetime changes. They exercise cancelled File opening, pending ribbon
+  validation, native page binding, pointer/KeyTips, page/handle/parent/text-selection
+  reuse, page validation after moving navigation focus, native ComboBox first-Escape,
+  Tab/Shift+Tab containment, covered Form default-button protection, resize with
+  minimized/BelowRibbon geometry, Back/document focus return, popup exclusion,
+  command execution once, disable/remove/disposal and zero unavailable-element
+  exceptions. Earlier passing scopes are retained separately. Final evidence:
+  `TestResults/visual/m4c-backstage-final-{office,neutral}/result.log` and PNGs.
+- Inspected final Office Info, neutral Print and narrow captures, as well as earlier
+  Office Info/Print/narrow captures. Shown Showcase Info and Print captures were
+  also inspected: `TestResults/visual/m4c-backstage-showcase-shown/`. Its initial
+  DrawToBitmap captures rendered covered document Controls over the overlay; they
+  are not visual acceptance evidence. The dedicated capture now records shown
+  screen pixels with a foreground guard. Debug Showcase is refreshed for review.
+
+Visual follow-up, 2026-10-27: the user found the overall Backstage presentation
+good and requested rounded ends on the selected navigation marker and circular
+Back hover/pressed feedback. The shared renderer now uses mirrored rounded
+coverage for the marker and Back fill/outline; keyboard Back focus also follows
+the circular outline. Normal Debug solution build passed with zero warnings/errors.
+Only the two new rendering cases ran (2/2), covering Office/neutral normal/hover/
+pressed/focus states and symmetric edge coverage at odd/even sizes and synthetic
+96/120/144/192 DPI: `tests/RibbonKit.WinForms.Tests/TestResults/m4c-backstage-chrome.trx`.
+The shown public-only Office scope passed at 120 DPI, including Back press/cancel
+and ordinary Back activation. Actual hover/pressed captures and the rendering
+matrix were inspected: `TestResults/visual/m4c-backstage-rounded-office/` and
+`TestResults/visual/m4c-backstage-chrome/`. Debug Showcase is refreshed; no unrelated
+or full suite was rerun. The two corrections await human review.
+
+Stroke/image follow-up, 2026-10-27: the user requested a slightly heavier Back
+circle/arrow and a navigation image example. Back now targets a 1.5-logical-pixel
+stroke (circle snapped to device pixels; arrow keeps fractional antialiased width
+and rounded caps/joins). Info demonstrates a borrowed full-color `Image`; Print
+and commands retain vector `Icon` examples. The application disposes its image.
+Normal Debug solution build passed with zero warnings/errors; only the affected
+Back rendering case ran and passed 1/1 across both renderers, odd/even sizes and
+synthetic 96/120/144/192 DPI. Evidence:
+`tests/RibbonKit.WinForms.Tests/TestResults/m4c-backstage-back-stroke.trx`.
+Inspected the updated rendering matrix and shown Showcase Info/Print captures in
+`TestResults/visual/m4c-backstage-image-stroke-showcase/`. The public-only shown
+Office scope also passed at 120 DPI, including hover/pressed captures, Back
+activation/cancel and the existing interaction checks:
+`TestResults/visual/m4c-backstage-back-stroke-office/result.log`.
+Debug Showcase is refreshed; earlier unrelated passes were retained.
+
+### Designer navigation width — 2026-10-27
+
+The user accepted the preceding stroke/image refinements and authorized navigation
+width configuration, clarifying that this means **designer properties**, not a
+runtime drag interaction. Current public properties on the owned Backstage model:
+
+- `NavigationWidth : int?` defaults to null/Auto. Its property-grid converter shows
+  an Auto choice and accepts Auto, a positive number, an empty value or Reset.
+- `MinimumNavigationWidth` / `MaximumNavigationWidth` default to 160/320 logical
+  pixels. Both accept values of at least 80; a larger minimum takes precedence,
+  allowing designer properties to be assigned in either order.
+- Values use 96-DPI logical pixels and normal binding/Changed events. The Backstage
+  property expands in the property grid, with these settings in Layout. The nine
+  additive Unshipped entries have XML documentation and API coverage.
+- Auto starts at 200 and measures visible captions, icon space, padding and scroll
+  clearance. Shared layout constrains Auto and explicit widths to leave page space;
+  very narrow hosts share the remaining width. Temporary constraints never rewrite
+  the authored property, so widening restores its preferred width. Page Controls
+  retain their parent, handle, selection, focus, values and pending validation.
+- No drag handle, end-user resizing policy, width-setting UI, storage service or
+  persistence schema was added. Application settings remain application-owned.
+  Nullable-width binding uses formatting enabled and DataSourceNullValue=null.
+
+Relevant final verification:
+
+- Normal Debug solution build passed with zero warnings/errors, including API/XML
+  and design. The final property-only selection passed **4/4**: three new property,
+  binding/metadata/reset, DPI/Auto/constraints and native-state cases plus the
+  affected existing Backstage geometry case. Synthetic DPI: 96/120/144/192. Evidence:
+  `tests/RibbonKit.WinForms.Tests/TestResults/m4c-backstage-width-properties.trx`.
+- Shown public-only Office and neutral width scopes both passed at **120 DPI**:
+  explicit width/binding, maximum and narrow-window clamping without rewriting the
+  preference, wide restoration, live Auto caption measurement, pending native edits,
+  focus/parent/handle/text-selection retention and the existing Backstage interaction
+  contract. Final property-only evidence:
+  `TestResults/visual/m4c-backstage-width-properties-{office,neutral}/result.log`.
+  Office explicit/long-caption Auto and neutral narrow captures were inspected.
+- Debug Showcase is refreshed and continues to consume the public properties.
+  Actual VS property-grid editing/code round-trip, Release/package, physical
+  mixed-DPI/monitor, RTL and accessibility acceptance remain separate. No WPF build
+  or tests ran for the documentation-only future item.
+
+The corresponding WPF idea is deferred in
+[the future improvements plan](../../docs/22-FUTURE-WPF-IMPROVEMENTS.md#backstage-navigation-width-in-designer-properties),
+with a short pointer in the design index. WPF runtime/build/CI remain unchanged.
+Human review of the width settings remains pending. The public fixture is linked into the project runner
+and included in the independent package consumer, but no fresh package/isolated
+consumer campaign was run. Full/unrelated suites, Release, actual VS round-trip,
+physical mixed-DPI/monitor, RTL and new accessibility compatibility remain unrun.
+No native touch/IME, motion, legacy File designs, chrome or additional themes were
+added. WPF runtime/build/CI remain unchanged. M4D galleries are the next planned
+slice after review; they were not implemented in this session.
 
 ## Remaining slices
 
@@ -172,8 +334,8 @@ Each public API and ownership contract is proposed before its implementation.
 
 | Slice | Remaining deliverable |
 | --- | --- |
-| M4B | File command-menu foundation (implemented; visual review open) |
-| M4C | Backstage navigation, commands and application-supplied native page Controls |
+| M4B | File command-menu foundation (accepted at the recorded scope) |
+| M4C | Backstage navigation, commands and native page Controls implemented; human review pending |
 | M4D | Gallery model and dropdown tiles, selection, preview/cancel/commit |
 | M4E | In-ribbon gallery, scrolling/expansion and QAT projection |
 | M4F | Tab/group merge service, then modal scopes with deterministic restoration |

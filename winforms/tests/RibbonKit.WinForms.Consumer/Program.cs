@@ -8,6 +8,10 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--validate-backstage-width" or "--validate-backstage-width-flat")
+            return BackstageInteractionChecks.Run(args[1], args[0] == "--validate-backstage-width-flat", true);
+        if (args.Length == 2 && args[0] is "--validate-backstage" or "--validate-backstage-flat")
+            return BackstageInteractionChecks.Run(args[1], args[0] == "--validate-backstage-flat");
         if (args.Length == 2 && args[0] is "--validate-file" or "--validate-file-flat")
             return FileMenuInteractionChecks.Run(args[1], args[0] == "--validate-file-flat");
         if (args.Length == 2 && args[0] is "--validate-contextual" or "--validate-contextual-flat")

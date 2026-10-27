@@ -62,6 +62,12 @@ internal sealed class RibbonInputFilter(RibbonControl ribbon) : IMessageFilter, 
             }
             if (key != Keys.Menu)
                 _altArmed = false;
+            if (ribbon.IsBackstageOpen)
+            {
+                ribbon.SetKeyboardFocusCues(true);
+                if (key == Keys.F10 && Control.ModifierKeys == Keys.None) { ribbon.ToggleKeyTips(); return true; }
+                return ribbon.ProcessBackstageKey(key | Control.ModifierKeys);
+            }
             // Observe Tab before normal WinForms traversal transfers focus into
             // the ribbon; do not consume the host's navigation message.
             if (key == Keys.Tab && (Control.ModifierKeys & (Keys.Control | Keys.Alt)) == 0)

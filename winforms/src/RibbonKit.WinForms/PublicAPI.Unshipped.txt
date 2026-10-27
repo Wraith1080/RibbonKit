@@ -1,4 +1,43 @@
 #nullable enable
+RibbonKit.WinForms.RibbonBackstage
+RibbonKit.WinForms.RibbonBackstage.RibbonBackstage() -> void
+RibbonKit.WinForms.RibbonBackstage.Items.get -> RibbonKit.WinForms.RibbonItemCollection!
+RibbonKit.WinForms.RibbonBackstage.NavigationWidth.get -> int?
+RibbonKit.WinForms.RibbonBackstage.NavigationWidth.set -> void
+RibbonKit.WinForms.RibbonBackstage.NavigationWidthChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonBackstage.MinimumNavigationWidth.get -> int
+RibbonKit.WinForms.RibbonBackstage.MinimumNavigationWidth.set -> void
+RibbonKit.WinForms.RibbonBackstage.MinimumNavigationWidthChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonBackstage.MaximumNavigationWidth.get -> int
+RibbonKit.WinForms.RibbonBackstage.MaximumNavigationWidth.set -> void
+RibbonKit.WinForms.RibbonBackstage.MaximumNavigationWidthChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonBackstage.SelectedPage.get -> RibbonKit.WinForms.RibbonBackstagePageItem?
+RibbonKit.WinForms.RibbonBackstage.SelectedPage.set -> void
+RibbonKit.WinForms.RibbonBackstage.SelectedPageChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonBackstage.Opening -> System.ComponentModel.CancelEventHandler?
+RibbonKit.WinForms.RibbonBackstage.Opened -> System.EventHandler?
+RibbonKit.WinForms.RibbonBackstage.Closing -> System.ComponentModel.CancelEventHandler?
+RibbonKit.WinForms.RibbonBackstage.Closed -> System.EventHandler?
+RibbonKit.WinForms.RibbonBackstagePageItem
+RibbonKit.WinForms.RibbonBackstagePageItem.RibbonBackstagePageItem() -> void
+RibbonKit.WinForms.RibbonBackstagePageItem.Content.get -> System.Windows.Forms.Control?
+RibbonKit.WinForms.RibbonBackstagePageItem.Content.set -> void
+RibbonKit.WinForms.RibbonBackstagePageItem.ContentChanged -> System.EventHandler?
+override RibbonKit.WinForms.RibbonBackstagePageItem.PerformClick() -> void
+RibbonKit.WinForms.RibbonFileMenuMode
+RibbonKit.WinForms.RibbonFileMenuMode.CommandMenu = 0 -> RibbonKit.WinForms.RibbonFileMenuMode
+RibbonKit.WinForms.RibbonFileMenuMode.Backstage = 1 -> RibbonKit.WinForms.RibbonFileMenuMode
+RibbonKit.WinForms.RibbonControl.Backstage.get -> RibbonKit.WinForms.RibbonBackstage!
+RibbonKit.WinForms.RibbonControl.FileMenuMode.get -> RibbonKit.WinForms.RibbonFileMenuMode
+RibbonKit.WinForms.RibbonControl.FileMenuMode.set -> void
+RibbonKit.WinForms.RibbonControl.FileMenuModeChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonControl.IsBackstageOpen.get -> bool
+RibbonKit.WinForms.RibbonControl.IsBackstageOpen.set -> void
+RibbonKit.WinForms.RibbonControl.IsBackstageOpenChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonTheme.BackstageNavigationBackground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.BackstageNavigationBackground.init -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawBackstageBackground(RibbonKit.WinForms.RibbonPaintContext context, int navigationWidth) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawBackstageEntry(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonItem? item, bool selected) -> void
 RibbonKit.WinForms.RibbonControl.FileMenu.get -> RibbonKit.WinForms.RibbonDropDownItem!
 virtual RibbonKit.WinForms.RibbonRenderer.DrawFileButton(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonDropDownItem! menu) -> void
 RibbonKit.WinForms.RibbonTab.IsContextual.get -> bool

@@ -1171,7 +1171,8 @@ records shared-state isolation and bounded test-only timeout exceptions.
 
 ### Remaining or intentionally deferred
 
-- **Future WPF improvements:** deferred checkbox/radio QAT icon-button ideas are
+- **Future WPF improvements:** deferred checkbox/radio QAT icon buttons and
+  designer-configurable Backstage navigation width are
   recorded in the [future improvements plan](docs/22-FUTURE-WPF-IMPROVEMENTS.md).
 
 - **RibbonKit 1.1 acceptance and release:** campaign scope, inherited Writer
