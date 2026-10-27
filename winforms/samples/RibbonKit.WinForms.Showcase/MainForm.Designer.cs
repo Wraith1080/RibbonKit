@@ -69,7 +69,12 @@ partial class MainForm
         whitePage = new RibbonRadioButtonItem { Id = "options.white", Text = "White", KeyTip = "W", Checked = true }; components.Add(whitePage, "whitePage");
         sepiaPage = new RibbonRadioButtonItem { Id = "options.sepia", Text = "Sepia", KeyTip = "S" }; components.Add(sepiaPage, "sepiaPage");
         viewOptions.Items.AddRange(showRuler, showGrid, unavailableOption); viewMode.Items.AddRange(printView, webView, draftView);
-        pageColor.Items.AddRange(whitePage, sepiaPage); optionMenu.Items.AddRange(popupRuler, pageColor); menuOptions.Items.Add(optionMenu);
+        popupRuler.MenuDescription = "Show the document ruler. This choice shares the ribbon checkbox binding.";
+        pageColor.MenuDescription = "Choose a background for the current document.";
+        whitePage.MenuDescription = "Use the standard white page background.";
+        sepiaPage.MenuDescription = "Use a warm background for comfortable reading.";
+        var optionSeparator = new RibbonMenuSeparatorItem(); components.Add(optionSeparator, "optionSeparator");
+        pageColor.Items.AddRange(whitePage, sepiaPage); optionMenu.Items.AddRange(popupRuler, optionSeparator, pageColor); menuOptions.Items.Add(optionMenu);
         options.Groups.AddRange(viewOptions, viewMode, menuOptions);
         showRuler.Click += OptionClick; showGrid.Click += OptionClick; popupRuler.Click += OptionClick;
         printView.Click += OptionClick; webView.Click += OptionClick; draftView.Click += OptionClick;
@@ -108,7 +113,10 @@ partial class MainForm
         paste.Layout = RibbonSplitButtonLayout.Vertical; paste.DropDownKeyTip = "T";
         pasteText.Id = "cmd.pasteText"; pasteText.Text = "Paste text only"; pasteText.KeyTip = "T"; pasteText.Click += ActionClick;
         pasteSpecial.Id = "cmd.pasteSpecial"; pasteSpecial.Text = "Paste special"; pasteSpecial.KeyTip = "S"; pasteSpecial.Click += ActionClick;
-        paste.Items.AddRange(new RibbonItem[] { pasteText, pasteSpecial });
+        pasteText.MenuDescription = "Insert clipboard text without its original formatting.";
+        pasteSpecial.MenuDescription = "Choose which clipboard format to insert into the document.";
+        var pasteSeparator = new RibbonMenuSeparatorItem(); components.Add(pasteSeparator, "pasteSeparator");
+        paste.Items.AddRange(new RibbonItem[] { pasteText, pasteSeparator, pasteSpecial });
         cut.Id = "cmd.cut"; cut.Text = "Cut"; cut.KeyTip = "X"; cut.SizePolicy = RibbonSizePolicy.Adaptive(RibbonItemSize.Large, RibbonItemSize.Medium, RibbonItemSize.Small); cut.Click += ActionClick;
         bold.Id = "cmd.bold"; bold.Text = "Bold"; bold.KeyTip = "B"; bold.SizePolicy = RibbonSizePolicy.Fixed(RibbonItemSize.Medium); bold.CheckedChanged += BoldChanged;
         italic.Id = "cmd.italic"; italic.Text = "Italic"; italic.KeyTip = "I"; italic.SizePolicy = RibbonSizePolicy.Fixed(RibbonItemSize.Medium);
@@ -128,6 +136,8 @@ partial class MainForm
         select.Id = "cmd.select"; select.Text = "Select"; select.KeyTip = "S";
         selectAll.Id = "cmd.selectAll"; selectAll.Text = "Select all"; selectAll.KeyTip = "A"; selectAll.Click += ActionClick;
         selectNone.Id = "cmd.selectNone"; selectNone.Text = "Clear selection"; selectNone.KeyTip = "C"; selectNone.Click += ActionClick;
+        selectAll.MenuDescription = "Select every item in the current document.";
+        selectNone.MenuDescription = "Remove the current selection without changing the document.";
         picture.Id = "cmd.picture"; picture.Text = "Picture"; picture.KeyTip = "P"; picture.SizePolicy = RibbonSizePolicy.Adaptive(RibbonItemSize.Large, RibbonItemSize.Medium, RibbonItemSize.Small); picture.Click += ActionClick;
         shapes.Id = "cmd.shapes"; shapes.Text = "Shapes"; shapes.KeyTip = "S"; shapes.SizePolicy = RibbonSizePolicy.Adaptive(RibbonItemSize.Large, RibbonItemSize.Medium, RibbonItemSize.Small);
         rectangle.Id = "cmd.rectangle"; rectangle.Text = "Rectangle"; rectangle.KeyTip = "R"; rectangle.Click += ActionClick;

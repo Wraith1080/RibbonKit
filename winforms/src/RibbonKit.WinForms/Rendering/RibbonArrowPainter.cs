@@ -5,6 +5,22 @@ namespace RibbonKit.WinForms;
 
 internal static class RibbonArrowPainter
 {
+    internal static void DrawVertical(Graphics graphics, Rectangle slot, int dpi, Color color, bool up)
+    {
+        float width = Math.Min(slot.Width, RibbonLayoutEngine.Scale(10, dpi)), height = Math.Min(slot.Height, RibbonLayoutEngine.Scale(6, dpi));
+        float stroke = Math.Max(1, 1.5f * dpi / 96);
+        if (width <= stroke || height <= stroke) return;
+        float x = slot.Left + (slot.Width - 1) / 2f, y = slot.Top + (slot.Height - 1) / 2f;
+        float dx = (width - stroke) / 2, dy = (height - stroke) / 2 * (up ? -1 : 1);
+        var saved = graphics.Save();
+        try
+        {
+            graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            using var pen = new Pen(color, stroke) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round };
+            graphics.DrawLines(pen, [new PointF(x - dx, y - dy), new PointF(x, y + dy), new PointF(x + dx, y - dy)]);
+        }
+        finally { graphics.Restore(saved); }
+    }
     internal static void DrawHorizontal(Graphics graphics, Rectangle slot, int dpi, Color color, bool backward)
     {
         float width = Math.Min(slot.Width, RibbonLayoutEngine.Scale(6, dpi));

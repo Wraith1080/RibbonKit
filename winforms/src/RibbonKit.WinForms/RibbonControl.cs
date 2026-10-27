@@ -196,6 +196,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             _fallbackTabIndex = -1;
             if (!ReferenceEquals(next, _selectedTab))
             {
+                _popups.CloseAll(false);
                 _selectedTab = next;
                 _layoutDirty = true;
                 SelectedTabChanged?.Invoke(this, EventArgs.Empty);
@@ -239,8 +240,8 @@ public partial class RibbonControl : Control, ISupportInitialize
         if (_theme is null || _disposing)
             return;
         var layout = LayoutTheme;
-        Height = RibbonLayoutEngine.Scale(layout.TabHeight, DeviceDpi) + RibbonLayoutEngine.Scale(layout.BodyHeight, DeviceDpi)
-            + RibbonLayoutEngine.Scale(_theme.BodyMargin.Top, DeviceDpi) + RibbonLayoutEngine.Scale(_theme.BodyMargin.Bottom, DeviceDpi);
+        Height = RibbonLayoutEngine.Scale(layout.TabHeight, DeviceDpi) + (IsMinimized ? 0 : RibbonLayoutEngine.Scale(layout.BodyHeight, DeviceDpi)
+            + RibbonLayoutEngine.Scale(_theme.BodyMargin.Top, DeviceDpi) + RibbonLayoutEngine.Scale(_theme.BodyMargin.Bottom, DeviceDpi));
     }
     private void EnsureLayout()
     {
@@ -352,7 +353,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         EnsureLayout();
         var context = new RibbonPaintContext(e.Graphics, ClientRectangle, Theme, Font, DeviceDpi);
         Painter.DrawSurface(context, false);
-        Painter.DrawBody(context with { Bounds = _snapshot.BodyBounds });
+        if (!_snapshot.BodyBounds.IsEmpty) Painter.DrawBody(context with { Bounds = _snapshot.BodyBounds });
         var state = e.Graphics.Save();
         try
         {
@@ -398,6 +399,8 @@ public partial class RibbonControl : Control, ISupportInitialize
                     }, split, target.Size, false);
                 else if (target.Element is RibbonItem item)
                     Painter.DrawItem(ctx, item, target.Size, false);
+                else if (target.Kind == TargetKind.Minimize)
+                    Painter.DrawMinimizeButton(ctx with { Hot = Enabled && _hotScroll == target.Kind, Pressed = Enabled && _pressedScroll == target.Kind, Focused = false }, IsMinimized);
                 else if (target.Element is null)
                     Painter.DrawScrollButton(ctx with
                     {
@@ -462,6 +465,12 @@ public partial class RibbonControl : Control, ISupportInitialize
             Capture = false;
             return;
         }
+        if (e.Clicks == 2 && hit.Element is RibbonTab)
+        {
+            _pressed = null; _pressedScroll = null; Capture = false;
+            ToggleMinimizedByUser();
+            return;
+        }
         _pressed = hit.Element;
         _pressedScroll = hit.Element is null ? hit.Kind : null;
         _pressedDropDown = hit.DropDownPart;
@@ -506,6 +515,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     internal bool ProcessRibbonKey(Keys keys)
     {
         _screenTips.Cancel();
+        if (keys == (Keys.Control | Keys.F1)) { ToggleMinimizedByUser(); return true; }
         if (keys is Keys.Escape or Keys.Enter or Keys.Space or Keys.Tab or (Keys.Tab | Keys.Shift)
             or Keys.Left or Keys.Right or Keys.Up or Keys.Down or Keys.Home or Keys.End)
             SetKeyboardFocusCues(true);
@@ -523,9 +533,10 @@ public partial class RibbonControl : Control, ISupportInitialize
                 ExitKeyTips(true);
             return true;
         }
-        if (_keyTips && keys is >= Keys.A and <= Keys.Z || _keyTips && keys is >= Keys.D0 and <= Keys.D9)
+        var tipKey = keys & Keys.KeyCode;
+        if (_keyTips && (keys & (Keys.Control | Keys.Alt)) == 0 && (tipKey is >= Keys.A and <= Keys.Z or >= Keys.D0 and <= Keys.D9))
         {
-            var character = keys is >= Keys.A and <= Keys.Z ? (char)('A' + keys - Keys.A) : (char)('0' + keys - Keys.D0);
+            var character = tipKey is >= Keys.A and <= Keys.Z ? (char)('A' + tipKey - Keys.A) : (char)('0' + tipKey - Keys.D0);
             var prefix = _keyPrefix + character;
             var candidates = TipTargets();
             var tips = KeyTipResolver.Resolve(candidates.Select(t => (t.TipText, t.PreferredKeyTip)));
@@ -575,7 +586,8 @@ public partial class RibbonControl : Control, ISupportInitialize
         {
             if (current >= 0 && targets[current].Kind == TargetKind.Tab && keys == Keys.Down)
             {
-                if (targets.FirstOrDefault(t => t.Kind is TargetKind.Item or TargetKind.Group) is { Element: { } first })
+                if (IsMinimized) Activate(targets[current]);
+                else if (targets.FirstOrDefault(t => t.Kind is TargetKind.Item or TargetKind.Group) is { Element: { } first })
                     FocusElement(first);
                 return true;
             }
@@ -597,7 +609,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         }
         return false;
     }
-    internal void Activate(RibbonTarget target)
+    internal void Activate(RibbonTarget target, Control? opener = null)
     {
         _screenTips.Cancel();
         if (!target.Enabled)
@@ -609,9 +621,11 @@ public partial class RibbonControl : Control, ISupportInitialize
             case RibbonTab tab:
                 SelectedTab = tab;
                 FocusElement(tab);
+                if (IsMinimized) _popups.Toggle(tab, this, target.VisibleBounds);
                 break;
             case RibbonGroup group:
-                _popups.Toggle(group, this, target.VisibleBounds);
+                Control groupOpener = opener ?? (Control?)_popups.Surfaces.LastOrDefault(s => s.Targets.Any(t => ReferenceEquals(t.Element, group))) ?? this;
+                _popups.Toggle(group, groupOpener, target.VisibleBounds);
                 break;
             case RibbonSplitButtonItem split when !target.DropDownPart:
                 ActivateSplitPrimary(split);
@@ -627,7 +641,8 @@ public partial class RibbonControl : Control, ISupportInitialize
                 _popups.CloseAll(true);
                 break;
             default:
-                Scroll(target.Kind is TargetKind.TabBack or TargetKind.TabNext, target.Kind is TargetKind.TabBack or TargetKind.BodyBack ? -120 : 120);
+                if (target.Kind == TargetKind.Minimize) IsMinimized = !IsMinimized;
+                else Scroll(target.Kind is TargetKind.TabBack or TargetKind.TabNext, target.Kind is TargetKind.TabBack or TargetKind.BodyBack ? -120 : 120);
                 break;
         }
     }

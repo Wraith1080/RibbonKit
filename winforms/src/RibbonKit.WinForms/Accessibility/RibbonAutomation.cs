@@ -159,7 +159,7 @@ internal sealed class RibbonAutomationRoot : RibbonAutomationNode, IFragmentRoot
         TabsNode = new(this, null, true);
     }
     internal override RibbonAutomationNode? Parent => null;
-    internal override IReadOnlyList<RibbonAutomationNode> Children => Read(() => Surface is null ? new[] { TabsNode } : Targets.Where(t => t.Element is not null).Select(t => t.Element!).Distinct().Select(e => Node(e)).ToArray());
+    internal override IReadOnlyList<RibbonAutomationNode> Children => Read(() => Surface is null ? new[] { TabsNode } : Targets.Where(t => t.Element is not null and not RibbonMenuSeparatorItem).Select(t => t.Element!).Distinct().Select(e => Node(e)).ToArray());
     internal override Rectangle ScreenBounds => Read(() => Control.Visible ? Control.RectangleToScreen(Control.ClientRectangle) : Rectangle.Empty);
     public override IRawProvider? HostRawElementProvider => Read(() => { UiaNative.UiaHostProviderFromHwnd(Control.Handle, out var host); return host; });
     public override object? GetPropertyValue(int propertyId) => propertyId switch { 30003 => Surface is null ? 50033 : 50009, 30005 => Surface?.OwnerElement.Text ?? Ribbon.AccessibleName ?? "Ribbon", 30011 => Surface is null ? Ribbon.Name is { Length: > 0 } name ? name : "ribbon" : "popup:" + Surface.OwnerElement.Id, 30012 => "RibbonControl", _ => base.GetPropertyValue(propertyId) };
@@ -184,7 +184,7 @@ internal sealed class RibbonAutomationRoot : RibbonAutomationNode, IFragmentRoot
     {
         var point = Control.PointToClient(new((int)x, (int)y));
         var target = Targets.LastOrDefault(t => t.VisibleBounds.Contains(point));
-        return target?.Element is { } element ? Node(element) : this;
+        return target?.Element is { } element and not RibbonMenuSeparatorItem ? Node(element) : this;
     });
     public IFragmentProvider? GetFocus() => Read<IFragmentProvider?>(() => Control.ContainsFocus && Ribbon.FocusedElement is { } item ? Node(item) : null);
     internal void Changed()

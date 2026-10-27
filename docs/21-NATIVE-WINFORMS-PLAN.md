@@ -1,6 +1,6 @@
 # Native RibbonKit.WinForms assessment and implementation plan
 
-> Implementation through M2E passive ScreenTips, 2026-10-27, following
+> Implementation through M2G minimize/expand, 2026-10-27, following
 > the user's acceptance of the M2C editor and startup polish. Current bounded
 > evidence and remaining review are in the M2 ledger. Comprehensive theming is deferred
 > until most component slices are implemented; see the sequencing decision in §6.
@@ -862,7 +862,7 @@ change them before committing to the corresponding API/compatibility contract.
 | D6 Visual/platform expansion | Office2024 light/Compact/LTR/instant M1; add later palettes, RTL, Touch, custom content and chrome in bounded slices. | Requiring any of them in M1 expands its native review, API and lifetime gates. Full pixel equality with WPF text is not a defensible acceptance metric. |
 
 The implementation covers the M1 foundation, M2A split buttons and the bounded
-M2B TextBox/M2C ComboBox/M2D check/radio slices
+M2B TextBox/M2C ComboBox/M2D check/radio/M2E ScreenTip/M2F menu/M2G minimize slices
 under these recorded decisions; [the M2 ledger](../winforms/docs/M2-STATUS.md) owns
 the current slice scope and remaining review.
 Its [acceptance ledger](../winforms/docs/M1-STATUS.md) keeps the remaining designer,

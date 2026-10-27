@@ -100,9 +100,24 @@ public abstract class RibbonItem : RibbonElement
 {
     private string _accessibleName = "", _description = "";
     private string _screenTipTitle = "", _screenTipDescription = "";
+    private string _menuDescription = "";
     private Image? _image, _largeImage;
     private IRibbonIcon? _icon;
     private RibbonSizePolicy _sizePolicy = RibbonSizePolicy.Fixed(RibbonItemSize.Large);
+    /// <summary>Gets or sets optional inline descriptive text for command-menu rows. At most two lines are displayed; native editor rows keep their compact layout. This is independent of ScreenTipDescription.</summary>
+    [DefaultValue(""), Localizable(true), Category("Appearance")]
+    public string MenuDescription
+    {
+        get => _menuDescription;
+        set
+        {
+            Ribbon?.VerifyAccess();
+            value ??= "";
+            if (_menuDescription == value) return;
+            _menuDescription = value;
+            Changed();
+        }
+    }
     /// <summary>Gets or sets the passive hover tip title. Empty uses the complete Text caption, including text ellipsized on screen.</summary>
     [DefaultValue(""), Localizable(true), Category("Appearance")]
     public string ScreenTipTitle
@@ -261,6 +276,7 @@ public class RibbonDropDownItem : RibbonItem
     /// <summary>Initializes a RibbonDropDownItem instance.</summary>
     public RibbonDropDownItem() => Items = new(this);
     /// <summary>Gets the stable, owned command collection.</summary>
+    [Editor("RibbonKit.WinForms.Design.MenuItemCollectionEditor, RibbonKit.WinForms.Design", "System.Drawing.Design.UITypeEditor, System.Drawing")]
     [Category("Data"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     public RibbonItemCollection Items
     {

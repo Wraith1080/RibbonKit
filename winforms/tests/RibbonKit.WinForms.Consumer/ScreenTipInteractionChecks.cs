@@ -13,6 +13,7 @@ internal static class ScreenTipInteractionChecks
     [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
     [DllImport("user32.dll")] private static extern nint GetFocus();
     [DllImport("user32.dll")] private static extern nint GetCapture();
+    [DllImport("user32.dll")] private static extern nint WindowFromPoint(Point point);
     [DllImport("user32.dll")] private static extern nint GetWindow(nint window, uint command);
     [DllImport("user32.dll")] private static extern nint GetTopWindow(nint window);
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(nint window, out uint process);
@@ -162,12 +163,27 @@ internal static class ScreenTipInteractionChecks
             "Validation window or its popup owns foreground before input");
         async Task Move(WF.Control surface, Rectangle bounds)
         {
-            Guard(); WF.Cursor.Position = surface.PointToScreen(Centre(bounds)); await Task.Delay(40);
+            Guard(); var point = surface.PointToScreen(Centre(bounds));
+            if (WF.Cursor.Position == point) { await Task.Delay(40); return; }
+            bool delivered = false;
+            void OnMove(object? sender, WF.MouseEventArgs e) => delivered |= surface.PointToScreen(e.Location) == point;
+            surface.MouseMove += OnMove;
+            try
+            {
+                WF.Cursor.Position = point;
+                for (int i = 0; i < 25 && !delivered; i++) await Task.Delay(20);
+                Check(delivered, "Native pointer move reaches the target before measuring hover delay");
+                await Task.Delay(40);
+            }
+            finally { surface.MouseMove -= OnMove; }
         }
         async Task Hover(WF.Control surface, RibbonItem item, string name) => await HoverBounds(surface, recording.Bounds[item], name);
         async Task HoverBounds(WF.Control surface, Rectangle bounds, string name)
         {
-            await Move(document, document.ClientRectangle); await Move(surface, bounds);
+            // A shown Form can extend below the work area in the edge case.
+            // Reset over a visible blank part of the ribbon, then wait for the
+            // real MouseMove before starting the hover clock.
+            await Move(ribbon, new(ribbon.ClientSize.Width - 10, 2, 1, 1)); await Move(surface, bounds);
             await Task.Delay(260); Guard(); Check(Tip() is null, "Hover delay prevents immediate appearance: " + name);
             using var beforeContent = name == "nested-row" ? new Bitmap(bounds.Width, bounds.Height) : null;
             if (beforeContent is not null)
@@ -181,7 +197,13 @@ internal static class ScreenTipInteractionChecks
             }
             await Task.Delay(600); Guard();
             if (Tip() is null)
-                results.Add($"Hover diagnostic: {name}; pointer={WF.Cursor.Position}; surface={surface.Bounds}; visible={surface.Visible}; focus={GetFocus()}; last-title={recording.Title}");
+            {
+                results.Add($"Hover diagnostic: {name}; pointer={WF.Cursor.Position}; surface={surface.Bounds}; visible={surface.Visible}; focus={GetFocus()}; last-title={recording.Title}; under-pointer={WindowFromPoint(WF.Cursor.Position)}; expected-surface={surface.Handle}");
+                var failedBounds = Rectangle.Union(form.Bounds, surface.RectangleToScreen(bounds));
+                using var failure = new Bitmap(failedBounds.Width, failedBounds.Height);
+                using (var graphics = Graphics.FromImage(failure)) graphics.CopyFromScreen(failedBounds.Location, Point.Empty, failedBounds.Size);
+                failure.Save(Path.Combine(directory, name + "-failure.png"));
+            }
             Check(Tip() is not null, "Delayed hover shows: " + name);
             var tip = Tip()!;
             var captureBounds = tip.Bounds;

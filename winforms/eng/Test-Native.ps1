@@ -7,6 +7,14 @@ try {
     if ($LASTEXITCODE) { throw 'Native build failed.' }
     dotnet test tests/RibbonKit.WinForms.Tests -c $Configuration --no-build
     if ($LASTEXITCODE) { throw 'Native unit/STA tests failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --minimize-checks TestResults/visual/minimize-native
+    if ($LASTEXITCODE) { throw 'Native minimize checks failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --minimize-checks-flat TestResults/visual/minimize-flat-native
+    if ($LASTEXITCODE) { throw 'Native neutral minimize checks failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --menu-checks TestResults/visual/menus-native
+    if ($LASTEXITCODE) { throw 'Native rich-menu checks failed.' }
+    dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --menu-checks-flat TestResults/visual/menus-flat-native
+    if ($LASTEXITCODE) { throw 'Native neutral rich-menu checks failed.' }
     dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --screentip-checks TestResults/visual/screentips-native
     if ($LASTEXITCODE) { throw 'Native ScreenTip hover/lifetime/focus checks failed.' }
     dotnet run --project tests/RibbonKit.WinForms.NativeTests -c $Configuration --no-build -- --screentip-checks-flat TestResults/visual/screentips-flat-native
@@ -47,6 +55,16 @@ try {
         dotnet build (Join-Path $consumerRoot 'RibbonKit.WinForms.Consumer.csproj') -c $Configuration --no-restore
         if ($LASTEXITCODE) { throw 'Isolated package consumer build failed.' }
         $consumerExe = Join-Path $consumerRoot "bin/$Configuration/net10.0-windows/RibbonKit.WinForms.Consumer.exe"
+        foreach ($minimizeMode in @('minimize', 'minimize-flat')) {
+            $minimizeEvidence = Join-Path $nativeRoot ('TestResults/visual/m2g-package-' + $minimizeMode)
+            $minimizeProcess = Start-Process -FilePath $consumerExe -ArgumentList @(('--validate-' + $minimizeMode), ('"' + $minimizeEvidence + '"')) -PassThru -Wait
+            if ($minimizeProcess.ExitCode) { throw "Package minimize checks failed: $minimizeEvidence/result.log" }
+        }
+        foreach ($menuMode in @('menus', 'menus-flat')) {
+            $menuEvidence = Join-Path $nativeRoot ('TestResults/visual/m2f-package-' + $menuMode)
+            $menuProcess = Start-Process -FilePath $consumerExe -ArgumentList @(('--validate-' + $menuMode), ('"' + $menuEvidence + '"')) -PassThru -Wait
+            if ($menuProcess.ExitCode) { throw "Package rich-menu checks failed: $menuEvidence/result.log" }
+        }
         foreach ($tipMode in @('screentips', 'screentips-flat')) {
             $tipEvidence = Join-Path $nativeRoot ('TestResults/visual/m2e-package-' + $tipMode)
             $tipProcess = Start-Process -FilePath $consumerExe -ArgumentList @(('--validate-' + $tipMode), ('"' + $tipEvidence + '"')) -PassThru -Wait

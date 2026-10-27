@@ -90,6 +90,41 @@ should author them explicitly. One ribbon per Form is the initial input scope.
   owned. The mirrored-corner painter avoids independent per-corner arc paths;
   current pixel checks do not substitute for native visual review.
 
+## Minimize and temporary tab bodies
+
+`RibbonControl.IsMinimized` is a bindable, designer-serializable Boolean with a
+default of false and an `IsMinimizedChanged` event. Ctrl+F1, the tab-row chevron,
+and double-clicking a tab toggle it. Holding Ctrl+F1 changes the mode once;
+keyboard input in another Form does not toggle this ribbon. Applications can use
+ordinary WinForms binding to store their preferred mode.
+
+```csharp
+ribbon.IsMinimized = true;
+ribbon.IsMinimizedChanged += (_, _) => SaveRibbonMode(ribbon.IsMinimized);
+```
+
+Minimized mode reserves only the tab-row height. Clicking a tab, pressing
+Down/Enter/Space on a focused tab, or choosing its KeyTip opens a temporary body
+below the row. It uses the same groups, adaptive sizes, split actions, scrollers
+and native editor instances. Selecting another tab replaces that body. Commands
+close the transient stack; Escape closes one level at a time and returns to the
+opener. Outside input, owner changes, host movement/resizing and deactivation
+dismiss stale presentations. The selected tab and command values remain model
+state; opening a temporary body does not change `IsMinimized`.
+
+User toggles commit the focused native editor and stop if validation is canceled.
+An authoritative property/binding change uses the existing parking contract:
+valid edits commit, invalid drafts roll back, and native selection is preserved.
+Mode changes preserve document focus when the ribbon does not own focus.
+
+`DrawMinimizeButton(context, minimized)` receives the shared measured utility
+slot. The chevron occupies 28 logical pixels at the right of the tab row; tab
+overflow excludes that opaque slot. Tab scrollers shrink on very narrow rows to
+retain up to 24 logical pixels of tab space. A temporary body is at least 200 logical pixels wide
+when the work area permits, so a very narrow docked ribbon can still open its
+groups. These local dimensions belong in the deferred theme inventory.
+Minimized-tab and utility accessibility compatibility remains deferred.
+
 ## Compact check and radio options
 
 `RibbonCheckBoxItem` and `RibbonRadioButtonItem` are compact option rows with
@@ -190,6 +225,40 @@ popup before its containing ribbon popup. Actual VS authoring and accessibility 
 remain unverified. Inputs shows
 selection-only Font, editable Zoom, a disabled chooser and a popup chooser using
 ordinary application-owned data and validation.
+
+## Richer command menus
+
+`RibbonItem.MenuDescription` adds localizable inline text below a command-menu
+caption, displaying at most two wrapped lines in the secondary text color. The
+full string stays in the model. This property is independent of `ScreenTipDescription`;
+strip commands, collapsed-group command slots and native editor rows retain their
+compact layout. Descriptions also work on toggles, checkboxes, radio choices,
+submenus and either layout of split buttons.
+
+```csharp
+var formats = new RibbonDropDownItem { Text = "Format" };
+formats.Items.AddRange(
+    new RibbonButtonItem {
+        Text = "Keep source formatting",
+        MenuDescription = "Preserve the source document's fonts and paragraph styles."
+    },
+    new RibbonMenuSeparatorItem(),
+    new RibbonButtonItem { Text = "Text only" });
+```
+
+`RibbonMenuSeparatorItem` belongs only in a dropdown's `Items`; group collections
+reject it before changing ownership. It has no activation, focus, KeyTips or
+ScreenTip. The dropdown collection editor offers separators alongside ordinary
+items. `DrawMenuSeparator` paints the shared one-pixel hairline, and
+`DrawSubmenuArrow` paints a right-pointing chevron; `DrawText` receives the complete
+description and its measured slot. Both Office and neutral renderers share this
+content layout.
+
+Nested command menus open beside their row, flip left near the screen edge and
+stay inside the work area. Right opens a submenu; Left/Escape closes one level
+and restores its opener. Decorative, hidden and disabled rows are skipped during
+navigation. Scrolling a parent closes its children before their anchors move.
+Collection/property changes dismiss stale popups through the existing model path.
 
 ## Passive ScreenTips
 
@@ -301,8 +370,8 @@ drawing. Earlier preview subclasses that called base painting to obtain Office
 styling should now derive from the named Office renderer. Instances assigned to
 `Renderer` remain borrowed and must outlive their ribbon/popups.
 
-The shared hooks are `DrawSurface`, `DrawBody`, `DrawPopupFrame`, `DrawPopupShadow`, `DrawScrollButton`, `DrawText`,
-`DrawDropDownArrow`, `DrawTextBox`, `DrawComboBox`, `DrawComboBoxItem`, `DrawScreenTip`, and protected
+The shared hooks are `DrawSurface`, `DrawBody`, `DrawPopupFrame`, `DrawPopupShadow`, `DrawScrollButton`, `DrawMinimizeButton`, `DrawText`,
+`DrawDropDownArrow`, `DrawSubmenuArrow`, `DrawMenuSeparator`, `DrawTextBox`, `DrawComboBox`, `DrawComboBoxItem`, `DrawScreenTip`, and protected
 `DrawItemImage`/`DrawChrome`, in addition to
 whole tab/group/item/split/focus/KeyTip methods. Content callbacks receive the
 library's measured slots. Respect those rectangles, font and clipping; painting
@@ -325,12 +394,18 @@ applications should use Windows UIA clients rather than implement those types.
 Run these commands from `winforms/`. Native keyboard/mouse checks briefly operate
 their own test Form; let that process retain focus until it finishes.
 
-The unit/STA suite contains 66 essential cases: the [test review](docs/M2-STATUS.md#essential-test-review--2026-10-26)
+The unit/STA suite contains 72 essential cases: the [test review](docs/M2-STATUS.md#essential-test-review--2026-10-26)
 reduced the earlier set to 56; M2C adds three ComboBox cases and M2D adds three
 check/radio state, grouping/binding and compact-rendering cases. M2E adds three
 ScreenTip metadata, cancellation/lifetime and measurement/rendering cases.
 One body-spacing case checks downward growth, retained content/editor sizes and
 collapsed-group geometry across representative fonts and synthetic DPI scales.
+M2F adds three menu metadata/ownership, content-slot/rendering and mixed-layout/
+submenu-placement cases. Real keyboard and popup lifetime checks run in the shown
+public consumer rather than relying on foreground focus during unit tests.
+M2G adds three minimized-state/metadata, shared body geometry/reachability and
+utility-slot/vector-direction cases. Its shown consumer covers native mode
+gestures, binding, validation, native editor transfer, KeyTips and popup lifetime.
 The existing editor alignment case also covers mixed rows. For routine changes, run the affected
 test classes. Reserve the full native/package sequence for changes that need those
 gates. Add cases for distinct failure modes and use representative DPI/font rows;
@@ -341,6 +416,17 @@ the four-corner symmetry regression deliberately keeps all four scales.
 ./eng/Test-Native.ps1 -Configuration Release -Package
 ./eng/Measure-Baseline.ps1
 ```
+
+For the bounded shown minimize scope, use `--minimize-checks` /
+`--minimize-checks-flat` on the native test host, or `--validate-minimize` /
+`--validate-minimize-flat` on the independent consumer, followed by an evidence
+directory. The test Form retains foreground ownership while sending native input.
+
+For the bounded shown menu scope, use `--menu-checks` / `--menu-checks-flat` on the
+native test host, or `--validate-menus` / `--validate-menus-flat` on the independent
+consumer, followed by an evidence directory. These cover described commands,
+separators, nested/split/check/radio actions, native editors, passive tips,
+keyboard return, edge flipping, scrolling and source removal.
 
 For the bounded shown ScreenTip scope, run the native test host with
 `--screentip-checks TestResults/visual/screentips-office` or

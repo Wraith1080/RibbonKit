@@ -1,8 +1,8 @@
 # M2 editing and richer interaction
 
-Status: **M2A core, M2B TextBox, M2C ComboBox, M2D check/radio and M2E passive ScreenTip implementation**, 2026-10-27.
+Status: **Implementation through M2G minimize/expand**, 2026-10-27.
 The user accepted the demonstrated M2C startup/editor polish and authorized M2D.
-M2D/M2E await user visual review; outstanding designer, display-scale and monitor
+M2D/M2E/M2F/M2G await user visual review; outstanding designer, display-scale and monitor
 gates remain in [the M1 ledger](M1-STATUS.md).
 Accessibility compatibility is deferred by explicit user direction: this phase
 prioritizes the necessary control structure. No new split accessibility providers,
@@ -12,9 +12,9 @@ That is a current limitation, not a decision against future accessibility work.
 
 ## Next component slice
 
-2026-10-27: **M2E passive ScreenTips are implemented for review**; remaining bounded
-M2 menu/minimize work follows, with optional ICommand separate. The
-[M2E record below](#m2e-passive-screentips--2026-10-27) owns current scope and evidence.
+2026-10-27: **M2G minimize/expand is implemented for review**. The next roadmap
+milestone is M3 QAT/projections; optional ICommand remains a separate proposal.
+The [M2G record below](#m2g-minimizeexpand--2026-10-27) owns current scope and evidence.
 The [prior continuation prompt](NEXT-SLICE-PROMPT.md) records the starting
 constraints; its proposed-slice wording and earlier checkpoint are historical.
 
@@ -22,7 +22,7 @@ The user deferred comprehensive theming until most component slices exist,
 before final visual polishing/API stabilization. The authoritative scope and
 sequencing are in the [native roadmap](../../docs/21-NATIVE-WINFORMS-PLAN.md#deferred-theming-consolidation).
 Continue structural component work; this does not authorize the theme refactor
-or new accessibility work in M2E. Current implementation evidence below does not
+or new accessibility work in M2G. Current implementation evidence below does not
 establish acceptance of every visual, designer or hardware gate.
 
 ## M2A scope and API
@@ -1201,10 +1201,167 @@ at actual **120 DPI (125%)**, including separator pixels, body geometry, caption
 collapsed/nested popups and scrollers. The first shown attempt stopped at its
 foreground-ownership guard before sending input; both subsequent guarded scopes
 completed. Debug Showcase wide/compact and package captures were inspected.
-The normal Debug Showcase is rebuilt for user review. This is a bounded visual
+The normal Debug Showcase is rebuilt. The user accepted the separator appearance
+on 2026-10-27 and authorized continuing the native plan. This is a bounded visual
 refinement; full-suite, other physical DPI/monitor and VS acceptance were not run.
 
 Evidence: `TestResults/group-separator-{before-test,focused,debug,release,package}.log`,
 `TestResults/group-separator-showcase/`,
 `TestResults/visual/group-separator-package-{split,split-flat}-review/` and
 `TestResults/group-separator-consumer-path.txt`.
+
+## M2F richer menus — 2026-10-27
+
+The user accepted the group separator appearance and authorized continuing the
+native component plan. The proposed bounded API was stated before implementation:
+localizable `RibbonItem.MenuDescription`, dropdown-only `RibbonMenuSeparatorItem`,
+and `RibbonRenderer.DrawMenuSeparator` / `DrawSubmenuArrow`. No public layout or
+popup coordinator was added. Optional ICommand and minimize remain separate.
+
+Menu commands can display a caption plus at most two wrapped description lines.
+The complete string remains in the model; passive ScreenTip metadata is separate.
+Native editor rows, strip commands and collapsed-group command slots keep their
+existing compact metrics. Mixed menus share one measured target sequence for
+painting, mouse input, keyboard navigation and popup anchoring. Decorative
+separators have no activation, focus, KeyTips or ScreenTip; group collections
+reject them before changing ownership. A dropdown-specific designer collection
+editor offers the new item. The retained foundation bridge omits decorative rows;
+this is structural filtering, not new accessibility compatibility or acceptance.
+
+Nested command menus open beside their row and flip left at the screen edge.
+Left/Escape closes one level and returns to the valid opener. Collapsed-group
+dropdowns retain their downward opening. Scrolling a parent closes children
+before their anchors move; existing model changes dismiss stale popup chains.
+Shared text hooks receive descriptions in SecondaryText (GrayText when disabled),
+and menu arrows use the shared vector chevron. Office and neutral use the same
+geometry. Showcase Paste, Select and Options demonstrate the public capability.
+
+The deferred theme inventory should include the local menu constants: 280-logical-
+pixel minimum width when descriptions exist, five-pixel top/bottom text padding,
+two-pixel description gap, nine-pixel separator row, eight-pixel separator inset
+and work-area clearance, and four-pixel submenu row alignment. Hairlines and popup
+frames remain one device pixel. Placement accounts for the frame; an initial
+native check exposed a one-device-pixel overlap, corrected before packaging.
+
+Normal Debug/Release builds, XML/public API checks and design assembly compilation
+passed without warnings/errors. The full Release unit/STA run executed **69 cases:
+68 passed and one new focus-dependent menu test failed**. That new test was replaced
+with deterministic mixed-row/placement checks; keyboard and popup lifetime are
+verified by the shown public consumer. The repaired case passed separately.
+After the placement correction, **7/7 focused menu/popup cases passed**. The other
+passed cases were not repeated. Synthetic geometry/rendering covers
+96/120/144/192 DPI and two fonts; no clean final 69-case aggregate run is claimed.
+
+A fresh Release package was restored into an empty cache outside the checkout.
+Its public-only consumer built without Showcase resources, project references,
+reflection or internal access. The first consumer compile caught a test-only
+internal IsDisposed assertion; it was replaced with public collection membership.
+Both Office and neutral shown menu scopes passed at actual **120 DPI (125%)**:
+descriptions, hidden/disabled/decorative rows, native mouse activation,
+Home/Down/Right/Left/Escape, nested radio exclusivity, separate split actions,
+checkboxes, committed native field values, passive ScreenTips, execution once,
+edge flipping, scrolling, source removal and outside dismissal. Captures of mixed
+menus, both submenu directions, split choices, native editing, tip overlay and
+overflow were inspected. This is independent-consumer evidence for M2F.
+
+Earlier ScreenTip regression attempts exposed a foreground guard stop and
+intermittent rapid pointer-hop timing. The fixture now waits for the target's
+real MouseMove before starting its existing hover-delay check, resets over a
+visible blank ribbon area rather than a potentially offscreen document, and
+saves a failure screenshot plus the HWND under the pointer. Temporary runtime
+tracing was removed; ScreenTip runtime behavior was not changed by this follow-up.
+The test continues to check native ownership, selection, popup stacking and
+first-chance unavailable-element exceptions. With that synchronization, both
+Office and neutral package ScreenTip scopes passed at actual 120 DPI, including
+nested/collapsed tips, frame ownership, click-to-close and zero first-chance
+unavailable-element exceptions. The existing external package popup-dismissal
+regression also passed, including switching to another process with a nested
+stack open. These are retained-bridge/lifetime regressions, not new accessibility
+acceptance. The ordinary Debug Showcase is rebuilt for human review.
+
+Evidence: `tests/RibbonKit.WinForms.Tests/TestResults/m2f-{release,geometry-repaired,placement}.trx`,
+`TestResults/visual/m2f-package-{menus,menus-flat}/` and
+`TestResults/visual/m2f-package-screentips-{office-complete,flat-complete}/`,
+`TestResults/m2f-package-dismissal.log` and `TestResults/m2f-consumer-path.txt`.
+Outstanding human appearance, actual VS
+designer round-trip, additional physical DPI/monitor and deferred accessibility
+gates remain open. The next planned bounded component slice is **M2G minimize /
+Ctrl+F1**; comprehensive theming and optional ICommand remain separate.
+
+## M2G minimize/expand — 2026-10-27
+
+The user authorized continuing the native plan. The bounded API was stated before
+implementation: bindable/serializable `RibbonControl.IsMinimized` (false by
+default), `IsMinimizedChanged`, and `RibbonRenderer.DrawMinimizeButton`. The
+property participates in BeginUpdate/EndUpdate. No public popup coordinator,
+new accessibility providers, host layout helper or animation was added.
+
+Ctrl+F1, the tab-row chevron and tab double-click toggle the mode. Held Ctrl+F1
+consumes repeats after one toggle and does not act in another Form. User gestures
+commit the active editor and stop on validation cancellation; authoritative
+property/binding changes retain the existing editor parking policy (commit valid
+text, roll back an invalid draft). Document focus remains with the host when the
+ribbon did not own it. Mode changes retain the selected tab and command state.
+
+Only the tab row is docked while minimized. A tab click, Down/Enter/Space or its
+KeyTip opens its actual groups in a temporary body below the row. A shared body
+layout supplies expanded and temporary command geometry, reduction, collapsed
+groups, scrollers and native editor slots. Models are neither cloned nor
+reparented. Keyboard return and command dismissal reuse the popup stack; nested
+menus and group flyouts remain above the tab session until individually closed.
+Changing tabs replaces the temporary body. Source changes, disabling/removing the
+selected tab, outside clicks, host movement/resize and deactivation close stale
+sessions. Selection fallback now also closes the old body when a tab is disabled
+without a layout change. Removing a model releases its native presentation;
+parking/transferring one between docked and popup bodies preserves its instance,
+caret, selection and value.
+
+The utility owns an opaque 28-logical-pixel slot, preventing scrolling tab text
+from showing beneath its chevron. Very narrow tab rows shrink the two tab
+scrollers to retain up to 24 logical pixels of tab space. The temporary body has
+a 200-logical-pixel minimum width when the work area permits; all these local
+metrics belong in the deferred theme inventory. KeyTip matching now ignores
+Shift for letters/digits while retaining Ctrl/Alt exclusions, so uppercase input
+routes through the new tab session as well as existing command surfaces.
+
+Normal Debug/Release solution builds, XML/public API checks and package creation
+passed without warnings/errors. A full **72/72 native Release unit/STA checkpoint**
+passed. Subsequent bounded fallback, batching and header refinements passed their
+affected selections; the final **18/18 focused cases** include minimized state,
+serialization, batching, shared body geometry, narrow reachability, tab/utility
+separation and renderer boundaries. The suite was not repeated in full after
+those bounded changes. Chevron direction/containment and opaque utility corners
+cover synthetic 96/120/144/192 DPI and odd/even slots in both painters; body
+geometry covers two fonts and several widths. GDI+ stroke antialiasing differs
+under reflection, so glyph assertions test direction and containment rather than
+requiring mirrored alpha pixels. Actual glyphs were inspected; the existing
+rounded-frame symmetry checks retain their separate contract.
+
+Fresh Release packages restored into empty caches outside the checkout, with no
+Showcase resources, project references, reflection or internal-access grant.
+The final Office/neutral minimize scopes passed at actual **120 DPI (125%)**:
+two-way binding, focus, all three toggle gestures, held-key suppression,
+tab/command KeyTips, nested Escape and execution once, same TextBox/ComboBox and
+selection, validation/rollback, native choice commit, popup scrolling/collapse,
+very narrow keyboard access, deactivation/other-Form isolation, source changes,
+selection fallback and native-editor disposal. The independent compile caught a
+test's internal paint-role flag; its recorder now identifies this fixture's tall
+body-scroll slots through public measured geometry. Separate automated tab
+gestures also respect Windows' double-click interval.
+
+Office/neutral menu and ScreenTip regression scopes passed before the final
+header-only refinements, including popup stacking and zero first-chance
+unavailable-element exceptions. Existing external package keyboard and
+popup-dismissal regressions passed. These retained-bridge checks do not establish
+minimized-tab or utility accessibility compatibility. Expanded/minimized,
+temporary/KeyTip bodies, nested menus, narrow/collapsed and very narrow captures
+were inspected. The normal Debug Showcase is rebuilt; it receives the feature
+directly from the library without new host glue.
+
+Evidence: `tests/RibbonKit.WinForms.Tests/TestResults/m2g-{release,fallback,batching,final-rendering,tab-access}.trx`,
+`TestResults/visual/m2g-complete-{minimize,minimize-flat}/`,
+`TestResults/visual/m2g-final-{menus,menus-flat,screentips,screentips-flat}/`,
+`TestResults/m2g-package-{keyboard,dismissal}.log` and
+`TestResults/m2g-complete-consumer-path.txt`. Human appearance, actual VS
+round-trip and other physical DPI/monitor gates remain open. The next roadmap
+milestone is **M3 QAT/projections**; optional ICommand remains a separate proposal.

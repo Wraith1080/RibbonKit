@@ -60,7 +60,9 @@ internal sealed class RibbonPopupManager : IDisposable
             }
         }
         var screenAnchor = opener.RectangleToScreen(anchor);
-        var work = Screen.FromRectangle(screenAnchor).WorkingArea;
+        var placementAnchor = owner is RibbonTab
+            ? opener.RectangleToScreen(new Rectangle(0, opener.ClientSize.Height - 1, opener.ClientSize.Width, 1)) : screenAnchor;
+        var work = Screen.FromRectangle(placementAnchor).WorkingArea;
         var surface = new RibbonPopupSurface(_ribbon, owner, new(Math.Max(1, work.Width - 2), Math.Max(1, work.Height - 2)));
         var host = new ToolStripControlHost(surface) { AutoSize = false, Size = surface.Size, Margin = Padding.Empty, Padding = Padding.Empty };
         var window = new RibbonPopupWindow(_ribbon, QueueActivationCheck)
@@ -73,15 +75,32 @@ internal sealed class RibbonPopupManager : IDisposable
         var session = new Session(owner, opener, anchor, window, surface);
         _sessions.Add(session);
         window.Closed += (_, _) => { if (_sessions.Contains(session)) Close(owner, false); };
-        Point location = new(Math.Clamp(screenAnchor.Left, work.Left, Math.Max(work.Left, work.Right - window.Width)), screenAnchor.Bottom);
-        if (location.Y + window.Height > work.Bottom)
-            location.Y = Math.Max(work.Top, screenAnchor.Top - window.Height);
-        window.Show(location);
+        bool submenu = opener is RibbonPopupSurface { OwnerElement: RibbonDropDownItem };
+        var bounds = CalculateBounds(placementAnchor, work, window.Size, submenu, _ribbon.DeviceDpi);
+        if (bounds.Size != window.Size)
+        {
+            window.Size = bounds.Size;
+            surface.Size = new(Math.Max(1, bounds.Width - 2), Math.Max(1, bounds.Height - 2));
+            host.Size = surface.Size;
+        }
+        window.Show(bounds.Location);
         opener.Invalidate();
         _ribbon.Invalidate();
         _ribbon.SyncEditors();
         surface.FocusFirst();
         _ribbon.AccessibilityChanged();
+    }
+    internal static Rectangle CalculateBounds(Rectangle anchor, Rectangle work, Size size, bool submenu, int dpi)
+    {
+        int inset = RibbonLayoutEngine.Scale(8, dpi), rowPadding = RibbonLayoutEngine.Scale(4, dpi);
+        if (work.Width > 2 * inset && work.Height > 2 * inset) work.Inflate(-inset, -inset);
+        size = new(Math.Max(1, Math.Min(size.Width, work.Width)), Math.Max(1, Math.Min(size.Height, work.Height)));
+        // The row is inset by the menu padding and the one-device-pixel frame.
+        int x = submenu ? anchor.Right + rowPadding + 1 : anchor.Left;
+        int y = submenu ? anchor.Top - rowPadding : anchor.Bottom;
+        if (submenu && x + size.Width > work.Right) x = anchor.Left - size.Width - rowPadding - 1;
+        if (!submenu && y + size.Height > work.Bottom) y = anchor.Top - size.Height;
+        return new(Math.Clamp(x, work.Left, work.Right - size.Width), Math.Clamp(y, work.Top, work.Bottom - size.Height), size.Width, size.Height);
     }
     private void OnDeactivate(object? sender, EventArgs e) => QueueActivationCheck();
     internal void QueueActivationCheck()
@@ -143,6 +162,7 @@ internal sealed class RibbonPopupManager : IDisposable
         _ribbon.Invalidate();
         if (session.Owner is RibbonDropDownItem drop)
             drop.OnClosed();
+        if (session.Owner is RibbonTab) _ribbon.TabPopupClosed();
         if (restoreFocus && !session.Opener.IsDisposed)
         {
             if (session.Opener is RibbonPopupSurface surface)
@@ -191,7 +211,10 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     private readonly List<RibbonTarget> _targets = [];
     private readonly int _contentPadding;
     private readonly bool _singleColumn;
+    private RibbonLayoutSnapshot? _bodyLayout;
+    private int _bodyOffset, _bodyWidth;
     private RibbonElement? _hot, _pressed, _focused;
+    private TargetKind? _hotKind, _pressedKind;
     private bool _hotDropDown, _pressedDropDown, _focusedDropDown;
     internal RibbonElement OwnerElement
     {
@@ -204,7 +227,8 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     {
         Bounds = new(t.Bounds.X + AutoScrollPosition.X, t.Bounds.Y + AutoScrollPosition.Y,
             _singleColumn ? Math.Max(t.Bounds.Width, ClientSize.Width - t.Bounds.X - _contentPadding) : t.Bounds.Width, t.Bounds.Height),
-        Clip = ClientRectangle
+        Clip = _bodyLayout is null ? ClientRectangle : Rectangle.Intersect(ClientRectangle,
+            new(t.Clip.X + AutoScrollPosition.X, t.Clip.Y + AutoScrollPosition.Y, t.Clip.Width, t.Clip.Height))
     }).SelectMany(t => RibbonSplitLayout.Expand(t, _ribbon.DeviceDpi, OwnerElement is RibbonDropDownItem)).ToArray();
     internal RibbonPopupSurface(RibbonControl ribbon, RibbonElement owner, Size workArea)
     {
@@ -217,7 +241,14 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         int S(double n) => RibbonLayoutEngine.Scale(n, ribbon.DeviceDpi);
         _contentPadding = S(4);
         int width, height;
-        if (owner is RibbonGroup group)
+        if (owner is RibbonTab tab)
+        {
+            width = _bodyWidth = Math.Clamp(Math.Max(S(200), ribbon.ClientSize.Width), 1, Math.Max(1, workArea.Width - S(24)));
+            _bodyLayout = ribbon.Engine.BuildBody(ribbon, tab, width, 0);
+            _targets.AddRange(_bodyLayout.Targets);
+            height = _bodyLayout.BodyBounds.Bottom + S(ribbon.LayoutTheme.BodyMargin.Bottom);
+        }
+        else if (owner is RibbonGroup group)
         {
             var measured = ribbon.Engine.Measure(group, 0, Font, ribbon.DeviceDpi, ribbon.LayoutTheme);
             // Group measurement includes a strip caption and trailing column
@@ -234,15 +265,20 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         else
         {
             var items = ((RibbonDropDownItem)owner).Items.Where(i => i.Visible).ToArray();
-            width = Math.Max(S(170), items.Select(i => TextRenderer.MeasureText(i.Text, Font).Width + S(56)).DefaultIfEmpty(S(170)).Max());
+            width = Math.Max(S(170), items.Where(i => i is not RibbonMenuSeparatorItem).Select(i => TextRenderer.MeasureText(i.Text, Font).Width + S(56)).DefaultIfEmpty(S(170)).Max());
+            if (items.Any(RibbonMenuLayout.HasDescription)) width = Math.Max(width, S(280));
             int labelWidth = items.Where(i => i is IRibbonEditorItem).Select(i => RibbonEditorLayout.LabelWidth(i, Font, ribbon.DeviceDpi)).DefaultIfEmpty(0).Max();
             width = Math.Max(width, items.OfType<IRibbonEditorItem>().Select(i => labelWidth + S(i.InputWidth + 14)).DefaultIfEmpty(0).Max());
-            int rowHeight = Math.Max(S(28), Font.Height + S(10));
-            height = Math.Max(S(32), items.Length * rowHeight + S(8));
+            int top = S(4);
             for (int i = 0; i < items.Length; i++)
-                _targets.Add(new(TargetKind.Item, items[i], new(S(4), S(4) + i * rowHeight, width - S(8), rowHeight), Rectangle.Empty, RibbonItemSize.Medium, LabelWidth: labelWidth));
+            {
+                int rowHeight = RibbonMenuLayout.RowHeight(items[i], width - S(8), Font, ribbon.DeviceDpi);
+                _targets.Add(new(TargetKind.Item, items[i], new(S(4), top, width - S(8), rowHeight), Rectangle.Empty, RibbonItemSize.Medium, LabelWidth: labelWidth));
+                top += rowHeight;
+            }
+            height = Math.Max(S(32), top + S(4));
         }
-        _singleColumn = _targets.Select(t => t.Bounds.Left).Distinct().Take(2).Count() <= 1;
+        _singleColumn = owner is not RibbonTab && _targets.Select(t => t.Bounds.Left).Distinct().Take(2).Count() <= 1;
         AutoScrollMinSize = new(width, height);
         int maxWidth = Math.Max(1, workArea.Width - S(24)), maxHeight = Math.Max(1, workArea.Height - S(32));
         int verticalBar = SystemInformation.GetVerticalScrollBarWidthForDpi(ribbon.DeviceDpi);
@@ -258,34 +294,65 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         base.OnPaint(e);
         var context = new RibbonPaintContext(e.Graphics, ClientRectangle, _ribbon.Theme, Font, DeviceDpi);
         _ribbon.Painter.DrawSurface(context, true);
+        if (_bodyLayout is { } body)
+        {
+            var saved = e.Graphics.Save();
+            try
+            {
+                var clip = body.BodyViewport; clip.Offset(AutoScrollPosition);
+                e.Graphics.SetClip(Rectangle.Intersect(ClientRectangle, clip));
+                foreach (var slot in body.Groups)
+                {
+                    var bounds = slot.Bounds; bounds.Offset(AutoScrollPosition);
+                    _ribbon.Painter.DrawGroup(context with { Bounds = bounds,
+                        Hot = slot.Group.EffectiveEnabled && ReferenceEquals(_hot, slot.Group),
+                        Pressed = slot.Group.EffectiveEnabled && ReferenceEquals(_pressed, slot.Group),
+                        Focused = slot.Group.EffectiveEnabled && _ribbon.KeyboardFocusCues && Focused && ReferenceEquals(_focused, slot.Group) }, slot.Group, slot.Collapsed);
+                }
+            }
+            finally { e.Graphics.Restore(saved); }
+        }
         var targets = Targets;
         foreach (var target in targets.Where(t => !t.DropDownPart))
-            if (target.Element is RibbonItem item && item is not IRibbonEditorItem)
+        {
+            if (target.VisibleBounds.IsEmpty && !(target.Element is RibbonSplitButtonItem
+                && targets.Any(t => t.DropDownPart && ReferenceEquals(t.Element, target.Element) && !t.VisibleBounds.IsEmpty))) continue;
+            var saved = e.Graphics.Save();
+            try
             {
-                var primary = context with
+                e.Graphics.SetClip(target.Clip);
+                if (target.Element is RibbonItem item && item is not IRibbonEditorItem)
                 {
-                    Bounds = target.Bounds,
-                    Hot = target.Enabled && !_hotDropDown && ReferenceEquals(_hot, item),
-                    Pressed = target.Enabled && !_pressedDropDown && ReferenceEquals(_pressed, item),
-                    Focused = target.Enabled && !_focusedDropDown && _ribbon.KeyboardFocusCues && Focused && ReferenceEquals(_focused, item),
-                    ReserveIcon = target.ReserveIcon
-                };
-                if (item is RibbonSplitButtonItem split)
-                {
-                    var arrow = targets.First(t => ReferenceEquals(t.Element, item) && t.DropDownPart);
-                    _ribbon.Painter.DrawSplitItem(primary, primary with
+                    var primary = context with
                     {
-                        Bounds = arrow.Bounds,
-                        Hot = target.Enabled && _hotDropDown && ReferenceEquals(_hot, item),
-                        Pressed = target.Enabled && _pressedDropDown && ReferenceEquals(_pressed, item),
-                        Focused = target.Enabled && _focusedDropDown && _ribbon.KeyboardFocusCues && Focused && ReferenceEquals(_focused, item)
-                    }, split, target.Size, OwnerElement is RibbonDropDownItem);
+                        Bounds = target.Bounds,
+                        Hot = target.Enabled && !_hotDropDown && ReferenceEquals(_hot, item),
+                        Pressed = target.Enabled && !_pressedDropDown && ReferenceEquals(_pressed, item),
+                        Focused = target.Enabled && !_focusedDropDown && _ribbon.KeyboardFocusCues && Focused && ReferenceEquals(_focused, item),
+                        ReserveIcon = target.ReserveIcon
+                    };
+                    if (item is RibbonSplitButtonItem split)
+                    {
+                        var arrow = targets.First(t => ReferenceEquals(t.Element, item) && t.DropDownPart);
+                        _ribbon.Painter.DrawSplitItem(primary, primary with
+                        {
+                            Bounds = arrow.Bounds,
+                            Hot = target.Enabled && _hotDropDown && ReferenceEquals(_hot, item),
+                            Pressed = target.Enabled && _pressedDropDown && ReferenceEquals(_pressed, item),
+                            Focused = target.Enabled && _focusedDropDown && _ribbon.KeyboardFocusCues && Focused && ReferenceEquals(_focused, item)
+                        }, split, target.Size, OwnerElement is RibbonDropDownItem);
+                    }
+                    else
+                        _ribbon.Painter.DrawItem(primary, item, target.Size, OwnerElement is RibbonDropDownItem);
                 }
-                else
-                    _ribbon.Painter.DrawItem(primary, item, target.Size, OwnerElement is RibbonDropDownItem);
+                else if (target.Kind is TargetKind.BodyBack or TargetKind.BodyNext)
+                    _ribbon.Painter.DrawScrollButton(context with { Bounds = target.Bounds, Hot = _hotKind == target.Kind,
+                        Pressed = _pressedKind == target.Kind, IsBodyScrollButton = true }, target.Kind == TargetKind.BodyBack);
             }
+            finally { e.Graphics.Restore(saved); }
+        }
         if (_ribbon.KeyTipsActive && ReferenceEquals(_ribbon.Popups.Top, this))
-            _ribbon.DrawTips(e.Graphics, Targets.Where(t => t.Enabled).ToArray());
+            _ribbon.DrawTips(e.Graphics, Targets.Where(t => t.Enabled && t.Element is not null).ToArray());
     }
     private RibbonTarget? Hit(Point point) => Targets.FirstOrDefault(t => t.Enabled && t.VisibleBounds.Contains(point));
     protected override void OnMouseMove(MouseEventArgs e)
@@ -293,6 +360,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         base.OnMouseMove(e);
         var target = Hit(e.Location);
         _hot = target?.Element;
+        _hotKind = target?.Element is null ? target?.Kind : null;
         _hotDropDown = target?.DropDownPart ?? false;
         Invalidate();
     }
@@ -300,6 +368,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     {
         base.OnMouseLeave(e);
         _hot = null;
+        _hotKind = null;
         Invalidate();
     }
     protected override void OnMouseDown(MouseEventArgs e)
@@ -316,6 +385,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
             return;
         }
         _pressed = hit.Element;
+        _pressedKind = hit.Element is null ? hit.Kind : null;
         _pressedDropDown = hit.DropDownPart;
         Capture = true;
         if (hit.Element is { } element)
@@ -327,18 +397,21 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         base.OnMouseUp(e);
         var hit = Hit(e.Location);
         var pressed = _pressed;
+        var kind = _pressedKind;
         _pressed = null;
         Capture = false;
-        if (e.Button == MouseButtons.Left && hit?.Element is { } item && ReferenceEquals(pressed, item) && _pressedDropDown == hit.DropDownPart)
+        if (e.Button == MouseButtons.Left && hit is not null && ReferenceEquals(pressed, hit.Element)
+            && (hit.Element is not null || kind == hit.Kind) && _pressedDropDown == hit.DropDownPart)
         {
             _ribbon.ExitKeyTips(false);
-            _ribbon.Activate(hit);
+            ActivateTarget(hit);
         }
     }
     protected override void OnMouseCaptureChanged(EventArgs e)
     {
         base.OnMouseCaptureChanged(e);
         _pressed = null;
+        _pressedKind = null;
         Invalidate();
     }
     protected override void OnLostFocus(EventArgs e)
@@ -348,16 +421,23 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     }
     internal void FocusFirst()
     {
-        if (Targets.FirstOrDefault(t => t.Enabled)?.Element is { } item)
+        if (Targets.FirstOrDefault(t => t.Enabled && t.Element is not null)?.Element is { } item)
             FocusElement(item);
         else
             Focus();
     }
     internal void FocusElement(RibbonElement item, bool dropDownPart = false, bool enterEditor = true)
     {
+        if (item is RibbonMenuSeparatorItem || !item.EffectiveEnabled || !item.Visible) return;
         _focused = item;
         _focusedDropDown = item is RibbonSplitButtonItem && dropDownPart;
         Focus();
+        if (_bodyLayout is { } body && _targets.FirstOrDefault(t => ReferenceEquals(t.Element, item)) is { } bodyTarget)
+        {
+            int delta = bodyTarget.Bounds.Left < body.BodyViewport.Left ? bodyTarget.Bounds.Left - body.BodyViewport.Left
+                : bodyTarget.Bounds.Right > body.BodyViewport.Right ? bodyTarget.Bounds.Right - body.BodyViewport.Right : 0;
+            if (delta != 0) ScrollBody(delta);
+        }
         if (_targets.SelectMany(t => RibbonSplitLayout.Expand(t, _ribbon.DeviceDpi, OwnerElement is RibbonDropDownItem)).FirstOrDefault(t => ReferenceEquals(t.Element, item) && t.DropDownPart == _focusedDropDown) is { } target)
         {
             int x = -AutoScrollPosition.X, y = -AutoScrollPosition.Y;
@@ -369,7 +449,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
                 y = target.Bounds.Top;
             else if (target.Bounds.Bottom > y + ClientSize.Height)
                 y = target.Bounds.Bottom - ClientSize.Height;
-            AutoScrollPosition = new(Math.Max(0, x), Math.Max(0, y));
+            AutoScrollPosition = new(_bodyLayout is null ? Math.Max(0, x) : 0, Math.Max(0, y));
         }
         Invalidate();
         _ribbon.SyncEditors();
@@ -390,8 +470,29 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     protected override void OnScroll(ScrollEventArgs se)
     {
         _ribbon.ScreenTips.Cancel();
+        if (_ribbon.Popups.Surfaces.Contains(this)) _ribbon.Popups.PrepareChoice(this);
         base.OnScroll(se);
         _ribbon.SyncEditors();
+    }
+    private void ActivateTarget(RibbonTarget target)
+    {
+        if (target.Kind is TargetKind.BodyBack or TargetKind.BodyNext) ScrollBody(target.Kind == TargetKind.BodyBack ? -120 : 120);
+        else _ribbon.Activate(target, this);
+    }
+    private void ScrollBody(int amount)
+    {
+        if (_bodyLayout is not { } body || OwnerElement is not RibbonTab tab) return;
+        _ribbon.ScreenTips.Cancel();
+        if (_ribbon.Popups.Surfaces.Contains(this)) _ribbon.Popups.PrepareChoice(this);
+        _bodyOffset = Math.Clamp(_bodyOffset + amount, 0, Math.Max(0, body.BodyExtent - body.BodyViewport.Width));
+        _bodyLayout = _ribbon.Engine.BuildBody(_ribbon, tab, _bodyWidth, _bodyOffset);
+        _targets.Clear(); _targets.AddRange(_bodyLayout.Targets);
+        _ribbon.SyncEditors(); Invalidate(); _ribbon.AccessibilityChanged();
+    }
+    protected override void OnMouseWheel(MouseEventArgs e)
+    {
+        if (_bodyLayout is { } body && body.BodyExtent > body.BodyViewport.Width) ScrollBody(e.Delta < 0 ? 120 : -120);
+        else base.OnMouseWheel(e);
     }
     protected override bool ProcessCmdKey(ref Message msg, Keys keys)
         => ProcessPopupKey(keys) || base.ProcessCmdKey(ref msg, keys);
@@ -406,7 +507,12 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
             _ribbon.Popups.CloseTop(true);
             return true;
         }
-        var targets = Targets.Where(t => t.Enabled).ToArray();
+        if (keys == Keys.Left && OwnerElement is RibbonDropDownItem)
+        {
+            _ribbon.Popups.CloseTop(true);
+            return true;
+        }
+        var targets = Targets.Where(t => t.Enabled && t.Element is not null).ToArray();
         if (keys is Keys.Enter or Keys.Space or Keys.Right)
         {
             var target = targets.FirstOrDefault(t => ReferenceEquals(t.Element, _focused) && t.DropDownPart == _focusedDropDown);
@@ -415,7 +521,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
                 if (keys == Keys.Right && target.Element is RibbonDropDownItem drop)
                     drop.ShowDropDown();
                 else
-                    _ribbon.Activate(target);
+                    ActivateTarget(target);
                 return true;
             }
         }

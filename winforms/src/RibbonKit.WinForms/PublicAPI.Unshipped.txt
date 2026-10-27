@@ -1,4 +1,15 @@
 #nullable enable
+RibbonKit.WinForms.RibbonControl.IsMinimized.get -> bool
+RibbonKit.WinForms.RibbonControl.IsMinimized.set -> void
+RibbonKit.WinForms.RibbonControl.IsMinimizedChanged -> System.EventHandler?
+virtual RibbonKit.WinForms.RibbonRenderer.DrawMinimizeButton(RibbonKit.WinForms.RibbonPaintContext context, bool minimized) -> void
+RibbonKit.WinForms.RibbonItem.MenuDescription.get -> string!
+RibbonKit.WinForms.RibbonItem.MenuDescription.set -> void
+RibbonKit.WinForms.RibbonMenuSeparatorItem
+RibbonKit.WinForms.RibbonMenuSeparatorItem.RibbonMenuSeparatorItem() -> void
+override RibbonKit.WinForms.RibbonMenuSeparatorItem.PerformClick() -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawMenuSeparator(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonMenuSeparatorItem! item) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawSubmenuArrow(RibbonKit.WinForms.RibbonPaintContext context, System.Drawing.Color color) -> void
 RibbonKit.WinForms.RibbonItem.ScreenTipTitle.get -> string!
 RibbonKit.WinForms.RibbonItem.ScreenTipTitle.set -> void
 RibbonKit.WinForms.RibbonItem.ScreenTipDescription.get -> string!

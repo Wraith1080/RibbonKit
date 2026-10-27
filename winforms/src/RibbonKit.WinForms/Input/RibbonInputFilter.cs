@@ -42,6 +42,14 @@ internal sealed class RibbonInputFilter(RibbonControl ribbon) : IMessageFilter, 
         if (m.Msg is 0x104 or 0x100)
         {
             var key = (Keys)(int)m.WParam;
+            if (key == Keys.F1 && Control.ModifierKeys == Keys.Control && ribbon.Enabled && ribbon.Visible
+                && (form.ContainsFocus || ribbon.Popups.ContainsFocus))
+            {
+                _altArmed = false;
+                // Holding the chord must not repeatedly flip the mode.
+                if (((long)m.LParam & (1L << 30)) == 0) ribbon.ToggleMinimizedByUser();
+                return true;
+            }
             if (ribbon.Editors.ProcessListKey(key | Control.ModifierKeys))
             {
                 _altArmed = false;

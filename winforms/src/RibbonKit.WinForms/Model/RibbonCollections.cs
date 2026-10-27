@@ -12,6 +12,8 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
     private void Verify(T item, T? replacing = null)
     {
         ArgumentNullException.ThrowIfNull(item);
+        if (item is RibbonMenuSeparatorItem && _owner is not RibbonDropDownItem)
+            throw new ArgumentException("Menu separators belong to a dropdown's Items collection.", nameof(item));
         if (item.IsDisposed)
             throw new ObjectDisposedException(item.GetType().Name);
         if (item.Parent is not null && !ReferenceEquals(item, replacing))

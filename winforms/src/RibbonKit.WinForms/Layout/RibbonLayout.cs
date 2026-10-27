@@ -2,12 +2,12 @@ namespace RibbonKit.WinForms.Layout;
 
 internal enum TargetKind
 {
-    Tab, Group, Item, TabBack, TabNext, BodyBack, BodyNext
+    Tab, Group, Item, TabBack, TabNext, BodyBack, BodyNext, Minimize
 }
 internal sealed record RibbonTarget(TargetKind Kind, RibbonElement? Element, Rectangle Bounds, Rectangle Clip, RibbonItemSize Size = RibbonItemSize.Large, bool ReserveIcon = false, bool DropDownPart = false, int LabelWidth = 0)
 {
     internal Rectangle VisibleBounds => Rectangle.Intersect(Bounds, Clip);
-    internal bool Enabled => Element?.EffectiveEnabled ?? true;
+    internal bool Enabled => Element is not RibbonMenuSeparatorItem && (Element?.EffectiveEnabled ?? true);
     internal string Identity => (Element?.Id ?? Kind.ToString()) + (DropDownPart ? ":dropdown" : "");
     internal string TipText => (Element?.Text ?? "") + (DropDownPart ? " options" : "");
     internal string PreferredKeyTip => DropDownPart && Element is RibbonSplitButtonItem split ? split.DropDownKeyTip : Element?.KeyTip ?? "";
@@ -128,13 +128,17 @@ internal sealed class RibbonLayoutEngine
         var result = new RibbonLayoutSnapshot();
         int dpi = ribbon.DeviceDpi;
         int S(double n) => Scale(n, dpi);
-        int tabHeight = S(ribbon.LayoutTheme.TabHeight), bodyHeight = S(ribbon.LayoutTheme.BodyHeight);
+        int tabHeight = S(ribbon.LayoutTheme.TabHeight);
         var client = ribbon.ClientRectangle;
         var tabs = ribbon.Tabs.Where(t => t.Visible).ToArray();
         var widths = tabs.Select(t => Math.Max(S(58), TextRenderer.MeasureText(t.Text, ribbon.Font).Width + S(28))).ToArray();
-        int tabTotal = widths.Sum();
-        bool tabOverflow = tabTotal > client.Width;
-        var tabViewport = new Rectangle(tabOverflow ? S(22) : 0, 0, Math.Max(0, client.Width - (tabOverflow ? S(44) : 0)), tabHeight);
+        int tabTotal = widths.Sum(), utilityWidth = Math.Min(S(28), client.Width);
+        int tabsWidth = Math.Max(0, client.Width - utilityWidth);
+        bool tabOverflow = tabTotal > tabsWidth;
+        // Keep part of a tab reachable when the utility and two full-size
+        // scrollers would otherwise consume the complete narrow tab strip.
+        int tabScrollWidth = tabOverflow ? Math.Min(S(22), Math.Max(0, (tabsWidth - S(24)) / 2)) : 0;
+        var tabViewport = new Rectangle(tabScrollWidth, 0, Math.Max(0, tabsWidth - 2 * tabScrollWidth), tabHeight);
         result.TabExtent = tabTotal;
         result.TabViewport = tabViewport;
         int tx = tabViewport.Left - Math.Clamp(tabOffset, 0, Math.Max(0, tabTotal - tabViewport.Width));
@@ -145,11 +149,24 @@ internal sealed class RibbonLayoutEngine
         }
         if (tabOverflow)
         {
-            result.Targets.Add(new(TargetKind.TabBack, null, new(0, 0, S(22), tabHeight), client));
-            result.Targets.Add(new(TargetKind.TabNext, null, new(client.Width - S(22), 0, S(22), tabHeight), client));
+            var tabsClip = new Rectangle(0, 0, tabsWidth, tabHeight);
+            result.Targets.Add(new(TargetKind.TabBack, null, new(0, 0, tabScrollWidth, tabHeight), tabsClip));
+            result.Targets.Add(new(TargetKind.TabNext, null, new(tabsWidth - tabScrollWidth, 0, tabScrollWidth, tabHeight), tabsClip));
         }
-        if (ribbon.SelectedTab is not { } selected)
-            return result;
+        result.Targets.Add(new(TargetKind.Minimize, null, new(tabsWidth, 0, utilityWidth, tabHeight), client));
+        if (ribbon.IsMinimized || ribbon.SelectedTab is not { } selected) return result;
+        var bodyLayout = BuildBody(ribbon, selected, client.Width, bodyOffset, tabHeight);
+        result.BodyBounds = bodyLayout.BodyBounds; result.BodyViewport = bodyLayout.BodyViewport; result.BodyExtent = bodyLayout.BodyExtent;
+        result.Groups.AddRange(bodyLayout.Groups);
+        result.Targets.AddRange(bodyLayout.Targets.SelectMany(t => RibbonSplitLayout.Expand(t, dpi, false)));
+        return result;
+    }
+    internal RibbonLayoutSnapshot BuildBody(RibbonControl ribbon, RibbonTab selected, int width, int bodyOffset, int top = 0)
+    {
+        var result = new RibbonLayoutSnapshot();
+        int dpi = ribbon.DeviceDpi;
+        int S(double n) => Scale(n, dpi);
+        int bodyHeight = S(ribbon.LayoutTheme.BodyHeight);
         var groups = selected.Groups.Where(g => g.Visible).ToArray();
         var maps = groups.Select(g => !g.CanResize ? new[] { 0 } : g.ReductionMode switch { RibbonGroupReductionMode.Resize => new[] { 0, 1, 2 }, RibbonGroupReductionMode.ResizeThenCollapse => new[] { 0, 1, 2, 3 }, _ => new[] { 0, 3 } }).ToArray();
         var tables = groups.Select((g, i) => maps[i].Select(s => (double)Measure(g, s, ribbon.Font, dpi, ribbon.LayoutTheme).Width).ToArray()).ToArray();
@@ -157,8 +174,8 @@ internal sealed class RibbonLayoutEngine
             .OrderByDescending(p => p.g.ReductionPriority.HasValue).ThenByDescending(p => p.g.ReductionPriority ?? int.MinValue)
             .ThenByDescending(p => p.g.ReductionPriority.HasValue ? 0 : tables[p.i][0]).ThenByDescending(p => p.i).Select(p => p.i).ToArray();
         var margin = ribbon.LayoutTheme.BodyMargin;
-        var body = new Rectangle(S(margin.Left), tabHeight + S(margin.Top),
-            Math.Max(0, client.Width - S(margin.Left) - S(margin.Right)), bodyHeight);
+        var body = new Rectangle(S(margin.Left), top + S(margin.Top),
+            Math.Max(0, width - S(margin.Left) - S(margin.Right)), bodyHeight);
         result.BodyBounds = body;
         int inset = Math.Min(S(2), body.Width / 2);
         int available = Math.Max(0, body.Width - 2 * inset);
@@ -187,7 +204,7 @@ internal sealed class RibbonLayoutEngine
                 result.Targets.Add(new(TargetKind.Group, groups[i], bounds, viewport));
             else
                 foreach (var item in measure.Items)
-                    result.Targets.AddRange(RibbonSplitLayout.Expand(new(TargetKind.Item, item.Item, new(x + item.Bounds.X, body.Top + item.Bounds.Y, item.Bounds.Width, item.Bounds.Height), viewport, item.Size, item.ReserveIcon, LabelWidth: item.LabelWidth), dpi, false));
+                    result.Targets.Add(new(TargetKind.Item, item.Item, new(x + item.Bounds.X, body.Top + item.Bounds.Y, item.Bounds.Width, item.Bounds.Height), viewport, item.Size, item.ReserveIcon, LabelWidth: item.LabelWidth));
             x += measure.Width;
         }
         if (overflow)
