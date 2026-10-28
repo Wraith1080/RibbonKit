@@ -77,12 +77,12 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     {
         bool enabled = tab.EffectiveEnabled;
         var tint = tab.IsContextual ? ContextualTabColor(context, tab, true) : context.Theme.Accent;
-        DrawText(context, tab.Text, !enabled ? SystemColors.GrayText : tab.IsContextual ? ContextualTabColor(context, tab, selected) : selected ? context.Theme.Accent : context.Theme.Foreground,
+        DrawText(context, tab.DisplayText, !enabled ? SystemColors.GrayText : tab.IsContextual ? ContextualTabColor(context, tab, selected) : selected ? context.Theme.Accent : context.Theme.Foreground,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
         if (enabled && (selected || context.Hot || context.Pressed || context.Focused))
         {
             int S(int value) => Layout.RibbonLayoutEngine.Scale(value, context.DeviceDpi);
-            int labelWidth = Layout.RibbonCaptionLayout.TextWidth(tab.Text, context.Font);
+            int labelWidth = Layout.RibbonCaptionLayout.TextWidth(tab.DisplayText, context.Font);
             int width = Math.Max(0, Math.Min(labelWidth + 2 * S(4), context.Bounds.Width - 2 * S(4)));
             int height = Math.Min(S(3), Math.Max(0, context.Bounds.Height - S(1)));
             var underline = new Rectangle(context.Bounds.Left + (context.Bounds.Width - width) / 2,

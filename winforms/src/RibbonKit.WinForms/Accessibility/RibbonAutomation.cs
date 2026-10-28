@@ -43,7 +43,7 @@ internal class RibbonAutomationNode : IRawProvider, IFragmentProvider, IInvokePr
     public virtual object? GetPropertyValue(int propertyId) => Root.Read<object?>(() => propertyId switch
     {
         30003 => TabList ? 50018 : Element switch { RibbonTab => 50019, RibbonGroup when Expandable => 50000, RibbonGroup => 50026, _ => 50000 },
-        30005 => TabList ? "Ribbon tabs" : Element is RibbonItem { AccessibleName.Length: > 0 } item ? item.AccessibleName : Element?.Text ?? "Ribbon",
+        30005 => TabList ? "Ribbon tabs" : Element is RibbonItem { AccessibleName.Length: > 0 } item ? item.AccessibleName : Element?.DisplayText ?? "Ribbon",
         30006 => Element?.KeyTip is { Length: > 0 } keys ? "Alt, " + keys : "",
         30008 => Element is not null && ReferenceEquals(Root.Ribbon.FocusedElement, Element) && (Root.Control.Focused || Root.Ribbon.Popups.ContainsFocus),
         30009 => TabList || Element is not RibbonGroup || Expandable,

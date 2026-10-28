@@ -37,17 +37,25 @@ public partial class RibbonControl
 
     /// <summary>Occurs after any customization session successfully applies, including context commands. The application owns persistence.</summary>
     public event EventHandler? CustomizationApplied;
-    /// <summary>Occurs before the built-in QAT options dialog opens. Applications may insert their own native options pages.</summary>
+    /// <summary>Occurs before either built-in customization entry opens the options dialog. Applications may insert their own native options pages.</summary>
     public event EventHandler<RibbonOptionsDialogEventArgs>? OptionsDialogOpening;
     internal void OnCustomizationApplied() => CustomizationApplied?.Invoke(this, EventArgs.Empty);
 
     /// <summary>Opens the shared native QAT editor. Returns None when focused ribbon input blocks opening. Owner defaults to the host form.</summary>
     public DialogResult ShowQuickAccessCustomization(IWin32Window? owner = null)
+        => ShowCustomization(false, owner);
+
+    /// <summary>Opens the shared options dialog on Customize Ribbon. Returns None when focused ribbon input blocks opening. Owner defaults to the host form.</summary>
+    public DialogResult ShowRibbonCustomization(IWin32Window? owner = null)
+        => ShowCustomization(true, owner);
+
+    private DialogResult ShowCustomization(bool ribbonPage, IWin32Window? owner)
     {
         VerifyAccess();
         if (!Editors.CommitFocused()) return DialogResult.None;
         Popups.CloseAll(false); ScreenTips.Cancel(); ExitKeyTips(false);
         using var form = new RibbonQuickAccessCustomizationForm(this, CustomizationApplicationId);
+        if (ribbonPage) form.SelectedPage = form.Pages.First(p => p.Name == "CustomizeRibbonOptionsPage");
         OptionsDialogOpening?.Invoke(this, new(form));
         return form.ShowDialog(owner ?? FindForm());
     }
@@ -56,7 +64,7 @@ public partial class RibbonControl
     {
         var menu = new RibbonDropDownItem { Text = "Quick Access Toolbar" };
         var catalog = CommandCatalog.GetAvailable(RibbonCustomizationTarget.QuickAccess);
-        var source = element is null ? null : RibbonQuickAccess.Source(element) ?? element;
+        var source = element is null ? null : CommandCatalog.GetSource(element);
         var entry = catalog.FirstOrDefault(e => ReferenceEquals(e.Source, source));
         string? presentation = null;
         if (element is not null && QuickAccessItems.Contains(element) && CommandCatalog.Managed(element, CommandCatalog.Sources()))
@@ -68,7 +76,7 @@ public partial class RibbonControl
             { item.Icon = command.Icon; item.Image = command.Image; }
             item.Click += (_, _) =>
             {
-                using var session = CommandCatalog.BeginCustomization(CustomizationApplicationId);
+                using var session = CommandCatalog.BeginCustomization(CustomizationApplicationId, RibbonCustomizationTarget.QuickAccess);
                 try
                 {
                     change(session);
@@ -82,7 +90,7 @@ public partial class RibbonControl
             Add("RemoveFromQuickAccess", "Remove from Quick Access Toolbar", s => s.Draft.QuickAccess.RemoveAll(e => e.Id == presentation));
         else if (entry is not null)
         {
-            using var session = CommandCatalog.BeginCustomization(CustomizationApplicationId);
+            using var session = CommandCatalog.BeginCustomization(CustomizationApplicationId, RibbonCustomizationTarget.QuickAccess);
             Add("AddToQuickAccess", "Add to Quick Access Toolbar", s => s.Draft.QuickAccess.Add(new() { CommandId = entry.CommandId }), !session.Draft.QuickAccess.Any(e => e.CommandId == entry.CommandId));
         }
         if (menu.Items.Count > 0) menu.Items.Add(new RibbonMenuSeparatorItem());
@@ -91,6 +99,8 @@ public partial class RibbonControl
         menu.Items.Add(new RibbonMenuSeparatorItem());
         var customize = new RibbonButtonItem { Id = "CustomizeQuickAccess", Text = "Customize Quick Access Toolbar…" };
         customize.Click += (_, _) => ShowQuickAccessCustomization(); menu.Items.Add(customize);
+        var customizeRibbon = new RibbonButtonItem { Id = "CustomizeRibbon", Text = "Customize Ribbon…" };
+        customizeRibbon.Click += (_, _) => ShowRibbonCustomization(); menu.Items.Add(customizeRibbon);
         return menu;
     }
 

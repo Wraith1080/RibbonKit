@@ -45,6 +45,7 @@ internal sealed class RibbonPopupManager : IDisposable
             return;
         }
         var menuSource = owner is RibbonQuickAccessDropDownReference reference ? reference.Source : owner as RibbonDropDownItem;
+        if (menuSource is not null) menuSource = _ribbon.CommandCatalog.Structure.Source(menuSource) as RibbonDropDownItem;
         var groupSource = owner is RibbonQuickAccessGroupReference groupReference ? groupReference.Source : owner as RibbonGroup;
         if (!CurrentProjection(owner, menuSource, groupSource)) return;
         if (menuSource is RibbonGalleryItem openingGallery) openingGallery.CancelPreview();

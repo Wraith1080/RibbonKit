@@ -5,7 +5,7 @@ namespace RibbonKit.WinForms;
 /// <summary>Selects the available-command list. Groups belong only to QuickAccess.</summary>
 public enum RibbonCustomizationTarget
 {
-    /// <summary>Commands that may be offered to a future structural Ribbon editor.</summary>
+    /// <summary>Commands that may be offered to a structural Ribbon editor.</summary>
     Ribbon,
     /// <summary>QAT-compatible commands and whole groups.</summary>
     QuickAccess
@@ -22,7 +22,7 @@ public sealed class RibbonCommandCatalogEntry
     /// <summary>Gets its authored tab/group or application-command category.</summary>
     public string Category { get; }
     /// <summary>Gets the current source label without replacing its binding.</summary>
-    public string Text => Source.Text;
+    public string Text => Source.DisplayText;
     /// <summary>Gets whether this entry is a whole group.</summary>
     public bool IsGroup => Source is RibbonGroup;
     /// <summary>Gets whether the source can use an existing QAT projection.</summary>
@@ -39,11 +39,12 @@ public sealed class RibbonCommandCatalog : RibbonElement
     private readonly Dictionary<RibbonElement, string> _keys = [];
     private RibbonCustomizationState? _defaults;
     internal bool Applying;
-    internal RibbonCommandCatalog(RibbonControl host) { _host = host; Commands = new(this); }
+    internal RibbonCommandCatalog(RibbonControl host) { _host = host; Commands = new(this); Structure = new(this); }
+    internal RibbonStructureManager Structure { get; }
     /// <summary>Gets owned application commands with no required ribbon slot. QAT presentations borrow these sources.</summary>
     [Category("Data"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     public RibbonItemCollection Commands { get; }
-    internal override IEnumerable<RibbonElement> Children => Commands;
+    internal override IEnumerable<RibbonElement> Children => Commands.Cast<RibbonElement>().Concat(Structure.Parked);
     /// <summary>Gets fresh descriptions of authored sources. Group entries appear only for QuickAccess; transient and popup-only sources are not discovered.</summary>
     public IReadOnlyList<RibbonCommandCatalogEntry> GetAvailable(RibbonCustomizationTarget target)
     {
@@ -51,6 +52,7 @@ public sealed class RibbonCommandCatalog : RibbonElement
         var entries = new List<RibbonCommandCatalogEntry>(); var seen = new HashSet<RibbonElement>();
         void Add(RibbonElement source, string category)
         {
+            source = Structure.Source(source);
             if (!Ordinary(source) || !seen.Add(source) || source is not (RibbonItem or RibbonGroup) || source is RibbonMenuSeparatorItem or RibbonGalleryTile) return;
             if (source is RibbonGroup && target != RibbonCustomizationTarget.QuickAccess || target == RibbonCustomizationTarget.QuickAccess && !SupportsQuickAccess(source)) return;
             entries.Add(new(source, category));
@@ -58,10 +60,15 @@ public sealed class RibbonCommandCatalog : RibbonElement
         foreach (var tab in _host.Tabs.Where(t => !t.IsDisposed && !t.IsModal))
         foreach (var group in tab.Groups.Where(g => !g.IsDisposed))
         {
-            Add(group, tab.Text);
-            foreach (var item in group.Items) Add(item, tab.Text + " › " + group.Text);
+            Add(group, tab.DisplayText);
+            foreach (var item in group.Items) Add(item, tab.DisplayText + " › " + group.DisplayText);
         }
         foreach (var command in Commands) Add(command, Text);
+        foreach (var retained in Structure.Parked)
+        {
+            if (retained is RibbonTab tab) foreach (var group in tab.Groups) { Add(group, tab.DisplayText); foreach (var item in group.Items) Add(item, tab.DisplayText + " › " + group.DisplayText); }
+            else if (retained is RibbonGroup group) { Add(group, Text); foreach (var item in group.Items) Add(item, Text + " › " + group.DisplayText); }
+        }
         foreach (var entry in _host.QuickAccessItems)
             if (RibbonQuickAccess.Source(entry) is { } source) Add(source, "Quick Access");
         if (entries.GroupBy(e => e.CommandId, StringComparer.Ordinal).Any(g => g.Count() > 1)) throw new InvalidOperationException("Catalog source IDs must be unique.");
@@ -82,15 +89,25 @@ public sealed class RibbonCommandCatalog : RibbonElement
         return id;
     }
     /// <summary>Captures the current permanent QAT as Reset defaults. Call after authoring and before importing saved preferences.</summary>
-    public void CaptureDefaults() { Check(); _defaults = Capture("defaults"); }
+    public void CaptureDefaults() { Check(); Structure.CaptureDefaults(); _defaults = Capture("defaults"); }
     /// <summary>Creates an isolated QAT draft and an Apply checkpoint. Its JSON is scoped to the supplied application identity.</summary>
     public RibbonCustomizationSession BeginCustomization(string applicationId)
     {
         Check(); ArgumentException.ThrowIfNullOrWhiteSpace(applicationId);
         _defaults ??= Capture("defaults");
         var defaults = RibbonCustomizationSerializer.Copy(_defaults); defaults.ApplicationId = applicationId;
-        return new(this, applicationId, defaults);
+        return new(this, applicationId, defaults, null);
     }
+    /// <summary>Creates a draft scoped to one options page. Export merges its draft with the other page's current live preferences.</summary>
+    public RibbonCustomizationSession BeginCustomization(string applicationId, RibbonCustomizationTarget target)
+    {
+        Check(); ArgumentException.ThrowIfNullOrWhiteSpace(applicationId); if (!Enum.IsDefined(target)) throw new ArgumentOutOfRangeException(nameof(target));
+        _defaults ??= Capture("defaults");
+        var defaults = RibbonCustomizationSerializer.Copy(_defaults); defaults.ApplicationId = applicationId;
+        return new(this, applicationId, defaults, target);
+    }
+    /// <summary>Gets the original command behind a Ribbon/QAT presentation, or the supplied element for an authored model.</summary>
+    public RibbonElement GetSource(RibbonElement element) { Check(); ArgumentNullException.ThrowIfNull(element); return Structure.Source(RibbonQuickAccess.Source(element) ?? element); }
     internal RibbonControl Host => _host;
     internal void Check() { _host.VerifyAccess(); ObjectDisposedException.ThrowIf(IsDisposed || _host.IsDisposed, this); }
     private bool Ordinary(RibbonElement source)
@@ -108,6 +125,7 @@ public sealed class RibbonCommandCatalog : RibbonElement
     {
         Check(); var sources = Sources(); var counts = new Dictionary<string, int>(StringComparer.Ordinal);
         var state = new RibbonCustomizationState { ApplicationId = applicationId, QuickAccessPosition = _host.QuickAccessPosition, QuickAccessVisible = _host.QuickAccessVisible };
+        state.Ribbon = Structure.IsCustomized ? Structure.Capture() : null;
         foreach (var presentation in _host.QuickAccessItems.Where(p => Managed(p, sources)))
         {
             var source = RibbonQuickAccess.Source(presentation)!; int count = counts.GetValueOrDefault(source.Id); counts[source.Id] = count + 1;
@@ -202,6 +220,7 @@ public sealed class RibbonCommandCatalog : RibbonElement
     {
         if (disposing && !IsDisposed)
         {
+            Structure.Dispose();
             foreach (var model in _presentations.Values.Distinct().Where(m => !m.IsDisposed && m.Parent is null).ToArray()) model.Dispose();
             _presentations.Clear(); _keys.Clear();
         }

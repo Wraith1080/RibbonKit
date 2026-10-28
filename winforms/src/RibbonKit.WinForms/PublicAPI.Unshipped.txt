@@ -766,3 +766,52 @@ RibbonKit.WinForms.RibbonOptionsPage.ApplyChanges() -> bool
 RibbonKit.WinForms.RibbonOptionsPage.Applying -> System.ComponentModel.CancelEventHandler?
 RibbonKit.WinForms.RibbonOptionsPage.Cancelled -> System.EventHandler?
 RibbonKit.WinForms.RibbonOptionsPage.RibbonOptionsPage() -> void
+RibbonKit.WinForms.RibbonCommandCatalog.BeginCustomization(string! applicationId, RibbonKit.WinForms.RibbonCustomizationTarget target) -> RibbonKit.WinForms.RibbonCustomizationSession!
+RibbonKit.WinForms.RibbonCommandCatalog.GetSource(RibbonKit.WinForms.RibbonElement! element) -> RibbonKit.WinForms.RibbonElement!
+RibbonKit.WinForms.RibbonControl.ShowRibbonCustomization(System.Windows.Forms.IWin32Window? owner = null) -> System.Windows.Forms.DialogResult
+RibbonKit.WinForms.RibbonCustomizationCommand
+RibbonKit.WinForms.RibbonCustomizationCommand.CommandId.get -> string!
+RibbonKit.WinForms.RibbonCustomizationCommand.CommandId.set -> void
+RibbonKit.WinForms.RibbonCustomizationCommand.Id.get -> string!
+RibbonKit.WinForms.RibbonCustomizationCommand.Id.set -> void
+RibbonKit.WinForms.RibbonCustomizationCommand.Label.get -> string?
+RibbonKit.WinForms.RibbonCustomizationCommand.Label.set -> void
+RibbonKit.WinForms.RibbonCustomizationCommand.RibbonCustomizationCommand() -> void
+RibbonKit.WinForms.RibbonCustomizationCommand.Size.get -> RibbonKit.WinForms.RibbonItemSize
+RibbonKit.WinForms.RibbonCustomizationCommand.Size.set -> void
+RibbonKit.WinForms.RibbonCustomizationEditor
+RibbonKit.WinForms.RibbonCustomizationEditor.ApplyChanges() -> bool
+RibbonKit.WinForms.RibbonCustomizationEditor.ExportRequested -> System.EventHandler?
+RibbonKit.WinForms.RibbonCustomizationEditor.ImportRequested -> System.EventHandler?
+RibbonKit.WinForms.RibbonCustomizationEditor.RefreshDraft() -> void
+RibbonKit.WinForms.RibbonCustomizationEditor.RibbonCustomizationEditor(RibbonKit.WinForms.RibbonControl! ribbon, string! applicationId) -> void
+RibbonKit.WinForms.RibbonCustomizationEditor.Session.get -> RibbonKit.WinForms.RibbonCustomizationSession!
+RibbonKit.WinForms.RibbonCustomizationGroup
+RibbonKit.WinForms.RibbonCustomizationGroup.Commands.get -> System.Collections.Generic.List<RibbonKit.WinForms.RibbonCustomizationCommand!>!
+RibbonKit.WinForms.RibbonCustomizationGroup.Commands.set -> void
+RibbonKit.WinForms.RibbonCustomizationGroup.Id.get -> string!
+RibbonKit.WinForms.RibbonCustomizationGroup.Id.set -> void
+RibbonKit.WinForms.RibbonCustomizationGroup.IsCustom.get -> bool
+RibbonKit.WinForms.RibbonCustomizationGroup.IsCustom.set -> void
+RibbonKit.WinForms.RibbonCustomizationGroup.Label.get -> string?
+RibbonKit.WinForms.RibbonCustomizationGroup.Label.set -> void
+RibbonKit.WinForms.RibbonCustomizationGroup.RibbonCustomizationGroup() -> void
+RibbonKit.WinForms.RibbonCustomizationLayout
+RibbonKit.WinForms.RibbonCustomizationLayout.RibbonCustomizationLayout() -> void
+RibbonKit.WinForms.RibbonCustomizationLayout.Tabs.get -> System.Collections.Generic.List<RibbonKit.WinForms.RibbonCustomizationTab!>!
+RibbonKit.WinForms.RibbonCustomizationLayout.Tabs.set -> void
+RibbonKit.WinForms.RibbonCustomizationState.Ribbon.get -> RibbonKit.WinForms.RibbonCustomizationLayout?
+RibbonKit.WinForms.RibbonCustomizationState.Ribbon.set -> void
+RibbonKit.WinForms.RibbonCustomizationTab
+RibbonKit.WinForms.RibbonCustomizationTab.Groups.get -> System.Collections.Generic.List<RibbonKit.WinForms.RibbonCustomizationGroup!>!
+RibbonKit.WinForms.RibbonCustomizationTab.Groups.set -> void
+RibbonKit.WinForms.RibbonCustomizationTab.Id.get -> string!
+RibbonKit.WinForms.RibbonCustomizationTab.Id.set -> void
+RibbonKit.WinForms.RibbonCustomizationTab.IsCustom.get -> bool
+RibbonKit.WinForms.RibbonCustomizationTab.IsCustom.set -> void
+RibbonKit.WinForms.RibbonCustomizationTab.Label.get -> string?
+RibbonKit.WinForms.RibbonCustomizationTab.Label.set -> void
+RibbonKit.WinForms.RibbonCustomizationTab.RibbonCustomizationTab() -> void
+RibbonKit.WinForms.RibbonCustomizationTab.Visible.get -> bool
+RibbonKit.WinForms.RibbonCustomizationTab.Visible.set -> void
+RibbonKit.WinForms.RibbonQuickAccessCustomizationForm.RibbonEditor.get -> RibbonKit.WinForms.RibbonCustomizationEditor!

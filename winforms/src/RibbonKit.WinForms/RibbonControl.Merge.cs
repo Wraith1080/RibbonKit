@@ -16,7 +16,7 @@ public partial class RibbonControl
     public bool Unmerge(RibbonMergeSource source) => Merges.Unmerge(source);
     /// <summary>Gets a snapshot of authored and currently merged tabs in presentation order. Tabs remains the host's authored collection.</summary>
     [Browsable(false)]
-    public IReadOnlyList<RibbonTab> GetPresentedTabs() => ModalTab is { } modal ? UnfilteredTabs.Where(t => ReferenceEquals(t, modal)).ToArray() : UnfilteredTabs;
+    public IReadOnlyList<RibbonTab> GetPresentedTabs() => ModalTab is { } modal ? UnfilteredTabs.Where(t => ReferenceEquals(t, modal)).ToArray() : UnfilteredTabs.Where(t => CommandCatalog?.Structure.Hidden(t) != true).ToArray();
     /// <summary>Gets a snapshot of a presented tab's authored and contributed groups. The tab's Groups collection retains authored ownership.</summary>
     public IReadOnlyList<RibbonGroup> GetPresentedGroups(RibbonTab tab)
     {
@@ -34,5 +34,5 @@ public partial class RibbonControl
             return borrowed.IsDisposed ? element.MergeProvenance : GetMergeSource(borrowed);
         return null;
     }
-    internal IEnumerable<RibbonElement> RetainedElements => AllElements.Concat(_merges?.RetainedElements ?? []).Distinct();
+    internal IEnumerable<RibbonElement> RetainedElements => AllElements.Concat(_merges?.RetainedElements ?? []).Concat(CommandCatalog.Structure.Retained).Distinct();
 }

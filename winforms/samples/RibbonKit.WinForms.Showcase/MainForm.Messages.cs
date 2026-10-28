@@ -11,7 +11,7 @@ public partial class MainForm
         add.Click += (_, _) => AddSampleMessage();
         reopen.Click += (_, _) => { foreach (var message in ribbon.MessageBar.Items) message.IsOpen = true; };
         clear.Click += (_, _) => { ribbon.BeginUpdate(); try { foreach (var message in ribbon.MessageBar.Items.ToArray()) message.Dispose(); } finally { ribbon.EndUpdate(); } };
-        var group = new RibbonGroup { Text = "Messages" }; group.Items.AddRange(add, reopen, clear);
+        var group = new RibbonGroup { Id = "group.messages", Text = "Messages" }; group.Items.AddRange(add, reopen, clear);
         ribbon.Tabs.Single(t => t.Id == "tab.merging").Groups.Add(group);
     }
     private void AddSampleMessage()

@@ -144,7 +144,7 @@ internal static class RibbonQuickAccess
     internal static bool RetainsGroup(RibbonGroup group) => group.Ribbon is { } ribbon
         && ribbon.QuickAccessItems.OfType<RibbonQuickAccessGroupReference>().Any(r => ReferenceEquals(r.Source, group));
     internal static int Width(RibbonElement entry) => entry is RibbonQuickAccessComboBoxReference or RibbonQuickAccessDropDownReference or RibbonQuickAccessGroupReference ? 40 : ButtonWidth;
-    internal static string Caption(RibbonElement entry) => entry.Text.Length > 0 ? entry.Text : Source(entry)?.Text ?? "Unavailable";
+    internal static string Caption(RibbonElement entry) => entry.Text.Length > 0 ? entry.Text : Source(entry)?.DisplayText ?? "Unavailable";
     internal static bool Available(RibbonElement entry)
     {
         if (entry.Ribbon is { IsModal: true } host && ReferenceEquals(Source(entry), host.FileMenu)) return false;

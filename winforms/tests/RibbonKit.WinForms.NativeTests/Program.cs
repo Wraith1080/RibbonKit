@@ -11,6 +11,8 @@ internal static partial class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--ribbon-customization-checks" or "--ribbon-customization-checks-flat")
+            return IndependentConsumer.RibbonCustomizationInteractionChecks.Run(args[1], args[0] == "--ribbon-customization-checks-flat");
         if (args.Length == 2 && args[0] is "--customization-editor-checks" or "--customization-editor-checks-flat")
             return IndependentConsumer.CustomizationEditorInteractionChecks.Run(args[1], args[0] == "--customization-editor-checks-flat");
         if (args.Length == 2 && args[0] is "--popup-refinement-checks" or "--popup-refinement-checks-flat")

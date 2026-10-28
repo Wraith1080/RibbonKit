@@ -44,6 +44,9 @@ public sealed class RibbonGalleryItem : RibbonDropDownItem
         set
         {
             Ribbon?.VerifyAccess();
+            if (Ribbon?.CommandCatalog.Structure is { Synchronizing: false } structure && !ReferenceEquals(structure.Source(this), this)
+                && structure.Source(this) is RibbonGalleryItem source)
+            { source.SelectedItem = value is null ? null : (RibbonGalleryTile)structure.Source(value); return; }
             if (value is not null && (value.IsDisposed || !Items.Contains(value))) throw new ArgumentException("Select a tile belonging to this gallery.", nameof(value));
             if (ReferenceEquals(_selectedItem, value)) return;
             CancelPreview();
@@ -79,10 +82,12 @@ public sealed class RibbonGalleryItem : RibbonDropDownItem
     public event EventHandler<RibbonGalleryPreviewEventArgs>? ItemPreview;
     /// <summary>Occurs once when an active preview is cancelled by leaving, dismissal, mutation or programmatic selection. Restore the application presentation from SelectedItem. Successful commit ends preview without cancellation.</summary>
     public event EventHandler? ItemPreviewCancelled;
-    internal RibbonGalleryTile? PreviewItem => _previewItem;
+    internal RibbonGalleryTile? PreviewItem => Ribbon?.CommandCatalog.Structure is { } structure && structure.IsProxy(this) ? structure.GalleryPreview(this) : _previewItem;
     internal bool Available(RibbonGalleryTile tile) => !IsDisposed && Visible && EffectiveEnabled && !tile.IsDisposed && tile.Visible && tile.EffectiveEnabled && Items.Contains(tile);
     internal void Preview(RibbonGalleryTile? tile, object? owner = null)
     {
+        if (Ribbon?.CommandCatalog.Structure is { } structure && structure.IsProxy(this) && structure.Source(this) is RibbonGalleryItem source)
+        { source.Preview(tile is not null && Available(tile) ? (RibbonGalleryTile)structure.Source(tile) : null, owner); return; }
         if (tile is not null && !Available(tile)) tile = null;
         if (tile is null) { CancelPreview(owner); return; }
         if (ReferenceEquals(_previewItem, tile) && ReferenceEquals(_previewOwner, owner)) return;
@@ -92,6 +97,8 @@ public sealed class RibbonGalleryItem : RibbonDropDownItem
     }
     internal void CancelPreview(object? owner = null)
     {
+        if (Ribbon?.CommandCatalog.Structure is { Synchronizing: false } structure && structure.IsProxy(this) && structure.Source(this) is RibbonGalleryItem source)
+        { source.CancelPreview(owner); return; }
         if (_previewItem is null || owner is not null && !ReferenceEquals(owner, _previewOwner)) return;
         _previewItem = null; _previewOwner = null; ItemPreviewCancelled?.Invoke(this, EventArgs.Empty);
     }
@@ -102,6 +109,8 @@ public sealed class RibbonGalleryItem : RibbonDropDownItem
     }
     internal void Commit(RibbonGalleryTile tile)
     {
+        if (Ribbon?.CommandCatalog.Structure is { } structure && structure.IsProxy(this) && structure.Source(this) is RibbonGalleryItem source)
+        { if (Available(tile)) source.Commit((RibbonGalleryTile)structure.Source(tile)); return; }
         Ribbon?.VerifyAccess();
         if (!Available(tile)) return;
         _previewItem = null; _previewOwner = null;

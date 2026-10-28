@@ -1,6 +1,6 @@
 # Native RibbonKit.WinForms assessment and implementation plan
 
-> Implementation through M5B QAT context menus and extensible native options UI,
+> Implementation through M5C structural customization and extensible native options UI,
 > 2026-10-28. Current bounded
 > scope, evidence and remaining review are in the [M5 ledger](../winforms/docs/M5-STATUS.md)
 > and [M4 ledger](../winforms/docs/M4-STATUS.md).

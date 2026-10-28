@@ -27,7 +27,7 @@ public sealed class RibbonQuickAccessCustomizationEditor : UserControl
     public RibbonQuickAccessCustomizationEditor(RibbonControl ribbon, string applicationId)
     {
         ArgumentNullException.ThrowIfNull(ribbon); ribbon.VerifyAccess();
-        _ribbon = ribbon; Session = ribbon.CommandCatalog.BeginCustomization(applicationId);
+        _ribbon = ribbon; Session = ribbon.CommandCatalog.BeginCustomization(applicationId, RibbonCustomizationTarget.QuickAccess);
         AutoScaleMode = AutoScaleMode.Dpi; AutoScaleDimensions = new(96, 96);
         Font = ribbon.Font; BackColor = ribbon.Theme.Surface; ForeColor = ribbon.Theme.Foreground;
         Name = "QuickAccessCustomizationEditor";

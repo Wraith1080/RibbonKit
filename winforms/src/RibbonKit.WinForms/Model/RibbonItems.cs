@@ -263,6 +263,7 @@ public class RibbonButtonItem : RibbonItem
         Ribbon?.ScreenTips.Cancel();
         if (!EffectiveEnabled || !Visible)
             return;
+        if (Ribbon?.CommandCatalog.Structure.Invoke(this) == true) return;
         BeforeClick();
         if (!IsDisposed)
             Click?.Invoke(this, EventArgs.Empty);

@@ -1,6 +1,10 @@
 # M5 native customization and Simplified Ribbon
 
-Status: **M5A foundation and M5B extensible options/QAT UI implemented; human review pending**, 2026-10-28.
+Status: **M5A/M5B accepted at the reviewed scope; M5C implemented, visual review in progress**, 2026-10-28.
+
+User acceptance, 2026-10-28: the QAT/options dialog, rounded controls, dual search,
+spacing/minimum width, caption fixes, larger Showcase and owner centering work as
+expected. Physical monitor, actual VS and accessibility gates remain separate.
 
 ## M5A catalog and QAT transaction foundation — 2026-10-28
 
@@ -278,8 +282,109 @@ the larger default and owner-centered dialog.
 Physical monitor transitions remain separate. No full suite, Release/package,
 actual Visual Studio, external UIA/accessibility or WPF checks were run.
 
-Remaining work: human review; M5C structural Ribbon draft/schema/proxy editing;
-M5D Simplified integration;
+## M5C — Customize Ribbon — 2026-10-28
+
+Use the supplied WPF layout: command list left, structural tree right, Add/Remove
+between, reorder arrows beside the tree, Reset/Import/Export and New Tab/New Group/
+Edit below. Keep the shared navigation shell, search frames, minimum width, density
+and footer. Contextual/modal/merge content stays application-owned and outside
+structural persistence. Groups remain QAT-only in the available catalog.
+
+Public proposal before implementation: extend the native state with a version-two
+Ribbon hierarchy (version-one QAT input remains supported); add scoped sessions,
+the reusable Ribbon editor and an entry point selecting that page in the existing
+options dialog. Ordinary tabs/groups retain their source objects; labels and user
+visibility are presentation preferences. Custom groups use owned typed command
+presentations borrowing original models/assets and forwarding actions and editor
+validation to their sources. Native editor windows belong to one presentation;
+original native editor handles and source bindings are retained. Import/export UI
+raises host requests; the application owns file dialogs and storage. Apply/Cancel,
+Reset, stale-state rejection and data validation keep the existing transaction
+contract. Adding/reordering commands is limited to custom groups; builtin commands
+remain read-only. No Simplified layout, comprehensive theme campaign, animation or WPF runtime work.
+
+Implemented:
+
+- `RibbonCustomizationEditor` supplies the available command list, tab/group/command
+  tree, dual search, Add/Remove, sibling reorder and New Tab/New Group/Edit controls.
+  Built-in commands are read-only; authored tabs/groups can be renamed and reordered
+  within their parent, and ordinary tabs can be hidden while retaining one visible
+  preference. Custom groups accept typed command presentations with label/size edits.
+  Filters change the view only. Custom entries retain generated stable identities.
+- `RibbonQuickAccessCustomizationForm` keeps its existing name/API and initial QAT
+  selection, and now includes `RibbonEditor`. `ShowRibbonCustomization` and the shared
+  context menu select Customize Ribbon. Application pages, owner centering, minimum
+  content width, shared footer and independent per-page Apply remain intact.
+- Scoped `BeginCustomization(applicationId, target)` sessions preserve the other
+  page's live settings. The existing overload applies complete profiles. Export
+  merges the scoped draft with live preferences from the other scope. Native JSON
+  version two adds optional Ribbon structure; version-one/QAT-only input preserves
+  live structure. Full Reset stages captured defaults for both scopes. Applications
+  must assign explicit stable IDs to persisted authored tabs/groups and sources.
+- Authored models, command collections, handlers and bindings retain their owners.
+  User tab visibility and tab/group aliases are presentation preferences, rather
+  than writes to bound source properties. Owned button/check/radio/split/dropdown,
+  text/ComboBox and gallery presentations borrow source assets/state and invoke
+  original actions, validation, commits, previews and selections. Native editor
+  windows remain distinct per presentation; existing handles survive Apply/reorder.
+- Preflight rejects missing definitions, unknown/transient commands, duplicate and
+  cross-scope identities, incompatible group moves and stale drafts. Native input
+  validation precedes structural mutation and is followed by another preflight.
+  Apply-time failure restores topology/aliases/preferences. Reload recognizes host
+  definition removals. Modal/contextual/merge state stays outside saved structure.
+- Tree rows retain native selection, scrolling and keyboard expansion. Windows'
+  fixed-size state/expand glyphs are replaced by themed checkbox painting and vector
+  chevrons with matching pointer regions. Mouse uses an 18-logical-pixel checkbox
+  and 12-pixel chevron; Touch uses 24 and 16, with larger surrounding targets. This
+  avoids native state-ImageList downscaling. Office uses the existing rounded check
+  indicator; the neutral renderer keeps its square indicator. This is a bounded
+  options refinement, not completion of comprehensive theming or accessibility.
+- Original transparent 24-viewBox [Import](../src/RibbonKit.WinForms/Assets/Icons/Import.svg)
+  and [Export](../src/RibbonKit.WinForms/Assets/Icons/Export.svg) SVGs share rounded
+  strokes and a tray/arrow motif. The runtime reads their owned polyline geometry
+  and draws at current device size using existing secondary/accent theme roles;
+  no general SVG dependency is added. The source SVGs are included in the package.
+  Showcase owns the Import/Export file dialogs and JSON storage operations.
+- The requested smaller button/navigation font experiment was reverted after
+  visual review. Both pages, the Edit dialog, navigation and footer again inherit
+  the original font sizes. The larger tree controls and SVG icons remain.
+  Generated icon bitmaps are owned and disposed with their controls.
+
+Focused evidence (separate selections, not an aggregate/full-suite claim):
+
+- Normal Debug native solution builds passed with zero warnings/errors, including
+  XML documentation, public API baseline and designer compilation.
+- The initial customization/editor selection passed 30 tests. The subsequent
+  `m5c-structure-boundaries.trx` selection passed 26 and caught one QAT dropdown
+  ownership-status regression. Restoring its existing per-presentation contract
+  passed both affected cases in `m5c-dropdown-ownership-final.trx`. Full-profile
+  Reset and existing QAT reset/round-trip passed two focused cases in
+  `m5c-full-profile-reset.trx`. Six button/row/font cases passed in
+  `m5c-button-font-metrics.trx` during the subsequently reverted font experiment.
+  Tests also cover original validation bindings,
+  retained native handles, source actions, gallery identity, rollback, profile
+  migration/legacy input, external definitions and view-only filters.
+  The final gallery availability check passed in `m5c-gallery-availability-final.trx`.
+- Public-only native consumers passed Office and neutral at actual 120 DPI in
+  `artifacts/m5c-tree-{office,neutral}-final/`. They exercise tree pointer edges,
+  single toggles, native keyboard expansion, last-visible protection, name/size
+  editing, independent page Apply, Cancel-after-Apply, Reset, profile export,
+  compact/Touch/larger fonts and narrow content. Captures were inspected. An earlier
+  modeless-close capture lost foreground; only the successful guarded retry counts.
+- The existing QAT/options native consumer passed the affected additional Ribbon
+  page/OK semantics in `artifacts/m5c-qat-compatibility/`. Showcase captures and full
+  profile export verified stable IDs and application page integration. The latest
+  reverted-font experiment's mouse capture is `artifacts/m5c-final-fonts/`. Its QAT review passed in
+  `artifacts/m5c-qat-fonts-final-retry/`; final Touch Showcase captures are in
+  `artifacts/m5c-touch-fonts-final-retry/`. Earlier foreground-interrupted attempts
+  are not passing evidence. Restored-font captures are in `artifacts/m5c-fonts-restored/`.
+
+Physical mixed-monitor transitions, actual touch/IME hardware, external UIA and
+screen readers, actual Visual Studio and a fresh package remain separate gates.
+No full suite, Release/package or WPF build was run. Human visual acceptance of
+M5C is still pending; icon feedback was positive and the font-size experiment was reverted.
+
+Remaining work: M5C visual review; M5D Simplified integration;
 actual VS, fresh-package, physical mixed-monitor and separate accessibility gates.
 WPF runtime/build/CI are unchanged. No commit, push or application file persistence
 was performed by the runtime.

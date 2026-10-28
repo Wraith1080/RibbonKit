@@ -18,7 +18,7 @@ public partial class MainForm
         chartAction.Click += (_, _) => ribbon.SelectedTab = chart;
         contribution.Group.Items.Add(chartAction); source.Groups.Add(contribution);
         var merging = new RibbonTab { Id = "tab.merging", Text = "Merging", KeyTip = "M" };
-        var actions = new RibbonGroup { Text = "Application context" };
+        var actions = new RibbonGroup { Id = "group.applicationContext", Text = "Application context" };
         var active = new RibbonToggleItem { Text = "Chart context", KeyTip = "C", Icon = new SampleIcon(1), ScreenTipDescription = "The application activates a merge source. Keyboard focus does not drive activation." };
         active.CheckedChanged += (_, _) =>
         {

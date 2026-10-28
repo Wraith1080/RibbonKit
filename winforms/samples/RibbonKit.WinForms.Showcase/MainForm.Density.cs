@@ -18,7 +18,7 @@ public partial class MainForm
         mouse.Click += (_, _) => { ribbon.Density = RibbonDensity.Compact; Sync(); };
         touch.Click += (_, _) => { ribbon.Density = RibbonDensity.Touch; Sync(); };
         ribbon.DensityChanged += (_, _) => { Sync(); status.Text = ribbon.Density == RibbonDensity.Touch ? "Touch spacing" : "Mouse spacing"; };
-        var group = new RibbonGroup { Text = "Input mode" }; group.Items.Add(selector); ribbon.Tabs.Single(t => t.Id == "tab.merging").Groups.Add(group);
+        var group = new RibbonGroup { Id = "group.inputMode", Text = "Input mode" }; group.Items.Add(selector); ribbon.Tabs.Single(t => t.Id == "tab.merging").Groups.Add(group);
         ribbon.QuickAccessItems.Insert(2, new RibbonQuickAccessDropDownReference { Source = selector }); Sync();
         document.AppendText("\r\n\r\nThe third Quick Access entry (also Merging > Input mode) switches Mouse/Touch spacing. Touch keeps the same text size and commands while enlarging rows, fields, popup choices and Quick Access targets. The application owns this selector and preference storage.");
     }

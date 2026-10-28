@@ -284,7 +284,7 @@ public partial class RibbonRenderer : IDisposable
         if (selected || context.Hot)
             DrawChrome(context, selected ? new(context.Theme.Surface) : context.Theme.Hover, Color.Transparent);
         var color = !tab.EffectiveEnabled ? SystemColors.GrayText : tab.IsContextual ? ContextualTabColor(context, tab, selected) : context.Theme.Foreground;
-        DrawText(context, tab.Text, color, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
+        DrawText(context, tab.DisplayText, color, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
         if (context.Focused)
             DrawFocus(context);
     }
@@ -312,7 +312,7 @@ public partial class RibbonRenderer : IDisposable
             if (bounds.Width <= 0 || bounds.Height <= 0) return;
             int arrowHeight = Math.Min(bounds.Height, RibbonLayoutEngine.Scale(6, context.DeviceDpi));
             int gap = Math.Min(Math.Max(0, bounds.Height - arrowHeight), RibbonLayoutEngine.Scale(5, context.DeviceDpi));
-            var caption = _captions.Wrap(group.Text, context.Font, context.DeviceDpi, bounds.Width);
+            var caption = _captions.Wrap(group.DisplayText, context.Font, context.DeviceDpi, bounds.Width);
             int availableText = Math.Max(0, bounds.Height - arrowHeight - gap);
             int lineHeight = Math.Min(context.Font.Height, availableText);
             int rows = lineHeight == 0 ? 0 : Math.Min(caption.Lines.Length, availableText / lineHeight);
@@ -321,7 +321,7 @@ public partial class RibbonRenderer : IDisposable
             var color = group.EffectiveEnabled ? context.Theme.Foreground : SystemColors.GrayText;
             for (int row = 0; row < rows; row++)
                 DrawText(context with { Bounds = new(bounds.Left, top + row * lineHeight, bounds.Width, lineHeight) },
-                    rows < caption.Lines.Length ? group.Text.Replace('\r', ' ').Replace('\n', ' ') : caption.Lines[row], color, flags);
+                    rows < caption.Lines.Length ? group.DisplayText.Replace('\r', ' ').Replace('\n', ' ') : caption.Lines[row], color, flags);
             DrawDropDownArrow(context with { Bounds = new(bounds.Left, top + textHeight + gap, bounds.Width, arrowHeight) }, color);
             if (context.Focused)
                 DrawFocus(context);
@@ -330,7 +330,7 @@ public partial class RibbonRenderer : IDisposable
         {
             int height = Math.Max(context.Font.Height + RibbonLayoutEngine.Scale(6, context.DeviceDpi), RibbonLayoutEngine.Scale(20, context.DeviceDpi));
             var caption = new Rectangle(context.Bounds.X + 4, context.Bounds.Bottom - height, Math.Max(0, context.Bounds.Width - 8), height);
-            DrawText(context with { Bounds = caption }, group.Text, context.Theme.SecondaryText, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+            DrawText(context with { Bounds = caption }, group.DisplayText, context.Theme.SecondaryText, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
         }
     }
     /// <summary>Paints a command using library-measured bounds and shared content alignment.</summary>

@@ -153,8 +153,9 @@ public abstract class RibbonElement : Component, IBindableComponent
         && (this is not RibbonMessage message || message.IsOpen);
     internal void Changed(bool layout = true)
     {
-        if (Ribbon is { } ribbon) ribbon.ModelChanged(layout, ribbon.Popups.IsPreparingContent(this));
+        if (Ribbon is { } ribbon) ribbon.ModelChanged(layout, ribbon.Popups.IsPreparingContent(this), this);
     }
+    internal string DisplayText => Ribbon?.CommandCatalog?.Structure.Label(this) ?? Text;
     internal IEnumerable<RibbonElement> Tree()
     {
         yield return this;

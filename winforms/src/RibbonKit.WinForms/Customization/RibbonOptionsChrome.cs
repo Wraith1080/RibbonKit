@@ -9,6 +9,19 @@ internal static class RibbonOptionsChrome
     internal static void Surface(RoundedPainter painter, Graphics graphics, Rectangle bounds, RibbonControl ribbon,
         int dpi, RibbonFill fill, Color border, int stroke = 1)
         => painter.Draw(graphics, bounds, Radius(ribbon, dpi), fill, border, stroke);
+
+    // Native TreeView state images keep native selection/scrolling while using
+    // exactly the renderer's ordinary checkbox glyph and theme roles.
+    internal static Bitmap TabCheck(RibbonControl ribbon, Font font, int dpi, int slot, bool marked)
+    {
+        var image = new Bitmap(slot, slot);
+        using var graphics = Graphics.FromImage(image);
+        using var model = new RibbonCheckBoxItem { Checked = marked };
+        int side = Math.Min(slot, Layout.RibbonLayoutEngine.Scale(16, dpi));
+        var bounds = new Rectangle((slot - side) / 2, (slot - side) / 2, side, side);
+        ribbon.Painter.DrawCheckBoxIndicator(new(graphics, bounds, ribbon.Theme, font, dpi) { Density = ribbon.Density }, model);
+        return image;
+    }
 }
 
 // Keep native text editing, list selection, scrolling and accessibility. The
@@ -29,7 +42,7 @@ internal sealed class RibbonOptionsFrame : Panel
     protected override void OnLayout(LayoutEventArgs e) { base.OnLayout(e); ShapeChild(); }
     private void ShapeChild()
     {
-        if (_ribbon is null || Controls.OfType<ListBox>().FirstOrDefault() is not { } child) return;
+        if (_ribbon is null || Controls.Cast<Control>().FirstOrDefault(c => c is ListBox or TreeView) is not { } child) return;
         int radius = Math.Max(0, RibbonOptionsChrome.Radius(_ribbon, DeviceDpi) - 1);
         if (_childSize == child.Size && _childRadius == radius) return;
         _childSize = child.Size; _childRadius = radius;

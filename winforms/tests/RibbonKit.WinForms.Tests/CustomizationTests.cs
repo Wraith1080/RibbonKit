@@ -60,8 +60,8 @@ public sealed class CustomizationTests
     {
         using var f = new Fixture(); using var edit = f.Ribbon.CommandCatalog.BeginCustomization("test.app"); string json = edit.ExportJson();
         var live = f.Ribbon.QuickAccessItems.ToArray(); var draft = edit.Draft;
-        foreach (string bad in new[] { "{", "{}", "null", json.Replace("\"version\": 1", "\"version\": 99"), json.Replace("test.app", "other.app"),
-            json.Replace("RibbonKit.WinForms.Customization", "RibbonKit.WPF"), json.Replace("\"version\": 1", "\"version\": 1, \"version\": 1"),
+        foreach (string bad in new[] { "{", "{}", "null", json.Replace("\"version\": 2", "\"version\": 99"), json.Replace("test.app", "other.app"),
+            json.Replace("RibbonKit.WinForms.Customization", "RibbonKit.WPF"), json.Replace("\"version\": 2", "\"version\": 2, \"version\": 2"),
             json.Replace("cmd.bold", "cmd.missing"), json.Replace("\"TabRow\"", "99"), json.Insert(json.LastIndexOf('}'), ", \"unknown\": true") })
         {
             var error = Record.Exception(() => edit.ImportJson(bad));

@@ -133,7 +133,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
         }
         internal Presenter(RibbonControl ribbon, RibbonItem item)
         {
-            _ribbon = ribbon; _item = item; _value = (IRibbonEditorItem)item; _accepted = _lastModel = _value.CaptureEdit();
+            _ribbon = ribbon; _item = item; _value = (IRibbonEditorItem)ribbon.CommandCatalog.Structure.Source(item); _accepted = _lastModel = _value.CaptureEdit();
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
             TabStop = false;
             if (item is RibbonComboBoxItem)

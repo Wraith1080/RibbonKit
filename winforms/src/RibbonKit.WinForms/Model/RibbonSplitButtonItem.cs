@@ -82,6 +82,7 @@ public sealed class RibbonSplitButtonItem : RibbonDropDownItem
         Ribbon?.VerifyAccess();
         Ribbon?.ScreenTips.Cancel();
         if (!EffectiveEnabled || !Visible) return;
+        if (Ribbon?.CommandCatalog.Structure.Invoke(this) == true) return;
         if (CheckOnClick) Checked = !Checked;
         if (!IsDisposed) Click?.Invoke(this, EventArgs.Empty);
     }

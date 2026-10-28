@@ -11,8 +11,9 @@ The current [M4 slice](docs/M4-STATUS.md) adds contextual-tab header colors,
 the File command menu, native Backstage pages, dropdown/in-ribbon/QAT galleries
 and source-owned tab/group merging with modal scopes and Compact/Touch density. [Remaining slices](docs/M4-STATUS.md#remaining-slices)
 record the working sequence through galleries, customization and window integration.
-The [M5 foundation](docs/M5-STATUS.md) adds shared catalog discovery and detached QAT
-drafts with versioned JSON and Apply/Cancel checkpoints; customization UI follows.
+The [M5 implementation](docs/M5-STATUS.md) adds shared catalog discovery, detached
+Ribbon/QAT drafts, versioned JSON, Apply/Cancel checkpoints and an extensible native
+Options dialog with Customize Ribbon and Quick Access Toolbar pages.
 Accessibility compatibility is deferred
 while the control structure is implemented; it remains possible future work.
 
@@ -1032,13 +1033,12 @@ ImportJson stages validated data. Reload rebases an external permanent QAT chang
 Applied fires after the accepted checkpoint is updated. A context-menu/editor can
 use `GetQuickAccessEntryId` to identify a presentation when one source occurs twice.
 
-JSON is versioned and application-scoped. It contains source/presentation IDs and
-QAT layout preferences, with no live objects, command values, checked state, theme,
-density or window state. Malformed/foreign/future/unknown data is rejected before
-live changes. Transient QAT references remain in the live toolbar without entering
-saved state. Structural Ribbon/custom-tab/group editing is M5C; this version stores
-QAT membership only. Source captions and authored presentation aliases remain
-application-owned; this schema introduces no rename preference.
+JSON is versioned and application-scoped. Version two contains QAT preferences and
+optional ordinary Ribbon structure, label/size preferences and source/presentation
+IDs. Live objects, command values, checked state, theme, density and window state
+are excluded. Version-one/QAT-only input remains supported and preserves live
+Ribbon structure. Malformed/foreign/future/unknown data is rejected before live
+changes. Transient QAT references remain live without entering saved state.
 
 Showcase **Merging → QAT drafts** demonstrates Preview/Apply/Cancel, Reset,
 application-owned in-memory Save/Restore and **Customize QAT**. Right-click a
@@ -1073,12 +1073,53 @@ ribbon.OptionsDialogOpening += (_, e) =>
 ribbon.ShowQuickAccessCustomization(ownerForm);
 ```
 
-`RibbonQuickAccessCustomizationForm` is the ready-made options dialog with a QAT
-page; `Editor.Session` exposes its draft. `RibbonQuickAccessCustomizationEditor`
-can also be embedded independently. Its `RefreshDraft()` updates controls after
-programmatic session edits, and `ApplyChanges()` reports draft errors on the page.
+`RibbonQuickAccessCustomizationForm` is the ready-made options dialog containing
+both pages, initially selecting QAT. `Editor.Session` exposes its QAT draft and
+`RibbonEditor.Session` exposes its Ribbon draft. Both editors can be embedded
+independently. `RefreshDraft()` updates controls after programmatic session edits,
+and `ApplyChanges()` reports draft errors on the page.
 `ribbon.CustomizationApplied` is the persistence cue for successful engine,
-context-menu and QAT-page Apply; storage stays application-owned.
+context-menu and page Apply; storage stays application-owned.
+
+Use `ribbon.ShowRibbonCustomization(ownerForm)` to open Customize Ribbon. The page
+follows the WPF arrangement: commands left, hierarchy right, transfer controls
+between, order arrows beside the tree, and structural controls below. Its two
+searches filter views only. Built-in commands retain their original collections;
+new command presentations belong to custom groups. Ordinary tabs/groups support
+rename and sibling reorder. Tabs support user visibility preferences, with at
+least one retained; contextual/modal/merged structure remains application-owned.
+Whole groups appear only in the QAT available-command list.
+
+```csharp
+using var edit = ribbon.CommandCatalog.BeginCustomization(
+    "com.example.editor", RibbonCustomizationTarget.Ribbon);
+var group = new RibbonCustomizationGroup { Label = "My commands" };
+group.Commands.Add(new RibbonCustomizationCommand {
+    CommandId = "cmd.copy", Size = RibbonItemSize.Medium });
+edit.Draft.Ribbon!.Tabs[0].Groups.Add(group);
+if (edit.Apply()) SaveProfile(edit.ExportJson()); // Host-owned storage.
+```
+
+Scoped sessions apply/reset only their selected scope; exporting combines that
+draft with the other scope's current live preferences. The original overload edits
+complete profiles. Full Reset stages captured defaults for both scopes. Call
+`CaptureDefaults()` after application declarations and before loading preferences.
+For structural profiles, assign explicit stable IDs to authored tabs/groups and
+selected command sources. Changed definitions require a matching profile or host
+migration. Reload rebases external changes; aliases preserve bound source Text.
+`GetSource(element)` resolves a customization/QAT presentation to its original
+command. New text/ComboBox presentations own separate native controls and use the
+original source's values, bindings, validation and commit events.
+
+`RibbonCustomizationEditor.ImportRequested` and `ExportRequested` request host
+file/storage UI; use its Session import/export methods, then RefreshDraft after
+import. Showcase demonstrates native JSON file dialogs. The transparent vector
+[Import](src/RibbonKit.WinForms/Assets/Icons/Import.svg) and
+[Export](src/RibbonKit.WinForms/Assets/Icons/Export.svg) assets are included under
+`assets/icons/` in the package and rendered with the dialog's current palette/DPI.
+Tree checkboxes and chevrons have explicit mouse/Touch sizes and pointer regions;
+selection, scrolling and arrow-key navigation remain native. Options buttons and
+navigation retain their original inherited font sizes.
 
 Both QAT lists have independent search fields. Filtering changes only the view;
 Remove and reorder use presentation identity in the complete draft, preserving

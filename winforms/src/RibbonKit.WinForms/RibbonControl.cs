@@ -227,11 +227,17 @@ public partial class RibbonControl : Control, ISupportInitialize
         if (ReferenceEquals(tab, _selectedTab))
             _fallbackTabIndex = GetPresentedTabs().ToList().IndexOf(tab) is var presented && presented >= 0 ? presented : index;
     }
-    internal void ModelChanged(bool layout = true, bool preservePopups = false)
+    internal void ModelChanged(bool layout = true, bool preservePopups = false, RibbonElement? origin = null)
     {
         if (_disposing)
             return;
         VerifyAccess();
+        if (CommandCatalog?.Structure is { } structure)
+        {
+            if (structure.Synchronizing) return;
+            if (structure.Applying) { _engine.Clear(); _layoutDirty = true; return; }
+            structure.Synchronize(origin);
+        }
         _screenTips?.Cancel();
         MessageBar.Reconcile();
         _modalScope?.Reconcile();
@@ -893,7 +899,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     internal void CloseDropDown(RibbonDropDownItem item)
     {
         if (ReferenceEquals(item, FileMenu) && IsBackstageOpen) IsBackstageOpen = false;
-        else _popups.CloseMenu(item, true);
+        else _popups.CloseMenu(CommandCatalog.Structure.Source(item) as RibbonDropDownItem ?? item, true);
     }
     internal bool IsInDesignMode => LicenseManager.UsageMode == LicenseUsageMode.Designtime || DesignMode;
     /// <inheritdoc />

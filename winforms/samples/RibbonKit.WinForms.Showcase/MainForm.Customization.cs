@@ -8,7 +8,7 @@ public partial class MainForm
     private void InitializeCustomization()
     {
         ribbon.CustomizationApplicationId = CustomizationApplicationId;
-        ribbon.CustomizationApplied += (_, _) => status.Text = "Quick Access Toolbar changes applied. The application can save its profile here.";
+        ribbon.CustomizationApplied += (_, _) => status.Text = "Customization changes applied. The application can save its profile here.";
         ribbon.OptionsDialogOpening += (_, e) =>
         {
             var page = new RibbonOptionsPage { Text = "Editor", Name = "ApplicationEditorOptions" };
@@ -17,6 +17,26 @@ public partial class MainForm
             page.Applied += (_, _) => { document.WordWrap = wrap.Checked; status.Text = "Application editor preferences applied."; };
             page.Cancelled += (_, _) => wrap.Checked = document.WordWrap;
             e.Dialog.Pages.Insert(0, page);
+            if (e.Dialog is RibbonQuickAccessCustomizationForm shared)
+            {
+                shared.RibbonEditor.ImportRequested += (_, _) =>
+                {
+                    using var file = new OpenFileDialog { Filter = "Ribbon customization (*.json)|*.json", Title = "Import customization" };
+                    if (file.ShowDialog(shared) != DialogResult.OK) return;
+                    try { shared.RibbonEditor.Session.ImportJson(File.ReadAllText(file.FileName)); shared.RibbonEditor.RefreshDraft(); }
+                    catch (Exception error) when (error is IOException or System.Text.Json.JsonException or InvalidOperationException or ArgumentException) { MessageBox.Show(shared, error.Message, "Import customization", MessageBoxButtons.OK, MessageBoxIcon.Information); }
+                };
+                shared.RibbonEditor.ExportRequested += (_, _) =>
+                {
+                    try
+                    {
+                        string json = shared.RibbonEditor.Session.ExportJson();
+                        using var file = new SaveFileDialog { Filter = "Ribbon customization (*.json)|*.json", DefaultExt = "json", FileName = "ribbon-customization.json", Title = "Export customization" };
+                        if (file.ShowDialog(shared) == DialogResult.OK) File.WriteAllText(file.FileName, json);
+                    }
+                    catch (Exception error) when (error is IOException or InvalidOperationException or ArgumentException) { MessageBox.Show(shared, error.Message, "Export customization", MessageBoxButtons.OK, MessageBoxIcon.Information); }
+                };
+            }
         };
         var redo = new RibbonButtonItem { Id = "demo.qat.redo", Text = "Redo", Icon = new SampleIcon(0) };
         redo.Click += (_, _) => status.Text = "The application handled Redo.";
@@ -34,6 +54,7 @@ public partial class MainForm
         }
         Add("demo.qat.preview", "Preview change", PreviewQatChange);
         Add("demo.qat.editor", "Customize QAT", () => ribbon.ShowQuickAccessCustomization(this));
+        Add("demo.ribbon.editor", "Customize Ribbon", () => ribbon.ShowRibbonCustomization(this));
         Add("demo.qat.apply", "Apply", () => status.Text = Draft().Apply() ? "Toolbar changes applied." : "Complete the highlighted input before applying.");
         Add("demo.qat.cancel", "Cancel change", () => { Draft().Cancel(); status.Text = "Unapplied toolbar edits discarded; the latest Apply remains."; });
         Add("demo.qat.reset", "Reset preview", () => { Draft().Reset(); status.Text = "Original toolbar is staged. Apply to restore it."; });
@@ -42,12 +63,12 @@ public partial class MainForm
         ribbon.Tabs.Single(t => t.Id == "tab.merging").Groups.Add(group);
         ribbon.CommandCatalog.CaptureDefaults();
         Disposed += (_, _) => _qatDraft?.Dispose();
-        document.AppendText("\r\n\r\nRight-click ribbon commands or use Merging > QAT drafts > Customize QAT to open the shared toolbar editor. Search, Add/Remove and Move up/down stage a draft; Apply commits and Cancel keeps the latest Apply. Reset restores default commands; Reload reads the current toolbar. The preset demo replaces Italic with Redo and moves below. Save/Restore use the same public engine and application-owned memory.");
+        document.AppendText("\r\n\r\nRight-click the ribbon to open Customize Ribbon or Customize Quick Access Toolbar. Both pages share the Options dialog. Customize Ribbon can hide, rename and reorder ordinary tabs, add custom tabs/groups and populate custom groups from the command catalog. Built-in commands keep their original ownership and bindings. Each page applies independently; Cancel keeps the latest Apply. Import/Export use application-owned JSON file dialogs. Merging > QAT drafts also offers the toolbar preview demo.");
     }
-    private RibbonCustomizationSession Draft() => _qatDraft ??= ribbon.CommandCatalog.BeginCustomization(CustomizationApplicationId);
+    private RibbonCustomizationSession Draft() => _qatDraft ??= ribbon.CommandCatalog.BeginCustomization(CustomizationApplicationId, RibbonCustomizationTarget.QuickAccess);
     private void PreviewQatChange()
     {
-        _qatDraft?.Dispose(); _qatDraft = ribbon.CommandCatalog.BeginCustomization(CustomizationApplicationId);
+        _qatDraft?.Dispose(); _qatDraft = ribbon.CommandCatalog.BeginCustomization(CustomizationApplicationId, RibbonCustomizationTarget.QuickAccess);
         _qatDraft.Draft.QuickAccess.RemoveAll(e => e.CommandId == italic.Id || e.CommandId == "demo.qat.redo");
         _qatDraft.Draft.QuickAccess.Add(new() { CommandId = "demo.qat.redo" });
         _qatDraft.Draft.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
@@ -69,6 +90,8 @@ public partial class MainForm
                 await Capture("qat");
                 var fullBounds = dialog.Bounds;
                 dialog.Width = dialog.MinimumSize.Width; await Capture("qat-narrow"); dialog.Bounds = fullBounds;
+                dialog.SelectedPage = dialog.Pages.Single(p => p.Name == "CustomizeRibbonOptionsPage"); await Capture("customize-ribbon");
+                File.WriteAllText(Path.Combine(directory, "ribbon-profile.json"), dialog.RibbonEditor.Session.ExportJson());
                 dialog.SelectedPage = dialog.Pages.Single(p => p.Name == "ApplicationEditorOptions"); await Capture("application-editor");
                 async Task Capture(string name)
                 {

@@ -15,6 +15,8 @@
     <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
     <InternalsVisibleTo Include="RibbonKit.WinForms.Tests" />
     <InternalsVisibleTo Include="RibbonKit.WinForms.NativeTests" />
+    <EmbeddedResource Include="Assets/Icons/Import.svg;Assets/Icons/Export.svg" />
+    <None Update="Assets/Icons/*.svg" Pack="true" PackagePath="assets/icons/" />
     <None Include="../../LICENSE" Pack="true" PackagePath="" />
     <None Include="../../README.md" Pack="true" PackagePath="" />
     <None Include="../../THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="" />

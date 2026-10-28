@@ -9,7 +9,7 @@ internal sealed record RibbonTarget(TargetKind Kind, RibbonElement? Element, Rec
     internal Rectangle VisibleBounds => Rectangle.Intersect(Bounds, Clip);
     internal bool Enabled => Kind == TargetKind.QuickAccess ? Element is not null && RibbonQuickAccess.Available(Element) : Element is not RibbonMenuSeparatorItem && (Element?.EffectiveEnabled ?? true);
     internal string Identity => (Element?.Id ?? Kind.ToString()) + (DropDownPart ? ":dropdown" : "");
-    internal string TipText => (Kind == TargetKind.QuickAccess && Element is not null ? RibbonQuickAccess.Caption(Element) : Element?.Text ?? "") + (DropDownPart ? " options" : "");
+    internal string TipText => (Kind == TargetKind.QuickAccess && Element is not null ? RibbonQuickAccess.Caption(Element) : Element?.DisplayText ?? "") + (DropDownPart ? " options" : "");
     internal string PreferredKeyTip => Element is RibbonQuickAccessDropDownReference { Source: RibbonSplitButtonItem } reference && DropDownPart
         ? reference.DropDownKeyTip.Length > 0 ? reference.DropDownKeyTip : reference.KeyTip.Length > 0 ? "" : AutomaticKeyTip ?? ""
         : DropDownPart && Element is RibbonSplitButtonItem split ? split.DropDownKeyTip
@@ -79,7 +79,7 @@ internal sealed class RibbonLayoutEngine
         var metrics = RibbonDensityMetrics.For(group.Ribbon?.Density ?? RibbonDensity.Compact);
         if (state == 3)
         {
-            int caption = RibbonCaptionLayout.TextWidth(group.Text, font);
+            int caption = RibbonCaptionLayout.TextWidth(group.DisplayText, font);
             int desired = caption + S(2 * (CollapsedGroupSideInset + CollapsedGroupCaptionInset));
             int width = Math.Clamp(desired, S(metrics.Touch ? 80 : 62), S(theme.CollapsedGroupMaxWidth));
             return _cache[(group, state, dpi)] = new(width + GroupDividerWidth, []);
@@ -150,7 +150,7 @@ internal sealed class RibbonLayoutEngine
             }
         }
         FinishColumn();
-        int header = TextRenderer.MeasureText(group.Text, font).Width + S(20);
+        int header = TextRenderer.MeasureText(group.DisplayText, font).Width + S(20);
         int contentWidth = items.Count == 0 ? 0 : items.Max(i => i.Bounds.Right) - S(GroupSideInset);
         int groupWidth = Math.Max(contentWidth + 2 * S(GroupSideInset), header);
         // Caption-driven width is shared equally, without retaining the final
@@ -169,7 +169,7 @@ internal sealed class RibbonLayoutEngine
         int tabHeight = S(ribbon.LayoutTheme.TabHeight);
         var client = ribbon.ClientRectangle;
         var tabs = ribbon.GetPresentedTabs().Where(t => t.Visible).ToArray();
-        var widths = tabs.Select(t => Math.Max(S(58), TextRenderer.MeasureText(t.Text, ribbon.Font).Width + S(28))).ToArray();
+        var widths = tabs.Select(t => Math.Max(S(58), TextRenderer.MeasureText(t.DisplayText, ribbon.Font).Width + S(28))).ToArray();
         var action = ribbon.HeaderAction;
         var metrics = RibbonDensityMetrics.For(ribbon.Density);
         int actionWidth = action?.Element is { } command ? TextRenderer.MeasureText(command.Text, ribbon.Font).Width + S(metrics.Touch ? 44 : 36) : S(metrics.SmallWidth);

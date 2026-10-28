@@ -103,7 +103,7 @@ internal static class CustomizationEditorInteractionChecks
                     SendMessage(ok.Handle, 0x201, 1, center); SendMessage(ok.Handle, 0x202, 0, center);
                 };
                 acceptTimer.Start(); result = ribbon.ShowQuickAccessCustomization(host); acceptTimer.Stop();
-                Check(result == WF.DialogResult.OK && applied == 5, "Native OK button click commits and closes through the normal dialog path");
+                Check(result == WF.DialogResult.OK && applied == 6, "Native OK button click commits and closes through the normal dialog path");
                 ribbon.Density = RibbonDensity.Compact;
                 for (int i = 0; i < 5; i++) group.Items.Add(new RibbonButtonItem { Id = "caption.extra." + i, Text = "Additional command " + i });
                 host.Width = 380; host.Activate(); SetForegroundWindow(host.Handle); await Task.Delay(80); paint.Texts.Clear(); ribbon.Refresh();
