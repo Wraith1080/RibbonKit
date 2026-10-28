@@ -63,7 +63,7 @@ public partial class MainForm : Form
             new RibbonQuickAccessReference { Source = showGrid },
             new RibbonQuickAccessReference { Source = printView },
             new RibbonQuickAccessReference { Source = webView });
-        var moveQuickAccess = new RibbonButtonItem { Text = "Move Quick Access Toolbar", ScreenTipDescription = "Move the toolbar between the tab row and below the ribbon. Title-bar hosting is planned with window integration." };
+        var moveQuickAccess = new RibbonButtonItem { Id = "cmd.qat.move", Text = "Move Quick Access Toolbar", ScreenTipDescription = "Move the toolbar between the tab row and below the ribbon. Title-bar hosting is planned with window integration." };
         moveQuickAccess.Click += (_, _) => ribbon.QuickAccessPosition = ribbon.QuickAccessPosition == RibbonQuickAccessPosition.TabRow ? RibbonQuickAccessPosition.BelowRibbon : RibbonQuickAccessPosition.TabRow;
         ribbon.QuickAccessItems.Add(moveQuickAccess);
         document.Text = "Native RibbonKit.WinForms\r\n\r\nInputs demonstrates native TextBox and ComboBox editing, binding, read-only/disabled fields and popup ownership. Font selects a choice; Zoom also accepts typed percentages (25% to 500%). Resize to open the same editors in collapsed groups.\r\n\r\nF4 or Alt+Down opens the choice popup. Escape closes that list first, then its containing ribbon popup. Enter validates and commits; Escape outside a list restores the last committed value. Tab visits fields; F6 returns to this document. Alt/F10, E, F focuses Font.\r\n\r\nThe document, status text, validation rules and data belong to this application. Home still demonstrates split buttons.";
@@ -79,6 +79,7 @@ public partial class MainForm : Form
         InitializeModal();
         InitializeDensity();
         InitializeMessages();
+        InitializeCustomization();
         document.AppendText("\r\n\r\nMerging > Chart context adds a source-owned Chart Design tab and a Chart context group on Home. Switch the context off and on to retain its fields and bindings. Its Update chart and Type entries in Quick Access become unavailable while the context is away. Application activation drives merging; moving keyboard focus does not.");
         document.AppendText("\r\n\r\nHome > Galleries shows Styles inside the ribbon. Use its up/down buttons to browse a row, and the bottom button or F4 to expand all styles. Preview leaves selection unchanged; click or Enter applies the style. The first two Quick Access buttons open the same Styles and Text color galleries, including while another tab is active.");
     }

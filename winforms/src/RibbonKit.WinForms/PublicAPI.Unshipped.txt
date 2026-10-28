@@ -1,4 +1,5 @@
 #nullable enable
+RibbonKit.WinForms.RibbonCommandCatalog.GetQuickAccessEntryId(RibbonKit.WinForms.RibbonElement! presentation) -> string!
 RibbonKit.WinForms.RibbonTheme.BackstageNavigationFontSize.get -> float
 RibbonKit.WinForms.RibbonTheme.BackstageNavigationFontSize.init -> void
 virtual RibbonKit.WinForms.RibbonRenderer.JoinBelowRibbonQuickAccess.get -> bool
@@ -677,3 +678,54 @@ virtual RibbonKit.WinForms.RibbonRenderer.DrawMessageAction(RibbonKit.WinForms.R
 virtual RibbonKit.WinForms.RibbonRenderer.DrawMessageBar(RibbonKit.WinForms.RibbonPaintContext context) -> void
 virtual RibbonKit.WinForms.RibbonRenderer.DrawMessageClose(RibbonKit.WinForms.RibbonPaintContext context, bool enabled) -> void
 virtual RibbonKit.WinForms.RibbonRenderer.JoinMessageBarToBody.get -> bool
+RibbonKit.WinForms.RibbonCommandCatalog
+RibbonKit.WinForms.RibbonCommandCatalog.BeginCustomization(string! applicationId) -> RibbonKit.WinForms.RibbonCustomizationSession!
+RibbonKit.WinForms.RibbonCommandCatalog.CaptureDefaults() -> void
+RibbonKit.WinForms.RibbonCommandCatalog.Commands.get -> RibbonKit.WinForms.RibbonItemCollection!
+RibbonKit.WinForms.RibbonCommandCatalog.CreateQuickAccessEntry(string! commandId) -> RibbonKit.WinForms.RibbonElement!
+RibbonKit.WinForms.RibbonCommandCatalog.GetAvailable(RibbonKit.WinForms.RibbonCustomizationTarget target) -> System.Collections.Generic.IReadOnlyList<RibbonKit.WinForms.RibbonCommandCatalogEntry!>!
+RibbonKit.WinForms.RibbonCommandCatalogEntry
+RibbonKit.WinForms.RibbonCommandCatalogEntry.CanAddToQuickAccess.get -> bool
+RibbonKit.WinForms.RibbonCommandCatalogEntry.Category.get -> string!
+RibbonKit.WinForms.RibbonCommandCatalogEntry.CommandId.get -> string!
+RibbonKit.WinForms.RibbonCommandCatalogEntry.HasStableIdentity.get -> bool
+RibbonKit.WinForms.RibbonCommandCatalogEntry.IsGroup.get -> bool
+RibbonKit.WinForms.RibbonCommandCatalogEntry.Source.get -> RibbonKit.WinForms.RibbonElement!
+RibbonKit.WinForms.RibbonCommandCatalogEntry.Text.get -> string!
+RibbonKit.WinForms.RibbonControl.CommandCatalog.get -> RibbonKit.WinForms.RibbonCommandCatalog!
+RibbonKit.WinForms.RibbonCustomizationEntry
+RibbonKit.WinForms.RibbonCustomizationEntry.CommandId.get -> string!
+RibbonKit.WinForms.RibbonCustomizationEntry.CommandId.set -> void
+RibbonKit.WinForms.RibbonCustomizationEntry.Id.get -> string!
+RibbonKit.WinForms.RibbonCustomizationEntry.Id.set -> void
+RibbonKit.WinForms.RibbonCustomizationEntry.RibbonCustomizationEntry() -> void
+RibbonKit.WinForms.RibbonCustomizationSerializer
+RibbonKit.WinForms.RibbonCustomizationSession
+RibbonKit.WinForms.RibbonCustomizationSession.Applied -> System.EventHandler?
+RibbonKit.WinForms.RibbonCustomizationSession.Apply() -> bool
+RibbonKit.WinForms.RibbonCustomizationSession.Cancel() -> void
+RibbonKit.WinForms.RibbonCustomizationSession.Dispose() -> void
+RibbonKit.WinForms.RibbonCustomizationSession.Draft.get -> RibbonKit.WinForms.RibbonCustomizationState!
+RibbonKit.WinForms.RibbonCustomizationSession.ExportJson() -> string!
+RibbonKit.WinForms.RibbonCustomizationSession.ImportJson(string! json) -> void
+RibbonKit.WinForms.RibbonCustomizationSession.Reload() -> void
+RibbonKit.WinForms.RibbonCustomizationSession.Reset() -> void
+RibbonKit.WinForms.RibbonCustomizationState
+RibbonKit.WinForms.RibbonCustomizationState.ApplicationId.get -> string!
+RibbonKit.WinForms.RibbonCustomizationState.ApplicationId.set -> void
+RibbonKit.WinForms.RibbonCustomizationState.Format.get -> string!
+RibbonKit.WinForms.RibbonCustomizationState.Format.set -> void
+RibbonKit.WinForms.RibbonCustomizationState.QuickAccess.get -> System.Collections.Generic.List<RibbonKit.WinForms.RibbonCustomizationEntry!>!
+RibbonKit.WinForms.RibbonCustomizationState.QuickAccess.set -> void
+RibbonKit.WinForms.RibbonCustomizationState.QuickAccessPosition.get -> RibbonKit.WinForms.RibbonQuickAccessPosition
+RibbonKit.WinForms.RibbonCustomizationState.QuickAccessPosition.set -> void
+RibbonKit.WinForms.RibbonCustomizationState.QuickAccessVisible.get -> bool
+RibbonKit.WinForms.RibbonCustomizationState.QuickAccessVisible.set -> void
+RibbonKit.WinForms.RibbonCustomizationState.RibbonCustomizationState() -> void
+RibbonKit.WinForms.RibbonCustomizationState.Version.get -> int
+RibbonKit.WinForms.RibbonCustomizationState.Version.set -> void
+RibbonKit.WinForms.RibbonCustomizationTarget
+RibbonKit.WinForms.RibbonCustomizationTarget.QuickAccess = 1 -> RibbonKit.WinForms.RibbonCustomizationTarget
+RibbonKit.WinForms.RibbonCustomizationTarget.Ribbon = 0 -> RibbonKit.WinForms.RibbonCustomizationTarget
+static RibbonKit.WinForms.RibbonCustomizationSerializer.Deserialize(string! json, string! applicationId) -> RibbonKit.WinForms.RibbonCustomizationState!
+static RibbonKit.WinForms.RibbonCustomizationSerializer.Serialize(RibbonKit.WinForms.RibbonCustomizationState! state) -> string!

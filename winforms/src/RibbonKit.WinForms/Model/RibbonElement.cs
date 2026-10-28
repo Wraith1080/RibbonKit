@@ -12,6 +12,7 @@ public abstract class RibbonElement : Component, IBindableComponent
     private string _text = "";
     private string _keyTip = "";
     private bool _enabled = true, _visible = true;
+    internal bool HasExplicitId { get; private set; }
     private BindingContext? _bindingContext;
     private ControlBindingsCollection? _bindings;
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -36,8 +37,12 @@ public abstract class RibbonElement : Component, IBindableComponent
         set
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(value);
+            Ribbon?.VerifyAccess();
             if (value == _id)
+            {
+                HasExplicitId = true;
                 return;
+            }
             Ribbon?.ValidateIdentityChange(this, value);
             if (Ribbon is null)
             {
@@ -48,6 +53,7 @@ public abstract class RibbonElement : Component, IBindableComponent
                     throw new ArgumentException("Duplicate component identity: " + value);
             }
             _id = value;
+            HasExplicitId = true;
             Changed(false);
             IdChanged?.Invoke(this, EventArgs.Empty);
         }

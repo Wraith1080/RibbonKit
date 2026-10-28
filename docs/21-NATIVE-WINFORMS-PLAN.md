@@ -1,8 +1,9 @@
 # Native RibbonKit.WinForms assessment and implementation plan
 
-> Implementation through M4J message-panel foundation,
+> Implementation through M5A catalog and QAT transaction foundation,
 > 2026-10-28. Current bounded
-> scope, evidence and remaining review are in the [M4 ledger](../winforms/docs/M4-STATUS.md).
+> scope, evidence and remaining review are in the [M5 ledger](../winforms/docs/M5-STATUS.md)
+> and [M4 ledger](../winforms/docs/M4-STATUS.md).
 > The [M3 ledger](../winforms/docs/M3-STATUS.md) retains QAT/projection evidence.
 > [Remaining slice sequence](../winforms/docs/M4-STATUS.md#remaining-slices) is a
 > bounded working decomposition of the milestones below.

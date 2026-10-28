@@ -38,6 +38,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         Backstage = new() { Text = "Backstage" };
         Backstage.Parent = this;
         MessageBar = new() { Text = "Messages", Parent = this };
+        CommandCatalog = new(this) { Text = "Application commands", Parent = this };
         _modalClose = new() { Text = "Close", KeyTip = "X" };
         _modalClose.Parent = this;
         _modalClose.Click += (_, _) => ExitModalByUser(RibbonModalReason.CloseButton);
@@ -147,7 +148,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     internal RibbonGalleryStripManager GalleryStrips => _galleryStrips;
     internal RibbonScreenTipManager ScreenTips => _screenTips;
     internal bool KeyTipsActive => _keyTips;
-    internal IEnumerable<RibbonElement> AllElements => Tabs.SelectMany(t => t.Tree()).Concat(_merges?.ActiveElements ?? []).Concat(QuickAccessItems.SelectMany(e => e.Tree())).Concat(FileMenu.Tree()).Concat(Backstage.Tree()).Concat(MessageBar.Tree()).Concat(IsModal ? _modalClose.Tree() : []);
+    internal IEnumerable<RibbonElement> AllElements => Tabs.SelectMany(t => t.Tree()).Concat(_merges?.ActiveElements ?? []).Concat(QuickAccessItems.SelectMany(e => e.Tree())).Concat(FileMenu.Tree()).Concat(Backstage.Tree()).Concat(MessageBar.Tree()).Concat(CommandCatalog.Tree()).Concat(IsModal ? _modalClose.Tree() : []);
     internal void VerifyAccess()
     {
         if (Environment.CurrentManagedThreadId != _threadId)
@@ -199,6 +200,12 @@ public partial class RibbonControl : Control, ISupportInitialize
                 bar.Items.Remove(message);
                 break;
             case RibbonControl r when ReferenceEquals(element, r.MessageBar):
+                r.ModelChanged();
+                break;
+            case RibbonCommandCatalog catalog when element is RibbonItem command:
+                catalog.Commands.Remove(command);
+                break;
+            case RibbonControl r when ReferenceEquals(element, r.CommandCatalog):
                 r.ModelChanged();
                 break;
             case RibbonControl r:
@@ -344,7 +351,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     {
         base.OnBindingContextChanged(e);
         if (Tabs is not null)
-            foreach (var element in Tabs.Cast<RibbonElement>().Concat(QuickAccessItems).Append(FileMenu).Append(Backstage).Append(MessageBar))
+            foreach (var element in Tabs.Cast<RibbonElement>().Concat(QuickAccessItems).Append(FileMenu).Append(Backstage).Append(MessageBar).Append(CommandCatalog))
                 element.BindingContext = BindingContext;
     }
     /// <inheritdoc />
@@ -911,6 +918,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             FileMenu.Dispose();
             Backstage.Dispose();
             MessageBar.Dispose();
+            CommandCatalog.Dispose();
             QuickAccessOverflow.Dispose();
             _modalClose.Dispose();
             _defaultRenderer.Dispose();

@@ -11,6 +11,8 @@ The current [M4 slice](docs/M4-STATUS.md) adds contextual-tab header colors,
 the File command menu, native Backstage pages, dropdown/in-ribbon/QAT galleries
 and source-owned tab/group merging with modal scopes and Compact/Touch density. [Remaining slices](docs/M4-STATUS.md#remaining-slices)
 record the working sequence through galleries, customization and window integration.
+The [M5 foundation](docs/M5-STATUS.md) adds shared catalog discovery and detached QAT
+drafts with versioned JSON and Apply/Cancel checkpoints; customization UI follows.
 Accessibility compatibility is deferred
 while the control structure is implemented; it remains possible future work.
 
@@ -783,7 +785,8 @@ source disables the declaration in place. Reinserting the same live source in
 the same ribbon restores it. A reference never owns or disposes its source;
 directly declared commands are owned by `QuickAccessItems`. Changing
 `QuickAccessVisible` retains placement and order. Collection Insert/Remove supports
-application-authored ordering; customization UI and persistence remain M5.
+application-authored ordering. The M5A engine supplies detached QAT customization
+and persistence; the standard customization menu/editor follows in M5B.
 
 Showcase's M toolbar command moves it between placements. Narrow the window to
 open overflow. Buttons, toggles, checkbox/radio references, ComboBox choosers and
@@ -990,6 +993,55 @@ item tips are suppressed. Accessibility compatibility remains deferred.
 The Showcase starts on Home: Find demonstrates full-caption fallback, Copy/Paste
 authored descriptions and Unavailable a disabled explanation. Inputs and its
 menu demonstrate native editors; Options supplies check/radio examples.
+
+## QAT customization foundation
+
+`ribbon.CommandCatalog.GetAvailable(RibbonCustomizationTarget.QuickAccess)` lists
+supported command sources and whole groups. The `Ribbon` list excludes groups.
+Catalog entries borrow source models; labels/state stay shared. Popup-only,
+File/Backstage/message and transient merge/modal content is excluded. Contextual
+authored commands remain discoverable even when their tabs are currently hidden.
+
+Declare application-only commands in `CommandCatalog.Commands` when they need no
+ordinary ribbon slot. Both customization lists can still find them after QAT
+removal. Legacy directly owned QAT buttons removed through customization are moved
+into that collection without replacing their handlers or bindings. Raw collection
+Remove retains its normal detach semantics.
+
+Assign explicit stable `Id` values to all selected sources before saving. Runtime
+IDs work for in-process drafts but are rejected for JSON persistence. Do not derive
+source identity from display labels; changing IDs requires application migration.
+
+```csharp
+var undo = new RibbonButtonItem { Id = "cmd.undo", Text = "Undo" };
+undo.Click += (_, _) => UndoDocument(); // Application behavior.
+ribbon.CommandCatalog.Commands.Add(undo);
+ribbon.CommandCatalog.CaptureDefaults(); // After authoring, before loading preferences.
+
+using var edit = ribbon.CommandCatalog.BeginCustomization("com.example.editor");
+edit.Draft.QuickAccess.Add(new RibbonCustomizationEntry { CommandId = undo.Id });
+edit.Draft.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
+if (edit.Apply()) SavePreferences(edit.ExportJson()); // Application owns storage.
+edit.Cancel(); // Discards later unapplied edits; it keeps the latest successful Apply.
+```
+
+Draft membership/order and toolbar placement/visibility change live models only
+through Apply. Invalid focused ribbon input blocks it. Reset stages catalog defaults;
+ImportJson stages validated data. Reload rebases an external permanent QAT change.
+Applied fires after the accepted checkpoint is updated. A context-menu/editor can
+use `GetQuickAccessEntryId` to identify a presentation when one source occurs twice.
+
+JSON is versioned and application-scoped. It contains source/presentation IDs and
+QAT layout preferences, with no live objects, command values, checked state, theme,
+density or window state. Malformed/foreign/future/unknown data is rejected before
+live changes. Transient QAT references remain in the live toolbar without entering
+saved state. Structural Ribbon/custom-tab/group editing is M5C; this version stores
+QAT membership only. Source captions and authored presentation aliases remain
+application-owned; this schema introduces no rename preference.
+
+Showcase **Merging → QAT drafts** demonstrates a preset Preview/Apply/Cancel,
+Reset and application-owned in-memory Save/Restore. The standard right-click
+customization menu and QAT editing screen are M5B.
 
 ## Renderer customization
 
