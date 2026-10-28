@@ -8,6 +8,14 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--validate-simplified-context" or "--validate-simplified-context-flat")
+            return SimplifiedContextInteractionChecks.Run(args[1], args[0] == "--validate-simplified-context-flat");
+        if (args.Length == 2 && args[0] is "--validate-review" or "--validate-review-flat")
+            return ReviewInteractionChecks.Run(args[1], args[0] == "--validate-review-flat");
+        if (args.Length == 2 && args[0] is "--validate-options-popups" or "--validate-options-popups-flat")
+            return OptionsPopupInteractionChecks.Run(args[1], args[0] == "--validate-options-popups-flat");
+        if (args.Length == 2 && args[0] is "--validate-simplified" or "--validate-simplified-flat")
+            return SimplifiedInteractionChecks.Run(args[1], args[0] == "--validate-simplified-flat");
         if (args.Length == 2 && args[0] is "--validate-customization-editor" or "--validate-customization-editor-flat")
             return CustomizationEditorInteractionChecks.Run(args[1], args[0] == "--validate-customization-editor-flat");
         if (args.Length == 2 && args[0] is "--validate-popup-refinements" or "--validate-popup-refinements-flat")

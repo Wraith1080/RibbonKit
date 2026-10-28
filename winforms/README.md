@@ -17,6 +17,12 @@ Options dialog with Customize Ribbon and Quick Access Toolbar pages.
 The Showcase supplies an original [SVG command/group icon set](samples/RibbonKit.WinForms.Showcase/Assets/CommandIcons/README.md).
 `RibbonGroup.Icon` accepts a borrowed `IRibbonIcon` for collapsed group buttons,
 QAT group entries and customization lists, using the same vector contract as commands.
+The [Simplified Ribbon implementation](docs/M5D-SIMPLIFIED-RIBBON.md) adds a single
+command row, More Commands/full-group access and a grouped customization page.
+Classic and Simplified share tab/group structure; per-tab inline selections and
+QAT preferences apply independently. In Showcase, choose **Options → Show →
+Simplified Ribbon**. Paste, Copy, Cut, Bold, Italic and representative commands have
+authored inline defaults. Human visual review remains pending.
 Accessibility compatibility is deferred
 while the control structure is implemented; it remains possible future work.
 
@@ -30,6 +36,33 @@ dotnet run --project winforms/samples/RibbonKit.WinForms.Showcase
 Resize the ordinary Form, open a collapsed group, or use Alt/F10 and F6. The
 sample's document editor, icons, handlers and BindingSource belong to the application.
 The Inputs tab demonstrates library-owned native ribbon editors.
+
+Set `RibbonControl.LayoutMode` to `RibbonLayoutMode.Simplified` to use the row.
+Commands opt into authored defaults through `SimplifiedPlacement = Inline`;
+`SimplifiedSize` accepts Small (icon) or Medium (icon and label), and higher
+`SimplifiedPriority` survives longer when space is limited. Classic remains the
+default; layout mode and Compact/Touch density are independent. The host owns
+appearance persistence. More Commands keeps displaced commands and every visible
+group accessible, including native editors that are not supported inline.
+
+Custom groups have a shared name/icon/layout dialog in both customization pages.
+`RibbonCustomizationGroup.IconCommandId` borrows artwork from a catalog command;
+null selects None. `Layout` chooses `RibbonCustomizationGroupLayout.Stacked`
+(Medium/Small columns) or `Large` (Large commands in a row). Stacked is the default,
+including older profiles without a layout field and groups created in Simplified
+mode. Import/export and Apply normalize sizes consistently; original commands and
+application-owned artwork remain unchanged.
+
+`ShowRibbonCustomization()` opens the page for the active mode. Simplified uses
+independent source/target tab selectors, grouped lists, Add/Remove/reorder, Show
+Label, New/Edit and Reset actions, with only the Options footer's **OK, Cancel,
+Apply** buttons. Structural changes synchronize with Classic after Apply; switching
+modes preserves pending page drafts. `RibbonCustomizationTarget.Simplified` scopes
+a transaction to shared structure and Simplified pins, preserving live QAT settings.
+Native version-three JSON adds optional `Simplified` tabs with ordered source
+command IDs and sizes. Version-one/two input remains readable; absent sections
+preserve live settings. Files, appearance mode, density and command values remain
+application-owned.
 
 The foundation includes tabs, groups, buttons, two-state toggles and dropdowns;
 three group reduction modes, fixed/adaptive command sizes, explicit priorities,

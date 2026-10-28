@@ -56,7 +56,7 @@ internal sealed class RibbonChoicePopup : IDisposable
             _form.LocationChanged += OnMove;
             _form.ResizeBegin += OnMove;
         }
-        _window.Show(bounds.Location);
+        using (new RibbonPopupActivation(_form, _window)) _window.Show(bounds.Location);
     }
     internal static Rectangle CalculateBounds(Rectangle anchor, Rectangle work, int width, int rowHeight, int count, int dpi, bool submenu = false)
     {

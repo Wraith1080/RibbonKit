@@ -8,7 +8,9 @@ public enum RibbonCustomizationTarget
     /// <summary>Commands that may be offered to a structural Ribbon editor.</summary>
     Ribbon,
     /// <summary>QAT-compatible commands and whole groups.</summary>
-    QuickAccess
+    QuickAccess,
+    /// <summary>Commands supported by the Simplified row. Whole groups remain access surfaces, not pinnable commands.</summary>
+    Simplified
 }
 
 /// <summary>A catalog description borrowing an existing source and its state.</summary>
@@ -55,6 +57,7 @@ public sealed class RibbonCommandCatalog : RibbonElement
             source = Structure.Source(source);
             if (!Ordinary(source) || !seen.Add(source) || source is not (RibbonItem or RibbonGroup) || source is RibbonMenuSeparatorItem or RibbonGalleryTile) return;
             if (source is RibbonGroup && target != RibbonCustomizationTarget.QuickAccess || target == RibbonCustomizationTarget.QuickAccess && !SupportsQuickAccess(source)) return;
+            if (target == RibbonCustomizationTarget.Simplified && (source is not RibbonItem item || !RibbonSimplifiedManager.Supported(item))) return;
             entries.Add(new(source, category));
         }
         foreach (var tab in _host.Tabs.Where(t => !t.IsDisposed && !t.IsModal))
@@ -126,6 +129,7 @@ public sealed class RibbonCommandCatalog : RibbonElement
         Check(); var sources = Sources(); var counts = new Dictionary<string, int>(StringComparer.Ordinal);
         var state = new RibbonCustomizationState { ApplicationId = applicationId, QuickAccessPosition = _host.QuickAccessPosition, QuickAccessVisible = _host.QuickAccessVisible };
         state.Ribbon = Structure.IsCustomized ? Structure.Capture() : null;
+        state.Simplified = RibbonCustomizationSerializer.CopySimplified(_host.Simplified.Preferences);
         foreach (var presentation in _host.QuickAccessItems.Where(p => Managed(p, sources)))
         {
             var source = RibbonQuickAccess.Source(presentation)!; int count = counts.GetValueOrDefault(source.Id); counts[source.Id] = count + 1;

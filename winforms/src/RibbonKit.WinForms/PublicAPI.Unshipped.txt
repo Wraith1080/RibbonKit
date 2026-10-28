@@ -817,3 +817,52 @@ RibbonKit.WinForms.RibbonCustomizationTab.RibbonCustomizationTab() -> void
 RibbonKit.WinForms.RibbonCustomizationTab.Visible.get -> bool
 RibbonKit.WinForms.RibbonCustomizationTab.Visible.set -> void
 RibbonKit.WinForms.RibbonQuickAccessCustomizationForm.RibbonEditor.get -> RibbonKit.WinForms.RibbonCustomizationEditor!
+RibbonKit.WinForms.RibbonControl.LayoutMode.get -> RibbonKit.WinForms.RibbonLayoutMode
+RibbonKit.WinForms.RibbonControl.LayoutMode.set -> void
+RibbonKit.WinForms.RibbonControl.LayoutModeChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonCustomizationState.Simplified.get -> RibbonKit.WinForms.RibbonSimplifiedLayout?
+RibbonKit.WinForms.RibbonCustomizationState.Simplified.set -> void
+RibbonKit.WinForms.RibbonCustomizationTarget.Simplified = 2 -> RibbonKit.WinForms.RibbonCustomizationTarget
+RibbonKit.WinForms.RibbonItem.SimplifiedPlacement.get -> RibbonKit.WinForms.RibbonSimplifiedPlacement
+RibbonKit.WinForms.RibbonItem.SimplifiedPlacement.set -> void
+RibbonKit.WinForms.RibbonItem.SimplifiedPriority.get -> int
+RibbonKit.WinForms.RibbonItem.SimplifiedPriority.set -> void
+RibbonKit.WinForms.RibbonItem.SimplifiedSize.get -> RibbonKit.WinForms.RibbonItemSize
+RibbonKit.WinForms.RibbonItem.SimplifiedSize.set -> void
+RibbonKit.WinForms.RibbonLayoutMode
+RibbonKit.WinForms.RibbonLayoutMode.Classic = 0 -> RibbonKit.WinForms.RibbonLayoutMode
+RibbonKit.WinForms.RibbonLayoutMode.Simplified = 1 -> RibbonKit.WinForms.RibbonLayoutMode
+RibbonKit.WinForms.RibbonSimplifiedCommand
+RibbonKit.WinForms.RibbonSimplifiedCommand.CommandId.get -> string!
+RibbonKit.WinForms.RibbonSimplifiedCommand.CommandId.set -> void
+RibbonKit.WinForms.RibbonSimplifiedCommand.RibbonSimplifiedCommand() -> void
+RibbonKit.WinForms.RibbonSimplifiedCommand.Size.get -> RibbonKit.WinForms.RibbonItemSize
+RibbonKit.WinForms.RibbonSimplifiedCommand.Size.set -> void
+RibbonKit.WinForms.RibbonSimplifiedLayout
+RibbonKit.WinForms.RibbonSimplifiedLayout.RibbonSimplifiedLayout() -> void
+RibbonKit.WinForms.RibbonSimplifiedLayout.Tabs.get -> System.Collections.Generic.List<RibbonKit.WinForms.RibbonSimplifiedTab!>!
+RibbonKit.WinForms.RibbonSimplifiedLayout.Tabs.set -> void
+RibbonKit.WinForms.RibbonSimplifiedPlacement
+RibbonKit.WinForms.RibbonSimplifiedPlacement.Inline = 1 -> RibbonKit.WinForms.RibbonSimplifiedPlacement
+RibbonKit.WinForms.RibbonSimplifiedPlacement.Overflow = 0 -> RibbonKit.WinForms.RibbonSimplifiedPlacement
+RibbonKit.WinForms.RibbonSimplifiedTab
+RibbonKit.WinForms.RibbonSimplifiedTab.Commands.get -> System.Collections.Generic.List<RibbonKit.WinForms.RibbonSimplifiedCommand!>!
+RibbonKit.WinForms.RibbonSimplifiedTab.Commands.set -> void
+RibbonKit.WinForms.RibbonSimplifiedTab.RibbonSimplifiedTab() -> void
+RibbonKit.WinForms.RibbonSimplifiedTab.TabId.get -> string!
+RibbonKit.WinForms.RibbonSimplifiedTab.TabId.set -> void
+RibbonKit.WinForms.RibbonSimplifiedCustomizationEditor
+RibbonKit.WinForms.RibbonSimplifiedCustomizationEditor.ApplyChanges() -> bool
+RibbonKit.WinForms.RibbonSimplifiedCustomizationEditor.ExportRequested -> System.EventHandler?
+RibbonKit.WinForms.RibbonSimplifiedCustomizationEditor.ImportRequested -> System.EventHandler?
+RibbonKit.WinForms.RibbonSimplifiedCustomizationEditor.RefreshDraft() -> void
+RibbonKit.WinForms.RibbonSimplifiedCustomizationEditor.RibbonSimplifiedCustomizationEditor(RibbonKit.WinForms.RibbonControl! ribbon, string! applicationId) -> void
+RibbonKit.WinForms.RibbonSimplifiedCustomizationEditor.Session.get -> RibbonKit.WinForms.RibbonCustomizationSession!
+RibbonKit.WinForms.RibbonQuickAccessCustomizationForm.SimplifiedEditor.get -> RibbonKit.WinForms.RibbonSimplifiedCustomizationEditor!
+RibbonKit.WinForms.RibbonCustomizationGroup.IconCommandId.get -> string?
+RibbonKit.WinForms.RibbonCustomizationGroup.IconCommandId.set -> void
+RibbonKit.WinForms.RibbonCustomizationGroup.Layout.get -> RibbonKit.WinForms.RibbonCustomizationGroupLayout
+RibbonKit.WinForms.RibbonCustomizationGroup.Layout.set -> void
+RibbonKit.WinForms.RibbonCustomizationGroupLayout
+RibbonKit.WinForms.RibbonCustomizationGroupLayout.Stacked = 0 -> RibbonKit.WinForms.RibbonCustomizationGroupLayout
+RibbonKit.WinForms.RibbonCustomizationGroupLayout.Large = 1 -> RibbonKit.WinForms.RibbonCustomizationGroupLayout

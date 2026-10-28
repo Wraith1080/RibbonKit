@@ -1,6 +1,6 @@
 # M5 native customization and Simplified Ribbon
 
-Status: **M5A/M5B accepted at the reviewed scope; M5C implemented, visual review in progress**, 2026-10-28.
+Status: **M5A/M5B accepted at the reviewed scope; M5C and M5D implemented with human review pending**, 2026-10-28.
 
 User acceptance, 2026-10-28: the QAT/options dialog, rounded controls, dual search,
 spacing/minimum width, caption fixes, larger Showcase and owner centering work as
@@ -384,7 +384,7 @@ screen readers, actual Visual Studio and a fresh package remain separate gates.
 No full suite, Release/package or WPF build was run. Human visual acceptance of
 M5C is still pending; icon feedback was positive and the font-size experiment was reverted.
 
-Remaining work: M5C visual review; M5D Simplified integration;
+Remaining work: M5C visual review; [M5D native row/customization review](M5D-SIMPLIFIED-RIBBON.md);
 actual VS, fresh-package, physical mixed-monitor and separate accessibility gates.
 WPF runtime/build/CI are unchanged. No commit, push or application file persistence
 was performed by the runtime.
@@ -411,3 +411,89 @@ disabled state and borrowed ownership. The complete coverage list, SVG contact
 sheet and generated tab/collapsed captures were inspected under
 `artifacts/showcase-command-icons/`. These are generated captures, not physical
 mixed-monitor/touch, actual VS or fresh-package acceptance. No broad suite was run.
+
+### Larger standard popup icons — 2026-10-28
+
+Standard dropdown/split menu artwork is now 24 logical pixels in Compact and 32
+in Touch. Shared named metrics reserve the matching gutter, text gap and minimum
+row height; popup width/description measurement and QAT group overflow use those
+same metrics. Native editor rows, checkbox/radio indicator sizes and illustrated
+choice artwork retain their existing contracts. No public API was added.
+
+The affected menu/popup/group selection passed 20 checks; four new rendering cases
+passed at synthetic 96/120/144/192 DPI in `popup-icon-bounds.trx`, verifying enlarged
+artwork inside split primary rows and clear of text. The Debug sample/runtime/design
+build passed without warnings/errors. Actual Compact/Touch command popup captures
+in `artifacts/popup-icons-enlarged/` were inspected. The user requested continuation
+after this refinement. Full-suite, physical mixed-monitor and hardware checks were
+not repeated. Next implementation slice is M5D Simplified Ribbon.
+
+### M5D first bounded step — 2026-10-28
+
+The user's continuation starts [M5D](M5D-SIMPLIFIED-RIBBON.md). Its initial design
+includes source/default ownership, scoped draft/Apply/Cancel, mode-specific options
+eligibility and compatible native profile evolution. The internal selection
+foundation now handles priority, stable source order, deduplication, group-run
+dividers, reserved More Commands access and narrow-width fallback. Eleven focused
+checks passed in `m5d1-simplified-selection.trx`. The native row, source presenters,
+popup/editor integration, scoped persistence and editor were the subsequent D2/D3
+scope completed below. D1 itself exposed no public mode or profile schema.
+
+### M5D native mode and shared customization — 2026-10-28
+
+The source-backed row and More Commands now use shared native layout/popup/editor
+services. Mode is independent of density, QAT placement, minimization and profiles.
+The Options dialog offers exactly one Customize Ribbon page for the current mode.
+Simplified follows the WPF grouped-list reference, with independent tab selectors,
+New/Edit/Reset menus and the shared footer Apply. Both modes edit one ordinary
+tab/group structure; inline order/size choices remain separate. Classic structural
+removal prunes invalid Simplified references atomically, while stale drafts reject
+Apply and preserve pending edits. QAT scope stays independent.
+
+The runtime exposes authored placement/size/priority and version-three optional
+Simplified profiles, with older native profiles readable. Context pin/unpin shares
+the same transaction. Original sources, handlers and native editor handles remain
+authoritative. Showcase adds a mode toggle and representative default commands.
+
+Normal Debug native solution build passed with zero warnings/errors. The 44-case
+existing catalog/session/structure/options/selection scope passed, followed by nine
+Simplified integration cases in `m5d-integration-final.trx`. Public-only consumer
+checks passed in both native renderers at actual 120 DPI, Compact/Touch, including
+row/More/full-group editor reuse, minimized geometry, applied shared structure,
+mode-specific pending drafts and footer Apply/Cancel. Final captures and results
+are under `artifacts/m5d-native-office/`, `artifacts/m5d-native-neutral/` and
+`artifacts/m5d-showcase-final/`. The [active M5D plan](M5D-SIMPLIFIED-RIBBON.md)
+records exact scope and remaining gates. No full suite, WPF/Release build, fresh
+package, actual VS, physical mixed-monitor/touch/IME or accessibility acceptance
+was run; human M5D visual review remains pending.
+
+### Customization popup and ComboBox refinement — 2026-10-28
+
+New/Edit/Reset now use the ordinary ribbon popup services with the Options form's
+input/lifetime/DPI owner. They have no headings; checked commands use a plain tick.
+The tab selectors and Classic command-size picker share ribbon ComboBox field and
+choice-popup painting: rounded for Office2024, square for neutral. Native selection,
+independent selectors, acceptance/cancellation and modal host-close behavior remain.
+Eight focused Options cases, the existing editor integration case and two shared
+menu/Alt+F4 regressions passed across the recorded focused/repair selections. Debug
+native solution build passed without warnings/errors. Public-only native checks
+passed at 120 DPI, Compact/Touch, in both renderers; inspected final captures are in
+`artifacts/options-popups-office/` and `artifacts/options-popups-neutral/`. See the
+[M5D evidence](M5D-SIMPLIFIED-RIBBON.md#evidence-and-pending-review) for scope and
+unchanged broader gates. Human review remains pending; no full suite was repeated.
+
+### Eight-item customization/header review — 2026-10-28
+
+The requested Apply, popup/context, tree, custom group, activation and header/QAT
+fixes are implemented. Older custom groups and new groups in either mode default
+to Stacked. The [M5D review checklist](M5D-SIMPLIFIED-RIBBON.md#eight-review-fixes--2026-10-28)
+records every item, the measured activation reproduction/fix, public profile
+additions, focused/native evidence and remaining limits. Native 120-DPI checks
+passed in both renderers and densities; Debug build is clean. Human review is
+pending, and no full suite or broader acceptance gate was repeated.
+
+The regular ribbon context menu now includes a plain-checkmark Simplified Ribbon
+toggle, excluding QAT panel/items and their flyout origins. Nine focused checks,
+clean Debug build and public-only native Compact/Touch checks in both renderers
+at 120 DPI passed; [scope and captures](M5D-SIMPLIFIED-RIBBON.md#context-menu-layout-toggle--2026-10-28)
+are recorded in the active plan. Human review remains pending.

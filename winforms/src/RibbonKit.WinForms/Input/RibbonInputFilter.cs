@@ -24,6 +24,7 @@ internal sealed class RibbonInputFilter(RibbonControl ribbon) : IMessageFilter, 
     public bool PreFilterMessage(ref Message m)
     {
         if (m.Msg is 0x101 or 0x105 && (Keys)(int)m.WParam == Keys.F4) _popupCloseChord = false;
+        if (ribbon.PopupOnly && !ribbon.Popups.HasOpen) return false;
         ribbon.ScreenTips.Observe(ref m);
         if (ribbon.FindForm() is not { } form || (!form.ContainsFocus && !ribbon.Popups.ContainsFocus && !ribbon.Editors.HasOpenList))
             return false;
@@ -62,6 +63,11 @@ internal sealed class RibbonInputFilter(RibbonControl ribbon) : IMessageFilter, 
                     if (!form.IsDisposed && !form.Disposing) form.Close();
                 }
                 return true;
+            }
+            if (ribbon.PopupOnly)
+            {
+                if (key == Keys.Escape && Control.ModifierKeys == Keys.None) { ribbon.Popups.CloseTop(true); return true; }
+                return false;
             }
             if (key == Keys.F1 && Control.ModifierKeys == Keys.Control && ribbon.Enabled && ribbon.Visible
                 && (form.ContainsFocus || ribbon.Popups.ContainsFocus))

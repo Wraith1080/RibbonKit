@@ -89,7 +89,7 @@ public sealed class RibbonQuickAccessCustomizationEditor : UserControl
         try
         {
             if (!Session.Apply()) { Status("Complete the highlighted ribbon input before applying."); return false; }
-            RefreshDraft(); Status("Toolbar changes applied."); return true;
+            RefreshDraft(); return true;
         }
         catch (InvalidOperationException e) when (version == Session.ApplyVersion) { Status(e.Message); return false; }
         catch (ArgumentException e) when (version == Session.ApplyVersion) { Status(e.Message); return false; }

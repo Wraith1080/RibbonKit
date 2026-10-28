@@ -9,11 +9,15 @@ public sealed class RibbonCustomizationSession : IDisposable
     private readonly RibbonCustomizationTarget? _target;
     private RibbonCustomizationState _checkpoint;
     private bool _disposed;
+    private bool QatScope => _target is null or RibbonCustomizationTarget.QuickAccess;
+    private bool RibbonScope => _target is null or RibbonCustomizationTarget.Ribbon or RibbonCustomizationTarget.Simplified;
+    private bool SimplifiedScope => _target is null or RibbonCustomizationTarget.Simplified;
     internal int ApplyVersion { get; private set; }
     internal RibbonCustomizationSession(RibbonCommandCatalog catalog, string applicationId, RibbonCustomizationState defaults, RibbonCustomizationTarget? target)
     {
         _catalog = catalog; _applicationId = applicationId; _target = target; _defaults = defaults;
-        if (target != RibbonCustomizationTarget.QuickAccess) _defaults.Ribbon = catalog.Structure.Defaults;
+        if (RibbonScope) _defaults.Ribbon = catalog.Structure.Defaults;
+        if (SimplifiedScope) _defaults.Simplified = new();
         _checkpoint = Capture(); Draft = RibbonCustomizationSerializer.Copy(_checkpoint);
     }
     /// <summary>Gets detached editable preferences. Cancel/Reload/Reset/Import replace this object; DTO edits never change live models.</summary>
@@ -24,25 +28,30 @@ public sealed class RibbonCustomizationSession : IDisposable
     private RibbonCustomizationState Capture()
     {
         var state = _catalog.Capture(_applicationId);
-        if (_target == RibbonCustomizationTarget.Ribbon) state.Ribbon = _catalog.Structure.Capture();
+        if (_target is RibbonCustomizationTarget.Ribbon or RibbonCustomizationTarget.Simplified) state.Ribbon = _catalog.Structure.Capture();
         return state;
     }
     private bool Same(RibbonCustomizationState a, RibbonCustomizationState b) =>
-        (_target == RibbonCustomizationTarget.Ribbon || RibbonCustomizationSerializer.Same(a, b))
-        && (_target == RibbonCustomizationTarget.QuickAccess || RibbonCustomizationSerializer.SameLayout(a.Ribbon, b.Ribbon));
+        (!QatScope || RibbonCustomizationSerializer.Same(a, b))
+        && (!RibbonScope || RibbonCustomizationSerializer.SameLayout(a.Ribbon, b.Ribbon))
+        && (!SimplifiedScope || RibbonCustomizationSerializer.SameSimplified(a.Simplified, b.Simplified));
+    internal bool HasChanges => !Same(Draft, _checkpoint);
     /// <summary>Preflights and applies this session's scope. Invalid native input returns false; invalid/stale profiles throw before mutation. Version-one/QAT-only data preserves live Ribbon structure.</summary>
     public bool Apply()
     {
         Check(); RibbonCustomizationSerializer.Validate(Draft, _applicationId);
         if (!Same(Capture(), _checkpoint)) throw new InvalidOperationException("Customization changed outside this session. Reload before applying.");
         List<RibbonElement>? qat = null, oldQat = null; RibbonStructureManager.Plan? ribbon = null;
+        RibbonSimplifiedLayout? simplified = null;
         bool success = false;
         void Prepare()
         {
-            if (_target != RibbonCustomizationTarget.Ribbon) qat = _catalog.Prepare(Draft, false);
-            if (_target != RibbonCustomizationTarget.QuickAccess && Draft.Ribbon is { } layout
+            if (QatScope) qat = _catalog.Prepare(Draft, false);
+            if (RibbonScope && Draft.Ribbon is { } layout
                 && (_catalog.Structure.IsCustomized || !RibbonCustomizationSerializer.SameLayout(layout, _catalog.Structure.Capture())))
                 ribbon = _catalog.Structure.Prepare(layout, false);
+            simplified = SimplifiedScope && Draft.Simplified is { } simple ? _catalog.Host.Simplified.Validate(simple, false, ribbon)
+                : ribbon is not null ? _catalog.Host.Simplified.Validate(_catalog.Host.Simplified.Preferences, false, ribbon, prune: true) : null;
             ValidateCombined(qat, ribbon);
         }
         void Release()
@@ -57,6 +66,7 @@ public sealed class RibbonCustomizationSession : IDisposable
             if (!Same(Capture(), _checkpoint)) throw new InvalidOperationException("Customization changed while committing input. Reload before applying.");
             Release(); Prepare();
             var previous = _catalog.Capture(_applicationId); var structure = _catalog.Structure; var saved = structure.Save();
+            var previousSimplified = _catalog.Host.Simplified.Preferences;
             var selected = _catalog.Host.SelectedTab;
             if (qat is not null) oldQat = _catalog.Prepare(previous, false);
             var host = _catalog.Host; bool pendingEnd = true;
@@ -65,6 +75,7 @@ public sealed class RibbonCustomizationSession : IDisposable
             {
                 if (ribbon is not null) structure.Apply(ribbon);
                 if (qat is not null) _catalog.Apply(Draft, qat);
+                if (simplified is not null) host.Simplified.Preferences = simplified;
                 structure.Applying = false; pendingEnd = false; host.EndUpdate();
                 if (selected is not null && host.GetPresentedTabs().Contains(selected) && selected.Visible && selected.EffectiveEnabled) host.SelectedTab = selected;
                 success = true;
@@ -73,6 +84,7 @@ public sealed class RibbonCustomizationSession : IDisposable
             {
                 if (!pendingEnd) { host.BeginUpdate(); pendingEnd = true; }
                 structure.Applying = true;
+                host.Simplified.Preferences = previousSimplified;
                 if (ribbon is not null) structure.Restore(saved);
                 if (oldQat is not null) _catalog.Apply(previous, oldQat);
                 if (ribbon is not null) structure.Discard(ribbon);
@@ -98,6 +110,7 @@ public sealed class RibbonCustomizationSession : IDisposable
     {
         Check(); var state = RibbonCustomizationSerializer.Deserialize(json, _applicationId);
         if (_target == RibbonCustomizationTarget.Ribbon && state.Ribbon is null) throw new InvalidOperationException("This profile contains no Ribbon preferences.");
+        if (_target == RibbonCustomizationTarget.Simplified && state.Simplified is null) throw new InvalidOperationException("This profile contains no Simplified preferences.");
         ValidatePersistent(state); Draft = state;
     }
     private void ValidatePersistent(RibbonCustomizationState state, bool all = false)
@@ -105,8 +118,9 @@ public sealed class RibbonCustomizationSession : IDisposable
         List<RibbonElement>? qat = null; RibbonStructureManager.Plan? ribbon = null;
         try
         {
-            if (all || _target != RibbonCustomizationTarget.Ribbon) qat = _catalog.Prepare(state, true);
-            if ((all || _target != RibbonCustomizationTarget.QuickAccess) && state.Ribbon is { } layout) ribbon = _catalog.Structure.Prepare(layout, true);
+            if (all || QatScope) qat = _catalog.Prepare(state, true);
+            if ((all || RibbonScope) && state.Ribbon is { } layout) ribbon = _catalog.Structure.Prepare(layout, true);
+            if ((all || SimplifiedScope) && state.Simplified is { } simple) _catalog.Host.Simplified.Validate(simple, true, ribbon);
             ValidateCombined(qat, ribbon);
         }
         finally { if (qat is not null) _catalog.ReleasePlan(qat); if (ribbon is not null) _catalog.Structure.Release(ribbon); }
@@ -135,9 +149,10 @@ public sealed class RibbonCustomizationSession : IDisposable
     public string ExportJson()
     {
         Check(); var state = RibbonCustomizationSerializer.Copy(Draft); var live = _catalog.Capture(_applicationId);
-        if (_target == RibbonCustomizationTarget.QuickAccess) state.Ribbon = live.Ribbon;
-        if (_target == RibbonCustomizationTarget.Ribbon) { state.QuickAccess = live.QuickAccess; state.QuickAccessPosition = live.QuickAccessPosition; state.QuickAccessVisible = live.QuickAccessVisible; }
-        state.Version = 2; RibbonCustomizationSerializer.Validate(state, _applicationId);
+        if (!RibbonScope) state.Ribbon = live.Ribbon;
+        if (!QatScope) { state.QuickAccess = live.QuickAccess; state.QuickAccessPosition = live.QuickAccessPosition; state.QuickAccessVisible = live.QuickAccessVisible; }
+        if (!SimplifiedScope) state.Simplified = live.Simplified;
+        state.Version = 3; RibbonCustomizationSerializer.Validate(state, _applicationId);
         ValidatePersistent(state, true);
         return RibbonCustomizationSerializer.Serialize(state);
     }

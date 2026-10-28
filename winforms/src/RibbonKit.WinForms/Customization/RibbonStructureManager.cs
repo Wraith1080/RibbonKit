@@ -9,6 +9,7 @@ internal sealed partial class RibbonStructureManager(RibbonCommandCatalog catalo
     private readonly HashSet<RibbonGroup> _groups = [];
     private readonly HashSet<RibbonElement> _owned = [];
     private readonly Dictionary<RibbonElement, string> _labels = [];
+    private readonly Dictionary<RibbonGroup, (string? Icon, RibbonCustomizationGroupLayout Layout)> _groupPreferences = [];
     private readonly HashSet<RibbonTab> _hidden = [];
     private RibbonCustomizationLayout? _defaults;
     internal bool Applying, Synchronizing;
@@ -39,7 +40,8 @@ internal sealed partial class RibbonStructureManager(RibbonCommandCatalog catalo
             Id = tab.Id, IsCustom = Custom(tab), Label = Label(tab), Visible = !_hidden.Contains(tab),
             Groups = tab.Groups.Select(group => new RibbonCustomizationGroup
             {
-                Id = group.Id, IsCustom = Custom(group), Label = Label(group),
+                Id = group.Id, IsCustom = Custom(group), Label = Label(group), IconCommandId = Custom(group) ? _groupPreferences.GetValueOrDefault(group).Icon : null,
+                Layout = Custom(group) ? _groupPreferences.GetValueOrDefault(group).Layout : RibbonCustomizationGroupLayout.Stacked,
                 Commands = Custom(group) ? group.Items.Select(item =>
                 {
                     if (!_proxies.TryGetValue(item, out var proxy)) throw new InvalidOperationException("Use a customization session to edit custom group membership.");
@@ -87,6 +89,7 @@ internal sealed partial class RibbonStructureManager(RibbonCommandCatalog catalo
                 foreach (var group in tab.Groups)
                 {
                     if (group.IsCustom && string.IsNullOrWhiteSpace(group.Label)) throw new InvalidOperationException("Custom groups need a name.");
+                    if (group.IconCommandId is { } icon && (!sources.TryGetValue(icon, out var artwork) || persistent && !artwork.HasStableIdentity)) throw new InvalidOperationException("Unknown or nonpersistent custom group icon command: " + icon);
                     var groupModel = Model<RibbonGroup>(group.Id, group.IsCustom); var items = new List<RibbonItem>();
                     if (!group.IsCustom && !ReferenceEquals(groupModel.Parent, model))
                         throw new InvalidOperationException("Authored groups can be reordered within their original tab; use custom groups on other tabs.");
@@ -98,8 +101,9 @@ internal sealed partial class RibbonStructureManager(RibbonCommandCatalog catalo
                         if (command is RibbonGalleryItem gallery)
                             foreach (var tile in gallery.Items) if (!occupied.Add(row.Id + ":tile:" + tile.Id)) throw new InvalidOperationException("Gallery tile presentation identity conflicts with another component.");
                         var proxy = _proxies.Values.FirstOrDefault(p => !p.Model.IsDisposed && p.Model.Id == row.Id && ReferenceEquals(p.Source, command));
-                        if (proxy is null) { proxy = CreateProxy(command, row); plan.Created.Add(proxy.Model); }
-                        plan.Entries.Add((proxy, row)); items.Add(proxy.Model);
+                        var normalized = new RibbonCustomizationCommand { Id = row.Id, CommandId = row.CommandId, Label = row.Label, Size = RibbonCustomizationSerializer.GroupSize(group.Layout, row.Size) };
+                        if (proxy is null) { proxy = CreateProxy(command, normalized); plan.Created.Add(proxy.Model); }
+                        plan.Entries.Add((proxy, normalized)); items.Add(proxy.Model);
                     }
                     groups.Add((groupModel, group, items));
                 }
@@ -130,7 +134,7 @@ internal sealed partial class RibbonStructureManager(RibbonCommandCatalog catalo
         Host.Tabs.Clear();
         foreach (var tab in _tabs.Where(t => !t.IsDisposed && t.Parent is null)) tab.Parent = catalog;
         foreach (var tab in _owned.OfType<RibbonTab>().Where(t => !t.IsDisposed && t.Parent is null)) tab.Parent = catalog;
-        _labels.Clear(); _hidden.Clear();
+        _labels.Clear(); _hidden.Clear(); _groupPreferences.Clear();
         foreach (var tab in plan.Tabs)
         {
             if (tab.Data.Label is { } label) _labels[tab.Model] = label;
@@ -139,7 +143,7 @@ internal sealed partial class RibbonStructureManager(RibbonCommandCatalog catalo
             foreach (var group in tab.Groups)
             {
                 if (group.Data.Label is { } groupLabel) _labels[group.Model] = groupLabel;
-                if (group.Data.IsCustom) { group.Model.Text = group.Data.Label!; foreach (var item in group.Items) group.Model.Items.Add(item); }
+                if (group.Data.IsCustom) { _groupPreferences[group.Model] = (group.Data.IconCommandId, group.Data.Layout); group.Model.Text = group.Data.Label!; foreach (var item in group.Items) group.Model.Items.Add(item); }
                 group.Model.Parent = null; tab.Model.Groups.Add(group.Model);
             }
         }
@@ -149,17 +153,17 @@ internal sealed partial class RibbonStructureManager(RibbonCommandCatalog catalo
     internal void Dispose()
     {
         foreach (var element in _owned.Where(e => !e.IsDisposed && e.Parent is null).ToArray()) element.Dispose();
-        _owned.Clear(); _proxies.Clear(); _tiles.Clear(); _labels.Clear(); _hidden.Clear();
+        _owned.Clear(); _proxies.Clear(); _tiles.Clear(); _labels.Clear(); _hidden.Clear(); _groupPreferences.Clear();
     }
     internal sealed record Snapshot(RibbonTab[] Tabs, Dictionary<RibbonTab, RibbonGroup[]> Groups,
         Dictionary<RibbonGroup, RibbonItem[]> Items, Dictionary<RibbonElement, string> Labels, RibbonTab[] Hidden,
-        Dictionary<Proxy, RibbonCustomizationCommand> Entries, bool Customized);
+        Dictionary<Proxy, RibbonCustomizationCommand> Entries, Dictionary<RibbonGroup, (string? Icon, RibbonCustomizationGroupLayout Layout)> GroupPreferences, bool Customized);
     internal Snapshot Save()
     {
         var tabs = Host.Tabs.Concat(_tabs).Concat(_owned.OfType<RibbonTab>()).Where(t => !t.IsDisposed).Distinct().ToArray();
         return new(Host.Tabs.ToArray(), tabs.ToDictionary(t => t, t => t.Groups.ToArray()),
             _owned.OfType<RibbonGroup>().Where(g => !g.IsDisposed).ToDictionary(g => g, g => g.Items.ToArray()),
-            new(_labels), _hidden.ToArray(), _proxies.Values.Where(p => _owned.Contains(p.Model)).ToDictionary(p => p, p => p.Entry), IsCustomized);
+            new(_labels), _hidden.ToArray(), _proxies.Values.Where(p => _owned.Contains(p.Model)).ToDictionary(p => p, p => p.Entry), new(_groupPreferences), IsCustomized);
     }
     internal void Restore(Snapshot saved)
     {
@@ -176,6 +180,7 @@ internal sealed partial class RibbonStructureManager(RibbonCommandCatalog catalo
         _labels.Clear(); foreach (var pair in saved.Labels) _labels.Add(pair.Key, pair.Value);
         _hidden.Clear(); foreach (var tab in saved.Hidden) _hidden.Add(tab);
         foreach (var pair in saved.Entries) pair.Key.Entry = pair.Value;
+        _groupPreferences.Clear(); foreach (var pair in saved.GroupPreferences) _groupPreferences.Add(pair.Key, pair.Value);
         IsCustomized = saved.Customized; Synchronize();
     }
     internal void Discard(Plan plan)

@@ -49,6 +49,7 @@ public partial class MainForm : Form
         InitializeModal();
         InitializeDensity();
         InitializeMessages();
+        InitializeSimplified();
         InitializeCustomization();
         InitializeCommandIcons();
         document.AppendText("\r\n\r\nMerging > Chart context adds a source-owned Chart Design tab and a Chart context group on Home. Switch the context off and on to retain its fields and bindings. Application activation drives merging; moving keyboard focus does not.");

@@ -42,7 +42,7 @@ internal sealed class RibbonOptionsFrame : Panel
     protected override void OnLayout(LayoutEventArgs e) { base.OnLayout(e); ShapeChild(); }
     private void ShapeChild()
     {
-        if (_ribbon is null || Controls.Cast<Control>().FirstOrDefault(c => c is ListBox or TreeView) is not { } child) return;
+        if (_ribbon is null || Controls.Cast<Control>().FirstOrDefault(c => c is ListBox or TreeView or ListView) is not { } child) return;
         int radius = Math.Max(0, RibbonOptionsChrome.Radius(_ribbon, DeviceDpi) - 1);
         if (_childSize == child.Size && _childRadius == radius) return;
         _childSize = child.Size; _childRadius = radius;

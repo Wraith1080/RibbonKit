@@ -50,7 +50,7 @@ public sealed class RibbonCustomizationTests
         using var f = new Fixture(); using var ribbon = f.Edit(); using var qat = f.Ribbon.CommandCatalog.BeginCustomization("structure.test", RibbonCustomizationTarget.QuickAccess);
         Fixture.Add(ribbon, "bold", "combo"); qat.Draft.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
         Assert.True(qat.Apply()); Assert.True(ribbon.Apply()); Assert.Equal(RibbonQuickAccessPosition.BelowRibbon, f.Ribbon.QuickAccessPosition);
-        string json = ribbon.ExportJson(); Assert.Contains("\"version\": 2", json); Assert.DoesNotContain("Checked", json);
+        string json = ribbon.ExportJson(); Assert.Contains("\"version\": 3", json); Assert.DoesNotContain("Checked", json);
         using var restarted = new Fixture(); using var restore = restarted.Ribbon.CommandCatalog.BeginCustomization("structure.test"); restore.ImportJson(json); Assert.True(restore.Apply());
         Assert.Equal(3, restarted.Ribbon.Tabs.Count); Assert.Equal("My tab", restarted.Ribbon.Tabs.Last().DisplayText);
         restore.Reset(); Assert.True(restore.Apply()); Assert.Equal(2, restarted.Ribbon.Tabs.Count);

@@ -2,6 +2,15 @@ using System.Text.Json.Serialization;
 
 namespace RibbonKit.WinForms;
 
+/// <summary>Selects the Classic presentation of commands in a custom group.</summary>
+public enum RibbonCustomizationGroupLayout
+{
+    /// <summary>Three-row columns containing Medium or Small commands.</summary>
+    Stacked,
+    /// <summary>A horizontal row of Large commands; native editors keep their compact form.</summary>
+    Large
+}
+
 /// <summary>Data-only ordinary Ribbon hierarchy. Contextual, merge and modal presentation is excluded.</summary>
 public sealed class RibbonCustomizationLayout
 {
@@ -37,6 +46,10 @@ public sealed class RibbonCustomizationGroup
     [JsonRequired] public bool IsCustom { get; set; } = true;
     /// <summary>Gets or sets a presentation label, or null for the authored label.</summary>
     public string? Label { get; set; }
+    /// <summary>Gets or sets a borrowed catalog command's icon identity, or null for no icon. Only custom groups use this preference.</summary>
+    public string? IconCommandId { get; set; }
+    /// <summary>Gets or sets custom group layout. Missing fields in older profiles default to Stacked.</summary>
+    public RibbonCustomizationGroupLayout Layout { get; set; } = RibbonCustomizationGroupLayout.Stacked;
     /// <summary>Gets or sets custom command presentations. Authored groups must leave this empty.</summary>
     [JsonRequired] public List<RibbonCustomizationCommand> Commands { get; set; } = [];
 }

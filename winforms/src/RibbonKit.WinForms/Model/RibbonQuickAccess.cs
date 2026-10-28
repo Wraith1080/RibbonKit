@@ -192,7 +192,7 @@ internal static class RibbonQuickAccess
     }
 }
 
-internal sealed class RibbonQuickAccessOverflow : RibbonElement
+internal class RibbonQuickAccessOverflow : RibbonElement
 {
-    internal RibbonQuickAccessOverflow(RibbonControl ribbon) { Text = "More Quick Access commands"; KeyTip = "0"; Parent = ribbon; }
+    internal RibbonQuickAccessOverflow(RibbonControl ribbon, string text = "More Quick Access commands") { Text = text; KeyTip = "0"; Parent = ribbon; }
 }

@@ -132,6 +132,18 @@ public sealed class RibbonGroup : RibbonElement
 /// <summary>The base for ribbon commands and popup rows.</summary>
 public abstract class RibbonItem : RibbonElement
 {
+    private RibbonSimplifiedPlacement _simplifiedPlacement;
+    private RibbonItemSize _simplifiedSize = RibbonItemSize.Medium;
+    private int _simplifiedPriority;
+    /// <summary>Gets or sets authored Simplified placement. Overflow keeps full-group access; a user selection overrides this default.</summary>
+    [Category("Simplified"), DefaultValue(RibbonSimplifiedPlacement.Overflow)]
+    public RibbonSimplifiedPlacement SimplifiedPlacement { get => _simplifiedPlacement; set { Ribbon?.VerifyAccess(); if (!Enum.IsDefined(value)) throw new ArgumentOutOfRangeException(nameof(value)); if (_simplifiedPlacement == value) return; _simplifiedPlacement = value; Changed(); } }
+    /// <summary>Gets or sets Small (icon only) or Medium (icon and label) Simplified presentation independently of SizePolicy.</summary>
+    [Category("Simplified"), DefaultValue(RibbonItemSize.Medium)]
+    public RibbonItemSize SimplifiedSize { get => _simplifiedSize; set { Ribbon?.VerifyAccess(); if (value is not (RibbonItemSize.Small or RibbonItemSize.Medium)) throw new ArgumentOutOfRangeException(nameof(value)); if (_simplifiedSize == value) return; _simplifiedSize = value; Changed(); } }
+    /// <summary>Gets or sets authored retention priority. Higher values stay inline longer; ties displace from the end.</summary>
+    [Category("Simplified"), DefaultValue(0)]
+    public int SimplifiedPriority { get => _simplifiedPriority; set { Ribbon?.VerifyAccess(); if (_simplifiedPriority == value) return; _simplifiedPriority = value; Changed(); } }
     private string _accessibleName = "", _description = "";
     private string _screenTipTitle = "", _screenTipDescription = "";
     private string _menuDescription = "";

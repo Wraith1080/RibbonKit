@@ -1,12 +1,13 @@
 namespace RibbonKit.WinForms.Layout;
 
 // Logical target geometry shared by measurement, native fields, painting and
-// borrowed surfaces. Compact values preserve the established native foundation.
+// borrowed surfaces, including optical placement in the header row.
 internal readonly record struct RibbonDensityMetrics(bool Touch)
 {
     internal static RibbonDensityMetrics For(RibbonDensity density) => new(density == RibbonDensity.Touch);
     internal int CommandRow => Touch ? 45 : 26;
-    internal int TabHeight => Touch ? 48 : 32;
+    internal int TabHeight => Touch ? 48 : 40;
+    internal int HeaderQuickAccessOffset => 2;
     internal int SmallWidth => Touch ? 44 : 28;
     internal int LargeWidth => Touch ? 80 : 60;
     internal int MediumWidth => Touch ? 64 : 54;
@@ -45,4 +46,9 @@ internal readonly record struct RibbonDensityMetrics(bool Touch)
     internal int GalleryHeight => Touch ? 80 : 32;
     internal int BackstageRow => Touch ? 52 : 42;
     internal int BackButton => Touch ? 44 : 36;
+    internal int SimplifiedBody => Touch ? 52 : 42;
+    internal int SimplifiedClearance => Touch ? 4 : 3;
+    internal int SimplifiedMore => Touch ? 44 : 32;
+    internal int SimplifiedDivider => 5;
+    internal int SimplifiedGap => 3;
 }

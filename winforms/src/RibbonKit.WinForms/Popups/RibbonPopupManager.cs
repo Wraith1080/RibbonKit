@@ -32,6 +32,15 @@ internal sealed class RibbonPopupManager : IDisposable
     }
     internal RibbonPopupSurface? Top => _sessions.LastOrDefault()?.Surface;
     internal IEnumerable<RibbonPopupSurface> Surfaces => _sessions.Select(s => s.Surface);
+    internal bool IsQuickAccessContext(Control surface)
+    {
+        while (surface is RibbonPopupSurface popup && _sessions.FirstOrDefault(s => ReferenceEquals(s.Surface, popup)) is { } session)
+        {
+            if (ReferenceEquals(session.Owner, _ribbon.QuickAccessOverflow) || _ribbon.QuickAccessItems.Contains(session.Owner)) return true;
+            surface = session.Opener;
+        }
+        return false;
+    }
     internal bool IsExpanded(RibbonElement element) => _sessions.Any(s => ReferenceEquals(s.Owner, element));
     internal bool IsMenuExpanded(RibbonDropDownItem source) => _sessions.Any(s => ReferenceEquals(s.MenuSource, source));
     internal void Toggle(RibbonElement owner, Control opener, Rectangle anchor, Point? contextPoint = null)
@@ -65,12 +74,12 @@ internal sealed class RibbonPopupManager : IDisposable
         if (!CurrentProjection(owner, menuSource, groupSource)) return;
         // Opening callbacks may remove/hide an owner or destroy its current
         // presentation. Revalidate before creating another popup session.
-        if (opener.IsDisposed || !opener.Visible || !_ribbon.Visible || _ribbon.IsDisposed || !owner.EffectiveEnabled || !owner.Visible)
+        if (opener.IsDisposed || !opener.Visible || (!_ribbon.Visible && !_ribbon.PopupOnly) || _ribbon.IsDisposed || !owner.EffectiveEnabled || !owner.Visible)
             return;
         var currentTargets = opener is RibbonPopupSurface popup ? popup.Targets : _ribbon.Snapshot.Targets;
-        if (contextPoint is null && !currentTargets.Any(t => ReferenceEquals(t.Element, owner) && !t.VisibleBounds.IsEmpty))
+        if (contextPoint is null && !_ribbon.PopupOnly && !currentTargets.Any(t => ReferenceEquals(t.Element, owner) && !t.VisibleBounds.IsEmpty))
             return;
-        if (contextPoint is null)
+        if (contextPoint is null && !_ribbon.PopupOnly)
             anchor = currentTargets.Where(t => ReferenceEquals(t.Element, owner)).Select(t => t.VisibleBounds).Where(r => !r.IsEmpty)
                 .Aggregate(Rectangle.Empty, (a, b) => a.IsEmpty ? b : Rectangle.Union(a, b));
         if (ReferenceEquals(opener, _ribbon))
@@ -109,7 +118,7 @@ internal sealed class RibbonPopupManager : IDisposable
         var session = new Session(owner, menuSource, opener, anchor, window, surface);
         _sessions.Add(session);
         window.Closed += (_, _) => { if (_sessions.Contains(session)) Close(owner, false); };
-        bool submenu = opener is RibbonPopupSurface parentSurface && (parentSurface.MenuSource is not null || parentSurface.OwnerElement is RibbonQuickAccessOverflow);
+        bool submenu = contextPoint is null && opener is RibbonPopupSurface parentSurface && (parentSurface.MenuSource is not null || parentSurface.OwnerElement is RibbonQuickAccessOverflow);
         var bounds = CalculateBounds(placementAnchor, work, window.Size, submenu, _ribbon.DeviceDpi);
         if (bounds.Size != window.Size)
         {
@@ -117,11 +126,11 @@ internal sealed class RibbonPopupManager : IDisposable
             surface.Size = new(Math.Max(1, bounds.Width - 2), Math.Max(1, bounds.Height - 2));
             host.Size = surface.Size;
         }
-        window.Show(bounds.Location);
-        opener.Invalidate();
-        _ribbon.Invalidate();
-        _ribbon.SyncEditors();
-        surface.FocusFirst();
+        using (new RibbonPopupActivation(_form, window))
+        {
+            window.Show(bounds.Location);
+            opener.Invalidate(); _ribbon.Invalidate(); _ribbon.SyncEditors(); surface.FocusFirst();
+        }
         _ribbon.AccessibilityChanged();
     }
     private static bool CurrentProjection(RibbonElement owner, RibbonDropDownItem? menuSource, RibbonGroup? groupSource) => owner switch
@@ -210,7 +219,8 @@ internal sealed class RibbonPopupManager : IDisposable
         if (restoreFocus && !session.Opener.IsDisposed)
         {
             if (session.Opener is RibbonPopupSurface surface)
-                surface.FocusElement(session.Owner, RibbonSplitLayout.IsSplit(session.Owner));
+                surface.FocusElement(surface.Targets.Any(t => t.Element == session.Owner) ? session.Owner : surface.FocusedElement ?? session.Owner, RibbonSplitLayout.IsSplit(session.Owner));
+            else if (_ribbon.PopupOnly) session.Opener.Focus();
             else if ((_ribbon.AllElements.Contains(session.Owner) || session.Owner is RibbonQuickAccessOverflow) && session.Owner.Visible)
                 _ribbon.FocusElement(session.Owner, RibbonSplitLayout.IsSplit(session.Owner));
             else
@@ -309,7 +319,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         }
         else if (GroupSource is { } group)
         {
-            var measured = ribbon.Engine.Measure(group, 0, Font, ribbon.DeviceDpi, ribbon.LayoutTheme);
+            var measured = ribbon.Engine.Measure(group, 0, Font, ribbon.DeviceDpi, ribbon.ClassicLayoutTheme);
             // Group measurement includes a strip caption and trailing column
             // spacing. Neither is painted in the flyout: fit its command bounds.
             int left = measured.Items.Select(i => i.Bounds.Left).DefaultIfEmpty(0).Min();
@@ -330,16 +340,16 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         }
         else if (owner is RibbonQuickAccessOverflow)
         {
-            var items = ribbon.Snapshot.QuickAccessOverflowItems;
+            IReadOnlyList<RibbonElement> items = owner is RibbonSimplifiedMore more ? more.Entries : ribbon.Snapshot.QuickAccessOverflowItems;
             width = Math.Max(S(menuMetrics.MenuMinimumWidth), items.Select(e => TextRenderer.MeasureText(RibbonQuickAccess.Caption(e), Font).Width + S(menuMetrics.MenuWidthPadding)).DefaultIfEmpty(S(menuMetrics.MenuMinimumWidth)).Max());
             if (items.Select(RibbonQuickAccess.Command).Any(c => c is not null && RibbonMenuLayout.HasDescription(c))) width = Math.Max(width, S(menuMetrics.MenuDescriptionWidth));
-            var heights = RibbonMenuLayout.RowHeights(items.Select(RibbonQuickAccess.Command).ToArray(), width - S(8), Font, ribbon.DeviceDpi, ribbon.Density, illustrated: false);
+            var heights = RibbonMenuLayout.RowHeights(items.Select(e => e as RibbonMenuSeparatorItem ?? RibbonQuickAccess.Command(e)).ToArray(), width - S(8), Font, ribbon.DeviceDpi, ribbon.Density, illustrated: false);
             int top = S(4);
-            var visible = ribbon.QuickAccessItems.Where(e => e.Visible).ToList();
+            var visible = owner is RibbonSimplifiedMore simplified ? simplified.Entries : ribbon.QuickAccessItems.Where(e => e.Visible).ToList();
             for (int i = 0; i < items.Count; i++)
             {
                 var entry = items[i]; int rowHeight = heights[i];
-                _targets.Add(new(TargetKind.QuickAccess, entry, new(S(4), top, width - S(8), rowHeight), Rectangle.Empty, RibbonItemSize.Medium,
+                _targets.Add(new(entry is RibbonMenuSeparatorItem ? TargetKind.Item : TargetKind.QuickAccess, entry, new(S(4), top, width - S(8), rowHeight), Rectangle.Empty, RibbonItemSize.Medium,
                     AutomaticKeyTip: RibbonQuickAccess.AutomaticKeyTip(visible.IndexOf(entry), visible.Count)));
                 top += rowHeight;
             }
@@ -416,6 +426,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
                         Pressed = slot.Group.EffectiveEnabled && ReferenceEquals(_pressed, slot.Group),
                         Focused = slot.Group.EffectiveEnabled && _ribbon.KeyboardFocusCues && Focused && ReferenceEquals(_focused, slot.Group) }, slot.Group, slot.Collapsed);
                 }
+                foreach (var divider in body.SimplifiedDividers) { var bounds = divider; bounds.Offset(AutoScrollPosition); using var brush = new SolidBrush(_ribbon.Theme.Border); e.Graphics.FillRectangle(brush, bounds); }
             }
             finally { e.Graphics.Restore(saved); }
         }
@@ -428,7 +439,8 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
             try
             {
                 e.Graphics.SetClip(target.Clip);
-                if (target.Kind == TargetKind.QuickAccess)
+                if (target.Kind == TargetKind.QuickAccessOverflow) _ribbon.Painter.DrawQuickAccessOverflow(context with { Bounds = target.Bounds, Hot = ReferenceEquals(_hot, target.Element), Pressed = ReferenceEquals(_pressed, target.Element) });
+                else if (target.Kind == TargetKind.QuickAccess)
                 {
                     var primary = context with { Bounds = target.Bounds,
                         Hot = target.Enabled && !_hotDropDown && ReferenceEquals(_hot, target.Element), Pressed = target.Enabled && !_pressedDropDown && ReferenceEquals(_pressed, target.Element),
@@ -442,6 +454,8 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
                     }
                     else _ribbon.Painter.DrawQuickAccessItem(primary, target.Element!, true);
                 }
+                else if (target.Element is RibbonMenuSeparatorItem separator)
+                    _ribbon.Painter.DrawMenuSeparator(context with { Bounds = target.Bounds }, separator);
                 else if (target.Element is RibbonItem item && item is not IRibbonEditorItem)
                 {
                     var primary = context with

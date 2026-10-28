@@ -113,7 +113,7 @@ public sealed class CustomizationEditorTests
     }
 
     [Fact]
-    public void Contexts_in_group_minimized_body_and_overflow_keep_source_identity_and_release_flyout() => FoundationTests.Sta(() =>
+    public void Contexts_in_group_minimized_body_and_overflow_keep_source_identity_and_preserve_flyout() => FoundationTests.Sta(() =>
     {
         using var ribbon = Ribbon(out var group, out var copy, out var undo); using var form = new Form { Width = 1000, Height = 500 };
         var groupEntry = new RibbonQuickAccessGroupReference { Id = "qat.group", Source = group }; ribbon.QuickAccessItems.Add(groupEntry);
@@ -135,8 +135,9 @@ public sealed class CustomizationEditorTests
             Assert.NotNull(popup); Assert.True(popup.Targets.Any(t => ReferenceEquals(t.Element, element)), string.Join(", ", popup.Targets.Select(t => t.Kind + ":" + t.Element?.Id)));
             var target = popup.Targets.First(t => ReferenceEquals(t.Element, element)); var screen = popup.PointToScreen(target.VisibleBounds.Location);
             SendMessage(popup.Handle, 0x7B, popup.Handle, (nint)((screen.Y << 16) | (screen.X & 0xffff)));
-            Assert.True(ribbon.HasCustomizationMenu); Assert.Single(ribbon.Popups.Surfaces); Assert.True(popup.IsDisposed);
+            Assert.True(ribbon.HasCustomizationMenu); Assert.Equal(2, ribbon.Popups.Surfaces.Count()); Assert.False(popup.IsDisposed);
             Assert.NotNull(MenuButton(ribbon.CustomizationMenu!, command)); ribbon.CloseCustomizationMenu(); Application.DoEvents();
+            Assert.Same(popup, Assert.Single(ribbon.Popups.Surfaces)); Assert.False(popup.IsDisposed); ribbon.Popups.CloseAll(false);
         }
     });
 

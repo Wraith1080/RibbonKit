@@ -26,6 +26,7 @@ internal sealed class RibbonLayoutSnapshot
     internal List<RibbonElement> QuickAccessOverflowItems { get; } = [];
     internal List<RibbonTarget> Targets { get; } = [];
     internal List<GroupSlot> Groups { get; } = [];
+    internal List<Rectangle> SimplifiedDividers { get; } = [];
     internal Rectangle BodyViewport
     {
         get; set;
@@ -46,7 +47,7 @@ internal sealed class RibbonLayoutSnapshot
 internal sealed record MeasuredItem(RibbonItem Item, Rectangle Bounds, RibbonItemSize Size, bool ReserveIcon = false, int LabelWidth = 0, bool GalleryDropDown = false);
 internal sealed record MeasuredGroup(int Width, List<MeasuredItem> Items);
 
-internal sealed class RibbonLayoutEngine
+internal sealed partial class RibbonLayoutEngine
 {
     internal const int CommandTopInset = 6;
     internal const int CommandBottomInset = 8;
@@ -229,6 +230,7 @@ internal sealed class RibbonLayoutEngine
             result.BodyFrameBounds = ribbon.JoinBelowRibbonQuickAccess && !result.QuickAccessBounds.IsEmpty
                 ? Rectangle.Union(result.BodyBounds, result.QuickAccessBounds) : result.BodyBounds;
             result.Groups.AddRange(bodyLayout.Groups);
+            result.SimplifiedDividers.AddRange(bodyLayout.SimplifiedDividers);
             result.Targets.AddRange(bodyLayout.Targets.SelectMany(t => RibbonSplitLayout.Expand(t, dpi, false)));
         }
         var messages = RibbonMessageLayout.Measure(ribbon, ribbon.MessageWidth, dpi);
@@ -249,6 +251,7 @@ internal sealed class RibbonLayoutEngine
     }
     internal RibbonLayoutSnapshot BuildBody(RibbonControl ribbon, RibbonTab selected, int width, int bodyOffset, int top = 0)
     {
+        if (ribbon.LayoutMode == RibbonLayoutMode.Simplified) return BuildSimplified(ribbon, selected, width, bodyOffset, top);
         var result = new RibbonLayoutSnapshot();
         int dpi = ribbon.DeviceDpi;
         int S(double n) => Scale(n, dpi);

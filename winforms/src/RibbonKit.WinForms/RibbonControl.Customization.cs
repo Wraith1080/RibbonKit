@@ -55,13 +55,20 @@ public partial class RibbonControl
         if (!Editors.CommitFocused()) return DialogResult.None;
         Popups.CloseAll(false); ScreenTips.Cancel(); ExitKeyTips(false);
         using var form = new RibbonQuickAccessCustomizationForm(this, CustomizationApplicationId);
-        if (ribbonPage) form.SelectedPage = form.Pages.First(p => p.Name == "CustomizeRibbonOptionsPage");
+        if (ribbonPage) form.SelectedPage = form.ActiveRibbonPage;
         OptionsDialogOpening?.Invoke(this, new(form));
         return form.ShowDialog(owner ?? FindForm());
     }
 
-    internal RibbonDropDownItem CreateCustomizationMenu(RibbonElement? element)
+    private bool IsQuickAccessContextElement(RibbonElement? element)
     {
+        for (var node = element; node is not null; node = node.Parent as RibbonElement)
+            if (ReferenceEquals(node, QuickAccessOverflow) || QuickAccessItems.Contains(node)) return true;
+        return false;
+    }
+    internal RibbonDropDownItem CreateCustomizationMenu(RibbonElement? element, bool quickAccessContext = false)
+    {
+        quickAccessContext |= IsQuickAccessContextElement(element);
         var menu = new RibbonDropDownItem { Text = "Quick Access Toolbar" };
         var catalog = CommandCatalog.GetAvailable(RibbonCustomizationTarget.QuickAccess);
         var source = element is null ? null : CommandCatalog.GetSource(element);
@@ -72,8 +79,6 @@ public partial class RibbonControl
         void Add(string name, string text, Action<RibbonCustomizationSession> change, bool enabled = true)
         {
             var item = new RibbonButtonItem { Id = name, Text = text, Enabled = enabled };
-            if (name is "AddToQuickAccess" or "RemoveFromQuickAccess" && source is RibbonItem command)
-            { item.Icon = command.Icon; item.Image = command.Image; }
             item.Click += (_, _) =>
             {
                 using var session = CommandCatalog.BeginCustomization(CustomizationApplicationId, RibbonCustomizationTarget.QuickAccess);
@@ -96,6 +101,32 @@ public partial class RibbonControl
         if (menu.Items.Count > 0) menu.Items.Add(new RibbonMenuSeparatorItem());
         Add("MoveQuickAccess", QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon ? "Show Quick Access Toolbar above the ribbon" : "Show Quick Access Toolbar below the ribbon", s => s.Draft.QuickAccessPosition = s.Draft.QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon ? RibbonQuickAccessPosition.TabRow : RibbonQuickAccessPosition.BelowRibbon);
         Add("ToggleQuickAccess", QuickAccessVisible ? "Hide Quick Access Toolbar" : "Show Quick Access Toolbar", s => s.Draft.QuickAccessVisible = !s.Draft.QuickAccessVisible);
+        if (LayoutMode == RibbonLayoutMode.Simplified && source is RibbonItem command && SelectedTab is { IsContextual: false, IsModal: false } selected
+            && _simplified.Commands(selected, false).Any(c => c.Id == command.Id) && GetMergeSource(command) is null)
+        {
+            bool pinned = _simplified.Selected(selected).Any(c => c.Command.Id == command.Id);
+            var pin = new RibbonButtonItem { Id = "ToggleSimplifiedPin", Text = pinned ? "Remove from Simplified Ribbon" : "Pin to Simplified Ribbon" };
+            pin.Click += (_, _) =>
+            {
+                using var session = CommandCatalog.BeginCustomization(CustomizationApplicationId, RibbonCustomizationTarget.Simplified);
+                var tab = session.Draft.Simplified!.Tabs.FirstOrDefault(t => t.TabId == selected.Id);
+                if (tab is null)
+                {
+                    tab = new() { TabId = selected.Id, Commands = _simplified.Defaults(selected) };
+                    session.Draft.Simplified.Tabs.Add(tab);
+                }
+                if (pinned) tab.Commands.RemoveAll(c => c.CommandId == command.Id); else tab.Commands.Add(new() { CommandId = command.Id, Size = command.SimplifiedSize });
+                try { if (!session.Apply()) MessageBox.Show(FindForm(), "Complete the highlighted ribbon input before changing Simplified choices.", "Customize Ribbon", MessageBoxButtons.OK, MessageBoxIcon.Information); }
+                catch (InvalidOperationException error) when (session.ApplyVersion == 0) { MessageBox.Show(FindForm(), error.Message, "Customize Ribbon", MessageBoxButtons.OK, MessageBoxIcon.Information); }
+            };
+            menu.Items.Add(new RibbonMenuSeparatorItem()); menu.Items.Add(pin);
+        }
+        if (!quickAccessContext)
+        {
+            var mode = new RibbonButtonItem { Id = "ToggleSimplifiedRibbon", Text = "Simplified Ribbon", Icon = LayoutMode == RibbonLayoutMode.Simplified ? RibbonMenuCheckmark.Instance : null };
+            mode.Click += (_, _) => LayoutMode = LayoutMode == RibbonLayoutMode.Classic ? RibbonLayoutMode.Simplified : RibbonLayoutMode.Classic;
+            menu.Items.Add(new RibbonMenuSeparatorItem()); menu.Items.Add(mode);
+        }
         menu.Items.Add(new RibbonMenuSeparatorItem());
         var customize = new RibbonButtonItem { Id = "CustomizeQuickAccess", Text = "Customize Quick Access Toolbar…" };
         customize.Click += (_, _) => ShowQuickAccessCustomization(); menu.Items.Add(customize);
@@ -113,11 +144,13 @@ public partial class RibbonControl
         }
         if (!QuickAccessCustomizationEnabled || IsBackstageOpen || !Enabled) return false;
         ReleaseCustomizationMenu();
-        var menu = CreateCustomizationMenu(element); _customizationMenu = menu; menu.Parent = this;
-        Popups.CloseAll(false); ScreenTips.Cancel(); ExitKeyTips(false);
-        // The root outlives any dismissed flyout; never attach this menu to a
-        // borrowed popup control which is disposed by CloseAll.
-        Popups.Toggle(menu, this, Rectangle.Empty, screen); return HasCustomizationMenu;
+        bool quickAccessContext = (ReferenceEquals(surface, this) && Snapshot.QuickAccessBounds.Contains(PointToClient(screen))) || Popups.IsQuickAccessContext(surface);
+        var menu = CreateCustomizationMenu(element, quickAccessContext); _customizationMenu = menu; menu.Parent = this;
+        ScreenTips.Cancel(); ExitKeyTips(false);
+        if (surface is RibbonPopupSurface popup && Popups.Surfaces.Contains(popup))
+            Popups.Toggle(menu, popup, popup.RectangleToClient(new Rectangle(screen, Size.Empty)), screen);
+        else { Popups.CloseAll(false); Popups.Toggle(menu, this, Rectangle.Empty, screen); }
+        return HasCustomizationMenu;
     }
     internal bool ProcessCustomizationKey(Keys keys)
     {

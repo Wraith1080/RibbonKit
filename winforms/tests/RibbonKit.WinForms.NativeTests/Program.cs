@@ -11,6 +11,14 @@ internal static partial class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--simplified-context-checks" or "--simplified-context-checks-flat")
+            return IndependentConsumer.SimplifiedContextInteractionChecks.Run(args[1], args[0] == "--simplified-context-checks-flat");
+        if (args.Length == 2 && args[0] is "--review-checks" or "--review-checks-flat")
+            return IndependentConsumer.ReviewInteractionChecks.Run(args[1], args[0] == "--review-checks-flat");
+        if (args.Length == 2 && args[0] is "--options-popup-checks" or "--options-popup-checks-flat")
+            return IndependentConsumer.OptionsPopupInteractionChecks.Run(args[1], args[0] == "--options-popup-checks-flat");
+        if (args.Length == 2 && args[0] is "--simplified-checks" or "--simplified-checks-flat")
+            return IndependentConsumer.SimplifiedInteractionChecks.Run(args[1], args[0] == "--simplified-checks-flat");
         if (args.Length == 2 && args[0] is "--ribbon-customization-checks" or "--ribbon-customization-checks-flat")
             return IndependentConsumer.RibbonCustomizationInteractionChecks.Run(args[1], args[0] == "--ribbon-customization-checks-flat");
         if (args.Length == 2 && args[0] is "--customization-editor-checks" or "--customization-editor-checks-flat")

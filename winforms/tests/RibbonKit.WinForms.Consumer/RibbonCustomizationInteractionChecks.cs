@@ -52,13 +52,13 @@ internal static class RibbonCustomizationInteractionChecks
                         {
                             if (WF.Application.OpenForms.Cast<WF.Form>().FirstOrDefault(f => f.Text == "Edit ribbon item") is not { } edit) return;
                             editTimer.Stop();
-                            try { await Capture(edit, "edit-ribbon-command"); Child<WF.TextBox>(edit, "RibbonItemName").Text = "Strong emphasis"; Child<WF.ComboBox>(edit, "RibbonItemSize").SelectedItem = RibbonItemSize.Large; ((WF.Button)edit.AcceptButton!).PerformClick(); }
+                            try { await Capture(edit, "edit-ribbon-command"); Child<WF.TextBox>(edit, "RibbonItemName").Text = "Strong emphasis"; Child<WF.ComboBox>(edit, "RibbonItemSize").SelectedItem = RibbonItemSize.Small; ((WF.Button)edit.AcceptButton!).PerformClick(); }
                             catch (Exception error) { editError = error; edit.Close(); }
                         };
                         editTimer.Start(); Child<WF.Button>(page, "EditRibbonItem").PerformClick(); editTimer.Stop();
                     }
                     if (editError is not null) throw editError;
-                    Check(group.Commands[0].Label == "Strong emphasis" && group.Commands[0].Size == RibbonItemSize.Large, "Native Edit dialog stages name and command size");
+                    Check(group.Commands[0].Label == "Strong emphasis" && group.Commands[0].Size == RibbonItemSize.Small, "Native Edit dialog stages name and Stacked command size");
                     page.RefreshDraft(); Child<WF.TextBox>(page, "RibbonHierarchySearch").Text = "Strong";
                     Check(tree.Nodes.Count == 1 && page.Session.Draft.Ribbon.Tabs.Count == 3, "Hierarchy search filters the view without deleting hidden definitions");
                     Child<WF.TextBox>(page, "RibbonHierarchySearch").Clear(); await Capture(dialog, "ribbon-pending");

@@ -51,6 +51,11 @@ internal sealed partial class RibbonStructureManager
         Synchronizing = true;
         try
         {
+            if (_groupPreferences.Count > 0)
+            {
+                var icons = catalog.GetAvailable(RibbonCustomizationTarget.Ribbon).ToDictionary(e => e.CommandId, StringComparer.Ordinal);
+                foreach (var pair in _groupPreferences.Where(p => !p.Key.IsDisposed)) pair.Key.Icon = pair.Value.Icon is { } id && icons.TryGetValue(id, out var entry) ? RibbonCustomizationIcons.Icon(entry.Source) : null;
+            }
             foreach (var proxy in _proxies.Values.ToArray())
             {
                 var source = proxy.Source; var model = proxy.Model;
@@ -61,6 +66,7 @@ internal sealed partial class RibbonStructureManager
                 model.Enabled = source.EffectiveEnabled && AncestorsVisible(source); model.Visible = source.Visible;
                 model.ScreenTipDescription = source.ScreenTipDescription; model.ScreenTipTitle = source.ScreenTipTitle; model.MenuDescription = source.MenuDescription;
                 model.SizePolicy = RibbonSizePolicy.Fixed(proxy.Entry.Size);
+                model.SimplifiedPlacement = source.SimplifiedPlacement; model.SimplifiedSize = source.SimplifiedSize; model.SimplifiedPriority = source.SimplifiedPriority;
                 switch (model, source)
                 {
                     case (RibbonToggleItem p, RibbonToggleItem s): p.Checked = s.Checked; break;

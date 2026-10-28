@@ -30,7 +30,7 @@ public sealed class RibbonCustomizationEditor : UserControl
         _tree = new(ribbon) { Name = "RibbonHierarchy", AccessibleName = "Customize the ribbon", Dock = DockStyle.Fill, BorderStyle = BorderStyle.None, HideSelection = false };
         _tree.PaintIcon = (graphics, node, bounds) =>
         {
-            var source = (node.Tag as Node)?.Data switch { RibbonItem item => item, RibbonCustomizationGroup group => _ribbon.CommandCatalog.Structure.Definition(group.Id), RibbonCustomizationCommand command => _catalog.FirstOrDefault(e => e.CommandId == command.CommandId)?.Source, _ => null };
+            var source = (node.Tag as Node)?.Data switch { RibbonItem item => item, RibbonCustomizationGroup { IsCustom: true, IconCommandId: { } id } => _catalog.FirstOrDefault(e => e.CommandId == id)?.Source, RibbonCustomizationGroup group => _ribbon.CommandCatalog.Structure.Definition(group.Id), RibbonCustomizationCommand command => _catalog.FirstOrDefault(e => e.CommandId == command.CommandId)?.Source, _ => null };
             if (source is not null) DrawIcon(graphics, source, bounds);
         };
         Session = ribbon.CommandCatalog.BeginCustomization(applicationId, RibbonCustomizationTarget.Ribbon);
@@ -78,8 +78,9 @@ public sealed class RibbonCustomizationEditor : UserControl
     /// <summary>Applies this page's draft, reporting preflight and validation errors inline. Application event exceptions retain their normal semantics.</summary>
     public bool ApplyChanges()
     {
+        if (_ribbon.LayoutMode != RibbonLayoutMode.Classic) { Status("Switch to Classic Ribbon to apply this page."); return false; }
         int version = Session.ApplyVersion;
-        try { if (!Session.Apply()) { Status("Complete the highlighted ribbon input before applying."); return false; } RefreshDraft(); Status("Ribbon changes applied."); return true; }
+        try { if (!Session.Apply()) { Status("Complete the highlighted ribbon input before applying."); return false; } RefreshDraft(); return true; }
         catch (InvalidOperationException e) when (version == Session.ApplyVersion) { Status(e.Message); return false; }
         catch (ArgumentException e) when (version == Session.ApplyVersion) { Status(e.Message); return false; }
     }
@@ -143,6 +144,8 @@ public sealed class RibbonCustomizationEditor : UserControl
     {
         if (Selected is not { } selected) return;
         var group = new RibbonCustomizationGroup { Label = "New Group" }; int at = selected.Group is { } parent ? selected.Tab.Groups.IndexOf(parent) + 1 : selected.Tab.Groups.Count;
+        using var dialog = new RibbonCustomizationGroupDialog(_ribbon, this, group, group.Label, true);
+        if (dialog.ShowDialog(FindForm()) != DialogResult.OK) return;
         selected.Tab.Groups.Insert(at, group); _treeSearch.Clear(); RefreshTree(group.Id);
     }
     private void AddSelected()
@@ -193,11 +196,18 @@ public sealed class RibbonCustomizationEditor : UserControl
     private void EditSelected()
     {
         if (!_edit.Enabled || Selected is not { } selected) return;
+        if (selected.Data is RibbonCustomizationGroup { IsCustom: true } customGroup)
+        {
+            using var editor = new RibbonCustomizationGroupDialog(_ribbon, this, customGroup, Label(customGroup.Id, customGroup.Label), false);
+            if (editor.ShowDialog(FindForm()) == DialogResult.OK) RefreshDraft(); return;
+        }
         string label = selected.Data switch { RibbonCustomizationTab t => Label(t.Id, t.Label), RibbonCustomizationGroup g => Label(g.Id, g.Label), RibbonCustomizationCommand c => Label(c.CommandId, c.Label), _ => "" };
         using var dialog = new Form { Text = "Edit ribbon item", Font = Font, AutoScaleMode = AutoScaleMode.Dpi, AutoScaleDimensions = new(DeviceDpi, DeviceDpi), FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, StartPosition = FormStartPosition.CenterParent, BackColor = _ribbon.Theme.Surface, ForeColor = _ribbon.Theme.Foreground };
         var name = new TextBox { Name = "RibbonItemName", AccessibleName = "Display name", Text = label, Dock = DockStyle.Fill, MaxLength = 512 };
-        var size = new ComboBox { Name = "RibbonItemSize", AccessibleName = "Command size", Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
-        size.Items.AddRange(Enum.GetValues<RibbonItemSize>().Cast<object>().ToArray()); size.SelectedItem = selected.Data is RibbonCustomizationCommand command ? command.Size : RibbonItemSize.Medium;
+        using var size = new RibbonOptionsComboBox(_ribbon) { Name = "RibbonItemSize", AccessibleName = "Command size", Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
+        var layout = selected.Group?.Layout ?? RibbonCustomizationGroupLayout.Stacked;
+        size.Items.AddRange((layout == RibbonCustomizationGroupLayout.Large ? [RibbonItemSize.Large] : new[] { RibbonItemSize.Small, RibbonItemSize.Medium }).Cast<object>().ToArray());
+        size.SelectedItem = selected.Data is RibbonCustomizationCommand command ? RibbonCustomizationSerializer.GroupSize(layout, command.Size) : RibbonItemSize.Medium; size.Enabled = layout != RibbonCustomizationGroupLayout.Large;
         int gap = ScaleLogical(8), height = RibbonQuickAccessEditorMetrics.ButtonHeight(DeviceDpi, Font.Height, _ribbon.Density);
         dialog.ClientSize = new(Math.Max(ScaleLogical(330), Font.Height * 22), (selected.Data is RibbonCustomizationCommand ? Font.Height * 3 : Font.Height * 2) + height + gap * 8);
         var content = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new(gap), ColumnCount = 1, RowCount = 4 };

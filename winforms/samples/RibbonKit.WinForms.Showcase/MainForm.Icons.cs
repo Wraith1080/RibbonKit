@@ -82,6 +82,7 @@ public partial class MainForm
             "Move Quick Access Toolbar" => "qat-move", "Customize QAT" => "qat-customize", "Customize Ribbon" => "ribbon-customize",
             "Apply" => "apply", "Cancel change" => "cancel", "Reset preview" => "reset", "Save preview" => "save-preview",
             "Restore preview" => "restore-preview", "Preview change" => "preview-change", "Redo" => "redo",
+            "Simplified Ribbon" => "layout-simplified",
             _ => throw new InvalidOperationException("Add an explicit command icon for " + item.Text)
         };
     }

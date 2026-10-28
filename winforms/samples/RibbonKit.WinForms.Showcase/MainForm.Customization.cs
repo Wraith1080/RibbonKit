@@ -19,6 +19,23 @@ public partial class MainForm
             e.Dialog.Pages.Insert(0, page);
             if (e.Dialog is RibbonQuickAccessCustomizationForm shared)
             {
+                shared.SimplifiedEditor.ImportRequested += (_, _) =>
+                {
+                    using var file = new OpenFileDialog { Filter = "Ribbon customization (*.json)|*.json", Title = "Import customization" };
+                    if (file.ShowDialog(shared) != DialogResult.OK) return;
+                    try { shared.SimplifiedEditor.Session.ImportJson(File.ReadAllText(file.FileName)); shared.SimplifiedEditor.RefreshDraft(); }
+                    catch (Exception error) when (error is IOException or System.Text.Json.JsonException or InvalidOperationException or ArgumentException) { MessageBox.Show(shared, error.Message, "Import customization", MessageBoxButtons.OK, MessageBoxIcon.Information); }
+                };
+                shared.SimplifiedEditor.ExportRequested += (_, _) =>
+                {
+                    try
+                    {
+                        string json = shared.SimplifiedEditor.Session.ExportJson();
+                        using var file = new SaveFileDialog { Filter = "Ribbon customization (*.json)|*.json", DefaultExt = "json", FileName = "ribbon-customization.json", Title = "Export customization" };
+                        if (file.ShowDialog(shared) == DialogResult.OK) File.WriteAllText(file.FileName, json);
+                    }
+                    catch (Exception error) when (error is IOException or InvalidOperationException or ArgumentException) { MessageBox.Show(shared, error.Message, "Export customization", MessageBoxButtons.OK, MessageBoxIcon.Information); }
+                };
                 shared.RibbonEditor.ImportRequested += (_, _) =>
                 {
                     using var file = new OpenFileDialog { Filter = "Ribbon customization (*.json)|*.json", Title = "Import customization" };

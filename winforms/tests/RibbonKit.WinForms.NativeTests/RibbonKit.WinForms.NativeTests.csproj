@@ -27,6 +27,10 @@
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/CustomizationInteractionChecks.cs" Link="PublicCustomizationInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/MessageInteractionChecks.cs" Link="PublicMessageInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/RibbonCustomizationInteractionChecks.cs" Link="PublicRibbonCustomizationInteractionChecks.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/SimplifiedInteractionChecks.cs" Link="PublicSimplifiedInteractionChecks.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/OptionsPopupInteractionChecks.cs" Link="PublicOptionsPopupInteractionChecks.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/ReviewInteractionChecks.cs" Link="PublicReviewInteractionChecks.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/SimplifiedContextInteractionChecks.cs" Link="PublicSimplifiedContextInteractionChecks.cs" /></ItemGroup>
   <!-- Public UIA client assemblies are used only by this external test client.
        The native runtime/package has no reference to them and no WPF hosting. -->
 </Project>

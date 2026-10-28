@@ -9,7 +9,6 @@ namespace RibbonKit.WinForms;
 internal sealed class RibbonCustomizationTree : TreeView
 {
     private readonly RibbonControl _ribbon;
-    private readonly RoundedPainter _painter = new();
     private readonly RibbonCheckBoxItem _check = new();
     private TreeNode? _hot, _pressed;
     private bool _hotCheck, _pressedCheck;
@@ -19,7 +18,12 @@ internal sealed class RibbonCustomizationTree : TreeView
     {
         _ribbon = ribbon; DrawMode = TreeViewDrawMode.OwnerDrawAll;
         ShowLines = false; ShowPlusMinus = true; FullRowSelect = true;
-        SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
+        DoubleBuffered = true;
+    }
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        SendMessage(Handle, 0x112C, 4, 4); // TVM_SETEXTENDEDSTYLE / TVS_EX_DOUBLEBUFFER
     }
     private int S(int value) => RibbonKit.WinForms.Layout.RibbonLayoutEngine.Scale(value, DeviceDpi);
     private bool Touch => _ribbon.Density == RibbonDensity.Touch;
@@ -46,16 +50,12 @@ internal sealed class RibbonCustomizationTree : TreeView
         using (var background = new SolidBrush(node.IsSelected ? theme.Checked.Start : theme.Surface)) e.Graphics.FillRectangle(background, row);
         if (node.Nodes.Count > 0)
         {
-            bool hot = ReferenceEquals(node, _hot) && !_hotCheck, pressed = ReferenceEquals(node, _pressed) && !_pressedCheck;
-            int side = S(Touch ? 28 : 20);
-            var button = new Rectangle(parts.Expand.Left + (parts.Expand.Width - side) / 2, row.Top + (row.Height - side) / 2, side, side);
-            if (hot || pressed) RibbonOptionsChrome.Surface(_painter, e.Graphics, button, _ribbon, DeviceDpi, pressed ? theme.Pressed : theme.Hover, Color.Transparent, 0);
             float cx = parts.Expand.Left + (parts.Expand.Width - 1) / 2f, cy = row.Top + (row.Height - 1) / 2f, half = ChevronSide / 2f;
             var saved = e.Graphics.Save();
             try
             {
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                using var pen = new Pen(hot ? theme.Accent : theme.SecondaryText, Math.Max(1, DeviceDpi / 96f * (Touch ? 1.8f : 1.6f))) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round };
+                using var pen = new Pen(theme.SecondaryText, Math.Max(1, DeviceDpi / 96f * (Touch ? 1.8f : 1.6f))) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round };
                 e.Graphics.DrawLines(pen, node.IsExpanded
                     ? new PointF[] { new(cx - half, cy - half / 2), new(cx, cy + half / 2), new(cx + half, cy - half / 2) }
                     : new PointF[] { new(cx - half / 2, cy - half), new(cx + half / 2, cy), new(cx - half / 2, cy + half) });
@@ -98,9 +98,9 @@ internal sealed class RibbonCustomizationTree : TreeView
             {
                 if (m.Msg == 0x201)
                 {
-                    Focus(); SelectedNode = node; _pressed = node; _pressedCheck = hit.Check;
+                    Focus(); SelectedNode = node; _pressed = hit.Check ? node : null; _pressedCheck = hit.Check;
                     if (hit.Check) CheckRequested?.Invoke(node); else node.Toggle();
-                    Invalidate();
+                    InvalidateNode(node);
                 }
                 return; // Prevent the smaller native hit region from toggling again.
             }
@@ -110,12 +110,15 @@ internal sealed class RibbonCustomizationTree : TreeView
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e); var hit = Hit(e.Location);
-        if (!ReferenceEquals(hit.Node, _hot) || hit.Check != _hotCheck) { _hot = hit.Node; _hotCheck = hit.Check; Invalidate(); }
+        var hot = hit.Check ? hit.Node : null;
+        if (!ReferenceEquals(hot, _hot)) { var previous = _hot; _hot = hot; _hotCheck = hit.Check; InvalidateNode(previous); InvalidateNode(hot); }
     }
-    protected override void OnMouseUp(MouseEventArgs e) { base.OnMouseUp(e); _pressed = null; Invalidate(); }
-    protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); _hot = _pressed = null; Invalidate(); }
-    protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); _pressed = null; Invalidate(); }
+    private void InvalidateNode(TreeNode? node) { if (node is not null) Invalidate(new Rectangle(0, node.Bounds.Top, ClientSize.Width, ItemHeight)); }
+    protected override void OnMouseUp(MouseEventArgs e) { base.OnMouseUp(e); var pressed = _pressed; _pressed = null; InvalidateNode(pressed); }
+    protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); var hot = _hot; var pressed = _pressed; _hot = _pressed = null; InvalidateNode(hot); InvalidateNode(pressed); }
+    protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); var pressed = _pressed; _pressed = null; InvalidateNode(pressed); }
     protected override void OnDpiChangedAfterParent(EventArgs e) { base.OnDpiChangedAfterParent(e); UpdateMetrics(); }
-    protected override void Dispose(bool disposing) { base.Dispose(disposing); if (disposing) { _painter.Dispose(); _check.Dispose(); } }
+    protected override void Dispose(bool disposing) { base.Dispose(disposing); if (disposing) _check.Dispose(); }
     [DllImport("user32.dll")] private static extern int GetScrollPos(nint window, int bar);
+    [DllImport("user32.dll")] private static extern nint SendMessage(nint window, uint message, nint wParam, nint lParam);
 }
