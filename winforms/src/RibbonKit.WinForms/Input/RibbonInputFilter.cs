@@ -4,7 +4,7 @@ namespace RibbonKit.WinForms;
 
 internal sealed class RibbonInputFilter(RibbonControl ribbon) : IMessageFilter, IDisposable
 {
-    private bool _attached, _altArmed;
+    private bool _attached, _altArmed, _popupCloseChord;
     internal void Attach()
     {
         if (_attached || ribbon.IsInDesignMode)
@@ -19,9 +19,11 @@ internal sealed class RibbonInputFilter(RibbonControl ribbon) : IMessageFilter, 
         Application.RemoveMessageFilter(this);
         _attached = false;
         _altArmed = false;
+        _popupCloseChord = false;
     }
     public bool PreFilterMessage(ref Message m)
     {
+        if (m.Msg is 0x101 or 0x105 && (Keys)(int)m.WParam == Keys.F4) _popupCloseChord = false;
         ribbon.ScreenTips.Observe(ref m);
         if (ribbon.FindForm() is not { } form || (!form.ContainsFocus && !ribbon.Popups.ContainsFocus && !ribbon.Editors.HasOpenList))
             return false;
@@ -42,6 +44,25 @@ internal sealed class RibbonInputFilter(RibbonControl ribbon) : IMessageFilter, 
         if (m.Msg is 0x104 or 0x100)
         {
             var key = (Keys)(int)m.WParam;
+            bool altClose = key == Keys.F4 && (Control.ModifierKeys & (Keys.Control | Keys.Shift)) == 0
+                && (Control.ModifierKeys.HasFlag(Keys.Alt) || m.Msg == 0x104 && ((long)m.LParam & (1L << 29)) != 0);
+            var origin = key == Keys.F4 ? Control.FromChildHandle(m.HWnd) : null;
+            bool ownedClose = key == Keys.F4 && (ReferenceEquals(origin?.FindForm(), form) || ribbon.Editors.OwnsWindow(m.HWnd)
+                || origin?.TopLevelControl is { IsHandleCreated: true } top && ribbon.Popups.OwnsWindow(top.Handle));
+            if (key == Keys.F4 && ownedClose && (_popupCloseChord || altClose && (ribbon.Editors.HasOpenList || ribbon.Popups.HasOpen)))
+            {
+                _altArmed = false;
+                if (!_popupCloseChord)
+                {
+                    _popupCloseChord = true;
+                    // Native default close handling can hide the hosted child
+                    // without notifying its ToolStrip wrapper or library owner.
+                    if (ribbon.Editors.HasOpenList) ribbon.Editors.ProcessListKey(Keys.Escape);
+                    ribbon.Popups.CloseAll(true);
+                    if (!form.IsDisposed && !form.Disposing) form.Close();
+                }
+                return true;
+            }
             if (key == Keys.F1 && Control.ModifierKeys == Keys.Control && ribbon.Enabled && ribbon.Visible
                 && (form.ContainsFocus || ribbon.Popups.ContainsFocus))
             {
@@ -84,6 +105,11 @@ internal sealed class RibbonInputFilter(RibbonControl ribbon) : IMessageFilter, 
             {
                 if (!ribbon.Editors.CommitFocused()) return true;
                 ribbon.ToggleKeyTips();
+                return true;
+            }
+            if (key == Keys.Escape && ribbon.IsModal && !ribbon.KeyTipsActive && !ribbon.Popups.HasOpen && !ribbon.Editors.ContainsFocus && Control.ModifierKeys == Keys.None)
+            {
+                ribbon.ExitModalByUser(RibbonModalReason.Escape);
                 return true;
             }
             if (key == Keys.F6 && (Control.ModifierKeys & (Keys.Control | Keys.Alt)) == 0)

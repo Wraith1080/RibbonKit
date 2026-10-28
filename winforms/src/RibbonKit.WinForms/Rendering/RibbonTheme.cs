@@ -36,6 +36,8 @@ public sealed record RibbonTheme
     public Padding BodyMargin { get; init; } = new(7, 1, 7, 7);
     /// <summary>Gets the body scroll buttons' top and bottom inset in 96-DPI logical pixels. Defaults to 2 to match the side clearance; zero gives full-height buttons. Must be nonnegative; layout clamps it to half the body height.</summary>
     public int BodyScrollButtonVerticalInset { get; init; } = 2;
+    /// <summary>Gets the minimize/modal-close visual inset on each side of their header slots, in 96-DPI logical pixels. Defaults to 4; must be nonnegative and clamps to half the slot's smaller dimension. Full measured hit areas remain available.</summary>
+    public int HeaderButtonInset { get; init; } = 4;
     /// <summary>Gets the enabled text and vector icon color.</summary>
     public Color Foreground { get; init; } = Color.FromArgb(26, 26, 26);
     /// <summary>Gets the group caption color.</summary>
@@ -75,5 +77,10 @@ public readonly record struct RibbonIconContext(int DeviceDpi, Color Foreground,
 /// <summary>Describes device-pixel geometry, palette, font and interaction state for painting.</summary>
 public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bounds, RibbonTheme Theme, Font Font, int DeviceDpi, bool Hot = false, bool Pressed = false, bool Focused = false, bool ReserveIcon = false)
 {
+    /// <summary>Gets the owning ribbon's density. Standalone paint contexts default to Compact.</summary>
+    public RibbonDensity Density { get; init; }
+    /// <summary>Gets whether an in-ribbon gallery is represented by its full-height Large dropdown fallback. The source's IsInRibbon and SizePolicy remain authored values.</summary>
+    public bool IsGalleryDropDown { get; init; }
     internal bool IsBodyScrollButton { get; init; }
+    internal Rectangle GroupSeparatorBounds { get; init; }
 }

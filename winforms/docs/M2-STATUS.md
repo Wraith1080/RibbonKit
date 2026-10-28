@@ -1196,6 +1196,9 @@ both endpoint gaps, a single-pixel stroke, theme color, collapsed absence and
 neutral absence; the inset assertion failed before the change. No cases were
 added. Normal Debug/Release/API/XML builds passed without warnings/errors.
 
+The historical collapsed-absence contract is superseded by the
+[2026-10-28 collapsed-divider correction](M4-STATUS.md#collapsed-group-right-separators--2026-10-28).
+
 Fresh isolated package restore/build and Office/neutral split/body scopes passed
 at actual **120 DPI (125%)**, including separator pixels, body geometry, captions,
 collapsed/nested popups and scrollers. The first shown attempt stopped at its

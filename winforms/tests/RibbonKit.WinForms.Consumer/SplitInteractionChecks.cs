@@ -13,7 +13,7 @@ internal static class SplitInteractionChecks
     [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint hwnd);
 
-    internal static int Run(string directory, bool flat = false)
+    internal static int Run(string directory, bool flat = false, bool touchHorizontalOnly = false)
     {
         WF.Application.SetHighDpiMode(WF.HighDpiMode.PerMonitorV2);
         WF.Application.EnableVisualStyles();
@@ -61,6 +61,7 @@ internal static class SplitInteractionChecks
                 for (int attempt = 0; attempt < 20 && GetForegroundWindow() != form.Handle; attempt++) await Task.Delay(50);
                 Check(GetForegroundWindow() == form.Handle, "Validation Form owns foreground focus before native input");
                 ribbon.Refresh();
+                if (touchHorizontalOnly) { await CheckTouchHorizontal(); return; }
                 CheckRibbonSurface();
                 int bodyHeight = recording.BodyBounds.Height;
                 var originalTheme = ribbon.Theme;
@@ -218,6 +219,38 @@ internal static class SplitInteractionChecks
         foreach (string result in results) Console.WriteLine(result);
         return error is null ? 0 : 1;
 
+        async Task CheckTouchHorizontal()
+        {
+            foreach (var item in group.Items.Where(i => i != split).ToArray()) { group.Items.Remove(item); item.Dispose(); }
+            group.CanResize = false; split.Layout = RibbonSplitButtonLayout.Horizontal;
+            int S(int value) => (int)Math.Round(value * ribbon.DeviceDpi / 96d);
+            foreach (var size in new[] { RibbonItemSize.Large, RibbonItemSize.Medium, RibbonItemSize.Small })
+            {
+                split.SizePolicy = RibbonSizePolicy.Fixed(size); ribbon.Density = RibbonDensity.Compact;
+                var compact = Parts(ribbon);
+                ribbon.Density = RibbonDensity.Touch;
+                var parts = Parts(ribbon);
+                Check(parts.Arrow.Bounds.Width == S(44) && parts.Primary.Bounds.Width >= S(size == RibbonItemSize.Large ? 72 : 56)
+                    && parts.Primary.Bounds.Width > parts.Arrow.Bounds.Width && parts.Primary.Bounds.Right == parts.Arrow.Bounds.Left,
+                    $"{size} Touch horizontal split has a full 44-logical-pixel arrow and larger primary");
+                CaptureChrome(ribbon, split, "touch-horizontal-" + size);
+                Mouse(ribbon, 0x200, parts.Arrow.Bounds); await CaptureVisible(ribbon, "touch-horizontal-" + size);
+                int clicks = primaryClicks, opens = menuOpens;
+                Click(ribbon, parts.Primary.Bounds); Click(ribbon, parts.Arrow.Bounds);
+                Check(primaryClicks == clicks + 1 && menuOpens == opens + 1 && split.IsDropDownOpen,
+                    size + " primary and arrow mouse targets route separately");
+                await Key("{ESC}{HOME}{ENTER}");
+                await Key("{TAB} ");
+                Check(primaryClicks == clicks + 2 && menuOpens == opens + 2 && split.IsDropDownOpen,
+                    size + " primary Enter and arrow Space route separately");
+                await Key("{ESC}");
+                ribbon.Density = RibbonDensity.Compact;
+                var restored = Parts(ribbon);
+                Check(restored.Primary.Bounds == compact.Primary.Bounds && restored.Arrow.Bounds == compact.Arrow.Bounds,
+                    size + " returns to its original Compact geometry");
+            }
+            results.Add($"PASS: public Touch horizontal split checks, renderer={(flat ? "neutral" : "Office2024")}, actual DPI={ribbon.DeviceDpi}");
+        }
         (RibbonPaintContext Primary, RibbonPaintContext Arrow) Parts(WF.Control surface, RibbonSplitButtonItem? item = null)
         {
             surface.Refresh();

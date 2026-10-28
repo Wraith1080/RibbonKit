@@ -8,5 +8,5 @@ public partial class RibbonControl
     [Category("Data"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     public RibbonDropDownItem FileMenu { get; }
 
-    internal bool HasFileMenu => !FileMenu.IsDisposed && FileMenu.Visible;
+    internal bool HasFileMenu => !IsModal && !FileMenu.IsDisposed && FileMenu.Visible;
 }

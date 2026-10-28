@@ -108,7 +108,7 @@ public sealed class MenuTests
         for (int i = 1; i < targets.Count; i++) Assert.Equal(targets[i - 1].Bounds.Bottom, targets[i].Bounds.Top);
         Assert.False(targets.Single(t => ReferenceEquals(t.Element, separator)).Enabled);
         Assert.False(targets.Single(t => ReferenceEquals(t.Element, disabled)).Enabled);
-        Assert.True(targets.Single(t => ReferenceEquals(t.Element, first)).Bounds.Height > targets.Single(t => ReferenceEquals(t.Element, editor)).Bounds.Height);
+        Assert.Single(targets.Where(t => t.Element is not RibbonMenuSeparatorItem).Select(t => t.Bounds.Height).Distinct());
         first.MenuDescription = "Updated";
         using var updated = new RibbonPopupSurface(ribbon, menu, new(1600, 1000));
         Assert.Equal("Retained", editor.Value); Assert.Same(menu, first.Parent);

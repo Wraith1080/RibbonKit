@@ -24,7 +24,7 @@ public sealed class RibbonGalleryItem : RibbonDropDownItem
     [Category("Data"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     [Editor("RibbonKit.WinForms.Design.GalleryTileCollectionEditor, RibbonKit.WinForms.Design", "System.Drawing.Design.UITypeEditor, System.Drawing")]
     public new RibbonItemCollection Items => base.Items;
-    /// <summary>Gets or sets whether Large presentations use an in-ribbon tile strip. Medium/Small presentations remain dropdown commands. Defaults to false.</summary>
+    /// <summary>Gets or sets whether the gallery uses an in-ribbon tile strip. Medium/Small entries in SizePolicy select a full-column Large dropdown fallback; authored policy values remain intact. Defaults to false.</summary>
     [Category("Appearance"), DefaultValue(false), Bindable(true)]
     public bool IsInRibbon
     {

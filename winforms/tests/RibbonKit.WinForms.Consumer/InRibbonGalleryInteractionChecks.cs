@@ -13,7 +13,7 @@ internal static class InRibbonGalleryInteractionChecks
     [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint hwnd);
     [DllImport("user32.dll")] private static extern void mouse_event(uint flags, uint x, uint y, uint data, nuint extra);
-    internal static int Run(string directory, bool flat = false, bool qatOnly = false, bool stripOnly = false)
+    internal static int Run(string directory, bool flat = false, bool qatOnly = false, bool stripOnly = false, bool reductionOnly = false)
     {
         directory = Path.GetFullPath(directory); Directory.CreateDirectory(directory);
         WF.Application.SetHighDpiMode(WF.HighDpiMode.PerMonitorV2); WF.Application.EnableVisualStyles();
@@ -45,6 +45,28 @@ internal static class InRibbonGalleryInteractionChecks
                 await Task.Yield(); form.Activate(); SetForegroundWindow(form.Handle);
                 for (int i = 0; i < 20 && GetForegroundWindow() != form.Handle; i++) await Task.Delay(50);
                 Guard(); document.Focus(); await MoveToDocument(); var strip = Strip(ribbon); nint stripHandle = strip.Handle; Read(strip);
+                if (reductionOnly)
+                {
+                    group.ReductionMode = RibbonGroupReductionMode.ResizeThenCollapse;
+                    gallery.SizePolicy = RibbonSizePolicy.Adaptive(RibbonItemSize.Large, RibbonItemSize.Medium, RibbonItemSize.Small); gallery.Icon = new FallbackIcon(); var policy = gallery.SizePolicy;
+                    foreach (var density in Enum.GetValues<RibbonDensity>())
+                    {
+                        ribbon.Density = density; form.Width = 1100; record.Fallback = Rectangle.Empty; ribbon.Refresh(); var full = record.Gallery;
+                        Check(strip.Visible && record.Fallback.IsEmpty, $"{density}: wide gallery uses its strip");
+                        for (int width = 1080; width >= 260; width -= 10)
+                        {
+                            form.Width = width; record.Fallback = Rectangle.Empty; ribbon.Refresh();
+                            if (!record.Fallback.IsEmpty) break;
+                        }
+                        Check(!record.Fallback.IsEmpty && record.GallerySize == RibbonItemSize.Large && record.Fallback.Height == full.Height && record.Fallback.Width < full.Width, $"{density}: reduced gallery keeps a full-height Large dropdown");
+                        Check(!strip.Visible && !strip.IsDisposed && gallery.IsInRibbon && gallery.SizePolicy == policy, "Reduction parks the strip without replacing authored gallery state");
+                        await Capture(density + "-large-fallback"); await Click(ribbon, record.Fallback); Check(gallery.IsDropDownOpen, "Pointer activation opens the source gallery from its Large fallback");
+                        int beforeCommit = commits; await Key("{END}{ENTER}"); Check(commits == beforeCommit + 1 && gallery.SelectedItem == tiles[11] && !gallery.IsDropDownOpen, "Fallback keyboard commits the source tile exactly once");
+                        form.Width = 1100; ribbon.Refresh(); Check(ReferenceEquals(strip, Strip(ribbon)) && strip.Handle == stripHandle && gallery.SelectedItem == tiles[11], "Growing restores the same strip HWND and selected tile");
+                    }
+                    Check(unavailable == 0, "Gallery reduction input raises zero unavailable-element exceptions");
+                    log.Add($"PASS: {(flat ? "Neutral" : "Office")} gallery reduction at {form.DeviceDpi} DPI"); completed = true; return;
+                }
                 if (!qatOnly)
                 {
                 Check(record.Tiles.Keys.OrderBy(t => Array.IndexOf(tiles, t)).SequenceEqual(tiles.Skip(3).Take(3)), "Strip initially reveals the source selection's row");
@@ -134,12 +156,14 @@ internal static class InRibbonGalleryInteractionChecks
         internal readonly Dictionary<RibbonGalleryStripButton, Rectangle> Buttons = [];
         internal readonly Dictionary<RibbonGalleryStripButton, bool> Available = [];
         internal readonly Dictionary<RibbonElement, Rectangle> Entries = [], MenuEntries = [];
-        internal Rectangle Overflow;
+        internal Rectangle Overflow, Gallery, Fallback;
+        internal RibbonItemSize GallerySize;
         internal void Button(RibbonPaintContext c, RibbonGalleryStripButton button, bool enabled) { Buttons[button] = c.Bounds; Available[button] = enabled; }
         internal void Entry(RibbonPaintContext c, RibbonElement entry, bool menu) => (menu ? MenuEntries : Entries)[entry] = c.Bounds;
     }
     private sealed class Office(Recording r) : RibbonOffice2024Renderer
     {
+        public override void DrawItem(RibbonPaintContext c, RibbonItem item, RibbonItemSize size, bool menu) { if (item is RibbonGalleryItem) { r.Gallery = c.Bounds; r.GallerySize = size; if (c.IsGalleryDropDown) r.Fallback = c.Bounds; } base.DrawItem(c, item, size, menu); }
         public override void DrawGalleryTile(RibbonPaintContext c, RibbonGalleryTile tile, bool selected) { r.Tiles[tile] = c.Bounds; base.DrawGalleryTile(c, tile, selected); }
         public override void DrawGalleryStripButton(RibbonPaintContext c, RibbonGalleryStripButton button, bool enabled) { r.Button(c, button, enabled); base.DrawGalleryStripButton(c, button, enabled); }
         public override void DrawQuickAccessItem(RibbonPaintContext c, RibbonElement entry, bool menu) { r.Entry(c, entry, menu); base.DrawQuickAccessItem(c, entry, menu); }
@@ -147,9 +171,11 @@ internal static class InRibbonGalleryInteractionChecks
     }
     private sealed class Flat(Recording r) : RibbonRenderer
     {
+        public override void DrawItem(RibbonPaintContext c, RibbonItem item, RibbonItemSize size, bool menu) { if (item is RibbonGalleryItem) { r.Gallery = c.Bounds; r.GallerySize = size; if (c.IsGalleryDropDown) r.Fallback = c.Bounds; } base.DrawItem(c, item, size, menu); }
         public override void DrawGalleryTile(RibbonPaintContext c, RibbonGalleryTile tile, bool selected) { r.Tiles[tile] = c.Bounds; base.DrawGalleryTile(c, tile, selected); }
         public override void DrawGalleryStripButton(RibbonPaintContext c, RibbonGalleryStripButton button, bool enabled) { r.Button(c, button, enabled); base.DrawGalleryStripButton(c, button, enabled); }
         public override void DrawQuickAccessItem(RibbonPaintContext c, RibbonElement entry, bool menu) { r.Entry(c, entry, menu); base.DrawQuickAccessItem(c, entry, menu); }
         public override void DrawQuickAccessOverflow(RibbonPaintContext c) { r.Overflow = c.Bounds; base.DrawQuickAccessOverflow(c); }
     }
+    private sealed class FallbackIcon : IRibbonIcon { public void Draw(Graphics g, Rectangle bounds, RibbonIconContext context) { using var pen = new Pen(Color.SteelBlue, Math.Max(1, bounds.Width / 16f)); var rect = Rectangle.Inflate(bounds, -3, -3); g.DrawRectangle(pen, rect); } }
 }

@@ -56,8 +56,8 @@ internal sealed class RibbonPopupWindow : ToolStripDropDown
     private sealed class PopupFrameRenderer(RibbonControl ribbon) : ToolStripRenderer
     {
         protected override void OnRenderToolStripBackground(ToolStripRenderEventArgs e) =>
-            ribbon.Painter.DrawSurface(new(e.Graphics, e.ToolStrip.ClientRectangle, ribbon.Theme, ribbon.Font, ribbon.DeviceDpi), true);
+            ribbon.Painter.DrawSurface(new(e.Graphics, e.ToolStrip.ClientRectangle, ribbon.Theme, ribbon.Font, ribbon.DeviceDpi) { Density = ribbon.Density }, true);
         protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e) =>
-            ribbon.Painter.DrawPopupFrame(new(e.Graphics, e.ToolStrip.ClientRectangle, ribbon.Theme, ribbon.Font, ribbon.DeviceDpi));
+            ribbon.Painter.DrawPopupFrame(new(e.Graphics, e.ToolStrip.ClientRectangle, ribbon.Theme, ribbon.Font, ribbon.DeviceDpi) { Density = ribbon.Density });
     }
 }

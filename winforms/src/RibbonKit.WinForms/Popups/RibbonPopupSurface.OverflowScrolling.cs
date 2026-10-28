@@ -9,7 +9,7 @@ internal sealed partial class RibbonPopupSurface
     private TargetKind? _overflowRepeatKind;
     private bool _overflowRepeatPressed;
     private bool HasOverflowBands => OwnerElement is RibbonQuickAccessOverflow && _overflowExtent > ClientSize.Height;
-    private int OverflowBandHeight => Math.Min(RibbonLayoutEngine.Scale(16, _ribbon.DeviceDpi), Math.Max(0, (ClientSize.Height - 1) / 2));
+    private int OverflowBandHeight => Math.Min(RibbonLayoutEngine.Scale(_ribbon.Density == RibbonDensity.Touch ? 28 : 16, _ribbon.DeviceDpi), Math.Max(0, (ClientSize.Height - 1) / 2));
     internal Rectangle OverflowViewport => HasOverflowBands
         ? new(0, OverflowBandHeight, ClientSize.Width, Math.Max(1, ClientSize.Height - 2 * OverflowBandHeight)) : ClientRectangle;
     internal Rectangle OverflowUpBounds => HasOverflowBands ? new(0, 0, ClientSize.Width, OverflowBandHeight) : Rectangle.Empty;

@@ -2,9 +2,9 @@ namespace RibbonKit.WinForms.Layout;
 
 internal enum TargetKind
 {
-    Tab, Group, Item, TabBack, TabNext, BodyBack, BodyNext, Minimize, QuickAccess, QuickAccessOverflow, OverflowUp, OverflowDown, FileMenu
+    Tab, Group, Item, TabBack, TabNext, BodyBack, BodyNext, Minimize, QuickAccess, QuickAccessOverflow, OverflowUp, OverflowDown, FileMenu, ModalClose
 }
-internal sealed record RibbonTarget(TargetKind Kind, RibbonElement? Element, Rectangle Bounds, Rectangle Clip, RibbonItemSize Size = RibbonItemSize.Large, bool ReserveIcon = false, bool DropDownPart = false, int LabelWidth = 0, string? AutomaticKeyTip = null)
+internal sealed record RibbonTarget(TargetKind Kind, RibbonElement? Element, Rectangle Bounds, Rectangle Clip, RibbonItemSize Size = RibbonItemSize.Large, bool ReserveIcon = false, bool DropDownPart = false, int LabelWidth = 0, string? AutomaticKeyTip = null, bool GalleryDropDown = false)
 {
     internal Rectangle VisibleBounds => Rectangle.Intersect(Bounds, Clip);
     internal bool Enabled => Kind == TargetKind.QuickAccess ? Element is not null && RibbonQuickAccess.Available(Element) : Element is not RibbonMenuSeparatorItem && (Element?.EffectiveEnabled ?? true);
@@ -15,7 +15,7 @@ internal sealed record RibbonTarget(TargetKind Kind, RibbonElement? Element, Rec
         : DropDownPart && Element is RibbonSplitButtonItem split ? split.DropDownKeyTip
         : Element?.KeyTip is { Length: > 0 } authored ? authored : AutomaticKeyTip ?? "";
 }
-internal sealed record GroupSlot(RibbonGroup Group, Rectangle Bounds, bool Collapsed);
+internal sealed record GroupSlot(RibbonGroup Group, Rectangle Bounds, bool Collapsed, Rectangle Frame);
 internal sealed class RibbonLayoutSnapshot
 {
     internal Rectangle BodyBounds { get; set; }
@@ -40,7 +40,7 @@ internal sealed class RibbonLayoutSnapshot
         get; set;
     }
 }
-internal sealed record MeasuredItem(RibbonItem Item, Rectangle Bounds, RibbonItemSize Size, bool ReserveIcon = false, int LabelWidth = 0);
+internal sealed record MeasuredItem(RibbonItem Item, Rectangle Bounds, RibbonItemSize Size, bool ReserveIcon = false, int LabelWidth = 0, bool GalleryDropDown = false);
 internal sealed record MeasuredGroup(int Width, List<MeasuredItem> Items);
 
 internal sealed class RibbonLayoutEngine
@@ -54,8 +54,14 @@ internal sealed class RibbonLayoutEngine
     {
         int S(double n) => Scale(n, dpi);
         int label = RibbonCaptionLayout.TextWidth(item.Text, font);
+        var metrics = RibbonDensityMetrics.For(item.Ribbon?.Density ?? RibbonDensity.Compact);
         int padding = item is RibbonDropDownItem and not RibbonSplitButtonItem ? 30 : 14;
-        return Math.Clamp(label + S(padding), S(60), S(theme.LargeButtonMaxWidth));
+        int width = Math.Clamp(label + S(padding + (metrics.Touch ? 8 : 0)), S(metrics.LargeWidth), S(Math.Max(metrics.LargeWidth, theme.LargeButtonMaxWidth)));
+        if (metrics.Touch && item is RibbonSplitButtonItem { Layout: RibbonSplitButtonLayout.Horizontal })
+            // Reserve the wider arrow without reducing the existing caption budget.
+            width = Math.Max(S(metrics.LargeHorizontalSplitPrimaryMinimum) + S(metrics.HorizontalSplitArrow),
+                width + S(metrics.HorizontalSplitArrow) - S(metrics.SplitArrow));
+        return width;
     }
     internal static int Scale(double value, int dpi) => (int)Math.Round(value * dpi / 96d);
     internal MeasuredGroup Measure(RibbonGroup group, int state, Font font, int dpi, RibbonTheme theme)
@@ -63,11 +69,12 @@ internal sealed class RibbonLayoutEngine
         if (_cache.TryGetValue((group, state, dpi), out var cached))
             return cached;
         int S(double n) => Scale(n, dpi);
+        var metrics = RibbonDensityMetrics.For(group.Ribbon?.Density ?? RibbonDensity.Compact);
         if (state == 3)
-            return _cache[(group, state, dpi)] = new(S(62), []);
+            return _cache[(group, state, dpi)] = new(S(metrics.Touch ? 80 : 62), []);
         int x = S(6), row = 0, columnWidth = 0, columnStart = 0;
         int fontLogical = (int)Math.Ceiling(font.Height * 96d / dpi);
-        int rowLogical = Math.Max(26, fontLogical + 8), captionLogical = Math.Max(20, fontLogical + 6);
+        int rowLogical = Math.Max(metrics.CommandRow, fontLogical + 8), captionLogical = Math.Max(20, fontLogical + 6);
         var items = new List<MeasuredItem>();
         void FinishColumn()
         {
@@ -91,7 +98,7 @@ internal sealed class RibbonLayoutEngine
                     LabelWidth = entry.Item is IRibbonEditorItem ? labelWidth : 0
                 };
             }
-            x += columnWidth + S(3);
+            x += columnWidth + S(metrics.ColumnGap);
             row = 0;
             columnWidth = 0;
             columnStart = items.Count;
@@ -99,23 +106,27 @@ internal sealed class RibbonLayoutEngine
         foreach (var item in group.Items.Where(i => i.Visible))
         {
             var size = item is IRibbonEditorItem or RibbonCheckBoxItem or RibbonRadioButtonItem ? RibbonItemSize.Medium : item.SizePolicy.At(state);
+            // A reduced in-ribbon gallery stays a full-column command. Its
+            // strip/dropdown presentation is independent of the painted size.
+            bool galleryDropDown = item is RibbonGalleryItem { IsInRibbon: true } && size != RibbonItemSize.Large;
+            if (galleryDropDown) size = RibbonItemSize.Large;
             bool large = size == RibbonItemSize.Large;
             int label = TextRenderer.MeasureText(item.Text, font, new Size(1000, 1000), TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine).Width;
             bool dropDownOnly = item is RibbonDropDownItem and not RibbonSplitButtonItem;
-            int width = large ? LargeItemWidth(item, font, dpi, theme) : size == RibbonItemSize.Small ? S(28) : Math.Max(S(54), Math.Min(S(180), label + S(38)));
+            int width = large ? LargeItemWidth(item, font, dpi, theme) : size == RibbonItemSize.Small ? S(metrics.SmallWidth) : Math.Max(S(metrics.MediumWidth), Math.Min(S(180 + (metrics.Touch ? 16 : 0)), label + S(metrics.CaptionPadding)));
             if (item is IRibbonEditorItem editor)
                 width = RibbonEditorLayout.LabelWidth(item, font, dpi) + S(editor.InputWidth + 6);
-            if (large && item is RibbonGalleryItem { IsInRibbon: true } gallery)
-                width = S(gallery.InRibbonColumnCount * gallery.TileWidth + RibbonGalleryStripLayout.UtilityWidth + 3 * RibbonGalleryStripLayout.Padding);
+            if (large && !galleryDropDown && item is RibbonGalleryItem { IsInRibbon: true } gallery)
+                width = S(gallery.InRibbonColumnCount * Math.Max(gallery.TileWidth, metrics.GalleryWidth) + metrics.GalleryUtility + 3 * RibbonGalleryStripLayout.Padding);
             if (item is RibbonSplitButtonItem && !large)
-                width += S(20);
+                width = Math.Max(width, S(metrics.HorizontalSplitPrimaryMinimum)) + S(metrics.HorizontalSplitArrow);
             else if (dropDownOnly && !large)
-                width += S(16);
+                width += S(metrics.Touch ? 28 : 16);
             if (large)
             {
                 FinishColumn();
-                items.Add(new(item, new(x, S(CommandTopInset), width, S(theme.BodyHeight - captionLogical - CommandVerticalInset)), size));
-                x += width + S(3);
+                items.Add(new(item, new(x, S(CommandTopInset), width, S(theme.BodyHeight - captionLogical - CommandVerticalInset)), size, GalleryDropDown: galleryDropDown));
+                x += width + S(metrics.ColumnGap);
                 columnStart = items.Count;
             }
             else
@@ -137,13 +148,16 @@ internal sealed class RibbonLayoutEngine
         int S(double n) => Scale(n, dpi);
         int tabHeight = S(ribbon.LayoutTheme.TabHeight);
         var client = ribbon.ClientRectangle;
-        var tabs = ribbon.Tabs.Where(t => t.Visible).ToArray();
+        var tabs = ribbon.GetPresentedTabs().Where(t => t.Visible).ToArray();
         var widths = tabs.Select(t => Math.Max(S(58), TextRenderer.MeasureText(t.Text, ribbon.Font).Width + S(28))).ToArray();
-        int tabTotal = widths.Sum(), utilityWidth = Math.Min(S(28), client.Width);
+        var action = ribbon.HeaderAction;
+        var metrics = RibbonDensityMetrics.For(ribbon.Density);
+        int actionWidth = action?.Element is { } command ? TextRenderer.MeasureText(command.Text, ribbon.Font).Width + S(metrics.Touch ? 44 : 36) : S(metrics.SmallWidth);
+        int tabTotal = widths.Sum(), utilityWidth = action is null ? 0 : Math.Min(actionWidth, Math.Max(0, client.Width - (action?.Element is null ? 0 : S(24))));
         int tabsStart = 0;
         if (ribbon.HasFileMenu)
         {
-            int keepQuickAccess = ribbon.HasQuickAccess && ribbon.QuickAccessPosition == RibbonQuickAccessPosition.TabRow ? S(RibbonQuickAccess.ButtonWidth + 4) : 0;
+            int keepQuickAccess = ribbon.HasQuickAccess && ribbon.QuickAccessPosition == RibbonQuickAccessPosition.TabRow ? S(metrics.QuickAccessButton + 4) : 0;
             int available = Math.Max(0, client.Width - utilityWidth - S(24) - keepQuickAccess);
             int left = Math.Min(S(ribbon.LayoutTheme.BodyMargin.Left), available);
             int width = Math.Min(Math.Max(S(50), TextRenderer.MeasureText(ribbon.FileMenu.Text, ribbon.Font, Size.Empty,
@@ -170,7 +184,7 @@ internal sealed class RibbonLayoutEngine
         bool tabOverflow = tabTotal > tabsWidth;
         // Keep part of a tab reachable when the utility and two full-size
         // scrollers would otherwise consume the complete narrow tab strip.
-        int tabScrollWidth = tabOverflow ? Math.Min(S(22), Math.Max(0, (tabsWidth - S(24)) / 2)) : 0;
+        int tabScrollWidth = tabOverflow ? Math.Min(S(metrics.ScrollButton), Math.Max(0, (tabsWidth - S(24)) / 2)) : 0;
         var tabViewport = new Rectangle(tabsStart + tabScrollWidth, 0, Math.Max(0, tabsWidth - 2 * tabScrollWidth), tabHeight);
         result.TabExtent = tabTotal;
         result.TabViewport = tabViewport;
@@ -186,7 +200,7 @@ internal sealed class RibbonLayoutEngine
             result.Targets.Add(new(TargetKind.TabBack, null, new(tabsStart, 0, tabScrollWidth, tabHeight), tabsClip));
             result.Targets.Add(new(TargetKind.TabNext, null, new(tabsStart + tabsWidth - tabScrollWidth, 0, tabScrollWidth, tabHeight), tabsClip));
         }
-        result.Targets.Add(new(TargetKind.Minimize, null, new(client.Width - utilityWidth, 0, utilityWidth, tabHeight), client));
+        if (action is { } header) result.Targets.Add(new(header.Kind, header.Element, new(client.Width - utilityWidth, 0, utilityWidth, tabHeight), client));
         if (ribbon.IsMinimized || ribbon.SelectedTab is not { } selected) return result;
         var bodyLayout = BuildBody(ribbon, selected, client.Width, bodyOffset, tabHeight);
         result.BodyBounds = bodyLayout.BodyBounds; result.BodyViewport = bodyLayout.BodyViewport; result.BodyExtent = bodyLayout.BodyExtent;
@@ -200,7 +214,8 @@ internal sealed class RibbonLayoutEngine
         int dpi = ribbon.DeviceDpi;
         int S(double n) => Scale(n, dpi);
         int bodyHeight = S(ribbon.LayoutTheme.BodyHeight);
-        var groups = selected.Groups.Where(g => g.Visible).ToArray();
+        int scrollWidth = S(RibbonDensityMetrics.For(ribbon.Density).ScrollButton);
+        var groups = ribbon.GetPresentedGroups(selected).Where(g => g.Visible).ToArray();
         var maps = groups.Select(g => RibbonQuickAccess.RetainsGroup(g) ? new[] { 3 } : !g.CanResize ? new[] { 0 } : g.ReductionMode switch { RibbonGroupReductionMode.Resize => new[] { 0, 1, 2 }, RibbonGroupReductionMode.ResizeThenCollapse => new[] { 0, 1, 2, 3 }, _ => new[] { 0, 3 } }).ToArray();
         var tables = groups.Select((g, i) => maps[i].Select(s => (double)Measure(g, s, ribbon.Font, dpi, ribbon.LayoutTheme).Width).ToArray()).ToArray();
         var order = groups.Select((g, i) => (g, i)).Where(p => p.g.CanResize && !RibbonQuickAccess.RetainsGroup(p.g))
@@ -217,11 +232,11 @@ internal sealed class RibbonLayoutEngine
         bool overflow = total > available;
         if (overflow)
         {
-            available = Math.Max(0, available - S(44));
+            available = Math.Max(0, available - 2 * scrollWidth);
             states = ReductionAlgorithm.ComputeStates(available, tables, order);
             total = groups.Select((g, i) => (int)tables[i][states[i]]).Sum();
         }
-        var viewport = new Rectangle(body.Left + inset + (overflow ? S(22) : 0), body.Top, available, bodyHeight);
+        var viewport = new Rectangle(body.Left + inset + (overflow ? scrollWidth : 0), body.Top, available, bodyHeight);
         result.BodyViewport = viewport;
         result.BodyExtent = total;
         int x = viewport.Left - Math.Clamp(bodyOffset, 0, Math.Max(0, total - available));
@@ -230,22 +245,23 @@ internal sealed class RibbonLayoutEngine
             int state = maps[i][states[i]];
             var measure = Measure(groups[i], state, ribbon.Font, dpi, ribbon.LayoutTheme);
             var bounds = new Rectangle(x, body.Top, measure.Width, bodyHeight);
+            var frame = bounds;
             if (state == 3) bounds = Rectangle.FromLTRB(bounds.Left + S(3), bounds.Top + S(CommandTopInset),
                 bounds.Right - S(3), bounds.Bottom - S(CommandBottomInset));
-            result.Groups.Add(new(groups[i], bounds, state == 3));
+            result.Groups.Add(new(groups[i], bounds, state == 3, frame));
             if (state == 3)
                 result.Targets.Add(new(TargetKind.Group, groups[i], bounds, viewport));
             else
                 foreach (var item in measure.Items)
-                    result.Targets.Add(new(TargetKind.Item, item.Item, new(x + item.Bounds.X, body.Top + item.Bounds.Y, item.Bounds.Width, item.Bounds.Height), viewport, item.Size, item.ReserveIcon, LabelWidth: item.LabelWidth));
+                    result.Targets.Add(new(TargetKind.Item, item.Item, new(x + item.Bounds.X, body.Top + item.Bounds.Y, item.Bounds.Width, item.Bounds.Height), viewport, item.Size, item.ReserveIcon, LabelWidth: item.LabelWidth, GalleryDropDown: item.GalleryDropDown));
             x += measure.Width;
         }
         if (overflow)
         {
             int scrollInset = Math.Min(S(Math.Min(ribbon.LayoutTheme.BodyScrollButtonVerticalInset, ribbon.LayoutTheme.BodyHeight)), bodyHeight / 2);
             int scrollHeight = bodyHeight - 2 * scrollInset;
-            result.Targets.Add(new(TargetKind.BodyBack, null, new(body.Left + inset, body.Top + scrollInset, S(22), scrollHeight), body));
-            result.Targets.Add(new(TargetKind.BodyNext, null, new(body.Right - inset - S(22), body.Top + scrollInset, S(22), scrollHeight), body));
+            result.Targets.Add(new(TargetKind.BodyBack, null, new(body.Left + inset, body.Top + scrollInset, scrollWidth, scrollHeight), body));
+            result.Targets.Add(new(TargetKind.BodyNext, null, new(body.Right - inset - scrollWidth, body.Top + scrollInset, scrollWidth, scrollHeight), body));
         }
         return result;
     }

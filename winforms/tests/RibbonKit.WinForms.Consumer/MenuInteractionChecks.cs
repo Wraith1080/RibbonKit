@@ -51,7 +51,7 @@ internal static class MenuInteractionChecks
                 Check(!recording.Bounds.ContainsKey(hidden), "Hidden rows have no painted target");
                 Check(recording.Texts.Contains(first.MenuDescription) && recording.Texts.Contains(nested.MenuDescription), "Shared text hook receives full descriptions");
                 Check(recording.Separators > 0 && recording.SubmenuArrows > 0, "Public separator and submenu-arrow hooks are used");
-                Check(recording.Bounds[first].Height > recording.Bounds[editor].Height && recording.Bounds[separator].Height < recording.Bounds[editor].Height, "Rich commands, compact native fields, and decorative separators get distinct heights");
+                Check(menu.Items.Where(i => i.Visible && i is not RibbonMenuSeparatorItem).Select(i => recording.Bounds[i].Height).Distinct().Count() == 1 && recording.Bounds[separator].Height < recording.Bounds[editor].Height, "Interactive rows share the tallest height while decorative separators stay compact");
                 Check(!recording.SeparatorInteraction && !recording.DisabledInteraction, "Decorative and disabled rows have no interaction chrome");
                 await Capture("mixed-menu"); await Click(parent, recording.Bounds[separator]);
                 Check(menu.IsDropDownOpen && clicks == 0 && menu.Items.Contains(separator), "Clicking a separator leaves its menu and command state intact");

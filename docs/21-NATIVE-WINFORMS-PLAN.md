@@ -1,7 +1,7 @@
 # Native RibbonKit.WinForms assessment and implementation plan
 
-> Implementation through M4E in-ribbon galleries and QAT projection,
-> 2026-10-27. Current bounded
+> Implementation through M4G Compact/Touch density,
+> 2026-10-28. Current bounded
 > scope, evidence and remaining review are in the [M4 ledger](../winforms/docs/M4-STATUS.md).
 > The [M3 ledger](../winforms/docs/M3-STATUS.md) retains QAT/projection evidence.
 > [Remaining slice sequence](../winforms/docs/M4-STATUS.md#remaining-slices) is a
@@ -702,6 +702,16 @@ menus, popups and interaction states, then propose a bounded theme contract for:
   insets; independent body, button, editor and popup corner radii.
 - Shadow enablement, color/opacity, blur radius and offset, with matching reserved
   drawing space; typography roles and arrow/check/radio/tab-indicator metrics.
+
+Office 2024 follow-up, **2026-10-28**: the BelowRibbon QAT should visually extend
+the ribbon body, following the user's WPF reference. Include a joined background
+and side frame, a subtle internal separator, bottom corners at the QAT's lower
+edge and one outer body/QAT shadow. Coordinate shared measurement, clipping and
+painting so the join has no gap, doubled border or intermediate body shadow.
+This belongs to M4I's theming/geometry pass; keep QAT models, command ownership and
+placement behavior independent. Review expanded and minimized presentations
+separately, representative DPI and a neutral renderer without imposing Office's
+joined-panel styling on every theme.
 
 Themes supply appearance values; renderers draw them. Layout, clipping, popup
 placement and hit targets must consume the same relevant geometry. Keep values

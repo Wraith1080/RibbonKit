@@ -18,7 +18,7 @@ internal sealed partial class RibbonPopupSurface
             foreach (var heading in layout.Headings)
             {
                 var bounds = heading.Bounds; bounds.Offset(AutoScrollPosition);
-                if (bounds.IntersectsWith(ClientRectangle)) _ribbon.Painter.DrawGalleryHeading(new(graphics, bounds, _ribbon.Theme, Font, DeviceDpi), heading.Text);
+                if (bounds.IntersectsWith(ClientRectangle)) _ribbon.Painter.DrawGalleryHeading(new(graphics, bounds, _ribbon.Theme, Font, DeviceDpi) { Density = _ribbon.Density }, heading.Text);
             }
         }
         finally { graphics.Restore(saved); }

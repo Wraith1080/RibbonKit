@@ -24,7 +24,7 @@ public enum RibbonItemSize
 }
 
 /// <summary>A tab owning a collection of ribbon groups.</summary>
-public sealed class RibbonTab : RibbonElement
+public sealed partial class RibbonTab : RibbonElement
 {
     private bool _isContextual;
     private Color _contextualColor = Color.Empty;
@@ -134,7 +134,7 @@ public abstract class RibbonItem : RibbonElement
     private Image? _image, _largeImage;
     private IRibbonIcon? _icon;
     private RibbonSizePolicy _sizePolicy = RibbonSizePolicy.Fixed(RibbonItemSize.Large);
-    /// <summary>Gets or sets optional inline descriptive text for command-menu rows. At most two lines are displayed; native editor rows keep their compact layout. This is independent of ScreenTipDescription.</summary>
+    /// <summary>Gets or sets optional inline descriptive text for command-menu rows. At most two lines are displayed; native editors do not display descriptions. This is independent of ScreenTipDescription.</summary>
     [DefaultValue(""), Localizable(true), Category("Appearance")]
     public string MenuDescription
     {
@@ -298,7 +298,7 @@ public sealed class RibbonToggleItem : RibbonButtonItem
 }
 
 /// <summary>A command that opens owned popup rows without a primary Click action.</summary>
-public class RibbonDropDownItem : RibbonItem
+public partial class RibbonDropDownItem : RibbonItem
 {
     /// <summary>Gets whether this item's owned popup is currently open.</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]

@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><UseWPF>true</UseWPF></PropertyGroup>
   <ItemGroup><ProjectReference Include="../../src/RibbonKit.WinForms/RibbonKit.WinForms.csproj" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/PopupRefinementChecks.cs" Link="PublicPopupRefinementChecks.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/DensityInteractionChecks.cs" Link="PublicDensityInteractionChecks.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/ModalInteractionChecks.cs" Link="PublicModalInteractionChecks.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/MergeInteractionChecks.cs" Link="PublicMergeInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/GalleryInteractionChecks.cs" Link="PublicGalleryInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/InRibbonGalleryInteractionChecks.cs" Link="PublicInRibbonGalleryInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/BackstageInteractionChecks.cs" Link="PublicBackstageInteractionChecks.cs" /></ItemGroup>

@@ -6,14 +6,17 @@ internal static class RibbonSplitLayout
     internal static bool IsVertical(RibbonSplitButtonItem item, RibbonItemSize size, bool menu) =>
         !menu && item.Layout == RibbonSplitButtonLayout.Vertical && size == RibbonItemSize.Large;
 
-    internal static (Rectangle Primary, Rectangle DropDown) Calculate(Rectangle bounds, RibbonSplitButtonItem item, RibbonItemSize size, bool menu, int dpi)
+    internal static (Rectangle Primary, Rectangle DropDown) Calculate(Rectangle bounds, RibbonSplitButtonItem item, RibbonItemSize size, bool menu, int dpi, Font? font = null)
     {
+        var metrics = RibbonDensityMetrics.For(item.Ribbon?.Density ?? RibbonDensity.Compact);
         if (IsVertical(item, size, menu))
         {
-            int primaryHeight = Math.Clamp(RibbonLayoutEngine.Scale(44, dpi), 1, Math.Max(1, bounds.Height - 1));
+            int primaryHeight = RibbonContentLayout.LargeImageBandHeight(bounds, font ?? item.Ribbon?.Font ?? Control.DefaultFont, dpi, item.Ribbon?.Density ?? RibbonDensity.Compact);
             return (bounds with { Height = primaryHeight }, new(bounds.Left, bounds.Top + primaryHeight, bounds.Width, Math.Max(0, bounds.Height - primaryHeight)));
         }
-        int arrowWidth = Math.Min(RibbonLayoutEngine.Scale(20, dpi), Math.Max(1, bounds.Width / 3));
+        bool touchHorizontal = metrics.Touch && !menu;
+        int arrowWidth = Math.Min(RibbonLayoutEngine.Scale(touchHorizontal ? metrics.HorizontalSplitArrow : metrics.SplitArrow, dpi),
+            Math.Max(1, touchHorizontal ? (bounds.Width - 1) / 2 : bounds.Width / 3));
         return (bounds with { Width = bounds.Width - arrowWidth }, new(bounds.Right - arrowWidth, bounds.Top, arrowWidth, bounds.Height));
     }
 
@@ -21,7 +24,8 @@ internal static class RibbonSplitLayout
     {
         if (target.Element is RibbonQuickAccessDropDownReference { Source: RibbonSplitButtonItem } reference)
         {
-            int span = Math.Min(RibbonLayoutEngine.Scale(menu ? 20 : 12, dpi), Math.Max(1, target.Bounds.Width / 3));
+            var metrics = RibbonDensityMetrics.For(reference.Ribbon?.Density ?? RibbonDensity.Compact);
+            int span = Math.Min(RibbonLayoutEngine.Scale(menu ? metrics.SplitArrow : metrics.QuickAccessArrow, dpi), Math.Max(1, target.Bounds.Width / 3));
             var primary = target.Bounds with { Width = Math.Max(0, target.Bounds.Width - span) };
             var arrow = new Rectangle(primary.Right, primary.Top, span, primary.Height);
             string automatic = target.AutomaticKeyTip ?? "";

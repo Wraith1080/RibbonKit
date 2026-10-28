@@ -23,6 +23,8 @@ public abstract class RibbonElement : Component, IBindableComponent
     {
         get; private set;
     }
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    internal RibbonMergeSource? MergeProvenance { get; set; }
     internal RibbonControl? Ribbon => Parent is RibbonControl ribbon ? ribbon : (Parent as RibbonElement)?.Ribbon;
     internal virtual IEnumerable<RibbonElement> Children => [];
 
@@ -140,7 +142,8 @@ public abstract class RibbonElement : Component, IBindableComponent
     public ControlBindingsCollection DataBindings => _bindings ??= new(this);
     /// <summary>Occurs after the binding context changes.</summary>
     public event EventHandler? BindingContextChanged;
-    internal bool EffectiveEnabled => !IsDisposed && Enabled && (Parent is RibbonElement parent ? parent.EffectiveEnabled : Ribbon?.Enabled ?? true);
+    internal bool EffectiveEnabled => !IsDisposed && Enabled && (Parent is RibbonElement parent ? parent.EffectiveEnabled : Ribbon?.Enabled ?? true)
+        && (this is not RibbonGroupContribution contribution || contribution.TargetTab is { Visible: true, EffectiveEnabled: true });
     internal void Changed(bool layout = true)
     {
         if (Ribbon is { } ribbon) ribbon.ModelChanged(layout, ribbon.Popups.IsPreparingContent(this));

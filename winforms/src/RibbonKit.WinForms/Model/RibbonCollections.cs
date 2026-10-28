@@ -56,8 +56,8 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
         Ribbon?.VerifyAccess();
         base.InsertItem(index, item);
         item.Parent = _owner;
-        if (Ribbon is { } ribbon)
-            item.BindingContext = ribbon.BindingContext;
+        if (_owner is RibbonElement owner) item.BindingContext = owner.BindingContext;
+        else if (Ribbon is { } ribbon) item.BindingContext = ribbon.BindingContext;
         RibbonRadioButtonItem.NormalizeAttached(item);
         Changed();
     }
@@ -73,8 +73,8 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
         previous.Parent = null;
         base.SetItem(index, item);
         item.Parent = _owner;
-        if (Ribbon is { } ribbon)
-            item.BindingContext = ribbon.BindingContext;
+        if (_owner is RibbonElement owner) item.BindingContext = owner.BindingContext;
+        else if (Ribbon is { } ribbon) item.BindingContext = ribbon.BindingContext;
         RibbonRadioButtonItem.NormalizeAttached(item);
         Changed();
     }

@@ -59,7 +59,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
         _syncing = true;
         try
         {
-            var owned = ribbon.AllElements.OfType<RibbonItem>().Where(i => i is IRibbonEditorItem).ToHashSet();
+            var owned = ribbon.RetainedElements.OfType<RibbonItem>().Where(i => !i.IsDisposed && i is IRibbonEditorItem).ToHashSet();
             foreach (var item in _editors.Keys.Where(i => !owned.Contains(i)).ToArray())
             {
                 _editors[item].Dispose();
@@ -237,10 +237,10 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
                 if (_editor is NativeComboBox nativeCombo)
                 {
                     nativeCombo.ApplyMetrics();
-                    // ComboBox determines its own selection-field height. Its
-                    // PreferredHeight can differ from the native height; asking
-                    // for it again on every paint makes Windows resize/repaint.
-                    nativeCombo.SetBounds(field.Left, ClientRectangle.Top + (Height - nativeCombo.PreferredHeight) / 2,
+                    // Owner-drawn selection height can exceed PreferredHeight,
+                    // especially in Touch. Center the actual native control in
+                    // its painted field without requesting another native resize.
+                    nativeCombo.SetBounds(field.Left, field.Top + (field.Height - nativeCombo.Height) / 2,
                         field.Width, nativeCombo.Height, BoundsSpecified.Location | BoundsSpecified.Width);
                     nativeCombo.ClipToText();
                 }
@@ -543,7 +543,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
             base.OnPaint(e);
             var context = new RibbonPaintContext(e.Graphics, ClientRectangle, _ribbon.Theme, Font, _ribbon.DeviceDpi,
                 Hot: _item.EffectiveEnabled && _field.Contains(PointToClient(MousePosition)),
-                Pressed: _item.EffectiveEnabled && _comboPressed, Focused: _editor.ContainsFocus);
+                Pressed: _item.EffectiveEnabled && _comboPressed, Focused: _editor.ContainsFocus) { Density = _ribbon.Density };
             var field = RibbonEditorLayout.Field(ClientRectangle, _item, _labelWidth, Font, _ribbon.DeviceDpi);
             if (_item is RibbonTextBoxItem text) _ribbon.Painter.DrawTextBox(context, text, field);
             else _ribbon.Painter.DrawComboBox(context, (RibbonComboBoxItem)_item, field);
@@ -567,6 +567,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
             private Rectangle _textClip;
             private Region? _textRegion;
             private int _metricFontHeight = -1;
+            private RibbonDensity? _metricDensity;
             internal void ApplyMetrics()
             {
                 // Variable drawing keeps padded list rows independent of the
@@ -575,15 +576,15 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
                 presenter._applying = true;
                 try
                 {
-                    if (_metricFontHeight == Font.Height) return;
-                    _metricFontHeight = Font.Height;
-                    ItemHeight = Font.Height;
+                    if (_metricFontHeight == Font.Height && _metricDensity == presenter._ribbon.Density) return;
+                    _metricFontHeight = Font.Height; _metricDensity = presenter._ribbon.Density;
+                    ItemHeight = Math.Max(Font.Height, RibbonLayoutEngine.Scale(presenter._ribbon.Density == RibbonDensity.Touch ? 28 : 0, presenter._ribbon.DeviceDpi));
                 }
                 finally { presenter._applying = applying; }
             }
             internal void ClipToText()
             {
-                var text = RibbonEditorLayout.ComboText(ClientRectangle, presenter._ribbon.DeviceDpi);
+                var text = RibbonEditorLayout.ComboText(ClientRectangle, presenter._ribbon.DeviceDpi, presenter._ribbon.Density);
                 text.Y = (Height - Font.Height) / 2; text.Height = Font.Height;
                 if (_textClip != text)
                 {
@@ -597,23 +598,23 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
             protected override void OnMeasureItem(MeasureItemEventArgs e)
             {
                 base.OnMeasureItem(e);
-                e.ItemHeight = RibbonEditorLayout.ComboRowHeight(Font, presenter._ribbon.DeviceDpi);
+                e.ItemHeight = RibbonEditorLayout.ComboRowHeight(Font, presenter._ribbon.DeviceDpi, presenter._ribbon.Density);
             }
             protected override void OnDropDown(EventArgs e)
             {
-                DropDownHeight = RibbonEditorLayout.ComboRowHeight(Font, presenter._ribbon.DeviceDpi) * Math.Max(1, Math.Min(Items.Count, MaxDropDownItems)) + 2;
+                DropDownHeight = RibbonEditorLayout.ComboRowHeight(Font, presenter._ribbon.DeviceDpi, presenter._ribbon.Density) * Math.Max(1, Math.Min(Items.Count, MaxDropDownItems)) + 2;
                 base.OnDropDown(e);
             }
             protected override void OnDrawItem(DrawItemEventArgs e)
             {
                 var ribbon = presenter._ribbon;
                 var item = (RibbonComboBoxItem)presenter._item;
-                var context = new RibbonPaintContext(e.Graphics, e.Bounds, ribbon.Theme, Font, ribbon.DeviceDpi);
+                var context = new RibbonPaintContext(e.Graphics, e.Bounds, ribbon.Theme, Font, ribbon.DeviceDpi) { Density = ribbon.Density };
                 if (e.State.HasFlag(DrawItemState.ComboBoxEdit))
                 {
                     using var fill = new SolidBrush(ribbon.Theme.Surface);
                     e.Graphics.FillRectangle(fill, e.Bounds);
-                    ribbon.Painter.DrawText(context with { Bounds = RibbonEditorLayout.ComboText(ClientRectangle, ribbon.DeviceDpi) },
+                    ribbon.Painter.DrawText(context with { Bounds = RibbonEditorLayout.ComboText(ClientRectangle, ribbon.DeviceDpi, ribbon.Density) },
                         item.Value, item.EffectiveEnabled ? ribbon.Theme.Foreground : SystemColors.GrayText,
                         TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.EndEllipsis);
                 }

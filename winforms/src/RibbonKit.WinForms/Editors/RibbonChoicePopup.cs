@@ -31,7 +31,7 @@ internal sealed class RibbonChoicePopup : IDisposable
             Name = item.Id + ".choices", Font = ribbon.Font, BackColor = ribbon.Theme.Surface,
             ForeColor = ribbon.Theme.Foreground, BorderStyle = BorderStyle.None,
             DrawMode = DrawMode.OwnerDrawFixed, IntegralHeight = false, TabStop = false,
-            CausesValidation = false, ItemHeight = RibbonEditorLayout.ComboRowHeight(ribbon.Font, ribbon.DeviceDpi)
+            CausesValidation = false, ItemHeight = RibbonEditorLayout.ComboRowHeight(ribbon.Font, ribbon.DeviceDpi, ribbon.Density)
         };
         _list.Items.AddRange(item.Items.Cast<object>().ToArray());
         _list.SelectedIndex = item.SelectedIndex;
@@ -138,7 +138,7 @@ internal sealed class RibbonChoicePopup : IDisposable
             // selection transition, when querying SelectedIndex can still
             // return the previous row and leave its selected paint behind.
             ribbon.Painter.DrawComboBoxItem(new(e.Graphics, e.Bounds, ribbon.Theme, Font, ribbon.DeviceDpi,
-                Hot: e.Index == _hot, Pressed: e.Index == _pressed && Capture),
+                Hot: e.Index == _hot, Pressed: e.Index == _pressed && Capture) { Density = ribbon.Density },
                 owner._item, e.Index, (e.State & DrawItemState.Selected) != 0);
         }
         protected override void OnMouseMove(MouseEventArgs e)

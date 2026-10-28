@@ -5,7 +5,8 @@ internal sealed record RibbonBackstageLayout(Rectangle Back, Rectangle Navigatio
     internal static RibbonBackstageLayout Build(Size size, Font font, int dpi, RibbonBackstage? backstage = null)
     {
         int S(int value) => RibbonLayoutEngine.Scale(value, dpi);
-        int inset = S(8), row = Math.Max(S(42), font.Height + S(16));
+        var metrics = RibbonDensityMetrics.For(backstage?.Ribbon?.Density ?? RibbonDensity.Compact);
+        int inset = S(8), row = Math.Max(S(metrics.BackstageRow), font.Height + S(16));
         int width = Math.Max(0, size.Width);
         // Preserve 240 logical pixels for a page when possible; very narrow hosts
         // divide their space evenly rather than letting either region disappear.
@@ -24,7 +25,7 @@ internal sealed record RibbonBackstageLayout(Rectangle Back, Rectangle Navigatio
             }
         int rail = Math.Clamp(backstage?.NavigationWidth is { } authored ? ToDevice(authored) : auto, minimum, maximum);
         int navigation = rail;
-        int back = Math.Min(S(36), Math.Max(0, navigation - 2 * inset));
+        int back = Math.Min(S(metrics.BackButton), Math.Max(0, navigation - 2 * inset));
         int top = Math.Min(size.Height, S(20) + back + S(24));
         return new(new(Math.Min(S(20), Math.Max(0, navigation - back)), S(20), back, back), new(0, top, navigation, Math.Max(0, size.Height - top)),
             new(rail, 0, width - rail, size.Height), row, inset);

@@ -14,13 +14,13 @@ internal class RibbonAutomationNode : IRawProvider, IFragmentProvider, IInvokePr
     private readonly Dictionary<int, object> _lastProperties = [];
     internal RibbonAutomationNode(RibbonAutomationRoot root, RibbonElement? element, bool tabList = false) => (Root, Element, TabList) = (root, element, tabList);
     public int ProviderOptions => 2;
-    internal virtual RibbonAutomationNode? Parent => TabList ? Root : Element switch { RibbonTab => Root.TabsNode, RibbonGroup { Parent: RibbonTab tab } => Root.Node(tab), RibbonItem item when Root.Surface is null && item.Parent is RibbonGroup group => Root.Node(group), _ => Root };
+    internal virtual RibbonAutomationNode? Parent => TabList ? Root : Element switch { RibbonTab => Root.TabsNode, RibbonGroup { Parent: RibbonTab tab } => Root.Node(tab), RibbonGroup { Parent: RibbonGroupContribution contribution } when contribution.TargetTab is { } tab => Root.Node(tab), RibbonItem item when Root.Surface is null && item.Parent is RibbonGroup group => Root.Node(group), _ => Root };
     internal virtual IReadOnlyList<RibbonAutomationNode> Children => Root.Read(() =>
     {
         if (TabList)
-            return (IReadOnlyList<RibbonAutomationNode>)Root.Ribbon.Tabs.Where(t => t.Visible).Select(Root.Node).ToArray();
+            return (IReadOnlyList<RibbonAutomationNode>)Root.Ribbon.GetPresentedTabs().Where(t => t.Visible).Select(Root.Node).ToArray();
         if (Element is RibbonTab tab && ReferenceEquals(tab, Root.Ribbon.SelectedTab))
-            return tab.Groups.Where(g => g.Visible).Select(Root.Node).ToArray();
+            return Root.Ribbon.GetPresentedGroups(tab).Where(g => g.Visible).Select(Root.Node).ToArray();
         if (Element is RibbonGroup group && !Root.Ribbon.Snapshot.Groups.Any(g => ReferenceEquals(g.Group, group) && g.Collapsed))
             return Root.Targets.Where(t => t.Element is RibbonItem item && ReferenceEquals(item.Parent, group)).Select(t => t.Element!).Distinct().Select(e => Root.Node(e)).ToArray();
         return [];

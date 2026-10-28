@@ -14,6 +14,7 @@ public partial class RibbonControl
         set
         {
             VerifyAccess();
+            if (value && IsModal) return;
             if (_isMinimized == value) return;
             bool restore = ContainsFocus || _popups.ContainsFocus || _editors.ContainsFocus;
             _screenTips.Cancel();

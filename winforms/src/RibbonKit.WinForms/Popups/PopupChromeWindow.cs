@@ -47,7 +47,7 @@ internal sealed class PopupChromeWindow : NativeWindow, IDisposable
             using var bitmap = new Bitmap(bounds.Width, bounds.Height, PixelFormat.Format32bppPArgb);
             using (var graphics = Graphics.FromImage(bitmap))
             {
-                var context = new RibbonPaintContext(graphics, new(padding, padding, popup.Width, popup.Height), ribbon.Theme, ribbon.Font, ribbon.DeviceDpi);
+                var context = new RibbonPaintContext(graphics, new(padding, padding, popup.Width, popup.Height), ribbon.Theme, ribbon.Font, ribbon.DeviceDpi) { Density = ribbon.Density };
                 if (shadow) ribbon.Painter.DrawPopupShadow(context);
                 if (radius > 0) ribbon.Painter.DrawPopupFrame(context);
             }

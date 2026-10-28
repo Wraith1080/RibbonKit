@@ -15,13 +15,13 @@ internal sealed class RibbonGalleryStripManager(RibbonControl ribbon) : IDisposa
         _syncing = true;
         try
         {
-            var sources = ribbon.AllElements.OfType<RibbonGalleryItem>().Where(g => g.IsInRibbon && !g.IsDisposed).ToArray();
+            var sources = ribbon.RetainedElements.OfType<RibbonGalleryItem>().Where(g => g.IsInRibbon && !g.IsDisposed).ToArray();
             foreach (var old in _strips.Keys.Except(sources).ToArray()) { _strips[old].Dispose(); _strips.Remove(old); }
             var slots = new Dictionary<RibbonGalleryItem, (Control Parent, RibbonTarget Target)>();
             void Add(Control parent, IEnumerable<RibbonTarget> targets)
             {
                 foreach (var target in targets)
-                    if (target.Element is RibbonGalleryItem { IsInRibbon: true } gallery && target.Size == RibbonItemSize.Large && !target.VisibleBounds.IsEmpty)
+                    if (target.Element is RibbonGalleryItem { IsInRibbon: true } gallery && target.Size == RibbonItemSize.Large && !target.GalleryDropDown && !target.VisibleBounds.IsEmpty)
                         slots[gallery] = (parent, target);
             }
             Add(ribbon, ribbon.Snapshot.Targets);
@@ -118,7 +118,7 @@ internal sealed class RibbonGalleryStripSurface : Control
     protected override void OnResize(EventArgs e) { base.OnResize(e); if (Source is not null) Rebuild(); }
     protected override void OnPaint(PaintEventArgs e)
     {
-        base.OnPaint(e); var context = new RibbonPaintContext(e.Graphics, ClientRectangle, _ribbon.Theme, Font, _ribbon.DeviceDpi);
+        base.OnPaint(e); var context = new RibbonPaintContext(e.Graphics, ClientRectangle, _ribbon.Theme, Font, _ribbon.DeviceDpi) { Density = _ribbon.Density };
         _ribbon.Painter.DrawGalleryStripFrame(context);
         foreach (var item in _layout.Tiles)
             _ribbon.Painter.DrawGalleryTile(context with { Bounds = item.Bounds, Hot = Interactive && ReferenceEquals(_hot, item.Tile),

@@ -67,15 +67,13 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     public override void DrawGroup(RibbonPaintContext context, RibbonGroup group, bool collapsed)
     {
         base.DrawGroup(context, group, collapsed);
-        if (!collapsed)
+        var frame = context.GroupSeparatorBounds.IsEmpty ? context.Bounds : context.GroupSeparatorBounds;
+        int inset = Layout.RibbonLayoutEngine.Scale(GroupSeparatorInset, context.DeviceDpi);
+        int height = frame.Height - 2 * inset;
+        if (frame.Width > 0 && height > 0)
         {
-            int inset = Layout.RibbonLayoutEngine.Scale(GroupSeparatorInset, context.DeviceDpi);
-            int height = context.Bounds.Height - 2 * inset;
-            if (context.Bounds.Width > 0 && height > 0)
-            {
-                using var brush = new SolidBrush(context.Theme.Border);
-                context.Graphics.FillRectangle(brush, context.Bounds.Right - 1, context.Bounds.Top + inset, 1, height);
-            }
+            using var brush = new SolidBrush(context.Theme.Border);
+            context.Graphics.FillRectangle(brush, frame.Right - 1, frame.Top + inset, 1, height);
         }
     }
     /// <inheritdoc />

@@ -19,6 +19,8 @@ internal static class ComponentTree
         yield return element;
         IEnumerable<RibbonElement> children = element switch
         {
+            RibbonMergeSource source => source.Tabs.Cast<RibbonElement>().Concat(source.Groups),
+            RibbonGroupContribution contribution => [contribution.Group],
             RibbonTab tab => tab.Groups,
             RibbonGroup group => group.Items,
             RibbonDropDownItem drop => drop.Items,
@@ -45,6 +47,10 @@ public sealed class QuickAccessCollectionEditor(IServiceProvider serviceProvider
 public sealed class GroupCollectionEditor(IServiceProvider serviceProvider, Type type) : CollectionEditor(serviceProvider, type)
 {
     protected override Type[] CreateNewItemTypes() => [typeof(RibbonGroup)];
+}
+public sealed class GroupContributionCollectionEditor(IServiceProvider serviceProvider, Type type) : CollectionEditor(serviceProvider, type)
+{
+    protected override Type[] CreateNewItemTypes() => [typeof(RibbonGroupContribution)];
 }
 public sealed class ItemCollectionEditor(IServiceProvider serviceProvider, Type type) : CollectionEditor(serviceProvider, type)
 {

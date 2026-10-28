@@ -72,6 +72,7 @@ public sealed class RendererBoundaryTests
         foreach (int extra in new[] { 0, 1 })
         foreach (bool collapsed in new[] { false, true })
         foreach (var painter in new[] { flat, office })
+        foreach (int state in new[] { 0, 1, 2 })
         {
             int S(int n) => (int)Math.Round(n * dpi / 96d);
             var bounds = new Rectangle(3, 5, S(120) + extra, S(112) + extra);
@@ -79,10 +80,11 @@ public sealed class RendererBoundaryTests
             using var graphics = Graphics.FromImage(bitmap);
             var separatorTheme = theme with { Border = Color.Magenta };
             graphics.Clear(separatorTheme.Surface);
-            painter.DrawGroup(new(graphics, bounds, separatorTheme, ribbon.Font, dpi), group, collapsed);
+            var command = collapsed ? Rectangle.FromLTRB(bounds.Left + S(3), bounds.Top + S(6), bounds.Right - S(3), bounds.Bottom - S(8)) : bounds;
+            painter.DrawGroup(new(graphics, command, separatorTheme, ribbon.Font, dpi, Hot: state == 1, Pressed: state == 2) { GroupSeparatorBounds = bounds }, group, collapsed);
             for (int y = 0; y < bitmap.Height; y++)
             {
-                bool line = ReferenceEquals(painter, office) && !collapsed && y >= bounds.Top + S(12) && y < bounds.Bottom - S(12);
+                bool line = ReferenceEquals(painter, office) && y >= bounds.Top + S(12) && y < bounds.Bottom - S(12);
                 Assert.Equal((line ? separatorTheme.Border : separatorTheme.Surface).ToArgb(), bitmap.GetPixel(bounds.Right - 1, y).ToArgb());
                 Assert.Equal(separatorTheme.Surface.ToArgb(), bitmap.GetPixel(bounds.Right - 2, y).ToArgb());
                 Assert.Equal(separatorTheme.Surface.ToArgb(), bitmap.GetPixel(bounds.Right, y).ToArgb());

@@ -9,12 +9,15 @@ public partial class MainForm : Form
     public MainForm()
     {
         InitializeComponent();
+        paste.DropDownHeader = "Paste options"; select.DropDownHeader = "Selection options";
+        trackChanges.DropDownHeader = "Track changes"; shapes.DropDownHeader = "Choose a shape"; inputMenu.DropDownHeader = "Input options";
+        foreach (var dropdown in components!.Components.OfType<RibbonDropDownItem>().Where(d => d is not RibbonGalleryItem && d.DropDownHeader.Length == 0)) dropdown.DropDownHeader = dropdown.Text;
         ribbon.FileMenu.Id = "file"; ribbon.FileMenu.Visible = true;
         ribbon.FileMenu.ScreenTipDescription = "Open document commands.";
         var newDocument = new RibbonButtonItem { Id = "file.new", Text = "New", KeyTip = "N", Icon = new SampleIcon(0), MenuDescription = "Create a document." };
         var openDocument = new RibbonButtonItem { Id = "file.open", Text = "Open", KeyTip = "O", Icon = new SampleIcon(1), MenuDescription = "Open an existing document." };
         var saveDocument = new RibbonButtonItem { Id = "file.save", Text = "Save", KeyTip = "S", Icon = new SampleIcon(7) };
-        var recentDocuments = new RibbonDropDownItem { Id = "file.recent", Text = "Recent", KeyTip = "R" };
+        var recentDocuments = new RibbonDropDownItem { Id = "file.recent", Text = "Recent", KeyTip = "R", DropDownHeader = "Recent documents" };
         var recentDocument = new RibbonButtonItem { Id = "file.recent.example", Text = "Example document", KeyTip = "E" }; recentDocument.Click += ActionClick;
         recentDocuments.Items.Add(recentDocument);
         newDocument.Click += ActionClick; openDocument.Click += ActionClick; saveDocument.Click += ActionClick;
@@ -72,6 +75,10 @@ public partial class MainForm : Form
         document.AppendText("\r\n\r\nChoose Insert > Picture to show the colored Picture Format tab. Close picture tools hides it and returns to a visible tab. The application decides when picture tools apply.");
         document.AppendText("\r\n\r\nFile opens native Backstage. Info and Print retain their native fields when switching pages or reopening; Save and New run application commands. F10, F enters Backstage, F6 moves to its page, and Escape returns to this document. File remains available while the ribbon is minimized.");
         ribbon.SelectedTab = home;
+        InitializeMerging();
+        InitializeModal();
+        InitializeDensity();
+        document.AppendText("\r\n\r\nMerging > Chart context adds a source-owned Chart Design tab and a Chart context group on Home. Switch the context off and on to retain its fields and bindings. Its Update chart and Type entries in Quick Access become unavailable while the context is away. Application activation drives merging; moving keyboard focus does not.");
         document.AppendText("\r\n\r\nHome > Galleries shows Styles inside the ribbon. Use its up/down buttons to browse a row, and the bottom button or F4 to expand all styles. Preview leaves selection unchanged; click or Enter applies the style. The first two Quick Access buttons open the same Styles and Text color galleries, including while another tab is active.");
     }
     private void NameValidating(object? sender, CancelEventArgs e)

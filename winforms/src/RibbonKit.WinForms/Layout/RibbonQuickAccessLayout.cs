@@ -10,8 +10,9 @@ internal static class RibbonQuickAccessLayout
         if (slotBounds.Width <= 0 || slotBounds.Height <= 0) return result;
         int S(double n) => RibbonLayoutEngine.Scale(n, ribbon.DeviceDpi);
         var entries = ribbon.QuickAccessItems.Where(e => e.Visible).ToArray();
-        int slot = S(RibbonQuickAccess.ButtonWidth), padding = Math.Min(S(2), slotBounds.Width / 2);
-        var widths = entries.Select(e => S(RibbonQuickAccess.Width(e))).ToArray();
+        var metrics = RibbonDensityMetrics.For(ribbon.Density);
+        int slot = S(metrics.QuickAccessButton), padding = Math.Min(S(2), slotBounds.Width / 2);
+        var widths = entries.Select(e => S(RibbonQuickAccess.Width(e) == RibbonQuickAccess.ButtonWidth ? metrics.QuickAccessButton : metrics.QuickAccessMenu)).ToArray();
         bool overflow = widths.Sum() + 2 * padding > slotBounds.Width;
         int count = 0, used = 0, available = Math.Max(0, slotBounds.Width - 2 * padding - (overflow ? slot : 0));
         while (count < entries.Length && used + widths[count] <= available) used += widths[count++];

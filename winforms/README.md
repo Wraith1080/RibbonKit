@@ -8,7 +8,8 @@ split buttons and native TextBox/ComboBox editing. The current [M3 slice](docs/M
 adds button/toggle Quick Access, checkbox/radio icon references, ComboBox choosers
 and dropdown/split/group references.
 The current [M4 slice](docs/M4-STATUS.md) adds contextual-tab header colors,
-the File command menu, native Backstage pages and dropdown galleries. [Remaining slices](docs/M4-STATUS.md#remaining-slices)
+the File command menu, native Backstage pages, dropdown/in-ribbon/QAT galleries
+and source-owned tab/group merging with modal scopes and Compact/Touch density. [Remaining slices](docs/M4-STATUS.md#remaining-slices)
 record the working sequence through galleries, customization and window integration.
 Accessibility compatibility is deferred
 while the control structure is implemented; it remains possible future work.
@@ -67,11 +68,49 @@ Custom renderers override `DrawSplitItem` to receive both measured action contex
 The retained foundation bridge does not provide complete accessibility semantics
 for this new item; no split accessibility compatibility is claimed.
 
-Office2024 light, Compact density, LTR and immediate transitions are the initial
+Office2024 light, Compact/Touch density, LTR and immediate transitions are the current
 scope. Mica client transparency, animation, custom window chrome, title-bar QAT,
-customization, galleries and WPF template/resource
+customization and WPF template/resource
 compatibility are later work. Ordinary application controls remain native Forms
 controls. The runtime references neither WPF nor the designer SDK.
+
+### Compact and Touch spacing
+
+`RibbonControl.Density` defaults to `RibbonDensity.Compact`. Set it to
+`RibbonDensity.Touch` for larger command rows, native field frames, popup choices,
+QAT targets, gallery tiles and Backstage navigation. Three command rows remain in
+each column. Font size, source models, selection, binding and authored theme values
+stay the same. Metrics use 96-DPI logical pixels and scale with the ribbon's DPI;
+Touch applies minimum target sizes without rewriting authored tile or input widths.
+
+```csharp
+ribbon.Density = RibbonDensity.Touch;
+ribbon.DensityChanged += (_, _) => SaveDensityPreference(ribbon.Density);
+```
+
+A change first commits valid focused ribbon input; invalid input blocks the change.
+Accepted changes close transient popups, cancel gallery previews and preserve native
+editor handles, focus and text selection where still available. Open Backstage stays
+open with its native page intact. Application pages, document content and dialogs
+remain sized by the host. Changes are immediate; automatic device detection and
+preference storage belong to the application. Custom renderers receive the owning
+density in `RibbonPaintContext.Density`.
+
+Large Touch commands align their icons across button types. Ordinary captions sit
+eight logical pixels below their icon slots, with room for two aligned text rows.
+Vertical splits use a larger primary action, with the actual one- or two-line
+caption and centered indicator grouped in the lower menu action; clicking the
+caption opens that menu. The split boundary leaves room for larger fonts.
+Horizontal Touch splits reserve a 44-logical-pixel arrow and a larger primary
+action (at least 72 for Large, 56 for smaller presentations). Large horizontal
+splits add the arrow allowance to the existing caption budget, so their effective
+total width can exceed `LargeButtonMaxWidth`; the authored metric is unchanged.
+Compact content positions and standard menu-row layout retain their existing
+geometry.
+
+Showcase's third QAT entry, also under **Merging → Input mode**, demonstrates a
+host-owned Mouse/Touch selector. Actual VS property editing remains deferred to the
+designer slice. The Office 2024 joined BelowRibbon QAT frame is planned for M4I.
 
 ## Application contract
 
@@ -98,6 +137,138 @@ the ribbon and cannot be reparented; its direct disposal permanently releases th
 stable declaration. Images/renderers remain borrowed. The legacy two-pane
 application menu/orb remains separate. New accessibility compatibility and actual
 VS acceptance remain deferred.
+
+### Illustrated command choices
+
+An optional `RibbonDropDownItem.DropDownHeader` adds a noninteractive heading.
+`MenuPresentation = RibbonMenuPresentation.IllustratedChoices` gives its leaf
+commands and options 36-logical-pixel artwork, bold titles, two description lines
+and a full-row selected fill. Supply artwork through the existing borrowed Icon,
+Image or LargeImage properties and descriptions through MenuDescription:
+
+```csharp
+var modes = new RibbonDropDownItem {
+    Text = "Input mode",
+    DropDownHeader = "Optimize spacing between commands",
+    MenuPresentation = RibbonMenuPresentation.IllustratedChoices
+};
+modes.Items.Add(new RibbonRadioButtonItem {
+    Text = "Touch", Icon = touchIcon,
+    MenuDescription = "More space between commands.\nOptimized for use with touch."
+});
+```
+
+Standard is the default presentation. Editors, separators and submenus retain
+their layouts; galleries keep their existing group headings. Projecting the whole
+dropdown through QAT retains its heading and illustrated choices. Individual
+commands projected into QAT retain the toolbar's own presentation. The renderer's
+DrawMenuHeader hook reuses its existing heading theme roles; Office 2024 uses a
+rounded fill, and neutral uses transparent bold text. The sample's Mouse/Touch
+selector supplies its own vector illustrations and synchronizes its selected row
+with accepted Density changes, including validation vetoes.
+
+### Transient tab and group merging
+
+`RibbonMergeSource` owns content for an application context, such as a document
+or chart editor. Call `ribbon.Merge(source)` when that context becomes active and
+`ribbon.Unmerge(source)` when it leaves. Focus changes do not activate sources.
+Both methods return false when that operation is already satisfied on this host.
+A source can be active on one host at a time; unmerge before retargeting it.
+
+```csharp
+var source = new RibbonMergeSource { Text = "Chart document", Order = 10 };
+var tools = new RibbonTab { Text = "Chart Design", KeyTip = "CD" };
+var data = new RibbonGroup { Text = "Data" };
+data.Items.Add(new RibbonTextBoxItem { Text = "Series", Value = "Revenue" });
+tools.Groups.Add(data);
+source.Tabs.Add(tools);
+var contribution = new RibbonGroupContribution {
+    TargetTabId = home.Id, Order = -1
+};
+contribution.Group.Text = "Chart context";
+contribution.Group.Items.Add(new RibbonButtonItem { Text = "Update chart" });
+source.Groups.Add(contribution);
+ribbon.Merge(source);
+// Later: ribbon.Unmerge(source); dispose source when the context is destroyed.
+```
+
+The host's Tabs and each tab's Groups remain authored collections. Use
+`GetPresentedTabs()` / `GetPresentedGroups(tab)` for presentation-order snapshots,
+including merged content. Models keep their source owner, IDs and bindings; the
+source keeps an independent BindingContext, while painting uses the host's theme,
+font and DPI. Host disposal unmerges borrowed sources without disposing them.
+Source disposal removes its contributions and disposes its owned models.
+
+Host content has order zero and precedes merged content at equal order. Source
+Order sorts whole tabs; each contribution has its own group Order. Negative orders
+precede host content. Equal orders use first-merge sequence, retained across
+unmerge/remerge on the same host, then declaration order. A missing TargetTabId
+has no group presentation; adding a matching authored tab makes it available.
+Duplicate IDs are rejected before attachment. Surviving selected host tabs stay
+selected; removal of the selected source tab uses the normal visible fallback.
+
+QAT references to merged commands park disabled while the source is away and
+revive on remerge. Its native editor and gallery presenters are parked for reuse
+on that host; moving the source to another host releases the old native cache.
+Use `GetMergeSource(element)` to identify transient models and QAT references,
+including parked references after source disposal, so future structural storage
+does not persist context-owned content. A source's lifetime belongs to the app.
+There is no automatic source-QAT, File/Backstage or nested-source merging.
+
+Showcase **Merging → Chart context** adds Chart Design and Home's Chart context
+group. Public-only shown checks are available through `--merge-checks` /
+`--merge-checks-flat` on the native runner, followed by an evidence directory;
+the independent consumer includes `--validate-merge` / `--validate-merge-flat`.
+Actual VS review remains deferred.
+
+### Modal tab scopes
+
+Mark a tab `IsModal = true`, then call `EnterModal(tab)` to present it exclusively.
+The tab must already be visible, enabled and authored or merged into this ribbon.
+Entry does not change authored tab/File visibility. QAT remains available,
+including commands from ordinary authored tabs. File, Backstage and minimize are
+blocked while the scope is active; blocked requests leave no deferred value.
+
+```csharp
+var preview = new RibbonTab {
+    Text = "Print Preview", IsModal = true,
+    CloseButtonText = "Close Print Preview"
+};
+// Add preview and its groups to the host or an application-owned merge source.
+ribbon.EnterModal(preview);
+// Later: ribbon.ExitModal();
+```
+
+`IsModal` and `ModalTab` on the ribbon describe transient state. `ModalEntering`
+and `ModalExiting` receive cancellable RibbonModalEventArgs; `ModalEntered` and
+`ModalExited` report completed transitions. Normal entry/exit respects native
+editor validation, and entry respects an open Backstage's closing veto. A second
+different mode must wait for explicit exit; reentrant transitions are guarded.
+
+The close command replaces minimize in the header and uses shared theme states,
+keyboard focus, automatic KeyTips (preferred X) and the existing button automation
+path. Both header utilities use `RibbonTheme.HeaderButtonInset` (default four
+logical pixels) for smaller, vertically centered visuals with equal top/right/
+bottom spacing. Their full measured click targets stay available. Zero uses the
+full slot; oversized values clamp safely. `RibbonTab.CanClose = false` hides that command and blocks user Escape;
+application ExitModal remains available with normal cancellation/validation.
+Escape closes a native choice list, popup or KeyTip level before leaving modal
+presentation. From application content it can exit directly. Removing, unmerging,
+hiding, disabling or clearing IsModal on the active tab forces a noncancellable
+`TabUnavailable` exit, even when pending editor input is invalid.
+
+Exit restores the prior valid selected tab or a deterministic visible fallback,
+prior minimized state and still-available focus. Visibility edits and merged
+sources added during the scope survive exit. GetPresentedTabs returns only the
+modal tab while active; authored Tabs/Visible values remain appropriate inputs
+for future structural persistence. The library does not own a print document,
+printer, preview paint, application content visibility or nested modal stack.
+
+Showcase **Merging → Print preview** demonstrates an application-owned preview
+page with native Copies/Zoom fields. The shared public-only consumer checks use
+`--modal-checks` / `--modal-checks-flat` on the native runner, or
+`--validate-modal` / `--validate-modal-flat` in the independent consumer, followed
+by an evidence directory.
 
 ### Galleries in dropdowns, the ribbon and Quick Access
 
@@ -162,8 +333,13 @@ document preview and commit actions.
 Set `IsInRibbon = true` to display a single-row strip in Large presentations.
 `InRibbonColumnCount` (1–12, default 3) sets its columns independently of popup
 ColumnCount. TileWidth determines its logical width; ribbon body height determines
-its height. Existing SizePolicy reductions to Medium/Small display the dropdown
-command. Up/down buttons and the mouse wheel browse whole realized rows, with
+its height. SizePolicy entries of Medium/Small select a full-height Large dropdown
+fallback in its own column. They do not create stacked medium/small gallery
+buttons. A Large entry retains the strip; the authored policy stays unchanged.
+Dropdown-only galleries (`IsInRibbon = false`) retain ordinary size policies.
+Custom renderers can read `RibbonPaintContext.IsGalleryDropDown` to distinguish
+the reduced dropdown from the strip without changing the source model.
+Up/down buttons and the mouse wheel browse whole realized rows, with
 disabled endpoint buttons. Arrow keys/Home/End preview tiles, PageUp/PageDown
 browse rows, and Enter/Space commit. F4, Alt+Down or the expand button opens the
 ordinary gallery popup. Cancelling expansion retains the strip's browsed row;
@@ -662,9 +838,20 @@ metadata is not added in this slice; custom renderers can override
 `RibbonItem.MenuDescription` adds localizable inline text below a command-menu
 caption, displaying at most two wrapped lines in the secondary text color. The
 full string stays in the model. This property is independent of `ScreenTipDescription`;
-strip commands, collapsed-group command slots and native editor rows retain their
-compact layout. Descriptions also work on toggles, checkboxes, radio choices,
+native editors do not display descriptions. Strip and group-flyout command columns
+retain their own layout. Descriptions also work on toggles, checkboxes, radio choices,
 submenus and either layout of split buttons.
+
+Each command popup gives all visible interactive rows the tallest measured row
+height, including disabled commands and native field rows. Headers and separators
+keep their own heights; hidden commands do not contribute. Each nested popup
+measures independently. QAT overflow uses the same rule. Native field frames keep
+their density-appropriate size and center inside the shared row height.
+
+Touch menus use wider minimums, larger icon/arrow slots and more vertical padding
+while keeping the authored font size. Described Touch rows reserve both available
+description lines. Optional DropDownHeader text receives the shared themed heading
+treatment; Showcase supplies headings such as Paste options and Selection options.
 
 ```csharp
 var formats = new RibbonDropDownItem { Text = "Format" };
@@ -690,6 +877,11 @@ stay inside the work area. Right opens a submenu; Left/Escape closes one level
 and restores its opener. Decorative, hidden and disabled rows are skipped during
 navigation. Scrolling a parent closes its children before their anchors move.
 Collection/property changes dismiss stale popups through the existing model path.
+Alt+F4 from an owned popup requests closing its host Form. RibbonKit first cancels
+choice/gallery previews and dismisses the popup chain through its ownership path,
+then calls the Form's normal close handling. FormClosing may cancel; retained native
+editors and typed values remain available when menus reopen. Escape retains its
+existing one-level dismissal behavior.
 
 ## Passive ScreenTips
 
@@ -766,6 +958,8 @@ controls use themed hover/pressed chrome. The body panel bounds supplied to
 Office group dividers follow the WPF reference's inset proportions: a crisp
 one-device-pixel `Border` hairline with 12 logical pixels of clearance at both
 ends, scaled with DPI. The neutral renderer retains its separator-free surface.
+Expanded and collapsed groups use the full group frame for aligned dividers;
+collapsed button hover/focus visuals and click targets keep their inset bounds.
 Body scrollers use `PopupBorder` at rest and an accent border on hover/press.
 Their top and bottom clearance is controlled by
 `RibbonTheme.BodyScrollButtonVerticalInset`: two logical pixels by default,

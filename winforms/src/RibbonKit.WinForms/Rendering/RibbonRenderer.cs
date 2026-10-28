@@ -70,8 +70,16 @@ public partial class RibbonRenderer : IDisposable
         // Like the tab scrollers, this utility owns its opaque tab-row slot.
         // GDI text from an overflowing tab must not show through beneath it.
         using (var background = new SolidBrush(context.Theme.Background)) context.Graphics.FillRectangle(background, context.Bounds);
-        if (context.Hot || context.Pressed) DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
-        RibbonArrowPainter.DrawVertical(context.Graphics, context.Bounds, context.DeviceDpi, context.Theme.Foreground, !minimized);
+        context = context with { Bounds = RibbonHeaderButtonLayout.PaintBounds(context.Bounds, context.Theme, context.DeviceDpi) };
+        if (context.Bounds.Width <= 0 || context.Bounds.Height <= 0) return;
+        var state = context.Graphics.Save();
+        try
+        {
+            context.Graphics.SetClip(context.Bounds, System.Drawing.Drawing2D.CombineMode.Intersect);
+            if (context.Hot || context.Pressed) DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
+            RibbonArrowPainter.DrawVertical(context.Graphics, context.Bounds, context.DeviceDpi, context.Theme.Foreground, !minimized);
+        }
+        finally { context.Graphics.Restore(state); }
     }
     /// <summary>Paints the measured Quick Access strip using the shared palette.</summary>
     public virtual void DrawQuickAccessToolbar(RibbonPaintContext context, RibbonQuickAccessPosition position)
@@ -226,7 +234,7 @@ public partial class RibbonRenderer : IDisposable
         var field = context with { Bounds = editorBounds };
         var border = context.Hot || context.Focused || context.Pressed || open ? context.Theme.Accent : context.Theme.Border;
         DrawChrome(field, new(context.Theme.Surface), border);
-        var button = RibbonEditorLayout.ComboButton(editorBounds, context.DeviceDpi);
+        var button = RibbonEditorLayout.ComboButton(editorBounds, context.DeviceDpi, context.Density);
         if (context.Hot || context.Pressed || open)
         {
             var saved = context.Graphics.Save();
@@ -324,14 +332,15 @@ public partial class RibbonRenderer : IDisposable
         }
         bool enabled = item.EffectiveEnabled;
         context = EnabledContext(context, enabled);
-        if (item is RibbonGalleryItem { IsInRibbon: true } && size == RibbonItemSize.Large && !menu)
+        if (menu && RibbonMenuLayout.IsIllustratedChoice(item)) { DrawIllustratedChoice(context, item); return; }
+        if (item is RibbonGalleryItem { IsInRibbon: true } && size == RibbonItemSize.Large && !menu && !context.IsGalleryDropDown)
         { DrawGalleryStripFrame(context); return; }
         if (item is RibbonCheckBoxItem or RibbonRadioButtonItem)
         {
             if (context.Hot || context.Pressed)
                 DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
             var content = RibbonContentLayout.Calculate(context.Bounds, RibbonItemSize.Medium, menu, true, context.DeviceDpi, context.Font);
-            if (menu) content = RibbonMenuLayout.Content(content, item, context.Bounds, context.Font, context.DeviceDpi);
+            if (menu) content = RibbonMenuLayout.Content(content, item, context.Bounds, context.Font, context.DeviceDpi, context.Density);
             if (item is RibbonCheckBoxItem box) DrawCheckBoxIndicator(context with { Bounds = content.Icon }, box);
             else DrawRadioButtonIndicator(context with { Bounds = content.Icon }, (RibbonRadioButtonItem)item);
             DrawText(context with { Bounds = content.Text }, item.Text, enabled ? context.Theme.Foreground : SystemColors.GrayText, content.Flags);
@@ -346,6 +355,23 @@ public partial class RibbonRenderer : IDisposable
         DrawItemContent(context, item, size, menu);
         if (context.Focused)
             DrawFocus(context);
+    }
+    /// <summary>Paints a noninteractive command-dropdown heading. Uses the renderer's existing themed heading treatment.</summary>
+    public virtual void DrawMenuHeader(RibbonPaintContext context, string text) => DrawGalleryHeading(context, text);
+
+    private void DrawIllustratedChoice(RibbonPaintContext context, RibbonItem item)
+    {
+        bool selected = item is RibbonToggleItem { Checked: true } or RibbonRadioButtonItem { Checked: true } or RibbonCheckBoxItem { Checked: true };
+        if (selected || context.Hot || context.Pressed)
+            DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, Color.Transparent);
+        var content = RibbonMenuLayout.IllustratedContent(context.Bounds, context.Font, context.DeviceDpi, RibbonMenuLayout.HasDescription(item));
+        var saved = context.Graphics.Save();
+        try { context.Graphics.SetClip(content.Icon, CombineMode.Intersect); DrawItemImage(context with { Bounds = content.Icon }, item, RibbonItemSize.Large); }
+        finally { context.Graphics.Restore(saved); }
+        using var titleFont = new Font(context.Font, context.Font.Style | FontStyle.Bold);
+        DrawText(context with { Bounds = content.Text, Font = titleFont }, item.Text, item.EffectiveEnabled ? context.Theme.Foreground : SystemColors.GrayText, content.Flags);
+        DrawMenuDescription(context, item, content.Text, illustrated: true);
+        if (context.Focused) DrawFocus(context);
     }
     /// <summary>Paints a check indicator in its measured compact slot. The flat foundation uses square corners.</summary>
     public virtual void DrawCheckBoxIndicator(RibbonPaintContext context, RibbonCheckBoxItem item) =>
@@ -449,13 +475,16 @@ public partial class RibbonRenderer : IDisposable
         bool check = item is RibbonToggleItem { Checked: true } or RibbonSplitButtonItem { Checked: true }
             || enabledOverride.HasValue && item is RibbonCheckBoxItem { CheckState: CheckState.Checked } or RibbonRadioButtonItem { Checked: true };
         bool hasIcon = item.Icon is not null || item.Image is not null || item.LargeImage is not null;
-        var content = RibbonContentLayout.Calculate(context.Bounds, size, menu, context.ReserveIcon || hasIcon, context.DeviceDpi, context.Font);
-        if (menu) content = RibbonMenuLayout.Content(content, item, context.Bounds, context.Font, context.DeviceDpi);
+        bool touchVertical = arrowBelowSingle && context.Density == RibbonDensity.Touch;
+        int captionRows = touchVertical ? _captions.Wrap(item.Text, context.Font, context.DeviceDpi,
+            Math.Max(0, context.Bounds.Width - 2 * RibbonLayoutEngine.Scale(5, context.DeviceDpi))).Lines.Length : 2;
+        var content = RibbonContentLayout.Calculate(context.Bounds, size, menu, context.ReserveIcon || hasIcon, context.DeviceDpi, context.Font, context.Density, touchVertical, captionRows);
+        if (menu) content = RibbonMenuLayout.Content(content, item, context.Bounds, context.Font, context.DeviceDpi, context.Density);
         var iconBounds = content.Icon;
         var textBounds = content.Text;
         var arrow = Rectangle.Empty;
         bool large = size == RibbonItemSize.Large && !menu;
-        int arrowSpan = appendArrow && item is RibbonDropDownItem ? RibbonLayoutEngine.Scale(16, context.DeviceDpi) : 0;
+        int arrowSpan = appendArrow && item is RibbonDropDownItem ? RibbonLayoutEngine.Scale(menu && context.Density == RibbonDensity.Touch ? 28 : 16, context.DeviceDpi) : 0;
         if (arrowSpan > 0 && !large)
         {
             arrow = menu ? new(textBounds.Right - arrowSpan, context.Bounds.Top, arrowSpan, context.Bounds.Height)
@@ -478,7 +507,7 @@ public partial class RibbonRenderer : IDisposable
         {
             if (large && textBounds.Width > 0)
             {
-                var caption = _captions.Wrap(item.Text, context.Font, context.DeviceDpi, textBounds.Width, arrowSpan, arrowBelowSingle);
+                var caption = _captions.Wrap(item.Text, context.Font, context.DeviceDpi, textBounds.Width, touchVertical ? 0 : arrowSpan, arrowBelowSingle);
                 int advance = RibbonCaptionLayout.LineAdvance(context.Font, context.DeviceDpi);
                 for (int index = 0; index < caption.Lines.Length; index++)
                 {
@@ -486,7 +515,9 @@ public partial class RibbonRenderer : IDisposable
                     var line = new Rectangle(textBounds.Left, top, textBounds.Width, Math.Min(context.Font.Height, Math.Max(0, textBounds.Bottom - top)));
                     if (arrowSpan > 0 && index == caption.Lines.Length - 1)
                     {
-                        if (arrowBelowSingle && caption.Lines.Length == 1)
+                        if (touchVertical)
+                            arrow = RibbonContentLayout.LargeDropDownArrow(context.Bounds, context.Font, context.DeviceDpi, context.Density, caption.Lines.Length);
+                        else if (arrowBelowSingle && caption.Lines.Length == 1)
                             arrow = new(context.Bounds.Left, context.Bounds.Bottom - RibbonLayoutEngine.Scale(13, context.DeviceDpi), context.Bounds.Width, RibbonLayoutEngine.Scale(12, context.DeviceDpi));
                         else
                         {
@@ -509,10 +540,10 @@ public partial class RibbonRenderer : IDisposable
             else DrawDropDownArrow(context with { Bounds = arrow }, color);
         }
     }
-    private void DrawMenuDescription(RibbonPaintContext context, RibbonItem item, Rectangle title, bool? enabledOverride = null)
+    private void DrawMenuDescription(RibbonPaintContext context, RibbonItem item, Rectangle title, bool? enabledOverride = null, bool illustrated = false)
     {
         if (!RibbonMenuLayout.HasDescription(item)) return;
-        var bounds = RibbonMenuLayout.Description(title, context.Bounds, context.Font, context.DeviceDpi);
+        var bounds = RibbonMenuLayout.Description(title, context.Bounds, context.Font, context.DeviceDpi, illustrated ? RibbonDensity.Compact : context.Density);
         if (bounds.Width > 0 && bounds.Height > 0)
             DrawText(context with { Bounds = bounds }, item.MenuDescription, (enabledOverride ?? item.EffectiveEnabled) ? context.Theme.SecondaryText : SystemColors.GrayText, RibbonMenuLayout.DescriptionFlags);
     }

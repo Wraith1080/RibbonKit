@@ -1,6 +1,6 @@
 # M4 broader native surfaces
 
-Status: **M4C accepted at reviewed scope; M4D reviewed; M4E implemented, latest utility geometry awaiting review**, 2026-10-27. Continuation follows the
+Status: **M4E gallery buttons and M4F1 merging accepted at reviewed scope; M4F2 modal scopes and M4G density implemented, human review pending**, 2026-10-28. Continuation follows the
 accepted [M3E option icon presentation](M3-STATUS.md#m3e-option-references--2026-10-27).
 M4 is a collection of bounded slices, not blanket implementation of every roadmap
 feature. Existing accessibility, full theming, animation, touch/IME and optional
@@ -449,7 +449,8 @@ copies borrow the same source gallery and retain its selection, bindings and
 preview/commit handlers. No WPF implementation or hosting is shared.
 
 - `RibbonGalleryItem.IsInRibbon` defaults false; Large presentations show the
-  single-row strip. Medium/Small reductions remain dropdown commands.
+  single-row strip. The original Medium/Small dropdown reduction is superseded
+  by the full-column Large fallback follow-up recorded below.
   `InRibbonColumnCount` defaults 3, range 1–12, independent of popup ColumnCount.
   TileWidth sets logical column width; ribbon body height sets strip height.
   Eleven additive property/event/enum/renderer symbols have XML/Unshipped coverage.
@@ -503,11 +504,541 @@ Relevant verification, separately recorded:
   The shared public-only fixture is also included in the independent consumer;
   this turn ran the project runner, not a freshly packed consumer.
 
-Human review of the latest equal-height utility layout remains pending. Actual
+On 2026-10-28 the user explicitly confirmed the three equal-height gallery
+buttons look okay; that adjustment is accepted at the reviewed scope. Actual
 VS testing stays deferred to the designer slice. No full/Release/package campaign,
 new accessibility providers, physical mixed-monitor/DPI, RTL or motion acceptance
 is claimed. Comprehensive theming remains deferred. WPF runtime/build/CI are
 unchanged; no commit or push was made.
+
+## M4F1 tab/group merge foundation — 2026-10-28
+
+The user requested continuation. M4F was explicitly bounded to tab/group merging
+first, with modal scopes next. The public proposal preceded code: source-owned
+tabs and group contributions; Merge/Unmerge on the host; presentation snapshots
+separate from authored collections; stable ordering, selection fallback and QAT/
+native-presenter parking. WPF §3.33 and docs/06-MERGE-AND-MODAL-PLAN.md supplied
+behavioral reference only; no WPF runtime/build/CI changes or checks were made.
+
+Implemented contract:
+
+- `RibbonMergeSource : RibbonElement` owns Tabs and Groups declarations with an
+  independent binding context. `RibbonGroupContribution` owns its Group and targets
+  an authored host tab by exact stable TargetTabId. Empty/unmatched targets are
+  skipped; matching host additions/removals and target changes reconcile normally.
+- `RibbonControl.Merge` / `Unmerge` borrow a source for one host. Attachment checks
+  every identity before mutation; another active host is rejected. There is no
+  focus-driven activation or automatic QAT/File/Backstage/nested-source merging.
+  The host's authored Tabs/Groups remain unchanged. GetPresentedTabs/Groups expose
+  ordered snapshots; adaptive layout and existing accessibility traversal consume
+  those snapshots. Model owners, commands, selection and bindings are not cloned.
+- Tab order uses source Order; group order uses contribution Order. Host content
+  is `(0, -1)`; contributions use `(order, first-merge sequence)` and declaration
+  order. Negative/equal orders, multiple sources, repeated cycles and live order
+  changes retain deterministic placement. Removing a source preserves a surviving
+  selected host tab or uses the existing visible/enabled fallback.
+- QAT entries park disabled on unmerge, retain original source state and revive
+  on remerge. GetMergeSource identifies transient provenance even after a borrowed
+  source is disposed, and resets when the QAT reference is reassigned. No M5
+  serializer/customization UI is implemented or claimed by this slice.
+- Native editor/gallery presenters park across unmerge/remerge on the same host,
+  preserving object/HWND identity and source data. Retargeting after unmerge releases
+  the old host's cache. Source disposal tears down its projections and owned models;
+  host disposal releases its borrow without disposing the source. Cleanup publishes
+  removal before preview-cancel callbacks, allowing source disposal without recursive
+  unmerge. Host binding-context changes do not replace child source contexts.
+- Twenty-two additive API symbols have XML/Unshipped coverage. Native designer
+  declaration traversal and contribution collection metadata are included; actual
+  VS editing/round-trip remains explicitly deferred. Showcase Merging → Chart context
+  demonstrates a Chart Design tab, a Home contribution and parked/revived QAT entries.
+
+Relevant verification:
+
+- Normal Debug native solution build passed with zero warnings/errors, including
+  API/XML and separate design compilation. Focused selection initially passed 6/7;
+  its retention case exposed an unmerge preview-cleanup gap. That focused case passed
+  1/1 after repair. Reentrant preview cancellation/disposal plus retention passed 2/2.
+  The final provenance case passed 1/1 after the shown fixture exposed lost transient
+  identity on source disposal. These are separate focused results, not a clean full
+  aggregate. Evidence under `tests/RibbonKit.WinForms.Tests/TestResults/`:
+  `m4f-merge-focused.trx`, `m4f-merge-native-retention.trx`,
+  `m4f-merge-reentrant-removal.trx`, `m4f-merge-provenance.trx`.
+- Adjacent contextual selection and QAT state/source-lifetime scopes passed 3/3, recorded
+  separately in `m4f-merge-adjacent.trx`. Prior gallery checks were not rerun merely
+  for repetition.
+- Public-only shown Office and neutral consumers passed at actual 120 DPI:
+  `TestResults/visual/m4f-merge-office-complete/result.log` and
+  `TestResults/visual/m4f-merge-neutral/result.log`. Coverage includes real application
+  activation, source-owned groups/commands, native field binding, focus stability,
+  selected-source removal, parked/revived QAT, editor HWND reuse, inactive-tab command
+  execution, gallery overflow commit, source disposal and zero unavailable-element
+  exceptions. Host-group, native field and neutral parked-QAT captures were inspected.
+  The fixture uses public APIs and is included in the independent consumer; this turn
+  ran the project runner, not a fresh package.
+
+The user confirmed merging works fine on 2026-10-28; M4F1 is accepted at that
+reviewed scope. M4F2 modal entry/exit, exclusive presentation, File/minimize/
+Backstage blocking, cancellation and deterministic restoration are next. No full or
+Release/package campaign, new accessibility providers, physical mixed-monitor/DPI,
+RTL or motion acceptance is claimed. Actual VS stays deferred to the designer slice.
+No commit or push was made.
+
+## M4F2 modal scopes — 2026-10-28
+
+The user confirmed merging works and explicitly accepted the three equal-height
+gallery buttons, then requested continuation. Proposed before implementation:
+EnterModal/ExitModal, cancellable transitions, exclusive tab presentation with QAT
+retained, shared close affordance, File/minimize/Backstage blocking and coherent
+restoration. WPF §3.32 and the retained merge/modal plan supplied behavioral
+reference only. Authored visibility is preserved through native presentation
+filtering, avoiding temporary hidden values in future storage.
+
+Implemented contract:
+
+- RibbonTab adds IsModal (default false), CanClose (true), CloseButtonText (empty
+  uses Close), binding/change metadata and XML comments. The host adds EnterModal,
+  ExitModal, IsModal/ModalTab and Entering/Entered/Exiting/Exited events.
+  RibbonModalEventArgs reports tab, reason, Cancel and IsForced. Twenty-eight
+  additive API entries have Unshipped coverage; no shipped baseline was changed.
+- The scope owns transition state outside adaptive reduction. A generic header
+  action slot presents the themed close command instead of minimize. Its renderer
+  hook, keyboard focus, preferred X KeyTip and ordinary button automation are shared
+  library behavior. Header bounds remain disjoint at narrow widths/large fonts.
+  CanClose false hides user close and blocks Escape; application exit remains
+  cancellable and available. Nested/switching modes require explicit exit first.
+- GetPresentedTabs projects only the active modal tab. Authored Tabs, Visible,
+  source collections and File visibility remain unchanged. QAT commands remain
+  available according to authored source availability; File references are blocked.
+  Native and programmatic minimize/File/Backstage requests cannot latch a deferred
+  value. Child lists/popups/KeyTips get Escape first; application-content Escape
+  can exit the modal scope.
+- Normal entry/exit respects native editor validation; entry respects an open
+  Backstage's closing veto. Tab removal/unmerge, hiding, disabling or removal of
+  IsModal eligibility forces TabUnavailable exit, ignoring cancellation/validation.
+  Reentrant transitions and callbacks that remove an entering candidate are guarded.
+- Exit restores prior valid selection or visible/enabled fallback, minimized state
+  and available focus without taking focus from another window. KeyTip-driven entry
+  retains prior application focus. Explicit restoration clears consumed fallback
+  indices so a later ordinary selection loss does not reuse a stale source index.
+  Visibility edits and sources merged during modal remain authored on exit.
+- Showcase Merging → Print preview borrows a preview source, provides native Copies/
+  Zoom fields and an application-owned preview page/print-request action, then
+  unmerges it on exit. Document paint, content visibility and printing stay in the
+  host. The existing gallery geometry was not changed.
+
+Relevant verification, recorded separately:
+
+- Normal Debug native solution build passed with zero warnings/errors, including
+  runtime API/XML and design compilation. Six new focused modal cases passed 6/6:
+  `tests/RibbonKit.WinForms.Tests/TestResults/m4f2-modal-focused.trx`. The changed
+  restoration/validation cases passed 2/2 after the KeyTip-focus/fallback refinement:
+  `m4f2-modal-restoration.trx`. The open-Backstage veto case passed 1/1 in
+  `m4f2-modal-backstage.trx`. These are separate focused runs, not a full aggregate.
+- Adjacent File header geometry, minimized-state contract, merge selection and
+  Backstage routing passed 4/4: `m4f2-modal-adjacent.trx` in the same directory.
+  Prior gallery and unrelated suites were not repeated for acceptance.
+- Public-only native Office and neutral consumers passed at actual 120 DPI:
+  `TestResults/visual/m4f2-modal-office/result.log` and
+  `TestResults/visual/m4f2-modal-neutral-complete/result.log`. Coverage includes
+  cancelled entry, real KeyTips, QAT execution, blocked File/minimize requests,
+  popup-first Escape, native validation, close cancellation, focus/minimized-state
+  restoration, CanClose policy, editor HWND reuse, merge/visibility edits during
+  modal, forced unmerge exit and zero unavailable-element exceptions. An earlier
+  neutral startup lost foreground before interactions and is partial evidence.
+- Office/neutral modal headers and the actual Showcase preview were inspected.
+  Showcase evidence: `TestResults/visual/m4f2-modal-showcase/print-preview.png`.
+  The public-only fixture is included in the independent consumer; this turn used
+  the project runner, not a freshly packed consumer.
+
+Human review is pending. Actual VS testing remains deferred to the designer slice.
+No full/Release/package campaign, new accessibility providers, physical mixed-DPI/
+monitor, RTL or motion acceptance is claimed. WPF runtime/build/CI are unchanged.
+No commit or push was made. The subsequent authorized continuation implements M4G
+below; it does not establish acceptance of every modal gate.
+
+### Header utility sizing follow-up — 2026-10-28
+
+The user requested smaller modal-close and minimize buttons with vertical
+centering and uniform top/right/bottom spacing. Both shared renderers now use
+`RibbonTheme.HeaderButtonInset`, default four logical pixels, within the existing
+header slots. Hover/pressed/focus visuals are inset and clipped; the modal close
+glyph is slightly smaller. Original slot geometry, click targets, tab/overflow
+spacing and text size remain unchanged. Minimize still clears its full opaque
+slot before painting so overflowing tab text cannot bleed through. The metric is
+nonnegative, DPI-scaled and safely clamped; zero restores full-slot visuals. Its
+two additive API entries have XML/Unshipped coverage.
+
+Normal Debug solution build passed with zero warnings/errors. The new margin/
+paint-boundary case and affected minimize-direction/modal-header geometry cases
+passed 3/3: `tests/RibbonKit.WinForms.Tests/TestResults/m4f2-header-buttons.trx`.
+Coverage includes Office/neutral hover/pressed/focus, 96/120/144/192 DPI, odd/even
+bounds, default/custom/zero/oversized insets and unchanged hit slots. Synthetic
+captures and live Office Showcase hover captures were inspected:
+`TestResults/visual/m4f2-header-buttons-{rendering,showcase}/`.
+Actual Showcase entry/exit ran for capture; broader native input, full/package/
+Release, designer and physical monitor scopes were not repeated for this visual
+refinement. The user accepted the header-button size/spacing on 2026-10-28;
+the gallery button adjustment is preserved. This confirms that visual refinement,
+not every remaining modal acceptance gate.
+
+## M4G Compact/Touch density — 2026-10-28
+
+The user requested continuation after the header-button refinement. The public
+proposal preceded implementation: per-ribbon Compact/Touch geometry, retained
+native editors and source models, validation before switching, refreshed owned
+surfaces and a host-owned selector. WPF's shared density/Touch records supplied
+behavioral reference only; no WPF implementation was changed.
+
+Implemented contract:
+
+- `RibbonControl.Density` defaults to Compact, has Appearance/default/binding
+  metadata and raises DensityChanged after an accepted change. RibbonDensity and
+  RibbonPaintContext.Density complete eight additive XML/Unshipped API entries.
+  Custom renderers receive density on every library-owned paint surface.
+- Shared logical metrics enlarge command rows, tab/QAT targets, native field
+  frames and chooser rows, split arrows, menus, gallery tiles/utility buttons,
+  scroll buttons and Backstage navigation. Touch retains three rows per column,
+  with 44-logical-pixel command rows, 44-pixel menu/choice rows, 64×80 minimum
+  popup gallery tiles and a 48-pixel tab row. Small split/scroll utility parts
+  remain narrower than full command targets. Authored font, theme, input widths,
+  tile metrics and source ownership remain unchanged. Compact restores its prior
+  geometry, including custom tab-height minima. Existing equal-height gallery
+  utilities and their border inset are retained.
+- Valid focused native edits commit first; invalid input blocks the change.
+  Accepted changes close transient menus/lists, cancel gallery previews and
+  KeyTips, clear layout caches and refresh Backstage. Retained native TextBox/
+  ComboBox handles, binding, selection and focus survive where available. Restore
+  editable ComboBox selection after native focus, which otherwise resets it.
+  A parked QAT command uses the presenting host's density even when its source
+  has no active ribbon. Merge/modal/minimized and open Backstage state survive.
+- Showcase's third QAT entry and Merging → Input mode supply a Mouse/Touch
+  selector through public APIs. The application owns selector state, device
+  detection, preferences, document/page/dialog layout and persistence. No motion,
+  automatic device switching or new accessibility provider is included.
+
+Relevant verification, recorded separately:
+
+- Normal Debug native solution build passed with zero warnings/errors, including
+  runtime API/XML and design compilation. Four new focused facts were exercised:
+  `tests/RibbonKit.WinForms.Tests/TestResults/m4g-density-focused.trx` initially
+  passed 3/4 and exposed editable ComboBox caret loss. Its repaired case passed
+  1/1 in `m4g-density-editor-retention.trx`. The popup case, extended for parked
+  QAT sources, passed 1/1 in `m4g-density-parked-qat.trx`. These are separate runs,
+  not a claimed clean four-case aggregate. Synthetic geometry covers repeated
+  Compact/Touch switching at 96/120/144/192 DPI, native validation/retention,
+  gallery preview cancellation, split/field rectangles, merging/modal/Backstage
+  retention and narrow collapsed-command reachability.
+- Affected existing Compact split geometry, native ComboBox refresh, QAT row
+  measurement and rich-menu row/editor layout passed 5/5:
+  `tests/RibbonKit.WinForms.Tests/TestResults/m4g-density-adjacent.trx`.
+- Public-only Office and neutral native consumers passed at actual 120 DPI:
+  `TestResults/visual/m4g-density-office-complete/result.log` and
+  `TestResults/visual/m4g-density-neutral/result.log`. Real pointer/keyboard
+  coverage includes invalid input, caret/focus/HWND/binding retention, three
+  rows, chooser/menu sizing and command routing, QAT gallery/overflow commits,
+  popup dismissal, lower QAT sizing, Backstage page retention, return to Compact
+  and zero unavailable-element exceptions. The first Office fixture incorrectly
+  required the native chooser to own foreground; its partial log is not a pass.
+  The corrected fixture observes public renderer row geometry without that
+  assumption. These passes preceded the bounded parked-QAT fix, which has its
+  own focused result above.
+- Actual Showcase Compact/Touch captures and Office lower-QAT/neutral Touch
+  captures were inspected. Showcase evidence is under
+  `TestResults/visual/m4g-density-showcase/`. The public-only fixture is included
+  in the independent consumer; this turn ran the project runner, not a newly
+  packed consumer.
+
+Human density review remains pending. Actual VS testing stays deferred to the
+designer slice. No full/Release/fresh-package campaign, physical mixed-monitor/DPI,
+RTL, new accessibility or motion acceptance is claimed. Native touch/IME hardware
+is not required by the user's testing direction. WPF runtime/build/CI are unchanged;
+no commit or push was made. By user direction on 2026-10-28, M4H localization/RTL
+is deferred until the remaining components, including customization, animation
+and themes, exist so its cross-component pass covers the complete control set.
+The requested joined Office 2024 BelowRibbon QAT frame remains in M4I's appearance
+pass, as recorded in the main plan.
+
+### Touch content alignment and vertical split ownership — 2026-10-28
+
+Human review found that Touch retained Compact's fixed icon/caption offsets while
+the vertical split's primary band grew from 44 to 68 logical pixels. That left its
+caption inside the primary action and its arrow near the lower edge. The user
+requested centered content with level neighboring buttons, then clarified that the
+vertical split's label belongs to the lower menu action.
+
+The first alignment follow-up used two bands: a centered icon in the upper image band
+and a centered lower envelope reserving two caption rows, a four-logical-pixel gap
+and a twelve-pixel indicator slot. First caption lines stay level for regular,
+toggle, dropdown and horizontal/vertical split buttons. Vertical splits center the
+label/indicator envelope within the lower action; both single- and two-line labels
+stay there and the arrow sits below them, centered horizontally. The shared split
+boundary uses the same font-aware band calculation as painting, giving taller
+captions room without transferring them into the primary action. Medium/Small,
+menu-row and Compact content placement are unchanged. No public API was added.
+
+Normal Debug solution build passed with zero warnings/errors. Five affected
+existing Compact caption/split-layout/joined-chrome cases passed in
+`tests/RibbonKit.WinForms.Tests/TestResults/m4g-touch-alignment.trx`. That initial
+run's two new cases incorrectly counted only exact foreground-colored arrow pixels,
+excluding antialiased edges; after correcting the pixel observation, both new
+Office/neutral cases passed 2/2 in `m4g-touch-alignment-rendering.trx`. Coverage spans
+96/120/144/192 DPI, 9/14-point fonts, hover/pressed/focus, shared icon/baseline
+alignment, caption ownership, split tiling, indicator placement and actual arrow
+ink bounds. Rendering captures, including normal-font 125% and larger-font 200%,
+were inspected under `TestResults/visual/m4g-touch-alignment-rendering/`.
+
+The public-only density consumer now also clicks the primary icon, lower caption
+and arrow independently and verifies exact-once primary/menu routing. Office and
+neutral runs passed at actual 120 DPI, retaining the previous density/editor/QAT/
+Backstage coverage:
+`TestResults/visual/m4g-touch-alignment-{office,neutral}/result.log`. The fixture
+uses public renderer observations and is linked into the independent consumer;
+these runs used the project runner rather than a new package. Showcase wide/narrow
+and separate primary/menu hover captures were inspected under
+`TestResults/visual/m4g-touch-alignment-showcase/`. Actual VS, full/Release/package
+and physical mixed-monitor scopes were not repeated; human review remains pending.
+
+### Button proportions and illustrated density chooser — 2026-10-28
+
+Further human review requested a smaller ordinary icon/caption gap and a larger
+vertical-split primary action, using the WPF screenshot as a reference. The user
+also requested its illustrated Mouse/Touch chooser. This supersedes the previous
+follow-up's shared caption-band geometry while preserving split label ownership.
+
+- Ordinary Large Touch buttons now place captions eight logical pixels beneath
+  their icon slots. Regular, toggle, dropdown and horizontal split first lines
+  remain aligned; their icons align with vertical splits. The nominal vertical
+  primary grows from 68 to 90 logical pixels, clamped by the two-row/font clearance
+  required below it. Its lower action centers the actual one- or two-line caption,
+  four-pixel gap and twelve-pixel indicator as a group. The caption remains a menu
+  action. Compact, Medium/Small and standard menu geometry are preserved.
+- The reusable dropdown proposal preceded implementation: optional DropDownHeader,
+  MenuPresentation.Standard/IllustratedChoices and DrawMenuHeader. These ten
+  additive API entries have XML/Unshipped coverage. A header occupies measured
+  space without becoming a command, focus stop, KeyTip or hit target. The shared
+  header hook uses existing theme roles: rounded Office 2024 fill and neutral
+  transparent bold text. Rows use larger artwork, bold titles, existing two-line
+  MenuDescription and Checked/Hover/Pressed fills; no separate control or provider
+  was introduced. Native editors, separators and submenus stay standard; gallery
+  layouts retain their own headings. A QAT dropdown reference shares the source
+  heading/rows; an individually projected command keeps standard QAT row sizing.
+- Showcase's existing selector now uses those public APIs, application-owned
+  vector mouse/hand artwork, the requested heading/descriptions and the current
+  mode's toolbar icon. Radio selection is reconciled with the accepted Density
+  after both programmatic changes and click handlers, preserving validation veto
+  behavior. The application continues to own mode detection/preferences/storage.
+
+Verification:
+
+- Normal Debug native solution build passed with zero warnings/errors, including
+  API/XML and design compilation. Focused proportion, choice/header, existing
+  command/File/QAT menu and Compact-caption checks passed 17/17:
+  `tests/RibbonKit.WinForms.Tests/TestResults/m4g-button-proportions-choices.trx`.
+  Updated rendering cases cover both renderers, 96/120/144/192 DPI, 9/14-point
+  fonts and hover/pressed/focus, checking close ordinary captions, larger primary
+  geometry, split caption/arrow ownership, selected fills and bold/normal text.
+- The individual-QAT row-sizing refinement was added after those checks and the
+  native runs below. Extended choice/header and affected QAT-menu cases passed
+  7/7 in `m4g-illustrated-qat-scope.trx`. This keeps the illustrated layout scoped
+  to the presenting source menu, including whole-dropdown QAT references.
+- Office and neutral public-only native runs passed at actual 120 DPI:
+  `TestResults/visual/m4g-proportions-choice-{office,neutral}/result.log`.
+  In addition to retained density/editor/gallery/Backstage and split input checks,
+  they verify QAT illustrated rows, a noninteractive header, mouse selection of
+  Touch, checked-state synchronization, keyboard return to Mouse and zero
+  unavailable-element exceptions. The independently included fixture uses its
+  own artwork and public APIs; this turn used the project runner, not a new pack.
+- Ordinary/split Showcase hover, both selected chooser states, and larger-font
+  200% rendering captures were inspected. Evidence is in
+  `TestResults/visual/m4g-proportions-choice-showcase-final/` and
+  `TestResults/visual/m4g-button-proportions-rendering/`. The final chooser captures
+  use pointer opening; earlier keyboard-open captures correctly included KeyTips.
+
+Human review remains pending; actual VS stays deferred to the designer slice.
+No full/Release/fresh-package or physical mixed-monitor campaign was run. WPF
+runtime/build/CI are unchanged, and no commit or push was made.
+
+### In-ribbon gallery reduction retains a Large column — 2026-10-28
+
+Human review found that a reduced in-ribbon gallery became a Medium/Small command
+despite its full-column presentation. The user requested a Large dropdown instead.
+The shared layout now treats a non-Large SizePolicy entry on IsInRibbon galleries
+as a Large dropdown fallback, with ordinary Large icon/caption/arrow drawing and a
+narrower width than the tile strip. It finishes neighboring row columns before
+and after the gallery, so the fallback remains full-height and exclusive. Large
+policy entries still request the strip; authored SizePolicy/IsInRibbon values and
+source tile ownership are unchanged. Dropdown-only galleries and QAT entries keep
+their normal sizing. Group reduction mode still determines whether resizing is
+attempted before whole-group collapse.
+
+The proposed strip/dropdown presentation distinction is carried through measured
+items, root/minimized/group-popup targets and strip parking. The retained strip is
+hidden during fallback instead of overlaying the Large dropdown, then reused when
+space returns. RibbonPaintContext.IsGalleryDropDown exposes the measured fallback
+to custom renderers; its two additive XML/Unshipped entries were build-checked.
+Popup tiles, preview/cancel/commit and selection continue to use the same source.
+
+Normal Debug native solution build passed with zero warnings/errors. Geometry at
+96/120/144/192 DPI in Compact/Touch, explicit/adaptive policy entries, exclusive
+columns, ordinary-gallery sizing and adjacent reduction/strip/borrowed-group cases
+passed 9/10 in `tests/RibbonKit.WinForms.Tests/TestResults/m4g-gallery-large-fallback.trx`.
+The resize fixture initially used the default Collapse-only group policy; after
+opting it into ResizeThenCollapse, that case passed 1/1 in
+`m4g-gallery-large-fallback-resize.trx`. It verifies root and minimized-popup paint
+state, source popup routing, exact-once selection, parking and strip HWND reuse.
+These are separate focused results, not a claimed clean aggregate.
+
+Public-only Office and neutral gallery-reduction scopes passed at actual 120 DPI
+for both Compact and Touch:
+`TestResults/visual/m4g-gallery-large-fallback-{office,neutral}/result.log`.
+Pointer opening, keyboard commit, full-height geometry, authored-state retention,
+restoration of the same strip/selected tile and zero unavailable-element exceptions
+were verified. The fixture is shared with the independent consumer and uses its
+own artwork; this turn used the project runner, not a fresh package. Office Touch
+fallback and actual Showcase narrow Touch captures were inspected; Showcase
+evidence is under `TestResults/visual/m4g-gallery-large-fallback-showcase/`.
+
+Human review remains pending. Actual VS remains deferred, and no full/Release/
+fresh-package or physical mixed-monitor campaign was repeated. WPF runtime/build/
+CI are unchanged; no commit or push was made.
+
+### Collapsed-group right separators — 2026-10-28
+
+The user reported missing right-side dividers on collapsed groups. The Office
+renderer explicitly skipped that state. Expanded and collapsed Office groups now
+paint the existing Border-colored, one-device-pixel divider at the full group
+frame's right edge, with the same 12-logical-pixel top/bottom clearance. Layout
+retains the full frame separately from the inset collapsed opener, so hover/focus
+visuals and click bounds are preserved. Root and minimized-body popup painting
+carry and scroll that frame together. Neutral retains its existing appearance;
+no public API or new theme role was added.
+
+Normal Debug native solution build passed with zero warnings/errors. Five focused
+renderer/body cases passed in
+`tests/RibbonKit.WinForms.Tests/TestResults/m4g-collapsed-group-separators.trx`.
+The updated renderer contract covers expanded/collapsed and Office/neutral states,
+normal/hover/pressed, 96/120/144/192 DPI and odd/even bounds. The new mixed-group
+case verifies Compact/Touch root and minimized-popup endpoint alignment, actual
+divider pixels and retained opener hit bounds. The previous M2 collapsed-absence
+assertion is intentionally replaced by this requested behavior.
+
+The actual 120-DPI Showcase capture was inspected:
+`TestResults/visual/m4g-collapsed-group-separators-showcase/Touch-collapsed.png`.
+Editing and Galleries both retain dividers aligned with expanded groups. This is
+rendering/capture evidence; native input, a fresh independent package, full/Release,
+designer and physical mixed-monitor scopes were not repeated for this paint fix.
+Human review remains pending. WPF runtime/build/CI are unchanged; no commit or push
+was made.
+
+### Command-popup spacing, uniform rows, headers and host close — 2026-10-28
+
+The user requested larger command dropdowns in Touch, equal item heights following
+the tallest row, contextual headings and repair of Alt+F4 leaving empty frames.
+They clarified that Alt+F4 should close the host Form, then identified vertically
+misaligned Touch ComboBox text during review. All changes remain in shared native
+layout/input/editor behavior; Showcase supplies the menu wording.
+
+- Command menus and QAT overflow normalize visible interactive rows to the tallest
+  measured row in each popup, including disabled items and native fields. Headers
+  and separators retain their own sizes; hidden items do not contribute. Group/
+  minimized-body columns and gallery tile layouts retain their own measurement.
+- Standard Touch menu minimum widths are 220 logical pixels, or 320 for described
+  menus, versus Compact's 170/280. Standard described Touch rows use ten-pixel
+  vertical padding and a four-pixel description gap, reserving two description
+  lines. Touch icon/arrow slots enlarge without changing fonts. Native frames
+  remain centered inside uniform rows. Illustrated-choice descriptions retain
+  their established card geometry. These named density values remain candidates
+  for the deferred theme consolidation.
+- Showcase supplies Paste options, Selection options, Track changes, Choose a shape,
+  Input options and other contextual headings through the existing DropDownHeader
+  API. The existing Office rounded fill and neutral transparent/bold treatment are
+  reused. No new public API or theme color role was added.
+- Alt+F4 reproduced the user's blank-frame defect before the fix:
+  `TestResults/visual/m4g-popup-alt-f4-reproduction/`. The session and outer wrapper
+  stayed open while native default close handling hid its hosted content. The key
+  now cancels native choice previews, closes the entire owned popup chain normally,
+  and requests the containing Form's close. FormClosing cancellation is honored;
+  typed fields and native HWNDs survive reopening. Message ownership limits the
+  handler to this host, and repeat keydowns do not issue duplicate close requests.
+  Escape keeps its existing one-level behavior. Earlier exploratory popup-only
+  dismissal evidence is superseded by the user's host-close clarification.
+- The ComboBox regression measured a five-pixel Touch text offset in the STA case:
+  owner-drawn selection height exceeded PreferredHeight, which was still used for
+  positioning. Presentation now centers the actual native height in the painted
+  field without requesting a new height. Both editable and selection-only text
+  align with the frame/arrow in strip and popup presentations; handles, values,
+  selection and paint/position stability remain covered.
+
+Relevant verification:
+
+- Normal Debug native solution build passed with zero warnings/errors, including
+  API/XML and design compilation. The focused popup/menu/choice/overflow run passed
+  11/12 in `tests/RibbonKit.WinForms.Tests/TestResults/m4g-popup-refinements-focused.trx`.
+  Its remaining assertion required different command/editor row heights; after
+  updating that obsolete contract, the case passed 1/1 in
+  `m4g-popup-uniform-row-contract.trx`. New coverage includes 96/120/144/192-DPI
+  menu geometry, 9/14-point fonts, uniform targets, thin separators, Touch growth,
+  native field slots and cancellable host close/repeat handling.
+- The ComboBox alignment regression failed before the positioning fix in
+  `m4g-touch-combo-alignment-before.trx`. The repaired geometry case plus affected
+  native editing/density retention cases passed 5/5 in
+  `m4g-touch-combo-alignment.trx`. Both native styles, font changes, Compact/Touch
+  switching, root/borrowed-group presentation, actual edit-child rectangles and
+  text-region centering within one device pixel are covered.
+- Final public-only Office and neutral native runs passed at actual 120 DPI:
+  `TestResults/visual/m4g-popup-combo-{office,neutral}/result.log`. They verify wider/
+  taller Touch menus, uniform rows, editable/selection-only ComboBox centering,
+  exactly-once host closing from command/nested menus, native fields/choosers,
+  QAT choosers/overflow, borrowed groups, galleries and temporary minimized bodies.
+  Cancellation preserves typed text, selection and native HWNDs; gallery preview
+  genuinely starts and is cancelled without commit. A permitted final close exits
+  the host. Unavailable-element exceptions remain zero. An earlier fixture used a
+  stale fourth QAT rectangle after Touch overflowed it; the final fixture reserves
+  sufficient toolbar width and asserts the intended gallery actually opened.
+- Existing rich-menu Office/neutral native scopes passed separately in
+  `TestResults/visual/m4g-uniform-menu-{office,neutral}/result.log`, covering nested
+  placement/flipping, scrolling, separators, keyboard, activation and retained native
+  fields. These passes preceded only the ComboBox-position refinement, which has
+  the dedicated evidence above. Public-only fixtures are included in the independent
+  consumer; these runs used project outputs, not a fresh package.
+- Actual Showcase Compact/Touch Paste, Select, Track changes and native Input
+  options captures were inspected under
+  `TestResults/visual/m4g-command-menu-showcase-final/`; final native ComboBox
+  captures were also inspected. A collapsed Editing group is opened normally by
+  the capture helper before reaching its commands. Earlier foreground-startup and
+  capture-helper interruptions are not completed acceptance runs.
+
+These are separate focused results, not a full aggregate. Human review is pending;
+actual VS remains deferred. No full/Release/fresh-package or physical mixed-monitor
+campaign was run. WPF runtime/build/CI remain unchanged; no commit or push was made.
+
+### Wider Touch horizontal split arrow — 2026-10-28
+
+Horizontal ribbon/group splits now reserve 44 logical pixels for the Touch arrow
+instead of 28. Measurement widens the whole command, preserving the previous
+Large caption budget and a primary minimum of 72 logical pixels for Large or 56
+for Medium/Small. The arrow no longer stops at one third of a narrow command;
+constrained geometry still keeps the primary larger. Reduced vertical sources
+follow the same horizontal contract. Compact, Large vertical splits, command-menu
+and QAT utility splits retain their previous geometry. No public API was added.
+
+Normal Debug native solution build passed with zero warnings/errors. The focused
+geometry/alignment/seam/density selection passed 8/8 in
+`tests/RibbonKit.WinForms.Tests/TestResults/m4g-touch-horizontal-split.trx`, including
+96/120/144/192 DPI, 9/14-point fonts, authored width limits, preserved caption
+space and Compact return. Public-only Office/neutral native runs passed at actual
+120 DPI under `TestResults/visual/m4g-touch-horizontal-split-{office,neutral}/`:
+Large/Medium/Small arrow widths, separate mouse/keyboard actions and Compact
+restoration. The first neutral launch failed its foreground prerequisite; its
+retry completed. These runs use project outputs, not a fresh package.
+
+Office/neutral hover and pressed captures and the actual Showcase
+`TestResults/visual/m4g-touch-horizontal-split-showcase/Touch-horizontal-split.png`
+were inspected. The capture temporarily changes Paste's orientation and restores
+it; the normal sample retains its authored layout. The user accepted this wider
+Touch horizontal split-arrow adjustment on 2026-10-28. Actual VS and physical
+mixed-monitor checks remain deferred. No full/Release or WPF checks were run for
+this bounded change.
 
 ## Remaining slices
 
@@ -519,10 +1050,11 @@ Each public API and ownership contract is proposed before its implementation.
 | M4B | File command-menu foundation (accepted at the recorded scope) |
 | M4C | Backstage navigation, commands and native page Controls accepted at reviewed scope; actual VS checks deferred to designer slice |
 | M4D | Dropdown foundation reviewed; neutral bold/transparent heading follow-up implemented; filtering controls/popup resize remain refinements |
-| M4E | In-ribbon gallery, scrolling/expansion and QAT projection implemented; latest equal-height utility layout awaiting human review |
-| M4F | Tab/group merge service, then modal scopes with deterministic restoration |
-| M4G | Compact/Touch density geometry and input reachability |
-| M4H | Built-in localization and RTL layout/navigation/editor-direction contracts |
+| M4E | In-ribbon/QAT gallery foundation reviewed at the 2026-10-28 continuation scope; Large dropdown fallback implemented, human review pending |
+| M4F1 | Tab/group merge foundation accepted at the 2026-10-28 reviewed scope |
+| M4F2 | Modal scopes implemented; human review pending |
+| M4G | Compact/Touch density implemented; human review pending |
+| M4H | Deferred by user direction, 2026-10-28: built-in localization and RTL layout/navigation/editor-direction contracts follow the remaining component work, including customization, animation and themes |
 | M4I | Deferred appearance inventory/consolidation, then additional themes/accents/gradients and File designs in bounded passes |
 | M5A | Command catalog, stable IDs and customization draft/persistence/Apply/Cancel foundation |
 | M5B | QAT customization UI, including groups only on its available list |

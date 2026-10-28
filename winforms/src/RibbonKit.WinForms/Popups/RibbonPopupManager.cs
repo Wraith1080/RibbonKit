@@ -260,6 +260,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     private readonly int _contentPadding;
     private readonly bool _singleColumn;
     private RibbonLayoutSnapshot? _bodyLayout;
+    private Rectangle _menuHeader;
     private int _bodyOffset, _bodyWidth;
     private RibbonElement? _hot, _pressed, _focused;
     private TargetKind? _hotKind, _pressedKind;
@@ -294,6 +295,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         TabStop = true;
         SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.Selectable, true);
         int S(double n) => RibbonLayoutEngine.Scale(n, ribbon.DeviceDpi);
+        var menuMetrics = RibbonDensityMetrics.For(ribbon.Density);
         _contentPadding = S(4);
         int width, height, galleryViewport = 0;
         if (owner is RibbonTab tab)
@@ -315,7 +317,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
             width = right - left + 2 * _contentPadding;
             height = bottom - top + 2 * _contentPadding;
             foreach (var item in measured.Items)
-                _targets.Add(new(TargetKind.Item, item.Item, new(item.Bounds.X - left + _contentPadding, item.Bounds.Y - top + _contentPadding, item.Bounds.Width, item.Bounds.Height), Rectangle.Empty, item.Size, item.ReserveIcon, LabelWidth: item.LabelWidth));
+                _targets.Add(new(TargetKind.Item, item.Item, new(item.Bounds.X - left + _contentPadding, item.Bounds.Y - top + _contentPadding, item.Bounds.Width, item.Bounds.Height), Rectangle.Empty, item.Size, item.ReserveIcon, LabelWidth: item.LabelWidth, GalleryDropDown: item.GalleryDropDown));
         }
         else if (GallerySource is { } gallery)
         {
@@ -327,13 +329,14 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         else if (owner is RibbonQuickAccessOverflow)
         {
             var items = ribbon.Snapshot.QuickAccessOverflowItems;
-            width = Math.Max(S(170), items.Select(e => TextRenderer.MeasureText(RibbonQuickAccess.Caption(e), Font).Width + S(56)).DefaultIfEmpty(S(170)).Max());
-            if (items.Select(RibbonQuickAccess.Command).Any(c => c is not null && RibbonMenuLayout.HasDescription(c))) width = Math.Max(width, S(280));
+            width = Math.Max(S(menuMetrics.MenuMinimumWidth), items.Select(e => TextRenderer.MeasureText(RibbonQuickAccess.Caption(e), Font).Width + S(56)).DefaultIfEmpty(S(menuMetrics.MenuMinimumWidth)).Max());
+            if (items.Select(RibbonQuickAccess.Command).Any(c => c is not null && RibbonMenuLayout.HasDescription(c))) width = Math.Max(width, S(menuMetrics.MenuDescriptionWidth));
+            var heights = RibbonMenuLayout.RowHeights(items.Select(RibbonQuickAccess.Command).ToArray(), width - S(8), Font, ribbon.DeviceDpi, ribbon.Density, illustrated: false);
             int top = S(4);
             var visible = ribbon.QuickAccessItems.Where(e => e.Visible).ToList();
-            foreach (var entry in items)
+            for (int i = 0; i < items.Count; i++)
             {
-                int rowHeight = RibbonQuickAccess.Command(entry) is { } command ? RibbonMenuLayout.RowHeight(command, width - S(8), Font, ribbon.DeviceDpi) : S(28);
+                var entry = items[i]; int rowHeight = heights[i];
                 _targets.Add(new(TargetKind.QuickAccess, entry, new(S(4), top, width - S(8), rowHeight), Rectangle.Empty, RibbonItemSize.Medium,
                     AutomaticKeyTip: RibbonQuickAccess.AutomaticKeyTip(visible.IndexOf(entry), visible.Count)));
                 top += rowHeight;
@@ -343,14 +346,22 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         else
         {
             var items = MenuSource!.Items.Where(i => i.Visible).ToArray();
-            width = Math.Max(S(170), items.Where(i => i is not RibbonMenuSeparatorItem).Select(i => TextRenderer.MeasureText(i.Text, Font).Width + S(56)).DefaultIfEmpty(S(170)).Max());
-            if (items.Any(RibbonMenuLayout.HasDescription)) width = Math.Max(width, S(280));
+            width = Math.Max(S(menuMetrics.MenuMinimumWidth), items.Where(i => i is not RibbonMenuSeparatorItem).Select(i => TextRenderer.MeasureText(i.Text, Font).Width + S(56)).DefaultIfEmpty(S(menuMetrics.MenuMinimumWidth)).Max());
+            if (items.Any(RibbonMenuLayout.HasDescription)) width = Math.Max(width, S(menuMetrics.MenuDescriptionWidth));
+            if (MenuSource.MenuPresentation == RibbonMenuPresentation.IllustratedChoices) width = Math.Max(width, S(RibbonMenuLayout.IllustratedWidth));
+            if (MenuSource.DropDownHeader.Length > 0) width = Math.Max(width, Math.Min(S(420), TextRenderer.MeasureText(MenuSource.DropDownHeader, Font).Width + S(28)));
             int labelWidth = items.Where(i => i is IRibbonEditorItem).Select(i => RibbonEditorLayout.LabelWidth(i, Font, ribbon.DeviceDpi)).DefaultIfEmpty(0).Max();
             width = Math.Max(width, items.OfType<IRibbonEditorItem>().Select(i => labelWidth + S(i.InputWidth + 14)).DefaultIfEmpty(0).Max());
             int top = S(4);
+            if (MenuSource.DropDownHeader.Length > 0)
+            {
+                int headerHeight = Font.Height + S(menuMetrics.Touch ? 16 : 12);
+                _menuHeader = new(S(4), top, width - S(8), headerHeight); top += headerHeight + S(4);
+            }
+            var heights = RibbonMenuLayout.RowHeights(items, width - S(8), Font, ribbon.DeviceDpi, ribbon.Density);
             for (int i = 0; i < items.Length; i++)
             {
-                int rowHeight = RibbonMenuLayout.RowHeight(items[i], width - S(8), Font, ribbon.DeviceDpi);
+                int rowHeight = heights[i];
                 _targets.Add(new(TargetKind.Item, items[i], new(S(4), top, width - S(8), rowHeight), Rectangle.Empty, RibbonItemSize.Medium, LabelWidth: labelWidth));
                 top += rowHeight;
             }
@@ -378,9 +389,15 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
-        var context = new RibbonPaintContext(e.Graphics, ClientRectangle, _ribbon.Theme, Font, DeviceDpi);
+        var context = new RibbonPaintContext(e.Graphics, ClientRectangle, _ribbon.Theme, Font, DeviceDpi) { Density = _ribbon.Density };
         _ribbon.Painter.DrawSurface(context, true);
         PaintGalleryHeadings(e.Graphics);
+        if (!_menuHeader.IsEmpty && MenuSource is { } source)
+        {
+            var header = _menuHeader; header.Offset(AutoScrollPosition);
+            header.Width = Math.Max(header.Width, ClientSize.Width - header.Left - _contentPadding);
+            _ribbon.Painter.DrawMenuHeader(context with { Bounds = header }, source.DropDownHeader);
+        }
         if (_bodyLayout is { } body)
         {
             var saved = e.Graphics.Save();
@@ -391,7 +408,8 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
                 foreach (var slot in body.Groups)
                 {
                     var bounds = slot.Bounds; bounds.Offset(AutoScrollPosition);
-                    _ribbon.Painter.DrawGroup(context with { Bounds = bounds,
+                    var frame = slot.Frame; frame.Offset(AutoScrollPosition);
+                    _ribbon.Painter.DrawGroup(context with { Bounds = bounds, GroupSeparatorBounds = frame,
                         Hot = slot.Group.EffectiveEnabled && ReferenceEquals(_hot, slot.Group),
                         Pressed = slot.Group.EffectiveEnabled && ReferenceEquals(_pressed, slot.Group),
                         Focused = slot.Group.EffectiveEnabled && _ribbon.KeyboardFocusCues && Focused && ReferenceEquals(_focused, slot.Group) }, slot.Group, slot.Collapsed);
@@ -430,7 +448,8 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
                         Hot = target.Enabled && !_hotDropDown && ReferenceEquals(_hot, item),
                         Pressed = target.Enabled && !_pressedDropDown && ReferenceEquals(_pressed, item),
                         Focused = target.Enabled && !_focusedDropDown && _ribbon.KeyboardFocusCues && Focused && ReferenceEquals(_focused, item),
-                        ReserveIcon = target.ReserveIcon
+                        ReserveIcon = target.ReserveIcon,
+                        IsGalleryDropDown = target.GalleryDropDown
                     };
                     if (item is RibbonGalleryTile tile && GallerySource is { } gallery)
                         _ribbon.Painter.DrawGalleryTile(primary, tile, ReferenceEquals(gallery.SelectedItem, tile));

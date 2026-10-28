@@ -26,6 +26,7 @@ public sealed class RibbonQuickAccessReference : RibbonElement
             if (ReferenceEquals(_source, value)) return;
             RibbonQuickAccess.ValidateSource(value, Ribbon);
             _source = value;
+            MergeProvenance = value is null ? null : RibbonControl.GetMergeSource(value);
             Changed();
             SourceChanged?.Invoke(this, EventArgs.Empty);
         }
@@ -49,6 +50,7 @@ public sealed class RibbonQuickAccessComboBoxReference : RibbonElement
             if (ReferenceEquals(_source, value)) return;
             RibbonQuickAccess.ValidateComboSource(value, Ribbon);
             _source = value;
+            MergeProvenance = value is null ? null : RibbonControl.GetMergeSource(value);
             Changed();
             SourceChanged?.Invoke(this, EventArgs.Empty);
         }
@@ -75,7 +77,7 @@ public sealed class RibbonQuickAccessDropDownReference : RibbonElement
             Ribbon?.VerifyAccess();
             if (ReferenceEquals(_source, value)) return;
             RibbonQuickAccess.ValidateMenuSource(value, Ribbon);
-            _source = value; Changed(); SourceChanged?.Invoke(this, EventArgs.Empty);
+            _source = value; MergeProvenance = value is null ? null : RibbonControl.GetMergeSource(value); Changed(); SourceChanged?.Invoke(this, EventArgs.Empty);
         }
     }
     /// <summary>Occurs after the borrowed source changes.</summary>
@@ -106,7 +108,7 @@ public sealed class RibbonQuickAccessGroupReference : RibbonElement
             Ribbon?.VerifyAccess();
             if (ReferenceEquals(_source, value)) return;
             RibbonQuickAccess.ValidateGroupSource(value, Ribbon);
-            _source = value; Changed(); SourceChanged?.Invoke(this, EventArgs.Empty);
+            _source = value; MergeProvenance = value is null ? null : RibbonControl.GetMergeSource(value); Changed(); SourceChanged?.Invoke(this, EventArgs.Empty);
         }
     }
     /// <summary>Occurs after the borrowed source changes.</summary>
@@ -145,6 +147,7 @@ internal static class RibbonQuickAccess
     internal static string Caption(RibbonElement entry) => entry.Text.Length > 0 ? entry.Text : Source(entry)?.Text ?? "Unavailable";
     internal static bool Available(RibbonElement entry)
     {
+        if (entry.Ribbon is { IsModal: true } host && ReferenceEquals(Source(entry), host.FileMenu)) return false;
         if (!entry.Visible || !entry.EffectiveEnabled || Source(entry) is not { IsDisposed: false } command ||
             !ReferenceEquals(command.Ribbon, entry.Ribbon) || entry.Ribbon is null || !command.EffectiveEnabled) return false;
         for (RibbonElement? node = command; node is not null; node = node.Parent as RibbonElement)

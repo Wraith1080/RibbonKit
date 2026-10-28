@@ -182,7 +182,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
-        _ribbon.Painter.DrawBackstageBackground(new(e.Graphics, ClientRectangle, _ribbon.Theme, Font, DeviceDpi), _pages.Left);
+        _ribbon.Painter.DrawBackstageBackground(new(e.Graphics, ClientRectangle, _ribbon.Theme, Font, DeviceDpi) { Density = _ribbon.Density }, _pages.Left);
     }
     protected override void Dispose(bool disposing)
     {
@@ -241,7 +241,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         protected override void OnPaint(PaintEventArgs e)
         {
             var ribbon = _surface._ribbon;
-            var context = new RibbonPaintContext(e.Graphics, ClientRectangle, ribbon.Theme, Font, DeviceDpi, _hot, _pressed, Focused && ribbon.KeyboardFocusCues);
+            var context = new RibbonPaintContext(e.Graphics, ClientRectangle, ribbon.Theme, Font, DeviceDpi, _hot, _pressed, Focused && ribbon.KeyboardFocusCues) { Density = ribbon.Density };
             ribbon.Painter.DrawBackstageEntry(context, Item, ReferenceEquals(Item, ribbon.Backstage.SelectedPage) && Item is not null);
             if (Tip.Length > 0) ribbon.Painter.DrawKeyTip(context with { Bounds = new(Width - Math.Min(Width, 34), Height / 2 - 9, Math.Min(Width, 30), 18) }, Tip);
         }

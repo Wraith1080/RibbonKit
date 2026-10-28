@@ -11,6 +11,16 @@ internal static partial class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--popup-refinement-checks" or "--popup-refinement-checks-flat")
+            return IndependentConsumer.PopupRefinementChecks.Run(args[1], args[0] == "--popup-refinement-checks-flat");
+        if (args.Length == 2 && args[0] is "--gallery-reduction-checks" or "--gallery-reduction-checks-flat")
+            return IndependentConsumer.InRibbonGalleryInteractionChecks.Run(args[1], args[0] == "--gallery-reduction-checks-flat", reductionOnly: true);
+        if (args.Length == 2 && args[0] is "--density-checks" or "--density-checks-flat")
+            return IndependentConsumer.DensityInteractionChecks.Run(args[1], args[0] == "--density-checks-flat");
+        if (args.Length == 2 && args[0] is "--modal-checks" or "--modal-checks-flat")
+            return IndependentConsumer.ModalInteractionChecks.Run(args[1], args[0] == "--modal-checks-flat");
+        if (args.Length == 2 && args[0] is "--merge-checks" or "--merge-checks-flat")
+            return IndependentConsumer.MergeInteractionChecks.Run(args[1], args[0] == "--merge-checks-flat");
         if (args.Length == 2 && args[0] is "--gallery-strip-checks" or "--gallery-strip-checks-flat")
             return IndependentConsumer.InRibbonGalleryInteractionChecks.Run(args[1], args[0] == "--gallery-strip-checks-flat", stripOnly: true);
         if (args.Length == 2 && args[0] is "--qat-gallery-checks" or "--qat-gallery-checks-flat")
@@ -51,6 +61,8 @@ internal static partial class Program
             return IndependentConsumer.TextBoxInteractionChecks.Run(args[1]);
         if (args.Length == 2 && args[0] is "--split-checks" or "--split-checks-flat")
             return IndependentConsumer.SplitInteractionChecks.Run(args[1], args[0] == "--split-checks-flat");
+        if (args.Length == 2 && args[0] is "--touch-split-checks" or "--touch-split-checks-flat")
+            return IndependentConsumer.SplitInteractionChecks.Run(args[1], args[0] == "--touch-split-checks-flat", true);
         if (args.Contains("--server"))
         {
             Server();

@@ -41,7 +41,7 @@ public partial class RibbonControl
     /// <summary>Occurs after Backstage visibility changes, including forced teardown.</summary>
     public event EventHandler? IsBackstageOpenChanged;
     internal RibbonBackstageSurface? BackstageSurface => _backstageSurface;
-    private bool CanShowBackstage => !_disposing && !IsDisposed && !IsInDesignMode && Visible && Enabled
+    private bool CanShowBackstage => !_disposing && !IsDisposed && !IsInDesignMode && !IsModal && Visible && Enabled
         && FileMenuMode == RibbonFileMenuMode.Backstage && HasFileMenu && FileMenu.EffectiveEnabled
         && !Backstage.IsDisposed && Backstage.Visible && Backstage.EffectiveEnabled;
     private void OpenBackstage()

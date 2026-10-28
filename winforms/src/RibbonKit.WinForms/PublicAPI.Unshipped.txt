@@ -1,4 +1,76 @@
 #nullable enable
+RibbonKit.WinForms.RibbonPaintContext.IsGalleryDropDown.get -> bool
+RibbonKit.WinForms.RibbonPaintContext.IsGalleryDropDown.init -> void
+RibbonKit.WinForms.RibbonMenuPresentation
+RibbonKit.WinForms.RibbonMenuPresentation.Standard = 0 -> RibbonKit.WinForms.RibbonMenuPresentation
+RibbonKit.WinForms.RibbonMenuPresentation.IllustratedChoices = 1 -> RibbonKit.WinForms.RibbonMenuPresentation
+RibbonKit.WinForms.RibbonDropDownItem.DropDownHeader.get -> string!
+RibbonKit.WinForms.RibbonDropDownItem.DropDownHeader.set -> void
+RibbonKit.WinForms.RibbonDropDownItem.DropDownHeaderChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonDropDownItem.MenuPresentation.get -> RibbonKit.WinForms.RibbonMenuPresentation
+RibbonKit.WinForms.RibbonDropDownItem.MenuPresentation.set -> void
+RibbonKit.WinForms.RibbonDropDownItem.MenuPresentationChanged -> System.EventHandler?
+virtual RibbonKit.WinForms.RibbonRenderer.DrawMenuHeader(RibbonKit.WinForms.RibbonPaintContext context, string! text) -> void
+RibbonKit.WinForms.RibbonDensity
+RibbonKit.WinForms.RibbonDensity.Compact = 0 -> RibbonKit.WinForms.RibbonDensity
+RibbonKit.WinForms.RibbonDensity.Touch = 1 -> RibbonKit.WinForms.RibbonDensity
+RibbonKit.WinForms.RibbonControl.Density.get -> RibbonKit.WinForms.RibbonDensity
+RibbonKit.WinForms.RibbonControl.Density.set -> void
+RibbonKit.WinForms.RibbonControl.DensityChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonPaintContext.Density.get -> RibbonKit.WinForms.RibbonDensity
+RibbonKit.WinForms.RibbonPaintContext.Density.init -> void
+RibbonKit.WinForms.RibbonTheme.HeaderButtonInset.get -> int
+RibbonKit.WinForms.RibbonTheme.HeaderButtonInset.init -> void
+RibbonKit.WinForms.RibbonControl.EnterModal(RibbonKit.WinForms.RibbonTab! tab) -> bool
+RibbonKit.WinForms.RibbonControl.ExitModal() -> bool
+RibbonKit.WinForms.RibbonControl.IsModal.get -> bool
+RibbonKit.WinForms.RibbonControl.IsModalChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonControl.ModalEntered -> System.EventHandler<RibbonKit.WinForms.RibbonModalEventArgs!>?
+RibbonKit.WinForms.RibbonControl.ModalEntering -> System.EventHandler<RibbonKit.WinForms.RibbonModalEventArgs!>?
+RibbonKit.WinForms.RibbonControl.ModalExited -> System.EventHandler<RibbonKit.WinForms.RibbonModalEventArgs!>?
+RibbonKit.WinForms.RibbonControl.ModalExiting -> System.EventHandler<RibbonKit.WinForms.RibbonModalEventArgs!>?
+RibbonKit.WinForms.RibbonControl.ModalTab.get -> RibbonKit.WinForms.RibbonTab?
+RibbonKit.WinForms.RibbonModalEventArgs
+RibbonKit.WinForms.RibbonModalEventArgs.IsForced.get -> bool
+RibbonKit.WinForms.RibbonModalEventArgs.Reason.get -> RibbonKit.WinForms.RibbonModalReason
+RibbonKit.WinForms.RibbonModalEventArgs.RibbonModalEventArgs(RibbonKit.WinForms.RibbonTab! tab, RibbonKit.WinForms.RibbonModalReason reason) -> void
+RibbonKit.WinForms.RibbonModalEventArgs.Tab.get -> RibbonKit.WinForms.RibbonTab!
+RibbonKit.WinForms.RibbonModalReason
+RibbonKit.WinForms.RibbonModalReason.Application = 0 -> RibbonKit.WinForms.RibbonModalReason
+RibbonKit.WinForms.RibbonModalReason.CloseButton = 1 -> RibbonKit.WinForms.RibbonModalReason
+RibbonKit.WinForms.RibbonModalReason.Escape = 2 -> RibbonKit.WinForms.RibbonModalReason
+RibbonKit.WinForms.RibbonModalReason.TabUnavailable = 3 -> RibbonKit.WinForms.RibbonModalReason
+RibbonKit.WinForms.RibbonTab.CanClose.get -> bool
+RibbonKit.WinForms.RibbonTab.CanClose.set -> void
+RibbonKit.WinForms.RibbonTab.CanCloseChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonTab.CloseButtonText.get -> string!
+RibbonKit.WinForms.RibbonTab.CloseButtonText.set -> void
+RibbonKit.WinForms.RibbonTab.IsModal.get -> bool
+RibbonKit.WinForms.RibbonTab.IsModal.set -> void
+RibbonKit.WinForms.RibbonTab.IsModalChanged -> System.EventHandler?
+virtual RibbonKit.WinForms.RibbonRenderer.DrawModalClose(RibbonKit.WinForms.RibbonPaintContext context, string! text) -> void
+RibbonKit.WinForms.RibbonMergeSource
+RibbonKit.WinForms.RibbonMergeSource.RibbonMergeSource() -> void
+RibbonKit.WinForms.RibbonMergeSource.Tabs.get -> RibbonKit.WinForms.RibbonTabCollection!
+RibbonKit.WinForms.RibbonMergeSource.Groups.get -> RibbonKit.WinForms.RibbonGroupContributionCollection!
+RibbonKit.WinForms.RibbonMergeSource.Order.get -> int
+RibbonKit.WinForms.RibbonMergeSource.Order.set -> void
+RibbonKit.WinForms.RibbonMergeSource.MergedInto.get -> RibbonKit.WinForms.RibbonControl?
+RibbonKit.WinForms.RibbonMergeSource.IsMerged.get -> bool
+RibbonKit.WinForms.RibbonMergeSource.IsMergedChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonGroupContribution
+RibbonKit.WinForms.RibbonGroupContribution.RibbonGroupContribution() -> void
+RibbonKit.WinForms.RibbonGroupContribution.Group.get -> RibbonKit.WinForms.RibbonGroup!
+RibbonKit.WinForms.RibbonGroupContribution.TargetTabId.get -> string!
+RibbonKit.WinForms.RibbonGroupContribution.TargetTabId.set -> void
+RibbonKit.WinForms.RibbonGroupContribution.Order.get -> int
+RibbonKit.WinForms.RibbonGroupContribution.Order.set -> void
+RibbonKit.WinForms.RibbonGroupContributionCollection
+RibbonKit.WinForms.RibbonControl.Merge(RibbonKit.WinForms.RibbonMergeSource! source) -> bool
+RibbonKit.WinForms.RibbonControl.Unmerge(RibbonKit.WinForms.RibbonMergeSource! source) -> bool
+RibbonKit.WinForms.RibbonControl.GetPresentedTabs() -> System.Collections.Generic.IReadOnlyList<RibbonKit.WinForms.RibbonTab!>!
+RibbonKit.WinForms.RibbonControl.GetPresentedGroups(RibbonKit.WinForms.RibbonTab! tab) -> System.Collections.Generic.IReadOnlyList<RibbonKit.WinForms.RibbonGroup!>!
+static RibbonKit.WinForms.RibbonControl.GetMergeSource(RibbonKit.WinForms.RibbonElement! element) -> RibbonKit.WinForms.RibbonMergeSource?
 RibbonKit.WinForms.RibbonGalleryItem.IsInRibbon.get -> bool
 RibbonKit.WinForms.RibbonGalleryItem.IsInRibbon.set -> void
 RibbonKit.WinForms.RibbonGalleryItem.IsInRibbonChanged -> System.EventHandler?

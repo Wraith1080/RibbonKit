@@ -8,6 +8,16 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--validate-popup-refinements" or "--validate-popup-refinements-flat")
+            return PopupRefinementChecks.Run(args[1], args[0] == "--validate-popup-refinements-flat");
+        if (args.Length == 2 && args[0] is "--validate-gallery-reduction" or "--validate-gallery-reduction-flat")
+            return InRibbonGalleryInteractionChecks.Run(args[1], args[0] == "--validate-gallery-reduction-flat", reductionOnly: true);
+        if (args.Length == 2 && args[0] is "--validate-density" or "--validate-density-flat")
+            return DensityInteractionChecks.Run(args[1], args[0] == "--validate-density-flat");
+        if (args.Length == 2 && args[0] is "--validate-modal" or "--validate-modal-flat")
+            return ModalInteractionChecks.Run(args[1], args[0] == "--validate-modal-flat");
+        if (args.Length == 2 && args[0] is "--validate-merge" or "--validate-merge-flat")
+            return MergeInteractionChecks.Run(args[1], args[0] == "--validate-merge-flat");
         if (args.Length == 2 && args[0] is "--validate-gallery-strip" or "--validate-gallery-strip-flat")
             return InRibbonGalleryInteractionChecks.Run(args[1], args[0] == "--validate-gallery-strip-flat", stripOnly: true);
         if (args.Length == 2 && args[0] is "--validate-qat-gallery" or "--validate-qat-gallery-flat")
@@ -48,6 +58,8 @@ internal static class Program
             return TextBoxInteractionChecks.Run(args[1]);
         if (args.Length == 2 && args[0] is "--validate-split" or "--validate-split-flat")
             return SplitInteractionChecks.Run(args[1], args[0] == "--validate-split-flat");
+        if (args.Length == 2 && args[0] is "--validate-touch-split" or "--validate-touch-split-flat")
+            return SplitInteractionChecks.Run(args[1], args[0] == "--validate-touch-split-flat", true);
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
         Application.EnableVisualStyles();
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);

@@ -7,7 +7,8 @@ internal sealed record RibbonGalleryStripLayout(Rectangle Viewport, Rectangle Up
     internal static RibbonGalleryStripLayout Build(RibbonGalleryItem source, Size size, int dpi, int row)
     {
         int S(int value) => RibbonLayoutEngine.Scale(value, dpi);
-        int padding = S(Padding), utility = Math.Min(Math.Max(0, size.Width - 2 * padding), S(UtilityWidth));
+        var metrics = RibbonDensityMetrics.For(source.Ribbon?.Density ?? RibbonDensity.Compact);
+        int padding = S(Padding), utility = Math.Min(Math.Max(0, size.Width - 2 * padding), S(metrics.GalleryUtility));
         int leftInset = Math.Min(padding, size.Width), topInset = Math.Min(padding, size.Height);
         int x = Math.Max(0, size.Width - padding - utility);
         var viewport = Rectangle.FromLTRB(leftInset, topInset, Math.Max(leftInset, x - padding), Math.Max(topInset, size.Height - padding));
