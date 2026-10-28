@@ -155,7 +155,7 @@ partial class MainForm
         pictureTools.Items.AddRange(crop, closePictureTools); pictureFormat.Groups.Add(pictureTools); ribbon.Tabs.Add(pictureFormat); picture.Click += ShowPictureTools;
         document.Dock = DockStyle.Fill; document.Multiline = true; document.ScrollBars = ScrollBars.Vertical; document.Name = "document";
         statusStrip.Items.AddRange(new ToolStripItem[] { status }); status.Text = "Ready";
-        AutoScaleMode = AutoScaleMode.Dpi; ClientSize = new Size(1080, 540); MinimumSize = new Size(240, 300); StartPosition = FormStartPosition.CenterScreen; Text = "RibbonKit.WinForms — ScreenTips";
+        AutoScaleMode = AutoScaleMode.Dpi; ClientSize = new Size(1280, 720); MinimumSize = new Size(240, 300); StartPosition = FormStartPosition.CenterScreen; Text = "RibbonKit.WinForms — ScreenTips";
         Controls.Add(document); Controls.Add(ribbon); Controls.Add(statusStrip);
         ((System.ComponentModel.ISupportInitialize)ribbon).EndInit(); ResumeLayout(false); PerformLayout();
     }

@@ -47,31 +47,16 @@ public partial class MainForm : Form
         printView.Icon = new SampleIcon(12);
         webView.Icon = new SampleIcon(13);
         ribbon.QuickAccessItems.AddRange(
-            new RibbonQuickAccessReference { Source = copy },
             new RibbonQuickAccessReference { Source = bold },
-            new RibbonQuickAccessReference { Source = italic },
-            new RibbonQuickAccessReference { Source = find },
-            new RibbonQuickAccessReference { Source = picture },
-            new RibbonQuickAccessReference { Source = cut },
-            new RibbonQuickAccessComboBoxReference { Source = fontInput },
-            new RibbonQuickAccessComboBoxReference { Source = zoomInput },
-            new RibbonQuickAccessDropDownReference { Source = select },
-            new RibbonQuickAccessDropDownReference { Source = paste },
-            new RibbonQuickAccessDropDownReference { Source = trackChanges },
-            new RibbonQuickAccessGroupReference { Source = fields, Text = "Input fields" },
-            new RibbonQuickAccessReference { Source = showRuler },
-            new RibbonQuickAccessReference { Source = showGrid },
-            new RibbonQuickAccessReference { Source = printView },
-            new RibbonQuickAccessReference { Source = webView });
+            new RibbonQuickAccessReference { Source = italic });
         var moveQuickAccess = new RibbonButtonItem { Id = "cmd.qat.move", Text = "Move Quick Access Toolbar", ScreenTipDescription = "Move the toolbar between the tab row and below the ribbon. Title-bar hosting is planned with window integration." };
         moveQuickAccess.Click += (_, _) => ribbon.QuickAccessPosition = ribbon.QuickAccessPosition == RibbonQuickAccessPosition.TabRow ? RibbonQuickAccessPosition.BelowRibbon : RibbonQuickAccessPosition.TabRow;
-        ribbon.QuickAccessItems.Add(moveQuickAccess);
+        ribbon.CommandCatalog.Commands.Add(moveQuickAccess);
         document.Text = "Native RibbonKit.WinForms\r\n\r\nInputs demonstrates native TextBox and ComboBox editing, binding, read-only/disabled fields and popup ownership. Font selects a choice; Zoom also accepts typed percentages (25% to 500%). Resize to open the same editors in collapsed groups.\r\n\r\nF4 or Alt+Down opens the choice popup. Escape closes that list first, then its containing ribbon popup. Enter validates and commits; Escape outside a list restores the last committed value. Tab visits fields; F6 returns to this document. Alt/F10, E, F focuses Font.\r\n\r\nThe document, status text, validation rules and data belong to this application. Home still demonstrates split buttons.";
         document.AppendText("\r\n\r\nOptions demonstrates compact check/radio choices. Gridlines cycles through three states. Ruler and its popup entry share an application binding. Resize to open the same options in collapsed groups.");
         document.AppendText("\r\n\r\nScreenTips: pause over Home's shortened Find caption to read it in full. Copy/Paste have descriptions; Unavailable explains its disabled state. Inputs and popup editors retain focus and selection while their tips are shown. Options includes check/radio examples.");
-        document.AppendText("\r\n\r\nQuick Access shares the source commands, including commands on inactive tabs. Font and Zoom open choice lists; editing stays in the Inputs fields. Select opens its source menu. Paste and Track changes keep separate primary and menu halves, including in overflow. Its M button moves the toolbar below the ribbon and back. Narrow the window to reach remaining commands through the overflow arrow. F10 shows toolbar KeyTips; 0 opens overflow, and automatic split KeyTips end in A/B for primary/menu.");
-        document.AppendText("\r\n\r\nInput fields in Quick Access opens the original Fields group, including on another tab. That group stays collapsed while its QAT reference is attached, and its native fields retain the same values and bindings.");
-        document.AppendText("\r\n\r\nRuler, Gridlines, Print layout and Web layout appear as icon toggle buttons in Quick Access. Gridlines keeps its three-state binding, with a small bar for mixed state. Layout choices retain their original radio group. Their ordinary checkbox/radio visuals remain on Options.");
+        document.AppendText("\r\n\r\nQuick Access starts with Bold, Italic and Mouse/Touch mode. Right-click to change toolbar placement or visibility, or open Customize Quick Access Toolbar to add other commands. Font and Zoom offer choice lists; Select opens its source menu, while Paste and Track changes retain their split primary/menu actions. F10 shows toolbar KeyTips; 0 opens overflow when the window is narrow.");
+        document.AppendText("\r\n\r\nThe Fields group can be added through Customize Quick Access Toolbar. It borrows the original native editors, values and bindings. Options commands can also be added: Gridlines keeps its three-state binding, and layout choices retain their radio group.");
         document.AppendText("\r\n\r\nChoose Insert > Picture to show the colored Picture Format tab. Close picture tools hides it and returns to a visible tab. The application decides when picture tools apply.");
         document.AppendText("\r\n\r\nFile opens native Backstage. Info and Print retain their native fields when switching pages or reopening; Save and New run application commands. F10, F enters Backstage, F6 moves to its page, and Escape returns to this document. File remains available while the ribbon is minimized.");
         ribbon.SelectedTab = home;
@@ -80,8 +65,8 @@ public partial class MainForm : Form
         InitializeDensity();
         InitializeMessages();
         InitializeCustomization();
-        document.AppendText("\r\n\r\nMerging > Chart context adds a source-owned Chart Design tab and a Chart context group on Home. Switch the context off and on to retain its fields and bindings. Its Update chart and Type entries in Quick Access become unavailable while the context is away. Application activation drives merging; moving keyboard focus does not.");
-        document.AppendText("\r\n\r\nHome > Galleries shows Styles inside the ribbon. Use its up/down buttons to browse a row, and the bottom button or F4 to expand all styles. Preview leaves selection unchanged; click or Enter applies the style. The first two Quick Access buttons open the same Styles and Text color galleries, including while another tab is active.");
+        document.AppendText("\r\n\r\nMerging > Chart context adds a source-owned Chart Design tab and a Chart context group on Home. Switch the context off and on to retain its fields and bindings. Application activation drives merging; moving keyboard focus does not.");
+        document.AppendText("\r\n\r\nHome > Galleries shows Styles inside the ribbon. Use its up/down buttons to browse a row, and the bottom button or F4 to expand all styles. Preview leaves selection unchanged; click or Enter applies the style. Styles and Text color can be added to Quick Access through customization.");
     }
     private void NameValidating(object? sender, CancelEventArgs e)
     {

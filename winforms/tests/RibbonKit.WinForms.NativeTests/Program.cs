@@ -11,6 +11,8 @@ internal static partial class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--customization-editor-checks" or "--customization-editor-checks-flat")
+            return IndependentConsumer.CustomizationEditorInteractionChecks.Run(args[1], args[0] == "--customization-editor-checks-flat");
         if (args.Length == 2 && args[0] is "--popup-refinement-checks" or "--popup-refinement-checks-flat")
             return IndependentConsumer.PopupRefinementChecks.Run(args[1], args[0] == "--popup-refinement-checks-flat");
         if (args.Length == 2 && args[0] is "--gallery-reduction-checks" or "--gallery-reduction-checks-flat")

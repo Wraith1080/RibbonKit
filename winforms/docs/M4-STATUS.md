@@ -1246,7 +1246,7 @@ Each public API and ownership contract is proposed before its implementation.
 | M4I | Joined Office 2024 BelowRibbon QAT implemented as M4I1, human review pending; comprehensive appearance inventory/consolidation and later themes remain separate bounded passes |
 | M4J | Message-panel foundation implemented, human review pending; connected/square joins, standalone minimized not-BelowRibbon case and shadow protection included |
 | M5A | Catalog and QAT draft/persistence/Apply/Cancel foundation implemented; human review and next scope in [M5 ledger](M5-STATUS.md) |
-| M5B | QAT customization UI, including groups only on its available list |
+| M5B | QAT context menu and extensible options dialog implemented; per-page Apply, DPI-aware layout and evidence in [M5 ledger](M5-STATUS.md); human review pending |
 | M5C | Ribbon customization UI and structural changes using the same draft/storage contract |
 | M5D | Simplified Ribbon layout, pinning/overflow and customization/storage designed together |
 | M6A | Motion, interruption/reduced-motion handling and optional host synchronization |

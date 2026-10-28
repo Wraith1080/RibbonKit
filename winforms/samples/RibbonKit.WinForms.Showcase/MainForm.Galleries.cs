@@ -33,7 +33,6 @@ public partial class MainForm
         var colors = new RibbonGalleryItem { Id = "gallery.colors", Text = "Text color", KeyTip = "GC", ColumnCount = 4, TileWidth = 64, TileHeight = 68, MaxVisibleRows = 3, Icon = new SampleIcon(7) };
         _sampleGalleries.AddRange([styles, colors]);
         var group = new RibbonGroup { Id = "group.galleries", Text = "Galleries", ReductionMode = RibbonGroupReductionMode.ResizeThenCollapse }; group.Items.AddRange(styles, colors); home.Groups.Add(group);
-        ribbon.QuickAccessItems.AddRange(new RibbonQuickAccessDropDownReference { Source = styles }, new RibbonQuickAccessDropDownReference { Source = colors });
         var fonts = new Dictionary<RibbonGalleryTile, Font>();
         foreach (var (text, points, style, heading) in new[] {
             ("Normal", 10f, FontStyle.Regular, "Document"), ("Emphasis", 10f, FontStyle.Italic, "Document"), ("Strong", 10f, FontStyle.Bold, "Document"),

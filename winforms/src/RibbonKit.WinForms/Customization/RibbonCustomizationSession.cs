@@ -8,6 +8,7 @@ public sealed class RibbonCustomizationSession : IDisposable
     private readonly RibbonCustomizationState _defaults;
     private RibbonCustomizationState _checkpoint;
     private bool _disposed;
+    internal int ApplyVersion { get; private set; }
     internal RibbonCustomizationSession(RibbonCommandCatalog catalog, string applicationId, RibbonCustomizationState defaults)
     {
         _catalog = catalog; _applicationId = applicationId; _defaults = defaults;
@@ -34,6 +35,8 @@ public sealed class RibbonCustomizationSession : IDisposable
         }
         finally { _catalog.ReleasePlan(plan); }
         _checkpoint = _catalog.Capture(_applicationId); Draft = RibbonCustomizationSerializer.Copy(_checkpoint);
+        ApplyVersion++;
+        _catalog.Host.OnCustomizationApplied();
         Applied?.Invoke(this, EventArgs.Empty); return true;
     }
     /// <summary>Discards unapplied edits. It never rolls back an earlier successful Apply or overwrites external live changes.</summary>

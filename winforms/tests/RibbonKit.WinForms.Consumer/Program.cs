@@ -8,6 +8,8 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--validate-customization-editor" or "--validate-customization-editor-flat")
+            return CustomizationEditorInteractionChecks.Run(args[1], args[0] == "--validate-customization-editor-flat");
         if (args.Length == 2 && args[0] is "--validate-popup-refinements" or "--validate-popup-refinements-flat")
             return PopupRefinementChecks.Run(args[1], args[0] == "--validate-popup-refinements-flat");
         if (args.Length == 2 && args[0] is "--validate-gallery-reduction" or "--validate-gallery-reduction-flat")

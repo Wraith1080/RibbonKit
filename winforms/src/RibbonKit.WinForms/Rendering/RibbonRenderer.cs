@@ -306,13 +306,22 @@ public partial class RibbonRenderer : IDisposable
             bool open = group.EffectiveEnabled && group.Ribbon?.Popups.IsExpanded(group) == true;
             if (open || context.Hot || context.Pressed)
                 DrawChrome(context, open || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, context.Theme.Border);
-            var bounds = Rectangle.Inflate(context.Bounds, -5, -5);
-            var flags = TextFormatFlags.HorizontalCenter | TextFormatFlags.WordBreak | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding;
-            int arrowHeight = RibbonLayoutEngine.Scale(6, context.DeviceDpi), gap = RibbonLayoutEngine.Scale(5, context.DeviceDpi);
-            int textHeight = Math.Min(Math.Max(0, bounds.Height - arrowHeight - gap), TextRenderer.MeasureText(group.Text, context.Font, new Size(Math.Max(1, bounds.Width), int.MaxValue), flags).Height);
+            int inset = RibbonLayoutEngine.Scale(RibbonLayoutEngine.CollapsedGroupCaptionInset, context.DeviceDpi);
+            var bounds = Rectangle.Inflate(context.Bounds, -inset, -inset);
+            var flags = TextFormatFlags.HorizontalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding;
+            if (bounds.Width <= 0 || bounds.Height <= 0) return;
+            int arrowHeight = Math.Min(bounds.Height, RibbonLayoutEngine.Scale(6, context.DeviceDpi));
+            int gap = Math.Min(Math.Max(0, bounds.Height - arrowHeight), RibbonLayoutEngine.Scale(5, context.DeviceDpi));
+            var caption = _captions.Wrap(group.Text, context.Font, context.DeviceDpi, bounds.Width);
+            int availableText = Math.Max(0, bounds.Height - arrowHeight - gap);
+            int lineHeight = Math.Min(context.Font.Height, availableText);
+            int rows = lineHeight == 0 ? 0 : Math.Min(caption.Lines.Length, availableText / lineHeight);
+            int textHeight = rows * lineHeight;
             int top = bounds.Top + (bounds.Height - textHeight - gap - arrowHeight) / 2;
             var color = group.EffectiveEnabled ? context.Theme.Foreground : SystemColors.GrayText;
-            DrawText(context with { Bounds = new(bounds.Left, top, bounds.Width, textHeight) }, group.Text, color, flags);
+            for (int row = 0; row < rows; row++)
+                DrawText(context with { Bounds = new(bounds.Left, top + row * lineHeight, bounds.Width, lineHeight) },
+                    rows < caption.Lines.Length ? group.Text.Replace('\r', ' ').Replace('\n', ' ') : caption.Lines[row], color, flags);
             DrawDropDownArrow(context with { Bounds = new(bounds.Left, top + textHeight + gap, bounds.Width, arrowHeight) }, color);
             if (context.Focused)
                 DrawFocus(context);

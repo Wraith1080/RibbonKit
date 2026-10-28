@@ -34,7 +34,7 @@ internal sealed class RibbonPopupManager : IDisposable
     internal IEnumerable<RibbonPopupSurface> Surfaces => _sessions.Select(s => s.Surface);
     internal bool IsExpanded(RibbonElement element) => _sessions.Any(s => ReferenceEquals(s.Owner, element));
     internal bool IsMenuExpanded(RibbonDropDownItem source) => _sessions.Any(s => ReferenceEquals(s.MenuSource, source));
-    internal void Toggle(RibbonElement owner, Control opener, Rectangle anchor)
+    internal void Toggle(RibbonElement owner, Control opener, Rectangle anchor, Point? contextPoint = null)
     {
         _ribbon.ScreenTips.Cancel();
         if (_ribbon.IsInDesignMode || _ribbon.IsBackstageOpen)
@@ -67,10 +67,11 @@ internal sealed class RibbonPopupManager : IDisposable
         if (opener.IsDisposed || !opener.Visible || !_ribbon.Visible || _ribbon.IsDisposed || !owner.EffectiveEnabled || !owner.Visible)
             return;
         var currentTargets = opener is RibbonPopupSurface popup ? popup.Targets : _ribbon.Snapshot.Targets;
-        if (!currentTargets.Any(t => ReferenceEquals(t.Element, owner) && !t.VisibleBounds.IsEmpty))
+        if (contextPoint is null && !currentTargets.Any(t => ReferenceEquals(t.Element, owner) && !t.VisibleBounds.IsEmpty))
             return;
-        anchor = currentTargets.Where(t => ReferenceEquals(t.Element, owner)).Select(t => t.VisibleBounds).Where(r => !r.IsEmpty)
-            .Aggregate(Rectangle.Empty, (a, b) => a.IsEmpty ? b : Rectangle.Union(a, b));
+        if (contextPoint is null)
+            anchor = currentTargets.Where(t => ReferenceEquals(t.Element, owner)).Select(t => t.VisibleBounds).Where(r => !r.IsEmpty)
+                .Aggregate(Rectangle.Empty, (a, b) => a.IsEmpty ? b : Rectangle.Union(a, b));
         if (ReferenceEquals(opener, _ribbon))
             CloseAll(false);
         else
@@ -91,7 +92,7 @@ internal sealed class RibbonPopupManager : IDisposable
                 _form.ResizeBegin += OnMove;
             }
         }
-        var screenAnchor = opener.RectangleToScreen(anchor);
+        var screenAnchor = contextPoint is { } context ? new Rectangle(context, Size.Empty) : opener.RectangleToScreen(anchor);
         var placementAnchor = owner is RibbonTab
             ? opener.RectangleToScreen(new Rectangle(0, opener.ClientSize.Height - 1, opener.ClientSize.Width, 1)) : screenAnchor;
         var work = Screen.FromRectangle(placementAnchor).WorkingArea;
@@ -672,7 +673,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         else base.OnMouseWheel(e);
     }
     protected override bool ProcessCmdKey(ref Message msg, Keys keys)
-        => ProcessPopupKey(keys) || base.ProcessCmdKey(ref msg, keys);
+        => ProcessCustomizationKey(keys) || ProcessPopupKey(keys) || base.ProcessCmdKey(ref msg, keys);
     private bool ProcessPopupKey(Keys keys)
     {
         if (!Focused) return false;

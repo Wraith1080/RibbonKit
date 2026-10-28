@@ -1,4 +1,6 @@
 #nullable enable
+RibbonKit.WinForms.RibbonTheme.CollapsedGroupMaxWidth.get -> int
+RibbonKit.WinForms.RibbonTheme.CollapsedGroupMaxWidth.init -> void
 RibbonKit.WinForms.RibbonCommandCatalog.GetQuickAccessEntryId(RibbonKit.WinForms.RibbonElement! presentation) -> string!
 RibbonKit.WinForms.RibbonTheme.BackstageNavigationFontSize.get -> float
 RibbonKit.WinForms.RibbonTheme.BackstageNavigationFontSize.init -> void
@@ -729,3 +731,38 @@ RibbonKit.WinForms.RibbonCustomizationTarget.QuickAccess = 1 -> RibbonKit.WinFor
 RibbonKit.WinForms.RibbonCustomizationTarget.Ribbon = 0 -> RibbonKit.WinForms.RibbonCustomizationTarget
 static RibbonKit.WinForms.RibbonCustomizationSerializer.Deserialize(string! json, string! applicationId) -> RibbonKit.WinForms.RibbonCustomizationState!
 static RibbonKit.WinForms.RibbonCustomizationSerializer.Serialize(RibbonKit.WinForms.RibbonCustomizationState! state) -> string!
+RibbonKit.WinForms.RibbonControl.CustomizationApplicationId.get -> string!
+RibbonKit.WinForms.RibbonControl.CustomizationApplicationId.set -> void
+RibbonKit.WinForms.RibbonControl.CustomizationApplied -> System.EventHandler?
+RibbonKit.WinForms.RibbonControl.QuickAccessCustomizationEnabled.get -> bool
+RibbonKit.WinForms.RibbonControl.QuickAccessCustomizationEnabled.set -> void
+RibbonKit.WinForms.RibbonControl.ShowQuickAccessCustomization(System.Windows.Forms.IWin32Window? owner = null) -> System.Windows.Forms.DialogResult
+RibbonKit.WinForms.RibbonQuickAccessCustomizationEditor
+RibbonKit.WinForms.RibbonQuickAccessCustomizationEditor.ApplyChanges() -> bool
+RibbonKit.WinForms.RibbonQuickAccessCustomizationEditor.RefreshDraft() -> void
+RibbonKit.WinForms.RibbonQuickAccessCustomizationEditor.RibbonQuickAccessCustomizationEditor(RibbonKit.WinForms.RibbonControl! ribbon, string! applicationId) -> void
+RibbonKit.WinForms.RibbonQuickAccessCustomizationEditor.Session.get -> RibbonKit.WinForms.RibbonCustomizationSession!
+RibbonKit.WinForms.RibbonQuickAccessCustomizationForm
+RibbonKit.WinForms.RibbonQuickAccessCustomizationForm.Editor.get -> RibbonKit.WinForms.RibbonQuickAccessCustomizationEditor!
+RibbonKit.WinForms.RibbonQuickAccessCustomizationForm.RibbonQuickAccessCustomizationForm(RibbonKit.WinForms.RibbonControl! ribbon, string! applicationId) -> void
+override RibbonKit.WinForms.RibbonOptionsDialog.Dispose(bool disposing) -> void
+override RibbonKit.WinForms.RibbonOptionsDialog.OnDpiChanged(System.Windows.Forms.DpiChangedEventArgs! e) -> void
+override RibbonKit.WinForms.RibbonOptionsDialog.OnFontChanged(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonOptionsDialog.OnFormClosing(System.Windows.Forms.FormClosingEventArgs! e) -> void
+override RibbonKit.WinForms.RibbonOptionsDialog.OnLoad(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonOptionsDialog.OnShown(System.EventArgs! e) -> void
+RibbonKit.WinForms.RibbonControl.OptionsDialogOpening -> System.EventHandler<RibbonKit.WinForms.RibbonOptionsDialogEventArgs!>?
+RibbonKit.WinForms.RibbonOptionsDialog
+RibbonKit.WinForms.RibbonOptionsDialog.Pages.get -> System.Collections.ObjectModel.Collection<RibbonKit.WinForms.RibbonOptionsPage!>!
+RibbonKit.WinForms.RibbonOptionsDialog.RibbonOptionsDialog(RibbonKit.WinForms.RibbonControl! ribbon) -> void
+RibbonKit.WinForms.RibbonOptionsDialog.SelectedPage.get -> RibbonKit.WinForms.RibbonOptionsPage?
+RibbonKit.WinForms.RibbonOptionsDialog.SelectedPage.set -> void
+RibbonKit.WinForms.RibbonOptionsDialogEventArgs
+RibbonKit.WinForms.RibbonOptionsDialogEventArgs.Dialog.get -> RibbonKit.WinForms.RibbonOptionsDialog!
+RibbonKit.WinForms.RibbonOptionsDialogEventArgs.RibbonOptionsDialogEventArgs(RibbonKit.WinForms.RibbonOptionsDialog! dialog) -> void
+RibbonKit.WinForms.RibbonOptionsPage
+RibbonKit.WinForms.RibbonOptionsPage.Applied -> System.EventHandler?
+RibbonKit.WinForms.RibbonOptionsPage.ApplyChanges() -> bool
+RibbonKit.WinForms.RibbonOptionsPage.Applying -> System.ComponentModel.CancelEventHandler?
+RibbonKit.WinForms.RibbonOptionsPage.Cancelled -> System.EventHandler?
+RibbonKit.WinForms.RibbonOptionsPage.RibbonOptionsPage() -> void

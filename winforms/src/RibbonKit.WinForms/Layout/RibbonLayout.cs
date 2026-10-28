@@ -53,6 +53,7 @@ internal sealed class RibbonLayoutEngine
     internal const int CommandVerticalInset = CommandTopInset + CommandBottomInset;
     internal const int GroupSideInset = 6;
     internal const int CollapsedGroupSideInset = 3;
+    internal const int CollapsedGroupCaptionInset = 5;
     internal const int GroupDividerWidth = 1;
     private readonly Dictionary<(RibbonGroup, int, int), MeasuredGroup> _cache = [];
     internal void Clear() => _cache.Clear();
@@ -77,7 +78,12 @@ internal sealed class RibbonLayoutEngine
         int S(double n) => Scale(n, dpi);
         var metrics = RibbonDensityMetrics.For(group.Ribbon?.Density ?? RibbonDensity.Compact);
         if (state == 3)
-            return _cache[(group, state, dpi)] = new(S(metrics.Touch ? 80 : 62) + GroupDividerWidth, []);
+        {
+            int caption = RibbonCaptionLayout.TextWidth(group.Text, font);
+            int desired = caption + S(2 * (CollapsedGroupSideInset + CollapsedGroupCaptionInset));
+            int width = Math.Clamp(desired, S(metrics.Touch ? 80 : 62), S(theme.CollapsedGroupMaxWidth));
+            return _cache[(group, state, dpi)] = new(width + GroupDividerWidth, []);
+        }
         int x = S(GroupSideInset), row = 0, columnWidth = 0, columnStart = 0;
         int fontLogical = (int)Math.Ceiling(font.Height * 96d / dpi);
         int rowLogical = Math.Max(metrics.CommandRow, fontLogical + 8), captionLogical = Math.Max(20, fontLogical + 6);

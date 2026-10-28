@@ -97,7 +97,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         {
             VerifyAccess();
             ArgumentNullException.ThrowIfNull(value);
-            if (value.TabHeight <= 0 || value.BodyHeight <= 0 || value.BodyScrollButtonVerticalInset < 0 || value.HeaderButtonInset < 0 || value.LargeButtonMaxWidth < 60 || value.CornerRadius < 0 || value.PopupCornerRadius < 0 ||
+            if (value.TabHeight <= 0 || value.BodyHeight <= 0 || value.BodyScrollButtonVerticalInset < 0 || value.HeaderButtonInset < 0 || value.LargeButtonMaxWidth < 60 || value.CollapsedGroupMaxWidth < 80 || value.CornerRadius < 0 || value.PopupCornerRadius < 0 ||
                 !float.IsFinite(value.BackstageNavigationFontSize) || value.BackstageNavigationFontSize <= 0 || value.MessageMinimumHeight <= 0 ||
                 value.MessageContentPadding.Left < 0 || value.MessageContentPadding.Top < 0 || value.MessageContentPadding.Right < 0 || value.MessageContentPadding.Bottom < 0 ||
                 value.BodyMargin.Left < 0 || value.BodyMargin.Top < 0 || value.BodyMargin.Right < 0 || value.BodyMargin.Bottom < 0)
@@ -599,7 +599,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     /// <inheritdoc />
     protected override bool IsInputKey(Keys keyData) => keyData is Keys.Left or Keys.Right or Keys.Up or Keys.Down or Keys.Home or Keys.End || base.IsInputKey(keyData);
     /// <inheritdoc />
-    protected override bool ProcessCmdKey(ref Message msg, Keys keyData) => ProcessRibbonKey(keyData) || base.ProcessCmdKey(ref msg, keyData);
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData) => ProcessCustomizationKey(keyData) || ProcessRibbonKey(keyData) || base.ProcessCmdKey(ref msg, keyData);
     internal bool ProcessRibbonKey(Keys keys)
     {
         _screenTips.Cancel();
@@ -904,6 +904,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             _disposing = true;
             _modalScope?.Release();
             ReleaseBackstageSurface();
+            ReleaseCustomizationMenu();
             _input.Dispose();
             _screenTips.Dispose();
             _popups.Dispose();

@@ -23,6 +23,7 @@
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/TextBoxInteractionChecks.cs" Link="PublicTextBoxInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/ComboBoxInteractionChecks.cs" Link="PublicComboBoxInteractionChecks.cs" /></ItemGroup>
   <!-- Reuse the public-only message consumer fixture. -->
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/CustomizationEditorInteractionChecks.cs" Link="PublicCustomizationEditorInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/CustomizationInteractionChecks.cs" Link="PublicCustomizationInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/MessageInteractionChecks.cs" Link="PublicMessageInteractionChecks.cs" /></ItemGroup>
   <!-- Public UIA client assemblies are used only by this external test client.

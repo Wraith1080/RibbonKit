@@ -23,12 +23,11 @@ public partial class MainForm
         active.CheckedChanged += (_, _) =>
         {
             if (active.Checked) ribbon.Merge(source); else ribbon.Unmerge(source);
-            status.Text = source.IsMerged ? "Chart Design and Home's Chart context group are available." : "Chart context removed; its Quick Access commands are parked.";
+            status.Text = source.IsMerged ? "Chart Design and Home's Chart context group are available." : "Chart context removed.";
         };
         var show = new RibbonButtonItem { Text = "Select Chart Design", KeyTip = "S", Icon = new SampleIcon(0) };
         show.Click += (_, _) => { active.Checked = true; ribbon.SelectedTab = chart; };
         var remove = new RibbonButtonItem { Text = "Remove chart context", KeyTip = "R", Icon = new SampleIcon(2) }; remove.Click += (_, _) => active.Checked = false;
         actions.Items.AddRange(active, show, remove); merging.Groups.Add(actions); ribbon.Tabs.Add(merging);
-        ribbon.QuickAccessItems.AddRange(new RibbonQuickAccessReference { Source = update }, new RibbonQuickAccessComboBoxReference { Source = chartType });
     }
 }

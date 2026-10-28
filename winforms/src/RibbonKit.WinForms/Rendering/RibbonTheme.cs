@@ -70,6 +70,8 @@ public sealed record RibbonTheme
     public int BodyHeight { get; init; } = 110;
     /// <summary>Gets the maximum total width of a Large button in 96-DPI logical pixels; must be at least 60. Captions wrap to two rows and ellipsize within this width.</summary>
     public int LargeButtonMaxWidth { get; init; } = 108;
+    /// <summary>Gets the maximum collapsed group frame width in 96-DPI logical pixels, excluding its one-device-pixel divider. Captions grow from the density minimum, then wrap/ellipsize. Must be at least 80.</summary>
+    public int CollapsedGroupMaxWidth { get; init; } = 108;
     /// <summary>Gets the corner radius in 96-DPI logical pixels.</summary>
     public int CornerRadius { get; init; } = 4;
 }

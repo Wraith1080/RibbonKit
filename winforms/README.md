@@ -785,11 +785,12 @@ source disables the declaration in place. Reinserting the same live source in
 the same ribbon restores it. A reference never owns or disposes its source;
 directly declared commands are owned by `QuickAccessItems`. Changing
 `QuickAccessVisible` retains placement and order. Collection Insert/Remove supports
-application-authored ordering. The M5A engine supplies detached QAT customization
-and persistence; the standard customization menu/editor follows in M5B.
+application-authored ordering. The M5 engine supplies detached QAT customization,
+persistence and the shared customization menu/editor.
 
-Showcase's M toolbar command moves it between placements. Narrow the window to
-open overflow. Buttons, toggles, checkbox/radio references, ComboBox choosers and
+Showcase starts with Bold, Italic and Mouse/Touch mode. Its context menu changes
+toolbar placement and visibility; other permanent commands can be added through
+customization. Narrow the window to open overflow. Buttons, toggles, checkbox/radio references, ComboBox choosers and
 dropdown/split/group references are supported. New QAT
 accessibility support and actual VS save/reopen remain pending. Model ownership,
 row measurement and painting are separated from placement so later optional
@@ -1039,9 +1040,73 @@ saved state. Structural Ribbon/custom-tab/group editing is M5C; this version sto
 QAT membership only. Source captions and authored presentation aliases remain
 application-owned; this schema introduces no rename preference.
 
-Showcase **Merging → QAT drafts** demonstrates a preset Preview/Apply/Cancel,
-Reset and application-owned in-memory Save/Restore. The standard right-click
-customization menu and QAT editing screen are M5B.
+Showcase **Merging → QAT drafts** demonstrates Preview/Apply/Cancel, Reset,
+application-owned in-memory Save/Restore and **Customize QAT**. Right-click a
+command, whole group or permanent QAT entry (also in flyouts/overflow), or use
+Shift+F10 / the menu key with ribbon focus, for the shared customization menu.
+Set `QuickAccessCustomizationEnabled = false` to opt out. A host
+`ContextMenuStrip` takes precedence; native text editors retain their editing menu.
+
+The native `RibbonOptionsDialog` follows the WPF options layout: a navigation
+rail, page heading and a footer ordered **OK, Cancel, Apply**. `RibbonOptionsPage` accepts
+any application controls; use `Applying` to validate/cancel, `Applied` to commit
+application settings and update their checkpoint, and `Cancelled` to discard
+unapplied settings. Apply affects only the selected page. OK validates every page
+before applying them in order; each page owns its transaction, without a global
+rollback across application settings. Cancel/window close preserves prior Apply.
+The dialog owns attached pages and child controls. Removing a page detaches it
+without disposal. Native system title-bar chrome is retained in this slice.
+
+```csharp
+ribbon.CustomizationApplicationId = "my.application";
+ribbon.OptionsDialogOpening += (_, e) =>
+{
+    var page = new RibbonOptionsPage { Text = "Editor" };
+    var wrap = new CheckBox { Text = "Wrap text", AutoSize = true,
+        Checked = LoadEditorPreference() };
+    page.Controls.Add(wrap);
+    // Load application settings here; keep an application-owned checkpoint.
+    page.Applied += (_, _) => SaveEditorPreference(wrap.Checked);
+    page.Cancelled += (_, _) => wrap.Checked = LoadEditorPreference();
+    e.Dialog.Pages.Insert(0, page);
+};
+ribbon.ShowQuickAccessCustomization(ownerForm);
+```
+
+`RibbonQuickAccessCustomizationForm` is the ready-made options dialog with a QAT
+page; `Editor.Session` exposes its draft. `RibbonQuickAccessCustomizationEditor`
+can also be embedded independently. Its `RefreshDraft()` updates controls after
+programmatic session edits, and `ApplyChanges()` reports draft errors on the page.
+`ribbon.CustomizationApplied` is the persistence cue for successful engine,
+context-menu and QAT-page Apply; storage stays application-owned.
+
+Both QAT lists have independent search fields. Filtering changes only the view;
+Remove and reorder use presentation identity in the complete draft, preserving
+hidden commands and duplicate presentations. The search fields use the same
+vertical gap above/below as the list-to-Reset gap. Office 2024 uses rounded field
+and list frames plus a rounded accent OK button; the neutral renderer stays square.
+Native text editing, list selection/scrolling, keyboard and button semantics remain.
+Options chrome uses `CornerRadius`, capped by the renderer's rounded/square popup
+policy, with the existing surface, accent and popup-border palette roles.
+
+The QAT page reserves the row beneath its lists for Reset/Reload on the left.
+Placement and visibility belong to the context menu. Its Reset restores default
+commands while keeping those menu-only preferences; the underlying session Reset
+still stages the complete profile. Mouse mode opens a smaller dialog than Touch.
+The customization menu uses the shared ribbon popup frame, row metrics, renderer
+and dismissal handling used by QAT overflow and command menus.
+
+Rows use one compact command path with borrowed icons. Touch expands targets,
+including a taller search frame that vertically centers its native text editor;
+font changes and parent DPI changes recalculate sizes from logical values rather
+than scaling old dimensions repeatedly. The dialog bounds its window/minimum to
+the current working area and scrolls page content when it cannot fit. A host
+embedding the editor independently should provide a scrolling container and size
+it for its content. Physical mixed-monitor acceptance remains separate.
+The page/editor have a 650-logical-pixel minimum content width, with a larger
+font-based floor when needed. Narrower dialog viewports clip/scroll the page
+instead of squeezing its columns. A larger application-set `MinimumSize.Width`
+is retained through font changes; WinForms scales the native minimum for DPI.
 
 ## Renderer customization
 
@@ -1081,6 +1146,11 @@ another nonnegative value; layout caps it at half the body height. For example,
 `ribbon.Theme = ribbon.Theme with { BodyScrollButtonVerticalInset = 0 };`.
 Collapsed group openers use the same inset rectangle for painting, focus, hit
 testing and popup anchoring, with six logical pixels above and eight below.
+Their measured width grows with the caption up to
+`RibbonTheme.CollapsedGroupMaxWidth` (108 logical pixels by default, minimum 80).
+The limit excludes the one-device-pixel divider. Long captions use up to two
+centered lines and ellipsize the final line; the arrow stays centered below.
+The same caption inset is used by measurement and painting at every DPI.
 
 Floating ribbon menus, collapsed groups and ComboBox choice popups share a
 one-device-pixel frame.
