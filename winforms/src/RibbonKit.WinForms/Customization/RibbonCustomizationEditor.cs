@@ -30,7 +30,7 @@ public sealed class RibbonCustomizationEditor : UserControl
         _tree = new(ribbon) { Name = "RibbonHierarchy", AccessibleName = "Customize the ribbon", Dock = DockStyle.Fill, BorderStyle = BorderStyle.None, HideSelection = false };
         _tree.PaintIcon = (graphics, node, bounds) =>
         {
-            var source = (node.Tag as Node)?.Data switch { RibbonItem item => item, RibbonCustomizationCommand command => _catalog.FirstOrDefault(e => e.CommandId == command.CommandId)?.Source, _ => null };
+            var source = (node.Tag as Node)?.Data switch { RibbonItem item => item, RibbonCustomizationGroup group => _ribbon.CommandCatalog.Structure.Definition(group.Id), RibbonCustomizationCommand command => _catalog.FirstOrDefault(e => e.CommandId == command.CommandId)?.Source, _ => null };
             if (source is not null) DrawIcon(graphics, source, bounds);
         };
         Session = ribbon.CommandCatalog.BeginCustomization(applicationId, RibbonCustomizationTarget.Ribbon);
@@ -220,7 +220,7 @@ public sealed class RibbonCustomizationEditor : UserControl
         TextRenderer.DrawText(e.Graphics, entry.Category + " › " + entry.Text, Font, bounds, theme.Foreground, TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter); e.DrawFocusRectangle();
     }
     private void DrawIcon(Graphics graphics, RibbonElement source, Rectangle bounds)
-    { if (source is RibbonItem { Icon: { } icon }) icon.Draw(graphics, bounds, new(DeviceDpi, _ribbon.Theme.Foreground, true)); else if (source is RibbonItem { Image: { } image }) graphics.DrawImage(image, bounds); }
+    { if (source is RibbonGroup { Icon: { } groupIcon }) groupIcon.Draw(graphics, bounds, new(DeviceDpi, _ribbon.Theme.Foreground, true)); else if (source is RibbonItem { Icon: { } icon }) icon.Draw(graphics, bounds, new(DeviceDpi, _ribbon.Theme.Foreground, true)); else if (source is RibbonItem { Image: { } image }) graphics.DrawImage(image, bounds); }
     private void RefreshIcons()
     {
         _tree.ImageList = null; _tree.StateImageList = null; _icons.Images.Clear(); _checks.Images.Clear(); _imageIndices.Clear();

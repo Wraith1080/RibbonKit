@@ -14,6 +14,8 @@ internal static class Program
         Application.SetCompatibleTextRenderingDefault(false);
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
         using var form = new MainForm();
+        if (args.Length == 2 && args[0] == "--capture-command-icons")
+            form.Shown += (_, _) => form.BeginInvoke(() => { form.CaptureCommandIcons(args[1]); form.Close(); });
         if (args.Length == 2 && args[0] is "--capture-options" or "--capture-options-touch")
             form.Shown += async (_, _) => { await Task.Yield(); await form.CaptureOptions(args[1], args[0] == "--capture-options-touch"); form.Close(); };
         if (args.Length == 2 && args[0] == "--capture-customization")

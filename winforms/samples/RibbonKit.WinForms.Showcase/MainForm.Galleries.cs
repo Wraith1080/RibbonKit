@@ -29,8 +29,8 @@ public partial class MainForm
     }
     private void InitializeGalleries()
     {
-        var styles = new RibbonGalleryItem { Id = "gallery.styles", Text = "Styles", KeyTip = "GS", IsInRibbon = true, InRibbonColumnCount = 3, ColumnCount = 3, TileWidth = 100, TileHeight = 80, MaxVisibleRows = 3, SizePolicy = RibbonSizePolicy.Adaptive(RibbonItemSize.Large, RibbonItemSize.Medium, RibbonItemSize.Small), Icon = new SampleIcon(0), ScreenTipDescription = "Preview a document style, then click to apply it. Escape restores the selected style." };
-        var colors = new RibbonGalleryItem { Id = "gallery.colors", Text = "Text color", KeyTip = "GC", ColumnCount = 4, TileWidth = 64, TileHeight = 68, MaxVisibleRows = 3, Icon = new SampleIcon(7) };
+        var styles = new RibbonGalleryItem { Id = "gallery.styles", Text = "Styles", KeyTip = "GS", IsInRibbon = true, InRibbonColumnCount = 3, ColumnCount = 3, TileWidth = 100, TileHeight = 80, MaxVisibleRows = 3, SizePolicy = RibbonSizePolicy.Adaptive(RibbonItemSize.Large, RibbonItemSize.Medium, RibbonItemSize.Small), ScreenTipDescription = "Preview a document style, then click to apply it. Escape restores the selected style." };
+        var colors = new RibbonGalleryItem { Id = "gallery.colors", Text = "Text color", KeyTip = "GC", ColumnCount = 4, TileWidth = 64, TileHeight = 68, MaxVisibleRows = 3 };
         _sampleGalleries.AddRange([styles, colors]);
         var group = new RibbonGroup { Id = "group.galleries", Text = "Galleries", ReductionMode = RibbonGroupReductionMode.ResizeThenCollapse }; group.Items.AddRange(styles, colors); home.Groups.Add(group);
         var fonts = new Dictionary<RibbonGalleryTile, Font>();

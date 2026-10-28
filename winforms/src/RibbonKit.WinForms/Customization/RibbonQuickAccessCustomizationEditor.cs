@@ -174,7 +174,9 @@ public sealed class RibbonQuickAccessCustomizationEditor : UserControl
         using var background = new SolidBrush(fill); e.Graphics.FillRectangle(background, e.Bounds);
         int gap = ScaleLogical(6), icon = ScaleLogical(20);
         var bounds = Rectangle.Inflate(e.Bounds, -gap, 0);
-        if (row.Entry?.Source is RibbonItem { Icon: { } image })
+        if (row.Entry?.Source is RibbonGroup { Icon: { } groupIcon })
+            groupIcon.Draw(e.Graphics, new(bounds.Left, e.Bounds.Top + (e.Bounds.Height - icon) / 2, icon, icon), new(DeviceDpi, theme.Foreground, true));
+        else if (row.Entry?.Source is RibbonItem { Icon: { } image })
             image.Draw(e.Graphics, new(bounds.Left, e.Bounds.Top + (e.Bounds.Height - icon) / 2, icon, icon), new(DeviceDpi, theme.Foreground, true));
         else if (row.Entry?.Source is RibbonItem { Image: { } bitmap })
             e.Graphics.DrawImage(bitmap, new Rectangle(bounds.Left, e.Bounds.Top + (e.Bounds.Height - icon) / 2, icon, icon));

@@ -70,11 +70,15 @@ public sealed partial class RibbonTab : RibbonElement
 /// <summary>A captioned group with an explicit reduction policy.</summary>
 public sealed class RibbonGroup : RibbonElement
 {
+    private IRibbonIcon? _icon;
     private RibbonGroupReductionMode _reductionMode;
     private int? _priority;
     private bool _canResize = true;
     /// <summary>Initializes a RibbonGroup instance.</summary>
     public RibbonGroup() => Items = new(this);
+    /// <summary>Gets or sets a borrowed vector icon for collapsed, QAT and customization presentations. The group never disposes the icon.</summary>
+    [Category("Appearance"), DefaultValue(null), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public IRibbonIcon? Icon { get => _icon; set { Ribbon?.VerifyAccess(); if (ReferenceEquals(_icon, value)) return; _icon = value; Changed(); } }
     /// <summary>Gets the stable, owned command collection.</summary>
     [Category("Data"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     public RibbonItemCollection Items

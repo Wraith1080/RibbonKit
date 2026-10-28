@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>WinExe</OutputType></PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Assets/CommandIcons/*.svg" />
     <ProjectReference Include="../../src/RibbonKit.WinForms/RibbonKit.WinForms.csproj" />
     <ProjectReference Include="../../src/RibbonKit.WinForms.Design/RibbonKit.WinForms.Design.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>

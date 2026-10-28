@@ -156,7 +156,13 @@ public partial class RibbonRenderer : IDisposable
         if (chooser) contentContext = context with { Bounds = context.Bounds with { Width = Math.Max(0, context.Bounds.Width - RibbonLayoutEngine.Scale(menu ? 16 : 12, context.DeviceDpi)) } };
         if (menu && entry is RibbonQuickAccessGroupReference)
         {
-            var label = contentContext with { Bounds = Rectangle.FromLTRB(contentContext.Bounds.Left + RibbonLayoutEngine.Scale(34, context.DeviceDpi),
+            var metrics = RibbonDensityMetrics.For(context.Density);
+            if (entry is RibbonQuickAccessGroupReference { Source.Icon: { } groupIcon })
+            {
+                int side = RibbonLayoutEngine.Scale(metrics.MenuIcon, context.DeviceDpi);
+                groupIcon.Draw(context.Graphics, new(contentContext.Bounds.Left + RibbonLayoutEngine.Scale(metrics.MenuIconInset, context.DeviceDpi), context.Bounds.Top + (context.Bounds.Height - side) / 2, side, side), new(context.DeviceDpi, color, enabled));
+            }
+            var label = contentContext with { Bounds = Rectangle.FromLTRB(contentContext.Bounds.Left + RibbonLayoutEngine.Scale(metrics.MenuTextInset, context.DeviceDpi),
                 contentContext.Bounds.Top, contentContext.Bounds.Right, contentContext.Bounds.Bottom) };
             DrawText(label, caption, color, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
         }
@@ -168,6 +174,8 @@ public partial class RibbonRenderer : IDisposable
             var icon = new Rectangle(contentContext.Bounds.Left + (contentContext.Bounds.Width - iconSize) / 2, context.Bounds.Top + (context.Bounds.Height - iconSize) / 2, iconSize, iconSize);
             if (command is not null && (command.Icon is not null || command.Image is not null || command.LargeImage is not null))
                 DrawQuickAccessImage(context with { Bounds = icon }, command, enabled);
+            else if (entry is RibbonQuickAccessGroupReference { Source.Icon: { } groupIcon })
+                groupIcon.Draw(context.Graphics, icon, new(context.DeviceDpi, color, enabled));
             else
                 DrawText(contentContext, menu ? caption : caption.Length == 0 ? "" : System.Globalization.StringInfo.GetNextTextElement(caption), color,
                     TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
@@ -314,11 +322,15 @@ public partial class RibbonRenderer : IDisposable
             int gap = Math.Min(Math.Max(0, bounds.Height - arrowHeight), RibbonLayoutEngine.Scale(5, context.DeviceDpi));
             var caption = _captions.Wrap(group.DisplayText, context.Font, context.DeviceDpi, bounds.Width);
             int availableText = Math.Max(0, bounds.Height - arrowHeight - gap);
+            int iconGap = group.Icon is null ? 0 : Math.Min(gap, availableText);
+            int iconSide = group.Icon is null ? 0 : Math.Min(Math.Min(bounds.Width, RibbonLayoutEngine.Scale(32, context.DeviceDpi)), Math.Max(0, availableText - context.Font.Height - iconGap));
+            availableText = Math.Max(0, availableText - iconSide - iconGap);
             int lineHeight = Math.Min(context.Font.Height, availableText);
             int rows = lineHeight == 0 ? 0 : Math.Min(caption.Lines.Length, availableText / lineHeight);
             int textHeight = rows * lineHeight;
-            int top = bounds.Top + (bounds.Height - textHeight - gap - arrowHeight) / 2;
+            int top = bounds.Top + (bounds.Height - iconSide - iconGap - textHeight - gap - arrowHeight) / 2;
             var color = group.EffectiveEnabled ? context.Theme.Foreground : SystemColors.GrayText;
+            if (iconSide > 0) { group.Icon!.Draw(context.Graphics, new(bounds.Left + (bounds.Width - iconSide) / 2, top, iconSide, iconSide), new(context.DeviceDpi, color, group.EffectiveEnabled)); top += iconSide + iconGap; }
             for (int row = 0; row < rows; row++)
                 DrawText(context with { Bounds = new(bounds.Left, top + row * lineHeight, bounds.Width, lineHeight) },
                     rows < caption.Lines.Length ? group.DisplayText.Replace('\r', ' ').Replace('\n', ' ') : caption.Lines[row], color, flags);

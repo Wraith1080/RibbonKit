@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Drawing.Drawing2D;
 
 namespace RibbonKit.WinForms.Showcase;
 
@@ -14,9 +13,9 @@ public partial class MainForm : Form
         foreach (var dropdown in components!.Components.OfType<RibbonDropDownItem>().Where(d => d is not RibbonGalleryItem && d.DropDownHeader.Length == 0)) dropdown.DropDownHeader = dropdown.Text;
         ribbon.FileMenu.Id = "file"; ribbon.FileMenu.Visible = true;
         ribbon.FileMenu.ScreenTipDescription = "Open document commands.";
-        var newDocument = new RibbonButtonItem { Id = "file.new", Text = "New", KeyTip = "N", Icon = new SampleIcon(0), MenuDescription = "Create a document." };
-        var openDocument = new RibbonButtonItem { Id = "file.open", Text = "Open", KeyTip = "O", Icon = new SampleIcon(1), MenuDescription = "Open an existing document." };
-        var saveDocument = new RibbonButtonItem { Id = "file.save", Text = "Save", KeyTip = "S", Icon = new SampleIcon(7) };
+        var newDocument = new RibbonButtonItem { Id = "file.new", Text = "New", KeyTip = "N", MenuDescription = "Create a document." };
+        var openDocument = new RibbonButtonItem { Id = "file.open", Text = "Open", KeyTip = "O", MenuDescription = "Open an existing document." };
+        var saveDocument = new RibbonButtonItem { Id = "file.save", Text = "Save", KeyTip = "S" };
         var recentDocuments = new RibbonDropDownItem { Id = "file.recent", Text = "Recent", KeyTip = "R", DropDownHeader = "Recent documents" };
         var recentDocument = new RibbonButtonItem { Id = "file.recent.example", Text = "Example document", KeyTip = "E" }; recentDocument.Click += ActionClick;
         recentDocuments.Items.Add(recentDocument);
@@ -32,20 +31,6 @@ public partial class MainForm : Form
         showRuler.DataBindings.Add(new Binding(nameof(RibbonCheckBoxItem.Checked), formattingSource, nameof(FormattingState.Ruler), true, DataSourceUpdateMode.OnPropertyChanged));
         popupRuler.DataBindings.Add(new Binding(nameof(RibbonCheckBoxItem.Checked), formattingSource, nameof(FormattingState.Ruler), true, DataSourceUpdateMode.OnPropertyChanged));
         showGrid.DataBindings.Add(new Binding(nameof(RibbonCheckBoxItem.CheckState), formattingSource, nameof(FormattingState.Grid), false, DataSourceUpdateMode.OnPropertyChanged));
-        copy.Icon = new SampleIcon(0);
-        paste.Icon = new SampleIcon(1);
-        cut.Icon = new SampleIcon(2);
-        bold.Icon = new SampleIcon(3);
-        italic.Icon = new SampleIcon(4);
-        find.Icon = new SampleIcon(5);
-        shapes.Icon = new SampleIcon(6);
-        picture.Icon = new SampleIcon(7);
-        link.Icon = new SampleIcon(8);
-        trackChanges.Icon = new SampleIcon(9);
-        showRuler.Icon = new SampleIcon(10);
-        showGrid.Icon = new SampleIcon(11);
-        printView.Icon = new SampleIcon(12);
-        webView.Icon = new SampleIcon(13);
         ribbon.QuickAccessItems.AddRange(
             new RibbonQuickAccessReference { Source = bold },
             new RibbonQuickAccessReference { Source = italic });
@@ -65,6 +50,7 @@ public partial class MainForm : Form
         InitializeDensity();
         InitializeMessages();
         InitializeCustomization();
+        InitializeCommandIcons();
         document.AppendText("\r\n\r\nMerging > Chart context adds a source-owned Chart Design tab and a Chart context group on Home. Switch the context off and on to retain its fields and bindings. Application activation drives merging; moving keyboard focus does not.");
         document.AppendText("\r\n\r\nHome > Galleries shows Styles inside the ribbon. Use its up/down buttons to browse a row, and the bottom button or F4 to expand all styles. Preview leaves selection unchanged; click or Enter applies the style. Styles and Text color can be added to Quick Access through customization.");
     }
@@ -136,59 +122,5 @@ public partial class MainForm : Form
             }
         }
         public event PropertyChangedEventHandler? PropertyChanged;
-    }
-    private sealed class SampleIcon(int kind) : IRibbonIcon
-    {
-        public void Draw(Graphics graphics, Rectangle bounds, RibbonIconContext context)
-        {
-            var saved = graphics.Save();
-            try
-            {
-                graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                using var pen = new Pen(context.Enabled ? Color.FromArgb(43, 87, 154) : SystemColors.GrayText, Math.Max(1, bounds.Width / 14f));
-                var r = Rectangle.Inflate(bounds, -Math.Max(2, bounds.Width / 6), -Math.Max(2, bounds.Height / 6));
-                if (kind is 3 or 4)
-                    TextRenderer.DrawText(graphics, kind == 3 ? "B" : "I", SystemFonts.DefaultFont, bounds, context.Foreground, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-                else if (kind == 10)
-                {
-                    graphics.DrawRectangle(pen, r.Left, r.Top + r.Height / 3, r.Width, r.Height / 2);
-                    for (int i = 1; i < 5; i++) graphics.DrawLine(pen, r.Left + r.Width * i / 5, r.Top + r.Height / 3, r.Left + r.Width * i / 5, r.Top + r.Height / 2);
-                }
-                else if (kind == 11)
-                {
-                    graphics.DrawRectangle(pen, r);
-                    graphics.DrawLine(pen, r.Left + r.Width / 2, r.Top, r.Left + r.Width / 2, r.Bottom);
-                    graphics.DrawLine(pen, r.Left, r.Top + r.Height / 2, r.Right, r.Top + r.Height / 2);
-                }
-                else if (kind == 13)
-                {
-                    graphics.DrawRectangle(pen, r);
-                    graphics.DrawLine(pen, r.Left, r.Top + r.Height / 4, r.Right, r.Top + r.Height / 4);
-                    graphics.DrawLine(pen, r.Left + r.Width / 3, r.Top + r.Height / 4, r.Left + r.Width / 3, r.Bottom);
-                }
-                else if (kind == 9)
-                {
-                    graphics.DrawLines(pen, new Point[] { new(r.Left, r.Bottom), new(r.Left + r.Width / 5, r.Bottom - r.Height / 2), new(r.Right - r.Width / 5, r.Top), new(r.Right, r.Top + r.Height / 5), new(r.Left + r.Width / 2, r.Bottom - r.Height / 5), new(r.Left, r.Bottom) });
-                    graphics.DrawLine(pen, r.Left + r.Width / 5, r.Bottom - r.Height / 2, r.Left + r.Width / 2, r.Bottom - r.Height / 5);
-                }
-                else if (kind is 5 or 8)
-                {
-                    graphics.DrawEllipse(pen, r);
-                    graphics.DrawLine(pen, r.Right - 2, r.Bottom - 2, bounds.Right - 1, bounds.Bottom - 1);
-                }
-                else if (kind == 6)
-                {
-                    graphics.DrawEllipse(pen, r.X, r.Y, r.Width / 2, r.Height / 2);
-                    graphics.DrawRectangle(pen, r.X + r.Width / 3, r.Y + r.Height / 3, r.Width * 2 / 3, r.Height * 2 / 3);
-                }
-                else
-                {
-                    graphics.DrawRectangle(pen, r);
-                    graphics.DrawLine(pen, r.Left + 2, r.Top + r.Height / 3, r.Right - 2, r.Top + r.Height / 3);
-                    graphics.DrawLine(pen, r.Left + 2, r.Top + r.Height * 2 / 3, r.Right - 2, r.Top + r.Height * 2 / 3);
-                }
-            }
-            finally { graphics.Restore(saved); }
-        }
     }
 }

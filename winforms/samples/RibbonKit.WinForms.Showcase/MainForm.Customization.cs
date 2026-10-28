@@ -38,7 +38,7 @@ public partial class MainForm
                 };
             }
         };
-        var redo = new RibbonButtonItem { Id = "demo.qat.redo", Text = "Redo", Icon = new SampleIcon(0) };
+        var redo = new RibbonButtonItem { Id = "demo.qat.redo", Text = "Redo" };
         redo.Click += (_, _) => status.Text = "The application handled Redo.";
         ribbon.CommandCatalog.Commands.Add(redo);
         var group = new RibbonGroup { Id = "group.qat.drafts", Text = "QAT drafts" };

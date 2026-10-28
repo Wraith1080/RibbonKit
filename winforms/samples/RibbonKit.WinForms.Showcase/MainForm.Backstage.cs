@@ -43,15 +43,15 @@ public partial class MainForm
         var summary = new Label { Text = "No print job has been submitted.", AutoSize = true, Location = new(28, 320) };
         preview.Click += (_, _) => summary.Text = $"Preview: {copies.Value} copies on {paper.Text}.";
         print.Controls.AddRange([copies, paper, preview, summary]);
-        var newCommand = new RibbonButtonItem { Id = "backstage.new", Text = "New", KeyTip = "N", Icon = new SampleIcon(0) };
-        var saveCommand = new RibbonButtonItem { Id = "backstage.save", Text = "Save", KeyTip = "S", Icon = new SampleIcon(7) };
+        var newCommand = new RibbonButtonItem { Id = "backstage.new", Text = "New", KeyTip = "N" };
+        var saveCommand = new RibbonButtonItem { Id = "backstage.save", Text = "Save", KeyTip = "S" };
         // Full-color image and vector icon examples share the library's left icon slot.
         var infoImage = SystemIcons.Information.ToBitmap();
         newCommand.Click += ActionClick; saveCommand.Click += ActionClick;
         ribbon.Backstage.Items.AddRange(
             new RibbonBackstagePageItem { Id = "backstage.info", Text = "Info", KeyTip = "I", Content = info, Image = infoImage },
             newCommand, saveCommand,
-            new RibbonBackstagePageItem { Id = "backstage.print", Text = "Print", KeyTip = "P", Content = print, Icon = new SampleIcon(1) });
+            new RibbonBackstagePageItem { Id = "backstage.print", Text = "Print", KeyTip = "P", Content = print });
         Disposed += (_, _) => { info.Dispose(); print.Dispose(); infoImage.Dispose(); };
         static Panel Page(string title, string description)
         {

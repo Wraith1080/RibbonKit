@@ -388,3 +388,26 @@ Remaining work: M5C visual review; M5D Simplified integration;
 actual VS, fresh-package, physical mixed-monitor and separate accessibility gates.
 WPF runtime/build/CI are unchanged. No commit, push or application file persistence
 was performed by the runtime.
+
+### Showcase command and group icons — 2026-10-28
+
+The user requested artwork for every ribbon command, including replacement of
+repeated placeholders and icons for groups. The sample now assigns semantic SVG
+artwork to all 101 existing command/group declarations, including File/Backstage,
+menu children, contextual/merge/modal sources and catalog-only commands. Gallery
+previews and Mouse/Touch artwork remain. Message actions receive their artwork
+when created. Original SVG sources live in `samples/RibbonKit.WinForms.Showcase/Assets/CommandIcons/`.
+
+The proposed shared addition, `RibbonGroup.Icon`, borrows an `IRibbonIcon` and
+disposes no artwork. The default renderer paints it above the caption/arrow in a
+collapsed group and in QAT strip/overflow entries. Both customization views show
+group icons. There is no Showcase-only renderer patch or native SVG dependency.
+Command/group icon preferences do not enter customization JSON.
+
+The normal Debug Showcase/runtime/design build passed with zero warnings/errors.
+Four focused group icon cases passed at synthetic 96/120/144/192 DPI in
+`group-icons-focused.trx`, verifying caption separation, bounds, QAT surfaces,
+disabled state and borrowed ownership. The complete coverage list, SVG contact
+sheet and generated tab/collapsed captures were inspected under
+`artifacts/showcase-command-icons/`. These are generated captures, not physical
+mixed-monitor/touch, actual VS or fresh-package acceptance. No broad suite was run.

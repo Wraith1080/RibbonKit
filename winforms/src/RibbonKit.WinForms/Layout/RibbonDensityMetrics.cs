@@ -13,6 +13,14 @@ internal readonly record struct RibbonDensityMetrics(bool Touch)
     internal int CaptionPadding => Touch ? 48 : 38;
     internal int ColumnGap => Touch ? 6 : 3;
     internal int MenuRow => Touch ? 44 : 28;
+    internal int MenuIcon => Touch ? 32 : 24;
+    internal int MenuIconInset => 8;
+    internal int MenuIconGap => Touch ? 12 : 10;
+    internal int MenuIconVerticalPadding => Touch ? 6 : 4;
+    internal int MenuTextInset => MenuIconInset + MenuIcon + MenuIconGap;
+    internal int MenuTextRightPadding => 8;
+    internal int MenuIconMinimumRow => MenuIcon + 2 * MenuIconVerticalPadding;
+    internal int MenuWidthPadding => MenuTextInset + MenuTextRightPadding + Math.Max(SplitArrow, Touch ? 28 : 16) + 8;
     internal int MenuMinimumWidth => Touch ? 220 : 170;
     internal int MenuDescriptionWidth => Touch ? 320 : 280;
     internal int MenuVerticalPadding => Touch ? 10 : 5;

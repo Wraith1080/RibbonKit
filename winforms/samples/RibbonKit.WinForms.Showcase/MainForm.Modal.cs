@@ -44,7 +44,7 @@ public partial class MainForm
         var copies = new RibbonTextBoxItem { Text = "Copies", KeyTip = "N", Value = "1", InputWidth = 75 };
         copies.ValueValidating += (_, e) => { e.Cancel = !int.TryParse(copies.Value, out int value) || value is < 1 or > 99; if (e.Cancel) status.Text = "Enter 1 to 99 copies, or press Escape to restore the value."; };
         var zoom = new RibbonComboBoxItem { Text = "Zoom", KeyTip = "Z", InputWidth = 90 }; zoom.Items.AddRange("50%", "100%", "150%"); zoom.SelectedIndex = 1;
-        var print = new RibbonButtonItem { Text = "Print request", KeyTip = "R", Icon = new SampleIcon(7) };
+        var print = new RibbonButtonItem { Text = "Print request", KeyTip = "R" };
         print.Click += (_, _) => status.Text = $"Application print request: {copies.Value} copies.";
         settings.Items.AddRange(copies, zoom, print); tab.Groups.Add(settings); source.Tabs.Add(tab);
         var preview = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(226, 228, 232), Visible = false };
@@ -61,7 +61,7 @@ public partial class MainForm
         zoom.SelectedIndexChanged += (_, _) => preview.Invalidate(); copies.ValueChanged += (_, _) => preview.Invalidate();
         ribbon.ModalEntered += (_, e) => { if (e.Tab == tab) { document.Visible = false; preview.Visible = true; preview.BringToFront(); status.Text = "Print Preview: File and minimize are unavailable. Quick Access remains available."; } };
         ribbon.ModalExited += (_, e) => { if (e.Tab == tab) { preview.Visible = false; document.Visible = true; ribbon.Unmerge(source); if (ContainsFocus) document.Focus(); status.Text = "Print Preview closed; previous ribbon presentation restored."; } };
-        var launch = new RibbonButtonItem { Id = "modal.launch", Text = "Print preview", KeyTip = "P", Icon = new SampleIcon(7) };
+        var launch = new RibbonButtonItem { Id = "modal.launch", Text = "Print preview", KeyTip = "P" };
         launch.Click += (_, _) => { ribbon.Merge(source); if (!ribbon.EnterModal(tab)) ribbon.Unmerge(source); };
         var group = new RibbonGroup { Id = "group.modalPreview", Text = "Modal preview" }; group.Items.Add(launch); ribbon.Tabs.Single(t => t.Id == "tab.merging").Groups.Add(group);
         document.AppendText("\r\n\r\nMerging > Print preview enters a modal tab. Quick Access remains available; File and minimize are blocked. Close Print Preview or Escape restores the prior ribbon selection and minimized state. The preview page and print action belong to this application.");

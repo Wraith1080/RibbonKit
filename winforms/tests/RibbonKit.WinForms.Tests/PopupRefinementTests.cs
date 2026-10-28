@@ -5,6 +5,31 @@ namespace RibbonKit.WinForms.Tests;
 
 public sealed class PopupRefinementTests
 {
+    [Theory]
+    [InlineData(96)] [InlineData(120)] [InlineData(144)] [InlineData(192)]
+    public void Enlarged_menu_artwork_stays_inside_primary_rows_and_clear_of_text_at_each_density(int dpi) => FoundationTests.Sta(() =>
+    {
+        using var renderer = new RibbonOffice2024Renderer(); using var font = new Font("Segoe UI", 9);
+        using var bitmap = new Bitmap(1000, 500); using var graphics = Graphics.FromImage(bitmap);
+        foreach (var density in Enum.GetValues<RibbonDensity>())
+        foreach (bool described in new[] { false, true })
+        {
+            var icon = new IconProbe(); using var command = new RibbonSplitButtonItem { Text = "Paste", Icon = icon, MenuDescription = described ? "Paste the clipboard content with its original formatting." : "" };
+            int S(int value) => RibbonLayoutEngine.Scale(value, dpi);
+            int width = S(320), height = RibbonMenuLayout.RowHeight(command, width, font, dpi, density), arrow = S(RibbonDensityMetrics.For(density).SplitArrow);
+            var row = new Rectangle(0, 0, width - arrow, height); var context = new RibbonPaintContext(graphics, row, RibbonThemes.Office2024Light, font, dpi) { Density = density };
+            renderer.DrawSplitItem(context, context with { Bounds = new(width - arrow, 0, arrow, height) }, command, RibbonItemSize.Medium, true);
+            Assert.True(row.Contains(icon.Bounds)); Assert.True(icon.Bounds.Width >= S(density == RibbonDensity.Touch ? 32 : 24));
+            var content = RibbonMenuLayout.Content(RibbonContentLayout.Calculate(row, RibbonItemSize.Medium, true, true, dpi, font, density), command, row, font, dpi, density);
+            Assert.True(icon.Bounds.Right < content.Text.Left); Assert.Equal(row.Top + (row.Height - icon.Bounds.Height) / 2, icon.Bounds.Top);
+            if (described) Assert.True(row.Contains(RibbonMenuLayout.Description(content.Text, row, font, dpi, density)));
+        }
+    });
+    private sealed class IconProbe : IRibbonIcon
+    {
+        internal Rectangle Bounds;
+        public void Draw(Graphics graphics, Rectangle bounds, RibbonIconContext context) => Bounds = bounds;
+    }
     [Fact]
     public void Command_popups_use_the_tallest_visible_row_and_touch_expands_described_rows_at_each_dpi() => FoundationTests.Sta(() =>
     {

@@ -331,7 +331,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         else if (owner is RibbonQuickAccessOverflow)
         {
             var items = ribbon.Snapshot.QuickAccessOverflowItems;
-            width = Math.Max(S(menuMetrics.MenuMinimumWidth), items.Select(e => TextRenderer.MeasureText(RibbonQuickAccess.Caption(e), Font).Width + S(56)).DefaultIfEmpty(S(menuMetrics.MenuMinimumWidth)).Max());
+            width = Math.Max(S(menuMetrics.MenuMinimumWidth), items.Select(e => TextRenderer.MeasureText(RibbonQuickAccess.Caption(e), Font).Width + S(menuMetrics.MenuWidthPadding)).DefaultIfEmpty(S(menuMetrics.MenuMinimumWidth)).Max());
             if (items.Select(RibbonQuickAccess.Command).Any(c => c is not null && RibbonMenuLayout.HasDescription(c))) width = Math.Max(width, S(menuMetrics.MenuDescriptionWidth));
             var heights = RibbonMenuLayout.RowHeights(items.Select(RibbonQuickAccess.Command).ToArray(), width - S(8), Font, ribbon.DeviceDpi, ribbon.Density, illustrated: false);
             int top = S(4);
@@ -348,7 +348,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         else
         {
             var items = MenuSource!.Items.Where(i => i.Visible).ToArray();
-            width = Math.Max(S(menuMetrics.MenuMinimumWidth), items.Where(i => i is not RibbonMenuSeparatorItem).Select(i => TextRenderer.MeasureText(i.Text, Font).Width + S(56)).DefaultIfEmpty(S(menuMetrics.MenuMinimumWidth)).Max());
+            width = Math.Max(S(menuMetrics.MenuMinimumWidth), items.Where(i => i is not RibbonMenuSeparatorItem).Select(i => TextRenderer.MeasureText(i.Text, Font).Width + S(menuMetrics.MenuWidthPadding)).DefaultIfEmpty(S(menuMetrics.MenuMinimumWidth)).Max());
             if (items.Any(RibbonMenuLayout.HasDescription)) width = Math.Max(width, S(menuMetrics.MenuDescriptionWidth));
             if (MenuSource.MenuPresentation == RibbonMenuPresentation.IllustratedChoices) width = Math.Max(width, S(RibbonMenuLayout.IllustratedWidth));
             if (MenuSource.DropDownHeader.Length > 0) width = Math.Max(width, Math.Min(S(420), TextRenderer.MeasureText(MenuSource.DropDownHeader, Font).Width + S(28)));

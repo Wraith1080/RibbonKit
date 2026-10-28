@@ -1,4 +1,6 @@
 #nullable enable
+RibbonKit.WinForms.RibbonGroup.Icon.get -> RibbonKit.WinForms.IRibbonIcon?
+RibbonKit.WinForms.RibbonGroup.Icon.set -> void
 RibbonKit.WinForms.RibbonTheme.CollapsedGroupMaxWidth.get -> int
 RibbonKit.WinForms.RibbonTheme.CollapsedGroupMaxWidth.init -> void
 RibbonKit.WinForms.RibbonCommandCatalog.GetQuickAccessEntryId(RibbonKit.WinForms.RibbonElement! presentation) -> string!

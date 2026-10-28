@@ -15,15 +15,17 @@ internal static class RibbonMenuLayout
         if (illustrated && IsIllustratedChoice(item)) return Math.Max(S(IllustratedMinimumHeight), font.Height * (HasDescription(item) ? 3 : 1) + S(12));
         var metrics = RibbonDensityMetrics.For(density ?? item.Ribbon?.Density ?? RibbonDensity.Compact);
         int basic = Math.Max(S(metrics.MenuRow), font.Height + S(10));
+        if (item is not IRibbonEditorItem) basic = Math.Max(basic, S(metrics.MenuIconMinimumRow));
         if (!HasDescription(item)) return basic;
         int arrow = item is RibbonSplitButtonItem ? metrics.SplitArrow : item is RibbonDropDownItem ? metrics.Touch ? 28 : 16 : 0;
-        int textWidth = Math.Max(1, width - S((metrics.Touch ? 44 : 36) + arrow));
+        int textWidth = Math.Max(1, width - S(metrics.MenuTextInset + metrics.MenuTextRightPadding + arrow));
         int description = metrics.Touch ? 2 * font.Height : Math.Min(2 * font.Height, TextRenderer.MeasureText(item.MenuDescription, font, new(textWidth, int.MaxValue), DescriptionFlags).Height);
         return Math.Max(basic, S(2 * metrics.MenuVerticalPadding) + font.Height + S(metrics.MenuDescriptionGap) + description);
     }
     internal static int[] RowHeights(IReadOnlyList<RibbonItem?> items, int width, Font font, int dpi, RibbonDensity density, bool illustrated = true)
     {
-        var heights = items.Select(item => item is null ? RibbonLayoutEngine.Scale(RibbonDensityMetrics.For(density).MenuRow, dpi) : RowHeight(item, width, font, dpi, density, illustrated)).ToArray();
+        var metrics = RibbonDensityMetrics.For(density);
+        var heights = items.Select(item => item is null ? RibbonLayoutEngine.Scale(Math.Max(metrics.MenuRow, metrics.MenuIconMinimumRow), dpi) : RowHeight(item, width, font, dpi, density, illustrated)).ToArray();
         int tallest = items.Select((item, index) => item is RibbonMenuSeparatorItem ? 0 : heights[index]).DefaultIfEmpty(0).Max();
         return items.Select((item, index) => item is RibbonMenuSeparatorItem ? heights[index] : tallest).ToArray();
     }
@@ -39,12 +41,10 @@ internal static class RibbonMenuLayout
     {
         int S(int value) => RibbonLayoutEngine.Scale(value, dpi);
         var metrics = RibbonDensityMetrics.For(density);
-        if (metrics.Touch)
-        {
-            int size = S(20);
-            content = content with { Icon = new(bounds.Left + S(8), bounds.Top + (bounds.Height - size) / 2, size, size),
-                Text = new(bounds.Left + S(40), bounds.Top + (bounds.Height - font.Height) / 2, Math.Max(0, bounds.Width - S(44)), font.Height) };
-        }
+        if (item is IRibbonEditorItem) return content;
+        int slot = S(metrics.MenuIcon), size = item is RibbonCheckBoxItem or RibbonRadioButtonItem ? S(metrics.Touch ? 20 : 16) : slot;
+        content = content with { Icon = new(bounds.Left + S(metrics.MenuIconInset) + (slot - size) / 2, bounds.Top + (bounds.Height - size) / 2, size, size),
+            Text = new(bounds.Left + S(metrics.MenuTextInset), bounds.Top + (bounds.Height - font.Height) / 2, Math.Max(0, bounds.Width - S(metrics.MenuTextInset + metrics.MenuTextRightPadding)), font.Height) };
         return !HasDescription(item) ? content : content with { Text = content.Text with { Y = bounds.Top + S(metrics.MenuVerticalPadding), Height = font.Height } };
     }
     internal static Rectangle Description(Rectangle title, Rectangle row, Font font, int dpi, RibbonDensity density = RibbonDensity.Compact)

@@ -14,6 +14,9 @@ record the working sequence through galleries, customization and window integrat
 The [M5 implementation](docs/M5-STATUS.md) adds shared catalog discovery, detached
 Ribbon/QAT drafts, versioned JSON, Apply/Cancel checkpoints and an extensible native
 Options dialog with Customize Ribbon and Quick Access Toolbar pages.
+The Showcase supplies an original [SVG command/group icon set](samples/RibbonKit.WinForms.Showcase/Assets/CommandIcons/README.md).
+`RibbonGroup.Icon` accepts a borrowed `IRibbonIcon` for collapsed group buttons,
+QAT group entries and customization lists, using the same vector contract as commands.
 Accessibility compatibility is deferred
 while the control structure is implemented; it remains possible future work.
 
