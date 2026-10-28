@@ -53,7 +53,12 @@ public sealed class FileMenuTests
                     Assert.Equal(file.Bounds.Right, layout.QuickAccessBounds.Left); Assert.True(layout.QuickAccessBounds.Width > 0);
                     Assert.True(layout.QuickAccessBounds.Right <= layout.TabViewport.Left);
                 }
-                else { Assert.Equal(0, layout.QuickAccessBounds.Left); Assert.Equal(width, layout.QuickAccessBounds.Width); Assert.True(file.Bounds.Right <= layout.TabViewport.Left); }
+                else
+                {
+                    Assert.Equal(RibbonLayoutEngine.Scale(inset, ribbon.DeviceDpi), layout.QuickAccessBounds.Left);
+                    Assert.Equal(width - RibbonLayoutEngine.Scale(inset, ribbon.DeviceDpi) - RibbonLayoutEngine.Scale(ribbon.Theme.BodyMargin.Right, ribbon.DeviceDpi), layout.QuickAccessBounds.Width);
+                    Assert.True(file.Bounds.Right <= layout.TabViewport.Left);
+                }
                 ribbon.FileMenu.Text = new string('W', 90); layout = ribbon.Snapshot;
                 Assert.True(layout.TabViewport.Width > 0); if (placement == RibbonQuickAccessPosition.TabRow) Assert.True(layout.QuickAccessBounds.Width > 0);
                 ribbon.FileMenu.Text = "File";

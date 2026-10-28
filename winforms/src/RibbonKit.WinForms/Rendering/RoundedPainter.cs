@@ -3,21 +3,21 @@ using System.Runtime.InteropServices;
 
 namespace RibbonKit.WinForms;
 
-// One analytic rounded rectangle. Coverage is sampled in one quadrant and reflected,
-// avoiding independent arc endpoints/rasterization for the four equal-radius corners.
+// Analytic coverage is mirrored horizontally and, for matching corner policies,
+// vertically. Connected edges may square either corner pair independently.
 // Pixels are cached at the actual device DPI; this is not a claim about GDI's helpers.
 internal sealed class RoundedPainter : IDisposable
 {
     private readonly Dictionary<Key, Bitmap> _cache = [];
     private readonly Queue<Key> _order = [];
-    private readonly record struct Key(int Width, int Height, int Radius, int Stroke, RibbonFill Fill, Color Border);
-    internal void Draw(Graphics graphics, Rectangle bounds, int radius, RibbonFill fill, Color border, int stroke = 1)
+    private readonly record struct Key(int Width, int Height, int Radius, int Stroke, RibbonFill Fill, Color Border, bool SquareTop, bool SquareBottom);
+    internal void Draw(Graphics graphics, Rectangle bounds, int radius, RibbonFill fill, Color border, int stroke = 1, bool squareTop = false, bool squareBottom = false)
     {
         if (bounds.Width <= 0 || bounds.Height <= 0)
             return;
         radius = Math.Clamp(radius, 0, Math.Min(bounds.Width, bounds.Height) / 2);
         stroke = Math.Clamp(stroke, 0, Math.Min(bounds.Width, bounds.Height) / 2);
-        var key = new Key(bounds.Width, bounds.Height, radius, stroke, fill, border);
+        var key = new Key(bounds.Width, bounds.Height, radius, stroke, fill, border, squareTop, squareBottom);
         if (!_cache.TryGetValue(key, out var bitmap))
         {
             bitmap = Create(key);
@@ -58,8 +58,9 @@ internal sealed class RoundedPainter : IDisposable
                     bytes[offset + 3] = solid.A;
                     continue;
                 }
-                double outer = Coverage(x, y, key.Width, key.Height, key.Radius);
-                double inner = key.Stroke == 0 ? outer : Coverage(x - key.Stroke, y - key.Stroke, key.Width - 2 * key.Stroke, key.Height - 2 * key.Stroke, Math.Max(0, key.Radius - key.Stroke));
+                bool square = y < key.Height / 2 ? key.SquareTop : key.SquareBottom;
+                double outer = Coverage(x, y, key.Width, key.Height, square ? 0 : key.Radius);
+                double inner = key.Stroke == 0 ? outer : Coverage(x - key.Stroke, y - key.Stroke, key.Width - 2 * key.Stroke, key.Height - 2 * key.Stroke, square ? 0 : Math.Max(0, key.Radius - key.Stroke));
                 double f = inner * fill.A / 255d, b = (outer - inner) * key.Border.A / 255d;
                 bytes[offset] = (byte)Math.Clamp((int)Math.Round(fill.B * f + key.Border.B * b), 0, 255);
                 bytes[offset + 1] = (byte)Math.Clamp((int)Math.Round(fill.G * f + key.Border.G * b), 0, 255);

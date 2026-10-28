@@ -10,8 +10,22 @@ public readonly record struct RibbonFill(Color Start, Color End)
 /// <summary>Immutable named appearance and 96-DPI metrics for one ribbon.</summary>
 public sealed record RibbonTheme
 {
+    /// <summary>Gets the shared notification background fill.</summary>
+    public RibbonFill MessageBackground { get; init; } = new(Color.FromArgb(255, 244, 206));
+    /// <summary>Gets the shared notification text color.</summary>
+    public Color MessageForeground { get; init; } = Color.FromArgb(50, 49, 48);
+    /// <summary>Gets the notification frame and row-separator color.</summary>
+    public Color MessageBorder { get; init; } = Color.FromArgb(230, 199, 83);
+    /// <summary>Gets the default notification icon color.</summary>
+    public Color MessageIconForeground { get; init; } = Color.FromArgb(0, 120, 212);
+    /// <summary>Gets the minimum notification row height in logical pixels; Touch also applies its larger target minimum. Must be positive.</summary>
+    public int MessageMinimumHeight { get; init; } = 34;
+    /// <summary>Gets notification content padding in logical pixels. Sides must be nonnegative.</summary>
+    public Padding MessageContentPadding { get; init; } = new(12, 4, 8, 4);
     /// <summary>Gets the opaque Office 2024 Backstage navigation rail color.</summary>
     public Color BackstageNavigationBackground { get; init; } = Color.FromArgb(245, 244, 243);
+    /// <summary>Gets the minimum Backstage navigation font size in 96-DPI logical pixels. Defaults to 14, matching the WPF Modern navigation; larger ribbon fonts are retained. Must be positive and finite. Page content retains the host font.</summary>
+    public float BackstageNavigationFontSize { get; init; } = 14;
     /// <summary>Gets the paired background fill for Office 2024 noninteractive gallery section headings.</summary>
     public RibbonFill GalleryHeadingBackground { get; init; } = new(Color.FromArgb(240, 240, 240));
     /// <summary>Gets the Office 2024 text color paired with GalleryHeadingBackground.</summary>
@@ -77,10 +91,16 @@ public readonly record struct RibbonIconContext(int DeviceDpi, Color Foreground,
 /// <summary>Describes device-pixel geometry, palette, font and interaction state for painting.</summary>
 public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bounds, RibbonTheme Theme, Font Font, int DeviceDpi, bool Hot = false, bool Pressed = false, bool Focused = false, bool ReserveIcon = false)
 {
+    /// <summary>Gets whether this frame's top edge adjoins the preceding ribbon/QAT surface and uses square top corners.</summary>
+    public bool IsTopEdgeConnected { get; init; }
+    /// <summary>Gets whether this frame's bottom edge adjoins open messages and uses square bottom corners.</summary>
+    public bool IsBottomEdgeConnected { get; init; }
     /// <summary>Gets the owning ribbon's density. Standalone paint contexts default to Compact.</summary>
     public RibbonDensity Density { get; init; }
     /// <summary>Gets whether an in-ribbon gallery is represented by its full-height Large dropdown fallback. The source's IsInRibbon and SizePolicy remain authored values.</summary>
     public bool IsGalleryDropDown { get; init; }
+    /// <summary>Gets whether this Quick Access toolbar paint joins an expanded body. DrawBody receives the combined outer frame; this row paints only its internal separator. Minimized standalone rows are false.</summary>
+    public bool IsQuickAccessToolbarJoined { get; init; }
     internal bool IsBodyScrollButton { get; init; }
     internal Rectangle GroupSeparatorBounds { get; init; }
 }

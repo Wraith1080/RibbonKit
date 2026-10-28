@@ -22,6 +22,8 @@
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/SplitInteractionChecks.cs" Link="PublicSplitInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/TextBoxInteractionChecks.cs" Link="PublicTextBoxInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/ComboBoxInteractionChecks.cs" Link="PublicComboBoxInteractionChecks.cs" /></ItemGroup>
+  <!-- Reuse the public-only message consumer fixture. -->
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/MessageInteractionChecks.cs" Link="PublicMessageInteractionChecks.cs" /></ItemGroup>
   <!-- Public UIA client assemblies are used only by this external test client.
        The native runtime/package has no reference to them and no WPF hosting. -->
 </Project>

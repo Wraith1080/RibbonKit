@@ -6,6 +6,8 @@ namespace RibbonKit.WinForms;
 /// <summary>Flat rendering foundation with shared content drawing over library-measured device-pixel geometry.</summary>
 public partial class RibbonRenderer : IDisposable
 {
+    /// <summary>Gets whether a below-ribbon Quick Access row uses the body margins and shares its outer frame. The default keeps a separate full-width row. Renderer changes refresh the shared measurement.</summary>
+    public virtual bool JoinBelowRibbonQuickAccess => false;
     private readonly RoundedPainter _rounded = new();
     private readonly ShadowPainter _shadow = new();
     private readonly RibbonCaptionLayout _captions = new();
@@ -588,12 +590,20 @@ public partial class RibbonRenderer : IDisposable
     /// <summary>Paints a fill and outline using mirrored corner coverage.</summary>
     protected void DrawRounded(RibbonPaintContext context, RibbonFill fill, Color border) => _rounded.Draw(context.Graphics, Rectangle.Inflate(context.Bounds, -1, -1), context.Theme.CornerRadius * context.DeviceDpi / 96, fill, border, border.A == 0 ? 0 : 1);
     internal void PaintRounded(RibbonPaintContext context, int radius, RibbonFill fill, Color border, int stroke = 1) =>
-        _rounded.Draw(context.Graphics, context.Bounds, radius, fill, border, stroke);
+        _rounded.Draw(context.Graphics, context.Bounds, radius, fill, border, stroke, context.IsTopEdgeConnected, context.IsBottomEdgeConnected);
     internal void PaintShadow(RibbonPaintContext context, int radius)
     {
         var bounds = context.Bounds;
         bounds.Offset(0, RibbonLayoutEngine.Scale(2, context.DeviceDpi));
-        _shadow.Draw(context.Graphics, bounds, radius, RibbonLayoutEngine.Scale(6, context.DeviceDpi), context.Theme.BodyShadowColor);
+        var saved = context.Graphics.Save();
+        try
+        {
+            int blur = RibbonLayoutEngine.Scale(6, context.DeviceDpi);
+            if (context.IsBottomEdgeConnected)
+                context.Graphics.SetClip(Rectangle.FromLTRB(bounds.Left - blur, bounds.Top - blur, bounds.Right + blur, context.Bounds.Bottom), CombineMode.Intersect);
+            _shadow.Draw(context.Graphics, bounds, radius, blur, context.Theme.BodyShadowColor, context.IsTopEdgeConnected, context.IsBottomEdgeConnected);
+        }
+        finally { context.Graphics.Restore(saved); }
     }
     private static RibbonPaintContext EnabledContext(RibbonPaintContext context, bool enabled) =>
         enabled ? context : context with

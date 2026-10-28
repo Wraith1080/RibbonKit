@@ -67,6 +67,8 @@ internal static class BackstageInteractionChecks
                 await Key("{F10}f"); Check(ribbon.IsBackstageOpen && ribbon.FileMenu.IsDropDownOpen && ribbon.SelectedTab == home, "File KeyTip routes to Backstage without changing the ribbon tab");
                 var overlay = info.Parent!.Parent!.Parent!; Check(overlay.Parent == form && overlay.Bounds == form.ClientRectangle, "Library overlay covers the ordinary Form client area");
                 await Capture("info");
+                Check(record.NavigationPoints >= Math.Max(ribbon.Font.SizeInPoints, ribbon.Theme.BackstageNavigationFontSize * 72 / 96),
+                    "Navigation uses the WPF-sized font minimum through the shared renderer context");
                 if (widthChecks) await CheckWidths(overlay);
                 await Key("{F10}");
                 var backButton = Button("Back");
@@ -187,13 +189,15 @@ internal static class BackstageInteractionChecks
         public string Name { get => _name; set { if (_name == value) return; _name = value; PropertyChanged?.Invoke(this, new(nameof(Name))); } }
         public event PropertyChangedEventHandler? PropertyChanged;
     }
-    private sealed class Recording { internal Rectangle File; }
+    private sealed class Recording { internal Rectangle File; internal float NavigationPoints; }
     private sealed class Office(Recording r) : RibbonOffice2024Renderer
     {
+        public override void DrawBackstageEntry(RibbonPaintContext c, RibbonItem? item, bool selected) { if (item is not null) r.NavigationPoints = c.Font.SizeInPoints; base.DrawBackstageEntry(c, item, selected); }
         public override void DrawFileButton(RibbonPaintContext c, RibbonDropDownItem menu) { r.File = c.Bounds; base.DrawFileButton(c, menu); }
     }
     private sealed class Flat(Recording r) : RibbonRenderer
     {
+        public override void DrawBackstageEntry(RibbonPaintContext c, RibbonItem? item, bool selected) { if (item is not null) r.NavigationPoints = c.Font.SizeInPoints; base.DrawBackstageEntry(c, item, selected); }
         public override void DrawFileButton(RibbonPaintContext c, RibbonDropDownItem menu) { r.File = c.Bounds; base.DrawFileButton(c, menu); }
     }
 }

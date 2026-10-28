@@ -2,7 +2,7 @@ namespace RibbonKit.WinForms.Layout;
 
 internal enum TargetKind
 {
-    Tab, Group, Item, TabBack, TabNext, BodyBack, BodyNext, Minimize, QuickAccess, QuickAccessOverflow, OverflowUp, OverflowDown, FileMenu, ModalClose
+    Tab, Group, Item, TabBack, TabNext, BodyBack, BodyNext, Minimize, QuickAccess, QuickAccessOverflow, OverflowUp, OverflowDown, FileMenu, ModalClose, MessageAction, MessageClose
 }
 internal sealed record RibbonTarget(TargetKind Kind, RibbonElement? Element, Rectangle Bounds, Rectangle Clip, RibbonItemSize Size = RibbonItemSize.Large, bool ReserveIcon = false, bool DropDownPart = false, int LabelWidth = 0, string? AutomaticKeyTip = null, bool GalleryDropDown = false)
 {
@@ -19,7 +19,10 @@ internal sealed record GroupSlot(RibbonGroup Group, Rectangle Bounds, bool Colla
 internal sealed class RibbonLayoutSnapshot
 {
     internal Rectangle BodyBounds { get; set; }
+    internal Rectangle BodyFrameBounds { get; set; }
     internal Rectangle QuickAccessBounds { get; set; }
+    internal Rectangle MessageBounds { get; set; }
+    internal List<MeasuredMessage> Messages { get; } = [];
     internal List<RibbonElement> QuickAccessOverflowItems { get; } = [];
     internal List<RibbonTarget> Targets { get; } = [];
     internal List<GroupSlot> Groups { get; } = [];
@@ -173,8 +176,9 @@ internal sealed class RibbonLayoutEngine
         {
             bool below = ribbon.QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon;
             int available = below ? client.Width : Math.Min(S(ribbon.QuickAccessMaxWidth), Math.Max(0, client.Width - tabsStart - utilityWidth - S(24)));
-            int top = below ? client.Height - ribbon.QuickAccessHeight : 0;
-            var quickAccess = RibbonQuickAccessLayout.Build(ribbon, new(below ? 0 : tabsStart, top, available, below ? ribbon.QuickAccessHeight : tabHeight), below);
+            var slot = below ? RibbonQuickAccessLayout.BelowBounds(new(client.Width, Math.Max(0, client.Height - ribbon.MessageHeight)), ribbon.QuickAccessHeight, ribbon.LayoutTheme.BodyMargin, ribbon.JoinBelowRibbonQuickAccess, dpi)
+                : new Rectangle(tabsStart, 0, available, tabHeight);
+            var quickAccess = RibbonQuickAccessLayout.Build(ribbon, slot, below);
             result.QuickAccessBounds = quickAccess.QuickAccessBounds;
             result.QuickAccessOverflowItems.AddRange(quickAccess.QuickAccessOverflowItems);
             result.Targets.AddRange(quickAccess.Targets);
@@ -201,11 +205,29 @@ internal sealed class RibbonLayoutEngine
             result.Targets.Add(new(TargetKind.TabNext, null, new(tabsStart + tabsWidth - tabScrollWidth, 0, tabScrollWidth, tabHeight), tabsClip));
         }
         if (action is { } header) result.Targets.Add(new(header.Kind, header.Element, new(client.Width - utilityWidth, 0, utilityWidth, tabHeight), client));
-        if (ribbon.IsMinimized || ribbon.SelectedTab is not { } selected) return result;
-        var bodyLayout = BuildBody(ribbon, selected, client.Width, bodyOffset, tabHeight);
-        result.BodyBounds = bodyLayout.BodyBounds; result.BodyViewport = bodyLayout.BodyViewport; result.BodyExtent = bodyLayout.BodyExtent;
-        result.Groups.AddRange(bodyLayout.Groups);
-        result.Targets.AddRange(bodyLayout.Targets.SelectMany(t => RibbonSplitLayout.Expand(t, dpi, false)));
+        if (!ribbon.IsMinimized && ribbon.SelectedTab is { } selected)
+        {
+            var bodyLayout = BuildBody(ribbon, selected, client.Width, bodyOffset, tabHeight);
+            result.BodyBounds = bodyLayout.BodyBounds; result.BodyViewport = bodyLayout.BodyViewport; result.BodyExtent = bodyLayout.BodyExtent;
+            result.BodyFrameBounds = ribbon.JoinBelowRibbonQuickAccess && !result.QuickAccessBounds.IsEmpty
+                ? Rectangle.Union(result.BodyBounds, result.QuickAccessBounds) : result.BodyBounds;
+            result.Groups.AddRange(bodyLayout.Groups);
+            result.Targets.AddRange(bodyLayout.Targets.SelectMany(t => RibbonSplitLayout.Expand(t, dpi, false)));
+        }
+        var messages = RibbonMessageLayout.Measure(ribbon, ribbon.MessageWidth, dpi);
+        if (messages.Height > 0)
+        {
+            int left = ribbon.JoinMessageBar ? Math.Min(client.Width, S(ribbon.Theme.BodyMargin.Left)) : 0;
+            int top = client.Height - messages.Height - (ribbon.JoinMessageBar ? S(ribbon.Theme.BodyMargin.Bottom) : 0);
+            result.MessageBounds = new(left, top, ribbon.MessageWidth, messages.Height);
+            int index = 0;
+            foreach (var measured in messages.Rows)
+            {
+                var row = RibbonMessageLayout.Offset(measured, left, top); result.Messages.Add(row); index++;
+                if (!row.Action.IsEmpty) result.Targets.Add(new(TargetKind.MessageAction, row.Message.Action, row.Action, row.Bounds, RibbonItemSize.Medium, AutomaticKeyTip: $"M{index}A"));
+                if (!row.Close.IsEmpty) result.Targets.Add(new(TargetKind.MessageClose, row.Message.Close, row.Close, row.Bounds, RibbonItemSize.Small, AutomaticKeyTip: $"M{index}X"));
+            }
+        }
         return result;
     }
     internal RibbonLayoutSnapshot BuildBody(RibbonControl ribbon, RibbonTab selected, int width, int bodyOffset, int top = 0)
@@ -225,6 +247,7 @@ internal sealed class RibbonLayoutEngine
         var body = new Rectangle(S(margin.Left), top + S(margin.Top),
             Math.Max(0, width - S(margin.Left) - S(margin.Right)), bodyHeight);
         result.BodyBounds = body;
+        result.BodyFrameBounds = body;
         int inset = Math.Min(S(2), body.Width / 2);
         int available = Math.Max(0, body.Width - 2 * inset);
         int[] states = ReductionAlgorithm.ComputeStates(available, tables, order);

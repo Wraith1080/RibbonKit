@@ -9,6 +9,33 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     /// <summary>Initializes the default Office 2024 inspired renderer.</summary>
     public RibbonOffice2024Renderer() { }
     /// <inheritdoc />
+    public override bool JoinBelowRibbonQuickAccess => true;
+    /// <inheritdoc />
+    public override bool JoinMessageBarToBody => true;
+    /// <inheritdoc />
+    public override void DrawMessageBar(RibbonPaintContext context)
+    {
+        int radius = context.Theme.CornerRadius * context.DeviceDpi / 48;
+        PaintShadow(context, radius);
+        PaintRounded(context, radius, context.Theme.MessageBackground, context.Theme.MessageBorder);
+    }
+    /// <inheritdoc />
+    public override void DrawQuickAccessToolbar(RibbonPaintContext context, RibbonQuickAccessPosition position)
+    {
+        if (position != RibbonQuickAccessPosition.BelowRibbon || !JoinBelowRibbonQuickAccess)
+        {
+            base.DrawQuickAccessToolbar(context, position);
+            return;
+        }
+        if (!context.IsQuickAccessToolbarJoined)
+            DrawBody(context); // A minimized ribbon leaves a complete standalone card.
+        else if (context.Bounds.Width > 2)
+        {
+            using var separator = new SolidBrush(context.Theme.Border);
+            context.Graphics.FillRectangle(separator, context.Bounds.Left + 1, context.Bounds.Top, context.Bounds.Width - 2, 1);
+        }
+    }
+    /// <inheritdoc />
     public override void DrawGalleryHeading(RibbonPaintContext context, string text)
     {
         context = context with { Hot = false, Pressed = false, Focused = false };

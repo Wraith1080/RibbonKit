@@ -32,6 +32,10 @@ internal static class ComponentTree
                 yield return descendant;
     }
 }
+public sealed class MessageCollectionEditor(IServiceProvider serviceProvider, Type type) : CollectionEditor(serviceProvider, type)
+{
+    protected override Type[] CreateNewItemTypes() => [typeof(RibbonMessage)];
+}
 public sealed class BackstageCollectionEditor(IServiceProvider serviceProvider, Type type) : CollectionEditor(serviceProvider, type)
 {
     protected override Type[] CreateNewItemTypes() => [typeof(RibbonBackstagePageItem), typeof(RibbonButtonItem)];

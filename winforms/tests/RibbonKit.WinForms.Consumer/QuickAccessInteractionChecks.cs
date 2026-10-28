@@ -43,9 +43,12 @@ internal static class QuickAccessInteractionChecks
         {
             try
             {
-                form.Activate(); SetForegroundWindow(form.Handle); await Task.Delay(200); Guard(); ribbon.Refresh();
+                await Task.Yield(); form.Activate(); SetForegroundWindow(form.Handle);
+                for (int attempt = 0; attempt < 20 && GetForegroundWindow() != form.Handle; attempt++) await Task.Delay(100);
+                Guard(); ribbon.Refresh();
                 int expandedHeight = ribbon.Height; await Capture("tab-row");
                 document.Focus(); nint documentFocus = GetFocus();
+                WF.Cursor.Position = document.PointToScreen(new(40, 40)); await Task.Delay(80);
                 var tipSlot = record.Entries[copyRef]; WF.Cursor.Position = ribbon.PointToScreen(new(tipSlot.Left + tipSlot.Width / 2, tipSlot.Top + tipSlot.Height / 2));
                 await Task.Delay(850); Guard();
                 Check(record.Tips.Contains("Copy") && GetFocus() == documentFocus, "A source ScreenTip appears at the reference without taking document focus");
@@ -62,10 +65,23 @@ internal static class QuickAccessInteractionChecks
                 group.Items.Add(copy); ribbon.Refresh(); await Click(ribbon, record.Entries[copyRef]); Check(copies == 2, "Reinserting the same source restores its existing reference");
                 ribbon.Focus(); await Key("{F10}1"); Check(copies == 3, "A numeric toolbar KeyTip executes once");
                 ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon; ribbon.Refresh();
-                Check(ribbon.Height > expandedHeight && record.Strip.Width == ribbon.ClientSize.Width && record.Strip.Top == expandedHeight, "BelowRibbon adds a full-width row downward");
+                int S(int value) => (int)Math.Round(value * ribbon.DeviceDpi / 96d);
+                Check(ribbon.Height > expandedHeight && record.Strip.Left == (flat ? 0 : S(ribbon.Theme.BodyMargin.Left))
+                    && record.Strip.Width == ribbon.ClientSize.Width - (flat ? 0 : S(ribbon.Theme.BodyMargin.Left) + S(ribbon.Theme.BodyMargin.Right))
+                    && record.Strip.Top == expandedHeight - (flat ? 0 : S(ribbon.Theme.BodyMargin.Bottom)),
+                    flat ? "Neutral BelowRibbon retains a separate full-width row" : "Office BelowRibbon joins the body inside its side margins");
                 await Capture("below-ribbon"); await Click(ribbon, record.Entries[save]); Check(saves == 1, "A toolbar-only command uses the normal activation path");
+                Check(flat || record.Frame.Left == record.Strip.Left && record.Frame.Right == record.Strip.Right && record.Frame.Bottom == record.Strip.Bottom && record.Joined,
+                    "Expanded frame and QAT share measured side and bottom edges when joined");
+                ribbon.Density = RibbonDensity.Touch; ribbon.Refresh(); await Capture("touch-below-ribbon");
+                Check(record.Strip.Height >= S(48) && (flat || record.Joined && record.Frame.Bottom == record.Strip.Bottom), "Touch enlarges the same below-ribbon frame");
+                ribbon.Density = RibbonDensity.Compact; ribbon.Refresh();
                 ribbon.QuickAccessVisible = false; Check(ribbon.Height == expandedHeight && ribbon.QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon && ribbon.QuickAccessItems.Count == 4, "Hiding retains placement and authored declarations");
                 ribbon.QuickAccessVisible = true; ribbon.IsMinimized = true; ribbon.Refresh(); await Capture("minimized-below");
+                Check(flat || record.Frame == record.Strip && !record.Joined, "Minimized Office QAT paints a standalone card");
+                ribbon.Density = RibbonDensity.Touch; ribbon.Refresh(); await Capture("touch-minimized-below");
+                Check(flat || record.Frame == record.Strip && !record.Joined, "Touch minimized QAT retains its standalone frame");
+                ribbon.Density = RibbonDensity.Compact; ribbon.Refresh();
                 await Click(ribbon, record.Entries[save]); Check(saves == 2 && ribbon.IsMinimized, "BelowRibbon commands remain available while minimized");
                 ribbon.IsMinimized = false; ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TabRow;
                 for (int i = 0; i < 70; i++)
@@ -193,7 +209,8 @@ internal static class QuickAccessInteractionChecks
         internal readonly Dictionary<RibbonElement, Rectangle> Entries = [], MenuEntries = [];
         internal readonly Dictionary<RibbonElement, string> Captions = [];
         internal readonly HashSet<string> Tips = [];
-        internal Rectangle Overflow, Strip, Up, Down;
+        internal Rectangle Overflow, Strip, Up, Down, Frame;
+        internal bool Joined;
         internal bool UpEnabled, DownEnabled, DownHot, DownPressed;
         internal void Scroll(RibbonPaintContext context, bool upward, bool enabled)
         {
@@ -208,11 +225,12 @@ internal static class QuickAccessInteractionChecks
     }
     private sealed class OfficeRecorder(Recording record) : RibbonOffice2024Renderer
     {
+        public override void DrawBody(RibbonPaintContext c) { record.Frame = c.Bounds; base.DrawBody(c); }
         public override void DrawSurface(RibbonPaintContext c, bool popup) { if (popup) record.MenuEntries.Clear(); base.DrawSurface(c, popup); }
         public override void DrawOverflowScrollButton(RibbonPaintContext c, bool upward, bool enabled) { record.Scroll(c, upward, enabled); base.DrawOverflowScrollButton(c, upward, enabled); }
         public override void DrawQuickAccessItem(RibbonPaintContext c, RibbonElement entry, bool menu) { record.Item(c, entry, menu); base.DrawQuickAccessItem(c, entry, menu); }
         public override void DrawQuickAccessOverflow(RibbonPaintContext c) { record.Overflow = c.Bounds; base.DrawQuickAccessOverflow(c); }
-        public override void DrawQuickAccessToolbar(RibbonPaintContext c, RibbonQuickAccessPosition position) { record.Strip = c.Bounds; base.DrawQuickAccessToolbar(c, position); }
+        public override void DrawQuickAccessToolbar(RibbonPaintContext c, RibbonQuickAccessPosition position) { record.Strip = c.Bounds; record.Joined = c.IsQuickAccessToolbarJoined; base.DrawQuickAccessToolbar(c, position); }
         public override void DrawScreenTip(RibbonPaintContext c, string title, string description, Rectangle titleBounds, Rectangle descriptionBounds) { record.Tips.Add(title); base.DrawScreenTip(c, title, description, titleBounds, descriptionBounds); }
     }
     private sealed class FlatRecorder(Recording record) : RibbonRenderer

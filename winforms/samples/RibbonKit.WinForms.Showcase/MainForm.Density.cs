@@ -54,6 +54,21 @@ public partial class MainForm
                 graphics.CopyFromScreen(popup.Location, Point.Empty, popup.Size); bitmap.Save(Path.Combine(directory, density + "-chooser.png"));
                 _densitySelector.CloseDropDown();
             }
+            var originalPosition = ribbon.QuickAccessPosition;
+            try
+            {
+                ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
+                foreach (var density in new[] { RibbonDensity.Compact, RibbonDensity.Touch })
+                {
+                    ribbon.Density = density;
+                    foreach (bool minimized in new[] { false, true })
+                    {
+                        ribbon.IsMinimized = minimized;
+                        await Capture($"{density}-qat-below-{(minimized ? "minimized" : "expanded")}");
+                    }
+                }
+            }
+            finally { ribbon.IsMinimized = false; ribbon.QuickAccessPosition = originalPosition; }
         }
         finally { ribbon.Renderer = renderer; Cursor.Position = cursor; }
 

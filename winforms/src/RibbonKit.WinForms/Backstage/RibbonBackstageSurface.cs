@@ -13,6 +13,9 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     private readonly Dictionary<RibbonItem, EntryButton> _entries = [];
     private readonly Dictionary<RibbonBackstagePageItem, PageSlot> _slots = [];
     private RibbonBackstagePageItem? _shownPage;
+    private Font? _navigationFont, _navigationFontSource;
+    private float _navigationFontMinimum;
+    private int _navigationFontDpi;
     private bool _syncing, _tips, _disposing;
     private string _prefix = "";
     internal RibbonBackstageSurface(RibbonControl ribbon)
@@ -35,6 +38,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         {
             bool hadFocus = ContainsFocus, hadPageFocus = _pages.ContainsFocus;
             Font = _ribbon.Font;
+            UpdateNavigationFont();
             BackColor = _ribbon.Theme.BackstageNavigationBackground;
             _navigation.BackColor = _ribbon.Theme.BackstageNavigationBackground;
             _pages.BackColor = _ribbon.Theme.Surface;
@@ -77,6 +81,18 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             if (movedFocus && _ribbon.IsBackstageOpen) FocusInitial(false);
         }
         finally { _syncing = false; }
+    }
+    private void UpdateNavigationFont()
+    {
+        var source = _ribbon.Font;
+        float minimum = _ribbon.Theme.BackstageNavigationFontSize;
+        if (ReferenceEquals(_navigationFontSource, source) && _navigationFontMinimum == minimum && _navigationFontDpi == DeviceDpi) return;
+        var font = new Font(source.FontFamily, Math.Max(source.SizeInPoints, minimum * 72 / 96), source.Style,
+            GraphicsUnit.Point, source.GdiCharSet, source.GdiVerticalFont);
+        var previous = _navigationFont;
+        _navigationFont = font; _navigationFontSource = source; _navigationFontMinimum = minimum; _navigationFontDpi = DeviceDpi;
+        _navigation.Font = font;
+        previous?.Dispose();
     }
     internal void DetachContent(Control content)
     {
@@ -165,7 +181,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     {
         base.OnLayout(levent);
         if (_back is null) return;
-        var layout = RibbonBackstageLayout.Build(ClientSize, Font, DeviceDpi, _ribbon.Backstage);
+        var layout = RibbonBackstageLayout.Build(ClientSize, _navigation.Font, DeviceDpi, _ribbon.Backstage);
         _back.Bounds = layout.Back;
         _navigation.Bounds = layout.Navigation;
         _pages.Bounds = layout.Page;
@@ -193,6 +209,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             _ribbon.BackstageSurfaceDisposed(this);
         }
         base.Dispose(disposing);
+        if (disposing) { _navigationFont?.Dispose(); _navigationFont = null; _navigationFontSource = null; }
     }
     private sealed class PageSlot : Panel
     {

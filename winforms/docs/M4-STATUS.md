@@ -1,6 +1,6 @@
 # M4 broader native surfaces
 
-Status: **M4E gallery buttons and M4F1 merging accepted at reviewed scope; M4F2 modal scopes and M4G density implemented, human review pending**, 2026-10-28. Continuation follows the
+Status: **M4E gallery buttons and M4F1 merging accepted at reviewed scope; M4F2 modal scopes, M4G density, M4I1 joined BelowRibbon QAT and M4J messages implemented, human review pending**, 2026-10-28. Continuation follows the
 accepted [M3E option icon presentation](M3-STATUS.md#m3e-option-references--2026-10-27).
 M4 is a collection of bounded slices, not blanket implementation of every roadmap
 feature. Existing accessibility, full theming, animation, touch/IME and optional
@@ -273,6 +273,39 @@ Office scope also passed at 120 DPI, including hover/pressed captures, Back
 activation/cancel and the existing interaction checks:
 `TestResults/visual/m4c-backstage-back-stroke-office/result.log`.
 Debug Showcase is refreshed; earlier unrelated passes were retained.
+
+### Navigation text legibility — 2026-10-28
+
+The user reported that native navigation labels looked smaller than WPF. Modern
+WPF's BackstageTabItem uses FontSize 14; its 15-pixel override belongs to Classic
+2007 and was not adopted. The native proposal preceded implementation:
+`RibbonTheme.BackstageNavigationFontSize` is a positive finite logical-pixel
+minimum, default 14 (10.5 points). It preserves a larger host font and the host's
+font family/style. Only navigation entries inherit the owned cached derived font;
+Back and native page content retain their existing fonts. The font is refreshed
+for source-font/theme/DPI changes and disposed with the surface. Row height and
+Auto rail width use this same font, including long labels and large host fonts.
+
+Normal Debug and Release native solution builds passed with zero warnings/errors,
+including the two additive theme accessor entries and XML documentation. Focused
+width/chrome checks passed 5/5 in `m4c-backstage-typography-focused.trx`; its two new
+typography cases initially omitted the visible File prerequisite. After fixing
+the fixture, those cases passed 2/2 in `m4c-backstage-typography-repaired.trx`.
+The final native Release unit/STA aggregate passed 164/164 in
+`tests/RibbonKit.WinForms.Tests/TestResults/m4c-backstage-typography-release-full.trx`.
+Coverage includes both renderers, Compact/Touch, 9/16-point host fonts, 14/22-pixel
+minima, measured label fit, theme validation, native HWND/text/selection/focus and
+borrowed page retention.
+
+Public-only Office/neutral native interaction runs passed at actual 120 DPI in
+`TestResults/visual/m4c-backstage-font-{office-final,neutral}/`, verifying the font
+minimum through public paint contexts plus File routing, navigation, native page
+bindings/validation, keyboard focus, close/reopen and disposal. The first Office
+launch stopped at its foreground prerequisite; the retry completed. These runs
+use project outputs, not a fresh package. Office/neutral Info captures were
+inspected; Showcase captures are in `TestResults/visual/m4c-backstage-font-showcase/`.
+The user accepted the navigation-font refinement on 2026-10-28. Actual VS and physical mixed-monitor checks remain
+deferred. No WPF runtime/build/CI or unrelated theme geometry was changed.
 
 ### Designer navigation width — 2026-10-27
 
@@ -1040,6 +1073,131 @@ Touch horizontal split-arrow adjustment on 2026-10-28. Actual VS and physical
 mixed-monitor checks remain deferred. No full/Release or WPF checks were run for
 this bounded change.
 
+## M4I1 Office 2024 joined BelowRibbon QAT — 2026-10-28
+
+The bounded renderer/layout proposal preceded implementation: Office 2024 joins
+the lower QAT to the body, neutral retains its separate row, and minimized Office
+uses a standalone card. Existing Surface, Border, CornerRadius, BodyShadowColor
+and BodyMargin supply the appearance; no palette or independent-radius refactor
+was started. Command ownership, models and authored placement remain unchanged.
+
+- `RibbonRenderer.JoinBelowRibbonQuickAccess` defaults false; Office overrides
+  it to true. Shared measurement moves the row inside the body side margins,
+  directly beneath the command body. `DrawBody` receives the combined outer frame;
+  `RibbonPaintContext.IsQuickAccessToolbarJoined` tells the QAT callback to add
+  only its single-device-pixel internal separator. One outer rounded frame/shadow
+  replaces the intermediate body bottom border, gap and shadow. Expanded height
+  and group/editor/hit geometry stay fixed; QAT anchors follow its new row.
+- Minimized Office keeps the QAT available as an all-corner rounded card, with
+  theme-provided top/bottom margins included in height. Neutral and Office-derived
+  renderers opting out retain the original full-width strip. Setting/reassigning
+  Renderer now refreshes measurement, including a mutable policy change. Five
+  additive override/property/accessor entries have XML/API-baseline coverage.
+- Message-panel support is recorded separately as M4J by user request. Its open
+  panel must square the adjoining QAT bottom corners and coordinate margins/frame/
+  shadow geometry. This change implements no message-panel runtime API.
+
+Verification:
+
+- Final normal Debug and Release native solution builds passed without warnings
+  or errors. Focused Debug geometry/File/QAT checks passed 5/5 in
+  `tests/RibbonKit.WinForms.Tests/TestResults/m4i-qat-frame-focused.trx`.
+  The native unit/STA Release aggregate passed 162/162 in
+  `m4i-qat-frame-release-full.trx`, including the final same-renderer reassignment
+  regression. New pixel checks cover 96/120/144/192 DPI, odd/even bounds, four-corner
+  symmetry, a one-device-pixel join and preservation of the single outer shadow.
+- Public-only Office and neutral native QAT runs passed at actual 120 DPI under
+  `TestResults/visual/m4i-qat-frame-{office,neutral}-complete/`: Compact/Touch expanded
+  and minimized geometry, pointer/source binding and retention, disabled/removed
+  declarations, KeyTips, overflow/wheel/repeat/keyboard, narrow reachability and
+  focus return. These use project outputs, not a fresh package. Early runs stopped
+  at ScreenTip/foreground prerequisites; the fixture now waits for activation and
+  starts hover from a known point. A later fixture attempt reused a Touch rectangle
+  after returning to Compact; refreshing recorded paint targets fixed the probe.
+  Successful native runs preceded only the same-renderer reassignment refinement,
+  which the final Release aggregate covers.
+- Actual Office/neutral expanded and minimized captures were inspected, together
+  with Showcase Compact expanded and Touch minimized captures in
+  `TestResults/visual/m4i-qat-frame-showcase/`. The capture helper exercises the
+  normal public placement/density APIs and restores its temporary sample state.
+
+Human review remains pending. Actual VS, fresh-package, physical mixed-monitor
+and broader appearance/palette acceptance remain deferred. No WPF runtime/build/CI
+changes, commit or push were made. Localization/RTL remains after the remaining
+components, including customization, animation and themes.
+
+## M4J message-panel foundation — 2026-10-28
+
+The user authorized the next slice, requested focused testing only, and explicitly
+called out minimized bodies where the QAT is **not BelowRibbon**, including future
+title-bar placement. The bounded proposal preceded implementation: repeatable
+title/body messages with borrowed icons, an optional action, retained open state,
+binding, keyboard access, and connected body/QAT geometry.
+
+- `RibbonControl.MessageBar` is stable and owned. Its typed Items own RibbonMessage
+  models; inherited Text is body text, Title is bold, and IsOpen/IsDismissible are
+  bindable. A stable owned Action uses the existing RibbonButtonItem command path.
+  Its invocation leaves the message open. Dismiss is idempotent, raises Dismissed
+  once and retains the model/action/bindings for reopening. Icons/images are
+  borrowed. BindingContext changes propagate through the message/action tree.
+- Shared measurement wraps text, moves actions beneath text when needed and
+  recomputes ribbon height on width/font/DPI/density changes. Compact starts at
+  34 logical pixels; Touch action/close targets have 44-pixel minima. Theme roles
+  supply message fills, foreground, border, icon color, padding and minimum height.
+  Public renderer callbacks receive measured stack, text/icon and action geometry.
+- Office attaches messages beneath the body or lower QAT and squares the adjoining
+  frame's bottom corners. The final message edge stays rounded. With a minimized
+  body and QAT **not BelowRibbon**, or a hidden QAT, messages form a standalone card
+  below the tabs with an exposed rounded top. The predicate does not require
+  TabRow; actual title-bar hosting remains M6B. Neutral keeps a separate flat stack.
+  Closing the last message restores the exact previous height and foot geometry.
+- Following the user's shadow report, the preceding body's shadow is clipped at
+  the join and message content paints after body/QAT chrome. It cannot obscure the
+  panel; the message stack retains its lower shadow. Mixed top/bottom corner masks
+  reuse the shared analytic painter. Message arrival preserves host focus/selection;
+  close restores a surviving message target or ribbon tab without stealing focus
+  from another application window opened by a host action.
+- Showcase **Merging → Messages** demonstrates add/reopen/clear. The demo's action
+  updates application status; reusable layout, input and painting stay in RibbonKit.
+  A message collection editor is wired for later designer review.
+
+Relevant verification only, as requested:
+
+- Normal Debug native solution build passed without warnings/errors, including
+  XML/API-baseline and design compilation. No full aggregate, Release campaign,
+  WPF checks or fresh-package campaign was run for this slice.
+- Initial message/QAT geometry selection passed 8/8 in
+  `tests/RibbonKit.WinForms.Tests/TestResults/m4j-messages-focused-initial.trx`.
+  The three existing QAT-frame cases were retained. New short-text coverage then
+  exposed an action/close overlap in a wrapped layout; the corrected main-row
+  height/close placement passed `m4j-message-short-wrap-fixed.trx` (1/1).
+  Final message-specific checks passed 6/6 in `m4j-messages-final-focused.trx`,
+  including 96/120/144/192 DPI, odd/even corner bounds, stacking, both renderers,
+  Compact/Touch, QAT visible/hidden and both placements, minimized/expanded state,
+  close restoration, narrow resize and a high-opacity shadow non-overlap regression.
+  The final binding-context and short-action Touch-width refinements separately
+  passed 1/1 in `m4j-message-binding-context.trx` and
+  `m4j-message-touch-target-width.trx`; earlier passed scopes were retained.
+- Public-only Office native checks passed at actual 120 DPI in
+  `TestResults/visual/m4j-messages-office-complete/`. Neutral passed in
+  `m4j-messages-neutral-verified/`. Both cover all eight density/placement/minimize
+  combinations, arrival focus/HWND/selection, explicit action KeyTip, pointer
+  action/close, Enter close and exact height restoration, nondismissible narrow
+  Touch and idempotent programmatic dismissal. Early native runs found missing
+  keyboard focus restoration after a closed target and missing height reflow on
+  resize; both were fixed. Neutral's final narrow assertion initially expected
+  Office's top gap, and one retry stopped at foreground acquisition; final results
+  above completed. The Office pass preceded only the short-action 44-pixel minimum,
+  which has dedicated focused coverage. These use project outputs, not a package.
+- Actual Office/neutral and Showcase captures were inspected, including expanded
+  BelowRibbon, standalone minimized not-BelowRibbon and narrow Touch. Showcase
+  captures are under `TestResults/visual/m4j-messages-showcase/`.
+
+Human review remains pending. Actual VS, physical mixed-monitor, localization/RTL,
+message live-region accessibility, motion and theme expansion remain separate
+gates/slices. Messages are application notifications, not merge/customization
+persistence. WPF runtime/build/CI remain unchanged; no commit or push was made.
+
 ## Remaining slices
 
 This is a working delivery order, not a promise that each row fits one change.
@@ -1055,7 +1213,8 @@ Each public API and ownership contract is proposed before its implementation.
 | M4F2 | Modal scopes implemented; human review pending |
 | M4G | Compact/Touch density implemented; human review pending |
 | M4H | Deferred by user direction, 2026-10-28: built-in localization and RTL layout/navigation/editor-direction contracts follow the remaining component work, including customization, animation and themes |
-| M4I | Deferred appearance inventory/consolidation, then additional themes/accents/gradients and File designs in bounded passes |
+| M4I | Joined Office 2024 BelowRibbon QAT implemented as M4I1, human review pending; comprehensive appearance inventory/consolidation and later themes remain separate bounded passes |
+| M4J | Message-panel foundation implemented, human review pending; connected/square joins, standalone minimized not-BelowRibbon case and shadow protection included |
 | M5A | Command catalog, stable IDs and customization draft/persistence/Apply/Cancel foundation |
 | M5B | QAT customization UI, including groups only on its available list |
 | M5C | Ribbon customization UI and structural changes using the same draft/storage contract |

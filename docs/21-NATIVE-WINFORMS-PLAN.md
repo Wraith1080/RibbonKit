@@ -1,6 +1,6 @@
 # Native RibbonKit.WinForms assessment and implementation plan
 
-> Implementation through M4G Compact/Touch density,
+> Implementation through M4J message-panel foundation,
 > 2026-10-28. Current bounded
 > scope, evidence and remaining review are in the [M4 ledger](../winforms/docs/M4-STATUS.md).
 > The [M3 ledger](../winforms/docs/M3-STATUS.md) retains QAT/projection evidence.
@@ -712,6 +712,25 @@ This belongs to M4I's theming/geometry pass; keep QAT models, command ownership 
 placement behavior independent. Review expanded and minimized presentations
 separately, representative DPI and a neutral renderer without imposing Office's
 joined-panel styling on every theme.
+
+The bounded joined-QAT follow-up is implemented as M4I1; human review remains
+pending. Its current API, automated/native evidence and limits are recorded in
+the [M4 ledger](../winforms/docs/M4-STATUS.md#m4i1-office-2024-joined-belowribbon-qat--2026-10-28).
+This does not complete the comprehensive inventory or authorize every later theme.
+
+Message-panel foundation is implemented as M4J, with human review pending in the
+[M4 ledger](../winforms/docs/M4-STATUS.md#m4j-message-panel-foundation--2026-10-28).
+User reminder,
+**2026-10-28**: an open panel beneath the BelowRibbon QAT changes the adjoining
+QAT bottom corners from rounded to square. Its eventual layout/frame contract
+must cover panel visibility, stacking, minimized state, margins and shadow
+ownership before the deferred localization/RTL pass; do not bake the current
+standalone QAT bottom edge into the message-panel presentation. When the body is
+minimized and QAT is not BelowRibbon, messages instead expose their standalone top
+edge; this condition also covers future title-bar QAT hosting. Preceding body
+shadows must not obscure message content. The completed scope and focused evidence
+are recorded in that ledger; message accessibility, motion and later palettes
+retain their separate gates.
 
 Themes supply appearance values; renderers draw them. Layout, clipping, popup
 placement and hit targets must consume the same relevant geometry. Keep values

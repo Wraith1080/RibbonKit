@@ -6,9 +6,25 @@ namespace RibbonKit.WinForms;
 internal sealed class ShadowPainter : IDisposable
 {
     private readonly Dictionary<(int Radius, int Blur, Color Color), Bitmap> _cache = [];
-    internal void Draw(Graphics graphics, Rectangle bounds, int radius, int blur, Color color)
+    internal void Draw(Graphics graphics, Rectangle bounds, int radius, int blur, Color color, bool squareTop = false, bool squareBottom = false)
     {
         if (bounds.Width <= 0 || bounds.Height <= 0 || color.A == 0 || blur <= 0) return;
+        if (squareTop || squareBottom)
+        {
+            int middle = bounds.Top + bounds.Height / 2;
+            foreach (bool top in new[] { true, false })
+            {
+                var saved = graphics.Save();
+                try
+                {
+                    graphics.SetClip(Rectangle.FromLTRB(bounds.Left - blur, top ? bounds.Top - blur : middle,
+                        bounds.Right + blur, top ? middle : bounds.Bottom + blur), CombineMode.Intersect);
+                    Draw(graphics, bounds, top ? squareTop ? 0 : radius : squareBottom ? 0 : radius, blur, color);
+                }
+                finally { graphics.Restore(saved); }
+            }
+            return;
+        }
         radius = Math.Clamp(radius, 0, (Math.Min(bounds.Width, bounds.Height) - 1) / 2);
         var key = (radius, blur, color);
         if (!_cache.TryGetValue(key, out var mask))

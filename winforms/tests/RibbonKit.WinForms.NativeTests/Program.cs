@@ -63,6 +63,8 @@ internal static partial class Program
             return IndependentConsumer.SplitInteractionChecks.Run(args[1], args[0] == "--split-checks-flat");
         if (args.Length == 2 && args[0] is "--touch-split-checks" or "--touch-split-checks-flat")
             return IndependentConsumer.SplitInteractionChecks.Run(args[1], args[0] == "--touch-split-checks-flat", true);
+        if (args.Length == 2 && args[0] is "--message-checks" or "--message-checks-flat")
+            return IndependentConsumer.MessageInteractionChecks.Run(args[1], args[0] == "--message-checks-flat");
         if (args.Contains("--server"))
         {
             Server();

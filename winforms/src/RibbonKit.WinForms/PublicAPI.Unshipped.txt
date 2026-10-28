@@ -1,4 +1,11 @@
 #nullable enable
+RibbonKit.WinForms.RibbonTheme.BackstageNavigationFontSize.get -> float
+RibbonKit.WinForms.RibbonTheme.BackstageNavigationFontSize.init -> void
+virtual RibbonKit.WinForms.RibbonRenderer.JoinBelowRibbonQuickAccess.get -> bool
+override RibbonKit.WinForms.RibbonOffice2024Renderer.JoinBelowRibbonQuickAccess.get -> bool
+override RibbonKit.WinForms.RibbonOffice2024Renderer.DrawQuickAccessToolbar(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonQuickAccessPosition position) -> void
+RibbonKit.WinForms.RibbonPaintContext.IsQuickAccessToolbarJoined.get -> bool
+RibbonKit.WinForms.RibbonPaintContext.IsQuickAccessToolbarJoined.init -> void
 RibbonKit.WinForms.RibbonPaintContext.IsGalleryDropDown.get -> bool
 RibbonKit.WinForms.RibbonPaintContext.IsGalleryDropDown.init -> void
 RibbonKit.WinForms.RibbonMenuPresentation
@@ -622,3 +629,51 @@ RibbonKit.WinForms.RibbonGalleryTile.GroupName.set -> void
 RibbonKit.WinForms.RibbonGalleryTile.RibbonGalleryTile() -> void
 virtual RibbonKit.WinForms.RibbonRenderer.DrawGalleryHeading(RibbonKit.WinForms.RibbonPaintContext context, string! text) -> void
 virtual RibbonKit.WinForms.RibbonRenderer.DrawGalleryTile(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonGalleryTile! tile, bool selected) -> void
+override RibbonKit.WinForms.RibbonOffice2024Renderer.DrawMessageBar(RibbonKit.WinForms.RibbonPaintContext context) -> void
+override RibbonKit.WinForms.RibbonOffice2024Renderer.JoinMessageBarToBody.get -> bool
+RibbonKit.WinForms.RibbonControl.MessageBar.get -> RibbonKit.WinForms.RibbonMessageBar!
+RibbonKit.WinForms.RibbonMessage
+RibbonKit.WinForms.RibbonMessage.Action.get -> RibbonKit.WinForms.RibbonButtonItem!
+RibbonKit.WinForms.RibbonMessage.Dismiss() -> void
+RibbonKit.WinForms.RibbonMessage.Dismissed -> System.EventHandler?
+RibbonKit.WinForms.RibbonMessage.Icon.get -> RibbonKit.WinForms.IRibbonIcon?
+RibbonKit.WinForms.RibbonMessage.Icon.set -> void
+RibbonKit.WinForms.RibbonMessage.Image.get -> System.Drawing.Image?
+RibbonKit.WinForms.RibbonMessage.Image.set -> void
+RibbonKit.WinForms.RibbonMessage.IsDismissible.get -> bool
+RibbonKit.WinForms.RibbonMessage.IsDismissible.set -> void
+RibbonKit.WinForms.RibbonMessage.IsDismissibleChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonMessage.IsOpen.get -> bool
+RibbonKit.WinForms.RibbonMessage.IsOpen.set -> void
+RibbonKit.WinForms.RibbonMessage.IsOpenChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonMessage.RibbonMessage() -> void
+RibbonKit.WinForms.RibbonMessage.Title.get -> string!
+RibbonKit.WinForms.RibbonMessage.Title.set -> void
+RibbonKit.WinForms.RibbonMessage.TitleChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonMessageBar
+RibbonKit.WinForms.RibbonMessageBar.HasOpenMessages.get -> bool
+RibbonKit.WinForms.RibbonMessageBar.HasOpenMessagesChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonMessageBar.Items.get -> RibbonKit.WinForms.RibbonMessageCollection!
+RibbonKit.WinForms.RibbonMessageBar.RibbonMessageBar() -> void
+RibbonKit.WinForms.RibbonMessageCollection
+RibbonKit.WinForms.RibbonPaintContext.IsBottomEdgeConnected.get -> bool
+RibbonKit.WinForms.RibbonPaintContext.IsBottomEdgeConnected.init -> void
+RibbonKit.WinForms.RibbonPaintContext.IsTopEdgeConnected.get -> bool
+RibbonKit.WinForms.RibbonPaintContext.IsTopEdgeConnected.init -> void
+RibbonKit.WinForms.RibbonTheme.MessageBackground.get -> RibbonKit.WinForms.RibbonFill
+RibbonKit.WinForms.RibbonTheme.MessageBackground.init -> void
+RibbonKit.WinForms.RibbonTheme.MessageBorder.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.MessageBorder.init -> void
+RibbonKit.WinForms.RibbonTheme.MessageContentPadding.get -> System.Windows.Forms.Padding
+RibbonKit.WinForms.RibbonTheme.MessageContentPadding.init -> void
+RibbonKit.WinForms.RibbonTheme.MessageForeground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.MessageForeground.init -> void
+RibbonKit.WinForms.RibbonTheme.MessageIconForeground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.MessageIconForeground.init -> void
+RibbonKit.WinForms.RibbonTheme.MessageMinimumHeight.get -> int
+RibbonKit.WinForms.RibbonTheme.MessageMinimumHeight.init -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawMessage(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonMessage! message, System.Drawing.Rectangle titleBounds, System.Drawing.Rectangle textBounds, System.Drawing.Rectangle iconBounds, bool first) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawMessageAction(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonButtonItem! action) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawMessageBar(RibbonKit.WinForms.RibbonPaintContext context) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawMessageClose(RibbonKit.WinForms.RibbonPaintContext context, bool enabled) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.JoinMessageBarToBody.get -> bool

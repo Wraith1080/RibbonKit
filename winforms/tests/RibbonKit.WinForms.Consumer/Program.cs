@@ -60,6 +60,8 @@ internal static class Program
             return SplitInteractionChecks.Run(args[1], args[0] == "--validate-split-flat");
         if (args.Length == 2 && args[0] is "--validate-touch-split" or "--validate-touch-split-flat")
             return SplitInteractionChecks.Run(args[1], args[0] == "--validate-touch-split-flat", true);
+        if (args.Length == 2 && args[0] is "--validate-messages" or "--validate-messages-flat")
+            return MessageInteractionChecks.Run(args[1], args[0] == "--validate-messages-flat");
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
         Application.EnableVisualStyles();
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);

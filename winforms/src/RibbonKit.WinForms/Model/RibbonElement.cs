@@ -143,7 +143,8 @@ public abstract class RibbonElement : Component, IBindableComponent
     /// <summary>Occurs after the binding context changes.</summary>
     public event EventHandler? BindingContextChanged;
     internal bool EffectiveEnabled => !IsDisposed && Enabled && (Parent is RibbonElement parent ? parent.EffectiveEnabled : Ribbon?.Enabled ?? true)
-        && (this is not RibbonGroupContribution contribution || contribution.TargetTab is { Visible: true, EffectiveEnabled: true });
+        && (this is not RibbonGroupContribution contribution || contribution.TargetTab is { Visible: true, EffectiveEnabled: true })
+        && (this is not RibbonMessage message || message.IsOpen);
     internal void Changed(bool layout = true)
     {
         if (Ribbon is { } ribbon) ribbon.ModelChanged(layout, ribbon.Popups.IsPreparingContent(this));

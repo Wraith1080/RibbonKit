@@ -110,7 +110,49 @@ geometry.
 
 Showcase's third QAT entry, also under **Merging → Input mode**, demonstrates a
 host-owned Mouse/Touch selector. Actual VS property editing remains deferred to the
-designer slice. The Office 2024 joined BelowRibbon QAT frame is planned for M4I.
+designer slice. Office 2024 joins a BelowRibbon QAT to the body's outer frame;
+the minimized toolbar becomes a standalone card.
+
+## Message panels
+
+Messages are library-owned models attached to the ribbon. The application owns
+their text, icons and actions. Showcase demonstrates them under **Merging → Messages**.
+
+```csharp
+var notice = new RibbonMessage
+{
+    Title = "PROTECTED VIEW",
+    Text = "Review this document before enabling editing."
+};
+notice.Action.Text = "Enable editing";
+notice.Action.KeyTip = "E";
+notice.Action.Click += (_, _) => ReviewDocument(); // Host behavior; no automatic dismissal.
+ribbon.MessageBar.Items.Add(notice);
+notice.Dismiss(); // Retained model, one Dismissed event; repeated calls are harmless.
+notice.IsOpen = true; // Reopen with the same action/bindings.
+```
+
+Open visible messages stack and wrap; narrower layouts can put an action beneath
+the text. `IsOpen` and `IsDismissible` support ordinary WinForms binding. Set
+`IsDismissible` false to omit the user close target; code can still call Dismiss.
+`MessageBar.HasOpenMessages` and its change event report whether the stack exists.
+Removing a model detaches it; disposing it releases its owned action. Icon/Image
+assets are borrowed, with Icon taking precedence. No message appears by default.
+
+Office connects the stack to the body or BelowRibbon QAT, squaring the adjoining
+bottom corners and keeping the last message edge rounded. When the body is
+minimized and QAT is **not BelowRibbon**, the stack is a standalone rounded card
+below the tabs. Hidden QAT works the same way; future title-bar hosting uses this
+same condition. Neutral renders a separate flat stack. Closing the final message
+restores the prior ribbon geometry. The body shadow stops at the join so it cannot
+obscure message content; the stack retains its own lower shadow.
+
+Tab/arrows, Enter/Space, explicit action KeyTips and automatic message action/close
+KeyTips use the ribbon's normal input paths. Message arrival retains document
+focus. Theme message roles control fill/text/border/icon colors, padding and row
+minimum; Touch enlarges action and close targets. Renderer callbacks receive the
+same geometry used by hit testing and wrapping. Animation, localization, message
+live-region accessibility and actual title-bar hosting remain later slices.
 
 ## Application contract
 
@@ -127,8 +169,8 @@ ribbon.FileMenu.Items.Add(open);
 
 The default header is File with KeyTip F. It has a measured slot before TabRow QAT
 and the tabs, using `BodyMargin.Left` to align its button and popup with the body.
-It remains available while minimized. BelowRibbon QAT keeps its
-full-width row. The existing owned popup stack supplies described/nested commands,
+It remains available while minimized. BelowRibbon QAT uses the available row
+width, inside the body margins when joined. The existing owned popup stack supplies described/nested commands,
 native fields, cancellation through DropDownOpening, closed events and Escape.
 Opening File retains tab selection. Hide/disable/dispose closes its open stack.
 `DrawFileButton` lets custom renderers paint the header using measured bounds.
@@ -418,6 +460,12 @@ application-owned vector provider (`Icon` takes precedence when both are set).
 The library scales that slot with DPI and borrows either asset. Showcase Info uses
 a full-color information image; Print and the commands use vector icons.
 
+Navigation labels use a 14-logical-pixel font minimum, matching WPF Modern
+Backstage. `RibbonTheme.BackstageNavigationFontSize` adjusts that minimum; larger
+ribbon fonts retain their size, family and style. Row height and Auto rail width
+measure the same navigation font. Page content and the Back button retain the
+host/ribbon font.
+
 In the Visual Studio property grid, expand the ribbon's **Backstage** property,
 then its **Layout** properties:
 
@@ -695,8 +743,12 @@ ribbon.QuickAccessItems.AddRange(
 ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon;
 ```
 
-The default placement is `TabRow`, before the tabs. `BelowRibbon` adds a full-width
-row beneath the body, or beneath the tabs while minimized. `QuickAccessMaxWidth`
+The default placement is `TabRow`, before the tabs. `BelowRibbon` adds a row
+beneath the body, or beneath the tabs while minimized. Office 2024 uses the body's
+side margins and one continuous frame/shadow, with a thin internal separator and
+the bottom corners beneath the QAT. While minimized, it becomes a standalone
+rounded card with the body's top/bottom clearance. Neutral rendering retains its
+separate full-width row. `QuickAccessMaxWidth`
 defaults to 240 logical pixels and caps only the tab-row placement. Overflow opens
 a library-owned command menu. Long QAT menus use separate opaque up/down scroll
 bands, with hover/pressed feedback, disabled endpoints, row-wise clicks and
@@ -708,6 +760,15 @@ entry KeyTips (preferred 1-9, then Q1, Q2, ... with equal-width numeric suffixes
 for larger collections); 0 opens overflow. These preferences and explicit entry
 `KeyTip` values participate in the existing conflict resolver, which may substitute
 a key and reserves the 9 prefix on large levels.
+
+Custom renderers choose this layout through `JoinBelowRibbonQuickAccess` (false
+on the base renderer, true on Office 2024). When joined, `DrawBody` receives the
+combined body/QAT frame; `DrawQuickAccessToolbar` receives its measured row with
+`IsQuickAccessToolbarJoined` true and paints the internal separator. Minimized
+rows are false and Office paints their standalone card. Reassign `Renderer` after
+changing a mutable renderer's layout policy to refresh measurement. Existing
+surface/border/corner/shadow theme roles supply the appearance. Future message
+panels will square the adjoining QAT bottom edge; that component remains planned.
 
 Toggle, checkbox and radio entries and the primary half of a `CheckOnClick` split keep QAT overflow
 open, retaining focus for repeated mouse, Space, Enter or KeyTip activation.

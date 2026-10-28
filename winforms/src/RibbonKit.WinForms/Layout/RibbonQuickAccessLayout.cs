@@ -4,6 +4,14 @@ namespace RibbonKit.WinForms.Layout;
 // measurement and the renderer without reparenting or cloning command models.
 internal static class RibbonQuickAccessLayout
 {
+    internal static Rectangle BelowBounds(Size client, int rowHeight, Padding margin, bool joined, int dpi)
+    {
+        int S(int value) => RibbonLayoutEngine.Scale(value, dpi);
+        int left = joined ? Math.Min(S(margin.Left), client.Width) : 0;
+        int right = joined ? Math.Min(S(margin.Right), Math.Max(0, client.Width - left)) : 0;
+        int bottom = joined ? S(margin.Bottom) : 0;
+        return new(left, Math.Max(0, client.Height - bottom - rowHeight), Math.Max(0, client.Width - left - right), rowHeight);
+    }
     internal static RibbonLayoutSnapshot Build(RibbonControl ribbon, Rectangle slotBounds, bool fillWidth)
     {
         var result = new RibbonLayoutSnapshot();
