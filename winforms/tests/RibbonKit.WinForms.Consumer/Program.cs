@@ -58,6 +58,8 @@ internal static class Program
             return TextBoxInteractionChecks.Run(args[1]);
         if (args.Length == 2 && args[0] is "--validate-split" or "--validate-split-flat")
             return SplitInteractionChecks.Run(args[1], args[0] == "--validate-split-flat");
+        if (args.Length == 2 && args[0] == "--validate-group-padding")
+            return SplitInteractionChecks.Run(args[1], groupPaddingOnly: true);
         if (args.Length == 2 && args[0] is "--validate-touch-split" or "--validate-touch-split-flat")
             return SplitInteractionChecks.Run(args[1], args[0] == "--validate-touch-split-flat", true);
         if (args.Length == 2 && args[0] is "--validate-messages" or "--validate-messages-flat")

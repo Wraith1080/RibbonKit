@@ -100,7 +100,8 @@ public class RibbonOffice2024Renderer : RibbonRenderer
         if (frame.Width > 0 && height > 0)
         {
             using var brush = new SolidBrush(context.Theme.Border);
-            context.Graphics.FillRectangle(brush, frame.Right - 1, frame.Top + inset, 1, height);
+            int divider = Layout.RibbonLayoutEngine.GroupDividerWidth;
+            context.Graphics.FillRectangle(brush, frame.Right - divider, frame.Top + inset, divider, height);
         }
     }
     /// <inheritdoc />

@@ -51,6 +51,9 @@ internal sealed class RibbonLayoutEngine
     internal const int CommandTopInset = 6;
     internal const int CommandBottomInset = 8;
     internal const int CommandVerticalInset = CommandTopInset + CommandBottomInset;
+    internal const int GroupSideInset = 6;
+    internal const int CollapsedGroupSideInset = 3;
+    internal const int GroupDividerWidth = 1;
     private readonly Dictionary<(RibbonGroup, int, int), MeasuredGroup> _cache = [];
     internal void Clear() => _cache.Clear();
     private static int LargeItemWidth(RibbonItem item, Font font, int dpi, RibbonTheme theme)
@@ -74,8 +77,8 @@ internal sealed class RibbonLayoutEngine
         int S(double n) => Scale(n, dpi);
         var metrics = RibbonDensityMetrics.For(group.Ribbon?.Density ?? RibbonDensity.Compact);
         if (state == 3)
-            return _cache[(group, state, dpi)] = new(S(metrics.Touch ? 80 : 62), []);
-        int x = S(6), row = 0, columnWidth = 0, columnStart = 0;
+            return _cache[(group, state, dpi)] = new(S(metrics.Touch ? 80 : 62) + GroupDividerWidth, []);
+        int x = S(GroupSideInset), row = 0, columnWidth = 0, columnStart = 0;
         int fontLogical = (int)Math.Ceiling(font.Height * 96d / dpi);
         int rowLogical = Math.Max(metrics.CommandRow, fontLogical + 8), captionLogical = Math.Max(20, fontLogical + 6);
         var items = new List<MeasuredItem>();
@@ -142,7 +145,15 @@ internal sealed class RibbonLayoutEngine
         }
         FinishColumn();
         int header = TextRenderer.MeasureText(group.Text, font).Width + S(20);
-        return _cache[(group, state, dpi)] = new(Math.Max(x + S(5), header), items);
+        int contentWidth = items.Count == 0 ? 0 : items.Max(i => i.Bounds.Right) - S(GroupSideInset);
+        int groupWidth = Math.Max(contentWidth + 2 * S(GroupSideInset), header);
+        // Caption-driven width is shared equally, without retaining the final
+        // inter-column gap. The right divider owns a separate device-pixel lane.
+        if ((groupWidth - contentWidth) % 2 != 0) groupWidth++;
+        int offset = (groupWidth - contentWidth) / 2 - S(GroupSideInset);
+        if (offset != 0)
+            for (int i = 0; i < items.Count; i++) items[i] = items[i] with { Bounds = items[i].Bounds with { X = items[i].Bounds.X + offset } };
+        return _cache[(group, state, dpi)] = new(groupWidth + GroupDividerWidth, items);
     }
     internal RibbonLayoutSnapshot Build(RibbonControl ribbon, int tabOffset, int bodyOffset)
     {
@@ -269,8 +280,8 @@ internal sealed class RibbonLayoutEngine
             var measure = Measure(groups[i], state, ribbon.Font, dpi, ribbon.LayoutTheme);
             var bounds = new Rectangle(x, body.Top, measure.Width, bodyHeight);
             var frame = bounds;
-            if (state == 3) bounds = Rectangle.FromLTRB(bounds.Left + S(3), bounds.Top + S(CommandTopInset),
-                bounds.Right - S(3), bounds.Bottom - S(CommandBottomInset));
+            if (state == 3) bounds = Rectangle.FromLTRB(bounds.Left + S(CollapsedGroupSideInset), bounds.Top + S(CommandTopInset),
+                bounds.Right - GroupDividerWidth - S(CollapsedGroupSideInset), bounds.Bottom - S(CommandBottomInset));
             result.Groups.Add(new(groups[i], bounds, state == 3, frame));
             if (state == 3)
                 result.Targets.Add(new(TargetKind.Group, groups[i], bounds, viewport));

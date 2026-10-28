@@ -61,6 +61,8 @@ internal static partial class Program
             return IndependentConsumer.TextBoxInteractionChecks.Run(args[1]);
         if (args.Length == 2 && args[0] is "--split-checks" or "--split-checks-flat")
             return IndependentConsumer.SplitInteractionChecks.Run(args[1], args[0] == "--split-checks-flat");
+        if (args.Length == 2 && args[0] == "--group-padding-checks")
+            return IndependentConsumer.SplitInteractionChecks.Run(args[1], groupPaddingOnly: true);
         if (args.Length == 2 && args[0] is "--touch-split-checks" or "--touch-split-checks-flat")
             return IndependentConsumer.SplitInteractionChecks.Run(args[1], args[0] == "--touch-split-checks-flat", true);
         if (args.Length == 2 && args[0] is "--message-checks" or "--message-checks-flat")

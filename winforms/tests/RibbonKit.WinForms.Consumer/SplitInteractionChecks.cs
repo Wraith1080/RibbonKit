@@ -13,7 +13,7 @@ internal static class SplitInteractionChecks
     [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint hwnd);
 
-    internal static int Run(string directory, bool flat = false, bool touchHorizontalOnly = false)
+    internal static int Run(string directory, bool flat = false, bool touchHorizontalOnly = false, bool groupPaddingOnly = false)
     {
         WF.Application.SetHighDpiMode(WF.HighDpiMode.PerMonitorV2);
         WF.Application.EnableVisualStyles();
@@ -61,6 +61,7 @@ internal static class SplitInteractionChecks
                 for (int attempt = 0; attempt < 20 && GetForegroundWindow() != form.Handle; attempt++) await Task.Delay(50);
                 Check(GetForegroundWindow() == form.Handle, "Validation Form owns foreground focus before native input");
                 ribbon.Refresh();
+                if (groupPaddingOnly) { await CheckGroupPadding(); return; }
                 if (touchHorizontalOnly) { await CheckTouchHorizontal(); return; }
                 CheckRibbonSurface();
                 int bodyHeight = recording.BodyBounds.Height;
@@ -219,6 +220,45 @@ internal static class SplitInteractionChecks
         foreach (string result in results) Console.WriteLine(result);
         return error is null ? 0 : 1;
 
+        async Task CheckGroupPadding()
+        {
+            foreach (var item in group.Items.ToArray()) { group.Items.Remove(item); item.Dispose(); }
+            group.Text = "Modal preview"; group.CanResize = false;
+            var preview = new RibbonButtonItem { Text = "Print preview", Image = icon }; group.Items.Add(preview);
+            var preceding = new RibbonGroup { Text = "Other", CanResize = false };
+            preceding.Items.Add(new RibbonButtonItem { Image = icon, SizePolicy = RibbonSizePolicy.Fixed(RibbonItemSize.Small) }); tab.Groups.Insert(0, preceding);
+            var editing = new RibbonGroup { Text = "Editing", ReductionMode = RibbonGroupReductionMode.Collapse };
+            editing.Items.AddRange(Enumerable.Range(0, 8).Select(i => new RibbonButtonItem { Text = "Command " + i, Image = icon }).ToArray()); tab.Groups.Add(editing);
+            form.Width = 540;
+            foreach (var density in new[] { RibbonDensity.Compact, RibbonDensity.Touch })
+            {
+                ribbon.Density = density; ribbon.Refresh();
+                var expanded = recording.GroupFrames[group]; var collapsed = recording.GroupFrames[editing];
+                var content = recording.Items[preview];
+                Check(!expanded.Collapsed && content.Left - expanded.Bounds.Left == expanded.Bounds.Right - 1 - content.Right,
+                    density + " expanded group has equal padding inside its divider lane");
+                Check(collapsed.Collapsed, density + " Editing presents its collapsed opener");
+                using (var bitmap = new Bitmap(ribbon.Width, ribbon.Height))
+                {
+                    ribbon.DrawToBitmap(bitmap, ribbon.ClientRectangle);
+                    int y = recording.BodyBounds.Top + (int)Math.Round(20 * ribbon.DeviceDpi / 96d), divider = -1;
+                    for (int x = collapsed.Bounds.Right; x < bitmap.Width; x++)
+                        if (bitmap.GetPixel(x, y).ToArgb() == ribbon.Theme.Border.ToArgb()) { divider = x; break; }
+                    Check(divider >= 0 && collapsed.Bounds.Left - expanded.Bounds.Right == divider - collapsed.Bounds.Right,
+                        density + " collapsed opener has equal clearance to the painted divider edges");
+                }
+                WF.Cursor.Position = ribbon.PointToScreen(new(content.Left + content.Width / 2, content.Top + content.Height / 2));
+                await CaptureVisible(ribbon, density + "-expanded-group-hover");
+                WF.Cursor.Position = ribbon.PointToScreen(new(collapsed.Bounds.Left + collapsed.Bounds.Width / 2, collapsed.Bounds.Top + collapsed.Bounds.Height / 2));
+                await CaptureVisible(ribbon, density + "-collapsed-group-hover");
+                Click(ribbon, collapsed.Bounds); await Task.Delay(60); var popup = Popup(); popup.Refresh();
+                var contents = editing.Items.Select(i => recording.Items[i]).ToArray();
+                Check(contents.Min(r => r.Left) == popup.ClientRectangle.Right - contents.Max(r => r.Right),
+                    density + " opened group retains equal popup content padding");
+                Capture(popup, density + "-opened-group"); await Key("{ESC}");
+            }
+            results.Add($"PASS: public group side-padding checks at actual {ribbon.DeviceDpi} DPI");
+        }
         async Task CheckTouchHorizontal()
         {
             foreach (var item in group.Items.Where(i => i != split).ToArray()) { group.Items.Remove(item); item.Dispose(); }
@@ -463,6 +503,7 @@ internal static class SplitInteractionChecks
         internal void Arrow(RibbonPaintContext context)
         { if (CaptionItem is { } item) Arrows[item] = context.Bounds; }
         internal Rectangle GroupBounds, BodyBounds, TabBounds;
+        internal readonly Dictionary<RibbonGroup, (Rectangle Bounds, bool Collapsed)> GroupFrames = [];
         internal string TabText = "";
         internal bool Collapsed;
         internal int BodyCalls, TextCalls, ArrowCalls, ImageCalls, ScrollCalls;
@@ -493,6 +534,7 @@ internal static class SplitInteractionChecks
         public override void DrawGroup(RibbonPaintContext context, RibbonGroup group, bool collapsed)
         {
             recording.GroupBounds = context.Bounds; recording.Collapsed = collapsed;
+            recording.GroupFrames[group] = (context.Bounds, collapsed);
             base.DrawGroup(context, group, collapsed);
         }
     }

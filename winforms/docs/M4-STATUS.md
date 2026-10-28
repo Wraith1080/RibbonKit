@@ -1126,6 +1126,35 @@ and broader appearance/palette acceptance remain deferred. No WPF runtime/build/
 changes, commit or push were made. Localization/RTL remains after the remaining
 components, including customization, animation and themes.
 
+### Equal group side padding — 2026-10-28
+
+The user reported unequal side clearance around expanded commands and collapsed
+group openers, requesting the right side match the left. Measurement now removes
+the final inter-column gap and applies the existing six-logical-pixel inset to
+both ends of the content block. Caption-driven extra width is shared equally,
+including odd device-pixel bounds. A separate one-device-pixel divider lane keeps
+the painted right separator from consuming the right inset. Collapsed openers
+retain their three-logical-pixel left inset and existing button width, with equal
+right clearance to that divider. Painting consumes the same named divider width;
+no public API, item width, vertical spacing or caption text was changed.
+
+Normal Debug solution build passed without warnings/errors. The focused padding,
+divider, adaptive-reduction and gallery-reduction selection passed 11/11 in
+`tests/RibbonKit.WinForms.Tests/TestResults/m4i-group-side-padding-final.trx`.
+This includes Compact/Touch, 96/120/144/192 DPI, expanded/reduced columns, long
+caption centering, collapsed targets and minimized-body divider coverage. The
+earlier `m4i-group-side-padding.trx` ran against a stale assembly after a fixture
+compile failure and is not evidence for the new tests; only the final file counts.
+
+Public-only Office checks passed at actual 120 DPI in
+`TestResults/visual/m4i-group-padding-hover-verified/`, asserting equal expanded
+padding, collapsed clearance to actual painted separators and equal content
+padding in the opened flyout. The flyout intentionally omits the group caption/
+divider and keeps its existing window padding; an initial fixture incorrectly
+treated it as a strip frame. Final native Compact/Touch hover captures were
+inspected using real pointer placement. Human review is pending. Only affected
+checks ran; no full/Release/package, WPF, actual VS or mixed-monitor campaign ran.
+
 ## M4J message-panel foundation — 2026-10-28
 
 The user authorized the next slice, requested focused testing only, and explicitly
