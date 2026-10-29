@@ -61,7 +61,7 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
         try
         {
             _from = new(ribbon); _form = ribbon.FindForm()!;
-            try { _window = new(_form); _window.Render(ribbon, _from, _from, 0); _hold = RibbonDrawingHold.Create(ribbon.Handle); }
+            try { _window = new(_form, clipToOwner: _form is RibbonForm); _window.Render(ribbon, _from, _from, 0); _hold = RibbonDrawingHold.Create(ribbon.Handle); }
             catch (Win32Exception error) { LastSkipReason = error.Message; Trace.WriteLine(LastSkipReason); Release(); }
             var before = (ribbon.LayoutMode, ribbon.Density, ribbon.QuickAccessPosition, ribbon.SelectedTab, ribbon.IsMinimized);
             mutation();

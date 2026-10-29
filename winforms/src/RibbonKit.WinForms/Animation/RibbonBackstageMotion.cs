@@ -47,9 +47,9 @@ internal sealed class RibbonBackstageMotion : IDisposable
         if (ribbon.AnimationLevel == RibbonAnimationLevel.None || !ribbon.CanAnimatePopupOpening || !ribbon.Motion.SystemEnabled || form.WindowState == FormWindowState.Minimized ||
             form.Opacity != 1 || form.TransparencyKey != Color.Empty || bounds.Width < 1 || bounds.Height < 1 || (long)bounds.Width * bounds.Height > 4_194_304) return null;
         var controls = surface.NavigationControls;
-        if (RibbonDrawingHold.HasOpacity(surface.Handle) || RibbonDrawingHold.HasOpacity(surface.PageArea.Handle) || controls.Any(c => RibbonDrawingHold.HasOpacity(c.Handle))) return null;
+        if (surface.HasApplicationOpacity || RibbonDrawingHold.HasOpacity(surface.PageArea.Handle) || controls.Any(c => RibbonDrawingHold.HasOpacity(c.Handle))) return null;
         var motion = new RibbonBackstageMotion(ribbon, surface, form, controls);
-        try { motion._surfaceHold = RibbonDrawingHold.Create(motion._target.Handle); foreach (var control in controls) motion._holds.Add(RibbonDrawingHold.Create(control.Handle)); return motion; }
+        try { motion._surfaceHold = surface.AcquireMotionOpacity(1); foreach (var control in controls) motion._holds.Add(RibbonDrawingHold.Create(control.Handle)); return motion; }
         catch (Win32Exception error) { Trace.WriteLine("Backstage motion skipped: " + error.Message); motion.Dispose(); return null; }
         catch { motion.Dispose(); throw; }
     }
@@ -57,9 +57,9 @@ internal sealed class RibbonBackstageMotion : IDisposable
     {
         Control target = surface;
         if (ribbon.AnimationLevel == RibbonAnimationLevel.None || !ribbon.CanAnimatePopupOpening || !ribbon.Motion.SystemEnabled || form.WindowState == FormWindowState.Minimized ||
-            form.Opacity != 1 || form.TransparencyKey != Color.Empty || target.Width < 1 || target.Height < 1 || RibbonDrawingHold.HasOpacity(target.Handle)) return null;
+            form.Opacity != 1 || form.TransparencyKey != Color.Empty || target.Width < 1 || target.Height < 1 || surface.HasApplicationOpacity) return null;
         var motion = new RibbonBackstageMotion(ribbon, surface, form, closing ? [] : surface.NavigationControls, closing ? Phase.Closing : Phase.Page);
-        try { motion._surfaceHold = RibbonDrawingHold.Create(target.Handle, closing ? (byte)255 : (byte)1); motion._completed = completed; return motion; }
+        try { motion._surfaceHold = surface.AcquireMotionOpacity(closing ? (byte)255 : (byte)1); motion._completed = completed; return motion; }
         catch (Win32Exception error) { Trace.WriteLine("Backstage fade skipped: " + error.Message); motion.Dispose(); return null; }
         catch { motion.Dispose(); throw; }
     }
@@ -80,7 +80,7 @@ internal sealed class RibbonBackstageMotion : IDisposable
                     _ribbon.Painter.DrawBackstageBackground(new(graphics, _surface.ClientRectangle, _ribbon.Theme, _surface.Font, _surface.DeviceDpi) { Density = _ribbon.Density }, Bounds.Width);
                 RibbonMotionScene.CaptureChildren(_ribbon, _controls, _image);
                 if (_disposed) return;
-                _background = new(_ribbon.Theme.BackstageNavigationBackground); _window = new(_form); _window.RenderBackstage(this, 0);
+                _background = new(_ribbon.Theme.BackstageNavigationBackground); _window = new(_form, clipToOwner: _form is RibbonForm); _window.RenderBackstage(this, 0);
             }
             _start = Stopwatch.GetTimestamp();
             _surface.ClientSizeChanged += Unsafe; _surface.HandleDestroyed += Unsafe; _surface.VisibleChanged += Visibility; _surface.Disposed += Unsafe;
@@ -140,7 +140,9 @@ internal sealed class RibbonBackstageMotion : IDisposable
         try { completed?.Invoke(); } // Hide a closing surface before restoring opacity; no final flash.
         finally
         {
-            foreach (var hold in _holds) hold.Dispose(); _holds.Clear(); _surfaceHold?.Dispose(); _surfaceHold = null; _window?.Dispose(); _window = null;
+            foreach (var hold in _holds) hold.Dispose(); _holds.Clear();
+            if (_surfaceHold is not null) _surface.RestoreMotionOpacity(); _surfaceHold = null;
+            _window?.Dispose(); _window = null;
             _image?.Dispose(); _image = null; _background?.Dispose(); _background = null; _timer.Dispose();
         }
     }

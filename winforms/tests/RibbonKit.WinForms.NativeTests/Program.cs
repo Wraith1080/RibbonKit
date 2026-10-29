@@ -11,6 +11,8 @@ internal static partial class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 3 && args[0] is "--window-motion-regression" or "--window-motion-regression-flat")
+            return IndependentConsumer.WindowMotionRegressionChecks.Run(args[2], args[1], args[0].EndsWith("-flat", StringComparison.Ordinal));
         if (args.Length == 2 && args[0] is "--window-projection-checks" or "--window-projection-checks-flat")
             return IndependentConsumer.WindowIntegrationChecks.Run(args[1], args[0] == "--window-projection-checks-flat", projectionsOnly: true);
         if (args.Length == 2 && args[0] is "--window-snap-checks" or "--window-snap-checks-flat")

@@ -45,7 +45,7 @@ internal sealed class RibbonGroupMotion(RibbonControl ribbon) : IDisposable
             if (_window is null)
             {
                 _surface = surface; _form = ribbon.FindForm();
-                _window = new(surface.TopLevelControl!); _start = Stopwatch.GetTimestamp(); StartedCount++;
+                _window = new(surface.TopLevelControl!, clipToOwner: surface.TopLevelControl is RibbonForm); _start = Stopwatch.GetTimestamp(); StartedCount++;
                 surface.Disposed += Unsafe; surface.HandleDestroyed += Unsafe; surface.VisibleChanged += Visibility;
                 if (_form is not null) _form.Deactivate += Deactivate;
                 for (Control? node = surface; node is not null; node = node.Parent)

@@ -270,7 +270,7 @@ internal sealed class RibbonMotionScene : IDisposable
                 // The utility chevron reflects committed state immediately;
                 // crossfading up/down glyphs would briefly produce an X.
                 if (minimize) alpha.SetColorMatrix(new ColorMatrix { Matrix33 = 1 });
-                Segment(scene.Header, new(origin.X - canvas.X, origin.Y - canvas.Y, scene.Header.Width, scene.Header.Height), header,
+                Segment(scene.Header, new(origin.X + scene.Header.X - canvas.X, origin.Y + scene.Header.Y - canvas.Y, scene.Header.Width, scene.Header.Height), header,
                     scene.Placement == RibbonQuickAccessPosition.TabRow ? new Rectangle(origin.X + scene.Qat.X - canvas.X, origin.Y + scene.Qat.Y - canvas.Y, scene.Qat.Width, scene.Qat.Height) : null, headerBackdrop: true);
                 if (minimize) alpha.SetColorMatrix(matrix);
             }

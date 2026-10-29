@@ -13,6 +13,9 @@ visible motion. M6A remains ahead of M6B window integration/title-bar QAT.
 The user reserved a small fixing slice before M6B on 2026-10-29; its specific
 items follow the current motion pass and do not start window integration.
 
+The later RibbonForm frame/width and live Backstage fade corrections are recorded
+in [M6B motion review corrections](M6B-WINDOW-INTEGRATION.md#motion-review-corrections--2026-10-29).
+
 ## Current contract
 
 - `RibbonControl.AnimationLevel` accepts `None`, `Subtle` or `Expressive`. The

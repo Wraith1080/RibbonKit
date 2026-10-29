@@ -105,7 +105,12 @@ public class RibbonForm : Form
     /// <inheritdoc />
     protected override void OnDpiChanged(DpiChangedEventArgs e) { base.OnDpiChanged(e); FrameChanged(); }
     /// <inheritdoc />
-    protected override void OnResize(EventArgs e) { base.OnResize(e); RefreshRibbon(); }
+    protected override void OnResize(EventArgs e)
+    {
+        // Dock layout owns width changes and their group-motion handoff. A model
+        // refresh here would settle the animation that layout just started.
+        base.OnResize(e); Invalidate(); _ribbon?.Invalidate();
+    }
     /// <inheritdoc />
     protected override void OnLayout(LayoutEventArgs e)
     {

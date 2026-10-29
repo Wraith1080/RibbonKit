@@ -13,7 +13,14 @@ internal sealed class RibbonMotionWindow : NativeWindow, IDisposable
     private Graphics? _graphics;
     private readonly ImageAttributes _alpha = new();
     private Rectangle _bounds;
-    internal RibbonMotionWindow(Control owner) => CreateHandle(new CreateParams { Caption = "Ribbon motion", Style = unchecked((int)0x80000000), ExStyle = 0x080800A0, Parent = owner.Handle });
+    private readonly Control? _clipOwner;
+    internal RibbonMotionWindow(Control owner, bool clipToOwner = false)
+    {
+        // In-window drawings share the native frame's clip. An owned popup can
+        // otherwise paint square pixels over RibbonForm's rounded caption edge.
+        _clipOwner = clipToOwner ? owner : null;
+        CreateHandle(new CreateParams { Caption = "Ribbon motion", Style = clipToOwner ? 0x40000000 : unchecked((int)0x80000000), ExStyle = 0x080800A0, Parent = owner.Handle });
+    }
     internal void Render(RibbonControl ribbon, RibbonMotionScene from, RibbonMotionScene to, double progress)
     {
         var bounds = Rectangle.Union(from.Bounds, to.Bounds);
@@ -28,7 +35,7 @@ internal sealed class RibbonMotionWindow : NativeWindow, IDisposable
         Prepare(motion.Bounds); motion.Draw(_graphics!, _alpha, progress); Present();
         // A row animation must remain below its live full-group/menu windows,
         // including popups flipped above their anchor by working-area fitting.
-        if (motion.BehindWindow is var above && above != 0)
+        if (_clipOwner is null && motion.BehindWindow is var above && above != 0)
             SetWindowPos(Handle, above, 0, 0, 0, 0, 0x0213); // NOOWNERZORDER | NOACTIVATE | NOMOVE | NOSIZE
     }
     internal void RenderBackstage(RibbonBackstageMotion motion, double progress)
@@ -45,9 +52,12 @@ internal sealed class RibbonMotionWindow : NativeWindow, IDisposable
     {
         _graphics!.Flush();
         var bounds = _bounds;
-        var size = bounds.Size; var location = bounds.Location; Point source = Point.Empty; var blend = new Blend { Alpha = 255, Format = 1 };
+        // Keep the child bitmap's compositor origin and HWND placement in the
+        // same parent-client space. Correct HWND rectangles alone do not catch
+        // a screen-space bitmap being composited over sibling controls.
+        var size = bounds.Size; var location = _clipOwner?.PointToClient(bounds.Location) ?? bounds.Location; Point source = Point.Empty; var blend = new Blend { Alpha = 255, Format = 1 };
         if (!UpdateLayeredWindow(Handle, 0, ref location, ref size, _dc, ref source, 0, ref blend, 2)) { int error = Marshal.GetLastWin32Error(); throw new Win32Exception(error, "Native drawing plane failed: " + error); }
-        SetWindowPos(Handle, 0, bounds.X, bounds.Y, bounds.Width, bounds.Height, 0x0050); // NOACTIVATE | SHOWWINDOW
+        SetWindowPos(Handle, 0, location.X, location.Y, bounds.Width, bounds.Height, 0x0050); // NOACTIVATE | SHOWWINDOW
     }
     private void Allocate(Size size)
     {

@@ -181,6 +181,10 @@ Backstage navigation fades and slides in from the left, using 220 ms / 28 logica
 pixels for Subtle and 308 ms / 50 for Expressive. Application pages also fade on
 opening and page selection, using native opacity over an opaque Backstage
 background. They stay live at their final bounds and are never captured as bitmaps.
+The Backstage drawing layer stays opaque after a fade while the surface is visible,
+so native TextBoxes do not cross a layer teardown/repaint at each endpoint. It is
+released when hidden or disposed. In RibbonForm, in-window drawings are clipped
+by the native parent frame, preserving its caption and rounded corners.
 Back/Escape and visibility requests fade out Backstage after validation accepts
 closing. `IsBackstageOpen` stays true until completion, then the normal close events
 and focus restoration run once. Reopening cancels a pending close; new input can

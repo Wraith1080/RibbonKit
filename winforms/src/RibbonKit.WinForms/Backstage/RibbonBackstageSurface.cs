@@ -18,6 +18,22 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     private int _navigationFontDpi;
     private bool _syncing, _tips, _disposing;
     private string _prefix = "";
+    private RibbonDrawingHold? _motionOpacity;
+    internal bool HasApplicationOpacity => _motionOpacity is null && RibbonDrawingHold.HasOpacity(Handle);
+    internal RibbonDrawingHold AcquireMotionOpacity(byte alpha)
+    {
+        _motionOpacity ??= RibbonDrawingHold.Create(Handle, alpha);
+        _motionOpacity.SetOpacity(alpha);
+        return _motionOpacity;
+    }
+    internal void RestoreMotionOpacity()
+    {
+        // Keep the existing redirection surface opaque while visible. Removing
+        // WS_EX_LAYERED at every fade endpoint rebuilds/erases native page paint.
+        if (Visible && IsHandleCreated) _motionOpacity?.SetOpacity(255);
+        else ReleaseMotionOpacity();
+    }
+    private void ReleaseMotionOpacity() { _motionOpacity?.Dispose(); _motionOpacity = null; }
     internal Rectangle NavigationBounds => new(0, 0, _pages.Left, ClientSize.Height);
     internal Control[] NavigationControls => [_back, _navigation];
     internal Control PageArea => _pages;
@@ -207,6 +223,8 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         foreach (var slot in _slots.Values) slot.Bounds = new(Point.Empty, _pages.ClientSize);
     }
     protected override void OnDpiChangedAfterParent(EventArgs e) { base.OnDpiChangedAfterParent(e); Synchronize(); }
+    protected override void OnVisibleChanged(EventArgs e) { base.OnVisibleChanged(e); if (!Visible) ReleaseMotionOpacity(); }
+    protected override void OnHandleDestroyed(EventArgs e) { ReleaseMotionOpacity(); base.OnHandleDestroyed(e); }
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
@@ -217,6 +235,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         if (disposing && !_disposing)
         {
             _disposing = true;
+            ReleaseMotionOpacity();
             foreach (var slot in _slots.Values) slot.Detach();
             _ribbon.BackstageSurfaceDisposed(this);
         }

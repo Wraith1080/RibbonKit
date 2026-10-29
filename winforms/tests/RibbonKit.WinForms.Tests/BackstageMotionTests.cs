@@ -103,7 +103,8 @@ public sealed class BackstageMotionTests
         using var f = new Fixture(true); f.Ribbon.AnimationLevel = RibbonAnimationLevel.Expressive; int closed = 0; f.Ribbon.Backstage.Closed += (_, _) => closed++;
         f.Ribbon.IsBackstageOpen = true; f.Ribbon.SettleMotion(); var surface = f.Ribbon.BackstageSurface!;
         f.Ribbon.IsBackstageOpen = false; Assert.True(f.Ribbon.IsBackstageOpen); Assert.True(f.Ribbon.BackstageOpeningMotion!.IsClosing); Assert.Equal(0, closed);
-        f.Ribbon.IsBackstageOpen = true; Assert.True(f.Ribbon.IsBackstageOpen); Assert.False(f.Ribbon.IsAnimating); Assert.Equal(0, closed); Assert.False(RibbonDrawingHold.HasOpacity(surface.Handle));
+        f.Ribbon.IsBackstageOpen = true; Assert.True(f.Ribbon.IsBackstageOpen); Assert.False(f.Ribbon.IsAnimating); Assert.Equal(0, closed);
+        Assert.True(GetLayeredWindowAttributes(surface.Handle, out _, out byte restored, out _)); Assert.Equal(255, restored);
         f.Ribbon.IsBackstageOpen = false; var input = Message.Create(f.Field.Handle, 0x100, (nint)Keys.A, 0); Assert.True(f.Ribbon.ObserveMotionInput(ref input)); Assert.False(f.Ribbon.IsBackstageOpen); Assert.Equal(1, closed); Assert.Equal("Untitled", f.Field.Text); Assert.False(RibbonDrawingHold.HasOpacity(surface.Handle));
         f.Ribbon.IsBackstageOpen = true; f.Ribbon.IsBackstageOpen = false; Assert.True(f.Ribbon.IsAnimating); f.Ribbon.AnimationLevel = RibbonAnimationLevel.None; Assert.False(f.Ribbon.IsBackstageOpen); Assert.Equal(2, closed); Assert.False(f.Ribbon.IsAnimating);
     });

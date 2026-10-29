@@ -1,0 +1,225 @@
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+
+namespace RibbonKit.WinForms.Showcase;
+
+public partial class MainForm
+{
+    internal async Task CaptureMotionInput(string directory, bool tailOnly = false, bool interactionsOnly = false)
+    {
+        Directory.CreateDirectory(directory); List<string> log = []; var pointer = Cursor.Position;
+        try
+        {
+            Activate(); SetForegroundWindow(Handle); await Task.Delay(150); Guard(); Location = new(240, 160); Width = 1250; Height = 760;
+            ribbon.AnimationLevel = RibbonAnimationLevel.None; ribbon.IsBackstageOpen = false; ribbon.IsMinimized = false; ribbon.SelectedTab = inputs; ribbon.Focus();
+            Cursor.Position = new(Right + 15, Top + 100); await Task.Delay(80); ribbon.AnimationLevel = RibbonAnimationLevel.Expressive;
+            if (interactionsOnly)
+            {
+                foreach (var density in Enum.GetValues<RibbonDensity>())
+                {
+                    ribbon.AnimationLevel = RibbonAnimationLevel.None; ribbon.Density = density; ribbon.LayoutMode = RibbonLayoutMode.Classic; ribbon.SelectedTab = inputs; Width = 1250; ribbon.Focus();
+                    Cursor.Position = new(Right + 15, Top + 100); await Task.Delay(60); ribbon.AnimationLevel = RibbonAnimationLevel.Expressive;
+                    await Record(density + "-hover-open", async () =>
+                    {
+                        ribbon.IsBackstageOpen = true; await Task.Delay(55); Guard(); var back = Descendants(this).First(c => c.Visible && c.AccessibleName == "Back");
+                        Cursor.Position = back.PointToScreen(new(back.Width / 2, back.Height / 2)); await Task.Delay(35);
+                    }, true);
+                    var backButton = Descendants(this).First(c => c.Visible && c.AccessibleName == "Back");
+                    await Record(density + "-pointer-close", () => Click(backButton), false);
+                    var field = Descendants(ribbon).OfType<TextBox>().Single(c => c.Visible && c.Name == nameInput.Id);
+                    var choice = Descendants(ribbon).OfType<ComboBox>().Single(c => c.Visible && c.Name == fontInput.Id);
+                    nint fieldHandle = field.Handle, choiceHandle = choice.Handle; string oldName = nameInput.Value; int oldFont = fontInput.SelectedIndex;
+                    await Record(density + "-type-name", async () => { await Click(field); Guard(); SendKeys.SendWait("^aMotion check{ENTER}"); }, false);
+                    if (nameInput.Value != "Motion check") throw new InvalidOperationException("Native ribbon TextBox did not commit input.");
+                    await Record(density + "-choose-font", async () => { await Click(choice); Guard(); SendKeys.SendWait("{F4}{HOME}{DOWN}{ENTER}"); }, false);
+                    if (fontInput.SelectedIndex != 1) throw new InvalidOperationException("Native ribbon ComboBox did not commit its choice.");
+                    ribbon.Focus();
+                    await Record(density + "-drag-narrow", async () => { var edge = new Point(Right - 2, Top + Height / 2); await Drag(edge, new(edge.X - 600, edge.Y)); }, false);
+                    await Record(density + "-drag-wide", async () => { var edge = new Point(Right - 2, Top + Height / 2); await Drag(edge, new(edge.X + 600, edge.Y)); }, false);
+                    if (field.Handle != fieldHandle || choice.Handle != choiceHandle || nameInput.Value != "Motion check" || fontInput.SelectedIndex != 1)
+                        throw new InvalidOperationException("Physical resize lost native editor handles or values.");
+                    nameInput.Value = oldName; fontInput.SelectedIndex = oldFont;
+                    log.Add($"PASS: {density} hover interruption, pointer Back, native typing/choice and physical resize retained handles and data");
+                }
+                log.Add("PASS: unattended interaction capture completed"); return;
+            }
+            for (int i = 0; i < (tailOnly ? 0 : 3); i++)
+            {
+                await Record("keys-open-" + i, async () => { Guard(); SendKeys.SendWait("{F10}"); await Task.Delay(20); Guard(); SendKeys.SendWait("f"); }, true);
+                await Record("keys-close-" + i, () => { Guard(); SendKeys.SendWait("{ESC}"); return Task.CompletedTask; }, false);
+            }
+            await Record("inputs-to-home", () => { ribbon.SelectedTab = home; return Task.CompletedTask; }, false);
+            await Record("home-to-inputs", () => { ribbon.SelectedTab = inputs; return Task.CompletedTask; }, false);
+            await Record("minimize", () => { Guard(); SendKeys.SendWait("^{F1}"); return Task.CompletedTask; }, false);
+            await Record("restore", () => { Guard(); SendKeys.SendWait("^{F1}"); return Task.CompletedTask; }, false);
+            log.Add("PASS: full-window input capture completed");
+        }
+        catch (Exception error) { log.Add("FAIL: " + error); Environment.ExitCode = 1; }
+        finally { Cursor.Position = pointer; File.WriteAllLines(Path.Combine(directory, "result.log"), log); }
+
+        void Guard() { GetWindowThreadProcessId(GetForegroundWindow(), out uint process); if (process != Environment.ProcessId) throw new InvalidOperationException("Showcase lost foreground; input stopped."); }
+        async Task Click(Control control)
+        {
+            Guard(); Cursor.Position = control.PointToScreen(new(control.Width / 2, control.Height / 2)); await Task.Delay(25); Guard(); DensityCaptureMouse(2, 0, 0, 0, 0); await Task.Delay(35); DensityCaptureMouse(4, 0, 0, 0, 0); await Task.Delay(60);
+        }
+        async Task Drag(Point from, Point to)
+        {
+            Guard(); Cursor.Position = from; await Task.Delay(20); DensityCaptureMouse(2, 0, 0, 0, 0); await Task.Delay(35);
+            try { for (int step = 1; step <= 10; step++) { Guard(); Cursor.Position = new(from.X + (to.X - from.X) * step / 10, from.Y + (to.Y - from.Y) * step / 10); await Task.Delay(18); } }
+            finally { DensityCaptureMouse(4, 0, 0, 0, 0); }
+            await Task.Delay(45);
+        }
+        async Task Record(string name, Func<Task> action, bool inspectRail)
+        {
+            Guard(); var bounds = Bounds; var client = PointToScreen(Point.Empty); var images = new List<(long Milliseconds, bool Animating, Bitmap Image)>();
+            long committed = 0; int oldRibbonBottom = ribbon.PointToScreen(new(0, ribbon.Height)).Y - bounds.Y;
+            Exception? error = null; using var stop = new CancellationTokenSource(); var watch = Stopwatch.StartNew();
+            var worker = new Thread(() =>
+            {
+                try
+                {
+                    while (!stop.IsCancellationRequested && images.Count < 48)
+                    {
+                        Guard(); var image = new Bitmap(bounds.Width, bounds.Height);
+                        using (var g = Graphics.FromImage(image)) g.CopyFromScreen(bounds.Location, Point.Empty, bounds.Size);
+                        images.Add((watch.ElapsedMilliseconds, ribbon.IsAnimating, image)); Thread.Sleep(4);
+                    }
+                }
+                catch (Exception exception) { error = exception; }
+            });
+            worker.Start();
+            try
+            {
+                await Task.Delay(20); await action(); committed = watch.ElapsedMilliseconds; await Task.Delay(450);
+            }
+            finally { stop.Cancel(); worker.Join(); }
+            try
+            {
+                if (error is not null) throw error;
+                int displaced = 0;
+                foreach (var frame in images)
+                {
+                    frame.Image.Save(Path.Combine(directory, $"{name}-{frame.Milliseconds:D4}.png"));
+                    if (inspectRail)
+                    {
+                        int columns = 0; var color = ribbon.Theme.BackstageNavigationBackground;
+                        for (int x = client.X - bounds.X + (int)Math.Round(250 * DeviceDpi / 96d); x < bounds.Width - 25; x += 3)
+                        {
+                            int matches = 0, samples = 0;
+                            for (int y = 230; y < bounds.Height - 35; y += 12)
+                            { samples++; var pixel = frame.Image.GetPixel(x, y); if (Math.Abs(pixel.R - color.R) + Math.Abs(pixel.G - color.G) + Math.Abs(pixel.B - color.B) <= 3) matches++; }
+                            if (matches > samples / 2) columns++;
+                        }
+                        displaced = Math.Max(displaced, columns);
+                    }
+                }
+                int documentChanges = 0, editorChanges = 0;
+                if (name.Contains("-to-", StringComparison.Ordinal) || name is "minimize" or "restore")
+                {
+                    var doc = document.RectangleToScreen(document.ClientRectangle); doc.Offset(-bounds.X, -bounds.Y);
+                    int ribbonBottom = ribbon.PointToScreen(new(0, ribbon.Height)).Y - bounds.Y;
+                    doc = Rectangle.FromLTRB(doc.Left + 8, Math.Max(doc.Top, Math.Max(oldRibbonBottom, ribbonBottom)) + 25, doc.Right - 30, doc.Bottom - 25);
+                    documentChanges = images.Where(f => f.Milliseconds >= committed + 35).Select(f => Changed(f.Image, images[^1].Image, doc)).DefaultIfEmpty().Max();
+                    var editorBounds = Descendants(ribbon).Where(c => c.Visible && (c.Name == nameInput.Id || c.Name == fontInput.Id) && c is TextBoxBase or ComboBox).Select(c => { var r = c.RectangleToScreen(c.ClientRectangle); r.Offset(-bounds.X, -bounds.Y); return r; }).ToArray();
+                    editorChanges = images.Where(f => f.Milliseconds >= committed + 35 && !f.Animating).Select(f => editorBounds.Sum(r => Changed(f.Image, images[^1].Image, r))).DefaultIfEmpty().Max();
+                }
+                log.Add($"{name}: frames={images.Count}, active frames={images.Count(f => f.Animating)}, displaced navigation columns={displaced}, document changes={documentChanges}, settled editor changes={editorChanges}");
+                File.WriteAllLines(Path.Combine(directory, "progress.log"), log);
+                if (inspectRail && displaced > 3) throw new InvalidOperationException("Navigation drawing appeared over the application page.");
+                if (documentChanges > 4 || editorChanges > 4) throw new InvalidOperationException("Document or native editor pixels flashed outside the intended animation.");
+            }
+            finally { foreach (var frame in images) frame.Image.Dispose(); }
+        }
+    }
+
+    private static IEnumerable<Control> Descendants(Control parent) => parent.Controls.Cast<Control>().SelectMany(c => new[] { c }.Concat(Descendants(c)));
+    private static int Changed(Bitmap first, Bitmap last, Rectangle area)
+    {
+        if (ReferenceEquals(first, last)) return 0;
+        area = Rectangle.Intersect(area, new(Point.Empty, first.Size)); if (area.Width <= 0 || area.Height <= 0) return 0;
+        var a = first.LockBits(new(Point.Empty, first.Size), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+        var b = last.LockBits(new(Point.Empty, last.Size), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+        try
+        {
+            int count = 0; int[] left = new int[area.Width], right = new int[area.Width];
+            for (int y = area.Top; y < area.Bottom; y += 2)
+            {
+                Marshal.Copy(a.Scan0 + y * a.Stride + area.Left * 4, left, 0, left.Length); Marshal.Copy(b.Scan0 + y * b.Stride + area.Left * 4, right, 0, right.Length);
+                for (int x = 0; x < left.Length; x += 2)
+                {
+                    // The alpha-1 input hold can leave a one-level RGB tint for
+                    // one compositor frame; count visible redraw/geometry changes.
+                    int av = left[x], bv = right[x];
+                    if (Math.Abs((av & 255) - (bv & 255)) > 12 || Math.Abs(((av >> 8) & 255) - ((bv >> 8) & 255)) > 12 || Math.Abs(((av >> 16) & 255) - ((bv >> 16) & 255)) > 12) count++;
+                }
+            }
+            return count;
+        }
+        finally { first.UnlockBits(a); last.UnlockBits(b); }
+    }
+
+    // Diagnostic capture of the actual Showcase pages; no replacement page tree.
+    internal async Task CaptureBackstageMotion(string directory)
+    {
+        Directory.CreateDirectory(directory); List<string> log = []; var cursor = Cursor.Position;
+        try
+        {
+            Activate(); await Task.Delay(120); Guard(); Cursor.Position = new(Right + 10, Top + 100);
+            var pages = ribbon.Backstage.Items.OfType<RibbonBackstagePageItem>().ToArray();
+            var fields = pages.SelectMany(p => p.Content!.Controls.OfType<TextBox>()).ToArray();
+            log.Add($"Actual Showcase Info/Print pages; native TextBoxes={fields.Length}; DPI={DeviceDpi}");
+            foreach (var density in Enum.GetValues<RibbonDensity>())
+            {
+                ribbon.AnimationLevel = RibbonAnimationLevel.None; ribbon.IsBackstageOpen = false; ribbon.Density = density;
+                ribbon.Backstage.SelectedPage = pages[0]; ribbon.AnimationLevel = RibbonAnimationLevel.Expressive;
+                ribbon.IsBackstageOpen = true; await Frames(density + "-opening", pages[0].Content!);
+                // Establish identity after the real page has inherited its first
+                // binding context and DPI, without forcing unparented HWNDs.
+                var state = fields.Select(f => (Field: f, Handle: f.Handle, f.Text, f.SelectionStart, f.SelectionLength)).ToArray();
+                for (int i = 0; i < 4; i++)
+                {
+                    var page = pages[(i + 1) % pages.Length]; ribbon.Backstage.SelectedPage = page;
+                    await Frames($"{density}-{i}-{page.Text}", page.Content!);
+                }
+                foreach (var retained in state)
+                    if (retained.Field.Handle != retained.Handle || retained.Field.Text != retained.Text || retained.Field.SelectionStart != retained.SelectionStart || retained.Field.SelectionLength != retained.SelectionLength)
+                        throw new InvalidOperationException("A real Showcase TextBox lost its handle, text or selection.");
+                log.Add($"PASS: {density} actual page TextBox handles, text and selections retained");
+            }
+            ribbon.IsBackstageOpen = false; await Finish(); log.Add("PASS: actual Showcase Backstage fade capture completed");
+        }
+        catch (Exception error) { log.Add("FAIL: " + error); Environment.ExitCode = 1; }
+        finally { File.WriteAllLines(Path.Combine(directory, "result.log"), log); Cursor.Position = cursor; }
+
+        void Guard() { GetWindowThreadProcessId(GetForegroundWindow(), out uint process); if (process != Environment.ProcessId) throw new InvalidOperationException("Showcase lost foreground; capture stopped."); }
+        async Task Finish() { var watch = Stopwatch.StartNew(); while (ribbon.IsAnimating && watch.ElapsedMilliseconds < 1500) await Task.Delay(5); if (ribbon.IsAnimating) throw new InvalidOperationException("Backstage motion did not complete."); }
+        async Task Frames(string name, Control page)
+        {
+            var bounds = page.RectangleToScreen(page.ClientRectangle); var frames = new List<(bool Active, Bitmap Image)>();
+            try
+            {
+                var watch = Stopwatch.StartNew();
+                while (watch.ElapsedMilliseconds < 440)
+                {
+                    Guard(); var image = new Bitmap(bounds.Width, bounds.Height); using (var g = Graphics.FromImage(image)) g.CopyFromScreen(bounds.Location, Point.Empty, bounds.Size);
+                    frames.Add((ribbon.IsAnimating, image)); await Task.Delay(8);
+                }
+                var settled = frames.Where(f => !f.Active).Select(f => f.Image).ToArray();
+                if (settled.Length < 2) throw new InvalidOperationException("No settled Backstage frames.");
+                int changed = settled.Max(frame => Differences(settled[^1], frame));
+                log.Add($"{name}: settled page changed pixels={changed}");
+                for (int i = 0; i < frames.Count; i++) frames[i].Image.Save(Path.Combine(directory, $"{name}-{i:D2}-{frames[i].Active}.png"));
+                if (changed != 0) throw new InvalidOperationException("Actual Showcase page flickered after fade completion.");
+            }
+            finally { foreach (var frame in frames) frame.Image.Dispose(); }
+        }
+        static int Differences(Bitmap first, Bitmap last)
+        {
+            int changed = 0;
+            for (int y = 0; y < first.Height; y++) for (int x = 0; x < first.Width; x++) if (first.GetPixel(x, y) != last.GetPixel(x, y)) changed++;
+            return changed;
+        }
+    }
+    [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint window);
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(nint window, out uint process);
+}

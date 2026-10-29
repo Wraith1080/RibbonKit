@@ -133,6 +133,108 @@ The standalone consumer has `--validate-window`/`--validate-window-flat` plus th
 same focused switches. This session linked its public-only source into the native
 runner; **no fresh-package consumer build** was performed.
 
+## Motion review corrections - 2026-10-29
+
+All three reported issues have bounded repairs for review; the fade style is retained.
+
+| Requested correction | Implementation |
+| --- | --- |
+| Frame becomes square / line after caption when motion starts | In-window geometry, group and navigation drawings use a layered child of RibbonForm, clipped by its actual native frame. Popup/dismissal windows retain their external presentation. Child position converts screen coordinates to the parent client coordinates. The tab-header crop also includes its caption offset, preventing disappearing/misplaced header ink. |
+| Group motion stops on host width changes | RibbonForm no longer calls ModelChanged on every Resize. Native docking commits width and owns the existing group-motion handoff. Caption/DPI/association changes retain their required refreshes. |
+| Backstage page flickers after fade | The library keeps its existing live Backstage opacity surface at alpha 255 while visible instead of removing WS_EX_LAYERED and forcing a native page repaint at every fade endpoint. Hide, handle destruction and disposal release it. Existing application-owned opacity remains untouched. Native page controls are neither captured nor moved for animation. |
+
+The frame issue and lost group motion were reproduced before repair. The simple
+Backstage page probe did not reproduce the intermittent blink; the final review
+uses **Showcase's actual Info and Print pages**, including its bound document-name
+TextBox, multiline Notes TextBox, heading labels, NumericUpDown and paper ComboBox.
+Both TextBoxes remain live. Handle/value/selection baselines are taken after the
+real page first inherits its binding context and DPI, without prematurely creating
+unparented handles. No public API or application completion handler was added.
+
+Focused evidence (separate, overlapping scopes; not a clean aggregate):
+
+- Native Debug solution build passed with zero warnings/errors, including API/XML
+  and design compilation. No WPF, Release, package or full suite was run.
+- `m6b-motion-regression-first.trx`: **7/7** new resize/child-window-coordinate/
+  TextBox-opacity lifecycle and external-opacity ownership checks.
+  `m6b-fade-stable-layer-first.trx`: **11/11** affected Backstage motion/policy/
+  input/close/reopen/callback cases. `m6b-motion-host-related.trx`: **11/11** host
+  association/fallback/geometry cases. The two new caption-offset drawing cases
+  failed before correction; they and affected ordinary header drawings passed
+  **4/4** in `m6b-header-offset-fixed.trx`.
+- At actual **120 DPI**, public-only frame captures changed **1,228** sampled
+  caption/frame pixels before repair. Final Office and neutral tab-transition
+  checks in `artifacts/m6b-frame-office-final-fix/` and
+  `artifacts/m6b-frame-neutral-final-fix/`, plus Office minimize checks in
+  `artifacts/m6b-minimize-final-fix/`, retain **zero** changed frame/caption edge
+  pixels in Compact/Touch. Full-window captures include all four native corners;
+  header ink remains in its measured band. Actual intermediate captures were inspected.
+- Public-only width checks passed for both renderers, Classic/Simplified,
+  Compact/Touch and Fade/SlideDown in `artifacts/m6b-resize-first/` and
+  `artifacts/m6b-resize-neutral-final/`. Collapse, continued resize and restoration
+  retain playback, native editor handles/values and customization JSON. The native
+  pointer check in `artifacts/m6b-motion-input-final/` confirms that the child
+  drawing passes a real caption-QAT click to its original command exactly once.
+- `artifacts/m6b-showcase-backstage-final/` records actual Showcase opening and
+  four Info/Print switches per density at 120 DPI. Sampled settled page pixels
+  have **zero** changes after every fade; both TextBoxes retain handles, text and
+  selections. Opening, intermediate text and settled captures were inspected.
+  `artifacts/m6b-backstage-neutral-final/` adds independent neutral page-switch
+  capture/state checks. These sampled runs do not prove absence of every
+  intermittent blink on other machines; human review remains open.
+
+Run the native public-only `--window-motion-regression` (or `-flat` variant) with
+`frame`, `minimize`, `groups`, `backstage` or `input` and an evidence directory.
+Showcase `--capture-backstage-motion <directory>` exercises its existing page tree.
+Earlier failing/intermediate captures remain diagnostic, including the initial
+caption-only probe and the capture review that exposed the header-offset error.
+
+### Compositor follow-up - 2026-10-29
+
+The user's later recording and displaced navigation screenshot exposed a regression
+in the child-overlay repair above. Hover was not required: actual F10/File KeyTips
+reproduced it. Correct HWND rectangles and settled/page-only captures missed the
+transient misplaced bitmap, so those earlier positive captures do not establish
+acceptance of this regression.
+
+`RibbonMotionWindow.Present` now supplies the same converted parent-client position
+to both native presentation calls for clipped children. Previously the bitmap
+presentation used the screen position before the child HWND was placed in client
+coordinates. The original top-level popup path keeps its screen position. The
+Backstage fade remains; no page-tree replacement or public API was added.
+
+Follow-up evidence at actual 120 DPI:
+
+- Actual Showcase whole-window capture reproduced **63 displaced navigation
+  columns** before the position fix; afterward three real KeyTip open/close cycles
+  had **zero** in `artifacts/m6b-flash-parent-position-retry/`. Intermediate frames
+  were inspected, including opening and ribbon restoration.
+- `artifacts/m6b-unattended-interactions/` passed real pointer hover during opening,
+  pointer Back, native TextBox commit, native ComboBox choice and physical width
+  drags in **Compact and Touch**. Both resize directions sampled active group
+  animation; editor handles and edited values survived. Hover captures had zero
+  displaced columns. Typing/drag logs establish input and identity, not pixel
+  stability; their saved frames were also inspected.
+- `artifacts/m6b-full-editor-document-final/` passed tab switches and ribbon
+  minimize/restore with zero sampled visible document or settled-editor changes.
+  The comparator ignores RGB differences of at most 12 levels; inspected earlier
+  exact-pixel differences were only a one-level tint from the alpha-1 input hold.
+- Independent public-only group checks passed all **eight** density/layout/style
+  combinations in `artifacts/m6b-compositor-groups-final/`. Frame captures in
+  `artifacts/m6b-compositor-static-frame/` retained all four corners, caption edges
+  and tab labels with zero sampled frame changes in both densities. A static
+  test-owned backdrop excludes moving desktop content under invisible resize edges.
+- Native Debug solution build passed with zero warnings/errors. The three focused
+  position cases passed in `m6b-child-composition-position.trx`; they validate HWND
+  geometry, while the actual full-window capture supplies compositor evidence.
+
+Showcase switches `--capture-motion-input`, `--capture-motion-input-tail` and
+`--capture-motion-interactions` take an evidence directory and close their own
+process after the bounded check. Foreground checks stop synthetic input if focus
+leaves that process. The review replay `artifacts/m6b-compositor-review.mp4` is
+assembled from sampled frames; it is not frame-pacing/performance acceptance.
+Human visual acceptance and the remaining gates below are still open.
+
 ## Remaining gates
 
 Human visual review is pending. Synthetic DPI geometry and native 120-DPI results

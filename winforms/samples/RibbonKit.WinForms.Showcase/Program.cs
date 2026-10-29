@@ -14,6 +14,14 @@ internal static class Program
         Application.SetCompatibleTextRenderingDefault(false);
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
         using var form = new MainForm();
+        if (args.Length == 2 && args[0] == "--capture-motion-interactions")
+            form.Shown += async (_, _) => { await Task.Yield(); try { await form.CaptureMotionInput(args[1], interactionsOnly: true); } finally { form.Close(); } };
+        if (args.Length == 2 && args[0] == "--capture-motion-input-tail")
+            form.Shown += async (_, _) => { await Task.Yield(); try { await form.CaptureMotionInput(args[1], tailOnly: true); } finally { form.Close(); } };
+        if (args.Length == 2 && args[0] == "--capture-motion-input")
+            form.Shown += async (_, _) => { await Task.Yield(); try { await form.CaptureMotionInput(args[1]); } finally { form.Close(); } };
+        if (args.Length == 2 && args[0] == "--capture-backstage-motion")
+            form.Shown += async (_, _) => { await Task.Yield(); try { await form.CaptureBackstageMotion(args[1]); } finally { form.Close(); } };
         if (args.Length == 2 && args[0] == "--capture-view")
             form.Shown += async (_, _) => { await Task.Yield(); await form.CaptureView(args[1]); form.Close(); };
         if (args.Length == 2 && args[0] == "--capture-review")
