@@ -52,11 +52,14 @@ public sealed class MinimizeTests
             ribbon.IsMinimized = false; ribbon.Width = width;
             var expanded = ribbon.Snapshot;
             using var popup = new RibbonPopupSurface(ribbon, tab, new(1800, 1200));
-            int top = expanded.TabViewport.Height;
-            foreach (var target in expanded.Targets.Where(t => t.Kind is TargetKind.Item or TargetKind.Group or TargetKind.BodyBack or TargetKind.BodyNext))
+            int S(int n) => RibbonLayoutEngine.Scale(n, ribbon.DeviceDpi);
+            // The native popup frame owns the outer margins/border. Its body
+            // uses the same engine at the remaining interior width.
+            var expected = ribbon.Engine.BuildBody(ribbon, tab, popup.Width + S(ribbon.LayoutTheme.BodyMargin.Horizontal), 0, -S(ribbon.LayoutTheme.BodyMargin.Top));
+            foreach (var target in expected.Targets.SelectMany(t => RibbonSplitLayout.Expand(t, ribbon.DeviceDpi, false)))
             {
                 var same = Assert.Single(popup.Targets, t => t.Identity == target.Identity);
-                Assert.Equal(target.Bounds with { Y = target.Bounds.Y - top }, same.Bounds);
+                Assert.Equal(target.Bounds with { X = target.Bounds.X - S(ribbon.LayoutTheme.BodyMargin.Left) }, same.Bounds);
                 Assert.Equal(target.Size, same.Size); Assert.Equal(target.ReserveIcon, same.ReserveIcon);
             }
             ribbon.IsMinimized = true;

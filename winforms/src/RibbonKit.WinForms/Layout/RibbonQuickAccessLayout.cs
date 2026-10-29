@@ -29,10 +29,11 @@ internal static class RibbonQuickAccessLayout
         result.QuickAccessBounds = clip;
         int rowHeight = fillWidth ? clip.Height : Math.Min(clip.Height, S(metrics.QuickAccessRow));
         int top = clip.Top + (clip.Height - rowHeight) / 2 + (fillWidth ? 0 : Math.Min(S(metrics.HeaderQuickAccessOffset), (clip.Height - rowHeight) / 2));
+        int targetHeight = Math.Min(S(metrics.QuickAccessButton), rowHeight), targetTop = top + (rowHeight - targetHeight) / 2;
         int left = clip.Left + padding;
         for (int i = 0; i < count; i++)
         {
-            var target = new RibbonTarget(TargetKind.QuickAccess, entries[i], new(left, top + S(2), widths[i], Math.Max(0, rowHeight - S(4))), clip,
+            var target = new RibbonTarget(TargetKind.QuickAccess, entries[i], new(left, targetTop, widths[i], targetHeight), clip,
                 RibbonItemSize.Small, AutomaticKeyTip: RibbonQuickAccess.AutomaticKeyTip(i, entries.Length));
             result.Targets.AddRange(RibbonSplitLayout.Expand(target, ribbon.DeviceDpi, false));
             left += widths[i];
@@ -40,7 +41,7 @@ internal static class RibbonQuickAccessLayout
         if (!overflow) return result;
         result.QuickAccessOverflowItems.AddRange(entries.Skip(count));
         result.Targets.Add(new(TargetKind.QuickAccessOverflow, ribbon.QuickAccessOverflow,
-            new(left, top + S(2), Math.Max(0, Math.Min(slot, width - 2 * padding - used)), Math.Max(0, rowHeight - S(4))), clip));
+            new(left, targetTop, Math.Max(0, Math.Min(slot, width - 2 * padding - used)), targetHeight), clip));
         return result;
     }
 }

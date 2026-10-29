@@ -96,6 +96,8 @@ public abstract class RibbonElement : Component, IBindableComponent
             Ribbon?.VerifyAccess();
             if (_visible == value)
                 return;
+            if (!IsDisposed && this is RibbonMessage or RibbonMessageBar && Ribbon is { CanAnimateMessageChange: true } messageHost)
+            { messageHost.Motion.Change(false, () => Visible = value, messages: true); return; }
             if (value && Ribbon is { CanAnimateHeaderArrival: true } ribbon &&
                 (this is RibbonTab tab && ribbon.GetPresentedTabs().Contains(tab) || this is RibbonMergeSource source && source.Tabs.Any(t => t.Visible)))
             { ribbon.Motion.Change(false, () => Visible = value, headers: true); return; }

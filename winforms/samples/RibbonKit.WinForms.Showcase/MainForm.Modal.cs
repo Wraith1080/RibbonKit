@@ -47,6 +47,7 @@ public partial class MainForm
         var print = new RibbonButtonItem { Text = "Print request", KeyTip = "R" };
         print.Click += (_, _) => status.Text = $"Application print request: {copies.Value} copies.";
         settings.Items.AddRange(copies, zoom, print); tab.Groups.Add(settings); source.Tabs.Add(tab);
+        zoom.SimplifiedPlacement = print.SimplifiedPlacement = RibbonSimplifiedPlacement.Inline;
         var preview = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(226, 228, 232), Visible = false };
         Controls.Add(preview);
         preview.Paint += (_, e) =>

@@ -1,4 +1,5 @@
 #nullable enable
+override RibbonKit.WinForms.RibbonControl.SetBoundsCore(int x, int y, int width, int height, System.Windows.Forms.BoundsSpecified specified) -> void
 RibbonKit.WinForms.RibbonTabContentAnimation
 RibbonKit.WinForms.RibbonTabContentAnimation.Fade = 0 -> RibbonKit.WinForms.RibbonTabContentAnimation
 RibbonKit.WinForms.RibbonTabContentAnimation.SlideDown = 1 -> RibbonKit.WinForms.RibbonTabContentAnimation

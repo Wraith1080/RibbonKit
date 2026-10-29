@@ -43,6 +43,13 @@ public partial class RibbonControl
     }
     /// <summary>Occurs after a layout-mode change, including native geometry refresh.</summary>
     public event EventHandler? LayoutModeChanged;
+    internal void RefreshBorrowedGroupPresentation()
+    {
+        if (LayoutMode != RibbonLayoutMode.Simplified) return;
+        _layoutDirty = true;
+        foreach (var surface in Popups.Surfaces) surface.RefreshSimplifiedBody();
+        Invalidate();
+    }
 }
 
 internal sealed class RibbonSimplifiedMore(RibbonControl ribbon) : RibbonQuickAccessOverflow(ribbon, "More Commands")

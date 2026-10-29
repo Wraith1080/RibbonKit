@@ -46,7 +46,8 @@ public sealed class GeometryMotionTests
         long previousStyle = Style(f.Ribbon); using var source = new RibbonMergeSource(); source.Tabs.Add(new RibbonTab { Id = "home", Text = "Conflict" });
         Assert.Throws<ArgumentException>(() => f.Ribbon.Merge(source)); Assert.False(source.IsMerged); Assert.False(f.Ribbon.IsAnimating); Assert.Equal(previousStyle, Style(f.Ribbon));
         context.Visible = true; Assert.True(f.Ribbon.IsAnimating); f.Host.Width -= 30; Assert.False(f.Ribbon.IsAnimating); Assert.Equal(previousStyle, Style(f.Ribbon));
-        context.Visible = false; f.Ribbon.IsMinimized = true; context.Visible = true; Assert.True(f.Ribbon.IsAnimating); f.Ribbon.SelectedTab = context; Assert.True(f.Ribbon.IsAnimating); f.Finish(); Assert.True(f.Ribbon.IsMinimized);
+        context.Visible = false; f.Ribbon.IsMinimized = true; f.Ribbon.SettleMotion(); // Test header arrival after minimizing; overlapping requests intentionally snap.
+        context.Visible = true; Assert.True(f.Ribbon.IsAnimating); f.Ribbon.SelectedTab = context; Assert.True(f.Ribbon.IsAnimating); f.Finish(); Assert.True(f.Ribbon.IsMinimized);
     });
     [Theory] [InlineData(RibbonTabContentAnimation.Fade)] [InlineData(RibbonTabContentAnimation.SlideDown)]
     public void Header_drawing_keeps_committed_slots_and_applies_the_shared_style_only_to_arrivals(RibbonTabContentAnimation style) => FoundationTests.Sta(() =>

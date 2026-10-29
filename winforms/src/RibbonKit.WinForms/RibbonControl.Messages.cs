@@ -27,6 +27,8 @@ public partial class RibbonControl
     }
     private void ActivateMessageTarget(RibbonTarget target)
     {
+        if (target.Kind == TargetKind.MessageClose && CanAnimateMessageChange)
+        { Motion.Change(false, () => ActivateMessageTarget(target), messages: true); return; }
         bool restore = Focused;
         if (target.Element is RibbonButtonItem button) button.PerformClick();
         if (IsDisposed || _disposing) return;

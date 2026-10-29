@@ -7,13 +7,14 @@ namespace RibbonKit.WinForms;
 public sealed class RibbonQuickAccessCustomizationEditor : UserControl
 {
     private readonly RibbonControl _ribbon;
-    private readonly TableLayoutPanel _layout = new() { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3 };
+    private readonly RibbonCustomizationColumns _panes;
+    private readonly TableLayoutPanel _layout = new() { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Margin = Padding.Empty };
     private readonly ListBox _available = List("AvailableCommands", "Available commands");
     private readonly ListBox _current = List("ToolbarCommands", "Commands on the Quick Access Toolbar");
     private readonly TextBox _search = new() { Name = "CommandSearch", AccessibleName = "Search available commands", BorderStyle = BorderStyle.None, PlaceholderText = "Search commands" };
     private readonly TextBox _currentSearch = new() { Name = "ToolbarSearch", AccessibleName = "Search current toolbar commands", BorderStyle = BorderStyle.None, PlaceholderText = "Search toolbar commands" };
     private readonly RibbonOptionsFrame _searchFrame, _currentSearchFrame, _availableFrame, _currentFrame;
-    private readonly FlowLayoutPanel _actions = new() { AutoSize = true, Dock = DockStyle.Fill, Margin = Padding.Empty };
+    private readonly FlowLayoutPanel _actions = new() { AutoSize = true, Anchor = AnchorStyles.Left | AnchorStyles.Top, WrapContents = false, Margin = Padding.Empty };
     private readonly Label _status = new() { Name = "CustomizationStatus", AutoSize = true, Dock = DockStyle.Fill, AccessibleName = "Customization status" };
     private readonly Button _add, _remove, _up, _down;
     private readonly Button _reset, _reload;
@@ -44,22 +45,18 @@ public sealed class RibbonQuickAccessCustomizationEditor : UserControl
         _down = Button("MoveCommandDown", "▼", () => MoveSelected(1)); _down.AccessibleName = "Move command down";
         _reset = Button("ResetCustomization", "&Reset", ResetCommands);
         _reload = Button("ReloadCustomization", "Re&load", () => { Session.Reload(); RefreshDraft(); });
-        var panes = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 4, RowCount = 3, Margin = Padding.Empty };
-        panes.ColumnStyles.Add(new(SizeType.Percent, 50)); panes.ColumnStyles.Add(new(SizeType.AutoSize)); panes.ColumnStyles.Add(new(SizeType.Percent, 50)); panes.ColumnStyles.Add(new(SizeType.AutoSize));
-        panes.RowStyles.Add(new(SizeType.AutoSize)); panes.RowStyles.Add(new(SizeType.AutoSize)); panes.RowStyles.Add(new(SizeType.Percent, 100));
-        var order = new FlowLayoutPanel { AutoSize = true, Anchor = AnchorStyles.None, FlowDirection = FlowDirection.TopDown, WrapContents = false };
-        order.Controls.AddRange([_up, _down]);
-        var transfer = new FlowLayoutPanel { AutoSize = true, Anchor = AnchorStyles.None, FlowDirection = FlowDirection.TopDown, WrapContents = false };
-        transfer.Controls.AddRange([_add, _remove]);
+        var panes = _panes = new RibbonCustomizationColumns { RowCount = 4 };
+        panes.RowStyles.Add(new(SizeType.AutoSize)); panes.RowStyles.Add(new(SizeType.AutoSize)); panes.RowStyles.Add(new(SizeType.Percent, 100)); panes.RowStyles.Add(new(SizeType.AutoSize));
         panes.Controls.Add(new Label { Name = "AvailableCommandsLabel", Text = "Choose commands from the ribbon:", AutoSize = true, Dock = DockStyle.Fill, Margin = Padding.Empty }, 0, 0);
         panes.Controls.Add(new Label { Name = "ToolbarCommandsLabel", Text = "Current Quick Access Toolbar:", AutoSize = true, Dock = DockStyle.Fill, Margin = Padding.Empty }, 2, 0);
         panes.Controls.Add(_searchFrame, 0, 1); panes.Controls.Add(_currentSearchFrame, 2, 1);
-        panes.Controls.Add(_availableFrame, 0, 2); panes.Controls.Add(transfer, 1, 2); panes.Controls.Add(_currentFrame, 2, 2); panes.Controls.Add(order, 3, 2);
+        panes.Controls.Add(_availableFrame, 0, 2); panes.AddActions(1, 2, _add, _remove);
+        panes.Controls.Add(_currentFrame, 2, 2); panes.AddActions(3, 2, _up, _down);
         _layout.RowStyles.Add(new(SizeType.Percent, 100));
-        for (int i = 0; i < 2; i++) _layout.RowStyles.Add(new(SizeType.AutoSize));
+        _layout.RowStyles.Add(new(SizeType.AutoSize));
         _layout.Controls.Add(panes, 0, 0);
         _actions.Controls.AddRange([_reset, _reload]);
-        _layout.Controls.Add(_actions, 0, 1); _layout.Controls.Add(_status, 0, 2); Controls.Add(_layout);
+        panes.Controls.Add(_actions, 0, 3); _layout.Controls.Add(_status, 0, 1); Controls.Add(_layout);
         _available.DrawItem += DrawRow; _current.DrawItem += DrawRow;
         _available.SelectedIndexChanged += (_, _) => UpdateActions(); _current.SelectedIndexChanged += (_, _) => UpdateActions();
         _available.DoubleClick += (_, _) => AddSelected(); _current.DoubleClick += (_, _) => RemoveSelected();
@@ -202,6 +199,7 @@ public sealed class RibbonQuickAccessCustomizationEditor : UserControl
         var minimum = RibbonQuickAccessEditorMetrics.Minimum(DeviceDpi, Font.Height, _ribbon.Density);
         MinimumSize = new(Math.Max(MinimumSize.Width, minimum.Width), minimum.Height);
         Padding = Padding.Empty; _available.ItemHeight = height; _current.ItemHeight = height;
+        _panes.UpdateMetrics(DeviceDpi, Font, _ribbon.Density);
         foreach (var frame in new[] { _searchFrame, _currentSearchFrame })
         { frame.Height = RibbonQuickAccessEditorMetrics.ButtonHeight(DeviceDpi, Font.Height, _ribbon.Density); frame.Margin = new(0, gap, 0, gap); }
         foreach (var search in new[] { _search, _currentSearch }) { search.BackColor = _ribbon.Theme.Surface; search.ForeColor = _ribbon.Theme.Foreground; }

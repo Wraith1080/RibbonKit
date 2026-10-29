@@ -18,6 +18,10 @@ internal static class Program
             form.Shown += async (_, _) => { await Task.Yield(); await form.CaptureView(args[1]); form.Close(); };
         if (args.Length == 2 && args[0] == "--capture-review")
             form.Shown += async (_, _) => { await Task.Yield(); await form.CaptureReview(args[1]); form.Close(); };
+        if (args.Length == 2 && args[0] == "--capture-review-followup")
+            form.Shown += async (_, _) => { await Task.Yield(); await form.CaptureReviewFollowup(args[1]); form.Close(); };
+        if (args.Length == 2 && args[0] == "--capture-tab-scrollers")
+            form.Shown += async (_, _) => { await Task.Yield(); await form.CaptureReviewFollowup(args[1], true); form.Close(); };
         if (args.Length == 2 && args[0] == "--capture-simplified")
             form.Shown += async (_, _) => { await Task.Yield(); await form.CaptureSimplified(args[1]); form.Close(); };
         if (args.Length == 2 && args[0] == "--capture-command-icons")

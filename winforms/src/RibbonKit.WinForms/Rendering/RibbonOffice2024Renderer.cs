@@ -12,12 +12,26 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     public override bool JoinBelowRibbonQuickAccess => true;
     /// <inheritdoc />
     public override bool JoinMessageBarToBody => true;
+    internal override bool PaintConnectedMessageShadow(RibbonPaintContext context, Rectangle upper, Rectangle messages)
+    {
+        PaintShadow(context with { Bounds = Rectangle.Union(upper, messages), IsTopEdgeConnected = false, IsBottomEdgeConnected = false }, context.Theme.CornerRadius * context.DeviceDpi / 48);
+        return true;
+    }
     /// <inheritdoc />
     public override void DrawMessageBar(RibbonPaintContext context)
     {
         int radius = context.Theme.CornerRadius * context.DeviceDpi / 48;
         PaintShadow(context, radius);
-        PaintRounded(context, radius, context.Theme.MessageBackground, context.Theme.MessageBorder);
+        // The preceding body/QAT already owns the shared horizontal edge.
+        var saved = context.Graphics.Save();
+        try
+        {
+            context.Graphics.SetClip(context.Bounds, System.Drawing.Drawing2D.CombineMode.Intersect);
+            var bounds = context.Bounds;
+            if (context.IsTopEdgeConnected) { bounds.Y--; bounds.Height++; }
+            PaintRounded(context with { Bounds = bounds }, radius, context.Theme.MessageBackground, context.Theme.MessageBorder);
+        }
+        finally { context.Graphics.Restore(saved); }
     }
     /// <inheritdoc />
     public override void DrawQuickAccessToolbar(RibbonPaintContext context, RibbonQuickAccessPosition position)
@@ -62,16 +76,7 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     }
     /// <inheritdoc />
     public override void DrawScrollButton(RibbonPaintContext context, bool backward)
-    {
-        if (context.IsBodyScrollButton)
-        {
-            DrawBodyScrollButton(context, backward);
-            return;
-        }
-        else if (context.Hot || context.Pressed)
-            DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
-        DrawText(context, backward ? "‹" : "›", context.Theme.Foreground, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-    }
+        => DrawBodyScrollButton(context, backward);
     /// <inheritdoc />
     public override void DrawTab(RibbonPaintContext context, RibbonTab tab, bool selected)
     {
@@ -104,6 +109,7 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     public override void DrawGroup(RibbonPaintContext context, RibbonGroup group, bool collapsed)
     {
         base.DrawGroup(context, group, collapsed);
+        if (context.IsSimplifiedGroup) return;
         var frame = context.GroupSeparatorBounds.IsEmpty ? context.Bounds : context.GroupSeparatorBounds;
         int inset = Layout.RibbonLayoutEngine.Scale(GroupSeparatorInset, context.DeviceDpi);
         int height = frame.Height - 2 * inset;

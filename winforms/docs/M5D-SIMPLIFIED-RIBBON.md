@@ -23,6 +23,8 @@ WPF controls and evidence are not used as native acceptance.
   it. Split commands project horizontally, galleries open their shared gallery
   popup, and supported ComboBox editors retain configured width/editability.
   Arbitrary/TextBox editors remain accessible through full groups.
+  Inline ComboBox fields have a 26/44 logical-pixel Compact/Touch minimum, capped
+  and centered in the existing row; full-group popups retain Classic field sizes.
 - The measured selector reserves More Commands before fitting candidates. Higher
   priority survives longer; ties displace from the end. Surviving and displaced
   commands retain draft order. Repeated canonical sources use their first eligible
@@ -31,6 +33,18 @@ WPF controls and evidence are not used as native acceptance.
   visible full group, including groups without inline commands. Below its minimum
   extent, scrolling/focus reveal preserves usable targets. Shared device-pixel
   rectangles drive painting, hit testing and popup anchoring.
+  When the row fits, More Commands aligns with the body's right inset rather
+  than following the last inline command; minimum-extent scrolling still applies.
+- While a full-group popup borrows controls, the group's inline commands project
+  as one medium collapsed group button, using the original group identity/icon.
+  Closing the popup restores their order, handles and latest values/checked state.
+  Clicking this temporary button dismisses the popup without invoking the restored
+  command underneath. The same projection works in a temporary minimized body.
+  The resting projection uses no snapshot or duplicate editor, and
+  customization/profiles are untouched.
+  Opt-in [group motion](M6A-MOTION-PLAN.md#group-collapse-and-restore--2026-10-29)
+  follows the existing Fade/Slide selector for borrowing/return and width overflow.
+  Its temporary drawing does not replace or duplicate the live controls.
 - Minimized tab popups use the same row. Full groups retain Classic geometry.
   Existing lower-QAT/message joins and native popup keyboard/dismissal paths are
   reused. Mode changes close the current popup stack; invalid focused editor input
@@ -106,9 +120,22 @@ Showcase **Options → Show → Simplified Ribbon** switches modes. Paste, Copy,
 Bold, Italic and representative commands/ComboBoxes have authored defaults; Paste
 and Bold receive higher priority. Shared public APIs supply the row and editor.
 The sample owns its toggle, SVG artwork, handlers and import/export file dialogs.
+Chart Design and Print Preview also supply authored inline command/ComboBox defaults.
+Picture Format follows the normal authored tabs, ahead of merged contributions.
 
 ## Evidence and pending review
 
+- Pre-M6B follow-up, 2026-10-29: More placement passed 3/3 focused cases in
+  `simplified-more-right-edge.trx`; selected related Simplified/Backstage/options
+  regressions passed 17/17 in `pre-m6b-followup-related.trx`. The two group cases
+  in `pre-m6b-followup-group-dismiss.trx` verify normal/minimized projections,
+  current values, exact profile preservation and clicking the temporary button.
+  Native Office/neutral checks at actual 120 DPI cover Compact/Touch, larger fields,
+  right-aligned More, original editor handles and live-state restoration. The core
+  evidence and assembled group-button return checks are recorded in the
+  [pre-M6B review ledger](M4-STATUS.md#additional-review-corrections--2026-10-29).
+  Foreground-owned Showcase captures verify the new transient-tab defaults/order.
+  Normal Debug build is clean; these refinements await human visual review.
 - Normal Debug native solution build: zero warnings/errors, 2026-10-28.
 - D1: 11 focused selector cases, including exact fit/reservation, priorities,
   repeated runs, deduplication, More-only/scroll fallback, synthetic

@@ -5,12 +5,13 @@ namespace RibbonKit.WinForms;
 
 internal sealed class RibbonPopupManager : IDisposable
 {
-    private sealed record Session(RibbonElement Owner, RibbonDropDownItem? MenuSource, Control Opener, Rectangle Anchor, ToolStripDropDown Window, RibbonPopupSurface Surface);
+    private sealed record Session(RibbonElement Owner, RibbonDropDownItem? MenuSource, Control Opener, Rectangle Anchor, RibbonPopupWindow Window, RibbonPopupSurface Surface);
     private readonly RibbonControl _ribbon;
     private readonly List<Session> _sessions = [];
     private Form? _form;
     private bool _activationCheckPending;
     private RibbonDropDownItem? _preparingMenu;
+    private RibbonTabPopupDismissal? _dismissal;
     // Opening handlers may construct descendants without dismissing the parent
     // overflow. Changes to the source or its opener still close stale sessions.
     internal bool IsPreparingContent(RibbonElement? element, bool includeOwner = false)
@@ -23,8 +24,30 @@ internal sealed class RibbonPopupManager : IDisposable
     }
     internal RibbonPopupManager(RibbonControl ribbon) => _ribbon = ribbon;
     internal bool HasOpen => _sessions.Count > 0;
+    internal bool IsAnimating => _dismissal?.IsRunning == true || _sessions.Any(s => s.Window.OpeningMotion?.IsRunning == true);
+    internal bool IsOpening(RibbonPopupSurface surface) => _sessions.Any(s => ReferenceEquals(s.Surface, surface) && s.Window.OpeningMotion?.IsRunning == true);
+    internal void SettleMotion() { _dismissal?.Dispose(); _dismissal = null; foreach (var session in _sessions.ToArray()) session.Window.SettleMotion(); }
+    internal void ObserveMotionInput(ref Message message)
+    {
+        if (!IsAnimating) return;
+        if (message.Msg is 0x100 or 0x104 or 0x201 or 0x204 or 0x207 or 0x20A or 0x20E or 0x240 or 0x246) { _dismissal?.Dispose(); _dismissal = null; }
+        var control = Control.FromChildHandle(message.HWnd);
+        bool within = control is not null && _sessions.Any(s => ReferenceEquals(s.Window, control) || s.Window.Contains(control));
+        if (message.Msg == 0x200)
+        {
+            if (within && _sessions.Any(s => s.Window.OpeningMotion is { IsRunning: true, PointerMoved: true })) SettleMotion();
+        }
+        else if (message.Msg is 0x100 or 0x104 or 0x201 or 0x204 or 0x207 or 0x20A or 0x20E or 0x240 or 0x246)
+        {
+            if (within || control?.FindForm() == _ribbon.FindForm()) SettleMotion();
+        }
+    }
     internal bool ContainsFocus => _sessions.Any(s => s.Window.ContainsFocus);
     internal bool OwnsWindow(nint handle) => _sessions.Any(s => s.Window.IsHandleCreated && s.Window.Handle == handle);
+    internal bool HasActiveOwner
+    {
+        get { nint active = GetForegroundWindow(); return _ribbon.FindForm() is { IsHandleCreated: true } form && active == form.Handle || OwnsWindow(active) || _ribbon.Editors.OwnsWindow(active); }
+    }
     internal void PrepareChoice(Control opener)
     {
         int parent = _sessions.FindIndex(s => ReferenceEquals(s.Surface, opener));
@@ -32,6 +55,11 @@ internal sealed class RibbonPopupManager : IDisposable
     }
     internal RibbonPopupSurface? Top => _sessions.LastOrDefault()?.Surface;
     internal IEnumerable<RibbonPopupSurface> Surfaces => _sessions.Select(s => s.Surface);
+    internal nint WindowAbove(Control row)
+    {
+        int parent = _sessions.FindIndex(s => ReferenceEquals(s.Surface, row));
+        return _sessions.Skip(parent + 1).FirstOrDefault()?.Window.Handle ?? 0;
+    }
     internal bool IsQuickAccessContext(Control surface)
     {
         while (surface is RibbonPopupSurface popup && _sessions.FirstOrDefault(s => ReferenceEquals(s.Surface, popup)) is { } session)
@@ -41,11 +69,14 @@ internal sealed class RibbonPopupManager : IDisposable
         }
         return false;
     }
-    internal bool IsExpanded(RibbonElement element) => _sessions.Any(s => ReferenceEquals(s.Owner, element));
+    internal bool BorrowsGroup(RibbonGroup group) => _sessions.Any(s => ReferenceEquals(s.Surface.GroupSource, group));
+    internal bool IsExpanded(RibbonElement element) => _sessions.Any(s => ReferenceEquals(s.Owner, element) || element is RibbonGroup group && ReferenceEquals(s.Surface.GroupSource, group));
     internal bool IsMenuExpanded(RibbonDropDownItem source) => _sessions.Any(s => ReferenceEquals(s.MenuSource, source));
     internal void Toggle(RibbonElement owner, Control opener, Rectangle anchor, Point? contextPoint = null)
     {
         _ribbon.SettleMotion();
+        if (_ribbon.LayoutMode == RibbonLayoutMode.Simplified && owner is RibbonGroup or RibbonQuickAccessGroupReference && _ribbon.CanAnimateGroups && !_ribbon.GroupMotion.Changing)
+        { _ribbon.AnimateGroupChange(() => Toggle(owner, opener, anchor, contextPoint)); return; }
         _ribbon.ScreenTips.Cancel();
         if (_ribbon.IsInDesignMode || _ribbon.IsBackstageOpen)
             return;
@@ -104,8 +135,10 @@ internal sealed class RibbonPopupManager : IDisposable
             }
         }
         var screenAnchor = contextPoint is { } context ? new Rectangle(context, Size.Empty) : opener.RectangleToScreen(anchor);
+        int S(int n) => RibbonLayoutEngine.Scale(n, _ribbon.DeviceDpi);
         var placementAnchor = owner is RibbonTab
-            ? opener.RectangleToScreen(new Rectangle(0, opener.ClientSize.Height - 1, opener.ClientSize.Width, 1)) : screenAnchor;
+            ? opener.RectangleToScreen(new Rectangle(S(_ribbon.LayoutTheme.BodyMargin.Left), S(_ribbon.LayoutTheme.TabHeight + _ribbon.LayoutTheme.BodyMargin.Top),
+                Math.Max(1, opener.ClientSize.Width - S(_ribbon.LayoutTheme.BodyMargin.Left) - S(_ribbon.LayoutTheme.BodyMargin.Right)), 0)) : screenAnchor;
         var work = Screen.FromRectangle(placementAnchor).WorkingArea;
         var surface = new RibbonPopupSurface(_ribbon, owner, new(Math.Max(1, work.Width - 2), Math.Max(1, work.Height - 2)), menuSource, groupSource);
         var host = new ToolStripControlHost(surface) { AutoSize = false, Size = surface.Size, Margin = Padding.Empty, Padding = Padding.Empty };
@@ -118,9 +151,10 @@ internal sealed class RibbonPopupManager : IDisposable
         window.Items.Add(host);
         var session = new Session(owner, menuSource, opener, anchor, window, surface);
         _sessions.Add(session);
+        if (surface.GroupSource is not null) _ribbon.RefreshBorrowedGroupPresentation();
         window.Closed += (_, _) => { if (_sessions.Contains(session)) Close(owner, false); };
         bool submenu = contextPoint is null && opener is RibbonPopupSurface parentSurface && (parentSurface.MenuSource is not null || parentSurface.OwnerElement is RibbonQuickAccessOverflow);
-        var bounds = CalculateBounds(placementAnchor, work, window.Size, submenu, _ribbon.DeviceDpi);
+        var bounds = owner is RibbonTab ? CalculateTabBounds(placementAnchor, work, window.Size) : CalculateBounds(placementAnchor, work, window.Size, submenu, _ribbon.DeviceDpi);
         if (bounds.Size != window.Size)
         {
             window.Size = bounds.Size;
@@ -129,8 +163,14 @@ internal sealed class RibbonPopupManager : IDisposable
         }
         using (new RibbonPopupActivation(_form, window))
         {
-            window.Show(bounds.Location);
-            opener.Invalidate(); _ribbon.Invalidate(); _ribbon.SyncEditors(); surface.FocusFirst();
+            window.PrepareOpening(surface);
+            try
+            {
+                window.Show(bounds.Location);
+                opener.Invalidate(); _ribbon.Invalidate(); _ribbon.SyncEditors(); surface.FocusFirst();
+                window.StartOpening();
+            }
+            catch { Close(owner, false); throw; }
         }
         _ribbon.AccessibilityChanged();
     }
@@ -151,6 +191,12 @@ internal sealed class RibbonPopupManager : IDisposable
         if (submenu && x + size.Width > work.Right) x = anchor.Left - size.Width - rowPadding - 1;
         if (!submenu && y + size.Height > work.Bottom) y = anchor.Top - size.Height;
         return new(Math.Clamp(x, work.Left, work.Right - size.Width), Math.Clamp(y, work.Top, work.Bottom - size.Height), size.Width, size.Height);
+    }
+    internal static Rectangle CalculateTabBounds(Rectangle anchor, Rectangle work, Size size)
+    {
+        size = new(Math.Min(size.Width, work.Width), Math.Min(size.Height, work.Height));
+        int y = anchor.Bottom + size.Height <= work.Bottom ? anchor.Bottom : anchor.Top - size.Height;
+        return new(Math.Clamp(anchor.Left, work.Left, work.Right - size.Width), Math.Clamp(y, work.Top, work.Bottom - size.Height), size.Width, size.Height);
     }
     private void OnDeactivate(object? sender, EventArgs e) => QueueActivationCheck();
     internal void QueueActivationCheck()
@@ -176,20 +222,29 @@ internal sealed class RibbonPopupManager : IDisposable
         });
     }
     private void OnMove(object? sender, EventArgs e) => CloseAll(false);
-    internal void OutsidePress(Point point)
+    internal bool OutsidePress(Point point)
     {
+        if (_ribbon.LayoutMode == RibbonLayoutMode.Simplified)
+        {
+            var rows = _sessions.Where(s => s.Owner is RibbonTab).Select(s => (Surface: (Control)s.Surface, Targets: s.Surface.Targets, Keep: _sessions.IndexOf(s)))
+                .Prepend((Surface: (Control)_ribbon, Targets: (IReadOnlyList<RibbonTarget>)_ribbon.Snapshot.Targets, Keep: -1));
+            foreach (var row in rows)
+                if (row.Targets.Any(t => t.Kind == TargetKind.Group && t.Element is RibbonGroup group && BorrowsGroup(group) && row.Surface.RectangleToScreen(t.VisibleBounds).Contains(point)))
+                { while (_sessions.Count > row.Keep + 1) CloseTop(false); return true; }
+        }
         int inside = _sessions.FindLastIndex(s =>
             (s.Window.Bounds.Contains(point) && (s.Window.Region is null || s.Window.Region.IsVisible(s.Window.PointToClient(point))))
             || s.Opener.RectangleToScreen(s.Anchor).Contains(point));
         if (inside < 0)
-            CloseAll(false);
+            CloseAll(false, animateTab: true);
         else
             while (_sessions.Count > inside + 1)
                 CloseTop(false);
+        return false;
     }
     internal void Close(RibbonElement owner, bool restoreFocus)
     {
-        int index = _sessions.FindIndex(s => ReferenceEquals(s.Owner, owner));
+        int index = _sessions.FindIndex(s => ReferenceEquals(s.Owner, owner) || owner is RibbonGroup group && ReferenceEquals(s.Surface.GroupSource, group));
         if (index < 0)
             return;
         while (_sessions.Count > index + 1)
@@ -200,19 +255,32 @@ internal sealed class RibbonPopupManager : IDisposable
     {
         if (_sessions.FirstOrDefault(s => ReferenceEquals(s.MenuSource, source)) is { } session) Close(session.Owner, restoreFocus);
     }
-    internal void CloseTop(bool restoreFocus)
+    internal void CloseTop(bool restoreFocus, bool animateTab = false)
     {
         _ribbon.ScreenTips.Cancel();
         if (_sessions.Count == 0)
             return;
         var session = _sessions[^1];
+        if (session.Surface.GroupSource is not null && _ribbon.LayoutMode == RibbonLayoutMode.Simplified && _ribbon.CanAnimateGroups && !_ribbon.GroupMotion.Changing)
+        { _ribbon.AnimateGroupChange(() => CloseTop(restoreFocus, animateTab)); return; }
         _sessions.RemoveAt(_sessions.Count - 1);
+        if (session.Surface.GroupSource is not null) _ribbon.RefreshBorrowedGroupPresentation();
         if (!HasOpen)
             _activationCheckPending = false;
-        _ribbon.Editors.Release(session.Surface);
-        _ribbon.GalleryStrips.Release(session.Surface);
-        session.Window.Close();
-        session.Window.Dispose();
+        session.Window.SettleMotion();
+        try
+        {
+            if (animateTab && session.Owner is RibbonTab)
+            { _dismissal?.Dispose(); _dismissal = RibbonTabPopupDismissal.Start(_ribbon, session.Window, session.Surface); }
+        }
+        finally
+        {
+            // A presentation failure must not strand an untracked live popup.
+            _ribbon.Editors.Release(session.Surface);
+            _ribbon.GalleryStrips.Release(session.Surface);
+            session.Window.Close(); session.Window.Dispose();
+            _ribbon.SyncEditors();
+        }
         if (!session.Opener.IsDisposed) session.Opener.Invalidate();
         _ribbon.Invalidate();
         session.MenuSource?.OnClosed();
@@ -230,13 +298,14 @@ internal sealed class RibbonPopupManager : IDisposable
         _ribbon.SyncEditors();
         _ribbon.AccessibilityChanged();
     }
-    internal void CloseAll(bool restoreFocus)
+    internal void CloseAll(bool restoreFocus, bool animateTab = false)
     {
         while (_sessions.Count > 0)
-            CloseTop(restoreFocus && _sessions.Count == 1);
+            CloseTop(restoreFocus && _sessions.Count == 1, animateTab);
     }
     internal void InvalidateAll()
     {
+        SettleMotion();
         foreach (var session in _sessions.ToArray())
         {
             if (!_sessions.Contains(session)) continue;
@@ -251,6 +320,7 @@ internal sealed class RibbonPopupManager : IDisposable
     }
     internal void ResetOwner()
     {
+        SettleMotion();
         CloseAll(false);
         if (_form is not null)
         {
@@ -286,6 +356,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     internal RibbonDropDownItem? MenuSource { get; }
     internal RibbonGalleryItem? GallerySource => MenuSource as RibbonGalleryItem;
     internal RibbonGroup? GroupSource { get; }
+    internal RibbonLayoutSnapshot? BodyLayout => _bodyLayout;
     internal RibbonElement? FocusedElement => _focused;
     internal bool FocusedDropDownPart => _focusedDropDown;
     internal IReadOnlyList<RibbonTarget> Targets => _targets.Select(t => t with
@@ -313,10 +384,10 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         int width, height, galleryViewport = 0;
         if (owner is RibbonTab tab)
         {
-            width = _bodyWidth = Math.Clamp(Math.Max(S(200), ribbon.ClientSize.Width), 1, Math.Max(1, workArea.Width - S(24)));
-            _bodyLayout = ribbon.Engine.BuildBody(ribbon, tab, width, 0);
+            width = _bodyWidth = Math.Clamp(Math.Max(S(200), ribbon.ClientSize.Width - S(ribbon.LayoutTheme.BodyMargin.Left) - S(ribbon.LayoutTheme.BodyMargin.Right) - 2), 1, Math.Max(1, workArea.Width));
+            _bodyLayout = BuildTabBody(tab, width, 0);
             _targets.AddRange(_bodyLayout.Targets);
-            height = _bodyLayout.BodyBounds.Bottom + S(ribbon.LayoutTheme.BodyMargin.Bottom);
+            height = _bodyLayout.BodyBounds.Bottom;
         }
         else if (GroupSource is { } group)
         {
@@ -381,7 +452,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
             height = Math.Max(S(32), top + S(4));
         }
         _singleColumn = GallerySource is null && owner is not RibbonTab && _targets.Select(t => t.Bounds.Left).Distinct().Take(2).Count() <= 1;
-        int maxWidth = Math.Max(1, workArea.Width - S(24)), maxHeight = Math.Max(1, workArea.Height - S(32));
+        int maxWidth = Math.Max(1, workArea.Width - (owner is RibbonTab ? 0 : S(24))), maxHeight = Math.Max(1, workArea.Height - S(32));
         if (galleryViewport > 0) maxHeight = Math.Min(maxHeight, galleryViewport);
         if (owner is RibbonQuickAccessOverflow)
         {
@@ -422,7 +493,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
                 {
                     var bounds = slot.Bounds; bounds.Offset(AutoScrollPosition);
                     var frame = slot.Frame; frame.Offset(AutoScrollPosition);
-                    _ribbon.Painter.DrawGroup(context with { Bounds = bounds, GroupSeparatorBounds = frame,
+                    _ribbon.Painter.DrawGroup(context with { Bounds = bounds, GroupSeparatorBounds = frame, IsSimplifiedGroup = _ribbon.LayoutMode == RibbonLayoutMode.Simplified,
                         Hot = slot.Group.EffectiveEnabled && ReferenceEquals(_hot, slot.Group),
                         Pressed = slot.Group.EffectiveEnabled && ReferenceEquals(_pressed, slot.Group),
                         Focused = slot.Group.EffectiveEnabled && _ribbon.KeyboardFocusCues && Focused && ReferenceEquals(_focused, slot.Group) }, slot.Group, slot.Collapsed);
@@ -506,6 +577,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
+        if (_ribbon.Popups.IsOpening(this)) return;
         var target = Hit(e.Location);
         _hot = target?.Element;
         _hotKind = target?.Element is null ? target?.Kind : null;
@@ -672,9 +744,27 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         _ribbon.ScreenTips.Cancel();
         if (_ribbon.Popups.Surfaces.Contains(this)) _ribbon.Popups.PrepareChoice(this);
         _bodyOffset = Math.Clamp(_bodyOffset + amount, 0, Math.Max(0, body.BodyExtent - body.BodyViewport.Width));
-        _bodyLayout = _ribbon.Engine.BuildBody(_ribbon, tab, _bodyWidth, _bodyOffset);
+        _bodyLayout = BuildTabBody(tab, _bodyWidth, _bodyOffset);
         _targets.Clear(); _targets.AddRange(_bodyLayout.Targets);
         _ribbon.SyncEditors(); Invalidate(); _ribbon.AccessibilityChanged();
+    }
+    private RibbonLayoutSnapshot BuildTabBody(RibbonTab tab, int width, int offset)
+    {
+        int S(int n) => RibbonLayoutEngine.Scale(n, _ribbon.DeviceDpi);
+        var margin = _ribbon.LayoutTheme.BodyMargin;
+        int horizontal = _ribbon.LayoutMode == RibbonLayoutMode.Simplified ? S(margin.Horizontal) : S(margin.Left) + S(margin.Right);
+        var body = _ribbon.Engine.BuildBody(_ribbon, tab, width + horizontal, offset, -S(margin.Top));
+        Rectangle Shift(Rectangle r) => r with { X = r.X - S(margin.Left) };
+        body.BodyBounds = Shift(body.BodyBounds); body.BodyFrameBounds = Shift(body.BodyFrameBounds); body.BodyViewport = Shift(body.BodyViewport);
+        for (int i = 0; i < body.Groups.Count; i++) body.Groups[i] = body.Groups[i] with { Bounds = Shift(body.Groups[i].Bounds), Frame = Shift(body.Groups[i].Frame) };
+        for (int i = 0; i < body.Targets.Count; i++) body.Targets[i] = body.Targets[i] with { Bounds = Shift(body.Targets[i].Bounds), Clip = Shift(body.Targets[i].Clip) };
+        for (int i = 0; i < body.SimplifiedDividers.Count; i++) body.SimplifiedDividers[i] = Shift(body.SimplifiedDividers[i]);
+        return body;
+    }
+    internal void RefreshSimplifiedBody()
+    {
+        if (OwnerElement is not RibbonTab tab || _bodyLayout is null) return;
+        _bodyLayout = BuildTabBody(tab, _bodyWidth, _bodyOffset); _targets.Clear(); _targets.AddRange(_bodyLayout.Targets); Invalidate();
     }
     protected override void OnMouseWheel(MouseEventArgs e)
     {

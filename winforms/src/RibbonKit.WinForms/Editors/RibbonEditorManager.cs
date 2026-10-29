@@ -122,6 +122,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
         private int _labelWidth, _choicesVersion = -1;
         private Rectangle _clip, _field;
         private bool _comboPressed;
+        private bool SimplifiedInline => _ribbon.LayoutMode == RibbonLayoutMode.Simplified && (ReferenceEquals(Parent, _ribbon) || Parent is RibbonPopupSurface { OwnerElement: RibbonTab });
         internal RibbonQuickAccessComboBoxReference? QuickReference { get; private set; }
         private Control? _quickOpener;
         private Rectangle _quickAnchor;
@@ -260,7 +261,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
                     Region = _ownedRegion = new Region(clip);
                     previous?.Dispose();
                 }
-                var field = _field = RibbonEditorLayout.Field(ClientRectangle, _item, _labelWidth, Font, _ribbon.DeviceDpi);
+                var field = _field = RibbonEditorLayout.Field(ClientRectangle, _item, _labelWidth, Font, _ribbon.DeviceDpi, SimplifiedInline);
                 if (_editor is NativeComboBox nativeCombo)
                 {
                     nativeCombo.ApplyMetrics();
@@ -571,7 +572,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
             var context = new RibbonPaintContext(e.Graphics, ClientRectangle, _ribbon.Theme, Font, _ribbon.DeviceDpi,
                 Hot: _item.EffectiveEnabled && _field.Contains(PointToClient(MousePosition)),
                 Pressed: _item.EffectiveEnabled && _comboPressed, Focused: _editor.ContainsFocus) { Density = _ribbon.Density };
-            var field = RibbonEditorLayout.Field(ClientRectangle, _item, _labelWidth, Font, _ribbon.DeviceDpi);
+            var field = RibbonEditorLayout.Field(ClientRectangle, _item, _labelWidth, Font, _ribbon.DeviceDpi, SimplifiedInline);
             if (_item is RibbonTextBoxItem text) _ribbon.Painter.DrawTextBox(context, text, field);
             else _ribbon.Painter.DrawComboBox(context, (RibbonComboBoxItem)_item, field);
         }

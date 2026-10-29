@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
@@ -13,7 +14,8 @@ internal static class BackstageInteractionChecks
     [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint hwnd);
     [DllImport("user32.dll")] private static extern void mouse_event(uint flags, uint x, uint y, uint data, nuint extra);
-    internal static int Run(string directory, bool flat = false, bool widthChecks = false)
+    [DllImport("user32.dll")] private static extern bool SystemParametersInfo(uint action, uint parameter, out bool value, uint flags);
+    internal static int Run(string directory, bool flat = false, bool widthChecks = false, bool motionChecks = false)
     {
         directory = Path.GetFullPath(directory); Directory.CreateDirectory(directory);
         WF.Application.SetHighDpiMode(WF.HighDpiMode.PerMonitorV2); WF.Application.EnableVisualStyles();
@@ -60,6 +62,7 @@ internal static class BackstageInteractionChecks
                 await Task.Yield(); form.Activate(); SetForegroundWindow(form.Handle);
                 for (int i = 0; i < 20 && GetForegroundWindow() != form.Handle; i++) await Task.Delay(50);
                 Guard(); document.Focus(); ribbon.Refresh();
+                if (motionChecks) { cancel = false; await CheckMotion(); completed = true; return; }
                 ribbon.FileMenu.ShowDropDown(); Check(!ribbon.IsBackstageOpen && closes == 0, "File cancellation prevents Backstage without a close event");
                 cancel = false; input.PerformClick(); var nativeInput = Tree(ribbon).OfType<WF.TextBox>().Single(); nativeInput.Text = "";
                 ribbon.FileMenu.ShowDropDown(); Check(!ribbon.IsBackstageOpen && nativeInput.Focused, "Pending ribbon editor validation blocks File");
@@ -137,6 +140,51 @@ internal static class BackstageInteractionChecks
             await Task.Delay(60); Guard(); using var bitmap = new Bitmap(form.Width, form.Height); using var g = Graphics.FromImage(bitmap);
             g.CopyFromScreen(form.Location, Point.Empty, bitmap.Size); bitmap.Save(Path.Combine(directory, name + ".png"));
         }
+        async Task CheckMotion()
+        {
+            if (!SystemParametersInfo(0x1042, 0, out bool enabled, 0) || !enabled) { log.Add("SKIP: OS client-area animations disabled; native playback was not forced."); return; }
+            await Task.Delay(250); nint handle = 0; WF.Control? parent = null;
+            foreach (var level in new[] { RibbonAnimationLevel.Subtle, RibbonAnimationLevel.Expressive })
+            {
+                ribbon.AnimationLevel = RibbonAnimationLevel.None; ribbon.Density = level == RibbonAnimationLevel.Subtle ? RibbonDensity.Compact : RibbonDensity.Touch; ribbon.IsMinimized = level == RibbonAnimationLevel.Expressive; ribbon.AnimationLevel = level; ribbon.Refresh();
+                await QuickClick(ribbon, record.File); Check(ribbon.IsBackstageOpen && ribbon.IsAnimating, level + " File input starts navigation opening");
+                var overlay = info.Parent!.Parent!.Parent!; if (handle == 0) { handle = field.Handle; parent = info.Parent; }
+                Check(info.Visible && field.Handle == handle && ReferenceEquals(parent, info.Parent) && state.Name == field.Text, level + " application page is live with retained HWND/parent/binding");
+                var page = info.RectangleToScreen(info.ClientRectangle); var client = overlay.RectangleToScreen(overlay.ClientRectangle); int navigation = info.Parent!.Parent!.Left;
+                await Task.Delay(20); using var first = Frame(client); using var livePage = Frame(page); var deadline = Stopwatch.StartNew();
+                await Task.Delay(30); using (var middle = Frame(client)) middle.Save(Path.Combine(directory, level + "-middle.png"));
+                while (ribbon.IsAnimating && deadline.ElapsedMilliseconds < 1500) await Task.Delay(3);
+                Check(!ribbon.IsAnimating && ribbon.IsBackstageOpen, level + " navigation completes without a host acknowledgement"); using var final = Frame(client); using var finalPage = Frame(page);
+                Check(Different(first, final, new(0, 0, navigation, first.Height)), level + " navigation visibly changes during opening");
+                Check(Different(livePage, finalPage, new(Point.Empty, livePage.Size)), level + " live application page visibly fades without moving its controls");
+                Check(FadedText(livePage, finalPage), level + " intermediate page contains faded native text rather than a blank host");
+                Check(field.Handle == handle && info.Parent == parent && ribbon.SelectedTab == home && ribbon.IsMinimized == (level == RibbonAnimationLevel.Expressive), level + " tab/minimized and native content state are retained");
+                Check(GetForegroundWindow() == form.Handle, level + " inert drawing never activates"); first.Save(Path.Combine(directory, level + "-first.png")); final.Save(Path.Combine(directory, level + "-final.png"));
+                await QuickClick(Button("Back")); Check(ribbon.IsBackstageOpen && ribbon.IsAnimating, "Back starts a validated closing fade");
+                using (var closing = Frame(client)) closing.Save(Path.Combine(directory, level + "-closing-first.png")); await Task.Delay(30); using (var closing = Frame(client)) closing.Save(Path.Combine(directory, level + "-closing-middle.png")); await FinishMotion();
+                Check(!ribbon.IsBackstageOpen && !ribbon.IsAnimating, "Closing completes autonomously"); using (var closed = Frame(client)) closed.Save(Path.Combine(directory, level + "-closed.png"));
+            }
+            ribbon.AnimationLevel = RibbonAnimationLevel.Expressive; await QuickClick(ribbon, record.File); Check(ribbon.IsAnimating, "Page input begins during opening");
+            await QuickClick(field); Check(!ribbon.IsAnimating && field.Focused, "Native field input settles navigation without losing focus"); await Key("^aUpdated title"); Check(state.Name == "Updated title" && field.Handle == handle, "Native text and binding update normally");
+            await QuickClick(Button("Print")); Check(ribbon.Backstage.SelectedPage == b && print.Visible && info.Parent == parent && ribbon.IsAnimating, "Page selection fades and preserves the borrowed parent"); await Task.Delay(25); using (var switching = Frame(form.RectangleToScreen(form.ClientRectangle))) switching.Save(Path.Combine(directory, "page-switch.png")); await FinishMotion(); await Key("{ESC}"); await FinishMotion();
+            ribbon.Backstage.SelectedPage = a; await QuickClick(ribbon, record.File); await QuickClick(field); await Key("^a{BACKSPACE}"); await Key("{ESC}"); Check(ribbon.IsBackstageOpen && !ribbon.IsAnimating, "Invalid native page still blocks closing");
+            await Key("Accepted title"); await Key("{ESC}"); await FinishMotion(); Check(!ribbon.IsBackstageOpen && state.Name == "Accepted title", "A valid page closes normally");
+            document.Focus(); WF.SendKeys.SendWait("{F10}f"); await Task.Delay(15); Check(ribbon.IsBackstageOpen && ribbon.IsAnimating, "File KeyTip starts the same opening path"); WF.SendKeys.SendWait("p"); await Task.Delay(25); Check(ribbon.Backstage.SelectedPage == b && ribbon.IsAnimating, "A Backstage KeyTip selects and fades its page during opening"); await FinishMotion(); await Key("{ESC}"); await FinishMotion();
+            ribbon.Backstage.SelectedPage = a; await QuickClick(ribbon, record.File); Check(ribbon.IsAnimating, "Resize begins during opening"); form.Width -= 25; Check(!ribbon.IsAnimating && ribbon.IsBackstageOpen, "Resize settles while keeping Backstage open"); await Key("{ESC}"); await FinishMotion();
+            await QuickClick(ribbon, record.File); await QuickClick(Button("Save")); Check(calls == 1 && !ribbon.IsBackstageOpen && !ribbon.IsAnimating, "Backstage command closes synchronously before application work");
+            await QuickClick(ribbon, record.File); WF.SendKeys.SendWait("{ESC}"); Check(ribbon.IsAnimating, "Alt+F4 test begins during closing"); int hostCloses = 0; WF.FormClosingEventHandler cancelHost = (_, e) => { hostCloses++; e.Cancel = true; }; form.FormClosing += cancelHost;
+            WF.SendKeys.SendWait("%{F4}"); await Task.Delay(60); Check(hostCloses == 1 && !ribbon.IsBackstageOpen && !ribbon.IsAnimating, "Alt+F4 during closing still reaches the cancellable host once"); form.FormClosing -= cancelHost;
+            ribbon.AnimationLevel = RibbonAnimationLevel.None; await QuickClick(ribbon, record.File); Check(ribbon.IsBackstageOpen && !ribbon.IsAnimating, "None keeps Backstage immediate"); await Key("{ESC}");
+            log.Add($"PASS: public Backstage navigation/page opening and closing motion, Subtle/Expressive, Compact/Touch, native input/validation/KeyTips/resize and retained live application controls; DPI={ribbon.DeviceDpi}; renderer={(flat ? "neutral" : "Office2024")}");
+        }
+        async Task FinishMotion() { var deadline = Stopwatch.StartNew(); while (ribbon.IsAnimating && deadline.ElapsedMilliseconds < 2000) await Task.Delay(3); Check(!ribbon.IsAnimating, "Library completes motion without host acknowledgement"); }
+        async Task QuickClick(WF.Control control, Rectangle? bounds = null)
+        {
+            Guard(); var r = bounds ?? control.ClientRectangle; Check(!r.IsEmpty && control.Visible, "Motion pointer target is visible"); WF.Cursor.Position = control.PointToScreen(new(r.Left + r.Width / 2, r.Top + r.Height / 2)); await Task.Delay(20); mouse_event(2, 0, 0, 0, 0); mouse_event(4, 0, 0, 0, 0); await Task.Delay(15);
+        }
+        static Bitmap Frame(Rectangle bounds) { var image = new Bitmap(bounds.Width, bounds.Height); using var g = Graphics.FromImage(image); g.CopyFromScreen(bounds.Location, Point.Empty, image.Size); return image; }
+        static bool Different(Bitmap first, Bitmap last, Rectangle area) { for (int y = area.Top; y < area.Bottom; y++) for (int x = area.Left; x < area.Right; x++) if (first.GetPixel(x, y) != last.GetPixel(x, y)) return true; return false; }
+        static bool FadedText(Bitmap first, Bitmap last) { for (int y = 0; y < Math.Min(90, first.Height); y++) for (int x = 0; x < Math.Min(600, first.Width); x++) { var end = last.GetPixel(x, y); var start = first.GetPixel(x, y); if (end.R < 30 && end.G < 30 && end.B < 30 && start.R is > 40 and < 235 && Math.Abs(start.R - start.G) < 3 && Math.Abs(start.B - start.G) < 3) return true; } return false; }
         async Task CheckWidths(WF.Control overlay)
         {
             int S(int value) => (int)Math.Round(value * form.DeviceDpi / 96d);

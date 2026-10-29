@@ -47,6 +47,11 @@ Commands opt into authored defaults through `SimplifiedPlacement = Inline`;
 default; layout mode and Compact/Touch density are independent. The host owns
 appearance persistence. More Commands keeps displaced commands and every visible
 group accessible, including native editors that are not supported inline.
+It sits at the body's right inset when the row fits. While a full-group popup
+borrows its controls, that group's inline commands become one medium group button;
+closing it restores the live commands and their latest values. This temporary
+presentation does not alter customization. Simplified inline ComboBox fields use
+a slightly taller minimum within the existing row.
 
 Custom groups have a shared name/icon/layout dialog in both customization pages.
 `RibbonCustomizationGroup.IconCommandId` borrows artwork from a catalog command;
@@ -127,15 +132,25 @@ This animates individual Classic/Simplified, Compact/Touch, TabRow/BelowRibbon
 QAT changes, minimize/restore and expanded tab selection by pointer, keyboard or
 the matching properties. Minimize/restore reveals or retracts opaque natural-size
 body drawings while the QAT and message frame follow the changing edge. It uses
-180 ms for Subtle and 252 ms for Expressive; temporary minimized-tab popups remain
-immediate. The chevron shows the committed state throughout the effect.
+180 ms for Subtle and 252 ms for Expressive. Temporary minimized-tab popups use
+the opening effect below. The chevron shows the committed state throughout the effect.
 The active Office indicator follows header geometry during playback. Expressive
 adds a gentle horizontal spring before the pill settles; Subtle keeps a bounded
 ease-out. Hovered unselected tabs use themed grey. The library commits real layout once and owns the inert drawings and
 completion. System-disabled client animations, startup, batch updates and unsafe
 presentation contexts keep immediate changes. Input and interruption settle the
-latest committed state. `IsAnimating` reports the drawing phase. Application
+latest committed state. `IsAnimating` reports geometry, group, message-panel, popup and Backstage/page motion. Application
 content currently reflows immediately; optional host synchronization is next work.
+
+Adaptive Classic group collapse/restore and Simplified inline overflow/return also
+animate. While a Simplified full-group popup borrows its controls, the temporary
+medium group button uses the same effect, including in a minimized tab body.
+The existing `TabContentAnimation` selector applies: Fade crossfades group content;
+SlideDown uses horizontal leftward collapse and rightward restoration for groups.
+Subtle uses 150 ms / 12 logical pixels; Expressive uses 210 ms / 20. Text/icons keep
+their natural size and real controls commit once. Continued width changes update
+the arrival drawing; input, policy/style changes, hiding and disposal settle it.
+Group presentation does not change customization JSON or native editor ownership.
 
 Layered child presentation requires a Windows 8-or-later compatibility declaration
 in the application's manifest; the sample's `app.manifest` supplies a Windows 10
@@ -146,7 +161,40 @@ acceptance; see the M6A plan for measured costs and pending gates.
 Custom renderers can override `GetTabIndicatorBounds` and `DrawTabIndicator` to
 participate in live and animated tab indicators. The former receives full tab
 header bounds; the latter receives the measured indicator rectangle. Neutral
-defaults to no separate indicator. Minimized-tab popup activation remains immediate.
+defaults to no separate indicator.
+
+Command menus, gallery popups, QAT/group flyouts and temporary minimized-tab bodies
+also use `AnimationLevel`. Their real frame, rounded clip, anchor and shadow stay
+fixed while natural-size contents fade and slide down: 130 ms / 8 logical pixels
+for Subtle, 182 ms / 12 for Expressive. Pointer/keyboard input settles the drawing
+before normal interaction. Command-menu closing and native ComboBox choices remain immediate.
+This opening style is independent of `TabContentAnimation`.
+
+A minimized tab's temporary body keeps the ribbon's side margins and opens just
+below the tabs, overlaying a lower QAT and messages. An outside click releases the
+real popup/editors immediately and fades/slides an inert drawing away over
+130/182 ms. The clicked application control receives focus and input normally.
+None, system policy and update batches retain immediate dismissal; a new request,
+resize, movement, deactivation or disposal releases the outgoing drawing.
+
+Backstage navigation fades and slides in from the left, using 220 ms / 28 logical
+pixels for Subtle and 308 ms / 50 for Expressive. Application pages also fade on
+opening and page selection, using native opacity over an opaque Backstage
+background. They stay live at their final bounds and are never captured as bitmaps.
+Back/Escape and visibility requests fade out Backstage after validation accepts
+closing. `IsBackstageOpen` stays true until completion, then the normal close events
+and focus restoration run once. Reopening cancels a pending close; new input can
+finish it without activating the outgoing page. Command, mode and modal transitions
+close immediately. None preserves immediate behavior throughout.
+
+Message arrivals, reopening, dismissal, removal and Clear also use the same level:
+160 ms for Subtle or 224 ms for Expressive. Rows reveal/retract at natural size;
+remaining rows move into place, and body/QAT joins follow the visible panel edge.
+Minimized layouts with a TabRow or hidden QAT retain a standalone message card.
+Message state, ribbon height and callbacks commit immediately, independently of
+the drawing. Same-direction changes before the first frame share one transition;
+opposite/repeated requests settle to the latest state. Startup, update batches,
+disposal, caption edits and collection replacements remain immediate.
 
 Showcase's **View → Ribbon animation** group selects None, Subtle or Expressive.
 Its **Tab content** menu chooses Fade or Slide down. Slide down moves the arriving

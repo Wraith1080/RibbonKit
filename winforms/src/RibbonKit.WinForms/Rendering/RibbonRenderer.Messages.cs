@@ -5,6 +5,7 @@ namespace RibbonKit.WinForms;
 
 public partial class RibbonRenderer
 {
+    internal virtual bool PaintConnectedMessageShadow(RibbonPaintContext context, Rectangle upper, Rectangle messages) => false;
     /// <summary>Gets whether message frames use body margins and connect to its/QAT's lower edge. Neutral rendering keeps a separate full-width stack.</summary>
     public virtual bool JoinMessageBarToBody => false;
     /// <summary>Paints the measured message stack frame; IsTopEdgeConnected distinguishes attached from standalone presentations.</summary>

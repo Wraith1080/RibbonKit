@@ -8,6 +8,16 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--validate-group-fade" or "--validate-group-fade-flat")
+            return GroupMotionInteractionChecks.Run(args[1], args[0] == "--validate-group-fade-flat", true);
+        if (args.Length == 2 && args[0] is "--validate-group-motion" or "--validate-group-motion-flat")
+            return GroupMotionInteractionChecks.Run(args[1], args[0] == "--validate-group-motion-flat");
+        if (args.Length == 2 && args[0] is "--validate-backstage-motion" or "--validate-backstage-motion-flat")
+            return BackstageInteractionChecks.Run(args[1], args[0] == "--validate-backstage-motion-flat", motionChecks: true);
+        if (args.Length == 2 && args[0] is "--validate-popup-motion-input" or "--validate-popup-motion-input-flat")
+            return PopupMotionInteractionChecks.Run(args[1], args[0] == "--validate-popup-motion-input-flat", true);
+        if (args.Length == 2 && args[0] is "--validate-popup-motion" or "--validate-popup-motion-flat")
+            return PopupMotionInteractionChecks.Run(args[1], args[0] == "--validate-popup-motion-flat");
         if (args.Length == 2 && args[0] is "--validate-minimize-motion" or "--validate-minimize-motion-flat")
             return GeometryMotionInteractionChecks.Run(args[1], args[0] == "--validate-minimize-motion-flat", minimizeOnly: true);
         if (args.Length == 2 && args[0] == "--validate-expressive-pill")
@@ -88,6 +98,14 @@ internal static class Program
             return SplitInteractionChecks.Run(args[1], args[0] == "--validate-touch-split-flat", true);
         if (args.Length == 2 && args[0] is "--validate-messages" or "--validate-messages-flat")
             return MessageInteractionChecks.Run(args[1], args[0] == "--validate-messages-flat");
+        if (args.Length == 2 && args[0] is "--validate-message-motion" or "--validate-message-motion-flat")
+            return MessageInteractionChecks.Run(args[1], args[0] == "--validate-message-motion-flat", true);
+        if (args.Length == 2 && args[0] is "--validate-pre-m6b-review" or "--validate-pre-m6b-review-flat")
+            return PreM6BReviewChecks.Run(args[1], args[0] == "--validate-pre-m6b-review-flat");
+        if (args.Length == 2 && args[0] is "--validate-customization-alignment" or "--validate-customization-alignment-flat")
+            return PreM6BReviewChecks.Run(args[1], args[0] == "--validate-customization-alignment-flat", optionsOnly: true);
+        if (args.Length == 2 && args[0] is "--validate-review-followup" or "--validate-review-followup-flat")
+            return ReviewFollowupChecks.Run(args[1], args[0] == "--validate-review-followup-flat");
         if (args.Length == 2 && args[0] is "--validate-customization" or "--validate-customization-flat")
             return CustomizationInteractionChecks.Run(args[1], args[0] == "--validate-customization-flat");
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);

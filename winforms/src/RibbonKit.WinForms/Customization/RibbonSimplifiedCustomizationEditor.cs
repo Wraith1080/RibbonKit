@@ -7,6 +7,7 @@ namespace RibbonKit.WinForms;
 public sealed partial class RibbonSimplifiedCustomizationEditor : UserControl
 {
     private readonly RibbonControl _ribbon;
+    private readonly RibbonCustomizationColumns _panes;
     private readonly ComboBox _sourceTab, _targetTab;
     private readonly ListBox _available = List("SimplifiedAvailableCommands", "Available commands grouped by source"), _current = List("SimplifiedSelectedCommands", "Simplified commands grouped by source");
     private readonly TextBox _search = Search("SimplifiedAvailableSearch", "Search commands"), _currentSearch = Search("SimplifiedSelectedSearch", "Search selected commands");
@@ -41,13 +42,13 @@ public sealed partial class RibbonSimplifiedCustomizationEditor : UserControl
         _new = Button("SimplifiedNew", "New ▾", () => OpenActions(_new!, "New")); _edit = Button("SimplifiedEdit", "Edit… ▾", () => OpenActions(_edit!, "Edit"));
         _import = Button("SimplifiedImport", "", () => ImportRequested?.Invoke(this, EventArgs.Empty)); _import.AccessibleName = "Import customization profile";
         _export = Button("SimplifiedExport", "", () => ExportRequested?.Invoke(this, EventArgs.Empty)); _export.AccessibleName = "Export customization profile";
-        var panes = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 4, RowCount = 5, Margin = Padding.Empty };
-        panes.ColumnStyles.Add(new(SizeType.Percent, 50)); panes.ColumnStyles.Add(new(SizeType.AutoSize)); panes.ColumnStyles.Add(new(SizeType.Percent, 50)); panes.ColumnStyles.Add(new(SizeType.AutoSize));
+        var panes = _panes = new RibbonCustomizationColumns { RowCount = 5 };
         for (int i = 0; i < 5; i++) panes.RowStyles.Add(new(i == 3 ? SizeType.Percent : SizeType.AutoSize, i == 3 ? 100 : 0));
         panes.Controls.Add(new Label { Text = "Choose commands from the ribbon:", AutoSize = true, Dock = DockStyle.Fill, Margin = Padding.Empty }, 0, 0);
         panes.Controls.Add(new Label { Text = "Customize the ribbon:", AutoSize = true, Dock = DockStyle.Fill, Margin = Padding.Empty }, 2, 0);
         panes.Controls.Add(_sourceTab, 0, 1); panes.Controls.Add(_targetTab, 2, 1); panes.Controls.Add(_leftSearch, 0, 2); panes.Controls.Add(_rightSearch, 2, 2);
-        panes.Controls.Add(_left, 0, 3); panes.Controls.Add(Flow(true, _add, _remove), 1, 3); panes.Controls.Add(_right, 2, 3); panes.Controls.Add(Flow(true, _up, _down), 3, 3);
+        panes.Controls.Add(_left, 0, 3); panes.AddActions(1, 3, _add, _remove);
+        panes.Controls.Add(_right, 2, 3); panes.AddActions(3, 3, _up, _down);
         var leftActions = Flow(false, _reset, _import, _export); leftActions.Anchor = AnchorStyles.Left | AnchorStyles.Top;
         var rightActions = Flow(false, _new, _edit); rightActions.Anchor = AnchorStyles.Left | AnchorStyles.Top;
         panes.Controls.Add(leftActions, 0, 4); panes.Controls.Add(rightActions, 2, 4);
@@ -204,6 +205,7 @@ public sealed partial class RibbonSimplifiedCustomizationEditor : UserControl
     private void UpdateMetrics()
     {
         if (_ribbon is null || _edit is null) return; SuspendLayout(); int gap = S(8), height = RibbonQuickAccessEditorMetrics.ButtonHeight(DeviceDpi, Font.Height, _ribbon.Density);
+        _panes.UpdateMetrics(DeviceDpi, Font, _ribbon.Density);
         _headerFont = new(Font, FontStyle.Bold); _fonts.Add(_headerFont); MinimumSize = PageMinimum;
         _available.ItemHeight = _current.ItemHeight = RibbonQuickAccessEditorMetrics.RowHeight(DeviceDpi, Font.Height, _ribbon.Density);
         foreach (var combo in new[] { _sourceTab, _targetTab }) { combo.ItemHeight = Math.Max(Font.Height + S(4), height - S(6)); combo.Margin = new(0, gap, 0, 0); combo.BackColor = _ribbon.Theme.Surface; combo.ForeColor = _ribbon.Theme.Foreground; }
@@ -212,7 +214,7 @@ public sealed partial class RibbonSimplifiedCustomizationEditor : UserControl
         foreach (var button in new[] { _add, _remove, _up, _down, _reset, _import, _export, _new, _edit }) { button.MinimumSize = new(S(button == _up || button == _down ? 40 : button == _import || button == _export ? 28 : 86), height); button.Margin = new(gap / 2); }
         foreach (var button in new[] { _reset, _import, _export, _new, _edit }) button.Margin = new(0, gap, gap, 0);
         _import.Image = _export.Image = null; _importIcon?.Dispose(); _exportIcon?.Dispose();
-        _import.Image = _importIcon = RibbonOptionsTransferIcons.Image(_ribbon, S(_ribbon.Density == RibbonDensity.Touch ? 24 : 20), true); _export.Image = _exportIcon = RibbonOptionsTransferIcons.Image(_ribbon, S(_ribbon.Density == RibbonDensity.Touch ? 24 : 20), false);
+        _import.Image = _importIcon = RibbonOptionsTransferIcons.Image(_ribbon, S(_ribbon.Density == RibbonDensity.Touch ? 24 : 20), false); _export.Image = _exportIcon = RibbonOptionsTransferIcons.Image(_ribbon, S(_ribbon.Density == RibbonDensity.Touch ? 24 : 20), true);
         _available.BackColor = _current.BackColor = _ribbon.Theme.Surface; _available.ForeColor = _current.ForeColor = _ribbon.Theme.Foreground;
         foreach (var frame in new[] { _left, _right, _leftSearch, _rightSearch }) frame.RefreshAppearance(); ResumeLayout(true);
     }

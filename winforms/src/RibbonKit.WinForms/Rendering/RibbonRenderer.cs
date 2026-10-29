@@ -37,19 +37,7 @@ public partial class RibbonRenderer : IDisposable
     }
     /// <summary>Paints a measured horizontal tab-strip or command-body scroll button.</summary>
     public virtual void DrawScrollButton(RibbonPaintContext context, bool backward)
-    {
-        if (context.IsBodyScrollButton)
-        {
-            DrawBodyScrollButton(context, backward);
-            return;
-        }
-        else
-        {
-            using var brush = new SolidBrush(context.Theme.Background);
-            context.Graphics.FillRectangle(brush, context.Bounds);
-        }
-        DrawText(context, backward ? "‹" : "›", context.Theme.Foreground, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-    }
+        => DrawBodyScrollButton(context, backward);
     internal void DrawBodyScrollButton(RibbonPaintContext context, bool backward)
     {
         DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : new(context.Theme.Surface),
@@ -318,6 +306,22 @@ public partial class RibbonRenderer : IDisposable
     public virtual void DrawGroup(RibbonPaintContext context, RibbonGroup group, bool collapsed)
     {
         context = EnabledContext(context, group.EffectiveEnabled);
+        if (context.IsSimplifiedGroup)
+        {
+            bool open = group.Ribbon?.Popups.BorrowsGroup(group) == true;
+            if (open || context.Hot || context.Pressed) DrawChrome(context, open || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, context.Theme.Border);
+            int S(int n) => RibbonLayoutEngine.Scale(n, context.DeviceDpi);
+            var color = group.EffectiveEnabled ? context.Theme.Foreground : SystemColors.GrayText;
+            var text = Rectangle.Inflate(context.Bounds, -S(6), 0); int arrow = Math.Min(text.Width, S(16));
+            if (group.Icon is { } icon)
+            {
+                int side = Math.Min(S(24), text.Height); icon.Draw(context.Graphics, new(text.Left, text.Top + (text.Height - side) / 2, side, side), new(context.DeviceDpi, color, group.EffectiveEnabled));
+                text.X += side + S(6); text.Width = Math.Max(0, text.Width - side - S(6));
+            }
+            DrawDropDownArrow(context with { Bounds = new(text.Right - arrow, text.Top, arrow, text.Height) }, color); text.Width = Math.Max(0, text.Width - arrow);
+            DrawText(context with { Bounds = text }, group.DisplayText, color, TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
+            if (context.Focused) DrawFocus(context); return;
+        }
         if (collapsed)
         {
             bool open = group.EffectiveEnabled && group.Ribbon?.Popups.IsExpanded(group) == true;
@@ -623,6 +627,7 @@ public partial class RibbonRenderer : IDisposable
         _rounded.Draw(context.Graphics, context.Bounds, radius, fill, border, stroke, context.IsTopEdgeConnected, context.IsBottomEdgeConnected);
     internal void PaintShadow(RibbonPaintContext context, int radius)
     {
+        if (context.SuppressShadow) return;
         var bounds = context.Bounds;
         bounds.Offset(0, RibbonLayoutEngine.Scale(2, context.DeviceDpi));
         var saved = context.Graphics.Save();

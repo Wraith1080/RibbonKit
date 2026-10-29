@@ -19,6 +19,11 @@ internal sealed class RibbonMotionScene : IDisposable
     internal readonly RibbonTab? ActiveTab;
     internal readonly Rectangle TabViewport;
     internal readonly Dictionary<RibbonTab, Rectangle> Headers;
+    internal readonly Dictionary<RibbonMessage, MessageRow> MessageRows;
+    internal readonly record struct MessageRow(Rectangle Bounds, Rectangle Content);
+    private readonly record struct MessageTrack(RibbonMotionScene Scene, MessageRow Row, Rectangle From, Rectangle To, bool Arriving, bool Leaving);
+    private RibbonMotionScene? _messageDeparture;
+    private MessageTrack[] _messageTracks = [];
     private RibbonMotionScene? _headerDeparture;
     private HeaderTrack[] _headerTracks = [];
     internal readonly record struct HeaderTrack(Rectangle Bounds, bool Arriving);
@@ -27,6 +32,13 @@ internal sealed class RibbonMotionScene : IDisposable
         var snapshot = ribbon.Snapshot; Dpi = ribbon.DeviceDpi; Bounds = ribbon.RectangleToScreen(ribbon.ClientRectangle);
         Header = new(0, 0, ribbon.Width, RibbonLayoutEngine.Scale(ribbon.LayoutTheme.TabHeight, Dpi));
         Body = snapshot.BodyBounds; Frame = snapshot.BodyFrameBounds; Qat = snapshot.QuickAccessBounds; Messages = snapshot.MessageBounds;
+        MessageRows = snapshot.Messages.ToDictionary(row => row.Message, row =>
+        {
+            var content = Rectangle.Empty;
+            foreach (var slot in new[] { row.Title, row.Text, row.Icon, row.Action, row.Close })
+                if (slot.Width > 0 && slot.Height > 0) content = content.IsEmpty ? slot : Rectangle.Union(content, slot);
+            return new MessageRow(row.Bounds, Rectangle.Intersect(row.Bounds, content));
+        });
         var strip = snapshot.Targets.Where(t => (t.Kind is TargetKind.QuickAccess or TargetKind.QuickAccessOverflow) && t.Element is not RibbonSimplifiedMore).Select(t => t.VisibleBounds).Where(b => !b.IsEmpty).ToArray();
         Strip = strip.Length == 0 ? Rectangle.Empty : strip.Aggregate(Rectangle.Union);
         Placement = ribbon.QuickAccessPosition; Joined = ribbon.JoinBelowRibbonQuickAccess && !Body.IsEmpty; BottomConnected = ribbon.MotionBottomConnected;
@@ -45,21 +57,48 @@ internal sealed class RibbonMotionScene : IDisposable
         bool previous = ribbon.CapturingMotionIndicators; ribbon.CapturingMotionIndicators = true;
         try
         {
-            PrintClient(ribbon, Image); using var graphics = Graphics.FromImage(Image);
-            foreach (Control child in ribbon.Controls)
-            {
-                if (!child.Visible || child.Width < 1 || child.Height < 1 || ribbon.Editors.PaintMotionScene(child, graphics)) continue;
-                using var image = new Bitmap(child.Width, child.Height, PixelFormat.Format24bppRgb);
-                child.DrawToBitmap(image, new(Point.Empty, image.Size)); var saved = graphics.Save();
-                try { graphics.TranslateTransform(child.Left, child.Top); if (child.Region is { } region) graphics.SetClip(region, CombineMode.Intersect); graphics.DrawImageUnscaled(image, Point.Empty); }
-                finally { graphics.Restore(saved); }
-            }
+            Capture(ribbon, ribbon, Image);
         }
         catch { Image.Dispose(); throw; }
         finally { ribbon.CapturingMotionIndicators = previous; }
     }
     public void Dispose() => Image.Dispose();
+    internal static void Capture(RibbonControl ribbon, Control surface, Bitmap image)
+    {
+        PrintClient(surface, image); CaptureChildren(ribbon, surface.Controls.Cast<Control>(), image);
+    }
+    internal static void CaptureChildren(RibbonControl ribbon, IEnumerable<Control> children, Bitmap image)
+    {
+        using var graphics = Graphics.FromImage(image);
+        foreach (Control child in children)
+        {
+            if (!child.Visible || child.Width < 1 || child.Height < 1 || ribbon.Editors.PaintMotionScene(child, graphics)) continue;
+            using var childImage = new Bitmap(child.Width, child.Height, PixelFormat.Format24bppRgb);
+            child.DrawToBitmap(childImage, new(Point.Empty, childImage.Size)); var saved = graphics.Save();
+            try { graphics.TranslateTransform(child.Left, child.Top); if (child.Region is { } region) graphics.SetClip(region, CombineMode.Intersect); graphics.DrawImageUnscaled(childImage, Point.Empty); }
+            finally { graphics.Restore(saved); }
+        }
+    }
     internal bool HasHeaderArrivals(RibbonControl ribbon) => ribbon.Snapshot.Targets.Any(t => t.Kind == TargetKind.Tab && t.Element is RibbonTab tab && !Headers.ContainsKey(tab) && t.VisibleBounds.Width > 0 && t.VisibleBounds.Height > 0);
+    internal bool HasMessageChanges(RibbonControl ribbon) => ribbon.Snapshot.Messages.Count != MessageRows.Count || ribbon.Snapshot.Messages.Any(row => !MessageRows.ContainsKey(row.Message));
+    private MessageTrack[] MessageTracksFrom(RibbonMotionScene from)
+    {
+        if (ReferenceEquals(_messageDeparture, from)) return _messageTracks;
+        _messageDeparture = from;
+        if (MessageRows.Count == from.MessageRows.Count && MessageRows.Keys.All(from.MessageRows.ContainsKey)) return _messageTracks = [];
+        var tracks = new List<MessageTrack>();
+        int removedBefore = 0;
+        foreach (var (message, row) in from.MessageRows)
+            if (!MessageRows.ContainsKey(message)) { tracks.Add(new(from, row, row.Bounds, row.Bounds with { Y = row.Bounds.Y - removedBefore, Height = 0 }, false, true)); removedBefore += row.Bounds.Height; }
+        int addedBefore = 0;
+        foreach (var (message, row) in MessageRows)
+        {
+            bool arriving = !from.MessageRows.TryGetValue(message, out var old);
+            tracks.Add(new(this, row, arriving ? row.Bounds with { Y = row.Bounds.Y - addedBefore, Height = 0 } : old.Bounds, row.Bounds, arriving, false));
+            if (arriving) addedBefore += row.Bounds.Height;
+        }
+        return _messageTracks = tracks.ToArray();
+    }
     private HeaderTrack[] HeaderTracksFrom(RibbonMotionScene from)
     {
         if (ReferenceEquals(_headerDeparture, from)) return _headerTracks;
@@ -91,20 +130,31 @@ internal sealed class RibbonMotionScene : IDisposable
         double p = 1 - remaining * remaining * remaining;
         bool slideTab = ribbon.TabContentAnimation == RibbonTabContentAnimation.SlideDown && from.ActiveTab is not null && to.ActiveTab is not null && !ReferenceEquals(from.ActiveTab, to.ActiveTab);
         var headerTracks = to.HeaderTracksFrom(from);
+        var messageTracks = to.MessageTracksFrom(from); bool messages = messageTracks.Length > 0;
         bool minimize = from.Minimized != to.Minimized;
         Rectangle Local(Rectangle screen) => new(screen.X - canvas.X, screen.Y - canvas.Y, screen.Width, screen.Height);
         Rectangle Interpolate(Rectangle old, Rectangle next) => Local(Between(At(old, from.Bounds), At(next, to.Bounds), p));
         var expandedBody = from.Minimized ? to.Body : from.Body;
         var body = minimize ? Interpolate(from.Body.IsEmpty ? expandedBody with { Height = 0 } : from.Body, to.Body.IsEmpty ? expandedBody with { Height = 0 } : to.Body) : Rectangle.Empty;
         var occupied = Local(Between(from.Bounds, to.Bounds, p));
+        var messageFrame = messages ? Interpolate(from.Messages.IsEmpty ? to.Messages with { Height = 0 } : from.Messages, to.Messages.IsEmpty ? from.Messages with { Height = 0 } : to.Messages) : Rectangle.Empty;
         using (var background = new SolidBrush(ribbon.Theme.Background)) graphics.FillRectangle(background, occupied);
         var belowFrom = from.Placement == RibbonQuickAccessPosition.BelowRibbon && !from.Qat.IsEmpty;
         var belowTo = to.Placement == RibbonQuickAccessPosition.BelowRibbon && !to.Qat.IsEmpty;
         bool joined = minimize ? body.Height > 0 && (from.Joined || to.Joined) : to.Joined || from.Joined;
-        bool connected = minimize ? (from.BottomConnected || to.BottomConnected) && (body.Height > 0 || belowTo && ribbon.JoinBelowRibbonQuickAccess) : to.BottomConnected;
+        bool connected = messages ? messageFrame.Height > 0 && (from.BottomConnected || to.BottomConnected) : minimize ? (from.BottomConnected || to.BottomConnected) && (body.Height > 0 || belowTo && ribbon.JoinBelowRibbonQuickAccess) : to.BottomConnected;
         var context = new RibbonPaintContext(graphics, occupied, ribbon.Theme, ribbon.Font, to.Dpi) { Density = ribbon.Density, IsBottomEdgeConnected = connected };
+        if (connected)
+        {
+            var panel = messages ? messageFrame : Interpolate(from.Messages, to.Messages);
+            var upper = minimize ? body : Interpolate(from.Frame, to.Frame);
+            if (belowFrom || belowTo) { var qat = Interpolate(from.Qat, to.Qat); upper = upper.IsEmpty ? qat : Rectangle.Union(upper, qat); }
+            if (!upper.IsEmpty && !panel.IsEmpty && ribbon.Painter.PaintConnectedMessageShadow(context, upper, panel)) context = context with { SuppressShadow = true };
+        }
+        if (messages && messageFrame.Width > 0 && messageFrame.Height > 0)
+            ribbon.Painter.DrawMessageBar(context with { Bounds = messageFrame, IsTopEdgeConnected = connected, IsBottomEdgeConnected = false });
         if (minimize && !from.Messages.IsEmpty && !to.Messages.IsEmpty)
-            ribbon.Painter.DrawMessageBar(context with { Bounds = Interpolate(from.Messages, to.Messages), IsTopEdgeConnected = connected });
+            ribbon.Painter.DrawMessageBar(context with { Bounds = Interpolate(from.Messages, to.Messages), IsTopEdgeConnected = connected, IsBottomEdgeConnected = false });
         if (minimize)
         {
             if (body.Width > 0 && body.Height > 0)
@@ -121,6 +171,25 @@ internal sealed class RibbonMotionScene : IDisposable
         // Keep the departure opaque beneath the arriving image. Fading both
         // with source-over changes the weight of identical overlapping glyphs.
         Draw(from, to, 1); Draw(to, from, p);
+        if (messages && messageFrame.Width > 2 && messageFrame.Height > 2)
+        {
+            var interior = Rectangle.Inflate(messageFrame, -1, -1);
+            foreach (var track in messageTracks)
+            {
+                var row = Interpolate(track.From, track.To); var clip = Rectangle.Intersect(interior, row);
+                if (clip.Width <= 0 || clip.Height <= 0) continue;
+                var crop = track.Row.Content; if (crop.Width <= 0 || crop.Height <= 0) continue;
+                double opacity = track.Arriving ? p : track.Leaving ? 1 - p : 1; alpha.SetColorMatrix(new ColorMatrix { Matrix33 = (float)opacity }); var saved = graphics.Save();
+                try
+                {
+                    graphics.SetClip(clip, CombineMode.Intersect);
+                    if (row.Top > messageFrame.Top) { using var border = new SolidBrush(ribbon.Theme.MessageBorder); graphics.FillRectangle(border, interior.Left, row.Top, interior.Width, 1); }
+                    var destination = new Rectangle(row.X + crop.X - track.Row.Bounds.X, row.Y + crop.Y - track.Row.Bounds.Y, crop.Width, crop.Height);
+                    graphics.DrawImage(track.Scene.Image, destination, crop.X, crop.Y, crop.Width, crop.Height, GraphicsUnit.Pixel, alpha);
+                }
+                finally { graphics.Restore(saved); }
+            }
+        }
         if (slideTab && !from.Body.IsEmpty && !to.Body.IsEmpty)
         {
             int inset = RibbonLayoutEngine.Scale(4, to.Dpi); var crop = Rectangle.Inflate(to.Body, -inset, -inset);
@@ -214,7 +283,7 @@ internal sealed class RibbonMotionScene : IDisposable
                 int inset = RibbonLayoutEngine.Scale(4, scene.Dpi); var crop = Rectangle.Inflate(scene.Body, -inset, -inset);
                 var position = Interpolate(from.Body, to.Body); position.Inflate(-inset, -inset); Segment(crop, position, position);
             }
-            if (!scene.Messages.IsEmpty && !other.Messages.IsEmpty) Segment(scene.Messages, Interpolate(from.Messages, to.Messages));
+            if (!messages && !scene.Messages.IsEmpty && !other.Messages.IsEmpty) Segment(scene.Messages, Interpolate(from.Messages, to.Messages));
             if (!scene.Strip.IsEmpty && !other.Strip.IsEmpty) { var strip = Interpolate(from.Strip, to.Strip); Segment(scene.Strip, strip, strip); }
         }
     }

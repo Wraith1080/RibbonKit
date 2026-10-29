@@ -91,7 +91,7 @@ public partial class RibbonControl
                 var args = new RibbonModalEventArgs(tab, RibbonModalReason.Application);
                 ribbon.ModalEntering?.Invoke(ribbon, args);
                 if (args.Cancel || !Available(tab) || !ribbon._editors.CommitFocused() || !Available(tab)) return false;
-                if (!ribbon.CloseBackstage(true) || !Available(tab)) return false;
+                if (!ribbon.CloseBackstage(true, animate: false) || !Available(tab)) return false;
                 _returnTab = ribbon.SelectedTab; _returnIndex = ribbon.UnfilteredTabs.ToList().IndexOf(_returnTab!);
                 _returnMinimized = ribbon.IsMinimized;
                 var focused = ribbon.FindForm() is { } form ? FocusedControl(form) : null;

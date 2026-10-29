@@ -5,6 +5,10 @@ internal sealed class RibbonPopupWindow : ToolStripDropDown
 {
     private readonly RibbonControl ribbon;
     private readonly Action activationChanged;
+    internal RibbonPopupMotion? OpeningMotion { get; private set; }
+    internal void PrepareOpening(Control surface) { SettleMotion(); OpeningMotion = RibbonPopupMotion.Prepare(ribbon, this, surface); }
+    internal void StartOpening() => OpeningMotion?.Start();
+    internal void SettleMotion() { OpeningMotion?.Dispose(); OpeningMotion = null; }
     internal RibbonPopupWindow(RibbonControl ribbon, Action activationChanged)
     {
         this.ribbon = ribbon; this.activationChanged = activationChanged;
@@ -30,7 +34,7 @@ internal sealed class RibbonPopupWindow : ToolStripDropDown
     {
         base.OnVisibleChanged(e);
         if (Visible) _chrome.Update(this, ribbon, UpdateShape());
-        else _chrome.Dispose();
+        else { SettleMotion(); _chrome.Dispose(); }
     }
     protected override void OnPaint(PaintEventArgs e)
     {
@@ -40,7 +44,7 @@ internal sealed class RibbonPopupWindow : ToolStripDropDown
     }
     protected override void Dispose(bool disposing)
     {
-        if (disposing) _chrome.Dispose();
+        if (disposing) { SettleMotion(); _chrome.Dispose(); }
         base.Dispose(disposing);
     }
     protected override void WndProc(ref Message m)

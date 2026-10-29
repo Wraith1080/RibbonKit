@@ -7,6 +7,7 @@ namespace RibbonKit.WinForms;
 public sealed class RibbonCustomizationEditor : UserControl
 {
     private readonly RibbonControl _ribbon;
+    private readonly RibbonCustomizationColumns _panes;
     private readonly ListBox _available = new() { Name = "RibbonAvailableCommands", AccessibleName = "Available ribbon commands", DisplayMember = nameof(RibbonCommandCatalogEntry.Text), Dock = DockStyle.Fill, BorderStyle = BorderStyle.None, IntegralHeight = false, DrawMode = DrawMode.OwnerDrawFixed };
     private readonly RibbonCustomizationTree _tree;
     private readonly TextBox _search = new() { Name = "RibbonCommandSearch", AccessibleName = "Search available ribbon commands", PlaceholderText = "Search commands", BorderStyle = BorderStyle.None };
@@ -48,13 +49,13 @@ public sealed class RibbonCustomizationEditor : UserControl
         _import = Button("ImportRibbonProfile", "", () => ImportRequested?.Invoke(this, EventArgs.Empty)); _import.AccessibleName = "Import customization profile";
         _export = Button("ExportRibbonProfile", "", () => ExportRequested?.Invoke(this, EventArgs.Empty)); _export.AccessibleName = "Export customization profile";
         _newTab = Button("NewRibbonTab", "New &Tab", NewTab); _newGroup = Button("NewRibbonGroup", "New &Group", NewGroup); _edit = Button("EditRibbonItem", "&Edit…", EditSelected);
-        var panes = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 4, RowCount = 4, Margin = Padding.Empty };
-        panes.ColumnStyles.Add(new(SizeType.Percent, 50)); panes.ColumnStyles.Add(new(SizeType.AutoSize)); panes.ColumnStyles.Add(new(SizeType.Percent, 50)); panes.ColumnStyles.Add(new(SizeType.AutoSize));
+        var panes = _panes = new RibbonCustomizationColumns { RowCount = 4 };
         panes.RowStyles.Add(new(SizeType.AutoSize)); panes.RowStyles.Add(new(SizeType.AutoSize)); panes.RowStyles.Add(new(SizeType.Percent, 100)); panes.RowStyles.Add(new(SizeType.AutoSize));
         panes.Controls.Add(new Label { Text = "Choose commands from the ribbon:", AutoSize = true, Dock = DockStyle.Fill, Margin = Padding.Empty }, 0, 0);
         panes.Controls.Add(new Label { Text = "Customize the ribbon:", AutoSize = true, Dock = DockStyle.Fill, Margin = Padding.Empty }, 2, 0);
         panes.Controls.Add(_searchFrame, 0, 1); panes.Controls.Add(_treeSearchFrame, 2, 1);
-        panes.Controls.Add(_availableFrame, 0, 2); panes.Controls.Add(Flow(true, _add, _remove), 1, 2); panes.Controls.Add(_treeFrame, 2, 2); panes.Controls.Add(Flow(true, _up, _down), 3, 2);
+        panes.Controls.Add(_availableFrame, 0, 2); panes.AddActions(1, 2, _add, _remove);
+        panes.Controls.Add(_treeFrame, 2, 2); panes.AddActions(3, 2, _up, _down);
         var left = Flow(false, _reset, _reload, _import, _export); left.Anchor = AnchorStyles.Left | AnchorStyles.Top;
         var right = Flow(false, _newTab, _newGroup, _edit); right.Anchor = AnchorStyles.Left | AnchorStyles.Top;
         panes.Controls.Add(left, 0, 3); panes.Controls.Add(right, 2, 3); panes.SetColumnSpan(right, 2);
@@ -74,7 +75,14 @@ public sealed class RibbonCustomizationEditor : UserControl
     /// <summary>Requests application-owned export or storage of Session.ExportJson. Export includes this page's draft and live QAT preferences.</summary>
     public event EventHandler? ExportRequested;
     /// <summary>Refreshes both views without applying or discarding the draft.</summary>
-    public void RefreshDraft() { _catalog = _ribbon.CommandCatalog.GetAvailable(RibbonCustomizationTarget.Ribbon); RefreshIcons(); RefreshAvailable(); RefreshTree(); Status(""); }
+    public void RefreshDraft()
+    {
+        string? selected = Selected?.Id, top = (_tree.TopNode?.Tag as Node)?.Id;
+        _tree.BeginUpdate();
+        try { _catalog = _ribbon.CommandCatalog.GetAvailable(RibbonCustomizationTarget.Ribbon); RefreshIcons(); RefreshAvailable(); RefreshTree(selected); Status(""); }
+        finally { _tree.EndUpdate(); }
+        if (top is not null && AllNodes(_tree.Nodes).FirstOrDefault(n => ((Node)n.Tag!).Id == top) is { } topNode) _tree.TopNode = topNode;
+    }
     /// <summary>Applies this page's draft, reporting preflight and validation errors inline. Application event exceptions retain their normal semantics.</summary>
     public bool ApplyChanges()
     {
@@ -103,6 +111,7 @@ public sealed class RibbonCustomizationEditor : UserControl
     private void RefreshTree(string? selected = null)
     {
         selected ??= Selected?.Id;
+        string? top = (_tree.TopNode?.Tag as Node)?.Id;
         var expanded = AllNodes(_tree.Nodes).Where(n => n.IsExpanded).Select(n => ((Node)n.Tag!).Id).ToHashSet();
         bool first = _tree.Nodes.Count == 0, filtered = _treeSearch.TextLength > 0;
         _tree.BeginUpdate(); _tree.Nodes.Clear();
@@ -123,6 +132,7 @@ public sealed class RibbonCustomizationEditor : UserControl
         }
         foreach (var node in AllNodes(_tree.Nodes)) if (first || filtered || expanded.Contains(((Node)node.Tag!).Id)) node.Expand();
         _tree.SelectedNode = AllNodes(_tree.Nodes).FirstOrDefault(n => ((Node)n.Tag!).Id == selected) ?? _tree.Nodes.Cast<TreeNode>().FirstOrDefault();
+        if (top is not null && AllNodes(_tree.Nodes).FirstOrDefault(n => ((Node)n.Tag!).Id == top) is { } topNode) _tree.TopNode = topNode;
         _tree.EndUpdate(); UpdateActions();
     }
     private TreeNode CommandNode(string id, string text, object data, RibbonCustomizationTab tab, RibbonCustomizationGroup group, string commandId)
@@ -249,6 +259,7 @@ public sealed class RibbonCustomizationEditor : UserControl
     {
         if (_ribbon is null || _edit is null) return;
         SuspendLayout(); int gap = ScaleLogical(8), height = RibbonQuickAccessEditorMetrics.ButtonHeight(DeviceDpi, Font.Height, _ribbon.Density);
+        _panes.UpdateMetrics(DeviceDpi, Font, _ribbon.Density);
         var minimum = RibbonQuickAccessEditorMetrics.Minimum(DeviceDpi, Font.Height, _ribbon.Density); MinimumSize = new(Math.Max(MinimumSize.Width, minimum.Width), minimum.Height);
         _available.ItemHeight = _tree.ItemHeight = RibbonQuickAccessEditorMetrics.RowHeight(DeviceDpi, Font.Height, _ribbon.Density); _tree.UpdateMetrics();
         foreach (var frame in new[] { _searchFrame, _treeSearchFrame }) { frame.Height = height; frame.Margin = new(0, gap, 0, gap); }
@@ -258,8 +269,8 @@ public sealed class RibbonCustomizationEditor : UserControl
         foreach (var button in new[] { _reset, _reload, _import, _export, _newTab, _newGroup, _edit }) button.Margin = new(0, gap, gap, 0);
         _import.Image = _export.Image = null; _importImage?.Dispose(); _exportImage?.Dispose();
         int iconSide = ScaleLogical(_ribbon.Density == RibbonDensity.Touch ? 24 : 20);
-        _import.Image = _importImage = RibbonOptionsTransferIcons.Image(_ribbon, iconSide, true);
-        _export.Image = _exportImage = RibbonOptionsTransferIcons.Image(_ribbon, iconSide, false);
+        _import.Image = _importImage = RibbonOptionsTransferIcons.Image(_ribbon, iconSide, false);
+        _export.Image = _exportImage = RibbonOptionsTransferIcons.Image(_ribbon, iconSide, true);
         _available.BackColor = _tree.BackColor = _ribbon.Theme.Surface; _available.ForeColor = _tree.ForeColor = _ribbon.Theme.Foreground;
         foreach (var frame in new[] { _availableFrame, _treeFrame, _searchFrame, _treeSearchFrame }) frame.RefreshAppearance();
         RefreshIcons(); ResumeLayout(true); Invalidate(true);

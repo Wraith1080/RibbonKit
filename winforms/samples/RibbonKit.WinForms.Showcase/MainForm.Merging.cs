@@ -13,10 +13,12 @@ public partial class MainForm
         var update = new RibbonButtonItem { Text = "Update chart", KeyTip = "U" };
         update.Click += (_, _) => status.Text = $"Chart requested: {series.Value} ({chartType.Value})";
         chartData.Items.AddRange(series, chartType, update); chart.Groups.Add(chartData); source.Tabs.Add(chart);
+        chartType.SimplifiedPlacement = update.SimplifiedPlacement = RibbonSimplifiedPlacement.Inline;
         var contribution = new RibbonGroupContribution { TargetTabId = home.Id, Order = 10 };
         contribution.Group.Text = "Chart context"; var chartAction = new RibbonButtonItem { Text = "Chart data", KeyTip = "CM" };
         chartAction.Click += (_, _) => ribbon.SelectedTab = chart;
         contribution.Group.Items.Add(chartAction); source.Groups.Add(contribution);
+        chartAction.SimplifiedPlacement = RibbonSimplifiedPlacement.Inline;
         var merging = new RibbonTab { Id = "tab.merging", Text = "View", KeyTip = "V" };
         var actions = new RibbonGroup { Id = "group.applicationContext", Text = "Application context" };
         var active = new RibbonToggleItem { Text = "Chart context", KeyTip = "C", ScreenTipDescription = "The application activates a merge source. Keyboard focus does not drive activation." };
@@ -29,6 +31,6 @@ public partial class MainForm
         show.Click += (_, _) => { active.Checked = true; ribbon.SelectedTab = chart; };
         var remove = new RibbonButtonItem { Text = "Remove chart context", KeyTip = "R" }; remove.Click += (_, _) => active.Checked = false;
         var commands = new RibbonDropDownItem { Id = "demo.chart.menu", Text = "Chart", KeyTip = "C", DropDownHeader = "Chart" };
-        commands.Items.AddRange(active, show, remove); actions.Items.Add(commands); merging.Groups.Add(actions); ribbon.Tabs.Add(merging);
+        commands.Items.AddRange(active, show, remove); actions.Items.Add(commands); merging.Groups.Add(actions); ribbon.Tabs.Insert(ribbon.Tabs.IndexOf(pictureFormat), merging);
     }
 }

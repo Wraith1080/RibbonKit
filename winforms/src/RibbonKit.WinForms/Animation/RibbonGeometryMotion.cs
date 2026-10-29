@@ -9,7 +9,7 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
     private readonly System.Windows.Forms.Timer _timer = new() { Interval = 8 };
     private RibbonMotionScene? _from, _to;
     private RibbonMotionWindow? _window;
-    private OpacityHold? _hold;
+    private RibbonDrawingHold? _hold;
     private Form? _form;
     private readonly List<Control> _ancestors = [];
     private long _start, _last;
@@ -17,6 +17,7 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
     private bool _attached, _settling;
     private bool _disposed;
     private bool _headerArrival;
+    private bool _messageChange;
     internal bool Changing { get; private set; }
     internal bool IsRunning => _from is not null && _to is not null;
     internal bool CanCoalesceHeaderSelection => _headerArrival && IsRunning && FrameIntervals.Count == 0;
@@ -25,12 +26,12 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
     internal bool? SystemPolicyOverride;
     internal string? LastSkipReason;
     internal bool SystemEnabled => SystemPolicyOverride ?? (SystemParametersInfo(0x1042, 0, out bool enabled, 0) && enabled);
-    internal void Change(bool toolbar, Action mutation, bool headers = false)
+    internal void Change(bool toolbar, Action mutation, bool headers = false, bool messages = false)
     {
         if (Changing) { mutation(); return; }
         if (IsRunning)
         {
-            if (CanCoalesceHeaderSelection)
+            if (CanCoalesceHeaderSelection || messages && _messageChange && FrameIntervals.Count == 0)
             {
                 // Showing/merging and selecting a tab often share one command.
                 // Before the first tick, retain its departure and update only
@@ -42,6 +43,7 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
                     if (_hold is null || _from is null || ribbon.IsDisposed || !ribbon.IsHandleCreated || !SafeBounds()) { Release(); return; }
                     var next = new RibbonMotionScene(ribbon);
                     if (next.Dpi != _from.Dpi || next.Bounds.Width != _from.Bounds.Width) { next.Dispose(); Release(); return; }
+                    if (messages && _messageChange && Math.Sign(next.MessageRows.Count - _to!.MessageRows.Count) != Math.Sign(_to.MessageRows.Count - _from.MessageRows.Count)) { next.Dispose(); Release(); return; }
                     _to!.Dispose(); _to = next; _window!.Render(ribbon, _from, _to, 0);
                     _duration = Math.Max(_duration, Duration(toolbar));
                     _start = _last = Stopwatch.GetTimestamp();
@@ -59,16 +61,17 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
         try
         {
             _from = new(ribbon); _form = ribbon.FindForm()!;
-            try { _window = new(_form); _window.Render(ribbon, _from, _from, 0); _hold = OpacityHold.Create(ribbon.Handle); }
+            try { _window = new(_form); _window.Render(ribbon, _from, _from, 0); _hold = RibbonDrawingHold.Create(ribbon.Handle); }
             catch (Win32Exception error) { LastSkipReason = error.Message; Trace.WriteLine(LastSkipReason); Release(); }
             var before = (ribbon.LayoutMode, ribbon.Density, ribbon.QuickAccessPosition, ribbon.SelectedTab, ribbon.IsMinimized);
             mutation();
             if (_hold is null || ribbon.IsDisposed || !ribbon.IsHandleCreated || !SafeBounds()) { Release(); return; }
             bool arrivals = _from!.HasHeaderArrivals(ribbon);
-            if (headers ? !arrivals : before == (ribbon.LayoutMode, ribbon.Density, ribbon.QuickAccessPosition, ribbon.SelectedTab, ribbon.IsMinimized)) { Release(); return; }
+            if (headers ? !arrivals : messages ? !_from.HasMessageChanges(ribbon) : before == (ribbon.LayoutMode, ribbon.Density, ribbon.QuickAccessPosition, ribbon.SelectedTab, ribbon.IsMinimized)) { Release(); return; }
             _to = new(ribbon);
             if (_to.Dpi != _from!.Dpi || _to.Bounds.Width != _from.Bounds.Width) { Release(); return; }
             _headerArrival = headers && arrivals;
+            _messageChange = messages;
             _window!.Render(ribbon, _from, _to, 0);
             _duration = Duration(toolbar);
             _start = _last = Stopwatch.GetTimestamp(); FrameIntervals.Clear(); StartedCount++;
@@ -86,7 +89,7 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
         catch { Release(); throw; }
         finally { Changing = false; }
     }
-    private double Duration(bool toolbar) => (_from!.Minimized != ribbon.IsMinimized ? 180d : toolbar ? 150d : 130d)
+    private double Duration(bool toolbar) => (_from!.Minimized != ribbon.IsMinimized ? 180d : _from.HasMessageChanges(ribbon) ? 160d : toolbar ? 150d : 130d)
         * (ribbon.AnimationLevel == RibbonAnimationLevel.Expressive ? 1.4d : 1d);
     private bool Eligible()
     {
@@ -94,7 +97,7 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
         if (!SafeBounds()) return false;
         var form = ribbon.FindForm()!;
         if (form.Opacity != 1 || form.TransparencyKey != Color.Empty) { LastSkipReason = "Application-owned form transparency"; return false; }
-        if ((GetStyle(ribbon.Handle) & 0x80000) != 0) { LastSkipReason = "Existing application-owned opacity"; return false; }
+        if (RibbonDrawingHold.HasOpacity(ribbon.Handle)) { LastSkipReason = "Existing application-owned opacity"; return false; }
         LastSkipReason = null; return true;
     }
     private bool SafeBounds()
@@ -132,6 +135,7 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
     {
         _timer.Stop();
         _headerArrival = false;
+        _messageChange = false;
         ribbon.LocationChanged -= Unsafe;
         if (_form is not null) { _form.ResizeBegin -= Unsafe; _form.Deactivate -= Unsafe; _form = null; }
         foreach (var parent in _ancestors)
@@ -146,26 +150,5 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
         if (!ribbon.IsDisposed && ribbon.IsHandleCreated) ribbon.Invalidate(true);
     }
     public void Dispose() { if (_disposed) return; _disposed = true; Settle(); _timer.Dispose(); }
-    private sealed class OpacityHold(nint window) : IDisposable
-    {
-        internal static OpacityHold Create(nint window)
-        {
-            var hold = new OpacityHold(window); SetStyle(window, GetStyle(window) | 0x80000);
-            // Alpha 1 retains normal native hit testing/focus. Alpha 0 would
-            // redirect pointer input past the committed controls to their parent.
-            if (!SetLayeredWindowAttributes(window, 0, 1, 2)) { int error = Marshal.GetLastWin32Error(); hold.Dispose(); throw new Win32Exception(error, "Native child drawing hold failed: " + error); }
-            return hold;
-        }
-        public void Dispose() { if (IsWindow(window)) { SetLayeredWindowAttributes(window, 0, 255, 2); SetStyle(window, GetStyle(window) & ~0x80000L); RedrawWindow(window, 0, 0, 0x185); } }
-    }
-    private static long GetStyle(nint window) => (IntPtr.Size == 8 ? GetWindowLongPtr(window, -20) : GetWindowLong(window, -20)).ToInt64();
-    private static void SetStyle(nint window, long style) { if (IntPtr.Size == 8) SetWindowLongPtr(window, -20, (nint)style); else SetWindowLong(window, -20, (nint)style); }
     [DllImport("user32.dll")] private static extern bool SystemParametersInfo(uint action, uint parameter, out bool value, uint flags);
-    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")] private static extern nint GetWindowLongPtr(nint window, int index);
-    [DllImport("user32.dll", EntryPoint = "GetWindowLongW")] private static extern nint GetWindowLong(nint window, int index);
-    [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")] private static extern nint SetWindowLongPtr(nint window, int index, nint value);
-    [DllImport("user32.dll", EntryPoint = "SetWindowLongW")] private static extern nint SetWindowLong(nint window, int index, nint value);
-    [DllImport("user32.dll", SetLastError = true)] private static extern bool SetLayeredWindowAttributes(nint window, uint color, byte alpha, uint flags);
-    [DllImport("user32.dll")] private static extern bool IsWindow(nint window);
-    [DllImport("user32.dll")] private static extern bool RedrawWindow(nint window, nint rectangle, nint region, uint flags);
 }

@@ -6,9 +6,13 @@ public partial class RibbonControl
 {
     private RibbonFileMenuMode _fileMenuMode;
     private RibbonBackstageSurface? _backstageSurface;
+    private Control? _backstageBackdrop;
     private Form? _backstageForm;
     private Control? _backstagePriorFocus;
     private bool _backstageOpen, _backstageChanging, _backstageRefreshing;
+    private bool _backstageClosing;
+    private RibbonBackstageMotion? _backstageMotion;
+    internal RibbonBackstageMotion? BackstageOpeningMotion => _backstageMotion;
 
     /// <summary>Gets the stable owned Backstage declaration. Its page Controls remain application-owned.</summary>
     [Category("Data"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
@@ -23,7 +27,7 @@ public partial class RibbonControl
         {
             VerifyAccess();
             if (!Enum.IsDefined(value)) throw new ArgumentOutOfRangeException(nameof(value));
-            if (_fileMenuMode == value || IsBackstageOpen && !CloseBackstage(true)) return;
+            if (_fileMenuMode == value || IsBackstageOpen && !CloseBackstage(true, animate: false)) return;
             _popups.CloseMenu(FileMenu, false);
             _fileMenuMode = value;
             FileMenuModeChanged?.Invoke(this, EventArgs.Empty);
@@ -31,7 +35,7 @@ public partial class RibbonControl
     }
     /// <summary>Occurs after FileMenuMode changes.</summary>
     public event EventHandler? FileMenuModeChanged;
-    /// <summary>Gets or requests Backstage visibility. Opening requires Backstage mode, an available File entry and a shown ordinary Form. Cancelled opening, closing or page validation keeps the previous value. The selected ribbon tab and minimized state are retained.</summary>
+    /// <summary>Gets or requests Backstage visibility. AnimationLevel can animate navigation and live native pages. An accepted animated close retains true until its fade completes; Closing/validation cancellation keeps it open. Command, mode and modal transitions close immediately. The selected ribbon tab and minimized state are retained.</summary>
     [Category("Behavior"), Bindable(true), DefaultValue(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool IsBackstageOpen
     {
@@ -46,12 +50,17 @@ public partial class RibbonControl
         && !Backstage.IsDisposed && Backstage.Visible && Backstage.EffectiveEnabled;
     private void OpenBackstage()
     {
+        if (_backstageClosing)
+        {
+            _backstageClosing = false; ShowBackstageBackdrop(); var closing = _backstageMotion; _backstageMotion = null; closing?.Cancel(); return;
+        }
         if (_backstageOpen || _backstageChanging || !CanShowBackstage || FindForm() is not { Visible: true, IsDisposed: false } form) return;
         if (!_editors.CommitFocused()) return;
         _backstageChanging = true;
         try
         {
             if (!FileMenu.CanOpen() || !CanShowBackstage || !Backstage.CanOpen() || !CanShowBackstage || !ReferenceEquals(FindForm(), form) || form.IsDisposed) return;
+            _motion?.Settle();
             _backstagePriorFocus = _keyTips ? _priorFocus : FocusedControl(form);
             _screenTips.Cancel();
             _galleryStrips.CancelPreviews();
@@ -70,24 +79,44 @@ public partial class RibbonControl
             Backstage.Reconcile();
             _backstageSurface.Synchronize();
             _backstageSurface.Bounds = form.ClientRectangle;
+            _ = _backstageSurface.Handle;
+            _backstageSurface.PerformLayout();
+            _backstageSurface.BringToFront(); ShowBackstageBackdrop();
+            _backstageMotion?.Dispose();
+            _backstageMotion = RibbonBackstageMotion.Prepare(this, _backstageSurface, form);
             _backstageOpen = true;
             _backstageSurface.Visible = true;
             _backstageSurface.BringToFront();
             _backstageSurface.FocusInitial(tips);
+            _backstageMotion?.Start();
             Invalidate();
             IsBackstageOpenChanged?.Invoke(this, EventArgs.Empty);
             if (_backstageOpen) Backstage.OnOpened();
         }
+        catch { _backstageMotion?.Dispose(); _backstageMotion = null; throw; }
         finally { _backstageChanging = false; }
     }
     private void BackstageHostResized(object? sender, EventArgs e)
     {
         if (_backstageSurface is { IsDisposed: false } surface && _backstageForm is { } form) surface.Bounds = form.ClientRectangle;
+        if (_backstageBackdrop is { IsDisposed: false } backdrop && _backstageForm is { } owner) backdrop.Bounds = owner.ClientRectangle;
+    }
+    private void ShowBackstageBackdrop()
+    {
+        if (_backstageSurface is not { } surface || _backstageForm is not { } form) return;
+        if (_backstageBackdrop is null || _backstageBackdrop.IsDisposed)
+        {
+            _backstageBackdrop = surface.CreateBackdrop(); _backstageBackdrop.Visible = false; _backstageBackdrop.TabStop = false; _backstageBackdrop.CausesValidation = false; form.Controls.Add(_backstageBackdrop);
+        }
+        _backstageBackdrop.Bounds = form.ClientRectangle;
+        form.Controls.SetChildIndex(_backstageBackdrop, Math.Min(form.Controls.GetChildIndex(surface) + 1, form.Controls.Count - 1)); _backstageBackdrop.Visible = true; _backstageBackdrop.Invalidate();
     }
     internal bool ValidateBackstagePage() => !IsBackstageOpen || _backstageSurface?.ValidatePage() != false;
-    private bool CloseBackstage(bool restoreFocus, bool force = false)
+    private bool CloseBackstage(bool restoreFocus, bool force = false, bool animate = true)
     {
         if (!_backstageOpen) return true;
+        if (_backstageClosing) { _backstageMotion?.Dispose(); return true; }
+        _backstageMotion?.Dispose(); _backstageMotion = null;
         if (!force && _backstageChanging) return false;
         bool changing = _backstageChanging;
         _backstageChanging = true;
@@ -96,21 +125,39 @@ public partial class RibbonControl
             if (!force && (!ValidateBackstagePage() || !Backstage.CanClose())) return false;
             if (!_backstageOpen) return true; // A callback may force teardown.
             bool hadFocus = FindForm()?.ContainsFocus == true;
-            _backstageOpen = false;
+            if (!force && animate && _backstageSurface is { IsDisposed: false } closingSurface && _backstageForm is { } form)
+            {
+                _backstageMotion = RibbonBackstageMotion.PrepareFade(this, closingSurface, form, true, () => FinishBackstageClose(restoreFocus, hadFocus));
+                if (_backstageMotion is not null) { _backstageClosing = true; if (_backstageBackdrop is { } backdrop) backdrop.Visible = false; _backstageMotion.Start(); return true; }
+            }
+            FinishBackstageClose(restoreFocus, hadFocus);
+            return true;
+        }
+        finally { _backstageChanging = changing; }
+    }
+    private void FinishBackstageClose(bool restoreFocus, bool hadFocus)
+    {
+        if (!_backstageOpen) return;
+        bool changing = _backstageChanging; _backstageChanging = true;
+        try
+        {
+            _backstageClosing = false; _backstageMotion = null; _backstageOpen = false;
             if (_backstageSurface is { IsDisposed: false } surface) { surface.HideKeyTips(); surface.Visible = false; }
-            if (restoreFocus && !_disposing && hadFocus)
+            if (_backstageBackdrop is { IsDisposed: false } backdrop) backdrop.Visible = false;
+            if (restoreFocus && !_disposing && hadFocus && FindForm() is { Disposing: false, IsDisposed: false, ContainsFocus: true })
             {
                 if (_backstagePriorFocus is { IsDisposed: false, CanFocus: true } previous) previous.Focus();
                 else if (CanFocus) FocusElement(FileMenu, enterEditor: false);
             }
-            _backstagePriorFocus = null;
-            Invalidate();
-            FileMenu.OnClosed();
-            Backstage.OnClosed();
-            IsBackstageOpenChanged?.Invoke(this, EventArgs.Empty);
-            return true;
+            _backstagePriorFocus = null; Invalidate(); FileMenu.OnClosed(); Backstage.OnClosed(); IsBackstageOpenChanged?.Invoke(this, EventArgs.Empty);
         }
         finally { _backstageChanging = changing; }
+    }
+    internal bool BeginBackstagePageMotion(RibbonBackstageSurface surface)
+    {
+        if (_backstageClosing || _backstageChanging || _backstageForm is not { } form) return false;
+        ShowBackstageBackdrop(); var old = _backstageMotion; _backstageMotion = null; old?.Dispose();
+        _backstageMotion = RibbonBackstageMotion.PrepareFade(this, surface, form, false); return _backstageMotion is not null;
     }
     internal void RefreshBackstage()
     {
@@ -121,18 +168,21 @@ public partial class RibbonControl
             if (_backstageOpen && !CanShowBackstage) CloseBackstage(false, true);
             if (!Backstage.IsDisposed) Backstage.Reconcile();
             _backstageSurface?.Synchronize();
+            _backstageBackdrop?.Invalidate();
         }
         finally { _backstageRefreshing = false; }
     }
     internal void DetachBackstageContent(Control content) => _backstageSurface?.DetachContent(content);
     private void ReleaseBackstageSurface()
     {
+        _backstageMotion?.Dispose(); _backstageMotion = null;
         CloseBackstage(false, true);
         if (_backstageForm is { } form) form.ClientSizeChanged -= BackstageHostResized;
         _backstageForm = null;
         var surface = _backstageSurface;
         _backstageSurface = null;
         surface?.Dispose();
+        _backstageBackdrop?.Dispose(); _backstageBackdrop = null;
     }
     internal void BackstageSurfaceDisposed(RibbonBackstageSurface surface)
     {
@@ -141,12 +191,13 @@ public partial class RibbonControl
         if (_backstageForm is { } form) form.ClientSizeChanged -= BackstageHostResized;
         _backstageForm = null;
         _backstageSurface = null;
+        _backstageBackdrop?.Dispose(); _backstageBackdrop = null;
     }
     internal void ActivateBackstage(RibbonItem item)
     {
         if (!IsBackstageOpen || !Backstage.Items.Contains(item) || !item.Visible || !item.EffectiveEnabled) return;
         if (item is RibbonBackstagePageItem page) page.PerformClick();
-        else if (CloseBackstage(true)) item.PerformClick();
+        else if (CloseBackstage(true, animate: false)) item.PerformClick();
     }
     internal bool ProcessBackstageKey(Keys keys) => _backstageSurface?.ProcessSurfaceKey(keys) ?? false;
     internal static Control? FocusedControl(ContainerControl container)

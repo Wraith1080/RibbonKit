@@ -18,7 +18,7 @@ public partial class MainForm
             var item = new RibbonRadioButtonItem { Id = "demo.animation." + level, Text = level.ToString(), KeyTip = level.ToString()[..1], GroupName = "showcase.animation.level", SizePolicy = RibbonSizePolicy.Fixed(RibbonItemSize.Medium), SimplifiedPlacement = RibbonSimplifiedPlacement.Inline };
             item.Click += (_, _) => { ribbon.AnimationLevel = level; Sync(); }; levels.Add(level, item); group.Items.Add(item);
         }
-        var content = new RibbonDropDownItem { Id = "demo.animation.tabContent", Text = "Tab content", KeyTip = "T", DropDownHeader = "Tab content animation", SimplifiedPlacement = RibbonSimplifiedPlacement.Inline, ScreenTipDescription = "Choose Fade or Slide down for tab content and newly shown or merged tab headers." };
+        var content = new RibbonDropDownItem { Id = "demo.animation.tabContent", Text = "Tab content", KeyTip = "T", DropDownHeader = "Tab content animation", SimplifiedPlacement = RibbonSimplifiedPlacement.Inline, ScreenTipDescription = "Choose Fade or Slide down for tab content and newly shown or merged headers. Groups share this choice: Slide moves left on collapse and right on restore." };
         foreach (var style in Enum.GetValues<RibbonTabContentAnimation>())
         {
             var item = new RibbonRadioButtonItem { Id = "demo.animation.tabContent." + style, Text = style == RibbonTabContentAnimation.Fade ? "Fade" : "Slide down", GroupName = "showcase.animation.tabContent" };
@@ -26,7 +26,7 @@ public partial class MainForm
         }
         group.Items.Add(content); var view = ribbon.Tabs.Single(t => t.Id == "tab.merging"); view.Groups.Add(group); Sync();
         ribbon.SelectedTabChanged += (_, _) => { if (ReferenceEquals(ribbon.SelectedTab, view)) Sync(); };
-        document.AppendText("\r\n\r\nView > Ribbon animation selects None, Subtle or Expressive for ribbon motion, including minimizing/restoring with the chevron, Ctrl+F1 or a tab double-click. Tab content chooses Fade or Slide down for content and newly shown or merged headers. None and the system animation preference always keep transitions immediate. View > Messages collects Add, Reopen and Clear in one menu.");
+        document.AppendText("\r\n\r\nView > Ribbon animation selects None, Subtle or Expressive for ribbon motion, including minimizing/restoring with the chevron, Ctrl+F1 or a tab double-click, and opening command menus or galleries. Popup frames stay anchored while their contents fade and slide into place; input settles the effect before normal interaction. Backstage navigation slides in while live pages fade on opening and selection. Back or Escape fades Backstage out after validation. Tab content chooses Fade or Slide down for content and newly shown or merged headers. None and the system animation preference always keep transitions immediate. View > Messages collects Add, Reopen and Clear in one menu; those actions and Close animate the message rows and their joins to the ribbon/QAT.");
     }
     internal async Task CaptureView(string directory)
     {

@@ -11,6 +11,16 @@ internal static partial class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--group-fade-checks" or "--group-fade-checks-flat")
+            return IndependentConsumer.GroupMotionInteractionChecks.Run(args[1], args[0] == "--group-fade-checks-flat", true);
+        if (args.Length == 2 && args[0] is "--group-motion-checks" or "--group-motion-checks-flat")
+            return IndependentConsumer.GroupMotionInteractionChecks.Run(args[1], args[0] == "--group-motion-checks-flat");
+        if (args.Length == 2 && args[0] is "--backstage-motion-checks" or "--backstage-motion-checks-flat")
+            return IndependentConsumer.BackstageInteractionChecks.Run(args[1], args[0] == "--backstage-motion-checks-flat", motionChecks: true);
+        if (args.Length == 2 && args[0] is "--popup-motion-input-checks" or "--popup-motion-input-checks-flat")
+            return IndependentConsumer.PopupMotionInteractionChecks.Run(args[1], args[0] == "--popup-motion-input-checks-flat", true);
+        if (args.Length == 2 && args[0] is "--popup-motion-checks" or "--popup-motion-checks-flat")
+            return IndependentConsumer.PopupMotionInteractionChecks.Run(args[1], args[0] == "--popup-motion-checks-flat");
         if (args.Length == 2 && args[0] is "--minimize-motion-checks" or "--minimize-motion-checks-flat")
             return IndependentConsumer.GeometryMotionInteractionChecks.Run(args[1], args[0] == "--minimize-motion-checks-flat", minimizeOnly: true);
         if (args.Length == 2 && args[0] == "--expressive-pill-checks")
@@ -93,6 +103,20 @@ internal static partial class Program
             return IndependentConsumer.SplitInteractionChecks.Run(args[1], args[0] == "--touch-split-checks-flat", true);
         if (args.Length == 2 && args[0] is "--message-checks" or "--message-checks-flat")
             return IndependentConsumer.MessageInteractionChecks.Run(args[1], args[0] == "--message-checks-flat");
+        if (args.Length == 2 && args[0] is "--message-motion" or "--message-motion-flat")
+            return IndependentConsumer.MessageInteractionChecks.Run(args[1], args[0] == "--message-motion-flat", true);
+        if (args.Length == 2 && args[0] is "--pre-m6b-review" or "--pre-m6b-review-flat")
+            return IndependentConsumer.PreM6BReviewChecks.Run(args[1], args[0] == "--pre-m6b-review-flat");
+        if (args.Length == 2 && args[0] is "--pre-m6b-popup-close" or "--pre-m6b-popup-close-flat")
+            return IndependentConsumer.PreM6BReviewChecks.Run(args[1], args[0] == "--pre-m6b-popup-close-flat", true);
+        if (args.Length == 2 && args[0] is "--customization-alignment" or "--customization-alignment-flat")
+            return IndependentConsumer.PreM6BReviewChecks.Run(args[1], args[0] == "--customization-alignment-flat", optionsOnly: true);
+        if (args.Length == 2 && args[0] is "--review-followup" or "--review-followup-flat")
+            return IndependentConsumer.ReviewFollowupChecks.Run(args[1], args[0] == "--review-followup-flat");
+        if (args.Length == 2 && args[0] is "--review-followup-groups" or "--review-followup-groups-flat")
+            return IndependentConsumer.ReviewFollowupChecks.Run(args[1], args[0] == "--review-followup-groups-flat", true);
+        if (args.Length == 2 && args[0] is "--review-followup-groups-touch" or "--review-followup-groups-touch-flat")
+            return IndependentConsumer.ReviewFollowupChecks.Run(args[1], args[0].EndsWith("-flat"), true, RibbonDensity.Touch);
         if (args.Length == 2 && args[0] is "--customization-checks" or "--customization-checks-flat")
             return IndependentConsumer.CustomizationInteractionChecks.Run(args[1], args[0] == "--customization-checks-flat");
         if (args.Contains("--server"))

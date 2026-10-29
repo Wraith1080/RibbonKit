@@ -45,7 +45,7 @@ public partial class RibbonControl
     }
     internal bool HasQuickAccess => QuickAccessVisible && QuickAccessItems.Any(e => e.Visible);
     internal bool JoinBelowRibbonQuickAccess => HasQuickAccess && QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon && Painter.JoinBelowRibbonQuickAccess;
-    internal int QuickAccessHeight => HasQuickAccess && QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon ? RibbonLayoutEngine.Scale(Math.Max(RibbonDensityMetrics.For(Density).QuickAccessRow, LayoutTheme.TabHeight), DeviceDpi) : 0;
+    internal int QuickAccessHeight => HasQuickAccess && QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon ? RibbonLayoutEngine.Scale(RibbonDensityMetrics.For(Density).QuickAccessRow, DeviceDpi) : 0;
     internal void ActivateQuickAccess(RibbonElement entry, Control opener, Rectangle anchor, bool dropDownPart = false)
     {
         if (!RibbonQuickAccess.Available(entry)) return;

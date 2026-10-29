@@ -207,9 +207,11 @@ public sealed class RendererBoundaryTests
                 Assert.Equal(bitmap.GetPixel(x, y), bitmap.GetPixel(x, bounds.Bottom - 1 - y));
                 Assert.Equal(bitmap.GetPixel(x, y), bitmap.GetPixel(bounds.Right - 1 - x, bounds.Bottom - 1 - y));
             }
-            graphics.Clear(theme.Surface);
-            painter.DrawScrollButton(context with { IsBodyScrollButton = false }, false);
-            Assert.Equal((painter == office ? fill : theme.Surface).ToArgb(), bitmap.GetPixel(bounds.Width / 2, 1).ToArgb());
+            using var body = (Bitmap)bitmap.Clone(); graphics.Clear(theme.Surface);
+            painter.DrawScrollButton(context with { IsBodyScrollButton = false }, backward);
+            Assert.Equal(border.ToArgb(), bitmap.GetPixel(bounds.Width / 2, 1).ToArgb());
+            for (int y = bounds.Height / 2 - S(10); y < bounds.Height / 2 + S(10); y++)
+                for (int x = S(3); x < bounds.Width - S(3); x++) Assert.Equal(body.GetPixel(x, y), bitmap.GetPixel(x, y));
         }
     }
 

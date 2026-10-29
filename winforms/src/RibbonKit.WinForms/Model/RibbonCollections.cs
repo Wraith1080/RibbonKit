@@ -54,6 +54,8 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
     {
         Verify(item);
         Ribbon?.VerifyAccess();
+        if (_owner is RibbonMessageBar && Ribbon is { CanAnimateMessageChange: true } messageHost)
+        { messageHost.Motion.Change(false, () => InsertItem(index, item), messages: true); return; }
         if (item is RibbonTab { Visible: true } && Ribbon is { CanAnimateHeaderArrival: true } motionHost)
         { motionHost.Motion.Change(false, () => InsertItem(index, item), headers: true); return; }
         base.InsertItem(index, item);
@@ -86,6 +88,8 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
         Ribbon?.VerifyAccess();
         var ribbon = Ribbon;
         var item = this[index];
+        if (_owner is RibbonMessageBar && !item.IsDisposed && ribbon is { CanAnimateMessageChange: true })
+        { ribbon.Motion.Change(false, () => RemoveItem(index), messages: true); return; }
         if (_owner is RibbonBackstage backstage) backstage.Removing(item, index);
         if (item is RibbonTab tab)
             ribbon?.RemovingTab(tab, index);
@@ -97,6 +101,8 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
     protected override void ClearItems()
     {
         Ribbon?.VerifyAccess();
+        if (_owner is RibbonMessageBar && Count > 0 && Ribbon is { CanAnimateMessageChange: true } messageHost)
+        { messageHost.Motion.Change(false, ClearItems, messages: true); return; }
         foreach (var item in this)
             item.Parent = null;
         base.ClearItems();

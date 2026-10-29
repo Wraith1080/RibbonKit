@@ -10,8 +10,9 @@ internal static class MessageInteractionChecks
 {
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint hwnd);
     [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
+    [DllImport("dwmapi.dll")] private static extern int DwmFlush();
     [DllImport("user32.dll")] private static extern void mouse_event(uint flags, uint dx, uint dy, uint data, nuint extra);
-    internal static int Run(string directory, bool neutral)
+    internal static int Run(string directory, bool neutral, bool motionChecks = false)
     {
         WF.Application.SetHighDpiMode(WF.HighDpiMode.PerMonitorV2); WF.Application.EnableVisualStyles();
         Directory.CreateDirectory(directory); var record = new Recording();
@@ -35,6 +36,7 @@ internal static class MessageInteractionChecks
                 await Task.Yield(); form.Activate(); SetForegroundWindow(form.Handle);
                 for (int i = 0; i < 30 && GetForegroundWindow() != form.Handle; i++) await Task.Delay(50);
                 Guard();
+                if (motionChecks) { await MotionChecks(); return; }
                 foreach (var density in new[] { RibbonDensity.Compact, RibbonDensity.Touch })
                 foreach (var position in new[] { RibbonQuickAccessPosition.TabRow, RibbonQuickAccessPosition.BelowRibbon })
                 foreach (bool minimized in new[] { false, true })
@@ -85,6 +87,55 @@ internal static class MessageInteractionChecks
             await Task.Delay(80); Guard(); form.Refresh(); form.Update();
             using var bitmap = new Bitmap(form.Width, form.Height); using var g = Graphics.FromImage(bitmap);
             g.CopyFromScreen(form.Location, Point.Empty, form.Size); bitmap.Save(Path.Combine(directory, name + ".png"));
+        }
+        void CaptureNow(string name)
+        {
+            Guard(); using var bitmap = new Bitmap(form.Width, form.Height); using var g = Graphics.FromImage(bitmap);
+            g.CopyFromScreen(form.Location, Point.Empty, form.Size); bitmap.Save(Path.Combine(directory, name + ".png"));
+        }
+        async Task Finish()
+        {
+            var watch = System.Diagnostics.Stopwatch.StartNew(); while (ribbon.IsAnimating && watch.ElapsedMilliseconds < 1500) await Task.Delay(15);
+            Check(!ribbon.IsAnimating, "Message animation completes on the native message loop");
+        }
+        async Task Middle(string name, int fromHeight, int toHeight)
+        {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            bool Interior() => record.Stack.Height > Math.Min(fromHeight, toHeight) && record.Stack.Height < Math.Max(fromHeight, toHeight);
+            while (ribbon.IsAnimating && !Interior() && watch.ElapsedMilliseconds < 800) await Task.Delay(5);
+            Check(ribbon.IsAnimating && Interior(), "Native playback paints an intermediate message-frame height"); DwmFlush(); CaptureNow(name);
+        }
+        async Task MotionChecks()
+        {
+            await Task.Delay(250); Guard();
+            var cases = new[] {
+                (RibbonDensity.Compact, RibbonQuickAccessPosition.BelowRibbon, false, true, RibbonAnimationLevel.Expressive),
+                (RibbonDensity.Touch, RibbonQuickAccessPosition.BelowRibbon, true, true, RibbonAnimationLevel.Expressive),
+                (RibbonDensity.Touch, RibbonQuickAccessPosition.TabRow, true, true, RibbonAnimationLevel.Subtle),
+                (RibbonDensity.Compact, RibbonQuickAccessPosition.TabRow, true, false, RibbonAnimationLevel.Subtle) };
+            foreach (var (density, position, minimized, qatVisible, level) in cases)
+            {
+                ribbon.AnimationLevel = RibbonAnimationLevel.None; first.IsOpen = second.IsOpen = false; ribbon.MessageBar.Items.Clear(); ribbon.MessageBar.Items.AddRange(first, second);
+                ribbon.Density = density; ribbon.QuickAccessPosition = position; ribbon.QuickAccessVisible = qatVisible; ribbon.IsMinimized = minimized; ribbon.Refresh();
+                string prefix = $"{density}-{position}-{minimized}-{qatVisible}"; int baseline = ribbon.Height; document.Focus(); document.Select(2, 4); nint handle = document.Handle; var parent = document.Parent;
+                await Capture(prefix + "-before"); ribbon.AnimationLevel = level; first.IsOpen = second.IsOpen = true;
+                Check(ribbon.IsAnimating && ribbon.MessageBar.HasOpenMessages, "Arrival starts after committing both message states");
+                Check(document.Focused && document.Handle == handle && document.SelectionStart == 2 && document.SelectionLength == 4, "Arrival retains native document focus, HWND and selection");
+                int fullHeight = record.Rows.Values.Sum(b => b.Height); await Middle(prefix + "-opening-1", 0, fullHeight); await Task.Delay(35); DwmFlush(); CaptureNow(prefix + "-opening-2"); await Finish(); ribbon.Refresh(); CaptureNow(prefix + "-open");
+                bool connected = !neutral && (!minimized || position == RibbonQuickAccessPosition.BelowRibbon && qatVisible);
+                Check(record.TopConnected == connected, "Completed message frame has the expected QAT/body join");
+                int actionBefore = actions; await Click(record.Actions[first.Action]); Check(actions == actionBefore + 1 && first.IsOpen, "Native action fires once and keeps its message open");
+                int dismissedBefore = dismissals; await Click(record.Closes[first]);
+                Check(!first.IsOpen && second.IsOpen && dismissals == dismissedBefore + 1 && ribbon.IsAnimating, "Close button commits one dismissal while its outgoing drawing animates");
+                await Middle(prefix + "-dismiss-first", fullHeight, record.Rows[second].Height); await Finish(); ribbon.Refresh(); CaptureNow(prefix + "-one");
+                first.IsOpen = true; Check(ribbon.IsAnimating, "Retained message reopens with animation"); await Finish();
+                ribbon.MessageBar.Items.Clear(); Check(ribbon.IsAnimating && !ribbon.MessageBar.HasOpenMessages && ribbon.Height == baseline, "Clear commits empty geometry while the old rows retract");
+                await Middle(prefix + "-clear", fullHeight, 0); await Finish(); ribbon.Refresh(); CaptureNow(prefix + "-closed");
+                Check(document.Handle == handle && document.Parent == parent && document.Text.Contains("retained draft"), "Animated panel lifecycle preserves application controls and data");
+            }
+            ribbon.AnimationLevel = RibbonAnimationLevel.None; first.IsOpen = true; ribbon.MessageBar.Items.Add(first); Check(!ribbon.IsAnimating, "None keeps message changes immediate");
+            ribbon.AnimationLevel = RibbonAnimationLevel.Expressive; first.Dismiss(); Check(ribbon.IsAnimating, "Dismiss uses the shared animation preference"); form.Width -= 20; Check(!ribbon.IsAnimating, "Resize settles the latest committed state");
+            log.Add($"PASS: {(neutral ? "neutral" : "Office2024")} public message motion at actual {ribbon.DeviceDpi} DPI");
         }
     }
     private sealed class Recording

@@ -13,13 +13,38 @@ internal sealed class RibbonMotionWindow : NativeWindow, IDisposable
     private Graphics? _graphics;
     private readonly ImageAttributes _alpha = new();
     private Rectangle _bounds;
-    internal RibbonMotionWindow(Form form) => CreateHandle(new CreateParams { Caption = "Ribbon geometry motion", Style = unchecked((int)0x80000000), ExStyle = 0x080800A0, Parent = form.Handle });
+    internal RibbonMotionWindow(Control owner) => CreateHandle(new CreateParams { Caption = "Ribbon motion", Style = unchecked((int)0x80000000), ExStyle = 0x080800A0, Parent = owner.Handle });
     internal void Render(RibbonControl ribbon, RibbonMotionScene from, RibbonMotionScene to, double progress)
     {
         var bounds = Rectangle.Union(from.Bounds, to.Bounds);
-        if (_bitmap?.Size != bounds.Size) Allocate(bounds.Size);
-        _bounds = bounds; RibbonMotionScene.Render(_graphics!, bounds, ribbon, from, to, progress, _alpha);
+        Prepare(bounds); RibbonMotionScene.Render(_graphics!, bounds, ribbon, from, to, progress, _alpha); Present();
+    }
+    internal void RenderPopup(RibbonPopupMotion motion, double progress)
+    {
+        Prepare(motion.Bounds); motion.Draw(_graphics!, _alpha, progress); Present();
+    }
+    internal void RenderGroup(RibbonGroupMotion motion, double progress)
+    {
+        Prepare(motion.Bounds); motion.Draw(_graphics!, _alpha, progress); Present();
+        // A row animation must remain below its live full-group/menu windows,
+        // including popups flipped above their anchor by working-area fitting.
+        if (motion.BehindWindow is var above && above != 0)
+            SetWindowPos(Handle, above, 0, 0, 0, 0, 0x0213); // NOOWNERZORDER | NOACTIVATE | NOMOVE | NOSIZE
+    }
+    internal void RenderBackstage(RibbonBackstageMotion motion, double progress)
+    {
+        Prepare(motion.Bounds); motion.Draw(_graphics!, _alpha, progress); Present();
+    }
+    internal void RenderDismissal(Bitmap image, Rectangle bounds, double opacity, int offset)
+    {
+        Prepare(bounds); _graphics!.Clear(Color.Transparent); _alpha.SetColorMatrix(new ColorMatrix { Matrix33 = (float)opacity });
+        _graphics.DrawImage(image, new Rectangle(0, offset, image.Width, image.Height), 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, _alpha); Present();
+    }
+    private void Prepare(Rectangle bounds) { if (_bitmap?.Size != bounds.Size) Allocate(bounds.Size); _bounds = bounds; }
+    private void Present()
+    {
         _graphics!.Flush();
+        var bounds = _bounds;
         var size = bounds.Size; var location = bounds.Location; Point source = Point.Empty; var blend = new Blend { Alpha = 255, Format = 1 };
         if (!UpdateLayeredWindow(Handle, 0, ref location, ref size, _dc, ref source, 0, ref blend, 2)) { int error = Marshal.GetLastWin32Error(); throw new Win32Exception(error, "Native drawing plane failed: " + error); }
         SetWindowPos(Handle, 0, bounds.X, bounds.Y, bounds.Width, bounds.Height, 0x0050); // NOACTIVATE | SHOWWINDOW

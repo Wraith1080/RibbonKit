@@ -55,12 +55,12 @@ public sealed class RibbonMessage : RibbonElement
     }
     /// <summary>Occurs after Title changes.</summary>
     public event EventHandler? TitleChanged;
-    /// <summary>Gets or sets whether this message is presented. Closing retains the model, bindings and action.</summary>
+    /// <summary>Gets or sets whether this message is presented. Closing retains the model, bindings and action. The state commits immediately; AnimationLevel can animate the panel drawing.</summary>
     [Category("Behavior"), DefaultValue(true), Bindable(true)]
     public bool IsOpen
     {
         get => _isOpen;
-        set { Ribbon?.VerifyAccess(); if (_isOpen == value) return; _isOpen = value; Changed(); IsOpenChanged?.Invoke(this, EventArgs.Empty); }
+        set { Ribbon?.VerifyAccess(); if (_isOpen == value) return; if (!IsDisposed && Ribbon is { CanAnimateMessageChange: true } ribbon) { ribbon.Motion.Change(false, () => IsOpen = value, messages: true); return; } _isOpen = value; Changed(); IsOpenChanged?.Invoke(this, EventArgs.Empty); }
     }
     /// <summary>Occurs after IsOpen changes.</summary>
     public event EventHandler? IsOpenChanged;
@@ -83,7 +83,12 @@ public sealed class RibbonMessage : RibbonElement
     [Category("Behavior"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     public RibbonButtonItem Action { get; }
     /// <summary>Closes an open message once and raises Dismissed. It remains in its collection and can be reopened.</summary>
-    public void Dismiss() { Ribbon?.VerifyAccess(); if (IsDisposed || !IsOpen) return; IsOpen = false; Dismissed?.Invoke(this, EventArgs.Empty); }
+    public void Dismiss()
+    {
+        Ribbon?.VerifyAccess(); if (IsDisposed || !IsOpen) return;
+        if (Ribbon is { CanAnimateMessageChange: true } ribbon) { ribbon.Motion.Change(false, Dismiss, messages: true); return; }
+        IsOpen = false; Dismissed?.Invoke(this, EventArgs.Empty);
+    }
     /// <summary>Occurs once for each successful Dismiss call; assigning IsOpen alone raises only IsOpenChanged.</summary>
     public event EventHandler? Dismissed;
     internal RibbonButtonItem Close { get; }

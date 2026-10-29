@@ -34,8 +34,8 @@ public class RibbonOptionsDialog : Form
         var cancel = Button("CancelCustomization", "Cancel", () => { DialogResult = DialogResult.Cancel; Close(); });
         cancel.CausesValidation = false;
         var ok = new RibbonOptionsAccentButton(ribbon) { Name = "AcceptCustomization", Text = "OK", AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
-        ok.Click += (_, _) => { if (ApplyAll()) { _accepted = true; DialogResult = DialogResult.OK; Close(); } };
-        var apply = Button("ApplyCustomization", "&Apply", () => SelectedPage?.ApplyChanges());
+        ok.Click += (_, _) => { using var update = new RibbonOptionsListUpdate(this); if (ApplyAll()) { _accepted = true; DialogResult = DialogResult.OK; Close(); } };
+        var apply = Button("ApplyCustomization", "&Apply", () => { using var update = new RibbonOptionsListUpdate(this); SelectedPage?.ApplyChanges(); });
         _footer.Controls.AddRange([apply, cancel, ok]); CancelButton = cancel; AcceptButton = ok;
         _body.Controls.Add(_viewport); _body.Controls.Add(_heading);
         var middle = new Panel { Dock = DockStyle.Fill }; middle.Controls.Add(_body); middle.Controls.Add(_rail);

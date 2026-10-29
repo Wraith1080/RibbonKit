@@ -48,6 +48,7 @@ internal readonly record struct RibbonDensityMetrics(bool Touch)
     internal int BackButton => Touch ? 44 : 36;
     internal int SimplifiedBody => Touch ? 52 : 42;
     internal int SimplifiedClearance => Touch ? 4 : 3;
+    internal int SimplifiedEditorMinimum => Touch ? 44 : 26;
     internal int SimplifiedMore => Touch ? 44 : 32;
     internal int SimplifiedDivider => 5;
     internal int SimplifiedGap => 3;

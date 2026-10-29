@@ -88,7 +88,7 @@ public sealed class MinimizeMotionTests
         ribbon.IsMinimized = true; Assert.True(ribbon.IsAnimating); f.Host.Width -= 20; Assert.False(ribbon.IsAnimating);
         ribbon.IsMinimized = false; Assert.True(ribbon.IsAnimating); ribbon.AnimationLevel = RibbonAnimationLevel.None; Assert.False(ribbon.IsAnimating);
         ribbon.AnimationLevel = RibbonAnimationLevel.Subtle; ribbon.IsMinimized = true; Assert.True(ribbon.IsAnimating);
-        ribbon.Activate(ribbon.Snapshot.Targets.Single(t => ReferenceEquals(t.Element, ribbon.SelectedTab))); Assert.False(ribbon.IsAnimating); Assert.True(ribbon.Popups.HasOpen); ribbon.Popups.CloseAll(false);
+        ribbon.Activate(ribbon.Snapshot.Targets.Single(t => ReferenceEquals(t.Element, ribbon.SelectedTab))); Assert.False(ribbon.Motion.IsRunning); Assert.True(ribbon.Popups.IsAnimating); Assert.True(ribbon.Popups.HasOpen); ribbon.Popups.CloseAll(false); Assert.False(ribbon.IsAnimating);
         var modal = new RibbonTab { Text = "Preview", IsModal = true }; ribbon.AnimationLevel = RibbonAnimationLevel.None; ribbon.Tabs.Add(modal); ribbon.AnimationLevel = RibbonAnimationLevel.Subtle;
         Assert.True(ribbon.EnterModal(modal)); Assert.False(ribbon.IsMinimized); Assert.False(ribbon.IsAnimating); Assert.True(ribbon.ExitModal()); Assert.True(ribbon.IsMinimized); Assert.False(ribbon.IsAnimating);
         using var startup = new RibbonControl { AnimationLevel = RibbonAnimationLevel.Subtle }; startup.IsMinimized = true; Assert.False(startup.IsAnimating);

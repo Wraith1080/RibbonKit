@@ -35,11 +35,14 @@ public sealed class SimplifiedRibbonTests
         Assert.Contains(f.Ribbon.Snapshot.Targets, t => t.Element == f.Copy); Assert.Contains(f.Ribbon.Snapshot.Targets, t => t.Element == f.Combo); Assert.DoesNotContain(f.Ribbon.Snapshot.Targets, t => t.Element == f.Field);
         var split = f.Ribbon.Snapshot.Targets.Where(t => t.Element == f.Paste).ToArray(); Assert.Equal(2, split.Length); Assert.Equal(split[0].Bounds.Right, split[1].Bounds.Left); Assert.Equal(split[0].Bounds.Top, split[1].Bounds.Top);
         int compact = f.Ribbon.Height; f.Ribbon.Density = RibbonDensity.Touch; Assert.True(f.Ribbon.Height > compact);
+        foreach (var density in Enum.GetValues<RibbonDensity>())
         foreach (int width in new[] { 1200, 400, 150, 24 })
         {
-            f.Ribbon.Width = width; var snapshot = f.Ribbon.Snapshot;
-            Assert.Single(snapshot.Targets, t => t.Element == f.Ribbon.Simplified.More); Assert.Equal(2, f.Ribbon.Simplified.More.Entries.OfType<RibbonQuickAccessGroupReference>().Count());
+            f.Ribbon.Density = density; f.Ribbon.Width = width; var snapshot = f.Ribbon.Snapshot;
+            var more = Assert.Single(snapshot.Targets, t => t.Element == f.Ribbon.Simplified.More); Assert.Equal(2, f.Ribbon.Simplified.More.Entries.OfType<RibbonQuickAccessGroupReference>().Count());
+            if (snapshot.BodyExtent <= snapshot.BodyViewport.Width) Assert.Equal(snapshot.BodyViewport.Right, more.Bounds.Right);
             Assert.All(snapshot.Targets.Where(t => t.Kind == TargetKind.Item), t => Assert.True(snapshot.BodyViewport.Contains(t.VisibleBounds)));
+            Assert.All(snapshot.Targets.Where(t => t.Kind == TargetKind.Item), t => Assert.True(t.VisibleBounds.Right <= more.Bounds.Left));
         }
         f.Ribbon.LayoutMode = RibbonLayoutMode.Classic; f.Ribbon.Density = RibbonDensity.Compact; Assert.Equal(classic, f.Ribbon.Height); Assert.Equal(items, f.Clipboard.Items); Assert.Same(f.Clipboard, f.Copy.Parent);
         Assert.Throws<ArgumentOutOfRangeException>(() => f.Copy.SimplifiedSize = RibbonItemSize.Large);
@@ -118,6 +121,7 @@ public sealed class SimplifiedRibbonTests
         using var f = new Fixture(); using var host = new Form(); f.Show(host); f.Ribbon.LayoutMode = RibbonLayoutMode.Simplified;
         f.Ribbon.QuickAccessPosition = RibbonQuickAccessPosition.BelowRibbon; f.Ribbon.IsMinimized = true;
         f.Ribbon.Activate(f.Ribbon.Snapshot.Targets.Single(t => t.Element == f.Home)); var body = f.Ribbon.Popups.Top!;
+        Assert.Equal(body.ClientSize.Width - RibbonLayoutEngine.Scale(4, f.Ribbon.DeviceDpi), body.Targets.Single(t => t.Element == f.Ribbon.Simplified.More).Bounds.Right);
         Assert.Contains(body.Targets, t => t.Element == f.Copy); Assert.Empty(f.Ribbon.Snapshot.Groups);
         f.Ribbon.Activate(body.Targets.Single(t => t.Element == f.Ribbon.Simplified.More), body); var more = f.Ribbon.Popups.Top!;
         f.Ribbon.Activate(more.Targets.Single(t => t.Element is RibbonQuickAccessGroupReference { Source: var source } && source == f.Font), more);

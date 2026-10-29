@@ -1228,6 +1228,135 @@ message live-region accessibility, motion and theme expansion remain separate
 gates/slices. Messages are application notifications, not merge/customization
 persistence. WPF runtime/build/CI remain unchanged; no commit or push was made.
 
+## Pre-M6B review fixes — 2026-10-29
+
+The user accepted the reviewed animation presentation and requested this bounded
+fixing slice before M6B. All five corrections are implemented for review:
+
+| Requested fix | Result |
+| --- | --- |
+| First message's top border | Office's attached panel omits its top stroke; the preceding body/QAT owns the shared edge. A standalone minimized not-BelowRibbon/hidden-QAT panel retains its full frame. |
+| Lower QAT height | Uses its own Compact/Touch row metric instead of the taller tab-header metric. Ordinary targets use the same square dimensions as TabRow targets, centered with balanced vertical clearance. |
+| Shadow discontinuity at messages | Office paints one shadow for the combined body/QAT/message outer frame and suppresses the component shadows. This keeps the side shadow continuous through the join in live and animated presentation. Neutral retains its independent surfaces. |
+| Temporary minimized body | Opens directly after the tabs with external body side margins, above QAT/messages. Shared body geometry is translated into the popup interior, including scroll rebuilding. Outside-click dismissal releases the real popup and retained editors immediately while an inert drawing fades/slides away; application focus/input proceeds normally. |
+| Customization split widths | One internal column layout supplies equal command columns and measured action rails to QAT, Classic and Simplified editors. Footer captions no longer alter the split; lists/trees, searches and labels keep their widths and horizontal positions across page selection. The Add/Remove/Up/Down follow-up also uses shared button dimensions, margins and vertical placement. |
+
+Action alignment follow-up, 2026-10-29: all three pages use the same action area,
+with one common search-row clearance. Simplified's additional tab-selector row
+therefore does not move its buttons. QAT's footer now occupies the same table row
+as the other pages' footer; native button identities, handlers and tab order are
+retained. Add aligns with Up, Remove aligns with Down, and all four rectangles
+match across page changes in Compact and Touch. This follow-up awaits user review.
+
+The dismissal uses existing None/Subtle/Expressive policy (130/182 ms with 8/12
+logical-pixel travel), with immediate startup/update-batch/system-policy fallback.
+Input, policy changes, resize/movement/deactivation and disposal release drawings;
+model ownership and application content remain unchanged. Command-menu closing,
+Escape and programmatic closure retain their immediate behavior. No public API
+signatures were added; the shadow/column/dismissal helpers are library-owned.
+
+Focused evidence:
+
+- New targeted checks passed 5/5 in `pre-m6b-review-first.trx`: square targets,
+  no attached top stroke, continuous shadow pixels at 96/120/144/192 DPI and
+  odd/even bounds, three-page column parity, popup margins/overlay and retained
+  editor handles. New/affected dismissal-policy and square-target cases passed
+  3/3 in `pre-m6b-popup-policy-final.trx` after exact target-size centering.
+- Related message, QAT frame and options checks passed 19/20 in
+  `pre-m6b-related.trx`. Its remaining geometry assertion encoded the old popup's
+  internal outer margins. It now compares the shared body at the popup's actual
+  interior width and translated origin. That correction plus affected message/
+  minimize drawings passed 13/13 in `pre-m6b-drawing-popup.trx`.
+- A fault-injection attempt with a persistently throwing application frame renderer
+  aborted `pre-m6b-popup-policy.trx` during native painting. That probe was removed;
+  arbitrary application paint-failure recovery is not established. The final
+  policy test covers None, disabled system motion, resize, level changes and
+  repeated cleanup without that unsafe probe. Failed evidence remains diagnostic.
+- Public-only native checks passed for Office/neutral at actual 120 DPI in
+  `artifacts/pre-m6b-review-office/` and `artifacts/pre-m6b-review-neutral/`:
+  Compact/Touch, both placements, expanded/minimized frames, square QAT targets,
+  actual pointer popup opening/dismissal, document focus/data/handle retention,
+  and QAT/Classic/Simplified column/list/search parity. Additional native popup
+  scopes in `artifacts/pre-m6b-popup-office/` and
+  `artifacts/pre-m6b-popup-neutral/` cover both ribbon layouts/densities/
+  placements, including inspected intermediate closing frames. Passed review
+  scopes were retained; later checks target changed or unresolved paths only.
+- Normal Debug native build includes XML/API and design compilation. Actual
+  resting, overlay, intermediate closing and customization captures were inspected.
+  No full aggregate, WPF, Release, fresh-package, actual VS, physical mixed-monitor/
+  touch/IME or performance/resource campaign was run. Human review of these fixes
+  remains pending; M6B has not started.
+- Action alignment follow-up: the two density/three-page rectangle checks and
+  existing search-spacing check passed 3/3 in `pre-m6b-action-alignment.trx`.
+  Public-only options checks passed at actual 120 DPI for Office and neutral in
+  `artifacts/pre-m6b-action-alignment-office/` and
+  `artifacts/pre-m6b-action-alignment-neutral/`. Exact native button bounds,
+  Add/Up and Remove/Down row alignment, column positions and list/search widths
+  match across QAT, Classic and Simplified. Actual captures were inspected.
+  The normal Debug build passed; unrelated motion/message tests were not rerun.
+
+Reproduce with native `--pre-m6b-review` / `--pre-m6b-review-flat` and an evidence
+directory, or consumer `--validate-pre-m6b-review` variants. Native
+`--pre-m6b-popup-close` variants select just the temporary-body checks.
+Native `--customization-alignment` / `--customization-alignment-flat`, or consumer
+`--validate-customization-alignment` variants, select just the options-page checks.
+
+### Additional review corrections — 2026-10-29
+
+The requested overflow alignment and subsequent eight fixes are implemented for
+review. M6B remains queued; these changes add no public API signatures.
+
+| Requested fix | Result |
+| --- | --- |
+| Simplified overflow placement | More Commands aligns with the body's right inset when the row fits. The same target drives paint, input and anchoring; minimum-width scrolling remains available. |
+| Backstage clipped letters | KeyTip badges measure their actual navigation font and add DPI-scaled clearance, replacing the fixed-height letter box. Rich hover ScreenTips are unchanged. |
+| Apply/OK tree flicker | Native list/tree redraw stays suspended through refresh and application callbacks, including closing on OK. Tree images refresh within that hold; the selected and top visible nodes are retained. |
+| Print Preview/Chart defaults | Showcase authors inline commands and supported ComboBoxes for both transient tabs. Other editors remain available through full groups. |
+| Picture Format order | Showcase inserts View before Picture Format, leaving Picture Format after the normal authored tabs and before merged contributions. General library tab-order semantics are unchanged. |
+| Import/export artwork | Classic and Simplified customization swap the two SVG mappings; the command handlers and identities stay the same. |
+| Simplified ComboBox height | Inline fields use 26/44 logical-pixel Compact/Touch minima, capped/centered in the existing row. Classic and full-group field sizes are retained. |
+| Borrowed full-group contents | The inline group becomes one medium collapsed group button while the popup uses its original controls. Closing restores the same handles/order and current values/checked states. Clicking the temporary button closes the popup without activating the command restored underneath. Root and temporary minimized rows share this behavior; profiles are untouched. |
+| Tab-header scrollers | Both built-in renderers use the body scroller's themed chrome and vector chevron instead of a small text glyph. Tab-header target dimensions and layout stay unchanged. |
+
+Relevant verification only:
+
+- Normal Debug native solution build passed with zero warnings/errors, including
+  API/XML and design compilation. No WPF files or build were involved.
+- `simplified-more-right-edge.trx`: 3/3. `pre-m6b-followup-badges-tree.trx`:
+  5/5 for both-density badges/fields, transfer mapping and Apply/OK redraw/scroll.
+  `pre-m6b-followup-group-dismiss.trx`: 2/2 normal/minimized group restoration
+  and click return. Related Simplified, Backstage and options cases passed 17/17
+  in `pre-m6b-followup-related.trx`; selections overlap and are not additive.
+- `pre-m6b-tab-scroller-chrome.trx`: 2/2, covering shared header/body chrome and
+  glyph pixels at synthetic 96/120/144/192 DPI, odd/even bounds, both renderers,
+  directions and resting/hover/pressed states, plus disjoint header utility bounds.
+- Public-only native core checks passed for Office/neutral at actual 120 DPI,
+  Compact/Touch, in `artifacts/pre-m6b-followup-office/` and
+  `artifacts/pre-m6b-followup-neutral/`. These verify measured badges, larger
+  fields, More placement, native editor identity/current state, and actual
+  Apply/OK draw suppression with scroll/handle retention.
+- Group-button click-return evidence is assembled from the passed Compact prefixes
+  in `artifacts/pre-m6b-followup-groups-office/` and
+  `artifacts/pre-m6b-followup-groups-neutral/`, then the Touch tails in
+  `artifacts/pre-m6b-followup-groups-office-touch/` and
+  `artifacts/pre-m6b-followup-groups-neutral-touch/`. An unavailable Classic field
+  baseline in the expanded fixture caused its earlier Touch assertion failures;
+  the fixture now keeps that source group expanded and verifies it was painted.
+  Passed scopes were retained instead of rerunning unrelated checks.
+- Showcase's ordering/default checks and inspected captures passed in
+  `artifacts/pre-m6b-followup-showcase-final/`; the tab-scroller capture passed in
+  `artifacts/pre-m6b-tab-scrollers-showcase/`, actual 120 DPI. Captures verify
+  foreground ownership and the GUI process is awaited before another native run.
+  Earlier overlapping-window captures are diagnostic, not visual acceptance.
+
+Core native checks use `--review-followup` / `--review-followup-flat` (consumer:
+`--validate-review-followup` variants). Native `--review-followup-groups` variants
+select group restoration; `--review-followup-groups-touch` variants select its
+Touch tail. Showcase `--capture-review-followup` and `--capture-tab-scrollers`
+accept an evidence directory. Actual captures were inspected. Full aggregate,
+Release/package, actual VS, physical mixed-monitor/touch/IME and performance gates
+were not run. Human visual acceptance of these refinements remains pending.
+
 ## Remaining slices
 
 This is a working delivery order, not a promise that each row fits one change.
@@ -1249,7 +1378,8 @@ Each public API and ownership contract is proposed before its implementation.
 | M5B | QAT context menu and extensible options dialog implemented; current acceptance and evidence in [M5 ledger](M5-STATUS.md) |
 | M5C | Ribbon customization UI and structural changes implemented; focused evidence and visual review in [M5 ledger](M5-STATUS.md) |
 | M5D | [Native row, More Commands, shared structure and Simplified customization/profiles implemented; human review pending](M5D-SIMPLIFIED-RIBBON.md) |
-| M6A | [Opt-in Classic/Simplified, density, QAT, tab/header and minimize/restore motion implemented; visual/performance acceptance and optional host synchronization remain](M6A-MOTION-PLAN.md) |
+| M6A | [Opt-in geometry, group collapse/restore, tab/header, minimize/restore, popup, Backstage/page opening/closing and message-panel motion implemented; visual/performance acceptance and optional host synchronization remain](M6A-MOTION-PLAN.md) |
+| Pre-M6B fixes | [Initial fixes, action alignment and additional review corrections implemented; human review pending](#pre-m6b-review-fixes--2026-10-29) |
 | M6B | Optional RibbonForm/window integration and title-bar QAT using existing source models |
 | M6C | Optional backdrop/chrome treatments and their native window/DPI behavior |
 

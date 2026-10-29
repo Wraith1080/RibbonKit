@@ -18,6 +18,16 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     private int _navigationFontDpi;
     private bool _syncing, _tips, _disposing;
     private string _prefix = "";
+    internal Rectangle NavigationBounds => new(0, 0, _pages.Left, ClientSize.Height);
+    internal Control[] NavigationControls => [_back, _navigation];
+    internal Control PageArea => _pages;
+    internal Control CreateBackdrop() => new Backdrop(this);
+    private sealed class Backdrop : Control
+    {
+        private readonly RibbonBackstageSurface _surface;
+        internal Backdrop(RibbonBackstageSurface surface) { _surface = surface; SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true); SetStyle(ControlStyles.Selectable, false); TabStop = false; CausesValidation = false; }
+        protected override void OnPaint(PaintEventArgs e) => _surface._ribbon.Painter.DrawBackstageBackground(new(e.Graphics, ClientRectangle, _surface._ribbon.Theme, _surface.Font, _surface.DeviceDpi) { Density = _surface._ribbon.Density }, _surface.NavigationBounds.Width);
+    }
     internal RibbonBackstageSurface(RibbonControl ribbon)
     {
         _ribbon = ribbon;
@@ -37,6 +47,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         try
         {
             bool hadFocus = ContainsFocus, hadPageFocus = _pages.ContainsFocus;
+            bool pageMotion = _ribbon.IsBackstageOpen && !ReferenceEquals(_shownPage, _ribbon.Backstage.SelectedPage) && _ribbon.BeginBackstagePageMotion(this);
             Font = _ribbon.Font;
             UpdateNavigationFont();
             BackColor = _ribbon.Theme.BackstageNavigationBackground;
@@ -79,6 +90,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             AssignTips();
             Invalidate(true);
             if (movedFocus && _ribbon.IsBackstageOpen) FocusInitial(false);
+            if (pageMotion) _ribbon.BackstageOpeningMotion?.Start();
         }
         finally { _syncing = false; }
     }
@@ -260,7 +272,13 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             var ribbon = _surface._ribbon;
             var context = new RibbonPaintContext(e.Graphics, ClientRectangle, ribbon.Theme, Font, DeviceDpi, _hot, _pressed, Focused && ribbon.KeyboardFocusCues) { Density = ribbon.Density };
             ribbon.Painter.DrawBackstageEntry(context, Item, ReferenceEquals(Item, ribbon.Backstage.SelectedPage) && Item is not null);
-            if (Tip.Length > 0) ribbon.Painter.DrawKeyTip(context with { Bounds = new(Width - Math.Min(Width, 34), Height / 2 - 9, Math.Min(Width, 30), 18) }, Tip);
+            if (Tip.Length > 0)
+            {
+                var text = TextRenderer.MeasureText(e.Graphics, Tip, Font, Size.Empty, TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
+                int S(int n) => RibbonLayoutEngine.Scale(n, DeviceDpi);
+                var size = new Size(Math.Min(Math.Max(0, Width - S(8)), text.Width + S(8)), Math.Min(Math.Max(0, Height - S(4)), text.Height + S(4)));
+                ribbon.Painter.DrawKeyTip(context with { Bounds = new(Math.Max(0, Width - S(4) - size.Width), (Height - size.Height) / 2, size.Width, size.Height) }, Tip);
+            }
         }
     }
 }

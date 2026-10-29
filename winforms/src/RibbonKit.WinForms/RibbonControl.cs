@@ -341,6 +341,18 @@ public partial class RibbonControl : Control, ISupportInitialize
         SyncEditors();
     }
     /// <inheritdoc />
+    protected override void SetBoundsCore(int x, int y, int width, int height, BoundsSpecified specified)
+    {
+        if (_engine is not null && width != Width && height == Height && CanAnimateGroups && _groupMotion?.Changing != true && !IsMinimized && SelectedTab is { } tab)
+        {
+            var before = Snapshot;
+            var next = _engine.BuildBody(this, tab, width, _bodyOffset, before.BodyBounds.Top - RibbonLayoutEngine.Scale(LayoutTheme.BodyMargin.Top, DeviceDpi));
+            if (_groupMotion?.IsRunning == true || RibbonGroupScene.Changes(RibbonGroupScene.Measure(this, before), RibbonGroupScene.Measure(this, next)))
+            { GroupMotion.Change(this, () => Snapshot, () => base.SetBoundsCore(x, y, width, height, specified)); return; }
+        }
+        base.SetBoundsCore(x, y, width, height, specified);
+    }
+    /// <inheritdoc />
     protected override void OnResize(EventArgs e)
     {
         SettleMotion();
@@ -385,7 +397,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     /// <inheritdoc />
     protected override void OnVisibleChanged(EventArgs e)
     {
-        if (!Visible) _motion?.Settle();
+        if (!Visible) { _groupMotion?.Settle(); _motion?.Settle(); }
         base.OnVisibleChanged(e);
         if (_popups is null)
             return;
@@ -404,6 +416,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     /// <inheritdoc />
     protected override void OnParentChanged(EventArgs e)
     {
+        _groupMotion?.Settle();
         _motion?.Settle();
         ReleaseBackstageSurface();
         _popups?.ResetOwner();
@@ -422,6 +435,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     /// <inheritdoc />
     protected override void OnHandleDestroyed(EventArgs e)
     {
+        _groupMotion?.Settle();
         _motion?.Settle();
         ReleaseBackstageSurface();
         _input.Detach();
@@ -437,6 +451,11 @@ public partial class RibbonControl : Control, ISupportInitialize
         EnsureLayout();
         var context = new RibbonPaintContext(e.Graphics, ClientRectangle, Theme, Font, DeviceDpi) { Density = Density, SuppressTabIndicators = CapturingMotionIndicators };
         Painter.DrawSurface(context, false);
+        if (MessageTopConnected && !_snapshot.MessageBounds.IsEmpty)
+        {
+            var upper = !_snapshot.BodyFrameBounds.IsEmpty ? _snapshot.BodyFrameBounds : _snapshot.QuickAccessBounds;
+            if (Painter.PaintConnectedMessageShadow(context, upper, _snapshot.MessageBounds)) context = context with { SuppressShadow = true };
+        }
         PaintMessages(context);
         if (!_snapshot.BodyBounds.IsEmpty) Painter.DrawBody(context with { Bounds = _snapshot.BodyFrameBounds, IsBottomEdgeConnected = MessageBar.HasOpenMessages && MessageTopConnected });
         if (!_snapshot.QuickAccessBounds.IsEmpty) Painter.DrawQuickAccessToolbar(context with { Bounds = _snapshot.QuickAccessBounds,
@@ -452,6 +471,7 @@ public partial class RibbonControl : Control, ISupportInitialize
                 {
                     Bounds = slot.Bounds,
                     GroupSeparatorBounds = slot.Frame,
+                    IsSimplifiedGroup = LayoutMode == RibbonLayoutMode.Simplified,
                     Hot = slot.Group.EffectiveEnabled && ReferenceEquals(slot.Group, _hot),
                     Pressed = slot.Group.EffectiveEnabled && ReferenceEquals(slot.Group, _pressed),
                     Focused = slot.Group.EffectiveEnabled && _keyboardFocusCues && Focused && ReferenceEquals(slot.Group, _focused)
@@ -925,6 +945,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         if (disposing && !_disposing)
         {
             _disposing = true;
+            _groupMotion?.Dispose();
             _motion?.Dispose();
             _modalScope?.Release();
             ReleaseBackstageSurface();

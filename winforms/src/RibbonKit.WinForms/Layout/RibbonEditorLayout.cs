@@ -15,10 +15,11 @@ internal static class RibbonEditorLayout
         string.IsNullOrEmpty(item.Text) ? 0 : TextRenderer.MeasureText(item.Text, font, new Size(10000, 1000),
             TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding).Width + RibbonLayoutEngine.Scale(6, dpi);
 
-    internal static Rectangle Field(Rectangle bounds, RibbonItem item, int labelWidth, Font font, int dpi)
+    internal static Rectangle Field(Rectangle bounds, RibbonItem item, int labelWidth, Font font, int dpi, bool simplified = false)
     {
         int padding = RibbonLayoutEngine.Scale(3, dpi);
         int minimum = RibbonDensityMetrics.For(item.Ribbon?.Density ?? RibbonDensity.Compact).EditorHeight;
+        if (simplified && item is RibbonComboBoxItem) minimum = Math.Max(minimum, RibbonDensityMetrics.For(item.Ribbon?.Density ?? RibbonDensity.Compact).SimplifiedEditorMinimum);
         int height = Math.Min(bounds.Height, Math.Max(RibbonLayoutEngine.Scale(minimum, dpi), font.Height + RibbonLayoutEngine.Scale(8, dpi)));
         int left = bounds.Left + padding + labelWidth;
         return new(left, bounds.Top + (bounds.Height - height) / 2,
