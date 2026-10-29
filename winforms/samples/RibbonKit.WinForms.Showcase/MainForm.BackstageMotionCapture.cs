@@ -5,7 +5,7 @@ namespace RibbonKit.WinForms.Showcase;
 
 public partial class MainForm
 {
-    internal async Task CaptureMotionInput(string directory, bool tailOnly = false, bool interactionsOnly = false)
+    internal async Task CaptureMotionInput(string directory, bool tailOnly = false, bool interactionsOnly = false, bool hoverOnly = false)
     {
         Directory.CreateDirectory(directory); List<string> log = []; var pointer = Cursor.Position;
         try
@@ -13,6 +13,20 @@ public partial class MainForm
             Activate(); SetForegroundWindow(Handle); await Task.Delay(150); Guard(); Location = new(240, 160); Width = 1250; Height = 760;
             ribbon.AnimationLevel = RibbonAnimationLevel.None; ribbon.IsBackstageOpen = false; ribbon.IsMinimized = false; ribbon.SelectedTab = inputs; ribbon.Focus();
             Cursor.Position = new(Right + 15, Top + 100); await Task.Delay(80); ribbon.AnimationLevel = RibbonAnimationLevel.Expressive;
+            if (hoverOnly)
+            {
+                async Task Sweep(int y)
+                {
+                    for (int step = 0; step < 30; step++) { Guard(); Cursor.Position = new(Left + 24 + step * (Width - 280) / 30, y); await Task.Delay(8); }
+                }
+                await Record("document-hover-caption", () => Sweep(Top + 22), false);
+                await Record("document-hover-tabs", () => Sweep(ribbon.PointToScreen(new(0, (int)Math.Round(55 * DeviceDpi / 96d))).Y), false);
+                await Record("document-hover-tab-motion", async () => { ribbon.SelectedTab = home; await Sweep(Top + 22); }, false);
+                await Record("document-hover-document", () => Sweep(document.PointToScreen(new(0, 70)).Y), false);
+                ribbon.IsBackstageOpen = true; var opening = Stopwatch.StartNew(); while (ribbon.IsAnimating && opening.ElapsedMilliseconds < 1500) await Task.Delay(5);
+                await Record("document-close", async () => { ribbon.IsBackstageOpen = false; await Sweep(Top + 22); }, false);
+                log.Add("PASS: controlled pointer movement and document capture completed"); return;
+            }
             if (interactionsOnly)
             {
                 foreach (var density in Enum.GetValues<RibbonDensity>())
@@ -52,6 +66,12 @@ public partial class MainForm
             await Record("home-to-inputs", () => { ribbon.SelectedTab = inputs; return Task.CompletedTask; }, false);
             await Record("minimize", () => { Guard(); SendKeys.SendWait("^{F1}"); return Task.CompletedTask; }, false);
             await Record("restore", () => { Guard(); SendKeys.SendWait("^{F1}"); return Task.CompletedTask; }, false);
+            if (tailOnly)
+            {
+                ribbon.IsBackstageOpen = true;
+                var opening = Stopwatch.StartNew(); while (ribbon.IsAnimating && opening.ElapsedMilliseconds < 1500) await Task.Delay(5);
+                await Record("document-close", () => { ribbon.IsBackstageOpen = false; return Task.CompletedTask; }, false);
+            }
             log.Add("PASS: full-window input capture completed");
         }
         catch (Exception error) { log.Add("FAIL: " + error); Environment.ExitCode = 1; }
@@ -114,12 +134,13 @@ public partial class MainForm
                     }
                 }
                 int documentChanges = 0, editorChanges = 0;
-                if (name.Contains("-to-", StringComparison.Ordinal) || name is "minimize" or "restore")
+                if (name.StartsWith("document-hover", StringComparison.Ordinal) || name.Contains("-to-", StringComparison.Ordinal) || name is "minimize" or "restore" or "document-close")
                 {
                     var doc = document.RectangleToScreen(document.ClientRectangle); doc.Offset(-bounds.X, -bounds.Y);
                     int ribbonBottom = ribbon.PointToScreen(new(0, ribbon.Height)).Y - bounds.Y;
                     doc = Rectangle.FromLTRB(doc.Left + 8, Math.Max(doc.Top, Math.Max(oldRibbonBottom, ribbonBottom)) + 25, doc.Right - 30, doc.Bottom - 25);
-                    documentChanges = images.Where(f => f.Milliseconds >= committed + 35).Select(f => Changed(f.Image, images[^1].Image, doc)).DefaultIfEmpty().Max();
+                    long compareAfter = name.StartsWith("document-hover", StringComparison.Ordinal) ? 20 : committed + 35;
+                    documentChanges = images.Where(f => f.Milliseconds >= compareAfter && (name != "document-close" || !f.Animating)).Select(f => Changed(f.Image, images[^1].Image, doc)).DefaultIfEmpty().Max();
                     var editorBounds = Descendants(ribbon).Where(c => c.Visible && (c.Name == nameInput.Id || c.Name == fontInput.Id) && c is TextBoxBase or ComboBox).Select(c => { var r = c.RectangleToScreen(c.ClientRectangle); r.Offset(-bounds.X, -bounds.Y); return r; }).ToArray();
                     editorChanges = images.Where(f => f.Milliseconds >= committed + 35 && !f.Animating).Select(f => editorBounds.Sum(r => Changed(f.Image, images[^1].Image, r))).DefaultIfEmpty().Max();
                 }

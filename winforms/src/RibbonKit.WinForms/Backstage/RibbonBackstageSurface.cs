@@ -22,9 +22,14 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     internal bool HasApplicationOpacity => _motionOpacity is null && RibbonDrawingHold.HasOpacity(Handle);
     internal RibbonDrawingHold AcquireMotionOpacity(byte alpha)
     {
-        _motionOpacity ??= RibbonDrawingHold.Create(Handle, alpha);
+        _motionOpacity ??= RibbonDrawingHold.Create(Handle, alpha, compositeChildren: _ribbon.HasWindowBackdrop);
+        if (_ribbon.HasWindowBackdrop) _motionOpacity.CompositeChildren();
         _motionOpacity.SetOpacity(alpha);
         return _motionOpacity;
+    }
+    internal void PrepareBackdrop()
+    {
+        if (Visible && IsHandleCreated && !HasApplicationOpacity) AcquireMotionOpacity(255).CompositeChildren();
     }
     internal void RestoreMotionOpacity()
     {

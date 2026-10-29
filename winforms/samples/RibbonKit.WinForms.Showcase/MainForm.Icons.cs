@@ -44,7 +44,7 @@ public partial class MainForm
                 "Clipboard" => "group-clipboard", "Font" => "group-font", "Editing" => "group-editing",
                 "Illustrations" => "group-illustrations", "Links" => "group-links", "Native editors" => "group-fields",
                 "Input states" => "group-input-states", "Editing actions" => "group-input-actions", "Show" => "group-show",
-                "Document view" => "group-view", "More options" => "group-more", "Picture" => "group-picture",
+                "Document view" or "Window" => "group-view", "More options" => "group-more", "Picture" => "group-picture",
                 "Galleries" => "group-galleries", "Application context" => "group-context", "Modal preview" => "group-preview",
                 "Input mode" => "group-input-mode", "Messages" => "group-messages", "Ribbon animation" => "animation-controls",
                 "Chart data" => "group-chart-data", "Chart context" => "group-chart-context", "Preview settings" => "group-preview-settings",
@@ -86,6 +86,7 @@ public partial class MainForm
             "Chart" => "chart-menu", "Messages" => "messages-menu",
             "None" => "animation-none", "Subtle" => "animation-subtle", "Expressive" => "animation-expressive",
             "Tab content" => "animation-tabs", "Fade" => "animation-fade", "Slide down" => "animation-slide-down",
+            "Backdrop" or "Mica" or "Acrylic" => "page-color", "Solid" => "white-page",
             _ => throw new InvalidOperationException("Add an explicit command icon for " + item.Text)
         };
     }

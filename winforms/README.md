@@ -117,7 +117,8 @@ for this new item; no split accessibility compatibility is claimed.
 
 Office2024 light, Compact/Touch density and LTR are the current appearance scope.
 The optional `RibbonForm` supplies the native caption and title-bar QAT described
-below. Mica/client transparency and further chrome treatments remain later work.
+below. Optional native Mica/Acrylic form backgrounds are available through that host;
+full Glass/translucent command panels and further theme treatments remain later work.
 WPF template/resource compatibility is outside this independent native library.
 Ordinary application controls remain native Forms controls. The runtime references neither WPF nor the designer SDK.
 
@@ -1071,8 +1072,58 @@ validation, KeyTips, overflow and editor handles serve every placement.
 
 **First-pass motion limit:** moves into/out of TitleBar settle immediately.
 TabRow/BelowRibbon movement retains its existing opt-in animation; the caption
-band stays steady during body/header motion. No Mica/Acrylic/glass or document/MDI
-management is added. [M6B scope, evidence and remaining review](docs/M6B-WINDOW-INTEGRATION.md).
+band stays steady during body/header motion. Document/MDI management remains
+application-owned. [M6B scope and evidence](docs/M6B-WINDOW-INTEGRATION.md).
+
+### Optional native window backdrops
+
+**Experimental; currently deferred.** [Status and resume checkpoint](docs/M6C-BACKDROPS.md#deferral-and-resume-checkpoint).
+The following API describes the experimental implementation.
+
+`RibbonForm.Backdrop` defaults to `RibbonWindowBackdrop.None`. Opt into `Mica` or
+`Acrylic` to use native material across the form background and behind the ribbon.
+The ribbon's main body remains opaque:
+
+```csharp
+window.Backdrop = RibbonWindowBackdrop.Mica;
+var applied = window.EffectiveBackdrop;
+
+// Application-owned GDI content keeps an opaque, composited native surface.
+var content = new RibbonBackdropPanel { Dock = DockStyle.Fill };
+content.Controls.Add(documentControl);
+window.Controls.Add(content);
+window.Controls.SetChildIndex(content, 0); // Fill the space remaining below the ribbon.
+```
+
+The library owns the backdrop attribute and frame extension after opt-in. It
+reapplies them after handle recreation and DPI/system changes. Windows 11 build
+22621 or later is required. Unsupported, high-contrast, borderless, child/layered
+windows and application opacity/transparency use the solid fallback while retaining
+the requested preference. `EffectiveBackdrop` reports the applied native setting;
+Windows may itself render that setting as solid according to its material policy.
+Setting None restores solid presentation and releases the library's extension.
+
+Command panels, popups, native editors and Backstage pages remain opaque. The
+authored theme and application Opacity/TransparencyKey are unchanged. Host native
+GDI document/content controls inside `RibbonBackdropPanel`; it preserves opaque
+text and child drawing over the material. It uses layered-child composition and
+requires the same Windows 8-or-later compatibility manifest as ribbon motion.
+The application owns the panel, its controls and their layout. It can use
+`BackdropChanged` to update its own margins; no host handler completes animations.
+Material mode keeps the real caption/tab strip live and commits its geometry
+immediately while body/group motion continues. Solid mode retains its existing
+header animation. This prevents layered animation holds from blackening the
+extended native frame.
+
+Custom renderers receive a transparent paint-time `Theme.Background` for the material
+surrounding ribbon background without changing `ribbon.Theme` or `Theme.Surface`.
+Honor that background and delegate composited
+text to the base `DrawText` method to preserve glyph alpha. The neutral and Office
+renderers use the same library path. Host content, persistence and DPI startup stay
+application-owned. Showcase exposes **View → Window → Backdrop**; its default is
+Solid. Its document and status bar use the shared opaque panel, with material
+visible in the application-owned surrounding margins.
+[M6C scope, focused evidence and remaining review](docs/M6C-BACKDROPS.md).
 
 ## Richer command menus
 

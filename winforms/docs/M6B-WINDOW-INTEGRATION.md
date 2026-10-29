@@ -1,7 +1,9 @@
 # M6B native window integration and TitleBar QAT
 
-Status, **2026-10-29: bounded implementation complete for review**. Human visual
-acceptance, physical monitor/DPI and broader OS/accessibility gates remain open.
+Status, **2026-10-29: reviewed implementation accepted by the user**. The final
+frame, resize-group, Backstage and native-editor motion fixes were visually
+accepted, with authorization to continue to M6C. Physical monitor/DPI and broader
+OS/accessibility gates remain open.
 M6C backdrop effects and the remaining roadmap are not part of this slice.
 
 ## Public contract and ownership
@@ -233,11 +235,13 @@ Showcase switches `--capture-motion-input`, `--capture-motion-input-tail` and
 process after the bounded check. Foreground checks stop synthetic input if focus
 leaves that process. The review replay `artifacts/m6b-compositor-review.mp4` is
 assembled from sampled frames; it is not frame-pacing/performance acceptance.
-Human visual acceptance and the remaining gates below are still open.
+User visual review, **2026-10-29**: the frame, resize-group, Backstage and native
+editor motion fixes are accepted. Continue to M6C; the remaining gates below are
+separate from this reviewed scope.
 
 ## Remaining gates
 
-Human visual review is pending. Synthetic DPI geometry and native 120-DPI results
+Synthetic DPI geometry and native 120-DPI results
 do not establish physical mixed-monitor/per-monitor migration, other OS versions,
 taskbar auto-hide/multi-monitor work areas, touch/IME hardware, accessibility
 compatibility, actual VS designer save/reopen or performance/resource budgets.
