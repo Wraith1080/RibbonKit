@@ -191,9 +191,12 @@ public partial class RibbonRenderer : IDisposable
         DrawDropDownArrow(context, context.Theme.Foreground);
         if (context.Focused) DrawFocus(context);
     }
-    /// <summary>Paints text inside a measured content slot, preserving its layout flags.</summary>
-    public virtual void DrawText(RibbonPaintContext context, string text, Color color, TextFormatFlags flags) =>
-        TextRenderer.DrawText(context.Graphics, text, context.Font, context.Bounds, color, flags);
+    /// <summary>Paints text inside a measured content slot, preserving its layout flags and glyph alpha on library material surfaces. Custom renderers can delegate here for composited text.</summary>
+    public virtual void DrawText(RibbonPaintContext context, string text, Color color, TextFormatFlags flags)
+    {
+        if (context.CompositedText) RibbonBackdropBuffer.DrawText(context, text, color, flags);
+        else TextRenderer.DrawText(context.Graphics, text, context.Font, context.Bounds, color, flags);
+    }
     /// <summary>Paints passive ScreenTip content in library-measured title and description slots. The popup frame and shadow use the existing popup hooks.</summary>
     public virtual void DrawScreenTip(RibbonPaintContext context, string title, string description, Rectangle titleBounds, Rectangle descriptionBounds)
     {
@@ -610,7 +613,12 @@ public partial class RibbonRenderer : IDisposable
     public virtual void DrawFocus(RibbonPaintContext context)
     {
         var bounds = Rectangle.Inflate(context.Bounds, -2, -2);
-        ControlPaint.DrawFocusRectangle(context.Graphics, bounds, context.Theme.Foreground, context.Theme.Surface);
+        if (context.CompositedText)
+        {
+            using var pen = new Pen(context.Theme.Foreground) { DashStyle = DashStyle.Dot };
+            context.Graphics.DrawRectangle(pen, bounds);
+        }
+        else ControlPaint.DrawFocusRectangle(context.Graphics, bounds, context.Theme.Foreground, context.Theme.Surface);
     }
     /// <summary>Paints a resolved keyboard badge.</summary>
     public virtual void DrawKeyTip(RibbonPaintContext context, string keys)

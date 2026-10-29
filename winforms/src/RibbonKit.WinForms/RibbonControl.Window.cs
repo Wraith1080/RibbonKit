@@ -8,6 +8,43 @@ public partial class RibbonControl
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     internal RibbonForm? WindowHost { get; set; }
     internal bool HasWindowCaption => WindowHost is { } host && host.SupportsRibbon(this);
+    internal bool HasWindowBackdrop => HasWindowCaption && WindowHost!.HasWindowBackdrop;
+    internal int BackdropHeaderHeight => WindowCaptionHeight + RibbonLayoutEngine.Scale(LayoutTheme.TabHeight, DeviceDpi);
+    private RibbonBackdropBuffer? _backdropBuffer;
+    private RibbonTheme? _backdropThemeSource, _backdropTheme;
+    internal RibbonTheme WindowPaintTheme
+    {
+        get
+        {
+            if (!HasWindowBackdrop) return Theme;
+            if (!ReferenceEquals(Theme, _backdropThemeSource))
+            {
+                _backdropThemeSource = Theme;
+                _backdropTheme = Theme with { Background = Color.Transparent };
+            }
+            return _backdropTheme!;
+        }
+    }
+    private bool _backdropBodyMasked;
+    internal bool CapturingBackdropScene;
+    internal bool BackdropBodyMasked => _backdropBodyMasked;
+    internal void PrepareBackdropEditors(bool enabled)
+    {
+        _editors.SetBackdrop(enabled);
+        if (enabled) _backstageSurface?.PrepareBackdrop();
+    }
+    internal void CopyBackdropSnapshot(Bitmap destination)
+    {
+        using var graphics = Graphics.FromImage(destination);
+        graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+        graphics.DrawImageUnscaled(_backdropBuffer!.Image, Point.Empty);
+    }
+    internal void SetBackdropBodyMasked(bool masked)
+    {
+        if (_backdropBodyMasked == masked) return;
+        _backdropBodyMasked = masked; _editors.SetBackdropOpacity(BackdropBodyMasked ? (byte)1 : (byte)255);
+        if (!IsDisposed && IsHandleCreated) { Invalidate(); Update(); }
+    }
     internal int WindowCaptionHeight => HasWindowCaption ? WindowHost!.CaptionHeight : 0;
     /// <summary>Gets the displayed toolbar position. A retained TitleBar preference falls back to TabRow without a supporting RibbonForm association or room beside its caption buttons.</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]

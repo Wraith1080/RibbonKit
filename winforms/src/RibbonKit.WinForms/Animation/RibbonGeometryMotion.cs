@@ -61,11 +61,20 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
         try
         {
             _from = new(ribbon); _form = ribbon.FindForm()!;
-            try { _window = new(_form, clipToOwner: _form is RibbonForm); _window.Render(ribbon, _from, _from, 0); _hold = RibbonDrawingHold.Create(ribbon.Handle); }
+            try
+            {
+                _window = new(_form, clipToOwner: _form is RibbonForm);
+                if (ribbon.HasWindowBackdrop) ribbon.SetBackdropBodyMasked(true);
+                _window.Render(ribbon, _from, _from, 0);
+                // Layering the real ribbon removes DWM material from its header.
+                // Keep that header live; the opaque body drawing covers the
+                // already-committed body without changing native window styles.
+                if (!ribbon.HasWindowBackdrop) _hold = RibbonDrawingHold.Create(ribbon.Handle);
+            }
             catch (Win32Exception error) { LastSkipReason = error.Message; Trace.WriteLine(LastSkipReason); Release(); }
             var before = (ribbon.LayoutMode, ribbon.Density, ribbon.QuickAccessPosition, ribbon.SelectedTab, ribbon.IsMinimized);
             mutation();
-            if (_hold is null || ribbon.IsDisposed || !ribbon.IsHandleCreated || !SafeBounds()) { Release(); return; }
+            if (_window is null || ribbon.IsDisposed || !ribbon.IsHandleCreated || !SafeBounds()) { Release(); return; }
             bool arrivals = _from!.HasHeaderArrivals(ribbon);
             if (headers ? !arrivals : messages ? !_from.HasMessageChanges(ribbon) : before == (ribbon.LayoutMode, ribbon.Density, ribbon.QuickAccessPosition, ribbon.SelectedTab, ribbon.IsMinimized)) { Release(); return; }
             _to = new(ribbon);
@@ -145,6 +154,7 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
             if (parent is ScrollableControl scroll) scroll.Scroll -= Scrolled;
         }
         _ancestors.Clear();
+        ribbon.SetBackdropBodyMasked(false);
         _hold?.Dispose(); _hold = null;
         _window?.Dispose(); _window = null; _from?.Dispose(); _from = null; _to?.Dispose(); _to = null;
         if (!ribbon.IsDisposed && ribbon.IsHandleCreated) ribbon.Invalidate(true);

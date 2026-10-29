@@ -901,3 +901,18 @@ override RibbonKit.WinForms.RibbonForm.OnPaint(System.Windows.Forms.PaintEventAr
 override RibbonKit.WinForms.RibbonForm.WndProc(ref System.Windows.Forms.Message m) -> void
 override RibbonKit.WinForms.RibbonForm.Dispose(bool disposing) -> void
 override RibbonKit.WinForms.RibbonForm.OnLayout(System.Windows.Forms.LayoutEventArgs! e) -> void
+RibbonKit.WinForms.RibbonWindowBackdrop
+RibbonKit.WinForms.RibbonWindowBackdrop.None = 0 -> RibbonKit.WinForms.RibbonWindowBackdrop
+RibbonKit.WinForms.RibbonWindowBackdrop.Mica = 1 -> RibbonKit.WinForms.RibbonWindowBackdrop
+RibbonKit.WinForms.RibbonWindowBackdrop.Acrylic = 2 -> RibbonKit.WinForms.RibbonWindowBackdrop
+RibbonKit.WinForms.RibbonForm.Backdrop.get -> RibbonKit.WinForms.RibbonWindowBackdrop
+RibbonKit.WinForms.RibbonForm.Backdrop.set -> void
+RibbonKit.WinForms.RibbonForm.EffectiveBackdrop.get -> RibbonKit.WinForms.RibbonWindowBackdrop
+override RibbonKit.WinForms.RibbonForm.OnHandleDestroyed(System.EventArgs! e) -> void
+RibbonKit.WinForms.RibbonForm.BackdropChanged -> System.EventHandler?
+override RibbonKit.WinForms.RibbonForm.OnPaintBackground(System.Windows.Forms.PaintEventArgs! e) -> void
+RibbonKit.WinForms.RibbonBackdropPanel
+RibbonKit.WinForms.RibbonBackdropPanel.RibbonBackdropPanel() -> void
+override RibbonKit.WinForms.RibbonBackdropPanel.CreateParams.get -> System.Windows.Forms.CreateParams!
+override RibbonKit.WinForms.RibbonBackdropPanel.OnHandleCreated(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonBackdropPanel.OnPaintBackground(System.Windows.Forms.PaintEventArgs! e) -> void

@@ -6,6 +6,8 @@ namespace RibbonKit.WinForms;
 // One native editor per model. Popup windows borrow its presentation, never own it.
 internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
 {
+    internal void SetBackdrop(bool enabled) { foreach (var presenter in _editors.Values) presenter.SetBackdrop(enabled); }
+    internal void SetBackdropOpacity(byte alpha) { foreach (var presenter in _editors.Values) presenter.SetBackdropOpacity(alpha); }
     private readonly Dictionary<RibbonItem, Presenter> _editors = [];
     private bool _syncing, _disposed;
     internal bool HasOpenList => _editors.Values.Any(p => p.ListOpen);
@@ -112,6 +114,21 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
 
     private sealed class Presenter : Control
     {
+        private RibbonDrawingHold? _backdropOpacity;
+        private bool _backdrop;
+        internal void SetBackdrop(bool enabled)
+        {
+            _backdrop = enabled;
+            if (!enabled) { _backdropOpacity?.Dispose(); _backdropOpacity = null; }
+            else if (IsHandleCreated && _backdropOpacity is null && !RibbonDrawingHold.HasOpacity(Handle)
+                && _ribbon.FindForm() is { IsHandleCreated: true } form && NativeRoot(Handle) == form.Handle)
+                _backdropOpacity = RibbonDrawingHold.Create(Handle, _ribbon.BackdropBodyMasked ? (byte)1 : (byte)255, compositeChildren: true);
+        }
+        internal void SetBackdropOpacity(byte alpha) => _backdropOpacity?.SetOpacity(alpha);
+        protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); SetBackdrop(_backdrop || _ribbon.HasWindowBackdrop); }
+        protected override void OnHandleDestroyed(EventArgs e) { _backdropOpacity?.Dispose(); _backdropOpacity = null; base.OnHandleDestroyed(e); }
+        private static nint NativeRoot(nint window) => GetAncestor(window, 2);
+        [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern nint GetAncestor(nint window, uint flags);
         private readonly RibbonControl _ribbon;
         private readonly RibbonItem _item;
         private readonly IRibbonEditorItem _value;
@@ -578,7 +595,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
         }
         protected override void Dispose(bool disposing)
         {
-            if (disposing) { CloseChoice(false); Region = null; _ownedRegion?.Dispose(); _ownedRegion = null; }
+            if (disposing) { _backdropOpacity?.Dispose(); _backdropOpacity = null; CloseChoice(false); Region = null; _ownedRegion?.Dispose(); _ownedRegion = null; }
             base.Dispose(disposing);
         }
         private sealed class NativeTextBox(Presenter presenter) : TextBox

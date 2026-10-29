@@ -104,6 +104,7 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     /// <summary>Gets whether this Quick Access toolbar paint joins an expanded body. DrawBody receives the combined outer frame; this row paints only its internal separator. Minimized standalone rows are false.</summary>
     public bool IsQuickAccessToolbarJoined { get; init; }
     internal bool IsBodyScrollButton { get; init; }
+    internal bool CompositedText { get; init; }
     internal Rectangle GroupSeparatorBounds { get; init; }
     internal bool SuppressTabIndicators { get; init; }
     internal bool SuppressShadow { get; init; }

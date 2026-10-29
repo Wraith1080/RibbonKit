@@ -435,6 +435,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     /// <inheritdoc />
     protected override void OnHandleDestroyed(EventArgs e)
     {
+        _backdropBuffer?.Dispose(); _backdropBuffer = null;
         _groupMotion?.Settle();
         _motion?.Settle();
         ReleaseBackstageSurface();
@@ -447,9 +448,44 @@ public partial class RibbonControl : Control, ISupportInitialize
     /// <inheritdoc />
     protected override void OnPaint(PaintEventArgs e)
     {
+        if (HasWindowBackdrop && Width > 0 && Height > 0)
+        {
+            try
+            {
+                _editors.SetBackdrop(true);
+                (_backdropBuffer ??= new()).Paint(e.Graphics, Size, Height, Theme.Background, graphics =>
+                {
+                    PaintRibbon(new(graphics, e.ClipRectangle), true);
+                    if (_backdropBodyMasked && !CapturingBackdropScene)
+                    {
+                        graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+                        using var clear = new SolidBrush(Color.Transparent);
+                        graphics.FillRectangle(clear, 0, BackdropHeaderHeight, Width, Math.Max(0, Height - BackdropHeaderHeight));
+                    }
+                });
+                return;
+            }
+            catch (Exception error) when (error is System.ComponentModel.Win32Exception or System.Runtime.InteropServices.ExternalException) { WindowHost!.BackdropPaintFailed(error); }
+        }
+        _backdropBuffer?.Dispose(); _backdropBuffer = null;
+        PaintRibbon(e, false);
+    }
+    private void PaintRibbon(PaintEventArgs e, bool composited)
+    {
+        var state = e.Graphics.Save();
+        try
+        {
+            if (composited && _backdropBodyMasked && !CapturingBackdropScene)
+                e.Graphics.SetClip(new Rectangle(0, 0, Width, BackdropHeaderHeight), System.Drawing.Drawing2D.CombineMode.Intersect);
+            PaintRibbonCore(e, composited);
+        }
+        finally { e.Graphics.Restore(state); }
+    }
+    private void PaintRibbonCore(PaintEventArgs e, bool composited)
+    {
         base.OnPaint(e);
         EnsureLayout();
-        var context = new RibbonPaintContext(e.Graphics, ClientRectangle, Theme, Font, DeviceDpi) { Density = Density, SuppressTabIndicators = CapturingMotionIndicators };
+        var context = new RibbonPaintContext(e.Graphics, ClientRectangle, composited ? WindowPaintTheme : Theme, Font, DeviceDpi) { Density = Density, SuppressTabIndicators = CapturingMotionIndicators, CompositedText = composited };
         Painter.DrawSurface(context, false);
         if (MessageTopConnected && !_snapshot.MessageBounds.IsEmpty)
         {
@@ -458,7 +494,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         }
         PaintMessages(context);
         if (!_snapshot.BodyBounds.IsEmpty) Painter.DrawBody(context with { Bounds = _snapshot.BodyFrameBounds, IsBottomEdgeConnected = MessageBar.HasOpenMessages && MessageTopConnected });
-        if (HasWindowCaption) WindowHost!.PaintCaption(e.Graphics, this);
+        if (HasWindowCaption) WindowHost!.PaintCaption(e.Graphics, this, composited);
         if (!_snapshot.QuickAccessBounds.IsEmpty) Painter.DrawQuickAccessToolbar(context with { Bounds = _snapshot.QuickAccessBounds,
             IsQuickAccessToolbarJoined = JoinBelowRibbonQuickAccess && !_snapshot.BodyBounds.IsEmpty,
             IsBottomEdgeConnected = MessageBar.HasOpenMessages && MessageTopConnected }, EffectiveQuickAccessPosition);
@@ -541,9 +577,9 @@ public partial class RibbonControl : Control, ISupportInitialize
             finally { e.Graphics.Restore(state); }
         }
         if (_keyTips && !_popups.HasOpen)
-            DrawTips(e.Graphics, TipTargets());
+            DrawTips(e.Graphics, TipTargets(), composited);
     }
-    internal void DrawTips(Graphics graphics, IReadOnlyList<RibbonTarget> targets)
+    internal void DrawTips(Graphics graphics, IReadOnlyList<RibbonTarget> targets, bool composited = false)
     {
         var keys = KeyTipResolver.Resolve(targets.Select(t => (t.TipText, t.PreferredKeyTip)));
         for (int i = 0; i < targets.Count; i++)
@@ -553,7 +589,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             var rect = targets[i].VisibleBounds;
             var size = TextRenderer.MeasureText(keys[i], Font);
             var badge = new Rectangle(rect.Left + Math.Max(0, (rect.Width - size.Width) / 2), Math.Max(rect.Top, rect.Bottom - size.Height), size.Width, size.Height);
-            Painter.DrawKeyTip(new(graphics, badge, Theme, Font, DeviceDpi) { Density = Density }, keys[i]);
+            Painter.DrawKeyTip(new(graphics, badge, Theme, Font, DeviceDpi) { Density = Density, CompositedText = composited }, keys[i]);
         }
     }
     private IReadOnlyList<RibbonTarget> TipTargets() => _popups.Top?.Targets.Where(t => t.Element is not null && t.Enabled).ToArray() ?? Snapshot.Targets.Where(t => t.Element is not null && (_topTips ? t.Element is not RibbonSimplifiedMore && t.Kind is TargetKind.Tab or TargetKind.FileMenu or TargetKind.QuickAccess or TargetKind.QuickAccessOverflow or TargetKind.ModalClose or TargetKind.MessageAction or TargetKind.MessageClose : t.Element is RibbonSimplifiedMore || t.Kind is TargetKind.Item or TargetKind.Group or TargetKind.ModalClose)).ToArray();
@@ -946,6 +982,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         if (disposing && !_disposing)
         {
             _disposing = true;
+            _backdropBuffer?.Dispose(); _backdropBuffer = null;
             _groupMotion?.Dispose();
             _motion?.Dispose();
             _modalScope?.Release();

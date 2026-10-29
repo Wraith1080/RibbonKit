@@ -5,7 +5,7 @@ using RibbonKit.WinForms.Layout;
 namespace RibbonKit.WinForms;
 
 /// <summary>An optional native caption host for a direct, top-docked ribbon. Document controls, DPI startup and application lifetime remain application-owned.</summary>
-public class RibbonForm : Form
+public partial class RibbonForm : Form
 {
     private RibbonControl? _ribbon;
     private int _hotCaption;
@@ -36,6 +36,7 @@ public class RibbonForm : Form
             old?.VerifyAccess();
             if (old is not null)
             {
+                old.PrepareBackdropEditors(false);
                 old.ParentChanged -= RibbonChanged; old.DockChanged -= RibbonChanged; old.VisibleChanged -= RibbonChanged; old.Disposed -= RibbonDisposed;
                 old.WindowHost = null;
             }
@@ -76,7 +77,7 @@ public class RibbonForm : Form
     {
         if (_updating || IsDisposed || Disposing) return;
         _updating = true;
-        try { _ribbon?.ModelChanged(); PerformLayout(); Invalidate(); }
+        try { _ribbon?.ModelChanged(); PerformLayout(); RefreshBackdrop(); Invalidate(); }
         finally { _updating = false; }
     }
     /// <inheritdoc />
@@ -95,6 +96,7 @@ public class RibbonForm : Form
     {
         base.OnHandleCreated(e);
         FrameChanged();
+        RefreshBackdrop();
     }
     private void FrameChanged()
     {
@@ -115,34 +117,52 @@ public class RibbonForm : Form
     protected override void OnLayout(LayoutEventArgs e)
     {
         base.OnLayout(e);
+        RefreshBackdrop();
         int height = _ribbon?.WindowCaptionHeight ?? 0;
         if (_lastCaptionHeight == height) return;
         _lastCaptionHeight = height;
         RefreshRibbon();
     }
     /// <inheritdoc />
-    protected override void OnTextChanged(EventArgs e) { base.OnTextChanged(e); Invalidate(); _ribbon?.Invalidate(); }
+    protected override void OnTextChanged(EventArgs e) { base.OnTextChanged(e); InvalidateCaption(); }
     /// <inheritdoc />
-    protected override void OnActivated(EventArgs e) { base.OnActivated(e); Invalidate(); _ribbon?.Invalidate(); }
+    protected override void OnActivated(EventArgs e) { base.OnActivated(e); InvalidateCaption(); }
     /// <inheritdoc />
-    protected override void OnDeactivate(EventArgs e) { base.OnDeactivate(e); _hotCaption = 0; Invalidate(); _ribbon?.Invalidate(); }
+    protected override void OnDeactivate(EventArgs e) { base.OnDeactivate(e); _hotCaption = 0; InvalidateCaption(); }
+    private void InvalidateCaption()
+    {
+        var bounds = new Rectangle(0, 0, ClientSize.Width, Math.Min(ClientSize.Height, CaptionHeight));
+        if (bounds.Width > 0 && bounds.Height > 0) Invalidate(bounds);
+        if (_ribbon is { HasWindowCaption: true, IsDisposed: false } ribbon)
+            ribbon.Invalidate(new Rectangle(0, 0, ribbon.Width, ribbon.WindowCaptionHeight));
+    }
     /// <inheritdoc />
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
-        if (CustomCaption && (_ribbon is null || !_ribbon.HasWindowCaption)) PaintCaption(e.Graphics, null);
+        if (CustomCaption && (_ribbon is null || !_ribbon.HasWindowCaption))
+        {
+            if (HasWindowBackdrop)
+            {
+                try { (_captionBackdrop ??= new()).Paint(e.Graphics, new(ClientSize.Width, CaptionHeight), CaptionHeight, BackColor, graphics => PaintCaption(graphics, null, true)); return; }
+                catch (Exception error) when (error is Win32Exception or ExternalException) { BackdropPaintFailed(error); }
+            }
+            PaintCaption(e.Graphics, null);
+        }
     }
-    internal void PaintCaption(Graphics graphics, RibbonControl? ribbon)
+    internal void PaintCaption(Graphics graphics, RibbonControl? ribbon, bool composited = false)
     {
         var geometry = Caption; var theme = ribbon?.Theme ?? RibbonThemes.Office2024Light;
-        using var background = new SolidBrush(theme.Background);
+        using var background = new SolidBrush(composited ? Color.Transparent : theme.Background);
         graphics.FillRectangle(background, new Rectangle(0, 0, ClientSize.Width, CaptionHeight));
         if (ShowIcon && Icon is { } icon && !geometry.Icon.IsEmpty) graphics.DrawIcon(icon, geometry.Icon);
         int left = geometry.ContentLeft;
         if (ribbon?.EffectiveQuickAccessPosition == RibbonQuickAccessPosition.TitleBar && ribbon.HasQuickAccess) left = ribbon.Snapshot.QuickAccessBounds.Right + RibbonLayoutEngine.Scale(10, DeviceDpi);
         var text = Rectangle.FromLTRB(Math.Min(left, geometry.Buttons.Left), 0, geometry.Buttons.Left, CaptionHeight);
-        TextRenderer.DrawText(graphics, Text, Font, text, ContainsFocus ? theme.Foreground : theme.SecondaryText,
-            TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+        var textContext = new RibbonPaintContext(graphics, text, theme, Font, DeviceDpi);
+        var flags = TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix;
+        if (composited) RibbonBackdropBuffer.DrawText(textContext, Text, ContainsFocus ? theme.Foreground : theme.SecondaryText, flags);
+        else TextRenderer.DrawText(graphics, Text, Font, text, ContainsFocus ? theme.Foreground : theme.SecondaryText, flags);
         foreach (var (bounds, hit) in geometry.Targets)
         {
             if (bounds.IsEmpty) continue;
@@ -152,7 +172,14 @@ public class RibbonForm : Form
             if (hit == 8) graphics.DrawLine(pen, x, y + size / 2, x + size, y + size / 2);
             else if (hit == 9)
             {
-                if (WindowState == FormWindowState.Maximized) { graphics.DrawRectangle(pen, x + 3, y, size - 3, size - 3); graphics.FillRectangle(background, x, y + 3, size - 3, size - 3); graphics.DrawRectangle(pen, x, y + 3, size - 3, size - 3); }
+                if (WindowState == FormWindowState.Maximized)
+                {
+                    graphics.DrawRectangle(pen, x + 3, y, size - 3, size - 3);
+                    var mode = graphics.CompositingMode;
+                    if (composited) graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+                    graphics.FillRectangle(background, x, y + 3, size - 3, size - 3); graphics.CompositingMode = mode;
+                    graphics.DrawRectangle(pen, x, y + 3, size - 3, size - 3);
+                }
                 else graphics.DrawRectangle(pen, x, y, size, size);
             }
             else { graphics.DrawLine(pen, x, y, x + size, y + size); graphics.DrawLine(pen, x + size, y, x, y + size); }
@@ -181,6 +208,8 @@ public class RibbonForm : Form
     /// <inheritdoc />
     protected override void WndProc(ref Message m)
     {
+        if (m.Msg is 0x1A or 0x31A or 0x31E or 0x7D) // settings, theme, DWM composition, styles
+        { base.WndProc(ref m); RefreshBackdrop(force: m.Msg == 0x31E); return; }
         if (CustomCaption)
         {
             if (m.Msg == 0x83 && m.WParam != 0) // NCCALCSIZE: retain the resize frame, reclaim only the caption.
@@ -203,20 +232,28 @@ public class RibbonForm : Form
             if (m.Msg == 0xA1 && (int)m.WParam is 8 or 9 or 20)
             {
                 _pressedCaption = _hotCaption = (int)m.WParam;
-                Capture = true; Invalidate(); _ribbon?.Invalidate();
+                Capture = true; InvalidateCaption();
                 m.Result = 0; return;
             }
             if (m.Msg is 0x202 or 0xA2 && _pressedCaption != 0)
             {
                 int pressed = _pressedCaption;
                 bool invoke = pressed == CaptionHitTest(PointToClient(Cursor.Position));
-                _pressedCaption = 0; Capture = false; Invalidate(); _ribbon?.Invalidate();
+                _pressedCaption = 0; Capture = false; InvalidateCaption();
                 if (invoke) PostMessage(Handle, 0x112, pressed == 20 ? 0xF060 : pressed == 8 ? 0xF020 : WindowState == FormWindowState.Maximized ? 0xF120 : 0xF030, 0);
                 m.Result = 0; return;
             }
-            if (m.Msg is 0x1F or 0x215) { _pressedCaption = 0; _hotCaption = 0; Invalidate(); _ribbon?.Invalidate(); }
-            if (m.Msg == 0xA0) { _hotCaption = (int)m.WParam; Invalidate(); _ribbon?.Invalidate(); var track = new TrackMouse { Size = Marshal.SizeOf<TrackMouse>(), Flags = 0x12, Window = Handle }; TrackMouseEvent(ref track); }
-            if (m.Msg == 0x2A2) { _hotCaption = 0; Invalidate(); _ribbon?.Invalidate(); }
+            if (m.Msg is 0x1F or 0x215 && (_pressedCaption != 0 || _hotCaption != 0)) { _pressedCaption = 0; _hotCaption = 0; InvalidateCaption(); }
+            if (m.Msg == 0xA0)
+            {
+                int hot = (int)m.WParam is 8 or 9 or 20 ? (int)m.WParam : 0;
+                if (_hotCaption != hot)
+                {
+                    _hotCaption = hot; InvalidateCaption();
+                    var track = new TrackMouse { Size = Marshal.SizeOf<TrackMouse>(), Flags = 0x12, Window = Handle }; TrackMouseEvent(ref track);
+                }
+            }
+            if (m.Msg == 0x2A2 && _hotCaption != 0) { _hotCaption = 0; InvalidateCaption(); }
             if (m.Msg == 0xA4 && (int)m.WParam is 2 or 3)
             {
                 var menu = GetSystemMenu(Handle, false);
@@ -228,7 +265,7 @@ public class RibbonForm : Form
         base.WndProc(ref m);
     }
     /// <inheritdoc />
-    protected override void Dispose(bool disposing) { if (disposing) Ribbon = null; base.Dispose(disposing); }
+    protected override void Dispose(bool disposing) { if (disposing) { _disposingBackdrop = true; ReleaseNativeBackdrop(); Ribbon = null; } base.Dispose(disposing); }
     [StructLayout(LayoutKind.Sequential)] private struct NativeRect { public int Left, Top, Right, Bottom; }
     [StructLayout(LayoutKind.Sequential)] private struct TrackMouse { public int Size, Flags; public nint Window; public uint HoverTime; }
     [DllImport("user32.dll")] private static extern bool IsZoomed(nint window);

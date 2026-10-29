@@ -8,6 +8,8 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] == "--backdrop-simplified-checks") return WindowBackdropChecks.Run(args[1], simplified: true);
+        if (args.Length == 2 && args[0] is "--backdrop-checks" or "--backdrop-checks-flat") return WindowBackdropChecks.Run(args[1], args[0].EndsWith("-flat", StringComparison.Ordinal));
         if (args.Length == 3 && args[0] is "--window-motion-regression" or "--window-motion-regression-flat")
             return IndependentConsumer.WindowMotionRegressionChecks.Run(args[2], args[1], args[0].EndsWith("-flat", StringComparison.Ordinal));
         if (args.Length == 2 && args[0] is "--window-projection-checks" or "--window-projection-checks-flat")

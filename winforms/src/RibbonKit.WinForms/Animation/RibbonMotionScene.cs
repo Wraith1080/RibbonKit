@@ -52,20 +52,24 @@ internal sealed class RibbonMotionScene : IDisposable
             IndicatorClip = Rectangle.Intersect(Header, active.Clip);
         }
         // TextRenderer/native GDI writes RGB glyphs without maintaining alpha.
-        // Endpoint surfaces are opaque; only the final drawing plane needs alpha.
-        Image = new(ribbon.Width, ribbon.Height, PixelFormat.Format24bppRgb);
-        bool previous = ribbon.CapturingMotionIndicators; ribbon.CapturingMotionIndicators = true;
+        // Endpoint surfaces are opaque; the optional native material header stays
+        // live and is excluded from the body drawing.
+        Image = new(ribbon.Width, ribbon.Height, ribbon.HasWindowBackdrop ? PixelFormat.Format32bppPArgb : PixelFormat.Format24bppRgb);
+        bool previous = ribbon.CapturingMotionIndicators, material = ribbon.CapturingBackdropScene;
+        ribbon.CapturingMotionIndicators = true; ribbon.CapturingBackdropScene = ribbon.HasWindowBackdrop;
         try
         {
             Capture(ribbon, ribbon, Image);
         }
         catch { Image.Dispose(); throw; }
-        finally { ribbon.CapturingMotionIndicators = previous; }
+        finally { ribbon.CapturingMotionIndicators = previous; ribbon.CapturingBackdropScene = material; }
     }
     public void Dispose() => Image.Dispose();
     internal static void Capture(RibbonControl ribbon, Control surface, Bitmap image)
     {
-        PrintClient(surface, image); CaptureChildren(ribbon, surface.Controls.Cast<Control>(), image);
+        PrintClient(surface, image);
+        if (ReferenceEquals(surface, ribbon) && ribbon.HasWindowBackdrop) ribbon.CopyBackdropSnapshot(image);
+        CaptureChildren(ribbon, surface.Controls.Cast<Control>(), image);
     }
     internal static void CaptureChildren(RibbonControl ribbon, IEnumerable<Control> children, Bitmap image)
     {
@@ -125,6 +129,20 @@ internal sealed class RibbonMotionScene : IDisposable
     }
     internal static void Render(Graphics graphics, Rectangle canvas, RibbonControl ribbon, RibbonMotionScene from, RibbonMotionScene to, double progress, ImageAttributes alpha)
     {
+        var state = graphics.Save();
+        try
+        {
+            if (ribbon.HasWindowBackdrop)
+            {
+                var origin = to.Bounds.Location; origin.Offset(-canvas.X, -canvas.Y);
+                graphics.ExcludeClip(new Rectangle(origin, new Size(to.Bounds.Width, ribbon.BackdropHeaderHeight)));
+            }
+            RenderCore(graphics, canvas, ribbon, from, to, progress, alpha);
+        }
+        finally { graphics.Restore(state); }
+    }
+    private static void RenderCore(Graphics graphics, Rectangle canvas, RibbonControl ribbon, RibbonMotionScene from, RibbonMotionScene to, double progress, ImageAttributes alpha)
+    {
         graphics.CompositingMode = CompositingMode.SourceCopy; graphics.Clear(Color.Transparent); graphics.CompositingMode = CompositingMode.SourceOver;
         double remaining = 1 - Math.Clamp(progress, 0, 1);
         double p = 1 - remaining * remaining * remaining;
@@ -138,12 +156,12 @@ internal sealed class RibbonMotionScene : IDisposable
         var body = minimize ? Interpolate(from.Body.IsEmpty ? expandedBody with { Height = 0 } : from.Body, to.Body.IsEmpty ? expandedBody with { Height = 0 } : to.Body) : Rectangle.Empty;
         var occupied = Local(Between(from.Bounds, to.Bounds, p));
         var messageFrame = messages ? Interpolate(from.Messages.IsEmpty ? to.Messages with { Height = 0 } : from.Messages, to.Messages.IsEmpty ? from.Messages with { Height = 0 } : to.Messages) : Rectangle.Empty;
-        using (var background = new SolidBrush(ribbon.Theme.Background)) graphics.FillRectangle(background, occupied);
+        using (var background = new SolidBrush(ribbon.WindowPaintTheme.Background)) graphics.FillRectangle(background, occupied);
         var belowFrom = from.Placement == RibbonQuickAccessPosition.BelowRibbon && !from.Qat.IsEmpty;
         var belowTo = to.Placement == RibbonQuickAccessPosition.BelowRibbon && !to.Qat.IsEmpty;
         bool joined = minimize ? body.Height > 0 && (from.Joined || to.Joined) : to.Joined || from.Joined;
         bool connected = messages ? messageFrame.Height > 0 && (from.BottomConnected || to.BottomConnected) : minimize ? (from.BottomConnected || to.BottomConnected) && (body.Height > 0 || belowTo && ribbon.JoinBelowRibbonQuickAccess) : to.BottomConnected;
-        var context = new RibbonPaintContext(graphics, occupied, ribbon.Theme, ribbon.Font, to.Dpi) { Density = ribbon.Density, IsBottomEdgeConnected = connected };
+        var context = new RibbonPaintContext(graphics, occupied, ribbon.WindowPaintTheme, ribbon.Font, to.Dpi) { Density = ribbon.Density, IsBottomEdgeConnected = connected };
         if (connected)
         {
             var panel = messages ? messageFrame : Interpolate(from.Messages, to.Messages);
@@ -172,7 +190,7 @@ internal sealed class RibbonMotionScene : IDisposable
         // with source-over changes the weight of identical overlapping glyphs.
         Draw(from, to, 1); Draw(to, from, p);
         // The caption stays on its own measured band during body/header motion.
-        if (to.Header.Top > 0)
+        if (!ribbon.HasWindowBackdrop && to.Header.Top > 0)
         {
             var caption = new Rectangle(0, 0, to.Image.Width, to.Header.Top);
             graphics.DrawImage(to.Image, Local(At(caption, to.Bounds)), caption, GraphicsUnit.Pixel);
@@ -209,7 +227,7 @@ internal sealed class RibbonMotionScene : IDisposable
             }
             finally { graphics.Restore(saved); }
         }
-        if (headerTracks.Length > 0)
+        if (!ribbon.HasWindowBackdrop && headerTracks.Length > 0)
         {
             var viewport = Interpolate(from.TabViewport, to.TabViewport);
             foreach (var track in headerTracks)
@@ -228,7 +246,7 @@ internal sealed class RibbonMotionScene : IDisposable
                 finally { graphics.Restore(saved); }
             }
         }
-        if (to.ActiveTab is { } activeTab && !to.Indicator.IsEmpty)
+        if (!ribbon.HasWindowBackdrop && to.ActiveTab is { } activeTab && !to.Indicator.IsEmpty)
         {
             var indicator = from.Indicator.IsEmpty ? Local(At(to.Indicator, to.Bounds)) : Interpolate(from.Indicator, to.Indicator);
             if (!from.Indicator.IsEmpty && ribbon.AnimationLevel == RibbonAnimationLevel.Expressive)
@@ -265,7 +283,7 @@ internal sealed class RibbonMotionScene : IDisposable
                 finally { graphics.Restore(saved); }
             }
             var header = Interpolate(from.Header, to.Header);
-            if (!minimize || ReferenceEquals(scene, to))
+            if (!ribbon.HasWindowBackdrop && (!minimize || ReferenceEquals(scene, to)))
             {
                 // The utility chevron reflects committed state immediately;
                 // crossfading up/down glyphs would briefly produce an X.
@@ -290,7 +308,7 @@ internal sealed class RibbonMotionScene : IDisposable
                 var position = Interpolate(from.Body, to.Body); position.Inflate(-inset, -inset); Segment(crop, position, position);
             }
             if (!messages && !scene.Messages.IsEmpty && !other.Messages.IsEmpty) Segment(scene.Messages, Interpolate(from.Messages, to.Messages));
-            if (!scene.Strip.IsEmpty && !other.Strip.IsEmpty) { var strip = Interpolate(from.Strip, to.Strip); Segment(scene.Strip, strip, strip); }
+            if ((!ribbon.HasWindowBackdrop || scene.Placement == RibbonQuickAccessPosition.BelowRibbon) && !scene.Strip.IsEmpty && !other.Strip.IsEmpty) { var strip = Interpolate(from.Strip, to.Strip); Segment(scene.Strip, strip, strip); }
         }
     }
 }

@@ -14,6 +14,18 @@ internal static class Program
         Application.SetCompatibleTextRenderingDefault(false);
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
         using var form = new MainForm();
+        if (args.Length == 2 && args[0] == "--capture-document-hover")
+            form.Shown += async (_, _) => { await Task.Yield(); try { form.Backdrop = RibbonWindowBackdrop.Acrylic; await form.CaptureMotionInput(args[1], hoverOnly: true); } finally { form.Close(); } };
+        if (args.Length == 2 && args[0] == "--capture-motion-backdrop-tail")
+            form.Shown += async (_, _) => { await Task.Yield(); try { form.Backdrop = RibbonWindowBackdrop.Acrylic; await form.CaptureMotionInput(args[1], tailOnly: true); } finally { form.Close(); } };
+        if (args.Length == 2 && args[0] == "--capture-motion-backdrop-interactions")
+            form.Shown += async (_, _) => { await Task.Yield(); try { form.Backdrop = RibbonWindowBackdrop.Acrylic; await form.CaptureMotionInput(args[1], interactionsOnly: true); } finally { form.Close(); } };
+        if (args.Length == 2 && args[0] == "--capture-backdrop-density")
+            form.Shown += async (_, _) => { await Task.Yield(); try { await form.CaptureBackdropDensity(args[1]); } finally { form.Close(); } };
+        if (args.Length == 2 && args[0] == "--capture-backdrop-menu")
+            form.Shown += async (_, _) => { await Task.Yield(); try { await form.CaptureBackdropMenu(args[1]); } finally { form.Close(); } };
+        if (args.Length == 2 && args[0] == "--capture-backdrops")
+            form.Shown += async (_, _) => { await Task.Yield(); try { await form.CaptureBackdrops(args[1]); } finally { form.Close(); } };
         if (args.Length == 2 && args[0] == "--capture-motion-interactions")
             form.Shown += async (_, _) => { await Task.Yield(); try { await form.CaptureMotionInput(args[1], interactionsOnly: true); } finally { form.Close(); } };
         if (args.Length == 2 && args[0] == "--capture-motion-input-tail")
