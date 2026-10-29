@@ -1,4 +1,20 @@
 #nullable enable
+RibbonKit.WinForms.RibbonTabContentAnimation
+RibbonKit.WinForms.RibbonTabContentAnimation.Fade = 0 -> RibbonKit.WinForms.RibbonTabContentAnimation
+RibbonKit.WinForms.RibbonTabContentAnimation.SlideDown = 1 -> RibbonKit.WinForms.RibbonTabContentAnimation
+RibbonKit.WinForms.RibbonControl.TabContentAnimation.get -> RibbonKit.WinForms.RibbonTabContentAnimation
+RibbonKit.WinForms.RibbonControl.TabContentAnimation.set -> void
+virtual RibbonKit.WinForms.RibbonRenderer.GetTabIndicatorBounds(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonTab! tab) -> System.Drawing.Rectangle
+virtual RibbonKit.WinForms.RibbonRenderer.DrawTabIndicator(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonTab! tab, bool selected) -> void
+override RibbonKit.WinForms.RibbonOffice2024Renderer.GetTabIndicatorBounds(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonTab! tab) -> System.Drawing.Rectangle
+override RibbonKit.WinForms.RibbonOffice2024Renderer.DrawTabIndicator(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonTab! tab, bool selected) -> void
+RibbonKit.WinForms.RibbonAnimationLevel
+RibbonKit.WinForms.RibbonAnimationLevel.None = 0 -> RibbonKit.WinForms.RibbonAnimationLevel
+RibbonKit.WinForms.RibbonAnimationLevel.Subtle = 1 -> RibbonKit.WinForms.RibbonAnimationLevel
+RibbonKit.WinForms.RibbonAnimationLevel.Expressive = 2 -> RibbonKit.WinForms.RibbonAnimationLevel
+RibbonKit.WinForms.RibbonControl.AnimationLevel.get -> RibbonKit.WinForms.RibbonAnimationLevel
+RibbonKit.WinForms.RibbonControl.AnimationLevel.set -> void
+RibbonKit.WinForms.RibbonControl.IsAnimating.get -> bool
 RibbonKit.WinForms.RibbonGroup.Icon.get -> RibbonKit.WinForms.IRibbonIcon?
 RibbonKit.WinForms.RibbonGroup.Icon.set -> void
 RibbonKit.WinForms.RibbonTheme.CollapsedGroupMaxWidth.get -> int

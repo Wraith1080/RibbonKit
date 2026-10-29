@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><OutputType>WinExe</OutputType></PropertyGroup>
+  <PropertyGroup><OutputType>WinExe</OutputType><ApplicationManifest>app.manifest</ApplicationManifest></PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="Assets/CommandIcons/*.svg" />
     <ProjectReference Include="../../src/RibbonKit.WinForms/RibbonKit.WinForms.csproj" />

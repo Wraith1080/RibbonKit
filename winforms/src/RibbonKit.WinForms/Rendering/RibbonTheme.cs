@@ -105,4 +105,5 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     public bool IsQuickAccessToolbarJoined { get; init; }
     internal bool IsBodyScrollButton { get; init; }
     internal Rectangle GroupSeparatorBounds { get; init; }
+    internal bool SuppressTabIndicators { get; init; }
 }

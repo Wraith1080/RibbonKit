@@ -45,6 +45,7 @@ internal sealed class RibbonPopupManager : IDisposable
     internal bool IsMenuExpanded(RibbonDropDownItem source) => _sessions.Any(s => ReferenceEquals(s.MenuSource, source));
     internal void Toggle(RibbonElement owner, Control opener, Rectangle anchor, Point? contextPoint = null)
     {
+        _ribbon.SettleMotion();
         _ribbon.ScreenTips.Cancel();
         if (_ribbon.IsInDesignMode || _ribbon.IsBackstageOpen)
             return;

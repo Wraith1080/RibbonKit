@@ -67,6 +67,7 @@ public sealed class ContextualTabTests
             Draw(true); Assert.Equal(tab.ContextualColor, record.Text);
             if (renderer is Office) Assert.Equal(tab.ContextualColor.ToArgb(), bitmap.GetPixel(S(90), bitmap.Height - S(2)).ToArgb());
             Draw(false, true, true); Assert.Equal(Color.FromArgb(220, 139, 192), record.Text);
+            if (renderer is Office) Assert.Equal(theme.SecondaryText.ToArgb(), bitmap.GetPixel(S(90), bitmap.Height - S(2)).ToArgb());
             tab.Enabled = false; Draw(true, true, true); Assert.Equal(SystemColors.GrayText, record.Text);
             Assert.Equal(theme.Background.ToArgb(), bitmap.GetPixel(S(90), bitmap.Height - S(2)).ToArgb()); tab.Enabled = true;
             tab.ContextualColor = Color.Empty; Draw(true); Assert.Equal(theme.Accent, record.Text);

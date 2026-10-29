@@ -10,6 +10,12 @@ public partial class RibbonControl
     public bool Merge(RibbonMergeSource source)
     {
         ObjectDisposedException.ThrowIf(_disposing || IsDisposed, this);
+        VerifyAccess();
+        ArgumentNullException.ThrowIfNull(source);
+        if (!source.IsMerged && source.Visible && source.Tabs.Any(t => t.Visible) && CanAnimateHeaderArrival)
+        {
+            bool merged = false; Motion.Change(false, () => merged = Merges.Merge(source), headers: true); return merged;
+        }
         return Merges.Merge(source);
     }
     /// <summary>Removes this source's presentation by identity. Models remain owned by the source; QAT references and native presenters are parked for reuse.</summary>

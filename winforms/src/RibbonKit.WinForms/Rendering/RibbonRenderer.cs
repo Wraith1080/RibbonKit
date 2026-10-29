@@ -295,7 +295,16 @@ public partial class RibbonRenderer : IDisposable
         DrawText(context, tab.DisplayText, color, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
         if (context.Focused)
             DrawFocus(context);
+        if (tab.EffectiveEnabled && !context.SuppressTabIndicators && (selected || context.Hot || context.Pressed || context.Focused))
+        {
+            var indicator = GetTabIndicatorBounds(context, tab);
+            if (!indicator.IsEmpty) DrawTabIndicator(context with { Bounds = indicator }, tab, selected);
+        }
     }
+    /// <summary>Measures a tab's bottom indicator in device pixels from its full header bounds. Empty means this renderer has no separate indicator.</summary>
+    public virtual Rectangle GetTabIndicatorBounds(RibbonPaintContext context, RibbonTab tab) => Rectangle.Empty;
+    /// <summary>Paints a tab indicator in the supplied measured device-pixel bounds. The neutral renderer has no separate indicator. Geometry motion calls this independently of captured tab text.</summary>
+    public virtual void DrawTabIndicator(RibbonPaintContext context, RibbonTab tab, bool selected) { }
     internal static Color ContextualTabColor(RibbonPaintContext context, RibbonTab tab, bool selected)
     {
         var color = tab.ContextualColor.IsEmpty ? context.Theme.Accent : tab.ContextualColor;

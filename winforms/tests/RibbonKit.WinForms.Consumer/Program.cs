@@ -8,6 +8,20 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--validate-minimize-motion" or "--validate-minimize-motion-flat")
+            return GeometryMotionInteractionChecks.Run(args[1], args[0] == "--validate-minimize-motion-flat", minimizeOnly: true);
+        if (args.Length == 2 && args[0] == "--validate-expressive-pill")
+            return GeometryMotionInteractionChecks.Run(args[1], false, tabsOnly: true, tabLevel: RibbonAnimationLevel.Expressive);
+        if (args.Length == 2 && args[0] is "--validate-header-arrivals" or "--validate-header-arrivals-flat")
+            return GeometryMotionInteractionChecks.Run(args[1], args[0] == "--validate-header-arrivals-flat", headersOnly: true);
+        if (args.Length == 2 && args[0] is "--validate-tab-slide-motion" or "--validate-tab-slide-motion-flat")
+            return GeometryMotionInteractionChecks.Run(args[1], args[0] == "--validate-tab-slide-motion-flat", false, true, RibbonTabContentAnimation.SlideDown);
+        if (args.Length == 2 && args[0] is "--validate-tab-motion" or "--validate-tab-motion-flat")
+            return GeometryMotionInteractionChecks.Run(args[1], args[0] == "--validate-tab-motion-flat", false, true);
+        if (args.Length == 2 && args[0] is "--validate-geometry-menu-motion" or "--validate-geometry-menu-motion-flat")
+            return GeometryMotionInteractionChecks.Run(args[1], args[0] == "--validate-geometry-menu-motion-flat", true);
+        if (args.Length == 2 && args[0] is "--validate-geometry-motion" or "--validate-geometry-motion-flat")
+            return GeometryMotionInteractionChecks.Run(args[1], args[0] == "--validate-geometry-motion-flat");
         if (args.Length == 2 && args[0] is "--validate-simplified-context" or "--validate-simplified-context-flat")
             return SimplifiedContextInteractionChecks.Run(args[1], args[0] == "--validate-simplified-context-flat");
         if (args.Length == 2 && args[0] is "--validate-review" or "--validate-review-flat")

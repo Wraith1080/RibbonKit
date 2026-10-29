@@ -73,6 +73,9 @@ public partial class RibbonControl : Control, ISupportInitialize
                 throw new ArgumentException("Select a visible, enabled tab belonging to this ribbon.", nameof(value));
             if (ReferenceEquals(_selectedTab, value))
                 return;
+            if (AnimationLevel != RibbonAnimationLevel.None && _motion?.Changing != true && _updateDepth == 0 && (!IsMinimized || _motion?.CanCoalesceHeaderSelection == true) && value is not null && _selectedTab is not null)
+            { Motion.Change(false, () => SelectedTab = value); return; }
+            SettleMotion();
             _popups.CloseAll(false);
             _screenTips.Cancel();
             _selectedTab = value;
@@ -235,6 +238,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     }
     internal void ModelChanged(bool layout = true, bool preservePopups = false, RibbonElement? origin = null)
     {
+        SettleMotion();
         if (_disposing)
             return;
         VerifyAccess();
@@ -339,6 +343,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     /// <inheritdoc />
     protected override void OnResize(EventArgs e)
     {
+        SettleMotion();
         _layoutDirty = true;
         if (MessageBar is { HasOpenMessages: true }) UpdateHeight();
         _screenTips?.Cancel();
@@ -380,6 +385,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     /// <inheritdoc />
     protected override void OnVisibleChanged(EventArgs e)
     {
+        if (!Visible) _motion?.Settle();
         base.OnVisibleChanged(e);
         if (_popups is null)
             return;
@@ -398,6 +404,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     /// <inheritdoc />
     protected override void OnParentChanged(EventArgs e)
     {
+        _motion?.Settle();
         ReleaseBackstageSurface();
         _popups?.ResetOwner();
         _screenTips?.ResetOwner();
@@ -415,6 +422,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     /// <inheritdoc />
     protected override void OnHandleDestroyed(EventArgs e)
     {
+        _motion?.Settle();
         ReleaseBackstageSurface();
         _input.Detach();
         _screenTips.ResetOwner();
@@ -427,7 +435,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     {
         base.OnPaint(e);
         EnsureLayout();
-        var context = new RibbonPaintContext(e.Graphics, ClientRectangle, Theme, Font, DeviceDpi) { Density = Density };
+        var context = new RibbonPaintContext(e.Graphics, ClientRectangle, Theme, Font, DeviceDpi) { Density = Density, SuppressTabIndicators = CapturingMotionIndicators };
         Painter.DrawSurface(context, false);
         PaintMessages(context);
         if (!_snapshot.BodyBounds.IsEmpty) Painter.DrawBody(context with { Bounds = _snapshot.BodyFrameBounds, IsBottomEdgeConnected = MessageBar.HasOpenMessages && MessageTopConnected });
@@ -723,6 +731,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     }
     internal void Activate(RibbonTarget target, Control? opener = null)
     {
+        SettleMotion();
         if (IsBackstageOpen) return;
         _screenTips.Cancel();
         if (!target.Enabled)
@@ -742,8 +751,8 @@ public partial class RibbonControl : Control, ISupportInitialize
         switch (target.Element)
         {
             case RibbonTab tab:
-                SelectedTab = tab;
                 FocusElement(tab);
+                SelectedTab = tab;
                 if (IsMinimized) _popups.Toggle(tab, this, target.VisibleBounds);
                 break;
             case RibbonGroup group:
@@ -802,6 +811,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     }
     internal void FocusElement(RibbonElement element, bool dropDownPart = false, bool enterEditor = true)
     {
+        SettleMotion();
         if (IsBackstageOpen) return;
         if (!ReferenceEquals(element, _focused) && !_editors.CommitFocused()) return;
         _focused = element;
@@ -915,6 +925,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         if (disposing && !_disposing)
         {
             _disposing = true;
+            _motion?.Dispose();
             _modalScope?.Release();
             ReleaseBackstageSurface();
             ReleaseCustomizationMenu();

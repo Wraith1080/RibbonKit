@@ -24,6 +24,8 @@ public partial class RibbonControl
         {
             VerifyAccess(); if (!Enum.IsDefined(value)) throw new ArgumentOutOfRangeException(nameof(value));
             if (_density == value || _changingDensity || _disposing) return;
+            if (AnimationLevel != RibbonAnimationLevel.None && _motion?.Changing != true && _updateDepth == 0)
+            { if (!_editors.CommitFocused()) return; Motion.Change(false, () => Density = value); return; }
             _changingDensity = true;
             try
             {

@@ -54,7 +54,7 @@ public sealed class RendererBoundaryTests
             Assert.Equal((bounds.Width - ink.Width) / 2, ink.Left);
             Assert.Equal(bounds.Bottom - S(1), ink.Bottom);
             Assert.NotEqual(theme.Accent.ToArgb(), bitmap.GetPixel(ink.Left, ink.Top).ToArgb());
-            Assert.Equal(theme.Accent.ToArgb(), bitmap.GetPixel(ink.Left + ink.Width / 2, ink.Top).ToArgb());
+            Assert.Equal((state == 0 ? theme.Accent : theme.SecondaryText).ToArgb(), bitmap.GetPixel(ink.Left + ink.Width / 2, ink.Top).ToArgb());
             for (int y = 0; y < ink.Height; y++)
             for (int x = 0; x < ink.Width; x++)
             {

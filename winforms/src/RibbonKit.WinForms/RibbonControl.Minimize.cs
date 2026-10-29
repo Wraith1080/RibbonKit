@@ -6,7 +6,7 @@ public partial class RibbonControl
 {
     private bool _isMinimized;
 
-    /// <summary>Gets or sets whether only the tab row is docked. Activating a tab temporarily opens its groups. Programmatic changes use the normal editor parking contract: valid edits commit and invalid drafts roll back.</summary>
+    /// <summary>Gets or sets whether only the tab row and any QAT/messages are docked. Activating a tab temporarily opens its groups. Programmatic changes use the normal editor parking contract: valid edits commit and invalid drafts roll back. AnimationLevel optionally reveals/retracts the body after committing its final layout.</summary>
     [DefaultValue(false), Bindable(true), Category("Behavior")]
     public bool IsMinimized
     {
@@ -16,6 +16,9 @@ public partial class RibbonControl
             VerifyAccess();
             if (value && IsModal) return;
             if (_isMinimized == value) return;
+            if (AnimationLevel != RibbonAnimationLevel.None && _motion?.Changing != true && _updateDepth == 0 && _modalScope?.Changing != true)
+            { Motion.Change(false, () => IsMinimized = value); return; }
+            SettleMotion();
             bool restore = ContainsFocus || _popups.ContainsFocus || _editors.ContainsFocus;
             _screenTips.Cancel();
             ExitKeyTips(false);

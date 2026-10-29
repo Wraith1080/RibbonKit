@@ -76,7 +76,7 @@ public partial class RibbonControl
         string? presentation = null;
         if (element is not null && QuickAccessItems.Contains(element) && CommandCatalog.Managed(element, CommandCatalog.Sources()))
             presentation = CommandCatalog.GetQuickAccessEntryId(element);
-        void Add(string name, string text, Action<RibbonCustomizationSession> change, bool enabled = true)
+        void Add(string name, string text, Action<RibbonCustomizationSession> change, bool enabled = true, bool toolbarMotion = false)
         {
             var item = new RibbonButtonItem { Id = name, Text = text, Enabled = enabled };
             item.Click += (_, _) =>
@@ -84,8 +84,15 @@ public partial class RibbonControl
                 using var session = CommandCatalog.BeginCustomization(CustomizationApplicationId, RibbonCustomizationTarget.QuickAccess);
                 try
                 {
-                    change(session);
-                    if (!session.Apply()) MessageBox.Show(FindForm(), "Complete the highlighted ribbon input before changing the toolbar.", "Quick Access Toolbar", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    void Apply()
+                    {
+                        change(session);
+                        if (!session.Apply()) MessageBox.Show(FindForm(), "Complete the highlighted ribbon input before changing the toolbar.", "Quick Access Toolbar", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    // The placement command retains the customization transaction
+                    // and notification, while one outer motion covers its batch.
+                    if (toolbarMotion && AnimationLevel != RibbonAnimationLevel.None && _updateDepth == 0) Motion.Change(true, Apply);
+                    else Apply();
                 }
                 catch (InvalidOperationException e) when (session.ApplyVersion == 0) { MessageBox.Show(FindForm(), e.Message, "Quick Access Toolbar", MessageBoxButtons.OK, MessageBoxIcon.Information); }
             };
@@ -99,7 +106,7 @@ public partial class RibbonControl
             Add("AddToQuickAccess", "Add to Quick Access Toolbar", s => s.Draft.QuickAccess.Add(new() { CommandId = entry.CommandId }), !session.Draft.QuickAccess.Any(e => e.CommandId == entry.CommandId));
         }
         if (menu.Items.Count > 0) menu.Items.Add(new RibbonMenuSeparatorItem());
-        Add("MoveQuickAccess", QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon ? "Show Quick Access Toolbar above the ribbon" : "Show Quick Access Toolbar below the ribbon", s => s.Draft.QuickAccessPosition = s.Draft.QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon ? RibbonQuickAccessPosition.TabRow : RibbonQuickAccessPosition.BelowRibbon);
+        Add("MoveQuickAccess", QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon ? "Show Quick Access Toolbar above the ribbon" : "Show Quick Access Toolbar below the ribbon", s => s.Draft.QuickAccessPosition = s.Draft.QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon ? RibbonQuickAccessPosition.TabRow : RibbonQuickAccessPosition.BelowRibbon, toolbarMotion: true);
         Add("ToggleQuickAccess", QuickAccessVisible ? "Hide Quick Access Toolbar" : "Show Quick Access Toolbar", s => s.Draft.QuickAccessVisible = !s.Draft.QuickAccessVisible);
         if (LayoutMode == RibbonLayoutMode.Simplified && source is RibbonItem command && SelectedTab is { IsContextual: false, IsModal: false } selected
             && _simplified.Commands(selected, false).Any(c => c.Id == command.Id) && GetMergeSource(command) is null)

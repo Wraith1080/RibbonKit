@@ -1249,7 +1249,7 @@ Each public API and ownership contract is proposed before its implementation.
 | M5B | QAT context menu and extensible options dialog implemented; current acceptance and evidence in [M5 ledger](M5-STATUS.md) |
 | M5C | Ribbon customization UI and structural changes implemented; focused evidence and visual review in [M5 ledger](M5-STATUS.md) |
 | M5D | [Native row, More Commands, shared structure and Simplified customization/profiles implemented; human review pending](M5D-SIMPLIFIED-RIBBON.md) |
-| M6A | Motion, interruption/reduced-motion handling and optional host synchronization |
+| M6A | [Opt-in Classic/Simplified, density, QAT, tab/header and minimize/restore motion implemented; visual/performance acceptance and optional host synchronization remain](M6A-MOTION-PLAN.md) |
 | M6B | Optional RibbonForm/window integration and title-bar QAT using existing source models |
 | M6C | Optional backdrop/chrome treatments and their native window/DPI behavior |
 

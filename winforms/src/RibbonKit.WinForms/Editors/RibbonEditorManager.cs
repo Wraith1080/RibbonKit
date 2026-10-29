@@ -13,6 +13,11 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
     internal TextBox? EditorFor(RibbonTextBoxItem item) => _editors.GetValueOrDefault(item)?.Editor as TextBox;
     internal ComboBox? EditorFor(RibbonComboBoxItem item) => _editors.GetValueOrDefault(item)?.Editor as ComboBox;
     internal bool CommitFocused() => _editors.Values.FirstOrDefault(p => p.Editor.ContainsFocus || p.ListOpen)?.CommitAndCloseList() ?? true;
+    internal bool PaintMotionScene(Control child, Graphics graphics)
+    {
+        if (_editors.Values.FirstOrDefault(p => ReferenceEquals(p, child)) is not { } presenter) return false;
+        presenter.PaintMotionScene(graphics); return true;
+    }
     internal bool IsDropDownOpen(RibbonComboBoxItem item) => _editors.GetValueOrDefault(item) is { ListOpen: true, QuickReference: null };
     internal bool IsQuickAccessOpen(RibbonQuickAccessComboBoxReference reference) => _editors.Values.Any(p => p.ListOpen && ReferenceEquals(p.QuickReference, reference));
     internal void CloseQuickAccess(RibbonQuickAccessComboBoxReference reference)
@@ -123,6 +128,28 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
         private int _listChoicesVersion;
         private Region? _ownedRegion;
         internal Control Editor => _editor;
+        internal void PaintMotionScene(Graphics graphics)
+        {
+            // DrawToBitmap ignores a native ComboBox's text-only HWND region and
+            // prints its square native arrow over our themed frame. Paint the
+            // presenter normally, then copy only the live editor's visible region.
+            using var presentation = new Bitmap(Width, Height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            RibbonMotionScene.PrintClient(this, presentation);
+            using (var local = Graphics.FromImage(presentation))
+            {
+                if (_editor.Visible && _editor.Width > 0 && _editor.Height > 0)
+                {
+                    using var image = new Bitmap(_editor.Width, _editor.Height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+                    _editor.DrawToBitmap(image, new(Point.Empty, image.Size));
+                    local.TranslateTransform(_editor.Left, _editor.Top);
+                    if (_editor.Region is { } region) local.SetClip(region, System.Drawing.Drawing2D.CombineMode.Intersect);
+                    local.DrawImageUnscaled(image, Point.Empty);
+                }
+            }
+            var state = graphics.Save();
+            try { var clip = _clip; clip.Offset(Left, Top); graphics.SetClip(clip, System.Drawing.Drawing2D.CombineMode.Intersect); graphics.DrawImageUnscaled(presentation, Location); }
+            finally { graphics.Restore(state); }
+        }
         internal RibbonChoicePopup? Choice { get; private set; }
         internal bool ListOpen => Choice?.Visible ?? false;
         internal Rectangle ScreenField => QuickReference is not null && _quickOpener is { IsDisposed: false } opener ? opener.RectangleToScreen(_quickAnchor) : RectangleToScreen(_field);

@@ -64,6 +64,6 @@ public partial class MainForm
         var launch = new RibbonButtonItem { Id = "modal.launch", Text = "Print preview", KeyTip = "P" };
         launch.Click += (_, _) => { ribbon.Merge(source); if (!ribbon.EnterModal(tab)) ribbon.Unmerge(source); };
         var group = new RibbonGroup { Id = "group.modalPreview", Text = "Modal preview" }; group.Items.Add(launch); ribbon.Tabs.Single(t => t.Id == "tab.merging").Groups.Add(group);
-        document.AppendText("\r\n\r\nMerging > Print preview enters a modal tab. Quick Access remains available; File and minimize are blocked. Close Print Preview or Escape restores the prior ribbon selection and minimized state. The preview page and print action belong to this application.");
+        document.AppendText("\r\n\r\nView > Print preview enters a modal tab. Quick Access remains available; File and minimize are blocked. Close Print Preview or Escape restores the prior ribbon selection and minimized state. The preview page and print action belong to this application.");
     }
 }

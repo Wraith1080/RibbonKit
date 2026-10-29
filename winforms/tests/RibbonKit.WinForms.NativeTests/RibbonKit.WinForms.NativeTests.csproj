@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><OutputType>Exe</OutputType><UseWPF>true</UseWPF></PropertyGroup>
+  <PropertyGroup><OutputType>Exe</OutputType><UseWPF>true</UseWPF><ApplicationManifest>../RibbonKit.WinForms.Consumer/app.manifest</ApplicationManifest></PropertyGroup>
   <ItemGroup><ProjectReference Include="../../src/RibbonKit.WinForms/RibbonKit.WinForms.csproj" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/PopupRefinementChecks.cs" Link="PublicPopupRefinementChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/DensityInteractionChecks.cs" Link="PublicDensityInteractionChecks.cs" /></ItemGroup>
@@ -31,6 +31,7 @@
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/OptionsPopupInteractionChecks.cs" Link="PublicOptionsPopupInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/ReviewInteractionChecks.cs" Link="PublicReviewInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/SimplifiedContextInteractionChecks.cs" Link="PublicSimplifiedContextInteractionChecks.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/GeometryMotionInteractionChecks.cs" Link="PublicGeometryMotionInteractionChecks.cs" /></ItemGroup>
   <!-- Public UIA client assemblies are used only by this external test client.
        The native runtime/package has no reference to them and no WPF hosting. -->
 </Project>

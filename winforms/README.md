@@ -23,6 +23,9 @@ Classic and Simplified share tab/group structure; per-tab inline selections and
 QAT preferences apply independently. In Showcase, choose **Options → Show →
 Simplified Ribbon**. Paste, Copy, Cut, Bold, Italic and representative commands have
 authored inline defaults. Human visual review remains pending.
+The [first M6A motion pass](docs/M6A-MOTION-PLAN.md) adds opt-in layout, density,
+QAT travel and expanded tab switching. Showcase opts into Subtle; the library
+retains immediate defaults.
 Accessibility compatibility is deferred
 while the control structure is implemented; it remains possible future work.
 
@@ -107,11 +110,54 @@ Custom renderers override `DrawSplitItem` to receive both measured action contex
 The retained foundation bridge does not provide complete accessibility semantics
 for this new item; no split accessibility compatibility is claimed.
 
-Office2024 light, Compact/Touch density, LTR and immediate transitions are the current
-scope. Mica client transparency, animation, custom window chrome, title-bar QAT,
-customization and WPF template/resource
+Office2024 light, Compact/Touch density and LTR are the current appearance scope.
+Mica client transparency, additional motion, custom window chrome, title-bar QAT
+and WPF template/resource
 compatibility are later work. Ordinary application controls remain native Forms
 controls. The runtime references neither WPF nor the designer SDK.
+
+### Opt-in geometry motion
+
+```csharp
+ribbon.AnimationLevel = RibbonAnimationLevel.Subtle; // None is the library default.
+ribbon.TabContentAnimation = RibbonTabContentAnimation.SlideDown; // Fade is the default.
+```
+
+This animates individual Classic/Simplified, Compact/Touch, TabRow/BelowRibbon
+QAT changes, minimize/restore and expanded tab selection by pointer, keyboard or
+the matching properties. Minimize/restore reveals or retracts opaque natural-size
+body drawings while the QAT and message frame follow the changing edge. It uses
+180 ms for Subtle and 252 ms for Expressive; temporary minimized-tab popups remain
+immediate. The chevron shows the committed state throughout the effect.
+The active Office indicator follows header geometry during playback. Expressive
+adds a gentle horizontal spring before the pill settles; Subtle keeps a bounded
+ease-out. Hovered unselected tabs use themed grey. The library commits real layout once and owns the inert drawings and
+completion. System-disabled client animations, startup, batch updates and unsafe
+presentation contexts keep immediate changes. Input and interruption settle the
+latest committed state. `IsAnimating` reports the drawing phase. Application
+content currently reflows immediately; optional host synchronization is next work.
+
+Layered child presentation requires a Windows 8-or-later compatibility declaration
+in the application's manifest; the sample's `app.manifest` supplies a Windows 10
+declaration. DPI awareness still belongs to the host. Missing native support falls
+back to immediate geometry. This preview still needs human visual and performance
+acceptance; see the M6A plan for measured costs and pending gates.
+
+Custom renderers can override `GetTabIndicatorBounds` and `DrawTabIndicator` to
+participate in live and animated tab indicators. The former receives full tab
+header bounds; the latter receives the measured indicator rectangle. Neutral
+defaults to no separate indicator. Minimized-tab popup activation remains immediate.
+
+Showcase's **View → Ribbon animation** group selects None, Subtle or Expressive.
+Its **Tab content** menu chooses Fade or Slide down. Slide down moves the arriving
+body at natural size inside the existing viewport, without a content fade; the
+other geometry transitions keep their existing behavior. These appearance choices
+remain application-owned and are excluded from customization profiles.
+The same choice animates newly shown contextual headers, live tab additions and
+merged headers. Header slots use committed layout positions; incoming captions
+fade or slide down at natural size. Showing/merging and immediately selecting a
+tab in the same command share one transition. None, startup and update batches
+remain immediate; hiding or unmerging restores the normal selection fallback.
 
 ### Compact and Touch spacing
 
@@ -131,7 +177,7 @@ A change first commits valid focused ribbon input; invalid input blocks the chan
 Accepted changes close transient popups, cancel gallery previews and preserve native
 editor handles, focus and text selection where still available. Open Backstage stays
 open with its native page intact. Application pages, document content and dialogs
-remain sized by the host. Changes are immediate; automatic device detection and
+remain sized by the host. Changes are immediate by default; automatic device detection and
 preference storage belong to the application. Custom renderers receive the owning
 density in `RibbonPaintContext.Density`.
 
@@ -147,7 +193,7 @@ total width can exceed `LargeButtonMaxWidth`; the authored metric is unchanged.
 Compact content positions and standard menu-row layout retain their existing
 geometry.
 
-Showcase's third QAT entry, also under **Merging → Input mode**, demonstrates a
+Showcase's third QAT entry, also under **View → Input mode**, demonstrates a
 host-owned Mouse/Touch selector. Actual VS property editing remains deferred to the
 designer slice. Office 2024 joins a BelowRibbon QAT to the body's outer frame;
 the minimized toolbar becomes a standalone card.
@@ -155,7 +201,7 @@ the minimized toolbar becomes a standalone card.
 ## Message panels
 
 Messages are library-owned models attached to the ribbon. The application owns
-their text, icons and actions. Showcase demonstrates them under **Merging → Messages**.
+their text, icons and actions. Showcase demonstrates them in the **View → Messages** dropdown.
 
 ```csharp
 var notice = new RibbonMessage
@@ -296,7 +342,7 @@ including parked references after source disposal, so future structural storage
 does not persist context-owned content. A source's lifetime belongs to the app.
 There is no automatic source-QAT, File/Backstage or nested-source merging.
 
-Showcase **Merging → Chart context** adds Chart Design and Home's Chart context
+Showcase **View → Chart → Chart context** adds Chart Design and Home's Chart context
 group. Public-only shown checks are available through `--merge-checks` /
 `--merge-checks-flat` on the native runner, followed by an evidence directory;
 the independent consumer includes `--validate-merge` / `--validate-merge-flat`.
@@ -345,7 +391,7 @@ modal tab while active; authored Tabs/Visible values remain appropriate inputs
 for future structural persistence. The library does not own a print document,
 printer, preview paint, application content visibility or nested modal stack.
 
-Showcase **Merging → Print preview** demonstrates an application-owned preview
+Showcase **View → Print preview** demonstrates an application-owned preview
 page with native Copies/Zoom fields. The shared public-only consumer checks use
 `--modal-checks` / `--modal-checks-flat` on the native runner, or
 `--validate-modal` / `--validate-modal-flat` in the independent consumer, followed
@@ -1076,8 +1122,8 @@ are excluded. Version-one/QAT-only input remains supported and preserves live
 Ribbon structure. Malformed/foreign/future/unknown data is rejected before live
 changes. Transient QAT references remain live without entering saved state.
 
-Showcase **Merging → QAT drafts** demonstrates Preview/Apply/Cancel, Reset,
-application-owned in-memory Save/Restore and **Customize QAT**. Right-click a
+Showcase uses the built-in customization pages rather than a separate QAT draft
+demo group. Right-click a
 command, whole group or permanent QAT entry (also in flyouts/overflow), or use
 Shift+F10 / the menu key with ribbon focus, for the shared customization menu.
 Set `QuickAccessCustomizationEnabled = false` to opt out. A host

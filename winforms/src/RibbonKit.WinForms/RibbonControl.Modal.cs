@@ -76,6 +76,7 @@ public partial class RibbonControl
         private RibbonTab? _returnTab;
         private Control? _returnFocus;
         private bool _returnMinimized, _changing;
+        internal bool Changing => _changing;
         private int _returnIndex;
         private bool Available(RibbonTab tab) => !ribbon._disposing && !tab.IsDisposed && tab.IsModal && tab.Visible && tab.EffectiveEnabled && ribbon.UnfilteredTabs.Contains(tab);
         internal bool Enter(RibbonTab tab)

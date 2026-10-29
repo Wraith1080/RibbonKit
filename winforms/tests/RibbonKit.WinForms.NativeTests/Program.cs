@@ -11,6 +11,20 @@ internal static partial class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--minimize-motion-checks" or "--minimize-motion-checks-flat")
+            return IndependentConsumer.GeometryMotionInteractionChecks.Run(args[1], args[0] == "--minimize-motion-checks-flat", minimizeOnly: true);
+        if (args.Length == 2 && args[0] == "--expressive-pill-checks")
+            return IndependentConsumer.GeometryMotionInteractionChecks.Run(args[1], false, tabsOnly: true, tabLevel: RibbonAnimationLevel.Expressive);
+        if (args.Length == 2 && args[0] is "--header-arrival-checks" or "--header-arrival-checks-flat")
+            return IndependentConsumer.GeometryMotionInteractionChecks.Run(args[1], args[0] == "--header-arrival-checks-flat", headersOnly: true);
+        if (args.Length == 2 && args[0] is "--tab-slide-motion-checks" or "--tab-slide-motion-checks-flat")
+            return IndependentConsumer.GeometryMotionInteractionChecks.Run(args[1], args[0] == "--tab-slide-motion-checks-flat", false, true, RibbonTabContentAnimation.SlideDown);
+        if (args.Length == 2 && args[0] is "--tab-motion-checks" or "--tab-motion-checks-flat")
+            return IndependentConsumer.GeometryMotionInteractionChecks.Run(args[1], args[0] == "--tab-motion-checks-flat", false, true);
+        if (args.Length == 2 && args[0] is "--geometry-menu-motion-checks" or "--geometry-menu-motion-checks-flat")
+            return IndependentConsumer.GeometryMotionInteractionChecks.Run(args[1], args[0] == "--geometry-menu-motion-checks-flat", true);
+        if (args.Length == 2 && args[0] is "--geometry-motion-checks" or "--geometry-motion-checks-flat")
+            return IndependentConsumer.GeometryMotionInteractionChecks.Run(args[1], args[0] == "--geometry-motion-checks-flat");
         if (args.Length == 2 && args[0] is "--simplified-context-checks" or "--simplified-context-checks-flat")
             return IndependentConsumer.SimplifiedContextInteractionChecks.Run(args[1], args[0] == "--simplified-context-checks-flat");
         if (args.Length == 2 && args[0] is "--review-checks" or "--review-checks-flat")

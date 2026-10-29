@@ -54,6 +54,8 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
     {
         Verify(item);
         Ribbon?.VerifyAccess();
+        if (item is RibbonTab { Visible: true } && Ribbon is { CanAnimateHeaderArrival: true } motionHost)
+        { motionHost.Motion.Change(false, () => InsertItem(index, item), headers: true); return; }
         base.InsertItem(index, item);
         item.Parent = _owner;
         if (_owner is RibbonElement owner) item.BindingContext = owner.BindingContext;

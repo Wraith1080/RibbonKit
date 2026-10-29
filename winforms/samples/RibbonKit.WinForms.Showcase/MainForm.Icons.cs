@@ -46,7 +46,7 @@ public partial class MainForm
                 "Input states" => "group-input-states", "Editing actions" => "group-input-actions", "Show" => "group-show",
                 "Document view" => "group-view", "More options" => "group-more", "Picture" => "group-picture",
                 "Galleries" => "group-galleries", "Application context" => "group-context", "Modal preview" => "group-preview",
-                "Input mode" => "group-input-mode", "Messages" => "group-messages", "QAT drafts" => "group-customization",
+                "Input mode" => "group-input-mode", "Messages" => "group-messages", "Ribbon animation" => "animation-controls",
                 "Chart data" => "group-chart-data", "Chart context" => "group-chart-context", "Preview settings" => "group-preview-settings",
                 _ => throw new InvalidOperationException("Add an explicit group icon for " + group.Text)
             };
@@ -83,6 +83,9 @@ public partial class MainForm
             "Apply" => "apply", "Cancel change" => "cancel", "Reset preview" => "reset", "Save preview" => "save-preview",
             "Restore preview" => "restore-preview", "Preview change" => "preview-change", "Redo" => "redo",
             "Simplified Ribbon" => "layout-simplified",
+            "Chart" => "chart-menu", "Messages" => "messages-menu",
+            "None" => "animation-none", "Subtle" => "animation-subtle", "Expressive" => "animation-expressive",
+            "Tab content" => "animation-tabs", "Fade" => "animation-fade", "Slide down" => "animation-slide-down",
             _ => throw new InvalidOperationException("Add an explicit command icon for " + item.Text)
         };
     }

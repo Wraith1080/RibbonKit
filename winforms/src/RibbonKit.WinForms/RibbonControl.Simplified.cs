@@ -34,6 +34,7 @@ public partial class RibbonControl
         {
             VerifyAccess(); if (!Enum.IsDefined(value)) throw new ArgumentOutOfRangeException(nameof(value));
             if (_layoutMode == value || !Editors.CommitFocused()) return;
+            if (AnimationLevel != RibbonAnimationLevel.None && _motion?.Changing != true && _updateDepth == 0) { Motion.Change(false, () => LayoutMode = value); return; }
             Popups.CloseAll(false); ScreenTips.Cancel(); ExitKeyTips(false); GalleryStrips.CancelPreviews();
             _layoutMode = value; _bodyOffset = 0; ModelChanged();
             if (_focused is not null && !Snapshot.Targets.Any(t => ReferenceEquals(t.Element, _focused))) { _focused = SelectedTab; _focusedDropDown = false; }

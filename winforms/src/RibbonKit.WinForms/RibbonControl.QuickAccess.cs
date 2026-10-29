@@ -27,7 +27,12 @@ public partial class RibbonControl
     public RibbonQuickAccessPosition QuickAccessPosition
     {
         get => _quickAccessPosition;
-        set { VerifyAccess(); if (!Enum.IsDefined(value)) throw new ArgumentOutOfRangeException(nameof(value)); if (_quickAccessPosition == value) return; _quickAccessPosition = value; ModelChanged(); QuickAccessPositionChanged?.Invoke(this, EventArgs.Empty); }
+        set
+        {
+            VerifyAccess(); if (!Enum.IsDefined(value)) throw new ArgumentOutOfRangeException(nameof(value)); if (_quickAccessPosition == value) return;
+            if (AnimationLevel != RibbonAnimationLevel.None && _motion?.Changing != true && _updateDepth == 0) { Motion.Change(true, () => QuickAccessPosition = value); return; }
+            _quickAccessPosition = value; ModelChanged(); QuickAccessPositionChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
     /// <summary>Occurs after toolbar placement changes.</summary>
     public event EventHandler? QuickAccessPositionChanged;

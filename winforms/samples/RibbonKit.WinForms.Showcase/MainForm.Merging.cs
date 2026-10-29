@@ -17,7 +17,7 @@ public partial class MainForm
         contribution.Group.Text = "Chart context"; var chartAction = new RibbonButtonItem { Text = "Chart data", KeyTip = "CM" };
         chartAction.Click += (_, _) => ribbon.SelectedTab = chart;
         contribution.Group.Items.Add(chartAction); source.Groups.Add(contribution);
-        var merging = new RibbonTab { Id = "tab.merging", Text = "Merging", KeyTip = "M" };
+        var merging = new RibbonTab { Id = "tab.merging", Text = "View", KeyTip = "V" };
         var actions = new RibbonGroup { Id = "group.applicationContext", Text = "Application context" };
         var active = new RibbonToggleItem { Text = "Chart context", KeyTip = "C", ScreenTipDescription = "The application activates a merge source. Keyboard focus does not drive activation." };
         active.CheckedChanged += (_, _) =>
@@ -28,6 +28,7 @@ public partial class MainForm
         var show = new RibbonButtonItem { Text = "Select Chart Design", KeyTip = "S" };
         show.Click += (_, _) => { active.Checked = true; ribbon.SelectedTab = chart; };
         var remove = new RibbonButtonItem { Text = "Remove chart context", KeyTip = "R" }; remove.Click += (_, _) => active.Checked = false;
-        actions.Items.AddRange(active, show, remove); merging.Groups.Add(actions); ribbon.Tabs.Add(merging);
+        var commands = new RibbonDropDownItem { Id = "demo.chart.menu", Text = "Chart", KeyTip = "C", DropDownHeader = "Chart" };
+        commands.Items.AddRange(active, show, remove); actions.Items.Add(commands); merging.Groups.Add(actions); ribbon.Tabs.Add(merging);
     }
 }
