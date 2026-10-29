@@ -45,6 +45,11 @@ public partial class RibbonControl
     /// <summary>Occurs after Backstage visibility changes, including forced teardown.</summary>
     public event EventHandler? IsBackstageOpenChanged;
     internal RibbonBackstageSurface? BackstageSurface => _backstageSurface;
+    private static Rectangle BackstageHostBounds(Form form)
+    {
+        int caption = form is RibbonForm { CustomCaption: true } window ? window.CaptionHeight : 0;
+        return new(0, caption, form.ClientSize.Width, Math.Max(0, form.ClientSize.Height - caption));
+    }
     private bool CanShowBackstage => !_disposing && !IsDisposed && !IsInDesignMode && !IsModal && Visible && Enabled
         && FileMenuMode == RibbonFileMenuMode.Backstage && HasFileMenu && FileMenu.EffectiveEnabled
         && !Backstage.IsDisposed && Backstage.Visible && Backstage.EffectiveEnabled;
@@ -78,7 +83,7 @@ public partial class RibbonControl
             }
             Backstage.Reconcile();
             _backstageSurface.Synchronize();
-            _backstageSurface.Bounds = form.ClientRectangle;
+            _backstageSurface.Bounds = BackstageHostBounds(form);
             _ = _backstageSurface.Handle;
             _backstageSurface.PerformLayout();
             _backstageSurface.BringToFront(); ShowBackstageBackdrop();
@@ -98,8 +103,8 @@ public partial class RibbonControl
     }
     private void BackstageHostResized(object? sender, EventArgs e)
     {
-        if (_backstageSurface is { IsDisposed: false } surface && _backstageForm is { } form) surface.Bounds = form.ClientRectangle;
-        if (_backstageBackdrop is { IsDisposed: false } backdrop && _backstageForm is { } owner) backdrop.Bounds = owner.ClientRectangle;
+        if (_backstageSurface is { IsDisposed: false } surface && _backstageForm is { } form) surface.Bounds = BackstageHostBounds(form);
+        if (_backstageBackdrop is { IsDisposed: false } backdrop && _backstageForm is { } owner) backdrop.Bounds = BackstageHostBounds(owner);
     }
     private void ShowBackstageBackdrop()
     {
@@ -108,7 +113,7 @@ public partial class RibbonControl
         {
             _backstageBackdrop = surface.CreateBackdrop(); _backstageBackdrop.Visible = false; _backstageBackdrop.TabStop = false; _backstageBackdrop.CausesValidation = false; form.Controls.Add(_backstageBackdrop);
         }
-        _backstageBackdrop.Bounds = form.ClientRectangle;
+        _backstageBackdrop.Bounds = BackstageHostBounds(form);
         form.Controls.SetChildIndex(_backstageBackdrop, Math.Min(form.Controls.GetChildIndex(surface) + 1, form.Controls.Count - 1)); _backstageBackdrop.Visible = true; _backstageBackdrop.Invalidate();
     }
     internal bool ValidateBackstagePage() => !IsBackstageOpen || _backstageSurface?.ValidatePage() != false;
@@ -168,6 +173,7 @@ public partial class RibbonControl
             if (_backstageOpen && !CanShowBackstage) CloseBackstage(false, true);
             if (!Backstage.IsDisposed) Backstage.Reconcile();
             _backstageSurface?.Synchronize();
+            if (_backstageForm is not null) BackstageHostResized(this, EventArgs.Empty);
             _backstageBackdrop?.Invalidate();
         }
         finally { _backstageRefreshing = false; }

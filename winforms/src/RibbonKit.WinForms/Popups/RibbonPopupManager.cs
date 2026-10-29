@@ -137,7 +137,7 @@ internal sealed class RibbonPopupManager : IDisposable
         var screenAnchor = contextPoint is { } context ? new Rectangle(context, Size.Empty) : opener.RectangleToScreen(anchor);
         int S(int n) => RibbonLayoutEngine.Scale(n, _ribbon.DeviceDpi);
         var placementAnchor = owner is RibbonTab
-            ? opener.RectangleToScreen(new Rectangle(S(_ribbon.LayoutTheme.BodyMargin.Left), S(_ribbon.LayoutTheme.TabHeight + _ribbon.LayoutTheme.BodyMargin.Top),
+            ? opener.RectangleToScreen(new Rectangle(S(_ribbon.LayoutTheme.BodyMargin.Left), _ribbon.WindowCaptionHeight + S(_ribbon.LayoutTheme.TabHeight + _ribbon.LayoutTheme.BodyMargin.Top),
                 Math.Max(1, opener.ClientSize.Width - S(_ribbon.LayoutTheme.BodyMargin.Left) - S(_ribbon.LayoutTheme.BodyMargin.Right)), 0)) : screenAnchor;
         var work = Screen.FromRectangle(placementAnchor).WorkingArea;
         var surface = new RibbonPopupSurface(_ribbon, owner, new(Math.Max(1, work.Width - 2), Math.Max(1, work.Height - 2)), menuSource, groupSource);

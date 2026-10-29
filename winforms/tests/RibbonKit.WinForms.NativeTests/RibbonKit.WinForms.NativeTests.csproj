@@ -38,4 +38,5 @@
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/GeometryMotionInteractionChecks.cs" Link="PublicGeometryMotionInteractionChecks.cs" /></ItemGroup>
   <!-- Public UIA client assemblies are used only by this external test client.
        The native runtime/package has no reference to them and no WPF hosting. -->
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/WindowIntegrationChecks.cs" Link="PublicWindowIntegrationChecks.cs" /></ItemGroup>
 </Project>

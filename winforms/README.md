@@ -116,10 +116,10 @@ The retained foundation bridge does not provide complete accessibility semantics
 for this new item; no split accessibility compatibility is claimed.
 
 Office2024 light, Compact/Touch density and LTR are the current appearance scope.
-Mica client transparency, additional motion, custom window chrome, title-bar QAT
-and WPF template/resource
-compatibility are later work. Ordinary application controls remain native Forms
-controls. The runtime references neither WPF nor the designer SDK.
+The optional `RibbonForm` supplies the native caption and title-bar QAT described
+below. Mica/client transparency and further chrome treatments remain later work.
+WPF template/resource compatibility is outside this independent native library.
+Ordinary application controls remain native Forms controls. The runtime references neither WPF nor the designer SDK.
 
 ### Opt-in geometry motion
 
@@ -275,17 +275,16 @@ assets are borrowed, with Icon taking precedence. No message appears by default.
 Office connects the stack to the body or BelowRibbon QAT, squaring the adjoining
 bottom corners and keeping the last message edge rounded. When the body is
 minimized and QAT is **not BelowRibbon**, the stack is a standalone rounded card
-below the tabs. Hidden QAT works the same way; future title-bar hosting uses this
-same condition. Neutral renders a separate flat stack. Closing the final message
-restores the prior ribbon geometry. The body shadow stops at the join so it cannot
+below the tabs. Hidden QAT and TitleBar placement use this same condition.
+Neutral renders a separate flat stack. Closing the final message restores the prior ribbon geometry. The body shadow stops at the join so it cannot
 obscure message content; the stack retains its own lower shadow.
 
 Tab/arrows, Enter/Space, explicit action KeyTips and automatic message action/close
 KeyTips use the ribbon's normal input paths. Message arrival retains document
 focus. Theme message roles control fill/text/border/icon colors, padding and row
 minimum; Touch enlarges action and close targets. Renderer callbacks receive the
-same geometry used by hit testing and wrapping. Animation, localization, message
-live-region accessibility and actual title-bar hosting remain later slices.
+same geometry used by hit testing and wrapping. Message motion follows the
+opt-in policy above; localization and live-region accessibility remain later slices.
 
 ## Application contract
 
@@ -882,8 +881,8 @@ side margins and one continuous frame/shadow, with a thin internal separator and
 the bottom corners beneath the QAT. While minimized, it becomes a standalone
 rounded card with the body's top/bottom clearance. Neutral rendering retains its
 separate full-width row. `QuickAccessMaxWidth`
-defaults to 240 logical pixels and caps only the tab-row placement. Overflow opens
-a library-owned command menu. Long QAT menus use separate opaque up/down scroll
+defaults to 240 logical pixels and caps the tab-row and title-bar placements.
+Overflow opens a library-owned command menu. Long QAT menus use separate opaque up/down scroll
 bands, with hover/pressed feedback, disabled endpoints, row-wise clicks and
 hover/held repeat. Short menus reserve no bands; native scrollbars are absent.
 The wheel and keyboard keep commands reachable, and scrolling pauses while a
@@ -924,9 +923,8 @@ toolbar placement and visibility; other permanent commands can be added through
 customization. Narrow the window to open overflow. Buttons, toggles, checkbox/radio references, ComboBox choosers and
 dropdown/split/group references are supported. New QAT
 accessibility support and actual VS save/reopen remain pending. Model ownership,
-row measurement and painting are separated from placement so later optional
-title-bar hosting can reuse the same declarations; it requires the future
-RibbonForm/window integration and is not exposed by the current placement enum.
+row measurement and painting are shared by all three placements. The optional
+`RibbonForm` hosts TitleBar without replacing declarations or moving their sources.
 
 Checkbox/radio references use the source's borrowed `Icon`, `Image` or `LargeImage`
 with the same checked/hover/pressed button chrome as toggles. Without an icon,
@@ -1028,6 +1026,49 @@ use the original command level and restore each opener. Showcase's Input fields
 reference demonstrates this with the Fields group. Group-specific icon/ScreenTip
 metadata is not added in this slice; custom renderers can override
 `DrawQuickAccessItem` for the group declaration.
+
+### Optional RibbonForm and title-bar QAT
+
+```csharp
+// The application still sets PerMonitorV2 at startup and owns its document.
+var window = new RibbonForm { Text = "My application" };
+var ribbon = new RibbonControl { Dock = DockStyle.Top };
+window.Controls.Add(document); // Application-owned, usually DockStyle.Fill.
+window.Controls.Add(ribbon);
+window.Ribbon = ribbon;
+ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TitleBar;
+```
+
+`RibbonForm.Ribbon` borrows a direct, top-docked ribbon. It does not add, move or
+otherwise own command declarations. Use empty Form padding and no other visible
+top-docked sibling for caption integration; document controls remain ordinary
+application controls. Normal Form child-control disposal rules still apply.
+Removing/reparenting the ribbon or changing its Dock releases the association.
+Setting `window.Ribbon = null` detaches it without disposing the ribbon or sources.
+
+`QuickAccessPosition` retains the requested preference, including while hidden.
+`EffectiveQuickAccessPosition` reports what is displayed. TitleBar uses TabRow in
+an ordinary/unsupported Form or when caption buttons leave no room; it returns
+to TitleBar when support/space returns. Unsupported padding or sibling docking
+uses an ordinary ribbon below the separately reserved caption. Other border
+styles retain their own native window arrangement.
+Existing TabRow/BelowRibbon profiles and numeric enum values are preserved;
+versioned JSON now accepts the TitleBar name without a schema change. The menu
+offers TitleBar and an explicit TabRow command only when a caption host exists.
+Customize QAT continues editing commands; placement/visibility remain menu choices.
+
+The library measures caption painting, native hit targets, QAT targets, keyboard
+bounds and popup anchors in device pixels. Caption drag/double-click, edge resize,
+system menu, minimize/maximize/restore/close and native Snap use Win32 window
+semantics. Interactive or disabled QAT bounds exclude caption dragging. Backstage
+leaves the caption accessible; messages and temporary minimized bodies retain
+the existing frame/overlay rules. The same menu/gallery/group/ComboBox projections,
+validation, KeyTips, overflow and editor handles serve every placement.
+
+**First-pass motion limit:** moves into/out of TitleBar settle immediately.
+TabRow/BelowRibbon movement retains its existing opt-in animation; the caption
+band stays steady during body/header motion. No Mica/Acrylic/glass or document/MDI
+management is added. [M6B scope, evidence and remaining review](docs/M6B-WINDOW-INTEGRATION.md).
 
 ## Richer command menus
 

@@ -22,7 +22,7 @@ public partial class RibbonControl
     }
     /// <summary>Occurs after toolbar visibility changes.</summary>
     public event EventHandler? QuickAccessVisibleChanged;
-    /// <summary>Gets or sets the toolbar's ordinary-window placement.</summary>
+    /// <summary>Gets or sets the toolbar's requested placement.</summary>
     [Category("Appearance"), Bindable(true), DefaultValue(RibbonQuickAccessPosition.TabRow)]
     public RibbonQuickAccessPosition QuickAccessPosition
     {
@@ -30,13 +30,13 @@ public partial class RibbonControl
         set
         {
             VerifyAccess(); if (!Enum.IsDefined(value)) throw new ArgumentOutOfRangeException(nameof(value)); if (_quickAccessPosition == value) return;
-            if (AnimationLevel != RibbonAnimationLevel.None && _motion?.Changing != true && _updateDepth == 0) { Motion.Change(true, () => QuickAccessPosition = value); return; }
+            if (value != RibbonQuickAccessPosition.TitleBar && _quickAccessPosition != RibbonQuickAccessPosition.TitleBar && AnimationLevel != RibbonAnimationLevel.None && _motion?.Changing != true && _updateDepth == 0) { Motion.Change(true, () => QuickAccessPosition = value); return; }
             _quickAccessPosition = value; ModelChanged(); QuickAccessPositionChanged?.Invoke(this, EventArgs.Empty);
         }
     }
     /// <summary>Occurs after toolbar placement changes.</summary>
     public event EventHandler? QuickAccessPositionChanged;
-    /// <summary>Gets or sets the logical width cap beside the tabs. The below-ribbon row uses the full available width.</summary>
+    /// <summary>Gets or sets the logical width cap beside the tabs or in a supported caption. The below-ribbon row uses the full available width.</summary>
     [Category("Layout"), DefaultValue(240)]
     public int QuickAccessMaxWidth
     {

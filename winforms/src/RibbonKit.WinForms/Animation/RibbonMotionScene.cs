@@ -30,7 +30,7 @@ internal sealed class RibbonMotionScene : IDisposable
     internal RibbonMotionScene(RibbonControl ribbon)
     {
         var snapshot = ribbon.Snapshot; Dpi = ribbon.DeviceDpi; Bounds = ribbon.RectangleToScreen(ribbon.ClientRectangle);
-        Header = new(0, 0, ribbon.Width, RibbonLayoutEngine.Scale(ribbon.LayoutTheme.TabHeight, Dpi));
+        Header = new(0, ribbon.WindowCaptionHeight, ribbon.Width, RibbonLayoutEngine.Scale(ribbon.LayoutTheme.TabHeight, Dpi));
         Body = snapshot.BodyBounds; Frame = snapshot.BodyFrameBounds; Qat = snapshot.QuickAccessBounds; Messages = snapshot.MessageBounds;
         MessageRows = snapshot.Messages.ToDictionary(row => row.Message, row =>
         {
@@ -171,6 +171,12 @@ internal sealed class RibbonMotionScene : IDisposable
         // Keep the departure opaque beneath the arriving image. Fading both
         // with source-over changes the weight of identical overlapping glyphs.
         Draw(from, to, 1); Draw(to, from, p);
+        // The caption stays on its own measured band during body/header motion.
+        if (to.Header.Top > 0)
+        {
+            var caption = new Rectangle(0, 0, to.Image.Width, to.Header.Top);
+            graphics.DrawImage(to.Image, Local(At(caption, to.Bounds)), caption, GraphicsUnit.Pixel);
+        }
         if (messages && messageFrame.Width > 2 && messageFrame.Height > 2)
         {
             var interior = Rectangle.Inflate(messageFrame, -1, -1);

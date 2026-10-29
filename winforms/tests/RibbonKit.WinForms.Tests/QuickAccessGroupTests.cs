@@ -47,7 +47,12 @@ public sealed class QuickAccessGroupTests
         Open(second); Assert.True(firstSurface.IsDisposed); Assert.False(first.IsDropDownOpen); Assert.True(second.IsDropDownOpen); Assert.Single(ribbon.Popups.Surfaces);
         Assert.Same(editor, ribbon.Editors.EditorFor(field)); Assert.Equal(handle, editor.Handle); Assert.True(ribbon.Popups.Top!.Contains(editor));
         ribbon.Activate(ribbon.Snapshot.Targets.Single(t => ReferenceEquals(t.Element, group)));
-        Assert.False(second.IsDropDownOpen); var sourceSurface = ribbon.Popups.Top!; Assert.Same(group, sourceSurface.OwnerElement); Assert.True(sourceSurface.Contains(editor)); Assert.Equal(handle, editor.Handle);
+        Assert.False(second.IsDropDownOpen); Assert.False(ribbon.Popups.HasOpen);
+        Assert.Same(editor, ribbon.Editors.EditorFor(field)); Assert.Equal(handle, editor.Handle);
+        // A source group button closes the borrowed presentation; the next press
+        // reopens the same group from its source, matching the retained-group contract.
+        ribbon.Activate(ribbon.Snapshot.Targets.Single(t => ReferenceEquals(t.Element, group)));
+        var sourceSurface = ribbon.Popups.Top!; Assert.Same(group, sourceSurface.OwnerElement); Assert.True(sourceSurface.Contains(editor)); Assert.Equal(handle, editor.Handle);
         int calls = 0; toggle.Click += (_, _) => calls++; check.Click += (_, _) => calls++; radioB.Click += (_, _) => calls++; split.Click += (_, _) => calls++; command.Click += (_, _) => calls++;
         foreach (var item in new RibbonItem[] { toggle, check, radioB, split })
         {

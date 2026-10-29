@@ -2,13 +2,15 @@ using System.ComponentModel;
 
 namespace RibbonKit.WinForms;
 
-/// <summary>Places the Quick Access Toolbar in an ordinary application window.</summary>
+/// <summary>Places the Quick Access Toolbar in an application window.</summary>
 public enum RibbonQuickAccessPosition
 {
     /// <summary>Before the ribbon tabs.</summary>
     TabRow,
     /// <summary>In a full-width row below the ribbon body or minimized tab row.</summary>
-    BelowRibbon
+    BelowRibbon,
+    /// <summary>In an associated RibbonForm caption; otherwise displayed in TabRow while retaining this preference.</summary>
+    TitleBar
 }
 
 /// <summary>A separate presentation of a borrowed button, toggle, checkbox or radio command. Disposing the reference never disposes its source.</summary>

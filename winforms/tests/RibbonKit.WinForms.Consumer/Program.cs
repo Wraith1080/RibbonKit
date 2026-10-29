@@ -8,6 +8,16 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] is "--window-projection-checks" or "--window-projection-checks-flat")
+            return IndependentConsumer.WindowIntegrationChecks.Run(args[1], args[0] == "--window-projection-checks-flat", projectionsOnly: true);
+        if (args.Length == 2 && args[0] is "--window-snap-checks" or "--window-snap-checks-flat")
+            return IndependentConsumer.WindowIntegrationChecks.Run(args[1], args[0] == "--window-snap-checks-flat", frameOnly: true, snapOnly: true);
+        if (args.Length == 2 && args[0] is "--window-tail-checks" or "--window-tail-checks-flat")
+            return IndependentConsumer.WindowIntegrationChecks.Run(args[1], args[0] == "--window-tail-checks-flat", frameOnly: true, tailOnly: true);
+        if (args.Length == 2 && args[0] is "--window-frame-checks" or "--window-frame-checks-flat")
+            return IndependentConsumer.WindowIntegrationChecks.Run(args[1], args[0] == "--window-frame-checks-flat", frameOnly: true);
+        if (args.Length == 2 && args[0] is "--validate-window" or "--validate-window-flat")
+            return IndependentConsumer.WindowIntegrationChecks.Run(args[1], args[0] == "--validate-window-flat");
         if (args.Length == 2 && args[0] is "--validate-group-fade" or "--validate-group-fade-flat")
             return GroupMotionInteractionChecks.Run(args[1], args[0] == "--validate-group-fade-flat", true);
         if (args.Length == 2 && args[0] is "--validate-group-motion" or "--validate-group-motion-flat")

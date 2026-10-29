@@ -883,3 +883,21 @@ RibbonKit.WinForms.RibbonCustomizationGroup.Layout.set -> void
 RibbonKit.WinForms.RibbonCustomizationGroupLayout
 RibbonKit.WinForms.RibbonCustomizationGroupLayout.Stacked = 0 -> RibbonKit.WinForms.RibbonCustomizationGroupLayout
 RibbonKit.WinForms.RibbonCustomizationGroupLayout.Large = 1 -> RibbonKit.WinForms.RibbonCustomizationGroupLayout
+
+RibbonKit.WinForms.RibbonQuickAccessPosition.TitleBar = 2 -> RibbonKit.WinForms.RibbonQuickAccessPosition
+RibbonKit.WinForms.RibbonControl.EffectiveQuickAccessPosition.get -> RibbonKit.WinForms.RibbonQuickAccessPosition
+RibbonKit.WinForms.RibbonForm
+RibbonKit.WinForms.RibbonForm.RibbonForm() -> void
+RibbonKit.WinForms.RibbonForm.Ribbon.get -> RibbonKit.WinForms.RibbonControl?
+RibbonKit.WinForms.RibbonForm.Ribbon.set -> void
+override RibbonKit.WinForms.RibbonForm.DisplayRectangle.get -> System.Drawing.Rectangle
+override RibbonKit.WinForms.RibbonForm.OnHandleCreated(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonForm.OnDpiChanged(System.Windows.Forms.DpiChangedEventArgs! e) -> void
+override RibbonKit.WinForms.RibbonForm.OnResize(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonForm.OnTextChanged(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonForm.OnActivated(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonForm.OnDeactivate(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonForm.OnPaint(System.Windows.Forms.PaintEventArgs! e) -> void
+override RibbonKit.WinForms.RibbonForm.WndProc(ref System.Windows.Forms.Message m) -> void
+override RibbonKit.WinForms.RibbonForm.Dispose(bool disposing) -> void
+override RibbonKit.WinForms.RibbonForm.OnLayout(System.Windows.Forms.LayoutEventArgs! e) -> void

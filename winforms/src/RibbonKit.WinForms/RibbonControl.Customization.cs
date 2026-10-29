@@ -91,7 +91,7 @@ public partial class RibbonControl
                     }
                     // The placement command retains the customization transaction
                     // and notification, while one outer motion covers its batch.
-                    if (toolbarMotion && AnimationLevel != RibbonAnimationLevel.None && _updateDepth == 0) Motion.Change(true, Apply);
+                    if (toolbarMotion && QuickAccessPosition != RibbonQuickAccessPosition.TitleBar && AnimationLevel != RibbonAnimationLevel.None && _updateDepth == 0) Motion.Change(true, Apply);
                     else Apply();
                 }
                 catch (InvalidOperationException e) when (session.ApplyVersion == 0) { MessageBox.Show(FindForm(), e.Message, "Quick Access Toolbar", MessageBoxButtons.OK, MessageBoxIcon.Information); }
@@ -107,6 +107,11 @@ public partial class RibbonControl
         }
         if (menu.Items.Count > 0) menu.Items.Add(new RibbonMenuSeparatorItem());
         Add("MoveQuickAccess", QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon ? "Show Quick Access Toolbar above the ribbon" : "Show Quick Access Toolbar below the ribbon", s => s.Draft.QuickAccessPosition = s.Draft.QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon ? RibbonQuickAccessPosition.TabRow : RibbonQuickAccessPosition.BelowRibbon, toolbarMotion: true);
+        if (HasWindowCaption)
+        {
+            Add("TitleBarQuickAccess", "Show Quick Access Toolbar in title bar", s => s.Draft.QuickAccessPosition = RibbonQuickAccessPosition.TitleBar);
+            Add("TabRowQuickAccess", "Show Quick Access Toolbar beside tabs", s => s.Draft.QuickAccessPosition = RibbonQuickAccessPosition.TabRow, toolbarMotion: true);
+        }
         Add("ToggleQuickAccess", QuickAccessVisible ? "Hide Quick Access Toolbar" : "Show Quick Access Toolbar", s => s.Draft.QuickAccessVisible = !s.Draft.QuickAccessVisible);
         if (LayoutMode == RibbonLayoutMode.Simplified && source is RibbonItem command && SelectedTab is { IsContextual: false, IsModal: false } selected
             && _simplified.Commands(selected, false).Any(c => c.Id == command.Id) && GetMergeSource(command) is null)

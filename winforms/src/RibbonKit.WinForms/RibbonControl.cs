@@ -312,7 +312,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         if (_theme is null || _disposing)
             return;
         var layout = LayoutTheme;
-        Height = RibbonLayoutEngine.Scale(layout.TabHeight, DeviceDpi) + (IsMinimized ? 0 : RibbonLayoutEngine.Scale(layout.BodyHeight, DeviceDpi)
+        Height = WindowCaptionHeight + RibbonLayoutEngine.Scale(layout.TabHeight, DeviceDpi) + (IsMinimized ? 0 : RibbonLayoutEngine.Scale(layout.BodyHeight, DeviceDpi)
             + RibbonLayoutEngine.Scale(_theme.BodyMargin.Top, DeviceDpi) + RibbonLayoutEngine.Scale(_theme.BodyMargin.Bottom, DeviceDpi)) + QuickAccessHeight
             + (IsMinimized && (JoinBelowRibbonQuickAccess || MessageBar.HasOpenMessages && JoinMessageBar) ? RibbonLayoutEngine.Scale(_theme.BodyMargin.Top, DeviceDpi) + RibbonLayoutEngine.Scale(_theme.BodyMargin.Bottom, DeviceDpi) : 0)
             + MessageHeight;
@@ -458,9 +458,10 @@ public partial class RibbonControl : Control, ISupportInitialize
         }
         PaintMessages(context);
         if (!_snapshot.BodyBounds.IsEmpty) Painter.DrawBody(context with { Bounds = _snapshot.BodyFrameBounds, IsBottomEdgeConnected = MessageBar.HasOpenMessages && MessageTopConnected });
+        if (HasWindowCaption) WindowHost!.PaintCaption(e.Graphics, this);
         if (!_snapshot.QuickAccessBounds.IsEmpty) Painter.DrawQuickAccessToolbar(context with { Bounds = _snapshot.QuickAccessBounds,
             IsQuickAccessToolbarJoined = JoinBelowRibbonQuickAccess && !_snapshot.BodyBounds.IsEmpty,
-            IsBottomEdgeConnected = MessageBar.HasOpenMessages && MessageTopConnected }, QuickAccessPosition);
+            IsBottomEdgeConnected = MessageBar.HasOpenMessages && MessageTopConnected }, EffectiveQuickAccessPosition);
         PaintMessageContents(context);
         var state = e.Graphics.Save();
         try

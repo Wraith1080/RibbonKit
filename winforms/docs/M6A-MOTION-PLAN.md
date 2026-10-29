@@ -779,4 +779,7 @@ Run native `--group-motion-checks` / `--group-motion-checks-flat` for Slide, or
 directory. The public consumer offers corresponding `--validate-group-motion`
 and `--validate-group-fade` variants. No full aggregate, WPF, Release/package,
 actual VS, physical mixed-monitor/touch/IME or performance campaign was run.
-Human visual/smoothness review is pending; M6B remains queued.
+User review, 2026-10-29: positive response to the group motion and shared Fade/Slide
+selector, followed by authorization to continue to M6B. Performance, physical
+display/DPI and broader native acceptance gates remain pending. M6B is the next
+slice; its implementation has not started.

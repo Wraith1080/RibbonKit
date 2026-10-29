@@ -2,12 +2,14 @@ using System.ComponentModel;
 
 namespace RibbonKit.WinForms.Showcase;
 
-public partial class MainForm : Form
+public partial class MainForm : RibbonForm
 {
     private readonly FormattingState _formatting = new();
     public MainForm()
     {
         InitializeComponent();
+        Ribbon = ribbon;
+        ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TitleBar;
         paste.DropDownHeader = "Paste options"; select.DropDownHeader = "Selection options";
         trackChanges.DropDownHeader = "Track changes"; shapes.DropDownHeader = "Choose a shape"; inputMenu.DropDownHeader = "Input options";
         foreach (var dropdown in components!.Components.OfType<RibbonDropDownItem>().Where(d => d is not RibbonGalleryItem && d.DropDownHeader.Length == 0)) dropdown.DropDownHeader = dropdown.Text;
@@ -34,8 +36,8 @@ public partial class MainForm : Form
         ribbon.QuickAccessItems.AddRange(
             new RibbonQuickAccessReference { Source = bold },
             new RibbonQuickAccessReference { Source = italic });
-        var moveQuickAccess = new RibbonButtonItem { Id = "cmd.qat.move", Text = "Move Quick Access Toolbar", ScreenTipDescription = "Move the toolbar between the tab row and below the ribbon. Title-bar hosting is planned with window integration." };
-        moveQuickAccess.Click += (_, _) => ribbon.QuickAccessPosition = ribbon.QuickAccessPosition == RibbonQuickAccessPosition.TabRow ? RibbonQuickAccessPosition.BelowRibbon : RibbonQuickAccessPosition.TabRow;
+        var moveQuickAccess = new RibbonButtonItem { Id = "cmd.qat.move", Text = "Move Quick Access Toolbar", ScreenTipDescription = "Move the toolbar between the title bar, tab row and below the ribbon." };
+        moveQuickAccess.Click += (_, _) => ribbon.QuickAccessPosition = ribbon.QuickAccessPosition switch { RibbonQuickAccessPosition.TitleBar => RibbonQuickAccessPosition.TabRow, RibbonQuickAccessPosition.TabRow => RibbonQuickAccessPosition.BelowRibbon, _ => RibbonQuickAccessPosition.TitleBar };
         ribbon.CommandCatalog.Commands.Add(moveQuickAccess);
         document.Text = "Native RibbonKit.WinForms\r\n\r\nInputs demonstrates native TextBox and ComboBox editing, binding, read-only/disabled fields and popup ownership. Font selects a choice; Zoom also accepts typed percentages (25% to 500%). Resize to open the same editors in collapsed groups.\r\n\r\nF4 or Alt+Down opens the choice popup. Escape closes that list first, then its containing ribbon popup. Enter validates and commits; Escape outside a list restores the last committed value. Tab visits fields; F6 returns to this document. Alt/F10, E, F focuses Font.\r\n\r\nThe document, status text, validation rules and data belong to this application. Home still demonstrates split buttons.";
         document.AppendText("\r\n\r\nOptions demonstrates compact check/radio choices. Gridlines cycles through three states. Ruler and its popup entry share an application binding. Resize to open the same options in collapsed groups.");

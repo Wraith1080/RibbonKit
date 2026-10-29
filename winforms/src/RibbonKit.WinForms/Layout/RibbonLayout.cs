@@ -167,7 +167,8 @@ internal sealed partial class RibbonLayoutEngine
         var result = new RibbonLayoutSnapshot();
         int dpi = ribbon.DeviceDpi;
         int S(double n) => Scale(n, dpi);
-        int tabHeight = S(ribbon.LayoutTheme.TabHeight);
+        int tabHeight = S(ribbon.LayoutTheme.TabHeight), tabTop = ribbon.WindowCaptionHeight;
+        var placement = ribbon.EffectiveQuickAccessPosition;
         var client = ribbon.ClientRectangle;
         var tabs = ribbon.GetPresentedTabs().Where(t => t.Visible).ToArray();
         var widths = tabs.Select(t => Math.Max(S(58), TextRenderer.MeasureText(t.DisplayText, ribbon.Font).Width + S(28))).ToArray();
@@ -178,54 +179,54 @@ internal sealed partial class RibbonLayoutEngine
         int tabsStart = 0;
         if (ribbon.HasFileMenu)
         {
-            int keepQuickAccess = ribbon.HasQuickAccess && ribbon.QuickAccessPosition == RibbonQuickAccessPosition.TabRow ? S(metrics.QuickAccessButton + 4) : 0;
+            int keepQuickAccess = ribbon.HasQuickAccess && placement == RibbonQuickAccessPosition.TabRow ? S(metrics.QuickAccessButton + 4) : 0;
             int available = Math.Max(0, client.Width - utilityWidth - S(24) - keepQuickAccess);
             int left = Math.Min(S(ribbon.LayoutTheme.BodyMargin.Left), available);
             int width = Math.Min(Math.Max(S(50), TextRenderer.MeasureText(ribbon.FileMenu.Text, ribbon.Font, Size.Empty,
                 TextFormatFlags.SingleLine | TextFormatFlags.NoPadding).Width + S(28)), Math.Max(0, available - left));
             if (width > 0)
             {
-                var bounds = new Rectangle(left, 0, width, tabHeight);
+                var bounds = new Rectangle(left, tabTop, width, tabHeight);
                 result.Targets.Add(new(TargetKind.FileMenu, ribbon.FileMenu, bounds, bounds));
                 tabsStart = bounds.Right;
             }
         }
         if (ribbon.HasQuickAccess)
         {
-            bool below = ribbon.QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon;
+            bool below = placement == RibbonQuickAccessPosition.BelowRibbon;
             int available = below ? client.Width : Math.Min(S(ribbon.QuickAccessMaxWidth), Math.Max(0, client.Width - tabsStart - utilityWidth - S(24)));
-            var slot = below ? RibbonQuickAccessLayout.BelowBounds(new(client.Width, Math.Max(0, client.Height - ribbon.MessageHeight)), ribbon.QuickAccessHeight, ribbon.LayoutTheme.BodyMargin, ribbon.JoinBelowRibbonQuickAccess, dpi)
-                : new Rectangle(tabsStart, 0, available, tabHeight);
+            var slot = placement == RibbonQuickAccessPosition.TitleBar ? ribbon.WindowHost!.QuickAccessSlot(ribbon) : below ? RibbonQuickAccessLayout.BelowBounds(new(client.Width, Math.Max(0, client.Height - ribbon.MessageHeight)), ribbon.QuickAccessHeight, ribbon.LayoutTheme.BodyMargin, ribbon.JoinBelowRibbonQuickAccess, dpi)
+                : new Rectangle(tabsStart, tabTop, available, tabHeight);
             var quickAccess = RibbonQuickAccessLayout.Build(ribbon, slot, below);
             result.QuickAccessBounds = quickAccess.QuickAccessBounds;
             result.QuickAccessOverflowItems.AddRange(quickAccess.QuickAccessOverflowItems);
             result.Targets.AddRange(quickAccess.Targets);
-            if (!below) tabsStart += result.QuickAccessBounds.Width;
+            if (placement == RibbonQuickAccessPosition.TabRow) tabsStart += result.QuickAccessBounds.Width;
         }
         int tabsWidth = Math.Max(0, client.Width - utilityWidth - tabsStart);
         bool tabOverflow = tabTotal > tabsWidth;
         // Keep part of a tab reachable when the utility and two full-size
         // scrollers would otherwise consume the complete narrow tab strip.
         int tabScrollWidth = tabOverflow ? Math.Min(S(metrics.ScrollButton), Math.Max(0, (tabsWidth - S(24)) / 2)) : 0;
-        var tabViewport = new Rectangle(tabsStart + tabScrollWidth, 0, Math.Max(0, tabsWidth - 2 * tabScrollWidth), tabHeight);
+        var tabViewport = new Rectangle(tabsStart + tabScrollWidth, tabTop, Math.Max(0, tabsWidth - 2 * tabScrollWidth), tabHeight);
         result.TabExtent = tabTotal;
         result.TabViewport = tabViewport;
         int tx = tabViewport.Left - Math.Clamp(tabOffset, 0, Math.Max(0, tabTotal - tabViewport.Width));
         for (int i = 0; i < tabs.Length; i++)
         {
-            result.Targets.Add(new(TargetKind.Tab, tabs[i], new(tx, 0, widths[i], tabHeight), tabViewport));
+            result.Targets.Add(new(TargetKind.Tab, tabs[i], new(tx, tabTop, widths[i], tabHeight), tabViewport));
             tx += widths[i];
         }
         if (tabOverflow)
         {
-            var tabsClip = new Rectangle(tabsStart, 0, tabsWidth, tabHeight);
-            result.Targets.Add(new(TargetKind.TabBack, null, new(tabsStart, 0, tabScrollWidth, tabHeight), tabsClip));
-            result.Targets.Add(new(TargetKind.TabNext, null, new(tabsStart + tabsWidth - tabScrollWidth, 0, tabScrollWidth, tabHeight), tabsClip));
+            var tabsClip = new Rectangle(tabsStart, tabTop, tabsWidth, tabHeight);
+            result.Targets.Add(new(TargetKind.TabBack, null, new(tabsStart, tabTop, tabScrollWidth, tabHeight), tabsClip));
+            result.Targets.Add(new(TargetKind.TabNext, null, new(tabsStart + tabsWidth - tabScrollWidth, tabTop, tabScrollWidth, tabHeight), tabsClip));
         }
-        if (action is { } header) result.Targets.Add(new(header.Kind, header.Element, new(client.Width - utilityWidth, 0, utilityWidth, tabHeight), client));
+        if (action is { } header) result.Targets.Add(new(header.Kind, header.Element, new(client.Width - utilityWidth, tabTop, utilityWidth, tabHeight), client));
         if (!ribbon.IsMinimized && ribbon.SelectedTab is { } selected)
         {
-            var bodyLayout = BuildBody(ribbon, selected, client.Width, bodyOffset, tabHeight);
+            var bodyLayout = BuildBody(ribbon, selected, client.Width, bodyOffset, tabTop + tabHeight);
             result.BodyBounds = bodyLayout.BodyBounds; result.BodyViewport = bodyLayout.BodyViewport; result.BodyExtent = bodyLayout.BodyExtent;
             result.BodyFrameBounds = ribbon.JoinBelowRibbonQuickAccess && !result.QuickAccessBounds.IsEmpty
                 ? Rectangle.Union(result.BodyBounds, result.QuickAccessBounds) : result.BodyBounds;

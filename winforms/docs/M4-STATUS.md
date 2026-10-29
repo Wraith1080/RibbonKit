@@ -1380,7 +1380,7 @@ Each public API and ownership contract is proposed before its implementation.
 | M5D | [Native row, More Commands, shared structure and Simplified customization/profiles implemented; human review pending](M5D-SIMPLIFIED-RIBBON.md) |
 | M6A | [Opt-in geometry, group collapse/restore, tab/header, minimize/restore, popup, Backstage/page opening/closing and message-panel motion implemented; visual/performance acceptance and optional host synchronization remain](M6A-MOTION-PLAN.md) |
 | Pre-M6B fixes | [Initial fixes, action alignment and additional review corrections implemented; human review pending](#pre-m6b-review-fixes--2026-10-29) |
-| M6B | Optional RibbonForm/window integration and title-bar QAT using existing source models |
+| M6B | [Optional RibbonForm and TitleBar QAT implemented; current evidence and remaining review](M6B-WINDOW-INTEGRATION.md) |
 | M6C | Optional backdrop/chrome treatments and their native window/DPI behavior |
 
 Cross-cutting follow-ups remain separate: optional ICommand support; deferred
