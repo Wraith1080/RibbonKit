@@ -9,7 +9,7 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     /// <summary>Initializes the default Office 2024 inspired renderer.</summary>
     public RibbonOffice2024Renderer() { }
     /// <inheritdoc />
-    public override int GetBackstagePageShadowInset(RibbonTheme theme, int deviceDpi) => theme.BodyShadowColor.A == 0 ? 0 : Layout.RibbonLayoutEngine.Scale(6, deviceDpi);
+    public override int GetBackstagePageShadowInset(RibbonTheme theme, int deviceDpi) => 0;
     /// <inheritdoc />
     public override int GetBackstagePageBorderWidth(RibbonTheme theme, int deviceDpi) => 1;
     /// <inheritdoc />
@@ -17,7 +17,6 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     /// <inheritdoc />
     public override void DrawBackstageBackground(RibbonPaintContext context, int navigationWidth)
     {
-        if (context.WindowBackdrop || context.CompositedText) { base.DrawBackstageBackground(context, navigationWidth); return; }
         using var rail = new SolidBrush(context.Theme.BackstageNavigationBackground);
         context.Graphics.FillRectangle(rail, context.Bounds);
         int width = Math.Clamp(navigationWidth, 0, context.Bounds.Width);

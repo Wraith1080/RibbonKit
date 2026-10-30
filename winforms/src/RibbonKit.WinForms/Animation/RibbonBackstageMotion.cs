@@ -14,7 +14,9 @@ internal sealed class RibbonBackstageMotion : IDisposable
     private readonly int _width;
     private readonly int _travel;
     private readonly double _duration;
-    private readonly System.Windows.Forms.Timer _timer = new() { Interval = 8 };
+    // Cap this large native scene near 60 updates/second; progress uses elapsed
+    // time, so pacing does not extend its authored transition duration.
+    private readonly System.Windows.Forms.Timer _timer = new() { Interval = 16 };
     private readonly Point _initialPointer = Cursor.Position;
     private Action? _completed;
     private long _start;

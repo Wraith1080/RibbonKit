@@ -44,7 +44,7 @@ public partial class RibbonControl
         set { VerifyAccess(); if (value < RibbonQuickAccess.ButtonWidth) throw new ArgumentOutOfRangeException(nameof(value)); if (_quickAccessMaxWidth == value) return; _quickAccessMaxWidth = value; ModelChanged(); }
     }
     internal bool HasQuickAccess => QuickAccessVisible && QuickAccessItems.Any(e => e.Visible);
-    internal bool ShowQuickAccess => HasQuickAccess && !IsBackstageOpen;
+    internal bool ShowQuickAccess => HasQuickAccess && (!IsBackstageOpen || EffectiveQuickAccessPosition != RibbonQuickAccessPosition.TitleBar);
     internal bool JoinBelowRibbonQuickAccess => HasQuickAccess && QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon && Painter.JoinBelowRibbonQuickAccess;
     internal int QuickAccessHeight => HasQuickAccess && QuickAccessPosition == RibbonQuickAccessPosition.BelowRibbon ? RibbonLayoutEngine.Scale(RibbonDensityMetrics.For(Density).QuickAccessRow, DeviceDpi) : 0;
     internal void ActivateQuickAccess(RibbonElement entry, Control opener, Rectangle anchor, bool dropDownPart = false)

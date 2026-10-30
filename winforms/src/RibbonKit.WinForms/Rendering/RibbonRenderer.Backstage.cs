@@ -5,11 +5,11 @@ namespace RibbonKit.WinForms;
 
 public partial class RibbonRenderer
 {
-    /// <summary>Gets the material page's top and navigation-side shadow clearance in device pixels. Solid mode does not reserve this space. Layout and background drawing share this value, clamped to available space and 32 logical pixels.</summary>
+    /// <summary>Gets optional material page shadow clearance in device pixels. Built-in renderers use zero and Office uses a border instead. Solid mode does not reserve this space. Layout and background drawing share this value, clamped to available space and 32 logical pixels.</summary>
     public virtual int GetBackstagePageShadowInset(RibbonTheme theme, int deviceDpi) => 0;
-    /// <summary>Gets the Solid page's top/left border width in device pixels. The default is zero. Background drawing and the native page inset share this value.</summary>
+    /// <summary>Gets the page's top/left border width in device pixels for Solid and material modes. The default is zero. Background drawing and the native page inset share this value.</summary>
     public virtual int GetBackstagePageBorderWidth(RibbonTheme theme, int deviceDpi) => 0;
-    /// <summary>Gets the Solid page's top-left corner radius in device pixels. The default is zero. Background drawing and the native page clip share this value; other corners stay square.</summary>
+    /// <summary>Gets the page's top-left corner radius in device pixels for Solid and material modes. The default is zero. Background drawing and the native page clip share this value; other corners stay square.</summary>
     public virtual int GetBackstagePageCornerRadius(RibbonTheme theme, int deviceDpi) => 0;
     /// <summary>Paints the native Backstage surface and its measured navigation rail.</summary>
     public virtual void DrawBackstageBackground(RibbonPaintContext context, int navigationWidth)

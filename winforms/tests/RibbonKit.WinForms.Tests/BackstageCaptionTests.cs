@@ -82,32 +82,36 @@ public sealed class BackstageCaptionTests
         { ToolbarPaints++; base.DrawQuickAccessToolbar(context, position); }
     }
 
-    [Theory] [InlineData(RibbonQuickAccessPosition.TitleBar, true)] [InlineData(RibbonQuickAccessPosition.TitleBar, false)]
-    [InlineData(RibbonQuickAccessPosition.TabRow, true)] [InlineData(RibbonQuickAccessPosition.TabRow, false)]
-    [InlineData(RibbonQuickAccessPosition.BelowRibbon, true)] [InlineData(RibbonQuickAccessPosition.BelowRibbon, false)]
-    public void Qat_stays_hidden_through_opening_closing_and_reopening_and_restores_the_authored_state(RibbonQuickAccessPosition position, bool visible) => FoundationTests.Sta(() =>
+    [Theory] [InlineData(RibbonQuickAccessPosition.TitleBar, true, true)] [InlineData(RibbonQuickAccessPosition.TitleBar, false, true)]
+    [InlineData(RibbonQuickAccessPosition.TabRow, true, true)] [InlineData(RibbonQuickAccessPosition.TabRow, false, true)]
+    [InlineData(RibbonQuickAccessPosition.BelowRibbon, true, true)] [InlineData(RibbonQuickAccessPosition.BelowRibbon, false, true)]
+    [InlineData(RibbonQuickAccessPosition.TitleBar, true, false)] [InlineData(RibbonQuickAccessPosition.TitleBar, false, false)]
+    public void Backstage_suppresses_only_effective_titlebar_qat_and_preserves_the_authored_state(RibbonQuickAccessPosition position, bool visible, bool caption) => FoundationTests.Sta(() =>
     {
-        using var host = new RibbonForm { Size = new(1000, 700) }; using var page = new Panel();
+        using Form host = caption ? new RibbonForm() : new Form(); host.Size = new(1000, 700); using var page = new Panel();
         using var painter = new CaptionProbe();
         var ribbon = new RibbonControl { Renderer = painter, FileMenuMode = RibbonFileMenuMode.Backstage, QuickAccessPosition = position, QuickAccessVisible = visible, AnimationLevel = RibbonAnimationLevel.Subtle };
         var command = new RibbonButtonItem { Text = "Save" }; var reference = new RibbonQuickAccessReference { Source = command };
         var group = new RibbonGroup(); group.Items.Add(command); var tab = new RibbonTab { Text = "Home" }; tab.Groups.Add(group); ribbon.Tabs.Add(tab);
         ribbon.QuickAccessItems.Add(reference); ribbon.FileMenu.Visible = true; ribbon.Backstage.Items.Add(new RibbonBackstagePageItem { Text = "Info", Content = page });
-        host.Controls.Add(ribbon); host.Ribbon = ribbon; host.Show(); Application.DoEvents(); ribbon.Motion.SystemPolicyOverride = true;
+        host.Controls.Add(ribbon); if (host is RibbonForm window) window.Ribbon = ribbon; host.Show(); Application.DoEvents(); ribbon.Motion.SystemPolicyOverride = true;
         int height = ribbon.Height, changes = 0; var before = ribbon.Snapshot.QuickAccessBounds;
+        bool shownDuringBackstage = visible && ribbon.EffectiveQuickAccessPosition != RibbonQuickAccessPosition.TitleBar;
         ribbon.QuickAccessVisibleChanged += (_, _) => changes++; ribbon.QuickAccessPositionChanged += (_, _) => changes++;
-        painter.ToolbarPaints = 0; ribbon.IsBackstageOpen = true; Assert.True(ribbon.IsAnimating); AssertHidden();
-        ribbon.SettleMotion(); AssertHidden(); ribbon.IsBackstageOpen = false; Assert.True(ribbon.IsAnimating); AssertHidden();
-        ribbon.IsBackstageOpen = true; AssertHidden(); ribbon.IsBackstageOpen = false; ribbon.SettleMotion(); ribbon.Refresh();
+        painter.ToolbarPaints = 0; ribbon.IsBackstageOpen = true; Assert.True(ribbon.IsAnimating); AssertPresentation();
+        ribbon.SettleMotion(); AssertPresentation(); ribbon.IsBackstageOpen = false; Assert.True(ribbon.IsAnimating); AssertPresentation();
+        ribbon.IsBackstageOpen = true; AssertPresentation(); ribbon.IsBackstageOpen = false; ribbon.SettleMotion(); ribbon.Refresh();
         Assert.False(ribbon.IsBackstageOpen); Assert.Equal(before, ribbon.Snapshot.QuickAccessBounds);
         Assert.Equal(visible, ribbon.QuickAccessVisible); Assert.Equal(position, ribbon.QuickAccessPosition); Assert.Equal(0, changes);
         Assert.Same(reference, ribbon.QuickAccessItems[0]); Assert.Same(command, reference.Source); Assert.Equal(height, ribbon.Height);
         Assert.Equal(visible, painter.ToolbarPaints > 0);
 
-        void AssertHidden()
+        void AssertPresentation()
         {
-            ribbon.Refresh(); Assert.True(ribbon.Snapshot.QuickAccessBounds.IsEmpty); Assert.Equal(0, painter.ToolbarPaints);
-            Assert.DoesNotContain(ribbon.Snapshot.Targets, t => t.Kind is Layout.TargetKind.QuickAccess or Layout.TargetKind.QuickAccessOverflow);
+            ribbon.Refresh(); Assert.Equal(!shownDuringBackstage, ribbon.Snapshot.QuickAccessBounds.IsEmpty);
+            Assert.Equal(shownDuringBackstage, painter.ToolbarPaints > 0);
+            Assert.Equal(shownDuringBackstage, ribbon.Snapshot.Targets.Any(t => t.Kind is Layout.TargetKind.QuickAccess or Layout.TargetKind.QuickAccessOverflow));
+            if (shownDuringBackstage) Assert.Equal(before, ribbon.Snapshot.QuickAccessBounds);
             Assert.Equal(height, ribbon.Height); Assert.Equal(visible, ribbon.QuickAccessVisible); Assert.Equal(position, ribbon.QuickAccessPosition);
         }
     });

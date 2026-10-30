@@ -290,11 +290,13 @@ Page selection is immediate. There is no page capture,
 moving navigation bitmap or stationary replacement-background control.
 
 The RibbonForm caption tint paints up to the same moving edge and repaints in the
-surface's timer turn. Caption buttons remain stationary. QAT layout/paint and hit
-targets are suppressed throughout Backstage opening, display and accepted
+surface's timer turn. Caption buttons remain stationary. Only effective TitleBar
+QAT layout/paint and hit targets are suppressed throughout Backstage opening, display and accepted
 closing, including a canceled close. Closing restores the authored visibility,
 placement, references and commands. No QAT preference events are raised and the
 underlying ribbon/document height is retained, including BelowRibbon placement.
+TabRow/BelowRibbon QAT presentation is retained, including a TitleBar preference
+that currently falls back to TabRow; the Backstage surface can naturally cover those rows.
 Solid/material and authored navigation opacity keep their existing palette rules.
 Native opacity follows the slide clock, returning to full coverage after opening.
 Transparent rails and frames fade premultiplied paint alongside their separate
@@ -409,6 +411,13 @@ Latest 15% travel and Solid RichTextBox correction evidence in
 - `native-input/result.log`: public-only Office Subtle/Expressive, Compact/Touch,
   pointer opening/Back, native editing/binding, immediate page/KeyTips, validation,
   resize, synchronous commands, Alt+F4 and None checks passed at actual 120 DPI.
+
+QAT refinement, 2026-10-30: the user's hide request now applies only to effective
+TitleBar placement. TabRow/BelowRibbon and ordinary-Form TitleBar fallback retain
+their normal layout, renderer calls and targets. All 16 focused caption/QAT cases
+passed in `artifacts/backstage-titlebar-qat-only-20261030/backstage-titlebar-qat-only.trx`,
+including opening/closing/reopening and authored visible/hidden preferences.
+The normal Debug solution/Showcase build passed with zero warnings/errors.
 
 All review windows closed. Human motion/smoothness acceptance, broader physical
 DPI/display, performance, Release/package and actual VS checks remain pending.

@@ -35,9 +35,10 @@ Backstage's earlier navigation/page fades are superseded by the
 - Backstage translates its one live native surface over 15% of its width: it
   starts 85% visible on opening and hides after moving 15% left on closing,
   over 220/308 ms, with a smooth opacity fade at both ends. Its integrated caption
-  tint tracks the same edge and opacity. QAT presentation
-  and hit targets are suppressed until closing completes, preserving authored
-  toolbar visibility, placement and commands. Page switches are
+  tint tracks the same edge and opacity. Only effective TitleBar QAT presentation
+  and hit targets are suppressed until closing completes. TabRow/BelowRibbon,
+  including TitleBar fallback to TabRow, retain their normal presentation.
+  Authored toolbar visibility, placement and commands are preserved. Page switches are
   immediate. Native page redirection fades with movement and stays opaque after
   opening until hidden. Transparent navigation/frames fade their premultiplied
   paint alongside the page layer. No Backstage page capture is used.

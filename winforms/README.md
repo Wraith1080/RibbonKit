@@ -200,8 +200,10 @@ The complete Backstage surface starts 85% visible and slides right into place;
 closing moves it 15% left before hiding it, using 220 ms for Subtle and 308 ms for
 Expressive. Navigation, page frame and live native pages travel together at their
 normal size. The integrated RibbonForm title-bar tint follows the same edge.
-The QAT is hidden throughout Backstage opening, display and closing; its authored
-visibility, placement and commands return when Backstage closes. Caption buttons
+The title-bar QAT is hidden throughout Backstage opening, display and closing;
+its authored visibility, placement and commands return when Backstage closes.
+TabRow and BelowRibbon QAT presentation is retained, including a TitleBar
+preference that currently falls back to TabRow. Caption buttons
 stay in place. Opening and closing also fade the surface and caption tint to
 soften their appearance/disappearance. Page switches remain immediate.
 Application controls retain their native handles, parents,
@@ -1177,8 +1179,8 @@ The page frame does not paint into the caption or add a bottom/right edge.
 
 While Backstage is open, the integrated `RibbonForm` title bar matches its
 navigation background, including the navigation-opacity preference over material.
-The tint slides with Backstage while the QAT is hidden. Closing uncovers the normal
-caption background and restores the QAT without changing the authored theme,
+The tint slides with Backstage while the title-bar QAT is hidden. Closing uncovers the normal
+caption background and restores that QAT without changing the authored theme,
 toolbar preferences or window style.
 
 Custom renderers receive a transparent paint-time `Theme.Background` for the material

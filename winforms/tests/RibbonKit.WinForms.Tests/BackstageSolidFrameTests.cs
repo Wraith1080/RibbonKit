@@ -6,10 +6,11 @@ namespace RibbonKit.WinForms.Tests;
 public sealed class BackstageSolidFrameTests
 {
     [Theory] [InlineData(96)] [InlineData(120)] [InlineData(144)] [InlineData(192)]
-    public void Solid_page_is_flush_with_top_and_left_border_and_only_top_left_is_rounded(int dpi) => FoundationTests.Sta(() =>
+    public void Solid_and_material_pages_share_flush_borders_and_only_the_top_left_corner_is_rounded(int dpi) => FoundationTests.Sta(() =>
     {
         using var renderer = new RibbonOffice2024Renderer();
         foreach (int extra in new[] { 0, 1 })
+        foreach (bool material in new[] { false, true })
         {
             int S(int n) => RibbonLayoutEngine.Scale(n, dpi);
             var theme = RibbonThemes.Office2024Light; var bounds = new Rectangle(4, 4, S(360) + extra, S(180) + extra);
@@ -18,7 +19,7 @@ public sealed class BackstageSolidFrameTests
             int radius = RibbonBackstageLayout.PageCornerRadius(renderer, theme, dpi, page.Size);
             int stroke = RibbonBackstageLayout.PageBorderWidth(renderer, theme, dpi, page.Size);
             using var image = new Bitmap(bounds.Right + 4, bounds.Bottom + 4); using var graphics = Graphics.FromImage(image); graphics.Clear(Color.Magenta);
-            renderer.DrawBackstageBackground(new(graphics, bounds, theme, SystemFonts.MessageBoxFont!, dpi), nav);
+            renderer.DrawBackstageBackground(new(graphics, bounds, theme, SystemFonts.MessageBoxFont!, dpi) { WindowBackdrop = material }, nav);
             Assert.Equal(1, stroke);
             Assert.Equal(theme.BackstageNavigationBackground.ToArgb(), image.GetPixel(x, y).ToArgb());
             Assert.Equal(theme.Border.ToArgb(), image.GetPixel(page.Right - 1, y).ToArgb());
@@ -41,12 +42,12 @@ public sealed class BackstageSolidFrameTests
             for (int py = 0; py < radius + 2; py++) for (int px = 0; px < radius + 2; px++)
                 if (clip.IsVisible(px, py)) Assert.Equal(theme.Surface.ToArgb(), image.GetPixel(x + stroke + px, y + stroke + py).ToArgb());
             string directory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "artifacts", "solid-backstage-frame-20261030", "raster"));
-            Directory.CreateDirectory(directory); image.Save(Path.Combine(directory, $"solid-{dpi}-{extra}.png"));
+            Directory.CreateDirectory(directory); image.Save(Path.Combine(directory, $"border-{material}-{dpi}-{extra}.png"));
         }
     });
 
     [Fact]
-    public void Open_page_switches_between_solid_clip_and_material_shadow_without_recreating_native_fields() => FoundationTests.Sta(() =>
+    public void Open_page_keeps_the_same_border_clip_across_material_changes_without_recreating_native_fields() => FoundationTests.Sta(() =>
     {
         using var host = new RibbonForm { StartPosition = FormStartPosition.Manual, Bounds = new(180, 120, 950, 650) };
         var ribbon = new RibbonControl { FileMenuMode = RibbonFileMenuMode.Backstage }; ribbon.FileMenu.Visible = true; ribbon.Tabs.Add(new RibbonTab { Text = "Home" });
@@ -58,9 +59,7 @@ public sealed class BackstageSolidFrameTests
         foreach (var material in new[] { RibbonWindowBackdrop.Mica, RibbonWindowBackdrop.Acrylic, RibbonWindowBackdrop.None })
         {
             host.Backdrop = material;
-            if (host.EffectiveBackdrop != RibbonWindowBackdrop.None)
-            { Assert.Equal(ribbon.Painter.GetBackstagePageShadowInset(ribbon.Theme, ribbon.DeviceDpi), area.Top); Assert.Null(area.Region); }
-            else { Assert.Equal(1, area.Top); Assert.NotNull(area.Region); }
+            Assert.Equal(1, area.Top); Assert.NotNull(area.Region); Assert.False(area.Region.IsVisible(0, 0));
             Assert.Equal(handle, field.Handle); Assert.Same(parent, field.Parent); Assert.Equal("Retained document", field.Text);
         }
     });

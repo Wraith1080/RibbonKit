@@ -6,27 +6,25 @@ namespace RibbonKit.WinForms.Tests;
 public sealed class BackstagePageShadowTests
 {
     [Theory] [InlineData(false)] [InlineData(true)]
-    public void Page_shadow_is_soft_on_left_and_top_and_never_paints_over_the_page_or_caption(bool transparent) => FoundationTests.Sta(() =>
+    public void Material_page_uses_crisp_borders_without_shadow_coverage_or_caption_bleed(bool transparent) => FoundationTests.Sta(() =>
     {
         using var renderer = new RibbonOffice2024Renderer();
         foreach (int dpi in new[] { 96, 120, 144, 192 })
         {
             int S(int n) => RibbonLayoutEngine.Scale(n, dpi);
-            var theme = RibbonThemes.Office2024Light with { BackstageNavigationBackground = transparent ? Color.Transparent : Color.White };
+            var theme = RibbonThemes.Office2024Light with { BackstageNavigationBackground = transparent ? Color.Transparent : Color.White, BodyShadowColor = Color.Magenta };
             var size = new Size(S(360), S(180)); var bounds = new Rectangle(S(10), S(10), size.Width, size.Height);
             using var image = new Bitmap(bounds.Right + S(10), bounds.Bottom + S(10)); using var graphics = Graphics.FromImage(image);
             using var buffer = new RibbonBackdropBuffer();
             buffer.Paint(graphics, image.Size, image.Height, Color.Transparent, canvas => renderer.DrawBackstageBackground(
                 new(canvas, bounds, theme, SystemFonts.MessageBoxFont!, dpi) { CompositedText = transparent, WindowBackdrop = true }, S(160)));
-            int inset = renderer.GetBackstagePageShadowInset(theme, dpi), edge = bounds.Left + S(160), top = bounds.Top + inset;
-            var nearLeft = buffer.Image.GetPixel(edge - 1, top + S(30)); var farLeft = buffer.Image.GetPixel(edge - inset, top + S(30));
-            var nearTop = buffer.Image.GetPixel(edge + S(30), top - 1); var farTop = buffer.Image.GetPixel(edge + S(30), bounds.Top);
-            if (transparent)
-            {
-                Assert.InRange(nearLeft.A, 1, 24); Assert.True(nearLeft.A > farLeft.A);
-                Assert.InRange(nearTop.A, 1, 24); Assert.True(nearTop.A > farTop.A);
-            }
-            else { Assert.True(nearLeft.R < farLeft.R); Assert.True(nearTop.R < farTop.R); }
+            int edge = bounds.Left + S(160), top = bounds.Top;
+            Assert.Equal(0, renderer.GetBackstagePageShadowInset(theme, dpi));
+            var outside = buffer.Image.GetPixel(edge - 1, top + S(30));
+            if (transparent) Assert.Equal(0, outside.A);
+            else Assert.Equal(Color.White.ToArgb(), outside.ToArgb());
+            Assert.Equal(theme.Border.ToArgb(), buffer.Image.GetPixel(edge, top + S(30)).ToArgb());
+            Assert.Equal(theme.Border.ToArgb(), buffer.Image.GetPixel(edge + S(30), top).ToArgb());
             Assert.Equal(Color.White.ToArgb(), buffer.Image.GetPixel(edge + S(30), top + 1).ToArgb());
             Assert.Equal(0, buffer.Image.GetPixel(edge + S(30), bounds.Top - 1).A); // Caption is outside the painted surface.
             Assert.Equal(0, buffer.Image.GetPixel(bounds.Right, top + S(30)).A); // No right/bottom bleed.

@@ -92,7 +92,7 @@ public partial class RibbonControl
             _backstageMotion = RibbonBackstageMotion.Prepare(this, _backstageSurface, form);
             if (_backstageMotion is { } opening) { opening.HoldBackground(openingBackground); openingBackground = null; }
             _backstageOpen = true;
-            _layoutDirty = true; // Suppress QAT presentation without changing its preference or host height.
+            _layoutDirty = true; // Suppress title-bar QAT presentation without changing its preference or host height.
             _backstageSurface.Visible = true;
             _backstageSurface.BringToFront();
             _backstageSurface.FocusInitial(tips);

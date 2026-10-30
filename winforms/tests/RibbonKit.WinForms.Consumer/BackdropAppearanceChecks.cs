@@ -70,27 +70,21 @@ internal static class BackdropAppearanceChecks
                     if (shadowOnly)
                     {
                         await Task.Delay(60); using var shot = Capture();
-                        var origin = form.PointToClient(page.PointToScreen(Point.Empty)); int inset = renderer.GetBackstagePageShadowInset(ribbon.Theme, form.DeviceDpi);
-                        int Light(Color color) => color.R + color.G + color.B;
-                        if (material == RibbonWindowBackdrop.None)
+                        var origin = form.PointToClient(page.PointToScreen(Point.Empty));
                         {
                             var surface = Descendants(form).Single(control => control.AccessibleName == "Backstage");
                             int border = renderer.GetBackstagePageBorderWidth(ribbon.Theme, form.DeviceDpi);
                             int top = form.PointToClient(surface.PointToScreen(Point.Empty)).Y;
-                            Require(origin.Y == top + border, "Solid page retained a top shadow band.");
-                            Require(shot.GetPixel(origin.X + S(100), top).ToArgb() == ribbon.Theme.Border.ToArgb(), "Solid top border was hidden by native content.");
-                            Require(shot.GetPixel(origin.X - border, origin.Y + S(100)).ToArgb() == ribbon.Theme.Border.ToArgb(), "Solid left border was hidden by native content.");
-                            Require(shot.GetPixel(origin.X - border, top).ToArgb() == ribbon.Theme.BackstageNavigationBackground.ToArgb(), "The top-left page corner remained square.");
-                            shot.Save(Path.Combine(directory, "Solid-page-frame.png"));
-                            log.Add("PASS: Solid; no reserved top band; grey top/left border and rounded top-left corner visible.");
+                            Require(origin.Y == top + border, "Page retained a top shadow band.");
+                            Require(shot.GetPixel(origin.X + S(100), top).ToArgb() == ribbon.Theme.Border.ToArgb(), "Top border was hidden by native content.");
+                            Require(shot.GetPixel(origin.X - border, origin.Y + S(100)).ToArgb() == ribbon.Theme.Border.ToArgb(), "Left border was hidden by native content.");
+                            var corner = shot.GetPixel(origin.X - border, top);
+                            if (material == RibbonWindowBackdrop.None) Require(corner.ToArgb() == ribbon.Theme.BackstageNavigationBackground.ToArgb(), "The top-left page corner remained square.");
+                            else Require(corner.ToArgb() != ribbon.Theme.Surface.ToArgb(), "The native material page covered its rounded corner.");
+                            shot.Save(Path.Combine(directory, material + "-page-frame.png"));
+                            log.Add($"PASS: {material}; no reserved top band; grey top/left border and rounded top-left corner visible.");
                             ribbon.IsBackstageOpen = false; continue;
                         }
-                        var nearLeft = shot.GetPixel(origin.X - 1, origin.Y + S(200)); var farLeft = shot.GetPixel(origin.X - inset - S(2), origin.Y + S(200));
-                        var nearTop = shot.GetPixel(origin.X + S(100), origin.Y - 1); var farTop = shot.GetPixel(origin.X + S(100), origin.Y - inset);
-                        shot.Save(Path.Combine(directory, material + "-page-shadow.png"));
-                        Require(Light(nearLeft) < Light(farLeft) && Light(nearTop) < Light(farTop), "The native page shadow is not visible on both edges.");
-                        log.Add($"PASS: {material}; left/top shadow visible; inset={inset}px; native page opaque.");
-                        ribbon.IsBackstageOpen = false; continue;
                     }
                     nint handle = field.Handle; var parent = page.Parent;
                     ribbon.IsBackstageOpen = false;

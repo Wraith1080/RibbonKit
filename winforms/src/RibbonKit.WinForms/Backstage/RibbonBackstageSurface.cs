@@ -22,6 +22,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     private RibbonDrawingHold? _motionOpacity;
     private Control? _motionTarget;
     private RibbonBackdropBuffer? _paintBuffer;
+    private RibbonBackdropBuffer? _topFrameBuffer;
     private Rectangle _pageFrameBounds;
     private Size _pageRegionSize;
     private int _pageRegionRadius;
@@ -255,8 +256,8 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         _back.Bounds = layout.Back;
         _navigation.Bounds = layout.Navigation;
         _pageFrameBounds = layout.Page;
-        int border = _ribbon.HasWindowBackdrop ? 0 : RibbonBackstageLayout.PageBorderWidth(_ribbon.Painter, _ribbon.Theme, DeviceDpi, layout.Page.Size);
-        int radius = _ribbon.HasWindowBackdrop ? 0 : RibbonBackstageLayout.PageCornerRadius(_ribbon.Painter, _ribbon.Theme, DeviceDpi, layout.Page.Size);
+        int border = RibbonBackstageLayout.PageBorderWidth(_ribbon.Painter, _ribbon.Theme, DeviceDpi, layout.Page.Size);
+        int radius = RibbonBackstageLayout.PageCornerRadius(_ribbon.Painter, _ribbon.Theme, DeviceDpi, layout.Page.Size);
         _pages.Bounds = new(layout.Page.Left + border, layout.Page.Top + border,
             Math.Max(0, layout.Page.Width - border), Math.Max(0, layout.Page.Height - border));
         UpdatePageRegion(Math.Max(0, radius - border));
@@ -296,8 +297,21 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     {
         base.OnPaint(e);
         void Paint(Graphics graphics) => _ribbon.Painter.DrawBackstageBackground(new(graphics, ClientRectangle, PaintTheme, Font, DeviceDpi) { Density = _ribbon.Density, CompositedText = TransparentNavigation, WindowBackdrop = _ribbon.HasWindowBackdrop }, _pageFrameBounds.Left);
-        if (TransparentNavigation) (_paintBuffer ??= new()).Paint(e.Graphics, Size, Height, Color.Transparent, Paint, opacity: MotionAlpha);
-        else { _paintBuffer?.Dispose(); _paintBuffer = null; Paint(e.Graphics); }
+        if (TransparentNavigation)
+        {
+            // The native page owns its pixels and opacity. Only redirect the
+            // uncovered rail/corner and top frame, not a window-sized white page.
+            int rail = Math.Clamp(_pages.Left + _pageRegionRadius, 0, Width);
+            int top = Math.Clamp(_pages.Top, 0, Height);
+            if (rail > 0) (_paintBuffer ??= new()).Paint(e.Graphics, new(rail, Height), Height, Color.Transparent, Paint, opacity: MotionAlpha);
+            if (top > 0 && rail < Width)
+                (_topFrameBuffer ??= new()).Paint(e.Graphics, new(Width - rail, top), top, Color.Transparent, Paint, opacity: MotionAlpha, origin: new(rail, 0));
+        }
+        else
+        {
+            _paintBuffer?.Dispose(); _paintBuffer = null; _topFrameBuffer?.Dispose(); _topFrameBuffer = null;
+            Paint(e.Graphics);
+        }
     }
     private sealed class NavigationPanel : Panel
     {
@@ -323,7 +337,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         {
             _disposing = true;
             ReleaseMotionOpacity();
-            _paintBuffer?.Dispose(); _paintBuffer = null;
+            _paintBuffer?.Dispose(); _paintBuffer = null; _topFrameBuffer?.Dispose(); _topFrameBuffer = null;
             foreach (var slot in _slots.Values) slot.Detach();
             _ribbon.BackstageSurfaceDisposed(this);
         }
