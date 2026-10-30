@@ -59,7 +59,7 @@ public sealed class AlignmentAndLifecycleTests
         int A(int n) => RibbonLayoutEngine.Scale(n, actualDpi);
         int logicalFont = (int)Math.Ceiling(ribbon.Font.Height * 96d / actualDpi);
         int previousHeight = Math.Max(104, 3 * Math.Max(26, logicalFont + 8) + Math.Max(20, logicalFont + 6) + 8);
-        int tabHeight = A(Math.Max(32, logicalFont + 12));
+        int tabHeight = A(Math.Max(ribbon.Theme.TabHeight, logicalFont + 12));
         Assert.Equal(tabHeight, ribbon.Snapshot.TabViewport.Height);
         Assert.Equal(tabHeight + A(1), ribbon.Snapshot.BodyBounds.Top);
         Assert.Equal(A(previousHeight + 6), ribbon.Snapshot.BodyBounds.Height);

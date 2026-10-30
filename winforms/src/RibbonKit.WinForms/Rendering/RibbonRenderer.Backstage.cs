@@ -5,14 +5,28 @@ namespace RibbonKit.WinForms;
 
 public partial class RibbonRenderer
 {
+    /// <summary>Gets the page's top and navigation-side shadow clearance in device pixels. Zero keeps a flat page. Layout and background drawing share this value, clamped to available space and 32 logical pixels.</summary>
+    public virtual int GetBackstagePageShadowInset(RibbonTheme theme, int deviceDpi) => 0;
     /// <summary>Paints the native Backstage surface and its measured navigation rail.</summary>
     public virtual void DrawBackstageBackground(RibbonPaintContext context, int navigationWidth)
     {
-        using var page = new SolidBrush(context.Theme.Surface);
         int width = Math.Clamp(navigationWidth, 0, context.Bounds.Width);
-        context.Graphics.FillRectangle(page, context.Bounds.X + width, context.Bounds.Y, context.Bounds.Width - width, context.Bounds.Height);
+        int shadow = RibbonBackstageLayout.PageShadowInset(this, context.Theme, context.DeviceDpi, context.Bounds.Size);
         using var rail = new SolidBrush(context.Theme.BackstageNavigationBackground);
-        context.Graphics.FillRectangle(rail, context.Bounds.X, context.Bounds.Y, Math.Clamp(navigationWidth, 0, context.Bounds.Width), context.Bounds.Height);
+        context.Graphics.FillRectangle(rail, context.Bounds);
+        var bounds = new Rectangle(context.Bounds.X + width, context.Bounds.Y + shadow, context.Bounds.Width - width, Math.Max(0, context.Bounds.Height - shadow));
+        if (shadow > 0 && bounds.Width > 0 && bounds.Height > 0)
+        {
+            var state = context.Graphics.Save();
+            try
+            {
+                context.Graphics.SetClip(context.Bounds, CombineMode.Intersect);
+                _shadow.Draw(context.Graphics, bounds, 0, shadow, context.Theme.BodyShadowColor);
+            }
+            finally { context.Graphics.Restore(state); }
+        }
+        using var page = new SolidBrush(context.Theme.Surface);
+        context.Graphics.FillRectangle(page, bounds);
     }
     /// <summary>Paints a native navigation button using shared state and geometry. A null item denotes the Back button.</summary>
     public virtual void DrawBackstageEntry(RibbonPaintContext context, RibbonItem? item, bool selected)
@@ -36,7 +50,9 @@ public partial class RibbonRenderer
             int diameter = Math.Max(0, Math.Min(context.Bounds.Width, context.Bounds.Height) - 2 * S(2));
             var circle = new Rectangle(context.Bounds.Left + (context.Bounds.Width - diameter) / 2,
                 context.Bounds.Top + (context.Bounds.Height - diameter) / 2, diameter, diameter);
-            var fill = context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : new RibbonFill(Color.Transparent);
+            var fill = context.Pressed || context.Hot
+                ? context.WindowBackdrop || context.CompositedText ? BackdropStateFill(context, context.Pressed) : context.Pressed ? context.Theme.Pressed : context.Theme.Hover
+                : new RibbonFill(Color.Transparent);
             PaintRounded(context with { Bounds = circle }, diameter / 2, fill,
                 context.Focused ? context.Theme.Accent : color, Math.Max(1, RibbonLayoutEngine.Scale(1.5, context.DeviceDpi)));
             var saved = context.Graphics.Save();
@@ -56,7 +72,8 @@ public partial class RibbonRenderer
         else
         {
             if (context.Hot || context.Pressed || selected)
-                DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
+                DrawChrome(context, context.WindowBackdrop || context.CompositedText ? BackdropStateFill(context, context.Pressed)
+                    : context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
             if (selected)
             {
                 var marker = new Rectangle(context.Bounds.Left + S(2), context.Bounds.Top + S(10), S(3), Math.Max(1, context.Bounds.Height - S(20)));

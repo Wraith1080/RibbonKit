@@ -30,6 +30,12 @@ public sealed record RibbonTheme
     public RibbonFill GalleryHeadingBackground { get; init; } = new(Color.FromArgb(240, 240, 240));
     /// <summary>Gets the Office 2024 text color paired with GalleryHeadingBackground.</summary>
     public Color GalleryHeadingForeground { get; init; } = Color.FromArgb(32, 31, 30);
+    /// <summary>Gets an optional keyboard-badge fill. Null preserves the renderer's default: pale yellow for Office 2024, or Surface for the neutral renderer.</summary>
+    public RibbonFill? KeyTipBackground { get; init; }
+    /// <summary>Gets the keyboard-badge text color. Empty preserves the renderer's default: black for Office 2024, or Foreground for the neutral renderer.</summary>
+    public Color KeyTipForeground { get; init; } = Color.Empty;
+    /// <summary>Gets the keyboard-badge outline color. Empty uses Border; Transparent suppresses the outline.</summary>
+    public Color KeyTipBorder { get; init; } = Color.Empty;
     /// <summary>Gets the ribbon background color.</summary>
     public Color Background { get; init; } = Color.White;
     /// <summary>Gets the command and popup surface color.</summary>
@@ -44,7 +50,7 @@ public sealed record RibbonTheme
     public bool PopupShadowEnabled { get; init; } = true;
     /// <summary>Gets the popup shadow color and maximum opacity; its default matches BodyShadowColor.</summary>
     public Color PopupShadowColor { get; init; } = Color.FromArgb(24, 0, 0, 0);
-    /// <summary>Gets the Office ribbon body's shadow color, including its maximum opacity. Transparent disables it.</summary>
+    /// <summary>Gets the Office ribbon body and Backstage page shadow color, including its maximum opacity. Transparent disables these shadows.</summary>
     public Color BodyShadowColor { get; init; } = Color.FromArgb(24, 0, 0, 0);
     /// <summary>Gets the ribbon body margins in 96-DPI logical pixels. The content viewport and hit targets respect them.</summary>
     public Padding BodyMargin { get; init; } = new(7, 1, 7, 7);
@@ -66,6 +72,12 @@ public sealed record RibbonTheme
     public RibbonFill Checked { get; init; } = new(Color.FromArgb(217, 225, 237));
     /// <summary>Gets QAT hover/pressed/checked and header utility hover/pressed background coverage over an active window backdrop, from 0 to 1. Solid and popup presentations keep their authored fills. Text and icons retain their opacity.</summary>
     public float QuickAccessBackdropOpacity { get; init; } = .6f;
+    /// <summary>Gets an optional hover/selected-navigation fill over a window backdrop. Null uses Foreground at alpha 24. Applies to header Quick Access/utilities and Backstage entries; Solid mode and opaque command panels retain Hover.</summary>
+    public RibbonFill? BackdropHover { get; init; }
+    /// <summary>Gets an optional pressed/open fill over a window backdrop. Null uses Foreground at alpha 40. Checked Quick Access entries use Accent at alpha 40 unless this fill is supplied. Solid mode and opaque command panels retain their authored state fills.</summary>
+    public RibbonFill? BackdropPressed { get; init; }
+    /// <summary>Gets unselected tab/File hover-indicator coverage over a window backdrop, from 0 to 1. Default is .45. Solid mode and selected-tab accents retain their authored coverage.</summary>
+    public float BackdropTabHoverOpacity { get; init; } = .45f;
     /// <summary>Gets the minimum tab height in 96-DPI logical pixels.</summary>
     public int TabHeight { get; init; } = 40;
     /// <summary>Gets the minimum command body height in 96-DPI logical pixels.</summary>
@@ -107,6 +119,7 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     public bool IsQuickAccessToolbarJoined { get; init; }
     internal bool IsBodyScrollButton { get; init; }
     internal bool CompositedText { get; init; }
+    internal bool WindowBackdrop { get; init; }
     internal Rectangle GroupSeparatorBounds { get; init; }
     internal bool SuppressTabIndicators { get; init; }
     internal bool SuppressShadow { get; init; }

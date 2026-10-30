@@ -9,7 +9,8 @@ public sealed class BackdropTransparencyTests
     [InlineData(false, false, false)] [InlineData(true, false, false)]
     public void Header_utilities_share_backdrop_fill_coverage(bool overflow, bool composited, bool pressed) => FoundationTests.Sta(() =>
     {
-        var theme = RibbonThemes.Office2024Light with { Background = composited ? Color.Transparent : Color.White, QuickAccessBackdropOpacity = .25f };
+        var theme = RibbonThemes.Office2024Light with { Background = composited ? Color.Transparent : Color.White, QuickAccessBackdropOpacity = .25f,
+            BackdropHover = RibbonThemes.Office2024Light.Hover, BackdropPressed = RibbonThemes.Office2024Light.Pressed };
         using var renderer = new RibbonRenderer(); using var buffer = new RibbonBackdropBuffer();
         using var output = new Bitmap(60, 44); using var graphics = Graphics.FromImage(output);
         buffer.Paint(graphics, output.Size, output.Height, Color.Transparent, canvas =>
@@ -34,7 +35,7 @@ public sealed class BackdropTransparencyTests
         Assert.Throws<ArgumentOutOfRangeException>(() => ribbon.Theme = ribbon.Theme with { QuickAccessBackdropOpacity = 1.1f });
     });
 
-    [Theory] [InlineData(true, false, 153)] [InlineData(false, false, 255)] [InlineData(true, true, 255)]
+    [Theory] [InlineData(true, false, 14)] [InlineData(false, false, 255)] [InlineData(true, true, 255)]
     public void Qat_only_tints_backdrop_backgrounds_and_keeps_vector_ink_opaque(bool composited, bool menu, int expectedAlpha) => FoundationTests.Sta(() =>
     {
         using var item = new RibbonButtonItem { Text = "Bold", Icon = new SolidIcon() };

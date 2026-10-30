@@ -2,12 +2,16 @@ namespace RibbonKit.WinForms.Layout;
 
 internal sealed record RibbonBackstageLayout(Rectangle Back, Rectangle Navigation, Rectangle Page, int RowHeight, int Inset)
 {
+    internal static int PageShadowInset(RibbonRenderer renderer, RibbonTheme theme, int dpi, Size size) =>
+        Math.Clamp(renderer.GetBackstagePageShadowInset(theme, dpi), 0, Math.Max(0,
+            Math.Min(RibbonLayoutEngine.Scale(32, dpi), Math.Min(size.Width, size.Height - 1))));
     internal static RibbonBackstageLayout Build(Size size, Font font, int dpi, RibbonBackstage? backstage = null)
     {
         int S(int value) => RibbonLayoutEngine.Scale(value, dpi);
         var metrics = RibbonDensityMetrics.For(backstage?.Ribbon?.Density ?? RibbonDensity.Compact);
         int inset = S(8), row = Math.Max(S(metrics.BackstageRow), font.Height + S(16));
         int width = Math.Max(0, size.Width);
+        int shadow = backstage?.Ribbon is { } ribbon ? PageShadowInset(ribbon.Painter, ribbon.Theme, dpi, size) : 0;
         // Preserve 240 logical pixels for a page when possible; very narrow hosts
         // divide their space evenly rather than letting either region disappear.
         int available = Math.Clamp(Math.Max(width / 2, width - S(240)), 0, width);
@@ -21,13 +25,13 @@ internal sealed record RibbonBackstageLayout(Rectangle Back, Rectangle Navigatio
                 int label = TextRenderer.MeasureText(item.Text, font, Size.Empty, TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding).Width;
                 // Shared entry text begins at 44, ends 8 before the edge, and is
                 // inset by 8 on each side. Reserve the native vertical scrollbar.
-                auto = (int)Math.Min(int.MaxValue, Math.Max((long)auto, (long)label + S(68 + 18)));
+                auto = (int)Math.Min(int.MaxValue, Math.Max((long)auto, (long)label + S(68 + 18) + shadow));
             }
         int rail = Math.Clamp(backstage?.NavigationWidth is { } authored ? ToDevice(authored) : auto, minimum, maximum);
         int navigation = rail;
         int back = Math.Min(S(metrics.BackButton), Math.Max(0, navigation - 2 * inset));
         int top = Math.Min(size.Height, S(20) + back + S(24));
-        return new(new(Math.Min(S(20), Math.Max(0, navigation - back)), S(20), back, back), new(0, top, navigation, Math.Max(0, size.Height - top)),
-            new(rail, 0, width - rail, size.Height), row, inset);
+        return new(new(Math.Min(S(20), Math.Max(0, navigation - back)), S(20), back, back), new(0, top, Math.Max(0, navigation - shadow), Math.Max(0, size.Height - top)),
+            new(rail, shadow, width - rail, Math.Max(0, size.Height - shadow)), row, inset);
     }
 }

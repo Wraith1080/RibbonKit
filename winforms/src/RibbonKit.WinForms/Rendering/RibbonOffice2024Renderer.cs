@@ -9,6 +9,8 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     /// <summary>Initializes the default Office 2024 inspired renderer.</summary>
     public RibbonOffice2024Renderer() { }
     /// <inheritdoc />
+    public override int GetBackstagePageShadowInset(RibbonTheme theme, int deviceDpi) => theme.BodyShadowColor.A == 0 ? 0 : Layout.RibbonLayoutEngine.Scale(6, deviceDpi);
+    /// <inheritdoc />
     public override bool JoinBelowRibbonQuickAccess => true;
     /// <inheritdoc />
     public override bool JoinMessageBarToBody => true;
@@ -89,10 +91,11 @@ public class RibbonOffice2024Renderer : RibbonRenderer
         }
     }
     /// <inheritdoc />
-    public override Rectangle GetTabIndicatorBounds(RibbonPaintContext context, RibbonTab tab)
+    public override Rectangle GetTabIndicatorBounds(RibbonPaintContext context, RibbonTab tab) => HeaderIndicatorBounds(context, tab.DisplayText);
+    private static Rectangle HeaderIndicatorBounds(RibbonPaintContext context, string text)
     {
         int S(int value) => Layout.RibbonLayoutEngine.Scale(value, context.DeviceDpi);
-        int labelWidth = Layout.RibbonCaptionLayout.TextWidth(tab.DisplayText, context.Font);
+        int labelWidth = Layout.RibbonCaptionLayout.TextWidth(text, context.Font);
         int width = Math.Max(0, Math.Min(labelWidth + 2 * S(4), context.Bounds.Width - 2 * S(4)));
         int height = Math.Min(S(3), Math.Max(0, context.Bounds.Height - S(1)));
         if (width == 0 || height == 0) return Rectangle.Empty;
@@ -103,7 +106,25 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     {
         if (!tab.EffectiveEnabled || context.Bounds.IsEmpty) return;
         var tint = selected ? tab.IsContextual ? ContextualTabColor(context, tab, true) : context.Theme.Accent : context.Theme.SecondaryText;
+        PaintHeaderIndicator(context, tint, selected);
+    }
+    private void PaintHeaderIndicator(RibbonPaintContext context, Color tint, bool selected)
+    {
+        if (!selected && (context.CompositedText || context.WindowBackdrop))
+            tint = Color.FromArgb((int)Math.Round(tint.A * context.Theme.BackdropTabHoverOpacity), tint);
         PaintRounded(context, context.Bounds.Height / 2, new(tint), Color.Transparent, 0);
+    }
+    /// <inheritdoc />
+    public override void DrawFileButton(RibbonPaintContext context, RibbonDropDownItem menu)
+    {
+        bool enabled = menu.EffectiveEnabled, open = enabled && menu.IsDropDownOpen;
+        DrawText(context, menu.Text, !enabled ? SystemColors.GrayText : open ? context.Theme.Accent : context.Theme.Foreground,
+            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
+        if (enabled && !context.SuppressTabIndicators && (open || context.Hot || context.Pressed || context.Focused))
+        {
+            var bounds = HeaderIndicatorBounds(context, menu.Text);
+            if (!bounds.IsEmpty) PaintHeaderIndicator(context with { Bounds = bounds }, open ? context.Theme.Accent : context.Theme.SecondaryText, open);
+        }
     }
     /// <inheritdoc />
     public override void DrawGroup(RibbonPaintContext context, RibbonGroup group, bool collapsed)
@@ -126,7 +147,9 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     /// <inheritdoc />
     public override void DrawKeyTip(RibbonPaintContext context, string keys)
     {
-        PaintRounded(context, 2, new(Color.FromArgb(255, 255, 225)), context.Theme.Border);
-        DrawText(context, keys, Color.Black, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);
+        PaintRounded(context, 2, context.Theme.KeyTipBackground ?? new(Color.FromArgb(255, 255, 225)),
+            context.Theme.KeyTipBorder.IsEmpty ? context.Theme.Border : context.Theme.KeyTipBorder);
+        DrawText(context, keys, context.Theme.KeyTipForeground.IsEmpty ? Color.Black : context.Theme.KeyTipForeground,
+            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);
     }
 }

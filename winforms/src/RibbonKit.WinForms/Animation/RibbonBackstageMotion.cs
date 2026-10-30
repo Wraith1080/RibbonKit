@@ -7,7 +7,8 @@ using RibbonKit.WinForms.Layout;
 namespace RibbonKit.WinForms;
 
 // Navigation uses an inert drawing; application pages fade through their native
-// parent HWND's opacity. Application controls are never captured or reparented.
+// parent HWND's opacity. Transparent closing fades already composed screen pixels
+// as one panel; it never prints application controls or changes their parents.
 internal sealed class RibbonBackstageMotion : IDisposable
 {
     private enum Phase { Opening, Page, Closing }
@@ -23,6 +24,7 @@ internal sealed class RibbonBackstageMotion : IDisposable
     private readonly System.Windows.Forms.Timer _timer = new() { Interval = 8 };
     private readonly ColorMatrix _fade = new();
     private readonly bool _expressive;
+    private bool _snapshotClosing, _surfaceHidden;
     private readonly double _duration;
     private readonly int _travel;
     private readonly Point _initialPointer = Cursor.Position;
@@ -31,7 +33,7 @@ internal sealed class RibbonBackstageMotion : IDisposable
     private SolidBrush? _background;
     private long _start;
     private bool _disposed, _subscribed;
-    internal bool IsRunning => !_disposed && (_phase == Phase.Opening ? _image is not null : _surfaceHold is not null);
+    internal bool IsRunning => !_disposed && (_phase == Phase.Opening || _snapshotClosing ? _image is not null : _surfaceHold is not null);
     internal bool IsClosing => _phase == Phase.Closing;
     internal Rectangle Bounds { get; private set; }
     private RibbonBackstageMotion(RibbonControl ribbon, RibbonBackstageSurface surface, Form form, Control[] controls, Phase phase = Phase.Opening)
@@ -58,11 +60,14 @@ internal sealed class RibbonBackstageMotion : IDisposable
         Control target = surface;
         if (ribbon.AnimationLevel == RibbonAnimationLevel.None || !ribbon.CanAnimatePopupOpening || !ribbon.Motion.SystemEnabled || form.WindowState == FormWindowState.Minimized ||
             form.Opacity != 1 || form.TransparencyKey != Color.Empty || target.Width < 1 || target.Height < 1 || surface.HasApplicationOpacity) return null;
-        var motion = new RibbonBackstageMotion(ribbon, surface, form, closing && !surface.TransparentNavigation ? [] : surface.NavigationControls, closing ? Phase.Closing : Phase.Page);
+        bool snapshot = closing && surface.TransparentNavigation;
+        if (snapshot && ((long)surface.Width * surface.Height > 4_194_304 || !SystemInformation.VirtualScreen.Contains(surface.RectangleToScreen(surface.ClientRectangle)))) return null;
+        var motion = new RibbonBackstageMotion(ribbon, surface, form, closing ? [] : surface.NavigationControls, closing ? Phase.Closing : Phase.Page)
+            { _snapshotClosing = snapshot };
         try
         {
-            motion._surfaceHold = surface.AcquireMotionOpacity(closing ? (byte)255 : (byte)1);
-            if (surface.TransparentNavigation)
+            if (!snapshot) motion._surfaceHold = surface.AcquireMotionOpacity(closing ? (byte)255 : (byte)1);
+            if (surface.TransparentNavigation && !closing)
                 foreach (var control in motion._controls) motion._holds.Add(RibbonDrawingHold.Create(control.Handle));
             motion._completed = completed; return motion;
         }
@@ -75,9 +80,20 @@ internal sealed class RibbonBackstageMotion : IDisposable
         if (!_surface.Visible || !_ribbon.IsBackstageOpen) { Dispose(); return; }
         try
         {
-            Bounds = _phase != Phase.Closing || _surface.TransparentNavigation ? _surface.RectangleToScreen(_surface.NavigationBounds) : _target.RectangleToScreen(_target.ClientRectangle);
+            bool navigation = _phase != Phase.Closing;
+            Bounds = navigation ? _surface.RectangleToScreen(_surface.NavigationBounds) : _target.RectangleToScreen(_target.ClientRectangle);
             if (!_form.RectangleToScreen(_form.ClientRectangle).Contains(Bounds)) { Dispose(); return; }
-            if (_phase != Phase.Closing || _surface.TransparentNavigation)
+            if (_snapshotClosing)
+            {
+                // Copy the visible, composed result once. WM_PRINT/DrawToBitmap
+                // would ask native TextBox/RichTextBox children to draw again.
+                _image = new(Bounds.Width, Bounds.Height, PixelFormat.Format24bppRgb);
+                using (var graphics = Graphics.FromImage(_image)) graphics.CopyFromScreen(Bounds.Location, Point.Empty, Bounds.Size);
+                _background = new(Color.Transparent); _window = new(_form, clipToOwner: _form is RibbonForm);
+                _window.RenderBackstage(this, 0);
+                _surfaceHidden = true; _surface.Visible = false;
+            }
+            else if (navigation)
             {
                 _image = new(Bounds.Width, Bounds.Height, _surface.TransparentNavigation ? PixelFormat.Format32bppPArgb : PixelFormat.Format24bppRgb);
                 // Printing a container can reach application descendants even when
@@ -122,7 +138,7 @@ internal sealed class RibbonBackstageMotion : IDisposable
         try
         {
             double p = 1 - Math.Pow(1 - Math.Clamp(progress, 0, 1), _expressive ? 5 : 3);
-            _surfaceHold!.SetOpacity((byte)Math.Clamp((int)Math.Round(255 * (_phase == Phase.Closing ? 1 - p : p)), 1, 255));
+            _surfaceHold?.SetOpacity((byte)Math.Clamp((int)Math.Round(255 * (_phase == Phase.Closing ? 1 - p : p)), 1, 255));
             if (_window is not null) _window.RenderBackstage(this, Math.Min(1, progress));
         }
         catch { Dispose(); throw; }
@@ -138,14 +154,15 @@ internal sealed class RibbonBackstageMotion : IDisposable
         }
         else if (message.Msg is 0x100 or 0x104 or 0x201 or 0x204 or 0x207 or 0x20A or 0x20E or 0x240 or 0x246)
         {
-            bool consume = IsClosing && (ReferenceEquals(control, _surface) || _surface.Contains(control)) && !((message.Msg is 0x100 or 0x104) && (Keys)(int)message.WParam == Keys.F4 && Control.ModifierKeys.HasFlag(Keys.Alt));
+            bool consume = IsClosing && (ReferenceEquals(control, _surface) || _surface.Contains(control) || _snapshotClosing &&
+                (message.Msg is 0x100 or 0x104 || Bounds.Contains(Cursor.Position))) && !((message.Msg is 0x100 or 0x104) && (Keys)(int)message.WParam == Keys.F4 && Control.ModifierKeys.HasFlag(Keys.Alt));
             Dispose(); return consume;
         }
         return false;
     }
     internal void Cancel() { _completed = null; Dispose(); }
     private void Unsafe(object? sender, EventArgs e) => Dispose();
-    private void Visibility(object? sender, EventArgs e) { if (!_surface.Visible) Dispose(); }
+    private void Visibility(object? sender, EventArgs e) { if (!_surface.Visible && !_surfaceHidden) Dispose(); }
     public void Dispose()
     {
         if (_disposed) return; _disposed = true; _timer.Stop();
@@ -158,9 +175,11 @@ internal sealed class RibbonBackstageMotion : IDisposable
         try { completed?.Invoke(); } // Hide a closing surface before restoring opacity; no final flash.
         finally
         {
+            if (_surfaceHidden && !_surface.IsDisposed && _ribbon.IsBackstageOpen)
+            { _surface.Visible = true; _surface.BringToFront(); }
             _surface.MaskNavigation(false);
             foreach (var hold in _holds) hold.Dispose(); _holds.Clear();
-            if (_surfaceHold is not null) _surface.RestoreMotionOpacity(); _surfaceHold = null;
+            if (_surfaceHold is not null || _surfaceHidden) _surface.RestoreMotionOpacity(); _surfaceHold = null;
             _window?.Dispose(); _window = null;
             _image?.Dispose(); _image = null; _background?.Dispose(); _background = null; _timer.Dispose();
         }

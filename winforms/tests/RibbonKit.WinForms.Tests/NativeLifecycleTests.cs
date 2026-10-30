@@ -187,6 +187,7 @@ public sealed class NativeLifecycleTests
     public void Attached_model_rejects_cross_thread_changes_before_mutation() => FoundationTests.Sta(() =>
     {
         using var ribbon = new RibbonControl();
+        var originalTheme = ribbon.Theme;
         var tab = new RibbonTab();
         var group = new RibbonGroup();
         var toggle = new RibbonToggleItem();
@@ -210,7 +211,7 @@ public sealed class NativeLifecycleTests
             throw failure;
         Assert.False(toggle.Checked);
         Assert.Null(group.ReductionPriority);
-        Assert.Equal(32, ribbon.Theme.TabHeight);
+        Assert.Same(originalTheme, ribbon.Theme);
     });
 
     [Fact]

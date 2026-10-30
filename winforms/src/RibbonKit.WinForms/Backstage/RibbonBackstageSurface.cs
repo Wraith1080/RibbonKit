@@ -277,7 +277,10 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     }
     internal void PaintNavigation(Graphics graphics)
     {
-        _ribbon.Painter.DrawBackstageBackground(new(graphics, ClientRectangle, PaintTheme, Font, DeviceDpi) { Density = _ribbon.Density, CompositedText = TransparentNavigation }, _pages.Left);
+        // The live background owns the fixed page shadow. Do not copy it into
+        // the translucent moving navigation drawing and darken it a second time.
+        var theme = TransparentNavigation ? PaintTheme with { BodyShadowColor = Color.Transparent } : PaintTheme;
+        _ribbon.Painter.DrawBackstageBackground(new(graphics, ClientRectangle, theme, Font, DeviceDpi) { Density = _ribbon.Density, CompositedText = TransparentNavigation }, _pages.Left);
         _back.PaintAt(graphics, _back.Location);
         var state = graphics.Save();
         try
@@ -380,7 +383,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         private void PaintEntry(Graphics graphics, Rectangle bounds)
         {
             var ribbon = _surface._ribbon;
-            var context = new RibbonPaintContext(graphics, bounds, _surface.PaintTheme, Font, DeviceDpi, _hot, _pressed, Focused && ribbon.KeyboardFocusCues) { Density = ribbon.Density, CompositedText = _surface.TransparentNavigation };
+            var context = new RibbonPaintContext(graphics, bounds, _surface.PaintTheme, Font, DeviceDpi, _hot, _pressed, Focused && ribbon.KeyboardFocusCues) { Density = ribbon.Density, CompositedText = _surface.TransparentNavigation, WindowBackdrop = ribbon.HasWindowBackdrop };
             ribbon.Painter.DrawBackstageEntry(context, Item, ReferenceEquals(Item, ribbon.Backstage.SelectedPage) && Item is not null);
             if (Tip.Length > 0)
             {

@@ -1,4 +1,19 @@
 #nullable enable
+virtual RibbonKit.WinForms.RibbonRenderer.GetBackstagePageShadowInset(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int
+override RibbonKit.WinForms.RibbonOffice2024Renderer.GetBackstagePageShadowInset(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int
+RibbonKit.WinForms.RibbonTheme.BackdropHover.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonTheme.BackdropHover.init -> void
+RibbonKit.WinForms.RibbonTheme.BackdropPressed.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonTheme.BackdropPressed.init -> void
+RibbonKit.WinForms.RibbonTheme.BackdropTabHoverOpacity.get -> float
+RibbonKit.WinForms.RibbonTheme.BackdropTabHoverOpacity.init -> void
+override RibbonKit.WinForms.RibbonOffice2024Renderer.DrawFileButton(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonDropDownItem! menu) -> void
+RibbonKit.WinForms.RibbonTheme.KeyTipBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonTheme.KeyTipBackground.init -> void
+RibbonKit.WinForms.RibbonTheme.KeyTipForeground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.KeyTipForeground.init -> void
+RibbonKit.WinForms.RibbonTheme.KeyTipBorder.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.KeyTipBorder.init -> void
 RibbonKit.WinForms.RibbonBackstage.NavigationBackgroundOpacity.get -> float
 RibbonKit.WinForms.RibbonBackstage.NavigationBackgroundOpacity.set -> void
 RibbonKit.WinForms.RibbonBackstage.NavigationBackgroundOpacityChanged -> System.EventHandler?

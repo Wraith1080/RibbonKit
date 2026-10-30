@@ -588,6 +588,11 @@ directory. Showcase's existing View animation level controls this entrance too.
 
 ## Live application-page fades and Backstage closing — 2026-10-29
 
+Later exception: [transparent material closing](M4I2-APPEARANCE-INVENTORY.md#backdrop-state-and-closing-review--2026-10-30)
+now fades the already-visible composed panel as one image, including its page
+background. It does not print/reparent native controls. The historical live-page
+path below remains in use for opening/page selection and Solid closing.
+
 The user requested animation for the application-page area and Backstage closing.
 The existing level now fades live pages on opening/selection and fades Backstage
 out for Back, Escape and visibility requests. Controls are not copied to bitmaps,

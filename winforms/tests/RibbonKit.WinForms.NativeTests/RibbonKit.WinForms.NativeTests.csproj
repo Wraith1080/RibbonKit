@@ -42,4 +42,6 @@
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/WindowMotionRegressionChecks.cs" Link="PublicWindowMotionRegressionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/WindowBackdropChecks.cs" Link="PublicWindowBackdropChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/GalleryBackdropChecks.cs" Link="PublicGalleryBackdropChecks.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/KeyTipAppearanceChecks.cs" Link="PublicKeyTipAppearanceChecks.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/BackdropAppearanceChecks.cs" Link="PublicBackdropAppearanceChecks.cs" /></ItemGroup>
 </Project>

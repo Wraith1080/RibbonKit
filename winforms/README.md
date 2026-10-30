@@ -122,6 +122,24 @@ full Glass/translucent command panels and further theme treatments remain later 
 WPF template/resource compatibility is outside this independent native library.
 Ordinary application controls remain native Forms controls. The runtime references neither WPF nor the designer SDK.
 
+KeyTip colors can be configured without a custom renderer:
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    KeyTipBackground = new RibbonFill(Color.MidnightBlue),
+    KeyTipForeground = Color.White,
+    KeyTipBorder = Color.CornflowerBlue
+};
+```
+
+The background defaults to `null`, preserving Office's pale yellow and the neutral
+renderer's `Surface`. Empty text/border colors preserve their defaults; a
+transparent border removes the outline. Geometry and keyboard behavior are
+unchanged. [Appearance inventory and remaining consolidation](docs/M4I2-APPEARANCE-INVENTORY.md).
+Showcase capture/check implementations are grouped under
+[`Diagnostics`](samples/RibbonKit.WinForms.Showcase/Diagnostics/README.md).
+
 ### Opt-in geometry motion
 
 ```csharp
@@ -1121,16 +1139,38 @@ immediately while body/group motion continues. Solid mode retains its existing
 header animation. This prevents layered animation holds from blackening the
 extended native frame.
 
-QAT hover/pressed/checked backgrounds use
-`RibbonTheme.QuickAccessBackdropOpacity` (default `.6`) over material, including
-the QAT overflow and ribbon collapse/expand utility hover/pressed fills. Set it to
-`1` for full coverage; artwork stays opaque. Backstage navigation is opaque by
+Material QAT/header utility and Backstage entry states use
+`RibbonTheme.BackdropHover` / `BackdropPressed`. Null uses the theme foreground at
+alpha 24 / 40, producing a darkening tint for light themes and a lightening tint
+for dark themes. Checked QAT entries instead use Accent at alpha 40 unless an
+explicit pressed fill is supplied. QAT hover/pressed/checked and overflow/chevron
+fills additionally multiply alpha by `QuickAccessBackdropOpacity` (default `.6`);
+`1` keeps the authored state fill's alpha. Artwork stays opaque. Solid mode and
+opaque command panels retain their existing state fills. Office File uses the
+same hover underline as a tab in both modes. Unselected material tab/File
+indicators multiply their alpha by `BackdropTabHoverOpacity` (default `.45`);
+selected-tab accents retain full coverage. Backstage navigation is opaque by
 default. Opt into translucent navigation with
 `ribbon.Backstage.NavigationBackgroundOpacity = 0;` while leaving native page
 controls opaque. Both values accept finite numbers from `0` through `1`; Solid
 fallback remains opaque. Showcase exposes **Transparent Backstage** in its Backdrop
 menu when material is active; this option uses a fully clear rail background.
 Neither setting changes application window opacity.
+
+Transparent Backstage closing fades one composed image, including its page
+background, so navigation does not disappear before a lingering white rectangle.
+It copies the visible panel once; it does not print native page controls or change
+their parents/handles. Reopening restores the live panel, and input/unsafe changes
+settle closing. Opening and page switching retain their live native-page paths.
+Unavailable, off-screen or oversized capture uses an immediate close. Solid-mode
+closing is unchanged. [Backdrop appearance review and evidence](docs/M4I2-APPEARANCE-INVENTORY.md#backdrop-state-and-closing-review--2026-10-30).
+
+Office Backstage pages have a soft left/top shadow in Solid and material modes.
+The page reserves six logical pixels above it, and navigation leaves the matching
+left-shadow band clear. `BodyShadowColor` supplies the shared shadow colour;
+Transparent disables it. `RibbonRenderer.GetBackstagePageShadowInset` is the
+layout/paint hook: Office returns the scaled clearance, while neutral stays flat.
+The shadow is clipped below the caption and does not add a bottom/right edge.
 
 Custom renderers receive a transparent paint-time `Theme.Background` for the material
 surrounding ribbon background without changing `ribbon.Theme` or `Theme.Surface`.

@@ -89,7 +89,8 @@ public partial class RibbonRenderer : IDisposable
         bool check = command is RibbonToggleItem { Checked: true } or RibbonCheckBoxItem { Checked: true } or RibbonRadioButtonItem { Checked: true } or RibbonSplitButtonItem { Checked: true };
         bool open = entry is RibbonQuickAccessComboBoxReference { IsDropDownOpen: true } or RibbonQuickAccessDropDownReference { IsDropDownOpen: true } or RibbonQuickAccessGroupReference { IsDropDownOpen: true };
         if (check || open || context.Hot || context.Pressed)
-            DrawChrome(context, QuickAccessFill(context, open || context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, menu), Color.Transparent);
+            DrawChrome(context, QuickAccessFill(context, open || context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, menu,
+                pressed: open || context.Pressed, marked: check && !context.Hot), Color.Transparent);
         DrawQuickAccessContent(context, entry, menu);
         if (command is RibbonCheckBoxItem { CheckState: CheckState.Indeterminate })
         {
@@ -128,17 +129,25 @@ public partial class RibbonRenderer : IDisposable
             try
             {
                 whole.Graphics.SetClip(part.Bounds, CombineMode.Intersect);
-                DrawChrome(whole, QuickAccessFill(whole, part.Pressed || expanded ? whole.Theme.Pressed : part.Hot ? whole.Theme.Hover : marked ? whole.Theme.Checked : new(whole.Theme.Surface), menu), Color.Transparent);
+                var fill = part.Pressed || expanded ? whole.Theme.Pressed : part.Hot ? whole.Theme.Hover : marked ? whole.Theme.Checked : new(whole.Theme.Surface);
+                bool active = part.Pressed || expanded || part.Hot || marked;
+                DrawChrome(whole, !active && whole.CompositedText && !menu ? new(Color.Transparent)
+                    : QuickAccessFill(whole, fill, menu, pressed: part.Pressed || expanded, marked: marked && !part.Hot), Color.Transparent);
             }
             finally { whole.Graphics.Restore(saved); }
         }
     }
-    private static RibbonFill QuickAccessFill(RibbonPaintContext context, RibbonFill fill, bool menu)
+    private static RibbonFill QuickAccessFill(RibbonPaintContext context, RibbonFill fill, bool menu, bool pressed = false, bool marked = false)
     {
         if (!context.CompositedText || menu) return fill;
+        fill = marked && !pressed && !context.Pressed ? context.Theme.BackdropPressed ?? new(Tint(context.Theme.Accent, 40)) : BackdropStateFill(context, pressed || context.Pressed);
         Color Alpha(Color color) => Color.FromArgb((int)Math.Round(color.A * context.Theme.QuickAccessBackdropOpacity), color);
         return new(Alpha(fill.Start), Alpha(fill.End));
     }
+    private static Color Tint(Color color, int alpha) => Color.FromArgb((int)Math.Round(color.A * alpha / 255d), color);
+    private static RibbonFill BackdropStateFill(RibbonPaintContext context, bool pressed) => pressed
+        ? context.Theme.BackdropPressed ?? new(Tint(context.Theme.Foreground, 40))
+        : context.Theme.BackdropHover ?? new(Tint(context.Theme.Foreground, 24));
     private void DrawQuickAccessContent(RibbonPaintContext context, RibbonElement entry, bool menu)
     {
         bool enabled = RibbonQuickAccess.Available(entry);
@@ -629,8 +638,10 @@ public partial class RibbonRenderer : IDisposable
     /// <summary>Paints a resolved keyboard badge.</summary>
     public virtual void DrawKeyTip(RibbonPaintContext context, string keys)
     {
-        PaintRounded(context, 0, new(context.Theme.Surface), context.Theme.Border);
-        DrawText(context, keys, context.Theme.Foreground, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);
+        PaintRounded(context, 0, context.Theme.KeyTipBackground ?? new(context.Theme.Surface),
+            context.Theme.KeyTipBorder.IsEmpty ? context.Theme.Border : context.Theme.KeyTipBorder);
+        DrawText(context, keys, context.Theme.KeyTipForeground.IsEmpty ? context.Theme.Foreground : context.Theme.KeyTipForeground,
+            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);
     }
     /// <summary>Paints common item chrome; the foundation uses square edges and theme-provided fills.</summary>
     protected virtual void DrawChrome(RibbonPaintContext context, RibbonFill fill, Color border) =>

@@ -2,7 +2,8 @@
 
 > Implementation through [M5E application restart persistence](../winforms/docs/M5E-SHOWCASE-PERSISTENCE.md),
 > with [M6C backdrop review corrections](../winforms/docs/M6C-BACKDROPS.md#resumed-review-corrections--2026-10-30),
-> 2026-10-30. Current bounded
+> 2026-10-30. Appearance consolidation starts with the
+> [M4I2 inventory and KeyTip palette](../winforms/docs/M4I2-APPEARANCE-INVENTORY.md). Current
 > scope, evidence and remaining review are in the [M5 ledger](../winforms/docs/M5-STATUS.md)
 > and [M4 ledger](../winforms/docs/M4-STATUS.md).
 > The [M3 ledger](../winforms/docs/M3-STATUS.md) retains QAT/projection evidence.
