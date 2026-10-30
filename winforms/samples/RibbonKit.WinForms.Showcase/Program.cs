@@ -23,7 +23,9 @@ internal static class Program
         bool hoverProbe = args.Length == 3 && args[0] == "--check-backdrop-hover";
         bool editorProbe = args.Length == 3 && args[0] == "--check-backdrop-editors";
         bool startupProbe = hoverProbe || editorProbe || args.Length == 3 && args[0] == "--check-backdrop-startup";
-        using var form = new MainForm(startupProbe ? MainForm.PrepareBackdropStartupSettings(args[1], Enum.Parse<RibbonWindowBackdrop>(args[2]))
+        bool startupTrace = args.Length == 3 && args[0] == "--trace-startup";
+        using var form = new MainForm(startupTrace ? MainForm.PrepareStartupTrace(args[1], args[2])
+            : startupProbe ? MainForm.PrepareBackdropStartupSettings(args[1], Enum.Parse<RibbonWindowBackdrop>(args[2]))
             : persistenceProbe ? Path.GetFullPath(args[1]) : args.Length == 0 ? MainForm.DefaultSettingsDirectory : null);
         if (startupProbe)
         {
@@ -39,8 +41,10 @@ internal static class Program
                 finally { form.Close(); }
             };
         }
-        using var startupBackground = startupProbe ? new StartupBackground() : null;
+        using var startupBackground = startupProbe || startupTrace ? new StartupBackground() : null;
         startupBackground?.Show();
+        if (startupTrace) startupBackground?.Activate();
+        if (startupTrace) form.InstallStartupTrace(args[1], args[2]);
         if (args.Length == 2 && args[0] == "--watch-native-paint")
         {
             form.PrepareNativePaintWatch();

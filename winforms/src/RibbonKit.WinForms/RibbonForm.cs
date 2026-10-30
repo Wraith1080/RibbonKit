@@ -26,8 +26,8 @@ public partial class RibbonForm : Form
         {
             var value = base.CreateParams;
             // The original Solid frame retains WS_CAPTION and its DWM frame.
-            // Only a material's transparent header exposes duplicate native
-            // glyphs and needs the caption style suppressed.
+            // Legacy extended-glass material headers need caption suppression.
+            // Direct bitmap alpha on recent Windows retains the native style.
             if (CustomCaption && _materialCaptionStyle) value.Style = (value.Style & ~0x00C00000) | 0x00800000;
             return value;
         }

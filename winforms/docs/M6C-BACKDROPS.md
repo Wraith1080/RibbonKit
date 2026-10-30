@@ -1,17 +1,75 @@
 # M6C native window backdrops
 
-Status, **2026-10-30: investigation resumed by the user; visual acceptance pending**.
+Status, **2026-10-30: current-machine visual review accepted by the user** after
+the direct-alpha correction, including material startup content and restored
+Windows opening motion. Older Windows, mixed-DPI and other remaining gates below
+are separate from this review.
 After branching the experiment, the user clarified that document flicker also
 occurred before backdrops and restored M6C through merge `589e8d5`. This removes
 the earlier deferral; it does not establish the cause or resolution of flicker.
 M5E persistence was implemented first as requested. Resumed review corrections
 and current evidence are recorded below.
 
+## First-show material alpha and Windows opening motion — 2026-10-30
+
+The user withdrew the startup acceptance after the steady-state pointer review:
+the document could still start black, and Windows opening motion was absent only
+with Mica/Acrylic. The `1008-09` recording shows the earlier blank/black content
+before the ribbon finishes drawing. Checks started from Shown missed that frame.
+
+The new `--trace-startup <fresh-directory> solid|mica|acrylic` diagnostic begins
+screen sampling from Load, before the native show transaction completes. It uses
+an isolated copy of saved application preferences, including the Load placement
+path, and closes automatically. It rejects foreground loss, empty presentation and
+substantially black document/status samples. The first unguarded comparison was
+discarded at the user's request. The guarded old Mica path reproduced one fully
+black document frame; the guarded old Solid attempt aborted on foreground loss.
+
+On Windows 11 build 26100 or later, RibbonForm now requests the documented
+[`DWMWA_REDIRECTIONBITMAP_ALPHA`](https://learn.microsoft.com/en-us/windows/win32/api/dwmapi/ne-dwmapi-dwmwindowattribute)
+mode. Successful opt-in uses zero frame extension and retains full `WS_CAPTION`.
+It avoids the older full-glass/caption-suppression combination that reproduced
+both the black first frame and missing native opening motion on this machine.
+The library reapplies its mode after composition/handle changes and disables it
+on Solid/fallback/teardown. Older supported Windows or a rejected attribute keep
+the previous extended-glass fallback. No Form opacity, cloak, delayed visibility,
+replacement document, timer or host-specific painting workaround is added.
+The alpha attribute is set-only; attempting to query it is not a valid regression
+assertion. Tests inspect successful owned mode, actual native caption style and
+the queryable material setting instead.
+
+Current evidence is under `artifacts/startup-show-20261030/`:
+
+- Integrated, foreground-guarded Solid/Mica/Acrylic traces recorded **21/21/19**
+  presented samples with zero substantially black document or status frames.
+  All three showed a growing native opening frame: widths **1016→1192**,
+  **1020→1192** and **1012→1192**, respectively. These use the real library path,
+  without the experimental native overrides used in the initial comparison.
+- Two hidden native-mode lifecycle cases passed in
+  `bitmap-alpha-lifecycle-fixed.trx`: Mica/Acrylic caption retention, composition
+  restart, handle recreation, Solid release and borderless fallback. The earlier
+  frame/editor selection passed before these additions. Normal Debug Showcase
+  and native-runner builds passed with zero warnings/errors.
+- `integrated-independent/` passed the public-only consumer across both densities
+  and all three material choices, retaining native editors through Backstage/tab
+  motion, opacity/key/border fallback, handle recreation and maximize/restore.
+  Inspected normal and maximized material captures have one caption-button row.
+- `integrated-off/` passed 16 client samples after each Mica→Solid and
+  Acrylic→Solid switch, with zero-percent sampled dark coverage.
+  `integrated-pages-modal/` retained actual Info/Print page text and passed 16
+  top-edge samples for each Solid/Acrylic Print Preview entry.
+
+All review windows closed; visible checking stopped. These sampled results do
+not establish older-Windows, mixed-DPI, full-suite or Release/package coverage.
+Current user acceptance is recorded at the top of this plan.
+Earlier post-Shown passes below remain historical evidence
+for their sampled interval, not proof of the earliest visible frame.
+
 ## Native paint and HRESULT boundary follow-up — 2026-10-30
 
 Current candidate addresses the user's rapid-dropdown exception, first-display
 document backing, header utility tint and the newly recorded native text dropouts.
-Human acceptance remains pending; earlier handler-only capture passes did not
+At this earlier checkpoint, human acceptance remained pending; handler-only capture passes did not
 establish that real pointer-driven drawing was stable.
 
 - UIAutomationCore now receives a reserved native provider bridge with explicit

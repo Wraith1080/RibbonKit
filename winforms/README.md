@@ -1077,7 +1077,7 @@ application-owned. [M6B scope and evidence](docs/M6B-WINDOW-INTEGRATION.md).
 
 ### Optional native window backdrops
 
-**Experimental; investigation resumed, visual acceptance pending.** [Current evidence and remaining review](docs/M6C-BACKDROPS.md#solid-frame-regression-and-stale-popup-accessibility--2026-10-30).
+**Experimental.** [Current evidence, user review and remaining platform checks](docs/M6C-BACKDROPS.md#first-show-material-alpha-and-windows-opening-motion--2026-10-30).
 The following API describes the experimental implementation.
 
 `RibbonForm.Backdrop` defaults to `RibbonWindowBackdrop.None`. Opt into `Mica` or
@@ -1095,15 +1095,19 @@ window.Controls.Add(content);
 window.Controls.SetChildIndex(content, 0); // Fill the space remaining below the ribbon.
 ```
 
-The library owns the backdrop attribute and frame extension after opt-in. It
+The library owns the backdrop and client-alpha setup after opt-in. It
 reapplies them after handle recreation and DPI/system changes. Windows 11 build
 22621 or later is required. Unsupported, high-contrast, borderless, child/layered
 windows and application opacity/transparency use the solid fallback while retaining
 the requested preference. `EffectiveBackdrop` reports the applied native setting;
 Windows may itself render that setting as solid according to its material policy.
-Setting None restores solid presentation and releases the library's extension.
-Solid retains the pre-backdrop native caption style; caption-style suppression is
-limited to applied material, preserving the Form handle across those transitions.
+Setting None restores solid presentation and releases the library's setup.
+On Windows 11 build 26100 or later, material uses the documented redirection-bitmap
+alpha attribute with zero frame extension, preserving the original native caption
+style and Windows opening animation. Earlier supported Windows versions, or an
+unavailable alpha attribute, use the extended-glass path with caption suppression.
+Solid retains the original native caption style. Material changes preserve the
+Form handle; appearance on older Windows still requires native review.
 
 Command panels, popups, native editors and Backstage pages remain opaque. The
 authored theme and application Opacity/TransparencyKey are unchanged. Host native

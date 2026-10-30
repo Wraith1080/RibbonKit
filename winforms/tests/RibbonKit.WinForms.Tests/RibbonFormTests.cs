@@ -21,7 +21,7 @@ public sealed class RibbonFormTests
         foreach (var backdrop in Enum.GetValues<RibbonWindowBackdrop>())
         {
             form.Backdrop = backdrop;
-            Assert.Equal(form.EffectiveBackdrop == RibbonWindowBackdrop.None, (form.NativeStyle & 0x00C00000) == 0x00C00000);
+            Assert.Equal(form.EffectiveBackdrop == RibbonWindowBackdrop.None || form.UsesBackdropBitmapAlpha, (form.NativeStyle & 0x00C00000) == 0x00C00000);
             Assert.Equal(style & ~0x00400000, form.NativeStyle & ~0x00400000); // Only the dialog-frame/caption bit changes.
             Assert.Equal(handle, form.Handle); Assert.False(form.Visible);
         }

@@ -10,6 +10,7 @@ public partial class RibbonForm
     private RibbonWindowBackdrop _backdrop, _effectiveBackdrop;
     private int _backdropHeight;
     private bool _backdropOwned, _applyingBackdrop, _backdropPaintFailed, _disposingBackdrop;
+    private bool _backdropBitmapAlpha;
     private bool _backdropEverShown, _backdropStartupPrepared;
     private RibbonBackdropBuffer? _captionBackdrop;
     /// <summary>Gets or sets optional native material behind the form and ribbon. Default is None. Host native GDI application controls inside RibbonBackdropPanel to retain opaque text/content. Windows 11 build 22621 or later is required; unsupported, high-contrast, layered or borderless windows retain the preference with a solid fallback. Document controls, Opacity, TransparencyKey and the authored ribbon theme are not modified.</summary>
@@ -33,6 +34,7 @@ public partial class RibbonForm
     internal int BackdropHeaderHeight => _ribbon is { HasWindowCaption: true } ribbon
         ? CaptionHeight + RibbonLayoutEngine.Scale(ribbon.LayoutTheme.TabHeight, DeviceDpi) : CaptionHeight;
     internal bool HasWindowBackdrop => _effectiveBackdrop != RibbonWindowBackdrop.None;
+    internal bool UsesBackdropBitmapAlpha => _backdropBitmapAlpha;
     internal static bool CanUseBackdrop(bool supported, bool highContrast, bool customCaption, bool topLevel, double opacity, Color transparencyKey, bool paintFailed)
         => supported && !highContrast && customCaption && topLevel && opacity == 1 && transparencyKey == Color.Empty && !paintFailed;
     private void RefreshBackdrop(bool force = false)
@@ -48,11 +50,17 @@ public partial class RibbonForm
             _ribbon?.SettleMotion();
             if (requested != RibbonWindowBackdrop.None)
             {
-                SetMaterialCaptionStyle(true);
+                // Windows 11 24H2 exposes premultiplied client alpha directly.
+                // Keep WS_CAPTION and the native opening transition instead of
+                // turning the whole client into an extended captionless frame.
+                int alpha = 1;
+                _backdropBitmapAlpha = OperatingSystem.IsWindowsVersionAtLeast(10, 0, 26100)
+                    && DwmSetWindowAttribute(Handle, 39, ref alpha, sizeof(int)) >= 0;
+                SetMaterialCaptionStyle(!_backdropBitmapAlpha);
                 try { _ribbon?.PrepareBackdropEditors(true); }
                 catch (Win32Exception error) { _backdropPaintFailed = true; ReleaseNativeBackdrop(); Trace.WriteLine("Native editor backdrop fallback: " + error.Message); return; }
                 int native = requested == RibbonWindowBackdrop.Mica ? 2 : 3;
-                var margins = new BackdropMargins { Left = -1 };
+                var margins = new BackdropMargins { Left = _backdropBitmapAlpha ? 0 : -1 };
                 if (DwmSetWindowAttribute(Handle, 38, ref native, sizeof(int)) >= 0 && DwmExtendFrameIntoClientArea(Handle, ref margins) >= 0)
                 { _backdropOwned = true; _effectiveBackdrop = requested; _backdropHeight = height; }
                 else { _backdropOwned = true; ReleaseNativeBackdrop(); }
@@ -98,6 +106,11 @@ public partial class RibbonForm
         // remove the material and finish the Solid frame/client synchronously.
         _backdropOwned = false; _effectiveBackdrop = RibbonWindowBackdrop.None; _backdropHeight = 0;
         if (repaint) { RibbonDrawingHold.Repaint(Handle); FlushBackdropDrawing(); }
+        if (_backdropBitmapAlpha && IsHandleCreated)
+        {
+            int opaque = 0; DwmSetWindowAttribute(Handle, 39, ref opaque, sizeof(int));
+        }
+        _backdropBitmapAlpha = false;
         if (release)
         {
             int none = 1; var margins = new BackdropMargins();
