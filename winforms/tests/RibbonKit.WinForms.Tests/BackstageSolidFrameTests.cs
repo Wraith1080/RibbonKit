@@ -5,6 +5,36 @@ namespace RibbonKit.WinForms.Tests;
 
 public sealed class BackstageSolidFrameTests
 {
+    [Theory] [InlineData(RibbonWindowBackdrop.Mica)] [InlineData(RibbonWindowBackdrop.Acrylic)]
+    public void Material_rail_opacity_changes_keep_one_native_page_layer_during_opening_and_closing(RibbonWindowBackdrop material) => FoundationTests.Sta(() =>
+    {
+        if (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621) || SystemInformation.HighContrast) return;
+        using var host = new RibbonForm { Bounds = new(180, 120, 950, 650) };
+        var ribbon = new RibbonControl { FileMenuMode = RibbonFileMenuMode.Backstage, AnimationLevel = RibbonAnimationLevel.Expressive };
+        ribbon.FileMenu.Visible = true; ribbon.Tabs.Add(new RibbonTab { Text = "Home" });
+        using var page = new Panel(); var field = new TextBox { Text = "Retained native text" }; page.Controls.Add(field);
+        ribbon.Backstage.Items.Add(new RibbonBackstagePageItem { Text = "Info", Content = page });
+        host.Controls.Add(ribbon); host.Ribbon = ribbon; host.Show(); Application.DoEvents(); host.Backdrop = material;
+        Assert.Equal(material, host.EffectiveBackdrop); ribbon.Motion.SystemPolicyOverride = true;
+        nint fieldHandle = field.Handle;
+        foreach (float opacity in new[] { 1f, 0f, 1f, .65f })
+        {
+            ribbon.Backstage.NavigationBackgroundOpacity = opacity; ribbon.IsBackstageOpen = true;
+            var surface = ribbon.BackstageSurface!; var pageHandle = surface.PageArea.Handle;
+            Assert.False(RibbonDrawingHold.HasOpacity(surface.Handle)); Assert.True(RibbonDrawingHold.HasOpacity(pageHandle));
+            ribbon.BackstageOpeningMotion!.SetProgress(.5);
+            Assert.InRange(surface.MotionAlpha, 127, 128);
+            ribbon.SettleMotion();
+            ribbon.Backstage.NavigationBackgroundOpacity = 1 - opacity;
+            Assert.Equal(pageHandle, surface.PageArea.Handle); Assert.False(RibbonDrawingHold.HasOpacity(surface.Handle));
+            Assert.True(RibbonDrawingHold.HasOpacity(pageHandle));
+            ribbon.IsBackstageOpen = false; ribbon.BackstageOpeningMotion!.SetProgress(.5);
+            Assert.InRange(surface.MotionAlpha, 127, 128); Assert.Equal(fieldHandle, field.Handle);
+            Assert.Equal("Retained native text", field.Text); ribbon.SettleMotion();
+            Assert.False(RibbonDrawingHold.HasOpacity(pageHandle));
+        }
+    });
+
     [Theory] [InlineData(96)] [InlineData(120)] [InlineData(144)] [InlineData(192)]
     public void Solid_and_material_pages_share_flush_borders_and_only_the_top_left_corner_is_rounded(int dpi) => FoundationTests.Sta(() =>
     {

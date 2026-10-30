@@ -28,10 +28,13 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     private int _pageRegionRadius;
     private bool _movingForMotion;
     internal byte MotionAlpha { get; private set; } = 255;
+    // Material paint keeps its alpha-preserving rail and native page layer even
+    // at full rail opacity; changing the tint must not change redirection owners.
+    private bool MaterialPaint => _ribbon.HasWindowBackdrop;
     internal bool TransparentNavigation => _ribbon.HasWindowBackdrop && _ribbon.Backstage.NavigationBackgroundOpacity < 1;
     internal RibbonTheme PaintTheme => _ribbon.Theme with { BackstageNavigationBackground = Color.FromArgb(
         TransparentNavigation ? (int)Math.Round(255 * _ribbon.Backstage.NavigationBackgroundOpacity) : 255, _ribbon.Theme.BackstageNavigationBackground) };
-    private Control MotionTarget => TransparentNavigation ? _pages : this;
+    private Control MotionTarget => MaterialPaint ? _pages : this;
     internal bool HasApplicationOpacity => _motionOpacity is null && RibbonDrawingHold.HasOpacity(MotionTarget.Handle);
     internal RibbonDrawingHold AcquireMotionOpacity(byte alpha)
     {
@@ -50,7 +53,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     internal void RepaintBackdrop()
     {
         RibbonDrawingHold.Repaint(Handle);
-        // A transparent rail redirects only the page panel. Redraw that native
+        // A material rail redirects only the page panel. Redraw that native
         // layer explicitly after its ancestor moves, including its edit HWNDs.
         if (_motionTarget is { IsDisposed: false, IsHandleCreated: true } target && !ReferenceEquals(target, this)) RibbonDrawingHold.Repaint(target.Handle);
         _motionOpacity?.SetOpacity(MotionAlpha);
@@ -292,12 +295,12 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         else if (_ribbon.HasWindowBackdrop && _motionOpacity is null) PrepareBackdrop();
     }
     protected override void OnHandleDestroyed(EventArgs e) { ReleaseMotionOpacity(); base.OnHandleDestroyed(e); }
-    protected override void OnPaintBackground(PaintEventArgs e) { if (!TransparentNavigation) base.OnPaintBackground(e); }
+    protected override void OnPaintBackground(PaintEventArgs e) { if (!MaterialPaint) base.OnPaintBackground(e); }
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
-        void Paint(Graphics graphics) => _ribbon.Painter.DrawBackstageBackground(new(graphics, ClientRectangle, PaintTheme, Font, DeviceDpi) { Density = _ribbon.Density, CompositedText = TransparentNavigation, WindowBackdrop = _ribbon.HasWindowBackdrop }, _pageFrameBounds.Left);
-        if (TransparentNavigation)
+        void Paint(Graphics graphics) => _ribbon.Painter.DrawBackstageBackground(new(graphics, ClientRectangle, PaintTheme, Font, DeviceDpi) { Density = _ribbon.Density, CompositedText = MaterialPaint, WindowBackdrop = _ribbon.HasWindowBackdrop }, _pageFrameBounds.Left);
+        if (MaterialPaint)
         {
             // The native page owns its pixels and opacity. Only redirect the
             // uncovered rail/corner and top frame, not a window-sized white page.
@@ -322,10 +325,10 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
         }
         private RibbonBackdropBuffer? _buffer;
-        protected override void OnPaintBackground(PaintEventArgs e) { if (!_surface.TransparentNavigation) base.OnPaintBackground(e); }
+        protected override void OnPaintBackground(PaintEventArgs e) { if (!_surface.MaterialPaint) base.OnPaintBackground(e); }
         protected override void OnPaint(PaintEventArgs e)
         {
-            if (!_surface.TransparentNavigation) { _buffer?.Dispose(); _buffer = null; base.OnPaint(e); return; }
+            if (!_surface.MaterialPaint) { _buffer?.Dispose(); _buffer = null; base.OnPaint(e); return; }
             (_buffer ??= new()).Paint(e.Graphics, Size, Height, Color.Transparent, graphics =>
             { using var fill = new SolidBrush(_surface.PaintTheme.BackstageNavigationBackground); graphics.FillRectangle(fill, ClientRectangle); }, opacity: _surface.MotionAlpha);
         }
@@ -389,10 +392,10 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         protected override void OnMouseDown(MouseEventArgs e) { _surface.HideKeyTips(); _pressed = e.Button == MouseButtons.Left; Invalidate(); base.OnMouseDown(e); }
         protected override void OnMouseUp(MouseEventArgs e) { _pressed = false; Invalidate(); base.OnMouseUp(e); }
         protected override void OnMouseCaptureChanged(EventArgs e) { _pressed = false; Invalidate(); base.OnMouseCaptureChanged(e); }
-        protected override void OnPaintBackground(PaintEventArgs e) { if (!_surface.TransparentNavigation) base.OnPaintBackground(e); }
+        protected override void OnPaintBackground(PaintEventArgs e) { if (!_surface.MaterialPaint) base.OnPaintBackground(e); }
         protected override void OnPaint(PaintEventArgs e)
         {
-            if (_surface.TransparentNavigation) (_buffer ??= new()).Paint(e.Graphics, Size, Height, Color.Transparent, PaintEntry, opacity: _surface.MotionAlpha);
+            if (_surface.MaterialPaint) (_buffer ??= new()).Paint(e.Graphics, Size, Height, Color.Transparent, PaintEntry, opacity: _surface.MotionAlpha);
             else { _buffer?.Dispose(); _buffer = null; PaintEntry(e.Graphics); }
         }
         internal void PaintAt(Graphics graphics, Point origin)
@@ -405,7 +408,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         private void PaintEntry(Graphics graphics, Rectangle bounds)
         {
             var ribbon = _surface._ribbon;
-            var context = new RibbonPaintContext(graphics, bounds, _surface.PaintTheme, Font, DeviceDpi, _hot, _pressed, Focused && ribbon.KeyboardFocusCues) { Density = ribbon.Density, CompositedText = _surface.TransparentNavigation, WindowBackdrop = ribbon.HasWindowBackdrop };
+            var context = new RibbonPaintContext(graphics, bounds, _surface.PaintTheme, Font, DeviceDpi, _hot, _pressed, Focused && ribbon.KeyboardFocusCues) { Density = ribbon.Density, CompositedText = _surface.MaterialPaint, WindowBackdrop = ribbon.HasWindowBackdrop };
             ribbon.Painter.DrawBackstageEntry(context, Item, ReferenceEquals(Item, ribbon.Backstage.SelectedPage) && Item is not null);
             if (Tip.Length > 0)
             {

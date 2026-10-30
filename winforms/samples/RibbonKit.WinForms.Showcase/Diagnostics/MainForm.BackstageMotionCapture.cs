@@ -5,7 +5,7 @@ namespace RibbonKit.WinForms.Showcase;
 
 public partial class MainForm
 {
-    internal async Task CaptureMotionInput(string directory, bool tailOnly = false, bool interactionsOnly = false, bool hoverOnly = false, bool openingOnly = false)
+    internal async Task CaptureMotionInput(string directory, bool tailOnly = false, bool interactionsOnly = false, bool hoverOnly = false, bool openingOnly = false, bool opaqueSlideOnly = false)
     {
         Directory.CreateDirectory(directory); List<string> log = []; var pointer = Cursor.Position;
         try
@@ -13,6 +13,20 @@ public partial class MainForm
             Activate(); SetForegroundWindow(Handle); await Task.Delay(150); Guard(); Location = new(240, 160); Width = 1250; Height = 760;
             ribbon.AnimationLevel = RibbonAnimationLevel.None; ribbon.IsBackstageOpen = false; ribbon.IsMinimized = false; ribbon.SelectedTab = inputs; ribbon.Focus();
             Cursor.Position = new(Right + 15, Top + 100); await Task.Delay(80); ribbon.AnimationLevel = RibbonAnimationLevel.Expressive;
+            if (opaqueSlideOnly)
+            {
+                foreach (var material in new[] { RibbonWindowBackdrop.Mica, RibbonWindowBackdrop.Acrylic })
+                foreach (var state in new[] { FormWindowState.Normal, FormWindowState.Maximized })
+                {
+                    ribbon.AnimationLevel = RibbonAnimationLevel.None; ribbon.IsBackstageOpen = false;
+                    Backdrop = material; ribbon.Backstage.NavigationBackgroundOpacity = 1;
+                    WindowState = state; await Task.Delay(400); Guard();
+                    Cursor.Position = new(Right - 4, Top + 15); ribbon.AnimationLevel = RibbonAnimationLevel.Expressive;
+                    await Record($"{material}-{state}-opaque-open", () => { ribbon.IsBackstageOpen = true; return Task.CompletedTask; }, true);
+                    await Record($"{material}-{state}-opaque-close", () => { ribbon.IsBackstageOpen = false; return Task.CompletedTask; }, true);
+                }
+                log.Add("PASS: complete opaque material slides captured"); return;
+            }
             if (hoverOnly)
             {
                 async Task Sweep(int y)
@@ -118,7 +132,7 @@ public partial class MainForm
         }
         async Task Record(string name, Func<Task> action, bool inspectBackstage)
         {
-            Guard(); var bounds = Bounds; var images = new List<(long Milliseconds, bool Animating, Bitmap Image)>();
+            Guard(); var bounds = Rectangle.Intersect(Bounds, SystemInformation.VirtualScreen); var images = new List<(long Milliseconds, bool Animating, Bitmap Image)>();
             long committed = 0; int oldRibbonBottom = ribbon.PointToScreen(new(0, ribbon.Height)).Y - bounds.Y;
             Exception? error = null; using var stop = new CancellationTokenSource(); var watch = Stopwatch.StartNew();
             var worker = new Thread(() =>
@@ -160,6 +174,24 @@ public partial class MainForm
                             if (samples > 0 && dark > samples * .7) darkColumns++;
                         }
                         if (darkColumns > 2) blackStrips++;
+                        if (opaqueSlideOnly)
+                        {
+                            // Opaque-layer artifacts can also be short horizontal
+                            // bars, which the tall-column check does not detect.
+                            int top = Math.Max(12, ribbon.PointToScreen(Point.Empty).Y - bounds.Y + 4);
+                            bool horizontal = false;
+                            for (int y = top; y < frame.Image.Height - 12 && !horizontal; y += 3)
+                            {
+                                int run = 0;
+                                for (int x = 12; x < frame.Image.Width - 12; x += 3)
+                                {
+                                    var pixel = frame.Image.GetPixel(x, y);
+                                    run = pixel.R < 25 && pixel.G < 25 && pixel.B < 25 ? run + 3 : 0;
+                                    if (run > 120) { horizontal = true; break; }
+                                }
+                            }
+                            if (horizontal) blackStrips++;
+                        }
                     }
                 }
                 int documentChanges = 0, editorChanges = 0;

@@ -32,6 +32,7 @@ internal static class BackdropAppearanceChecks
         {
             try
             {
+                form.Activate(); SetForegroundWindow(form.Handle);
                 await Task.Delay(260);
                 foreach (var material in closingOnly || shadowOnly || captionOnly ? new[] { RibbonWindowBackdrop.None, RibbonWindowBackdrop.Mica, RibbonWindowBackdrop.Acrylic }
                     : new[] { RibbonWindowBackdrop.Mica, RibbonWindowBackdrop.Acrylic })
@@ -69,9 +70,15 @@ internal static class BackdropAppearanceChecks
                     var paper = form.PointToClient(page.PointToScreen(new(page.Width - S(30), S(300))));
                     if (shadowOnly)
                     {
-                        await Task.Delay(60); using var shot = Capture();
-                        var origin = form.PointToClient(page.PointToScreen(Point.Empty));
+                        foreach (var windowState in new[] { WF.FormWindowState.Normal, WF.FormWindowState.Maximized })
+                        foreach (float opacity in new[] { 0f, 1f, .65f, 1f })
                         {
+                            if (form.WindowState != windowState) { form.WindowState = windowState; await Task.Delay(350); }
+                            ribbon.Backstage.NavigationBackgroundOpacity = opacity;
+                            await Task.Delay(80); using var shot = Capture();
+                            string label = $"{material}-{windowState}-{opacity}-{log.Count}";
+                            shot.Save(Path.Combine(directory, label + "-page-frame.png"));
+                            var origin = form.PointToClient(page.PointToScreen(Point.Empty));
                             var surface = Descendants(form).Single(control => control.AccessibleName == "Backstage");
                             int border = renderer.GetBackstagePageBorderWidth(ribbon.Theme, form.DeviceDpi);
                             int top = form.PointToClient(surface.PointToScreen(Point.Empty)).Y;
@@ -79,12 +86,18 @@ internal static class BackdropAppearanceChecks
                             Require(shot.GetPixel(origin.X + S(100), top).ToArgb() == ribbon.Theme.Border.ToArgb(), "Top border was hidden by native content.");
                             Require(shot.GetPixel(origin.X - border, origin.Y + S(100)).ToArgb() == ribbon.Theme.Border.ToArgb(), "Left border was hidden by native content.");
                             var corner = shot.GetPixel(origin.X - border, top);
-                            if (material == RibbonWindowBackdrop.None) Require(corner.ToArgb() == ribbon.Theme.BackstageNavigationBackground.ToArgb(), "The top-left page corner remained square.");
+                            if (material == RibbonWindowBackdrop.None || opacity == 1) Require(corner.ToArgb() == ribbon.Theme.BackstageNavigationBackground.ToArgb(), "The top-left page corner remained square.");
                             else Require(corner.ToArgb() != ribbon.Theme.Surface.ToArgb(), "The native material page covered its rounded corner.");
-                            shot.Save(Path.Combine(directory, material + "-page-frame.png"));
-                            log.Add($"PASS: {material}; no reserved top band; grey top/left border and rounded top-left corner visible.");
-                            ribbon.IsBackstageOpen = false; continue;
+                            for (int x = origin.X + S(15); x < shot.Width - S(15); x += S(30))
+                            for (int y = origin.Y + S(80); y < shot.Height - S(15); y += S(30))
+                                Require(shot.GetPixel(x, y).ToArgb() == Color.White.ToArgb(), $"{label}: native page contains an unexpected strip at {x},{y}.");
+                            if (material == RibbonWindowBackdrop.None || opacity == 1)
+                                for (int x = S(12); x < origin.X - S(12); x += S(20))
+                                for (int y = top + S(320); y < shot.Height - S(12); y += S(30))
+                                    Require(shot.GetPixel(x, y).ToArgb() == ribbon.Theme.BackstageNavigationBackground.ToArgb(), $"{label}: opaque rail contains an unexpected strip at {x},{y}.");
+                            log.Add($"PASS: {label}; no shadow band/black strips; top/left border and rounded top-left corner visible.");
                         }
+                        ribbon.IsBackstageOpen = false; form.WindowState = WF.FormWindowState.Normal; await Task.Delay(350); continue;
                     }
                     nint handle = field.Handle; var parent = page.Parent;
                     ribbon.IsBackstageOpen = false;
@@ -174,5 +187,6 @@ internal static class BackdropAppearanceChecks
         public override void DrawTab(RibbonPaintContext context, RibbonTab tab, bool selected) => base.DrawTab(context with { Hot = State == 1 && tab.Text == "Insert", Pressed = State == 2 && tab.Text == "Insert" }, tab, selected);
     }
     [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
+    [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint window);
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(nint window, out uint process);
 }

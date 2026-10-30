@@ -92,6 +92,8 @@ internal static class Program
             form.Shown += async (_, _) => { await Task.Yield(); try { form.Backdrop = RibbonWindowBackdrop.Acrylic; await form.CaptureMotionInput(args[1], hoverOnly: true); } finally { form.Close(); } };
         if (args.Length == 2 && args[0] == "--capture-document-hover-solid")
             form.Shown += async (_, _) => { await Task.Yield(); try { await form.CaptureMotionInput(args[1], hoverOnly: true); } finally { form.Close(); } };
+        if (args.Length == 2 && args[0] == "--capture-backstage-opaque")
+            form.Shown += async (_, _) => { await Task.Yield(); try { await form.CaptureMotionInput(args[1], opaqueSlideOnly: true); } finally { form.Close(); } };
         if (args.Length == 2 && args[0] == "--capture-backstage-opening")
             form.Shown += async (_, _) =>
             {

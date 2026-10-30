@@ -30,12 +30,12 @@ public sealed class BackdropClosingTests
         Assert.Equal(0, page.PrintRequests); Assert.Equal(handle, field.Handle); Assert.Same(parent, page.Parent);
         Assert.True(ribbon.IsBackstageOpen); Assert.Equal(0, closed);
         ribbon.BackstageOpeningMotion.SetProgress(.25); Assert.True(surface.Left < 0);
-        Assert.True(GetLayeredWindowAttributes((navigationOpacity < 1 ? surface.PageArea : surface).Handle, out _, out byte movingAlpha, out _)); Assert.InRange(movingAlpha, 2, 254);
+        Assert.False(RibbonDrawingHold.HasOpacity(surface.Handle));
+        Assert.True(GetLayeredWindowAttributes(surface.PageArea.Handle, out _, out byte movingAlpha, out _)); Assert.InRange(movingAlpha, 2, 254);
 
         ribbon.IsBackstageOpen = true; surface.Refresh();
         Assert.False(ribbon.IsAnimating); Assert.True(surface.Visible); Assert.Equal(255, painter.LastPageAlpha); Assert.Equal(0, closed);
-        var target = navigationOpacity < 1 ? surface.PageArea : surface;
-        Assert.True(GetLayeredWindowAttributes(target.Handle, out _, out byte alpha, out _)); Assert.Equal(255, alpha);
+        Assert.True(GetLayeredWindowAttributes(surface.PageArea.Handle, out _, out byte alpha, out _)); Assert.Equal(255, alpha);
         ribbon.IsBackstageOpen = false;
         if (navigationOpacity < 1)
         {
