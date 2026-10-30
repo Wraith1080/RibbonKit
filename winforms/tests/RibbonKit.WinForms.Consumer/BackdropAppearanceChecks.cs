@@ -10,7 +10,7 @@ namespace IndependentConsumer;
 // Public-only controlled painting and real closing frames. No pointer/keyboard input.
 internal static class BackdropAppearanceChecks
 {
-    internal static int Run(string directory, bool closingOnly = false, bool shadowOnly = false)
+    internal static int Run(string directory, bool closingOnly = false, bool shadowOnly = false, bool captionOnly = false)
     {
         Directory.CreateDirectory(directory); List<string> log = []; int exit = 0;
         WF.Application.SetHighDpiMode(WF.HighDpiMode.PerMonitorV2); WF.Application.EnableVisualStyles();
@@ -33,17 +33,36 @@ internal static class BackdropAppearanceChecks
             try
             {
                 await Task.Delay(260);
-                foreach (var material in shadowOnly ? new[] { RibbonWindowBackdrop.None, RibbonWindowBackdrop.Mica, RibbonWindowBackdrop.Acrylic }
+                foreach (var material in closingOnly || shadowOnly || captionOnly ? new[] { RibbonWindowBackdrop.None, RibbonWindowBackdrop.Mica, RibbonWindowBackdrop.Acrylic }
                     : new[] { RibbonWindowBackdrop.Mica, RibbonWindowBackdrop.Acrylic })
                 {
                     form.Backdrop = material; Require(form.EffectiveBackdrop == material, "Material did not apply.");
-                    foreach (int state in closingOnly || shadowOnly ? [] : new[] { 0, 1, 2 })
+                    foreach (int state in closingOnly || shadowOnly || captionOnly ? [] : new[] { 0, 1, 2 })
                     {
                         renderer.State = state; ribbon.Invalidate(); await Task.Delay(65);
                         using var shot = Capture(); shot.Save(Path.Combine(directory, $"{material}-state-{state}.png"));
                     }
                     renderer.State = 0; ribbon.Invalidate(); ribbon.AnimationLevel = RibbonAnimationLevel.None;
                     ribbon.IsBackstageOpen = true; await Task.Delay(40);
+                    if (captionOnly)
+                    {
+                        foreach (float opacity in new[] { 1f, .65f, 0f })
+                        {
+                            ribbon.Backstage.NavigationBackgroundOpacity = opacity; await Task.Delay(60); using var shot = Capture();
+                            var header = shot.GetPixel(S(150), S(3));
+                            if (material == RibbonWindowBackdrop.None || opacity == 1)
+                            {
+                                Require(header.ToArgb() == ribbon.Theme.BackstageNavigationBackground.ToArgb(), "Caption did not match the opaque rail color.");
+                                Require(shot.GetPixel(S(100), shot.Height - S(35)).ToArgb() == header.ToArgb(), "Opaque caption/rail colors differ.");
+                            }
+                            shot.Save(Path.Combine(directory, $"{material}-caption-{opacity}.png"));
+                        }
+                        ribbon.IsBackstageOpen = false; await Task.Delay(45);
+                        using var closed = Capture();
+                        if (material == RibbonWindowBackdrop.None) Require(closed.GetPixel(S(150), S(3)).ToArgb() == ribbon.Theme.Background.ToArgb(), "Normal caption did not restore after closing.");
+                        log.Add($"PASS: {material}; Backstage caption matches rail, opacity variants captured, normal caption restored.");
+                        continue;
+                    }
                     var entry = Descendants(form).OfType<WF.Button>().Single(button => button.Text == "Info");
                     int S(int n) => (int)Math.Round(n * form.DeviceDpi / 96d);
                     var icon = form.PointToClient(entry.PointToScreen(new(S(24), entry.Height / 2)));
@@ -53,6 +72,19 @@ internal static class BackdropAppearanceChecks
                         await Task.Delay(60); using var shot = Capture();
                         var origin = form.PointToClient(page.PointToScreen(Point.Empty)); int inset = renderer.GetBackstagePageShadowInset(ribbon.Theme, form.DeviceDpi);
                         int Light(Color color) => color.R + color.G + color.B;
+                        if (material == RibbonWindowBackdrop.None)
+                        {
+                            var surface = Descendants(form).Single(control => control.AccessibleName == "Backstage");
+                            int border = renderer.GetBackstagePageBorderWidth(ribbon.Theme, form.DeviceDpi);
+                            int top = form.PointToClient(surface.PointToScreen(Point.Empty)).Y;
+                            Require(origin.Y == top + border, "Solid page retained a top shadow band.");
+                            Require(shot.GetPixel(origin.X + S(100), top).ToArgb() == ribbon.Theme.Border.ToArgb(), "Solid top border was hidden by native content.");
+                            Require(shot.GetPixel(origin.X - border, origin.Y + S(100)).ToArgb() == ribbon.Theme.Border.ToArgb(), "Solid left border was hidden by native content.");
+                            Require(shot.GetPixel(origin.X - border, top).ToArgb() == ribbon.Theme.BackstageNavigationBackground.ToArgb(), "The top-left page corner remained square.");
+                            shot.Save(Path.Combine(directory, "Solid-page-frame.png"));
+                            log.Add("PASS: Solid; no reserved top band; grey top/left border and rounded top-left corner visible.");
+                            ribbon.IsBackstageOpen = false; continue;
+                        }
                         var nearLeft = shot.GetPixel(origin.X - 1, origin.Y + S(200)); var farLeft = shot.GetPixel(origin.X - inset - S(2), origin.Y + S(200));
                         var nearTop = shot.GetPixel(origin.X + S(100), origin.Y - 1); var farTop = shot.GetPixel(origin.X + S(100), origin.Y - inset);
                         shot.Save(Path.Combine(directory, material + "-page-shadow.png"));
@@ -61,33 +93,60 @@ internal static class BackdropAppearanceChecks
                         ribbon.IsBackstageOpen = false; continue;
                     }
                     nint handle = field.Handle; var parent = page.Parent;
-                    ribbon.IsBackstageOpen = false; await Task.Delay(60);
-                    using var behind = Capture(); var behindPage = behind.GetPixel(paper.X, paper.Y); var behindIcon = behind.GetPixel(icon.X, icon.Y);
-                    Require(behindPage.R < 80 && behindIcon.G > 180, "Closing probes lack distinct underlying colors.");
-                    ribbon.AnimationLevel = RibbonAnimationLevel.Expressive; ribbon.IsBackstageOpen = true;
-                    await Finish(); await Task.Delay(45);
-                    using (var ready = Capture()) ready.Save(Path.Combine(directory, material + "-backstage.png"));
-                    ribbon.IsBackstageOpen = false; var watch = Stopwatch.StartNew(); int samples = 0, synchronized = 0; bool saved = false;
-                    while (ribbon.IsBackstageOpen && watch.ElapsedMilliseconds < 1200)
+                    ribbon.IsBackstageOpen = false;
+                    foreach (var opacity in material == RibbonWindowBackdrop.None ? new[] { 1f } : new[] { 1f, .65f, 0f })
+                    foreach (var level in opacity == 1 ? new[] { RibbonAnimationLevel.Subtle, RibbonAnimationLevel.Expressive } : new[] { RibbonAnimationLevel.Expressive })
                     {
-                        using var frame = Capture(); var pagePixel = frame.GetPixel(paper.X, paper.Y); var iconPixel = frame.GetPixel(icon.X, icon.Y);
-                        double pageOpacity = (pagePixel.R - behindPage.R) / (255d - behindPage.R);
-                        double iconOpacity = (behindIcon.G - iconPixel.G) / (double)behindIcon.G;
-                        log.Add($"{material}: t={watch.ElapsedMilliseconds}; page={pageOpacity:F3}; navigation={iconOpacity:F3}"); samples++;
-                        if (samples <= 3) frame.Save(Path.Combine(directory, $"{material}-closing-frame-{samples}.png"));
-                        var rail = frame.GetPixel(S(120), frame.Height - S(35));
-                        Require(rail.R > 30 || rail.G > 30 || rail.B > 30, "Closing exposed an opaque black navigation rail.");
-                        if (pageOpacity is > .1 and < .9 && iconOpacity is > .1 and < .9)
+                        ribbon.Backstage.NavigationBackgroundOpacity = opacity;
+                        string label = $"{material}-{level}-{opacity}";
+                        ribbon.Density = level == RibbonAnimationLevel.Subtle ? RibbonDensity.Compact : RibbonDensity.Touch;
+                        ribbon.AnimationLevel = level; ribbon.Refresh();
+                        renderer.ToolbarPaints = 0; renderer.ToolbarItemPaints = 0; ribbon.IsBackstageOpen = true;
+                        var surface = Descendants(form).Single(control => control.AccessibleName == "Backstage");
+                        Require(surface.Right / (double)surface.Width is > .849 and < .851 && ribbon.IsAnimating, "Opening did not start 85% visible.");
+                        await TraceSlide(false); Require(ribbon.IsBackstageOpen && surface.Left == 0, "Opening did not reach its final location.");
+                        Require(renderer.ToolbarPaints == 0 && renderer.ToolbarItemPaints == 0, "QAT remained visible during Backstage opening.");
+                        using (var ready = Capture())
                         {
-                            Require(Math.Abs(pageOpacity - iconOpacity) < .25, "Navigation and page did not fade together."); synchronized++;
-                            if (!saved) { frame.Save(Path.Combine(directory, material + "-closing-mid.png")); saved = true; }
+                            ready.Save(Path.Combine(directory, $"{label}-open.png"));
+                            var bounds = form.PointToClient(field.PointToScreen(Point.Empty)); int ink = 0;
+                            for (int y = bounds.Y + 2; y < bounds.Y + field.Height - 2; y++)
+                            for (int x = bounds.X + 3; x < bounds.X + Math.Min(S(200), field.Width - 3); x++)
+                            { var pixel = ready.GetPixel(x, y); if (pixel.R < 90 && pixel.G < 90 && pixel.B < 90) ink++; }
+                            Require(ink > 40, "The native field's text was missing after opening.");
                         }
-                        else Require(!(iconOpacity < .5 && pageOpacity > .95), "The white page underlay survived after navigation faded.");
-                        await Task.Delay(12);
+                        ribbon.IsBackstageOpen = false; Require(ribbon.IsBackstageOpen && ribbon.IsAnimating, "Closing did not retain its lifecycle.");
+                        await TraceSlide(true); Require(!ribbon.IsBackstageOpen && surface.Left == 0, "Closing did not complete and park the surface.");
+                        Require(field.Handle == handle && ReferenceEquals(page.Parent, parent) && field.Text == "Retained native page field", "Native field ownership/value changed.");
+                        ribbon.Refresh(); Require(renderer.ToolbarPaints > 0 && renderer.ToolbarItemPaints > 0 && ribbon.QuickAccessVisible, "QAT did not return after closing.");
+                        log.Add($"PASS: {label}; complete live slide and caption edge, retained native field; DPI={form.DeviceDpi}.");
+
+                        async Task TraceSlide(bool closing)
+                        {
+                            var watch = Stopwatch.StartNew(); int previous = surface.Left, intermediate = 0;
+                            while (ribbon.IsAnimating && watch.ElapsedMilliseconds < 1500)
+                            {
+                                int edge = surface.Right, left = surface.Left;
+                                Require(surface.Right / (double)surface.Width >= .849, "Slide exceeded its 15% travel.");
+                                Require(renderer.ToolbarPaints == 0 && renderer.ToolbarItemPaints == 0, "QAT appeared before Backstage finished closing.");
+                                Require(closing ? left <= previous : left >= previous, "Surface reversed direction."); previous = left;
+                                using var frame = Capture();
+                                if (edge > S(20) && edge < frame.Width - S(20))
+                                {
+                                    intermediate++;
+                                    frame.Save(Path.Combine(directory, $"{label}-{(closing ? "close" : "open")}-{intermediate}.png"));
+                                    if (opacity == 1)
+                                    {
+                                        Require(frame.GetPixel(edge + S(4), S(3)).ToArgb() != ribbon.Theme.BackstageNavigationBackground.ToArgb(), "Caption tint crossed the moving surface edge.");
+                                    }
+                                    var pagePixel = frame.GetPixel(edge - S(8), surface.Top + S(300));
+                                    Require(pagePixel.R + pagePixel.G + pagePixel.B > 90, "The fading native page exposed an opaque black surface.");
+                                }
+                                await Task.Delay(12);
+                            }
+                            Require(!ribbon.IsAnimating && intermediate > 0, "Slide did not present an intermediate frame and finish autonomously.");
+                        }
                     }
-                    Require(!ribbon.IsBackstageOpen && synchronized > 0, "Closing did not present a synchronized intermediate frame.");
-                    Require(field.Handle == handle && ReferenceEquals(page.Parent, parent) && field.Text == "Retained native page field", "Native field ownership/value changed.");
-                    log.Add($"PASS: {material}; {samples} real closing frames, {synchronized} synchronized intermediate frames; field retained.");
                 }
             }
             catch (Exception error) { exit = 1; log.Add("FAIL: " + error); }
@@ -102,7 +161,6 @@ internal static class BackdropAppearanceChecks
             var image = new Bitmap(form.ClientSize.Width, form.ClientSize.Height);
             using var graphics = Graphics.FromImage(image); graphics.CopyFromScreen(form.PointToScreen(Point.Empty), Point.Empty, image.Size); return image;
         }
-        async Task Finish() { var watch = Stopwatch.StartNew(); while (ribbon.IsAnimating && watch.ElapsedMilliseconds < 1200) await Task.Delay(10); Require(!ribbon.IsAnimating, "Opening did not finish."); }
     }
     private static IEnumerable<WF.Control> Descendants(WF.Control root)
     { foreach (WF.Control child in root.Controls) { yield return child; foreach (var nested in Descendants(child)) yield return nested; } }
@@ -112,7 +170,11 @@ internal static class BackdropAppearanceChecks
     private sealed class StateProbe : RibbonOffice2024Renderer
     {
         internal int State;
-        public override void DrawQuickAccessItem(RibbonPaintContext context, RibbonElement entry, bool menu) => base.DrawQuickAccessItem(context with { Hot = State == 1, Pressed = State == 2 }, entry, menu);
+        internal int ToolbarPaints, ToolbarItemPaints;
+        public override void DrawQuickAccessToolbar(RibbonPaintContext context, RibbonQuickAccessPosition position)
+        { ToolbarPaints++; base.DrawQuickAccessToolbar(context, position); }
+        public override void DrawQuickAccessItem(RibbonPaintContext context, RibbonElement entry, bool menu)
+        { ToolbarItemPaints++; base.DrawQuickAccessItem(context with { Hot = State == 1, Pressed = State == 2 }, entry, menu); }
         public override void DrawMinimizeButton(RibbonPaintContext context, bool minimized) => base.DrawMinimizeButton(context with { Hot = State == 1, Pressed = State == 2 }, minimized);
         public override void DrawFileButton(RibbonPaintContext context, RibbonDropDownItem menu) => base.DrawFileButton(context with { Hot = State == 1, Pressed = State == 2 }, menu);
         public override void DrawTab(RibbonPaintContext context, RibbonTab tab, bool selected) => base.DrawTab(context with { Hot = State == 1 && tab.Text == "Insert", Pressed = State == 2 && tab.Text == "Insert" }, tab, selected);

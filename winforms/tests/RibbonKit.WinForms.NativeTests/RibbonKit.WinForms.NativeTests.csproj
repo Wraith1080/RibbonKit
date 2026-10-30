@@ -44,4 +44,5 @@
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/GalleryBackdropChecks.cs" Link="PublicGalleryBackdropChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/KeyTipAppearanceChecks.cs" Link="PublicKeyTipAppearanceChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/BackdropAppearanceChecks.cs" Link="PublicBackdropAppearanceChecks.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/BackstageRichTextChecks.cs" Link="PublicBackstageRichTextChecks.cs" /></ItemGroup>
 </Project>

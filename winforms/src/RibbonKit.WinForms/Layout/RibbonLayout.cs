@@ -179,7 +179,7 @@ internal sealed partial class RibbonLayoutEngine
         int tabsStart = 0;
         if (ribbon.HasFileMenu)
         {
-            int keepQuickAccess = ribbon.HasQuickAccess && placement == RibbonQuickAccessPosition.TabRow ? S(metrics.QuickAccessButton + 4) : 0;
+            int keepQuickAccess = ribbon.ShowQuickAccess && placement == RibbonQuickAccessPosition.TabRow ? S(metrics.QuickAccessButton + 4) : 0;
             int available = Math.Max(0, client.Width - utilityWidth - S(24) - keepQuickAccess);
             int left = Math.Min(S(ribbon.LayoutTheme.BodyMargin.Left), available);
             int width = Math.Min(Math.Max(S(50), TextRenderer.MeasureText(ribbon.FileMenu.Text, ribbon.Font, Size.Empty,
@@ -191,7 +191,7 @@ internal sealed partial class RibbonLayoutEngine
                 tabsStart = bounds.Right;
             }
         }
-        if (ribbon.HasQuickAccess)
+        if (ribbon.ShowQuickAccess)
         {
             bool below = placement == RibbonQuickAccessPosition.BelowRibbon;
             int available = below ? client.Width : Math.Min(S(ribbon.QuickAccessMaxWidth), Math.Max(0, client.Width - tabsStart - utilityWidth - S(24)));

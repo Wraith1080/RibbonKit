@@ -1,7 +1,8 @@
 # M4I2 appearance inventory and palette increments
 
 Status, **2026-10-30: inventory, KeyTip palette and requested backdrop-state/closing
-corrections and left/top page shadow implemented; visual review of the new appearance is pending**.
+corrections, revised Solid page frame and Backstage caption match implemented;
+visual review of the new appearance is pending**.
 This starts the appearance-consolidation checkpoint after the main component and
 M6C work. It does not complete comprehensive theming or add another built-in theme.
 Designer authoring, localization/RTL and additional palettes retain their later
@@ -222,6 +223,196 @@ There are **40 distinct focused passing cases** across the requested changes and
 this shadow addition, assembled from the separately recorded selections. No clean
 aggregate, package, physical mixed-DPI or actual VS acceptance is implied. Review
 windows are closed and visible checks have stopped. Human appearance review is pending.
+
+## Solid page frame and Backstage caption — 2026-10-30
+
+The user rejected the reserved grey strip between the Solid page and title bar.
+This supersedes the Solid shadow choice in the preceding checkpoint. Solid now
+uses a one-device-pixel top/left `Border`, with only the top-left corner rounded
+to the existing Office body radius. Its outer frame begins directly beneath the
+caption; the native page starts one pixel inside the border. The grey shadow band
+is gone. Mica/Acrylic keep their prior shadow and clearance.
+
+Frame drawing and native clipping share the new public renderer hooks
+`GetBackstagePageBorderWidth` / `GetBackstagePageCornerRadius` (neutral: zero;
+Office: one-pixel border and twice the shared logical `CornerRadius`). The native
+page region excludes the antialiased corner edge so application Controls cannot
+overwrite it. Other three corners remain square. Only the small corner bitmap is
+cached, avoiding full-page bitmap allocations during resizing. Material changes
+refresh the open page geometry/region and preserve the real field handles/data.
+Five additive Unshipped method/override entries and XML comments cover the hooks
+and Office background override; shipped API remains untouched.
+
+The user also requested a matching title bar only while Backstage is open. The
+integrated caption now uses `BackstageNavigationBackground`, with the same
+navigation-opacity preference over material. The title-bar QAT leaves its already
+painted background alone, preventing a white patch or compounded tint. Closing
+restores the original caption background. This is a paint-time projection; the
+authored theme, Form BackColor/Opacity, native styles and command ownership are
+unchanged. Ordinary native Form captions remain host-owned.
+
+Evidence in `artifacts/solid-backstage-frame-20261030/`:
+
+- `solid-frame.trx`: **9/9** affected cases. They cover odd/even raster bounds at
+  96/120/144/192 DPI, all four corner policies, top/left stroke joins and inner
+  native clipping, no reserved Solid shadow band, material shadow falloff and
+  open-page Solid/Mica/Acrylic switching with retained field handles/parents/data.
+  Raster images were retained under `raster/`; the actual 120-DPI Solid image was
+  inspected with the native corner clip in place.
+- `native/result.log`: the public-only frame capture passed Solid's flush top,
+  visible top/left borders and rounded corner; Mica/Acrylic retained both shadow
+  edges. It used no pointer/keyboard input or Showcase helpers.
+- `caption.trx`: **3/3** additional caption cases, including rail opacity 0/.65/1,
+  Solid/material backgrounds, no double QAT tint and normal-background restoration.
+  The caption-only native capture stopped on foreground loss before establishing
+  a pass (`caption-native/result.log`). It was not retried automatically.
+
+Only these changed scopes were selected; earlier passing hover/fade/keytip scopes
+and the aggregate suite were not repeated. All review windows closed. Native
+caption visual acceptance, broader DPI/display and designer/package gates remain
+separate. Current user visual review remains pending.
+
+## Whole-surface Backstage and caption slide — 2026-10-30
+
+The user requested replacing every Backstage animation with one complete-surface
+slide and then specified that the title-bar colouring should slide alongside it.
+This supersedes the earlier navigation slide, native-page opening/page-switch
+fades, composed-image closing fade and immediate caption tint described above.
+
+The latest user review shortened travel to 15%: the live Backstage container starts
+85% visible and slides right into place, then moves 15% left and hides on closing.
+It uses cubic ease-out over 220/308 ms for
+Subtle/Expressive. Navigation, background, page frame/shadow and application
+controls move together. Child layout, parents, handles, selection and data stay
+intact. The subsequent review added smooth opacity fades on opening/closing,
+including the caption tint, while keeping the shortened travel and QAT hiding.
+Page selection is immediate. There is no page capture,
+moving navigation bitmap or stationary replacement-background control.
+
+The RibbonForm caption tint paints up to the same moving edge and repaints in the
+surface's timer turn. Caption buttons remain stationary. QAT layout/paint and hit
+targets are suppressed throughout Backstage opening, display and accepted
+closing, including a canceled close. Closing restores the authored visibility,
+placement, references and commands. No QAT preference events are raised and the
+underlying ribbon/document height is retained, including BelowRibbon placement.
+Solid/material and authored navigation opacity keep their existing palette rules.
+Native opacity follows the slide clock, returning to full coverage after opening.
+Transparent rails and frames fade premultiplied paint alongside their separate
+native page layer, including text/selection. Both the surface and that page layer
+repaint after movement, preventing invisible panels/fields.
+Closing validation, delayed Closed/focus restoration, cancellation/reopening,
+synchronous command closes and None/system-disabled policies are retained.
+No public API was added.
+
+Earlier full-width-slide evidence in `artifacts/backstage-slide-20261030/`:
+
+- Normal native Debug solution build passed with zero warnings/errors; Showcase
+  is rebuilt in its normal output folder.
+- `backstage-slide-final.trx`: **43/43** affected unit/STA cases passed, covering
+  full-width travel, immediate pages, caption edge/alpha, native ownership/state,
+  policies/input/cancellation/disposal, existing frame/shadow and window motion.
+  Initial partial-alpha pixel assertions required the normal one-channel GDI+
+  premultiplication rounding allowance; that correction passed before the final run.
+- `native-native-ink/result.log`: **10** public-only shown scopes passed at actual
+  120 DPI: Solid/Mica/Acrylic, Subtle/Expressive and Compact/Touch, plus Mica/Acrylic
+  navigation opacity .65/0. Intermediate captures verify the visible page beneath
+  the tint edge; final captures assert real native field ink as well as retained
+  handles/parents/data. Actual Solid, Mica and Acrylic intermediate/final images
+  were inspected. Earlier captures exposed caption repaint lag, missing material
+  panels and missing text in a separately redirected page; all three were repaired
+  before this final capture run.
+- Public ordinary-Form Office opening/closing prefixes passed in `native-office/`.
+  Its input tail targeted a field before it had entered the viewport; the fixture
+  now uses native F6 to settle opening. The independently selectable tail passed
+  in `native-office-tail-fixed/`. `native-neutral/` passed the full motion scope.
+  These cover pointer opening/Back, native editing/bindings, immediate page/KeyTip
+  selection, validation, resize, synchronous commands, Alt+F4 and None. Evidence
+  is assembled from these scopes; the initial Office run was not a clean pass.
+
+Earlier quarter-width/QAT refinement evidence in
+`artifacts/backstage-quarter-slide-20261030/`:
+
+- Normal Debug native solution build passed with zero warnings/errors; Showcase
+  is rebuilt in its normal output folder.
+- `backstage-quarter-slide.trx`: **40/40** focused unit/STA cases passed, including
+  75%-visible opening, hiding at the matching closing offset, caption synchronization,
+  QAT suppression/restoration at all three placements and both authored visibility
+  states, retained command references/preferences and unchanged host height.
+- `native-final/result.log`: **10** public-only shown scopes passed at actual
+  120 DPI for Solid/Mica/Acrylic, both levels/densities, and material rail opacity
+  .65/0. Renderer probes verify that QAT chrome/items are absent during Backstage
+  and return after closing. Captures verify shortened travel, native page/text
+  visibility and the shared tint edge. Solid opening, Mica translucent open and
+  Acrylic closing captures were inspected.
+
+Latest fade/black-strip correction evidence in `artifacts/backstage-fade-20261030/`:
+
+- The supplied 5.2-second recording was decoded and inspected. Frame 1.433 s
+  shows a tall black strip along the moving material page's left edge.
+  Motion now adds `SWP_NOCOPYBITS` to WinForms' own bounds transaction so newly
+  exposed pixels repaint instead of copying clipped redirection pixels. The
+  managed transaction preserves caption clipping and bounds notifications.
+- Opening/closing use smoothstep opacity alongside the existing cubic slide.
+  Native redirection is prepared before visibility at alpha 1 (retaining native
+  hit testing), stays opaque between transitions and releases when hidden.
+  Transparent paint scales all premultiplied channels together; repeated paints
+  clear the buffer before applying coverage. Caption colour shares the same alpha.
+- Normal Debug native solution/Showcase builds passed with zero warnings/errors
+  after the user's Visual Studio debug run released its output locks.
+- `backstage-fade-first.trx`: 58/58 affected cases passed. The final bounds-transaction
+  change reran only the affected 40 motion/caption/window cases, passing 40/40 in
+  `backstage-fade-final.trx`; the other 18 appearance cases retain their first-run
+  evidence. `buffer-fade.trx` adds 3/3 premultiplied-channel/nonaccumulating-repaint
+  cases. There are **61 distinct focused passing cases**, not a full-suite run.
+- `native-final/result.log`: ten public-only Solid/Mica/Acrylic, density/level and
+  transparent-rail scopes passed at actual 120 DPI. Captures include intermediate
+  opening/closing fades, final native field ink and QAT suppression/restoration.
+  `input-final/result.log` passed the ordinary-Form Office pointer, native editing,
+  immediate page/KeyTip, validation, resize, synchronous command, Alt+F4 and None scope.
+- `showcase-managed-move/`: ten actual Showcase opening/hover cases passed, covering
+  Compact/Touch, Solid and Mica/Acrylic with clear/opaque rails. A separate screen
+  sampler recorded intermediate compositor frames and found zero tall black strips.
+  Actual intermediate/settled Mica and Acrylic frames were inspected. The capture
+  guard checks visible window ownership as well as foreground process ownership.
+  Earlier hidden-launch and direct-DLL-launch captures are excluded from acceptance;
+  use the apphost executable so its native compatibility manifest applies.
+
+Latest 15% travel and Solid RichTextBox correction evidence in
+`artifacts/backstage-subtle-20261030/`:
+
+- Solid opening now retains the already-composed document drawing below the ribbon
+  in one passive temporary control behind Backstage. It captures before native
+  sibling clipping changes, paints at natural size and releases when opening
+  completes or is interrupted. It does not print/reparent/resize the document or
+  Backstage pages. QAT/caption content is outside that retained drawing, preserving
+  QAT hiding. Material behavior, fade curves and 220/308 ms timing are unchanged.
+  This is internal library behavior; no new public API or host callback was added.
+- Normal Debug native solution build passed with zero warnings/errors. Showcase
+  is rebuilt in its normal output folder.
+- The 40 affected behavior/motion/caption/window cases passed in
+  `backstage-fifteen.trx`. That run also contained an unreliable desktop-pixel case:
+  the shared test runner's prior DPI initialization changed its coordinate basis.
+  That screen case was removed from the unit assembly and moved to a fresh,
+  DPI-aware native process. The run is not reported as a clean aggregate pass.
+- `native-richtext/result.log`: independent public-only Compact/Subtle and
+  Touch/Expressive checks passed at actual 120 DPI with **zero changed initial
+  document pixels**, no native resize or scroll, retained handle/parent/text/
+  selection and no leaked temporary drawing. Before/initial-fade PNGs were inspected.
+  The corrected standalone pre-fix screen probe exposed 30,215 changed pixels
+  (`richtext-dpi-before.trx`); earlier coordinate-mismatched probes are diagnostic.
+  Rerun with `--backstage-richtext-checks <directory>`; the independent package
+  consumer exposes `--validate-backstage-richtext`.
+- `showcase/None-1/result.log`: actual Showcase reports **zero changed initial
+  RichTextBox pixels** for Compact and Touch. Its ten opening/hover scopes across
+  Solid, Mica/Acrylic and clear/opaque rails passed with zero tall black strips.
+  Solid before/initial-fade document captures were inspected.
+- `native-input/result.log`: public-only Office Subtle/Expressive, Compact/Touch,
+  pointer opening/Back, native editing/binding, immediate page/KeyTips, validation,
+  resize, synchronous commands, Alt+F4 and None checks passed at actual 120 DPI.
+
+All review windows closed. Human motion/smoothness acceptance, broader physical
+DPI/display, performance, Release/package and actual VS checks remain pending.
+WPF runtime/build/CI were not changed or run.
 
 ## Showcase diagnostic organisation
 

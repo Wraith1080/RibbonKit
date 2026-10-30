@@ -33,6 +33,22 @@ public partial class MainForm
                 {
                     ribbon.AnimationLevel = RibbonAnimationLevel.None; ribbon.Density = density; ribbon.LayoutMode = RibbonLayoutMode.Classic; ribbon.SelectedTab = inputs; Width = 1250; ribbon.Focus();
                     Cursor.Position = new(Right + 15, Top + 100); await Task.Delay(60); ribbon.AnimationLevel = RibbonAnimationLevel.Expressive;
+                    if (openingOnly && Backdrop == RibbonWindowBackdrop.None)
+                    {
+                        Guard(); var doc = document.RectangleToScreen(document.ClientRectangle);
+                        int top = Math.Max(doc.Top, ribbon.PointToScreen(new(0, ribbon.Height)).Y + 15);
+                        var area = Rectangle.FromLTRB(doc.Left + 15, top, doc.Right - 25, doc.Bottom - 15);
+                        using var before = new Bitmap(area.Width, area.Height);
+                        using (var graphics = Graphics.FromImage(before)) graphics.CopyFromScreen(area.Location, Point.Empty, area.Size);
+                        ribbon.IsBackstageOpen = true; FlushMotionCompositor();
+                        using var opening = new Bitmap(area.Width, area.Height);
+                        using (var graphics = Graphics.FromImage(opening)) graphics.CopyFromScreen(area.Location, Point.Empty, area.Size);
+                        before.Save(Path.Combine(directory, density + "-richtext-before.png")); opening.Save(Path.Combine(directory, density + "-richtext-opening.png"));
+                        int changed = Changed(before, opening, new(Point.Empty, area.Size));
+                        log.Add($"{density}: initial RichTextBox changed pixels={changed}");
+                        if (changed > area.Width * area.Height / 400) throw new InvalidOperationException("RichTextBox drawing flickered before the Solid fade began.");
+                        ribbon.AnimationLevel = RibbonAnimationLevel.None; ribbon.IsBackstageOpen = false; await Task.Delay(60); ribbon.AnimationLevel = RibbonAnimationLevel.Expressive;
+                    }
                     await Record(density + "-hover-open", async () =>
                     {
                         ribbon.IsBackstageOpen = true; await Task.Delay(55); Guard(); var back = Descendants(this).First(c => c.Visible && c.AccessibleName == "Back");
@@ -82,7 +98,13 @@ public partial class MainForm
         catch (Exception error) { log.Add("FAIL: " + error); Environment.ExitCode = 1; }
         finally { Cursor.Position = pointer; File.WriteAllLines(Path.Combine(directory, "result.log"), log); }
 
-        void Guard() { GetWindowThreadProcessId(GetForegroundWindow(), out uint process); if (process != Environment.ProcessId) throw new InvalidOperationException("Showcase lost foreground; input stopped."); }
+        void Guard()
+        {
+            GetWindowThreadProcessId(GetForegroundWindow(), out uint process);
+            GetWindowThreadProcessId(MotionWindowFromPoint(new(Left + 40, Top + 20)), out uint visibleProcess);
+            if (process != Environment.ProcessId || visibleProcess != Environment.ProcessId || !TraceVisible(Handle))
+                throw new InvalidOperationException("Showcase is not visibly foreground; input/capture stopped.");
+        }
         async Task Click(Control control)
         {
             Guard(); Cursor.Position = control.PointToScreen(new(control.Width / 2, control.Height / 2)); await Task.Delay(25); Guard(); DensityCaptureMouse(2, 0, 0, 0, 0); await Task.Delay(35); DensityCaptureMouse(4, 0, 0, 0, 0); await Task.Delay(60);
@@ -94,10 +116,9 @@ public partial class MainForm
             finally { DensityCaptureMouse(4, 0, 0, 0, 0); }
             await Task.Delay(45);
         }
-        async Task Record(string name, Func<Task> action, bool inspectRail)
+        async Task Record(string name, Func<Task> action, bool inspectBackstage)
         {
-            Guard(); var bounds = Bounds; var client = PointToScreen(Point.Empty); var images = new List<(long Milliseconds, bool Animating, Bitmap Image)>();
-            var initialDocument = document.RectangleToScreen(document.ClientRectangle); initialDocument.Offset(-bounds.X, -bounds.Y);
+            Guard(); var bounds = Bounds; var images = new List<(long Milliseconds, bool Animating, Bitmap Image)>();
             long committed = 0; int oldRibbonBottom = ribbon.PointToScreen(new(0, ribbon.Height)).Y - bounds.Y;
             Exception? error = null; using var stop = new CancellationTokenSource(); var watch = Stopwatch.StartNew();
             var worker = new Thread(() =>
@@ -122,35 +143,23 @@ public partial class MainForm
             try
             {
                 if (error is not null) throw error;
-                int displaced = 0, backgroundGaps = 0;
+                int blackStrips = 0;
                 foreach (var frame in images)
                 {
                     frame.Image.Save(Path.Combine(directory, $"{name}-{frame.Milliseconds:D4}.png"));
-                    if (inspectRail)
+                    if (inspectBackstage)
                     {
-                        int columns = 0; var color = ribbon.Theme.BackstageNavigationBackground;
-                        for (int x = client.X - bounds.X + (int)Math.Round(250 * DeviceDpi / 96d); x < bounds.Width - 25; x += 3)
+                        // Sample the compositor independently of the UI timer.
+                        // A tall dark strip is never page content or a soft shadow.
+                        int darkColumns = 0;
+                        for (int x = 8; x < frame.Image.Width - 8; x += 3)
                         {
-                            int matches = 0, samples = 0;
-                            for (int y = 230; y < bounds.Height - 35; y += 12)
-                            { samples++; var pixel = frame.Image.GetPixel(x, y); if (Math.Abs(pixel.R - color.R) + Math.Abs(pixel.G - color.G) + Math.Abs(pixel.B - color.B) <= 3) matches++; }
-                            if (matches > samples / 2) columns++;
+                            int dark = 0, samples = 0;
+                            for (int y = 120; y < frame.Image.Height - 50; y += 8)
+                            { samples++; var pixel = frame.Image.GetPixel(x, y); if (pixel.R < 25 && pixel.G < 25 && pixel.B < 25) dark++; }
+                            if (samples > 0 && dark > samples * .7) darkColumns++;
                         }
-                        displaced = Math.Max(displaced, columns);
-                        // Native siblings are clipped as soon as Backstage is
-                        // shown. Both the document and replacement page are
-                        // opaque here; neither should reveal the form's material
-                        // or its unpainted gray background during that handoff.
-                        int opaque = 0, backgroundSamples = 0;
-                        for (int y = initialDocument.Bottom - 65; y < initialDocument.Bottom - 15; y += 5)
-                        for (int x = Math.Max(initialDocument.Left + 15, client.X - bounds.X + (int)Math.Round(290 * DeviceDpi / 96d)); x < initialDocument.Right - 30; x += 12)
-                        {
-                            if (!new Rectangle(Point.Empty, frame.Image.Size).Contains(x, y)) continue;
-                            backgroundSamples++; var pixel = frame.Image.GetPixel(x, y);
-                            bool Near(Color target) => Math.Abs(pixel.R - target.R) + Math.Abs(pixel.G - target.G) + Math.Abs(pixel.B - target.B) <= 9;
-                            if (Near(document.BackColor) || Near(ribbon.Theme.Surface)) opaque++;
-                        }
-                        if (backgroundSamples > 0 && opaque < backgroundSamples * .8) backgroundGaps++;
+                        if (darkColumns > 2) blackStrips++;
                     }
                 }
                 int documentChanges = 0, editorChanges = 0;
@@ -164,10 +173,9 @@ public partial class MainForm
                     var editorBounds = Descendants(ribbon).Where(c => c.Visible && (c.Name == nameInput.Id || c.Name == fontInput.Id) && c is TextBoxBase or ComboBox).Select(c => { var r = c.RectangleToScreen(c.ClientRectangle); r.Offset(-bounds.X, -bounds.Y); return r; }).ToArray();
                     editorChanges = images.Where(f => f.Milliseconds >= committed + 35 && !f.Animating).Select(f => editorBounds.Sum(r => Changed(f.Image, images[^1].Image, r))).DefaultIfEmpty().Max();
                 }
-                log.Add($"{name}: frames={images.Count}, active frames={images.Count(f => f.Animating)}, displaced navigation columns={displaced}, opening background gaps={backgroundGaps}, document changes={documentChanges}, settled editor changes={editorChanges}");
+                log.Add($"{name}: frames={images.Count}, active frames={images.Count(f => f.Animating)}, black strips={blackStrips}, document changes={documentChanges}, settled editor changes={editorChanges}");
                 File.WriteAllLines(Path.Combine(directory, "progress.log"), log);
-                if (inspectRail && displaced > 3) throw new InvalidOperationException("Navigation drawing appeared over the application page.");
-                if (backgroundGaps > 0) throw new InvalidOperationException("Native document drawing disappeared before its opaque Backstage replacement was painted.");
+                if (blackStrips > 0) throw new InvalidOperationException("A tall black strip appeared beside the moving Backstage page.");
                 if (documentChanges > 4 || editorChanges > 4) throw new InvalidOperationException("Document or native editor pixels flashed outside the intended animation.");
             }
             finally { foreach (var frame in images) frame.Image.Dispose(); }
@@ -201,6 +209,17 @@ public partial class MainForm
     }
 
     // Diagnostic capture of the actual Showcase pages; no replacement page tree.
+    internal async Task CaptureBackstageOpening(string directory)
+    {
+        foreach (var backdrop in new[] { RibbonWindowBackdrop.None, RibbonWindowBackdrop.Mica, RibbonWindowBackdrop.Acrylic })
+        foreach (var opacity in backdrop == RibbonWindowBackdrop.None ? new[] { 1f } : new[] { 0f, 1f })
+        {
+            ribbon.AnimationLevel = RibbonAnimationLevel.None; ribbon.IsBackstageOpen = false;
+            Backdrop = backdrop; ribbon.Backstage.NavigationBackgroundOpacity = opacity;
+            await CaptureMotionInput(Path.Combine(directory, $"{backdrop}-{opacity}"), interactionsOnly: true, openingOnly: true);
+            if (Environment.ExitCode != 0) return;
+        }
+    }
     internal async Task CaptureBackstageMotion(string directory)
     {
         Directory.CreateDirectory(directory); List<string> log = []; var cursor = Cursor.Position;
@@ -263,5 +282,7 @@ public partial class MainForm
         }
     }
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint window);
+    [DllImport("user32.dll", EntryPoint = "WindowFromPoint")] private static extern nint MotionWindowFromPoint(Point point);
+    [DllImport("dwmapi.dll", EntryPoint = "DwmFlush")] private static extern int FlushMotionCompositor();
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(nint window, out uint process);
 }

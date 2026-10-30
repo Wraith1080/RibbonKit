@@ -38,10 +38,6 @@ internal sealed class RibbonMotionWindow : NativeWindow, IDisposable
         if (_clipOwner is null && motion.BehindWindow is var above && above != 0)
             SetWindowPos(Handle, above, 0, 0, 0, 0, 0x0213); // NOOWNERZORDER | NOACTIVATE | NOMOVE | NOSIZE
     }
-    internal void RenderBackstage(RibbonBackstageMotion motion, double progress)
-    {
-        Prepare(motion.Bounds); motion.Draw(_graphics!, _alpha, progress); Present();
-    }
     internal void RenderDismissal(Bitmap image, Rectangle bounds, double opacity, int offset)
     {
         Prepare(bounds); _graphics!.Clear(Color.Transparent); _alpha.SetColorMatrix(new ColorMatrix { Matrix33 = (float)opacity });

@@ -158,7 +158,7 @@ adds a gentle horizontal spring before the pill settles; Subtle keeps a bounded
 ease-out. Hovered unselected tabs use themed grey. The library commits real layout once and owns the inert drawings and
 completion. System-disabled client animations, startup, batch updates and unsafe
 presentation contexts keep immediate changes. Input and interruption settle the
-latest committed state. `IsAnimating` reports geometry, group, message-panel, popup and Backstage/page motion. Application
+latest committed state. `IsAnimating` reports geometry, group, message-panel, popup and Backstage motion. Application
 content currently reflows immediately; optional host synchronization is next work.
 
 Adaptive Classic group collapse/restore and Simplified inline overflow/return also
@@ -196,15 +196,19 @@ real popup/editors immediately and fades/slides an inert drawing away over
 None, system policy and update batches retain immediate dismissal; a new request,
 resize, movement, deactivation or disposal releases the outgoing drawing.
 
-Backstage navigation fades and slides in from the left, using 220 ms / 28 logical
-pixels for Subtle and 308 ms / 50 for Expressive. Application pages also fade on
-opening and page selection, using native opacity over an opaque Backstage
-background. They stay live at their final bounds and are never captured as bitmaps.
-The Backstage drawing layer stays opaque after a fade while the surface is visible,
-so native TextBoxes do not cross a layer teardown/repaint at each endpoint. It is
-released when hidden or disposed. In RibbonForm, in-window drawings are clipped
-by the native parent frame, preserving its caption and rounded corners.
-Back/Escape and visibility requests fade out Backstage after validation accepts
+The complete Backstage surface starts 85% visible and slides right into place;
+closing moves it 15% left before hiding it, using 220 ms for Subtle and 308 ms for
+Expressive. Navigation, page frame and live native pages travel together at their
+normal size. The integrated RibbonForm title-bar tint follows the same edge.
+The QAT is hidden throughout Backstage opening, display and closing; its authored
+visibility, placement and commands return when Backstage closes. Caption buttons
+stay in place. Opening and closing also fade the surface and caption tint to
+soften their appearance/disappearance. Page switches remain immediate.
+Application controls retain their native handles, parents,
+values and selection. Backstage page controls are never captured or printed.
+Solid opening temporarily holds the already-composed document drawing beneath
+the fade to prevent native RichTextBox repaint flicker, then releases that image.
+Back/Escape and visibility requests slide out Backstage after validation accepts
 closing. `IsBackstageOpen` stays true until completion, then the normal close events
 and focus restoration run once. Reopening cancels a pending close; new input can
 finish it without activating the outgoing page. Command, mode and modal transitions
@@ -1157,20 +1161,25 @@ fallback remains opaque. Showcase exposes **Transparent Backstage** in its Backd
 menu when material is active; this option uses a fully clear rail background.
 Neither setting changes application window opacity.
 
-Transparent Backstage closing fades one composed image, including its page
-background, so navigation does not disappear before a lingering white rectangle.
-It copies the visible panel once; it does not print native page controls or change
-their parents/handles. Reopening restores the live panel, and input/unsafe changes
-settle closing. Opening and page switching retain their live native-page paths.
-Unavailable, off-screen or oversized capture uses an immediate close. Solid-mode
-closing is unchanged. [Backdrop appearance review and evidence](docs/M4I2-APPEARANCE-INVENTORY.md#backdrop-state-and-closing-review--2026-10-30).
+Solid and transparent/material Backstage use the same complete-surface slide.
+Native material layers repaint as the surface moves and fades so page fields remain
+visible. Moving pages discard clipped cached pixels to prevent a black edge strip.
+Reopening restores the open location; input and unsafe changes settle the motion.
+[Current Backstage motion and evidence](docs/M4I2-APPEARANCE-INVENTORY.md#whole-surface-backstage-and-caption-slide--2026-10-30).
 
-Office Backstage pages have a soft left/top shadow in Solid and material modes.
-The page reserves six logical pixels above it, and navigation leaves the matching
-left-shadow band clear. `BodyShadowColor` supplies the shared shadow colour;
-Transparent disables it. `RibbonRenderer.GetBackstagePageShadowInset` is the
-layout/paint hook: Office returns the scaled clearance, while neutral stays flat.
-The shadow is clipped below the caption and does not add a bottom/right edge.
+Solid Office Backstage pages sit flush below the title bar with a thin grey top/
+left `Border` and only their top-left corner rounded. There is no reserved grey
+shadow band. `GetBackstagePageBorderWidth` and `GetBackstagePageCornerRadius` share
+the frame dimensions with the native page clip; other corners stay square.
+Material mode keeps the soft left/top shadow and six-logical-pixel clearance,
+using `BodyShadowColor` and `GetBackstagePageShadowInset`. Neutral stays flat.
+The page frame does not paint into the caption or add a bottom/right edge.
+
+While Backstage is open, the integrated `RibbonForm` title bar matches its
+navigation background, including the navigation-opacity preference over material.
+The tint slides with Backstage while the QAT is hidden. Closing uncovers the normal
+caption background and restores the QAT without changing the authored theme,
+toolbar preferences or window style.
 
 Custom renderers receive a transparent paint-time `Theme.Background` for the material
 surrounding ribbon background without changing `ribbon.Theme` or `Theme.Surface`.

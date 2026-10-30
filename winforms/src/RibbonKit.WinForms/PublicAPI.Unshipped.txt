@@ -1,4 +1,9 @@
 #nullable enable
+virtual RibbonKit.WinForms.RibbonRenderer.GetBackstagePageBorderWidth(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int
+virtual RibbonKit.WinForms.RibbonRenderer.GetBackstagePageCornerRadius(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int
+override RibbonKit.WinForms.RibbonOffice2024Renderer.GetBackstagePageBorderWidth(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int
+override RibbonKit.WinForms.RibbonOffice2024Renderer.GetBackstagePageCornerRadius(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int
+override RibbonKit.WinForms.RibbonOffice2024Renderer.DrawBackstageBackground(RibbonKit.WinForms.RibbonPaintContext context, int navigationWidth) -> void
 virtual RibbonKit.WinForms.RibbonRenderer.GetBackstagePageShadowInset(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int
 override RibbonKit.WinForms.RibbonOffice2024Renderer.GetBackstagePageShadowInset(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int
 RibbonKit.WinForms.RibbonTheme.BackdropHover.get -> RibbonKit.WinForms.RibbonFill?

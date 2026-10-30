@@ -96,12 +96,7 @@ internal static class Program
                 await Task.Yield();
                 try
                 {
-                    foreach (var backdrop in new[] { RibbonWindowBackdrop.None, RibbonWindowBackdrop.Acrylic })
-                    {
-                        form.Backdrop = backdrop;
-                        await form.CaptureMotionInput(Path.Combine(args[1], backdrop.ToString()), interactionsOnly: true, openingOnly: true);
-                        if (Environment.ExitCode != 0) break;
-                    }
+                    await form.CaptureBackstageOpening(args[1]);
                 }
                 finally { form.Close(); }
             };

@@ -12,6 +12,29 @@ public partial class RibbonControl
     internal int BackdropHeaderHeight => WindowCaptionHeight + RibbonLayoutEngine.Scale(LayoutTheme.TabHeight, DeviceDpi);
     private RibbonBackdropBuffer? _backdropBuffer;
     private RibbonTheme? _backdropThemeSource, _backdropTheme;
+    internal Color CaptionBackground(bool composited) => IsBackstageOpen
+        ? Color.FromArgb((int)Math.Round((HasWindowBackdrop ? Backstage.NavigationBackgroundOpacity : 1) *
+            (_backstageMotion is { IsRunning: true } motion ? motion.Opacity : 255)), Theme.BackstageNavigationBackground)
+        : composited ? Color.Transparent : Theme.Background;
+    internal void PaintCaptionBackground(Graphics graphics, Rectangle bounds, bool composited)
+    {
+        using var normal = new SolidBrush(composited ? Color.Transparent : Theme.Background);
+        graphics.FillRectangle(normal, bounds);
+        if (!IsBackstageOpen) return;
+        int width = _backstageMotion is { IsRunning: true } motion ? motion.VisibleWidth : Width;
+        var tint = Rectangle.Intersect(bounds, new Rectangle(0, 0, width, WindowCaptionHeight));
+        using var background = new SolidBrush(CaptionBackground(composited));
+        graphics.FillRectangle(background, tint);
+    }
+    internal void InvalidateBackstageCaption()
+    {
+        if (!IsDisposed && HasWindowCaption)
+        {
+            WindowHost!.InvalidateCaption();
+            // Paint in the same timer turn as the native surface move.
+            Update(); WindowHost.Update();
+        }
+    }
     internal RibbonTheme WindowPaintTheme
     {
         get

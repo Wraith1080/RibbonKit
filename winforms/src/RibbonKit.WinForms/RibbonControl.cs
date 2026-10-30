@@ -497,7 +497,8 @@ public partial class RibbonControl : Control, ISupportInitialize
         PaintMessages(context);
         if (!_snapshot.BodyBounds.IsEmpty) Painter.DrawBody(context with { Bounds = _snapshot.BodyFrameBounds, IsBottomEdgeConnected = MessageBar.HasOpenMessages && MessageTopConnected });
         if (HasWindowCaption) WindowHost!.PaintCaption(e.Graphics, this, composited);
-        if (!_snapshot.QuickAccessBounds.IsEmpty) Painter.DrawQuickAccessToolbar(context with { Bounds = _snapshot.QuickAccessBounds,
+        if (!_snapshot.QuickAccessBounds.IsEmpty) Painter.DrawQuickAccessToolbar(context with
+            { Bounds = _snapshot.QuickAccessBounds,
             IsQuickAccessToolbarJoined = JoinBelowRibbonQuickAccess && !_snapshot.BodyBounds.IsEmpty,
             IsBottomEdgeConnected = MessageBar.HasOpenMessages && MessageTopConnected }, EffectiveQuickAccessPosition);
         PaintMessageContents(context);

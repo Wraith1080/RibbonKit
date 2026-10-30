@@ -61,7 +61,7 @@ public sealed class WindowMotionRegressionTests
     }
 
     [Fact]
-    public void Backstage_TextBox_fades_keep_one_opaque_surface_until_hidden_and_release_it_on_close() => FoundationTests.Sta(() =>
+    public void Backstage_slides_and_immediate_page_switches_keep_one_opaque_layer_until_hidden() => FoundationTests.Sta(() =>
     {
         using var form = new RibbonForm { Width = 1000, Height = 650 }; var ribbon = new RibbonControl { FileMenuMode = RibbonFileMenuMode.Backstage };
         using var info = new Panel(); using var name = new TextBox { Text = "Document", Location = new(28, 143) }; using var notes = new TextBox { Multiline = true, Text = "Native notes", Location = new(28, 218), Size = new(440, 115) };
@@ -71,7 +71,7 @@ public sealed class WindowMotionRegressionTests
         ribbon.Motion.SystemPolicyOverride = true; ribbon.AnimationLevel = RibbonAnimationLevel.Subtle; ribbon.IsBackstageOpen = true;
         var surface = ribbon.BackstageSurface!; using var probe = new LayerProbe(surface.Handle); nint nameHandle = name.Handle, notesHandle = notes.Handle;
         Finish(ribbon); AssertOpaque();
-        foreach (var page in new[] { b, a, b, a }) { ribbon.Backstage.SelectedPage = page; Assert.True(ribbon.IsAnimating); Finish(ribbon); AssertOpaque(); }
+        foreach (var page in new[] { b, a, b, a }) { ribbon.Backstage.SelectedPage = page; Assert.False(ribbon.IsAnimating); AssertOpaque(); }
         Assert.Equal(0, probe.VisibleLayerRemovals); Assert.Equal(nameHandle, name.Handle); Assert.Equal(notesHandle, notes.Handle); Assert.Equal("Document", name.Text); Assert.Equal("Native notes", notes.Text);
         ribbon.IsBackstageOpen = false; Finish(ribbon); Assert.False(RibbonDrawingHold.HasOpacity(surface.Handle)); Assert.False(surface.Visible);
         Assert.Equal(0, probe.VisibleLayerRemovals);
@@ -85,7 +85,7 @@ public sealed class WindowMotionRegressionTests
         using var page = new TextBox { Text = "Application" }; ribbon.Backstage.Items.Add(new RibbonBackstagePageItem { Text = "Info", Content = page }); form.Controls.Add(ribbon); form.Show(); Application.DoEvents(); ribbon.IsBackstageOpen = true;
         var surface = ribbon.BackstageSurface!; using var appOpacity = RibbonDrawingHold.Create(surface.Handle, 128);
         ribbon.AnimationLevel = RibbonAnimationLevel.Subtle; ribbon.Motion.SystemPolicyOverride = true;
-        Assert.Null(RibbonBackstageMotion.PrepareFade(ribbon, surface, form, false)); ribbon.IsBackstageOpen = false;
+        Assert.Null(RibbonBackstageMotion.Prepare(ribbon, surface, form)); ribbon.IsBackstageOpen = false;
         Assert.True(GetLayeredWindowAttributes(surface.Handle, out _, out byte alpha, out _)); Assert.Equal(128, alpha);
     });
 

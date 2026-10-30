@@ -8,7 +8,7 @@ public sealed class BackdropClosingTests
     [Theory]
     [InlineData(RibbonWindowBackdrop.Mica, 0f)] [InlineData(RibbonWindowBackdrop.Mica, .65f)] [InlineData(RibbonWindowBackdrop.Mica, 1f)]
     [InlineData(RibbonWindowBackdrop.Acrylic, 0f)] [InlineData(RibbonWindowBackdrop.Acrylic, .65f)] [InlineData(RibbonWindowBackdrop.Acrylic, 1f)]
-    public void Closing_fades_one_composed_panel_and_reopening_restores_the_live_page(RibbonWindowBackdrop material, float navigationOpacity) => FoundationTests.Sta(() =>
+    public void Closing_slides_the_live_panel_and_reopening_restores_its_location(RibbonWindowBackdrop material, float navigationOpacity) => FoundationTests.Sta(() =>
     {
         if (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621) || SystemInformation.HighContrast) return;
         using var host = new RibbonForm { StartPosition = FormStartPosition.Manual, Bounds = new(180, 120, 950, 650), Backdrop = material };
@@ -25,10 +25,12 @@ public sealed class BackdropClosingTests
         surface.Refresh(); Assert.Equal(255, painter.LastPageAlpha);
 
         ribbon.IsBackstageOpen = false; Assert.True(ribbon.BackstageOpeningMotion!.IsClosing);
-        Assert.Equal(navigationOpacity == 1, surface.Visible);
+        Assert.True(surface.Visible);
         Assert.Equal(surface.RectangleToScreen(surface.ClientRectangle), ribbon.BackstageOpeningMotion.Bounds);
         Assert.Equal(0, page.PrintRequests); Assert.Equal(handle, field.Handle); Assert.Same(parent, page.Parent);
         Assert.True(ribbon.IsBackstageOpen); Assert.Equal(0, closed);
+        ribbon.BackstageOpeningMotion.SetProgress(.25); Assert.True(surface.Left < 0);
+        Assert.True(GetLayeredWindowAttributes((navigationOpacity < 1 ? surface.PageArea : surface).Handle, out _, out byte movingAlpha, out _)); Assert.InRange(movingAlpha, 2, 254);
 
         ribbon.IsBackstageOpen = true; surface.Refresh();
         Assert.False(ribbon.IsAnimating); Assert.True(surface.Visible); Assert.Equal(255, painter.LastPageAlpha); Assert.Equal(0, closed);
@@ -38,7 +40,7 @@ public sealed class BackdropClosingTests
         if (navigationOpacity < 1)
         {
             var input = Message.Create(host.Handle, 0x100, (nint)Keys.A, 0);
-            Assert.True(ribbon.ObserveMotionInput(ref input)); // Do not type through the fading panel into the document.
+            Assert.True(ribbon.ObserveMotionInput(ref input)); // Do not type through the outgoing surface into the document.
         }
         else ribbon.SettleMotion();
         Assert.False(ribbon.IsBackstageOpen); Assert.Equal(1, closed);

@@ -6,33 +6,6 @@ namespace RibbonKit.WinForms.Tests;
 
 public sealed class BackstageMotionTests
 {
-    [Fact]
-    public void Opening_paints_the_replacement_background_before_showing_the_translucent_surface() => FoundationTests.Sta(() =>
-    {
-        using var f = new Fixture(false);
-        var previous = f.Ribbon.Renderer;
-        var probe = new BackgroundProbe(); f.Ribbon.Renderer = probe; previous?.Dispose();
-        f.Ribbon.AnimationLevel = RibbonAnimationLevel.Expressive;
-        f.Ribbon.IsBackstageOpen = true; f.Ribbon.SettleMotion(); f.Close();
-        var surface = f.Ribbon.BackstageSurface!; int paintedWhileHidden = 0;
-        probe.Painted = () => { if (!surface.Visible) paintedWhileHidden++; };
-        bool observed = false;
-        surface.VisibleChanged += (_, _) =>
-        {
-            if (!surface.Visible) return;
-            observed = true;
-            Assert.True(paintedWhileHidden > 0, "Native content was clipped before its replacement background painted.");
-        };
-        f.Ribbon.IsBackstageOpen = true;
-        Assert.True(observed); Assert.True(f.Ribbon.IsAnimating);
-        Assert.Equal(0, f.Page.PrintRequests);
-    });
-    private sealed class BackgroundProbe : RibbonRenderer
-    {
-        internal Action? Painted;
-        public override void DrawBackstageBackground(RibbonPaintContext context, int navigationWidth)
-        { base.DrawBackstageBackground(context, navigationWidth); Painted?.Invoke(); }
-    }
     private sealed class Fixture : IDisposable
     {
         internal readonly Form Host = new() { Size = new(1050, 720) };
@@ -63,34 +36,34 @@ public sealed class BackstageMotionTests
 
     [Theory] [InlineData(false, RibbonAnimationLevel.Subtle)] [InlineData(true, RibbonAnimationLevel.Subtle)]
     [InlineData(false, RibbonAnimationLevel.Expressive)] [InlineData(true, RibbonAnimationLevel.Expressive)]
-    public void Opening_only_holds_navigation_and_capture_never_prints_or_reparents_application_content(bool office, RibbonAnimationLevel level) => FoundationTests.Sta(() =>
+    public void Complete_surface_slides_and_fades_without_printing_or_reparenting_pages(bool office, RibbonAnimationLevel level) => FoundationTests.Sta(() =>
     {
         using var f = new Fixture(office); f.Ribbon.AnimationLevel = level; f.Ribbon.IsBackstageOpen = true;
-        Assert.True(f.Ribbon.IsBackstageOpen); Assert.True(f.Ribbon.IsAnimating, $"Navigation={f.Ribbon.BackstageSurface!.NavigationBounds}; eligible={f.Ribbon.CanAnimatePopupOpening}; system={f.Ribbon.Motion.SystemEnabled}"); var surface = f.Ribbon.BackstageSurface!; var bounds = f.Page.Bounds; var parent = f.Page.Parent; nint handle = f.Field.Handle;
-        Assert.True(f.Page.Visible); Assert.Equal(0, f.Page.PrintRequests); Assert.False(RibbonDrawingHold.HasOpacity(f.Page.Handle)); Assert.False(RibbonDrawingHold.HasOpacity(f.Field.Handle));
-        Assert.All(surface.NavigationControls, c => Assert.True(RibbonDrawingHold.HasOpacity(c.Handle)));
-        f.Ribbon.SettleMotion(); Assert.False(f.Ribbon.IsAnimating); Assert.All(surface.NavigationControls, c => Assert.False(RibbonDrawingHold.HasOpacity(c.Handle)));
-        Assert.Equal(bounds, f.Page.Bounds); Assert.Same(parent, f.Page.Parent); Assert.Equal(handle, f.Field.Handle); Assert.Equal("Untitled", f.Field.Text);
-        f.Close(); Assert.False(f.Ribbon.IsAnimating); f.Ribbon.IsBackstageOpen = true; Assert.True(f.Ribbon.IsAnimating); Assert.Same(parent, f.Page.Parent); Assert.Equal(handle, f.Field.Handle); Assert.Equal(0, f.Page.PrintRequests);
-    });
-
-    [Theory] [InlineData(RibbonAnimationLevel.Subtle)] [InlineData(RibbonAnimationLevel.Expressive)]
-    public void Navigation_drawing_fades_and_travels_horizontally_at_natural_size(RibbonAnimationLevel level) => FoundationTests.Sta(() =>
-    {
-        using var f = new Fixture(true); f.Ribbon.AnimationLevel = level; f.Ribbon.IsBackstageOpen = true; var motion = f.Ribbon.BackstageOpeningMotion!; var frames = new List<Bitmap>();
-        try
+        var surface = f.Ribbon.BackstageSurface!; var motion = f.Ribbon.BackstageOpeningMotion!;
+        var pageBounds = f.Page.Bounds; var parent = f.Page.Parent; nint handle = f.Field.Handle;
+        Assert.True(f.Ribbon.IsAnimating); Assert.InRange(surface.Right / (double)surface.Width, .849, .851); int start = surface.Left;
+        Assert.True(RibbonDrawingHold.HasOpacity(surface.Handle)); Assert.Equal(1, motion.Opacity); Assert.True(f.Page.Visible);
+        int previous = surface.Left;
+        foreach (double progress in new[] { .1, .25, .5, 1 })
         {
-            foreach (double progress in new[] { 0, .5, 1 })
-            {
-                var frame = new Bitmap(motion.Bounds.Width, motion.Bounds.Height, PixelFormat.Format32bppPArgb); frames.Add(frame); using var g = Graphics.FromImage(frame); using var alpha = new ImageAttributes(); motion.Draw(g, alpha, progress);
-            }
-            Assert.True(Pink(frames[0]).IsEmpty); var middle = Pink(frames[1]); var last = Pink(frames[2]); Assert.False(last.IsEmpty); Assert.Equal(last.Size, middle.Size); Assert.Equal(last.Top, middle.Top); Assert.True(middle.Left < last.Left);
-            Assert.InRange(frames[1].GetPixel(middle.Left, middle.Top).G, 1, 254); Assert.Equal(0, f.Page.PrintRequests);
-            string directory = Path.Combine("TestResults", "visual", "m6a-backstage"); Directory.CreateDirectory(directory); for (int i = 0; i < frames.Count; i++) frames[i].Save(Path.Combine(directory, $"{level}-{i}.png"));
+            motion.SetProgress(progress);
+            Assert.True(surface.Left > previous); previous = surface.Left;
+            Assert.InRange(motion.Opacity, 1, 255);
+            if (progress == .5) Assert.InRange(motion.Opacity, 127, 128);
+            Assert.Equal(surface.PointToScreen(Point.Empty).X + surface.PageArea.Left + parent!.Left + f.Page.Left, f.Page.PointToScreen(Point.Empty).X);
+            Assert.Equal(pageBounds, f.Page.Bounds); Assert.Same(parent, f.Page.Parent); Assert.Equal(handle, f.Field.Handle);
+            Assert.False(RibbonDrawingHold.HasOpacity(f.Page.Handle)); Assert.False(RibbonDrawingHold.HasOpacity(f.Field.Handle));
         }
-        finally { foreach (var image in frames) image.Dispose(); }
+        Assert.Equal(0, surface.Left); Assert.Equal(255, motion.Opacity); f.Ribbon.SettleMotion();
+        f.Ribbon.IsBackstageOpen = false; var closing = f.Ribbon.BackstageOpeningMotion!;
+        Assert.True(closing.IsClosing); closing.SetProgress(.25); Assert.True(surface.Left < 0); Assert.True(surface.Visible);
+        int? hiddenAt = null; surface.VisibleChanged += (_, _) => { if (!surface.Visible) hiddenAt = surface.Left; };
+        closing.SetProgress(1); Assert.Equal(1, closing.Opacity); Assert.Equal(start, surface.Left); Assert.InRange(surface.Right / (double)surface.Width, .849, .851); f.Ribbon.SettleMotion();
+        Assert.Equal(start, hiddenAt);
+        Assert.False(f.Ribbon.IsBackstageOpen); Assert.Equal(0, surface.Left); Assert.Equal(0, f.Page.PrintRequests);
+        f.Ribbon.IsBackstageOpen = true; Assert.True(f.Ribbon.IsAnimating); Assert.Equal(start, surface.Left);
+        Assert.Equal(handle, f.Field.Handle); Assert.Equal("Untitled", f.Field.Text);
     });
-
     [Fact]
     public void Policies_input_mutation_resize_and_cancelled_close_settle_without_changing_backstage_semantics() => FoundationTests.Sta(() =>
     {
@@ -114,16 +87,19 @@ public sealed class BackstageMotionTests
     });
 
     [Fact]
-    public void Live_page_opening_and_page_switch_fade_native_parents_without_capturing_content() => FoundationTests.Sta(() =>
+    public void Page_switches_are_immediate_and_keep_native_handles_selection_and_values() => FoundationTests.Sta(() =>
     {
-        using var f = new Fixture(true); using var second = new TextBox { Text = "Print settings" }; var page = new RibbonBackstagePageItem { Text = "Print", Content = second }; f.Ribbon.Backstage.Items.Add(page);
-        f.Ribbon.AnimationLevel = RibbonAnimationLevel.Subtle; f.Ribbon.IsBackstageOpen = true; var surface = f.Ribbon.BackstageSurface!;
-        Assert.True(GetLayeredWindowAttributes(surface.Handle, out _, out byte opening, out _)); Assert.Equal(1, opening); nint handle = f.Field.Handle; var parent = f.Page.Parent; f.Ribbon.SettleMotion();
-        f.Ribbon.Backstage.SelectedPage = page; Assert.True(f.Ribbon.IsAnimating); Assert.True(GetLayeredWindowAttributes(surface.Handle, out _, out byte switching, out _)); Assert.Equal(1, switching); Assert.True(second.Visible); f.Ribbon.SettleMotion();
-        Assert.False(RibbonDrawingHold.HasOpacity(surface.PageArea.Handle)); Assert.Equal("Print settings", second.Text); f.Ribbon.Backstage.SelectedPage = (RibbonBackstagePageItem)f.Ribbon.Backstage.Items[0]; Assert.True(f.Ribbon.IsAnimating); f.Ribbon.SettleMotion();
-        Assert.Same(parent, f.Page.Parent); Assert.Equal(handle, f.Field.Handle); Assert.Equal(0, f.Page.PrintRequests); Assert.False(RibbonDrawingHold.HasOpacity(f.Page.Handle));
+        using var f = new Fixture(true); using var second = new TextBox { Text = "Print settings" };
+        var page = new RibbonBackstagePageItem { Text = "Print", Content = second }; f.Ribbon.Backstage.Items.Add(page);
+        f.Ribbon.AnimationLevel = RibbonAnimationLevel.Subtle; f.Ribbon.IsBackstageOpen = true;
+        var surface = f.Ribbon.BackstageSurface!; nint handle = f.Field.Handle; var parent = f.Page.Parent;
+        f.Field.Select(2, 3); f.Ribbon.Backstage.SelectedPage = page;
+        Assert.False(f.Ribbon.IsAnimating); Assert.Equal(0, surface.Left); Assert.True(second.Visible);
+        f.Ribbon.Backstage.SelectedPage = (RibbonBackstagePageItem)f.Ribbon.Backstage.Items[0];
+        Assert.False(f.Ribbon.IsAnimating); Assert.Same(parent, f.Page.Parent); Assert.Equal(handle, f.Field.Handle);
+        Assert.Equal(2, f.Field.SelectionStart); Assert.Equal(3, f.Field.SelectionLength); Assert.Equal("Print settings", second.Text);
+        Assert.Equal(0, f.Page.PrintRequests); Assert.Equal(255, surface.MotionAlpha);
     });
-
     [Fact]
     public void Closing_completes_once_and_reopening_or_new_input_resolves_the_pending_close() => FoundationTests.Sta(() =>
     {
@@ -131,7 +107,7 @@ public sealed class BackstageMotionTests
         f.Ribbon.IsBackstageOpen = true; f.Ribbon.SettleMotion(); var surface = f.Ribbon.BackstageSurface!;
         f.Ribbon.IsBackstageOpen = false; Assert.True(f.Ribbon.IsBackstageOpen); Assert.True(f.Ribbon.BackstageOpeningMotion!.IsClosing); Assert.Equal(0, closed);
         f.Ribbon.IsBackstageOpen = true; Assert.True(f.Ribbon.IsBackstageOpen); Assert.False(f.Ribbon.IsAnimating); Assert.Equal(0, closed);
-        Assert.True(GetLayeredWindowAttributes(surface.Handle, out _, out byte restored, out _)); Assert.Equal(255, restored);
+        Assert.Equal(0, surface.Left); Assert.Equal(255, surface.MotionAlpha);
         f.Ribbon.IsBackstageOpen = false; var input = Message.Create(f.Field.Handle, 0x100, (nint)Keys.A, 0); Assert.True(f.Ribbon.ObserveMotionInput(ref input)); Assert.False(f.Ribbon.IsBackstageOpen); Assert.Equal(1, closed); Assert.Equal("Untitled", f.Field.Text); Assert.False(RibbonDrawingHold.HasOpacity(surface.Handle));
         f.Ribbon.IsBackstageOpen = true; f.Ribbon.IsBackstageOpen = false; Assert.True(f.Ribbon.IsAnimating); f.Ribbon.AnimationLevel = RibbonAnimationLevel.None; Assert.False(f.Ribbon.IsBackstageOpen); Assert.Equal(2, closed); Assert.False(f.Ribbon.IsAnimating);
     });
@@ -146,16 +122,5 @@ public sealed class BackstageMotionTests
         f.Ribbon.IsBackstageOpen = false; Assert.Throws<InvalidOperationException>(() => f.Ribbon.SettleMotion()); Assert.False(f.Ribbon.IsBackstageOpen); Assert.False(f.Ribbon.IsAnimating); Assert.False(RibbonDrawingHold.HasOpacity(surface.Handle)); f.Ribbon.Backstage.Closed -= fail;
     });
 
-    [DllImport("user32.dll")] private static extern bool GetLayeredWindowAttributes(nint window, out uint color, out byte alpha, out uint flags);
 
-    private static Rectangle Pink(Bitmap image)
-    {
-        int left = image.Width, top = image.Height, right = -1, bottom = -1; var data = image.LockBits(new(Point.Empty, image.Size), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb); int[] row = new int[image.Width];
-        try
-        {
-            for (int y = 0; y < image.Height; y++) { Marshal.Copy(data.Scan0 + y * data.Stride, row, 0, row.Length); for (int x = 0; x < row.Length; x++) { var c = Color.FromArgb(row[x]); if (c.R > 245 && c.B > 245 && c.G < 240) { left = Math.Min(left, x); top = Math.Min(top, y); right = Math.Max(right, x); bottom = Math.Max(bottom, y); } } }
-        }
-        finally { image.UnlockBits(data); }
-        return right < 0 ? Rectangle.Empty : Rectangle.FromLTRB(left, top, right + 1, bottom + 1);
-    }
 }

@@ -66,6 +66,7 @@ public partial class RibbonForm
                 else { _backdropOwned = true; ReleaseNativeBackdrop(); }
             }
             else ReleaseNativeBackdrop();
+            _ribbon?.RefreshBackstage(); // Material and Solid pages use different frame geometry/clips.
             Invalidate(true); _ribbon?.Invalidate(true);
             if (!RecreatingHandle) RefreshOpaquePanels(this);
         }

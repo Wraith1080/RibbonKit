@@ -42,7 +42,7 @@ public partial class RibbonControl
     internal bool CanAnimateHeaderArrival => AnimationLevel != RibbonAnimationLevel.None && _motion?.Changing != true && _updateDepth == 0 && !_disposing && IsHandleCreated && Visible && SelectedTab is not null;
     internal bool CanAnimatePopupOpening => _updateDepth == 0 && !_disposing && IsHandleCreated && Enabled && !IsInDesignMode;
     internal bool CanAnimateMessageChange => AnimationLevel != RibbonAnimationLevel.None && _motion?.Changing != true && _updateDepth == 0 && !_disposing && IsHandleCreated && Visible;
-    /// <summary>Gets or sets opt-in geometry, group, tab/header, message-panel, popup and Backstage/page motion. None preserves immediate presentation. Applications own this appearance preference.</summary>
+    /// <summary>Gets or sets opt-in geometry, group, tab/header, message-panel, popup and whole-surface Backstage motion. None preserves immediate presentation. Applications own this appearance preference.</summary>
     [Category("Appearance"), DefaultValue(RibbonAnimationLevel.None)]
     public RibbonAnimationLevel AnimationLevel
     {
@@ -56,7 +56,7 @@ public partial class RibbonControl
         get => _tabContentAnimation;
         set { VerifyAccess(); if (!Enum.IsDefined(value)) throw new ArgumentOutOfRangeException(nameof(value)); if (_tabContentAnimation == value) return; _groupMotion?.Settle(); _motion?.Settle(); _tabContentAnimation = value; }
     }
-    /// <summary>Gets whether geometry, group, message-panel, popup or Backstage/page motion is active. Animated Backstage closing retains visibility until completion; geometry and message drawings follow committed layout.</summary>
+    /// <summary>Gets whether geometry, group, message-panel, popup or Backstage motion is active. Animated Backstage closing retains visibility until completion; geometry and message drawings follow committed layout.</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool IsAnimating => _groupMotion?.IsRunning == true || _motion?.IsRunning == true || _popups.IsAnimating || _backstageMotion?.IsRunning == true;
     internal void SettleMotion() { if (_groupMotion is { Changing: false }) _groupMotion.Settle(); if (_motion is { Changing: false }) _motion.Settle(); _popups?.SettleMotion(); _backstageMotion?.Dispose(); }

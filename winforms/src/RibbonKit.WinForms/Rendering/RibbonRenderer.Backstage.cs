@@ -5,13 +5,17 @@ namespace RibbonKit.WinForms;
 
 public partial class RibbonRenderer
 {
-    /// <summary>Gets the page's top and navigation-side shadow clearance in device pixels. Zero keeps a flat page. Layout and background drawing share this value, clamped to available space and 32 logical pixels.</summary>
+    /// <summary>Gets the material page's top and navigation-side shadow clearance in device pixels. Solid mode does not reserve this space. Layout and background drawing share this value, clamped to available space and 32 logical pixels.</summary>
     public virtual int GetBackstagePageShadowInset(RibbonTheme theme, int deviceDpi) => 0;
+    /// <summary>Gets the Solid page's top/left border width in device pixels. The default is zero. Background drawing and the native page inset share this value.</summary>
+    public virtual int GetBackstagePageBorderWidth(RibbonTheme theme, int deviceDpi) => 0;
+    /// <summary>Gets the Solid page's top-left corner radius in device pixels. The default is zero. Background drawing and the native page clip share this value; other corners stay square.</summary>
+    public virtual int GetBackstagePageCornerRadius(RibbonTheme theme, int deviceDpi) => 0;
     /// <summary>Paints the native Backstage surface and its measured navigation rail.</summary>
     public virtual void DrawBackstageBackground(RibbonPaintContext context, int navigationWidth)
     {
         int width = Math.Clamp(navigationWidth, 0, context.Bounds.Width);
-        int shadow = RibbonBackstageLayout.PageShadowInset(this, context.Theme, context.DeviceDpi, context.Bounds.Size);
+        int shadow = context.WindowBackdrop || context.CompositedText ? RibbonBackstageLayout.PageShadowInset(this, context.Theme, context.DeviceDpi, context.Bounds.Size) : 0;
         using var rail = new SolidBrush(context.Theme.BackstageNavigationBackground);
         context.Graphics.FillRectangle(rail, context.Bounds);
         var bounds = new Rectangle(context.Bounds.X + width, context.Bounds.Y + shadow, context.Bounds.Width - width, Math.Max(0, context.Bounds.Height - shadow));

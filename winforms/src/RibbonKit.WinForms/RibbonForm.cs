@@ -152,7 +152,7 @@ public partial class RibbonForm : Form
     protected override void OnActivated(EventArgs e) { base.OnActivated(e); InvalidateCaption(); }
     /// <inheritdoc />
     protected override void OnDeactivate(EventArgs e) { base.OnDeactivate(e); _hotCaption = 0; InvalidateCaption(); }
-    private void InvalidateCaption()
+    internal void InvalidateCaption()
     {
         var bounds = new Rectangle(0, 0, ClientSize.Width, Math.Min(ClientSize.Height, CaptionHeight));
         if (bounds.Width > 0 && bounds.Height > 0) Invalidate(bounds);
@@ -176,11 +176,13 @@ public partial class RibbonForm : Form
     internal void PaintCaption(Graphics graphics, RibbonControl? ribbon, bool composited = false)
     {
         var geometry = Caption; var theme = ribbon?.Theme ?? RibbonThemes.Office2024Light;
-        using var background = new SolidBrush(composited ? Color.Transparent : theme.Background);
-        graphics.FillRectangle(background, new Rectangle(0, 0, ClientSize.Width, CaptionHeight));
+        using var background = new SolidBrush(ribbon?.CaptionBackground(composited) ?? (composited ? Color.Transparent : theme.Background));
+        var captionBounds = new Rectangle(0, 0, ClientSize.Width, CaptionHeight);
+        if (ribbon is not null) ribbon.PaintCaptionBackground(graphics, captionBounds, composited);
+        else graphics.FillRectangle(background, captionBounds);
         if (ShowIcon && Icon is { } icon && !geometry.Icon.IsEmpty) graphics.DrawIcon(icon, geometry.Icon);
         int left = geometry.ContentLeft;
-        if (ribbon?.EffectiveQuickAccessPosition == RibbonQuickAccessPosition.TitleBar && ribbon.HasQuickAccess) left = ribbon.Snapshot.QuickAccessBounds.Right + RibbonLayoutEngine.Scale(10, DeviceDpi);
+        if (ribbon?.EffectiveQuickAccessPosition == RibbonQuickAccessPosition.TitleBar && ribbon.ShowQuickAccess) left = ribbon.Snapshot.QuickAccessBounds.Right + RibbonLayoutEngine.Scale(10, DeviceDpi);
         var text = Rectangle.FromLTRB(Math.Min(left, geometry.Buttons.Left), 0, geometry.Buttons.Left, CaptionHeight);
         var textContext = new RibbonPaintContext(graphics, text, theme, Font, DeviceDpi);
         var flags = TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix;
@@ -200,7 +202,10 @@ public partial class RibbonForm : Form
                     graphics.DrawRectangle(pen, x + 3, y, size - 3, size - 3);
                     var mode = graphics.CompositingMode;
                     if (composited) graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
-                    graphics.FillRectangle(background, x, y + 3, size - 3, size - 3); graphics.CompositingMode = mode;
+                    var restoreBounds = new Rectangle(x, y + 3, size - 3, size - 3);
+                    if (ribbon is not null) ribbon.PaintCaptionBackground(graphics, restoreBounds, composited);
+                    else graphics.FillRectangle(background, restoreBounds);
+                    graphics.CompositingMode = mode;
                     graphics.DrawRectangle(pen, x, y + 3, size - 3, size - 3);
                 }
                 else graphics.DrawRectangle(pen, x, y, size, size);

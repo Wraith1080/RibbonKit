@@ -50,7 +50,7 @@ public sealed record RibbonTheme
     public bool PopupShadowEnabled { get; init; } = true;
     /// <summary>Gets the popup shadow color and maximum opacity; its default matches BodyShadowColor.</summary>
     public Color PopupShadowColor { get; init; } = Color.FromArgb(24, 0, 0, 0);
-    /// <summary>Gets the Office ribbon body and Backstage page shadow color, including its maximum opacity. Transparent disables these shadows.</summary>
+    /// <summary>Gets the Office ribbon body and material Backstage page shadow color, including its maximum opacity. Transparent disables these shadows. Solid Backstage uses Border instead.</summary>
     public Color BodyShadowColor { get; init; } = Color.FromArgb(24, 0, 0, 0);
     /// <summary>Gets the ribbon body margins in 96-DPI logical pixels. The content viewport and hit targets respect them.</summary>
     public Padding BodyMargin { get; init; } = new(7, 1, 7, 7);

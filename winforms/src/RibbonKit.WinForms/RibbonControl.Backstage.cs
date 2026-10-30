@@ -6,7 +6,6 @@ public partial class RibbonControl
 {
     private RibbonFileMenuMode _fileMenuMode;
     private RibbonBackstageSurface? _backstageSurface;
-    private Control? _backstageBackdrop;
     private Form? _backstageForm;
     private Control? _backstagePriorFocus;
     private bool _backstageOpen, _backstageChanging, _backstageRefreshing;
@@ -35,7 +34,7 @@ public partial class RibbonControl
     }
     /// <summary>Occurs after FileMenuMode changes.</summary>
     public event EventHandler? FileMenuModeChanged;
-    /// <summary>Gets or requests Backstage visibility. AnimationLevel can animate navigation and live native pages. An accepted animated close retains true until its fade completes; Closing/validation cancellation keeps it open. Command, mode and modal transitions close immediately. The selected ribbon tab and minimized state are retained.</summary>
+    /// <summary>Gets or requests Backstage visibility. AnimationLevel slides the complete native surface and integrated caption tint. An accepted animated close retains true until its slide completes; Closing/validation cancellation keeps it open. Command, mode and modal transitions close immediately. The selected ribbon tab and minimized state are retained.</summary>
     [Category("Behavior"), Bindable(true), DefaultValue(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool IsBackstageOpen
     {
@@ -57,11 +56,12 @@ public partial class RibbonControl
     {
         if (_backstageClosing)
         {
-            _backstageClosing = false; ShowBackstageBackdrop(); var closing = _backstageMotion; _backstageMotion = null; closing?.Cancel(); return;
+            _backstageClosing = false; var closing = _backstageMotion; _backstageMotion = null; closing?.Cancel(); return;
         }
         if (_backstageOpen || _backstageChanging || !CanShowBackstage || FindForm() is not { Visible: true, IsDisposed: false } form) return;
         if (!_editors.CommitFocused()) return;
         _backstageChanging = true;
+        RibbonBackstageBackground? openingBackground = null;
         try
         {
             if (!FileMenu.CanOpen() || !CanShowBackstage || !Backstage.CanOpen() || !CanShowBackstage || !ReferenceEquals(FindForm(), form) || form.IsDisposed) return;
@@ -71,6 +71,7 @@ public partial class RibbonControl
             _galleryStrips.CancelPreviews();
             _editors.CloseLists();
             _popups.CloseAll(false);
+            openingBackground = RibbonBackstageBackground.Capture(this, form);
             bool tips = _keyTips;
             ExitKeyTips(false);
             if (_backstageSurface is null || !ReferenceEquals(_backstageForm, form))
@@ -86,10 +87,12 @@ public partial class RibbonControl
             _backstageSurface.Bounds = BackstageHostBounds(form);
             _ = _backstageSurface.Handle;
             _backstageSurface.PerformLayout();
-            _backstageSurface.BringToFront(); ShowBackstageBackdrop();
+            _backstageSurface.BringToFront();
             _backstageMotion?.Dispose();
             _backstageMotion = RibbonBackstageMotion.Prepare(this, _backstageSurface, form);
+            if (_backstageMotion is { } opening) { opening.HoldBackground(openingBackground); openingBackground = null; }
             _backstageOpen = true;
+            _layoutDirty = true; // Suppress QAT presentation without changing its preference or host height.
             _backstageSurface.Visible = true;
             _backstageSurface.BringToFront();
             _backstageSurface.FocusInitial(tips);
@@ -99,26 +102,11 @@ public partial class RibbonControl
             if (_backstageOpen) Backstage.OnOpened();
         }
         catch { _backstageMotion?.Dispose(); _backstageMotion = null; throw; }
-        finally { _backstageChanging = false; }
+        finally { openingBackground?.Dispose(); _backstageChanging = false; }
     }
     private void BackstageHostResized(object? sender, EventArgs e)
     {
         if (_backstageSurface is { IsDisposed: false } surface && _backstageForm is { } form) surface.Bounds = BackstageHostBounds(form);
-        if (_backstageBackdrop is { IsDisposed: false } backdrop && _backstageForm is { } owner) backdrop.Bounds = BackstageHostBounds(owner);
-    }
-    private void ShowBackstageBackdrop()
-    {
-        if (_backstageSurface is not { } surface || _backstageForm is not { } form) return;
-        if (_backstageBackdrop is null || _backstageBackdrop.IsDisposed)
-        {
-            _backstageBackdrop = surface.CreateBackdrop(); _backstageBackdrop.Visible = false; _backstageBackdrop.TabStop = false; _backstageBackdrop.CausesValidation = false; form.Controls.Add(_backstageBackdrop);
-        }
-        _backstageBackdrop.Bounds = BackstageHostBounds(form);
-        form.Controls.SetChildIndex(_backstageBackdrop, Math.Min(form.Controls.GetChildIndex(surface) + 1, form.Controls.Count - 1)); _backstageBackdrop.Visible = true; _backstageBackdrop.Invalidate();
-        // Showing a sibling clips native document/editor HWNDs immediately.
-        // Paint the opaque replacement before preparing the translucent surface
-        // or capturing navigation, which can otherwise expose an unpainted gap.
-        _backstageBackdrop.Update();
     }
     internal bool ValidateBackstagePage() => !IsBackstageOpen || _backstageSurface?.ValidatePage() != false;
     private bool CloseBackstage(bool restoreFocus, bool force = false, bool animate = true)
@@ -136,8 +124,8 @@ public partial class RibbonControl
             bool hadFocus = FindForm()?.ContainsFocus == true;
             if (!force && animate && _backstageSurface is { IsDisposed: false } closingSurface && _backstageForm is { } form)
             {
-                _backstageMotion = RibbonBackstageMotion.PrepareFade(this, closingSurface, form, true, () => FinishBackstageClose(restoreFocus, hadFocus));
-                if (_backstageMotion is not null) { _backstageClosing = true; if (_backstageBackdrop is { } backdrop) backdrop.Visible = false; _backstageMotion.Start(); return true; }
+                _backstageMotion = RibbonBackstageMotion.Prepare(this, closingSurface, form, true, () => FinishBackstageClose(restoreFocus, hadFocus));
+                if (_backstageMotion is not null) { _backstageClosing = true; _backstageMotion.Start(); return true; }
             }
             FinishBackstageClose(restoreFocus, hadFocus);
             return true;
@@ -151,8 +139,8 @@ public partial class RibbonControl
         try
         {
             _backstageClosing = false; _backstageMotion = null; _backstageOpen = false;
+            _layoutDirty = true;
             if (_backstageSurface is { IsDisposed: false } surface) { surface.HideKeyTips(); surface.Visible = false; }
-            if (_backstageBackdrop is { IsDisposed: false } backdrop) backdrop.Visible = false;
             if (restoreFocus && !_disposing && hadFocus && FindForm() is { Disposing: false, IsDisposed: false, ContainsFocus: true })
             {
                 if (_backstagePriorFocus is { IsDisposed: false, CanFocus: true } previous) previous.Focus();
@@ -161,12 +149,6 @@ public partial class RibbonControl
             _backstagePriorFocus = null; Invalidate(); FileMenu.OnClosed(); Backstage.OnClosed(); IsBackstageOpenChanged?.Invoke(this, EventArgs.Empty);
         }
         finally { _backstageChanging = changing; }
-    }
-    internal bool BeginBackstagePageMotion(RibbonBackstageSurface surface)
-    {
-        if (_backstageClosing || _backstageChanging || _backstageForm is not { } form) return false;
-        ShowBackstageBackdrop(); var old = _backstageMotion; _backstageMotion = null; old?.Dispose();
-        _backstageMotion = RibbonBackstageMotion.PrepareFade(this, surface, form, false); return _backstageMotion is not null;
     }
     internal void RefreshBackstage()
     {
@@ -178,7 +160,6 @@ public partial class RibbonControl
             if (!Backstage.IsDisposed) Backstage.Reconcile();
             _backstageSurface?.Synchronize();
             if (_backstageForm is not null) BackstageHostResized(this, EventArgs.Empty);
-            _backstageBackdrop?.Invalidate();
         }
         finally { _backstageRefreshing = false; }
     }
@@ -192,7 +173,6 @@ public partial class RibbonControl
         var surface = _backstageSurface;
         _backstageSurface = null;
         surface?.Dispose();
-        _backstageBackdrop?.Dispose(); _backstageBackdrop = null;
     }
     internal void BackstageSurfaceDisposed(RibbonBackstageSurface surface)
     {
@@ -201,7 +181,6 @@ public partial class RibbonControl
         if (_backstageForm is { } form) form.ClientSizeChanged -= BackstageHostResized;
         _backstageForm = null;
         _backstageSurface = null;
-        _backstageBackdrop?.Dispose(); _backstageBackdrop = null;
     }
     internal void ActivateBackstage(RibbonItem item)
     {

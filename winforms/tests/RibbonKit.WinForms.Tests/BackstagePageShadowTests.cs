@@ -17,7 +17,7 @@ public sealed class BackstagePageShadowTests
             using var image = new Bitmap(bounds.Right + S(10), bounds.Bottom + S(10)); using var graphics = Graphics.FromImage(image);
             using var buffer = new RibbonBackdropBuffer();
             buffer.Paint(graphics, image.Size, image.Height, Color.Transparent, canvas => renderer.DrawBackstageBackground(
-                new(canvas, bounds, theme, SystemFonts.MessageBoxFont!, dpi) { CompositedText = transparent }, S(160)));
+                new(canvas, bounds, theme, SystemFonts.MessageBoxFont!, dpi) { CompositedText = transparent, WindowBackdrop = true }, S(160)));
             int inset = renderer.GetBackstagePageShadowInset(theme, dpi), edge = bounds.Left + S(160), top = bounds.Top + inset;
             var nearLeft = buffer.Image.GetPixel(edge - 1, top + S(30)); var farLeft = buffer.Image.GetPixel(edge - inset, top + S(30));
             var nearTop = buffer.Image.GetPixel(edge + S(30), top - 1); var farTop = buffer.Image.GetPixel(edge + S(30), bounds.Top);
@@ -35,7 +35,7 @@ public sealed class BackstagePageShadowTests
     });
 
     [Theory] [InlineData(false)] [InlineData(true)]
-    public void Layout_reserves_the_same_shadow_inset_and_flat_or_disabled_pages_keep_their_previous_origin(bool office) => FoundationTests.Sta(() =>
+    public void Solid_layout_reserves_no_shadow_band_regardless_of_shadow_colour(bool office) => FoundationTests.Sta(() =>
     {
         using var ribbon = new RibbonControl(); using RibbonRenderer renderer = office ? new RibbonOffice2024Renderer() : new RibbonRenderer(); ribbon.Renderer = renderer;
         ribbon.Backstage.NavigationWidth = 220;
@@ -45,7 +45,7 @@ public sealed class BackstagePageShadowTests
             int S(int n) => RibbonLayoutEngine.Scale(n, dpi);
             ribbon.Theme = ribbon.Theme with { BodyShadowColor = enabled ? Color.FromArgb(24, Color.Black) : Color.Transparent };
             var size = new Size(S(1000), S(500)); var layout = RibbonBackstageLayout.Build(size, ribbon.Font, dpi, ribbon.Backstage);
-            int inset = office && enabled ? S(6) : 0;
+            int inset = 0;
             Assert.Equal(inset, layout.Page.Top); Assert.Equal(S(220), layout.Page.Left);
             Assert.Equal(inset, layout.Page.Left - layout.Navigation.Right);
             Assert.Equal(size.Width, layout.Page.Right); Assert.Equal(size.Height, layout.Page.Bottom);

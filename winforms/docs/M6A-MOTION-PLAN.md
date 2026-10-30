@@ -15,6 +15,8 @@ items follow the current motion pass and do not start window integration.
 
 The later RibbonForm frame/width and live Backstage fade corrections are recorded
 in [M6B motion review corrections](M6B-WINDOW-INTEGRATION.md#motion-review-corrections--2026-10-29).
+Backstage's earlier navigation/page fades are superseded by the
+[whole-surface and caption slide](M4I2-APPEARANCE-INVENTORY.md#whole-surface-backstage-and-caption-slide--2026-10-30).
 
 ## Current contract
 
@@ -28,8 +30,20 @@ in [M6B motion review corrections](M6B-WINDOW-INTEGRATION.md#motion-review-corre
   Geometry, command ownership and native editor bounds commit once. An inert
   drawing plane presents natural-size endpoint drawings, interpolated panel
   geometry and actual QAT strip travel. Text/icons are not stretched with panels.
-  `IsAnimating` reports geometry, group, message-panel, popup and Backstage/page motion,
+  `IsAnimating` reports geometry, group, message-panel, popup and Backstage motion,
   not an uncommitted model transaction.
+- Backstage translates its one live native surface over 15% of its width: it
+  starts 85% visible on opening and hides after moving 15% left on closing,
+  over 220/308 ms, with a smooth opacity fade at both ends. Its integrated caption
+  tint tracks the same edge and opacity. QAT presentation
+  and hit targets are suppressed until closing completes, preserving authored
+  toolbar visibility, placement and commands. Page switches are
+  immediate. Native page redirection fades with movement and stays opaque after
+  opening until hidden. Transparent navigation/frames fade their premultiplied
+  paint alongside the page layer. No Backstage page capture is used.
+  Solid opening holds the previously composed document drawing beneath the fade
+  until Backstage is opaque, avoiding native RichTextBox sibling-clip redraw.
+  This temporary passive drawing leaves the actual editor and its state untouched.
 - Subtle requests 130 ms for layout/density and 150 ms for QAT. Expressive uses
   1.4 times those durations and adds a gentle spring to the active tab indicator.
   Minimize/restore requests 180/252 ms for Subtle/Expressive.

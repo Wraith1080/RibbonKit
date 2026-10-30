@@ -11,6 +11,11 @@ internal static partial class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] == "--backstage-richtext-checks") return IndependentConsumer.BackstageRichTextChecks.Run(args[1]);
+        if (args.Length == 2 && args[0] is "--backstage-motion-tail-checks" or "--backstage-motion-tail-checks-flat")
+            return IndependentConsumer.BackstageInteractionChecks.Run(args[1], args[0].EndsWith("-flat", StringComparison.Ordinal), motionChecks: true, motionTailOnly: true);
+        if (args.Length == 2 && args[0] == "--backstage-caption-checks") return IndependentConsumer.BackdropAppearanceChecks.Run(args[1], captionOnly: true);
+        if (args.Length == 2 && args[0] == "--backstage-page-frame-checks") return IndependentConsumer.BackdropAppearanceChecks.Run(args[1], shadowOnly: true);
         if (args.Length == 2 && args[0] == "--backstage-page-shadow-checks") return IndependentConsumer.BackdropAppearanceChecks.Run(args[1], shadowOnly: true);
         if (args.Length == 2 && args[0] == "--backstage-close-checks") return IndependentConsumer.BackdropAppearanceChecks.Run(args[1], closingOnly: true);
         if (args.Length == 2 && args[0] == "--backdrop-appearance-checks") return IndependentConsumer.BackdropAppearanceChecks.Run(args[1]);

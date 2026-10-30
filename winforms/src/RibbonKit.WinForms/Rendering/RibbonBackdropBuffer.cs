@@ -13,7 +13,7 @@ internal sealed class RibbonBackdropBuffer : IDisposable
     private Bitmap? _image;
     private Graphics? _graphics;
     internal Bitmap Image => _image!;
-    internal void Paint(Graphics destination, Size size, int headerHeight, Color fallback, Action<Graphics> paint, bool opaque = false)
+    internal void Paint(Graphics destination, Size size, int headerHeight, Color fallback, Action<Graphics> paint, bool opaque = false, byte opacity = 255)
     {
         if (size.Width < 1 || size.Height < 1 || (long)size.Width * size.Height > 4_194_304) throw new Win32Exception("Backdrop drawing exceeds its bounded pixel budget.");
         if (_image?.Size != size) Allocate(size);
@@ -25,16 +25,22 @@ internal sealed class RibbonBackdropBuffer : IDisposable
             paint(_graphics); _graphics.Flush();
         }
         finally { _graphics.Restore(state); }
-        if (opaque)
+        if (opaque || opacity < 255)
         {
-            // An opaque child may include arbitrary application GDI artwork.
-            // TextRenderer writes RGB but clears glyph alpha. Preserve its colors
-            // and restore coverage for this whole, deliberately opaque surface.
+            // Opaque children restore coverage erased by native GDI artwork.
+            // Fade all premultiplied channels together, including text; every
+            // paint starts from a clear buffer so coverage never accumulates.
             GdiFlush();
             int length = checked(size.Width * size.Height * 4);
             if (_opaquePixels?.Length != length) _opaquePixels = new byte[length];
             Marshal.Copy(_bits, _opaquePixels, 0, length);
-            for (int pixel = 3; pixel < length; pixel += 4) _opaquePixels[pixel] = 255;
+            for (int pixel = 0; pixel < length; pixel += 4)
+            {
+                if (opaque) _opaquePixels[pixel + 3] = 255;
+                if (opacity < 255)
+                    for (int channel = 0; channel < 4; channel++)
+                        _opaquePixels[pixel + channel] = (byte)((_opaquePixels[pixel + channel] * opacity + 127) / 255);
+            }
             Marshal.Copy(_opaquePixels, 0, _bits, length);
         }
         nint output = destination.GetHdc();

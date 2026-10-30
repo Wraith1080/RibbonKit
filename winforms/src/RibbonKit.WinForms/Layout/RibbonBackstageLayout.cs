@@ -5,13 +5,19 @@ internal sealed record RibbonBackstageLayout(Rectangle Back, Rectangle Navigatio
     internal static int PageShadowInset(RibbonRenderer renderer, RibbonTheme theme, int dpi, Size size) =>
         Math.Clamp(renderer.GetBackstagePageShadowInset(theme, dpi), 0, Math.Max(0,
             Math.Min(RibbonLayoutEngine.Scale(32, dpi), Math.Min(size.Width, size.Height - 1))));
+    internal static int PageBorderWidth(RibbonRenderer renderer, RibbonTheme theme, int dpi, Size size) =>
+        Math.Clamp(renderer.GetBackstagePageBorderWidth(theme, dpi), 0, Math.Max(0,
+            Math.Min(RibbonLayoutEngine.Scale(32, dpi), Math.Min(size.Width, size.Height) - 1)));
+    internal static int PageCornerRadius(RibbonRenderer renderer, RibbonTheme theme, int dpi, Size size) =>
+        Math.Clamp(renderer.GetBackstagePageCornerRadius(theme, dpi), 0, Math.Max(0,
+            Math.Min(RibbonLayoutEngine.Scale(32, dpi), Math.Min(size.Width, size.Height) / 2)));
     internal static RibbonBackstageLayout Build(Size size, Font font, int dpi, RibbonBackstage? backstage = null)
     {
         int S(int value) => RibbonLayoutEngine.Scale(value, dpi);
         var metrics = RibbonDensityMetrics.For(backstage?.Ribbon?.Density ?? RibbonDensity.Compact);
         int inset = S(8), row = Math.Max(S(metrics.BackstageRow), font.Height + S(16));
         int width = Math.Max(0, size.Width);
-        int shadow = backstage?.Ribbon is { } ribbon ? PageShadowInset(ribbon.Painter, ribbon.Theme, dpi, size) : 0;
+        int shadow = backstage?.Ribbon is { HasWindowBackdrop: true } ribbon ? PageShadowInset(ribbon.Painter, ribbon.Theme, dpi, size) : 0;
         // Preserve 240 logical pixels for a page when possible; very narrow hosts
         // divide their space evenly rather than letting either region disappear.
         int available = Math.Clamp(Math.Max(width / 2, width - S(240)), 0, width);
