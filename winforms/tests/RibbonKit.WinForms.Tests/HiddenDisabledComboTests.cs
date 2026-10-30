@@ -5,6 +5,19 @@ namespace RibbonKit.WinForms.Tests;
 public sealed class HiddenDisabledComboTests
 {
     [Fact]
+    public void Motion_inside_the_same_combo_field_does_not_keep_repainting_its_native_text() => FoundationTests.Sta(() =>
+    {
+        using var form = new RibbonForm { Size = new(1000, 650), Backdrop = RibbonWindowBackdrop.Mica };
+        using var ribbon = new RibbonControl(); var choice = new RibbonComboBoxItem { Text = "Font" }; choice.Items.Add("Segoe UI"); choice.SelectedIndex = 0;
+        var group = new RibbonGroup(); group.Items.Add(choice); var tab = new RibbonTab(); tab.Groups.Add(group); ribbon.Tabs.Add(tab);
+        form.Controls.Add(ribbon); form.Ribbon = ribbon; _ = form.Handle; _ = ribbon.Handle; form.PerformLayout(); ribbon.SyncEditors();
+        var editor = ribbon.Editors.EditorFor(choice)!; var presenter = editor.Parent!; _ = presenter.Handle;
+        int paints = 0; presenter.Invalidated += (_, _) => paints++;
+        var method = presenter.GetType().GetMethod("OnMouseMove", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+        for (int i = 0; i < 8; i++) method.Invoke(presenter, [new MouseEventArgs(MouseButtons.None, 0, editor.Left + 4 + i, editor.Top + editor.Height / 2, 0)]);
+        Assert.Equal(1, paints); Assert.Equal("Segoe UI", editor.Text); Assert.False(form.Visible);
+    });
+    [Fact]
     public void Synchronizing_unchanged_disabled_choice_does_not_request_another_presenter_paint() => FoundationTests.Sta(() =>
     {
         using var form = new RibbonForm { Size = new(1100, 600) };

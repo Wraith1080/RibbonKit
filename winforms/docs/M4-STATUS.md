@@ -1382,7 +1382,7 @@ Each public API and ownership contract is proposed before its implementation.
 | M6A | [Opt-in geometry, group collapse/restore, tab/header, minimize/restore, popup, Backstage/page opening/closing and message-panel motion implemented; visual/performance acceptance and optional host synchronization remain](M6A-MOTION-PLAN.md) |
 | Pre-M6B fixes | [Initial fixes, action alignment and additional review corrections implemented; human review pending](#pre-m6b-review-fixes--2026-10-29) |
 | M6B | [Optional RibbonForm and TitleBar QAT implemented; current evidence and remaining review](M6B-WINDOW-INTEGRATION.md) |
-| M6C | [Solid-release repaint, persisted backdrop and fully clear navigation implemented, 2026-10-30. Visible checks stopped; separate startup/popup flicker acceptance remains open](M6C-BACKDROPS.md#solid-release-saved-selection-and-fully-clear-navigation--2026-10-30) |
+| M6C | [Native HRESULT bridge, original-show preparation, header utility alpha and revised native buffering candidate, 2026-10-30; 586-sample pointer pass clean, human review pending. Computer use stopped](M6C-BACKDROPS.md#native-paint-and-hresult-boundary-follow-up--2026-10-30) |
 
 Cross-cutting follow-ups remain separate: optional ICommand support; deferred
 accessibility compatibility; actual VS designer/package/independent-consumer

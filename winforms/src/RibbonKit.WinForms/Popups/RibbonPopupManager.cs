@@ -579,22 +579,26 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         base.OnMouseMove(e);
         if (_ribbon.Popups.IsOpening(this)) return;
         var target = Hit(e.Location);
+        var kind = target?.Element is null ? target?.Kind : null;
+        bool changed = !ReferenceEquals(_hot, target?.Element) || _hotKind != kind || _hotDropDown != (target?.DropDownPart ?? false);
         _hot = target?.Element;
-        _hotKind = target?.Element is null ? target?.Kind : null;
+        _hotKind = kind;
         _hotDropDown = target?.DropDownPart ?? false;
         PreviewGalleryPointer(target?.Element as RibbonGalleryTile);
         UpdateOverflowHover(_hotKind);
-        Invalidate();
+        if (changed) Invalidate();
     }
     protected override void OnMouseLeave(EventArgs e)
     {
         base.OnMouseLeave(e);
+        bool changed = _hot is not null || _hotKind is not null || _hotDropDown;
         _hot = null;
         _hotKind = null;
+        _hotDropDown = false;
         if (!_galleryKeyboardPreview || _galleryLastPointer != MousePosition)
         { _galleryKeyboardPreview = false; GallerySource?.CancelPreview(this); }
         StopOverflowRepeat();
-        Invalidate();
+        if (changed) Invalidate();
     }
     protected override void OnMouseDown(MouseEventArgs e)
     {

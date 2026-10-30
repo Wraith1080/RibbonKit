@@ -16,7 +16,7 @@ public class RibbonBackdropPanel : Panel
         get
         {
             var value = base.CreateParams;
-            if (FindForm() is RibbonForm { HasWindowBackdrop: true }) value.ExStyle |= 0x02080000; // COMPOSITED | LAYERED
+            if (FindForm() is RibbonForm { HasWindowBackdrop: true }) value.ExStyle |= 0x00080000; // LAYERED; retain ordinary native child painting.
             return value;
         }
     }
@@ -35,9 +35,9 @@ public class RibbonBackdropPanel : Panel
             if (FindForm() is not RibbonForm { HasWindowBackdrop: true, IsHandleCreated: true } host)
             {
                 _opaque = false; _compositionRoot = 0;
-                if ((style & 0x02080000) != 0)
+                if ((style & 0x00080000) != 0)
                 {
-                    SetExtendedStyle(style & ~0x02080000);
+                    SetExtendedStyle(style & ~0x00080000);
                     RedrawWindow(Handle, 0, 0, 0x185);
                 }
                 return;
@@ -47,8 +47,8 @@ public class RibbonBackdropPanel : Panel
             // before any hover or first background paint is needed to reveal it.
             if (GetAncestor(Handle, 2) != host.Handle) return;
             if (_compositionRoot != host.Handle) { _opaque = false; _compositionRoot = host.Handle; }
-            if (_opaque && (style & 0x02080000) == 0x02080000) return;
-            SetExtendedStyle(style | 0x02080000);
+            if (_opaque && (style & 0x00080000) != 0) return;
+            SetExtendedStyle(style | 0x00080000);
             _opaque = SetLayeredWindowAttributes(Handle, 0, 255, 2);
             if (!_opaque) host.BackdropPaintFailed(new Win32Exception(Marshal.GetLastWin32Error(), "Opaque native content needs layered-child support."));
             else RedrawWindow(Handle, 0, 0, 0x185);

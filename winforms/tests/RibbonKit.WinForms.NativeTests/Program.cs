@@ -11,6 +11,7 @@ internal static partial class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] == "--backdrop-startup-checks") return IndependentConsumer.WindowBackdropChecks.RunStartup(args[1]);
         if (args.Length == 2 && args[0] == "--gallery-backdrop-checks") return IndependentConsumer.GalleryBackdropChecks.Run(args[1]);
         if (args.Length == 2 && args[0] is "--backdrop-transparency-checks" or "--backdrop-transparency-checks-flat") return IndependentConsumer.WindowBackdropChecks.Run(args[1], flat: args[0].EndsWith("-flat", StringComparison.Ordinal), transparency: true);
         if (args.Length == 2 && args[0] == "--backdrop-simplified-checks") return IndependentConsumer.WindowBackdropChecks.Run(args[1], simplified: true);

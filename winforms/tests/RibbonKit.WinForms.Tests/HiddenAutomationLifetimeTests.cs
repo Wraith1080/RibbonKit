@@ -23,9 +23,13 @@ public sealed class HiddenAutomationLifetimeTests
             try { if (pattern) _ = node.GetPatternProvider(10000); else _ = root.GetPropertyValue(30010); }
             catch (Exception error) { failure = error; }
         }) { IsBackground = true };
-        int disposedExceptions = 0;
+        int disposedExceptions = 0, unavailableOnUiThread = 0;
+        int uiThread = Environment.CurrentManagedThreadId;
         void FirstChance(object? sender, System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs args)
-        { if (Thread.CurrentThread.ManagedThreadId == worker.ManagedThreadId && args.Exception is ObjectDisposedException) Interlocked.Increment(ref disposedExceptions); }
+        {
+            if (Thread.CurrentThread.ManagedThreadId == worker.ManagedThreadId && args.Exception is ObjectDisposedException) Interlocked.Increment(ref disposedExceptions);
+            if (Environment.CurrentManagedThreadId == uiThread && args.Exception is COMException { ErrorCode: unchecked((int)0x80040201) }) Interlocked.Increment(ref unavailableOnUiThread);
+        }
         AppDomain.CurrentDomain.FirstChanceException += FirstChance;
         try
         {
@@ -39,6 +43,7 @@ public sealed class HiddenAutomationLifetimeTests
         finally { AppDomain.CurrentDomain.FirstChanceException -= FirstChance; }
         var unavailable = Assert.IsType<COMException>(failure);
         Assert.Equal(unchecked((int)0x80040201), unavailable.ErrorCode);
+        Assert.Equal(0, unavailableOnUiThread); // Report a stale request on the client, outside the UI dispatcher callback.
         if (!owner) Assert.Equal(0, disposedExceptions); // The reported popup race must not even throw from Control.Invoke.
         Assert.False(ribbon.Visible); Assert.False(surface.Visible);
     });

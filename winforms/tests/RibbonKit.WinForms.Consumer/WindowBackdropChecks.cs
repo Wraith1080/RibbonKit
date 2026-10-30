@@ -10,6 +10,50 @@ namespace IndependentConsumer;
 // Public-only window/material consumer. It references no Showcase code/resources.
 internal static class WindowBackdropChecks
 {
+    internal static int RunStartup(string directory)
+    {
+        Directory.CreateDirectory(directory); List<string> log = []; int exit = 0;
+        WF.Application.SetHighDpiMode(WF.HighDpiMode.PerMonitorV2); WF.Application.EnableVisualStyles();
+        foreach (var material in new[] { RibbonWindowBackdrop.Mica, RibbonWindowBackdrop.Acrylic })
+        {
+            using var form = new RibbonForm { Backdrop = material, StartPosition = WF.FormStartPosition.Manual, Bounds = new(250, 160, 900, 650), Text = "Independent startup content consumer" };
+            var wrapper = new WF.Panel { Dock = WF.DockStyle.Fill, BackColor = Color.Transparent, Padding = new(12) };
+            var panel = new RibbonBackdropPanel { Dock = WF.DockStyle.Fill };
+            var document = new WF.RichTextBox { Dock = WF.DockStyle.Fill, Text = "Application-owned native document\r\n\r\nReady without a mouse hover.", BackColor = Color.White };
+            var status = new WF.StatusStrip { BackColor = SystemColors.Control, Items = { new WF.ToolStripStatusLabel("Ready") } };
+            panel.Controls.Add(document); panel.Controls.Add(status); wrapper.Controls.Add(panel); form.Controls.Add(wrapper);
+            nint editor = document.Handle;
+            form.Load += (_, _) => form.Size = new(1100, 760); // Saved placement applied after the hidden child composition was initialized.
+            form.Shown += async (_, _) =>
+            {
+                try
+                {
+                    await Task.Delay(100); int worst = 0;
+                    foreach (var control in new WF.Control[] { document, status })
+                    {
+                        var area = control.RectangleToScreen(control.ClientRectangle); area.Inflate(-4, -4);
+                        using var image = new Bitmap(area.Width, area.Height);
+                        using (var graphics = Graphics.FromImage(image)) graphics.CopyFromScreen(area.Location, Point.Empty, image.Size);
+                        int dark = 0, total = 0;
+                        for (int y = 0; y < image.Height; y += 3) for (int x = 0; x < image.Width; x += 3)
+                        { var p = image.GetPixel(x, y); if (p.R < 30 && p.G < 30 && p.B < 30) dark++; total++; }
+                        int percent = total == 0 ? 0 : 100 * dark / total; worst = Math.Max(worst, percent);
+                        image.Save(Path.Combine(directory, $"{material}-{control.GetType().Name}.png"));
+                        Require(percent < 25, "Native startup content was black: " + control.GetType().Name);
+                    }
+                    Require(editor == document.Handle, "Native editor retained");
+                    Require(form.EffectiveBackdrop == material, "Material applied");
+                    log.Add($"PASS: {material}, actual public-only startup after Load resize; document/status worst dark coverage={worst}%; editor retained");
+                }
+                catch (Exception error) { exit = 1; log.Add("FAIL: " + error); }
+                finally { form.Close(); }
+            };
+            WF.Application.Run(form);
+            if (exit != 0) break;
+        }
+        File.WriteAllLines(Path.Combine(directory, "result.log"), log); return exit;
+        static void Require(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
+    }
     internal static int Run(string directory, bool flat = false, bool simplified = false, bool transparency = false)
     {
         Directory.CreateDirectory(directory); List<string> log = [];

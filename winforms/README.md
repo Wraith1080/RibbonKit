@@ -1118,7 +1118,8 @@ header animation. This prevents layered animation holds from blackening the
 extended native frame.
 
 QAT hover/pressed/checked backgrounds use
-`RibbonTheme.QuickAccessBackdropOpacity` (default `.6`) over material. Set it to
+`RibbonTheme.QuickAccessBackdropOpacity` (default `.6`) over material, including
+the QAT overflow and ribbon collapse/expand utility hover/pressed fills. Set it to
 `1` for full coverage; artwork stays opaque. Backstage navigation is opaque by
 default. Opt into translucent navigation with
 `ribbon.Backstage.NavigationBackgroundOpacity = 0;` while leaving native page

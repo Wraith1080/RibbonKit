@@ -7,6 +7,114 @@ the earlier deferral; it does not establish the cause or resolution of flicker.
 M5E persistence was implemented first as requested. Resumed review corrections
 and current evidence are recorded below.
 
+## Native paint and HRESULT boundary follow-up — 2026-10-30
+
+Current candidate addresses the user's rapid-dropdown exception, first-display
+document backing, header utility tint and the newly recorded native text dropouts.
+Human acceptance remains pending; earlier handler-only capture passes did not
+establish that real pointer-driven drawing was stable.
+
+- UIAutomationCore now receives a reserved native provider bridge with explicit
+  [PreserveSig HRESULT signatures](https://learn.microsoft.com/en-us/dotnet/standard/native-interop/preserve-sig).
+  A queued request for a closed popup returns `0x80040201` without throwing a
+  managed exception inside the application. Provider events, navigation, patterns
+  and disconnection use the bridge; only actual roots expose the fragment-root
+  interface. Existing published managed interfaces remain unchanged. The eight
+  new native ABI declarations are public because CLR COM export requires visible
+  interface types; they have XML documentation, are hidden from IntelliSense and
+  are recorded as 34 additive Unshipped entries, not application extension points.
+- First-frame preparation runs synchronously in the original native show
+  transaction, with direct native field warm-up before application Shown handlers.
+  The candidate does not hide, cloak, re-show, animate or change Form opacity.
+  A temporary cloak experiment was removed because it could consume the Windows
+  opening animation. Original Windows appearance-animation acceptance remains
+  with the user; the diagnostic now samples from first presentation, not 100 ms later.
+- The user's `0934-46` recording contains a lower-document text loss near 7.57 s
+  and a brief black startup content frame. `0935-39` contains repeated missing
+  ComboBox values. The earlier `0643-26` clip was exception evidence only. These
+  are distinct from the intentional gallery font previews in `0907-57`.
+- `RibbonBackdropPanel` now uses opaque layered redirection without adding
+  `WS_EX_COMPOSITED` to the application document tree. Ribbon field presenters
+  retain native subtree composition but disable their second managed double
+  buffer while that native buffer is owned; normal popup/Solid buffering returns
+  on release. HWNDs, values and native editing are retained. The parent-OnPaint
+  forced child repaint was removed after the reported regression. Temporary
+  Showcase font/redraw batching was also removed; gallery previews keep their
+  authored behavior. This is a shared native-host correction, not a RichTextBox
+  replacement or recurring repaint timer. Microsoft's [buffer-completion explanation](https://devblogs.microsoft.com/oldnewthing/20171018-00/?p=97245)
+  documents why adding composited buffering changes native drawing publication;
+  it is supporting context, not proof of this machine's original failure cause.
+- QAT overflow and ribbon collapse/expand hover/pressed fills now honor the
+  existing `QuickAccessBackdropOpacity`; their icons remain opaque. Solid/popup
+  fills keep their normal authored coverage. The default is still `.6`, not zero.
+
+Focused evidence across separate runs: 11 native/managed provider-lifetime cases,
+17 alpha cases and 13 editor/panel lifecycle cases passed (41 distinct cases).
+Native COM-vtable tests require zero first-chance unavailable exceptions on both
+threads. External-process UIA discovery, patterns, property events, disabled
+actions, focus and popup dismissal also passed. Debug Showcase/native-test builds
+passed with zero warnings/errors; no full-suite, Release/package or mixed-DPI
+campaign was run.
+
+Actual Mica pointer review (`artifacts/startup-native-20261030/pointer-document/`)
+sampled Font/Name and every populated document band: 586 samples, zero detected
+dropouts, with real pointer movement from Font into the document. Empty/occluded
+baseline logs from the earlier `pointer-layered-only` and `pointer-single-buffer`
+experiments are not acceptance evidence. The recorder now rejects blank field
+baselines and avoids interpreting Zoom's ordinary ScreenTip occlusion as flicker.
+The current Acrylic first-presentation/editor probe passed 16 startup and 36 hover
+samples; the public-only independent Mica/Acrylic RichTextBox/status consumer also
+passed after a Load resize. See `single-buffer-final-Acrylic/` and
+`independent-single-buffer/` under the same artifact root. All owned review windows
+closed and computer use stopped. Restart Showcase before reviewing this candidate;
+the latest human reports supersede earlier broad flicker acceptance claims.
+
+## Startup content, hover and provider follow-up — 2026-10-30
+
+User review on 2026-10-30 confirmed that the earlier black title-area box appears
+eliminated. The new reports concern black application content on restored-material
+startup, random RichTextBox hover flicker and a stale-popup accessibility query.
+Older pending black-box entries below describe earlier checkpoints.
+
+- A fresh launch of the actual saved Mica profile reproduced black document and
+  status surfaces without pointer overlap. An isolated actual Showcase reproduction
+  then measured 100% black in both. Applying material without restoring saved bounds
+  passed, so that simpler launch is insufficient regression coverage. The saved
+  bounds are applied in Load after hidden composition was established. RibbonForm
+  now finishes opaque-panel painting once after native show, following the Load
+  resize. An earlier panel VisibleChanged repaint was insufficient and was removed.
+  This uses the library's opaque host, retains native children and needs no sample
+  hover handler, repaint timer or replacement document control.
+- Popup surfaces no longer invalidate for movement within an unchanged hover
+  target. Gallery preview and overflow repeat still receive pointer processing.
+  Popup shadows no longer enter native positioning on every paint when bounds,
+  visibility and sibling order already match; real moves and order repairs remain.
+  Focused regressions first reproduced six invalidations for one unchanged item
+  and five redundant native positioning calls. They now observe one and zero.
+  These are bounded hover corrections, not acceptance of every random flicker.
+- Queued accessibility reads return a lifetime result from the UI callback and
+  raise `0x80040201` on the requesting client if the popup disappeared. The prior
+  reproduction raised that COMException inside WinForms' reflected UI callback.
+  Closed providers still report the [documented unavailable result](https://learn.microsoft.com/en-us/windows/win32/api/uiautomationcoreapi/nf-uiautomationcoreapi-uiadisconnectprovider);
+  unrelated live-provider failures are preserved. Pattern/property race tests now
+  require zero unavailable exceptions on the UI thread and retain the earlier
+  no-ObjectDisposedException assertion for popup closure.
+
+Verification: normal Debug Showcase and native-test builds passed with zero
+warnings/errors. A total of 52 focused cases passed across provider lifetime,
+popup/gallery behavior, native frame policy, retained editors and alpha rendering.
+Actual Showcase diagnostics restored Touch/material/window placement from isolated
+preferences: Solid/Mica/Acrylic each passed 16 startup samples beginning 100 ms
+after Shown, and 48 popup/ribbon handler hover samples with zero changed sampled
+document/status pixels. Mica startup was also inspected on the actual user profile;
+Paste → right-click customization opened successfully. A public-only independent
+consumer passed Mica/Acrylic startup after a Load resize with RichTextBox, status
+strip and retained editor handles; it references no Showcase code/resources.
+Artifacts: `artifacts/backdrop-startup-20261030/` (`final-*`, `independent`). All
+review windows closed and computer use stopped. Handler-driven capture is not
+physical pointer acceptance; random native hover flicker still needs user review.
+No full-suite, package, mixed-monitor/DPI or native-input campaign was run.
+
 ## Solid release, saved selection and fully clear navigation — 2026-10-30
 
 The user reported the whole form turning black when disabling material. Release

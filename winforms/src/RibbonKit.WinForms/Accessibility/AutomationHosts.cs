@@ -13,7 +13,7 @@ public partial class RibbonControl
         if (HandleWindowHitTest(ref m) || HandleCustomizationContext(ref m)) return;
         if (m.Msg == 0x3D && m.LParam.ToInt64() == -25 && !IsInDesignMode)
         {
-            m.Result = UiaNative.UiaReturnRawElementProvider(Handle, m.WParam, m.LParam, AutomationRoot);
+            m.Result = UiaNative.UiaReturnRawElementProvider(Handle, m.WParam, m.LParam, AutomationRoot.NativeProvider);
             return;
         }
         base.WndProc(ref m);
@@ -28,7 +28,7 @@ public partial class RibbonControl
     {
         var root = _popups.Top is { } surface ? surface.AutomationRoot : AutomationRoot;
         if (IsHandleCreated)
-            _ = UiaNative.UiaRaiseAutomationEvent(root.Node(element), 20005);
+            _ = UiaNative.UiaRaiseAutomationEvent(root.Node(element).NativeProvider, 20005);
     }
     private void DisposeAutomation()
     {
@@ -57,7 +57,7 @@ internal sealed partial class RibbonPopupSurface
         if (HandleCustomizationContext(ref m)) return;
         if (m.Msg == 0x3D && m.LParam.ToInt64() == -25)
         {
-            m.Result = UiaNative.UiaReturnRawElementProvider(Handle, m.WParam, m.LParam, AutomationRoot);
+            m.Result = UiaNative.UiaReturnRawElementProvider(Handle, m.WParam, m.LParam, AutomationRoot.NativeProvider);
             return;
         }
         base.WndProc(ref m);

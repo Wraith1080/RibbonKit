@@ -5,6 +5,20 @@ namespace RibbonKit.WinForms.Tests;
 // Offscreen alpha checks; no app launch or focus/input changes.
 public sealed class BackdropTransparencyTests
 {
+    [Theory] [InlineData(false, true, false)] [InlineData(true, true, false)] [InlineData(false, true, true)] [InlineData(true, true, true)]
+    [InlineData(false, false, false)] [InlineData(true, false, false)]
+    public void Header_utilities_share_backdrop_fill_coverage(bool overflow, bool composited, bool pressed) => FoundationTests.Sta(() =>
+    {
+        var theme = RibbonThemes.Office2024Light with { Background = composited ? Color.Transparent : Color.White, QuickAccessBackdropOpacity = .25f };
+        using var renderer = new RibbonRenderer(); using var buffer = new RibbonBackdropBuffer();
+        using var output = new Bitmap(60, 44); using var graphics = Graphics.FromImage(output);
+        buffer.Paint(graphics, output.Size, output.Height, Color.Transparent, canvas =>
+        {
+            var context = new RibbonPaintContext(canvas, new(Point.Empty, output.Size), theme, SystemFonts.MessageBoxFont!, 96, Hot: !pressed, Pressed: pressed) { CompositedText = composited };
+            if (overflow) renderer.DrawQuickAccessOverflow(context); else renderer.DrawMinimizeButton(context, false);
+        });
+        Assert.InRange(buffer.Image.GetPixel(18, 10).A, composited ? 63 : 254, composited ? 65 : 255);
+    });
     [Fact]
     public void Backstage_opacity_is_opt_in_finite_and_not_a_page_or_control_opacity() => FoundationTests.Sta(() =>
     {

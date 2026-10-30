@@ -3,12 +3,15 @@ using RibbonKit.WinForms.Layout;
 
 namespace RibbonKit.WinForms.Accessibility;
 
-[ComVisible(true), ClassInterface(ClassInterfaceType.None)]
+[ComVisible(false)]
 internal class RibbonAutomationNode : IRawProvider, IFragmentProvider, IInvokeProvider, IToggleProvider, ISelectionProvider, ISelectionItemProvider, IExpandProvider
 {
     private static int s_nextId;
     private readonly int _runtimeId = Interlocked.Increment(ref s_nextId);
     protected RibbonAutomationRoot Root;
+    private RibbonNativeProvider? _nativeProvider;
+    internal RibbonNativeProvider NativeProvider => _nativeProvider ??= this is RibbonAutomationRoot root ? new RibbonNativeRootProvider(root) : new RibbonNativeProvider(this);
+    internal RibbonAutomationRoot OwnerRoot => Root;
     internal readonly RibbonElement? Element;
     internal readonly bool TabList;
     private readonly Dictionary<int, object> _lastProperties = [];
@@ -121,13 +124,13 @@ internal class RibbonAutomationNode : IRawProvider, IFragmentProvider, IInvokePr
             if (value is null)
                 continue;
             if (_lastProperties.TryGetValue(property, out var old) && !Equals(old, value))
-                _ = UiaNative.UiaRaiseAutomationPropertyChangedEvent(this, property, old, value);
+                _ = UiaNative.UiaRaiseAutomationPropertyChangedEvent(NativeProvider, property, old, value);
             _lastProperties[property] = value;
         }
     }
 }
 
-[ComVisible(true), ClassInterface(ClassInterfaceType.None)]
+[ComVisible(false)]
 internal sealed class RibbonAutomationRoot : RibbonAutomationNode, IFragmentRootProvider
 {
     private readonly Dictionary<RibbonElement, RibbonAutomationNode> _nodes = [];
@@ -174,21 +177,41 @@ internal sealed class RibbonAutomationRoot : RibbonAutomationNode, IFragmentRoot
     internal T Read<T>(Func<T> action)
     {
         CheckAvailable();
-        T ReadOnOwnerThread() { CheckAvailable(); return action(); }
+        // A queued popup can disappear before this delegate runs. Return a
+        // lifetime result instead of throwing through WinForms' UI dispatcher;
+        // the requesting client still receives UIA_E_ELEMENTNOTAVAILABLE.
+        (bool Available, T Value) ReadOnOwnerThread() => Unavailable ? (false, default!) : (true, action());
         try
         {
             // UIAutomationCore can synchronously call back while disconnecting
             // after the ribbon dispatcher has begun teardown. Those owner-thread
             // callbacks may still use the live popup HWND until disconnect ends.
-            if (_disconnecting && !Control.InvokeRequired) return ReadOnOwnerThread();
+            if (_disconnecting && !Control.InvokeRequired) return ReadResult(ReadOnOwnerThread());
             if (DispatcherUnavailable) throw ElementUnavailable();
             // A popup can close while a client is waiting for the UI thread.
             // Dispatch through its retained ribbon, then recheck the popup's
             // lifetime on that thread before touching provider/model state.
-            return Ribbon.InvokeRequired ? Ribbon.Invoke(ReadOnOwnerThread) : ReadOnOwnerThread();
+            return ReadResult(Ribbon.InvokeRequired ? Ribbon.Invoke(ReadOnOwnerThread) : ReadOnOwnerThread());
         }
         catch (ObjectDisposedException) when (Unavailable || DispatcherUnavailable) { throw ElementUnavailable(); }
         catch (InvalidOperationException) when (Unavailable || DispatcherUnavailable) { throw ElementUnavailable(); }
+        static T ReadResult((bool Available, T Value) result) => result.Available ? result.Value : throw ElementUnavailable();
+    }
+    internal int ReadNative<T>(Func<T> action, out T value)
+    {
+        value = default!;
+        if (Unavailable) return RibbonNativeProvider.Unavailable;
+        (bool Available, T Value) ReadOnOwnerThread() => Unavailable ? (false, default!) : (true, action());
+        try
+        {
+            bool direct = _disconnecting && !Control.InvokeRequired;
+            if (!direct && DispatcherUnavailable) return RibbonNativeProvider.Unavailable;
+            var result = direct || !Ribbon.InvokeRequired ? ReadOnOwnerThread() : Ribbon.Invoke(ReadOnOwnerThread);
+            if (!result.Available) return RibbonNativeProvider.Unavailable;
+            value = result.Value; return 0;
+        }
+        catch (ObjectDisposedException) when (Unavailable || DispatcherUnavailable) { return RibbonNativeProvider.Unavailable; }
+        catch (InvalidOperationException) when (Unavailable || DispatcherUnavailable) { return RibbonNativeProvider.Unavailable; }
     }
     private bool DispatcherUnavailable => Ribbon.IsDisposed || Ribbon.Disposing || !Ribbon.IsHandleCreated;
     private bool Unavailable => Disconnected || Control.IsDisposed || !Control.IsHandleCreated
@@ -211,13 +234,13 @@ internal sealed class RibbonAutomationRoot : RibbonAutomationNode, IFragmentRoot
         {
             if (!Ribbon.AllElements.Contains(entry.Key))
             {
-                _ = UiaNative.UiaDisconnectProvider(entry.Value);
+                _ = UiaNative.UiaDisconnectProvider(entry.Value.NativeProvider);
                 _nodes.Remove(entry.Key);
             }
             else
                 entry.Value.RaiseChanges();
         }
-        _ = UiaNative.UiaRaiseStructureChangedEvent(this, 2, null, 0);
+        _ = UiaNative.UiaRaiseStructureChangedEvent(NativeProvider, 2, null, 0);
     }
     internal void Disconnect()
     {
@@ -230,8 +253,8 @@ internal sealed class RibbonAutomationRoot : RibbonAutomationNode, IFragmentRoot
             // disconnecting. Keep the live HWND and cached tree available until
             // those callbacks finish; subsequent stale client calls still fail.
             foreach (var node in _nodes.Values.ToArray())
-                _ = UiaNative.UiaDisconnectProvider(node);
-            _ = UiaNative.UiaDisconnectProvider(this);
+                _ = UiaNative.UiaDisconnectProvider(node.NativeProvider);
+            _ = UiaNative.UiaDisconnectProvider(NativeProvider);
         }
         finally
         {

@@ -923,4 +923,39 @@ override RibbonKit.WinForms.RibbonBackdropPanel.CreateParams.get -> System.Windo
 override RibbonKit.WinForms.RibbonBackdropPanel.OnHandleCreated(System.EventArgs! e) -> void
 override RibbonKit.WinForms.RibbonBackdropPanel.OnPaintBackground(System.Windows.Forms.PaintEventArgs! e) -> void
 override RibbonKit.WinForms.RibbonBackdropPanel.OnHandleDestroyed(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonForm.OnShown(System.EventArgs! e) -> void
 override RibbonKit.WinForms.RibbonBackdropPanel.WndProc(ref System.Windows.Forms.Message m) -> void
+RibbonKit.WinForms.Accessibility.INativeExpandProvider
+RibbonKit.WinForms.Accessibility.INativeExpandProvider.Collapse() -> int
+RibbonKit.WinForms.Accessibility.INativeExpandProvider.Expand() -> int
+RibbonKit.WinForms.Accessibility.INativeExpandProvider.ExpandCollapseState(out int value) -> int
+RibbonKit.WinForms.Accessibility.INativeFragmentProvider
+RibbonKit.WinForms.Accessibility.INativeFragmentProvider.BoundingRectangle(out RibbonKit.WinForms.Accessibility.UiaRectangle value) -> int
+RibbonKit.WinForms.Accessibility.INativeFragmentProvider.FragmentRoot(out RibbonKit.WinForms.Accessibility.INativeFragmentRootProvider? value) -> int
+RibbonKit.WinForms.Accessibility.INativeFragmentProvider.GetEmbeddedFragmentRoots(out RibbonKit.WinForms.Accessibility.INativeFragmentRootProvider![]? value) -> int
+RibbonKit.WinForms.Accessibility.INativeFragmentProvider.GetRuntimeId(out int[]? value) -> int
+RibbonKit.WinForms.Accessibility.INativeFragmentProvider.Navigate(int direction, out RibbonKit.WinForms.Accessibility.INativeFragmentProvider? value) -> int
+RibbonKit.WinForms.Accessibility.INativeFragmentProvider.SetFocus() -> int
+RibbonKit.WinForms.Accessibility.INativeFragmentRootProvider
+RibbonKit.WinForms.Accessibility.INativeFragmentRootProvider.ElementProviderFromPoint(double x, double y, out RibbonKit.WinForms.Accessibility.INativeFragmentProvider? value) -> int
+RibbonKit.WinForms.Accessibility.INativeFragmentRootProvider.GetFocus(out RibbonKit.WinForms.Accessibility.INativeFragmentProvider? value) -> int
+RibbonKit.WinForms.Accessibility.INativeInvokeProvider
+RibbonKit.WinForms.Accessibility.INativeInvokeProvider.Invoke() -> int
+RibbonKit.WinForms.Accessibility.INativeRawProvider
+RibbonKit.WinForms.Accessibility.INativeRawProvider.GetPatternProvider(int id, out object? value) -> int
+RibbonKit.WinForms.Accessibility.INativeRawProvider.GetPropertyValue(int id, out object? value) -> int
+RibbonKit.WinForms.Accessibility.INativeRawProvider.HostRawElementProvider(out RibbonKit.WinForms.Accessibility.INativeRawProvider? value) -> int
+RibbonKit.WinForms.Accessibility.INativeRawProvider.ProviderOptions(out int value) -> int
+RibbonKit.WinForms.Accessibility.INativeSelectionItemProvider
+RibbonKit.WinForms.Accessibility.INativeSelectionItemProvider.AddToSelection() -> int
+RibbonKit.WinForms.Accessibility.INativeSelectionItemProvider.IsSelected(out bool value) -> int
+RibbonKit.WinForms.Accessibility.INativeSelectionItemProvider.RemoveFromSelection() -> int
+RibbonKit.WinForms.Accessibility.INativeSelectionItemProvider.Select() -> int
+RibbonKit.WinForms.Accessibility.INativeSelectionItemProvider.SelectionContainer(out RibbonKit.WinForms.Accessibility.INativeRawProvider? value) -> int
+RibbonKit.WinForms.Accessibility.INativeSelectionProvider
+RibbonKit.WinForms.Accessibility.INativeSelectionProvider.CanSelectMultiple(out bool value) -> int
+RibbonKit.WinForms.Accessibility.INativeSelectionProvider.GetSelection(out RibbonKit.WinForms.Accessibility.INativeRawProvider![]? value) -> int
+RibbonKit.WinForms.Accessibility.INativeSelectionProvider.IsSelectionRequired(out bool value) -> int
+RibbonKit.WinForms.Accessibility.INativeToggleProvider
+RibbonKit.WinForms.Accessibility.INativeToggleProvider.Toggle() -> int
+RibbonKit.WinForms.Accessibility.INativeToggleProvider.ToggleState(out int value) -> int

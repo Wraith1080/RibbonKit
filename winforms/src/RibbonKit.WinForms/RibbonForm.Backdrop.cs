@@ -10,6 +10,7 @@ public partial class RibbonForm
     private RibbonWindowBackdrop _backdrop, _effectiveBackdrop;
     private int _backdropHeight;
     private bool _backdropOwned, _applyingBackdrop, _backdropPaintFailed, _disposingBackdrop;
+    private bool _backdropEverShown, _backdropStartupPrepared;
     private RibbonBackdropBuffer? _captionBackdrop;
     /// <summary>Gets or sets optional native material behind the form and ribbon. Default is None. Host native GDI application controls inside RibbonBackdropPanel to retain opaque text/content. Windows 11 build 22621 or later is required; unsupported, high-contrast, layered or borderless windows retain the preference with a solid fallback. Document controls, Opacity, TransparencyKey and the authored ribbon theme are not modified.</summary>
     [Category("Appearance"), DefaultValue(RibbonWindowBackdrop.None)]
@@ -70,6 +71,24 @@ public partial class RibbonForm
             else RefreshOpaquePanels(child);
         }
     }
+    /// <inheritdoc />
+    protected override void OnShown(EventArgs e)
+    {
+        PrepareBackdropStartup();
+        if (HasWindowBackdrop) _ribbon?.Editors.PaintNativeSurfaces();
+        _backdropEverShown = true;
+        base.OnShown(e);
+    }
+    private void PrepareBackdropStartup()
+    {
+        if (_backdropEverShown || _backdropStartupPrepared || !HasWindowBackdrop || !IsHandleCreated || !IsBackdropWindowVisible(Handle)) return;
+        _backdropStartupPrepared = true;
+        // Finish native child redirection synchronously in the original show
+        // transaction, after Load sizing and before returning to the pump.
+        // Do not hide/cloak/re-show the window or consume its DWM animation.
+        RefreshOpaquePanels(this); RibbonDrawingHold.Repaint(Handle);
+        FlushBackdropDrawing();
+    }
     private void ReleaseNativeBackdrop(bool updateFrame = true)
     {
         bool release = _backdropOwned && IsHandleCreated;
@@ -110,6 +129,7 @@ public partial class RibbonForm
     }
     [StructLayout(LayoutKind.Sequential)] private struct BackdropMargins { internal int Left, Right, Top, Bottom; }
     [DllImport("dwmapi.dll")] private static extern int DwmSetWindowAttribute(nint window, int attribute, ref int value, int size);
+    [DllImport("user32.dll", EntryPoint = "IsWindowVisible")] private static extern bool IsBackdropWindowVisible(nint window);
     [DllImport("dwmapi.dll")] private static extern int DwmExtendFrameIntoClientArea(nint window, ref BackdropMargins margins);
     [DllImport("gdi32.dll")] private static extern bool PatBlt(nint dc, int x, int y, int width, int height, uint operation);
     [DllImport("gdi32.dll", EntryPoint = "GdiFlush")] private static extern bool FlushBackdropDrawing();

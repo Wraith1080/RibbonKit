@@ -139,10 +139,11 @@ public interface IExpandProvider
 }
 internal static class UiaNative
 {
-    [DllImport("UIAutomationCore.dll")] internal static extern nint UiaReturnRawElementProvider(nint hwnd, nint wParam, nint lParam, [MarshalAs(UnmanagedType.Interface)] IRawProvider provider);
+    [DllImport("UIAutomationCore.dll")] internal static extern nint UiaReturnRawElementProvider(nint hwnd, nint wParam, nint lParam, [MarshalAs(UnmanagedType.Interface)] INativeRawProvider provider);
+    [DllImport("UIAutomationCore.dll", EntryPoint = "UiaHostProviderFromHwnd")] internal static extern int UiaNativeHostProviderFromHwnd(nint hwnd, out INativeRawProvider? provider);
     [DllImport("UIAutomationCore.dll")] internal static extern int UiaHostProviderFromHwnd(nint hwnd, [MarshalAs(UnmanagedType.Interface)] out IRawProvider provider);
-    [DllImport("UIAutomationCore.dll")] internal static extern int UiaRaiseAutomationEvent([MarshalAs(UnmanagedType.Interface)] IRawProvider provider, int eventId);
-    [DllImport("UIAutomationCore.dll")] internal static extern int UiaRaiseStructureChangedEvent([MarshalAs(UnmanagedType.Interface)] IRawProvider provider, int changeType, [In] int[]? runtimeId, int length);
-    [DllImport("UIAutomationCore.dll")] internal static extern int UiaRaiseAutomationPropertyChangedEvent([MarshalAs(UnmanagedType.Interface)] IRawProvider provider, int propertyId, [MarshalAs(UnmanagedType.Struct)] object oldValue, [MarshalAs(UnmanagedType.Struct)] object newValue);
-    [DllImport("UIAutomationCore.dll")] internal static extern int UiaDisconnectProvider([MarshalAs(UnmanagedType.Interface)] IRawProvider provider);
+    [DllImport("UIAutomationCore.dll")] internal static extern int UiaRaiseAutomationEvent([MarshalAs(UnmanagedType.Interface)] INativeRawProvider provider, int eventId);
+    [DllImport("UIAutomationCore.dll")] internal static extern int UiaRaiseStructureChangedEvent([MarshalAs(UnmanagedType.Interface)] INativeRawProvider provider, int changeType, [In] int[]? runtimeId, int length);
+    [DllImport("UIAutomationCore.dll")] internal static extern int UiaRaiseAutomationPropertyChangedEvent([MarshalAs(UnmanagedType.Interface)] INativeRawProvider provider, int propertyId, [MarshalAs(UnmanagedType.Struct)] object oldValue, [MarshalAs(UnmanagedType.Struct)] object newValue);
+    [DllImport("UIAutomationCore.dll")] internal static extern int UiaDisconnectProvider([MarshalAs(UnmanagedType.Interface)] INativeRawProvider provider);
 }

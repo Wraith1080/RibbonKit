@@ -8,6 +8,7 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] == "--backdrop-startup-checks") return WindowBackdropChecks.RunStartup(args[1]);
         if (args.Length == 2 && args[0] is "--backdrop-transparency-checks" or "--backdrop-transparency-checks-flat") return WindowBackdropChecks.Run(args[1], flat: args[0].EndsWith("-flat", StringComparison.Ordinal), transparency: true);
         if (args.Length == 2 && args[0] == "--backdrop-simplified-checks") return WindowBackdropChecks.Run(args[1], simplified: true);
         if (args.Length == 2 && args[0] is "--backdrop-checks" or "--backdrop-checks-flat") return WindowBackdropChecks.Run(args[1], args[0].EndsWith("-flat", StringComparison.Ordinal));

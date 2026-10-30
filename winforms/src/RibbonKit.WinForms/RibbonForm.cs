@@ -231,6 +231,12 @@ public partial class RibbonForm : Form
     /// <inheritdoc />
     protected override void WndProc(ref Message m)
     {
+        if (m.Msg is 0x18 or 0x47) // SHOWWINDOW / WINDOWPOSCHANGED: first native visibility, before deferred Shown.
+        {
+            base.WndProc(ref m);
+            PrepareBackdropStartup();
+            return;
+        }
         if (m.Msg is 0x1A or 0x31A or 0x31E or 0x7D) // settings, theme, DWM composition, styles
         { base.WndProc(ref m); RefreshBackdrop(force: m.Msg == 0x31E); return; }
         if (CustomCaption)

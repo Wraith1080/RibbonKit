@@ -66,7 +66,7 @@ public partial class RibbonRenderer : IDisposable
         try
         {
             context.Graphics.SetClip(context.Bounds, System.Drawing.Drawing2D.CombineMode.Intersect);
-            if (context.Hot || context.Pressed) DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
+            if (context.Hot || context.Pressed) DrawChrome(context, QuickAccessFill(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, false), Color.Transparent);
             RibbonArrowPainter.DrawVertical(context.Graphics, context.Bounds, context.DeviceDpi, context.Theme.Foreground, !minimized);
         }
         finally { context.Graphics.Restore(state); }
@@ -193,7 +193,7 @@ public partial class RibbonRenderer : IDisposable
     /// <summary>Paints the measured overflow opener. Keyboard and pointer activation open the same owned popup.</summary>
     public virtual void DrawQuickAccessOverflow(RibbonPaintContext context)
     {
-        if (context.Hot || context.Pressed) DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
+        if (context.Hot || context.Pressed) DrawChrome(context, QuickAccessFill(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, false), Color.Transparent);
         DrawDropDownArrow(context, context.Theme.Foreground);
         if (context.Focused) DrawFocus(context);
     }

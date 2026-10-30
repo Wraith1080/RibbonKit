@@ -40,15 +40,21 @@ public sealed class HiddenEditorCompositionTests
         Assert.NotNull(field); nint handle = field.Handle; var presenter = field.Parent!;
         _ = presenter.Handle; f.Ribbon.PrepareBackdropEditors(true);
         Assert.True(GetLayeredWindowAttributes(presenter.Handle, out _, out byte alpha, out _), $"root={GetAncestor(presenter.Handle, 2)}; host={f.Form.Handle}; parent={presenter.Parent?.GetType().Name}; material={f.Form.EffectiveBackdrop}"); Assert.Equal(255, alpha);
+        Assert.False(ManagedBuffered(presenter)); // Native composition owns buffering over material.
         using var popup = new Form(); var surface = new Panel(); popup.Controls.Add(surface); _ = popup.Handle; _ = surface.Handle;
         SetParent(surface.Handle, popup.Handle);
         surface.Controls.Add(presenter); SetParent(presenter.Handle, surface.Handle); f.Ribbon.PrepareBackdropEditors(true);
         Assert.False(RibbonDrawingHold.HasOpacity(presenter.Handle));
+        Assert.True(ManagedBuffered(presenter)); // Ordinary opaque popup returns to normal WinForms buffering.
         Assert.Equal(handle, field.Handle); Assert.Equal("Retained name", field.Text);
         f.Ribbon.Controls.Add(presenter); SetParent(presenter.Handle, f.Ribbon.Handle); f.Ribbon.SyncEditors(); f.Ribbon.PrepareBackdropEditors(true);
         Assert.True(GetLayeredWindowAttributes(presenter.Handle, out _, out alpha, out _)); Assert.Equal(255, alpha);
+        Assert.False(ManagedBuffered(presenter));
         Assert.Equal(handle, field.Handle); Assert.False(f.Form.Visible); Assert.False(popup.Visible);
     });
+
+    private static bool ManagedBuffered(Control control) => (bool)typeof(Control).GetMethod("GetStyle",
+        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.Invoke(control, [ControlStyles.OptimizedDoubleBuffer])!;
 
     [Fact]
     public void Mask_interruptions_and_repeated_sync_restore_both_native_fields_without_recreating_them() => FoundationTests.Sta(() =>

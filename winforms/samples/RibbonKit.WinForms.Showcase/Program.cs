@@ -20,7 +20,37 @@ internal static class Program
             return;
         }
         bool persistenceProbe = args.Length == 4 && args[0] == "--persistence-probe";
-        using var form = new MainForm(persistenceProbe ? Path.GetFullPath(args[1]) : args.Length == 0 ? MainForm.DefaultSettingsDirectory : null);
+        bool hoverProbe = args.Length == 3 && args[0] == "--check-backdrop-hover";
+        bool editorProbe = args.Length == 3 && args[0] == "--check-backdrop-editors";
+        bool startupProbe = hoverProbe || editorProbe || args.Length == 3 && args[0] == "--check-backdrop-startup";
+        using var form = new MainForm(startupProbe ? MainForm.PrepareBackdropStartupSettings(args[1], Enum.Parse<RibbonWindowBackdrop>(args[2]))
+            : persistenceProbe ? Path.GetFullPath(args[1]) : args.Length == 0 ? MainForm.DefaultSettingsDirectory : null);
+        if (startupProbe)
+        {
+            form.Shown += async (_, _) =>
+            {
+                try
+                {
+                    await form.CheckBackdropStartup(args[1]);
+                    if (hoverProbe) await form.CheckBackdropHover(args[1]);
+                    if (editorProbe) await form.CheckEditorHover(args[1]);
+                }
+                catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
+                finally { form.Close(); }
+            };
+        }
+        using var startupBackground = startupProbe ? new StartupBackground() : null;
+        startupBackground?.Show();
+        if (args.Length == 2 && args[0] == "--watch-native-paint")
+        {
+            form.PrepareNativePaintWatch();
+            form.Shown += async (_, _) =>
+            {
+                try { await form.WatchNativePaint(args[1]); }
+                catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
+                finally { form.Close(); }
+            };
+        }
         if (args.Length == 2 && args[0] == "--check-modal-layout-hidden")
         {
             try { form.CheckHiddenModalLayout(args[1]); }
@@ -136,5 +166,16 @@ internal static class Program
                 form.Close();
             });
         Application.Run(form);
+    }
+    // Owned diagnostic background distinguishes unrevealed/cloaked frames from
+    // actual first content frames without capturing unrelated desktop content.
+    private sealed class StartupBackground : Form
+    {
+        internal StartupBackground()
+        {
+            StartPosition = FormStartPosition.Manual; Bounds = Screen.PrimaryScreen!.Bounds;
+            BackColor = Color.Fuchsia; FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false;
+        }
+        protected override bool ShowWithoutActivation => true;
     }
 }

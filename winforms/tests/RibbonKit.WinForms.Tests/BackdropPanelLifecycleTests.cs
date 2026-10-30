@@ -43,7 +43,7 @@ public sealed class BackdropPanelLifecycleTests
             form.Backdrop = next;
             Assert.Equal(handle, content.Handle); Assert.Equal(editor, document.Handle);
             Assert.Equal("Retained native document", document.Text);
-            Assert.Equal(next == RibbonWindowBackdrop.None ? 0 : 0x02080000, Style(content.Handle) & 0x02080000);
+            Assert.Equal(next == RibbonWindowBackdrop.None ? 0 : 0x00080000, Style(content.Handle) & 0x02080000);
         }
     });
 

@@ -64,7 +64,11 @@ internal sealed class PopupChromeWindow : NativeWindow, IDisposable
         // popup's frame must follow that nested ownership level too: keeping
         // every frame on the host Form lets later owned tips lift a nested
         // frame above its own opaque content.
-        SetWindowPos(Handle, popup.Handle, bounds.X, bounds.Y, bounds.Width, bounds.Height, 0x0050); // NOACTIVATE | SHOWWINDOW
+        // Hover repaints must not repeatedly enter native window positioning.
+        // Still repair real moves, visibility and sibling Z-order changes (for
+        // example when another owned popup or ScreenTip has been shown).
+        if (!GetWindowRect(Handle, out var current) || current.Rectangle != bounds || !IsWindowVisible(Handle) || GetWindow(popup.Handle, 2) != Handle)
+            SetWindowPos(Handle, popup.Handle, bounds.X, bounds.Y, bounds.Width, bounds.Height, 0x0050); // NOACTIVATE | SHOWWINDOW
     }
 
     private void Upload(Bitmap bitmap, Point location)
@@ -100,6 +104,10 @@ internal sealed class PopupChromeWindow : NativeWindow, IDisposable
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     private struct Blend { internal byte Operation, Flags, Alpha, Format; }
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeRect { internal int Left, Top, Right, Bottom; internal readonly Rectangle Rectangle => Rectangle.FromLTRB(Left, Top, Right, Bottom); }
+    [DllImport("user32.dll")] private static extern bool GetWindowRect(nint window, out NativeRect rectangle);
+    [DllImport("user32.dll")] private static extern bool IsWindowVisible(nint window);
     [DllImport("user32.dll")] private static extern nint GetDC(nint window);
     [DllImport("user32.dll")] private static extern int ReleaseDC(nint window, nint dc);
     [DllImport("gdi32.dll")] private static extern nint CreateCompatibleDC(nint dc);

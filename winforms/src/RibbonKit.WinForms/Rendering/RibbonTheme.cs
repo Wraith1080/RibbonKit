@@ -64,7 +64,7 @@ public sealed record RibbonTheme
     public RibbonFill Pressed { get; init; } = new(Color.FromArgb(218, 218, 218));
     /// <summary>Gets the checked-command fill.</summary>
     public RibbonFill Checked { get; init; } = new(Color.FromArgb(217, 225, 237));
-    /// <summary>Gets QAT hover/pressed/checked background coverage over an active window backdrop, from 0 to 1. Solid and popup presentations keep their authored fills. Text and icons retain their opacity.</summary>
+    /// <summary>Gets QAT hover/pressed/checked and header utility hover/pressed background coverage over an active window backdrop, from 0 to 1. Solid and popup presentations keep their authored fills. Text and icons retain their opacity.</summary>
     public float QuickAccessBackdropOpacity { get; init; } = .6f;
     /// <summary>Gets the minimum tab height in 96-DPI logical pixels.</summary>
     public int TabHeight { get; init; } = 40;
