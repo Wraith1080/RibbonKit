@@ -5,7 +5,7 @@ namespace RibbonKit.WinForms.Showcase;
 
 public partial class MainForm
 {
-    internal async Task CaptureMotionInput(string directory, bool tailOnly = false, bool interactionsOnly = false, bool hoverOnly = false)
+    internal async Task CaptureMotionInput(string directory, bool tailOnly = false, bool interactionsOnly = false, bool hoverOnly = false, bool openingOnly = false)
     {
         Directory.CreateDirectory(directory); List<string> log = []; var pointer = Cursor.Position;
         try
@@ -38,6 +38,11 @@ public partial class MainForm
                         ribbon.IsBackstageOpen = true; await Task.Delay(55); Guard(); var back = Descendants(this).First(c => c.Visible && c.AccessibleName == "Back");
                         Cursor.Position = back.PointToScreen(new(back.Width / 2, back.Height / 2)); await Task.Delay(35);
                     }, true);
+                    if (openingOnly)
+                    {
+                        ribbon.AnimationLevel = RibbonAnimationLevel.None; ribbon.IsBackstageOpen = false;
+                        continue;
+                    }
                     var backButton = Descendants(this).First(c => c.Visible && c.AccessibleName == "Back");
                     await Record(density + "-pointer-close", () => Click(backButton), false);
                     var field = Descendants(ribbon).OfType<TextBox>().Single(c => c.Visible && c.Name == nameInput.Id);
@@ -92,6 +97,7 @@ public partial class MainForm
         async Task Record(string name, Func<Task> action, bool inspectRail)
         {
             Guard(); var bounds = Bounds; var client = PointToScreen(Point.Empty); var images = new List<(long Milliseconds, bool Animating, Bitmap Image)>();
+            var initialDocument = document.RectangleToScreen(document.ClientRectangle); initialDocument.Offset(-bounds.X, -bounds.Y);
             long committed = 0; int oldRibbonBottom = ribbon.PointToScreen(new(0, ribbon.Height)).Y - bounds.Y;
             Exception? error = null; using var stop = new CancellationTokenSource(); var watch = Stopwatch.StartNew();
             var worker = new Thread(() =>
@@ -116,7 +122,7 @@ public partial class MainForm
             try
             {
                 if (error is not null) throw error;
-                int displaced = 0;
+                int displaced = 0, backgroundGaps = 0;
                 foreach (var frame in images)
                 {
                     frame.Image.Save(Path.Combine(directory, $"{name}-{frame.Milliseconds:D4}.png"));
@@ -131,6 +137,20 @@ public partial class MainForm
                             if (matches > samples / 2) columns++;
                         }
                         displaced = Math.Max(displaced, columns);
+                        // Native siblings are clipped as soon as Backstage is
+                        // shown. Both the document and replacement page are
+                        // opaque here; neither should reveal the form's material
+                        // or its unpainted gray background during that handoff.
+                        int opaque = 0, backgroundSamples = 0;
+                        for (int y = initialDocument.Bottom - 65; y < initialDocument.Bottom - 15; y += 5)
+                        for (int x = Math.Max(initialDocument.Left + 15, client.X - bounds.X + (int)Math.Round(290 * DeviceDpi / 96d)); x < initialDocument.Right - 30; x += 12)
+                        {
+                            if (!new Rectangle(Point.Empty, frame.Image.Size).Contains(x, y)) continue;
+                            backgroundSamples++; var pixel = frame.Image.GetPixel(x, y);
+                            bool Near(Color target) => Math.Abs(pixel.R - target.R) + Math.Abs(pixel.G - target.G) + Math.Abs(pixel.B - target.B) <= 9;
+                            if (Near(document.BackColor) || Near(ribbon.Theme.Surface)) opaque++;
+                        }
+                        if (backgroundSamples > 0 && opaque < backgroundSamples * .8) backgroundGaps++;
                     }
                 }
                 int documentChanges = 0, editorChanges = 0;
@@ -144,9 +164,10 @@ public partial class MainForm
                     var editorBounds = Descendants(ribbon).Where(c => c.Visible && (c.Name == nameInput.Id || c.Name == fontInput.Id) && c is TextBoxBase or ComboBox).Select(c => { var r = c.RectangleToScreen(c.ClientRectangle); r.Offset(-bounds.X, -bounds.Y); return r; }).ToArray();
                     editorChanges = images.Where(f => f.Milliseconds >= committed + 35 && !f.Animating).Select(f => editorBounds.Sum(r => Changed(f.Image, images[^1].Image, r))).DefaultIfEmpty().Max();
                 }
-                log.Add($"{name}: frames={images.Count}, active frames={images.Count(f => f.Animating)}, displaced navigation columns={displaced}, document changes={documentChanges}, settled editor changes={editorChanges}");
+                log.Add($"{name}: frames={images.Count}, active frames={images.Count(f => f.Animating)}, displaced navigation columns={displaced}, opening background gaps={backgroundGaps}, document changes={documentChanges}, settled editor changes={editorChanges}");
                 File.WriteAllLines(Path.Combine(directory, "progress.log"), log);
                 if (inspectRail && displaced > 3) throw new InvalidOperationException("Navigation drawing appeared over the application page.");
+                if (backgroundGaps > 0) throw new InvalidOperationException("Native document drawing disappeared before its opaque Backstage replacement was painted.");
                 if (documentChanges > 4 || editorChanges > 4) throw new InvalidOperationException("Document or native editor pixels flashed outside the intended animation.");
             }
             finally { foreach (var frame in images) frame.Image.Dispose(); }

@@ -1,12 +1,226 @@
 # M6C native window backdrops
 
-Status, **2026-10-30: deferred by the user after unstable visual behavior**.
+Status, **2026-10-30: investigation resumed by the user; visual acceptance pending**.
+After branching the experiment, the user clarified that document flicker also
+occurred before backdrops and restored M6C through merge `589e8d5`. This removes
+the earlier deferral; it does not establish the cause or resolution of flicker.
+M5E persistence was implemented first as requested. Resumed review corrections
+and current evidence are recorded below.
+
+## Returning to editor tabs — 2026-10-30
+
+The user reported TextBox and enabled ComboBox flicker when returning to their
+tab. This reopens that specific visual check; the earlier disabled-choice
+correction did not cover unchanged enabled presenters.
+
+- Presentation comparison now covers enabled fields too, including their enabled,
+  read-only and layout state. Unchanged synchronization skips the extra frame
+  invalidation. Parking or recreating a presenter clears the comparison; label,
+  value/choice, palette, renderer and geometry changes still refresh it. Native
+  focus, hover, press and actual list changes retain their own repaint paths.
+- A returning presenter requests a synchronous client/subtree repaint after
+  visibility/parenting completes. Material motion also finishes the committed
+  ribbon's native child paints while its covering drawing is still present.
+  Solid already does this when releasing its drawing hold. These requests do not
+  include non-client frame painting or introduce another form style change.
+- Geometry-motion release no longer invalidates the entire subtree after removing
+  that cover, or when settling an already idle controller. Closing an already
+  closed choice list also avoids its previous unconditional invalidations.
+
+Normal Debug Showcase build passed with zero warnings/errors. Nine focused hidden
+cases passed: six `HiddenEditorTabReturnTests`, the existing disabled-choice case,
+and two editor composition/root-transfer cases. Before correction, five unchanged
+synchronizations produced five presenter invalidations per enabled field; five
+idle settles also produced five ribbon invalidations. Both are now zero. Repeated
+away/return cycles preserve native handles, text/choice values, editable selections
+and commit counts. Classic includes TextBox and both ComboBox modes; Simplified
+covers its explicitly inline ComboBoxes (TextBox commands stay in full groups).
+
+Computer use remains off. Hidden native windows do not consume visible child
+paints, so these checks establish state and repaint-request behavior, **not** the
+absence of composed-screen flicker or the animation handoff's visible timing.
+Return-to-tab review under Solid/Mica/Acrylic, with Fade/SlideDown and interruptions
+by popups/Backstage, remains pending. No public API or persistence schema changed;
+no visible launch/input, full suite, WPF, Release/package, commit or push ran.
+
+## Disabled choices, popup caption state and preview containment — 2026-10-30
+
+The user reported remaining disabled ComboBox flicker on popup opening, grey
+owner-title text while menus/temporary minimized-tab ribbons own keyboard focus,
+and a title-bar bar during Print Preview entry. Computer-use input remains off;
+the work below used source review, hidden HWNDs and offscreen drawing only.
+
+| Report | Bounded correction | Current evidence/limit |
+| --- | --- | --- |
+| Disabled ComboBox repaints when an unrelated popup opens | Popup opening synchronizes editors. Previously every `Presenter.Present` ended in `Invalidate`, including an unchanged disabled choice. The initial correction compared disabled presenters' actual surface, geometry/clip, palette/renderer, font/density/DPI, label/value/choices, editable mode and material state. Parking/handle changes clear the comparison. The tab-return follow-up above extends this to enabled fields and removes no-op list-closing redraws. | The hidden regression observed five invalidations for five unchanged synchronizations before the fix and zero after it. Label, choice/value, palette, renderer and enabled-state changes still repaint and retain the native handle. The intermittent composed-screen flicker has not yet been rechecked. |
+| Title text turns grey for owned popups/temporary minimized ribbons | `ContainsFocus` describes keyboard focus, which legitimately moves into ToolStrip/choice windows. Caption text now follows `WM_NCACTIVATE` state, including the existing popup-family activation guard. It uses the same existing foreground/secondary theme roles. Real deactivation still dims the caption. | Two hidden/offscreen cases passed for normal and composited caption drawing: active text stays stronger without keyboard focus and becomes secondary on native deactivation. Actual menu/minimized-tab opening, focus return and external-application activation remain live gates. |
+| Print Preview can paint into the title area | The application preview was a direct full-form sibling, shown before `BringToFront` corrected its docking order. It now shares the document's opaque body host from initialization, with the status strip reserved below it. Preview cannot escape that host during entry/layout and its native GDI drawing uses the same opaque surface as the document. This remains Showcase-owned application content. | The real Showcase launch/exit command passed 12 hidden layout cases: Solid/Mica/Acrylic × Compact/Touch × initially expanded/minimized. Managed form-space rectangles do not overlap the ribbon or status strip, and exit restores the previous minimized state. Actual intermediate composed frames remain unverified. |
+
+Verification:
+
+- Normal Debug Showcase build passed with zero warnings/errors; no runtime public
+  API or persisted schema was added for these corrections.
+- `HiddenCaptionColorTests` (2 cases) and `HiddenDisabledComboTests` (1 case)
+  passed. Both paths first exposed the prior behavior. The disabled-choice case
+  includes legitimate presentation changes, not just unchanged-call suppression.
+- `--check-modal-layout-hidden <directory>` runs the actual Showcase consumer
+  without `Show`, `Activate`, `Application.Run` or input injection. All 12 cases
+  passed; ignored log: `artifacts/m6c-hidden-modal-20261030-final/result.log`.
+  Invisible native controls may be parked at unrelated screen coordinates, so
+  this check deliberately uses their managed layout in a common form coordinate
+  space. It proves hierarchy/layout contracts, not visible pixel stability.
+- No visible app launch, mouse/keyboard automation, full suite, WPF, Release,
+  package, commit or push work ran during this follow-up.
+
+On the next live review, repeat disabled-choice popup openings (including after
+tab/Backstage interruptions), one-click temporary opening of minimized tabs and
+their nested popups, then preview entry/exit from both minimized states. Inspect
+title ink and short bar frames under Solid/Mica/Acrylic. Keep the broader startup,
+hover and combined-action checklist below open; these headless results do not
+establish that all reported flashes have disappeared.
+
+## Startup and combined-action paint review — 2026-10-30
+
+The user's subsequent review reopened painting acceptance. **This investigation
+is not complete.** Computer-use input stopped at the user's request after the
+startup reproduction/recheck; no later mouse/keyboard automation or visible test
+windows were run. The earlier focused passes below do not close these new reports.
+
+| Requested check | Current result |
+| --- | --- |
+| Editor absent until hover at startup | Reproduced on a fresh, untouched Solid launch. The accessibility tree contained the document while its pixels were absent. After the content-host lifecycle change, a second untouched launch showed the document and status bar immediately. Material startup has native lifecycle coverage; actual fresh-launch Mica/Acrylic pixel review remains pending. |
+| Ribbon TextBox/ComboBox flicker after rapid tab changes followed by Backstage or other actions | Corrected material composition lifetime when retained presenters move into opaque popup roots and return. Composition is established before showing/reparenting completes, and unchanged opacity is no longer rewritten every ribbon paint. Hidden-window checks cover root transfer, repeated synchronization and mask interruptions with retained HWNDs/values. Rapid visible sequences remain pending. |
+| Editor flicker on hover | The supplied recording has a one-frame loss of the lower document text at frame 248, about 8.23 seconds, followed by restoration. The old capture sweeps did not cross the document/status boundary shown there. Solid no longer uses a layered/composited document host; repeated boundary sweeps in Solid/Mica/Acrylic remain pending. |
+| Black/white bar over the title bar when opening popups | Added a scoped `WM_NCACTIVATE` no-repaint guard for the custom caption, preserving default activation handling and minimized-window handling. This is an implemented candidate correction, not a visually verified fix. Popup opening/closing, keyboard focus, system-menu and external activation checks remain pending. |
+| Showcase label backgrounds | The user clarified application/form/status labels, not ribbon captions. The Showcase content host/status strip now use `SystemColors.Control`, and the status label uses its ambient/default background. Existing native Label controls already use ambient backgrounds; authored Backstage page backgrounds and ribbon palette/caption roles remain unchanged. Final visual review is pending. |
+| Status bar starts black or missing | Covered by the same content-host initialization defect. The corrected untouched Solid launch displayed the status bar. Repeated startup captures in all material choices remain pending. |
+
+### Cause and bounded implementation
+
+`RibbonBackdropPanel` previously requested `COMPOSITED | LAYERED` even in Solid
+mode and before it belonged to a native Form. `HandleCreated` can occur in the
+WinForms parking window, where initializing layered opacity is deferred. A layered
+child can then stay undrawn until a later paint/hover. The panel now uses ordinary
+Panel painting for Solid/unattached hosts, retries material initialization after
+native show/position parenting messages, tracks the owning root across attachment,
+and removes only its composition flags on Solid fallback. Child controls are not
+recreated. Two inherited implementation overrides are recorded in Unshipped; no
+new application preference/API setting was introduced.
+
+Editor presenters now release library-owned material composition when their native
+root becomes an opaque popup instead of retaining the main-window composition
+there. Returning presenters initialize against the actual root before presentation.
+Mask changes still restore opacity 1/255 without replacing native fields. Existing
+application-owned opacity remains outside the library's drawing hold.
+
+For custom caption activation, Microsoft's [WM_NCACTIVATE documentation](https://learn.microsoft.com/en-us/windows/win32/winmsg/wm-ncactivate)
+defines `lParam = -1` as suppressing default nonclient repaint. The guard keeps
+normal native activation processing, then invalidates only the owned caption.
+The visible popup-bar result still requires confirmation; do not infer it from
+the documented mechanism or a clean build.
+
+### Evidence and remaining gate
+
+- Normal Debug Showcase build passed, zero warnings/errors.
+- Three new `BackdropPanelLifecycleTests` cover precreated/parked handles, Solid
+  style policy, Mica/Acrylic initialization before hover and handle/value retention
+  through material changes. All passed after the correction. The old code failed
+  the precreated-handle cases. These visible lifecycle tests ran before computer
+  use was stopped.
+- Two `HiddenEditorCompositionTests` passed without showing/activating windows or
+  injecting input. The fixture explicitly completes native parenting of hidden
+  controls because WinForms deliberately parks them; this is lifecycle/opacity
+  evidence, not composed-screen evidence.
+- Computer-use window snapshots established the missing Solid startup document/
+  status bar before the fix and their presence before hover after it. No forced
+  Refresh/Update or mouse movement was used for those observations.
+- User recording: `20261029-2340-45.6762179.mp4`, 30 fps, 10.37 seconds. Ignored
+  extracted frames: `artifacts/review-video-full-20261030/`, especially 247–249.
+  The recording confirms document paint loss; the reported popup/title-bar bar
+  has not been isolated in those frames.
+
+Resume with fresh-process no-input startup captures, then repeated document/status
+boundary crossings and interrupted tab → Backstage → popup sequences in Solid,
+Mica and Acrylic. Include both native field types, actual Showcase pages/status,
+both densities, and an independent consumer with a real RichTextBox. Showcase's
+current document is a multiline TextBox, despite the user's generic editor name.
+Capture short intermediate frames rather than checking only settled pixels. Check
+caption/bar pixels during actual popup activation and focus return. Keep this
+six-item checklist open until those live scopes pass and the user reviews them.
+No full suite, WPF, Release, package, commit or push work ran for this follow-up.
+
+## Resumed review corrections — 2026-10-30
+
+Implemented, with focused/native evidence below; human acceptance remains pending:
+
+| Requested/reproduced issue | Change and observed result |
+| --- | --- |
+| Backstage opening briefly loses the document/native editors before the replacement paints | Showing the replacement sibling clips native HWNDs immediately. `ShowBackstageBackdrop` now paints that opaque background synchronously before preparing the fading surface or capturing navigation. The previous rail-displacement check missed this separate blank interval; the opening diagnostic now checks opaque page coverage too. |
+| Minimize/maximize/restore/close glyphs double when material is enabled | `RibbonForm.CreateParams` suppresses the native `WS_CAPTION` while retaining a one-pixel border, resize, system-menu and min/max styles. The same style applies to Solid/Mica/Acrylic, with no handle recreation when switching materials. Captures show one set of custom glyphs in both densities and normal/maximized states. The inherited override is recorded in Unshipped; no new application option was added. |
+| Removing the native caption makes maximize cover the taskbar | `WM_GETMINMAXINFO` fits the window's native border around the current monitor work area. Explicit host `MaximizedBounds`/`MaximumSize` remain authoritative. The independent native check reports client `1920×1140`, matching the actual work area. |
+| In-ribbon gallery labels become white under material | The gallery child now paints into a reusable opaque DIB. After GDI/application artwork and labels paint, it flushes GDI and restores alpha coverage for that deliberately opaque surface. This preserves existing RGB/disabled/selection colors and legacy `IRibbonIcon` text without forcing new icon drawing rules. It does not layer/recreate the gallery HWND or make the main ribbon body translucent. The buffer is released on Solid fallback/disposal. |
+
+The caption style preserves the border needed by the custom frame; disabling all
+DWM nonclient rendering is unsuitable because it disables extended-frame effects.
+See Microsoft's [DWM composition guidance](https://learn.microsoft.com/en-us/windows/win32/dwm/composition-ovw)
+and [custom-window rounding guidance](https://learn.microsoft.com/en-us/windows/apps/desktop/modernize/ui/apply-rounded-corners).
+
+Verification, normal Debug output, actual display DPI **120**:
+
+- `BackstageMotionTests`: 12 passed, including a new ordering regression proving
+  the background paints before the translucent surface becomes visible.
+- `RibbonFormTests`: final 15 passed, including caption style/handle stability,
+  native-frame fallback and maximized work-area containment.
+- `WindowBackdropTests` + `InRibbonGalleryTests`: 29 passed, including preservation
+  of opaque GDI artwork and gallery-label ink. These are focused runs, not one
+  full-suite result.
+- Restored-M6C Solid/Acrylic sweeps and physical interaction captures retained
+  fields/data and sampled width-group playback in both densities. Pixel inspection
+  then exposed a gap the older success log had not checked. Offline review of the
+  same page region found 4/2 gap frames in Solid Compact/Touch and 2/2 in Acrylic.
+  After the handoff change the new opening check reports **0/0/0/0** gaps, with
+  intermediate frames inspected. This compares current Solid/material modes;
+  it is not a fresh build of the pre-M6C `c8515a2` reference.
+- Public-only independent Backstage motion checks passed after making the test
+  await actual native mouse release and sample the page before full-window screen
+  copies stall its UI timer. Its zero-opacity initial frame is legitimately blank;
+  a separately sampled intermediate must still contain faded native text. Validation,
+  KeyTips, page switching, command close, resize, input and close cancellation passed.
+- Public-only native frame checks passed real caption drag, edge resize,
+  maximize/restore/minimize/close, system menu and detach/ordinary-Form/reattach.
+  The separate keyboard Snap check passed. Snap hover appearance remains a visual
+  review item; keyboard Snap is not proof of that flyout.
+- Public-only gallery material checks passed all three label-ink comparisons
+  against Solid under Mica/Acrylic, both densities: exact dark-pixel counts and
+  retained native handle/selection, without Showcase resources/helpers.
+- Actual Showcase caption/gallery captures cover both densities, three material
+  choices and normal/maximized states. Full-form images show rounded normal-window
+  corners, opaque command/document areas and dark inline labels/artwork. Acrylic
+  Styles/Text color dropdown captures also retain dark labels.
+- M5E Apply/save and a second real process restore passed again after the final
+  frame changes; only that affected restart scope was repeated.
+
+Ignored raw evidence: `artifacts/m6c-resumed-20261030-061116/`, especially
+`opening-painted-first-ready/`, `caption-and-gallery-opaque/`,
+`independent-backstage-motion-sampled/`, `independent-window-frame-fitted/`,
+`independent-window-snap/`, `independent-gallery/`, `showcase-gallery-popups/` and
+`persistence-after-frame-fix/`. The first opening retry aborted on lost foreground;
+the user then freed the computer and the guarded retry passed. That abort is not
+acceptance evidence. Earlier failed/diagnostic runs remain in the same ignored root.
+
+These changes resolve the captured Backstage handoff gap and reported caption/
+gallery defects at this scope. The broader intermittent document blink, physical
+monitor migration, other DPI values and human visual acceptance remain open. The
+main ribbon body stays opaque as requested. No WPF, full-suite, Release or package
+campaign ran; no commit/push/branch operation was performed.
+
+Earlier deferral context:
 The user accepted M6B's final frame/group/Backstage/editor motion fixes on
 2026-10-29 and authorized M6C. During review the user expanded the backdrop to
 the form background and explicitly retained the opaque main ribbon body.
-The user prefers the stable pre-M6C ribbon, will handle branching, and wants this
-experiment revisited after the remaining work. M6C has not received visual
-acceptance; passing focused checks below do not override that decision.
+At deferral the user preferred the stable pre-M6C ribbon, handled branching and
+planned to revisit the experiment after the remaining work. M6C had not received
+visual acceptance; the historical checks below did not establish that acceptance.
 
 ## Deferral and resume checkpoint
 
@@ -18,10 +232,10 @@ acceptance; passing focused checks below do not override that decision.
   No branch switch, commit, reset, stash or source rollback was performed for this
   documentation update. Recheck live Git state when resuming; do not assume the
   branch or dirty state remains the same.
-- Keep the backdrop API, opaque GDI host, native editor/Backstage composition,
-  motion masking/capture and caption-repaint follow-up together as the experiment
-  for now. The caption fix's isolated test pass does not establish acceptance of
-  the whole rendering path or authorize promoting it into the stable baseline.
+- At deferral the backdrop API, opaque GDI host, native editor/Backstage composition,
+  motion masking/capture and caption-repaint follow-up stayed together as the
+  experiment. The caption fix's isolated test pass did not establish acceptance
+  of the whole rendering path. The later user-owned restoration is recorded above.
 - **Outstanding symptom:** the Showcase document intermittently flickers during
   ribbon/Backstage animation, more likely with pointer movement. Controlled captures
   missed the visible blink, including before the caption repair. Its visual cause
@@ -32,7 +246,7 @@ acceptance; passing focused checks below do not override that decision.
   pages and document content need opaque readable surfaces. Full translucent
   command panels were explicitly declined.
 
-When the user explicitly resumes M6C, begin with a bounded reproduction against
+Investigation method retained from deferral: begin with a bounded reproduction against
 the stable reference and the experimental branch. Include pointer sweeps across
 caption/ribbon/document during tab, minimize/density and Backstage open/close
 transitions. Inspect intermediate composed frames and paint/erase activity, then

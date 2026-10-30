@@ -155,9 +155,14 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
         }
         _ancestors.Clear();
         ribbon.SetBackdropBodyMasked(false);
+        bool held = _hold is not null;
         _hold?.Dispose(); _hold = null;
+        // A Solid hold repaints its subtree on disposal. Material mode keeps
+        // the HWND styles stable, so explicitly finish its native child paints
+        // while the motion window still covers the committed ribbon.
+        if (!held && _window is not null && !ribbon.IsDisposed && ribbon.IsHandleCreated)
+            RibbonDrawingHold.Repaint(ribbon.Handle);
         _window?.Dispose(); _window = null; _from?.Dispose(); _from = null; _to?.Dispose(); _to = null;
-        if (!ribbon.IsDisposed && ribbon.IsHandleCreated) ribbon.Invalidate(true);
     }
     public void Dispose() { if (_disposed) return; _disposed = true; Settle(); _timer.Dispose(); }
     [DllImport("user32.dll")] private static extern bool SystemParametersInfo(uint action, uint parameter, out bool value, uint flags);

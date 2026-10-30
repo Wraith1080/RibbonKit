@@ -6,6 +6,25 @@ namespace RibbonKit.WinForms.Tests;
 
 public sealed class WindowBackdropTests
 {
+    [Fact]
+    public void Opaque_material_surface_keeps_GDI_artwork_and_gallery_label_ink_opaque() => FoundationTests.Sta(() =>
+    {
+        using var output = new Bitmap(220, 90); using var graphics = Graphics.FromImage(output);
+        using var buffer = new RibbonBackdropBuffer(); using var renderer = new RibbonRenderer();
+        using var font = new Font("Segoe UI", 12); using var tile = new RibbonGalleryTile { Text = "Gallery label" };
+        buffer.Paint(graphics, output.Size, 0, Color.White, canvas =>
+        {
+            TextRenderer.DrawText(canvas, "Aa", font, new Rectangle(10, 5, 80, 25), Color.Black, TextFormatFlags.NoPadding);
+            renderer.DrawGalleryTile(new(canvas, new(0, 30, 210, 60), RibbonThemes.Office2024Light, font, 96), tile, false);
+        }, opaque: true);
+        int artworkInk = 0, labelInk = 0;
+        for (int y = 0; y < output.Height; y++) for (int x = 0; x < output.Width; x++)
+        {
+            var pixel = buffer.Image.GetPixel(x, y); Assert.Equal(255, pixel.A);
+            if (pixel.R < 100 && pixel.G < 100 && pixel.B < 100) { if (y < 30) artworkInk++; else labelInk++; }
+        }
+        Assert.True(artworkInk > 20); Assert.True(labelInk > 20);
+    });
     [Theory] [InlineData(RibbonWindowBackdrop.None)] [InlineData(RibbonWindowBackdrop.Acrylic)]
     public void Caption_pointer_tracking_does_not_invalidate_document_or_repeat_unchanged_hover(RibbonWindowBackdrop backdrop) => FoundationTests.Sta(() =>
     {

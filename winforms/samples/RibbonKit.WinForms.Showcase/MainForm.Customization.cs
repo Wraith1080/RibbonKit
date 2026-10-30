@@ -6,13 +6,13 @@ public partial class MainForm
     private void InitializeCustomization()
     {
         ribbon.CustomizationApplicationId = CustomizationApplicationId;
-        ribbon.CustomizationApplied += (_, _) => status.Text = "Customization changes applied. The application can save its profile here.";
+        ribbon.CustomizationApplied += (_, _) => { status.Text = "Customization changes applied."; SaveCustomization(); };
         ribbon.OptionsDialogOpening += (_, e) =>
         {
             var page = new RibbonOptionsPage { Text = "Editor", Name = "ApplicationEditorOptions" };
             var wrap = new CheckBox { Text = "Wrap document text", Checked = document.WordWrap, AutoSize = true, Location = new(8, 12) };
             page.Controls.Add(wrap);
-            page.Applied += (_, _) => { document.WordWrap = wrap.Checked; status.Text = "Application editor preferences applied."; };
+            page.Applied += (_, _) => { document.WordWrap = wrap.Checked; status.Text = "Application editor preferences applied."; SavePreferences(); };
             page.Cancelled += (_, _) => wrap.Checked = document.WordWrap;
             e.Dialog.Pages.Insert(0, page);
             if (e.Dialog is RibbonQuickAccessCustomizationForm shared)

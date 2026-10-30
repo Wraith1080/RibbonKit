@@ -25,7 +25,10 @@ internal sealed class RibbonDrawingHold(nint window, long addedStyle = 0x80000) 
         long style = GetStyle(window);
         if ((style & 0x02000000) == 0) { SetStyle(window, style | 0x02000000); addedStyle |= 0x02000000; }
     }
-    public void Dispose() { if (_disposed) return; _disposed = true; if (IsWindow(window)) { SetLayeredWindowAttributes(window, 0, 255, 2); SetStyle(window, GetStyle(window) & ~addedStyle); RedrawWindow(window, 0, 0, 0x185); } }
+    // Include native edit/selection HWNDs, and finish their paint before the
+    // covering motion drawing is removed. Never include non-client frame paint.
+    internal static void Repaint(nint window) => RedrawWindow(window, 0, 0, 0x185); // INVALIDATE | ERASE | ALLCHILDREN | UPDATENOW
+    public void Dispose() { if (_disposed) return; _disposed = true; if (IsWindow(window)) { SetLayeredWindowAttributes(window, 0, 255, 2); SetStyle(window, GetStyle(window) & ~addedStyle); Repaint(window); } }
     private static long GetStyle(nint window) => (IntPtr.Size == 8 ? GetWindowLongPtr(window, -20) : GetWindowLong(window, -20)).ToInt64();
     private static void SetStyle(nint window, long style) { if (IntPtr.Size == 8) SetWindowLongPtr(window, -20, (nint)style); else SetWindowLong(window, -20, (nint)style); }
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")] private static extern nint GetWindowLongPtr(nint window, int index);

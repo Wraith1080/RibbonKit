@@ -6,6 +6,11 @@ User acceptance, 2026-10-28: the QAT/options dialog, rounded controls, dual sear
 spacing/minimum width, caption fixes, larger Showcase and owner centering work as
 expected. Physical monitor, actual VS and accessibility gates remain separate.
 
+Automatic Showcase storage and application preference/restart behavior follow in
+[M5E](M5E-SHOWCASE-PERSISTENCE.md), implemented and checked on 2026-10-30 with human
+restart review pending. Earlier M5A statements excluding automatic storage describe
+the library foundation; the application owns the later file integration.
+
 ## M5A catalog and QAT transaction foundation — 2026-10-28
 
 The user authorized continuation and confirmed focused verification only. M5A

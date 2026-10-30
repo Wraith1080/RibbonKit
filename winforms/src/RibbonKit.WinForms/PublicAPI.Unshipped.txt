@@ -892,6 +892,7 @@ RibbonKit.WinForms.RibbonForm.Ribbon.get -> RibbonKit.WinForms.RibbonControl?
 RibbonKit.WinForms.RibbonForm.Ribbon.set -> void
 override RibbonKit.WinForms.RibbonForm.DisplayRectangle.get -> System.Drawing.Rectangle
 override RibbonKit.WinForms.RibbonForm.OnHandleCreated(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonForm.CreateParams.get -> System.Windows.Forms.CreateParams!
 override RibbonKit.WinForms.RibbonForm.OnDpiChanged(System.Windows.Forms.DpiChangedEventArgs! e) -> void
 override RibbonKit.WinForms.RibbonForm.OnResize(System.EventArgs! e) -> void
 override RibbonKit.WinForms.RibbonForm.OnTextChanged(System.EventArgs! e) -> void
@@ -916,3 +917,5 @@ RibbonKit.WinForms.RibbonBackdropPanel.RibbonBackdropPanel() -> void
 override RibbonKit.WinForms.RibbonBackdropPanel.CreateParams.get -> System.Windows.Forms.CreateParams!
 override RibbonKit.WinForms.RibbonBackdropPanel.OnHandleCreated(System.EventArgs! e) -> void
 override RibbonKit.WinForms.RibbonBackdropPanel.OnPaintBackground(System.Windows.Forms.PaintEventArgs! e) -> void
+override RibbonKit.WinForms.RibbonBackdropPanel.OnHandleDestroyed(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonBackdropPanel.WndProc(ref System.Windows.Forms.Message m) -> void

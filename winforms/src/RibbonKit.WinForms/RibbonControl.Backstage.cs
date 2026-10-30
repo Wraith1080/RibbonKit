@@ -115,6 +115,10 @@ public partial class RibbonControl
         }
         _backstageBackdrop.Bounds = BackstageHostBounds(form);
         form.Controls.SetChildIndex(_backstageBackdrop, Math.Min(form.Controls.GetChildIndex(surface) + 1, form.Controls.Count - 1)); _backstageBackdrop.Visible = true; _backstageBackdrop.Invalidate();
+        // Showing a sibling clips native document/editor HWNDs immediately.
+        // Paint the opaque replacement before preparing the translucent surface
+        // or capturing navigation, which can otherwise expose an unpainted gap.
+        _backstageBackdrop.Update();
     }
     internal bool ValidateBackstagePage() => !IsBackstageOpen || _backstageSurface?.ValidatePage() != false;
     private bool CloseBackstage(bool restoreFocus, bool force = false, bool animate = true)

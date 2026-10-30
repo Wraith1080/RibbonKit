@@ -147,17 +147,25 @@ internal static class BackstageInteractionChecks
             foreach (var level in new[] { RibbonAnimationLevel.Subtle, RibbonAnimationLevel.Expressive })
             {
                 ribbon.AnimationLevel = RibbonAnimationLevel.None; ribbon.Density = level == RibbonAnimationLevel.Subtle ? RibbonDensity.Compact : RibbonDensity.Touch; ribbon.IsMinimized = level == RibbonAnimationLevel.Expressive; ribbon.AnimationLevel = level; ribbon.Refresh();
-                await QuickClick(ribbon, record.File); Check(ribbon.IsBackstageOpen && ribbon.IsAnimating, level + " File input starts navigation opening");
+                log.Add($"File target={record.File}; ribbon={ribbon.Bounds}; DPI={ribbon.DeviceDpi}");
+                await QuickClick(ribbon, record.File);
+                if (!ribbon.IsBackstageOpen) await Capture("file-input-diagnostic");
+                Check(ribbon.IsBackstageOpen && ribbon.IsAnimating, $"{level} File input starts navigation opening (open={ribbon.IsBackstageOpen}, animating={ribbon.IsAnimating})");
                 var overlay = info.Parent!.Parent!.Parent!; if (handle == 0) { handle = field.Handle; parent = info.Parent; }
                 Check(info.Visible && field.Handle == handle && ReferenceEquals(parent, info.Parent) && state.Name == field.Text, level + " application page is live with retained HWND/parent/binding");
                 var page = info.RectangleToScreen(info.ClientRectangle); var client = overlay.RectangleToScreen(overlay.ClientRectangle); int navigation = info.Parent!.Parent!.Left;
-                await Task.Delay(20); using var first = Frame(client); using var livePage = Frame(page); var deadline = Stopwatch.StartNew();
+                // Capture the live page before the full-window copy blocks the
+                // UI timer. Sample again after yielding so the fade has actually
+                // advanced; its initial zero-opacity frame is legitimately blank.
+                using var livePage = Frame(page); await Task.Delay(8);
+                using var first = Frame(client); using var middlePage = Frame(page); var deadline = Stopwatch.StartNew();
+                livePage.Save(Path.Combine(directory, level + "-page-initial.png")); middlePage.Save(Path.Combine(directory, level + "-page-middle.png"));
                 await Task.Delay(30); using (var middle = Frame(client)) middle.Save(Path.Combine(directory, level + "-middle.png"));
                 while (ribbon.IsAnimating && deadline.ElapsedMilliseconds < 1500) await Task.Delay(3);
                 Check(!ribbon.IsAnimating && ribbon.IsBackstageOpen, level + " navigation completes without a host acknowledgement"); using var final = Frame(client); using var finalPage = Frame(page);
                 Check(Different(first, final, new(0, 0, navigation, first.Height)), level + " navigation visibly changes during opening");
                 Check(Different(livePage, finalPage, new(Point.Empty, livePage.Size)), level + " live application page visibly fades without moving its controls");
-                Check(FadedText(livePage, finalPage), level + " intermediate page contains faded native text rather than a blank host");
+                Check(FadedText(livePage, finalPage) || FadedText(middlePage, finalPage), level + " intermediate page contains faded native text rather than a blank host");
                 Check(field.Handle == handle && info.Parent == parent && ribbon.SelectedTab == home && ribbon.IsMinimized == (level == RibbonAnimationLevel.Expressive), level + " tab/minimized and native content state are retained");
                 Check(GetForegroundWindow() == form.Handle, level + " inert drawing never activates"); first.Save(Path.Combine(directory, level + "-first.png")); final.Save(Path.Combine(directory, level + "-final.png"));
                 await QuickClick(Button("Back")); Check(ribbon.IsBackstageOpen && ribbon.IsAnimating, "Back starts a validated closing fade");
@@ -180,7 +188,17 @@ internal static class BackstageInteractionChecks
         async Task FinishMotion() { var deadline = Stopwatch.StartNew(); while (ribbon.IsAnimating && deadline.ElapsedMilliseconds < 2000) await Task.Delay(3); Check(!ribbon.IsAnimating, "Library completes motion without host acknowledgement"); }
         async Task QuickClick(WF.Control control, Rectangle? bounds = null)
         {
-            Guard(); var r = bounds ?? control.ClientRectangle; Check(!r.IsEmpty && control.Visible, "Motion pointer target is visible"); WF.Cursor.Position = control.PointToScreen(new(r.Left + r.Width / 2, r.Top + r.Height / 2)); await Task.Delay(20); mouse_event(2, 0, 0, 0, 0); mouse_event(4, 0, 0, 0, 0); await Task.Delay(15);
+            Guard(); var r = bounds ?? control.ClientRectangle; Check(!r.IsEmpty && control.Visible, "Motion pointer target is visible");
+            WF.Cursor.Position = control.PointToScreen(new(r.Left + r.Width / 2, r.Top + r.Height / 2)); await Task.Delay(20);
+            var released = new TaskCompletionSource<bool>(); WF.MouseEventHandler release = (_, _) => released.TrySetResult(true);
+            control.MouseUp += release;
+            try
+            {
+                mouse_event(2, 0, 0, 0, 0); mouse_event(4, 0, 0, 0, 0);
+                Check(await Task.WhenAny(released.Task, Task.Delay(1500)) == released.Task, "Native pointer release reached its target");
+            }
+            finally { control.MouseUp -= release; }
+            await Task.Yield();
         }
         static Bitmap Frame(Rectangle bounds) { var image = new Bitmap(bounds.Width, bounds.Height); using var g = Graphics.FromImage(image); g.CopyFromScreen(bounds.Location, Point.Empty, image.Size); return image; }
         static bool Different(Bitmap first, Bitmap last, Rectangle area) { for (int y = area.Top; y < area.Bottom; y++) for (int x = area.Left; x < area.Right; x++) if (first.GetPixel(x, y) != last.GetPixel(x, y)) return true; return false; }

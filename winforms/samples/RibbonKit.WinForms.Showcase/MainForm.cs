@@ -5,7 +5,8 @@ namespace RibbonKit.WinForms.Showcase;
 public partial class MainForm : RibbonForm
 {
     private readonly FormattingState _formatting = new();
-    public MainForm()
+    public MainForm() : this(DefaultSettingsDirectory) { }
+    internal MainForm(string? settingsDirectory)
     {
         InitializeComponent();
         Ribbon = ribbon;
@@ -58,6 +59,7 @@ public partial class MainForm : RibbonForm
         InitializeCommandIcons();
         document.AppendText("\r\n\r\nView > Chart contains the three chart context actions. Chart context adds a source-owned Chart Design tab and a Chart context group on Home. Switch the context off and on to retain its fields and bindings. Application activation drives merging; moving keyboard focus does not.");
         document.AppendText("\r\n\r\nHome > Galleries shows Styles inside the ribbon. Use its up/down buttons to browse a row, and the bottom button or F4 to expand all styles. Preview leaves selection unchanged; click or Enter applies the style. Styles and Text color can be added to Quick Access through customization.");
+        InitializePersistence(settingsDirectory);
     }
     private void NameValidating(object? sender, CancelEventArgs e)
     {

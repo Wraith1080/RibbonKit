@@ -13,9 +13,44 @@ internal static class Program
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
-        using var form = new MainForm();
+        bool persistenceProbe = args.Length == 4 && args[0] == "--persistence-probe";
+        using var form = new MainForm(persistenceProbe ? Path.GetFullPath(args[1]) : args.Length == 0 ? MainForm.DefaultSettingsDirectory : null);
+        if (args.Length == 2 && args[0] == "--check-modal-layout-hidden")
+        {
+            try { form.CheckHiddenModalLayout(args[1]); }
+            catch (Exception error)
+            {
+                Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1;
+            }
+            return;
+        }
+        if (persistenceProbe)
+            form.Shown += async (_, _) =>
+            {
+                await Task.Yield();
+                try { await form.RunPersistenceProbe(args[2], args[3]); }
+                catch (Exception error) { File.WriteAllText(args[3], error.ToString()); Environment.ExitCode = 1; }
+                finally { form.Close(); }
+            };
         if (args.Length == 2 && args[0] == "--capture-document-hover")
             form.Shown += async (_, _) => { await Task.Yield(); try { form.Backdrop = RibbonWindowBackdrop.Acrylic; await form.CaptureMotionInput(args[1], hoverOnly: true); } finally { form.Close(); } };
+        if (args.Length == 2 && args[0] == "--capture-document-hover-solid")
+            form.Shown += async (_, _) => { await Task.Yield(); try { await form.CaptureMotionInput(args[1], hoverOnly: true); } finally { form.Close(); } };
+        if (args.Length == 2 && args[0] == "--capture-backstage-opening")
+            form.Shown += async (_, _) =>
+            {
+                await Task.Yield();
+                try
+                {
+                    foreach (var backdrop in new[] { RibbonWindowBackdrop.None, RibbonWindowBackdrop.Acrylic })
+                    {
+                        form.Backdrop = backdrop;
+                        await form.CaptureMotionInput(Path.Combine(args[1], backdrop.ToString()), interactionsOnly: true, openingOnly: true);
+                        if (Environment.ExitCode != 0) break;
+                    }
+                }
+                finally { form.Close(); }
+            };
         if (args.Length == 2 && args[0] == "--capture-motion-backdrop-tail")
             form.Shown += async (_, _) => { await Task.Yield(); try { form.Backdrop = RibbonWindowBackdrop.Acrylic; await form.CaptureMotionInput(args[1], tailOnly: true); } finally { form.Close(); } };
         if (args.Length == 2 && args[0] == "--capture-motion-backdrop-interactions")
@@ -26,6 +61,8 @@ internal static class Program
             form.Shown += async (_, _) => { await Task.Yield(); try { await form.CaptureBackdropMenu(args[1]); } finally { form.Close(); } };
         if (args.Length == 2 && args[0] == "--capture-backdrops")
             form.Shown += async (_, _) => { await Task.Yield(); try { await form.CaptureBackdrops(args[1]); } finally { form.Close(); } };
+        if (args.Length == 2 && args[0] == "--capture-backdrop-caption")
+            form.Shown += async (_, _) => { await Task.Yield(); try { await form.CaptureBackdropCaption(args[1]); } finally { form.Close(); } };
         if (args.Length == 2 && args[0] == "--capture-motion-interactions")
             form.Shown += async (_, _) => { await Task.Yield(); try { await form.CaptureMotionInput(args[1], interactionsOnly: true); } finally { form.Close(); } };
         if (args.Length == 2 && args[0] == "--capture-motion-input-tail")
@@ -60,6 +97,8 @@ internal static class Program
             form.Shown += async (_, _) => { await Task.Yield(); await form.CaptureModal(args[1]); form.Close(); };
         if (args.Length == 2 && args[0] == "--capture-galleries")
             form.Shown += async (_, _) => { await Task.Yield(); await form.CaptureGalleries(args[1]); form.Close(); };
+        if (args.Length == 2 && args[0] == "--capture-galleries-backdrop")
+            form.Shown += async (_, _) => { await Task.Yield(); try { form.Backdrop = RibbonWindowBackdrop.Acrylic; await form.CaptureGalleries(args[1]); } finally { form.Close(); } };
         if (args.Length == 2 && args[0] == "--capture-backstage")
             form.Shown += async (_, _) => { await Task.Yield(); await form.CaptureBackstage(args[1]); form.Close(); };
         if (args.Length == 2 && args[0] == "--capture")

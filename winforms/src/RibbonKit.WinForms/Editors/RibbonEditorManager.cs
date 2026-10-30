@@ -115,18 +115,45 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
     private sealed class Presenter : Control
     {
         private RibbonDrawingHold? _backdropOpacity;
-        private bool _backdrop;
+        private bool _backdrop, _settingBackdrop;
+        private byte _backdropAlpha = 255;
+        private Presentation? _presentation;
+        private sealed record Presentation(Control Surface, Rectangle Bounds, int LabelWidth, Rectangle Clip,
+            RibbonTheme Theme, RibbonRenderer Renderer, Font Font, RibbonDensity Density, int Dpi, string Label, object Value,
+            int ChoicesVersion, bool Editable, bool ReadOnly, bool Enabled, bool Material, RibbonLayoutMode Layout);
         internal void SetBackdrop(bool enabled)
         {
             _backdrop = enabled;
-            if (!enabled) { _backdropOpacity?.Dispose(); _backdropOpacity = null; }
-            else if (IsHandleCreated && _backdropOpacity is null && !RibbonDrawingHold.HasOpacity(Handle)
-                && _ribbon.FindForm() is { IsHandleCreated: true } form && NativeRoot(Handle) == form.Handle)
-                _backdropOpacity = RibbonDrawingHold.Create(Handle, _ribbon.BackdropBodyMasked ? (byte)1 : (byte)255, compositeChildren: true);
+            if (_settingBackdrop) return;
+            _settingBackdrop = true;
+            try
+            {
+                // Opaque popups do not share the extended host frame. Release
+                // our material composition when a retained editor moves there,
+                // and re-establish it before returning to the live ribbon.
+                bool apply = enabled && IsHandleCreated && _ribbon.FindForm() is { IsHandleCreated: true } form && NativeRoot(Handle) == form.Handle;
+                if (!apply) { _backdropOpacity?.Dispose(); _backdropOpacity = null; return; }
+                if (_backdropOpacity is null && !RibbonDrawingHold.HasOpacity(Handle))
+                {
+                    _backdropAlpha = _ribbon.BackdropBodyMasked ? (byte)1 : (byte)255;
+                    _backdropOpacity = RibbonDrawingHold.Create(Handle, _backdropAlpha, compositeChildren: true);
+                }
+                else SetBackdropOpacity(_ribbon.BackdropBodyMasked ? (byte)1 : (byte)255);
+            }
+            finally { _settingBackdrop = false; }
         }
-        internal void SetBackdropOpacity(byte alpha) => _backdropOpacity?.SetOpacity(alpha);
-        protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); SetBackdrop(_backdrop || _ribbon.HasWindowBackdrop); }
-        protected override void OnHandleDestroyed(EventArgs e) { _backdropOpacity?.Dispose(); _backdropOpacity = null; base.OnHandleDestroyed(e); }
+        internal void SetBackdropOpacity(byte alpha)
+        {
+            if (_backdropOpacity is null || _backdropAlpha == alpha) return;
+            _backdropOpacity.SetOpacity(alpha); _backdropAlpha = alpha;
+        }
+        protected override void OnHandleCreated(EventArgs e) { _presentation = null; base.OnHandleCreated(e); SetBackdrop(_backdrop || _ribbon.HasWindowBackdrop); }
+        protected override void OnHandleDestroyed(EventArgs e) { _presentation = null; _backdropOpacity?.Dispose(); _backdropOpacity = null; base.OnHandleDestroyed(e); }
+        protected override void WndProc(ref Message m)
+        {
+            base.WndProc(ref m);
+            if (m.Msg is 0x18 or 0x47) SetBackdrop(_backdrop || _ribbon.HasWindowBackdrop);
+        }
         private static nint NativeRoot(nint window) => GetAncestor(window, 2);
         [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern nint GetAncestor(nint window, uint flags);
         private readonly RibbonControl _ribbon;
@@ -236,6 +263,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
             if (!_item.EffectiveEnabled && ListOpen) CloseChoice(true);
             if (!_item.EffectiveEnabled && _dirty && !TryCommit()) CancelEdit();
             if (IsDisposed) return;
+            bool arriving = _presentation is null || !ReferenceEquals(Parent, surface);
             var (start, length) = Selection;
             _applying = true;
             try
@@ -328,11 +356,23 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
                 Enabled = _item.EffectiveEnabled;
             }
             finally { _applying = false; }
+            SetBackdrop(_ribbon.HasWindowBackdrop);
             Visible = true;
-            Invalidate();
+            // Layout/popup synchronization does not itself change a field's
+            // drawing. Focus, hover, press and list changes invalidate separately.
+            var next = new Presentation(surface, Bounds, _labelWidth, _clip, _ribbon.Theme, _ribbon.Painter, Font,
+                _ribbon.Density, _ribbon.DeviceDpi, _item.Text, _lastModel,
+                _item is RibbonComboBoxItem choices ? choices.ChoicesVersion : -1,
+                _item is RibbonComboBoxItem { IsEditable: true }, _item is RibbonTextBoxItem { ReadOnly: true },
+                _item.EffectiveEnabled, _ribbon.HasWindowBackdrop, _ribbon.LayoutMode);
+            if (_presentation != next) { _presentation = next; Invalidate(); }
+            // Showing a retained presenter must also refresh its native text
+            // subtree, not leave that work until after the tab motion uncovers it.
+            if (arriving && IsHandleCreated) RibbonDrawingHold.Repaint(Handle);
         }
         internal void Park()
         {
+            _presentation = null;
             SyncQuickAccess();
             if (QuickReference is null)
             {
@@ -470,6 +510,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
         }
         private void CloseChoice(bool cancel)
         {
+            if (Choice is null && QuickReference is null && _quickOpener is null && _listStart is null) return;
             var popup = Choice;
             Choice = null;
             var opener = _quickOpener;

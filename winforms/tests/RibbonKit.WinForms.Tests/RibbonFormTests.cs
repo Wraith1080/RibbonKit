@@ -6,6 +6,31 @@ namespace RibbonKit.WinForms.Tests;
 
 public sealed class RibbonFormTests
 {
+    [Theory]
+    [InlineData(FormBorderStyle.Sizable)] [InlineData(FormBorderStyle.FixedSingle)] [InlineData(FormBorderStyle.Fixed3D)]
+    public void Custom_caption_suppresses_native_glyphs_but_retains_frame_and_system_semantics(FormBorderStyle border) => FoundationTests.Sta(() =>
+    {
+        using var form = new StyleProbe { FormBorderStyle = border };
+        int style = form.NativeStyle;
+        Assert.NotEqual(0x00C00000, style & 0x00C00000); // No second system caption.
+        Assert.NotEqual(0, style & 0x00800000); // Preserve a DWM-roundable border.
+        Assert.NotEqual(0, style & 0x00080000); // System menu.
+        Assert.NotEqual(0, style & 0x00030000); // Minimize/maximize.
+        if (border == FormBorderStyle.Sizable) Assert.NotEqual(0, style & 0x00040000);
+        form.Show(); nint handle = form.Handle;
+        foreach (var backdrop in Enum.GetValues<RibbonWindowBackdrop>())
+        { form.Backdrop = backdrop; Assert.Equal(style, form.NativeStyle); Assert.Equal(handle, form.Handle); }
+        form.FormBorderStyle = FormBorderStyle.FixedToolWindow;
+        Assert.Equal(0x00C00000, form.NativeStyle & 0x00C00000); // Ordinary native-frame fallback.
+    });
+    private sealed class StyleProbe : RibbonForm { internal int NativeStyle => CreateParams.Style; }
+    [Fact]
+    public void Captionless_native_style_keeps_maximized_client_inside_the_monitor_work_area() => FoundationTests.Sta(() =>
+    {
+        using var form = new RibbonForm { Size = new(900, 600) };
+        form.Show(); form.WindowState = FormWindowState.Maximized; Application.DoEvents();
+        Assert.True(Screen.FromHandle(form.Handle).WorkingArea.Contains(form.RectangleToScreen(form.ClientRectangle)));
+    });
     [Fact]
     public void Association_fallback_switching_and_disposal_preserve_one_command_owner() => FoundationTests.Sta(() =>
     {

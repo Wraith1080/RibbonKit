@@ -2,6 +2,7 @@ namespace RibbonKit.WinForms.Showcase;
 
 public partial class MainForm
 {
+    private Panel? _printPreview;
     internal async Task CaptureModal(string directory)
     {
         Directory.CreateDirectory(directory); Activate(); await Task.Delay(100);
@@ -49,6 +50,7 @@ public partial class MainForm
         settings.Items.AddRange(copies, zoom, print); tab.Groups.Add(settings); source.Tabs.Add(tab);
         zoom.SimplifiedPlacement = print.SimplifiedPlacement = RibbonSimplifiedPlacement.Inline;
         var preview = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(226, 228, 232), Visible = false };
+        _printPreview = preview;
         Controls.Add(preview);
         preview.Paint += (_, e) =>
         {

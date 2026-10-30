@@ -6,6 +6,33 @@ namespace RibbonKit.WinForms.Tests;
 
 public sealed class BackstageMotionTests
 {
+    [Fact]
+    public void Opening_paints_the_replacement_background_before_showing_the_translucent_surface() => FoundationTests.Sta(() =>
+    {
+        using var f = new Fixture(false);
+        var previous = f.Ribbon.Renderer;
+        var probe = new BackgroundProbe(); f.Ribbon.Renderer = probe; previous?.Dispose();
+        f.Ribbon.AnimationLevel = RibbonAnimationLevel.Expressive;
+        f.Ribbon.IsBackstageOpen = true; f.Ribbon.SettleMotion(); f.Close();
+        var surface = f.Ribbon.BackstageSurface!; int paintedWhileHidden = 0;
+        probe.Painted = () => { if (!surface.Visible) paintedWhileHidden++; };
+        bool observed = false;
+        surface.VisibleChanged += (_, _) =>
+        {
+            if (!surface.Visible) return;
+            observed = true;
+            Assert.True(paintedWhileHidden > 0, "Native content was clipped before its replacement background painted.");
+        };
+        f.Ribbon.IsBackstageOpen = true;
+        Assert.True(observed); Assert.True(f.Ribbon.IsAnimating);
+        Assert.Equal(0, f.Page.PrintRequests);
+    });
+    private sealed class BackgroundProbe : RibbonRenderer
+    {
+        internal Action? Painted;
+        public override void DrawBackstageBackground(RibbonPaintContext context, int navigationWidth)
+        { base.DrawBackstageBackground(context, navigationWidth); Painted?.Invoke(); }
+    }
     private sealed class Fixture : IDisposable
     {
         internal readonly Form Host = new() { Size = new(1050, 720) };

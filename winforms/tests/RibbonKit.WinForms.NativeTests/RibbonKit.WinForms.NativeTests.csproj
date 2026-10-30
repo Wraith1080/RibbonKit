@@ -41,4 +41,5 @@
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/WindowIntegrationChecks.cs" Link="PublicWindowIntegrationChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/WindowMotionRegressionChecks.cs" Link="PublicWindowMotionRegressionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/WindowBackdropChecks.cs" Link="PublicWindowBackdropChecks.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/GalleryBackdropChecks.cs" Link="PublicGalleryBackdropChecks.cs" /></ItemGroup>
 </Project>

@@ -8,11 +8,12 @@ namespace RibbonKit.WinForms;
 // child HWND, not another input/presentation window. Reuse its DIB between paints.
 internal sealed class RibbonBackdropBuffer : IDisposable
 {
-    private nint _dc, _dib, _old;
+    private nint _dc, _dib, _old, _bits;
+    private byte[]? _opaquePixels;
     private Bitmap? _image;
     private Graphics? _graphics;
     internal Bitmap Image => _image!;
-    internal void Paint(Graphics destination, Size size, int headerHeight, Color fallback, Action<Graphics> paint)
+    internal void Paint(Graphics destination, Size size, int headerHeight, Color fallback, Action<Graphics> paint, bool opaque = false)
     {
         if (size.Width < 1 || size.Height < 1 || (long)size.Width * size.Height > 4_194_304) throw new Win32Exception("Backdrop drawing exceeds its bounded pixel budget.");
         if (_image?.Size != size) Allocate(size);
@@ -24,6 +25,18 @@ internal sealed class RibbonBackdropBuffer : IDisposable
             paint(_graphics); _graphics.Flush();
         }
         finally { _graphics.Restore(state); }
+        if (opaque)
+        {
+            // An opaque child may include arbitrary application GDI artwork.
+            // TextRenderer writes RGB but clears glyph alpha. Preserve its colors
+            // and restore coverage for this whole, deliberately opaque surface.
+            GdiFlush();
+            int length = checked(size.Width * size.Height * 4);
+            if (_opaquePixels?.Length != length) _opaquePixels = new byte[length];
+            Marshal.Copy(_bits, _opaquePixels, 0, length);
+            for (int pixel = 3; pixel < length; pixel += 4) _opaquePixels[pixel] = 255;
+            Marshal.Copy(_opaquePixels, 0, _bits, length);
+        }
         nint output = destination.GetHdc();
         try { if (!BitBlt(output, 0, 0, size.Width, size.Height, _dc, 0, 0, 0x00CC0020)) throw new Win32Exception(Marshal.GetLastWin32Error()); }
         finally { destination.ReleaseHdc(output); }
@@ -35,9 +48,9 @@ internal sealed class RibbonBackdropBuffer : IDisposable
         {
             _dc = CreateCompatibleDC(0); if (_dc == 0) throw new Win32Exception();
             var info = new BitmapInfo { Size = 40, Width = size.Width, Height = -size.Height, Planes = 1, Bits = 32 };
-            _dib = CreateDIBSection(_dc, ref info, 0, out nint bits, 0, 0); if (_dib == 0) throw new Win32Exception();
+            _dib = CreateDIBSection(_dc, ref info, 0, out _bits, 0, 0); if (_dib == 0) throw new Win32Exception();
             _old = SelectObject(_dc, _dib);
-            _image = new(size.Width, size.Height, size.Width * 4, PixelFormat.Format32bppPArgb, bits);
+            _image = new(size.Width, size.Height, size.Width * 4, PixelFormat.Format32bppPArgb, _bits);
             _graphics = Graphics.FromHdc(_dc);
         }
         catch { Dispose(); throw; }
@@ -77,8 +90,9 @@ internal sealed class RibbonBackdropBuffer : IDisposable
         _graphics?.Dispose(); _graphics = null; _image?.Dispose(); _image = null;
         if (_dc != 0 && _old != 0) SelectObject(_dc, _old);
         if (_dib != 0) DeleteObject(_dib); if (_dc != 0) DeleteDC(_dc);
-        _dc = _dib = _old = 0;
+        _dc = _dib = _old = _bits = 0; _opaquePixels = null;
     }
+    [DllImport("gdi32.dll")] private static extern bool GdiFlush();
     [StructLayout(LayoutKind.Sequential)] private struct BitmapInfo { internal int Size, Width, Height; internal short Planes, Bits; internal int Compression, ImageSize, X, Y, Colors, Important; }
     [StructLayout(LayoutKind.Sequential)] private struct NativeRect { internal int Left, Top, Right, Bottom; }
     [StructLayout(LayoutKind.Sequential)] private struct TextOptions

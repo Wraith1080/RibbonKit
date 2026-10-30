@@ -11,11 +11,26 @@ public partial class RibbonForm : Form
     private int _hotCaption;
     private int _pressedCaption;
     private bool _updating;
+    private bool _captionActive;
     private int _lastCaptionHeight;
     /// <summary>Creates a resizable native ribbon window with standard system-menu and caption semantics.</summary>
     public RibbonForm()
     {
         SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.ResizeRedraw, true);
+    }
+    /// <inheritdoc />
+    protected override CreateParams CreateParams
+    {
+        get
+        {
+            var value = base.CreateParams;
+            // DWM draws its own caption glyphs over transparent extended frames
+            // while WS_CAPTION remains present. We own those glyphs and targets.
+            // Keep the one-pixel border, resize/system-menu/min/max styles and
+            // the same style across Solid/Mica/Acrylic, without recreating HWNDs.
+            if (CustomCaption) value.Style = (value.Style & ~0x00C00000) | 0x00800000;
+            return value;
+        }
     }
 
     /// <summary>Gets or sets a borrowed ribbon already added directly to Controls with Dock=Top. Caption integration requires empty Form padding and no other visible top-docked sibling. Association does not reparent or dispose it. Null releases the association and restores its ordinary toolbar fallback.</summary>
@@ -161,8 +176,8 @@ public partial class RibbonForm : Form
         var text = Rectangle.FromLTRB(Math.Min(left, geometry.Buttons.Left), 0, geometry.Buttons.Left, CaptionHeight);
         var textContext = new RibbonPaintContext(graphics, text, theme, Font, DeviceDpi);
         var flags = TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix;
-        if (composited) RibbonBackdropBuffer.DrawText(textContext, Text, ContainsFocus ? theme.Foreground : theme.SecondaryText, flags);
-        else TextRenderer.DrawText(graphics, Text, Font, text, ContainsFocus ? theme.Foreground : theme.SecondaryText, flags);
+        if (composited) RibbonBackdropBuffer.DrawText(textContext, Text, _captionActive ? theme.Foreground : theme.SecondaryText, flags);
+        else TextRenderer.DrawText(graphics, Text, Font, text, _captionActive ? theme.Foreground : theme.SecondaryText, flags);
         foreach (var (bounds, hit) in geometry.Targets)
         {
             if (bounds.IsEmpty) continue;
@@ -212,6 +227,33 @@ public partial class RibbonForm : Form
         { base.WndProc(ref m); RefreshBackdrop(force: m.Msg == 0x31E); return; }
         if (CustomCaption)
         {
+            // Keyboard focus belongs to an owned popup while it is open. The
+            // native activation message (including the popup-family guard)
+            // remains the authoritative state for the owner's caption color.
+            if (m.Msg == 0x86) _captionActive = m.WParam != 0;
+            if (m.Msg == 0x86 && WindowState != FormWindowState.Minimized) // NCACTIVATE
+            {
+                // Keep native activation semantics without letting the default
+                // nonclient painter briefly overwrite our reclaimed caption.
+                // WM_NCACTIVATE documents -1 as the no-repaint sentinel.
+                nint previous = m.LParam; m.LParam = -1;
+                try { base.WndProc(ref m); }
+                finally { m.LParam = previous; }
+                InvalidateCaption(); return;
+            }
+            if (m.Msg == 0x24 && MaximizedBounds.IsEmpty && MaximumSize.IsEmpty) // GETMINMAXINFO
+            {
+                base.WndProc(ref m);
+                // Without WS_CAPTION Windows otherwise maximizes to the whole
+                // monitor. Keep the native resize border outside its work area.
+                var screen = Screen.FromHandle(Handle); var work = screen.WorkingArea; var monitor = screen.Bounds;
+                var frame = new NativeRect { Right = 1, Bottom = 1 }; var style = CreateParams;
+                if (!AdjustWindowRectExForDpi(ref frame, (uint)style.Style, false, (uint)style.ExStyle, (uint)DeviceDpi)) frame = new() { Right = 1, Bottom = 1 };
+                var limits = Marshal.PtrToStructure<MinMaxInfo>(m.LParam);
+                limits.MaxPosition = new(work.Left - monitor.Left + frame.Left, work.Top - monitor.Top + frame.Top);
+                limits.MaxSize = new(work.Width + frame.Right - frame.Left - 1, work.Height + frame.Bottom - frame.Top - 1);
+                Marshal.StructureToPtr(limits, m.LParam, false); m.Result = 0; return;
+            }
             if (m.Msg == 0x83 && m.WParam != 0) // NCCALCSIZE: retain the resize frame, reclaim only the caption.
             {
                 var original = Marshal.PtrToStructure<NativeRect>(m.LParam);
@@ -270,6 +312,8 @@ public partial class RibbonForm : Form
     [StructLayout(LayoutKind.Sequential)] private struct TrackMouse { public int Size, Flags; public nint Window; public uint HoverTime; }
     [DllImport("user32.dll")] private static extern bool IsZoomed(nint window);
     [DllImport("user32.dll")] private static extern bool SetWindowPos(nint window, nint after, int x, int y, int cx, int cy, uint flags);
+    [StructLayout(LayoutKind.Sequential)] private struct MinMaxInfo { internal Point Reserved, MaxSize, MaxPosition, MinTrackSize, MaxTrackSize; }
+    [DllImport("user32.dll", SetLastError = true)] private static extern bool AdjustWindowRectExForDpi(ref NativeRect bounds, uint style, [MarshalAs(UnmanagedType.Bool)] bool menu, uint extendedStyle, uint dpi);
     [DllImport("user32.dll")] private static extern int GetSystemMetricsForDpi(int index, uint dpi);
     [DllImport("dwmapi.dll")] private static extern bool DwmDefWindowProc(nint window, int message, nint wparam, nint lparam, out nint result);
     [DllImport("user32.dll")] private static extern bool TrackMouseEvent(ref TrackMouse track);

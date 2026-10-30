@@ -1266,6 +1266,11 @@ are excluded. Version-one/QAT-only input remains supported and preserves live
 Ribbon structure. Malformed/foreign/future/unknown data is rejected before live
 changes. Transient QAT references remain live without entering saved state.
 
+Showcase automatically saves committed customization and separate application
+preferences under `%LOCALAPPDATA%/RibbonKit/WinForms.Showcase/`, restoring them
+before its first display. See [restart persistence](docs/M5E-SHOWCASE-PERSISTENCE.md)
+for stored state, rejected-file recovery and isolated real-process checks.
+
 Showcase uses the built-in customization pages rather than a separate QAT draft
 demo group. Right-click a
 command, whole group or permanent QAT entry (also in flyouts/overflow), or use

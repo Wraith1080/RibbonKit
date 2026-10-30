@@ -56,6 +56,7 @@ internal sealed class RibbonGalleryStripManager(RibbonControl ribbon) : IDisposa
 internal sealed class RibbonGalleryStripSurface : Control
 {
     private readonly RibbonControl _ribbon;
+    private RibbonBackdropBuffer? _backdropBuffer;
     internal RibbonGalleryItem Source { get; }
     private RibbonGalleryStripLayout _layout = null!;
     private RibbonGalleryTile? _focused, _hot, _pressed, _lastSelection;
@@ -118,7 +119,19 @@ internal sealed class RibbonGalleryStripSurface : Control
     protected override void OnResize(EventArgs e) { base.OnResize(e); if (Source is not null) Rebuild(); }
     protected override void OnPaint(PaintEventArgs e)
     {
-        base.OnPaint(e); var context = new RibbonPaintContext(e.Graphics, ClientRectangle, _ribbon.Theme, Font, _ribbon.DeviceDpi) { Density = _ribbon.Density };
+        base.OnPaint(e);
+        if (_ribbon.HasWindowBackdrop)
+        {
+            try { (_backdropBuffer ??= new()).Paint(e.Graphics, ClientSize, 0, _ribbon.Theme.Surface, PaintContent, opaque: true); return; }
+            catch (Exception error) when (error is System.ComponentModel.Win32Exception or System.Runtime.InteropServices.ExternalException)
+            { _ribbon.WindowHost!.BackdropPaintFailed(error); }
+        }
+        _backdropBuffer?.Dispose(); _backdropBuffer = null;
+        PaintContent(e.Graphics);
+    }
+    private void PaintContent(Graphics graphics)
+    {
+        var context = new RibbonPaintContext(graphics, ClientRectangle, _ribbon.Theme, Font, _ribbon.DeviceDpi) { Density = _ribbon.Density };
         _ribbon.Painter.DrawGalleryStripFrame(context);
         foreach (var item in _layout.Tiles)
             _ribbon.Painter.DrawGalleryTile(context with { Bounds = item.Bounds, Hot = Interactive && ReferenceEquals(_hot, item.Tile),
@@ -226,5 +239,5 @@ internal sealed class RibbonGalleryStripSurface : Control
         }
         return base.ProcessCmdKey(ref msg, keys);
     }
-    protected override void Dispose(bool disposing) { if (disposing) Source.CancelPreview(this); base.Dispose(disposing); }
+    protected override void Dispose(bool disposing) { if (disposing) { _backdropBuffer?.Dispose(); _backdropBuffer = null; Source.CancelPreview(this); } base.Dispose(disposing); }
 }

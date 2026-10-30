@@ -4,13 +4,47 @@ namespace RibbonKit.WinForms.Showcase;
 
 public partial class MainForm
 {
+    internal async Task CaptureBackdropCaption(string directory)
+    {
+        Directory.CreateDirectory(directory); Activate(); SetForegroundWindow(Handle);
+        Location = new(240, 160); Size = new(1250, 760);
+        foreach (var density in Enum.GetValues<RibbonDensity>())
+        foreach (var material in Enum.GetValues<RibbonWindowBackdrop>())
+        {
+            ribbon.Density = density; Backdrop = material;
+            foreach (var state in new[] { FormWindowState.Normal, FormWindowState.Maximized })
+            {
+                WindowState = state; await Task.Delay(450);
+                GetWindowThreadProcessId(GetForegroundWindow(), out uint foreground);
+                if (foreground != Environment.ProcessId) throw new InvalidOperationException("Showcase lost foreground; caption capture stopped.");
+                using var frame = new Bitmap(Width, Math.Min(Height, (int)Math.Ceiling(80 * DeviceDpi / 96d)));
+                using (var graphics = Graphics.FromImage(frame)) graphics.CopyFromScreen(Location, Point.Empty, frame.Size);
+                frame.Save(Path.Combine(directory, $"{density}-{material}-{state}.png"));
+                if (state == FormWindowState.Normal)
+                {
+                    using var body = new Bitmap(Width, Height);
+                    using (var graphics = Graphics.FromImage(body)) graphics.CopyFromScreen(Location, Point.Empty, body.Size);
+                    body.Save(Path.Combine(directory, $"{density}-{material}-gallery.png"));
+                }
+            }
+            WindowState = FormWindowState.Normal;
+        }
+        File.WriteAllText(Path.Combine(directory, "result.log"), "PASS: caption capture completed across densities, materials and normal/maximized states; pixel review is separate.");
+    }
     private void InitializeBackdrops()
     {
         // Application-owned GDI content uses the library's opaque host. The
         // surrounding transparent margins expose the full-form native material.
         var content = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent };
-        var opaque = new RibbonBackdropPanel { Dock = DockStyle.Fill };
+        var opaque = new RibbonBackdropPanel { Dock = DockStyle.Fill, BackColor = SystemColors.Control };
+        statusStrip.BackColor = SystemColors.Control; status.BackColor = Color.Empty;
         Controls.Remove(document); Controls.Remove(statusStrip); opaque.Controls.Add(document); opaque.Controls.Add(statusStrip);
+        if (_printPreview is { } preview)
+        {
+            // Preview shares the document's opaque client host. Even its first
+            // visible/layout frame must stay below the ribbon and caption.
+            Controls.Remove(preview); opaque.Controls.Add(preview); opaque.Controls.SetChildIndex(preview, 0);
+        }
         content.Controls.Add(opaque); Controls.Add(content); Controls.SetChildIndex(content, 0);
         BackdropChanged += (_, _) => content.Padding = Backdrop == RibbonWindowBackdrop.None ? Padding.Empty : new Padding(12);
         var group = new RibbonGroup { Id = "group.window", Text = "Window" };
