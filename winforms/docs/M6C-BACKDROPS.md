@@ -7,6 +7,152 @@ the earlier deferral; it does not establish the cause or resolution of flicker.
 M5E persistence was implemented first as requested. Resumed review corrections
 and current evidence are recorded below.
 
+## Solid release, saved selection and fully clear navigation — 2026-10-30
+
+The user reported the whole form turning black when disabling material. Release
+now switches managed paint to Solid before native teardown, repaints and flushes GDI
+client drawing while the old material still covers it, then removes the native
+material/extension and finishes the Solid frame/client synchronously. This avoids
+leaving the zero-alpha black material backing exposed until a later paint. Teardown
+does not repaint during handle destruction/disposal. Window and native editor
+ownership remain unchanged.
+
+Showcase now saves the requested `Backdrop` (including a preference currently using
+Solid fallback) and `TransparentBackstage` in its application `preferences.json`.
+Both are optional additions to version one: existing files default to Solid and
+opaque navigation. Changes save automatically; startup restores before display.
+Malformed/foreign/future inputs remain protected from automatic overwrite.
+The transparent option now selects navigation background opacity `0`, not `.65`.
+It adds no grey rail tint; Windows' chosen material retains its own appearance,
+and entry state indicators, text/icons and native page content retain coverage.
+
+Verification: Debug build passed, as did 51 focused cases in two nonvisible scopes
+(17 preference/storage, 11 alpha, 23 frame/editor/provider cases). An isolated
+`--check-backdrop-preferences-hidden` run exercised actual Showcase save events for
+Mica/Acrylic/Solid and restoration in a fresh MainForm, without Show/Application.Run
+or desktop input. The user then approved one automatic visible check: 16 full-client
+samples immediately after each Mica→Solid and Acrylic→Solid switch passed, with
+zero-percent sampled near-black coverage. First captured frames were inspected.
+Log/images: `artifacts/backdrop-off-20261030/live-off-final/`; hidden preference
+evidence: `artifacts/backdrop-off-20261030/preferences-hidden/`. The test app closed
+and visible checking stopped immediately afterward. These bounded checks do not
+close the separate historical startup/top-edge/popup flicker acceptance below.
+
+## Solid-frame regression and stale-popup accessibility — 2026-10-30
+
+The user confirmed that the startup block persists in Solid mode and that popup
+opening had regressed. **The black-block issue remains open for final acceptance.**
+The earlier sampled passes and simple/extended RECT comparison did not establish
+its cause or resolution.
+
+Comparison with pre-backdrop commit `c8515a2` found that the later custom caption
+style removed `WS_CAPTION` even in Solid mode. Solid now retains that earlier
+native frame style. Caption suppression applies only while a material is actually
+applied and is reversed on Solid/fallback; style changes preserve the Form HWND.
+The unsuccessful simple-RECT customization was removed: caption reclamation again
+applies to the committed extended client calculation. Maximized top sizing uses
+the resize inset rather than the native title height, including the restored
+Solid style. Existing popup-family activation/no-repaint handling is retained.
+
+The reported `ObjectDisposedException` was reproduced with a hidden popup and a
+queued client-thread property/pattern query. Checking a popup before invoking
+through that same short-lived Control left a disposal race. Providers now dispatch
+through the retained ribbon and recheck popup availability on the owner thread.
+Stale queries, including root identity properties, return UIA element-not-available
+(`0x80040201`). Synchronous owner-thread disconnection callbacks remain supported;
+unrelated live-provider errors are not swallowed.
+
+Verification: Debug Showcase build and 34 focused hidden/offscreen cases passed.
+Six accessibility cases cover queued popup/owner closure, stale identity and live
+errors; the popup-close cases also assert no first-chance ObjectDisposedException
+on the client thread. Eight hidden frame-policy/calculation cases and the 20
+existing alpha/editor cases passed. A brief user-approved actual Showcase check
+at the retained Simplified/TitleBar-QAT settings opened Paste, queried its provider
+tree, then right-clicked to open the customization menu without the reported
+exception. The caption was clean in the inspected startup/settled-popup frames.
+This was not a high-speed first-display capture. Exhaustive startup/popup frames,
+material/maximize visual revalidation of the changed frame policy and human
+acceptance remain pending. The review app closed and computer use stopped after
+that bounded check; no commit or push was made.
+
+## Frame calculations, optional transparency and live follow-up — 2026-10-30
+
+The frame-calculation conclusion in this earlier follow-up is superseded by the
+Solid-frame investigation above; its transparency implementation/evidence remains.
+
+The supplied recording still showed a top-edge strip at startup and Print Preview
+entry after the earlier title-row correction. `WM_NCCALCSIZE` was customized only
+for its extended form. Its simple RECT form retained a native top inset: eight
+pixels for Sizable, one for FixedSingle and three for Fixed3D in the regression's
+96-DPI context. Both forms were temporarily given the same caption reclamation.
+The user reported no fix and a popup regression, so that simple-RECT change was
+subsequently removed. A difference between query paths was not sufficient evidence
+that it caused the rendering defect.
+
+The user also authorized the previously deferred transparency work:
+
+- `RibbonTheme.QuickAccessBackdropOpacity` controls QAT hover/pressed/checked fill
+  coverage over an active backdrop (default `.6`, finite range 0–1). Artwork keeps
+  its opacity; Solid and popup rows keep their authored fills.
+- `RibbonBackstage.NavigationBackgroundOpacity` is opt-in (default `1`, finite
+  range 0–1, with a matching Changed event). Lower values expose an active native
+  backdrop through the navigation rail; unsupported/Solid hosts remain opaque.
+  Showcase offers **View → Window → Backdrop → Transparent Backstage**, enabled
+  when a material is applied, selecting `.65` versus `1`. This experimental choice
+  is not added to application persistence.
+- Navigation uses alpha-preserving drawing and composited text. Page fields stay
+  on an opaque native parent; transparent mode fades that parent rather than the
+  whole surface. Motion captures only library-owned navigation drawing. Entry
+  backgrounds replace their rail pixels instead of applying the tint twice.
+- Live Showcase review caught two integration gaps beyond the independent
+  consumer: the new command needed an explicit sample icon mapping, and its
+  AutoScroll page tree could remain blank after a fade. Restoration now repaints
+  the native target subtree before revealing it at full opacity. Page controls,
+  bindings and ownership are retained.
+
+Evidence and limits:
+
+- Normal Debug builds passed. The final focused offscreen/hidden run passed 20
+  cases: 11 alpha/coverage cases plus nine retained-editor regressions. The earlier
+  19 frame cases and 12 independent public-consumer transparency cases remain
+  recorded evidence; they were not repeated during the usage-conscious live pass.
+- Independent Office and neutral consumers covered Compact/Touch ×
+  Solid/Mica/Acrylic, including partial/zero coverage, Solid fallback, page changes
+  and reopen with native values/handles retained. Actual pixels confirmed material
+  exposure; transition captures exposed and verified the tint-compounding repair.
+- Native frame interaction passed at 120 DPI: move, resize, maximize/restore,
+  minimize, close and work-area containment. Fresh Showcase launch and Solid
+  preview entry/exit were inspected live. The final actual-Showcase probe painted
+  both Info and Print pages without mouse input or `Refresh`, then sampled the top
+  client edge 16 times at 16-ms intervals during each Solid/Acrylic preview entry.
+  Both entries passed without a wide changed strip. Log/images:
+  `artifacts/transparency-review-20261030/showcase-final/`.
+- These bounded samples do not prove every first-display or interruption frame is
+  clean. Mica preview entry, exhaustive startup/hover/rapid-interruption review,
+  physical mixed-DPI/IME, Release/package/designer and human acceptance remain
+  pending. The live check ended and computer use stopped at the user's request to
+  conserve usage; no background desktop automation remains active.
+
+## Startup and Print Preview title-row follow-up — 2026-10-30
+
+The user still sees a brief black title-area bar at startup and during Print
+Preview, and requested a small first correction. Showcase had no black BackColor
+assignment; material background painting deliberately clears to transparent black
+to expose DWM. That clear is not proof of the reported flash's cause.
+
+Solid geometry motion held the whole real ribbon but copied its tab header starting
+below the custom caption, omitting that caption row. It now carries the caption
+pixels too, with QAT glyphs excluded for their existing independent movement.
+Showcase also initializes BackColor from the ribbon theme before associating the
+window host, providing matching startup backing. Material header painting and the
+deferred QAT/Backstage transparency work were not changed.
+
+Normal Debug Showcase build passed with zero warnings/errors. To keep this small,
+no additional tests or visible app/input checks ran. Startup and Print Preview
+entry/exit still need visual confirmation in Solid/Mica/Acrylic; this correction
+does not establish that the reported black frames are gone, especially in material
+mode. Computer use remains off.
+
 ## Returning to editor tabs — 2026-10-30
 
 The user reported TextBox and enabled ComboBox flicker when returning to their

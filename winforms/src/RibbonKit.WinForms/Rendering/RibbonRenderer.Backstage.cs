@@ -9,7 +9,8 @@ public partial class RibbonRenderer
     public virtual void DrawBackstageBackground(RibbonPaintContext context, int navigationWidth)
     {
         using var page = new SolidBrush(context.Theme.Surface);
-        context.Graphics.FillRectangle(page, context.Bounds);
+        int width = Math.Clamp(navigationWidth, 0, context.Bounds.Width);
+        context.Graphics.FillRectangle(page, context.Bounds.X + width, context.Bounds.Y, context.Bounds.Width - width, context.Bounds.Height);
         using var rail = new SolidBrush(context.Theme.BackstageNavigationBackground);
         context.Graphics.FillRectangle(rail, context.Bounds.X, context.Bounds.Y, Math.Clamp(navigationWidth, 0, context.Bounds.Width), context.Bounds.Height);
     }
@@ -19,14 +20,23 @@ public partial class RibbonRenderer
         bool enabled = item?.EffectiveEnabled ?? true;
         if (!enabled) context = context with { Hot = false, Pressed = false, Focused = false };
         int S(int value) => RibbonLayoutEngine.Scale(value, context.DeviceDpi);
-        using (var rail = new SolidBrush(context.Theme.BackstageNavigationBackground)) context.Graphics.FillRectangle(rail, context.Bounds);
+        // Each entry replaces its rail pixels. Source-over would apply the tint
+        // again when composing a navigation image for motion, darkening rows.
+        var mode = context.Graphics.CompositingMode;
+        try
+        {
+            if (context.CompositedText) context.Graphics.CompositingMode = CompositingMode.SourceCopy;
+            using var rail = new SolidBrush(context.Theme.BackstageNavigationBackground);
+            context.Graphics.FillRectangle(rail, context.Bounds);
+        }
+        finally { context.Graphics.CompositingMode = mode; }
         var color = !enabled ? SystemColors.GrayText : selected ? context.Theme.Accent : context.Theme.Foreground;
         if (item is null)
         {
             int diameter = Math.Max(0, Math.Min(context.Bounds.Width, context.Bounds.Height) - 2 * S(2));
             var circle = new Rectangle(context.Bounds.Left + (context.Bounds.Width - diameter) / 2,
                 context.Bounds.Top + (context.Bounds.Height - diameter) / 2, diameter, diameter);
-            var fill = context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : new RibbonFill(context.Theme.BackstageNavigationBackground);
+            var fill = context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : new RibbonFill(Color.Transparent);
             PaintRounded(context with { Bounds = circle }, diameter / 2, fill,
                 context.Focused ? context.Theme.Accent : color, Math.Max(1, RibbonLayoutEngine.Scale(1.5, context.DeviceDpi)));
             var saved = context.Graphics.Save();
@@ -56,7 +66,7 @@ public partial class RibbonRenderer
             if (item.Icon is { } vector) vector.Draw(context.Graphics, icon, new(context.DeviceDpi, color, enabled));
             else if (item.Image is { } image) context.Graphics.DrawImage(image, icon);
             var text = Rectangle.FromLTRB(context.Bounds.Left + S(44), context.Bounds.Top, context.Bounds.Right - S(8), context.Bounds.Bottom);
-            TextRenderer.DrawText(context.Graphics, item.Text, context.Font, text, color,
+            DrawText(context with { Bounds = text }, item.Text, color,
                 TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
         }
         if (context.Focused && item is not null) DrawFocus(context);

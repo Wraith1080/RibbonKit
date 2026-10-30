@@ -20,15 +20,24 @@ requires its own explicit isolated directory.
   events queue a capture after the current transaction completes or rolls back.
 - `preferences.json`: separate version-one Showcase format for Classic/Simplified,
   Compact/Touch, ribbon minimized state, animation level/content style, editor word
-  wrap, normal window bounds/DPI and maximized state. Changes through appearance
+  wrap, requested backdrop, transparent Backstage choice, normal window bounds/DPI
+  and maximized state. Changes through appearance
   commands and Editor Apply save preferences; accepted window close captures both
   files. Window movement/resizing saves at ResizeEnd/close. A minimized application
   reopens in its previous normal/maximized state. Bounds scale to the destination
   DPI and fit the current monitor working area when a saved monitor is unavailable.
 
 Document text, field values, selection, focus, open menus/Backstage, contextual and
-merge/modal/message state stay transient. M6C's experimental backdrop selection
-is not yet part of this preference format.
+merge/modal/message state stay transient. At the user's request on 2026-10-30,
+`backdrop` and `transparentBackstage` are optional version-one additions. Existing
+files use Solid/opaque defaults; unsupported native material still retains the
+requested selection. A transparent Backstage choice restores zero rail opacity.
+
+The focused follow-up passed 17 preference/storage cases and an isolated actual
+Showcase hidden save/restore check. `--check-backdrop-preferences-hidden <fresh-dir>`
+uses its own `isolated-preferences` subdirectory and refuses to overwrite an
+existing diagnostic file. It never shows a window. The broader five-process probes
+below are earlier evidence, not a repeated visible restart campaign for these fields.
 
 Apply establishes the saved checkpoint. Later edits followed by Cancel cannot
 overwrite it. Reset/Import remain draft actions until successful Apply; Reset

@@ -4,6 +4,26 @@ namespace RibbonKit.WinForms.Showcase;
 
 public partial class MainForm
 {
+    internal static void CheckBackdropPreferencesHidden(string directory)
+    {
+        Directory.CreateDirectory(directory);
+        string settings = Path.Combine(directory, "isolated-preferences"), path = Path.Combine(settings, "preferences.json");
+        if (File.Exists(path)) throw new InvalidOperationException("Use a fresh diagnostic directory; existing preferences are preserved.");
+        using var writer = new MainForm(settings);
+        _ = writer.Handle; writer.OnLoad(EventArgs.Empty); // Execute the real startup/save lifecycle without Show/Application.Run.
+        foreach (var material in new[] { RibbonWindowBackdrop.Mica, RibbonWindowBackdrop.Acrylic, RibbonWindowBackdrop.None })
+        {
+            writer.Backdrop = material; writer.ribbon.Backstage.NavigationBackgroundOpacity = 0;
+            var saved = Persistence.ShowcasePreferences.FromJson(File.ReadAllText(path));
+            if (saved.Backdrop != material || !saved.TransparentBackstage) throw new InvalidOperationException("Backdrop change did not automatically save requested appearance.");
+        }
+        writer.Backdrop = RibbonWindowBackdrop.Mica;
+        using var reader = new MainForm(settings);
+        if (reader.Backdrop != RibbonWindowBackdrop.Mica || reader.ribbon.Backstage.NavigationBackgroundOpacity != 0)
+            throw new InvalidOperationException("Actual Showcase startup did not restore backdrop/clear navigation preferences.");
+        if (writer.Visible || reader.Visible) throw new InvalidOperationException("Preference check unexpectedly showed a window.");
+        File.WriteAllText(Path.Combine(directory, "result.log"), "PASS: automatic Mica/Acrylic/Solid saves and actual Showcase startup restore; transparent navigation is zero-opacity; no visible windows/input");
+    }
     // Isolated, real-process acceptance path. Program only enables storage for
     // this diagnostic when an explicit settings directory is supplied.
     internal async Task RunPersistenceProbe(string phase, string resultPath)
@@ -56,6 +76,7 @@ public partial class MainForm
             Bounds = new(70, 80, 1100, 740); WindowState = FormWindowState.Maximized;
             // Direct placement/visibility changes also persist outside a dialog.
             ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TabRow; ribbon.QuickAccessVisible = false;
+            Backdrop = RibbonWindowBackdrop.Mica; ribbon.Backstage.NavigationBackgroundOpacity = 0;
             await Task.Yield();
             SavePreferences();
             Require(_persistenceWarning is null, _persistenceWarning ?? "Persistence failed.");
@@ -66,6 +87,7 @@ public partial class MainForm
             Require(ribbon.AnimationLevel == RibbonAnimationLevel.Expressive && ribbon.TabContentAnimation == RibbonTabContentAnimation.SlideDown, "Animation choices did not survive restart.");
             Require(!document.WordWrap && WindowState == FormWindowState.Maximized, "Editor/window preferences did not survive restart.");
             Require(ribbon.QuickAccessPosition == RibbonQuickAccessPosition.TabRow && !ribbon.QuickAccessVisible, "Direct QAT preferences did not survive restart.");
+            Require(Backdrop == RibbonWindowBackdrop.Mica && ribbon.Backstage.NavigationBackgroundOpacity == 0, "Backdrop/transparent navigation preferences did not survive restart.");
             using var live = ribbon.CommandCatalog.BeginCustomization(CustomizationApplicationId);
             Require(live.Draft.QuickAccess.Any(q => q.CommandId == "demo.qat.redo") && live.Draft.QuickAccess.Count == 4, "QAT Apply/Cancel checkpoint was lost.");
             Require(live.Draft.Ribbon!.Tabs.Single(t => t.Id == home.Id).Label == "Home saved", "Authored tab rename was lost.");
@@ -79,6 +101,7 @@ public partial class MainForm
             Require(ribbon.LayoutMode == RibbonLayoutMode.Classic && ribbon.Density == RibbonDensity.Compact && !ribbon.IsMinimized, "Safe ribbon defaults were not used.");
             Require(ribbon.AnimationLevel == RibbonAnimationLevel.Subtle && ribbon.TabContentAnimation == RibbonTabContentAnimation.Fade && document.WordWrap, "Safe application defaults were not used.");
             Require(ribbon.QuickAccessItems.Count == 3 && ribbon.QuickAccessPosition == RibbonQuickAccessPosition.TitleBar && ribbon.QuickAccessVisible, "Safe customization defaults were not used.");
+            Require(Backdrop == RibbonWindowBackdrop.None && ribbon.Backstage.NavigationBackgroundOpacity == 1, "Safe backdrop defaults were not used.");
         }
         else throw new ArgumentException("Unknown persistence probe phase: " + phase);
         File.WriteAllText(resultPath, JsonSerializer.Serialize(new { Result = "PASS", Phase = phase, Preferences = CapturePreferences(), Warning = _persistenceWarning }, new JsonSerializerOptions { WriteIndented = true }));

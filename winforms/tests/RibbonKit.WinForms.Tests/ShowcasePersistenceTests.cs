@@ -32,6 +32,8 @@ public sealed class ShowcasePersistenceTests : IDisposable
     [InlineData("{\"format\":\"RibbonKit.WinForms.Showcase.Preferences\",\"version\":2}")]
     [InlineData("{\"format\":\"RibbonKit.WinForms.Showcase.Preferences\",\"version\":1,\"density\":\"Future\"}")]
     [InlineData("{\"format\":\"RibbonKit.WinForms.Showcase.Preferences\",\"version\":1,\"density\":1}")]
+    [InlineData("{\"format\":\"RibbonKit.WinForms.Showcase.Preferences\",\"version\":1,\"backdrop\":\"Future\"}")]
+    [InlineData("{\"format\":\"RibbonKit.WinForms.Showcase.Preferences\",\"version\":1,\"backdrop\":2}")]
     [InlineData("{\"format\":\"RibbonKit.WinForms.Showcase.Preferences\",\"version\":1,\"window\":{\"x\":0,\"y\":0,\"width\":0,\"height\":100,\"dpi\":96,\"maximized\":false}}")]
     public void Rejected_input_uses_defaults_and_is_never_overwritten(string json)
     {
@@ -68,6 +70,24 @@ public sealed class ShowcasePersistenceTests : IDisposable
         Assert.True(work.Contains(fit));
         var tiny = new ShowcaseWindowPlacement(-1900, 30, 20, 20, 144, false).Fit(work, new(240, 300), 96);
         Assert.Equal(new Size(240, 300), tiny.Size);
+    }
+
+    [Theory] [InlineData(RibbonWindowBackdrop.None)] [InlineData(RibbonWindowBackdrop.Mica)] [InlineData(RibbonWindowBackdrop.Acrylic)]
+    public void Backdrop_preference_and_clear_navigation_survive_file_restart(RibbonWindowBackdrop backdrop)
+    {
+        var source = new ShowcasePreferences { Backdrop = backdrop, TransparentBackstage = true };
+        Assert.Null(new ShowcaseSettingsFile(SettingsPath).Save(source.ToJson()));
+        ShowcasePreferences? restored = null;
+        Assert.Null(new ShowcaseSettingsFile(SettingsPath).Load(json => restored = ShowcasePreferences.FromJson(json)));
+        Assert.Equal(backdrop, restored!.Backdrop); Assert.True(restored.TransparentBackstage);
+    }
+
+    [Fact]
+    public void Existing_version_one_preferences_without_backdrop_fields_keep_opaque_solid_defaults()
+    {
+        var restored = ShowcasePreferences.FromJson("{\"format\":\"RibbonKit.WinForms.Showcase.Preferences\",\"version\":1,\"density\":\"Touch\"}");
+        Assert.Equal(RibbonWindowBackdrop.None, restored.Backdrop); Assert.False(restored.TransparentBackstage);
+        Assert.Equal(RibbonDensity.Touch, restored.Density);
     }
 
     public void Dispose()

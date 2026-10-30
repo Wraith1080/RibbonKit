@@ -89,7 +89,7 @@ public partial class RibbonRenderer : IDisposable
         bool check = command is RibbonToggleItem { Checked: true } or RibbonCheckBoxItem { Checked: true } or RibbonRadioButtonItem { Checked: true } or RibbonSplitButtonItem { Checked: true };
         bool open = entry is RibbonQuickAccessComboBoxReference { IsDropDownOpen: true } or RibbonQuickAccessDropDownReference { IsDropDownOpen: true } or RibbonQuickAccessGroupReference { IsDropDownOpen: true };
         if (check || open || context.Hot || context.Pressed)
-            DrawChrome(context, open || context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, Color.Transparent);
+            DrawChrome(context, QuickAccessFill(context, open || context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, menu), Color.Transparent);
         DrawQuickAccessContent(context, entry, menu);
         if (command is RibbonCheckBoxItem { CheckState: CheckState.Indeterminate })
         {
@@ -128,10 +128,16 @@ public partial class RibbonRenderer : IDisposable
             try
             {
                 whole.Graphics.SetClip(part.Bounds, CombineMode.Intersect);
-                DrawChrome(whole, part.Pressed || expanded ? whole.Theme.Pressed : part.Hot ? whole.Theme.Hover : marked ? whole.Theme.Checked : new(whole.Theme.Surface), Color.Transparent);
+                DrawChrome(whole, QuickAccessFill(whole, part.Pressed || expanded ? whole.Theme.Pressed : part.Hot ? whole.Theme.Hover : marked ? whole.Theme.Checked : new(whole.Theme.Surface), menu), Color.Transparent);
             }
             finally { whole.Graphics.Restore(saved); }
         }
+    }
+    private static RibbonFill QuickAccessFill(RibbonPaintContext context, RibbonFill fill, bool menu)
+    {
+        if (!context.CompositedText || menu) return fill;
+        Color Alpha(Color color) => Color.FromArgb((int)Math.Round(color.A * context.Theme.QuickAccessBackdropOpacity), color);
+        return new(Alpha(fill.Start), Alpha(fill.End));
     }
     private void DrawQuickAccessContent(RibbonPaintContext context, RibbonElement entry, bool menu)
     {

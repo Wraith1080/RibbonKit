@@ -9,6 +9,7 @@ public partial class MainForm : RibbonForm
     internal MainForm(string? settingsDirectory)
     {
         InitializeComponent();
+        BackColor = ribbon.Theme.Background;
         Ribbon = ribbon;
         ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TitleBar;
         paste.DropDownHeader = "Paste options"; select.DropDownHeader = "Selection options";

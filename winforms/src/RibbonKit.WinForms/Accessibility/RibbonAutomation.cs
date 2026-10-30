@@ -132,6 +132,7 @@ internal sealed class RibbonAutomationRoot : RibbonAutomationNode, IFragmentRoot
 {
     private readonly Dictionary<RibbonElement, RibbonAutomationNode> _nodes = [];
     private bool _disconnecting;
+    private volatile bool _disconnected;
     internal RibbonControl Ribbon
     {
         get;
@@ -146,10 +147,7 @@ internal sealed class RibbonAutomationRoot : RibbonAutomationNode, IFragmentRoot
         get;
     }
     internal IReadOnlyList<RibbonTarget> Targets => Surface?.Targets ?? Ribbon.Snapshot.Targets;
-    internal bool Disconnected
-    {
-        get; private set;
-    }
+    internal bool Disconnected => _disconnected;
     // The base needs a root reference; assign it through a separate constructor overload below.
     internal RibbonAutomationRoot(RibbonControl ribbon, RibbonPopupSurface? surface = null) : base(null!, null)
     {
@@ -162,7 +160,7 @@ internal sealed class RibbonAutomationRoot : RibbonAutomationNode, IFragmentRoot
     internal override IReadOnlyList<RibbonAutomationNode> Children => Read(() => Surface is null ? new[] { TabsNode } : Targets.Where(t => t.Element is not null and not RibbonMenuSeparatorItem).Select(t => t.Element!).Distinct().Select(e => Node(e)).ToArray());
     internal override Rectangle ScreenBounds => Read(() => Control.Visible ? Control.RectangleToScreen(Control.ClientRectangle) : Rectangle.Empty);
     public override IRawProvider? HostRawElementProvider => Read(() => { UiaNative.UiaHostProviderFromHwnd(Control.Handle, out var host); return host; });
-    public override object? GetPropertyValue(int propertyId) => propertyId switch { 30003 => Surface is null ? 50033 : 50009, 30005 => Surface?.OwnerElement.Text ?? Ribbon.AccessibleName ?? "Ribbon", 30011 => Surface is null ? Ribbon.Name is { Length: > 0 } name ? name : "ribbon" : "popup:" + Surface.OwnerElement.Id, 30012 => "RibbonControl", _ => base.GetPropertyValue(propertyId) };
+    public override object? GetPropertyValue(int propertyId) => Read<object?>(() => propertyId switch { 30003 => Surface is null ? 50033 : 50009, 30005 => Surface?.OwnerElement.Text ?? Ribbon.AccessibleName ?? "Ribbon", 30011 => Surface is null ? Ribbon.Name is { Length: > 0 } name ? name : "ribbon" : "popup:" + Surface.OwnerElement.Id, 30012 => "RibbonControl", _ => base.GetPropertyValue(propertyId) });
     internal RibbonAutomationNode Node(RibbonElement element)
     {
         if (!_nodes.TryGetValue(element, out var node))
@@ -175,10 +173,28 @@ internal sealed class RibbonAutomationRoot : RibbonAutomationNode, IFragmentRoot
     }
     internal T Read<T>(Func<T> action)
     {
-        if (Disconnected || Control.IsDisposed || !Control.IsHandleCreated)
-            throw new COMException("Element is no longer available.", unchecked((int)0x80040201));
-        return Control.InvokeRequired ? (T)Control.Invoke(action)! : action();
+        CheckAvailable();
+        T ReadOnOwnerThread() { CheckAvailable(); return action(); }
+        try
+        {
+            // UIAutomationCore can synchronously call back while disconnecting
+            // after the ribbon dispatcher has begun teardown. Those owner-thread
+            // callbacks may still use the live popup HWND until disconnect ends.
+            if (_disconnecting && !Control.InvokeRequired) return ReadOnOwnerThread();
+            if (DispatcherUnavailable) throw ElementUnavailable();
+            // A popup can close while a client is waiting for the UI thread.
+            // Dispatch through its retained ribbon, then recheck the popup's
+            // lifetime on that thread before touching provider/model state.
+            return Ribbon.InvokeRequired ? Ribbon.Invoke(ReadOnOwnerThread) : ReadOnOwnerThread();
+        }
+        catch (ObjectDisposedException) when (Unavailable || DispatcherUnavailable) { throw ElementUnavailable(); }
+        catch (InvalidOperationException) when (Unavailable || DispatcherUnavailable) { throw ElementUnavailable(); }
     }
+    private bool DispatcherUnavailable => Ribbon.IsDisposed || Ribbon.Disposing || !Ribbon.IsHandleCreated;
+    private bool Unavailable => Disconnected || Control.IsDisposed || !Control.IsHandleCreated
+        || !_disconnecting && (Control.Disposing || DispatcherUnavailable);
+    private void CheckAvailable() { if (Unavailable) throw ElementUnavailable(); }
+    private static COMException ElementUnavailable() => new("Element is no longer available.", unchecked((int)0x80040201));
     internal void Run(Action action) => Read(() => { action(); return 0; });
     public IFragmentProvider? ElementProviderFromPoint(double x, double y) => Read<IFragmentProvider?>(() =>
     {
@@ -219,7 +235,7 @@ internal sealed class RibbonAutomationRoot : RibbonAutomationNode, IFragmentRoot
         }
         finally
         {
-            Disconnected = true;
+            _disconnected = true;
             _nodes.Clear();
             _disconnecting = false;
         }

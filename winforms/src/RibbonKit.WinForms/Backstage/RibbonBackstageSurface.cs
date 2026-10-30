@@ -7,7 +7,7 @@ namespace RibbonKit.WinForms;
 internal sealed class RibbonBackstageSurface : ContainerControl
 {
     private readonly RibbonControl _ribbon;
-    private readonly Panel _navigation = new() { AutoScroll = true, TabIndex = 1 };
+    private readonly Panel _navigation;
     private readonly Panel _pages = new() { TabIndex = 2 };
     private readonly EntryButton _back;
     private readonly Dictionary<RibbonItem, EntryButton> _entries = [];
@@ -19,10 +19,27 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     private bool _syncing, _tips, _disposing;
     private string _prefix = "";
     private RibbonDrawingHold? _motionOpacity;
-    internal bool HasApplicationOpacity => _motionOpacity is null && RibbonDrawingHold.HasOpacity(Handle);
+    private Control? _motionTarget;
+    private RibbonBackdropBuffer? _paintBuffer;
+    private bool _navigationMasked;
+    internal bool TransparentNavigation => _ribbon.HasWindowBackdrop && _ribbon.Backstage.NavigationBackgroundOpacity < 1;
+    internal RibbonTheme PaintTheme => _ribbon.Theme with { BackstageNavigationBackground = Color.FromArgb(
+        TransparentNavigation ? (int)Math.Round(255 * _ribbon.Backstage.NavigationBackgroundOpacity) : 255, _ribbon.Theme.BackstageNavigationBackground) };
+    private Control MotionTarget => TransparentNavigation ? _pages : this;
+    private RibbonTheme LivePaintTheme => _navigationMasked ? PaintTheme with { BackstageNavigationBackground = Color.Transparent } : PaintTheme;
+    internal void MaskNavigation(bool masked)
+    {
+        if (_navigationMasked == masked) return;
+        _navigationMasked = masked;
+        if (!IsDisposed && IsHandleCreated) { Invalidate(); Update(); }
+    }
+    internal bool HasApplicationOpacity => _motionOpacity is null && RibbonDrawingHold.HasOpacity(MotionTarget.Handle);
     internal RibbonDrawingHold AcquireMotionOpacity(byte alpha)
     {
-        _motionOpacity ??= RibbonDrawingHold.Create(Handle, alpha, compositeChildren: _ribbon.HasWindowBackdrop);
+        var target = MotionTarget;
+        if (!ReferenceEquals(_motionTarget, target)) ReleaseMotionOpacity();
+        _motionTarget = target;
+        _motionOpacity ??= RibbonDrawingHold.Create(target.Handle, alpha, compositeChildren: _ribbon.HasWindowBackdrop);
         if (_ribbon.HasWindowBackdrop) _motionOpacity.CompositeChildren();
         _motionOpacity.SetOpacity(alpha);
         return _motionOpacity;
@@ -35,10 +52,14 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     {
         // Keep the existing redirection surface opaque while visible. Removing
         // WS_EX_LAYERED at every fade endpoint rebuilds/erases native page paint.
-        if (Visible && IsHandleCreated) _motionOpacity?.SetOpacity(255);
+        if (Visible && IsHandleCreated)
+        {
+            if (_motionTarget is { IsDisposed: false, IsHandleCreated: true } target) RibbonDrawingHold.Repaint(target.Handle);
+            _motionOpacity?.SetOpacity(255);
+        }
         else ReleaseMotionOpacity();
     }
-    private void ReleaseMotionOpacity() { _motionOpacity?.Dispose(); _motionOpacity = null; }
+    private void ReleaseMotionOpacity() { _motionOpacity?.Dispose(); _motionOpacity = null; _motionTarget = null; }
     internal Rectangle NavigationBounds => new(0, 0, _pages.Left, ClientSize.Height);
     internal Control[] NavigationControls => [_back, _navigation];
     internal Control PageArea => _pages;
@@ -46,12 +67,21 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     private sealed class Backdrop : Control
     {
         private readonly RibbonBackstageSurface _surface;
+        private RibbonBackdropBuffer? _buffer;
         internal Backdrop(RibbonBackstageSurface surface) { _surface = surface; SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true); SetStyle(ControlStyles.Selectable, false); TabStop = false; CausesValidation = false; }
-        protected override void OnPaint(PaintEventArgs e) => _surface._ribbon.Painter.DrawBackstageBackground(new(e.Graphics, ClientRectangle, _surface._ribbon.Theme, _surface.Font, _surface.DeviceDpi) { Density = _surface._ribbon.Density }, _surface.NavigationBounds.Width);
+        protected override void OnPaintBackground(PaintEventArgs e) { if (!_surface.TransparentNavigation) base.OnPaintBackground(e); }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            void Paint(Graphics graphics) => _surface._ribbon.Painter.DrawBackstageBackground(new(graphics, ClientRectangle, _surface.LivePaintTheme, _surface.Font, _surface.DeviceDpi) { Density = _surface._ribbon.Density, CompositedText = _surface.TransparentNavigation }, _surface.NavigationBounds.Width);
+            if (_surface.TransparentNavigation) (_buffer ??= new()).Paint(e.Graphics, Size, Height, Color.Transparent, Paint);
+            else { _buffer?.Dispose(); _buffer = null; Paint(e.Graphics); }
+        }
+        protected override void Dispose(bool disposing) { if (disposing) _buffer?.Dispose(); base.Dispose(disposing); }
     }
     internal RibbonBackstageSurface(RibbonControl ribbon)
     {
         _ribbon = ribbon;
+        _navigation = new NavigationPanel(this) { AutoScroll = true, TabIndex = 1 };
         SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
         AutoScaleMode = AutoScaleMode.None;
         AutoValidate = AutoValidate.EnablePreventFocusChange;
@@ -74,6 +104,8 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             BackColor = _ribbon.Theme.BackstageNavigationBackground;
             _navigation.BackColor = _ribbon.Theme.BackstageNavigationBackground;
             _pages.BackColor = _ribbon.Theme.Surface;
+            if (_motionOpacity is not null && !ReferenceEquals(_motionTarget, MotionTarget)) ReleaseMotionOpacity();
+            if (Visible && _ribbon.HasWindowBackdrop && _motionOpacity is null) PrepareBackdrop();
             var items = _ribbon.Backstage.Items.Where(i => i.Visible && !i.IsDisposed).ToArray();
             foreach (var old in _entries.Keys.Except(items).ToArray()) { _entries[old].Dispose(); _entries.Remove(old); }
             int index = 0;
@@ -228,12 +260,51 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         foreach (var slot in _slots.Values) slot.Bounds = new(Point.Empty, _pages.ClientSize);
     }
     protected override void OnDpiChangedAfterParent(EventArgs e) { base.OnDpiChangedAfterParent(e); Synchronize(); }
-    protected override void OnVisibleChanged(EventArgs e) { base.OnVisibleChanged(e); if (!Visible) ReleaseMotionOpacity(); }
+    protected override void OnVisibleChanged(EventArgs e)
+    {
+        base.OnVisibleChanged(e);
+        if (!Visible) ReleaseMotionOpacity();
+        else if (_ribbon.HasWindowBackdrop && _motionOpacity is null) PrepareBackdrop();
+    }
     protected override void OnHandleDestroyed(EventArgs e) { ReleaseMotionOpacity(); base.OnHandleDestroyed(e); }
+    protected override void OnPaintBackground(PaintEventArgs e) { if (!TransparentNavigation) base.OnPaintBackground(e); }
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
-        _ribbon.Painter.DrawBackstageBackground(new(e.Graphics, ClientRectangle, _ribbon.Theme, Font, DeviceDpi) { Density = _ribbon.Density }, _pages.Left);
+        void Paint(Graphics graphics) => _ribbon.Painter.DrawBackstageBackground(new(graphics, ClientRectangle, LivePaintTheme, Font, DeviceDpi) { Density = _ribbon.Density, CompositedText = TransparentNavigation }, _pages.Left);
+        if (TransparentNavigation) (_paintBuffer ??= new()).Paint(e.Graphics, Size, Height, Color.Transparent, Paint);
+        else { _paintBuffer?.Dispose(); _paintBuffer = null; Paint(e.Graphics); }
+    }
+    internal void PaintNavigation(Graphics graphics)
+    {
+        _ribbon.Painter.DrawBackstageBackground(new(graphics, ClientRectangle, PaintTheme, Font, DeviceDpi) { Density = _ribbon.Density, CompositedText = TransparentNavigation }, _pages.Left);
+        _back.PaintAt(graphics, _back.Location);
+        var state = graphics.Save();
+        try
+        {
+            graphics.SetClip(_navigation.Bounds, System.Drawing.Drawing2D.CombineMode.Intersect);
+            foreach (var entry in _entries.Values)
+                if (entry.Visible) entry.PaintAt(graphics, new(_navigation.Left + entry.Left, _navigation.Top + entry.Top));
+        }
+        finally { graphics.Restore(state); }
+    }
+    private sealed class NavigationPanel : Panel
+    {
+        private readonly RibbonBackstageSurface _surface;
+        internal NavigationPanel(RibbonBackstageSurface surface)
+        {
+            _surface = surface;
+            SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+        }
+        private RibbonBackdropBuffer? _buffer;
+        protected override void OnPaintBackground(PaintEventArgs e) { if (!_surface.TransparentNavigation) base.OnPaintBackground(e); }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            if (!_surface.TransparentNavigation) { _buffer?.Dispose(); _buffer = null; base.OnPaint(e); return; }
+            (_buffer ??= new()).Paint(e.Graphics, Size, Height, Color.Transparent, graphics =>
+            { using var fill = new SolidBrush(_surface.LivePaintTheme.BackstageNavigationBackground); graphics.FillRectangle(fill, ClientRectangle); });
+        }
+        protected override void Dispose(bool disposing) { if (disposing) _buffer?.Dispose(); base.Dispose(disposing); }
     }
     protected override void Dispose(bool disposing)
     {
@@ -241,6 +312,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         {
             _disposing = true;
             ReleaseMotionOpacity();
+            _paintBuffer?.Dispose(); _paintBuffer = null;
             foreach (var slot in _slots.Values) slot.Detach();
             _ribbon.BackstageSurfaceDisposed(this);
         }
@@ -279,6 +351,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         internal RibbonItem? Item { get; }
         internal string Tip = "";
         private bool _hot, _pressed;
+        private RibbonBackdropBuffer? _buffer;
         internal EntryButton(RibbonBackstageSurface surface, RibbonItem? item)
         {
             _surface = surface; Item = item;
@@ -291,18 +364,32 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         protected override void OnMouseDown(MouseEventArgs e) { _surface.HideKeyTips(); _pressed = e.Button == MouseButtons.Left; Invalidate(); base.OnMouseDown(e); }
         protected override void OnMouseUp(MouseEventArgs e) { _pressed = false; Invalidate(); base.OnMouseUp(e); }
         protected override void OnMouseCaptureChanged(EventArgs e) { _pressed = false; Invalidate(); base.OnMouseCaptureChanged(e); }
+        protected override void OnPaintBackground(PaintEventArgs e) { if (!_surface.TransparentNavigation) base.OnPaintBackground(e); }
         protected override void OnPaint(PaintEventArgs e)
         {
+            if (_surface.TransparentNavigation) (_buffer ??= new()).Paint(e.Graphics, Size, Height, Color.Transparent, PaintEntry);
+            else { _buffer?.Dispose(); _buffer = null; PaintEntry(e.Graphics); }
+        }
+        internal void PaintAt(Graphics graphics, Point origin)
+        {
+            // Native theme text draws in HDC coordinates, so provide absolute
+            // bounds instead of relying on a GDI+ translation reaching GDI.
+            PaintEntry(graphics, new Rectangle(origin, Size));
+        }
+        private void PaintEntry(Graphics graphics) => PaintEntry(graphics, ClientRectangle);
+        private void PaintEntry(Graphics graphics, Rectangle bounds)
+        {
             var ribbon = _surface._ribbon;
-            var context = new RibbonPaintContext(e.Graphics, ClientRectangle, ribbon.Theme, Font, DeviceDpi, _hot, _pressed, Focused && ribbon.KeyboardFocusCues) { Density = ribbon.Density };
+            var context = new RibbonPaintContext(graphics, bounds, _surface.PaintTheme, Font, DeviceDpi, _hot, _pressed, Focused && ribbon.KeyboardFocusCues) { Density = ribbon.Density, CompositedText = _surface.TransparentNavigation };
             ribbon.Painter.DrawBackstageEntry(context, Item, ReferenceEquals(Item, ribbon.Backstage.SelectedPage) && Item is not null);
             if (Tip.Length > 0)
             {
-                var text = TextRenderer.MeasureText(e.Graphics, Tip, Font, Size.Empty, TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
+                var text = TextRenderer.MeasureText(graphics, Tip, Font, Size.Empty, TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
                 int S(int n) => RibbonLayoutEngine.Scale(n, DeviceDpi);
                 var size = new Size(Math.Min(Math.Max(0, Width - S(8)), text.Width + S(8)), Math.Min(Math.Max(0, Height - S(4)), text.Height + S(4)));
-                ribbon.Painter.DrawKeyTip(context with { Bounds = new(Math.Max(0, Width - S(4) - size.Width), (Height - size.Height) / 2, size.Width, size.Height) }, Tip);
+                ribbon.Painter.DrawKeyTip(context with { Bounds = new(bounds.Left + Math.Max(0, Width - S(4) - size.Width), bounds.Top + (Height - size.Height) / 2, size.Width, size.Height) }, Tip);
             }
         }
+        protected override void Dispose(bool disposing) { if (disposing) _buffer?.Dispose(); base.Dispose(disposing); }
     }
 }

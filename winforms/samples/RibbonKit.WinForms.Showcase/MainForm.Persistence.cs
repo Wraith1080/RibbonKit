@@ -36,6 +36,8 @@ public partial class MainForm
                 ribbon.IsMinimized = preferences.IsMinimized;
                 ribbon.TabContentAnimation = preferences.TabContentAnimation;
                 document.WordWrap = preferences.WordWrap;
+                Backdrop = preferences.Backdrop;
+                ribbon.Backstage.NavigationBackgroundOpacity = preferences.TransparentBackstage ? 0 : 1;
                 _startupPlacement = preferences.Window;
                 level = preferences.AnimationLevel;
             }));
@@ -50,6 +52,8 @@ public partial class MainForm
         ribbon.DensityChanged += (_, _) => SavePreferences();
         ribbon.LayoutModeChanged += (_, _) => SavePreferences();
         ribbon.IsMinimizedChanged += (_, _) => SavePreferences();
+        BackdropChanged += (_, _) => SavePreferences();
+        ribbon.Backstage.NavigationBackgroundOpacityChanged += (_, _) => SavePreferences();
         ribbon.QuickAccessPositionChanged += (_, _) => QueueCustomizationSave();
         ribbon.QuickAccessVisibleChanged += (_, _) => QueueCustomizationSave();
         Move += (_, _) => TrackWindowPlacement();
@@ -83,6 +87,7 @@ public partial class MainForm
     {
         LayoutMode = ribbon.LayoutMode, Density = ribbon.Density, IsMinimized = ribbon.IsMinimized,
         AnimationLevel = ribbon.AnimationLevel, TabContentAnimation = ribbon.TabContentAnimation, WordWrap = document.WordWrap,
+        Backdrop = Backdrop, TransparentBackstage = ribbon.Backstage.NavigationBackgroundOpacity < 1,
         Window = new(_normalWindowBounds.X, _normalWindowBounds.Y, _normalWindowBounds.Width, _normalWindowBounds.Height,
             _normalWindowDpi, _lastWindowState == FormWindowState.Maximized)
     };

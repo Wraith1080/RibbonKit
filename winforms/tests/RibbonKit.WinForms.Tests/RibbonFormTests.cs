@@ -8,18 +8,24 @@ public sealed class RibbonFormTests
 {
     [Theory]
     [InlineData(FormBorderStyle.Sizable)] [InlineData(FormBorderStyle.FixedSingle)] [InlineData(FormBorderStyle.Fixed3D)]
-    public void Custom_caption_suppresses_native_glyphs_but_retains_frame_and_system_semantics(FormBorderStyle border) => FoundationTests.Sta(() =>
+    public void Solid_caption_retains_original_frame_and_material_suppression_keeps_system_semantics(FormBorderStyle border) => FoundationTests.Sta(() =>
     {
         using var form = new StyleProbe { FormBorderStyle = border };
         int style = form.NativeStyle;
-        Assert.NotEqual(0x00C00000, style & 0x00C00000); // No second system caption.
+        Assert.Equal(0x00C00000, style & 0x00C00000); // Original Solid DWM caption style.
         Assert.NotEqual(0, style & 0x00800000); // Preserve a DWM-roundable border.
         Assert.NotEqual(0, style & 0x00080000); // System menu.
         Assert.NotEqual(0, style & 0x00030000); // Minimize/maximize.
         if (border == FormBorderStyle.Sizable) Assert.NotEqual(0, style & 0x00040000);
-        form.Show(); nint handle = form.Handle;
+        nint handle = form.Handle;
         foreach (var backdrop in Enum.GetValues<RibbonWindowBackdrop>())
-        { form.Backdrop = backdrop; Assert.Equal(style, form.NativeStyle); Assert.Equal(handle, form.Handle); }
+        {
+            form.Backdrop = backdrop;
+            Assert.Equal(form.EffectiveBackdrop == RibbonWindowBackdrop.None, (form.NativeStyle & 0x00C00000) == 0x00C00000);
+            Assert.Equal(style & ~0x00400000, form.NativeStyle & ~0x00400000); // Only the dialog-frame/caption bit changes.
+            Assert.Equal(handle, form.Handle); Assert.False(form.Visible);
+        }
+        form.Backdrop = RibbonWindowBackdrop.None; Assert.Equal(style, form.NativeStyle);
         form.FormBorderStyle = FormBorderStyle.FixedToolWindow;
         Assert.Equal(0x00C00000, form.NativeStyle & 0x00C00000); // Ordinary native-frame fallback.
     });

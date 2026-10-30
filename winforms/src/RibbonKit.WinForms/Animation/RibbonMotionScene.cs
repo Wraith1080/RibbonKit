@@ -282,6 +282,17 @@ internal sealed class RibbonMotionScene : IDisposable
                 }
                 finally { graphics.Restore(saved); }
             }
+            if (!ribbon.HasWindowBackdrop && scene.Header.Top > 0)
+            {
+                // Solid motion holds the entire real ribbon, including its
+                // custom caption. Carry that row too; Header starts below it.
+                // QAT glyphs keep their existing independently moving track.
+                var caption = new Rectangle(0, 0, scene.Image.Width, scene.Header.Top);
+                var destination = new Rectangle(origin.X - canvas.X, origin.Y - canvas.Y, caption.Width, caption.Height);
+                Rectangle? qat = scene.Placement == RibbonQuickAccessPosition.TitleBar && !scene.Strip.IsEmpty
+                    ? new Rectangle(origin.X + scene.Strip.X - canvas.X, origin.Y + scene.Strip.Y - canvas.Y, scene.Strip.Width, scene.Strip.Height) : null;
+                Segment(caption, destination, exclude: qat);
+            }
             var header = Interpolate(from.Header, to.Header);
             if (!ribbon.HasWindowBackdrop && (!minimize || ReferenceEquals(scene, to)))
             {

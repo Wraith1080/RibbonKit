@@ -47,6 +47,7 @@ public partial class RibbonForm
             _ribbon?.SettleMotion();
             if (requested != RibbonWindowBackdrop.None)
             {
+                SetMaterialCaptionStyle(true);
                 try { _ribbon?.PrepareBackdropEditors(true); }
                 catch (Win32Exception error) { _backdropPaintFailed = true; ReleaseNativeBackdrop(); Trace.WriteLine("Native editor backdrop fallback: " + error.Message); return; }
                 int native = requested == RibbonWindowBackdrop.Mica ? 2 : 3;
@@ -69,16 +70,24 @@ public partial class RibbonForm
             else RefreshOpaquePanels(child);
         }
     }
-    private void ReleaseNativeBackdrop()
+    private void ReleaseNativeBackdrop(bool updateFrame = true)
     {
-        if (_backdropOwned && IsHandleCreated)
+        bool release = _backdropOwned && IsHandleCreated;
+        bool repaint = release && updateFrame && !IsDisposed && !Disposing && !_disposingBackdrop && !RecreatingHandle;
+        // Stop glass clearing before native calls can reenter painting. Replace
+        // the old zero-alpha/black backing while material still covers it, then
+        // remove the material and finish the Solid frame/client synchronously.
+        _backdropOwned = false; _effectiveBackdrop = RibbonWindowBackdrop.None; _backdropHeight = 0;
+        if (repaint) { RibbonDrawingHold.Repaint(Handle); FlushBackdropDrawing(); }
+        if (release)
         {
             int none = 1; var margins = new BackdropMargins();
             DwmSetWindowAttribute(Handle, 38, ref none, sizeof(int)); DwmExtendFrameIntoClientArea(Handle, ref margins);
         }
-        _backdropOwned = false; _effectiveBackdrop = RibbonWindowBackdrop.None; _backdropHeight = 0;
+        SetMaterialCaptionStyle(false, updateFrame);
         _ribbon?.PrepareBackdropEditors(false);
         _captionBackdrop?.Dispose(); _captionBackdrop = null;
+        if (repaint) { RibbonDrawingHold.Repaint(Handle); FlushBackdropDrawing(); }
     }
     internal void BackdropPaintFailed(Exception error)
     {
@@ -97,10 +106,11 @@ public partial class RibbonForm
     /// <inheritdoc />
     protected override void OnHandleDestroyed(EventArgs e)
     {
-        ReleaseNativeBackdrop(); _backdropPaintFailed = false; base.OnHandleDestroyed(e);
+        ReleaseNativeBackdrop(updateFrame: false); _backdropPaintFailed = false; base.OnHandleDestroyed(e);
     }
     [StructLayout(LayoutKind.Sequential)] private struct BackdropMargins { internal int Left, Right, Top, Bottom; }
     [DllImport("dwmapi.dll")] private static extern int DwmSetWindowAttribute(nint window, int attribute, ref int value, int size);
     [DllImport("dwmapi.dll")] private static extern int DwmExtendFrameIntoClientArea(nint window, ref BackdropMargins margins);
     [DllImport("gdi32.dll")] private static extern bool PatBlt(nint dc, int x, int y, int width, int height, uint operation);
+    [DllImport("gdi32.dll", EntryPoint = "GdiFlush")] private static extern bool FlushBackdropDrawing();
 }

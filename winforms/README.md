@@ -1077,7 +1077,7 @@ application-owned. [M6B scope and evidence](docs/M6B-WINDOW-INTEGRATION.md).
 
 ### Optional native window backdrops
 
-**Experimental; currently deferred.** [Status and resume checkpoint](docs/M6C-BACKDROPS.md#deferral-and-resume-checkpoint).
+**Experimental; investigation resumed, visual acceptance pending.** [Current evidence and remaining review](docs/M6C-BACKDROPS.md#solid-frame-regression-and-stale-popup-accessibility--2026-10-30).
 The following API describes the experimental implementation.
 
 `RibbonForm.Backdrop` defaults to `RibbonWindowBackdrop.None`. Opt into `Mica` or
@@ -1102,6 +1102,8 @@ windows and application opacity/transparency use the solid fallback while retain
 the requested preference. `EffectiveBackdrop` reports the applied native setting;
 Windows may itself render that setting as solid according to its material policy.
 Setting None restores solid presentation and releases the library's extension.
+Solid retains the pre-backdrop native caption style; caption-style suppression is
+limited to applied material, preserving the Form handle across those transitions.
 
 Command panels, popups, native editors and Backstage pages remain opaque. The
 authored theme and application Opacity/TransparencyKey are unchanged. Host native
@@ -1115,13 +1117,25 @@ immediately while body/group motion continues. Solid mode retains its existing
 header animation. This prevents layered animation holds from blackening the
 extended native frame.
 
+QAT hover/pressed/checked backgrounds use
+`RibbonTheme.QuickAccessBackdropOpacity` (default `.6`) over material. Set it to
+`1` for full coverage; artwork stays opaque. Backstage navigation is opaque by
+default. Opt into translucent navigation with
+`ribbon.Backstage.NavigationBackgroundOpacity = 0;` while leaving native page
+controls opaque. Both values accept finite numbers from `0` through `1`; Solid
+fallback remains opaque. Showcase exposes **Transparent Backstage** in its Backdrop
+menu when material is active; this option uses a fully clear rail background.
+Neither setting changes application window opacity.
+
 Custom renderers receive a transparent paint-time `Theme.Background` for the material
 surrounding ribbon background without changing `ribbon.Theme` or `Theme.Surface`.
 Honor that background and delegate composited
 text to the base `DrawText` method to preserve glyph alpha. The neutral and Office
 renderers use the same library path. Host content, persistence and DPI startup stay
 application-owned. Showcase exposes **View → Window → Backdrop**; its default is
-Solid. Its document and status bar use the shared opaque panel, with material
+Solid on first use. The selected backdrop and transparent Backstage choice are
+saved in Showcase's application preferences and restored on restart. Its document
+and status bar use the shared opaque panel, with material
 visible in the application-owned surrounding margins.
 [M6C scope, focused evidence and remaining review](docs/M6C-BACKDROPS.md).
 

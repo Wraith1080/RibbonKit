@@ -13,6 +13,12 @@ internal static class Program
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
+        if (args.Length == 2 && args[0] == "--check-backdrop-preferences-hidden")
+        {
+            try { MainForm.CheckBackdropPreferencesHidden(args[1]); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
+            return;
+        }
         bool persistenceProbe = args.Length == 4 && args[0] == "--persistence-probe";
         using var form = new MainForm(persistenceProbe ? Path.GetFullPath(args[1]) : args.Length == 0 ? MainForm.DefaultSettingsDirectory : null);
         if (args.Length == 2 && args[0] == "--check-modal-layout-hidden")
@@ -24,6 +30,20 @@ internal static class Program
             }
             return;
         }
+        if (args.Length == 2 && args[0] == "--check-backdrop-off")
+            form.Shown += async (_, _) =>
+            {
+                try { await form.CheckBackdropOff(args[1]); }
+                catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
+                finally { form.Close(); }
+            };
+        if (args.Length == 2 && args[0] == "--check-transparent-backstage")
+            form.Shown += async (_, _) =>
+            {
+                try { await form.CheckTransparentBackstage(args[1]); }
+                catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
+                finally { form.Close(); }
+            };
         if (persistenceProbe)
             form.Shown += async (_, _) =>
             {

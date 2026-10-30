@@ -86,7 +86,7 @@ public partial class MainForm
             "Chart" => "chart-menu", "Messages" => "messages-menu",
             "None" => "animation-none", "Subtle" => "animation-subtle", "Expressive" => "animation-expressive",
             "Tab content" => "animation-tabs", "Fade" => "animation-fade", "Slide down" => "animation-slide-down",
-            "Backdrop" or "Mica" or "Acrylic" => "page-color", "Solid" => "white-page",
+            "Backdrop" or "Mica" or "Acrylic" or "Transparent Backstage" => "page-color", "Solid" => "white-page",
             _ => throw new InvalidOperationException("Add an explicit command icon for " + item.Text)
         };
     }

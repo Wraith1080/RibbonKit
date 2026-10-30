@@ -1,4 +1,9 @@
 #nullable enable
+RibbonKit.WinForms.RibbonBackstage.NavigationBackgroundOpacity.get -> float
+RibbonKit.WinForms.RibbonBackstage.NavigationBackgroundOpacity.set -> void
+RibbonKit.WinForms.RibbonBackstage.NavigationBackgroundOpacityChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonTheme.QuickAccessBackdropOpacity.get -> float
+RibbonKit.WinForms.RibbonTheme.QuickAccessBackdropOpacity.init -> void
 override RibbonKit.WinForms.RibbonControl.SetBoundsCore(int x, int y, int width, int height, System.Windows.Forms.BoundsSpecified specified) -> void
 RibbonKit.WinForms.RibbonTabContentAnimation
 RibbonKit.WinForms.RibbonTabContentAnimation.Fade = 0 -> RibbonKit.WinForms.RibbonTabContentAnimation

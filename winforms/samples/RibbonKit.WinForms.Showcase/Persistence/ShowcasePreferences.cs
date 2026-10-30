@@ -14,6 +14,8 @@ internal sealed record ShowcasePreferences
     public RibbonAnimationLevel AnimationLevel { get; init; } = RibbonAnimationLevel.Subtle;
     public RibbonTabContentAnimation TabContentAnimation { get; init; }
     public bool WordWrap { get; init; } = true;
+    public RibbonWindowBackdrop Backdrop { get; init; }
+    public bool TransparentBackstage { get; init; }
     public ShowcaseWindowPlacement? Window { get; init; }
 
     private static readonly JsonSerializerOptions Options = new()
@@ -30,7 +32,7 @@ internal sealed record ShowcasePreferences
             ?? throw new InvalidOperationException("The preferences file is empty.");
         if (value.Format != new ShowcasePreferences().Format || value.Version != 1
             || !Enum.IsDefined(value.LayoutMode) || !Enum.IsDefined(value.Density)
-            || !Enum.IsDefined(value.AnimationLevel) || !Enum.IsDefined(value.TabContentAnimation))
+            || !Enum.IsDefined(value.AnimationLevel) || !Enum.IsDefined(value.TabContentAnimation) || !Enum.IsDefined(value.Backdrop))
             throw new InvalidOperationException("The preferences format or version is unsupported.");
         value.Window?.Validate();
         return value;

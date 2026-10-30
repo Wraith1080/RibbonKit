@@ -10,7 +10,7 @@ namespace IndependentConsumer;
 // Public-only window/material consumer. It references no Showcase code/resources.
 internal static class WindowBackdropChecks
 {
-    internal static int Run(string directory, bool flat = false, bool simplified = false)
+    internal static int Run(string directory, bool flat = false, bool simplified = false, bool transparency = false)
     {
         Directory.CreateDirectory(directory); List<string> log = [];
         using var traceFile = new StreamWriter(Path.Combine(directory, "native-trace.log")) { AutoFlush = true };
@@ -42,6 +42,7 @@ internal static class WindowBackdropChecks
                 var theme = ribbon.Theme;
                 nint fieldHandle = Descendants(ribbon).OfType<WF.TextBox>().Single(c => c.Name == field.Id).Handle;
                 nint choiceHandle = Descendants(ribbon).OfType<WF.ComboBox>().Single(c => c.Name == choice.Id).Handle;
+                if (transparency) { await CheckTransparency(); return; }
                 if (simplified) { ribbon.LayoutMode = RibbonLayoutMode.Simplified; await Finish(); }
                 log.Add($"OS={Environment.OSVersion.Version}; DPI={form.DeviceDpi}; renderer={(flat ? "neutral" : "Office")}; layout={ribbon.LayoutMode}");
                 foreach (var density in Enum.GetValues<RibbonDensity>())
@@ -82,6 +83,61 @@ internal static class WindowBackdropChecks
         WF.Application.Run(form); Trace.Listeners.Remove(trace); return Environment.ExitCode;
         void Assert(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
         async Task Finish() { var watch = Stopwatch.StartNew(); while (ribbon.IsAnimating && watch.ElapsedMilliseconds < 1800) await Task.Delay(5); Assert(!ribbon.IsAnimating, "Motion must finish without host acknowledgement"); await Task.Delay(30); }
+        async Task CheckTransparency()
+        {
+            ribbon.Theme = ribbon.Theme with { BackstageNavigationBackground = Color.FromArgb(24, 72, 142) };
+            ribbon.Backstage.NavigationWidth = 240;
+            using var otherPage = new WF.Panel { BackColor = Color.White };
+            var otherField = new WF.TextBox { Text = "Retained second page", Bounds = new(30, 35, 400, 30) }; otherPage.Controls.Add(otherField);
+            var info = (RibbonBackstagePageItem)ribbon.Backstage.Items[0];
+            var print = new RibbonBackstagePageItem { Text = "Print", Content = otherPage }; ribbon.Backstage.Items.Add(print);
+            foreach (var density in Enum.GetValues<RibbonDensity>())
+            foreach (var material in new[] { RibbonWindowBackdrop.None, RibbonWindowBackdrop.Mica, RibbonWindowBackdrop.Acrylic })
+            {
+                ribbon.Density = density; form.Backdrop = material;
+                ribbon.Backstage.NavigationBackgroundOpacity = 1; ribbon.Backstage.SelectedPage = info;
+                ribbon.IsBackstageOpen = true; await Finish();
+                nint pageHandle = page.Controls[0].Handle;
+                var opaque = Sample(new(20, form.ClientSize.Height - 35));
+                ribbon.Backstage.NavigationBackgroundOpacity = 0; await Finish();
+                var clear = Sample(new(20, form.ClientSize.Height - 35));
+                ribbon.Backstage.NavigationBackgroundOpacity = .65f; await Finish();
+                var tinted = Sample(new(20, form.ClientSize.Height - 35));
+                if (form.EffectiveBackdrop == RibbonWindowBackdrop.None)
+                    Assert(Distance(opaque, clear) < 6 && Distance(opaque, tinted) < 6, "Solid fallback must keep navigation opaque");
+                else
+                {
+                    Assert(Distance(opaque, clear) > 40, $"Navigation must expose material, opaque={opaque}; clear={clear}");
+                    Assert(Distance(opaque, tinted) > 12 && Distance(clear, tinted) > 12, $"Intermediate navigation opacity must retain its tint, opaque={opaque}; clear={clear}; tinted={tinted}");
+                }
+                Assert(Sample(new(500, form.ClientSize.Height - 35)).R > 235, "Page surface remains opaque white");
+                Capture($"transparency-{density}-{material}-info");
+                ribbon.Backstage.SelectedPage = print; await Task.Delay(55); Capture($"transparency-{density}-{material}-page-mid");
+                if (form.EffectiveBackdrop != RibbonWindowBackdrop.None)
+                {
+                    var entry = Descendants(form).OfType<WF.Button>().Single(button => button.Text == "Info");
+                    if (!entry.ClientRectangle.Contains(entry.PointToClient(WF.Cursor.Position)))
+                    {
+                        var point = form.PointToClient(entry.PointToScreen(new(8, 8)));
+                        var row = Sample(point);
+                        Assert(Distance(row, tinted) < 12, $"Motion must not apply the rail tint twice inside entries: rail={tinted}; row={row}");
+                    }
+                }
+                await Finish();
+                ribbon.Backstage.SelectedPage = info; await Finish();
+                Assert(page.Controls[0].Handle == pageHandle && page.Controls[0].Text == "Backstage native field", "Native page editor identity/value retained");
+                ribbon.IsBackstageOpen = false; await Finish(); ribbon.IsBackstageOpen = true; await Finish();
+                Capture($"transparency-{density}-{material}-reopen"); ribbon.IsBackstageOpen = false; await Finish();
+                log.Add($"PASS: transparency/{density}/{material}; effective={form.EffectiveBackdrop}; opaque={opaque}; clear={clear}; tint={tinted}; native page retained");
+            }
+            log.Add("PASS: public-only Backstage transparency checks completed");
+        }
+        static int Distance(Color left, Color right) => Math.Abs(left.R - right.R) + Math.Abs(left.G - right.G) + Math.Abs(left.B - right.B);
+        Color Sample(Point client)
+        {
+            GetWindowThreadProcessId(GetForegroundWindow(), out uint process); Assert(process == Environment.ProcessId, "Consumer lost foreground; sample stopped.");
+            using var image = new Bitmap(1, 1); using var graphics = Graphics.FromImage(image); graphics.CopyFromScreen(form.PointToScreen(client), Point.Empty, new Size(1, 1)); return image.GetPixel(0, 0);
+        }
         async Task NativeWindowSettled()
         {
             // HWND bounds commit before the Windows maximize/restore animation

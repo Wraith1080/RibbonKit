@@ -22,7 +22,7 @@ public sealed record RibbonTheme
     public int MessageMinimumHeight { get; init; } = 34;
     /// <summary>Gets notification content padding in logical pixels. Sides must be nonnegative.</summary>
     public Padding MessageContentPadding { get; init; } = new(12, 4, 8, 4);
-    /// <summary>Gets the opaque Office 2024 Backstage navigation rail color.</summary>
+    /// <summary>Gets the Office 2024 Backstage navigation rail color. Backstage.NavigationBackgroundOpacity can expose an active window backdrop behind it.</summary>
     public Color BackstageNavigationBackground { get; init; } = Color.FromArgb(245, 244, 243);
     /// <summary>Gets the minimum Backstage navigation font size in 96-DPI logical pixels. Defaults to 14, matching the WPF Modern navigation; larger ribbon fonts are retained. Must be positive and finite. Page content retains the host font.</summary>
     public float BackstageNavigationFontSize { get; init; } = 14;
@@ -64,6 +64,8 @@ public sealed record RibbonTheme
     public RibbonFill Pressed { get; init; } = new(Color.FromArgb(218, 218, 218));
     /// <summary>Gets the checked-command fill.</summary>
     public RibbonFill Checked { get; init; } = new(Color.FromArgb(217, 225, 237));
+    /// <summary>Gets QAT hover/pressed/checked background coverage over an active window backdrop, from 0 to 1. Solid and popup presentations keep their authored fills. Text and icons retain their opacity.</summary>
+    public float QuickAccessBackdropOpacity { get; init; } = .6f;
     /// <summary>Gets the minimum tab height in 96-DPI logical pixels.</summary>
     public int TabHeight { get; init; } = 40;
     /// <summary>Gets the minimum command body height in 96-DPI logical pixels.</summary>

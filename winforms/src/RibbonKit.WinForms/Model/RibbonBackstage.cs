@@ -19,6 +19,22 @@ public sealed class RibbonBackstage : RibbonElement
     private int _fallbackIndex = -1;
     private int? _navigationWidth;
     private int _minimumNavigationWidth = 160, _maximumNavigationWidth = 320;
+    private float _navigationBackgroundOpacity = 1;
+    /// <summary>Gets or sets navigation background coverage from 0 to 1. Default 1 is opaque. Lower values expose an active RibbonForm backdrop; text, icons and native page content retain their opacity. Solid/unsupported hosts retain an opaque navigation surface.</summary>
+    [Category("Appearance"), Bindable(true), DefaultValue(1f)]
+    public float NavigationBackgroundOpacity
+    {
+        get => _navigationBackgroundOpacity;
+        set
+        {
+            Ribbon?.VerifyAccess();
+            if (!float.IsFinite(value) || value < 0 || value > 1) throw new ArgumentOutOfRangeException(nameof(value));
+            if (_navigationBackgroundOpacity == value) return;
+            _navigationBackgroundOpacity = value; Changed(false); NavigationBackgroundOpacityChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+    /// <summary>Occurs after NavigationBackgroundOpacity changes.</summary>
+    public event EventHandler? NavigationBackgroundOpacityChanged;
     /// <summary>Initializes an empty native Backstage declaration.</summary>
     public RibbonBackstage() => Items = new(this);
     /// <summary>Gets the owned page and button entries, in navigation order.</summary>

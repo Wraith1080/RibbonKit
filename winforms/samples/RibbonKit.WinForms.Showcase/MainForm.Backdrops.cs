@@ -4,6 +4,80 @@ namespace RibbonKit.WinForms.Showcase;
 
 public partial class MainForm
 {
+    internal async Task CheckBackdropOff(string directory)
+    {
+        Directory.CreateDirectory(directory); List<string> log = [];
+        foreach (var material in new[] { RibbonWindowBackdrop.Mica, RibbonWindowBackdrop.Acrylic })
+        {
+            Backdrop = material; await Task.Delay(250); Backdrop = RibbonWindowBackdrop.None;
+            int worst = 0;
+            for (int frame = 0; frame < 16; frame++)
+            {
+                if (!ContainsFocus) throw new InvalidOperationException("Showcase lost focus; backdrop-off capture stopped.");
+                using var image = new Bitmap(ClientSize.Width, ClientSize.Height);
+                using (var graphics = Graphics.FromImage(image)) graphics.CopyFromScreen(PointToScreen(Point.Empty), Point.Empty, image.Size);
+                int black = 0, samples = 0;
+                for (int y = 4; y < image.Height - 4; y += 3) for (int x = 4; x < image.Width - 4; x += 3)
+                { var pixel = image.GetPixel(x, y); if (pixel.R < 30 && pixel.G < 30 && pixel.B < 30) black++; samples++; }
+                int percent = 100 * black / samples; worst = Math.Max(worst, percent);
+                if (frame is 0 or 15 || percent >= 25) image.Save(Path.Combine(directory, $"{material}-off-{frame}.png"));
+                if (percent >= 25) throw new InvalidOperationException($"Backdrop-off frame was substantially black: {material}/{frame}, {percent}%.");
+                await Task.Delay(8);
+            }
+            log.Add($"PASS: {material} to Solid; 16 client samples, worst dark coverage {worst}%");
+        }
+        File.WriteAllLines(Path.Combine(directory, "result.log"), log);
+    }
+    internal async Task CheckTransparentBackstage(string directory)
+    {
+        Directory.CreateDirectory(directory); List<string> log = [];
+        Backdrop = RibbonWindowBackdrop.Acrylic; ribbon.Backstage.NavigationBackgroundOpacity = 0;
+        foreach (var page in ribbon.Backstage.Items.OfType<RibbonBackstagePageItem>())
+        {
+            ribbon.IsBackstageOpen = true; ribbon.Backstage.SelectedPage = page;
+            var watch = Stopwatch.StartNew();
+            while (ribbon.IsAnimating && watch.ElapsedMilliseconds < 2000) await Task.Delay(10);
+            await Task.Delay(80);
+            if (!ContainsFocus) throw new InvalidOperationException("Showcase lost focus; capture stopped.");
+            var area = page.Content!.RectangleToScreen(page.Content.ClientRectangle);
+            using var bitmap = new Bitmap(area.Width, area.Height);
+            using (var graphics = Graphics.FromImage(bitmap)) graphics.CopyFromScreen(area.Location, Point.Empty, area.Size);
+            bitmap.Save(Path.Combine(directory, page.Id + ".png"));
+            int ink = 0;
+            for (int y = 8; y < Math.Min(bitmap.Height, 380); y++) for (int x = 8; x < bitmap.Width - 8; x++)
+            { var pixel = bitmap.GetPixel(x, y); if (pixel.R < 110 && pixel.G < 110 && pixel.B < 110) ink++; }
+            log.Add($"{page.Text}: ink={ink}; dpi={DeviceDpi}");
+            if (ink < 200) { File.WriteAllLines(Path.Combine(directory, "result.log"), log); throw new InvalidOperationException("Backstage native page was blank: " + page.Text); }
+        }
+        ribbon.IsBackstageOpen = false;
+        while (ribbon.IsAnimating) await Task.Delay(10);
+        var view = ribbon.Tabs.Single(tab => tab.Id == "tab.merging");
+        var launch = view.Groups.Single(group => group.Id == "group.modalPreview").Items.Single();
+        foreach (var material in new[] { RibbonWindowBackdrop.None, RibbonWindowBackdrop.Acrylic })
+        {
+            Backdrop = material; ribbon.SelectedTab = view; await Task.Delay(400);
+            using var before = Edge(); launch.PerformClick();
+            for (int frame = 0; frame < 16; frame++)
+            {
+                await Task.Delay(16);
+                if (!ContainsFocus) throw new InvalidOperationException("Showcase lost focus; modal capture stopped.");
+                using var current = Edge(); int changed = 0;
+                for (int y = 0; y < current.Height; y++) for (int x = 0; x < current.Width; x++)
+                { var a = before.GetPixel(x, y); var b = current.GetPixel(x, y); if (Math.Abs(a.R - b.R) + Math.Abs(a.G - b.G) + Math.Abs(a.B - b.B) > 36) changed++; }
+                if (changed > current.Width * current.Height * .7) { current.Save(Path.Combine(directory, $"{material}-edge-failed.png")); throw new InvalidOperationException("Modal entry changed the top client strip: " + material); }
+            }
+            if (!ribbon.IsModal) throw new InvalidOperationException("Print Preview did not enter modal mode.");
+            log.Add($"PASS: {material} Print Preview entry; 16 top-edge samples without a wide bar");
+            ribbon.ExitModal(); while (ribbon.IsAnimating) await Task.Delay(10);
+        }
+        log.Add("PASS: actual Showcase pages and modal checks completed without Refresh or mouse input");
+        File.WriteAllLines(Path.Combine(directory, "result.log"), log);
+        Bitmap Edge()
+        {
+            var image = new Bitmap(Math.Max(1, ClientSize.Width - 100), 4);
+            using var graphics = Graphics.FromImage(image); graphics.CopyFromScreen(PointToScreen(new(50, 2)), Point.Empty, image.Size); return image;
+        }
+    }
     internal async Task CaptureBackdropCaption(string directory)
     {
         Directory.CreateDirectory(directory); Activate(); SetForegroundWindow(Handle);
@@ -51,7 +125,15 @@ public partial class MainForm
         var menu = new RibbonDropDownItem { Id = "demo.window.backdrop", Text = "Backdrop", KeyTip = "B", DropDownHeader = "Window backdrop", SimplifiedPlacement = RibbonSimplifiedPlacement.Inline,
             ScreenTipDescription = "Choose Solid, Mica or Acrylic for the window and ribbon. Native fields and the document stay on opaque surfaces. Windows may use a solid fallback." };
         Dictionary<RibbonWindowBackdrop, RibbonRadioButtonItem> choices = [];
-        void Sync() { foreach (var (value, item) in choices) item.Checked = Backdrop == value; }
+        var transparent = new RibbonCheckBoxItem { Id = "demo.window.backdrop.transparentBackstage", Text = "Transparent Backstage",
+            ScreenTipDescription = "Use a fully transparent Backstage navigation background. Page content stays opaque." };
+        transparent.Click += (_, _) => ribbon.Backstage.NavigationBackgroundOpacity = transparent.Checked ? 0 : 1;
+        void Sync()
+        {
+            foreach (var (value, item) in choices) item.Checked = Backdrop == value;
+            transparent.Enabled = EffectiveBackdrop != RibbonWindowBackdrop.None;
+            transparent.Checked = ribbon.Backstage.NavigationBackgroundOpacity < 1;
+        }
         foreach (var value in Enum.GetValues<RibbonWindowBackdrop>())
         {
             var item = new RibbonRadioButtonItem { Id = "demo.window.backdrop." + value, Text = value == RibbonWindowBackdrop.None ? "Solid" : value.ToString(), GroupName = "showcase.window.backdrop" };
@@ -62,6 +144,8 @@ public partial class MainForm
             };
             choices.Add(value, item); menu.Items.Add(item);
         }
+        menu.Items.AddRange(new RibbonMenuSeparatorItem(), transparent);
+        BackdropChanged += (_, _) => Sync();
         menu.DropDownOpening += (_, _) => Sync(); group.Items.Add(menu); ribbon.Tabs.Single(t => t.Id == "tab.merging").Groups.Add(group); Sync();
         document.AppendText("\r\n\r\nView > Window > Backdrop selects Solid, Mica or Acrylic across the form and ribbon. Native fields and this document stay on opaque surfaces. With material enabled the header stays live while command content animates. Solid retains the full header animation.");
     }

@@ -13,6 +13,7 @@ public partial class RibbonForm : Form
     private bool _updating;
     private bool _captionActive;
     private int _lastCaptionHeight;
+    private bool _materialCaptionStyle;
     /// <summary>Creates a resizable native ribbon window with standard system-menu and caption semantics.</summary>
     public RibbonForm()
     {
@@ -24,13 +25,20 @@ public partial class RibbonForm : Form
         get
         {
             var value = base.CreateParams;
-            // DWM draws its own caption glyphs over transparent extended frames
-            // while WS_CAPTION remains present. We own those glyphs and targets.
-            // Keep the one-pixel border, resize/system-menu/min/max styles and
-            // the same style across Solid/Mica/Acrylic, without recreating HWNDs.
-            if (CustomCaption) value.Style = (value.Style & ~0x00C00000) | 0x00800000;
+            // The original Solid frame retains WS_CAPTION and its DWM frame.
+            // Only a material's transparent header exposes duplicate native
+            // glyphs and needs the caption style suppressed.
+            if (CustomCaption && _materialCaptionStyle) value.Style = (value.Style & ~0x00C00000) | 0x00800000;
             return value;
         }
+    }
+    private void SetMaterialCaptionStyle(bool enabled, bool update = true)
+    {
+        if (_materialCaptionStyle == enabled) return;
+        _materialCaptionStyle = enabled;
+        if (!update || !IsHandleCreated || IsDisposed || Disposing || _disposingBackdrop) return;
+        UpdateStyles();
+        SetWindowPos(Handle, 0, 0, 0, 0, 0, 0x37); // Recalculate the frame without recreating the Form or child HWNDs.
     }
 
     /// <summary>Gets or sets a borrowed ribbon already added directly to Controls with Dock=Top. Caption integration requires empty Form padding and no other visible top-docked sibling. Association does not reparent or dispose it. Null releases the association and restores its ordinary toolbar fallback.</summary>
@@ -250,11 +258,13 @@ public partial class RibbonForm : Form
                 var frame = new NativeRect { Right = 1, Bottom = 1 }; var style = CreateParams;
                 if (!AdjustWindowRectExForDpi(ref frame, (uint)style.Style, false, (uint)style.ExStyle, (uint)DeviceDpi)) frame = new() { Right = 1, Bottom = 1 };
                 var limits = Marshal.PtrToStructure<MinMaxInfo>(m.LParam);
-                limits.MaxPosition = new(work.Left - monitor.Left + frame.Left, work.Top - monitor.Top + frame.Top);
-                limits.MaxSize = new(work.Width + frame.Right - frame.Left - 1, work.Height + frame.Bottom - frame.Top - 1);
+                // The client caption reclaims the native title height. Its
+                // maximized top inset is the resize edge, like the left side.
+                limits.MaxPosition = new(work.Left - monitor.Left + frame.Left, work.Top - monitor.Top + frame.Left);
+                limits.MaxSize = new(work.Width + frame.Right - frame.Left - 1, work.Height + frame.Bottom - frame.Left - 1);
                 Marshal.StructureToPtr(limits, m.LParam, false); m.Result = 0; return;
             }
-            if (m.Msg == 0x83 && m.WParam != 0) // NCCALCSIZE: retain the resize frame, reclaim only the caption.
+            if (m.Msg == 0x83 && m.WParam != 0) // Reclaim the caption in the committed client-area calculation.
             {
                 var original = Marshal.PtrToStructure<NativeRect>(m.LParam);
                 base.WndProc(ref m);
