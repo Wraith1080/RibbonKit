@@ -423,6 +423,43 @@ All review windows closed. Human motion/smoothness acceptance, broader physical
 DPI/display, performance, Release/package and actual VS checks remain pending.
 WPF runtime/build/CI were not changed or run.
 
+## Material page redraw and File closing — 2026-10-31
+
+The user confirmed that the material/opaque-rail black-bar correction fixed the
+reported problem. Material rails keep the same native page layer and small
+alpha-preserving frame buffers at every authored opacity.
+
+The subsequent rare Notes-field flicker correction retains the native page's
+existing drawing during travel. Animation repaints the rail/frame and newly
+exposed page strips, finishes existing native invalidations, and applies opacity
+after the moved frame has painted. Completion no longer forces an extra visible
+page erase. Application controls, native handles, text and selection stay live;
+no page capture, editor subclass or host callback is required by the library.
+
+Office and neutral File headers now paint their final closed/hover appearance
+underneath the outgoing Backstage fade. The public open lifecycle stays true
+until closing completes, and cancelling a close restores the active appearance.
+
+Evidence under `artifacts/backstage-notes-20261031/`:
+
+- Normal Debug native solution/Showcase build passed with zero warnings/errors.
+- `notes-file.trx`: **50/50** focused unit/STA cases passed, including native Notes
+  erase/handle/text/selection checks and File active/closing/reopening raster
+  comparisons. After the final completion-paint refinement, the affected **17/17**
+  page/frame/closing cases passed in `retained-page-final.trx`. These are focused
+  results, not a full-suite run.
+- `native-final/result.log`: ten public-only Solid/Mica/Acrylic closing scopes
+  passed at actual 120 DPI with retained native text, ownership and QAT lifecycle.
+- `final/result.log`: eight complete actual Showcase opening/closing captures
+  passed for restored/maximized Mica/Acrylic with opaque rails, with zero detected
+  vertical/horizontal black strips. The actual Notes field's erase count fell from
+  9–15 per transition in `before/` to 1–3 in `final/`; remaining erases include
+  initial/native exposed-area paint and hidden teardown. Maximized Mica opening
+  and Acrylic closing captures were inspected.
+
+The rare-flicker and File-motion changes still need the user's live review.
+Other physical display/DPI, Release/package and VS designer gates were not run.
+
 ## Showcase diagnostic organisation
 
 Nine diagnostic-only partial files were moved into

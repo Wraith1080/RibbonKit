@@ -50,28 +50,61 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     {
         if (Visible && IsHandleCreated && !HasApplicationOpacity) AcquireMotionOpacity(255).CompositeChildren();
     }
-    internal void RepaintBackdrop()
+    internal void RepaintBackdrop(bool retainPage = false)
     {
-        RibbonDrawingHold.Repaint(Handle);
-        // A material rail redirects only the page panel. Redraw that native
-        // layer explicitly after its ancestor moves, including its edit HWNDs.
-        if (_motionTarget is { IsDisposed: false, IsHandleCreated: true } target && !ReferenceEquals(target, this)) RibbonDrawingHold.Repaint(target.Handle);
+        if (retainPage && MaterialPaint)
+        {
+            // Only the rail/frame changes its drawing during travel. Keep the
+            // page's redirected pixels and finish any native exposed-area paint,
+            // rather than erasing every application editor on each timer step.
+            int rail = Math.Clamp(_pages.Left + _pageRegionRadius, 0, Width);
+            int top = Math.Clamp(_pages.Top, 0, Height);
+            if (rail > 0) Invalidate(new Rectangle(0, 0, rail, Height), true);
+            if (top > 0 && rail < Width) Invalidate(new Rectangle(rail, 0, Width - rail, top), true);
+            RibbonDrawingHold.UpdatePending(Handle);
+            if (_motionTarget is { IsDisposed: false, IsHandleCreated: true } target) RibbonDrawingHold.UpdatePending(target.Handle);
+        }
+        else
+        {
+            RibbonDrawingHold.Repaint(Handle);
+            if (_motionTarget is { IsDisposed: false, IsHandleCreated: true } target && !ReferenceEquals(target, this)) RibbonDrawingHold.Repaint(target.Handle);
+        }
         _motionOpacity?.SetOpacity(MotionAlpha);
     }
-    internal void SetMotionAlpha(byte alpha) { MotionAlpha = alpha; _motionOpacity?.SetOpacity(alpha); }
+    // Publish native opacity after painting the corresponding moved frame.
+    internal void SetMotionAlpha(byte alpha) => MotionAlpha = alpha;
     internal void RestoreMotionOpacity()
     {
         SetMotionAlpha(255);
-        if (Visible && IsHandleCreated) RepaintBackdrop();
+        if (Visible && IsHandleCreated) RepaintBackdrop(retainPage: MaterialPaint);
         else ReleaseMotionOpacity();
     }
     internal void MoveForMotion(Point location)
     {
         // Do not let WinForms copy clipped pixels from the previous position of
         // a redirected native page: the newly exposed strip can otherwise be black.
+        bool repaintExposed = Visible && MaterialPaint && _pages.IsHandleCreated;
+        var exposedBefore = repaintExposed ? VisiblePageBounds() : Rectangle.Empty;
         _movingForMotion = true;
         try { Location = location; }
         finally { _movingForMotion = false; }
+        if (repaintExposed)
+        {
+            var exposedAfter = VisiblePageBounds();
+            if (exposedAfter.IsEmpty) return;
+            if (exposedBefore.IsEmpty) _pages.Invalidate(exposedAfter, true);
+            else if (exposedAfter.Left < exposedBefore.Left)
+                _pages.Invalidate(Rectangle.FromLTRB(exposedAfter.Left, exposedAfter.Top, exposedBefore.Left, exposedAfter.Bottom), true);
+            if (!exposedBefore.IsEmpty && exposedAfter.Right > exposedBefore.Right)
+                _pages.Invalidate(Rectangle.FromLTRB(exposedBefore.Right, exposedAfter.Top, exposedAfter.Right, exposedAfter.Bottom), true);
+        }
+    }
+    private Rectangle VisiblePageBounds()
+    {
+        if (Parent is not { IsDisposed: false } parent) return Rectangle.Empty;
+        var clip = Rectangle.Intersect(parent.RectangleToScreen(parent.ClientRectangle), SystemInformation.VirtualScreen);
+        var visible = Rectangle.Intersect(_pages.RectangleToScreen(_pages.ClientRectangle), clip);
+        return visible.Width > 0 && visible.Height > 0 ? _pages.RectangleToClient(visible) : Rectangle.Empty;
     }
     protected override void WndProc(ref Message message)
     {

@@ -13,6 +13,12 @@ clear/opaque material rails. It samples compositor frames for tall black strips
 and checks that Showcase visibly owns the capture area. Launch the compiled
 Showcase executable so its native compatibility manifest applies.
 
+`--capture-backstage-opaque <directory>` records complete opening/closing slides
+for Mica/Acrylic in restored and maximized windows, checks vertical/horizontal
+black strips, and logs native paint/erase counts for the actual Notes field.
+Those counts diagnose redundant redraw; they do not certify the absence of rare
+flicker or measure display frame pacing.
+
 Some switches show windows or send pointer/keyboard input. Use those only during
 an authorized, undisturbed review interval. Hidden layout/preferences checks do
 not show windows. Logs and captures belong under ignored `winforms/artifacts/`,

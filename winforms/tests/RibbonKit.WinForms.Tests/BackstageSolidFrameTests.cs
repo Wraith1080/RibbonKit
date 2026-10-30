@@ -5,6 +5,43 @@ namespace RibbonKit.WinForms.Tests;
 
 public sealed class BackstageSolidFrameTests
 {
+    private sealed class NotesProbe : TextBox
+    {
+        internal int Erases;
+        protected override void WndProc(ref Message message)
+        {
+            if (message.Msg == 0x14) Erases++;
+            base.WndProc(ref message);
+        }
+    }
+
+    [Theory] [InlineData(RibbonWindowBackdrop.Mica, 0f)] [InlineData(RibbonWindowBackdrop.Mica, 1f)]
+    [InlineData(RibbonWindowBackdrop.Acrylic, 0f)] [InlineData(RibbonWindowBackdrop.Acrylic, 1f)]
+    public void Material_slide_does_not_erase_unchanged_multiline_editors_each_step(RibbonWindowBackdrop material, float opacity) => FoundationTests.Sta(() =>
+    {
+        if (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621) || SystemInformation.HighContrast) return;
+        using var host = new RibbonForm { Bounds = new(180, 120, 950, 650), Backdrop = material };
+        var ribbon = new RibbonControl { FileMenuMode = RibbonFileMenuMode.Backstage, AnimationLevel = RibbonAnimationLevel.Expressive };
+        ribbon.FileMenu.Visible = true; ribbon.Tabs.Add(new RibbonTab { Text = "Home" });
+        using var page = new Panel();
+        var notes = new NotesProbe { Multiline = true, ScrollBars = ScrollBars.Vertical, Bounds = new(35, 120, 400, 160), Text = "Retained notes\r\nSecond line" };
+        page.Controls.Add(notes); ribbon.Backstage.Items.Add(new RibbonBackstagePageItem { Text = "Info", Content = page });
+        host.Controls.Add(ribbon); host.Ribbon = ribbon; host.Show(); Application.DoEvents();
+        ribbon.Backstage.NavigationBackgroundOpacity = opacity; ribbon.Motion.SystemPolicyOverride = true;
+        ribbon.IsBackstageOpen = true; nint handle = notes.Handle; var parent = notes.Parent;
+        notes.Select(3, 5);
+        foreach (bool closing in new[] { false, true })
+        {
+            if (closing) ribbon.IsBackstageOpen = false;
+            notes.Erases = 0;
+            foreach (double progress in new[] { .25, .5, .75, .95 }) ribbon.BackstageOpeningMotion!.SetProgress(progress);
+            Assert.Equal(0, notes.Erases); Assert.Equal(handle, notes.Handle); Assert.Same(parent, notes.Parent);
+            Assert.Equal("Retained notes\r\nSecond line", notes.Text); Assert.Equal(3, notes.SelectionStart); Assert.Equal(5, notes.SelectionLength);
+            ribbon.SettleMotion();
+            if (!closing) Assert.Equal(0, notes.Erases);
+        }
+    });
+
     [Theory] [InlineData(RibbonWindowBackdrop.Mica)] [InlineData(RibbonWindowBackdrop.Acrylic)]
     public void Material_rail_opacity_changes_keep_one_native_page_layer_during_opening_and_closing(RibbonWindowBackdrop material) => FoundationTests.Sta(() =>
     {

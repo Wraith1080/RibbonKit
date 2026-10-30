@@ -284,7 +284,7 @@ public partial class RibbonRenderer : IDisposable
     {
         bool enabled = menu.EffectiveEnabled;
         context = EnabledContext(context, enabled);
-        bool open = enabled && menu.IsDropDownOpen;
+        bool open = enabled && menu.IsDropDownOpen && !context.FileMenuClosing;
         if (open || context.Hot || context.Pressed)
             DrawChrome(context, open || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
         DrawText(context, menu.Text, !enabled ? SystemColors.GrayText : open ? context.Theme.Accent : context.Theme.Foreground,

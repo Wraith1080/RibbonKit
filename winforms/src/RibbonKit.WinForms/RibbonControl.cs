@@ -551,7 +551,9 @@ public partial class RibbonControl : Control, ISupportInitialize
                 else if (target.Kind == TargetKind.ModalClose)
                     Painter.DrawModalClose(ctx, _modalClose.Text);
                 else if (target.Kind == TargetKind.FileMenu)
-                    Painter.DrawFileButton(ctx, FileMenu);
+                    // Reveal the final header underneath the outgoing fade;
+                    // its model stays open until Backstage actually closes.
+                    Painter.DrawFileButton(ctx with { FileMenuClosing = _backstageClosing }, FileMenu);
                 else if (target.Element is RibbonTab tab)
                     Painter.DrawTab(ctx, tab, ReferenceEquals(tab, SelectedTab));
                 else if (target.Element is RibbonSplitButtonItem split && arrow is not null)

@@ -81,7 +81,7 @@ internal sealed class RibbonBackstageMotion : IDisposable
         _surface.SetMotionAlpha((byte)Math.Clamp((int)Math.Round(255 * (IsClosing ? 1 - fade : fade)), 1, 255));
         int offset = (int)Math.Round(_travel * (IsClosing ? p : 1 - p));
         _surface.MoveForMotion(new(_origin.X - offset, _origin.Y));
-        _surface.RepaintBackdrop();
+        _surface.RepaintBackdrop(retainPage: true);
         _ribbon.InvalidateBackstageCaption();
     }
     private void Tick(object? sender, EventArgs e)

@@ -149,7 +149,7 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     /// <inheritdoc />
     public override void DrawFileButton(RibbonPaintContext context, RibbonDropDownItem menu)
     {
-        bool enabled = menu.EffectiveEnabled, open = enabled && menu.IsDropDownOpen;
+        bool enabled = menu.EffectiveEnabled, open = enabled && menu.IsDropDownOpen && !context.FileMenuClosing;
         DrawText(context, menu.Text, !enabled ? SystemColors.GrayText : open ? context.Theme.Accent : context.Theme.Foreground,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
         if (enabled && !context.SuppressTabIndicators && (open || context.Hot || context.Pressed || context.Focused))

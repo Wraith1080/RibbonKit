@@ -15,6 +15,8 @@ public partial class MainForm
             Cursor.Position = new(Right + 15, Top + 100); await Task.Delay(80); ribbon.AnimationLevel = RibbonAnimationLevel.Expressive;
             if (opaqueSlideOnly)
             {
+                var notes = ribbon.Backstage.Items.OfType<RibbonBackstagePageItem>().SelectMany(p => Descendants(p.Content!)).OfType<TextBox>().Single(c => c.Multiline);
+                using var paints = new NotesPaintObserver(notes);
                 foreach (var material in new[] { RibbonWindowBackdrop.Mica, RibbonWindowBackdrop.Acrylic })
                 foreach (var state in new[] { FormWindowState.Normal, FormWindowState.Maximized })
                 {
@@ -22,8 +24,11 @@ public partial class MainForm
                     Backdrop = material; ribbon.Backstage.NavigationBackgroundOpacity = 1;
                     WindowState = state; await Task.Delay(400); Guard();
                     Cursor.Position = new(Right - 4, Top + 15); ribbon.AnimationLevel = RibbonAnimationLevel.Expressive;
+                    paints.Reset();
                     await Record($"{material}-{state}-opaque-open", () => { ribbon.IsBackstageOpen = true; return Task.CompletedTask; }, true);
+                    log.Add($"Notes opening paints={paints.Paints}, erases={paints.Erases}"); paints.Reset();
                     await Record($"{material}-{state}-opaque-close", () => { ribbon.IsBackstageOpen = false; return Task.CompletedTask; }, true);
+                    log.Add($"Notes closing paints={paints.Paints}, erases={paints.Erases}");
                 }
                 log.Add("PASS: complete opaque material slides captured"); return;
             }
@@ -215,6 +220,19 @@ public partial class MainForm
     }
 
     private static IEnumerable<Control> Descendants(Control parent) => parent.Controls.Cast<Control>().SelectMany(c => new[] { c }.Concat(Descendants(c)));
+    private sealed class NotesPaintObserver : NativeWindow, IDisposable
+    {
+        internal int Paints, Erases;
+        internal NotesPaintObserver(Control notes) => AssignHandle(notes.Handle);
+        internal void Reset() { Paints = 0; Erases = 0; }
+        protected override void WndProc(ref Message message)
+        {
+            if (message.Msg == 0xF) Paints++;
+            if (message.Msg == 0x14) Erases++;
+            base.WndProc(ref message);
+        }
+        public void Dispose() => ReleaseHandle();
+    }
     private static int Changed(Bitmap first, Bitmap last, Rectangle area)
     {
         if (ReferenceEquals(first, last)) return 0;

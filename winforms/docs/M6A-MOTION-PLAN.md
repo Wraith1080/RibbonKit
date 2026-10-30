@@ -40,8 +40,11 @@ Backstage's earlier navigation/page fades are superseded by the
   including TitleBar fallback to TabRow, retain their normal presentation.
   Authored toolbar visibility, placement and commands are preserved. Page switches are
   immediate. Native page redirection fades with movement and stays opaque after
-  opening until hidden. Transparent navigation/frames fade their premultiplied
-  paint alongside the page layer. No Backstage page capture is used.
+  opening until hidden. Material navigation/frames, including opaque rails, fade
+  their premultiplied paint alongside the page layer. Static native page drawing
+  is retained during travel; only newly exposed page strips and existing native
+  invalidations repaint. File paints its final header underneath the closing fade
+  while the open/close model lifecycle remains unchanged. No Backstage page capture is used.
   Solid opening holds the previously composed document drawing beneath the fade
   until Backstage is opaque, avoiding native RichTextBox sibling-clip redraw.
   This temporary passive drawing leaves the actual editor and its state untouched.

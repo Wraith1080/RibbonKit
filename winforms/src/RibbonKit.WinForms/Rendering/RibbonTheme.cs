@@ -124,4 +124,5 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     internal bool SuppressTabIndicators { get; init; }
     internal bool SuppressShadow { get; init; }
     internal bool IsSimplifiedGroup { get; init; }
+    internal bool FileMenuClosing { get; init; }
 }
