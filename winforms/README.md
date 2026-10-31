@@ -1639,13 +1639,26 @@ through the external UIA/input client. Its folder is printed and retained.
 The consumer has no Showcase reference, copied helper or internal-access grant.
 
 Build the solution before `dotnet pack src/RibbonKit.WinForms -c Release --no-build`.
-The runtime package includes XML docs, license/notices and the design assembly
-under `lib/net10.0-windows7.0/Design/WinForms/Server` (NuGet's canonical moniker
-for the target alias); the designer SDK is not a runtime
-dependency. This follows the [Microsoft package convention](https://github.com/microsoft/winforms-designer-extensibility/blob/main/docs/sdk/control-library-nuget-package-spec.md).
-Collection editors compile against Microsoft.WinForms.Designer.SDK 1.6.0.
-Actual Visual Studio load, collection editing, undo/redo and C#/resx round-trip
-remain unverified; see the exact review checklist in the acceptance ledger.
+The runtime package includes XML docs, license/notices and design support under
+`lib/net10.0-windows7.0/Design/WinForms` (NuGet's canonical moniker for the target
+alias). That folder contains the .NET Framework client/protocol; its `Server`
+folder contains the modern design server/protocol. The designer SDK is not a
+runtime dependency. This follows the [Microsoft package convention](https://github.com/microsoft/winforms-designer-extensibility/blob/main/docs/sdk/control-library-nuget-package-spec.md).
+Design projects use Microsoft.WinForms.Designer.SDK 1.6.0.
+
+Select a ribbon in the Form designer and choose **Edit Ribbon…** from its smart
+tag, or open the **Tabs** property ellipsis. The custom window edits built-in
+tabs/groups/commands as a detached draft; OK requests one designer transaction,
+while Cancel leaves live components unchanged. Its **Add** menu includes contextual
+tabs; the **Tab header** section edits their existing header text/indicator tint
+and can reset it to the theme accent. The tree popup also provides add/remove and
+ordering actions. A protected **Ribbon** root groups the tabs for future root
+settings, and command **SizePolicy** values have a dropdown of fixed/adaptive
+choices. Theme editing is outside this
+increment. Use `eng/Prepare-DesignerConsumer.ps1` for an isolated package-only
+review solution. See [the authoring checkpoint and manual steps](docs/DESIGNER-AUTHORING.md)
+for current evidence, actual-VS OK/Cancel, Undo/Redo and save/reopen review steps,
+and acceptance limits.
 
 Raw measurements and captures go under ignored `TestResults/`. Builds use the
 normal Debug/Release `bin` folders. The measurement tool records native paint

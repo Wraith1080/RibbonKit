@@ -18,8 +18,9 @@ Unshipped. Initial scope is Office2024 light, Compact, LTR and immediate transit
 - SDK 10.0.401; .NET desktop runtime 10.0.12; x64; Windows build 10.0.26300.
 - Intel Core Ultra 7 255H, 16 logical processors; Balanced power plan.
 - One reported display, 1920 x 1200; actual control DPI 120 (125%). No OS scale was changed.
-- Visual Studio Community 2026 18.10.2 is installed. Design assembly compiles
-  against Microsoft.WinForms.Designer.SDK 1.6.0; actual VS authoring is **not run**.
+- Visual Studio Community 2026 18.10.2 is installed. Design projects use
+  Microsoft.WinForms.Designer.SDK 1.6.0. Current native authoring evidence and
+  pending review are tracked in [the designer checkpoint](DESIGNER-AUTHORING.md).
 
 ## Acceptance ledger
 
@@ -35,7 +36,7 @@ Passed describes the named automated scope; Partial does not close the full gate
 | F5 popups/lifetime | Partial: cancellation/reopen, model removal, ribbon hiding/Form disposal, repeat dropdown/group cycles, nested Escape and focus return, outside press preserving content focus. | Human opener re-click, movement/resize and edge-placement review remain. See the dated activation follow-up for automated window-switch coverage. |
 | F6 keys/KeyTips | Passed for native automated scope: Alt release, F10 toggle, tab/command tips, Escape, arrows, Home/End, Tab/Shift+Tab, F6, disabled skipping, scrolling focus reveal; prefix/conflict/non-Latin and 80-item resolution cases. Both test host and package consumer pass. | Badge appearance is part of F9. Complex nested containers and multiple ribbons per Form are outside this slice. |
 | F7 accessibility | Partial: separate-process discovery, names/IDs/action bounds, selected-tab content, Invoke/Toggle/selection/ExpandCollapse, disabled rejection, popup discovery/focus, external toggle property-change event. | Broader state/structure/focus event inspection remains. Narrator-specific work/review is outside scope by user direction, 2026-10-26. This is not accessibility certification. |
-| F8 designer | Partial: modern SDK assembly/typed editors compile; Content metadata, size-policy InstanceDescriptor serialization and explicit InitializeComponent component/event wiring build. Design DLL is packaged in the documented Server folder. | Actual VS load/edit/undo/redo/C#/resx/binding/event round-trip and package designer review are not run. Compilation is not designer acceptance. |
+| F8 designer | Partial: Content metadata, serialization, typed editors and custom Edit Ribbon client/protocol/server are implemented. Current evidence and acceptance: [designer checkpoint](DESIGNER-AUTHORING.md). | Scope-specific review and remaining limits live in the checkpoint; broader designer authoring is outside this increment. |
 | F9 appearance/DPI | Partial: native Form captures at actual 125% inspected at 1080, 420 and 260 widths; medium-row widths/icon slots/text starts and large-label first line covered at synthetic 96/120/144/192 DPI and varying fonts. Four equal-radius fill/stroke corner pixel checks pass at those scales. | Human review at actual 100/125/150/200%, hover/press/checked/focus, popup edges and WPF reference comparison remains. Synthetic DPI does not close this gate. |
 | F10 monitor boundary | Unavailable: one display reported. | Genuine mixed-scale monitor movement has not run. No hardware limitation has been accepted as a substitute. |
 | F11 independent consumer | Passed bounded runtime scope: package-only app with its own Form, image, BindingSource and handlers; same external UIA, keyboard, mouse and nested-popup actions. No Showcase reference/helpers or internal-access grant. | Package designer authoring follows F8; human/native display review follows F9/F10. |

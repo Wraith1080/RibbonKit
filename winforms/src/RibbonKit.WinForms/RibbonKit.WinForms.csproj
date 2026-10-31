@@ -22,8 +22,12 @@
     <None Include="../../THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="" />
     <!-- Match NuGet's canonical moniker for the net10.0-windows alias. -->
     <None Include="../RibbonKit.WinForms.Design/bin/$(Configuration)/$(TargetFramework)/RibbonKit.WinForms.Design.dll" Pack="true" PackagePath="lib/net10.0-windows7.0/Design/WinForms/Server/" />
+    <None Include="../RibbonKit.WinForms.Design.Protocol/bin/$(Configuration)/$(TargetFramework)/RibbonKit.WinForms.Design.Protocol.dll" Pack="true" PackagePath="lib/net10.0-windows7.0/Design/WinForms/Server/" />
+    <None Include="../RibbonKit.WinForms.Design.Client/bin/$(Configuration)/net472/RibbonKit.WinForms.Design.Client.dll" Pack="true" PackagePath="lib/net10.0-windows7.0/Design/WinForms/" />
+    <None Include="../RibbonKit.WinForms.Design.Protocol/bin/$(Configuration)/net472/RibbonKit.WinForms.Design.Protocol.dll" Pack="true" PackagePath="lib/net10.0-windows7.0/Design/WinForms/" />
   </ItemGroup>
   <Target Name="VerifyDesignBuildForPack" BeforeTargets="GenerateNuspec">
     <Error Condition="!Exists('../RibbonKit.WinForms.Design/bin/$(Configuration)/$(TargetFramework)/RibbonKit.WinForms.Design.dll')" Text="Build RibbonKit.WinForms.sln in the same configuration before packing the runtime with its design support." />
+    <Error Condition="!Exists('../RibbonKit.WinForms.Design.Client/bin/$(Configuration)/net472/RibbonKit.WinForms.Design.Client.dll') Or !Exists('../RibbonKit.WinForms.Design.Protocol/bin/$(Configuration)/net472/RibbonKit.WinForms.Design.Protocol.dll') Or !Exists('../RibbonKit.WinForms.Design.Protocol/bin/$(Configuration)/$(TargetFramework)/RibbonKit.WinForms.Design.Protocol.dll')" Text="Build the native designer client, server and protocol in the same configuration before packing." />
   </Target>
 </Project>

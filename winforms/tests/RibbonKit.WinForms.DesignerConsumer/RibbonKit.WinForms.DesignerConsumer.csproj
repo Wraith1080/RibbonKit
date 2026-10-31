@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Copied outside the checkout for actual package/designer verification. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="RibbonKit.WinForms" Version="0.1.0" />
+    <Compile Update="DesignerForm.cs"><SubType>Form</SubType></Compile>
+    <Compile Update="DesignerForm.Designer.cs"><DependentUpon>DesignerForm.cs</DependentUpon></Compile>
+    <EmbeddedResource Update="DesignerForm.resx"><DependentUpon>DesignerForm.cs</DependentUpon></EmbeddedResource>
+  </ItemGroup>
+</Project>

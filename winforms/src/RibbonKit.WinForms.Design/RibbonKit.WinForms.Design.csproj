@@ -3,5 +3,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.WinForms.Designer.SDK" Version="1.6.0" PrivateAssets="all" />
     <ProjectReference Include="../RibbonKit.WinForms/RibbonKit.WinForms.csproj" />
+    <ProjectReference Include="../RibbonKit.WinForms.Design.Protocol/RibbonKit.WinForms.Design.Protocol.csproj" />
   </ItemGroup>
 </Project>

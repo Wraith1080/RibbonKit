@@ -1,12 +1,29 @@
 using System.ComponentModel;
+using System.Collections;
 using Microsoft.DotNet.DesignTools.Designers;
+using Microsoft.DotNet.DesignTools.Designers.Actions;
 using Microsoft.DotNet.DesignTools.Editors;
+using RibbonKit.WinForms.Design.Protocol;
 
 namespace RibbonKit.WinForms.Design;
 
 public sealed class RibbonControlDesigner : ControlDesigner
 {
+    public override DesignerActionListCollection ActionLists => new() { new RibbonActions(this) };
+    protected override void PreFilterProperties(IDictionary properties)
+    {
+        base.PreFilterProperties(properties);
+        if (properties[nameof(RibbonControl.Tabs)] is PropertyDescriptor tabs)
+            properties[nameof(RibbonControl.Tabs)] = TypeDescriptor.CreateProperty(typeof(RibbonControl), tabs,
+                new EditorAttribute(RibbonDesignEndpoint.EditorName, "System.Drawing.Design.UITypeEditor, System.Drawing"));
+    }
     public override IReadOnlyCollection<IComponent> AssociatedComponents => ((RibbonControl)Component).Tabs.Cast<RibbonElement>().Concat(((RibbonControl)Component).QuickAccessItems).Append(((RibbonControl)Component).FileMenu).Append(((RibbonControl)Component).Backstage).SelectMany(t => t.TreeForDesigner()).ToArray();
+    private sealed class RibbonActions(RibbonControlDesigner designer) : DesignerActionList(designer.Component)
+    {
+        public void EditRibbon() => designer.InvokePropertyEditor(nameof(RibbonControl.Tabs));
+        public override DesignerActionItemCollection GetSortedActionItems() => new()
+        { new DesignerActionMethodItem(this, nameof(EditRibbon), "Edit Ribbon…", "Ribbon", "Edit tabs, groups and commands.", true) };
+    }
 }
 public sealed class RibbonElementDesigner : ComponentDesigner
 {
