@@ -46,7 +46,7 @@ internal static class RibbonDesignCommitter
         {
             string name = element.Site?.Name ?? UniqueName(element.GetType().Name, used);
             return new RibbonDesignNode { Key = Key(element), ComponentName = name, Kind = Kind(element),
-                Properties = Properties(element), Choices = element is RibbonComboBoxItem choice ? choice.Items.ToList() : [], Children = ChildElements(element).Select(Map).ToList() };
+                Properties = Properties(element), Icon = ReadIcon(element), Choices = element is RibbonComboBoxItem choice ? choice.Items.ToList() : [], Children = ChildElements(element).Select(Map).ToList() };
         }
         snapshot.Tabs = ribbon.Tabs.Select(Map).ToList();
         snapshot.Revision = Fingerprint(snapshot);
@@ -66,6 +66,7 @@ internal static class RibbonDesignCommitter
         draft.ReservedIds = before.ReservedIds; draft.ReservedNames = before.ReservedNames; draft.Validate();
         var existing = Elements(ribbon.Tabs).ToDictionary(Key, StringComparer.Ordinal);
         var originalNodes = before.Nodes.ToDictionary(node => node.Key, StringComparer.Ordinal);
+        var preparedIcons = new Dictionary<string, RibbonSvgIcon>(StringComparer.Ordinal);
         foreach (var node in draft.Nodes)
         {
             if (originalNodes.TryGetValue(node.Key, out var original))
@@ -78,6 +79,11 @@ internal static class RibbonDesignCommitter
             var schema = before.Templates.Single(template => template.Kind == node.Kind);
             if (!schema.Properties.Select(property => property.Name).ToHashSet(StringComparer.Ordinal).SetEquals(node.Properties.Select(property => property.Name)))
                 throw new ArgumentException("The property set is incomplete or unsupported for " + node.Kind + ". Cancel and reopen Edit Ribbon.");
+            if (node.Icon.Kind == "Custom" && (original is null || !SameIcon(node.Icon, original.Icon))) throw new ArgumentException("Custom icon providers can only be preserved or explicitly replaced.");
+            if (node.Kind == "Tab" && node.Icon.Kind != "None") throw new ArgumentException("Tabs do not have command icons.");
+            if (node.Icon.Kind is not ("None" or "Svg" or "Custom")) throw new ArgumentException("Unsupported icon selection.");
+            if (node.Icon.Kind == "Svg" && (original == null || !SameIcon(node.Icon, original.Icon)))
+                preparedIcons.Add(node.Key, new RibbonSvgIcon(node.Icon.Source, node.Icon.UseForegroundColor));
         }
         if (Fingerprint(draft) == before.Revision) return false;
         // Exercise conversions, setters, native choice constraints and runtime
@@ -122,6 +128,13 @@ internal static class RibbonDesignCommitter
             foreach (var node in draft.Nodes)
             {
                 var element = target[node.Key]; var original = originalNodes.GetValueOrDefault(node.Key);
+                if (original == null ? node.Icon.Kind != "None" : !SameIcon(node.Icon, original.Icon))
+                {
+                    var property = TypeDescriptor.GetProperties(element)["Icon"] ?? throw new ArgumentException("This element has no icon.");
+                    var old = property.GetValue(element);
+                    object? next = node.Icon.Kind == "Svg" ? preparedIcons[node.Key] : null;
+                    changes.OnComponentChanging(element, property); property.SetValue(element, next); changes.OnComponentChanged(element, property, old, next);
+                }
                 bool choicesChanged = false;
                 if (element is RibbonComboBoxItem combo && !combo.Items.SequenceEqual(node.Choices))
                 {
@@ -218,6 +231,14 @@ internal static class RibbonDesignCommitter
         return property;
     }
     private static object? ConvertValue(PropertyDescriptor property, string value) => property.PropertyType == typeof(string) ? value : property.Converter.ConvertFromInvariantString(value);
+    private static bool SameIcon(RibbonDesignIcon first, RibbonDesignIcon second) => first.Kind == second.Kind && first.Source == second.Source && first.UseForegroundColor == second.UseForegroundColor;
+    private static RibbonDesignIcon ReadIcon(RibbonElement element)
+    {
+        var icon = element switch { RibbonItem item => item.Icon, RibbonGroup group => group.Icon, _ => null };
+        bool raster = element is RibbonItem { Image: not null } or RibbonItem { LargeImage: not null };
+        return icon is RibbonSvgIcon svg ? new() { Kind = "Svg", Source = svg.Source, Name = svg.Name, UseForegroundColor = svg.UseForegroundColor, HasRasterImage = raster }
+            : new() { Kind = icon == null ? "None" : "Custom", Name = icon?.GetType().Name ?? "", HasRasterImage = raster };
+    }
     private static List<RibbonDesignProperty> Properties(RibbonElement element) => ScalarNames
         .Where(name => name != "Checked" || element is not RibbonCheckBoxItem)
         .Select(name => TypeDescriptor.GetProperties(element)[name]).Where(property => property is { IsReadOnly: false })

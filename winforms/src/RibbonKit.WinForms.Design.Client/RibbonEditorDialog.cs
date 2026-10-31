@@ -30,6 +30,8 @@ internal sealed class RibbonEditorDialog : Form
     private readonly Button _resetColor = new() { Name = "UseThemeAccent", Text = "Use theme &accent", AutoSize = true };
     private readonly Panel _swatch = new() { Name = "HeaderColorSwatch", Size = new Size(22, 22), BorderStyle = BorderStyle.FixedSingle, Margin = new Padding(4) };
     private readonly Label _colorValue = new() { Name = "HeaderColorValue", AutoSize = true, Dock = DockStyle.Fill };
+    private readonly GroupBox _iconBox = new() { Name = "CommandIcon", Text = "Icon", AutoSize = true, Dock = DockStyle.Fill, Padding = new Padding(8), Margin = new Padding(0, 0, 0, 8) };
+    private readonly Label _iconName = new() { AutoSize = true, Anchor = AnchorStyles.Left };
     private readonly TextBox _choices = new() { Multiline = true, Dock = DockStyle.Fill, ScrollBars = ScrollBars.Vertical, AcceptsReturn = true, AccessibleName = "ComboBox choices, one per line" };
     private readonly GroupBox _choiceBox = new() { Text = "Choices (one per line)", Dock = DockStyle.Fill, Height = 130, Padding = new Padding(8), Margin = new Padding(0, 8, 0, 0) };
     private readonly ContextMenuStrip _contextMenu;
@@ -56,8 +58,9 @@ internal sealed class RibbonEditorDialog : Form
         structure.Padding = new Padding(0, 6, 6, 0);
         structure.Controls.Add(new Label { Text = "Ribbon structure", AutoSize = true, Dock = DockStyle.Fill, Padding = new Padding(0, 0, 0, 6) }, 0, 0);
         _tree.Name = "StructureTree"; _tree.ContextMenuStrip = _contextMenu; structure.Controls.Add(_tree, 0, 1); _split.Panel1.Controls.Add(structure);
-        var details = ColumnLayout(); details.RowCount = 4; details.Padding = new Padding(6, 6, 0, 0);
+        var details = ColumnLayout(); details.RowCount = 5; details.Padding = new Padding(6, 6, 0, 0);
         details.RowStyles.Add(new RowStyle(SizeType.AutoSize)); details.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        details.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         details.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); details.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         details.Controls.Add(_selection, 0, 0);
         var header = ColumnLayout(); header.AutoSize = true; header.Dock = DockStyle.Top; header.RowCount = 3;
@@ -65,8 +68,20 @@ internal sealed class RibbonEditorDialog : Form
         var headerActions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, WrapContents = true, Margin = new Padding(0) };
         headerActions.Controls.AddRange(new Control[] { _color, _resetColor, _swatch });
         header.Controls.Add(headerActions, 0, 1); header.Controls.Add(_colorValue, 0, 2); _tabHeader.Controls.Add(header);
-        details.Controls.Add(_tabHeader, 0, 1); _properties.Name = "ComponentProperties"; details.Controls.Add(_properties, 0, 2);
-        _choiceBox.Controls.Add(_choices); details.Controls.Add(_choiceBox, 0, 3); _split.Panel2.Controls.Add(details);
+        details.Controls.Add(_tabHeader, 0, 1);
+        var iconActions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Top, WrapContents = true, Margin = new Padding(0) };
+        var chooseIcon = new Button { Name = "ChooseIcon", Text = "Choose &icon…", AutoSize = true };
+        var clearIcon = new Button { Name = "ClearIcon", Text = "Clear vector icon", AutoSize = true };
+        iconActions.Controls.AddRange(new Control[] { chooseIcon, clearIcon, _iconName }); _iconBox.Controls.Add(iconActions); details.Controls.Add(_iconBox, 0, 2);
+        chooseIcon.Click += (_, _) =>
+        {
+            if (_tree.SelectedNode?.Tag is not RibbonDesignNode node) return;
+            using var picker = new RibbonIconPickerDialog(_draft.Nodes.Select(entry => entry.Icon), node.Icon);
+            if (picker.ShowDialog(this) == DialogResult.OK && picker.Selection is { } selection) SetIcon(selection);
+        };
+        clearIcon.Click += (_, _) => SetIcon(new RibbonDesignIcon());
+        _properties.Name = "ComponentProperties"; details.Controls.Add(_properties, 0, 3);
+        _choiceBox.Controls.Add(_choices); details.Controls.Add(_choiceBox, 0, 4); _split.Panel2.Controls.Add(details);
         var footer = new TableLayoutPanel { Name = "DialogFooter", ColumnCount = 3, RowCount = 1, AutoSize = true, Dock = DockStyle.Fill, Padding = new Padding(0, 12, 0, 0), Margin = new Padding(0) };
         footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         var ok = new Button { Name = "AcceptDraft", Text = "OK", AutoSize = true, MinimumSize = new Size(88, 30), Padding = new Padding(8, 2, 8, 2), Margin = new Padding(8, 0, 0, 0) };
@@ -174,6 +189,8 @@ internal sealed class RibbonEditorDialog : Form
         {
             _selection.Text = ReferenceEquals(_tree.SelectedNode, _root) ? "Ribbon — root" : node == null ? "Properties — select a component" : node.Caption + " — " + KindLabel(node.Kind);
             _tabHeader.Visible = node?.Kind == "Tab";
+            _iconBox.Visible = node != null && node.Kind is not ("Tab" or "Separator");
+            _iconName.Text = node?.Icon.Kind switch { "Svg" => node.Icon.Name, "Custom" => "Custom provider (preserved)", _ => node?.Icon.HasRasterImage == true ? "Existing raster images retained" : "None" };
             if (node?.Kind == "Tab")
             {
                 _contextual.Checked = IsContextual(node); var color = HeaderColor(node);
@@ -219,6 +236,11 @@ internal sealed class RibbonEditorDialog : Form
         if (_tree.SelectedNode?.Tag is not RibbonDesignNode { Kind: "Tab" } node) return;
         node.Properties.Single(property => property.Name == "ContextualColor").Value = TypeDescriptor.GetConverter(typeof(Color)).ConvertToInvariantString(color) ?? "";
         RefreshSelection();
+    }
+    internal void SetIcon(RibbonDesignIcon icon)
+    {
+        if (_tree.SelectedNode?.Tag is not RibbonDesignNode node || node.Kind is "Tab" or "Separator") return;
+        icon.HasRasterImage = node.Icon.HasRasterImage; node.Icon = icon; RefreshSelection();
     }
     private void Add(string kind, bool contextual = false)
     {

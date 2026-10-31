@@ -77,8 +77,9 @@ public sealed class RibbonGroup : RibbonElement
     /// <summary>Initializes a RibbonGroup instance.</summary>
     public RibbonGroup() => Items = new(this);
     /// <summary>Gets or sets a borrowed vector icon for collapsed, QAT and customization presentations. The group never disposes the icon.</summary>
-    [Category("Appearance"), DefaultValue(null), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    [Category("Appearance"), DefaultValue(null), Localizable(true), DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public IRibbonIcon? Icon { get => _icon; set { Ribbon?.VerifyAccess(); if (ReferenceEquals(_icon, value)) return; _icon = value; Changed(); } }
+    private bool ShouldSerializeIcon() => Icon is RibbonSvgIcon;
     /// <summary>Gets the stable, owned command collection.</summary>
     [Category("Data"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     public RibbonItemCollection Items
@@ -236,8 +237,8 @@ public abstract class RibbonItem : RibbonElement
             Changed();
         }
     }
-    /// <summary>Gets or sets a borrowed code-authored vector icon provider.</summary>
-    [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    /// <summary>Gets or sets a borrowed vector icon provider. RibbonSvgIcon supports designer serialization; custom providers remain code-authored.</summary>
+    [Browsable(false), Localizable(true), DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     public IRibbonIcon? Icon
     {
         get => _icon; set
@@ -247,6 +248,7 @@ public abstract class RibbonItem : RibbonElement
             Changed();
         }
     }
+    private bool ShouldSerializeIcon() => Icon is RibbonSvgIcon;
     /// <summary>Gets or sets the item size used at each group reduction step.</summary>
     [Category("Layout")]
     public RibbonSizePolicy SizePolicy

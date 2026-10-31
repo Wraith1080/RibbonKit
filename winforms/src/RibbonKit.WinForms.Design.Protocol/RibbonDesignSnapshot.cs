@@ -78,7 +78,18 @@ public sealed class RibbonDesignNode
     [DataMember] public List<RibbonDesignProperty> Properties { get; set; } = new();
     [DataMember] public List<string> Choices { get; set; } = new();
     [DataMember] public List<RibbonDesignNode> Children { get; set; } = new();
+    [DataMember] public RibbonDesignIcon Icon { get; set; } = new();
     public string Caption => Properties.FirstOrDefault(property => property.Name == "Text")?.Value ?? ComponentName;
+}
+
+[DataContract]
+public sealed class RibbonDesignIcon
+{
+    [DataMember] public string Kind { get; set; } = "None";
+    [DataMember] public string Source { get; set; } = "";
+    [DataMember] public bool UseForegroundColor { get; set; }
+    [DataMember] public string Name { get; set; } = "";
+    [DataMember] public bool HasRasterImage { get; set; }
 }
 
 [DataContract]

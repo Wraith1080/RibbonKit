@@ -4,13 +4,19 @@
     <PackageId>RibbonKit.WinForms</PackageId>
     <Description>Native Windows Forms ribbon controls. Foundation preview.</Description>
     <Authors>RibbonKit contributors</Authors>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageLicenseExpression>MIT AND MS-PL</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <WarningsAsErrors>$(WarningsAsErrors);CS1591;RS0016;RS0017</WarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="5.6.0" PrivateAssets="all" />
+    <PackageReference Include="Svg" Version="3.4.8" />
+    <Compile Include="../Shared/Icons/*.cs" Link="Imaging/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../Shared/Icons/Stock/*.svg" LogicalName="RibbonKit.StockIcons.%(Filename)%(Extension)" />
+    <None Include="../Shared/Icons/Stock/LICENSE.txt" Pack="true" PackagePath="licenses/Fluent-System-Icons.txt" />
+    <None Include="../Shared/Icons/Stock/PROVENANCE.md" Pack="true" PackagePath="assets/icons/stock/" />
+    <None Include="../../licenses/*.txt" Pack="true" PackagePath="licenses/" />
     <AdditionalFiles Include="PublicAPI.Shipped.txt" />
     <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
     <InternalsVisibleTo Include="RibbonKit.WinForms.Tests" />
@@ -25,9 +31,11 @@
     <None Include="../RibbonKit.WinForms.Design.Protocol/bin/$(Configuration)/$(TargetFramework)/RibbonKit.WinForms.Design.Protocol.dll" Pack="true" PackagePath="lib/net10.0-windows7.0/Design/WinForms/Server/" />
     <None Include="../RibbonKit.WinForms.Design.Client/bin/$(Configuration)/net472/RibbonKit.WinForms.Design.Client.dll" Pack="true" PackagePath="lib/net10.0-windows7.0/Design/WinForms/" />
     <None Include="../RibbonKit.WinForms.Design.Protocol/bin/$(Configuration)/net472/RibbonKit.WinForms.Design.Protocol.dll" Pack="true" PackagePath="lib/net10.0-windows7.0/Design/WinForms/" />
+    <None Include="../RibbonKit.WinForms.Design.Client/bin/$(Configuration)/net472/Svg.dll;../RibbonKit.WinForms.Design.Client/bin/$(Configuration)/net472/ExCSS.dll;../RibbonKit.WinForms.Design.Client/bin/$(Configuration)/net472/System.Memory.dll;../RibbonKit.WinForms.Design.Client/bin/$(Configuration)/net472/System.Buffers.dll;../RibbonKit.WinForms.Design.Client/bin/$(Configuration)/net472/System.Numerics.Vectors.dll;../RibbonKit.WinForms.Design.Client/bin/$(Configuration)/net472/System.Runtime.CompilerServices.Unsafe.dll" Pack="true" PackagePath="lib/net10.0-windows7.0/Design/WinForms/" />
   </ItemGroup>
   <Target Name="VerifyDesignBuildForPack" BeforeTargets="GenerateNuspec">
     <Error Condition="!Exists('../RibbonKit.WinForms.Design/bin/$(Configuration)/$(TargetFramework)/RibbonKit.WinForms.Design.dll')" Text="Build RibbonKit.WinForms.sln in the same configuration before packing the runtime with its design support." />
     <Error Condition="!Exists('../RibbonKit.WinForms.Design.Client/bin/$(Configuration)/net472/RibbonKit.WinForms.Design.Client.dll') Or !Exists('../RibbonKit.WinForms.Design.Protocol/bin/$(Configuration)/net472/RibbonKit.WinForms.Design.Protocol.dll') Or !Exists('../RibbonKit.WinForms.Design.Protocol/bin/$(Configuration)/$(TargetFramework)/RibbonKit.WinForms.Design.Protocol.dll')" Text="Build the native designer client, server and protocol in the same configuration before packing." />
+    <Error Condition="!Exists('../RibbonKit.WinForms.Design.Client/bin/$(Configuration)/net472/Svg.dll') Or !Exists('../RibbonKit.WinForms.Design.Client/bin/$(Configuration)/net472/ExCSS.dll')" Text="Build the native designer SVG dependencies before packing." />
   </Target>
 </Project>

@@ -1,0 +1,556 @@
+# Fluent UI System Icons
+
+512 regular 24px SVG assets, pinned to Microsoft fluentui-system-icons commit `9eb184e96268d3293462f9d9d19225b4c7b07774`.
+MIT license: LICENSE.txt. The original 24 keys/names remain unchanged.
+Each key below names its local SVG file and exact upstream source.
+
+## Original catalog
+
+- `new`: `assets/Document Add/SVG/ic_fluent_document_add_24_regular.svg`
+- `open`: `assets/Folder Open/SVG/ic_fluent_folder_open_24_regular.svg`
+- `save`: `assets/Save/SVG/ic_fluent_save_24_regular.svg`
+- `print`: `assets/Print/SVG/ic_fluent_print_24_regular.svg`
+- `undo`: `assets/Arrow Undo/SVG/ic_fluent_arrow_undo_24_regular.svg`
+- `redo`: `assets/Arrow Redo/SVG/ic_fluent_arrow_redo_24_regular.svg`
+- `copy`: `assets/Copy/SVG/ic_fluent_copy_24_regular.svg`
+- `cut`: `assets/Cut/SVG/ic_fluent_cut_24_regular.svg`
+- `paste`: `assets/Clipboard Paste/SVG/ic_fluent_clipboard_paste_24_regular.svg`
+- `bold`: `assets/Text Bold/SVG/ic_fluent_text_bold_24_regular.svg`
+- `italic`: `assets/Text Italic/SVG/ic_fluent_text_italic_24_regular.svg`
+- `underline`: `assets/Text Underline/SVG/ic_fluent_text_underline_24_regular.svg`
+- `find`: `assets/Search/SVG/ic_fluent_search_24_regular.svg`
+- `picture`: `assets/Image/SVG/ic_fluent_image_24_regular.svg`
+- `link`: `assets/Link/SVG/ic_fluent_link_24_regular.svg`
+- `settings`: `assets/Settings/SVG/ic_fluent_settings_24_regular.svg`
+- `delete`: `assets/Delete/SVG/ic_fluent_delete_24_regular.svg`
+- `refresh`: `assets/Arrow Clockwise/SVG/ic_fluent_arrow_clockwise_24_regular.svg`
+- `help`: `assets/Question Circle/SVG/ic_fluent_question_circle_24_regular.svg`
+- `zoom-in`: `assets/Zoom In/SVG/ic_fluent_zoom_in_24_regular.svg`
+- `zoom-out`: `assets/Zoom Out/SVG/ic_fluent_zoom_out_24_regular.svg`
+- `table`: `assets/Table/SVG/ic_fluent_table_24_regular.svg`
+- `check`: `assets/Checkmark/SVG/ic_fluent_checkmark_24_regular.svg`
+- `close`: `assets/Dismiss/SVG/ic_fluent_dismiss_24_regular.svg`
+
+## Files and documents
+
+- `folder`: `assets/Folder/SVG/ic_fluent_folder_24_regular.svg`
+- `archive`: `assets/Archive/SVG/ic_fluent_archive_24_regular.svg`
+- `document`: `assets/Document/SVG/ic_fluent_document_24_regular.svg`
+- `clipboard`: `assets/Clipboard/SVG/ic_fluent_clipboard_24_regular.svg`
+- `copy-add`: `assets/Copy Add/SVG/ic_fluent_copy_add_24_regular.svg`
+- `open-off`: `assets/Open Off/SVG/ic_fluent_open_off_24_regular.svg`
+- `print-add`: `assets/Print Add/SVG/ic_fluent_print_add_24_regular.svg`
+- `save-copy`: `assets/Save Copy/SVG/ic_fluent_save_copy_24_regular.svg`
+- `save-edit`: `assets/Save Edit/SVG/ic_fluent_save_edit_24_regular.svg`
+- `save-sync`: `assets/Save Sync/SVG/ic_fluent_save_sync_24_regular.svg`
+- `folder-add`: `assets/Folder Add/SVG/ic_fluent_folder_add_24_regular.svg`
+- `folder-zip`: `assets/Folder Zip/SVG/ic_fluent_folder_zip_24_regular.svg`
+- `copy-select`: `assets/Copy Select/SVG/ic_fluent_copy_select_24_regular.svg`
+- `folder-link`: `assets/Folder Link/SVG/ic_fluent_folder_link_24_regular.svg`
+- `folder-mail`: `assets/Folder Mail/SVG/ic_fluent_folder_mail_24_regular.svg`
+- `folder-swap`: `assets/Folder Swap/SVG/ic_fluent_folder_swap_24_regular.svg`
+- `folder-sync`: `assets/Folder Sync/SVG/ic_fluent_folder_sync_24_regular.svg`
+- `open-folder`: `assets/Open Folder/SVG/ic_fluent_open_folder_24_regular.svg`
+- `document-100`: `assets/Document 100/SVG/ic_fluent_document_100_24_regular.svg`
+- `document-css`: `assets/Document CSS/SVG/ic_fluent_document_css_24_regular.svg`
+- `document-csv`: `assets/Document CSV/SVG/ic_fluent_document_csv_24_regular.svg`
+- `document-fit`: `assets/Document Fit/SVG/ic_fluent_document_fit_24_regular.svg`
+- `document-pdf`: `assets/Document PDF/SVG/ic_fluent_document_pdf_24_regular.svg`
+- `folder-globe`: `assets/Folder Globe/SVG/ic_fluent_folder_globe_24_regular.svg`
+- `archive-clock`: `assets/Archive Clock/SVG/ic_fluent_archive_clock_24_regular.svg`
+- `clipboard-day`: `assets/Clipboard Day/SVG/ic_fluent_clipboard_day_24_regular.svg`
+- `clipboard-off`: `assets/Clipboard Off/SVG/ic_fluent_clipboard_off_24_regular.svg`
+- `document-copy`: `assets/Document Copy/SVG/ic_fluent_document_copy_24_regular.svg`
+- `document-cube`: `assets/Document Cube/SVG/ic_fluent_document_cube_24_regular.svg`
+- `document-data`: `assets/Document Data/SVG/ic_fluent_document_data_24_regular.svg`
+- `document-edit`: `assets/Document Edit/SVG/ic_fluent_document_edit_24_regular.svg`
+- `document-link`: `assets/Document Link/SVG/ic_fluent_document_link_24_regular.svg`
+- `document-lock`: `assets/Document Lock/SVG/ic_fluent_document_lock_24_regular.svg`
+
+## Text and formatting
+
+- `translate`: `assets/Translate/SVG/ic_fluent_translate_24_regular.svg`
+- `text-t`: `assets/Text T/SVG/ic_fluent_text_t_24_regular.svg`
+- `align-top`: `assets/Align Top/SVG/ic_fluent_align_top_24_regular.svg`
+- `text-font`: `assets/Text Font/SVG/ic_fluent_text_font_24_regular.svg`
+- `text-more`: `assets/Text More/SVG/ic_fluent_text_more_24_regular.svg`
+- `text-wrap`: `assets/Text Wrap/SVG/ic_fluent_text_wrap_24_regular.svg`
+- `align-left`: `assets/Align Left/SVG/ic_fluent_align_left_24_regular.svg`
+- `number-row`: `assets/Number Row/SVG/ic_fluent_number_row_24_regular.svg`
+- `text-color`: `assets/Text Color/SVG/ic_fluent_text_color_24_regular.svg`
+- `text-field`: `assets/Text Field/SVG/ic_fluent_text_field_24_regular.svg`
+- `text-quote`: `assets/Text Quote/SVG/ic_fluent_text_quote_24_regular.svg`
+- `align-right`: `assets/Align Right/SVG/ic_fluent_align_right_24_regular.svg`
+- `text-expand`: `assets/Text Expand/SVG/ic_fluent_text_expand_24_regular.svg`
+- `align-bottom`: `assets/Align Bottom/SVG/ic_fluent_align_bottom_24_regular.svg`
+- `text-density`: `assets/Text Density/SVG/ic_fluent_text_density_24_regular.svg`
+- `text-effects`: `assets/Text Effects/SVG/ic_fluent_text_effects_24_regular.svg`
+- `text-hanging`: `assets/Text Hanging/SVG/ic_fluent_text_hanging_24_regular.svg`
+- `text-percent`: `assets/Text Percent/SVG/ic_fluent_text_percent_24_regular.svg`
+- `font-decrease`: `assets/Font Decrease/SVG/ic_fluent_font_decrease_24_regular.svg`
+- `font-increase`: `assets/Font Increase/SVG/ic_fluent_font_increase_24_regular.svg`
+- `number-symbol`: `assets/Number Symbol/SVG/ic_fluent_number_symbol_24_regular.svg`
+- `text-collapse`: `assets/Text Collapse/SVG/ic_fluent_text_collapse_24_regular.svg`
+- `text-footnote`: `assets/Text Footnote/SVG/ic_fluent_text_footnote_24_regular.svg`
+- `translate-off`: `assets/Translate Off/SVG/ic_fluent_translate_off_24_regular.svg`
+- `text-paragraph`: `assets/Text Paragraph/SVG/ic_fluent_text_paragraph_24_regular.svg`
+- `text-subscript`: `assets/Text Subscript/SVG/ic_fluent_text_subscript_24_regular.svg`
+- `translate-auto`: `assets/Translate Auto/SVG/ic_fluent_translate_auto_24_regular.svg`
+- `text-continuous`: `assets/Text Continuous/SVG/ic_fluent_text_continuous_24_regular.svg`
+- `align-straighten`: `assets/Align Straighten/SVG/ic_fluent_align_straighten_24_regular.svg`
+- `text-description`: `assets/Text Description/SVG/ic_fluent_text_description_24_regular.svg`
+- `text-superscript`: `assets/Text Superscript/SVG/ic_fluent_text_superscript_24_regular.svg`
+- `text-strikethrough`: `assets/Text Strikethrough/SVG/ic_fluent_text_strikethrough_24_regular.svg`
+- `text-add-t`: `assets/Text Add T/SVG/ic_fluent_text_add_t_24_regular.svg`
+- `text-header-1`: `assets/Text Header 1/SVG/ic_fluent_text_header_1_24_regular.svg`
+- `text-header-2`: `assets/Text Header 2/SVG/ic_fluent_text_header_2_24_regular.svg`
+- `text-header-3`: `assets/Text Header 3/SVG/ic_fluent_text_header_3_24_regular.svg`
+- `text-header-4`: `assets/Text Header 4/SVG/ic_fluent_text_header_4_24_regular.svg`
+- `text-header-5`: `assets/Text Header 5/SVG/ic_fluent_text_header_5_24_regular.svg`
+- `text-header-6`: `assets/Text Header 6/SVG/ic_fluent_text_header_6_24_regular.svg`
+- `text-wrap-off`: `assets/Text Wrap Off/SVG/ic_fluent_text_wrap_off_24_regular.svg`
+- `text-font-info`: `assets/Text Font Info/SVG/ic_fluent_text_font_info_24_regular.svg`
+- `text-font-size`: `assets/Text Font Size/SVG/ic_fluent_text_font_size_24_regular.svg`
+- `number-circle-0`: `assets/Number Circle 0/SVG/ic_fluent_number_circle_0_24_regular.svg`
+
+## Tables and data
+
+- `database`: `assets/Database/SVG/ic_fluent_database_24_regular.svg`
+- `calculator`: `assets/Calculator/SVG/ic_fluent_calculator_24_regular.svg`
+- `data-pie`: `assets/Data Pie/SVG/ic_fluent_data_pie_24_regular.svg`
+- `data-area`: `assets/Data Area/SVG/ic_fluent_data_area_24_regular.svg`
+- `data-line`: `assets/Data Line/SVG/ic_fluent_data_line_24_regular.svg`
+- `table-add`: `assets/Table Add/SVG/ic_fluent_table_add_24_regular.svg`
+- `data-usage`: `assets/Data Usage/SVG/ic_fluent_data_usage_24_regular.svg`
+- `table-edit`: `assets/Table Edit/SVG/ic_fluent_table_edit_24_regular.svg`
+- `table-link`: `assets/Table Link/SVG/ic_fluent_table_link_24_regular.svg`
+- `table-lock`: `assets/Table Lock/SVG/ic_fluent_table_lock_24_regular.svg`
+- `data-funnel`: `assets/Data Funnel/SVG/ic_fluent_data_funnel_24_regular.svg`
+- `chart-person`: `assets/Chart Person/SVG/ic_fluent_chart_person_24_regular.svg`
+- `data-scatter`: `assets/Data Scatter/SVG/ic_fluent_data_scatter_24_regular.svg`
+- `data-treemap`: `assets/Data Treemap/SVG/ic_fluent_data_treemap_24_regular.svg`
+- `data-whisker`: `assets/Data Whisker/SVG/ic_fluent_data_whisker_24_regular.svg`
+- `math-formula`: `assets/Math Formula/SVG/ic_fluent_math_formula_24_regular.svg`
+- `math-symbols`: `assets/Math Symbols/SVG/ic_fluent_math_symbols_24_regular.svg`
+- `table-cursor`: `assets/Table Cursor/SVG/ic_fluent_table_cursor_24_regular.svg`
+- `table-offset`: `assets/Table Offset/SVG/ic_fluent_table_offset_24_regular.svg`
+- `table-search`: `assets/Table Search/SVG/ic_fluent_table_search_24_regular.svg`
+- `table-simple`: `assets/Table Simple/SVG/ic_fluent_table_simple_24_regular.svg`
+- `table-switch`: `assets/Table Switch/SVG/ic_fluent_table_switch_24_regular.svg`
+- `data-sunburst`: `assets/Data Sunburst/SVG/ic_fluent_data_sunburst_24_regular.svg`
+- `data-trending`: `assets/Data Trending/SVG/ic_fluent_data_trending_24_regular.svg`
+- `database-link`: `assets/Database Link/SVG/ic_fluent_database_link_24_regular.svg`
+- `table-dismiss`: `assets/Table Dismiss/SVG/ic_fluent_table_dismiss_24_regular.svg`
+- `table-sparkle`: `assets/Table Sparkle/SVG/ic_fluent_table_sparkle_24_regular.svg`
+- `chart-multiple`: `assets/Chart Multiple/SVG/ic_fluent_chart_multiple_24_regular.svg`
+- `data-histogram`: `assets/Data Histogram/SVG/ic_fluent_data_histogram_24_regular.svg`
+- `data-waterfall`: `assets/Data Waterfall/SVG/ic_fluent_data_waterfall_24_regular.svg`
+- `table-multiple`: `assets/Table Multiple/SVG/ic_fluent_table_multiple_24_regular.svg`
+- `table-settings`: `assets/Table Settings/SVG/ic_fluent_table_settings_24_regular.svg`
+- `database-person`: `assets/Database Person/SVG/ic_fluent_database_person_24_regular.svg`
+- `database-search`: `assets/Database Search/SVG/ic_fluent_database_search_24_regular.svg`
+- `database-switch`: `assets/Database Switch/SVG/ic_fluent_database_switch_24_regular.svg`
+- `table-lightning`: `assets/Table Lightning/SVG/ic_fluent_table_lightning_24_regular.svg`
+- `database-settings`: `assets/Database Settings/SVG/ic_fluent_database_settings_24_regular.svg`
+
+## Layout and windows
+
+- `box`: `assets/Box/SVG/ic_fluent_box_24_regular.svg`
+- `grid`: `assets/Grid/SVG/ic_fluent_grid_24_regular.svg`
+- `resize`: `assets/Resize/SVG/ic_fluent_resize_24_regular.svg`
+- `window`: `assets/Window/SVG/ic_fluent_window_24_regular.svg`
+- `box-edit`: `assets/Box Edit/SVG/ic_fluent_box_edit_24_regular.svg`
+- `page-fit`: `assets/Page Fit/SVG/ic_fluent_page_fit_24_regular.svg`
+- `grid-dots`: `assets/Grid Dots/SVG/ic_fluent_grid_dots_24_regular.svg`
+- `window-ad`: `assets/Window Ad/SVG/ic_fluent_window_ad_24_regular.svg`
+- `border-all`: `assets/Border All/SVG/ic_fluent_border_all_24_regular.svg`
+- `border-top`: `assets/Border Top/SVG/ic_fluent_border_top_24_regular.svg`
+- `box-search`: `assets/Box Search/SVG/ic_fluent_box_search_24_regular.svg`
+- `panel-left`: `assets/Panel Left/SVG/ic_fluent_panel_left_24_regular.svg`
+- `window-new`: `assets/Window New/SVG/ic_fluent_window_new_24_regular.svg`
+- `border-left`: `assets/Border Left/SVG/ic_fluent_border_left_24_regular.svg`
+- `border-none`: `assets/Border None/SVG/ic_fluent_border_none_24_regular.svg`
+- `box-dismiss`: `assets/Box Dismiss/SVG/ic_fluent_box_dismiss_24_regular.svg`
+- `box-toolbox`: `assets/Box Toolbox/SVG/ic_fluent_box_toolbox_24_regular.svg`
+- `padding-top`: `assets/Padding Top/SVG/ic_fluent_padding_top_24_regular.svg`
+- `panel-right`: `assets/Panel Right/SVG/ic_fluent_panel_right_24_regular.svg`
+- `window-apps`: `assets/Window Apps/SVG/ic_fluent_window_apps_24_regular.svg`
+- `window-text`: `assets/Window Text/SVG/ic_fluent_window_text_24_regular.svg`
+- `border-right`: `assets/Border Right/SVG/ic_fluent_border_right_24_regular.svg`
+- `box-multiple`: `assets/Box Multiple/SVG/ic_fluent_box_multiple_24_regular.svg`
+- `grid-circles`: `assets/Grid Circles/SVG/ic_fluent_grid_circles_24_regular.svg`
+- `padding-down`: `assets/Padding Down/SVG/ic_fluent_padding_down_24_regular.svg`
+- `padding-left`: `assets/Padding Left/SVG/ic_fluent_padding_left_24_regular.svg`
+- `resize-image`: `assets/Resize Image/SVG/ic_fluent_resize_image_24_regular.svg`
+- `resize-large`: `assets/Resize Large/SVG/ic_fluent_resize_large_24_regular.svg`
+- `resize-small`: `assets/Resize Small/SVG/ic_fluent_resize_small_24_regular.svg`
+- `resize-table`: `assets/Resize Table/SVG/ic_fluent_resize_table_24_regular.svg`
+- `resize-video`: `assets/Resize Video/SVG/ic_fluent_resize_video_24_regular.svg`
+- `window-brush`: `assets/Window Brush/SVG/ic_fluent_window_brush_24_regular.svg`
+- `border-bottom`: `assets/Border Bottom/SVG/ic_fluent_border_bottom_24_regular.svg`
+- `border-inside`: `assets/Border Inside/SVG/ic_fluent_border_inside_24_regular.svg`
+- `box-checkmark`: `assets/Box Checkmark/SVG/ic_fluent_box_checkmark_24_regular.svg`
+- `padding-right`: `assets/Padding Right/SVG/ic_fluent_padding_right_24_regular.svg`
+- `window-shield`: `assets/Window Shield/SVG/ic_fluent_window_shield_24_regular.svg`
+- `window-wrench`: `assets/Window Wrench/SVG/ic_fluent_window_wrench_24_regular.svg`
+- `border-outside`: `assets/Border Outside/SVG/ic_fluent_border_outside_24_regular.svg`
+- `layout-dynamic`: `assets/Layout Dynamic/SVG/ic_fluent_layout_dynamic_24_regular.svg`
+- `split-vertical`: `assets/Split Vertical/SVG/ic_fluent_split_vertical_24_regular.svg`
+
+## Navigation
+
+- `tab`: `assets/Tab/SVG/ic_fluent_tab_24_regular.svg`
+- `home`: `assets/Home/SVG/ic_fluent_home_24_regular.svg`
+- `cursor`: `assets/Cursor/SVG/ic_fluent_cursor_24_regular.svg`
+- `navigation`: `assets/Navigation/SVG/ic_fluent_navigation_24_regular.svg`
+- `tab-add`: `assets/Tab Add/SVG/ic_fluent_tab_add_24_regular.svg`
+- `arrow-up`: `assets/Arrow Up/SVG/ic_fluent_arrow_up_24_regular.svg`
+- `home-add`: `assets/Home Add/SVG/ic_fluent_home_add_24_regular.svg`
+- `arrow-fit`: `assets/Arrow Fit/SVG/ic_fluent_arrow_fit_24_regular.svg`
+- `home-more`: `assets/Home More/SVG/ic_fluent_home_more_24_regular.svg`
+- `tab-group`: `assets/Tab Group/SVG/ic_fluent_tab_group_24_regular.svg`
+- `arrow-down`: `assets/Arrow Down/SVG/ic_fluent_arrow_down_24_regular.svg`
+- `arrow-exit`: `assets/Arrow Exit/SVG/ic_fluent_arrow_exit_24_regular.svg`
+- `arrow-left`: `assets/Arrow Left/SVG/ic_fluent_arrow_left_24_regular.svg`
+- `arrow-move`: `assets/Arrow Move/SVG/ic_fluent_arrow_move_24_regular.svg`
+- `arrow-next`: `assets/Arrow Next/SVG/ic_fluent_arrow_next_24_regular.svg`
+- `arrow-sort`: `assets/Arrow Sort/SVG/ic_fluent_arrow_sort_24_regular.svg`
+- `arrow-swap`: `assets/Arrow Swap/SVG/ic_fluent_arrow_swap_24_regular.svg`
+- `arrow-sync`: `assets/Arrow Sync/SVG/ic_fluent_arrow_sync_24_regular.svg`
+- `chevron-up`: `assets/Chevron Up/SVG/ic_fluent_chevron_up_24_regular.svg`
+- `home-empty`: `assets/Home Empty/SVG/ic_fluent_home_empty_24_regular.svg`
+- `home-heart`: `assets/Home Heart/SVG/ic_fluent_home_heart_24_regular.svg`
+- `home-money`: `assets/Home Money/SVG/ic_fluent_home_money_24_regular.svg`
+- `home-split`: `assets/Home Split/SVG/ic_fluent_home_split_24_regular.svg`
+- `arrow-reply`: `assets/Arrow Reply/SVG/ic_fluent_arrow_reply_24_regular.svg`
+- `arrow-reset`: `assets/Arrow Reset/SVG/ic_fluent_arrow_reset_24_regular.svg`
+- `arrow-right`: `assets/Arrow Right/SVG/ic_fluent_arrow_right_24_regular.svg`
+- `arrow-split`: `assets/Arrow Split/SVG/ic_fluent_arrow_split_24_regular.svg`
+- `home-garage`: `assets/Home Garage/SVG/ic_fluent_home_garage_24_regular.svg`
+- `home-person`: `assets/Home Person/SVG/ic_fluent_home_person_24_regular.svg`
+- `tab-desktop`: `assets/Tab Desktop/SVG/ic_fluent_tab_desktop_24_regular.svg`
+- `arrow-bounce`: `assets/Arrow Bounce/SVG/ic_fluent_arrow_bounce_24_regular.svg`
+- `arrow-expand`: `assets/Arrow Expand/SVG/ic_fluent_arrow_expand_24_regular.svg`
+- `arrow-export`: `assets/Arrow Export/SVG/ic_fluent_arrow_export_24_regular.svg`
+- `arrow-import`: `assets/Arrow Import/SVG/ic_fluent_arrow_import_24_regular.svg`
+- `arrow-upload`: `assets/Arrow Upload/SVG/ic_fluent_arrow_upload_24_regular.svg`
+- `chevron-down`: `assets/Chevron Down/SVG/ic_fluent_chevron_down_24_regular.svg`
+- `chevron-left`: `assets/Chevron Left/SVG/ic_fluent_chevron_left_24_regular.svg`
+- `cursor-click`: `assets/Cursor Click/SVG/ic_fluent_cursor_click_24_regular.svg`
+- `cursor-hover`: `assets/Cursor Hover/SVG/ic_fluent_cursor_hover_24_regular.svg`
+- `arrow-forward`: `assets/Arrow Forward/SVG/ic_fluent_arrow_forward_24_regular.svg`
+- `arrow-routing`: `assets/Arrow Routing/SVG/ic_fluent_arrow_routing_24_regular.svg`
+
+## People and collaboration
+
+- `chat`: `assets/Chat/SVG/ic_fluent_chat_24_regular.svg`
+- `group`: `assets/Group/SVG/ic_fluent_group_24_regular.svg`
+- `share`: `assets/Share/SVG/ic_fluent_share_24_regular.svg`
+- `people`: `assets/People/SVG/ic_fluent_people_24_regular.svg`
+- `person`: `assets/Person/SVG/ic_fluent_person_24_regular.svg`
+- `comment`: `assets/Comment/SVG/ic_fluent_comment_24_regular.svg`
+- `chat-add`: `assets/Chat Add/SVG/ic_fluent_chat_add_24_regular.svg`
+- `chat-off`: `assets/Chat Off/SVG/ic_fluent_chat_off_24_regular.svg`
+- `meet-now`: `assets/Meet Now/SVG/ic_fluent_meet_now_24_regular.svg`
+- `chat-help`: `assets/Chat Help/SVG/ic_fluent_chat_help_24_regular.svg`
+- `chat-lock`: `assets/Chat Lock/SVG/ic_fluent_chat_lock_24_regular.svg`
+- `hand-draw`: `assets/Hand Draw/SVG/ic_fluent_hand_draw_24_regular.svg`
+- `hand-left`: `assets/Hand Left/SVG/ic_fluent_hand_left_24_regular.svg`
+- `hand-wave`: `assets/Hand Wave/SVG/ic_fluent_hand_wave_24_regular.svg`
+- `share-ios`: `assets/Share iOS/SVG/ic_fluent_share_ios_24_regular.svg`
+- `chat-empty`: `assets/Chat Empty/SVG/ic_fluent_chat_empty_24_regular.svg`
+- `chat-video`: `assets/Chat Video/SVG/ic_fluent_chat_video_24_regular.svg`
+- `group-list`: `assets/Group List/SVG/ic_fluent_group_list_24_regular.svg`
+- `hand-point`: `assets/Hand Point/SVG/ic_fluent_hand_point_24_regular.svg`
+- `hand-right`: `assets/Hand Right/SVG/ic_fluent_hand_right_24_regular.svg`
+- `people-add`: `assets/People Add/SVG/ic_fluent_people_add_24_regular.svg`
+- `person-add`: `assets/Person Add/SVG/ic_fluent_person_add_24_regular.svg`
+- `person-key`: `assets/Person Key/SVG/ic_fluent_person_key_24_regular.svg`
+- `person-tag`: `assets/Person Tag/SVG/ic_fluent_person_tag_24_regular.svg`
+- `chat-cursor`: `assets/Chat Cursor/SVG/ic_fluent_chat_cursor_24_regular.svg`
+- `comment-add`: `assets/Comment Add/SVG/ic_fluent_comment_add_24_regular.svg`
+- `comment-off`: `assets/Comment Off/SVG/ic_fluent_comment_off_24_regular.svg`
+- `people-call`: `assets/People Call/SVG/ic_fluent_people_call_24_regular.svg`
+- `people-chat`: `assets/People Chat/SVG/ic_fluent_people_chat_24_regular.svg`
+- `people-edit`: `assets/People Edit/SVG/ic_fluent_people_edit_24_regular.svg`
+- `people-link`: `assets/People Link/SVG/ic_fluent_people_link_24_regular.svg`
+- `people-list`: `assets/People List/SVG/ic_fluent_people_list_24_regular.svg`
+- `people-lock`: `assets/People Lock/SVG/ic_fluent_people_lock_24_regular.svg`
+- `people-star`: `assets/People Star/SVG/ic_fluent_people_star_24_regular.svg`
+- `people-swap`: `assets/People Swap/SVG/ic_fluent_people_swap_24_regular.svg`
+- `people-sync`: `assets/People Sync/SVG/ic_fluent_people_sync_24_regular.svg`
+- `people-team`: `assets/People Team/SVG/ic_fluent_people_team_24_regular.svg`
+- `person-call`: `assets/Person Call/SVG/ic_fluent_person_call_24_regular.svg`
+- `person-chat`: `assets/Person Chat/SVG/ic_fluent_person_chat_24_regular.svg`
+- `person-edit`: `assets/Person Edit/SVG/ic_fluent_person_edit_24_regular.svg`
+- `person-home`: `assets/Person Home/SVG/ic_fluent_person_home_24_regular.svg`
+- `person-info`: `assets/Person Info/SVG/ic_fluent_person_info_24_regular.svg`
+
+## Mail and scheduling
+
+- `mail`: `assets/Mail/SVG/ic_fluent_mail_24_regular.svg`
+- `send`: `assets/Send/SVG/ic_fluent_send_24_regular.svg`
+- `clock`: `assets/Clock/SVG/ic_fluent_clock_24_regular.svg`
+- `timer`: `assets/Timer/SVG/ic_fluent_timer_24_regular.svg`
+- `calendar`: `assets/Calendar/SVG/ic_fluent_calendar_24_regular.svg`
+- `timer-2`: `assets/Timer 2/SVG/ic_fluent_timer_2_24_regular.svg`
+- `timer-3`: `assets/Timer 3/SVG/ic_fluent_timer_3_24_regular.svg`
+- `mail-add`: `assets/Mail Add/SVG/ic_fluent_mail_add_24_regular.svg`
+- `mail-off`: `assets/Mail Off/SVG/ic_fluent_mail_off_24_regular.svg`
+- `timer-10`: `assets/Timer 10/SVG/ic_fluent_timer_10_24_regular.svg`
+- `mail-copy`: `assets/Mail Copy/SVG/ic_fluent_mail_copy_24_regular.svg`
+- `mail-edit`: `assets/Mail Edit/SVG/ic_fluent_mail_edit_24_regular.svg`
+- `mail-link`: `assets/Mail Link/SVG/ic_fluent_mail_link_24_regular.svg`
+- `mail-list`: `assets/Mail List/SVG/ic_fluent_mail_list_24_regular.svg`
+- `mail-read`: `assets/Mail Read/SVG/ic_fluent_mail_read_24_regular.svg`
+- `send-copy`: `assets/Send Copy/SVG/ic_fluent_send_copy_24_regular.svg`
+- `tasks-app`: `assets/Tasks App/SVG/ic_fluent_tasks_app_24_regular.svg`
+- `timer-off`: `assets/Timer Off/SVG/ic_fluent_timer_off_24_regular.svg`
+- `clock-bill`: `assets/Clock Bill/SVG/ic_fluent_clock_bill_24_regular.svg`
+- `clock-lock`: `assets/Clock Lock/SVG/ic_fluent_clock_lock_24_regular.svg`
+- `mail-alert`: `assets/Mail Alert/SVG/ic_fluent_mail_alert_24_regular.svg`
+- `mail-clock`: `assets/Mail Clock/SVG/ic_fluent_mail_clock_24_regular.svg`
+- `mail-error`: `assets/Mail Error/SVG/ic_fluent_mail_error_24_regular.svg`
+- `mail-inbox`: `assets/Mail Inbox/SVG/ic_fluent_mail_inbox_24_regular.svg`
+- `send-clock`: `assets/Send Clock/SVG/ic_fluent_send_clock_24_regular.svg`
+- `clock-alarm`: `assets/Clock Alarm/SVG/ic_fluent_clock_alarm_24_regular.svg`
+- `clock-pause`: `assets/Clock Pause/SVG/ic_fluent_clock_pause_24_regular.svg`
+- `mail-attach`: `assets/Mail Attach/SVG/ic_fluent_mail_attach_24_regular.svg`
+- `mail-rewind`: `assets/Mail Rewind/SVG/ic_fluent_mail_rewind_24_regular.svg`
+- `mail-unread`: `assets/Mail Unread/SVG/ic_fluent_mail_unread_24_regular.svg`
+- `send-beaker`: `assets/Send Beaker/SVG/ic_fluent_send_beaker_24_regular.svg`
+- `send-person`: `assets/Send Person/SVG/ic_fluent_send_person_24_regular.svg`
+- `time-picker`: `assets/Time Picker/SVG/ic_fluent_time_picker_24_regular.svg`
+- `calendar-add`: `assets/Calendar Add/SVG/ic_fluent_calendar_add_24_regular.svg`
+- `calendar-day`: `assets/Calendar Day/SVG/ic_fluent_calendar_day_24_regular.svg`
+- `calendar-eye`: `assets/Calendar Eye/SVG/ic_fluent_calendar_eye_24_regular.svg`
+- `calendar-ltr`: `assets/Calendar LTR/SVG/ic_fluent_calendar_ltr_24_regular.svg`
+- `calendar-rtl`: `assets/Calendar RTL/SVG/ic_fluent_calendar_rtl_24_regular.svg`
+- `mail-dismiss`: `assets/Mail Dismiss/SVG/ic_fluent_mail_dismiss_24_regular.svg`
+- `mail-warning`: `assets/Mail Warning/SVG/ic_fluent_mail_warning_24_regular.svg`
+- `calendar-chat`: `assets/Calendar Chat/SVG/ic_fluent_calendar_chat_24_regular.svg`
+- `calendar-date`: `assets/Calendar Date/SVG/ic_fluent_calendar_date_24_regular.svg`
+- `calendar-edit`: `assets/Calendar Edit/SVG/ic_fluent_calendar_edit_24_regular.svg`
+- `calendar-link`: `assets/Calendar Link/SVG/ic_fluent_calendar_link_24_regular.svg`
+
+## Media and drawing
+
+- `mic`: `assets/Mic/SVG/ic_fluent_mic_24_regular.svg`
+- `crop`: `assets/Crop/SVG/ic_fluent_crop_24_regular.svg`
+- `line`: `assets/Line/SVG/ic_fluent_line_24_regular.svg`
+- `play`: `assets/Play/SVG/ic_fluent_play_24_regular.svg`
+- `stop`: `assets/Stop/SVG/ic_fluent_stop_24_regular.svg`
+- `color`: `assets/Color/SVG/ic_fluent_color_24_regular.svg`
+- `pause`: `assets/Pause/SVG/ic_fluent_pause_24_regular.svg`
+- `ruler`: `assets/Ruler/SVG/ic_fluent_ruler_24_regular.svg`
+- `video`: `assets/Video/SVG/ic_fluent_video_24_regular.svg`
+- `camera`: `assets/Camera/SVG/ic_fluent_camera_24_regular.svg`
+- `circle`: `assets/Circle/SVG/ic_fluent_circle_24_regular.svg`
+- `record`: `assets/Record/SVG/ic_fluent_record_24_regular.svg`
+- `mic-off`: `assets/Mic Off/SVG/ic_fluent_mic_off_24_regular.svg`
+- `mic-link`: `assets/Mic Link/SVG/ic_fluent_mic_link_24_regular.svg`
+- `mic-sync`: `assets/Mic Sync/SVG/ic_fluent_mic_sync_24_regular.svg`
+- `color-off`: `assets/Color Off/SVG/ic_fluent_color_off_24_regular.svg`
+- `draw-text`: `assets/Draw Text/SVG/ic_fluent_draw_text_24_regular.svg`
+- `image-add`: `assets/Image Add/SVG/ic_fluent_image_add_24_regular.svg`
+- `image-off`: `assets/Image Off/SVG/ic_fluent_image_off_24_regular.svg`
+- `mic-pulse`: `assets/Mic Pulse/SVG/ic_fluent_mic_pulse_24_regular.svg`
+- `speaker-0`: `assets/Speaker 0/SVG/ic_fluent_speaker_0_24_regular.svg`
+- `speaker-1`: `assets/Speaker 1/SVG/ic_fluent_speaker_1_24_regular.svg`
+- `speaker-2`: `assets/Speaker 2/SVG/ic_fluent_speaker_2_24_regular.svg`
+- `video-360`: `assets/Video 360/SVG/ic_fluent_video_360_24_regular.svg`
+- `video-add`: `assets/Video Add/SVG/ic_fluent_video_add_24_regular.svg`
+- `video-off`: `assets/Video Off/SVG/ic_fluent_video_off_24_regular.svg`
+- `video-usb`: `assets/Video USB/SVG/ic_fluent_video_usb_24_regular.svg`
+- `camera-add`: `assets/Camera Add/SVG/ic_fluent_camera_add_24_regular.svg`
+- `camera-off`: `assets/Camera Off/SVG/ic_fluent_camera_off_24_regular.svg`
+- `circle-off`: `assets/Circle Off/SVG/ic_fluent_circle_off_24_regular.svg`
+- `color-fill`: `assets/Color Fill/SVG/ic_fluent_color_fill_24_regular.svg`
+- `color-line`: `assets/Color Line/SVG/ic_fluent_color_line_24_regular.svg`
+- `draw-image`: `assets/Draw Image/SVG/ic_fluent_draw_image_24_regular.svg`
+- `draw-shape`: `assets/Draw Shape/SVG/ic_fluent_draw_shape_24_regular.svg`
+- `image-copy`: `assets/Image Copy/SVG/ic_fluent_image_copy_24_regular.svg`
+- `image-edit`: `assets/Image Edit/SVG/ic_fluent_image_edit_24_regular.svg`
+- `line-style`: `assets/Line Style/SVG/ic_fluent_line_style_24_regular.svg`
+- `mic-record`: `assets/Mic Record/SVG/ic_fluent_mic_record_24_regular.svg`
+- `video-chat`: `assets/Video Chat/SVG/ic_fluent_video_chat_24_regular.svg`
+- `video-clip`: `assets/Video Clip/SVG/ic_fluent_video_clip_24_regular.svg`
+- `video-link`: `assets/Video Link/SVG/ic_fluent_video_link_24_regular.svg`
+- `camera-dome`: `assets/Camera Dome/SVG/ic_fluent_camera_dome_24_regular.svg`
+- `circle-edit`: `assets/Circle Edit/SVG/ic_fluent_circle_edit_24_regular.svg`
+- `circle-hint`: `assets/Circle Hint/SVG/ic_fluent_circle_hint_24_regular.svg`
+- `circle-line`: `assets/Circle Line/SVG/ic_fluent_circle_line_24_regular.svg`
+
+## Status and security
+
+- `key`: `assets/Key/SVG/ic_fluent_key_24_regular.svg`
+- `flag`: `assets/Flag/SVG/ic_fluent_flag_24_regular.svg`
+- `info`: `assets/Info/SVG/ic_fluent_info_24_regular.svg`
+- `shield`: `assets/Shield/SVG/ic_fluent_shield_24_regular.svg`
+- `warning`: `assets/Warning/SVG/ic_fluent_warning_24_regular.svg`
+- `password`: `assets/Password/SVG/ic_fluent_password_24_regular.svg`
+- `question`: `assets/Question/SVG/ic_fluent_question_24_regular.svg`
+- `important`: `assets/Important/SVG/ic_fluent_important_24_regular.svg`
+- `prohibited`: `assets/Prohibited/SVG/ic_fluent_prohibited_24_regular.svg`
+- `flag-off`: `assets/Flag Off/SVG/ic_fluent_flag_off_24_regular.svg`
+- `key-reset`: `assets/Key Reset/SVG/ic_fluent_key_reset_24_regular.svg`
+- `lock-open`: `assets/Lock Open/SVG/ic_fluent_lock_open_24_regular.svg`
+- `checkbox-1`: `assets/Checkbox 1/SVG/ic_fluent_checkbox_1_24_regular.svg`
+- `checkbox-2`: `assets/Checkbox 2/SVG/ic_fluent_checkbox_2_24_regular.svg`
+- `flag-clock`: `assets/Flag Clock/SVG/ic_fluent_flag_clock_24_regular.svg`
+- `shield-add`: `assets/Shield Add/SVG/ic_fluent_shield_add_24_regular.svg`
+- `key-command`: `assets/Key Command/SVG/ic_fluent_key_command_24_regular.svg`
+- `lock-closed`: `assets/Lock Closed/SVG/ic_fluent_lock_closed_24_regular.svg`
+- `lock-shield`: `assets/Lock Shield/SVG/ic_fluent_lock_shield_24_regular.svg`
+- `shield-lock`: `assets/Shield Lock/SVG/ic_fluent_shield_lock_24_regular.svg`
+- `shield-task`: `assets/Shield Task/SVG/ic_fluent_shield_task_24_regular.svg`
+- `error-circle`: `assets/Error Circle/SVG/ic_fluent_error_circle_24_regular.svg`
+- `info-sparkle`: `assets/Info Sparkle/SVG/ic_fluent_info_sparkle_24_regular.svg`
+- `key-multiple`: `assets/Key Multiple/SVG/ic_fluent_key_multiple_24_regular.svg`
+- `presence-dnd`: `assets/Presence DND/SVG/ic_fluent_presence_dnd_24_regular.svg`
+- `presence-oof`: `assets/Presence OOF/SVG/ic_fluent_presence_oof_24_regular.svg`
+- `shield-badge`: `assets/Shield Badge/SVG/ic_fluent_shield_badge_24_regular.svg`
+- `shield-error`: `assets/Shield Error/SVG/ic_fluent_shield_error_24_regular.svg`
+- `shield-globe`: `assets/Shield Globe/SVG/ic_fluent_shield_globe_24_regular.svg`
+- `lock-multiple`: `assets/Lock Multiple/SVG/ic_fluent_lock_multiple_24_regular.svg`
+- `presence-away`: `assets/Presence Away/SVG/ic_fluent_presence_away_24_regular.svg`
+- `checkmark-lock`: `assets/Checkmark Lock/SVG/ic_fluent_checkmark_lock_24_regular.svg`
+- `password-clock`: `assets/Password Clock/SVG/ic_fluent_password_clock_24_regular.svg`
+- `shield-dismiss`: `assets/Shield Dismiss/SVG/ic_fluent_shield_dismiss_24_regular.svg`
+- `shield-keyhole`: `assets/Shield Keyhole/SVG/ic_fluent_shield_keyhole_24_regular.svg`
+- `checkbox-person`: `assets/Checkbox Person/SVG/ic_fluent_checkbox_person_24_regular.svg`
+- `shield-question`: `assets/Shield Question/SVG/ic_fluent_shield_question_24_regular.svg`
+
+## Devices and development
+
+- `bug`: `assets/Bug/SVG/ic_fluent_bug_24_regular.svg`
+- `code`: `assets/Code/SVG/ic_fluent_code_24_regular.svg`
+- `merge`: `assets/Merge/SVG/ic_fluent_merge_24_regular.svg`
+- `phone`: `assets/Phone/SVG/ic_fluent_phone_24_regular.svg`
+- `branch`: `assets/Branch/SVG/ic_fluent_branch_24_regular.svg`
+- `laptop`: `assets/Laptop/SVG/ic_fluent_laptop_24_regular.svg`
+- `server`: `assets/Server/SVG/ic_fluent_server_24_regular.svg`
+- `tablet`: `assets/Tablet/SVG/ic_fluent_tablet_24_regular.svg`
+- `desktop`: `assets/Desktop/SVG/ic_fluent_desktop_24_regular.svg`
+- `storage`: `assets/Storage/SVG/ic_fluent_storage_24_regular.svg`
+- `keyboard`: `assets/Keyboard/SVG/ic_fluent_keyboard_24_regular.svg`
+- `code-off`: `assets/Code Off/SVG/ic_fluent_code_off_24_regular.svg`
+- `device-eq`: `assets/Device EQ/SVG/ic_fluent_device_eq_24_regular.svg`
+- `phone-add`: `assets/Phone Add/SVG/ic_fluent_phone_add_24_regular.svg`
+- `phone-key`: `assets/Phone Key/SVG/ic_fluent_phone_key_24_regular.svg`
+- `usb-stick`: `assets/Usb Stick/SVG/ic_fluent_usb_stick_24_regular.svg`
+- `code-block`: `assets/Code Block/SVG/ic_fluent_code_block_24_regular.svg`
+- `hard-drive`: `assets/Hard Drive/SVG/ic_fluent_hard_drive_24_regular.svg`
+- `laptop-off`: `assets/Laptop Off/SVG/ic_fluent_laptop_off_24_regular.svg`
+- `phone-chat`: `assets/Phone Chat/SVG/ic_fluent_phone_chat_24_regular.svg`
+- `phone-edit`: `assets/Phone Edit/SVG/ic_fluent_phone_edit_24_regular.svg`
+- `phone-lock`: `assets/Phone Lock/SVG/ic_fluent_phone_lock_24_regular.svg`
+- `branch-fork`: `assets/Branch Fork/SVG/ic_fluent_branch_fork_24_regular.svg`
+- `code-circle`: `assets/Code Circle/SVG/ic_fluent_code_circle_24_regular.svg`
+- `desktop-mac`: `assets/Desktop Mac/SVG/ic_fluent_desktop_mac_24_regular.svg`
+- `desktop-off`: `assets/Desktop Off/SVG/ic_fluent_desktop_off_24_regular.svg`
+- `phone-shake`: `assets/Phone Shake/SVG/ic_fluent_phone_shake_24_regular.svg`
+- `plug-puzzle`: `assets/Plug Puzzle/SVG/ic_fluent_plug_puzzle_24_regular.svg`
+- `server-link`: `assets/Server Link/SVG/ic_fluent_server_link_24_regular.svg`
+- `desktop-edit`: `assets/Desktop Edit/SVG/ic_fluent_desktop_edit_24_regular.svg`
+- `desktop-flow`: `assets/Desktop Flow/SVG/ic_fluent_desktop_flow_24_regular.svg`
+- `desktop-sync`: `assets/Desktop Sync/SVG/ic_fluent_desktop_sync_24_regular.svg`
+- `keyboard-123`: `assets/Keyboard 123/SVG/ic_fluent_keyboard_123_24_regular.svg`
+- `keyboard-off`: `assets/Keyboard Off/SVG/ic_fluent_keyboard_off_24_regular.svg`
+- `keyboard-tab`: `assets/Keyboard Tab/SVG/ic_fluent_keyboard_tab_24_regular.svg`
+- `phone-laptop`: `assets/Phone Laptop/SVG/ic_fluent_phone_laptop_24_regular.svg`
+
+## General commands
+
+- `add`: `assets/Add/SVG/ic_fluent_add_24_regular.svg`
+- `tag`: `assets/Tag/SVG/ic_fluent_tag_24_regular.svg`
+- `apps`: `assets/Apps/SVG/ic_fluent_apps_24_regular.svg`
+- `book`: `assets/Book/SVG/ic_fluent_book_24_regular.svg`
+- `edit`: `assets/Edit/SVG/ic_fluent_edit_24_regular.svg`
+- `note`: `assets/Note/SVG/ic_fluent_note_24_regular.svg`
+- `money`: `assets/Money/SVG/ic_fluent_money_24_regular.svg`
+- `filter`: `assets/Filter/SVG/ic_fluent_filter_24_regular.svg`
+- `wrench`: `assets/Wrench/SVG/ic_fluent_wrench_24_regular.svg`
+- `history`: `assets/History/SVG/ic_fluent_history_24_regular.svg`
+- `options`: `assets/Options/SVG/ic_fluent_options_24_regular.svg`
+- `receipt`: `assets/Receipt/SVG/ic_fluent_receipt_24_regular.svg`
+- `building`: `assets/Building/SVG/ic_fluent_building_24_regular.svg`
+- `location`: `assets/Location/SVG/ic_fluent_location_24_regular.svg`
+- `notebook`: `assets/Notebook/SVG/ic_fluent_notebook_24_regular.svg`
+- `subtract`: `assets/Subtract/SVG/ic_fluent_subtract_24_regular.svg`
+- `briefcase`: `assets/Briefcase/SVG/ic_fluent_briefcase_24_regular.svg`
+- `tag-add`: `assets/Tag Add/SVG/ic_fluent_tag_add_24_regular.svg`
+- `tag-off`: `assets/Tag Off/SVG/ic_fluent_tag_off_24_regular.svg`
+- `book-add`: `assets/Book Add/SVG/ic_fluent_book_add_24_regular.svg`
+- `edit-off`: `assets/Edit Off/SVG/ic_fluent_edit_off_24_regular.svg`
+- `link-add`: `assets/Link Add/SVG/ic_fluent_link_add_24_regular.svg`
+- `link-off`: `assets/Link Off/SVG/ic_fluent_link_off_24_regular.svg`
+- `note-add`: `assets/Note Add/SVG/ic_fluent_note_add_24_regular.svg`
+- `tag-edit`: `assets/Tag Edit/SVG/ic_fluent_tag_edit_24_regular.svg`
+- `tag-lock`: `assets/Tag Lock/SVG/ic_fluent_tag_lock_24_regular.svg`
+- `zoom-fit`: `assets/Zoom Fit/SVG/ic_fluent_zoom_fit_24_regular.svg`
+- `apps-list`: `assets/Apps List/SVG/ic_fluent_apps_list_24_regular.svg`
+- `book-open`: `assets/Book Open/SVG/ic_fluent_book_open_24_regular.svg`
+- `book-star`: `assets/Book Star/SVG/ic_fluent_book_star_24_regular.svg`
+- `edit-lock`: `assets/Edit Lock/SVG/ic_fluent_edit_lock_24_regular.svg`
+- `link-edit`: `assets/Link Edit/SVG/ic_fluent_link_edit_24_regular.svg`
+- `money-off`: `assets/Money Off/SVG/ic_fluent_money_off_24_regular.svg`
+- `note-edit`: `assets/Note Edit/SVG/ic_fluent_note_edit_24_regular.svg`
+- `tag-error`: `assets/Tag Error/SVG/ic_fluent_tag_error_24_regular.svg`
+- `tag-reset`: `assets/Tag Reset/SVG/ic_fluent_tag_reset_24_regular.svg`
+- `add-circle`: `assets/Add Circle/SVG/ic_fluent_add_circle_24_regular.svg`
+- `add-square`: `assets/Add Square/SVG/ic_fluent_add_square_24_regular.svg`
+- `book-clock`: `assets/Book Clock/SVG/ic_fluent_book_clock_24_regular.svg`
+- `book-coins`: `assets/Book Coins/SVG/ic_fluent_book_coins_24_regular.svg`
+- `book-globe`: `assets/Book Globe/SVG/ic_fluent_book_globe_24_regular.svg`
+- `book-pulse`: `assets/Book Pulse/SVG/ic_fluent_book_pulse_24_regular.svg`
+- `book-theta`: `assets/Book Theta/SVG/ic_fluent_book_theta_24_regular.svg`
+- `delete-off`: `assets/Delete Off/SVG/ic_fluent_delete_off_24_regular.svg`
+- `filter-add`: `assets/Filter Add/SVG/ic_fluent_filter_add_24_regular.svg`
+- `money-hand`: `assets/Money Hand/SVG/ic_fluent_money_hand_24_regular.svg`
+
+## Cloud and network
+
+- `cloud`: `assets/Cloud/SVG/ic_fluent_cloud_24_regular.svg`
+- `globe`: `assets/Globe/SVG/ic_fluent_globe_24_regular.svg`
+- `connected`: `assets/Connected/SVG/ic_fluent_connected_24_regular.svg`
+- `communication`: `assets/Communication/SVG/ic_fluent_communication_24_regular.svg`
+- `cloud-add`: `assets/Cloud Add/SVG/ic_fluent_cloud_add_24_regular.svg`
+- `cloud-off`: `assets/Cloud Off/SVG/ic_fluent_cloud_off_24_regular.svg`
+- `globe-add`: `assets/Globe Add/SVG/ic_fluent_globe_add_24_regular.svg`
+- `globe-off`: `assets/Globe Off/SVG/ic_fluent_globe_off_24_regular.svg`
+- `web-asset`: `assets/Web Asset/SVG/ic_fluent_web_asset_24_regular.svg`
+- `cloud-cube`: `assets/Cloud Cube/SVG/ic_fluent_cloud_cube_24_regular.svg`
+- `cloud-edit`: `assets/Cloud Edit/SVG/ic_fluent_cloud_edit_24_regular.svg`
+- `cloud-flow`: `assets/Cloud Flow/SVG/ic_fluent_cloud_flow_24_regular.svg`
+- `cloud-link`: `assets/Cloud Link/SVG/ic_fluent_cloud_link_24_regular.svg`
+- `cloud-swap`: `assets/Cloud Swap/SVG/ic_fluent_cloud_swap_24_regular.svg`
+- `cloud-sync`: `assets/Cloud Sync/SVG/ic_fluent_cloud_sync_24_regular.svg`
+- `globe-sync`: `assets/Globe Sync/SVG/ic_fluent_globe_sync_24_regular.svg`
+- `cloud-error`: `assets/Cloud Error/SVG/ic_fluent_cloud_error_24_regular.svg`
+- `cloud-words`: `assets/Cloud Words/SVG/ic_fluent_cloud_words_24_regular.svg`
+- `globe-clock`: `assets/Globe Clock/SVG/ic_fluent_globe_clock_24_regular.svg`
+- `globe-error`: `assets/Globe Error/SVG/ic_fluent_globe_error_24_regular.svg`
+- `globe-video`: `assets/Globe Video/SVG/ic_fluent_globe_video_24_regular.svg`
+- `cloud-beaker`: `assets/Cloud Beaker/SVG/ic_fluent_cloud_beaker_24_regular.svg`
+- `globe-person`: `assets/Globe Person/SVG/ic_fluent_globe_person_24_regular.svg`
+- `globe-search`: `assets/Globe Search/SVG/ic_fluent_globe_search_24_regular.svg`
+- `globe-shield`: `assets/Globe Shield/SVG/ic_fluent_globe_shield_24_regular.svg`
+- `cloud-archive`: `assets/Cloud Archive/SVG/ic_fluent_cloud_archive_24_regular.svg`
+- `cloud-desktop`: `assets/Cloud Desktop/SVG/ic_fluent_cloud_desktop_24_regular.svg`
+- `cloud-dismiss`: `assets/Cloud Dismiss/SVG/ic_fluent_cloud_dismiss_24_regular.svg`
+- `globe-desktop`: `assets/Globe Desktop/SVG/ic_fluent_globe_desktop_24_regular.svg`
+- `globe-surface`: `assets/Globe Surface/SVG/ic_fluent_globe_surface_24_regular.svg`
+- `globe-warning`: `assets/Globe Warning/SVG/ic_fluent_globe_warning_24_regular.svg`
+- `network-check`: `assets/Network Check/SVG/ic_fluent_network_check_24_regular.svg`
+- `globe-location`: `assets/Globe Location/SVG/ic_fluent_globe_location_24_regular.svg`
+- `cloud-checkmark`: `assets/Cloud Checkmark/SVG/ic_fluent_cloud_checkmark_24_regular.svg`
+- `globe-prohibited`: `assets/Globe Prohibited/SVG/ic_fluent_globe_prohibited_24_regular.svg`
+- `cloud-bidirectional`: `assets/Cloud Bidirectional/SVG/ic_fluent_cloud_bidirectional_24_regular.svg`
+- `communication-person`: `assets/Communication Person/SVG/ic_fluent_communication_person_24_regular.svg`
+- `communication-shield`: `assets/Communication Shield/SVG/ic_fluent_communication_shield_24_regular.svg`
+- `cloud-arrow-up`: `assets/Cloud Arrow Up/SVG/ic_fluent_cloud_arrow_up_24_regular.svg`
+- `globe-arrow-up`: `assets/Globe Arrow Up/SVG/ic_fluent_globe_arrow_up_24_regular.svg`
+- `cloud-arrow-down`: `assets/Cloud Arrow Down/SVG/ic_fluent_cloud_arrow_down_24_regular.svg`
+- `cloud-arrow-right`: `assets/Cloud Arrow Right/SVG/ic_fluent_cloud_arrow_right_24_regular.svg`
+- `globe-arrow-forward`: `assets/Globe Arrow Forward/SVG/ic_fluent_globe_arrow_forward_24_regular.svg`

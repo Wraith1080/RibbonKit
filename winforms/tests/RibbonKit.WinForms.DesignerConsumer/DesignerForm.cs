@@ -17,6 +17,28 @@ public partial class DesignerForm : Form
         var nodes = Descendants(ribbon.Tabs).ToArray();
         Require(nodes.All(node => !string.IsNullOrWhiteSpace(node.Id)) && nodes.Select(node => node.Id).Distinct().Count() == nodes.Length, "Stable unique IDs");
         Require(applyButton.Image is { Width: 16, Height: 16 }, "Image loaded from resx");
+        Require(boldToggle.Icon is RibbonSvgIcon { Source: "stock:bold", UseForegroundColor: true }, "SVG icon loaded from string-backed resx");
+        Require(commandsGroup.Icon is RibbonSvgIcon { Source: "stock:copy", UseForegroundColor: true }, "Generated SVG constructor");
+        Require(RibbonStockIcons.All.Count >= 512, "Expanded stock catalog metadata");
+        var addedStock = RibbonStockIcons.Create("table-add");
+        using (var addedPixels = new Bitmap(32, 32))
+        using (var addedPaint = Graphics.FromImage(addedPixels))
+        {
+            addedStock.Draw(addedPaint, new Rectangle(0, 0, 32, 32), new RibbonIconContext(192, Color.DarkCyan, true));
+            bool any = false; for (int y = 0; y < 32; y++) for (int x = 0; x < 32; x++) any |= addedPixels.GetPixel(x, y).A != 0;
+            Require(any, "Expanded stock asset renders outside Showcase");
+        }
+        foreach (int side in new[] { 16, 32, 64 })
+        {
+            using var pixels = new Bitmap(side, side); using var paint = Graphics.FromImage(pixels);
+            boldToggle.Icon!.Draw(paint, new Rectangle(0, 0, side, side), new RibbonIconContext(192, Color.DarkCyan, true));
+            bool drawn = false; for (int y = 0; y < side; y++) for (int x = 0; x < side; x++)
+            {
+                var pixel = pixels.GetPixel(x, y); drawn |= pixel.A != 0;
+                if (pixel.A > 200) Require(Math.Abs(pixel.R - Color.DarkCyan.R) <= 1 && Math.Abs(pixel.G - Color.DarkCyan.G) <= 1 && Math.Abs(pixel.B - Color.DarkCyan.B) <= 1, "SVG foreground color follows the public draw context: " + pixel);
+            }
+            Require(drawn, "Public-only SVG drawing at " + side);
+        }
         nameField.Value = "Model change";
         Require(bindingTextBox.Text == "Model change", "Model-to-control binding");
         bindingTextBox.Text = "Control change";

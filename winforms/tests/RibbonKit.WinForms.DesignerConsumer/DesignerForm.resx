@@ -7,4 +7,7 @@
   <data name="applyButton.Image" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Assets\Command.png;System.Drawing.Bitmap, System.Drawing.Common</value>
   </data>
+  <data name="boldToggle.Icon" type="RibbonKit.WinForms.RibbonSvgIcon, RibbonKit.WinForms">
+    <value>ribbon-svg-v1:1:c3RvY2s6Ym9sZA==</value>
+  </data>
 </root>

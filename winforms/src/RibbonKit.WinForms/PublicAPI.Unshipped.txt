@@ -1,4 +1,22 @@
 #nullable enable
+RibbonKit.WinForms.RibbonSvgIcon
+RibbonKit.WinForms.RibbonSvgIcon.RibbonSvgIcon(string! source, bool useForegroundColor = false) -> void
+RibbonKit.WinForms.RibbonSvgIcon.Source.get -> string!
+RibbonKit.WinForms.RibbonSvgIcon.UseForegroundColor.get -> bool
+RibbonKit.WinForms.RibbonSvgIcon.Name.get -> string!
+RibbonKit.WinForms.RibbonSvgIcon.Draw(System.Drawing.Graphics! graphics, System.Drawing.Rectangle bounds, RibbonKit.WinForms.RibbonIconContext context) -> void
+RibbonKit.WinForms.RibbonStockIcon
+RibbonKit.WinForms.RibbonStockIcon.Key.get -> string!
+RibbonKit.WinForms.RibbonStockIcon.Name.get -> string!
+RibbonKit.WinForms.RibbonStockIcons
+static RibbonKit.WinForms.RibbonStockIcons.All.get -> System.Collections.Generic.IReadOnlyList<RibbonKit.WinForms.RibbonStockIcon!>!
+static RibbonKit.WinForms.RibbonStockIcons.Create(string! key) -> RibbonKit.WinForms.RibbonSvgIcon!
+RibbonKit.WinForms.RibbonSvgIconConverter
+RibbonKit.WinForms.RibbonSvgIconConverter.RibbonSvgIconConverter() -> void
+override RibbonKit.WinForms.RibbonSvgIconConverter.CanConvertFrom(System.ComponentModel.ITypeDescriptorContext? context, System.Type! sourceType) -> bool
+override RibbonKit.WinForms.RibbonSvgIconConverter.CanConvertTo(System.ComponentModel.ITypeDescriptorContext? context, System.Type? destinationType) -> bool
+override RibbonKit.WinForms.RibbonSvgIconConverter.ConvertFrom(System.ComponentModel.ITypeDescriptorContext? context, System.Globalization.CultureInfo? culture, object! value) -> object?
+override RibbonKit.WinForms.RibbonSvgIconConverter.ConvertTo(System.ComponentModel.ITypeDescriptorContext? context, System.Globalization.CultureInfo? culture, object? value, System.Type! destinationType) -> object?
 RibbonKit.WinForms.RibbonTheme.DisabledForeground.get -> System.Drawing.Color
 RibbonKit.WinForms.RibbonTheme.DisabledForeground.init -> void
 virtual RibbonKit.WinForms.RibbonRenderer.GetBackstagePageBorderWidth(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int

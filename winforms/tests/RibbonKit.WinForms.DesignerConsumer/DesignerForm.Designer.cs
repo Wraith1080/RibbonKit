@@ -48,6 +48,7 @@ partial class DesignerForm
         editTab.Groups.Add(fieldsGroup);
         commandsGroup.Id = "commands";
         commandsGroup.Text = "Commands";
+        commandsGroup.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:copy", true);
         commandsGroup.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applyButton, boldToggle });
         fieldsGroup.Id = "fields";
         fieldsGroup.Text = "Fields";
@@ -60,6 +61,7 @@ partial class DesignerForm
         boldToggle.Id = "bold";
         boldToggle.Text = "Bold";
         boldToggle.Checked = true;
+        boldToggle.Icon = (RibbonKit.WinForms.IRibbonIcon)resources.GetObject("boldToggle.Icon");
         nameField.Id = "name";
         nameField.Text = "Name";
         nameField.Value = "Initial value";

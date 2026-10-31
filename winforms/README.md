@@ -17,6 +17,15 @@ Options dialog with Customize Ribbon and Quick Access Toolbar pages.
 The Showcase supplies an original [SVG command/group icon set](samples/RibbonKit.WinForms.Showcase/Assets/CommandIcons/README.md).
 `RibbonGroup.Icon` accepts a borrowed `IRibbonIcon` for collapsed group buttons,
 QAT group entries and customization lists, using the same vector contract as commands.
+The library also supplies immutable `RibbonSvgIcon` artwork and a curated
+`RibbonStockIcons` catalog with 512 regular icons. In Edit Ribbon, select a
+group/command and choose
+**Icon → Choose icon…** to search stock SVGs or import project artwork. SVG source
+is embedded for save/reopen; original colors are retained unless **Use ribbon
+color** is selected. Stock icons opt into foreground/disabled tinting. Existing
+Image/LargeImage fallback remains available when a vector icon is cleared.
+See [SVG icon authoring](docs/SVG-ICON-AUTHORING.md) for supported artwork,
+serialization, dependency notices, code examples and pending actual-VS review.
 The [Simplified Ribbon implementation](docs/M5D-SIMPLIFIED-RIBBON.md) adds a single
 command row, More Commands/full-group access and a grouped customization page.
 Classic and Simplified share tab/group structure; per-tab inline selections and
@@ -753,6 +762,21 @@ should author them explicitly. One ribbon per Form is the initial input scope.
   `IRibbonIcon` providers. Geometry, hit testing and accessibility remain library
   owned. The mirrored-corner painter avoids independent per-corner arc paths;
   current pixel checks do not substitute for native visual review.
+
+### SVG icon sources
+
+```csharp
+copyButton.Icon = RibbonStockIcons.Create("copy");
+pictureButton.Icon = new RibbonSvgIcon(svgXml); // Retain the artwork's colors.
+monoButton.Icon = new RibbonSvgIcon(svgXml, useForegroundColor: true);
+```
+
+SVG data must be self-contained static artwork with a positive viewBox. The
+adapter draws vectors at the requested device bounds; it does not take ownership
+of application images or custom providers. No additional resource owner or
+Showcase helper is needed. The built-in SVG converter supports generated
+constructors and string-backed .resx resources; opaque custom providers remain
+code-authored. See [the complete bounded SVG contract](docs/SVG-ICON-AUTHORING.md).
 
 ## Minimize and temporary tab bodies
 
@@ -1645,6 +1669,11 @@ alias). That folder contains the .NET Framework client/protocol; its `Server`
 folder contains the modern design server/protocol. The designer SDK is not a
 runtime dependency. This follows the [Microsoft package convention](https://github.com/microsoft/winforms-designer-extensibility/blob/main/docs/sdk/control-library-nuget-package-spec.md).
 Design projects use Microsoft.WinForms.Designer.SDK 1.6.0.
+
+The package declares `MIT AND MS-PL` for its bundled components; RibbonKit's own
+code remains MIT. Application distributors must include the applicable notices
+from the package's `licenses/` folder. These files are not automatically copied
+into application publish or installer output; see [dependency notices](THIRD-PARTY-NOTICES.md).
 
 Select a ribbon in the Form designer and choose **Edit Ribbon…** from its smart
 tag, or open the **Tabs** property ellipsis. The custom window edits built-in

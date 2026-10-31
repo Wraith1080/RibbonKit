@@ -6,5 +6,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.WinForms.Designer.SDK" Version="1.6.0" PrivateAssets="all" />
     <ProjectReference Include="../RibbonKit.WinForms.Design.Protocol/RibbonKit.WinForms.Design.Protocol.csproj" />
+    <PackageReference Include="Svg" Version="3.4.8" PrivateAssets="all" />
+    <Compile Include="../Shared/Icons/*.cs" Link="Imaging/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../Shared/Icons/Stock/*.svg" LogicalName="RibbonKit.StockIcons.%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

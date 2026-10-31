@@ -159,25 +159,14 @@ resource/event/binding check. Actual-VS dropdown behavior, Undo/Redo and saved
 generated policy declarations remain user review. Prior unrelated evidence is
 retained; no full suite or new physical-DPI result is claimed.
 
-### Proposed image and SVG authoring slice
+### Image and SVG authoring slice
 
-The runtime already supports borrowed `Image`/`LargeImage` resources and the
-code-authored vector `IRibbonIcon` extension. The custom editor lacks an asset
-picker and serializable SVG selection. The two internal import/export SVG assets
-have a deliberately limited polyline reader, not a general SVG loader.
-
-Propose a searchable icon catalog/picker with stock icons and imported project
-assets. Store vector assets and stable resource keys as the source; raster
-ImageLists may supply thumbnails but should not become the SVG source of truth.
-A curated set of [Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons/blob/main/packages/svg-icons/README.md)
-is a candidate stock collection under its [MIT license](https://github.com/microsoft/fluentui-system-icons/blob/main/LICENSE),
-with attribution retained. Pick an SVG rendering adapter behind `IRibbonIcon`
-after defining supported SVG features, dependency/distribution requirements,
-resource serialization, opt-in monochrome tinting versus original colors,
-DPI/state caching and disposal. Do not serialize machine-specific absolute paths.
-Keep raster resources compatible. Present the asset-selection/public API and
-ownership proposal before implementation; no SVG dependency or stock assets were
-added in this follow-up.
+The user authorized the icon recommendation after committing the preceding
+designer work as `b530a05`. The compatible SVG API, source/ownership and dependency
+contract was presented before implementation. Current implementation, verification
+limits and user review live in [SVG icon authoring](SVG-ICON-AUTHORING.md). Existing
+raster resources and arbitrary custom providers retain their ownership; a general
+raster picker and root feature policies remain separate work.
 
 ### Later feature-policy and root-settings slice
 
@@ -190,7 +179,7 @@ appropriate root categories and verify that designer settings affect the shared
 runtime behavior. Keep theme selection/preview distinct from theme authoring.
 This is later work; the root added now is not a new settings owner or master flag.
 
-## Implemented scope
+## Accepted functional baseline
 
 The ribbon's **Edit Ribbon…** smart-tag action and **Tabs** property ellipsis
 open one custom window. Its tree supports built-in tabs, groups and command
@@ -208,12 +197,14 @@ are preserved. Unsited components receive designer names without replacement.
 ComboBox mode/value/selection dependencies, choice removal and three-state checkbox editing have
 focused coverage. Cancel and an unchanged OK do not request a live transaction.
 
-This first window does not author File/Backstage/QAT content, images, event
-handlers or bindings. Existing values remain on their original components; the
+The accepted first window did not author File/Backstage/QAT content, images,
+event handlers or bindings. The subsequent SVG picker is tracked separately in
+[SVG icon authoring](SVG-ICON-AUTHORING.md). Existing values remain on their original components; the
 ordinary designer properties and compatible collection-editor types remain.
 Custom subclasses are outside the window's supported built-in type set. Theme
-selection/preview remains deferred as described above. Runtime APIs and ownership contracts
-are unchanged; all new editor/protocol/commit logic is design-only.
+selection/preview remains deferred as described above. That baseline introduced
+design-only editor/protocol/commit logic without runtime API or ownership changes;
+the separate SVG record documents its compatible runtime additions.
 
 The package now carries a .NET Framework 4.7.2 client and protocol beside the
 modern design server and its matching protocol. This follows Microsoft's
