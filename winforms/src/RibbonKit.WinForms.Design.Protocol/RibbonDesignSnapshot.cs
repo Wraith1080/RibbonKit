@@ -12,6 +12,7 @@ namespace RibbonKit.WinForms.Design.Protocol;
 public sealed class RibbonDesignSnapshot
 {
     [DataMember] public string Revision { get; set; } = "";
+    [DataMember] public string SelectionKey { get; set; } = "";
     [DataMember] public List<RibbonDesignNode> Tabs { get; set; } = new();
     [DataMember] public List<RibbonDesignNode> Templates { get; set; } = new();
     [DataMember] public List<string> ReservedNames { get; set; } = new();

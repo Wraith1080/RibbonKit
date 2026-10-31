@@ -49,6 +49,7 @@ internal static class RibbonDesignCommitter
                 Properties = Properties(element), Icon = ReadIcon(element), Choices = element is RibbonComboBoxItem choice ? choice.Items.ToList() : [], Children = ChildElements(element).Select(Map).ToList() };
         }
         snapshot.Tabs = ribbon.Tabs.Select(Map).ToList();
+        snapshot.SelectionKey = (host.GetService(typeof(ISelectionService)) as ISelectionService)?.PrimarySelection is RibbonElement selected && elements.Contains(selected) ? Key(selected) : "";
         snapshot.Revision = Fingerprint(snapshot);
         foreach (var kind in Kinds)
         {
@@ -248,7 +249,7 @@ internal static class RibbonDesignCommitter
             Options = property.PropertyType.IsEnum ? Enum.GetNames(property.PropertyType) : property.PropertyType == typeof(RibbonSizePolicy) ? SizePolicies.ToArray() : [] }).ToList();
     private static string Kind(RibbonElement element) => Kinds.FirstOrDefault(pair => pair.Value == element.GetType()).Key
         ?? throw new ArgumentException("Edit Ribbon currently supports built-in component types. Use the existing property editor for " + element.GetType().Name + ".");
-    private static string Key(RibbonElement element) => element.Site?.Name is { Length: > 0 } name ? "site:" + name : "id:" + element.Id;
+    internal static string Key(RibbonElement element) => element.Site?.Name is { Length: > 0 } name ? "site:" + name : "id:" + element.Id;
     private static string UniqueName(string type, HashSet<string> used)
     {
         string stem = char.ToLowerInvariant(type[0]) + type.Substring(1); int suffix = 1; string name;

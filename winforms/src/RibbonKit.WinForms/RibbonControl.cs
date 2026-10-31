@@ -555,7 +555,7 @@ public partial class RibbonControl : Control, ISupportInitialize
                     // its model stays open until Backstage actually closes.
                     Painter.DrawFileButton(ctx with { FileMenuClosing = _backstageClosing }, FileMenu);
                 else if (target.Element is RibbonTab tab)
-                    Painter.DrawTab(ctx, tab, ReferenceEquals(tab, SelectedTab));
+                    Painter.DrawTab(ctx, tab, ReferenceEquals(tab, DisplaySelectedTab));
                 else if (target.Element is RibbonSplitButtonItem split && arrow is not null)
                     Painter.DrawSplitItem(ctx, ctx with
                     {
@@ -581,6 +581,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             }
             finally { e.Graphics.Restore(state); }
         }
+        if (IsInDesignMode) DrawDesignEditors(e.Graphics);
         if (_keyTips && !_popups.HasOpen)
             DrawTips(e.Graphics, TipTargets(), composited);
     }

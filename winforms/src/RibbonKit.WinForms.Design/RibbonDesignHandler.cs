@@ -13,7 +13,11 @@ internal sealed class RibbonDesignHandler : RequestHandler<RibbonDesignRequest, 
             if (request.Ribbon is not RibbonControl ribbon) return new(error: "Select a RibbonControl before opening Edit Ribbon.");
             var host = GetDesignerHost(request.SessionId) ?? throw new InvalidOperationException("A Visual Studio designer session is required.");
             if (request.Draft.Length == 0) return new(RibbonDesignCommitter.Read(ribbon, host).Serialize());
-            RibbonDesignCommitter.Apply(ribbon, host, RibbonDesignSnapshot.Deserialize(request.Draft)); return new();
+            var draft = RibbonDesignSnapshot.Deserialize(request.Draft);
+            RibbonDesignCommitter.Apply(ribbon, host, draft);
+            if (host.GetDesigner(ribbon) is RibbonControlDesigner designer)
+                designer.Selection.SelectDraft(draft);
+            return new();
         }
         catch (Exception error) { return new(error: error.Message); }
     }

@@ -7,6 +7,7 @@
     <ProjectReference Include="../../src/RibbonKit.WinForms/RibbonKit.WinForms.csproj" />
     <ProjectReference Include="../../src/RibbonKit.WinForms.Design.Protocol/RibbonKit.WinForms.Design.Protocol.csproj" />
     <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonDesignCommitter.cs" Link="Designer/RibbonDesignCommitter.cs" />
+    <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonDesignSelection.cs" Link="Designer/RibbonDesignSelection.cs" />
     <Compile Include="../../src/RibbonKit.WinForms.Design.Client/RibbonEditorDialog.cs" Link="Designer/RibbonEditorDialog.cs" />
     <Compile Include="../../src/RibbonKit.WinForms.Design.Client/RibbonIconPickerDialog.cs" Link="Designer/RibbonIconPickerDialog.cs" />
   </ItemGroup>

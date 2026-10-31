@@ -4,6 +4,10 @@ Status, **2026-10-31: bounded custom designer increment accepted by the user**. 
 `codex/Ribbonkit-Winform`. This checkpoint follows the disabled/state appearance
 increment and preserves the accepted Backstage behavior.
 
+Latest increment, **2026-10-31: surface preview and selection implemented;
+actual-VS interaction, visual and DPI review pending**. See the bounded contract,
+evidence and review steps below. Earlier accepted scopes retain their acceptance.
+
 ## Bounded contract
 
 Use the existing runtime component/collection APIs. User direction, 2026-10-31:
@@ -58,7 +62,8 @@ User direction, 2026-10-31, refines the proposed order:
    optional refinements. A smart-tag popup providing the equivalent contextual
    add/edit/remove/reorder actions is an accepted alternative when advanced
    surface manipulation is too complex. Preserve designer transactions and do
-   not invoke application commands during preview.
+   not invoke application commands during preview. The first bounded implementation
+   is recorded under **Surface preview and selection** below.
 3. **Backstage authoring.** Add a dedicated navigation/page/command editor and
    preview. Define how separately designed native page controls are assigned and
    authored before implementation; retain application ownership and the accepted
@@ -141,7 +146,8 @@ entry, missing asset picking and the need for future root-level feature settings
   combinations remain available, including unusual existing policies. Friendly
   captions convert to the existing canonical triples for commit/serialization;
   runtime size-policy APIs/defaults and authored semantics are unchanged.
-- A permanent **Ribbon** root contains the tab nodes and opens selected. It is a
+- A permanent **Ribbon** root contains the tab nodes and opens selected when there
+  is no selected tab/group/command to reveal. It is a
   view-only node, cannot be removed/reordered, and does not enter the draft's
   component/ID/ownership tree or generated code. Its only current property is a
   read-only tab count. Removing the last draft tab retains the root and Add menu.
@@ -178,6 +184,95 @@ runtime owners. Propose only the gaps, with compatible defaults, then expose
 appropriate root categories and verify that designer settings affect the shared
 runtime behavior. Keep theme selection/preview distinct from theme authoring.
 This is later work; the root added now is not a new settings owner or master flag.
+
+## Surface preview and selection — 2026-10-31
+
+Status: **implemented; user review pending**. Baseline: clean `1caf206` on
+`codex/Ribbonkit-Winform`. The bounded contract was presented before implementation:
+click tabs/groups/commands on the Form designer surface to select their actual
+components in Properties; use a smart-tag selector to preview hidden or disabled
+tabs, including contextual tabs. Do not execute commands, toggle values, open
+popups or mutate authored visibility/enabled state to obtain a preview.
+
+The design server owns an adorner with a selection outline. Picking and outlines
+reuse the runtime's measured/clipped layout, including split-button parts, group
+frames and scroll controls. The adorner is active while the ribbon or one of its
+tab descendants is selected; selecting another Form control releases its picking.
+Tab/body scroll controls scroll the preview without command activation. Hidden
+or displaced children have no invented editable geometry; the nearest visible
+ancestor supplies the outline. Collapsed groups and dropdowns remain closed.
+
+**Preview tab** in the smart tag lists every authored tab, with component names
+and hidden/disabled labels. The ribbon and its elements also expose **Edit Ribbon…**
+and **Select Ribbon**. Preview uses an internal, design-only display-tab override;
+`SelectedTab`, authored properties and component ownership are unchanged. There
+is no public API addition or new runtime owner. The runtime grants internal access
+to its design assembly so the designer can reuse layout rather than reconstruct it.
+Resetting to **(Startup tab)** or disposing the designer restores the normal
+display. Removing a previewed tab falls back safely. A minimized ribbon retains
+its authored minimized presentation; expand it to review its body.
+
+Design mode already suppresses native editor creation. Static TextBox/ComboBox
+previews now reuse the existing label/frame/arrow renderer and show their values
+with theme foreground/disabled roles. These are inert illustrations, not native
+caret, selection, popup, IME or complete Windows styling previews. No editor
+handles or bindings are created or moved. Runtime fields retain native ownership.
+
+Opening **Edit Ribbon…** reveals the selected component in its tree. Cancel keeps
+the live model and surface selection; OK uses the existing transaction and returns
+the final tree selection to Properties, including newly created components.
+Selection metadata is excluded from the authoring revision, so selecting another
+node and accepting a no-op does not create an undo entry. Draft edits still apply
+only on OK; the surface does not live-render unaccepted draft changes. Direct
+drag/drop, inline editing, popup editing, Backstage authoring, themes, root feature
+policies, localization and RTL remain separate increments.
+
+Verification in normal **Debug** outputs:
+
+- **11 new STA cases passed**, covering Classic/Simplified hidden contextual
+  preview, disabled selection, command suppression, native-field placeholders,
+  split/group geometry, clipping and scrolling, Properties/tree selection,
+  no-op/one-transaction acceptance, new component identity, reset/removal/disposal,
+  runtime isolation and serialization metadata. The final report is
+  `artifacts/designer-selection-20261031/designer-selection-final.trx` at the
+  repository root. The initial Simplified assertion assumed inline placement;
+  the fixture now explicitly configures an inline command.
+  After the final reset refinement, the two affected reset/scroll cases passed
+  again in `designer-selection-reset-final.trx`; returning to the startup display
+  also brings its header into view.
+- **33 affected cases passed**: existing authoring/UX, SVG draft commit/rejection,
+  Classic reduction and Simplified row geometry. Report:
+  `artifacts/designer-selection-20261031/designer-selection-affected.trx`.
+- Runtime/server and actual net472 client builds passed without warnings/errors.
+  The isolated Debug package restores/builds in an independent consumer; all five
+  packaged runtime/client/server/protocol assemblies match the current builds.
+  Its public-only verifier passes ownership, IDs, artwork, events and two-way
+  binding, plus native field values/handles retained across runtime tab switches.
+- No actual-VS interaction, visual inspection, physical-DPI/mixed-monitor or full
+  suite result is claimed. SDK-free selection policy and dialog source are linked
+  into the STA test host; actual SDK adorner hit routing and smart-tag dropdown
+  behavior remain user review. Prior unrelated passing evidence is retained.
+
+For this increment, open the fresh solution under **User review steps** below:
+
+1. Close older consumer solutions, open this one and use **View Designer**. Select
+   the ribbon first, then click Home/Edit headers, Commands/Fields group captions,
+   Apply/Bold and the Name/Font field illustrations. Properties should select the
+   corresponding component and an outline should follow. Bold must not toggle;
+   Apply must not run. Double-clicks should not run commands or create handlers.
+2. With a component selected, use its smart tag to open **Edit Ribbon…**. The tree
+   should reveal that component. Select another node and Cancel, then try OK with
+   selection only; OK should return that component to Properties without an undo
+   entry. Make one actual edit and review Undo/Redo using the baseline steps below.
+3. Add a contextual tab with a group/command. Set its Visible and Enabled values
+   to False and choose OK. It should be previewable without changing those values.
+   Select Ribbon, use **Preview tab** to switch between it and Home/Edit, then
+   choose **(Startup tab)**. Hidden/disabled markers should be clear. Save/reopen
+   the designer and run the app: preview-only choices must not persist; the hidden
+   tab must stay hidden at runtime.
+4. Check narrow widths/overflow, contextual header tint, icon rendering, static
+   fields, outlines and smart-tag readability at available display scales. Select
+   an ordinary Form control and confirm normal selection/layout still works.
 
 ## Accepted functional baseline
 
@@ -263,7 +358,7 @@ or publish is authorized.
 A fresh Debug package consumer is ready at:
 
 ```text
-C:\Users\LENOVO\AppData\Local\Temp\RibbonKit-WinForms-Designer-20261031-root-policy-review\App\RibbonKit.Designer.Check.sln
+C:\Users\LENOVO\AppData\Local\Temp\RibbonKit-WinForms-Designer-20261031-selection-final-review\App\RibbonKit.Designer.Check.sln
 ```
 
 Close the older `RibbonKit.Designer.Check` VS window first so the previous
@@ -271,6 +366,9 @@ package's designer assemblies are released. Open the solution above. It has its
 own local feed and package cache; a runtime project reference does not exercise
 the packaged client extension. Do not add a reference to Showcase or the design
 projects.
+
+For the latest increment, start with the **Surface preview and selection** review
+checklist above; the following steps retain the accepted functional baseline.
 
 1. Open `DesignerForm.cs` with **View Designer**. Select the ribbon, then choose
    **Edit Ribbon…** from its smart tag; the **Tabs** ellipsis should open the same

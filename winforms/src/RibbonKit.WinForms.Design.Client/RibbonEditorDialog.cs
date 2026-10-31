@@ -119,7 +119,9 @@ internal sealed class RibbonEditorDialog : Form
         _split.SizeChanged += (_, _) => UpdateSplitterConstraints();
         _tree.Nodes.Add(_root);
         foreach (var tab in draft.Tabs) _root.Nodes.Add(CreateTree(tab));
-        _tree.ExpandAll(); _tree.SelectedNode = _root; ShowSelection();
+        _tree.ExpandAll();
+        _tree.SelectedNode = Descendants(_root).FirstOrDefault(tree => tree.Tag is RibbonDesignNode node && node.Key == draft.SelectionKey) ?? _root;
+        ShowSelection();
         ResumeLayout(true);
     }
 
@@ -162,6 +164,11 @@ internal sealed class RibbonEditorDialog : Form
         var tree = new TreeNode(Label(node)) { Tag = node };
         foreach (var child in node.Children) tree.Nodes.Add(CreateTree(child)); return tree;
     }
+    private static IEnumerable<TreeNode> Descendants(TreeNode tree)
+    {
+        foreach (TreeNode child in tree.Nodes)
+        { yield return child; foreach (var descendant in Descendants(child)) yield return descendant; }
+    }
     private TreeNode? ParentFor(string kind)
     {
         for (var parent = _tree.SelectedNode; parent != null; parent = parent.Parent)
@@ -172,6 +179,7 @@ internal sealed class RibbonEditorDialog : Form
     private void ShowSelection()
     {
         var node = _tree.SelectedNode?.Tag as RibbonDesignNode;
+        _draft.SelectionKey = node?.Key ?? "";
         _showing = true;
         try
         {

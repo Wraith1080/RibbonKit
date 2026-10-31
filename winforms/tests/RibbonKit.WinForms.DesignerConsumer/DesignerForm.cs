@@ -45,8 +45,30 @@ public partial class DesignerForm : Form
         Require(nameField.Value == "Control change", "Control-to-model binding");
         applyButton.PerformClick(); Require(statusLabel.Text == "Applied: Control change", "Click event hookup");
         Require(fontField.Items.SequenceEqual(new[] { "Segoe UI", "Arial", "Consolas" }) && fontField.SelectedIndex == 0, "Choice declarations");
+        VerifyRuntimeEditors();
         Require(!typeof(RibbonControl).Assembly.GetReferencedAssemblies().Any(assembly => assembly.Name?.Contains("DesignTools") == true), "No designer SDK runtime dependency");
     }
+
+    private void VerifyRuntimeEditors()
+    {
+        var startup = ribbon.SelectedTab; var animation = ribbon.AnimationLevel; bool minimized = ribbon.IsMinimized;
+        try
+        {
+            ribbon.AnimationLevel = RibbonAnimationLevel.None; ribbon.IsMinimized = false; ribbon.SelectedTab = editTab;
+            _ = ribbon.Handle;
+            var input = ChildControls(ribbon).OfType<TextBox>().Single(control => control.Text == nameField.Value);
+            var choice = ChildControls(ribbon).OfType<ComboBox>().Single();
+            var inputHandle = input.Handle; var choiceHandle = choice.Handle;
+            using var pixels = new Bitmap(ribbon.Width, ribbon.Height); ribbon.DrawToBitmap(pixels, new(Point.Empty, pixels.Size));
+            ribbon.SelectedTab = homeTab; ribbon.SelectedTab = editTab;
+            Require(ChildControls(ribbon).Contains(input) && ChildControls(ribbon).Contains(choice), "Runtime keeps native editors after tab switches");
+            Require(input.Handle == inputHandle && choice.Handle == choiceHandle, "Native editor handles retained; designer field preview stays design-only");
+            Require(input.Text == nameField.Value && choice.SelectedIndex == fontField.SelectedIndex, "Runtime native field values retained");
+        }
+        finally { ribbon.SelectedTab = startup; ribbon.IsMinimized = minimized; ribbon.AnimationLevel = animation; }
+    }
+
+    private static IEnumerable<Control> ChildControls(Control parent) => parent.Controls.Cast<Control>().SelectMany(child => new[] { child }.Concat(ChildControls(child)));
 
     private static IEnumerable<RibbonElement> Descendants(IEnumerable<RibbonElement> elements)
     {

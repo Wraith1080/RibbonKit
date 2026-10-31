@@ -170,7 +170,7 @@ internal sealed partial class RibbonLayoutEngine
         int tabHeight = S(ribbon.LayoutTheme.TabHeight), tabTop = ribbon.WindowCaptionHeight;
         var placement = ribbon.EffectiveQuickAccessPosition;
         var client = ribbon.ClientRectangle;
-        var tabs = ribbon.GetPresentedTabs().Where(t => t.Visible).ToArray();
+        var tabs = ribbon.GetPresentedTabs().Where(t => t.Visible || ReferenceEquals(t, ribbon.DesignPreviewTab)).ToArray();
         var widths = tabs.Select(t => Math.Max(S(58), TextRenderer.MeasureText(t.DisplayText, ribbon.Font).Width + S(28))).ToArray();
         var action = ribbon.HeaderAction;
         var metrics = RibbonDensityMetrics.For(ribbon.Density);
@@ -224,7 +224,7 @@ internal sealed partial class RibbonLayoutEngine
             result.Targets.Add(new(TargetKind.TabNext, null, new(tabsStart + tabsWidth - tabScrollWidth, tabTop, tabScrollWidth, tabHeight), tabsClip));
         }
         if (action is { } header) result.Targets.Add(new(header.Kind, header.Element, new(client.Width - utilityWidth, tabTop, utilityWidth, tabHeight), client));
-        if (!ribbon.IsMinimized && ribbon.SelectedTab is { } selected)
+        if (!ribbon.IsMinimized && ribbon.DisplaySelectedTab is { } selected)
         {
             var bodyLayout = BuildBody(ribbon, selected, client.Width, bodyOffset, tabTop + tabHeight);
             result.BodyBounds = bodyLayout.BodyBounds; result.BodyViewport = bodyLayout.BodyViewport; result.BodyExtent = bodyLayout.BodyExtent;

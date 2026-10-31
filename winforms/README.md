@@ -1689,6 +1689,15 @@ review solution. See [the authoring checkpoint and manual steps](docs/DESIGNER-A
 for current evidence, actual-VS OK/Cancel, Undo/Redo and save/reopen review steps,
 and acceptance limits.
 
+In the Form designer, select the ribbon, then click tab headers, group captions
+or commands to select their components in Properties. The smart tag's **Preview
+tab** selector also reveals hidden/disabled contextual tabs without changing
+authored properties or runtime startup selection. Fields use static designer
+illustrations; preview clicks do not activate commands or open popups. **Edit
+Ribbon…** reveals the selected component, and OK returns its tree selection to
+Properties. Actual-VS interaction and DPI review for this increment remain pending;
+see the [preview contract and review checklist](docs/DESIGNER-AUTHORING.md#surface-preview-and-selection--2026-10-31).
+
 Raw measurements and captures go under ignored `TestResults/`. Builds use the
 normal Debug/Release `bin` folders. The measurement tool records native paint
 completion and resource checkpoints, not compositor frame rate or a leak proof.
