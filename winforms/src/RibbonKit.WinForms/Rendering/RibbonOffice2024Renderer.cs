@@ -115,7 +115,7 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     public override void DrawTab(RibbonPaintContext context, RibbonTab tab, bool selected)
     {
         bool enabled = tab.EffectiveEnabled;
-        DrawText(context, tab.DisplayText, !enabled ? SystemColors.GrayText : tab.IsContextual ? ContextualTabColor(context, tab, selected) : selected ? context.Theme.Accent : context.Theme.Foreground,
+        DrawText(context, tab.DisplayText, !enabled ? context.Theme.DisabledColor : tab.IsContextual ? ContextualTabColor(context, tab, selected) : selected ? context.Theme.Accent : context.Theme.Foreground,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
         if (enabled && !context.SuppressTabIndicators && (selected || context.Hot || context.Pressed || context.Focused))
         {
@@ -150,7 +150,7 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     public override void DrawFileButton(RibbonPaintContext context, RibbonDropDownItem menu)
     {
         bool enabled = menu.EffectiveEnabled, open = enabled && menu.IsDropDownOpen && !context.FileMenuClosing;
-        DrawText(context, menu.Text, !enabled ? SystemColors.GrayText : open ? context.Theme.Accent : context.Theme.Foreground,
+        DrawText(context, menu.Text, !enabled ? context.Theme.DisabledColor : open ? context.Theme.Accent : context.Theme.Foreground,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
         if (enabled && !context.SuppressTabIndicators && (open || context.Hot || context.Pressed || context.Focused))
         {

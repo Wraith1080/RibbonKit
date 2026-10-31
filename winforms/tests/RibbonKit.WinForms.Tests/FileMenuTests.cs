@@ -100,8 +100,14 @@ public sealed class FileMenuTests
         {
             int S(int value) => RibbonLayoutEngine.Scale(value, dpi);
             using var normal = Draw(false, false, false); using var hover = Draw(true, false, false); using var pressed = Draw(true, true, false); using var focus = Draw(false, false, true);
-            Assert.Equal(ribbon.Theme.Hover.Start.ToArgb(), hover.GetPixel(S(6), S(6)).ToArgb());
-            Assert.Equal(ribbon.Theme.Pressed.Start.ToArgb(), pressed.GetPixel(S(6), S(6)).ToArgb());
+            bool officeStyle = renderer is RibbonOffice2024Renderer;
+            Assert.Equal((officeStyle ? ribbon.Theme.Background : ribbon.Theme.Hover.Start).ToArgb(), hover.GetPixel(S(6), S(6)).ToArgb());
+            Assert.Equal((officeStyle ? ribbon.Theme.Background : ribbon.Theme.Pressed.Start).ToArgb(), pressed.GetPixel(S(6), S(6)).ToArgb());
+            if (officeStyle)
+            {
+                Assert.Equal(ribbon.Theme.SecondaryText.ToArgb(), hover.GetPixel(S(40), S(30)).ToArgb());
+                Assert.Equal(ribbon.Theme.SecondaryText.ToArgb(), pressed.GetPixel(S(40), S(30)).ToArgb());
+            }
             Assert.NotEqual(Pixels(normal), Pixels(focus));
             ribbon.FileMenu.Enabled = false; using var disabled = Draw(false, false, false); using var flags = Draw(true, true, true);
             Assert.Equal(Pixels(disabled), Pixels(flags)); ribbon.FileMenu.Enabled = true;

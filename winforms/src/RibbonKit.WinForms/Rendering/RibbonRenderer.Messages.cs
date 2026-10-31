@@ -22,7 +22,7 @@ public partial class RibbonRenderer
                 using var border = new SolidBrush(context.Theme.MessageBorder);
                 context.Graphics.FillRectangle(border, context.Bounds.Left + 1, context.Bounds.Top, Math.Max(0, context.Bounds.Width - 2), 1);
             }
-            var color = message.EffectiveEnabled ? context.Theme.MessageForeground : SystemColors.GrayText;
+            var color = message.EffectiveEnabled ? context.Theme.MessageForeground : context.Theme.DisabledColor;
             if (!titleBounds.IsEmpty)
             {
                 using var bold = new Font(context.Font, context.Font.Style | FontStyle.Bold);
@@ -53,20 +53,21 @@ public partial class RibbonRenderer
             DrawItemImage(context with { Bounds = new(context.Bounds.Left + S(6), context.Bounds.Top + (context.Bounds.Height - S(16)) / 2, S(16), S(16)) }, action, RibbonItemSize.Small);
             text = Rectangle.FromLTRB(text.Left + S(24), text.Top, text.Right, text.Bottom);
         }
-        DrawText(context with { Bounds = text }, action.Text, action.EffectiveEnabled ? context.Theme.MessageForeground : SystemColors.GrayText,
+        DrawText(context with { Bounds = text }, action.Text, action.EffectiveEnabled ? context.Theme.MessageForeground : context.Theme.DisabledColor,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
         if (context.Focused) DrawFocus(context);
     }
     /// <summary>Paints a measured message close target with the shared hover/pressed/focus policy.</summary>
     public virtual void DrawMessageClose(RibbonPaintContext context, bool enabled)
     {
+        context = EnabledContext(context, enabled);
         if (context.Hot || context.Pressed) DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, context.Theme.MessageBorder);
         var saved = context.Graphics.Save();
         try
         {
             context.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             float x = context.Bounds.Left + context.Bounds.Width / 2f, y = context.Bounds.Top + context.Bounds.Height / 2f, half = RibbonLayoutEngine.Scale(4, context.DeviceDpi);
-            using var pen = new Pen(enabled ? context.Theme.MessageForeground : SystemColors.GrayText, Math.Max(1, 1.5f * context.DeviceDpi / 96)) { StartCap = LineCap.Round, EndCap = LineCap.Round };
+            using var pen = new Pen(enabled ? context.Theme.MessageForeground : context.Theme.DisabledColor, Math.Max(1, 1.5f * context.DeviceDpi / 96)) { StartCap = LineCap.Round, EndCap = LineCap.Round };
             context.Graphics.DrawLine(pen, x - half, y - half, x + half, y + half); context.Graphics.DrawLine(pen, x - half, y + half, x + half, y - half);
         }
         finally { context.Graphics.Restore(saved); }

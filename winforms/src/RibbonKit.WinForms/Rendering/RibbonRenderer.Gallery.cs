@@ -22,7 +22,7 @@ public partial class RibbonRenderer
     {
         context = EnabledContext(context, enabled);
         if (context.Hot || context.Pressed) DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
-        var color = enabled ? context.Theme.Foreground : SystemColors.GrayText;
+        var color = enabled ? context.Theme.Foreground : context.Theme.DisabledColor;
         var glyph = context.Bounds;
         if (button == RibbonGalleryStripButton.Expand)
         {
@@ -59,7 +59,7 @@ public partial class RibbonRenderer
         int textHeight = Math.Min(2 * context.Font.Height, Math.Max(0, bounds.Height - S(24)));
         var label = new Rectangle(bounds.Left + S(4), bounds.Bottom - S(4) - textHeight, Math.Max(1, bounds.Width - S(8)), textHeight);
         var artwork = Rectangle.FromLTRB(bounds.Left + S(8), bounds.Top + S(6), bounds.Right - S(8), Math.Max(bounds.Top + S(6), label.Top - S(4)));
-        var color = enabled ? context.Theme.Foreground : SystemColors.GrayText;
+        var color = enabled ? context.Theme.Foreground : context.Theme.DisabledColor;
         if (artwork.Width > 0 && artwork.Height > 0)
         {
             if (tile.Icon is not null) DrawItemImage(context with { Bounds = artwork }, tile, RibbonItemSize.Large);

@@ -1459,6 +1459,15 @@ underline, group separators, rounded chrome or Office focus/badge treatment.
 the default when `RibbonControl.Renderer` is null. Both consume the selected
 `RibbonTheme`; choosing a renderer does not change layout or command ownership.
 
+`RibbonTheme.DisabledForeground` optionally colors library-painted disabled text,
+vector command icons, arrows and check/radio indicators, including field labels,
+selection-only ComboBox text and choice rows. Its default `Color.Empty` preserves
+Windows gray; reset to Empty to restore it. Native TextBox/editable ComboBox input,
+caret and selection retain Windows drawing, and bitmap artwork keeps its existing
+treatment. Focus, hover, pressed and checked colors reuse existing theme roles.
+See the [state and native-layer map](docs/M4I2-APPEARANCE-INVENTORY.md#state-and-native-layer-map)
+for the supported layers and limits.
+
 The default ribbon background is white. The shared `BodyMargin` defaults to
 7,1,7,7 logical pixels. Layout reserves these
 margins for the panel, scrolling and hit targets. Office paints that panel as a

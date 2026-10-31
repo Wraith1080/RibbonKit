@@ -1,4 +1,6 @@
 #nullable enable
+RibbonKit.WinForms.RibbonTheme.DisabledForeground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.DisabledForeground.init -> void
 virtual RibbonKit.WinForms.RibbonRenderer.GetBackstagePageBorderWidth(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int
 virtual RibbonKit.WinForms.RibbonRenderer.GetBackstagePageCornerRadius(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int
 override RibbonKit.WinForms.RibbonOffice2024Renderer.GetBackstagePageBorderWidth(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int

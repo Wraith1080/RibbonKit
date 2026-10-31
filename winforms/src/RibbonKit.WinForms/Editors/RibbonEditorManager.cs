@@ -368,6 +368,8 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
                     _dirty = false;
                 }
                 _lastModel = _value.CaptureEdit();
+                // Disabled EDIT text remains Windows-owned. The theme's disabled
+                // role applies to our label/frame glyphs and owner-drawn selection.
                 _editor.ForeColor = _item.EffectiveEnabled ? _ribbon.Theme.Foreground : SystemColors.GrayText;
                 _editor.BackColor = BackColor;
                 Enabled = _item.EffectiveEnabled;
@@ -382,7 +384,15 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
                 _item is RibbonComboBoxItem choices ? choices.ChoicesVersion : -1,
                 _item is RibbonComboBoxItem { IsEditable: true }, _item is RibbonTextBoxItem { ReadOnly: true },
                 _item.EffectiveEnabled, _ribbon.HasWindowBackdrop, _ribbon.LayoutMode);
-            if (_presentation != next) { _presentation = next; Invalidate(); }
+            if (_presentation != next)
+            {
+                // A disabled native control's ForeColor stays system-owned, so
+                // a changed owner-drawn selection color needs its own repaint.
+                bool selectionColorChanged = _editor is ComboBox { DropDownStyle: ComboBoxStyle.DropDownList }
+                    && !next.Enabled && _presentation?.Theme.DisabledColor != next.Theme.DisabledColor;
+                _presentation = next; Invalidate();
+                if (selectionColorChanged) _editor.Invalidate();
+            }
             // Showing a retained presenter must also refresh its native text
             // subtree, not leave that work until after the tab motion uncovers it.
             if (arriving && IsHandleCreated) RibbonDrawingHold.Repaint(Handle);
@@ -725,7 +735,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
                     using var fill = new SolidBrush(ribbon.Theme.Surface);
                     e.Graphics.FillRectangle(fill, e.Bounds);
                     ribbon.Painter.DrawText(context with { Bounds = RibbonEditorLayout.ComboText(ClientRectangle, ribbon.DeviceDpi, ribbon.Density) },
-                        item.Value, item.EffectiveEnabled ? ribbon.Theme.Foreground : SystemColors.GrayText,
+                        item.Value, item.EffectiveEnabled ? ribbon.Theme.Foreground : ribbon.Theme.DisabledColor,
                         TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.EndEllipsis);
                 }
                 else if (e.Index >= 0 && e.Index < item.Items.Count)

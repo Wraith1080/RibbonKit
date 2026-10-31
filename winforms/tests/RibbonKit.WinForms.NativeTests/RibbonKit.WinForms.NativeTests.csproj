@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><UseWPF>true</UseWPF><ApplicationManifest>../RibbonKit.WinForms.Consumer/app.manifest</ApplicationManifest></PropertyGroup>
   <ItemGroup><ProjectReference Include="../../src/RibbonKit.WinForms/RibbonKit.WinForms.csproj" /></ItemGroup>
+  <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/StateAppearanceChecks.cs" Link="PublicStateAppearanceChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/GroupMotionInteractionChecks.cs" Link="PublicGroupMotionInteractionChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/PopupRefinementChecks.cs" Link="PublicPopupRefinementChecks.cs" /></ItemGroup>
   <ItemGroup><Compile Include="../RibbonKit.WinForms.Consumer/PopupMotionInteractionChecks.cs" Link="PublicPopupMotionInteractionChecks.cs" /></ItemGroup>

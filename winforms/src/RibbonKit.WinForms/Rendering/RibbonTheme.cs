@@ -60,6 +60,9 @@ public sealed record RibbonTheme
     public int HeaderButtonInset { get; init; } = 4;
     /// <summary>Gets the enabled text and vector icon color.</summary>
     public Color Foreground { get; init; } = Color.FromArgb(26, 26, 26);
+    /// <summary>Gets the color for library-painted disabled text, glyphs and vector command icons. Empty uses SystemColors.GrayText. Does not recolor raster artwork, Windows-drawn text in TextBox/editable ComboBox controls, or application-owned content.</summary>
+    public Color DisabledForeground { get; init; } = Color.Empty;
+    internal Color DisabledColor => DisabledForeground.IsEmpty ? SystemColors.GrayText : DisabledForeground;
     /// <summary>Gets the group caption color.</summary>
     public Color SecondaryText { get; init; } = Color.FromArgb(97, 97, 97);
     /// <summary>Gets the selected-tab and focus color.</summary>

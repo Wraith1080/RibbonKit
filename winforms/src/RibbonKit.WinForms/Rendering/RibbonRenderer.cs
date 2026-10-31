@@ -52,7 +52,7 @@ public partial class RibbonRenderer : IDisposable
         if (enabled && (context.Hot || context.Pressed))
             DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
         RibbonArrowPainter.DrawVertical(context.Graphics, context.Bounds, context.DeviceDpi,
-            enabled ? context.Theme.Foreground : SystemColors.GrayText, upward);
+            enabled ? context.Theme.Foreground : context.Theme.DisabledColor, upward);
     }
     /// <summary>Paints the measured tab-row minimize/expand button. A minimized ribbon shows a downward chevron.</summary>
     public virtual void DrawMinimizeButton(RibbonPaintContext context, bool minimized)
@@ -98,7 +98,7 @@ public partial class RibbonRenderer : IDisposable
             int S(double value) => RibbonLayoutEngine.Scale(value, context.DeviceDpi);
             int center = menu ? context.Bounds.Left + S(14) : context.Bounds.Left + context.Bounds.Width / 2;
             int top = Math.Min(context.Bounds.Bottom - S(3), context.Bounds.Top + context.Bounds.Height / 2 + S(9));
-            using var mark = new SolidBrush(enabled ? context.Theme.Foreground : SystemColors.GrayText);
+            using var mark = new SolidBrush(enabled ? context.Theme.Foreground : context.Theme.DisabledColor);
             context.Graphics.FillRectangle(mark, center - S(3), top, S(6), S(2));
         }
         if (context.Focused) DrawFocus(context);
@@ -118,7 +118,7 @@ public partial class RibbonRenderer : IDisposable
             primary.Graphics.FillRectangle(separator, dropDown.Bounds.Left, whole.Bounds.Top + 1, 1, Math.Max(0, whole.Bounds.Height - 2));
         }
         DrawQuickAccessContent(primary, entry, menu);
-        var color = enabled ? primary.Theme.Foreground : SystemColors.GrayText;
+        var color = enabled ? primary.Theme.Foreground : primary.Theme.DisabledColor;
         if (menu) DrawSubmenuArrow(dropDown, color); else DrawDropDownArrow(dropDown, color);
         if (primary.Focused) DrawFocus(primary);
         if (dropDown.Focused) DrawFocus(dropDown);
@@ -154,7 +154,7 @@ public partial class RibbonRenderer : IDisposable
         var command = RibbonQuickAccess.Command(entry);
         bool chooser = entry is RibbonQuickAccessComboBoxReference or RibbonQuickAccessGroupReference || entry is RibbonQuickAccessDropDownReference { Source: not RibbonSplitButtonItem };
         var caption = RibbonQuickAccess.Caption(entry);
-        var color = enabled ? context.Theme.Foreground : SystemColors.GrayText;
+        var color = enabled ? context.Theme.Foreground : context.Theme.DisabledColor;
         var contentContext = context;
         if (chooser) contentContext = context with { Bounds = context.Bounds with { Width = Math.Max(0, context.Bounds.Width - RibbonLayoutEngine.Scale(menu ? 16 : 12, context.DeviceDpi)) } };
         if (menu && entry is RibbonQuickAccessGroupReference)
@@ -192,7 +192,7 @@ public partial class RibbonRenderer : IDisposable
     private void DrawQuickAccessImage(RibbonPaintContext context, RibbonItem command, bool enabled)
     {
         if (enabled == command.EffectiveEnabled) { DrawItemImage(context, command, RibbonItemSize.Small); return; }
-        if (command.Icon is { } icon) icon.Draw(context.Graphics, context.Bounds, new(context.DeviceDpi, SystemColors.GrayText, false));
+        if (command.Icon is { } icon) icon.Draw(context.Graphics, context.Bounds, new(context.DeviceDpi, context.Theme.DisabledColor, false));
         else if ((command.Image ?? command.LargeImage) is { } image)
         {
             using var bitmap = new Bitmap(image, context.Bounds.Size);
@@ -261,7 +261,7 @@ public partial class RibbonRenderer : IDisposable
             }
             finally { context.Graphics.Restore(saved); }
         }
-        DrawDropDownArrow(context with { Bounds = button }, item.EffectiveEnabled ? context.Theme.Foreground : SystemColors.GrayText);
+        DrawDropDownArrow(context with { Bounds = button }, item.EffectiveEnabled ? context.Theme.Foreground : context.Theme.DisabledColor);
     }
     /// <summary>Paints a native choice row. Selected is the native selection or keyboard preview; Hot and Pressed describe pointer interaction separately.</summary>
     public virtual void DrawComboBoxItem(RibbonPaintContext context, RibbonComboBoxItem item, int index, bool selected)
@@ -272,12 +272,12 @@ public partial class RibbonRenderer : IDisposable
         if (selected || context.Hot || context.Pressed)
             DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, Color.Transparent);
         DrawText(context with { Bounds = Rectangle.Inflate(context.Bounds, -RibbonLayoutEngine.Scale(6, context.DeviceDpi), 0) },
-            item.Items[index], item.EffectiveEnabled ? context.Theme.Foreground : SystemColors.GrayText,
+            item.Items[index], item.EffectiveEnabled ? context.Theme.Foreground : context.Theme.DisabledColor,
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.EndEllipsis);
     }
     private void DrawEditorLabel(RibbonPaintContext context, RibbonItem item, Rectangle editorBounds) =>
         DrawText(context with { Bounds = new(context.Bounds.Left, context.Bounds.Top, Math.Max(0, editorBounds.Left - context.Bounds.Left - RibbonLayoutEngine.Scale(6, context.DeviceDpi)), context.Bounds.Height) },
-            item.Text, item.EffectiveEnabled ? context.Theme.Foreground : SystemColors.GrayText,
+            item.Text, item.EffectiveEnabled ? context.Theme.Foreground : context.Theme.DisabledColor,
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding);
     /// <summary>Paints the File menu header using library-measured bounds and its original open/availability state.</summary>
     public virtual void DrawFileButton(RibbonPaintContext context, RibbonDropDownItem menu)
@@ -287,7 +287,7 @@ public partial class RibbonRenderer : IDisposable
         bool open = enabled && menu.IsDropDownOpen && !context.FileMenuClosing;
         if (open || context.Hot || context.Pressed)
             DrawChrome(context, open || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
-        DrawText(context, menu.Text, !enabled ? SystemColors.GrayText : open ? context.Theme.Accent : context.Theme.Foreground,
+        DrawText(context, menu.Text, !enabled ? context.Theme.DisabledColor : open ? context.Theme.Accent : context.Theme.Foreground,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.EndEllipsis);
         if (context.Focused) DrawFocus(context);
     }
@@ -297,7 +297,7 @@ public partial class RibbonRenderer : IDisposable
         context = EnabledContext(context, tab.EffectiveEnabled);
         if (selected || context.Hot)
             DrawChrome(context, selected ? new(context.Theme.Surface) : context.Theme.Hover, Color.Transparent);
-        var color = !tab.EffectiveEnabled ? SystemColors.GrayText : tab.IsContextual ? ContextualTabColor(context, tab, selected) : context.Theme.Foreground;
+        var color = !tab.EffectiveEnabled ? context.Theme.DisabledColor : tab.IsContextual ? ContextualTabColor(context, tab, selected) : context.Theme.Foreground;
         DrawText(context, tab.DisplayText, color, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
         if (context.Focused)
             DrawFocus(context);
@@ -329,7 +329,7 @@ public partial class RibbonRenderer : IDisposable
             bool open = group.Ribbon?.Popups.BorrowsGroup(group) == true;
             if (open || context.Hot || context.Pressed) DrawChrome(context, open || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, context.Theme.Border);
             int S(int n) => RibbonLayoutEngine.Scale(n, context.DeviceDpi);
-            var color = group.EffectiveEnabled ? context.Theme.Foreground : SystemColors.GrayText;
+            var color = group.EffectiveEnabled ? context.Theme.Foreground : context.Theme.DisabledColor;
             var text = Rectangle.Inflate(context.Bounds, -S(6), 0); int arrow = Math.Min(text.Width, S(16));
             if (group.Icon is { } icon)
             {
@@ -360,7 +360,7 @@ public partial class RibbonRenderer : IDisposable
             int rows = lineHeight == 0 ? 0 : Math.Min(caption.Lines.Length, availableText / lineHeight);
             int textHeight = rows * lineHeight;
             int top = bounds.Top + (bounds.Height - iconSide - iconGap - textHeight - gap - arrowHeight) / 2;
-            var color = group.EffectiveEnabled ? context.Theme.Foreground : SystemColors.GrayText;
+            var color = group.EffectiveEnabled ? context.Theme.Foreground : context.Theme.DisabledColor;
             if (iconSide > 0) { group.Icon!.Draw(context.Graphics, new(bounds.Left + (bounds.Width - iconSide) / 2, top, iconSide, iconSide), new(context.DeviceDpi, color, group.EffectiveEnabled)); top += iconSide + iconGap; }
             for (int row = 0; row < rows; row++)
                 DrawText(context with { Bounds = new(bounds.Left, top + row * lineHeight, bounds.Width, lineHeight) },
@@ -397,7 +397,7 @@ public partial class RibbonRenderer : IDisposable
             if (menu) content = RibbonMenuLayout.Content(content, item, context.Bounds, context.Font, context.DeviceDpi, context.Density);
             if (item is RibbonCheckBoxItem box) DrawCheckBoxIndicator(context with { Bounds = content.Icon }, box);
             else DrawRadioButtonIndicator(context with { Bounds = content.Icon }, (RibbonRadioButtonItem)item);
-            DrawText(context with { Bounds = content.Text }, item.Text, enabled ? context.Theme.Foreground : SystemColors.GrayText, content.Flags);
+            DrawText(context with { Bounds = content.Text }, item.Text, enabled ? context.Theme.Foreground : context.Theme.DisabledColor, content.Flags);
             if (menu) DrawMenuDescription(context, item, content.Text);
             if (context.Focused) DrawFocus(context);
             return;
@@ -423,7 +423,7 @@ public partial class RibbonRenderer : IDisposable
         try { context.Graphics.SetClip(content.Icon, CombineMode.Intersect); DrawItemImage(context with { Bounds = content.Icon }, item, RibbonItemSize.Large); }
         finally { context.Graphics.Restore(saved); }
         using var titleFont = new Font(context.Font, context.Font.Style | FontStyle.Bold);
-        DrawText(context with { Bounds = content.Text, Font = titleFont }, item.Text, item.EffectiveEnabled ? context.Theme.Foreground : SystemColors.GrayText, content.Flags);
+        DrawText(context with { Bounds = content.Text, Font = titleFont }, item.Text, item.EffectiveEnabled ? context.Theme.Foreground : context.Theme.DisabledColor, content.Flags);
         DrawMenuDescription(context, item, content.Text, illustrated: true);
         if (context.Focused) DrawFocus(context);
     }
@@ -435,20 +435,20 @@ public partial class RibbonRenderer : IDisposable
     {
         bool enabled = item.EffectiveEnabled;
         context = EnabledContext(context, enabled);
-        var border = !enabled ? SystemColors.GrayText : context.Hot || context.Pressed || context.Focused || item.Checked ? context.Theme.Accent : context.Theme.SecondaryText;
+        var border = !enabled ? context.Theme.DisabledColor : context.Hot || context.Pressed || context.Focused || item.Checked ? context.Theme.Accent : context.Theme.SecondaryText;
         PaintRounded(context, context.Bounds.Width / 2, context.Pressed ? context.Theme.Pressed : new(context.Theme.Surface), border);
         if (item.Checked)
         {
             int inset = Layout.RibbonLayoutEngine.Scale(4, context.DeviceDpi);
             var dot = Rectangle.Inflate(context.Bounds, -inset, -inset);
-            PaintRounded(context with { Bounds = dot }, dot.Width / 2, new(enabled ? context.Theme.Accent : SystemColors.GrayText), Color.Transparent, 0);
+            PaintRounded(context with { Bounds = dot }, dot.Width / 2, new(enabled ? context.Theme.Accent : context.Theme.DisabledColor), Color.Transparent, 0);
         }
     }
     internal void PaintCheckIndicator(RibbonPaintContext context, CheckState check, bool enabled, int radius)
     {
         bool marked = check != CheckState.Unchecked;
-        var border = !enabled ? SystemColors.GrayText : marked || context.Hot || context.Pressed || context.Focused ? context.Theme.Accent : context.Theme.SecondaryText;
-        var fill = marked ? new RibbonFill(enabled ? context.Theme.Accent : SystemColors.GrayText)
+        var border = !enabled ? context.Theme.DisabledColor : marked || context.Hot || context.Pressed || context.Focused ? context.Theme.Accent : context.Theme.SecondaryText;
+        var fill = marked ? new RibbonFill(enabled ? context.Theme.Accent : context.Theme.DisabledColor)
             : context.Pressed ? context.Theme.Pressed : new(context.Theme.Surface);
         PaintRounded(context, radius, fill, border);
         if (!marked) return;
@@ -502,7 +502,7 @@ public partial class RibbonRenderer : IDisposable
         if (!vertical)
         {
             var arrowContext = whole with { Bounds = dropDown.Bounds };
-            var color = item.EffectiveEnabled ? whole.Theme.Foreground : SystemColors.GrayText;
+            var color = item.EffectiveEnabled ? whole.Theme.Foreground : whole.Theme.DisabledColor;
             if (menu) DrawSubmenuArrow(arrowContext, color);
             else DrawDropDownArrow(arrowContext, color);
         }
@@ -546,7 +546,7 @@ public partial class RibbonRenderer : IDisposable
             textBounds.Width = Math.Max(0, textBounds.Width - arrowSpan);
         }
         var flags = content.Flags;
-        var color = enabled ? context.Theme.Foreground : SystemColors.GrayText;
+        var color = enabled ? context.Theme.Foreground : context.Theme.DisabledColor;
         var saved = context.Graphics.Save();
         try
         {
@@ -599,13 +599,13 @@ public partial class RibbonRenderer : IDisposable
         if (!RibbonMenuLayout.HasDescription(item)) return;
         var bounds = RibbonMenuLayout.Description(title, context.Bounds, context.Font, context.DeviceDpi, illustrated ? RibbonDensity.Compact : context.Density);
         if (bounds.Width > 0 && bounds.Height > 0)
-            DrawText(context with { Bounds = bounds }, item.MenuDescription, (enabledOverride ?? item.EffectiveEnabled) ? context.Theme.SecondaryText : SystemColors.GrayText, RibbonMenuLayout.DescriptionFlags);
+            DrawText(context with { Bounds = bounds }, item.MenuDescription, (enabledOverride ?? item.EffectiveEnabled) ? context.Theme.SecondaryText : context.Theme.DisabledColor, RibbonMenuLayout.DescriptionFlags);
     }
     /// <summary>Paints a borrowed icon or image in its measured and clipped icon slot.</summary>
     protected virtual void DrawItemImage(RibbonPaintContext context, RibbonItem item, RibbonItemSize size)
     {
         bool enabled = item.EffectiveEnabled;
-        var color = enabled ? context.Theme.Foreground : SystemColors.GrayText;
+        var color = enabled ? context.Theme.Foreground : context.Theme.DisabledColor;
         if (item.Icon is { } icon)
             icon.Draw(context.Graphics, context.Bounds, new(context.DeviceDpi, color, enabled));
         else if ((size == RibbonItemSize.Large ? item.LargeImage ?? item.Image : item.Image ?? item.LargeImage) is { } image)

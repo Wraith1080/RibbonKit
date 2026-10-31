@@ -1,8 +1,8 @@
 # M4I2 appearance inventory and palette increments
 
-Status, **2026-10-30: inventory, KeyTip palette and requested backdrop-state/closing
-corrections, revised Solid page frame and Backstage caption match implemented;
-visual review of the new appearance is pending**.
+Status, **2026-10-31: inventory, KeyTip/backdrop palette, Backstage refinements
+and the disabled/state-color increment implemented; broader appearance review
+remains pending**.
 This starts the appearance-consolidation checkpoint after the main component and
 M6C work. It does not complete comprehensive theming or add another built-in theme.
 Designer authoring, localization/RTL and additional palettes retain their later
@@ -36,12 +36,12 @@ constants are rendering/platform rules, not automatically missing theme settings
 | --- | --- | --- |
 | Form/ribbon surround and body | `Background`, `Surface`, `Border`, `BodyMargin`, `BodyHeight`, `BodyShadowColor`; [theme](../src/RibbonKit.WinForms/Rendering/RibbonTheme.cs), [Office renderer](../src/RibbonKit.WinForms/Rendering/RibbonOffice2024Renderer.cs) | Background/surface are solid colors; body radius is derived from the shared command radius. Separate body fill/radius, border sides/thickness and shadow metrics need a compatible proposal. Preserve joined body/QAT/message ownership. |
 | Normal buttons and split buttons | `Foreground`, `Hover`, `Pressed`, `Checked`, `Accent`, `CornerRadius`; [shared renderer](../src/RibbonKit.WinForms/Rendering/RibbonRenderer.cs), [split layout](../src/RibbonKit.WinForms/Layout/RibbonSplitLayout.cs) | State borders and component-specific fills are coupled to shared roles. Icon/text/arrow spacing is measured locally. Do not stretch commands when adding body clearance. |
-| Check/radio commands | Shared state fills, accent and text; indicator render methods in the shared renderer | Indicator border/fill/stroke and disabled presentation use shared colors/system gray. Distinguish indicator appearance from whole-row appearance before adding roles. |
+| Check/radio commands | Shared state fills, accent, text and `DisabledForeground`; indicator render methods in the shared renderer | Indicator and whole-row appearance remain distinct. Disabled indicator fill/border uses the disabled role; the tick/mixed stroke retains `Surface`. |
 | Tabs, contextual headers and indicators | Accent, foreground, secondary text, `TabHeight`, contextual model color; Office `DrawTab`, `GetTabIndicatorBounds` | Indicator thickness/insets, label clearance and contextual blending are local. Indicator measurement, drawing and motion endpoints must consume one metric contract. |
 | Groups and collapsed openers | Secondary text, border, large/collapsed maximum widths; Office `DrawGroup`, shared content layout | Separator inset is 12 logical pixels; caption/icon/launcher metrics also live in layout. Separate shared defaults from component-specific overrides. |
 | QAT and header utilities | Shared state fills, `QuickAccessBackdropOpacity`, `HeaderButtonInset`; [QAT layout](../src/RibbonKit.WinForms/Layout/RibbonQuickAccessLayout.cs) | Toolbar/button/overflow dimensions are density metrics. Any appearance expansion must retain TitleBar/TabRow/BelowRibbon identity, joined-frame policy and measured hit targets. |
 | Command menus and overflow scrolling | Surface, foreground, secondary text, shared state fills; [menu layout](../src/RibbonKit.WinForms/Layout/RibbonMenuLayout.cs), popup surfaces | Compact/Touch row, icon gutter, description and arrow spacing are in density/layout helpers. Heading roles currently overlap gallery heading roles. Scroll rails/buttons need their own inventory when metrics change. |
-| Native TextBox/ComboBox fields and choice rows | Surface/border/foreground, shared state fills, model input width; [editor layout](../src/RibbonKit.WinForms/Layout/RibbonEditorLayout.cs), [native presenter](../src/RibbonKit.WinForms/Editors/RibbonEditorManager.cs) | Padding/button dimensions and state borders are coupled. Disabled text still uses system gray; native-control colors do not all obey a painted-role override. Validate every native/presenter/choice layer before promising a configurable disabled palette. Preserve the corrected buffering and handles. |
+| Native TextBox/ComboBox fields and choice rows | Surface/border/foreground, `DisabledForeground` on painted layers, shared state fills, model input width; [editor layout](../src/RibbonKit.WinForms/Layout/RibbonEditorLayout.cs), [native presenter](../src/RibbonKit.WinForms/Editors/RibbonEditorManager.cs) | Padding/button dimensions and state borders remain coupled. Disabled native EDIT text stays Windows-owned; labels, arrow, selection-only ComboBox text and choice rows support the new role. See the layer map below. Buffering and handles are preserved. |
 | Gallery strip, tiles, headings and utilities | `GalleryHeadingBackground/Foreground`, shared fills/borders; [gallery renderer](../src/RibbonKit.WinForms/Rendering/RibbonRenderer.Gallery.cs), gallery layout helpers | Static gallery data has collection editing; dynamic data/artwork remains host-owned. Tile padding, selected borders, utility geometry and heading font/inset roles need consolidation. |
 | Backstage rail, rows, Back button and page surface | `BackstageNavigationBackground/FontSize`, navigation width bounds/opacity, shared fills/accent; [rail layout](../src/RibbonKit.WinForms/Layout/RibbonBackstageLayout.cs), [entry renderer](../src/RibbonKit.WinForms/Rendering/RibbonRenderer.Backstage.cs) | Entry icon/text/marker insets, Back geometry and selected fill are local/coupled. Auto rail measurement and entry text placement must use the same future metrics. Native page content remains host-owned. |
 | Message rows, action and close button | Message colors, `MessageMinimumHeight`, `MessageContentPadding`; [message layout](../src/RibbonKit.WinForms/Layout/RibbonMessageLayout.cs), message renderer | Action/close state colors and glyph metrics still share message text/accent roles. Preserve connected/square joins, standalone minimized presentation and the one outer shadow. |
@@ -51,10 +51,11 @@ constants are rendering/platform rules, not automatically missing theme settings
 | Caption buttons and material surround | Optional [RibbonForm](../src/RibbonKit.WinForms/RibbonForm.cs), existing theme text/hover/pressed, native frame/backdrop integration | Close hover uses the familiar red/white treatment; caption slot and glyph metrics are local. Treat caption styling as a separate host contract rather than mapping close-danger colors to ordinary button roles. Do not regress the material opening animation. |
 | Customization/options dialogs | Standard WinForms controls, model state and icon resources | Native/system-control styling is distinct from owner-drawn ribbon theme coverage. Actual designer/package authoring remains unverified. A broad dialog restyle is not part of this increment. |
 
-Cross-cutting remaining work: disabled/focus/open state roles; independent surface
-fills and border roles; typography; shared density-aware geometry; radius and shadow
-coverage. Keep these as bounded proposals. Reusing an existing suitable role is
-preferred to adding a setting for every numeric constant.
+Cross-cutting remaining work: independent surface fills and border roles;
+typography; shared density-aware geometry; radius and shadow coverage. Native
+disabled EDIT styling requires a separate supported drawing/ownership proposal
+if requested. Existing focus/open/hover/pressed/checked roles are retained and
+mapped below. Reuse suitable roles before adding another setting.
 
 ## First implemented contract: KeyTip palette
 
@@ -106,12 +107,99 @@ Generated rasters are separate from actual mixed-DPI/display, live keyboard,
 high-contrast, designer/package and human visual acceptance; those gates were not
 rerun here.
 
-The next appearance contract should address disabled and focus/state colors across
-painted commands and native fields before palette expansion. First identify which
-native disabled layers require a supported drawing extension; do not promise the
-entire native control changes color from one new property. Body/button/popup radii,
-shadow metrics and layout spacing follow as separate geometry slices. New built-in
-themes should use those consolidated contracts rather than copying renderers.
+The next disabled/focus/state-color contract is implemented below. Body/button/
+popup radii, shadow metrics and layout spacing remain separate geometry slices.
+New built-in themes should use the consolidated contracts rather than copying
+renderers.
+
+## Disabled and focus/state colors — 2026-10-31
+
+The user approved one additive public setting before implementation:
+
+| `RibbonTheme` property | Compatible default | Supported scope |
+| --- | --- | --- |
+| `Color DisabledForeground` | `Color.Empty`: resolve `SystemColors.GrayText` when drawing, preserving existing disabled-gray uses | Library-painted disabled text, vector command icons, arrows, check/radio indicator fill/border, field labels, selection-only ComboBox text and owner-drawn choice rows, in both renderers. |
+
+```csharp
+ribbon.Theme = ribbon.Theme with { DisabledForeground = Color.DimGray };
+// Restore the previous system-gray behavior:
+ribbon.Theme = ribbon.Theme with { DisabledForeground = Color.Empty };
+```
+
+Two additive Unshipped accessors and XML documentation cover this setting. The
+shipped baseline and all existing defaults remain. There is no new focus color,
+palette, drawing owner, editor replacement or host callback. Custom renderers
+that supply their own drawing still own their colors; vector artwork receives
+the role through the existing `RibbonIconContext.Foreground`/`Enabled` contract.
+Raster artwork retains its existing rendering/disabled treatment.
+
+### State and native-layer map
+
+| Layer | Existing enabled/focus/state colors | Disabled contract and limit |
+| --- | --- | --- |
+| Painted commands, split halves, menus and QAT | `Foreground`; `SecondaryText` for descriptions; `Hover`, `Pressed`, `Checked` for state fills. Open commands use existing pressed/checked treatment. | Existing system-gray text, vector icon and arrow uses resolve `DisabledForeground`. Disabled hover/press/focus is suppressed; checked state remains visible. Bitmap artwork is not recolored by this property. |
+| Check/radio indicators | `SecondaryText` for resting unmarked border; `Accent` for active/marked border and fill; `Surface` for tick/mixed stroke. | Indicator border, marked fill/radio dot and label use the disabled role. The tick/mixed stroke stays `Surface`; a whole-row hover fill is separate. |
+| Focus outlines and tab/File headers | Office command focus uses `Accent`; neutral supplies `Foreground`/`Surface` to Windows' contrasting dotted-focus drawing. Office tab/File hover/press/focus underline uses `SecondaryText`; selected/open accent uses `Accent`. Neutral retains its flat fills/focus. | Disabled command focus and header indicators are suppressed, text uses the disabled role. File closing still paints its accepted final appearance beneath the fade. |
+| Gallery tiles and utility/overflow buttons | `Checked` and an `Accent` border retain selected tiles; shared pointer fills apply separately. | Text/vector/glyph uses resolve the disabled role. Disabled pointer/focus feedback is suppressed; selected-state fills/markers remain. |
+| TextBox presenter frame/label | `Surface`, resting `Border`, focused `Accent`. TextBox hover does not add a new fill. | Painted label uses the disabled role. Frame remains `Surface`/`Border`; this increment adds no disabled background/border. |
+| ComboBox presenter frame/label/arrow | Same base frame; hot/focused/pressed/open border uses `Accent`. Button fill uses `Hover`, `Pressed` or open `Checked`. | Painted label/arrow uses the disabled role; active border/button feedback is suppressed when disabled. The unused Windows ComboBox frame/button remains clipped away. |
+| Selection-only native ComboBox (`DropDownList`) | Existing native `OnDrawItem` callback paints the selection using `Surface`/`Foreground`. | That callback uses the disabled role. Changing/resetting it explicitly invalidates this native text layer; repeated unchanged synchronization adds no repaint. No handle, parent, bounds or selection change is required. |
+| Native TextBox and editable ComboBox EDIT child | Enabled/read-only text and background receive existing `Foreground`/`Surface`. Read-only remains enabled and selectable. Caret, selection, IME and edit behavior stay native. | Disabled EDIT text remains Windows gray, independently of `DisabledForeground`. `ForeColor` is not a complete disabled styling contract. Changing background support does not imply control over disabled text, caret or selection colors. |
+| ComboBox choice popup's native ListBox | `DrawComboBoxItem` paints `Surface`, `Foreground`, selected `Checked`, hover `Hover`, pressed `Pressed`. | Painted rows support the disabled role; an actual open list closes when its source becomes disabled. Native scrolling, incremental search and scrollbar visuals remain Windows-owned. |
+| Backstage rail entries and application pages | Existing shared/accent and material `BackdropHover`/`BackdropPressed` roles, rail opacity and selected markers. | Only the existing disabled-gray entry text/vector uses change. Navigation selection and material tint policy stay intact. Application page controls remain host-owned; no Backstage page is captured or restyled. |
+| Messages, caption and options dialogs | Messages retain `MessageForeground` and the separate `MessageIconForeground`; actions/close use shared state fills. Caption close-danger treatment and native/dialog-specific drawing retain their current roles. | Existing message disabled text/action/close-gray uses resolve the disabled role. Disabled message Close now discards stale hot/pressed/focused flags. Notification artwork, caption styling and broad options/dialog styling are outside this increment. |
+
+Windows documents the disabled EDIT limitation in
+[WM_CTLCOLORSTATIC](https://learn.microsoft.com/en-us/windows/win32/controls/wm-ctlcolorstatic):
+background customization does not grant a disabled text-foreground override.
+The existing selection/choice owner-draw callbacks are supported customization
+points; replacing/subclassing EDIT painting would need a separate proposal.
+
+### Focused verification and limits
+
+Evidence is under `artifacts/state-appearance-20261031/`:
+
+- The normal Debug native solution build passed with zero warnings/errors.
+  Final changes to the independent fixture and corrected File assertion were
+  compiled through their normal Debug projects, also without warnings/errors.
+- **42 distinct unit/STA cases passed across focused selections**: four initial
+  message/material cases, 37 affected editor/renderer/option/QAT/state cases, and
+  the corrected File case. `first/` also retains the initial failing native-text
+  invalidation reproduction, fixed before `affected.trx`. That selection passed
+  37/38; its sole failure expected the superseded filled Office File hover.
+  `file-assertion-fixed.trx` passed the corrected underline contract, 1/1. No
+  clean aggregate or full-suite result is claimed; passing scopes were retained.
+- Public-only consumer raster checks passed **eight renderer/DPI scopes**:
+  Office and neutral at synthetic 96/120/144/192 DPI, each covering 24 painted
+  layers. Empty exactly matches explicit system gray; each supported disabled
+  layer changes with the override, raster artwork stays unchanged, reset restores
+  the bitmap exactly, and enabled drawing remains identical. Existing authored
+  focus/border/hover/pressed/checked roles were checked. The four completed neutral
+  raster scopes in `public/result.log` were retained when its subsequent native
+  probe failed; Office passes are in `office/result.log`. Only unfinished native
+  and Office scopes were retried, not the passing neutral rasters.
+- `native-final/result.log` passed both renderers with real TextBox, editable
+  ComboBox EDIT child and selection-only ComboBox controls at actual **120 DPI**.
+  The fixture checks disabled selection drawing, palette invalidation/reset,
+  native EDIT limits, read-only behavior, retained handles/parents/bounds/values/
+  selection. It prints only ordinary ribbon field text regions; the editable
+  ComboBox's real EDIT child is inspected separately because printing the root
+  also includes its hidden owner-drawn selection. These are controlled native
+  paint checks, not physical input or Backstage page captures. Earlier exact-ink,
+  hidden-control and foreground-dependent probes are diagnostic, not acceptance.
+- Default/custom state sheets, enabled focus/state sheets and native text images
+  were inspected. The native runner supports `--state-appearance-checks <dir>`;
+  `--state-appearance-native-checks <dir>` retries native fields alone, and
+  `--state-appearance-office-checks <dir>` selects Office rasters alone. The
+  standalone package consumer exposes `--validate-state-appearance <dir>`;
+  package verification itself was not run.
+
+The user's existing Notes/File flicker acceptance below is preserved. No Backstage
+motion/page rendering, WPF runtime/build/CI, geometry, radius/shadow/spacing,
+localization/RTL or built-in palette changed. Prior Backstage passing evidence
+was retained. Full-suite, Release/package, actual VS, high-contrast, physical
+input/IME, mixed-monitor/physical-DPI and human acceptance of this increment remain
+open; these focused checks do not establish those gates.
 
 ## Backdrop state and closing review — 2026-10-30
 
@@ -457,7 +545,8 @@ Evidence under `artifacts/backstage-notes-20261031/`:
   initial/native exposed-area paint and hidden teardown. Maximized Mica opening
   and Acrylic closing captures were inspected.
 
-The rare-flicker and File-motion changes still need the user's live review.
+User live acceptance, 2026-10-31: the Notes-field flicker during Backstage
+opening/closing and the File-header state flicker on closing are fixed.
 Other physical display/DPI, Release/package and VS designer gates were not run.
 
 ## Showcase diagnostic organisation

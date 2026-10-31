@@ -48,7 +48,7 @@ public partial class RibbonRenderer
             context.Graphics.FillRectangle(rail, context.Bounds);
         }
         finally { context.Graphics.CompositingMode = mode; }
-        var color = !enabled ? SystemColors.GrayText : selected ? context.Theme.Accent : context.Theme.Foreground;
+        var color = !enabled ? context.Theme.DisabledColor : selected ? context.Theme.Accent : context.Theme.Foreground;
         if (item is null)
         {
             int diameter = Math.Max(0, Math.Min(context.Bounds.Width, context.Bounds.Height) - 2 * S(2));

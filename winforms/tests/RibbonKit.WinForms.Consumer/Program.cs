@@ -8,6 +8,7 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] == "--validate-state-appearance") return StateAppearanceChecks.Run(args[1]);
         if (args.Length == 2 && args[0] == "--validate-backstage-richtext") return BackstageRichTextChecks.Run(args[1]);
         if (args.Length == 2 && args[0] is "--validate-backstage-motion-tail" or "--validate-backstage-motion-tail-flat")
             return BackstageInteractionChecks.Run(args[1], args[0].EndsWith("-flat", StringComparison.Ordinal), motionChecks: true, motionTailOnly: true);
