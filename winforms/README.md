@@ -597,7 +597,7 @@ strip or projection scopes; their consumer flags are
 `FileMenuMode` defaults to `CommandMenu`, preserving existing File consumers.
 Choose `Backstage` to route the same File header, pointer/keyboard activation and
 `FileMenu.ShowDropDown()` to the library-owned surface. `FileMenu.Items` remains
-the command-menu declaration; `Backstage.Items` owns separate page/button models.
+the command-menu declaration; `Backstage.Items` owns separate navigation models.
 No header duplication, custom Form subclass or Showcase helper is required.
 
 ```csharp
@@ -610,19 +610,33 @@ ribbon.Backstage.Items.AddRange(
 var save = new RibbonButtonItem { Text = "Save", KeyTip = "S" };
 save.Click += (_, _) => SaveDocument();
 ribbon.Backstage.Items.Add(save);
+ribbon.Backstage.Items.Add(new RibbonMenuSeparatorItem());
+var options = new RibbonButtonItem { Text = "Options", KeyTip = "O" };
+options.Click += (_, _) => ShowOptions();
+ribbon.Backstage.FooterItems.Add(options); // Bottom-aligned; empty by default.
 ribbon.FileMenu.Visible = true;
 ribbon.FileMenuMode = RibbonFileMenuMode.Backstage;
 // Dispose application content after the ribbon/Form has released it.
 form.Disposed += (_, _) => { infoContent.Dispose(); printContent.Dispose(); infoImage.Dispose(); };
 ```
 
-`Backstage` is a stable, content-serialized owned component. Its Items collection
-accepts `RibbonBackstagePageItem` and plain `RibbonButtonItem` commands. IDs,
+`Backstage` is a stable, content-serialized owned component. Its `Items` and
+`FooterItems` collections accept `RibbonBackstagePageItem`, plain `RibbonButtonItem`
+commands and decorative `RibbonMenuSeparatorItem` entries. IDs,
 binding contexts, change events and owned-model disposal follow the ribbon tree.
 `Backstage.SelectedPage` is bindable; the first available page is initially
 selected. Hiding, disabling, removing or disposing the selected page selects the
 next available page, then the previous page, then none. Navigation focus and
 commands do not change selection; commands close Backstage before invoking Click.
+
+`FooterItems` is empty by default. Entries there stay at the bottom while the
+main `Items` list scrolls above them. When the window is too short to retain the
+bottom section and a main row, both sections share one scrollable list, in main
+then bottom order. Separators use the existing theme Border color and nine
+logical pixels of row height; they have no activation, focus or KeyTips. A model
+still has one collection owner: remove it before moving it between sections,
+preferably inside a ribbon update batch. Page content ownership and eager
+`ContentType` initialization apply equally in both sections.
 
 Navigation items reserve the same left icon slot with or without an image. Set
 `Image` for an application-owned full-color bitmap/picture, or `Icon` for an
@@ -682,8 +696,36 @@ close and reopen. Values, established binding contexts, HWNDs and text selection
 survive those operations. Do not reparent or dispose assigned content. Setting
 Content to null/replacing it, removing the page, or disposing its page/ribbon/Form
 detaches it, restores its authored Dock/Bounds/Visible and never disposes it.
-The application must eventually dispose its content. The Control reference is
-designer-serializable; actual VS page-authoring/round-trip acceptance is pending.
+The application must eventually dispose content assigned through `Content`.
+
+For a designer-selected page body, use the optional `ContentType` instead. In
+**Edit Backstage…**, select a page and choose its **ContentType** from the
+**Page content** category. Build the consuming project first so its public
+UserControl classes are available. Each class needs a public parameterless
+constructor; edit its layout in its ordinary UserControl designer, including
+TableLayoutPanel/FlowLayoutPanel children as needed. The saved declaration is
+`infoPage.ContentType = typeof(InfoPageControl)`.
+
+`ContentType` defaults to null. **All declared page classes are instantiated
+during runtime ribbon initialization, before `Form.Load` and before File is
+clicked**, including hidden and disabled pages. The designer-generated
+`ISupportInitialize.EndInit` creates the instances, so their `Content` is available
+after `InitializeComponent`. Normal runtime control creation also initializes
+pages for code-built consumers without an init batch. Use BeginInit/EndInit for
+hand-built or initially hidden ribbons to establish the same explicit boundary.
+Types/pages assigned later are instantiated immediately after the model change,
+or when an active BeginUpdate/EndUpdate batch finishes. Creating the instances
+does not open Backstage, force HWND creation, or force hidden UserControl.Load
+events; native handle/visibility/Load timing remains the normal WinForms lifecycle.
+
+Instances are retained across switches and close/reopen. The page disposes its
+instance when its type is reset/replaced or the page is disposed.
+Removing a page releases its visual parent; dispose the removed declaration when
+finished with it. Existing borrowed `Content` must be cleared before selecting a
+type, and `ContentType` must be cleared before assigning borrowed content. Page
+constructors run as application code during initialization and constructor failures propagate; designer
+previews do not create them. Generated code saves the type rather than the
+realized instance. Actual VS assignment/Undo/save-reopen remains a user review gate.
 
 The overlay covers its ordinary Form's client area, leaving document Controls
 in place. It follows client resizing and DPI changes, with scrollable navigation;
@@ -1681,11 +1723,26 @@ tabs/groups/commands as a detached draft; OK requests one designer transaction,
 while Cancel leaves live components unchanged. Its **Add** menu includes contextual
 tabs; the **Tab header** section edits their existing header text/indicator tint
 and can reset it to the theme accent. The tree popup also provides add/remove and
-ordering actions. A protected **Ribbon** root groups the tabs for future root
-settings, and command **SizePolicy** values have a dropdown of fixed/adaptive
-choices. Theme editing is outside this
-increment. Use `eng/Prepare-DesignerConsumer.ps1` for an isolated package-only
-review solution. See [the authoring checkpoint and manual steps](docs/DESIGNER-AUTHORING.md)
+ordering actions. Select the protected **Ribbon** root for built-in theme selection
+and a static ribbon/Backstage preview. Its **Ribbon settings** also offers an
+**Animation** dropdown: None (the default), Subtle or Expressive. This edits the
+existing `AnimationLevel` property on OK, supports Undo/Redo and saves nondefault
+values as ordinary enum assignments. Reset restores None; the image preview stays static.
+The current native catalog offers
+**Office2024Light** only; **(Application theme)** preserves the application value.
+Command **SizePolicy** values have a dropdown of fixed/adaptive choices.
+`BuiltInTheme` defaults to null; Reset restores the last application-assigned
+`Theme`, initially Office 2024 Light. An explicit choice serializes as
+`ribbon.BuiltInTheme = RibbonBuiltInTheme.Office2024Light;`. Direct assignment to
+`Theme` clears that choice. Custom theme authoring and native page-content styling
+remain application-owned. The permanent
+[Designer Sample](samples/RibbonKit.WinForms.DesignerSample/README.md) contains the
+reviewed forms and has its own solution in `samples/RibbonKit.WinForms.DesignerSample`.
+Run `./winforms/eng/Update-DesignerSample.ps1` from the repository root to rebuild
+the local designer package and update that same project. Authored files are never
+recopied by the refresh. `Prepare-DesignerConsumer.ps1` without a destination also
+refreshes it; an explicit destination remains an optional independent fixture.
+See [the authoring checkpoint and manual steps](docs/DESIGNER-AUTHORING.md)
 for current evidence, actual-VS OK/Cancel, Undo/Redo and save/reopen review steps,
 and acceptance limits.
 
@@ -1695,8 +1752,36 @@ tab** selector also reveals hidden/disabled contextual tabs without changing
 authored properties or runtime startup selection. Fields use static designer
 illustrations; preview clicks do not activate commands or open popups. **Edit
 Ribbon…** reveals the selected component, and OK returns its tree selection to
-Properties. Actual-VS interaction and DPI review for this increment remain pending;
-see the [preview contract and review checklist](docs/DESIGNER-AUTHORING.md#surface-preview-and-selection--2026-10-31).
+Properties. See the [preview contract and current acceptance](docs/DESIGNER-AUTHORING.md#surface-preview-and-selection--2026-10-31);
+physical-DPI and mixed-monitor review remain separate gates.
+
+To show File, select the ribbon and check **Show File button** in its smart tag.
+**File opens** chooses Command menu or Backstage. These edit the existing File
+declaration with Undo/Redo support; File remains hidden until explicitly enabled.
+The owned File declaration has matching designer defaults: caption **File**, KeyTip
+**F**, visibility false. Enabling it serializes `FileMenu.Visible = true`; Reset
+restores the File caption without affecting ordinary dropdown defaults.
+
+The **Edit Backstage…** smart-tag action (also the **Backstage** property ellipsis)
+opens a detached pages/commands/separators editor with icon picking, ordering, File routing
+and a renderer-backed navigation preview. OK applies one designer transaction;
+Cancel leaves the live model unchanged. Native page bodies are designed in
+separate UserControls. Choose a page's optional `ContentType` in this editor for
+page-owned runtime creation, or continue assigning application-owned instances
+through `RibbonBackstagePageItem.Content`.
+Select the protected **Main entries** or **Bottom entries** group before using
+**Add → Page / Command / Separator**. Change an entry's **Placement** dropdown
+between **Main** and **Bottom** to move it; Move up/down orders its current section.
+Both the editor image and Form designer preview show the bottom section.
+All entries share one body placeholder in both previews; selection updates the
+navigation and Properties. The Form designer retains its synthetic drawing in
+a temporary opaque native layer, outside the authored Controls/component tree.
+It never creates, reparents or captures page controls. See
+[Backstage authoring and user review](docs/BACKSTAGE-DESIGNER-AUTHORING.md).
+On the Form designer surface, File opens an inert Backstage preview when routed
+to Backstage; Back closes it. Navigation clicks select components in Properties.
+The **Preview Backstage** smart-tag action also works with File hidden. These
+gestures do not change saved open state or activate application commands.
 
 Raw measurements and captures go under ignored `TestResults/`. Builds use the
 normal Debug/Release `bin` folders. The measurement tool records native paint

@@ -14,5 +14,9 @@
     <Compile Update="DesignerForm.cs"><SubType>Form</SubType></Compile>
     <Compile Update="DesignerForm.Designer.cs"><DependentUpon>DesignerForm.cs</DependentUpon></Compile>
     <EmbeddedResource Update="DesignerForm.resx"><DependentUpon>DesignerForm.cs</DependentUpon></EmbeddedResource>
+    <Compile Update="BackstageInfoControl.cs"><SubType>UserControl</SubType></Compile>
+    <Compile Update="BackstageInfoControl.Designer.cs"><DependentUpon>BackstageInfoControl.cs</DependentUpon></Compile>
+    <Compile Update="BackstagePrintControl.cs"><SubType>UserControl</SubType></Compile>
+    <Compile Update="BackstagePrintControl.Designer.cs"><DependentUpon>BackstagePrintControl.cs</DependentUpon></Compile>
   </ItemGroup>
 </Project>

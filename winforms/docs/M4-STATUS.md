@@ -1367,7 +1367,7 @@ Each public API and ownership contract is proposed before its implementation.
 | M4B | File command-menu foundation (accepted at the recorded scope) |
 | M4C | Backstage navigation, commands and native page Controls accepted at reviewed scope; actual VS checks deferred to designer slice |
 | M4D | Dropdown foundation reviewed; neutral bold/transparent heading follow-up implemented; filtering controls/popup resize remain refinements |
-| M4E | In-ribbon/QAT gallery foundation reviewed at the 2026-10-28 continuation scope; Large dropdown fallback implemented, human review pending |
+| M4E | In-ribbon/QAT gallery foundation reviewed at the 2026-10-28 continuation scope; Large dropdown fallback implemented, human review pending. [Optional custom presenter proposal deferred](GALLERY-PRESENTER-PLAN.md) |
 | M4F1 | Tab/group merge foundation accepted at the 2026-10-28 reviewed scope |
 | M4F2 | Modal scopes implemented; human review pending |
 | M4G | Compact/Touch density implemented; human review pending |

@@ -20,6 +20,8 @@ public partial class RibbonControl : Control, ISupportInitialize
     private RibbonLayoutSnapshot _snapshot = new();
     private RibbonTab? _selectedTab;
     private RibbonTheme _theme = RibbonThemes.Office2024Light;
+    private RibbonTheme _applicationTheme = RibbonThemes.Office2024Light;
+    private RibbonBuiltInTheme? _builtInTheme;
     private RibbonRenderer? _renderer;
     private RibbonElement? _focused, _hot, _pressed;
     private bool _focusedDropDown, _hotDropDown, _pressedDropDown;
@@ -34,7 +36,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         Tabs = new(this);
         QuickAccessItems = new(this);
         QuickAccessOverflow = new(this);
-        FileMenu = new() { Text = "File", KeyTip = "F", Visible = false };
+        FileMenu = RibbonFileMenuDefaults.Create();
         FileMenu.Parent = this;
         Backstage = new() { Text = "Backstage" };
         Backstage.Parent = this;
@@ -94,7 +96,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     }
     /// <summary>Occurs after the selected tab changes.</summary>
     public event EventHandler? SelectedTabChanged;
-    /// <summary>Gets or sets the immutable palette and logical metrics.</summary>
+    /// <summary>Gets the effective immutable palette and logical metrics. Assignment supplies the application theme and clears BuiltInTheme.</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public RibbonTheme Theme
     {
@@ -109,12 +111,36 @@ public partial class RibbonControl : Control, ISupportInitialize
                 value.MessageContentPadding.Left < 0 || value.MessageContentPadding.Top < 0 || value.MessageContentPadding.Right < 0 || value.MessageContentPadding.Bottom < 0 ||
                 value.BodyMargin.Left < 0 || value.BodyMargin.Top < 0 || value.BodyMargin.Right < 0 || value.BodyMargin.Bottom < 0)
                 throw new ArgumentOutOfRangeException(nameof(value));
+            _applicationTheme = value;
+            _builtInTheme = null;
             if (Equals(_theme, value))
                 return;
             _theme = value;
             ModelChanged();
         }
     }
+    /// <summary>Gets or selects an optional built-in override. Null (the default and Reset value) uses the last application-assigned Theme, initially Office2024Light. Assigning Theme clears this override. Application page controls retain their own styling.</summary>
+    [Category("Appearance"), DefaultValue(null), Description("Optional built-in ribbon theme. Reset uses the application theme; a new ribbon defaults to Office 2024 Light.")]
+    public RibbonBuiltInTheme? BuiltInTheme
+    {
+        get => _builtInTheme;
+        set
+        {
+            VerifyAccess();
+            var next = value switch
+            {
+                null => _applicationTheme,
+                RibbonBuiltInTheme.Office2024Light => RibbonThemes.Office2024Light,
+                _ => throw new ArgumentOutOfRangeException(nameof(value))
+            };
+            if (_builtInTheme == value) return;
+            _builtInTheme = value;
+            if (Equals(_theme, next)) return;
+            _theme = next;
+            ModelChanged();
+        }
+    }
+    internal RibbonTheme ApplicationTheme => _applicationTheme;
     /// <summary>Gets or sets a borrowed renderer; null selects RibbonOffice2024Renderer. Reassignment refreshes measurement after a renderer's layout policy changes.</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public RibbonRenderer? Renderer
@@ -205,7 +231,7 @@ public partial class RibbonControl : Control, ISupportInitialize
                 r.ModelChanged();
                 break;
             case RibbonBackstage backstage when element is RibbonItem entry:
-                backstage.Items.Remove(entry);
+                if (!backstage.Items.Remove(entry)) backstage.FooterItems.Remove(entry);
                 break;
             case RibbonMessageBar bar when element is RibbonMessage message:
                 bar.Items.Remove(message);
@@ -307,8 +333,12 @@ public partial class RibbonControl : Control, ISupportInitialize
     }
     /// <summary>Provides BeginInit for native ribbon presentation.</summary>
     public void BeginInit() => BeginUpdate();
-    /// <summary>Provides EndInit for native ribbon presentation.</summary>
-    public void EndInit() => EndUpdate();
+    /// <summary>Completes native ribbon initialization and creates ContentType page instances at runtime. Designer sessions do not create page content.</summary>
+    public void EndInit()
+    {
+        EndUpdate();
+        InitializeBackstageContent();
+    }
     private void UpdateHeight()
     {
         if (_theme is null || _disposing)
@@ -433,6 +463,14 @@ public partial class RibbonControl : Control, ISupportInitialize
         _input.Attach();
         _screenTips.Attach();
         ModelChanged();
+    }
+    /// <inheritdoc />
+    protected override void OnCreateControl()
+    {
+        base.OnCreateControl();
+        // Code-created consumers need the same pre-Form.Load initialization
+        // even when they do not use the designer's ISupportInitialize batch.
+        InitializeBackstageContent();
     }
     /// <inheritdoc />
     protected override void OnHandleDestroyed(EventArgs e)

@@ -6,7 +6,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $nativeRoot = Split-Path $PSScriptRoot -Parent
 if (-not $Destination) {
-    $Destination = Join-Path ([IO.Path]::GetTempPath()) ('RibbonKit-WinForms-Designer-' + [guid]::NewGuid().ToString('N'))
+    & (Join-Path $PSScriptRoot 'Update-DesignerSample.ps1') -Configuration $Configuration -NoBuild:$NoBuild
+    return
 }
 $Destination = [IO.Path]::GetFullPath($Destination)
 if (Test-Path -LiteralPath $Destination) { throw "Destination already exists; preserve it and choose a new directory: $Destination" }

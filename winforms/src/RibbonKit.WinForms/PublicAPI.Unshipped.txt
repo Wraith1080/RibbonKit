@@ -1,4 +1,8 @@
 #nullable enable
+RibbonKit.WinForms.RibbonBuiltInTheme
+RibbonKit.WinForms.RibbonBuiltInTheme.Office2024Light = 0 -> RibbonKit.WinForms.RibbonBuiltInTheme
+RibbonKit.WinForms.RibbonControl.BuiltInTheme.get -> RibbonKit.WinForms.RibbonBuiltInTheme?
+RibbonKit.WinForms.RibbonControl.BuiltInTheme.set -> void
 RibbonKit.WinForms.RibbonSvgIcon
 RibbonKit.WinForms.RibbonSvgIcon.RibbonSvgIcon(string! source, bool useForegroundColor = false) -> void
 RibbonKit.WinForms.RibbonSvgIcon.Source.get -> string!
@@ -164,6 +168,7 @@ RibbonKit.WinForms.RibbonTheme.GalleryHeadingForeground.init -> void
 RibbonKit.WinForms.RibbonBackstage
 RibbonKit.WinForms.RibbonBackstage.RibbonBackstage() -> void
 RibbonKit.WinForms.RibbonBackstage.Items.get -> RibbonKit.WinForms.RibbonItemCollection!
+RibbonKit.WinForms.RibbonBackstage.FooterItems.get -> RibbonKit.WinForms.RibbonItemCollection!
 RibbonKit.WinForms.RibbonBackstage.NavigationWidth.get -> int?
 RibbonKit.WinForms.RibbonBackstage.NavigationWidth.set -> void
 RibbonKit.WinForms.RibbonBackstage.NavigationWidthChanged -> System.EventHandler?
@@ -185,6 +190,9 @@ RibbonKit.WinForms.RibbonBackstagePageItem.RibbonBackstagePageItem() -> void
 RibbonKit.WinForms.RibbonBackstagePageItem.Content.get -> System.Windows.Forms.Control?
 RibbonKit.WinForms.RibbonBackstagePageItem.Content.set -> void
 RibbonKit.WinForms.RibbonBackstagePageItem.ContentChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonBackstagePageItem.ContentType.get -> System.Type?
+RibbonKit.WinForms.RibbonBackstagePageItem.ContentType.set -> void
+RibbonKit.WinForms.RibbonBackstagePageItem.ContentTypeChanged -> System.EventHandler?
 override RibbonKit.WinForms.RibbonBackstagePageItem.PerformClick() -> void
 RibbonKit.WinForms.RibbonFileMenuMode
 RibbonKit.WinForms.RibbonFileMenuMode.CommandMenu = 0 -> RibbonKit.WinForms.RibbonFileMenuMode
@@ -345,6 +353,7 @@ override RibbonKit.WinForms.RibbonControl.OnEnabledChanged(System.EventArgs! e) 
 override RibbonKit.WinForms.RibbonControl.OnFontChanged(System.EventArgs! e) -> void
 override RibbonKit.WinForms.RibbonControl.OnGotFocus(System.EventArgs! e) -> void
 override RibbonKit.WinForms.RibbonControl.OnHandleCreated(System.EventArgs! e) -> void
+override RibbonKit.WinForms.RibbonControl.OnCreateControl() -> void
 override RibbonKit.WinForms.RibbonControl.OnHandleDestroyed(System.EventArgs! e) -> void
 override RibbonKit.WinForms.RibbonControl.OnLostFocus(System.EventArgs! e) -> void
 override RibbonKit.WinForms.RibbonControl.OnMouseCaptureChanged(System.EventArgs! e) -> void

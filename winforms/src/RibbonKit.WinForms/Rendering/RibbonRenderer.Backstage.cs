@@ -48,6 +48,8 @@ public partial class RibbonRenderer
             context.Graphics.FillRectangle(rail, context.Bounds);
         }
         finally { context.Graphics.CompositingMode = mode; }
+        if (item is RibbonMenuSeparatorItem separator)
+        { DrawMenuSeparator(context with { Hot = false, Pressed = false, Focused = false }, separator); return; }
         var color = !enabled ? context.Theme.DisabledColor : selected ? context.Theme.Accent : context.Theme.Foreground;
         if (item is null)
         {

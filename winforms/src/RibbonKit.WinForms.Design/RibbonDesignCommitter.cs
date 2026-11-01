@@ -39,6 +39,12 @@ internal static class RibbonDesignCommitter
         var used = new HashSet<string>(host.Container.Components.Cast<IComponent>().Select(component => component.Site?.Name ?? ""), StringComparer.OrdinalIgnoreCase);
         var snapshot = new RibbonDesignSnapshot
         {
+            BuiltInTheme = ribbon.BuiltInTheme?.ToString() ?? "",
+            ThemeRevision = ribbon.Theme + "\n" + ribbon.ApplicationTheme,
+            ApplicationTheme = ribbon.ApplicationTheme == RibbonThemes.Office2024Light ? "Office 2024 Light" : "Custom application theme",
+            ThemeChoices = Enum.GetNames<RibbonBuiltInTheme>(),
+            AnimationLevel = ribbon.AnimationLevel.ToString(),
+            AnimationChoices = Enum.GetNames<RibbonAnimationLevel>(),
             ReservedNames = host.Container.Components.Cast<IComponent>().Where(component => !elements.Contains(component)).Select(component => component.Site?.Name ?? "").Where(name => name.Length != 0).ToList(),
             ReservedIds = OutsideElements(ribbon).Select(element => element.Id).ToList()
         };
@@ -62,6 +68,9 @@ internal static class RibbonDesignCommitter
     {
         var before = Read(ribbon, host);
         if (before.Revision != draft.Revision) throw new ArgumentException("The ribbon changed while the editor was open. Cancel and reopen Edit Ribbon.");
+        var theme = ParseTheme(draft.BuiltInTheme);
+        var animation = ParseAnimation(draft.AnimationLevel);
+        draft.ThemeRevision = before.ThemeRevision;
         // Reserved names/IDs and property schemas come from the live designer,
         // not from data sent back by a dialog.
         draft.ReservedIds = before.ReservedIds; draft.ReservedNames = before.ReservedNames; draft.Validate();
@@ -114,6 +123,20 @@ internal static class RibbonDesignCommitter
         bool initializing = false;
         try
         {
+            if (ribbon.BuiltInTheme != theme)
+            {
+                var property = TypeDescriptor.GetProperties(ribbon)[nameof(ribbon.BuiltInTheme)]!;
+                var old = ribbon.BuiltInTheme;
+                changes.OnComponentChanging(ribbon, property); property.SetValue(ribbon, theme); changes.OnComponentChanged(ribbon, property, old, theme);
+            }
+            if (ribbon.AnimationLevel != animation)
+            {
+                var property = TypeDescriptor.GetProperties(ribbon)[nameof(ribbon.AnimationLevel)]!;
+                var old = ribbon.AnimationLevel;
+                changes.OnComponentChanging(ribbon, property); property.SetValue(ribbon, animation); changes.OnComponentChanged(ribbon, property, old, animation);
+            }
+            if (new RibbonDesignSnapshot { Tabs = before.Tabs }.Serialize() == new RibbonDesignSnapshot { Tabs = draft.Tabs }.Serialize())
+            { transaction.Commit(); return true; }
             var target = new Dictionary<string, RibbonElement>(existing, StringComparer.Ordinal);
             foreach (var node in draft.Nodes)
             {
@@ -183,7 +206,7 @@ internal static class RibbonDesignCommitter
         finally { if (initializing) ribbon.EndInit(); ((IDisposable)transaction).Dispose(); }
     }
 
-    private static RibbonElement BuildProbe(RibbonDesignNode node, Dictionary<string, RibbonDesignNode> originals, List<RibbonDesignNode> templates)
+    internal static RibbonElement BuildProbe(RibbonDesignNode node, Dictionary<string, RibbonDesignNode> originals, List<RibbonDesignNode> templates)
     {
         var element = (RibbonElement)Activator.CreateInstance(Kinds[node.Kind])!;
         try
@@ -232,15 +255,15 @@ internal static class RibbonDesignCommitter
         return property;
     }
     private static object? ConvertValue(PropertyDescriptor property, string value) => property.PropertyType == typeof(string) ? value : property.Converter.ConvertFromInvariantString(value);
-    private static bool SameIcon(RibbonDesignIcon first, RibbonDesignIcon second) => first.Kind == second.Kind && first.Source == second.Source && first.UseForegroundColor == second.UseForegroundColor;
-    private static RibbonDesignIcon ReadIcon(RibbonElement element)
+    internal static bool SameIcon(RibbonDesignIcon first, RibbonDesignIcon second) => first.Kind == second.Kind && first.Source == second.Source && first.UseForegroundColor == second.UseForegroundColor;
+    internal static RibbonDesignIcon ReadIcon(RibbonElement element)
     {
         var icon = element switch { RibbonItem item => item.Icon, RibbonGroup group => group.Icon, _ => null };
         bool raster = element is RibbonItem { Image: not null } or RibbonItem { LargeImage: not null };
         return icon is RibbonSvgIcon svg ? new() { Kind = "Svg", Source = svg.Source, Name = svg.Name, UseForegroundColor = svg.UseForegroundColor, HasRasterImage = raster }
             : new() { Kind = icon == null ? "None" : "Custom", Name = icon?.GetType().Name ?? "", HasRasterImage = raster };
     }
-    private static List<RibbonDesignProperty> Properties(RibbonElement element) => ScalarNames
+    internal static List<RibbonDesignProperty> Properties(RibbonElement element) => ScalarNames
         .Where(name => name != "Checked" || element is not RibbonCheckBoxItem)
         .Select(name => TypeDescriptor.GetProperties(element)[name]).Where(property => property is { IsReadOnly: false })
         .Select(property => new RibbonDesignProperty { Name = property!.Name, Category = property.Category,
@@ -255,13 +278,26 @@ internal static class RibbonDesignCommitter
         string stem = char.ToLowerInvariant(type[0]) + type.Substring(1); int suffix = 1; string name;
         do { name = stem + suffix++; } while (!used.Add(name)); return name;
     }
-    private static string Fingerprint(RibbonDesignSnapshot snapshot) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(new RibbonDesignSnapshot { Tabs = snapshot.Tabs }.Serialize())));
+    internal static RibbonBuiltInTheme? ParseTheme(string value) => value switch
+    {
+        "" => null,
+        nameof(RibbonBuiltInTheme.Office2024Light) => RibbonBuiltInTheme.Office2024Light,
+        _ => throw new ArgumentException("Select a supported built-in theme or the application theme.")
+    };
+    internal static RibbonAnimationLevel ParseAnimation(string value) => value switch
+    {
+        nameof(RibbonAnimationLevel.None) => RibbonAnimationLevel.None,
+        nameof(RibbonAnimationLevel.Subtle) => RibbonAnimationLevel.Subtle,
+        nameof(RibbonAnimationLevel.Expressive) => RibbonAnimationLevel.Expressive,
+        _ => throw new ArgumentException("Select a supported animation level.")
+    };
+    private static string Fingerprint(RibbonDesignSnapshot snapshot) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(new RibbonDesignSnapshot { Tabs = snapshot.Tabs, BuiltInTheme = snapshot.BuiltInTheme, ThemeRevision = snapshot.ThemeRevision, AnimationLevel = snapshot.AnimationLevel }.Serialize())));
     private static IEnumerable<RibbonElement> Elements(IEnumerable<RibbonElement> elements)
     { foreach (var element in elements) { yield return element; foreach (var child in Elements(ChildElements(element))) yield return child; } }
     private static IEnumerable<RibbonElement> ChildElements(RibbonElement element) => element switch
     {
         RibbonTab tab => tab.Groups, RibbonGroup group => group.Items, RibbonDropDownItem drop => drop.Items,
-        RibbonBackstage backstage => backstage.Items, RibbonCommandCatalog catalog => catalog.Commands,
+        RibbonBackstage backstage => backstage.NavigationItems, RibbonCommandCatalog catalog => catalog.Commands,
         RibbonMessageBar messages => messages.Items, RibbonMessage message => [message.Action], _ => []
     };
     private static IEnumerable<RibbonElement> OutsideElements(RibbonControl ribbon) => Elements(new RibbonElement[] { ribbon.FileMenu, ribbon.Backstage, ribbon.CommandCatalog, ribbon.MessageBar }.Concat(ribbon.QuickAccessItems));

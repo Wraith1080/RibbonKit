@@ -12,7 +12,7 @@ public enum RibbonFileMenuMode
     Backstage
 }
 
-/// <summary>Owns Backstage navigation models. Applications retain ownership of all page Controls.</summary>
+/// <summary>Owns main and bottom Backstage navigation models. Explicit page Content remains borrowed; ContentType-created controls are page-owned.</summary>
 public sealed class RibbonBackstage : RibbonElement
 {
     private RibbonBackstagePageItem? _selectedPage;
@@ -36,11 +36,17 @@ public sealed class RibbonBackstage : RibbonElement
     /// <summary>Occurs after NavigationBackgroundOpacity changes.</summary>
     public event EventHandler? NavigationBackgroundOpacityChanged;
     /// <summary>Initializes an empty native Backstage declaration.</summary>
-    public RibbonBackstage() => Items = new(this);
-    /// <summary>Gets the owned page and button entries, in navigation order.</summary>
+    public RibbonBackstage() { Items = new(this); FooterItems = new(this); }
+    /// <summary>Gets the owned main page, button and decorative separator entries, in navigation order.</summary>
     [Category("Data"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     [Editor("RibbonKit.WinForms.Design.BackstageCollectionEditor, RibbonKit.WinForms.Design", "System.Drawing.Design.UITypeEditor, System.Drawing")]
     public RibbonItemCollection Items { get; }
+    /// <summary>Gets the owned bottom-aligned page, button and decorative separator entries. Empty by default. Main entries scroll above this section; when both sections cannot fit, they share one scrollable navigation list. Order within each collection is preserved.</summary>
+    [Category("Data"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Editor("RibbonKit.WinForms.Design.BackstageCollectionEditor, RibbonKit.WinForms.Design", "System.Drawing.Design.UITypeEditor, System.Drawing")]
+    public RibbonItemCollection FooterItems { get; }
+    internal IEnumerable<RibbonItem> NavigationItems => Items.Concat(FooterItems);
+    internal bool Contains(RibbonItem item) => Items.Contains(item) || FooterItems.Contains(item);
     /// <summary>Gets or sets the preferred navigation width in 96-DPI logical pixels. Null selects Auto, measured from visible captions, icon space and padding. Available page space and the minimum/maximum limits constrain display without changing this value. Use Reset in the designer to restore Auto.</summary>
     [Category("Layout"), Bindable(true), DefaultValue(null)]
     [TypeConverter(typeof(RibbonNavigationWidthConverter))]
@@ -110,18 +116,19 @@ public sealed class RibbonBackstage : RibbonElement
     public event CancelEventHandler? Closing;
     /// <summary>Occurs after Backstage closes, including forced availability or lifetime teardown.</summary>
     public event EventHandler? Closed;
-    internal bool Available(RibbonBackstagePageItem page) => Items.Contains(page) && !page.IsDisposed && page.Visible && page.EffectiveEnabled;
+    internal bool Available(RibbonBackstagePageItem page) => Contains(page) && !page.IsDisposed && page.Visible && page.EffectiveEnabled;
     internal void Reconcile()
     {
         if (_selectedPage is null || !Available(_selectedPage))
         {
-            int index = _fallbackIndex >= 0 ? _fallbackIndex : _selectedPage is null ? 0 : Math.Max(0, Items.IndexOf(_selectedPage));
+            var entries = NavigationItems.ToArray();
+            int index = _fallbackIndex >= 0 ? _fallbackIndex : _selectedPage is null ? 0 : Math.Max(0, Array.IndexOf(entries, _selectedPage));
             _fallbackIndex = -1;
-            SetSelection(Items.Skip(index).OfType<RibbonBackstagePageItem>().FirstOrDefault(Available)
-                ?? Items.Take(index).OfType<RibbonBackstagePageItem>().LastOrDefault(Available));
+            SetSelection(entries.Skip(index).OfType<RibbonBackstagePageItem>().FirstOrDefault(Available)
+                ?? entries.Take(index).OfType<RibbonBackstagePageItem>().LastOrDefault(Available));
         }
     }
-    internal void Removing(RibbonElement item, int index) { if (ReferenceEquals(item, _selectedPage)) _fallbackIndex = index; }
+    internal void Removing(RibbonElement item, int index) { if (ReferenceEquals(item, _selectedPage)) _fallbackIndex = Math.Max(0, Array.IndexOf(NavigationItems.ToArray(), item)); }
     private void SetSelection(RibbonBackstagePageItem? page)
     {
         if (ReferenceEquals(page, _selectedPage)) return;
@@ -133,16 +140,18 @@ public sealed class RibbonBackstage : RibbonElement
     internal bool CanClose() { var e = new CancelEventArgs(); Closing?.Invoke(this, e); return !e.Cancel; }
     internal void OnOpened() => Opened?.Invoke(this, EventArgs.Empty);
     internal void OnClosed() => Closed?.Invoke(this, EventArgs.Empty);
-    internal override IEnumerable<RibbonElement> Children => Items;
+    internal override IEnumerable<RibbonElement> Children => NavigationItems;
 }
 
-/// <summary>A Backstage page borrowing one initially unparented, non-top-level native Control. Do not reparent or dispose the Control while it is assigned. Release Content or dispose the page before disposing application content.</summary>
+/// <summary>A Backstage page with borrowed native Content or an optional, page-owned UserControl selected through ContentType.</summary>
 public sealed class RibbonBackstagePageItem : RibbonItem
 {
     private static readonly ConditionalWeakTable<Control, RibbonBackstagePageItem> Claims = new();
     private Control? _content;
-    /// <summary>Gets or assigns borrowed native content. One Control belongs to one page declaration; it keeps its library parent while pages are hidden or Backstage is closed. Release, removal and ribbon/page disposal detach without disposing content. The application owns its bindings, values, styling and disposal.</summary>
-    [Category("Data"), DefaultValue(null)]
+    private Type? _contentType;
+    private bool _ownsContent, _creatingContent, _releasingContent;
+    /// <summary>Gets the realized content or assigns borrowed native content when ContentType is null. Borrowed content must initially be unparented and used by only one page; the application owns its disposal. ContentType-created content is retained across page switches and disposed by the page. Do not reparent content while assigned.</summary>
+    [Category("Data")]
     public Control? Content
     {
         get => _content;
@@ -150,6 +159,7 @@ public sealed class RibbonBackstagePageItem : RibbonItem
         {
             Ribbon?.VerifyAccess();
             if (ReferenceEquals(value, _content)) return;
+            if (_contentType is not null) throw new InvalidOperationException("Clear ContentType before assigning borrowed Content.");
             if (value is not null)
             {
                 ObjectDisposedException.ThrowIf(value.IsDisposed, value);
@@ -163,9 +173,53 @@ public sealed class RibbonBackstagePageItem : RibbonItem
             ContentChanged?.Invoke(this, EventArgs.Empty);
         }
     }
+    private bool ShouldSerializeContent() => _contentType is null && _content is not null;
+    private void ResetContent() => Content = null;
+
+    /// <summary>Gets or selects a public, concrete UserControl type with a public parameterless constructor. Null preserves application-owned Content. All selected page types are created during runtime ribbon initialization before Form.Load, reused across page switches, and disposed on type replacement/reset or page disposal. Types assigned after initialization are created immediately, or at the end of an active update batch. Clear borrowed Content before selecting a type. Designer previews never create it.</summary>
+    [Category("Data"), DefaultValue(null)]
+    public Type? ContentType
+    {
+        get => _contentType;
+        set
+        {
+            Ribbon?.VerifyAccess();
+            if (_contentType == value) return;
+            if (value is not null && !IsContentType(value)) throw new ArgumentException("Choose a public, concrete UserControl with a public parameterless constructor.", nameof(value));
+            if (!_ownsContent && _content is not null) throw new InvalidOperationException("Clear application-owned Content before selecting ContentType.");
+            if (_creatingContent) throw new InvalidOperationException("ContentType cannot change while its UserControl is being created.");
+            ReleaseContent();
+            _contentType = value;
+            Changed();
+            ContentTypeChanged?.Invoke(this, EventArgs.Empty);
+            ContentChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+    /// <summary>Occurs after ContentType changes.</summary>
+    public event EventHandler? ContentTypeChanged;
+    internal static bool IsContentType(Type type) => typeof(UserControl).IsAssignableFrom(type) && type.IsVisible && !type.IsAbstract
+        && !type.ContainsGenericParameters && type.GetConstructor(Type.EmptyTypes) is not null;
+    internal void EnsureContent()
+    {
+        if (_contentType is null || _content is not null || _releasingContent || Ribbon?.IsInDesignMode == true || Site?.DesignMode == true || IsDisposed) return;
+        if (_creatingContent) throw new InvalidOperationException("Recursive Backstage content creation is not supported.");
+        _creatingContent = true;
+        try
+        {
+            var control = (UserControl)Activator.CreateInstance(_contentType)!;
+            if (control.IsDisposed || control.Parent is not null || Claims.TryGetValue(control, out _))
+            { control.Dispose(); throw new InvalidOperationException("A page UserControl constructor must return a live, unparented control."); }
+            _content = control; _ownsContent = true; Claims.Add(control, this); control.Disposed += ContentDisposed;
+        }
+        finally { _creatingContent = false; }
+        ContentChanged?.Invoke(this, EventArgs.Empty);
+    }
     /// <summary>Occurs after Content changes or the application disposes it.</summary>
     public event EventHandler? ContentChanged;
-    private void ContentDisposed(object? sender, EventArgs e) => Content = null;
+    private void ContentDisposed(object? sender, EventArgs e)
+    {
+        ReleaseContent(); Changed(); ContentChanged?.Invoke(this, EventArgs.Empty);
+    }
     private void ReleaseContent()
     {
         if (_content is not { } old) return;
@@ -173,6 +227,13 @@ public sealed class RibbonBackstagePageItem : RibbonItem
         Ribbon?.DetachBackstageContent(old);
         Claims.Remove(old);
         _content = null;
+        bool owned = _ownsContent; _ownsContent = false;
+        if (owned && !old.IsDisposed && !old.Disposing)
+        {
+            _releasingContent = true;
+            try { old.Dispose(); }
+            finally { _releasingContent = false; }
+        }
     }
     /// <summary>Selects this available page through its Backstage owner, preserving native validation.</summary>
     public override void PerformClick()

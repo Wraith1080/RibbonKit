@@ -25,6 +25,16 @@ public partial class RibbonForm : Form
         get
         {
             var value = base.CreateParams;
+            if (CustomCaption && (DesignMode || LicenseManager.UsageMode == LicenseUsageMode.Designtime))
+            {
+                // The designer embeds this window as a child: DWM does not
+                // provide the runtime frame, so native edge styles paint a
+                // legacy bevel around our client caption. Designer adorners
+                // retain resizing through the authored FormBorderStyle.
+                value.Style &= ~0x00C40000; // WS_CAPTION | WS_THICKFRAME
+                value.ExStyle &= ~0x00000301; // WINDOWEDGE | CLIENTEDGE | DLGMODALFRAME
+                return value;
+            }
             // The original Solid frame retains WS_CAPTION and its DWM frame.
             // Legacy extended-glass material headers need caption suppression.
             // Direct bitmap alpha on recent Windows retains the native style.

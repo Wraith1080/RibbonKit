@@ -6,7 +6,78 @@ internal static class Program
     private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
+        if (args.Length == 2 && args[0] is "--generate-animation-forms" or "--verify-animation-forms")
+        {
+            try
+            {
+                if (args[0] == "--generate-animation-forms") AnimationSelectionCheck.Generate(args[1]);
+                else AnimationSelectionCheck.Verify(args[1]);
+            }
+            catch (Exception error) { File.WriteAllText(args[1] + ".error.log", error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
+        if (args.Length == 2 && args[0] is "--generate-theme-forms" or "--verify-theme-forms")
+        {
+            try
+            {
+                if (args[0] == "--generate-theme-forms") ThemeSelectionCheck.Generate(args[1]);
+                else ThemeSelectionCheck.Verify(args[1]);
+            }
+            catch (Exception error) { File.WriteAllText(args[1] + ".error.log", error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
+        if (args.Length == 3 && args[0] == "--verify-backstage-designer-preview")
+        {
+            Directory.CreateDirectory(args[2]);
+            try { BackstageDesignerPreviewCheck.Verify(args[1], args[2]); }
+            catch (Exception error) { File.WriteAllText(Path.Combine(args[2], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
+            return;
+        }
+        if (args.Length == 2 && args[0] == "--verify-backstage-navigation")
+        {
+            Directory.CreateDirectory(args[1]);
+            try { using var example = new DesignerForm(); example.VerifyBackstageNavigation(); File.WriteAllText(Path.Combine(args[1], "result.log"), "PASS: independent package-only public API; bottom commands, decorative separators, keyboard reachability, inline scrolling fallback, native Notes handles/text/selection, events and model identity retained."); }
+            catch (Exception error) { File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
+            return;
+        }
+        if (args.Length == 2 && args[0] == "--verify-designer-presentation")
+        {
+            try { DesignerPresentationCheck.Verify(args[1]); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
+            return;
+        }
+        if (args.Length == 2 && args[0] is "--generate-content-form" or "--verify-content-form")
+        {
+            try
+            {
+                if (args[0] == "--generate-content-form") ContentTypeSerializationCheck.Generate(args[1]);
+                else ContentTypeSerializationCheck.Verify(args[1]);
+            }
+            catch (Exception error) { File.WriteAllText(args[1] + ".error.log", error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
+        if (args.Length == 2 && args[0] is "--generate-file-form" or "--verify-file-form")
+        {
+            try
+            {
+                if (args[0] == "--generate-file-form") FileMenuSerializationCheck.Generate(args[1]);
+                else FileMenuSerializationCheck.Verify(args[1]);
+            }
+            catch (Exception error) { File.WriteAllText(args[1] + ".error.log", error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
         using var form = new DesignerForm();
+        if (args.Length == 2 && args[0] == "--verify-page-content")
+        {
+            Directory.CreateDirectory(args[1]);
+            try
+            {
+                form.VerifyPageContent(); form.VerifyPageContentDisposal();
+                File.WriteAllText(Path.Combine(args[1], "result.log"), "PASS: package-only Info/Print instances exist after InitializeComponent and in Form.Load before File clicks; Load-assigned values and native handles/text/selection retained across page switches and reopen; owned controls disposed with Form.");
+            }
+            catch (Exception error) { File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
+            return;
+        }
         if (args.Length == 2 && args[0] == "--verify-roundtrip")
         {
             Directory.CreateDirectory(args[1]);

@@ -16,5 +16,10 @@ Use normal Debug/Release output folders. Version and package identity are native
 - Distinguish unit/STA, external UIA, generated-code, actual VS designer, native
   display/hardware and human acceptance. Record pending gates in docs/M1-STATUS.md.
 - Use one agent. Build/test this solution only; WPF checks do not verify WinForms.
+- Ongoing VS designer review uses `samples/RibbonKit.WinForms.DesignerSample`.
+  Refresh that project in place with `eng/Update-DesignerSample.ps1`; preserve its
+  authored Forms/UserControls/resources. Do not create another temporary user
+  review solution. An explicit isolated destination remains available only when
+  a particular independent package-verification scope needs it.
 
 See ../docs/21-NATIVE-WINFORMS-PLAN.md for the approved scope and API proposal.

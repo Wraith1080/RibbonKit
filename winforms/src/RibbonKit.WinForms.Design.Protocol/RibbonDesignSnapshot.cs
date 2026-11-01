@@ -13,6 +13,12 @@ public sealed class RibbonDesignSnapshot
 {
     [DataMember] public string Revision { get; set; } = "";
     [DataMember] public string SelectionKey { get; set; } = "";
+    [DataMember] public string BuiltInTheme { get; set; } = "";
+    [DataMember] public string ThemeRevision { get; set; } = "";
+    [DataMember] public string ApplicationTheme { get; set; } = "";
+    [DataMember] public string[] ThemeChoices { get; set; } = Array.Empty<string>();
+    [DataMember] public string AnimationLevel { get; set; } = "None";
+    [DataMember] public string[] AnimationChoices { get; set; } = Array.Empty<string>();
     [DataMember] public List<RibbonDesignNode> Tabs { get; set; } = new();
     [DataMember] public List<RibbonDesignNode> Templates { get; set; } = new();
     [DataMember] public List<string> ReservedNames { get; set; } = new();
@@ -68,6 +74,13 @@ public sealed class RibbonDesignSnapshot
         new DataContractJsonSerializer(typeof(RibbonDesignSnapshot)).WriteObject(stream, value);
         return Encoding.UTF8.GetString(stream.ToArray());
     }
+}
+
+[DataContract]
+public sealed class RibbonThemePreview
+{
+    [DataMember] public string RibbonPng { get; set; } = "";
+    [DataMember] public string BackstagePng { get; set; } = "";
 }
 
 [DataContract]

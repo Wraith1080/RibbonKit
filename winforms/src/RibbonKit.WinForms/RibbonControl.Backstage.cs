@@ -10,10 +10,11 @@ public partial class RibbonControl
     private Control? _backstagePriorFocus;
     private bool _backstageOpen, _backstageChanging, _backstageRefreshing;
     private bool _backstageClosing;
+    private bool _backstageContentInitialized, _initializingBackstageContent;
     private RibbonBackstageMotion? _backstageMotion;
     internal RibbonBackstageMotion? BackstageOpeningMotion => _backstageMotion;
 
-    /// <summary>Gets the stable owned Backstage declaration. Its page Controls remain application-owned.</summary>
+    /// <summary>Gets the stable owned Backstage declaration. Explicit page Content remains application-owned; optional ContentType instances are page-owned.</summary>
     [Category("Data"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     [TypeConverter(typeof(ExpandableObjectConverter))]
     public RibbonBackstage Backstage { get; }
@@ -150,12 +151,25 @@ public partial class RibbonControl
         }
         finally { _backstageChanging = changing; }
     }
+    private void InitializeBackstageContent()
+    {
+        if (Backstage is null || Backstage.IsDisposed || _disposing || IsDisposed || IsInDesignMode || _updateDepth > 0 || _initializingBackstageContent) return;
+        _backstageContentInitialized = true;
+        _initializingBackstageContent = true;
+        try
+        {
+            foreach (var page in Backstage.NavigationItems.OfType<RibbonBackstagePageItem>().ToArray())
+                if (!page.IsDisposed && ReferenceEquals(page.Parent, Backstage)) page.EnsureContent();
+        }
+        finally { _initializingBackstageContent = false; }
+    }
     internal void RefreshBackstage()
     {
         if (Backstage is null || _backstageRefreshing) return;
         _backstageRefreshing = true;
         try
         {
+            if (_backstageContentInitialized) InitializeBackstageContent();
             if (_backstageOpen && !CanShowBackstage) CloseBackstage(false, true);
             if (!Backstage.IsDisposed) Backstage.Reconcile();
             _backstageSurface?.Synchronize();
@@ -184,7 +198,7 @@ public partial class RibbonControl
     }
     internal void ActivateBackstage(RibbonItem item)
     {
-        if (!IsBackstageOpen || !Backstage.Items.Contains(item) || !item.Visible || !item.EffectiveEnabled) return;
+        if (!IsBackstageOpen || item is RibbonMenuSeparatorItem || !Backstage.Contains(item) || !item.Visible || !item.EffectiveEnabled) return;
         if (item is RibbonBackstagePageItem page) page.PerformClick();
         else if (CloseBackstage(true, animate: false)) item.PerformClick();
     }

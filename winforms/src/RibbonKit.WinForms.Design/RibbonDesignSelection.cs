@@ -11,13 +11,16 @@ internal sealed class RibbonDesignSelection : IDisposable
 {
     private readonly RibbonControl _ribbon;
     private readonly ISelectionService? _selection;
+    internal RibbonBackstageDesignPreview Backstage { get; }
     internal event EventHandler? Changed;
-    internal RibbonDesignSelection(RibbonControl ribbon, ISelectionService? selection)
+    internal RibbonDesignSelection(RibbonControl ribbon, ISelectionService? selection, Control? previewSurface = null)
     {
         _ribbon = ribbon; _selection = selection;
+        Backstage = new(ribbon, selection, previewSurface ?? ribbon); Backstage.Changed += PreviewChanged;
         if (_selection is not null) _selection.SelectionChanged += SelectionChanged;
     }
-    internal bool Active => ReferenceEquals(_selection?.PrimarySelection, _ribbon) || TabFor(_selection?.PrimarySelection) is not null;
+    internal bool Active => Backstage.IsOpen || ReferenceEquals(_selection?.PrimarySelection, _ribbon) || TabFor(_selection?.PrimarySelection) is not null;
+    private void PreviewChanged(object? sender, EventArgs e) => Changed?.Invoke(this, EventArgs.Empty);
     internal object? Selected => _selection?.PrimarySelection;
     internal RibbonTab? TabFor(object? component)
     {
@@ -48,9 +51,10 @@ internal sealed class RibbonDesignSelection : IDisposable
     }
     private RibbonTarget? ScrollTarget(Point point) => _ribbon.Snapshot.Targets.LastOrDefault(target =>
         target.Kind is TargetKind.TabBack or TargetKind.TabNext or TargetKind.BodyBack or TargetKind.BodyNext && target.VisibleBounds.Contains(point));
-    internal bool CanSelectAt(Point point) => HitTest(point) is not null || ScrollTarget(point) is not null;
+    internal bool CanSelectAt(Point point) => Backstage.CanOpenFromFile(point) || HitTest(point) is not null || ScrollTarget(point) is not null;
     internal bool SelectAt(Point point)
     {
+        if (Backstage.CanOpenFromFile(point)) { Backstage.Open(); return true; }
         if (ScrollTarget(point) is { } scroll)
         {
             _ribbon.Scroll(scroll.Kind is TargetKind.TabBack or TargetKind.TabNext, scroll.Kind is TargetKind.TabBack or TargetKind.BodyBack ? -120 : 120);
@@ -62,6 +66,7 @@ internal sealed class RibbonDesignSelection : IDisposable
     internal void Select(object component)
     {
         if (!ReferenceEquals(component, _ribbon) && TabFor(component) is null) return;
+        Backstage.Close(false);
         if (TabFor(component) is { } tab) _ribbon.SetDesignPreviewTab(tab);
         _selection?.SetSelectedComponents(new[] { component }, SelectionTypes.Replace);
         Changed?.Invoke(this, EventArgs.Empty);
@@ -88,12 +93,18 @@ internal sealed class RibbonDesignSelection : IDisposable
     }
     private void SelectionChanged(object? sender, EventArgs e)
     {
+        bool wasOpen = Backstage.IsOpen;
+        Backstage.ObserveSelection(Selected);
         if (TabFor(Selected) is { } tab) _ribbon.SetDesignPreviewTab(tab);
+        // Preview gestures publish after SetSelectedComponents returns. An
+        // external selection that closes the preview already published Close.
+        if (Backstage.ChangingSelection || wasOpen && !Backstage.IsOpen) return;
         Changed?.Invoke(this, EventArgs.Empty);
     }
     public void Dispose()
     {
         if (_selection is not null) _selection.SelectionChanged -= SelectionChanged;
+        Backstage.Changed -= PreviewChanged; Backstage.Close(false);
         if (!_ribbon.IsDisposed && _ribbon.IsInDesignMode) _ribbon.SetDesignPreviewTab(null);
     }
 }

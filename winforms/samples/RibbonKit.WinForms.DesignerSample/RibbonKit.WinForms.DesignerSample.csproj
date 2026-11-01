@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Persistent editable designer sample; the refresh command never copies over authored files. -->
+  <Import Project=".local/DesignerPackage.props" Condition="Exists('.local/DesignerPackage.props')" />
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>RibbonKitDesignerConsumer</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="RibbonKit.WinForms" Version="$(RibbonKitDesignerSamplePackageVersion)" />
+    <Compile Update="DesignerForm.cs"><SubType>Form</SubType></Compile>
+    <Compile Update="DesignerForm.Designer.cs"><DependentUpon>DesignerForm.cs</DependentUpon></Compile>
+    <EmbeddedResource Update="DesignerForm.resx"><DependentUpon>DesignerForm.cs</DependentUpon></EmbeddedResource>
+    <Compile Update="BackstageInfoControl.cs"><SubType>UserControl</SubType></Compile>
+    <Compile Update="BackstageInfoControl.Designer.cs"><DependentUpon>BackstageInfoControl.cs</DependentUpon></Compile>
+    <Compile Update="BackstagePrintControl.cs"><SubType>UserControl</SubType></Compile>
+    <Compile Update="BackstagePrintControl.Designer.cs"><DependentUpon>BackstagePrintControl.cs</DependentUpon></Compile>
+  </ItemGroup>
+  <Target Name="RequireDesignerSamplePackage" BeforeTargets="CollectPackageReferences;PrepareForBuild" Condition="'$(RibbonKitDesignerSamplePackageVersion)' == ''">
+    <Error Text="Run winforms/eng/Update-DesignerSample.ps1 once to build the local designer package, then reopen this solution." />
+  </Target>
+</Project>

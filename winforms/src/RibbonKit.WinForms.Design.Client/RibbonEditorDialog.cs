@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using RibbonKit.WinForms.Design.Protocol;
@@ -13,6 +14,10 @@ internal sealed class RibbonEditorDialog : Form
 {
     private readonly RibbonDesignSnapshot _draft;
     private readonly Func<RibbonDesignSnapshot, string?> _commit;
+    private readonly Func<RibbonDesignSnapshot, RibbonThemePreview>? _render;
+    private readonly GroupBox _themeBox = new() { Name = "RibbonTheme", Text = "Ribbon settings", AutoSize = true, Dock = DockStyle.Fill, Padding = new Padding(8), Margin = new Padding(0, 0, 0, 8) };
+    private readonly ComboBox _themeChoice = new() { Name = "BuiltInTheme", DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Top, AccessibleName = "Built-in ribbon theme" };
+    private readonly ComboBox _animationChoice = new() { Name = "AnimationLevel", DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Top, AccessibleName = "Ribbon animation level" };
     private readonly TreeView _tree = new() { Dock = DockStyle.Fill, HideSelection = false, AccessibleName = "Ribbon structure" };
     private readonly TreeNode _root = new("Ribbon") { Name = "RibbonRoot" };
     private readonly PropertyGrid _properties = new() { Dock = DockStyle.Fill, HelpVisible = true, AccessibleName = "Selected component properties" };
@@ -38,10 +43,10 @@ internal sealed class RibbonEditorDialog : Form
     private bool _showing, _sizing;
     private int _metricsDpi = 96;
 
-    internal RibbonEditorDialog(RibbonDesignSnapshot draft, Func<RibbonDesignSnapshot, string?> commit)
+    internal RibbonEditorDialog(RibbonDesignSnapshot draft, Func<RibbonDesignSnapshot, string?> commit, Func<RibbonDesignSnapshot, RibbonThemePreview>? render = null)
     {
         SuspendLayout();
-        _draft = draft; _commit = commit; _contextMenu = new ContextMenuStrip(_components) { ShowImageMargin = false };
+        _draft = draft; _commit = commit; _render = render; _contextMenu = new ContextMenuStrip(_components) { ShowImageMargin = false };
         Text = "Edit Ribbon"; Name = "RibbonEditorDialog"; StartPosition = FormStartPosition.CenterParent;
         Font = SystemFonts.MessageBoxFont; AutoScaleDimensions = new SizeF(96, 96); AutoScaleMode = AutoScaleMode.Dpi;
         MinimumSize = new Size(780, 520); ClientSize = new Size(960, 640); MinimizeBox = false; MaximizeBox = false;
@@ -58,8 +63,9 @@ internal sealed class RibbonEditorDialog : Form
         structure.Padding = new Padding(0, 6, 6, 0);
         structure.Controls.Add(new Label { Text = "Ribbon structure", AutoSize = true, Dock = DockStyle.Fill, Padding = new Padding(0, 0, 0, 6) }, 0, 0);
         _tree.Name = "StructureTree"; _tree.ContextMenuStrip = _contextMenu; structure.Controls.Add(_tree, 0, 1); _split.Panel1.Controls.Add(structure);
-        var details = ColumnLayout(); details.RowCount = 5; details.Padding = new Padding(6, 6, 0, 0);
+        var details = ColumnLayout(); details.RowCount = 6; details.Padding = new Padding(6, 6, 0, 0);
         details.RowStyles.Add(new RowStyle(SizeType.AutoSize)); details.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        details.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         details.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         details.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); details.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         details.Controls.Add(_selection, 0, 0);
@@ -80,8 +86,20 @@ internal sealed class RibbonEditorDialog : Form
             if (picker.ShowDialog(this) == DialogResult.OK && picker.Selection is { } selection) SetIcon(selection);
         };
         clearIcon.Click += (_, _) => SetIcon(new RibbonDesignIcon());
-        _properties.Name = "ComponentProperties"; details.Controls.Add(_properties, 0, 3);
-        _choiceBox.Controls.Add(_choices); details.Controls.Add(_choiceBox, 0, 4); _split.Panel2.Controls.Add(details);
+        var themes = ColumnLayout(); themes.AutoSize = true; themes.Dock = DockStyle.Top; themes.RowCount = 5;
+        themes.Controls.Add(new Label { AutoSize = true, Dock = DockStyle.Fill, Text = "Application theme: " + draft.ApplicationTheme }, 0, 0);
+        _themeChoice.Items.Add("(Application theme)"); _themeChoice.Items.AddRange(draft.ThemeChoices.Cast<object>().ToArray());
+        themes.Controls.Add(_themeChoice, 0, 1);
+        themes.Controls.Add(new Label { Text = "Animation", AutoSize = true, Dock = DockStyle.Fill }, 0, 2);
+        _animationChoice.Items.AddRange(draft.AnimationChoices.Cast<object>().ToArray());
+        themes.Controls.Add(_animationChoice, 0, 3);
+        var preview = new Button { Name = "PreviewTheme", Text = "Preview ribbon and Backstage…", AutoSize = true, Enabled = render != null };
+        themes.Controls.Add(preview, 0, 4); _themeBox.Controls.Add(themes); details.Controls.Add(_themeBox, 0, 3);
+        _themeChoice.SelectedIndexChanged += (_, _) => { if (!_showing) _draft.BuiltInTheme = _themeChoice.SelectedIndex <= 0 ? "" : _themeChoice.SelectedItem?.ToString() ?? ""; };
+        _animationChoice.SelectedIndexChanged += (_, _) => { if (!_showing && _animationChoice.SelectedItem is string animation) _draft.AnimationLevel = animation; };
+        preview.Click += (_, _) => PreviewTheme();
+        _properties.Name = "ComponentProperties"; details.Controls.Add(_properties, 0, 4);
+        _choiceBox.Controls.Add(_choices); details.Controls.Add(_choiceBox, 0, 5); _split.Panel2.Controls.Add(details);
         var footer = new TableLayoutPanel { Name = "DialogFooter", ColumnCount = 3, RowCount = 1, AutoSize = true, Dock = DockStyle.Fill, Padding = new Padding(0, 12, 0, 0), Margin = new Padding(0) };
         footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         var ok = new Button { Name = "AcceptDraft", Text = "OK", AutoSize = true, MinimumSize = new Size(88, 30), Padding = new Padding(8, 2, 8, 2), Margin = new Padding(8, 0, 0, 0) };
@@ -184,6 +202,9 @@ internal sealed class RibbonEditorDialog : Form
         try
         {
             _properties.SelectedObject = ReferenceEquals(_tree.SelectedNode, _root) ? new RibbonRootProperties(_draft) : node == null ? null : new DraftProperties(node);
+            _themeBox.Visible = ReferenceEquals(_tree.SelectedNode, _root);
+            _themeChoice.SelectedIndex = _draft.BuiltInTheme.Length == 0 ? 0 : _themeChoice.Items.IndexOf(_draft.BuiltInTheme);
+            _animationChoice.SelectedItem = _draft.AnimationLevel;
             _choiceBox.Visible = node?.Kind == "ComboBox"; _choices.Text = node == null ? "" : string.Join(Environment.NewLine, node.Choices);
         }
         finally { _showing = false; }
@@ -292,12 +313,46 @@ internal sealed class RibbonEditorDialog : Form
         catch (Exception error) { MessageBox.Show(this, error.Message, "Edit Ribbon", MessageBoxButtons.OK, MessageBoxIcon.Error); }
     }
 
+    private void PreviewTheme()
+    {
+        if (_render == null) return;
+        try
+        {
+            using var dialog = CreateThemePreview();
+            dialog.ShowDialog(this);
+        }
+        catch (Exception error) { MessageBox.Show(this, error.Message, "Theme preview", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+    }
+    internal Form CreateThemePreview()
+    {
+        var result = (_render ?? throw new InvalidOperationException("Theme preview is unavailable."))(_draft);
+        var dialog = new Form { Text = "Ribbon theme preview", StartPosition = FormStartPosition.CenterParent,
+                Size = new Size(980, 600), MinimumSize = new Size(640, 400), ShowInTaskbar = false, MinimizeBox = false,
+                Font = Font, AutoScaleMode = AutoScaleMode.Dpi };
+        try
+        {
+            var views = new TabControl { Name = "ThemePreviewTabs", Dock = DockStyle.Fill };
+            void Add(string caption, string png)
+            {
+                using var stream = new MemoryStream(Convert.FromBase64String(png)); using var decoded = Image.FromStream(stream);
+                var picture = new PictureBox { Image = new Bitmap(decoded), SizeMode = PictureBoxSizeMode.AutoSize };
+                picture.Disposed += (_, _) => picture.Image?.Dispose();
+                var page = new TabPage(caption) { AutoScroll = true }; page.Controls.Add(picture); views.TabPages.Add(page);
+            }
+            Add("Ribbon", result.RibbonPng); Add("Backstage", result.BackstagePng);
+            dialog.Controls.Add(views);
+            dialog.Controls.Add(new Label { Text = "Static draft preview. Native page content keeps its application styling.", Dock = DockStyle.Bottom, AutoSize = true, Padding = new Padding(8) });
+            return dialog;
+        }
+        catch { dialog.Dispose(); throw; }
+    }
+
     private sealed class RibbonRootProperties(RibbonDesignSnapshot draft)
     {
         [Category("Structure"), Description("The number of authored tabs in this ribbon."), ReadOnly(true)]
         public int Tabs => draft.Tabs.Count;
     }
-    private sealed class DraftProperties(RibbonDesignNode node) : CustomTypeDescriptor
+    internal sealed class DraftProperties(RibbonDesignNode node) : CustomTypeDescriptor
     {
         public override string GetClassName() => node.Kind;
         public override string GetComponentName() => node.ComponentName;

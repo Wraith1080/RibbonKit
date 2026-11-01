@@ -205,7 +205,8 @@ public sealed class DesignerAuthoringTests
         internal string TransactionDescription = "";
         internal List<IComponent> Destroyed { get; } = [];
         internal ISelectionService? Selection;
-        public object? GetService(Type serviceType) => serviceType == typeof(IComponentChangeService) ? Changes : serviceType == typeof(IDesignerHost) ? this : serviceType == typeof(ISelectionService) ? Selection : null;
+        internal ITypeDiscoveryService? TypeDiscovery;
+        public object? GetService(Type serviceType) => serviceType == typeof(IComponentChangeService) ? Changes : serviceType == typeof(IDesignerHost) ? this : serviceType == typeof(ISelectionService) ? Selection : serviceType == typeof(ITypeDiscoveryService) ? TypeDiscovery : null;
         public IComponent CreateComponent(Type type) => CreateComponent(type, type.Name + Container.Components.Count);
         public IComponent CreateComponent(Type type, string? name) { var component = (IComponent)Activator.CreateInstance(type)!; Container.Add(component, name); return component; }
         public void DestroyComponent(IComponent component) { Destroyed.Add(component); component.Dispose(); }

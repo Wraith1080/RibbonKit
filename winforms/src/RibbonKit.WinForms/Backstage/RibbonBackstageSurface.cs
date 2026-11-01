@@ -9,9 +9,11 @@ internal sealed class RibbonBackstageSurface : ContainerControl
 {
     private readonly RibbonControl _ribbon;
     private readonly Panel _navigation;
-    private readonly Panel _pages = new() { TabIndex = 2 };
+    private readonly Panel _footer;
+    private readonly Panel _pages = new() { TabIndex = 3 };
     private readonly EntryButton _back;
-    private readonly Dictionary<RibbonItem, EntryButton> _entries = [];
+    private readonly Dictionary<RibbonItem, Control> _entries = [];
+    private bool _arranging;
     private readonly Dictionary<RibbonBackstagePageItem, PageSlot> _slots = [];
     private RibbonBackstagePageItem? _shownPage;
     private Font? _navigationFont, _navigationFontSource;
@@ -125,13 +127,14 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     {
         _ribbon = ribbon;
         _navigation = new NavigationPanel(this) { AutoScroll = true, TabIndex = 1 };
+        _footer = new NavigationPanel(this) { TabIndex = 2, Visible = false };
         SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
         AutoScaleMode = AutoScaleMode.None;
         AutoValidate = AutoValidate.EnablePreventFocusChange;
         TabStop = false;
         AccessibleName = "Backstage";
         _back = new(this, null) { Text = "Back", AccessibleName = "Back", TabIndex = 0 };
-        Controls.AddRange([_back, _navigation, _pages]);
+        Controls.AddRange([_back, _navigation, _footer, _pages]);
         _back.Click += (_, _) => _ribbon.IsBackstageOpen = false;
     }
     internal void Synchronize()
@@ -146,28 +149,29 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             UpdateNavigationFont();
             BackColor = _ribbon.Theme.BackstageNavigationBackground;
             _navigation.BackColor = _ribbon.Theme.BackstageNavigationBackground;
+            _footer.BackColor = _navigation.BackColor;
             _pages.BackColor = _ribbon.Theme.Surface;
             if (_motionOpacity is not null && !ReferenceEquals(_motionTarget, MotionTarget)) ReleaseMotionOpacity();
             if (Visible && _ribbon.HasWindowBackdrop && _motionOpacity is null) PrepareBackdrop();
-            var items = _ribbon.Backstage.Items.Where(i => i.Visible && !i.IsDisposed).ToArray();
+            var items = _ribbon.Backstage.NavigationItems.Where(i => i.Visible && !i.IsDisposed).ToArray();
             foreach (var old in _entries.Keys.Except(items).ToArray()) { _entries[old].Dispose(); _entries.Remove(old); }
             int index = 0;
             foreach (var item in items)
             {
                 if (!_entries.TryGetValue(item, out var button))
                 {
-                    button = new(this, item);
-                    button.Click += (_, _) => _ribbon.ActivateBackstage(item);
+                    button = item is RibbonMenuSeparatorItem separator ? new SeparatorControl(this, separator) : new EntryButton(this, item);
+                    if (button is EntryButton) button.Click += (_, _) => _ribbon.ActivateBackstage(item);
                     _entries.Add(item, button);
                     _navigation.Controls.Add(button);
                 }
                 button.Text = item.Text;
                 button.AccessibleName = string.IsNullOrEmpty(item.AccessibleName) ? item.Text : item.AccessibleName;
                 button.AccessibleDescription = item.AccessibleDescription;
-                button.Enabled = item.EffectiveEnabled;
+                button.Enabled = item is not RibbonMenuSeparatorItem && item.EffectiveEnabled;
                 button.TabIndex = index++;
             }
-            var pages = _ribbon.Backstage.Items.OfType<RibbonBackstagePageItem>().Where(p => !p.IsDisposed).ToArray();
+            var pages = _ribbon.Backstage.NavigationItems.OfType<RibbonBackstagePageItem>().Where(p => !p.IsDisposed).ToArray();
             foreach (var old in _slots.Keys.Where(p => !pages.Contains(p) || !ReferenceEquals(p.Content, _slots[p].Content)).ToArray())
             { _slots[old].Dispose(); _slots.Remove(old); }
             foreach (var page in pages.Where(p => p.Content is { IsDisposed: false }))
@@ -199,6 +203,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         var previous = _navigationFont;
         _navigationFont = font; _navigationFontSource = source; _navigationFontMinimum = minimum; _navigationFontDpi = DeviceDpi;
         _navigation.Font = font;
+        _footer.Font = font;
         previous?.Dispose();
     }
     internal void DetachContent(Control content)
@@ -224,7 +229,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         var tips = KeyTipResolver.Resolve(buttons.Select(b => (b.Text, b.Item?.KeyTip ?? "B")));
         for (int i = 0; i < buttons.Length; i++) { buttons[i].Tip = _tips && tips[i].StartsWith(_prefix, StringComparison.Ordinal) ? tips[i] : ""; buttons[i].Invalidate(); }
     }
-    private IEnumerable<EntryButton> NavigationButtons() => new[] { _back }.Concat(_ribbon.Backstage.Items.Where(i => _entries.ContainsKey(i)).Select(i => _entries[i])).Where(b => b.Visible && b.Enabled);
+    private IEnumerable<EntryButton> NavigationButtons() => new[] { _back }.Concat(_ribbon.Backstage.NavigationItems.Where(i => _entries.ContainsKey(i)).Select(i => _entries[i]).OfType<EntryButton>()).Where(b => b.Visible && b.Enabled);
     internal bool ProcessSurfaceKey(Keys keys)
     {
         if (!_ribbon.IsBackstageOpen) return false;
@@ -259,7 +264,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             else { _prefix = tips.Any(t => t.StartsWith(prefix, StringComparison.Ordinal)) ? prefix : ""; AssignTips(); }
             return true;
         }
-        if (keys is Keys.Up or Keys.Down or Keys.Home or Keys.End && (_navigation.ContainsFocus || _back.Focused))
+        if (keys is Keys.Up or Keys.Down or Keys.Home or Keys.End && (_navigation.ContainsFocus || _footer.ContainsFocus || _back.Focused))
         {
             HideKeyTips();
             var buttons = NavigationButtons().ToArray();
@@ -287,24 +292,38 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     protected override void OnLayout(LayoutEventArgs levent)
     {
         base.OnLayout(levent);
-        if (_back is null) return;
-        var layout = RibbonBackstageLayout.Build(ClientSize, _navigation.Font, DeviceDpi, _ribbon.Backstage);
-        _back.Bounds = layout.Back;
-        _navigation.Bounds = layout.Navigation;
-        _pageFrameBounds = layout.Page;
-        int border = RibbonBackstageLayout.PageBorderWidth(_ribbon.Painter, _ribbon.Theme, DeviceDpi, layout.Page.Size);
-        int radius = RibbonBackstageLayout.PageCornerRadius(_ribbon.Painter, _ribbon.Theme, DeviceDpi, layout.Page.Size);
-        _pages.Bounds = new(layout.Page.Left + border, layout.Page.Top + border,
-            Math.Max(0, layout.Page.Width - border), Math.Max(0, layout.Page.Height - border));
-        UpdatePageRegion(Math.Max(0, radius - border));
-        int y = _navigation.AutoScrollPosition.Y;
-        foreach (var item in _ribbon.Backstage.Items.Where(i => _entries.ContainsKey(i)))
+        if (_back is null || _arranging) return;
+        _arranging = true;
+        try
         {
-            _entries[item].Bounds = new(layout.Inset, y, Math.Max(1, _navigation.ClientSize.Width - 2 * layout.Inset), layout.RowHeight);
-            y += layout.RowHeight;
+            var layout = RibbonBackstageLayout.Build(ClientSize, _navigation.Font, DeviceDpi, _ribbon.Backstage);
+            _back.Bounds = layout.Back;
+            _navigation.Bounds = layout.Navigation;
+            _footer.Bounds = layout.Footer;
+            _pageFrameBounds = layout.Page;
+            int border = RibbonBackstageLayout.PageBorderWidth(_ribbon.Painter, _ribbon.Theme, DeviceDpi, layout.Page.Size);
+            int radius = RibbonBackstageLayout.PageCornerRadius(_ribbon.Painter, _ribbon.Theme, DeviceDpi, layout.Page.Size);
+            _pages.Bounds = new(layout.Page.Left + border, layout.Page.Top + border,
+                Math.Max(0, layout.Page.Width - border), Math.Max(0, layout.Page.Height - border));
+            UpdatePageRegion(Math.Max(0, radius - border));
+            _navigation.SuspendLayout(); _footer.SuspendLayout();
+            try
+            {
+                _navigation.AutoScrollMinSize = new(0, layout.NavigationContentHeight);
+                foreach (var slot in layout.Arrange(_ribbon.Backstage, -_navigation.AutoScrollPosition.Y))
+                {
+                    if (!_entries.TryGetValue(slot.Item, out var entry)) continue;
+                    var parent = slot.Footer && !layout.FooterInline ? _footer : _navigation;
+                    if (!ReferenceEquals(entry.Parent, parent)) parent.Controls.Add(entry);
+                    var bounds = slot.Bounds; bounds.Offset(-parent.Left, -parent.Top);
+                    bounds.Width = Math.Max(1, parent.ClientSize.Width - 2 * layout.Inset); entry.Bounds = bounds;
+                }
+                _footer.Visible = layout.Footer.Height > 0;
+            }
+            finally { _navigation.ResumeLayout(false); _footer.ResumeLayout(false); }
+            foreach (var slot in _slots.Values) slot.Bounds = new(Point.Empty, _pages.ClientSize);
         }
-        _navigation.AutoScrollMinSize = new(0, _entries.Count * layout.RowHeight);
-        foreach (var slot in _slots.Values) slot.Bounds = new(Point.Empty, _pages.ClientSize);
+        finally { _arranging = false; }
     }
     private void UpdatePageRegion(int radius)
     {
@@ -405,6 +424,27 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             if (!Content.IsDisposed) { Content.Dock = _dock; Content.Bounds = _bounds; Content.Visible = _visible; }
         }
         protected override void Dispose(bool disposing) { if (disposing) Detach(); base.Dispose(disposing); }
+    }
+    private sealed class SeparatorControl : Control
+    {
+        private readonly RibbonBackstageSurface _surface;
+        private readonly RibbonMenuSeparatorItem _item;
+        private RibbonBackdropBuffer? _buffer;
+        internal SeparatorControl(RibbonBackstageSurface surface, RibbonMenuSeparatorItem item)
+        {
+            _surface = surface; _item = item; TabStop = false; Enabled = false; AccessibleRole = AccessibleRole.Separator;
+            SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+            SetStyle(ControlStyles.Selectable, false);
+        }
+        protected override void OnPaintBackground(PaintEventArgs e) { if (!_surface.MaterialPaint) base.OnPaintBackground(e); }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            void Paint(Graphics graphics) => _surface._ribbon.Painter.DrawBackstageEntry(new(graphics, ClientRectangle, _surface.PaintTheme, Font, DeviceDpi)
+                { Density = _surface._ribbon.Density, CompositedText = _surface.MaterialPaint, WindowBackdrop = _surface._ribbon.HasWindowBackdrop }, _item, false);
+            if (_surface.MaterialPaint) (_buffer ??= new()).Paint(e.Graphics, Size, Height, Color.Transparent, Paint, opacity: _surface.MotionAlpha);
+            else { _buffer?.Dispose(); _buffer = null; Paint(e.Graphics); }
+        }
+        protected override void Dispose(bool disposing) { if (disposing) _buffer?.Dispose(); base.Dispose(disposing); }
     }
     private sealed class EntryButton : Button
     {

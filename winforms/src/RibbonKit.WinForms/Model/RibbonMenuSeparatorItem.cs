@@ -2,7 +2,7 @@ using System.ComponentModel;
 
 namespace RibbonKit.WinForms;
 
-/// <summary>A decorative horizontal separator owned by RibbonDropDownItem.Items. It cannot receive command focus, KeyTips or activation.</summary>
+/// <summary>A decorative horizontal separator owned by dropdown Items or Backstage Items/FooterItems. It cannot receive command focus, KeyTips or activation.</summary>
 [DefaultProperty(nameof(Visible))]
 public sealed class RibbonMenuSeparatorItem : RibbonItem
 {

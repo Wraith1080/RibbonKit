@@ -22,11 +22,11 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
         if (_owner is RibbonGalleryItem && item is not RibbonGalleryTile)
             throw new ArgumentException("Gallery Items must contain gallery tiles.", nameof(item));
         if (item is RibbonBackstagePageItem && _owner is not RibbonBackstage)
-            throw new ArgumentException("Backstage pages belong to Backstage.Items.", nameof(item));
-        if (_owner is RibbonBackstage && item is not RibbonBackstagePageItem && item.GetType() != typeof(RibbonButtonItem))
-            throw new ArgumentException("Backstage entries must be pages or button commands.", nameof(item));
-        if (item is RibbonMenuSeparatorItem && _owner is not RibbonDropDownItem)
-            throw new ArgumentException("Menu separators belong to a dropdown's Items collection.", nameof(item));
+            throw new ArgumentException("Backstage pages belong to Backstage.Items or FooterItems.", nameof(item));
+        if (_owner is RibbonBackstage && item is not (RibbonBackstagePageItem or RibbonMenuSeparatorItem) && item.GetType() != typeof(RibbonButtonItem))
+            throw new ArgumentException("Backstage entries must be pages, button commands or decorative separators.", nameof(item));
+        if (item is RibbonMenuSeparatorItem && _owner is not (RibbonDropDownItem or RibbonBackstage))
+            throw new ArgumentException("Separators belong to a dropdown or Backstage navigation collection.", nameof(item));
         if (item.IsDisposed)
             throw new ObjectDisposedException(item.GetType().Name);
         if (item.Parent is not null && !ReferenceEquals(item, replacing))
@@ -128,7 +128,7 @@ public sealed class RibbonGroupCollection : RibbonElementCollection<RibbonGroup>
 {
     internal RibbonGroupCollection(object owner) : base(owner) { }
 }
-/// <summary>Owns the commands of one group or dropdown.</summary>
+/// <summary>Owns the items of one group, dropdown or Backstage navigation section.</summary>
 [Editor("RibbonKit.WinForms.Design.ItemCollectionEditor, RibbonKit.WinForms.Design", "System.Drawing.Design.UITypeEditor, System.Drawing")]
 public sealed class RibbonItemCollection : RibbonElementCollection<RibbonItem>
 {

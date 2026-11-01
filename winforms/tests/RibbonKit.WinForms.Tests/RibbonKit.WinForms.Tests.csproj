@@ -8,7 +8,16 @@
     <ProjectReference Include="../../src/RibbonKit.WinForms.Design.Protocol/RibbonKit.WinForms.Design.Protocol.csproj" />
     <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonDesignCommitter.cs" Link="Designer/RibbonDesignCommitter.cs" />
     <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonDesignSelection.cs" Link="Designer/RibbonDesignSelection.cs" />
+    <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonFileDesignSettings.cs" Link="Designer/RibbonFileDesignSettings.cs" />
+    <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonBackstageDesignPreview.cs" Link="Designer/RibbonBackstageDesignPreview.cs" />
+    <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonBackstagePreviewLayer.cs" Link="Designer/RibbonBackstagePreviewLayer.cs" />
+    <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonDesignerRepaint.cs" Link="Designer/RibbonDesignerRepaint.cs" />
+    <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonBackstageCommitter.cs" Link="Designer/RibbonBackstageCommitter.cs" />
+    <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonBackstageContentTypes.cs" Link="Designer/RibbonBackstageContentTypes.cs" />
+    <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonBackstagePreviewRenderer.cs" Link="Designer/RibbonBackstagePreviewRenderer.cs" />
+    <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonThemePreviewRenderer.cs" Link="Designer/RibbonThemePreviewRenderer.cs" />
     <Compile Include="../../src/RibbonKit.WinForms.Design.Client/RibbonEditorDialog.cs" Link="Designer/RibbonEditorDialog.cs" />
+    <Compile Include="../../src/RibbonKit.WinForms.Design.Client/RibbonBackstageDialog.cs" Link="Designer/RibbonBackstageDialog.cs" />
     <Compile Include="../../src/RibbonKit.WinForms.Design.Client/RibbonIconPickerDialog.cs" Link="Designer/RibbonIconPickerDialog.cs" />
   </ItemGroup>
 </Project>

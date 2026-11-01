@@ -4,9 +4,17 @@ Status, **2026-10-31: bounded custom designer increment accepted by the user**. 
 `codex/Ribbonkit-Winform`. This checkpoint follows the disabled/state appearance
 increment and preserves the accepted Backstage behavior.
 
-Latest increment, **2026-10-31: surface preview and selection implemented;
-actual-VS interaction, visual and DPI review pending**. See the bounded contract,
-evidence and review steps below. Earlier accepted scopes retain their acceptance.
+Latest increment, **2026-11-01: animation selection added to Ribbon settings;
+actual VS/user review pending**. See the sections below for the bounded contracts,
+evidence and review steps. Earlier accepted scopes retain their acceptance.
+Current Backstage authoring and preview status is in
+[Backstage authoring](BACKSTAGE-DESIGNER-AUTHORING.md).
+
+Current review project: the permanent
+[Designer Sample solution](../samples/RibbonKit.WinForms.DesignerSample/RibbonKit.WinForms.DesignerSample.sln).
+Refresh it in place with `./winforms/eng/Update-DesignerSample.ps1` from the
+repository root. The earlier temporary paths below are historical evidence/backup
+locations; new user review continues in this sample.
 
 ## Bounded contract
 
@@ -34,11 +42,11 @@ dependency or a new theme/model coordinator.
 ## Theme selection boundary
 
 User direction, 2026-10-31: general theme authoring is outside the planned scope.
-A later increment should offer selection of library-provided themes with a
-designer preview. It should not expose an arbitrary theme-color/settings editor
+This increment offers selection of library-provided themes with a
+designer preview. It does not expose an arbitrary theme-color/settings editor
 or introduce a mutable theme owner. `Theme` remains an immutable runtime value
-and is currently hidden from the designer. Selecting a theme must eventually
-round-trip safely, support Undo/Redo and leave shared theme instances untouched.
+and remains hidden from the designer. The optional selection property below
+round-trips independently and leaves shared theme instances untouched.
 Propose any required public selection/serialization API before implementation,
 with compatible defaults. This does not defer per-tab contextual color authoring.
 
@@ -69,13 +77,202 @@ User direction, 2026-10-31, refines the proposed order:
    authored before implementation; retain application ownership and the accepted
    Backstage runtime behavior. Direct child-control editing on a Backstage canvas
    is additional designer-hosting scope, not implied by navigation editing.
+   The first implementation and review are in [Backstage authoring](BACKSTAGE-DESIGNER-AUTHORING.md).
 4. **Theme selection and preview.** Offer supported library themes under the
    boundary above, using the improved designer workflow. No general theme
    authoring is planned. Advanced surface editing is not a prerequisite for this
    or Backstage authoring.
+   The bounded implementation is recorded below; actual VS acceptance is pending.
 
 Live visual inspection remains with the user. These are planned increments;
 acceptance and automated evidence below apply to the completed functional slice.
+
+## Built-in theme selection and preview — 2026-11-01
+
+User review, **2026-11-01**: "looks good" accepts the built-in theme selection and
+preview at the reviewed scope. Physical-DPI and mixed-monitor acceptance remain separate.
+
+The current native catalog contains **only `RibbonThemes.Office2024Light`**.
+This increment selects that existing palette; it adds no palette, renderer,
+arbitrary color/settings editor or mutable theme owner. The proposed public
+contract was stated before implementation in this session.
+
+| Member/action | Contract |
+| --- | --- |
+| `RibbonBuiltInTheme.Office2024Light` | The existing immutable shared Office 2024 Light value. |
+| `RibbonControl.BuiltInTheme` | Nullable selector. Default `null` means use the retained application theme; a new ribbon still uses Office 2024 Light. |
+| Explicit built-in choice | Applies the built-in palette, retaining the last application theme as the fallback. The explicit choice serializes even when it matches the initial palette. |
+| Reset / Application theme | Sets the selector to `null`, returns to that fallback and omits the generated selector assignment. With no application assignment, this returns Office 2024 Light. |
+| Direct `Theme` assignment | Validates the immutable value, updates the application fallback and clears the selector, including assignment of the current effective value. A later direct application assignment wins over generated selection. |
+| Custom themes | Remain application-owned through the existing hidden `Theme` property. Opening, Cancel and unchanged OK preserve the supplied value. No custom theme object is serialized by this editor. |
+
+Generated C# for an explicit selection is:
+
+```csharp
+ribbon.BuiltInTheme = RibbonKit.WinForms.RibbonBuiltInTheme.Office2024Light;
+```
+
+In **Edit Ribbon**, select the protected **Ribbon** root. Its **Ribbon settings** section
+offers **(Application theme)** and **Office2024Light**, identifies the fallback
+as Office 2024 Light or a custom application theme, and provides **Preview ribbon
+and Backstage…**. The preview window has separate scrollable Ribbon and Backstage
+images. Both use the draft choice and existing renderer. The ribbon image draws
+detached authored tabs/groups/commands and the File declaration. Backstage uses
+the existing main/footer navigation renderer and shared body placeholder.
+With the default application theme, both choices have the same appearance.
+
+Draft preview does not mutate the live ribbon, execute commands, create/capture
+native pages, change authored visibility, startup selection or File routing.
+Contextual colors and borrowed artwork remain declarations. Hidden/disabled
+ContentType pages are not instantiated. Native page controls keep their own
+application styling; selecting a ribbon palette does not restyle them.
+
+OK applies selection and any structural edits in one existing designer
+transaction. A theme-only edit leaves collections/components untouched. Unchanged
+OK creates no transaction. The revision includes selection and immutable effective/
+application values, so external theme changes invalidate an open draft. Reset
+and Undo/Redo restore the fallback without serializing custom theme internals.
+The accepted Form preview layer, frame and runtime motion paths are unchanged.
+
+Verification uses normal Debug output, with evidence under
+`TestResults/winforms-designer-theme/`:
+
+- **51 distinct relevant cases pass across the retained focused runs**: 18 theme
+  cases, the 29 existing authoring/editor cases and four directly affected
+  Backstage preview DPI cases. Reports retain the initial test-host setup/layout
+  assertion failures and their focused corrections; this is assembled focused
+  evidence, not a single full-suite pass.
+- The theme cases cover nullable/default/Reset metadata, explicit enum CodeDOM,
+  direct assignment precedence, detached root choice, Cancel/no-op OK, one combined
+  transaction, stale/invalid rejection, actual framework UndoEngine Undo/Redo,
+  both renderer-backed previews, native-content isolation and four synthetic
+  root-dialog scale/resize cases. The standalone Undo host supplies the framework
+  `CodeDomComponentSerializationService` that a minimal DesignSurface lacks.
+- Native runtime, design server, net472 client and both protocol targets build.
+  The final focused build reports no warnings/errors. Root/preview PNGs were
+  inspected; synthetic scaling is not physical-DPI or actual VS acceptance.
+- Independent package-only public API verification generated, normally compiled
+  and reopened four forms in fresh processes: Form/RibbonForm, application/explicit
+  choices. Custom fallback, Reset, direct assignment precedence, native content
+  styling/ownership and actual generated enum assignment pass. This new check
+  uses no RibbonKit internals or Showcase helpers. Evidence is in
+  `C:\Users\LENOVO\AppData\Local\Temp\RibbonKit-WinForms-Designer-20261101-theme-selection-review\theme-selection\result.log`.
+- Actual installed VS client protocol composition resolves both endpoints by
+  name, request and response after the preview flag addition. This is protocol
+  evidence, not actual VS editing acceptance.
+- A broader unit/STA run was started, then stopped on the user's instruction to
+  test only relevant scopes. It reported the out-of-scope native tree double-buffer
+  assertion in `ReviewFixTests`; that was not investigated or changed. No full-suite,
+  Release, native motion, physical-DPI, mixed-monitor or new user acceptance is claimed.
+  Earlier accepted preview-layer/frame/motion evidence is retained.
+
+The existing user review solution remains
+`C:\Users\LENOVO\AppData\Local\Temp\RibbonKit-WinForms-Designer-20261101-bottom-navigation-review\App\RibbonKit.Designer.Check.sln`.
+Its package configuration is backed up as `NuGet.Config.theme-selection-20261101.bak`;
+the theme package uses a fresh private cache. Hashes confirm all 15 authored
+C#/resx/project files were preserved. `theme-selection-update-20261101.json` in
+that review root records the refresh.
+
+Actual VS review:
+
+1. Close/reopen the review solution to load the refreshed package. Open **Edit
+  Ribbon → Ribbon → Ribbon settings**, select Office2024Light and inspect both preview views.
+2. Cancel, reopen and verify the prior choice remains. Accept a choice with OK;
+   use Undo/Redo and verify it is one operation. Unchanged OK should add no operation.
+3. Save, close and reopen the Form designer. Inspect the enum assignment in
+   generated code. Reset `BuiltInTheme` in Properties (or select Application theme
+   in the editor), then save/reopen and verify the assignment is omitted.
+4. Review File/Back and main/footer preview navigation, contextual header tint,
+   and the retained shared placeholder. Final actual VS/visual and physical-DPI
+   acceptance remains with the user.
+
+## Animation selection in Ribbon settings — 2026-11-01
+
+Status: **implemented; actual VS/user review pending**. The protected Ribbon root
+now groups theme and animation under **Ribbon settings**. The **Animation**
+dropdown exposes the existing `RibbonControl.AnimationLevel`: **None**, **Subtle**,
+or **Expressive**. None remains the runtime/designer default. Nondefault choices
+serialize as ordinary enum assignments, for example:
+
+```csharp
+ribbon.AnimationLevel = RibbonKit.WinForms.RibbonAnimationLevel.Subtle;
+```
+
+Reset in Properties restores None and omits the assignment. This is designer
+access to an existing preference; no runtime/public API or motion implementation
+changes. System-disabled animation continues to use the existing immediate path.
+The dropdown edits a detached snapshot, Cancel leaves the model unchanged, and
+OK applies animation with other edits in one designer transaction. Unchanged OK
+creates no undo entry. Root-only changes leave collections untouched. External
+animation changes invalidate an open draft. Image previews remain static and do
+not enable the selected motion level on the preview or live ribbon.
+
+Relevant Debug verification only:
+
+- **17 focused cases pass**: 12 new animation cases, the four affected root-layout
+  scale/resize cases and the existing theme Undo/Redo case. The four layout cases
+  also pass with explicit animation-row ordering/width assertions. Evidence:
+  `TestResults/winforms-designer-animation/designer-animation-focused.trx` and
+  `designer-animation-layout.trx`. These are 17 distinct cases, not 21.
+- The new cases cover all dropdown choices, JSON snapshot round-trip, detached
+  preview, Cancel/no-op OK, invalid/numeric/stale rejection, a combined theme/
+  animation framework UndoEngine unit, enum serialization and Reset/default
+  handling. The rendered root-page PNG was inspected.
+- Runtime/protocol, design server and net472 client compile in their normal Debug
+  folders with no warnings/errors. No broad suite or native motion tests were run.
+- An independent package-only consumer generated, normally compiled and reopened
+  None/Subtle/Expressive initializers in a fresh process; default omission and
+  Reset pass. No RibbonKit internals or Showcase helpers are used. Evidence:
+  `C:\Users\LENOVO\AppData\Local\Temp\RibbonKit-WinForms-Designer-20261101-animation-selection-review\animation-selection\result.log`.
+
+The existing bottom-navigation review solution uses the updated package through
+`packages-animation-selection-20261101`. Its prior configuration is backed up as
+`NuGet.Config.animation-selection-20261101.bak`; hashes confirm all 15 authored
+C#/resx/project files remain unchanged. `animation-selection-update-20261101.json`
+in that review root records the refresh.
+
+For actual VS review, reopen that solution, select **Edit Ribbon → Ribbon →
+Ribbon settings → Animation**, then check Cancel, OK, Undo/Redo and save/reopen.
+Selecting None (or Reset in Properties) should remove the saved assignment.
+Native motion behavior, physical-DPI and mixed-monitor acceptance are unchanged.
+
+## Permanent Designer Sample — 2026-11-01
+
+At the user's request, the existing bottom-navigation review project's edited
+sources now live in `winforms/samples/RibbonKit.WinForms.DesignerSample`, with
+`RibbonKit.WinForms.DesignerSample.sln` and a matching project name. The 14 C#/resx
+files and both assets were copied byte-for-byte from the reviewed project. The
+project's designer nesting metadata was retained, its package reference now uses
+the local refresh version, and its existing source namespace remains unchanged.
+The old temporary solution is retained as a backup. No reviewed design was reset.
+
+`eng/Update-DesignerSample.ps1` builds the runtime/server/client in normal Debug
+folders, packs a unique local prerelease, then restores and builds the same sample.
+It writes only ignored `.local/DesignerPackage.props`/refresh metadata and normal
+build/package outputs; it never copies fixtures over the user's source/project.
+The private feed/cache is under ignored `winforms/artifacts/designer-sample/`.
+NuGet source mapping keeps RibbonKit on that local feed. A fresh package version
+avoids stale caches without deleting them or using the global package cache.
+
+The standalone sample solution avoids restoring the sample before its designer
+package exists. Run the refresh once after checkout, then open this solution in
+Visual Studio. Reopen it after package updates. The no-destination
+`Prepare-DesignerConsumer.ps1` command now delegates to the in-place refresh.
+Its explicit `-Destination` path still prepares isolated automated fixtures when
+a named independent-verification scope requires one. New user review does not
+create another temporary project.
+
+Relevant verification only: the Debug designer/sample builds pass with zero
+warnings/errors; the second refresh through `Prepare-DesignerConsumer.ps1 -NoBuild`
+uses the same project and preserves every authored file hash. The relocated Form
+initializes, and its bitmap resource check passes. Its retained strict
+`--verify-roundtrip` fixture check stops at the expected Bold SVG assertion:
+the source review's `boldToggle.Icon` assignment/resource was already absent.
+Both the verifier and designer source match that original review byte-for-byte;
+no icon was restored or test relaxed to make it pass. This is not a complete
+round-trip pass. Evidence and migration hashes are under
+`TestResults/winforms-designer-sample/`. Actual VS review at the new location is
+pending; no runtime, broad regression or physical-DPI tests are needed for this move.
 
 ## Editor UX and DPI increment — 2026-10-31
 
@@ -187,7 +384,9 @@ This is later work; the root added now is not a new settings owner or master fla
 
 ## Surface preview and selection — 2026-10-31
 
-Status: **implemented; user review pending**. Baseline: clean `1caf206` on
+Status: **accepted by the user, 2026-10-31**: the provided preview/selection review
+workflow "works perfectly". This accepts that bounded designer workflow; it does
+not establish broad physical-DPI or mixed-monitor acceptance. Baseline: clean `1caf206` on
 `codex/Ribbonkit-Winform`. The bounded contract was presented before implementation:
 click tabs/groups/commands on the Form designer surface to select their actual
 components in Properties; use a smart-tag selector to preview hidden or disabled
@@ -297,7 +496,7 @@ event handlers or bindings. The subsequent SVG picker is tracked separately in
 [SVG icon authoring](SVG-ICON-AUTHORING.md). Existing values remain on their original components; the
 ordinary designer properties and compatible collection-editor types remain.
 Custom subclasses are outside the window's supported built-in type set. Theme
-selection/preview remains deferred as described above. That baseline introduced
+selection/preview is implemented in its separate increment above. The earlier baseline introduced
 design-only editor/protocol/commit logic without runtime API or ownership changes;
 the separate SVG record documents its compatible runtime additions.
 
@@ -409,7 +608,8 @@ fields and original Font choices to remain. It checks resource/event/binding
 behavior without showing a window. A passing result before VS edits is baseline
 evidence only; no separate after-save verifier output has been reported.
 
-To prepare another isolated consumer later, run
-`winforms/eng/Prepare-DesignerConsumer.ps1` from the repository root. It builds
-the native client/server in normal Debug outputs, packs locally and prints a new
-solution path. Existing destinations are preserved.
+For ongoing review, run `winforms/eng/Update-DesignerSample.ps1` from the repository
+root and reopen the permanent Designer Sample solution linked above. The
+no-destination `Prepare-DesignerConsumer.ps1` command does the same. Use an explicit
+`-Destination` only for a separate independent-verification fixture; existing
+destinations are preserved.

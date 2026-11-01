@@ -1,5 +1,12 @@
 namespace RibbonKit.WinForms;
 
+/// <summary>Identifies the supported built-in native ribbon palettes; custom values remain application-owned through RibbonControl.Theme.</summary>
+public enum RibbonBuiltInTheme
+{
+    /// <summary>The Office 2024 inspired light palette.</summary>
+    Office2024Light
+}
+
 /// <summary>A solid or vertical two-stop gradient fill; contains no disposable resources.</summary>
 public readonly record struct RibbonFill(Color Start, Color End)
 {

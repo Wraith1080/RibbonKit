@@ -2,11 +2,16 @@ using RibbonKit.WinForms;
 
 namespace RibbonKitDesignerConsumer;
 
-public partial class DesignerForm : Form
+public partial class DesignerForm : RibbonForm
 {
-    public DesignerForm() => InitializeComponent();
+    public DesignerForm()
+    {
+        InitializeComponent();
+    }
 
     private void ApplyButton_Click(object? sender, EventArgs e) => statusLabel.Text = "Applied: " + nameField.Value;
+    private void BackstageSaveCommand_Click(object? sender, EventArgs e) => statusLabel.Text = "Backstage Save: " + ((BackstageInfoControl?)infoPage.Content)?.NotesEditor.Text;
+    private void BackstageOptionsCommand_Click(object? sender, EventArgs e) => statusLabel.Text = "Backstage Options";
 
     internal void VerifyRoundtrip()
     {
@@ -46,6 +51,18 @@ public partial class DesignerForm : Form
         applyButton.PerformClick(); Require(statusLabel.Text == "Applied: Control change", "Click event hookup");
         Require(fontField.Items.SequenceEqual(new[] { "Segoe UI", "Arial", "Consolas" }) && fontField.SelectedIndex == 0, "Choice declarations");
         VerifyRuntimeEditors();
+        Require(ribbon.Backstage.Items.Contains(infoPage) && ribbon.Backstage.Items.Contains(printPage) && ribbon.Backstage.Items.Contains(backstageSaveCommand), "Backstage generated components retained");
+        VerifyPageContent();
+        var infoContent = (BackstageInfoControl)infoPage.Content!;
+        Require(ReferenceEquals(infoPage.Content, infoContent), "Designer-selected UserControl retained through the public ContentType API");
+        infoContent.NotesEditor.Text = "Native notes"; var notesHandle = infoContent.NotesEditor.Handle; infoContent.NotesEditor.Select(2, 4);
+        backstageSaveCommand.PerformClick(); Require(statusLabel.Text == "Backstage Save: Native notes", "Backstage command event retained");
+        Require(infoContent.NotesEditor.Handle == notesHandle && infoContent.NotesEditor.SelectionStart == 2 && infoContent.NotesEditor.SelectionLength == 4, "Native page editor ownership and selection retained");
+        using (var borrowed = new UserControl())
+        {
+            var declaration = new RibbonBackstagePageItem { Content = borrowed }; declaration.Dispose();
+            Require(!borrowed.IsDisposed && borrowed.Parent is null, "Page disposal releases application-owned content without disposing it");
+        }
         Require(!typeof(RibbonControl).Assembly.GetReferencedAssemblies().Any(assembly => assembly.Name?.Contains("DesignTools") == true), "No designer SDK runtime dependency");
     }
 
