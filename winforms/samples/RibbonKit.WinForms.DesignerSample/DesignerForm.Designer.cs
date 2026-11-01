@@ -139,12 +139,14 @@ partial class DesignerForm
         // ribbon
         // 
         ribbon.AccessibleName = "Ribbon";
+        ribbon.AnimationLevel = RibbonKit.WinForms.RibbonAnimationLevel.Expressive;
         // 
         // 
         // 
         ribbon.Backstage.FooterItems.AddRange(new RibbonKit.WinForms.RibbonItem[] { backstageFooterSeparator, backstageOptionsCommand });
         ribbon.Backstage.Id = "rk:03b381db26f845b490311e09277bd042";
         ribbon.Backstage.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { infoPage, backstageSaveCommand, backstageMainSeparator, printPage });
+        ribbon.BuiltInTheme = RibbonKit.WinForms.RibbonBuiltInTheme.Office2024Light;
         // 
         // 
         // 

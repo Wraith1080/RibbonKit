@@ -16,6 +16,11 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     private bool _arranging;
     private readonly Dictionary<RibbonBackstagePageItem, PageSlot> _slots = [];
     private RibbonBackstagePageItem? _shownPage;
+    private RibbonBackstagePageMotion? _pageMotion;
+    internal RibbonBackstagePageMotion? PageMotion => _pageMotion;
+    internal bool IsPageAnimating => _pageMotion?.IsRunning == true;
+    internal void SettlePageMotion() { var motion = _pageMotion; _pageMotion = null; motion?.Dispose(); }
+    internal void ObservePageMotionInput(ref Message message) => _pageMotion?.ObserveInput(ref message);
     private Font? _navigationFont, _navigationFontSource;
     private float _navigationFontMinimum;
     private int _navigationFontDpi;
@@ -144,6 +149,10 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         try
         {
             bool hadFocus = ContainsFocus, hadPageFocus = _pages.ContainsFocus;
+            bool interrupted = IsPageAnimating || _ribbon.BackstageOpeningMotion?.IsRunning == true;
+            bool changedPage = !ReferenceEquals(_shownPage, _ribbon.Backstage.SelectedPage);
+            bool animatePage = changedPage && !interrupted && _shownPage is { Content: not null } previous && _ribbon.Backstage.Available(previous);
+            SettlePageMotion();
             if (_ribbon.IsBackstageOpen && !ReferenceEquals(_shownPage, _ribbon.Backstage.SelectedPage)) _ribbon.BackstageOpeningMotion?.Dispose();
             Font = _ribbon.Font;
             UpdateNavigationFont();
@@ -182,15 +191,22 @@ internal sealed class RibbonBackstageSurface : ContainerControl
                     _slots.Add(page, slot);
                     _pages.Controls.Add(slot);
                 }
-                slot.Visible = ReferenceEquals(page, _ribbon.Backstage.SelectedPage);
             }
+            PerformLayout();
+            if (animatePage && _ribbon.Backstage.SelectedPage is { } selected && _slots.TryGetValue(selected, out var arriving))
+                _pageMotion = RibbonBackstagePageMotion.Prepare(_ribbon, arriving, _pages);
+            foreach (var pair in _slots) pair.Value.Visible = ReferenceEquals(pair.Key, _ribbon.Backstage.SelectedPage);
             bool movedFocus = hadFocus && (!ContainsFocus || hadPageFocus && !ReferenceEquals(_shownPage, _ribbon.Backstage.SelectedPage));
             _shownPage = _ribbon.Backstage.SelectedPage;
             PerformLayout();
             AssignTips();
-            Invalidate(true);
+            // Selection changes chrome, not authored page pixels. Invalidating
+            // every descendant also invalidates native edit/RichEdit windows.
+            Invalidate(); _back.Invalidate(); _navigation.Invalidate(true); _footer.Invalidate(true);
             if (movedFocus && _ribbon.IsBackstageOpen) FocusInitial(false);
+            _pageMotion?.Start();
         }
+        catch { SettlePageMotion(); throw; }
         finally { _syncing = false; }
     }
     private void UpdateNavigationFont()
@@ -208,6 +224,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     }
     internal void DetachContent(Control content)
     {
+        SettlePageMotion();
         foreach (var page in _slots.Keys.Where(p => ReferenceEquals(_slots[p].Content, content)).ToArray())
         { _slots[page].Dispose(); _slots.Remove(page); }
     }
@@ -321,7 +338,8 @@ internal sealed class RibbonBackstageSurface : ContainerControl
                 _footer.Visible = layout.Footer.Height > 0;
             }
             finally { _navigation.ResumeLayout(false); _footer.ResumeLayout(false); }
-            foreach (var slot in _slots.Values) slot.Bounds = new(Point.Empty, _pages.ClientSize);
+            foreach (var slot in _slots.Values)
+                if (!IsPageAnimating || !ReferenceEquals(_pageMotion!.Target, slot)) slot.Bounds = new(Point.Empty, _pages.ClientSize);
         }
         finally { _arranging = false; }
     }
@@ -343,10 +361,10 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     protected override void OnVisibleChanged(EventArgs e)
     {
         base.OnVisibleChanged(e);
-        if (!Visible) ReleaseMotionOpacity();
+        if (!Visible) { SettlePageMotion(); ReleaseMotionOpacity(); }
         else if (_ribbon.HasWindowBackdrop && _motionOpacity is null) PrepareBackdrop();
     }
-    protected override void OnHandleDestroyed(EventArgs e) { ReleaseMotionOpacity(); base.OnHandleDestroyed(e); }
+    protected override void OnHandleDestroyed(EventArgs e) { SettlePageMotion(); ReleaseMotionOpacity(); base.OnHandleDestroyed(e); }
     protected override void OnPaintBackground(PaintEventArgs e) { if (!MaterialPaint) base.OnPaintBackground(e); }
     protected override void OnPaint(PaintEventArgs e)
     {
@@ -391,6 +409,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         if (disposing && !_disposing)
         {
             _disposing = true;
+            SettlePageMotion();
             ReleaseMotionOpacity();
             _paintBuffer?.Dispose(); _paintBuffer = null; _topFrameBuffer?.Dispose(); _topFrameBuffer = null;
             foreach (var slot in _slots.Values) slot.Detach();
@@ -399,12 +418,76 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         base.Dispose(disposing);
         if (disposing) { _navigationFont?.Dispose(); _navigationFont = null; _navigationFontSource = null; }
     }
-    private sealed class PageSlot : Panel
+    internal sealed class PageSlot : Panel
     {
         internal Control Content { get; }
         private readonly DockStyle _dock;
         private readonly Rectangle _bounds;
         private readonly bool _visible;
+        private bool _moving;
+        private RibbonDrawingHold? _pageOpacity;
+        internal byte PageOpacity { get; private set; } = 255;
+        internal bool HasApplicationOpacity => _pageOpacity is null && RibbonDrawingHold.HasOpacity(Handle);
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                var parameters = base.CreateParams;
+                // Compose this native page subtree atomically, including edit
+                // HWNDs. WinForms' managed double buffering cannot cover them.
+                parameters.ExStyle |= 0x02000000; // WS_EX_COMPOSITED, scoped to the library-owned slot.
+                return parameters;
+            }
+        }
+        internal void AcquirePageOpacity(byte alpha)
+        {
+            _pageOpacity ??= RibbonDrawingHold.Create(Handle, alpha, compositeChildren: true);
+            SetPageOpacity(alpha);
+        }
+        internal void SetPageOpacity(byte alpha) { _pageOpacity?.SetOpacity(alpha); PageOpacity = _pageOpacity is null ? (byte)255 : alpha; }
+        internal void RestorePageOpacity()
+        {
+            SetPageOpacity(255);
+            // Keep the visible page's redirection stable after fading. Removing
+            // WS_EX_LAYERED and forcing an erase here flashes native editors.
+            if (IsHandleCreated) RibbonDrawingHold.UpdatePending(Handle);
+        }
+        private void ReleasePageOpacity() { _pageOpacity?.Dispose(); _pageOpacity = null; PageOpacity = 255; }
+        protected override void OnVisibleChanged(EventArgs e) { base.OnVisibleChanged(e); if (!Visible) ReleasePageOpacity(); }
+        protected override void OnHandleDestroyed(EventArgs e) { ReleasePageOpacity(); base.OnHandleDestroyed(e); }
+        internal void MoveForMotion(Point location)
+        {
+            bool repaintExposed = Visible && IsHandleCreated;
+            using var before = repaintExposed ? VisibleClientRegion() : null;
+            _moving = true;
+            try { Location = location; }
+            finally { _moving = false; }
+            if (!repaintExposed || !Visible) return;
+            using var after = VisibleClientRegion();
+            // The redirected page initially paints only its unclipped rows.
+            // Sliding down exposes rows above that cached drawing; update just
+            // those pixels before publishing the next frame, including the
+            // curved viewport edge and native children within the exposed area.
+            if (before is not null) after.Exclude(before);
+            Invalidate(after, true);
+        }
+        private Region VisibleClientRegion()
+        {
+            if (Parent is not { } viewport) return new Region(Rectangle.Empty);
+            var region = viewport.Region?.Clone() ?? new Region(viewport.ClientRectangle);
+            region.Translate(-Left, -Top); region.Intersect(ClientRectangle);
+            return region;
+        }
+        protected override void WndProc(ref Message message)
+        {
+            if (_moving && message.Msg == 0x46)
+            {
+                var position = Marshal.PtrToStructure<MotionWindowPosition>(message.LParam);
+                position.Flags |= 0x0100; // SWP_NOCOPYBITS; repaint exposed native strips.
+                Marshal.StructureToPtr(position, message.LParam, false);
+            }
+            base.WndProc(ref message);
+        }
         internal PageSlot(Control content)
         {
             Visible = false;
@@ -423,7 +506,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             Controls.Remove(Content);
             if (!Content.IsDisposed) { Content.Dock = _dock; Content.Bounds = _bounds; Content.Visible = _visible; }
         }
-        protected override void Dispose(bool disposing) { if (disposing) Detach(); base.Dispose(disposing); }
+        protected override void Dispose(bool disposing) { if (disposing) { Visible = false; ReleasePageOpacity(); Detach(); } base.Dispose(disposing); }
     }
     private sealed class SeparatorControl : Control
     {

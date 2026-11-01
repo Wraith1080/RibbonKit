@@ -113,6 +113,7 @@ public partial class RibbonControl
     private bool CloseBackstage(bool restoreFocus, bool force = false, bool animate = true)
     {
         if (!_backstageOpen) return true;
+        _backstageSurface?.SettlePageMotion();
         if (_backstageClosing) { _backstageMotion?.Dispose(); return true; }
         _backstageMotion?.Dispose(); _backstageMotion = null;
         if (!force && _backstageChanging) return false;

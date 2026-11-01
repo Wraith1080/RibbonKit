@@ -4,7 +4,7 @@ Status, **2026-10-31: bounded custom designer increment accepted by the user**. 
 `codex/Ribbonkit-Winform`. This checkpoint follows the disabled/state appearance
 increment and preserves the accepted Backstage behavior.
 
-Latest increment, **2026-11-01: animation selection added to Ribbon settings;
+Latest increment, **2026-11-01: shared content-style selection added to Ribbon settings;
 actual VS/user review pending**. See the sections below for the bounded contracts,
 evidence and review steps. Earlier accepted scopes retain their acceptance.
 Current Backstage authoring and preview status is in
@@ -235,6 +235,53 @@ For actual VS review, reopen that solution, select **Edit Ribbon → Ribbon →
 Ribbon settings → Animation**, then check Cancel, OK, Undo/Redo and save/reopen.
 Selecting None (or Reset in Properties) should remove the saved assignment.
 Native motion behavior, physical-DPI and mixed-monitor acceptance are unchanged.
+
+### Shared tab content animation setting — 2026-11-01
+
+The root **Ribbon settings** now exposes **Tab content animation**, offering
+Fade (the existing default) and SlideDown. It edits the existing property used by
+expanded tab content, arriving headers and group collapse/restore; the user's new
+[Backstage page motion](BACKSTAGE-PAGE-MOTION.md) uses that same preference.
+Groups retain their sideways slide. None/Subtle/Expressive remains a separate
+animation-level setting. No new public API is added.
+
+The style participates in the detached snapshot and revision, one mixed-root
+transaction and Undo/Redo. Cancel and unchanged OK preserve live values; Reset
+restores Fade and omits its generated assignment. Nondefault code is the ordinary
+`ribbon.TabContentAnimation = RibbonTabContentAnimation.SlideDown;` assignment.
+Static designer previews remain unchanged in behavior.
+
+The 24 focused designer cases, root-page inspection and package-only native
+verification are recorded once in the linked page-motion plan. The permanent
+Designer Sample has been refreshed in place; no new review project was created.
+Actual VS/visual review is pending for this addition.
+
+### Designer Sample runtime animation correction — 2026-11-01
+
+The user reported that selecting Expressive had no runtime effect. The authored
+`DesignerForm.Designer.cs` did contain the Expressive assignment, with no normal
+startup override; the Windows client-area animation query also returned enabled.
+The permanent sample lacked the compatibility manifest already present in
+Showcase and the independent native consumer. Its animation drawing-window
+creation failed and the existing runtime correctly fell back to immediate changes.
+
+The sample now includes `app.manifest` and declares it through `ApplicationManifest`
+in its project. It uses the same Windows compatibility/common-controls declarations
+as the other native hosts, with its own assembly identity. This is a host
+integration correction; no library, designer selection or public API changes were
+needed. The user's authored Expressive/theme settings remain unchanged.
+
+A focused `--verify-animation` sample check uses its actual compiled initializer,
+public RibbonKit APIs, an offscreen native Form and real UI timers. Before the
+manifest correction it logged Expressive, system animations enabled, a native
+window-handle creation failure, and `IsAnimating=false` on tab selection. After
+the correction, tab selection and Backstage opening/closing each report
+`IsAnimating=true`, then complete with `IsAnimating=false`. No OS policy override,
+page capture or RibbonKit internal reflection is used. Debug build passes with
+zero warnings/errors. Evidence is under
+`TestResults/winforms-designer-animation-runtime/before/` and `after/`.
+No broad tests were repeated. User visual, physical-DPI and frame-pacing review
+remain separate from this bounded native runtime check.
 
 ## Permanent Designer Sample — 2026-11-01
 

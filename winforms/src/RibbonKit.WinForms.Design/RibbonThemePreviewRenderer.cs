@@ -15,6 +15,7 @@ internal static class RibbonThemePreviewRenderer
         if (draft.Revision != before.Revision) throw new ArgumentException("The ribbon changed while the editor was open. Cancel and reopen Edit Ribbon.");
         var theme = RibbonDesignCommitter.ParseTheme(draft.BuiltInTheme);
         _ = RibbonDesignCommitter.ParseAnimation(draft.AnimationLevel);
+        _ = RibbonDesignCommitter.ParseContentAnimation(draft.TabContentAnimation);
         draft.ReservedIds = before.ReservedIds; draft.ReservedNames = before.ReservedNames; draft.Validate();
         using var probe = new PreviewRibbon();
         probe.Site = new PreviewSite(probe);

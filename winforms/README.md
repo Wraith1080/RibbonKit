@@ -214,7 +214,12 @@ its authored visibility, placement and commands return when Backstage closes.
 TabRow and BelowRibbon QAT presentation is retained, including a TitleBar
 preference that currently falls back to TabRow. Caption buttons
 stay in place. Opening and closing also fade the surface and caption tint to
-soften their appearance/disappearance. Page switches remain immediate.
+soften their appearance/disappearance. Page changes use the shared
+`TabContentAnimation`: Fade fades in the incoming native page body; SlideDown
+slides it down 8/12 logical pixels for Subtle/Expressive. Navigation, page frame
+and caption stay fixed, and native page controls keep their parent/handles/state.
+None and system-disabled animation remain immediate. No page is captured.
+See [page-motion contract and focused evidence](docs/BACKSTAGE-PAGE-MOTION.md).
 Application controls retain their native handles, parents,
 values and selection. Backstage page controls are never captured or printed.
 Solid opening temporarily holds the already-composed document drawing beneath
@@ -1728,6 +1733,9 @@ and a static ribbon/Backstage preview. Its **Ribbon settings** also offers an
 **Animation** dropdown: None (the default), Subtle or Expressive. This edits the
 existing `AnimationLevel` property on OK, supports Undo/Redo and saves nondefault
 values as ordinary enum assignments. Reset restores None; the image preview stays static.
+**Tab content animation** offers Fade (default) or SlideDown and applies to tab
+bodies, arriving headers, ribbon group collapse/restore and Backstage page changes.
+Reset restores Fade. Both settings use the same detached draft and OK transaction.
 The current native catalog offers
 **Office2024Light** only; **(Application theme)** preserves the application value.
 Command **SizePolicy** values have a dropdown of fixed/adaptive choices.

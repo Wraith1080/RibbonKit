@@ -87,7 +87,7 @@ public sealed class BackstageMotionTests
     });
 
     [Fact]
-    public void Page_switches_are_immediate_and_keep_native_handles_selection_and_values() => FoundationTests.Sta(() =>
+    public void Page_switch_during_opening_settles_and_later_page_motion_keeps_native_handles_selection_and_values() => FoundationTests.Sta(() =>
     {
         using var f = new Fixture(true); using var second = new TextBox { Text = "Print settings" };
         var page = new RibbonBackstagePageItem { Text = "Print", Content = second }; f.Ribbon.Backstage.Items.Add(page);
@@ -96,7 +96,7 @@ public sealed class BackstageMotionTests
         f.Field.Select(2, 3); f.Ribbon.Backstage.SelectedPage = page;
         Assert.False(f.Ribbon.IsAnimating); Assert.Equal(0, surface.Left); Assert.True(second.Visible);
         f.Ribbon.Backstage.SelectedPage = (RibbonBackstagePageItem)f.Ribbon.Backstage.Items[0];
-        Assert.False(f.Ribbon.IsAnimating); Assert.Same(parent, f.Page.Parent); Assert.Equal(handle, f.Field.Handle);
+        Assert.True(f.Ribbon.IsAnimating); f.Ribbon.SettleMotion(); Assert.Same(parent, f.Page.Parent); Assert.Equal(handle, f.Field.Handle);
         Assert.Equal(2, f.Field.SelectionStart); Assert.Equal(3, f.Field.SelectionLength); Assert.Equal("Print settings", second.Text);
         Assert.Equal(0, f.Page.PrintRequests); Assert.Equal(255, surface.MotionAlpha);
     });

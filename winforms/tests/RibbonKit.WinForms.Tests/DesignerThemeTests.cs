@@ -148,10 +148,12 @@ public sealed class DesignerThemeTests
             var group = dialog.Controls.Find("RibbonTheme", true).Single();
             var choice = dialog.Controls.Find("BuiltInTheme", true).Single(); var button = dialog.Controls.Find("PreviewTheme", true).Single();
             var animation = dialog.Controls.Find("AnimationLevel", true).Single();
+            var contentStyle = dialog.Controls.Find("TabContentAnimation", true).Single();
             Assert.True(group.Height > 60 * scale); Assert.True(button.Enabled);
             Assert.True(choice.Width >= 250 * scale); Assert.True(button.Bottom <= button.Parent!.ClientSize.Height);
             Assert.True(button.Right <= button.Parent.ClientSize.Width); Assert.True(button.Top >= choice.Bottom);
             Assert.True(animation.Top >= choice.Bottom); Assert.True(animation.Bottom <= button.Top); Assert.True(animation.Width >= 250 * scale);
+            Assert.True(contentStyle.Top >= animation.Bottom); Assert.True(contentStyle.Bottom <= button.Top); Assert.True(contentStyle.Width >= 250 * scale);
         }
         if (scale == 1 && Environment.GetEnvironmentVariable("RIBBONKIT_THEME_CAPTURE") is { Length: > 0 } directory)
         {

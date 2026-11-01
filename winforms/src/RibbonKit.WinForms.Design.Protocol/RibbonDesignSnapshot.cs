@@ -19,6 +19,8 @@ public sealed class RibbonDesignSnapshot
     [DataMember] public string[] ThemeChoices { get; set; } = Array.Empty<string>();
     [DataMember] public string AnimationLevel { get; set; } = "None";
     [DataMember] public string[] AnimationChoices { get; set; } = Array.Empty<string>();
+    [DataMember] public string TabContentAnimation { get; set; } = "Fade";
+    [DataMember] public string[] TabContentAnimationChoices { get; set; } = Array.Empty<string>();
     [DataMember] public List<RibbonDesignNode> Tabs { get; set; } = new();
     [DataMember] public List<RibbonDesignNode> Templates { get; set; } = new();
     [DataMember] public List<string> ReservedNames { get; set; } = new();

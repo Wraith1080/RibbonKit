@@ -18,6 +18,7 @@ internal sealed class RibbonEditorDialog : Form
     private readonly GroupBox _themeBox = new() { Name = "RibbonTheme", Text = "Ribbon settings", AutoSize = true, Dock = DockStyle.Fill, Padding = new Padding(8), Margin = new Padding(0, 0, 0, 8) };
     private readonly ComboBox _themeChoice = new() { Name = "BuiltInTheme", DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Top, AccessibleName = "Built-in ribbon theme" };
     private readonly ComboBox _animationChoice = new() { Name = "AnimationLevel", DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Top, AccessibleName = "Ribbon animation level" };
+    private readonly ComboBox _contentAnimationChoice = new() { Name = "TabContentAnimation", DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Top, AccessibleName = "Tab content animation" };
     private readonly TreeView _tree = new() { Dock = DockStyle.Fill, HideSelection = false, AccessibleName = "Ribbon structure" };
     private readonly TreeNode _root = new("Ribbon") { Name = "RibbonRoot" };
     private readonly PropertyGrid _properties = new() { Dock = DockStyle.Fill, HelpVisible = true, AccessibleName = "Selected component properties" };
@@ -86,17 +87,21 @@ internal sealed class RibbonEditorDialog : Form
             if (picker.ShowDialog(this) == DialogResult.OK && picker.Selection is { } selection) SetIcon(selection);
         };
         clearIcon.Click += (_, _) => SetIcon(new RibbonDesignIcon());
-        var themes = ColumnLayout(); themes.AutoSize = true; themes.Dock = DockStyle.Top; themes.RowCount = 5;
+        var themes = ColumnLayout(); themes.AutoSize = true; themes.Dock = DockStyle.Top; themes.RowCount = 7;
         themes.Controls.Add(new Label { AutoSize = true, Dock = DockStyle.Fill, Text = "Application theme: " + draft.ApplicationTheme }, 0, 0);
         _themeChoice.Items.Add("(Application theme)"); _themeChoice.Items.AddRange(draft.ThemeChoices.Cast<object>().ToArray());
         themes.Controls.Add(_themeChoice, 0, 1);
         themes.Controls.Add(new Label { Text = "Animation", AutoSize = true, Dock = DockStyle.Fill }, 0, 2);
         _animationChoice.Items.AddRange(draft.AnimationChoices.Cast<object>().ToArray());
         themes.Controls.Add(_animationChoice, 0, 3);
+        themes.Controls.Add(new Label { Text = "Tab content animation (tabs, headers, groups and Backstage pages)", AutoSize = true, Dock = DockStyle.Fill }, 0, 4);
+        _contentAnimationChoice.Items.AddRange(draft.TabContentAnimationChoices.Cast<object>().ToArray());
+        themes.Controls.Add(_contentAnimationChoice, 0, 5);
         var preview = new Button { Name = "PreviewTheme", Text = "Preview ribbon and Backstage…", AutoSize = true, Enabled = render != null };
-        themes.Controls.Add(preview, 0, 4); _themeBox.Controls.Add(themes); details.Controls.Add(_themeBox, 0, 3);
+        themes.Controls.Add(preview, 0, 6); _themeBox.Controls.Add(themes); details.Controls.Add(_themeBox, 0, 3);
         _themeChoice.SelectedIndexChanged += (_, _) => { if (!_showing) _draft.BuiltInTheme = _themeChoice.SelectedIndex <= 0 ? "" : _themeChoice.SelectedItem?.ToString() ?? ""; };
         _animationChoice.SelectedIndexChanged += (_, _) => { if (!_showing && _animationChoice.SelectedItem is string animation) _draft.AnimationLevel = animation; };
+        _contentAnimationChoice.SelectedIndexChanged += (_, _) => { if (!_showing && _contentAnimationChoice.SelectedItem is string animation) _draft.TabContentAnimation = animation; };
         preview.Click += (_, _) => PreviewTheme();
         _properties.Name = "ComponentProperties"; details.Controls.Add(_properties, 0, 4);
         _choiceBox.Controls.Add(_choices); details.Controls.Add(_choiceBox, 0, 5); _split.Panel2.Controls.Add(details);
@@ -205,6 +210,7 @@ internal sealed class RibbonEditorDialog : Form
             _themeBox.Visible = ReferenceEquals(_tree.SelectedNode, _root);
             _themeChoice.SelectedIndex = _draft.BuiltInTheme.Length == 0 ? 0 : _themeChoice.Items.IndexOf(_draft.BuiltInTheme);
             _animationChoice.SelectedItem = _draft.AnimationLevel;
+            _contentAnimationChoice.SelectedItem = _draft.TabContentAnimation;
             _choiceBox.Visible = node?.Kind == "ComboBox"; _choices.Text = node == null ? "" : string.Join(Environment.NewLine, node.Choices);
         }
         finally { _showing = false; }

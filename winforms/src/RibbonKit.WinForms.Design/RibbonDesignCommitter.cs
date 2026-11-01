@@ -45,6 +45,8 @@ internal static class RibbonDesignCommitter
             ThemeChoices = Enum.GetNames<RibbonBuiltInTheme>(),
             AnimationLevel = ribbon.AnimationLevel.ToString(),
             AnimationChoices = Enum.GetNames<RibbonAnimationLevel>(),
+            TabContentAnimation = ribbon.TabContentAnimation.ToString(),
+            TabContentAnimationChoices = Enum.GetNames<RibbonTabContentAnimation>(),
             ReservedNames = host.Container.Components.Cast<IComponent>().Where(component => !elements.Contains(component)).Select(component => component.Site?.Name ?? "").Where(name => name.Length != 0).ToList(),
             ReservedIds = OutsideElements(ribbon).Select(element => element.Id).ToList()
         };
@@ -70,6 +72,7 @@ internal static class RibbonDesignCommitter
         if (before.Revision != draft.Revision) throw new ArgumentException("The ribbon changed while the editor was open. Cancel and reopen Edit Ribbon.");
         var theme = ParseTheme(draft.BuiltInTheme);
         var animation = ParseAnimation(draft.AnimationLevel);
+        var contentAnimation = ParseContentAnimation(draft.TabContentAnimation);
         draft.ThemeRevision = before.ThemeRevision;
         // Reserved names/IDs and property schemas come from the live designer,
         // not from data sent back by a dialog.
@@ -134,6 +137,12 @@ internal static class RibbonDesignCommitter
                 var property = TypeDescriptor.GetProperties(ribbon)[nameof(ribbon.AnimationLevel)]!;
                 var old = ribbon.AnimationLevel;
                 changes.OnComponentChanging(ribbon, property); property.SetValue(ribbon, animation); changes.OnComponentChanged(ribbon, property, old, animation);
+            }
+            if (ribbon.TabContentAnimation != contentAnimation)
+            {
+                var property = TypeDescriptor.GetProperties(ribbon)[nameof(ribbon.TabContentAnimation)]!;
+                var old = ribbon.TabContentAnimation;
+                changes.OnComponentChanging(ribbon, property); property.SetValue(ribbon, contentAnimation); changes.OnComponentChanged(ribbon, property, old, contentAnimation);
             }
             if (new RibbonDesignSnapshot { Tabs = before.Tabs }.Serialize() == new RibbonDesignSnapshot { Tabs = draft.Tabs }.Serialize())
             { transaction.Commit(); return true; }
@@ -291,7 +300,13 @@ internal static class RibbonDesignCommitter
         nameof(RibbonAnimationLevel.Expressive) => RibbonAnimationLevel.Expressive,
         _ => throw new ArgumentException("Select a supported animation level.")
     };
-    private static string Fingerprint(RibbonDesignSnapshot snapshot) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(new RibbonDesignSnapshot { Tabs = snapshot.Tabs, BuiltInTheme = snapshot.BuiltInTheme, ThemeRevision = snapshot.ThemeRevision, AnimationLevel = snapshot.AnimationLevel }.Serialize())));
+    internal static RibbonTabContentAnimation ParseContentAnimation(string value) => value switch
+    {
+        nameof(RibbonTabContentAnimation.Fade) => RibbonTabContentAnimation.Fade,
+        nameof(RibbonTabContentAnimation.SlideDown) => RibbonTabContentAnimation.SlideDown,
+        _ => throw new ArgumentException("Select Fade or SlideDown for tab content animation.")
+    };
+    private static string Fingerprint(RibbonDesignSnapshot snapshot) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(new RibbonDesignSnapshot { Tabs = snapshot.Tabs, BuiltInTheme = snapshot.BuiltInTheme, ThemeRevision = snapshot.ThemeRevision, AnimationLevel = snapshot.AnimationLevel, TabContentAnimation = snapshot.TabContentAnimation }.Serialize())));
     private static IEnumerable<RibbonElement> Elements(IEnumerable<RibbonElement> elements)
     { foreach (var element in elements) { yield return element; foreach (var child in Elements(ChildElements(element))) yield return child; } }
     private static IEnumerable<RibbonElement> ChildElements(RibbonElement element) => element switch

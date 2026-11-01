@@ -8,6 +8,9 @@ tracked in the [pre-M6B review slice](M4-STATUS.md#pre-m6b-review-fixes--2026-10
 This accepts the reviewed animation presentation, separately from performance,
 physical display/DPI and other broader gates.
 
+The subsequent [Backstage page content motion](BACKSTAGE-PAGE-MOTION.md), requested
+2026-11-01, is implemented with its own focused evidence and pending user review.
+
 The user selected Classic/Simplified, Mouse/Touch and QAT movement as the first
 visible motion. M6A remains ahead of M6B window integration/title-bar QAT.
 The user reserved a small fixing slice before M6B on 2026-10-29; its specific
@@ -38,8 +41,9 @@ Backstage's earlier navigation/page fades are superseded by the
   tint tracks the same edge and opacity. Only effective TitleBar QAT presentation
   and hit targets are suppressed until closing completes. TabRow/BelowRibbon,
   including TitleBar fallback to TabRow, retain their normal presentation.
-  Authored toolbar visibility, placement and commands are preserved. Page switches are
-  immediate. Native page redirection fades with movement and stays opaque after
+  Authored toolbar visibility, placement and commands are preserved. Page switches
+  now follow the shared Fade/SlideDown content preference; see the bounded page
+  contract linked above. Native page redirection fades with surface movement and stays opaque after
   opening until hidden. Material navigation/frames, including opaque rails, fade
   their premultiplied paint alongside the page layer. Static native page drawing
   is retained during travel; only newly exposed page strips and existing native

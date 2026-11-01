@@ -362,6 +362,9 @@ separate. Current user visual review remains pending.
 
 ## Whole-surface Backstage and caption slide — 2026-10-30
 
+The later requested [Backstage page motion](BACKSTAGE-PAGE-MOTION.md) adds shared
+Fade/SlideDown page selection; the accepted opening/closing treatment below remains.
+
 The user requested replacing every Backstage animation with one complete-surface
 slide and then specified that the title-bar colouring should slide alongside it.
 This supersedes the earlier navigation slide, native-page opening/page-switch
