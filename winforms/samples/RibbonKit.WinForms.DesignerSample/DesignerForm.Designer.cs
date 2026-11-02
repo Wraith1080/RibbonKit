@@ -67,6 +67,7 @@ partial class DesignerForm
         saveButton = new RibbonKit.WinForms.RibbonButtonItem();
         ribbonQatReference1 = new RibbonKit.WinForms.RibbonQuickAccessReference();
         ribbonQatReference2 = new RibbonKit.WinForms.RibbonQuickAccessReference();
+        documentStylesQatReference = new RibbonKit.WinForms.RibbonQuickAccessDropDownReference();
         statusLabel = new Label();
         button1 = new Button();
         ((System.ComponentModel.ISupportInitialize)ribbon).BeginInit();
@@ -271,6 +272,7 @@ partial class DesignerForm
         // 
         documentStylesGallery.ColumnCount = 2;
         documentStylesGallery.DropDownPresenterType = typeof(GalleryStylesControl);
+        documentStylesGallery.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:desktop-edit", true);
         documentStylesGallery.Id = "gallery.documentStyles";
         documentStylesGallery.InRibbonColumnCount = 2;
         documentStylesGallery.InRibbonPresenterType = typeof(GalleryStylesStripControl);
@@ -279,8 +281,10 @@ partial class DesignerForm
         documentStylesGallery.KeyTip = "S";
         documentStylesGallery.MaxVisibleRows = 3;
         documentStylesGallery.SelectedItem = documentStyle1;
+        documentStylesGallery.SimplifiedPlacement = RibbonKit.WinForms.RibbonSimplifiedPlacement.Inline;
         documentStylesGallery.Text = "Document styles";
         documentStylesGallery.TileWidth = 160;
+        documentStylesGallery.UseDropDownPresenterInQuickAccess = true;
         documentStylesGallery.SelectionCommitted += documentStylesGallery_SelectionCommitted;
         documentStylesGallery.ItemPreview += documentStylesGallery_ItemPreview;
         documentStylesGallery.ItemPreviewCancelled += documentStylesGallery_ItemPreviewCancelled;
@@ -445,7 +449,7 @@ partial class DesignerForm
         // 
         ribbon.MessageBar.Id = "rk:8433585172b34728b57d006d459f4081";
         ribbon.Name = "ribbon";
-        ribbon.QuickAccessItems.AddRange(new RibbonKit.WinForms.RibbonElement[] { ribbonQatReference1, ribbonQatReference2 });
+        ribbon.QuickAccessItems.AddRange(new RibbonKit.WinForms.RibbonElement[] { ribbonQatReference1, ribbonQatReference2, documentStylesQatReference });
         ribbon.QuickAccessPosition = RibbonKit.WinForms.RibbonQuickAccessPosition.BelowRibbon;
         ribbon.Size = new Size(1029, 287);
         ribbon.TabContentAnimation = RibbonKit.WinForms.RibbonTabContentAnimation.SlideDown;
@@ -476,6 +480,13 @@ partial class DesignerForm
         // 
         ribbonQatReference2.Id = "rk:7cf51470e7dc4796a830db3f28359224";
         ribbonQatReference2.Source = saveButton;
+        // 
+        // documentStylesQatReference
+        // 
+        documentStylesQatReference.Id = "qat.documentStyles";
+        documentStylesQatReference.KeyTip = "3";
+        documentStylesQatReference.Source = documentStylesGallery;
+        documentStylesQatReference.Text = "Document styles";
         // 
         // statusLabel
         // 
@@ -558,6 +569,7 @@ partial class DesignerForm
     private RibbonKit.WinForms.RibbonButtonItem saveButton;
     private RibbonKit.WinForms.RibbonQuickAccessReference ribbonQatReference1;
     private RibbonKit.WinForms.RibbonQuickAccessReference ribbonQatReference2;
+    private RibbonKit.WinForms.RibbonQuickAccessDropDownReference documentStylesQatReference;
     private RibbonKit.WinForms.RibbonDropDownItem selectDropdown;
     private RibbonKit.WinForms.RibbonButtonItem selectObjectButton;
     private RibbonKit.WinForms.RibbonButtonItem selectAllButton;

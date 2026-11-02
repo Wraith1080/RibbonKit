@@ -140,9 +140,11 @@ internal sealed class RibbonPopupManager : IDisposable
             ? opener.RectangleToScreen(new Rectangle(S(_ribbon.LayoutTheme.BodyMargin.Left), _ribbon.WindowCaptionHeight + S(_ribbon.LayoutTheme.TabHeight + _ribbon.LayoutTheme.BodyMargin.Top),
                 Math.Max(1, opener.ClientSize.Width - S(_ribbon.LayoutTheme.BodyMargin.Left) - S(_ribbon.LayoutTheme.BodyMargin.Right)), 0)) : screenAnchor;
         var work = Screen.FromRectangle(placementAnchor).WorkingArea;
-        var surface = new RibbonPopupSurface(_ribbon, owner, new(Math.Max(1, work.Width - 2), Math.Max(1, work.Height - 2)), menuSource, groupSource, customGallery: !IsQuickAccessContext(opener));
+        bool quickAccess = _ribbon.QuickAccessItems.Contains(owner) || ReferenceEquals(owner, _ribbon.QuickAccessOverflow) || IsQuickAccessContext(opener);
+        var surface = new RibbonPopupSurface(_ribbon, owner, new(Math.Max(1, work.Width - 2), Math.Max(1, work.Height - 2)), menuSource, groupSource, quickAccess);
         if (opener.IsDisposed || !opener.Visible || owner.IsDisposed || !owner.Visible || !owner.EffectiveEnabled || _ribbon.IsDisposed
-            || menuSource is not null && !ReferenceEquals(menuSource.Ribbon, _ribbon) || !CurrentProjection(owner, menuSource, groupSource))
+            || menuSource is not null && !ReferenceEquals(menuSource.Ribbon, _ribbon) || !CurrentProjection(owner, menuSource, groupSource)
+            || surface.HasGalleryPresenter && quickAccess && menuSource is RibbonGalleryItem { UseDropDownPresenterInQuickAccess: false })
         { surface.Dispose(); return; }
         var host = new ToolStripControlHost(surface) { AutoSize = false, Size = surface.Size, Margin = Padding.Empty, Padding = Padding.Empty };
         var window = new RibbonPopupWindow(_ribbon, QueueActivationCheck)
@@ -263,6 +265,11 @@ internal sealed class RibbonPopupManager : IDisposable
     {
         if (_sessions.FirstOrDefault(s => ReferenceEquals(s.MenuSource, source)) is { } session) Close(session.Owner, restoreFocus);
     }
+    internal void CloseQuickAccessGallery(RibbonGalleryItem source)
+    {
+        foreach (var session in _sessions.Where(session => session.Surface.IsQuickAccess && ReferenceEquals(session.MenuSource, source)).ToArray())
+            Close(session.Owner, false);
+    }
     internal void CloseTop(bool restoreFocus, bool animateTab = false)
     {
         _ribbon.ScreenTips.Cancel();
@@ -365,6 +372,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     internal RibbonControl Ribbon => _ribbon;
     internal RibbonDropDownItem? MenuSource { get; }
     internal RibbonGalleryItem? GallerySource => MenuSource as RibbonGalleryItem;
+    internal bool IsQuickAccess { get; }
     internal RibbonGroup? GroupSource { get; }
     internal RibbonLayoutSnapshot? BodyLayout => _bodyLayout;
     internal RibbonElement? FocusedElement => _focused;
@@ -377,10 +385,11 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         Clip = OwnerElement is RibbonQuickAccessOverflow ? OverflowViewport : _bodyLayout is null ? ClientRectangle : Rectangle.Intersect(ClientRectangle,
             new(t.Clip.X + AutoScrollPosition.X, t.Clip.Y + AutoScrollPosition.Y, t.Clip.Width, t.Clip.Height))
     }).SelectMany(t => RibbonSplitLayout.Expand(t, _ribbon.DeviceDpi, MenuSource is not null || OwnerElement is RibbonQuickAccessOverflow)).ToArray();
-    internal RibbonPopupSurface(RibbonControl ribbon, RibbonElement owner, Size workArea, RibbonDropDownItem? menuSource = null, RibbonGroup? groupSource = null, bool customGallery = true)
+    internal RibbonPopupSurface(RibbonControl ribbon, RibbonElement owner, Size workArea, RibbonDropDownItem? menuSource = null, RibbonGroup? groupSource = null, bool quickAccess = false)
     {
         _ribbon = ribbon;
         OwnerElement = owner;
+        IsQuickAccess = quickAccess || ribbon.QuickAccessItems.Contains(owner) || ReferenceEquals(owner, ribbon.QuickAccessOverflow);
         MenuSource = menuSource ?? (owner as RibbonDropDownItem) ?? (owner as RibbonQuickAccessDropDownReference)?.Source;
         if (GallerySource is { } gallerySource) Disposed += (_, _) => gallerySource.CancelPreview(this);
         GroupSource = groupSource ?? (owner as RibbonGroup) ?? (owner as RibbonQuickAccessGroupReference)?.Source;
@@ -415,7 +424,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         }
         else if (GallerySource is { } gallery)
         {
-            if (customGallery && gallery.HasCustomDropDownPresenter && owner is not RibbonQuickAccessDropDownReference)
+            if (gallery.HasCustomDropDownPresenter && (!IsQuickAccess || gallery.UseDropDownPresenterInQuickAccess))
             { Size = InitializeGalleryPresenter(gallery, workArea); return; }
             _galleryLayout = RibbonGalleryLayout.Build(gallery, Font, ribbon.DeviceDpi, workArea);
             width = _galleryLayout.Extent.Width; height = _galleryLayout.Extent.Height;

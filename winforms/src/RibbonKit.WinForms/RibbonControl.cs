@@ -589,7 +589,7 @@ public partial class RibbonControl : Control, ISupportInitialize
                 else if (target.Kind == TargetKind.QuickAccess)
                     Painter.DrawQuickAccessItem(ctx, target.Element!, false);
                 else if (target.Kind == TargetKind.QuickAccessOverflow)
-                    Painter.DrawQuickAccessOverflow(ctx);
+                    Painter.DrawQuickAccessOverflow(ctx with { Pressed = ctx.Pressed || target.Enabled && _popups.IsExpanded(target.Element ?? QuickAccessOverflow) });
                 else if (target.Kind == TargetKind.ModalClose)
                     Painter.DrawModalClose(ctx, _modalClose.Text);
                 else if (target.Kind == TargetKind.FileMenu)

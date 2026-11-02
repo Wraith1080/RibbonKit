@@ -17,6 +17,7 @@ internal sealed partial class RibbonPopupSurface : IRibbonGalleryPresenterHost
     private RibbonGalleryTile? _presentedSelection;
     private RibbonGalleryTile? _presenterPressed;
     private bool _presenterSynchronizing;
+    private bool _presenterCommitting;
     internal bool HasGalleryPresenter => _galleryPresenter is not null;
 
     private Size InitializeGalleryPresenter(RibbonGalleryItem gallery, Size maximum)
@@ -29,7 +30,7 @@ internal sealed partial class RibbonPopupSurface : IRibbonGalleryPresenterHost
             int S(int n) => RibbonLayoutEngine.Scale(n, _ribbon.DeviceDpi);
             int footer = S(24), padding = 2 * _contentPadding;
             var limit = new Size(Math.Max(1, maximum.Width - S(24) - padding), Math.Max(1, maximum.Height - S(32) - footer - padding));
-            _galleryContext = new(this, gallery, _ribbon) { Viewport = limit };
+            _galleryContext = new(this, gallery, _ribbon, isQuickAccess: IsQuickAccess) { Viewport = limit };
             control.Font = Font; control.BackColor = _ribbon.Theme.Surface;
             presenter.Synchronize(_galleryContext);
             var preferred = control.GetPreferredSize(limit);
@@ -56,6 +57,7 @@ internal sealed partial class RibbonPopupSurface : IRibbonGalleryPresenterHost
     internal bool IsCurrentPresenter(RibbonGalleryPresenterContext context) => ReferenceEquals(_galleryContext, context)
         && !IsDisposed && _galleryPresenterControl is { IsDisposed: false }
         && GallerySource is { IsDisposed: false, Visible: true, EffectiveEnabled: true } gallery
+        && (!IsQuickAccess || gallery.UseDropDownPresenterInQuickAccess)
         && ReferenceEquals(gallery.Ribbon, _ribbon) && _ribbon.Popups.Surfaces.Contains(this);
     internal bool PresenterPreview(RibbonGalleryPresenterContext context, RibbonGalleryTile? item)
     {
@@ -66,11 +68,16 @@ internal sealed partial class RibbonPopupSurface : IRibbonGalleryPresenterHost
     internal bool PresenterCommit(RibbonGalleryPresenterContext context, RibbonGalleryTile item)
     {
         _ribbon.VerifyAccess();
-        if (_presenterSynchronizing || !IsCurrentPresenter(context) || !context.Gallery.Available(item) || !_ribbon.Editors.CommitFocused()
-            || !IsCurrentPresenter(context) || !context.Gallery.Available(item)) return false;
-        // Use the same accepted activation and popup-dismissal route as built-in
-        // tiles. In particular, committing the selected tile still commits once.
-        return _ribbon.ActivateGalleryTile(item, this, editorValidated: true);
+        if (_presenterSynchronizing || _presenterCommitting || !IsCurrentPresenter(context) || !context.Gallery.Available(item)) return false;
+        _presenterCommitting = true;
+        try
+        {
+            if (!_ribbon.Editors.CommitFocused() || !IsCurrentPresenter(context) || !context.Gallery.Available(item)) return false;
+            // Use the same accepted activation and popup-dismissal route as built-in
+            // tiles. In particular, committing the selected tile still commits once.
+            return _ribbon.ActivateGalleryTile(item, this, editorValidated: true);
+        }
+        finally { _presenterCommitting = false; }
     }
     internal bool PresenterFocus(RibbonGalleryPresenterContext context, RibbonGalleryTile item)
     {

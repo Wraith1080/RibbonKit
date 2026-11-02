@@ -47,15 +47,17 @@ public interface IRibbonGalleryPresenter
 public sealed class RibbonGalleryPresenterContext
 {
     private IRibbonGalleryPresenterHost? _host;
-    internal RibbonGalleryPresenterContext(IRibbonGalleryPresenterHost host, RibbonGalleryItem gallery, RibbonControl ribbon, RibbonGalleryPresentation presentation = RibbonGalleryPresentation.DropDown)
+    internal RibbonGalleryPresenterContext(IRibbonGalleryPresenterHost host, RibbonGalleryItem gallery, RibbonControl ribbon, RibbonGalleryPresentation presentation = RibbonGalleryPresentation.DropDown, bool isQuickAccess = false)
     {
         _host = host; Gallery = gallery; Theme = ribbon.Theme; Renderer = ribbon.Painter; Presentation = presentation;
-        Font = ribbon.Font; Density = ribbon.Density; Dpi = ribbon.DeviceDpi;
+        Font = ribbon.Font; Density = ribbon.Density; Dpi = ribbon.DeviceDpi; IsQuickAccess = isQuickAccess;
     }
     /// <summary>Gets the original gallery, including owned items and authoritative SelectedItem. Never clone its tiles or independently execute their actions.</summary>
     public RibbonGalleryItem Gallery { get; }
     /// <summary>Gets whether this view is an expanded popup or an inline ribbon body.</summary>
     public RibbonGalleryPresentation Presentation { get; }
+    /// <summary>Gets whether this view was opened through Quick Access, including its overflow, nested menus or borrowed groups. This describes the opening route, not a different source model.</summary>
+    public bool IsQuickAccess { get; }
     /// <summary>Gets the current immutable ribbon theme.</summary>
     public RibbonTheme Theme { get; }
     /// <summary>Gets the borrowed shared renderer for optional themed tile/heading drawing.</summary>

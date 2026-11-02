@@ -1,6 +1,6 @@
 # Optional native gallery presenter and dropdown content hosting
 
-Status, **2026-11-02: first custom inline runtime body implemented; human review pending**.
+Status, **2026-11-02: ordinary custom inline presentation accepted at the reviewed scope; QAT custom gallery popups implemented, human review pending**.
 The user previously confirmed the dropdown gallery presenter works.
 The user accepted the synchronized gallery fade/slide entrance on **2026-11-02**.
 Gallery UserControl class selection in the ribbon designer is implemented with
@@ -14,8 +14,9 @@ This is native RibbonKit.WinForms work; WPF runtime/build/CI remain outside scop
 The deferred dropdown popup designer and custom UserControl hosting proposal is
 recorded separately below and remains deferred. Inline/QAT custom presenters
 now include the [first ordinary inline body increment](#first-inline-runtime-increment--2026-11-02).
-Temporary custom bodies, QAT popup opt-in and inline designer class selection remain
-later slices under the [inline/QAT contract](#inline-and-qat-gallery-presenter-contract--proposal-2026-11-02).
+The [QAT gallery popup increment](#qat-gallery-popup-increment--2026-11-02) reuses the
+existing dropdown class/factory. Temporary custom bodies and inline designer class
+selection remain later slices under the [inline/QAT contract](#inline-and-qat-gallery-presenter-contract--proposal-2026-11-02).
 
 ## First increment contract — 2026-11-02
 
@@ -450,22 +451,112 @@ Verification recorded separately:
 Review **Gallery → Document styles** in the normal Debug Designer Sample. Browse
 rows, expand/cancel, select from either view and switch tabs. To edit the new body,
 open GalleryStylesStripControl.cs in its ordinary UserControl designer. The inline
-selector is not yet offered in Edit Ribbon or Properties. The next bounded slice
-is separate session-owned custom bodies in temporary group/minimized-tab hosts;
-QAT popup opt-in and the designer class picker still follow afterward.
+selector is not yet offered in Edit Ribbon or Properties. The following QAT
+increment now reuses the source dropdown selectors through an explicit opt-in,
+retaining the compact QAT launcher. Separate custom bodies in temporary
+group/minimized-tab hosts and the inline designer class picker remain later slices.
 
 ```powershell
 dotnet run --project winforms/samples/RibbonKit.WinForms.DesignerSample -c Debug --no-build -- --verify-inline-gallery-presenter winforms/artifacts/inline-gallery-presenter/consumer-final
 ```
 
+## QAT gallery popup increment — 2026-11-02
+
+Implemented by user direction after acceptance of the ordinary inline gallery.
+The compact QAT launcher opens the existing dropdown-gallery UserControl class;
+no second application presenter class, QAT tile-strip mode or custom toolbar body
+was introduced. Temporary group/minimized-tab bodies and inline class discovery
+remain outside this increment.
+
+- `RibbonGalleryItem.UseDropDownPresenterInQuickAccess` defaults false, with a
+  Changed event and normal Behavior/default-value metadata. True uses the source's
+  existing DropDownPresenterType or DropDownPresenterFactory; both null still
+  selects the built-in popup. The inline selectors are independent. Four native
+  Unshipped entries cover this bool/event and context.IsQuickAccess; no interface
+  member or shipped API was changed.
+- Popup creation records the actual QAT owner/opener chain, including direct or
+  duplicate references, overflow, nested QAT menus and borrowed-group routes.
+  Simply having a QAT reference does not mark an ordinary opening as QAT.
+  context.IsQuickAccess is immutable route metadata; Presentation remains DropDown.
+  The canonical source supplies the original tiles, selection and event handlers.
+- Each accepted opening creates its own popup-owned control, with the existing
+  constrained sizing, keyboard/child-input routing, reveal/scroll, capture and
+  synchronized card/shadow fade. Cancellation creates no view. Reopening or using
+  another launcher creates a fresh view; no source tile or inline control is moved.
+  The existing one-expanded-popup-per-source policy remains.
+- Changing the QAT policy closes only this source's QAT gallery popup. The next
+  opening resolves the current choice; ordinary popup selection and retained
+  inline controls survive the policy change. Construction and activation recheck
+  the policy after application callbacks. Closing, rebinding/removing a reference,
+  source disposal and validation-time policy changes retire stale requests. A
+  commit guard rejects reentrant activation through the shared popup presenter
+  path. Preview, programmatic selection and accepted actions remain distinct.
+- The source opt-in is ordinary serialized application configuration, excluded
+  from customization JSON with presenter/view state. Properties and authored code
+  can set it; the Edit Ribbon draft bool entry remains part of the later authoring
+  slice. The Designer Sample declares a source opt-in and a Document styles QAT
+  reference with KeyTip 3, reusing GalleryStylesControl. Its user-authored gallery
+  column/row settings and existing card controls were preserved.
+
+Verification, **2026-11-02**:
+
+- Normal Debug runtime/API/XML and native designer server/client builds passed.
+  Native solution Release build passed with zero warnings/errors. The independent
+  Designer Sample package refresh and Debug build passed with zero warnings/errors.
+- **12 new QAT cases passed across focused scopes**:
+  `tests/RibbonKit.WinForms.Tests/TestResults/qat-gallery-presenter.trx` (10/10)
+  and `qat-gallery-simplified-boundary-final.trx` (2/2) in the same folder.
+  **45 affected existing cases passed**, `qat-gallery-presenter-related.trx` in
+  the same folder: ordinary popup/type selection, built-in inline/QAT behavior,
+  QAT menus/groups and ownership. These are 57 distinct focused cases across these
+  selections, not a full-suite run. New coverage includes default compatibility,
+  type/factory routing, inactive tabs, actual overflow ancestry, nested/group
+  routes versus ordinary menus, policy replacement, cancelled/reentrant opening,
+  validation, exactly-once activation, source/reference disposal, stale callbacks,
+  child keyboard/wheel, capture and nondefault CodeDOM bool serialization.
+  Simplified More Commands shares internal QAT reference/overflow types, so QAT
+  classification uses actual collection membership and the opener chain rather
+  than CLR type. The two extra cases cover ordinary Simplified inline commands
+  and More Commands/full-group openings without a QAT opt-in or QAT context flag.
+- The public-API package-only native check passed at actual **120 DPI** in
+  `artifacts/qat-gallery-presenter/consumer-final/`, using package
+  `0.1.0-designer.local20261102T105123362Z`. It verifies the authored QAT reference
+  and existing popup class, native child-label click, queued keyboard/KeyTips,
+  two controlled commits, fresh views, independent inline/card handles and row,
+  inactive-tab behavior, policy reset and built-in fallback. The fixture switches
+  to bounded TabRow mode to force overflow and verifies the overflow parent exists
+  before selecting its gallery row. The joined BelowRibbon toolbar uses its full
+  row and was not proof of overflow. Direct, last-row and true-overflow PNGs were
+  inspected. These are fixture-driven native events, separate from physical input.
+- An initial refresh/check overlap opened the prior sample and locked its output;
+  the task-owned check was stopped, the failed sample build completed, and the
+  user-requested fresh package refresh passed. An early native retry also needed
+  to exit the parent KeyTip layer after Escape before starting another F10 gesture.
+  Those incomplete attempts are not passing evidence; no runtime KeyTip behavior
+  was changed. Previously successful unrelated scopes were retained.
+- Actual VS designer/save-reopen review, physical pointer/keyboard, mixed-monitor
+  DPI, RTL and perceived motion/performance remain separate gates. Existing
+  accessibility providers/bounds are reused; no new gallery UIA patterns or full
+  accessibility certification is claimed. No full suite or WPF checks ran.
+
+Review the third **Document styles** button in the normal Debug Designer Sample's
+BelowRibbon QAT, or press F10 then 3. It should open the same custom popup class
+as the ribbon gallery, including while another tab is selected. Selection from
+either route updates the same gallery. The next component slice remains separate
+session-owned custom inline bodies in temporary group/minimized-tab hosts.
+
+```powershell
+dotnet run --project winforms/samples/RibbonKit.WinForms.DesignerSample -c Debug --no-build -- --verify-qat-gallery-presenter winforms/artifacts/qat-gallery-presenter/consumer-final
+```
+
 ## Inline and QAT gallery presenter contract — proposal, 2026-11-02
 
-**User directed continuation on 2026-11-02; first runtime slice recorded above.**
+**User directed continuation on 2026-11-02; ordinary inline and QAT popup slices recorded above.**
 The complete target contract below includes later, still-unimplemented slices.
 Its original inspection used the clean `codex/Ribbonkit-Winform` worktree at
 `d8d893b4c1a53cc66e1da636543609150fdf88ff` (`Gallery Usercontrol custom presentation
-pop up`). Inline selectors and context.Presentation are now available; the QAT
-opt-in and context.IsQuickAccess remain proposed APIs.
+pop up`). Inline selectors, the QAT opt-in and context.Presentation/IsQuickAccess
+are now available. The temporary custom-body and designer authoring slices remain.
 The accepted popup entrance, designer-editable cards and earlier focus, native
 editor and backdrop fixes remain the baseline. Ordinary dropdown/split content
 hosting and popup designer previews remain in their separate deferred section.
@@ -477,7 +568,7 @@ hosting and popup designer previews remain in their separate deferred section.
 | Inline ribbon body | Opt-in `InRibbonPresenterType` or `InRibbonPresenterFactory` when `IsInRibbon` actually receives a strip slot. Null for both retains the built-in strip. | Ribbon-owned control for that source/projection slot; retained while the source remains retained by this ribbon. |
 | Expanded gallery popup from that body, or an ordinary gallery dropdown | Existing `DropDownPresenterType` or `DropDownPresenterFactory`; independent of the inline selectors. Null for both retains the built-in popup. | Fresh popup-owned control after every accepted opening, disposed on close. Never the inline control. |
 | Direct gallery reference on the QAT toolbar | Keep the existing compact gallery launcher, caption/icon, KeyTip, sizing and overflow route. It is not a tile viewport and gets no UserControl in this proposal. | Existing QAT reference borrows the source; no custom body is constructed until an eligible popup opens. |
-| Gallery popup opened through QAT | Use the source's existing dropdown selectors only when the proposed `UseDropDownPresenterInQuickAccess` is true. Its default is false, preserving today's built-in QAT popup even on sources with a custom ordinary popup. | Fresh popup-owned control per accepted opening, including duplicate references, overflow and inactive source tabs. |
+| Gallery popup opened through QAT | Use the source's existing dropdown selectors only when `UseDropDownPresenterInQuickAccess` is true. Its default is false, preserving existing built-in QAT behavior even on sources with a custom ordinary popup. | Fresh popup-owned control per accepted opening, including duplicate references, overflow and inactive source tabs. |
 
 A gallery strip inside a collapsed-group or minimized-tab popup is an **inline
 body in a temporary host**, not an expanded gallery popup. A QAT group flyout can
@@ -501,7 +592,7 @@ public Type? InRibbonPresenterType { get; set; }                // default null
 public event EventHandler? InRibbonPresenterTypeChanged;
 public Func<Control>? InRibbonPresenterFactory { get; set; }    // default null
 public event EventHandler? InRibbonPresenterFactoryChanged;
-// Proposed QAT addition; not implemented.
+// Implemented QAT addition.
 public bool UseDropDownPresenterInQuickAccess { get; set; }     // default false
 public event EventHandler? UseDropDownPresenterInQuickAccessChanged;
 
@@ -509,7 +600,7 @@ public event EventHandler? UseDropDownPresenterInQuickAccessChanged;
 public enum RibbonGalleryPresentation { DropDown = 0, InRibbon = 1 }
 // Add to RibbonGalleryPresenterContext:
 public RibbonGalleryPresentation Presentation { get; }
-// Proposed later context metadata; not implemented.
+// Implemented QAT route metadata.
 public bool IsQuickAccess { get; }
 ```
 
@@ -780,14 +871,14 @@ or new customization schema for this extension.
    distinct simultaneous controls, shared original tiles/selection, independent
    scrolling, expansion/cancel/commit, retained hide/show and owned disposal.
    Keep QAT custom popups and designer class-picker changes for later slices.
-2. **Temporary inline hosts.** Add separate controls in collapsed groups,
-   minimized-tab bodies and QAT group flyouts. Verify permanent/temporary views
-   coexist, popup teardown never disposes the permanent view, and no live body
-   is moved between hosts. Preserve default strip behavior.
-3. **QAT gallery popup opt-in.** Add the proposed bool/event and resolve dropdown
+2. **QAT gallery popup opt-in — implemented above.** Add the bool/event and resolve dropdown
    selectors through direct, duplicate, overflow, nested and inactive-tab routes.
    Retain the compact toolbar launcher and one expanded popup per source. Verify
    default-false compatibility and per-opening disposal separately from bodies.
+3. **Temporary inline hosts.** Add separate controls in collapsed groups,
+   minimized-tab bodies and QAT group flyouts. Verify permanent/temporary views
+   coexist, popup teardown never disposes the permanent view, and no live body
+   is moved between hosts. Preserve default strip behavior.
 4. **Designer authoring.** Extend only the existing gallery class-selection and
    bool authoring paths after the runtime contract works in an independent public
    consumer. Add generated-code/Undo/Redo checks without constructing application
@@ -813,7 +904,7 @@ gates. Do not rerun unrelated or already successful historical scopes for
 repetition. The original contract-only session ran none of those checks; the
 implemented first-slice evidence is recorded separately above.
 
-Decisions for user review before implementation:
+Recorded contract review decisions:
 
 - **QAT representation:** recommend retaining the compact launcher and customizing
   its opened gallery only. An embedded QAT tile strip/UserControl would require
@@ -828,7 +919,7 @@ Decisions for user review before implementation:
   tradeoff against reusing one movable control or allowing application preferred
   sizes to drive ribbon reduction; neither alternative is assumed authorized.
 
-The user authorized continuation with the first bounded implementation above;
+The user authorized the ordinary inline and QAT popup increments above;
 the later slices remain the recorded target sequence.
 Arbitrary embedded editors, custom QAT toolbar bodies, new gallery UIA patterns,
 general dropdown hosting/preview, new themes and unrelated refactors stay deferred.
@@ -891,8 +982,8 @@ simultaneous views or clone source items, bindings or command state to imitate i
 
 The [inline/QAT proposal](#inline-and-qat-gallery-presenter-contract--proposal-2026-11-02)
 now specifies the creation, ownership, retention, replacement, detach and disposal
-target. The ordinary inline body is implemented above; temporary custom bodies and
-QAT extensions remain later slices. Do not
+target. The ordinary inline body and QAT gallery popup opt-in are implemented
+above; temporary custom bodies remain a later slice. Do not
 silently inherit Backstage's Content/ContentType lifetime rules: its single
 page-body contract differs from gallery presentations. Application assets remain
 application-owned under their existing contracts.

@@ -627,7 +627,9 @@ Each successful opening creates a fresh owned view; popup close disposes it and
 makes its context inert. The class and factory are mutually exclusive; clear one
 before setting the other. Null for both uses the built-in gallery. Class selection,
 draft validation and inert previews never construct the UserControl. Inline bodies
-have independent selectors below; QAT popups remain built-in. The factory is excluded from designer
+have independent selectors below. QAT popups use these dropdown selectors when
+UseDropDownPresenterInQuickAccess is true; its default false preserves the built-in
+QAT popup. The factory is excluded from designer
 serialization; presenter controls/state are excluded from customization JSON.
 Ordinary dropdown/split UserControl bodies remain a separate planned increment.
 
@@ -677,9 +679,35 @@ false, so validation is not repeated on release.
 The permanent Designer Sample's Gallery tab uses a visually editable
 [GalleryStylesStripControl](samples/RibbonKit.WinForms.DesignerSample/GalleryStylesStripControl.cs)
 beside the existing popup example. Temporary group/minimized-tab/QAT-group bodies
-and QAT gallery popups still use built-in views. Presenter types, controls and
+still use built-in views. Presenter types, controls and
 transient view state stay out of customization JSON. See the
 [first-slice evidence and remaining gates](docs/GALLERY-PRESENTER-PLAN.md#first-inline-runtime-increment--2026-11-02).
+
+### Custom gallery popups from Quick Access
+
+Reuse the source gallery's dropdown class or runtime factory for QAT openings:
+
+```csharp
+gallery.DropDownPresenterType = typeof(MyPopupGalleryControl);
+gallery.UseDropDownPresenterInQuickAccess = true;
+ribbon.QuickAccessItems.Add(new RibbonQuickAccessDropDownReference { Source = gallery });
+```
+
+The toolbar entry stays a compact launcher. Direct entries, duplicates, overflow,
+nested QAT menus and QAT group routes resolve the original source and open a fresh
+popup-owned control. context.IsQuickAccess identifies that route; Presentation is
+DropDown. Selection/events stay on the original gallery, and popup close disposes
+the view. Existing inline controls and source tiles are retained. QAT activation
+does not select the source tab.
+
+The opt-in defaults false; null dropdown selectors still use the built-in popup.
+Changing the opt-in closes this source's QAT popup and makes its callbacks inert,
+while an ordinary gallery popup keeps its own route. The bool supports normal
+Properties/source serialization and stays out of customization JSON. Its Edit
+Ribbon draft entry is deferred to the authoring slice. No extra QAT presenter
+class is needed. The Designer Sample declares this opt-in and a **Document styles**
+QAT entry with KeyTip **3**, reusing GalleryStylesControl.
+See [QAT evidence and review steps](docs/GALLERY-PRESENTER-PLAN.md#qat-gallery-popup-increment--2026-11-02).
 
 ### Native Backstage
 

@@ -18,13 +18,14 @@ public sealed class RibbonGalleryItem : RibbonDropDownItem
     private RibbonGalleryTile? _selectedItem, _previewItem;
     private object? _previewOwner;
     private bool _isInRibbon;
+    private bool _useDropDownPresenterInQuickAccess;
     private int _inRibbonColumnCount = 3;
     private int _columnCount = 4, _tileWidth = 80, _tileHeight = 72, _maxVisibleRows = 4;
     private Func<Control>? _dropDownPresenterFactory;
     private Type? _dropDownPresenterType;
     private Func<Control>? _inRibbonPresenterFactory;
     private Type? _inRibbonPresenterType;
-    /// <summary>Gets or selects a public concrete UserControl implementing IRibbonGalleryPresenter with a public parameterless constructor for the ordinary ribbon body. Creation is lazy when a strip is visible. RibbonKit retains the owned view across hiding and disposes it on replacement, final source detach or ribbon disposal. Clear InRibbonPresenterFactory first. Null for both inline selectors preserves the built-in strip; temporary flyout bodies and QAT remain built-in in this increment.</summary>
+    /// <summary>Gets or selects a public concrete UserControl implementing IRibbonGalleryPresenter with a public parameterless constructor for the ordinary ribbon body. Creation is lazy when a strip is visible. RibbonKit retains the owned view across hiding and disposes it on replacement, final source detach or ribbon disposal. Clear InRibbonPresenterFactory first. Null for both inline selectors preserves the built-in strip; temporary flyout bodies remain built-in. QAT gallery popups use the independent dropdown selectors when UseDropDownPresenterInQuickAccess is true.</summary>
     [Browsable(false), Category("Data"), DefaultValue(null)]
     [Description("Custom inline gallery UserControl class, independent of the dropdown presenter. Body authoring stays in the ordinary UserControl designer; inline class discovery is a later designer increment.")]
     public Type? InRibbonPresenterType
@@ -56,7 +57,23 @@ public sealed class RibbonGalleryItem : RibbonDropDownItem
     public event EventHandler? InRibbonPresenterFactoryChanged;
     internal bool HasCustomInRibbonPresenter => _inRibbonPresenterType is not null || _inRibbonPresenterFactory is not null;
     internal Control CreateInRibbonPresenter() => _inRibbonPresenterType is { } type ? (Control)Activator.CreateInstance(type)! : _inRibbonPresenterFactory!();
-    /// <summary>Gets or sets an optional runtime factory for ordinary dropdown-gallery bodies. Return a fresh unparented UserControl implementing IRibbonGalleryPresenter. RibbonKit creates it after accepted opening and disposes it with that popup; reopening creates another view. Clear DropDownPresenterType before assigning a factory. Null for both dropdown selectors preserves the built-in popup. Inline selectors are independent; QAT popups remain built-in. Factory delegates and presenter state are not serialized.</summary>
+    /// <summary>Gets or sets whether gallery popups opened through Quick Access use this source's dropdown presenter selectors, including overflow and nested/group routes. Defaults to false, preserving the built-in QAT popup. This does not replace the compact QAT launcher or select an inline presenter. Changing the setting closes this source's QAT gallery popup; the next opening resolves the setting again.</summary>
+    [Category("Behavior"), DefaultValue(false)]
+    [Description("Use the gallery's DropDownPresenterType or DropDownPresenterFactory for popups opened through Quick Access. The toolbar launcher stays compact; null dropdown selectors still use the built-in popup.")]
+    public bool UseDropDownPresenterInQuickAccess
+    {
+        get => _useDropDownPresenterInQuickAccess;
+        set
+        {
+            Ribbon?.VerifyAccess(); if (_useDropDownPresenterInQuickAccess == value) return;
+            _useDropDownPresenterInQuickAccess = value;
+            Ribbon?.Popups.CloseQuickAccessGallery(this);
+            Changed(false); UseDropDownPresenterInQuickAccessChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+    /// <summary>Occurs after UseDropDownPresenterInQuickAccess changes.</summary>
+    public event EventHandler? UseDropDownPresenterInQuickAccessChanged;
+    /// <summary>Gets or sets an optional runtime factory for dropdown-gallery bodies. Return a fresh unparented UserControl implementing IRibbonGalleryPresenter. RibbonKit creates it after accepted opening and disposes it with that popup; reopening creates another view. Clear DropDownPresenterType before assigning a factory. Null for both dropdown selectors preserves the built-in popup. Inline selectors are independent; QAT popups use this factory only when UseDropDownPresenterInQuickAccess is true. Factory delegates and presenter state are not serialized.</summary>
     [Browsable(false), DefaultValue(null), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Func<Control>? DropDownPresenterFactory
     {
@@ -70,7 +87,7 @@ public sealed class RibbonGalleryItem : RibbonDropDownItem
     }
     /// <summary>Occurs after the optional dropdown presenter factory changes.</summary>
     public event EventHandler? DropDownPresenterFactoryChanged;
-    /// <summary>Gets or selects a public concrete UserControl implementing IRibbonGalleryPresenter with a public parameterless constructor. RibbonKit creates a fresh view after each accepted ordinary gallery opening and disposes it with the popup. Designer selection never creates the control. Clear DropDownPresenterFactory before selecting a type; null for both dropdown selectors uses the built-in popup. Inline selectors are independent; QAT popups remain built-in.</summary>
+    /// <summary>Gets or selects a public concrete UserControl implementing IRibbonGalleryPresenter with a public parameterless constructor. RibbonKit creates a fresh view after each accepted gallery opening and disposes it with the popup. Designer selection never creates the control. Clear DropDownPresenterFactory before selecting a type; null for both dropdown selectors uses the built-in popup. Inline selectors are independent; QAT popups use this class only when UseDropDownPresenterInQuickAccess is true.</summary>
     [Category("Data"), DefaultValue(null)]
     [Description("Custom dropdown gallery UserControl class. Edit its body in the UserControl designer. Build the project to refresh available classes; (None) clears the class selection.")]
     public Type? DropDownPresenterType

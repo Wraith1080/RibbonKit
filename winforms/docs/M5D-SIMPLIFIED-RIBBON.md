@@ -125,6 +125,22 @@ Picture Format follows the normal authored tabs, ahead of merged contributions.
 
 ## Evidence and pending review
 
+- Overflow open-state correction, **2026-11-02**: Simplified More Commands and
+  the shared QAT overflow opener now pass their actual popup-expanded state to
+  the existing pressed rendering. The fill remains while a child flyout is open
+  and clears when the opener's popup chain closes or is toggled off. This is
+  transient paint state; no checked model, public API, geometry or persistence
+  change was added. All four Office/neutral, Simplified/QAT rendering cases failed
+  before and pass after in `overflow-open-visual-fixed.trx`; 13 affected Simplified
+  and overflow-scroll cases pass in `overflow-open-visual-related.trx`, under
+  `tests/RibbonKit.WinForms.Tests/TestResults/`. The independent package-only
+  Designer Sample check passes at actual **120 DPI** in
+  `artifacts/simplified-overflow-open-visual/consumer/`; native open/closed PNGs
+  were inspected. Normal Debug build and sample refresh pass with zero warnings/
+  errors, using `0.1.0-designer.local20261102T110604504Z`. Physical pointer,
+  mixed-monitor and human visual review remain separate; no full/Release or WPF
+  campaign ran for this bounded fix. The sample diagnostic is
+  `--verify-simplified-overflow-visual <output-directory>`.
 - Pre-M6B follow-up, 2026-10-29: More placement passed 3/3 focused cases in
   `simplified-more-right-edge.trx`; selected related Simplified/Backstage/options
   regressions passed 17/17 in `pre-m6b-followup-related.trx`. The two group cases
