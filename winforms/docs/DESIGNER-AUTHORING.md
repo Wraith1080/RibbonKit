@@ -4,8 +4,14 @@ Status, **2026-10-31: bounded custom designer increment accepted by the user**. 
 `codex/Ribbonkit-Winform`. This checkpoint follows the disabled/state appearance
 increment and preserves the accepted Backstage behavior.
 
-Latest increment, **2026-11-01: shared content-style selection added to Ribbon settings;
-actual VS/user review pending**. See the sections below for the bounded contracts,
+Latest increment, **2026-11-02: ComboBox label/compact presentation, cross-owner
+moves and shrinking size-policy choices**; see [designer rearrangement](DESIGNER-REARRANGEMENT.md).
+The earlier menu increment is recorded under
+[dropdown headings and descriptions](#dropdown-headings-and-descriptions--2026-11-01).
+[Group item layout](GROUP-ITEM-LAYOUT.md) owns the earlier split-orientation,
+two/three-row and in-group separator contract, evidence and remaining review.
+The [QAT authoring checkpoint](QAT-DESIGNER-AUTHORING.md)
+owns QAT's current contract, evidence and acceptance. See the sections below for earlier bounded contracts,
 evidence and review steps. Earlier accepted scopes retain their acceptance.
 Current Backstage authoring and preview status is in
 [Backstage authoring](BACKSTAGE-DESIGNER-AUTHORING.md).
@@ -15,6 +21,140 @@ Current review project: the permanent
 Refresh it in place with `./winforms/eng/Update-DesignerSample.ps1` from the
 repository root. The earlier temporary paths below are historical evidence/backup
 locations; new user review continues in this sample.
+
+## Dropdown headings and descriptions — 2026-11-01
+
+Status: **user confirmed the reviewed popup authoring works, 2026-11-02**.
+Exhaustive VS save/reopen coverage remains separate. The user's four follow-up
+notes are handled in [designer rearrangement](DESIGNER-REARRANGEMENT.md).
+Edit Ribbon now exposes the existing `DropDownHeader` and `MenuPresentation`
+properties on dropdown and split-button commands. Child `MenuDescription` was
+already editable and now has help text explaining its inline presentation.
+This changes designer authoring only; runtime defaults and popup geometry remain
+unchanged. Galleries retain their separate heading/tile model and do not offer
+these command-menu properties.
+
+To reproduce the Showcase Paste popup:
+
+1. Select the parent dropdown or split button in Edit Ribbon. Under Appearance,
+   set **DropDownHeader = Paste options** and **MenuPresentation = Standard**.
+2. Add a child Button. Set **Text = Paste text only**, choose its Icon, and set
+   **MenuDescription = Insert clipboard text without its original formatting.**
+3. Add a **Separator**, then another child Button with **Text = Paste special**
+   and **MenuDescription = Choose which clipboard format to insert into the document.**
+4. Press OK, save the Form and run it to open the popup. Reopen the designer to
+   check the saved declarations. Cancel leaves the live model unchanged.
+
+The parent heading is decorative and is not another Button. A child's Text is
+its title; MenuDescription is the explanation under it (up to two wrapped lines).
+ScreenTipDescription remains the separate hover tooltip. For the larger-artwork
+variant with bold leaf-command titles, choose **IllustratedChoices** instead of
+Standard. Empty DropDownHeader hides the heading; empty MenuDescription keeps a
+title-only command. Icons use the existing picker.
+
+Verification: 12 affected designer/menu checks passed across the initial focused
+run (10 passed) and two repaired-test reruns. Coverage includes both dropdown and
+split owners, Standard/IllustratedChoices, property-grid choices, detached draft
+preview, Cancel/OK, model identity, reopen data, enum/string CodeDOM, framework
+Undo/Redo, invalid input, and separator ownership. The older menu ownership test
+now reflects the preceding increment's support for separators in groups.
+Standard and IllustratedChoices 96-DPI popup captures under
+`winforms/artifacts/designer-menu-authoring/` were inspected. Normal Debug design
+server/client and the refreshed package-only Designer Sample build passed cleanly.
+The user's authored Form files were preserved. Actual VS save/reopen, manual
+keyboard interaction and physical mixed-DPI review remain separate; no full
+native or WPF suite was run.
+
+## Programmatic names and QAT selection — 2026-11-01
+
+Current review and acceptance are recorded in the [QAT checkpoint](QAT-DESIGNER-AUTHORING.md).
+The user reported that QAT could not be selected on the Form designer and that
+returning from Edit Ribbon left the ribbon selected. They then requested a
+programmatic Name field throughout the component editors.
+
+- **Design → (Name)** now edits the actual generated component name in Edit
+  Ribbon and Edit Backstage. It covers tabs, groups, all command/child kinds,
+  catalog commands, QAT references, Backstage pages/commands/separators and the
+  Ribbon root control. **Text** remains the displayed caption; **Id** remains the
+  stable command identity. Organizational branches and fixed nested settings
+  models do not acquire a renameable field.
+- The client edits detached names. The server validates identifiers using the
+  host name service (C# provider fallback in a minimal host), unique names and
+  current container occupancy before opening a transaction. Names must be unused
+  when OK is applied; reusing another component's current name requires a
+  separate accepted rename/removal first. Existing types and object identities
+  remain protected. New components can use the chosen name on first creation.
+- Existing objects are renamed through their designer sites at the end of the
+  same OK transaction, after old draft keys have resolved owners and sources.
+  The host's ComponentRename notifications retain normal code generation and
+  Undo/Redo. RibbonControl.Name is synchronized too. Name-only edits bypass
+  collection rebuilding. Cancel and unchanged OK retain their existing behavior.
+- QAT picking now includes its measured/clipped targets and selection outlines,
+  and catalog/QAT selection keeps the adorner active. Clicking an entry selects
+  its presentation; **Select source command** in Properties/designer actions
+  selects the actual command for name, caption and event editing. It never
+  executes the command or opens a runtime popup.
+- Edit Ribbon publishes its final component selection after the modal property
+  editor returns, using a selection-only design request. This avoids Visual
+  Studio restoring the original ribbon property owner after the commit. An
+  unpinned command is reached through Edit Ribbon's **Commands without a tab**
+  branch and OK; that branch is not a separate Form-designer tree.
+
+Focused evidence:
+
+- **12 new naming cases pass across retained runs**: all named-node metadata,
+  detached edits, root and child renames, invalid/occupied names rejected before
+  transactions, first-creation names, one-unit framework Undo/Redo, unchanged
+  objects/events/bindings/IDs/source references, no collection rebuild, retained
+  native page handles/text/selection and CodeDOM references using the new field
+  name. **80 affected authoring cases passed** separately. Reports are under
+  `TestResults/winforms-designer-names/`; the initial 11 naming passes are retained
+  in the task's console evidence, with serialization added afterward.
+- The QAT-selection correction passed **17 focused selection cases** before the
+  naming increment. Actual fresh-package VS review verified BelowRibbon entry
+  picking/outline, Edit source → OK selecting `ribbonButton1` in the main
+  Properties window, its Click event row, and the direct Select source command
+  action. No handler was created or user-authored Form code changed for that check.
+- The new (Name) field was inspected in the actual VS modal editor. Computer-use
+  keyboard entry into that modal was unreliable, so an actual rename followed by
+  save/reopen, generated-code build and handler creation remains a user review
+  gate; it is not established by the framework/CodeDOM checks.
+- Normal Debug runtime/server/client/sample builds and local package creation
+  passed with zero warnings/errors. The permanent sample was refreshed to
+  `0.1.0-designer.local20261101T151257400Z`, preserving authored source/resources.
+  No runtime public API, theme, persistence schema, WPF, full-suite or release
+  validation changed or ran for this designer increment.
+
+### Visual Studio name availability correction — 2026-11-01
+
+The user's first rename attempt failed with an existing `homeTab` collision while
+editing the Save command's name. The server had called `INameCreationService`
+for every component, including unchanged names. The VS implementation also checks
+availability and has no component argument with which to exclude the current
+owner. A minimal DesignSurface without that service did not reproduce this.
+
+The shared preflight now checks draft uniqueness/container ownership first,
+skips unchanged names, and calls the host validator for genuinely proposed unused
+names. Case-only renames retain their own slot and use the host CodeDomProvider
+for identifier syntax, with the existing C# fallback when unavailable. Duplicate
+names, keywords and host-specific inherited-name rules remain enforced before a
+transaction. No component is temporarily removed or renamed for validation.
+
+Five service-backed regressions reproduced the prior failure, including the exact
+`homeTab` message. **19 focused naming cases passed across the corrected 17-case
+run and two added guard cases**: both editors, unchanged OK, case-only edits,
+language keywords, inherited-name rejection, object/source/binding/page retention,
+Undo/Redo and named-source serialization. Retained reports are
+`host-availability-before.trx`, `host-availability-fixed.trx` and
+`host-availability-guards.trx` under `TestResults/winforms-designer-names/`.
+The unrelated prior authoring passes were not repeated.
+
+Normal Debug server/client/sample builds and refresh passed with zero warnings or
+errors. The permanent sample now uses local package
+`0.1.0-designer.local20261101T154053425Z`. The currently open VS/editor session
+still owns the previous assemblies and must be reopened before retrying the
+rename. Actual retry/save/reopen acceptance remains with the user; the focused
+checks do not claim a fresh live VS pass.
 
 ## Bounded contract
 
@@ -255,6 +395,100 @@ The 24 focused designer cases, root-page inspection and package-only native
 verification are recorded once in the linked page-motion plan. The permanent
 Designer Sample has been refreshed in place; no new review project was created.
 Actual VS/visual review is pending for this addition.
+
+### Window backdrop in Ribbon settings — 2026-11-01
+
+**Edit Ribbon → Ribbon → Ribbon settings → Window backdrop** offers **None**,
+**Mica** and **Acrylic**. It edits the existing containing `RibbonForm.Backdrop`
+property, rather than adding another preference to RibbonControl. The dropdown
+is enabled only when that editable RibbonForm is the designer root containing
+the ribbon; ordinary Form and UserControl designers retain a disabled choice.
+The label identifies the backdrop as a runtime effect. Static ribbon/Backstage
+preview images stay inert and do not activate a native window material.
+
+The detached draft reads the current requested backdrop. Cancel and unchanged
+OK leave live settings and undo history unchanged. OK reports the Form property
+change through the designer change service inside the same transaction as theme,
+animation and structure edits. The revision includes the containing-host capability
+and current backdrop, rejecting stale host/property changes. Values are validated
+against the actual host, including forged dialog metadata and numeric enum values.
+The existing property serializes nondefaults on the Form:
+
+```csharp
+Backdrop = RibbonKit.WinForms.RibbonWindowBackdrop.Mica;
+```
+
+None remains the default and Reset omits the assignment. Existing native fallback,
+Windows policy and application content responsibilities remain as documented in
+[native backdrops](M6C-BACKDROPS.md); this addition changes designer tooling only.
+
+Focused evidence: **19 distinct checks pass across retained runs** under
+`TestResults/winforms-designer-backdrop/`: three dropdown/JSON/detached-preview
+choices, Cancel/no-op OK, three invalid values, two stale host/property cases,
+unsupported-host rejection, mixed Form/ribbon framework Undo/Redo, three existing
+Form-property serialization/Reset values, and four root-dialog scale/resize cases.
+`backdrop-settings.trx` retains 18 passing results; the combined Undo test passes
+in `backdrop-undo-sited.trx` after naming/siting the fixture Form and tab as a real
+designer does. The root-dialog image with the enabled Acrylic choice was inspected.
+Normal Debug runtime/server/client/sample builds pass with zero warnings/errors.
+The permanent Designer Sample was refreshed in place, preserving authored files.
+No runtime, motion, native-material campaign or full suite was run for this tooling
+increment. Actual VS interaction, save/reopen and target-machine material appearance
+remain user review.
+
+For review, reopen the permanent sample solution, open Edit Ribbon and select
+the Ribbon root. Check backdrop Cancel, then OK and one Undo/Redo alongside a
+ribbon edit. Save/reopen and run the Form to review the chosen material. The
+designer canvas and preview images do not simulate the operating-system material.
+
+### Transparent Backstage in Ribbon settings — 2026-11-01
+
+The root **Ribbon settings** now includes **Transparent Backstage navigation**,
+matching the existing Showcase toggle. Checking it sets the existing
+`ribbon.Backstage.NavigationBackgroundOpacity` to **0**; clearing it sets **1**.
+Transparency reveals an active Mica/Acrylic backdrop through the navigation
+background. Text, icons and application page content retain their opacity; Solid
+or unsupported hosts keep their opaque fallback. The checkbox does not enable
+a backdrop, switch the File destination or open Backstage. It remains available
+for authoring the preference before the application enables a material.
+
+The snapshot preserves the actual float value: a pre-existing partial opacity
+appears checked and stays exact unless the checkbox is toggled. Cancel and no-op
+OK preserve it. The value participates in revision validation, including edits
+made in the existing Edit Backstage dialog. Invalid/out-of-range/non-finite values
+are rejected before mutation. The inert preview remains Solid.
+
+For designer Undo, the existing Backstage model is registered in the ribbon's
+host-provided nested container when available, under its existing `Backstage`
+property name. It remains the same owned model, outside the host's top-level
+component collection. The primitive property and its ribbon content owner receive
+change notifications in the same transaction as backdrop/theme/animation/tree
+edits. This avoids serializing an unsited model on its own and restores the
+default opaque value as well as nondefaults. Microsoft's
+[nested-container contract](https://learn.microsoft.com/en-us/dotnet/api/system.componentmodel.nestedcontainer?view=net-10.0)
+and [designer site implementation](https://source.dot.net/System.Windows.Forms.Design/System/ComponentModel/Design/DesignerHost.Site.cs.html)
+describe the ownership/service path used here. No runtime API or painting path changes.
+
+The generated setting remains ordinary nested content:
+
+```csharp
+ribbon.Backstage.NavigationBackgroundOpacity = 0F;
+```
+
+Reset restores **1** and omits that assignment. New nested-site checks preserve
+model/command identity, the existing content serialization path, one-time model
+disposal and borrowed application page ownership.
+
+**23 focused designer checks pass** in
+`TestResults/winforms-designer-transparent-backstage/transparent-settings-final.trx`:
+checkbox/partial-opacity behavior, Cancel/no-op, invalid values, stale drafts in
+both editors, nested serialization/Reset/lifetime, combined framework Undo/Redo,
+the affected backdrop choices and four scale/resize cases. The enabled checkbox
+layout was inspected. Normal Debug runtime/server/client/sample builds pass with
+zero warnings/errors, and the permanent package-only sample was refreshed in
+place. No motion, native material campaign or full suite was run. Actual VS
+save/reopen and runtime material appearance remain user review: reopen the sample
+solution, select Mica/Acrylic and the checkbox, then run and open File.
 
 ### Designer Sample runtime animation correction — 2026-11-01
 
@@ -527,7 +761,8 @@ open one custom window. Its tree supports built-in tabs, groups and command
 types, nested dropdown commands and gallery tiles. Add/remove and sibling
 reordering work on the detached draft. A property grid edits supported scalar
 properties; ComboBox choices have a separate multiline editor. Existing component
-names are retained; rename them through Visual Studio's Properties window.
+names were retained at that checkpoint; the programmatic-names follow-up above
+now supports renaming them inside the component editors as well.
 
 The server validates the draft before starting a live transaction, rejects stale
 drafts and duplicate IDs/names, and prevents removal of a QAT reference's source.

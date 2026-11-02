@@ -33,7 +33,8 @@ internal class RibbonAutomationNode : IRawProvider, IFragmentProvider, IInvokePr
         var bounds = TabList ? Root.Ribbon.Snapshot.TabViewport : Element is RibbonGroup group ? Rectangle.Intersect(Root.Ribbon.Snapshot.Groups.FirstOrDefault(s => ReferenceEquals(s.Group, group))?.Bounds ?? Rectangle.Empty, Root.Ribbon.Snapshot.BodyViewport) : Root.Targets.FirstOrDefault(t => ReferenceEquals(t.Element, Element))?.VisibleBounds ?? Rectangle.Empty;
         return bounds.IsEmpty || !Root.Control.Visible ? Rectangle.Empty : Root.Control.RectangleToScreen(bounds);
     });
-    private bool Expandable => Element is RibbonDropDownItem || Element is RibbonGroup group && Root.Ribbon.Snapshot.Groups.Any(s => ReferenceEquals(s.Group, group) && s.Collapsed);
+    private bool Expandable => Element is RibbonDropDownItem || Element is RibbonComboBoxItem && Root.Targets.Any(t => ReferenceEquals(t.Element, Element) && t.Size == RibbonItemSize.Small)
+        || Element is RibbonGroup group && Root.Ribbon.Snapshot.Groups.Any(s => ReferenceEquals(s.Group, group) && s.Collapsed);
     public object? GetPatternProvider(int patternId) => Root.Read<object?>(() => patternId switch
     {
         10000 when Element is RibbonButtonItem and not RibbonToggleItem => this,
@@ -111,11 +112,12 @@ internal class RibbonAutomationNode : IRawProvider, IFragmentProvider, IInvokePr
             return;
         if (Element is RibbonDropDownItem drop)
             drop.ShowDropDown();
+        else if (Element is RibbonComboBoxItem combo && Expandable) combo.ShowDropDown();
         else if (Element is RibbonGroup && Root.Targets.FirstOrDefault(t => ReferenceEquals(t.Element, Element)) is { } target)
             Root.Ribbon.Activate(target);
     });
-    public void Collapse() => Root.Run(() => { if (Element is { } element) Root.Ribbon.Popups.Close(element, true); });
-    public int ExpandCollapseState => Root.Read(() => Element is not null && Root.Ribbon.Popups.IsExpanded(Element) ? 1 : 0);
+    public void Collapse() => Root.Run(() => { if (Element is RibbonComboBoxItem combo) combo.CloseDropDown(); else if (Element is { } element) Root.Ribbon.Popups.Close(element, true); });
+    public int ExpandCollapseState => Root.Read(() => Element is RibbonComboBoxItem combo ? combo.IsDropDownOpen ? 1 : 0 : Element is not null && Root.Ribbon.Popups.IsExpanded(Element) ? 1 : 0);
     internal void RaiseChanges()
     {
         foreach (int property in new[] { 30005, 30010, 30070, 30079, 30086 })

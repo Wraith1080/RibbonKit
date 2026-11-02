@@ -6,6 +6,36 @@ internal static class Program
     private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
+        if (args.Length == 2 && args[0] == "--verify-editor-startup")
+        {
+            try { EditorStartupCheck.Verify(args[1]); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.AppendAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
+        if (args.Length == 2 && args[0] is "--verify-tab-motion-handoff" or "--verify-tab-motion-handoff-solid" or "--verify-tab-shadow" or "--verify-tab-shadow-solid")
+        {
+            try { TabMotionHandoffCheck.Verify(args[1], args[0].EndsWith("-solid", StringComparison.Ordinal), args[0].StartsWith("--verify-tab-shadow", StringComparison.Ordinal)); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.AppendAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
+        if (args.Length == 2 && args[0] == "--verify-backdrop-close")
+        {
+            try { BackdropCloseCheck.Verify(args[1]); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.AppendAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
+        if (args.Length == 2 && args[0] == "--verify-combo-layout")
+        {
+            try { ComboLayoutCheck.Verify(args[1]); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
+            return;
+        }
+        if (args.Length == 2 && args[0] == "--verify-group-layout")
+        {
+            try { GroupItemLayoutCheck.Verify(args[1]); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
+            return;
+        }
         if (args.Length == 2 && args[0] == "--verify-animation")
         {
             try { DesignerAnimationCheck.Verify(args[1]); }
@@ -46,6 +76,8 @@ internal static class Program
             return;
         }
         using var form = new DesignerForm();
+        using var focusTrace = args.Length == 2 && args[0] == "--trace-choice-focus"
+            ? new DesignerChoiceFocusTrace(form, args[1]) : null;
         if (args.Length == 2 && args[0] == "--verify-page-content")
         {
             Directory.CreateDirectory(args[1]);

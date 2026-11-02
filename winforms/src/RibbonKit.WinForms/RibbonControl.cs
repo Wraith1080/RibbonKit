@@ -76,7 +76,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             if (ReferenceEquals(_selectedTab, value))
                 return;
             if (AnimationLevel != RibbonAnimationLevel.None && _motion?.Changing != true && _updateDepth == 0 && (!IsMinimized || _motion?.CanCoalesceHeaderSelection == true) && value is not null && _selectedTab is not null)
-            { Motion.Change(false, () => SelectedTab = value); return; }
+            { Motion.Change(false, () => SelectedTab = value, tabContents: true); return; }
             SettleMotion();
             _popups.CloseAll(false);
             _screenTips.Cancel();
@@ -496,7 +496,7 @@ public partial class RibbonControl : Control, ISupportInitialize
                 (_backdropBuffer ??= new()).Paint(e.Graphics, Size, Height, Theme.Background, graphics =>
                 {
                     PaintRibbon(new(graphics, e.ClipRectangle), true);
-                    if (_backdropBodyMasked && !CapturingBackdropScene)
+                    if (_backdropBodyMasked && !KeepsBackdropFrame && !CapturingBackdropScene)
                     {
                         graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
                         using var clear = new SolidBrush(Color.Transparent);
@@ -515,7 +515,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         var state = e.Graphics.Save();
         try
         {
-            if (composited && _backdropBodyMasked && !CapturingBackdropScene)
+            if (composited && _backdropBodyMasked && !KeepsBackdropFrame && !CapturingBackdropScene)
                 e.Graphics.SetClip(new Rectangle(0, 0, Width, BackdropHeaderHeight), System.Drawing.Drawing2D.CombineMode.Intersect);
             PaintRibbonCore(e, composited);
         }
@@ -526,6 +526,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         base.OnPaint(e);
         EnsureLayout();
         var context = new RibbonPaintContext(e.Graphics, ClientRectangle, composited ? WindowPaintTheme : Theme, Font, DeviceDpi) { Density = Density, SuppressTabIndicators = CapturingMotionIndicators, CompositedText = composited };
+        bool maskContent = composited && _backdropBodyMasked && KeepsBackdropFrame && !CapturingBackdropScene;
         Painter.DrawSurface(context, false);
         if (MessageTopConnected && !_snapshot.MessageBounds.IsEmpty)
         {
@@ -544,22 +545,25 @@ public partial class RibbonControl : Control, ISupportInitialize
         try
         {
             e.Graphics.SetClip(_snapshot.BodyViewport);
-            foreach (var slot in _snapshot.Groups)
-                Painter.DrawGroup(context with
-                {
-                    Bounds = slot.Bounds,
-                    GroupSeparatorBounds = slot.Frame,
-                    IsSimplifiedGroup = LayoutMode == RibbonLayoutMode.Simplified,
-                    Hot = slot.Group.EffectiveEnabled && ReferenceEquals(slot.Group, _hot),
-                    Pressed = slot.Group.EffectiveEnabled && ReferenceEquals(slot.Group, _pressed),
-                    Focused = slot.Group.EffectiveEnabled && _keyboardFocusCues && Focused && ReferenceEquals(slot.Group, _focused)
-                }, slot.Group, slot.Collapsed);
-            foreach (var divider in _snapshot.SimplifiedDividers) { using var brush = new SolidBrush(Theme.Border); e.Graphics.FillRectangle(brush, divider); }
+            if (!maskContent)
+            {
+                foreach (var slot in _snapshot.Groups)
+                    Painter.DrawGroup(context with
+                    {
+                        Bounds = slot.Bounds,
+                        GroupSeparatorBounds = slot.Frame,
+                        IsSimplifiedGroup = LayoutMode == RibbonLayoutMode.Simplified,
+                        Hot = slot.Group.EffectiveEnabled && ReferenceEquals(slot.Group, _hot),
+                        Pressed = slot.Group.EffectiveEnabled && ReferenceEquals(slot.Group, _pressed),
+                        Focused = slot.Group.EffectiveEnabled && _keyboardFocusCues && Focused && ReferenceEquals(slot.Group, _focused)
+                    }, slot.Group, slot.Collapsed);
+                foreach (var divider in _snapshot.SimplifiedDividers) { using var brush = new SolidBrush(Theme.Border); e.Graphics.FillRectangle(brush, divider); }
+            }
         }
         finally { e.Graphics.Restore(state); }
         foreach (var target in _snapshot.Targets)
         {
-            if (target.DropDownPart || target.Element is IRibbonEditorItem)
+            if (maskContent && IsBodyContent(target) || target.DropDownPart || target.Element is RibbonItem field && RibbonEditorLayout.IsField(field, target.Size))
                 continue;
             var arrow = RibbonSplitLayout.IsSplit(target.Element) ? _snapshot.Targets.First(t => ReferenceEquals(t.Element, target.Element) && t.DropDownPart) : null;
             if (target.VisibleBounds.IsEmpty && (arrow is null || arrow.VisibleBounds.IsEmpty))
@@ -621,8 +625,9 @@ public partial class RibbonControl : Control, ISupportInitialize
         }
         if (IsInDesignMode) DrawDesignEditors(e.Graphics);
         if (_keyTips && !_popups.HasOpen)
-            DrawTips(e.Graphics, TipTargets(), composited);
+            DrawTips(e.Graphics, maskContent ? TipTargets().Where(target => !IsBodyContent(target)).ToArray() : TipTargets(), composited);
     }
+    private static bool IsBodyContent(RibbonTarget target) => target.Kind is TargetKind.Item or TargetKind.Group or TargetKind.BodyBack or TargetKind.BodyNext || target.Element is RibbonSimplifiedMore;
     internal void DrawTips(Graphics graphics, IReadOnlyList<RibbonTarget> targets, bool composited = false)
     {
         var keys = KeyTipResolver.Resolve(targets.Select(t => (t.TipText, t.PreferredKeyTip)));
@@ -779,6 +784,8 @@ public partial class RibbonControl : Control, ISupportInitialize
             return false;
         var targets = Snapshot.Targets.Where(t => t.Element is not null && t.Enabled).ToArray();
         int current = Array.FindIndex(targets, t => ReferenceEquals(t.Element, _focused) && t.DropDownPart == _focusedDropDown);
+        if (current >= 0 && targets[current] is { Element: RibbonComboBoxItem compact, Size: RibbonItemSize.Small } && keys is Keys.F4 or (Keys.Alt | Keys.Down))
+        { compact.ShowDropDown(); return true; }
         if (keys is Keys.Enter or Keys.Space)
         {
             if (current >= 0)
@@ -811,6 +818,8 @@ public partial class RibbonControl : Control, ISupportInitialize
                 dropDown.ShowDropDown();
                 return true;
             }
+            if (current >= 0 && targets[current] is { Element: RibbonComboBoxItem combo, Size: RibbonItemSize.Small } && keys == Keys.Down)
+            { combo.ShowDropDown(); return true; }
             if (current >= 0 && targets[current].Element is RibbonQuickAccessDropDownReference or RibbonQuickAccessGroupReference && keys == Keys.Down)
             {
                 Activate(targets[current] with { DropDownPart = true });
@@ -839,7 +848,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             return;
         if (target.Element is RibbonQuickAccessComboBoxReference openReference && _editors.IsQuickAccessOpen(openReference))
         { _editors.CloseQuickAccess(openReference); return; }
-        if (target.Element is not IRibbonEditorItem && !_editors.CommitFocused()) return;
+        if ((target.Element is not RibbonItem field || !RibbonEditorLayout.IsField(field, target.Size)) && !_editors.CommitFocused()) return;
         if (target.Element is { } element && !ReferenceEquals(element.Ribbon, this)) return;
         if (target.Kind is TargetKind.MessageAction or TargetKind.MessageClose) { ActivateMessageTarget(target); return; }
         if (target.Kind == TargetKind.QuickAccess)
@@ -865,6 +874,10 @@ public partial class RibbonControl : Control, ISupportInitialize
                 break;
             case RibbonDropDownItem drop:
                 OpenDropDown(drop);
+                break;
+            case RibbonComboBoxItem combo when target.Size == RibbonItemSize.Small:
+                Control choiceOpener = opener ?? (Control?)_popups.Surfaces.LastOrDefault(s => s.Targets.Any(t => ReferenceEquals(t.Element, combo))) ?? this;
+                if (combo.IsDropDownOpen) combo.CloseDropDown(); else _editors.OpenCompact(combo, choiceOpener, target.VisibleBounds);
                 break;
             case RibbonItem editor when editor is IRibbonEditorItem:
                 editor.PerformClick();

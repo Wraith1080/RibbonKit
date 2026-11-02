@@ -1,4 +1,19 @@
 #nullable enable
+RibbonKit.WinForms.RibbonComboBoxItem.ShowLabel.get -> bool
+RibbonKit.WinForms.RibbonComboBoxItem.ShowLabel.set -> void
+RibbonKit.WinForms.RibbonGroupLayout
+RibbonKit.WinForms.RibbonGroupLayout.Columns = 0 -> RibbonKit.WinForms.RibbonGroupLayout
+RibbonKit.WinForms.RibbonGroupLayout.TwoRows = 1 -> RibbonKit.WinForms.RibbonGroupLayout
+RibbonKit.WinForms.RibbonGroupLayout.ThreeRows = 2 -> RibbonKit.WinForms.RibbonGroupLayout
+RibbonKit.WinForms.RibbonItemRow
+RibbonKit.WinForms.RibbonItemRow.First = 0 -> RibbonKit.WinForms.RibbonItemRow
+RibbonKit.WinForms.RibbonItemRow.Second = 1 -> RibbonKit.WinForms.RibbonItemRow
+RibbonKit.WinForms.RibbonItemRow.Third = 2 -> RibbonKit.WinForms.RibbonItemRow
+RibbonKit.WinForms.RibbonGroup.Layout.get -> RibbonKit.WinForms.RibbonGroupLayout
+RibbonKit.WinForms.RibbonGroup.Layout.set -> void
+RibbonKit.WinForms.RibbonItem.Row.get -> RibbonKit.WinForms.RibbonItemRow
+RibbonKit.WinForms.RibbonItem.Row.set -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawGroupSeparator(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonMenuSeparatorItem! item) -> void
 RibbonKit.WinForms.RibbonBuiltInTheme
 RibbonKit.WinForms.RibbonBuiltInTheme.Office2024Light = 0 -> RibbonKit.WinForms.RibbonBuiltInTheme
 RibbonKit.WinForms.RibbonControl.BuiltInTheme.get -> RibbonKit.WinForms.RibbonBuiltInTheme?

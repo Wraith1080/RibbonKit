@@ -19,7 +19,7 @@ public sealed class DesignerEditorUxTests
         var tree = Control<TreeView>(dialog, "StructureTree"); _ = tree.Handle;
         var tools = Control<ToolStrip>(dialog, "StructureTools"); var add = (ToolStripDropDownButton)tools.Items["Add"]!;
         add.DropDownItems["AddContextualTab"]!.PerformClick();
-        var created = draft.Tabs.Last(); Assert.Equal("True", Value(created, "IsContextual")); Assert.Single(tree.Nodes); Assert.Equal(2, tree.Nodes[0].Nodes.Count);
+        var created = draft.Tabs.Last(); Assert.Equal("True", Value(created, "IsContextual")); Assert.Single(tree.Nodes); Assert.Equal(2, tree.Nodes[0].Nodes.Cast<TreeNode>().Count(node => node.Tag is RibbonDesignNode));
         Assert.Contains("Contextual tab", tree.SelectedNode!.Text); Assert.Single(ribbon.Tabs); Assert.Equal(0, accepts);
         var contextual = Control<CheckBox>(dialog, "ContextualTab"); Assert.True(contextual.Checked);
         dialog.SetHeaderColor(Color.MediumVioletRed); Assert.Equal(Color.MediumVioletRed, ColorValue(created));
@@ -112,7 +112,7 @@ public sealed class DesignerEditorUxTests
         using var dialog = new RibbonEditorDialog(draft, value => { RibbonDesignCommitter.Apply(ribbon, host, value); return null; });
         var tree = Control<TreeView>(dialog, "StructureTree"); _ = tree.Handle;
         var root = Assert.Single(tree.Nodes.Cast<TreeNode>()); Assert.Equal("RibbonRoot", root.Name); Assert.Null(root.Tag);
-        Assert.Same(root, tree.SelectedNode); Assert.Single(root.Nodes); Assert.Single(draft.Tabs);
+        Assert.Same(root, tree.SelectedNode); Assert.Single(root.Nodes.Cast<TreeNode>(), node => node.Tag is RibbonDesignNode); Assert.Single(draft.Tabs);
         var tools = Control<ToolStrip>(dialog, "StructureTools");
         Assert.False(tools.Items["Remove"]!.Enabled); Assert.False(tools.Items["MoveUp"]!.Enabled); Assert.False(tools.Items["MoveDown"]!.Enabled);
         var grid = Control<PropertyGrid>(dialog, "ComponentProperties");
@@ -130,14 +130,14 @@ public sealed class DesignerEditorUxTests
         using var dialog = new RibbonEditorDialog(draft, _ => throw new InvalidOperationException("Do not accept"));
         var tree = Control<TreeView>(dialog, "StructureTree"); _ = tree.Handle; var root = tree.Nodes[0]; tree.SelectedNode = root.Nodes[0];
         var tools = Control<ToolStrip>(dialog, "StructureTools"); tools.Items["Remove"]!.PerformClick();
-        Assert.Same(root, tree.SelectedNode); Assert.Empty(root.Nodes); Assert.Empty(draft.Tabs);
+        Assert.Same(root, tree.SelectedNode); Assert.All(root.Nodes.Cast<TreeNode>(), node => Assert.Null(node.Tag)); Assert.Empty(draft.Tabs);
         ((ToolStripDropDownButton)tools.Items["Add"]!).DropDownItems["AddTab"]!.PerformClick();
-        Assert.Single(root.Nodes); Assert.Single(draft.Tabs); Assert.Same(root.Nodes[0], tree.SelectedNode);
+        Assert.Single(root.Nodes.Cast<TreeNode>(), node => node.Tag is RibbonDesignNode); Assert.Single(draft.Tabs); Assert.Same(root.Nodes[0], tree.SelectedNode);
         Assert.Single(ribbon.Tabs); Assert.Equal(0, host.Transactions);
     });
 
     [Fact]
-    public void Size_policy_dropdown_covers_every_policy_and_commits_the_selected_canonical_value() => FoundationTests.Sta(() =>
+    public void Size_policy_dropdown_offers_monotonic_policies_and_commits_the_selected_canonical_value() => FoundationTests.Sta(() =>
     {
         using var host = new DesignerAuthoringTests.Host(); using var ribbon = DesignerAuthoringTests.MakeRibbon(host);
         var draft = RibbonDesignCommitter.Read(ribbon, host);
@@ -145,7 +145,7 @@ public sealed class DesignerEditorUxTests
         var tree = Control<TreeView>(dialog, "StructureTree"); _ = tree.Handle; tree.SelectedNode = tree.Nodes[0].Nodes[0].Nodes[0].Nodes[0];
         var grid = Control<PropertyGrid>(dialog, "ComponentProperties"); var descriptor = TypeDescriptor.GetProperties(grid.SelectedObject!)["SizePolicy"]!;
         var converter = descriptor.Converter; Assert.True(converter.GetStandardValuesSupported()); Assert.True(converter.GetStandardValuesExclusive());
-        var choices = converter.GetStandardValues()!.Cast<string>().ToArray(); Assert.Equal(27, choices.Distinct().Count());
+        var choices = converter.GetStandardValues()!.Cast<string>().ToArray(); Assert.Equal(10, choices.Distinct().Count());
         Assert.Equal("Fixed Large", converter.ConvertToInvariantString(choices[0]));
         Assert.Equal("Large → Medium → Small", converter.ConvertToInvariantString(choices[3]));
         var runtimeConverter = TypeDescriptor.GetConverter(typeof(RibbonSizePolicy));
@@ -153,6 +153,8 @@ public sealed class DesignerEditorUxTests
         {
             Assert.Equal(choice, converter.ConvertFromInvariantString(converter.ConvertToInvariantString(choice)!));
             Assert.Equal(choice, runtimeConverter.ConvertFromInvariantString(choice)!.ToString());
+            var policy = (RibbonSizePolicy)runtimeConverter.ConvertFromInvariantString(choice)!;
+            Assert.True(policy.Large <= policy.Medium && policy.Medium <= policy.Small);
         }
         Assert.Throws<FormatException>(() => converter.ConvertFromInvariantString("invalid policy"));
         descriptor.SetValue(grid.SelectedObject, "Large → Medium → Small"); dialog.AcceptDraft();

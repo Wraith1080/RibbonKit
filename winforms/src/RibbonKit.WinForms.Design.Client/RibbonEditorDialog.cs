@@ -19,14 +19,25 @@ internal sealed class RibbonEditorDialog : Form
     private readonly ComboBox _themeChoice = new() { Name = "BuiltInTheme", DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Top, AccessibleName = "Built-in ribbon theme" };
     private readonly ComboBox _animationChoice = new() { Name = "AnimationLevel", DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Top, AccessibleName = "Ribbon animation level" };
     private readonly ComboBox _contentAnimationChoice = new() { Name = "TabContentAnimation", DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Top, AccessibleName = "Tab content animation" };
+    private readonly ComboBox _backdropChoice = new() { Name = "Backdrop", DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Top, AccessibleName = "Window backdrop" };
+    private readonly CheckBox _transparentBackstage = new() { Name = "TransparentBackstage", Text = "Transparent &Backstage navigation", AutoSize = true, Dock = DockStyle.Top, AccessibleName = "Transparent Backstage navigation" };
     private readonly TreeView _tree = new() { Dock = DockStyle.Fill, HideSelection = false, AccessibleName = "Ribbon structure" };
     private readonly TreeNode _root = new("Ribbon") { Name = "RibbonRoot" };
+    private readonly TreeNode _qatRoot = new("Quick Access Toolbar") { Name = "QuickAccessRoot" };
+    private readonly TreeNode _qatEntries = new("Toolbar entries") { Name = "QuickAccessEntries" };
+    private readonly TreeNode _qatCommands = new("Commands without a tab") { Name = "QuickAccessCommands" };
+    private readonly HashSet<string> _initialCommandKeys;
+    private readonly GroupBox _qatBox = new() { Name = "QuickAccessHelp", Text = "Quick Access Toolbar", AutoSize = true, Dock = DockStyle.Fill, Padding = new Padding(8), Margin = new Padding(0, 0, 0, 8) };
+    private readonly Label _qatSource = new() { Name = "QuickAccessSource", AutoSize = true, Dock = DockStyle.Fill };
+    private readonly Button _editQatSource = new() { Name = "EditQatSource", Text = "Edit source", AutoSize = true };
+    private readonly Button _changeQatSource = new() { Name = "ChangeQatSource", Text = "Change source…", AutoSize = true };
     private readonly PropertyGrid _properties = new() { Dock = DockStyle.Fill, HelpVisible = true, AccessibleName = "Selected component properties" };
     private readonly IContainer _components = new Container();
     private readonly ToolStrip _tools = new() { Name = "StructureTools", Dock = DockStyle.Fill, GripStyle = ToolStripGripStyle.Hidden, CanOverflow = true, Padding = new Padding(0, 4, 0, 4) };
     private readonly ToolStripDropDownButton _add = new("&Add") { Name = "Add", DisplayStyle = ToolStripItemDisplayStyle.Text };
     private readonly ToolStripButton _up = new("Move &up") { Name = "MoveUp", DisplayStyle = ToolStripItemDisplayStyle.Text };
     private readonly ToolStripButton _down = new("Move &down") { Name = "MoveDown", DisplayStyle = ToolStripItemDisplayStyle.Text };
+    private readonly ToolStripButton _moveTo = new("Move &to…") { Name = "MoveTo", DisplayStyle = ToolStripItemDisplayStyle.Text };
     private readonly ToolStripButton _remove = new("&Remove") { Name = "Remove", DisplayStyle = ToolStripItemDisplayStyle.Text };
     private readonly SplitContainer _split = new() { Name = "StructureSplit", Dock = DockStyle.Fill, Size = new Size(936, 480), SplitterDistance = 270, FixedPanel = FixedPanel.Panel1 };
     private readonly Label _selection = new() { Name = "SelectionCaption", AutoSize = true, Dock = DockStyle.Fill, Padding = new Padding(0, 0, 0, 6) };
@@ -48,6 +59,7 @@ internal sealed class RibbonEditorDialog : Form
     {
         SuspendLayout();
         _draft = draft; _commit = commit; _render = render; _contextMenu = new ContextMenuStrip(_components) { ShowImageMargin = false };
+        _initialCommandKeys = new HashSet<string>(draft.CommandNodes.Select(node => node.Key), StringComparer.Ordinal);
         Text = "Edit Ribbon"; Name = "RibbonEditorDialog"; StartPosition = FormStartPosition.CenterParent;
         Font = SystemFonts.MessageBoxFont; AutoScaleDimensions = new SizeF(96, 96); AutoScaleMode = AutoScaleMode.Dpi;
         MinimumSize = new Size(780, 520); ClientSize = new Size(960, 640); MinimizeBox = false; MaximizeBox = false;
@@ -57,7 +69,7 @@ internal sealed class RibbonEditorDialog : Form
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.Controls.Add(new Label { Text = "Arrange tabs, groups and commands.", AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 8) }, 0, 0);
         ((ToolStripDropDownMenu)_add.DropDown).ShowImageMargin = false;
-        _tools.Items.AddRange(new ToolStripItem[] { _add, new ToolStripSeparator(), _up, _down, new ToolStripSeparator(), _remove });
+        _tools.Items.AddRange(new ToolStripItem[] { _add, new ToolStripSeparator(), _up, _down, _moveTo, new ToolStripSeparator(), _remove });
         layout.Controls.Add(_tools, 0, 1); layout.Controls.Add(_split, 0, 2);
         var structure = ColumnLayout(); structure.RowCount = 2;
         structure.RowStyles.Add(new RowStyle(SizeType.AutoSize)); structure.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
@@ -82,12 +94,12 @@ internal sealed class RibbonEditorDialog : Form
         iconActions.Controls.AddRange(new Control[] { chooseIcon, clearIcon, _iconName }); _iconBox.Controls.Add(iconActions); details.Controls.Add(_iconBox, 0, 2);
         chooseIcon.Click += (_, _) =>
         {
-            if (_tree.SelectedNode?.Tag is not RibbonDesignNode node) return;
-            using var picker = new RibbonIconPickerDialog(_draft.Nodes.Select(entry => entry.Icon), node.Icon);
+            if (SelectedModel() is not { } node) return;
+            using var picker = new RibbonIconPickerDialog(_draft.CommandNodes.Select(entry => entry.Icon), node.Icon);
             if (picker.ShowDialog(this) == DialogResult.OK && picker.Selection is { } selection) SetIcon(selection);
         };
         clearIcon.Click += (_, _) => SetIcon(new RibbonDesignIcon());
-        var themes = ColumnLayout(); themes.AutoSize = true; themes.Dock = DockStyle.Top; themes.RowCount = 7;
+        var themes = ColumnLayout(); themes.AutoSize = true; themes.Dock = DockStyle.Top; themes.RowCount = 11;
         themes.Controls.Add(new Label { AutoSize = true, Dock = DockStyle.Fill, Text = "Application theme: " + draft.ApplicationTheme }, 0, 0);
         _themeChoice.Items.Add("(Application theme)"); _themeChoice.Items.AddRange(draft.ThemeChoices.Cast<object>().ToArray());
         themes.Controls.Add(_themeChoice, 0, 1);
@@ -97,11 +109,31 @@ internal sealed class RibbonEditorDialog : Form
         themes.Controls.Add(new Label { Text = "Tab content animation (tabs, headers, groups and Backstage pages)", AutoSize = true, Dock = DockStyle.Fill }, 0, 4);
         _contentAnimationChoice.Items.AddRange(draft.TabContentAnimationChoices.Cast<object>().ToArray());
         themes.Controls.Add(_contentAnimationChoice, 0, 5);
+        themes.Controls.Add(new Label { Text = draft.CanSetBackdrop ? "Window backdrop (shown at runtime)" : "Window backdrop (requires an editable RibbonForm)", AutoSize = true, Dock = DockStyle.Fill }, 0, 6);
+        _backdropChoice.Items.AddRange(draft.BackdropChoices.Cast<object>().ToArray());
+        _backdropChoice.Enabled = draft.CanSetBackdrop;
+        themes.Controls.Add(_backdropChoice, 0, 7);
+        themes.Controls.Add(_transparentBackstage, 0, 8);
+        themes.Controls.Add(new Label { Text = "Uses Mica or Acrylic; page content stays opaque.", AutoSize = true, Dock = DockStyle.Fill }, 0, 9);
         var preview = new Button { Name = "PreviewTheme", Text = "Preview ribbon and Backstage…", AutoSize = true, Enabled = render != null };
-        themes.Controls.Add(preview, 0, 6); _themeBox.Controls.Add(themes); details.Controls.Add(_themeBox, 0, 3);
+        themes.Controls.Add(preview, 0, 10); _themeBox.Controls.Add(themes); details.Controls.Add(_themeBox, 0, 3);
         _themeChoice.SelectedIndexChanged += (_, _) => { if (!_showing) _draft.BuiltInTheme = _themeChoice.SelectedIndex <= 0 ? "" : _themeChoice.SelectedItem?.ToString() ?? ""; };
         _animationChoice.SelectedIndexChanged += (_, _) => { if (!_showing && _animationChoice.SelectedItem is string animation) _draft.AnimationLevel = animation; };
         _contentAnimationChoice.SelectedIndexChanged += (_, _) => { if (!_showing && _contentAnimationChoice.SelectedItem is string animation) _draft.TabContentAnimation = animation; };
+        _backdropChoice.SelectedIndexChanged += (_, _) => { if (!_showing && _backdropChoice.Enabled && _backdropChoice.SelectedItem is string backdrop) _draft.Backdrop = backdrop; };
+        _transparentBackstage.CheckedChanged += (_, _) => { if (!_showing) _draft.NavigationBackgroundOpacity = _transparentBackstage.Checked ? 0 : 1; };
+        var qatLayout = ColumnLayout(); qatLayout.AutoSize = true; qatLayout.Dock = DockStyle.Top;
+        qatLayout.Controls.Add(new Label { Text = "Add a shared command or create one without a tab. Removing a toolbar entry keeps its command.", AutoSize = true, Dock = DockStyle.Fill });
+        var qatActions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, WrapContents = true, Margin = new Padding(0) };
+        var addExisting = new Button { Name = "AddQatExisting", Text = "Add existing command…", AutoSize = true };
+        var newButton = new Button { Name = "NewQatButton", Text = "New QAT-only button", AutoSize = true };
+        var newToggle = new Button { Name = "NewQatToggle", Text = "New QAT-only toggle", AutoSize = true };
+        addExisting.Click += (_, _) => { using var picker = CreateQuickAccessPicker(); picker.ShowDialog(this); };
+        newButton.Click += (_, _) => AddQuickAccessCommand(false); newToggle.Click += (_, _) => AddQuickAccessCommand(true);
+        _editQatSource.Click += (_, _) => EditQuickAccessSource();
+        _changeQatSource.Click += (_, _) => { if (_tree.SelectedNode?.Tag is RibbonDesignNode entry) { using var picker = CreateQuickAccessPicker(entry.Key); picker.ShowDialog(this); } };
+        qatActions.Controls.AddRange(new Control[] { addExisting, newButton, newToggle, _editQatSource, _changeQatSource });
+        qatLayout.Controls.Add(qatActions); qatLayout.Controls.Add(_qatSource); _qatBox.Controls.Add(qatLayout); details.Controls.Add(_qatBox, 0, 3);
         preview.Click += (_, _) => PreviewTheme();
         _properties.Name = "ComponentProperties"; details.Controls.Add(_properties, 0, 4);
         _choiceBox.Controls.Add(_choices); details.Controls.Add(_choiceBox, 0, 5); _split.Panel2.Controls.Add(details);
@@ -113,6 +145,7 @@ internal sealed class RibbonEditorDialog : Form
         footer.Controls.Add(ok, 1, 0); footer.Controls.Add(cancel, 2, 0); AcceptButton = ok; CancelButton = cancel;
         layout.Controls.Add(footer, 0, 3); Controls.Add(layout);
         _up.Click += (_, _) => MoveNode(-1); _down.Click += (_, _) => MoveNode(1); _remove.Click += (_, _) => Remove(); ok.Click += (_, _) => AcceptDraft();
+        _moveTo.Click += (_, _) => { using var move = CreateMoveDialog(); move.ShowDialog(this); };
         _tree.AfterSelect += (_, _) => ShowSelection();
         _tree.NodeMouseClick += (_, e) => { if (e.Button == MouseButtons.Right) _tree.SelectedNode = e.Node; };
         _tree.KeyDown += (_, e) =>
@@ -142,8 +175,9 @@ internal sealed class RibbonEditorDialog : Form
         _split.SizeChanged += (_, _) => UpdateSplitterConstraints();
         _tree.Nodes.Add(_root);
         foreach (var tab in draft.Tabs) _root.Nodes.Add(CreateTree(tab));
+        _qatRoot.Nodes.AddRange(new[] { _qatEntries, _qatCommands }); _root.Nodes.Add(_qatRoot); RebuildQuickAccessTree();
         _tree.ExpandAll();
-        _tree.SelectedNode = Descendants(_root).FirstOrDefault(tree => tree.Tag is RibbonDesignNode node && node.Key == draft.SelectionKey) ?? _root;
+        _tree.SelectedNode = draft.SelectionKey == "qat:root" ? _qatRoot : Descendants(_root).FirstOrDefault(tree => tree.Tag is RibbonDesignNode node && node.Key == draft.SelectionKey) ?? _root;
         ShowSelection();
         ResumeLayout(true);
     }
@@ -198,19 +232,30 @@ internal sealed class RibbonEditorDialog : Form
             if (parent.Tag is RibbonDesignNode owner && RibbonDesignSnapshot.ChildKinds(owner.Kind).Contains(kind)) return parent;
         return null;
     }
-    private List<RibbonDesignNode> Children(TreeNode? parent) => parent?.Tag is RibbonDesignNode node ? node.Children : _draft.Tabs;
+    private List<RibbonDesignNode> Children(TreeNode? parent) => ReferenceEquals(parent, _qatEntries) ? _draft.QuickAccessItems
+        : ReferenceEquals(parent, _qatCommands) ? _draft.CatalogCommands : parent?.Tag is RibbonDesignNode node ? node.Children : _draft.Tabs;
+    private RibbonDesignNode? SelectedModel() => _tree.SelectedNode?.Tag is RibbonDesignNode { Kind: "OwnedQat" } owned
+        ? _draft.CatalogCommands.FirstOrDefault(node => node.Key == owned.SourceKey) : _tree.SelectedNode?.Tag as RibbonDesignNode;
+    private bool InQuickAccess(TreeNode? tree) { for (; tree != null; tree = tree.Parent) if (ReferenceEquals(tree, _qatRoot)) return true; return false; }
+    private bool IsToolbarEntry(TreeNode? tree) => tree != null && ReferenceEquals(tree.Parent, _qatEntries);
+    private bool IsCommandDeclaration(TreeNode? tree) { for (; tree != null; tree = tree.Parent) if (ReferenceEquals(tree, _qatCommands)) return true; return false; }
     private void ShowSelection()
     {
-        var node = _tree.SelectedNode?.Tag as RibbonDesignNode;
-        _draft.SelectionKey = node?.Key ?? "";
+        var node = SelectedModel();
+        _draft.SelectionKey = (_tree.SelectedNode?.Tag as RibbonDesignNode)?.Key ?? (InQuickAccess(_tree.SelectedNode) ? "qat:root" : "");
         _showing = true;
         try
         {
-            _properties.SelectedObject = ReferenceEquals(_tree.SelectedNode, _root) ? new RibbonRootProperties(_draft) : node == null ? null : new DraftProperties(node);
+            _properties.SelectedObject = ReferenceEquals(_tree.SelectedNode, _root) ? new RibbonRootProperties(_draft)
+                : ReferenceEquals(_tree.SelectedNode, _qatRoot) || ReferenceEquals(_tree.SelectedNode, _qatEntries) ? new QuickAccessRootProperties(_draft)
+                : node == null ? null : new DraftProperties(node);
             _themeBox.Visible = ReferenceEquals(_tree.SelectedNode, _root);
+            _qatBox.Visible = InQuickAccess(_tree.SelectedNode);
             _themeChoice.SelectedIndex = _draft.BuiltInTheme.Length == 0 ? 0 : _themeChoice.Items.IndexOf(_draft.BuiltInTheme);
             _animationChoice.SelectedItem = _draft.AnimationLevel;
             _contentAnimationChoice.SelectedItem = _draft.TabContentAnimation;
+            _backdropChoice.SelectedItem = _draft.Backdrop;
+            _transparentBackstage.Checked = _draft.NavigationBackgroundOpacity < 1;
             _choiceBox.Visible = node?.Kind == "ComboBox"; _choices.Text = node == null ? "" : string.Join(Environment.NewLine, node.Choices);
         }
         finally { _showing = false; }
@@ -218,13 +263,14 @@ internal sealed class RibbonEditorDialog : Form
     }
     private void RefreshSelection()
     {
-        var node = _tree.SelectedNode?.Tag as RibbonDesignNode;
+        var node = SelectedModel(); var entry = IsToolbarEntry(_tree.SelectedNode) ? _tree.SelectedNode!.Tag as RibbonDesignNode : null;
         _showing = true;
         try
         {
-            _selection.Text = ReferenceEquals(_tree.SelectedNode, _root) ? "Ribbon — root" : node == null ? "Properties — select a component" : node.Caption + " — " + KindLabel(node.Kind);
+            _selection.Text = ReferenceEquals(_tree.SelectedNode, _root) ? "Ribbon — root" : InQuickAccess(_tree.SelectedNode) && node == null ? "Quick Access Toolbar"
+                : node == null ? "Properties — select a component" : entry != null ? QuickAccessLabel(entry) : node.Caption + " — " + KindLabel(node.Kind);
             _tabHeader.Visible = node?.Kind == "Tab";
-            _iconBox.Visible = node != null && node.Kind is not ("Tab" or "Separator");
+            _iconBox.Visible = node != null && node.Kind is not ("Tab" or "Separator") && !RibbonDesignSnapshot.IsQuickAccessReference(node.Kind);
             _iconName.Text = node?.Icon.Kind switch { "Svg" => node.Icon.Name, "Custom" => "Custom provider (preserved)", _ => node?.Icon.HasRasterImage == true ? "Existing raster images retained" : "None" };
             if (node?.Kind == "Tab")
             {
@@ -235,17 +281,27 @@ internal sealed class RibbonEditorDialog : Form
                 _colorValue.Text = (color.IsEmpty ? "Theme accent" : TypeDescriptor.GetConverter(typeof(Color)).ConvertToInvariantString(color)) + " · header text and indicator";
                 _colorValue.Enabled = _contextual.Checked;
             }
-            if (_tree.SelectedNode is { Tag: RibbonDesignNode selectedNode } selected) selected.Text = Label(selectedNode);
+            foreach (var tree in Descendants(_root))
+                if (tree.Tag is RibbonDesignNode declaration) tree.Text = IsToolbarEntry(tree) ? QuickAccessLabel(declaration) : Label(declaration);
+            bool sourceUsed = node != null && !IsToolbarEntry(_tree.SelectedNode) && _draft.QuickAccessItems.Any(row => RibbonDesignSnapshot.Flatten(new[] { node }).Any(source => source.Key == row.SourceKey));
+            _qatSource.Text = entry != null ? "Source: " + SourceCaption(entry.SourceKey)
+                : sourceUsed ? "Remove this command's toolbar entries before deleting it." : "Toolbar visibility and placement are available on the Quick Access Toolbar branch.";
+            _editQatSource.Enabled = entry != null && _draft.CommandNodes.Any(source => source.Key == entry.SourceKey);
+            _changeQatSource.Enabled = entry != null && RibbonDesignSnapshot.IsQuickAccessReference(entry.Kind);
             _properties.Refresh();
-            _remove.Enabled = node != null;
-            _up.Enabled = node != null && _tree.SelectedNode is { Index: > 0 };
+            _remove.Enabled = node != null && !sourceUsed;
+            _remove.Text = entry != null ? "Remove from QAT" : IsCommandDeclaration(_tree.SelectedNode) ? "Delete command" : "Remove";
+            _remove.ToolTipText = sourceUsed ? "Remove its QAT entries before deleting the command." : _remove.Text;
+            _up.Enabled = _tree.SelectedNode?.Tag is RibbonDesignNode && _tree.SelectedNode is { Index: > 0 };
             _down.Enabled = node != null && _tree.SelectedNode is { } current && current.Index < Children(current.Parent).Count - 1;
+            _moveTo.Enabled = MoveDestinations().Any();
             PopulateAddMenu(_add.DropDownItems); ClearMenu(_contextMenu.Items);
             var add = new ToolStripMenuItem("Add") { Name = "Add" }; ((ToolStripDropDownMenu)add.DropDown).ShowImageMargin = false;
             PopulateAddMenu(add.DropDownItems); _contextMenu.Items.Add(add); _contextMenu.Items.Add(new ToolStripSeparator());
             _contextMenu.Items.Add(MenuAction("Move up", "MoveUp", () => MoveNode(-1), _up.Enabled));
             _contextMenu.Items.Add(MenuAction("Move down", "MoveDown", () => MoveNode(1), _down.Enabled));
-            _contextMenu.Items.Add(new ToolStripSeparator()); _contextMenu.Items.Add(MenuAction("Remove", "Remove", Remove, _remove.Enabled));
+            _contextMenu.Items.Add(MenuAction("Move to…", "MoveTo", () => { using var move = CreateMoveDialog(); move.ShowDialog(this); }, _moveTo.Enabled));
+            _contextMenu.Items.Add(new ToolStripSeparator()); _contextMenu.Items.Add(MenuAction(_remove.Text, "Remove", Remove, _remove.Enabled));
         }
         finally { _showing = false; }
     }
@@ -257,11 +313,20 @@ internal sealed class RibbonEditorDialog : Form
     private void PopulateAddMenu(ToolStripItemCollection items)
     {
         ClearMenu(items);
+        if (InQuickAccess(_tree.SelectedNode))
+        {
+            items.Add(MenuAction("Add existing command…", "AddQatExisting", () => { using var picker = CreateQuickAccessPicker(); picker.ShowDialog(this); }));
+            items.Add(MenuAction("New QAT-only button", "NewQatButton", () => AddQuickAccessCommand(false)));
+            items.Add(MenuAction("New QAT-only toggle", "NewQatToggle", () => AddQuickAccessCommand(true)));
+            if (_tree.SelectedNode?.Tag is RibbonDesignNode owner && !IsToolbarEntry(_tree.SelectedNode))
+                foreach (string kind in RibbonDesignSnapshot.ChildKinds(owner.Kind)) items.Add(MenuAction(KindLabel(kind), "Add" + kind, () => Add(kind)));
+            return;
+        }
         items.Add(MenuAction("&Tab", "AddTab", () => Add("Tab")));
         items.Add(MenuAction("&Contextual tab", "AddContextualTab", () => Add("Tab", true)));
         items.Add(MenuAction("&Group", "AddGroup", () => Add("Group"), ParentFor("Group") != null));
         items.Add(new ToolStripSeparator());
-        var kinds = RibbonDesignSnapshot.ChildKinds("Group").Concat(new[] { "Separator", "GalleryTile" }).Where(kind => ParentFor(kind) != null).ToArray();
+        var kinds = RibbonDesignSnapshot.ChildKinds("Group").Concat(new[] { "GalleryTile" }).Where(kind => ParentFor(kind) != null).ToArray();
         foreach (var kind in kinds) items.Add(MenuAction(KindLabel(kind), "Add" + kind, () => Add(kind)));
         if (kinds.Length == 0) items.Add(new ToolStripMenuItem("Select a group to add commands") { Enabled = false });
     }
@@ -274,38 +339,201 @@ internal sealed class RibbonEditorDialog : Form
     }
     internal void SetIcon(RibbonDesignIcon icon)
     {
-        if (_tree.SelectedNode?.Tag is not RibbonDesignNode node || node.Kind is "Tab" or "Separator") return;
+        if (SelectedModel() is not { } node || node.Kind is "Tab" or "Separator" || RibbonDesignSnapshot.IsQuickAccessReference(node.Kind)) return;
         icon.HasRasterImage = node.Icon.HasRasterImage; node.Icon = icon; RefreshSelection();
     }
     private void Add(string kind, bool contextual = false)
     {
         var parent = kind == "Tab" ? _root : ParentFor(kind); if (parent == null) return;
+        var created = CreateNode(kind, contextual);
+        Children(parent).Add(created); var tree = CreateTree(created); parent.Nodes.Insert(Children(parent).Count - 1, tree);
+        parent.Expand(); _tree.SelectedNode = tree;
+    }
+    private RibbonDesignNode CreateNode(string kind, bool contextual = false)
+    {
         var template = _draft.Templates.Single(node => node.Kind == kind);
-        var usedNames = new HashSet<string>(_draft.ReservedNames.Concat(_draft.Nodes.Select(node => node.ComponentName)), StringComparer.OrdinalIgnoreCase);
+        var usedNames = new HashSet<string>(_draft.ReservedNames.Concat(_draft.AllNodes.Select(node => node.ComponentName)), StringComparer.OrdinalIgnoreCase);
         string name; int suffix = 1; do { name = "ribbon" + (contextual ? "ContextualTab" : kind) + suffix++; } while (usedNames.Contains(name));
         var created = new RibbonDesignNode { Key = "new:" + Guid.NewGuid().ToString("N"), Kind = kind, ComponentName = name,
             Properties = template.Properties.Select(property => new RibbonDesignProperty { Name = property.Name, Category = property.Category, Description = property.Description, Type = property.Type, Value = property.Value, Options = property.Options.ToArray() }).ToList(),
             Choices = template.Choices.ToList() };
         created.Properties.Single(property => property.Name == "Id").Value = "rk:" + Guid.NewGuid().ToString("N");
-        var caption = created.Properties.FirstOrDefault(property => property.Name == "Text"); if (caption != null) caption.Value = contextual ? "Contextual tab" : "New " + KindLabel(kind).ToLowerInvariant();
+        var caption = created.Properties.FirstOrDefault(property => property.Name == "Text"); if (caption != null) caption.Value = RibbonDesignSnapshot.IsQuickAccessReference(kind) ? "" : contextual ? "Contextual tab" : "New " + KindLabel(kind).ToLowerInvariant();
         if (contextual) created.Properties.Single(property => property.Name == "IsContextual").Value = "True";
-        Children(parent).Add(created); var tree = CreateTree(created); parent.Nodes.Add(tree);
-        parent.Expand(); _tree.SelectedNode = tree;
+        return created;
     }
     private void Remove()
     {
-        if (_tree.SelectedNode is not { } selected || ReferenceEquals(selected, _root)) return;
+        if (!_remove.Enabled || _tree.SelectedNode is not { Tag: RibbonDesignNode } selected) return;
         var parent = selected.Parent; int index = selected.Index; var siblings = Children(parent); siblings.RemoveAt(index); selected.Remove();
         var trees = parent?.Nodes ?? _tree.Nodes;
-        _tree.SelectedNode = trees.Count == 0 ? parent : trees[Math.Min(index, trees.Count - 1)]; ShowSelection();
+        _tree.SelectedNode = siblings.Count == 0 ? parent : trees[Math.Min(index, siblings.Count - 1)]; ShowSelection();
     }
     private void MoveNode(int offset)
     {
-        if (_tree.SelectedNode is not { } selected || ReferenceEquals(selected, _root)) return;
+        if (_tree.SelectedNode is not { Tag: RibbonDesignNode } selected) return;
         var siblings = Children(selected.Parent); int from = selected.Index, to = from + offset;
         if (to < 0 || to >= siblings.Count) return;
         var trees = selected.Parent?.Nodes ?? _tree.Nodes; var model = siblings[from]; siblings.RemoveAt(from); siblings.Insert(to, model);
         selected.Remove(); trees.Insert(to, selected); _tree.SelectedNode = selected;
+    }
+    private IEnumerable<TreeNode> MoveDestinations()
+    {
+        if (_tree.SelectedNode is not { Tag: RibbonDesignNode model } selected || InQuickAccess(selected) || model.Kind == "Tab") yield break;
+        var excluded = new HashSet<string>(RibbonDesignSnapshot.Flatten(new[] { model }).Select(node => node.Key), StringComparer.Ordinal);
+        foreach (var tree in Descendants(_root))
+            if (!InQuickAccess(tree) && tree.Tag is RibbonDesignNode parent && !excluded.Contains(parent.Key)
+                && RibbonDesignSnapshot.ChildKinds(parent.Kind).Contains(model.Kind)) yield return tree;
+    }
+    internal bool MoveSelectionTo(string parentKey, string? row = null)
+    {
+        var destination = MoveDestinations().FirstOrDefault(tree => tree.Tag is RibbonDesignNode parent && parent.Key == parentKey);
+        if (destination?.Tag is not RibbonDesignNode parent || _tree.SelectedNode is not { Tag: RibbonDesignNode model } selected) return false;
+        var layout = parent.Properties.FirstOrDefault(property => property.Name == "Layout")?.Value;
+        if (parent.Kind == "Group" && layout is "TwoRows" or "ThreeRows")
+        {
+            var property = model.Properties.FirstOrDefault(value => value.Name == "Row");
+            if (property != null)
+            {
+                row ??= property.Value;
+                if (row is not ("First" or "Second" or "Third")) return false;
+                property.Value = layout == "TwoRows" && row == "Third" ? "Second" : row;
+            }
+        }
+        Children(selected.Parent).Remove(model); parent.Children.Add(model);
+        selected.Remove(); destination.Nodes.Add(selected); destination.Expand(); _tree.SelectedNode = selected; selected.EnsureVisible(); ShowSelection();
+        return true;
+    }
+    internal Form CreateMoveDialog()
+    {
+        var dialog = new Form { Text = "Move item", Name = "MoveItemDialog", StartPosition = FormStartPosition.CenterParent,
+            ClientSize = new Size(560, 250), MinimumSize = new Size(480, 280), ShowInTaskbar = false, MinimizeBox = false,
+            MaximizeBox = false, Font = Font, AutoScaleMode = AutoScaleMode.Dpi, Padding = new Padding(12) };
+        var layout = ColumnLayout(); layout.RowCount = 6;
+        var destination = new ComboBox { Name = "MoveDestination", DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
+        foreach (var tree in MoveDestinations()) destination.Items.Add(new MoveDestination(tree));
+        var row = new ComboBox { Name = "MoveRow", DropDownStyle = ComboBoxStyle.DropDownList, Dock = DockStyle.Fill };
+        var explanation = new Label { Name = "MoveExplanation", Text = "Size policy is preserved. Large commands span all rows; use Medium or Small to place a command within one row.", AutoSize = true, Dock = DockStyle.Fill, MaximumSize = new Size(520, 0) };
+        var actions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft };
+        var accept = new Button { Name = "AcceptMove", Text = "Move", AutoSize = true, Enabled = destination.Items.Count > 0 };
+        var cancel = new Button { Text = "Cancel", AutoSize = true, DialogResult = DialogResult.Cancel };
+        void RefreshRow()
+        {
+            row.Items.Clear();
+            var parent = (destination.SelectedItem as MoveDestination)?.Tree.Tag as RibbonDesignNode;
+            var mode = parent?.Properties.FirstOrDefault(value => value.Name == "Layout")?.Value;
+            row.Enabled = parent?.Kind == "Group" && (mode is "TwoRows" or "ThreeRows") && SelectedModel()?.Properties.Any(value => value.Name == "Row") == true;
+            row.Items.AddRange(mode == "ThreeRows" ? new object[] { "First", "Second", "Third" } : new object[] { "First", "Second" });
+            string current = SelectedModel()?.Properties.FirstOrDefault(value => value.Name == "Row")?.Value ?? "First";
+            row.SelectedItem = row.Items.Contains(current) ? current : "Second";
+        }
+        destination.SelectedIndexChanged += (_, _) => RefreshRow();
+        if (destination.Items.Count > 0) destination.SelectedIndex = 0;
+        accept.Click += (_, _) =>
+        {
+            if (destination.SelectedItem is MoveDestination target && target.Tree.Tag is RibbonDesignNode parent && MoveSelectionTo(parent.Key, row.Enabled ? row.SelectedItem?.ToString() : null)) dialog.DialogResult = DialogResult.OK;
+        };
+        actions.Controls.Add(cancel); actions.Controls.Add(accept);
+        layout.Controls.Add(new Label { Text = "Destination tab, group or menu", AutoSize = true }, 0, 0); layout.Controls.Add(destination, 0, 1);
+        layout.Controls.Add(new Label { Text = "Row in destination group", AutoSize = true }, 0, 2); layout.Controls.Add(row, 0, 3);
+        layout.Controls.Add(explanation, 0, 4); layout.Controls.Add(actions, 0, 5); dialog.Controls.Add(layout);
+        dialog.AcceptButton = accept; dialog.CancelButton = cancel;
+        return dialog;
+    }
+    private sealed class MoveDestination(TreeNode tree)
+    {
+        internal TreeNode Tree { get; } = tree;
+        public override string ToString() => Tree.FullPath + " (" + (Tree.Tag as RibbonDesignNode)?.ComponentName + ")";
+    }
+    private string SourceCaption(string key) => _draft.CommandNodes.FirstOrDefault(node => node.Key == key) is { } command
+        ? string.IsNullOrWhiteSpace(command.Caption) ? command.ComponentName : command.Caption
+        : _draft.QuickAccessSources.FirstOrDefault(source => source.Key == key)?.Caption ?? "(No source)";
+    private string QuickAccessLabel(RibbonDesignNode entry)
+    {
+        string alias = entry.Properties.FirstOrDefault(property => property.Name == "Text")?.Value ?? "";
+        return (alias.Length == 0 ? SourceCaption(entry.SourceKey) : alias) + (entry.Kind == "OwnedQat" ? "  [Owned command]" : "  [Reference]");
+    }
+    private void RebuildQuickAccessTree(string? selectKey = null)
+    {
+        _qatEntries.Nodes.Clear(); _qatCommands.Nodes.Clear();
+        foreach (var entry in _draft.QuickAccessItems) _qatEntries.Nodes.Add(new TreeNode(QuickAccessLabel(entry)) { Tag = entry });
+        foreach (var command in _draft.CatalogCommands) _qatCommands.Nodes.Add(CreateTree(command));
+        _qatRoot.Expand(); _qatEntries.Expand(); _qatCommands.Expand();
+        if (selectKey != null)
+        {
+            _tree.SelectedNode = Descendants(_qatRoot).FirstOrDefault(tree => tree.Tag is RibbonDesignNode node && node.Key == selectKey) ?? _qatEntries;
+            ShowSelection();
+        }
+    }
+    private IEnumerable<RibbonDesignSource> AvailableQuickAccessSources()
+    {
+        var declarations = _draft.CatalogCommands.Select(node => new RibbonDesignSource { Key = node.Key, Kind = node.Kind, Caption = node.Caption, Category = "Commands without a tab" })
+            .Concat(_draft.Tabs.SelectMany(tab => tab.Children.SelectMany(group => new[] { group }.Concat(group.Children)).Select(node =>
+                new RibbonDesignSource { Key = node.Key, Kind = node.Kind, Caption = node.Caption, Category = tab.Caption })));
+        var currentKeys = new HashSet<string>(_draft.CommandNodes.Select(node => node.Key), StringComparer.Ordinal);
+        return declarations.Concat(_draft.QuickAccessSources.Where(source => !_initialCommandKeys.Contains(source.Key) || currentKeys.Contains(source.Key)))
+            .Where(source => RibbonDesignSnapshot.QuickAccessKind(source.Kind).Length != 0).GroupBy(source => source.Key, StringComparer.Ordinal).Select(group => group.First());
+    }
+    internal void AddQuickAccessReference(string sourceKey)
+    {
+        var source = AvailableQuickAccessSources().FirstOrDefault(entry => entry.Key == sourceKey) ?? throw new ArgumentException("Choose an available QAT command.");
+        var reference = CreateNode(RibbonDesignSnapshot.QuickAccessKind(source.Kind)); reference.SourceKey = source.Key;
+        _draft.QuickAccessItems.Add(reference); RebuildQuickAccessTree(reference.Key);
+    }
+    internal void AddQuickAccessCommand(bool toggle)
+    {
+        var source = CreateNode(toggle ? "Toggle" : "Button"); _draft.CatalogCommands.Add(source);
+        AddQuickAccessReference(source.Key); RebuildQuickAccessTree(source.Key);
+    }
+    internal void ChangeQuickAccessSource(string entryKey, string sourceKey)
+    {
+        var entry = _draft.QuickAccessItems.Single(node => node.Key == entryKey);
+        var source = AvailableQuickAccessSources().FirstOrDefault(item => item.Key == sourceKey) ?? throw new ArgumentException("Choose an available QAT source.");
+        if (RibbonDesignSnapshot.QuickAccessKind(source.Kind) != entry.Kind) throw new ArgumentException("Choose a compatible source for this QAT entry.");
+        entry.SourceKey = source.Key; RebuildQuickAccessTree(entry.Key);
+    }
+    private void EditQuickAccessSource()
+    {
+        if (_tree.SelectedNode?.Tag is not RibbonDesignNode entry || !IsToolbarEntry(_tree.SelectedNode)) return;
+        var source = Descendants(_root).FirstOrDefault(tree => !IsToolbarEntry(tree) && tree.Tag is RibbonDesignNode node && node.Key == entry.SourceKey);
+        if (source != null) { _tree.SelectedNode = source; source.EnsureVisible(); }
+    }
+    internal Form CreateQuickAccessPicker(string? entryKey = null)
+    {
+        var picker = new Form { Name = "QuickAccessSourcePicker", Text = "Add command to Quick Access Toolbar", StartPosition = FormStartPosition.CenterParent,
+            ClientSize = new Size(520, 400), MinimumSize = new Size(380, 300), Font = Font, AutoScaleMode = AutoScaleMode.Dpi, ShowInTaskbar = false, MinimizeBox = false, MaximizeBox = false, Padding = new Padding(12) };
+        var layout = ColumnLayout(); layout.RowCount = 4;
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        var search = new TextBox { Name = "QatSourceSearch", Dock = DockStyle.Fill, AccessibleName = "Search available QAT commands" };
+        var list = new ListBox { Name = "QatSourceChoices", Dock = DockStyle.Fill, IntegralHeight = false, AccessibleName = "Available QAT commands" };
+        var target = entryKey == null ? null : _draft.QuickAccessItems.Single(entry => entry.Key == entryKey);
+        var choices = AvailableQuickAccessSources().Where(source => target == null || RibbonDesignSnapshot.QuickAccessKind(source.Kind) == target.Kind).Select(source => new QuickAccessChoice(source)).ToArray();
+        void Filter()
+        {
+            list.Items.Clear(); foreach (var choice in choices.Where(choice => choice.ToString().IndexOf(search.Text, StringComparison.CurrentCultureIgnoreCase) >= 0)) list.Items.Add(choice);
+            if (list.Items.Count != 0) list.SelectedIndex = 0;
+        }
+        search.TextChanged += (_, _) => Filter(); Filter();
+        var actions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(0, 8, 0, 0) };
+        var add = new Button { Name = "AcceptQatSource", Text = target == null ? "Add" : "Change", AutoSize = true, Enabled = list.SelectedItem != null };
+        var cancel = new Button { Text = "Cancel", AutoSize = true, DialogResult = DialogResult.Cancel };
+        list.SelectedIndexChanged += (_, _) => add.Enabled = list.SelectedItem != null;
+        void Accept()
+        {
+            if (list.SelectedItem is not QuickAccessChoice choice) return;
+            if (target == null) AddQuickAccessReference(choice.Source.Key); else ChangeQuickAccessSource(target.Key, choice.Source.Key);
+            picker.DialogResult = DialogResult.OK;
+        }
+        add.Click += (_, _) => Accept(); list.DoubleClick += (_, _) => Accept();
+        actions.Controls.Add(cancel); actions.Controls.Add(add); picker.AcceptButton = add; picker.CancelButton = cancel;
+        layout.Controls.Add(new Label { Text = "Choose an existing command or group. Its state and handlers are shared.", AutoSize = true, Dock = DockStyle.Fill }, 0, 0);
+        layout.Controls.Add(search, 0, 1); layout.Controls.Add(list, 0, 2); layout.Controls.Add(actions, 0, 3); picker.Controls.Add(layout);
+        return picker;
+    }
+    private sealed class QuickAccessChoice(RibbonDesignSource source)
+    {
+        internal RibbonDesignSource Source { get; } = source;
+        public override string ToString() => (string.IsNullOrWhiteSpace(Source.Caption) ? Source.Key : Source.Caption) + " — " + Source.Category;
     }
     internal void AcceptDraft()
     {
@@ -355,16 +583,42 @@ internal sealed class RibbonEditorDialog : Form
 
     private sealed class RibbonRootProperties(RibbonDesignSnapshot draft)
     {
+        [Category("Design"), DisplayName("(Name)"), Description("The programmatic component name used in generated code. Displayed text and stable Id are separate.")]
+        public string Name { get => draft.ComponentName; set => draft.ComponentName = value; }
         [Category("Structure"), Description("The number of authored tabs in this ribbon."), ReadOnly(true)]
         public int Tabs => draft.Tabs.Count;
     }
-    internal sealed class DraftProperties(RibbonDesignNode node) : CustomTypeDescriptor
+    private sealed class QuickAccessRootProperties(RibbonDesignSnapshot draft)
+    {
+        public enum Placement { TabRow, BelowRibbon, TitleBar }
+        [Category("Toolbar"), Description("Show the toolbar without discarding its commands.")]
+        public bool Visible { get => draft.QuickAccessVisible; set => draft.QuickAccessVisible = value; }
+        [Category("Toolbar"), Description("TitleBar uses the associated RibbonForm caption, with the existing TabRow fallback when unavailable.")]
+        public Placement Position { get => (Placement)Enum.Parse(typeof(Placement), draft.QuickAccessPosition); set => draft.QuickAccessPosition = value.ToString(); }
+        [Category("Toolbar"), ReadOnly(true)] public int Entries => draft.QuickAccessItems.Count;
+    }
+    internal sealed class DraftProperties(RibbonDesignNode node, bool named = true) : CustomTypeDescriptor
     {
         public override string GetClassName() => node.Kind;
         public override string GetComponentName() => node.ComponentName;
         public override PropertyDescriptorCollection GetProperties() => GetProperties(null);
-        public override PropertyDescriptorCollection GetProperties(Attribute[]? attributes) => new(node.Properties.Where(property => node.Kind != "Tab" || property.Name is not ("IsContextual" or "ContextualColor")).Select(property => (PropertyDescriptor)new DraftProperty(property)).ToArray());
+        public override PropertyDescriptorCollection GetProperties(Attribute[]? attributes) => new((named ? new PropertyDescriptor[] { new ComponentNameProperty(node) } : Array.Empty<PropertyDescriptor>())
+            .Concat(node.Properties.Where(property => node.Kind != "Tab" || property.Name is not ("IsContextual" or "ContextualColor")).Select(property => (PropertyDescriptor)new DraftProperty(property))).ToArray());
         public override object GetPropertyOwner(PropertyDescriptor? propertyDescriptor) => this;
+    }
+    private sealed class ComponentNameProperty(RibbonDesignNode node) : PropertyDescriptor("(Name)", new Attribute[]
+    {
+        new CategoryAttribute("Design"), new DescriptionAttribute("The programmatic component name used in generated code. Displayed Text and stable Id are separate.")
+    })
+    {
+        public override Type ComponentType => typeof(DraftProperties);
+        public override Type PropertyType => typeof(string);
+        public override bool IsReadOnly => false;
+        public override object GetValue(object? component) => node.ComponentName;
+        public override void SetValue(object? component, object? value) => node.ComponentName = value?.ToString() ?? "";
+        public override bool CanResetValue(object component) => false;
+        public override void ResetValue(object component) { }
+        public override bool ShouldSerializeValue(object component) => false;
     }
     private sealed class DraftProperty : PropertyDescriptor
     {

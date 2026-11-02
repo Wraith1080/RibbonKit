@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing.Design;
+using System.Threading;
 using System.Windows.Forms;
 using System.Windows.Forms.Design;
 using Microsoft.DotNet.DesignTools.Client;
@@ -52,9 +53,12 @@ internal sealed class RibbonEditor : UITypeEditor
         var sender = client.Protocol.GetEndpoint<RibbonDesignEndpoint>().GetSender(client);
         var response = sender.SendRequest(new RibbonDesignRequest(session.Id, context.Instance));
         if (response.Error.Length != 0) { MessageBox.Show(response.Error, "Edit Ribbon", MessageBoxButtons.OK, MessageBoxIcon.Error); return value; }
+        string? acceptedSelection = null;
+        var ribbon = context.Instance;
         using var dialog = new RibbonEditorDialog(RibbonDesignSnapshot.Deserialize(response.Snapshot), draft =>
         {
             var result = sender.SendRequest(new RibbonDesignRequest(session.Id, context.Instance, draft.Serialize()));
+            if (result.Error.Length == 0) acceptedSelection = draft.Serialize();
             return result.Error.Length == 0 ? null : result.Error;
         }, draft =>
         {
@@ -62,7 +66,23 @@ internal sealed class RibbonEditor : UITypeEditor
             if (result.Error.Length != 0) throw new InvalidOperationException(result.Error);
             return RibbonBackstageSnapshot.FromJson<RibbonThemePreview>(result.Snapshot);
         });
-        provider.GetRequiredService<IWindowsFormsEditorService>().ShowDialog(dialog);
+        if (provider.GetRequiredService<IWindowsFormsEditorService>().ShowDialog(dialog) == DialogResult.OK && acceptedSelection is { } selection)
+        {
+            void SelectAccepted()
+            {
+                try
+                {
+                    var result = sender.SendRequest(new RibbonDesignRequest(session.Id, ribbon, selection, selectOnly: true));
+                    if (result.Error.Length != 0) MessageBox.Show(result.Error, "Select ribbon component", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                catch (Exception error) { MessageBox.Show(error.Message, "Select ribbon component", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+            }
+            // Selecting during the commit happens inside the modal editor. VS
+            // can restore its original property owner as EditValue unwinds.
+            // Publish the selection after returning to the designer's UI loop.
+            if (SynchronizationContext.Current is { } ui) ui.Post(_ => SelectAccepted(), null);
+            else SelectAccepted();
+        }
         return value;
     }
 }

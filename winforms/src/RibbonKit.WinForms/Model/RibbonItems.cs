@@ -67,6 +67,28 @@ public sealed partial class RibbonTab : RibbonElement
     internal override IEnumerable<RibbonElement> Children => Groups;
 }
 
+/// <summary>The arrangement of commands inside an expanded group.</summary>
+public enum RibbonGroupLayout
+{
+    /// <summary>Packs up to three Small or Medium commands per column.</summary>
+    Columns,
+    /// <summary>Flows Small and Medium commands horizontally in their explicitly assigned rows.</summary>
+    TwoRows,
+    /// <summary>Flows Small and Medium commands horizontally in three explicitly assigned rows.</summary>
+    ThreeRows
+}
+
+/// <summary>The explicit row of a Small or Medium command in a TwoRows or ThreeRows group.</summary>
+public enum RibbonItemRow
+{
+    /// <summary>The first (top) row.</summary>
+    First,
+    /// <summary>The second row.</summary>
+    Second,
+    /// <summary>The third (bottom) row. TwoRows places this in its final row to keep commands visible when the group layout changes.</summary>
+    Third
+}
+
 /// <summary>A captioned group with an explicit reduction policy.</summary>
 public sealed class RibbonGroup : RibbonElement
 {
@@ -74,6 +96,20 @@ public sealed class RibbonGroup : RibbonElement
     private RibbonGroupReductionMode _reductionMode;
     private int? _priority;
     private bool _canResize = true;
+    private RibbonGroupLayout _layout;
+    /// <summary>Gets or sets the expanded layout. TwoRows and ThreeRows use each item's Row; Large commands and separators span all rows and start a new section. Full-group flyouts use the same layout.</summary>
+    [Category("Layout"), DefaultValue(RibbonGroupLayout.Columns), Description("Columns automatically packs up to three items vertically. TwoRows and ThreeRows flow Small/Medium items horizontally in their assigned rows. Large items and separators start a new section.")]
+    public RibbonGroupLayout Layout
+    {
+        get => _layout;
+        set
+        {
+            Ribbon?.VerifyAccess();
+            if (!Enum.IsDefined(value)) throw new ArgumentOutOfRangeException(nameof(value));
+            if (_layout == value) return;
+            _layout = value; Changed();
+        }
+    }
     /// <summary>Initializes a RibbonGroup instance.</summary>
     public RibbonGroup() => Items = new(this);
     /// <summary>Gets or sets a borrowed vector icon for collapsed, QAT and customization presentations. The group never disposes the icon.</summary>
@@ -133,6 +169,20 @@ public sealed class RibbonGroup : RibbonElement
 /// <summary>The base for ribbon commands and popup rows.</summary>
 public abstract class RibbonItem : RibbonElement
 {
+    private RibbonItemRow _row;
+    /// <summary>Gets or sets the explicit row in a TwoRows or ThreeRows group. Commands flow in collection order within each row. Third uses the final row in TwoRows. Ignored by Large commands, separators, menus and Simplified inline presentations.</summary>
+    [Category("Layout"), DefaultValue(RibbonItemRow.First), Description("First, Second or Third row within a TwoRows/ThreeRows group. Third uses the final row in TwoRows. Use a Small or Medium SizePolicy; Large items span all rows. Ignored by automatic column layouts and menus.")]
+    public RibbonItemRow Row
+    {
+        get => _row;
+        set
+        {
+            Ribbon?.VerifyAccess();
+            if (!Enum.IsDefined(value)) throw new ArgumentOutOfRangeException(nameof(value));
+            if (_row == value) return;
+            _row = value; Changed();
+        }
+    }
     private RibbonSimplifiedPlacement _simplifiedPlacement;
     private RibbonItemSize _simplifiedSize = RibbonItemSize.Medium;
     private int _simplifiedPriority;

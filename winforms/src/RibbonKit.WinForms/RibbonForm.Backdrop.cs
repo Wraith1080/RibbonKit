@@ -139,7 +139,14 @@ public partial class RibbonForm
     /// <inheritdoc />
     protected override void OnHandleDestroyed(EventArgs e)
     {
-        ReleaseNativeBackdrop(updateFrame: false); _backdropPaintFailed = false; base.OnHandleDestroyed(e);
+        // HWND-scoped DWM attributes die with the window. Do not disable them or
+        // release/repaint child composition while DWM takes the closing frame.
+        // Recreated handles reapply the retained preference in OnHandleCreated.
+        _backdropOwned = false; _effectiveBackdrop = RibbonWindowBackdrop.None; _backdropHeight = 0;
+        _backdropBitmapAlpha = false; _backdropPaintFailed = false;
+        SetMaterialCaptionStyle(false, update: false);
+        _captionBackdrop?.Dispose(); _captionBackdrop = null;
+        base.OnHandleDestroyed(e);
     }
     [StructLayout(LayoutKind.Sequential)] private struct BackdropMargins { internal int Left, Right, Top, Bottom; }
     [DllImport("dwmapi.dll")] private static extern int DwmSetWindowAttribute(nint window, int attribute, ref int value, int size);

@@ -21,6 +21,7 @@ public sealed class RibbonControlDesigner : ControlDesigner
     public override void Initialize(IComponent component)
     {
         base.Initialize(component);
+        RibbonDesignCommitter.EnsureNestedDesignModels((RibbonControl)component);
         _fileSettings = new((RibbonControl)component, GetService);
         _selection = new((RibbonControl)component, GetService(typeof(ISelectionService)) as ISelectionService,
             (GetService(typeof(IDesignerHost)) as IDesignerHost)?.RootComponent as Control);
@@ -43,7 +44,7 @@ public sealed class RibbonControlDesigner : ControlDesigner
             properties[nameof(RibbonControl.Backstage)] = TypeDescriptor.CreateProperty(typeof(RibbonControl), backstage,
                 new EditorAttribute(RibbonBackstageEndpoint.EditorName, "System.Drawing.Design.UITypeEditor, System.Drawing"));
     }
-    public override IReadOnlyCollection<IComponent> AssociatedComponents => ((RibbonControl)Component).Tabs.Cast<RibbonElement>().Concat(((RibbonControl)Component).QuickAccessItems).Append(((RibbonControl)Component).FileMenu).Append(((RibbonControl)Component).Backstage).SelectMany(t => t.TreeForDesigner()).ToArray();
+    public override IReadOnlyCollection<IComponent> AssociatedComponents => ((RibbonControl)Component).Tabs.Cast<RibbonElement>().Concat(((RibbonControl)Component).QuickAccessItems).Append(((RibbonControl)Component).FileMenu).Append(((RibbonControl)Component).Backstage).Append(((RibbonControl)Component).CommandCatalog).SelectMany(t => t.TreeForDesigner()).ToArray();
 }
 public sealed class RibbonElementDesigner : ComponentDesigner
 {
@@ -76,16 +77,23 @@ internal sealed class RibbonSurfaceActions(IComponent component, RibbonControlDe
     public void EditBackstage() => designer.EditBackstage();
     public void PreviewBackstage() => Selection.Backstage.Open();
     public void SelectRibbon() => Selection.Select(designer.Component);
-    public override DesignerActionItemCollection GetSortedActionItems() => new()
+    public void SelectSourceCommand() => Selection.SelectQuickAccessSource();
+    public override DesignerActionItemCollection GetSortedActionItems()
     {
-        new DesignerActionPropertyItem(nameof(ShowFileButton), "Show File button", "File", "Show or hide the ribbon's existing File header."),
-        new DesignerActionPropertyItem(nameof(FileOpens), "File opens", "File", "Choose a command menu or Backstage. Showing File does not change its destination."),
-        new DesignerActionPropertyItem(nameof(PreviewTab), "Preview tab", "Preview", "Show any authored tab without changing visibility, enabled values or startup selection."),
-        new DesignerActionMethodItem(this, nameof(PreviewBackstage), "Preview Backstage", "Preview", "Open an inert designer preview. Its Back button returns to the ribbon."),
-        new DesignerActionMethodItem(this, nameof(EditRibbon), "Edit Ribbon…", "Ribbon", "Edit tabs, groups and commands.", true),
-        new DesignerActionMethodItem(this, nameof(EditBackstage), "Edit Backstage…", "Ribbon", "Edit Backstage pages, commands and File routing.", true),
-        new DesignerActionMethodItem(this, nameof(SelectRibbon), "Select Ribbon", "Ribbon", "Select the ribbon control in Properties.")
-    };
+        var items = new DesignerActionItemCollection
+        {
+            new DesignerActionPropertyItem(nameof(ShowFileButton), "Show File button", "File", "Show or hide the ribbon's existing File header."),
+            new DesignerActionPropertyItem(nameof(FileOpens), "File opens", "File", "Choose a command menu or Backstage. Showing File does not change its destination."),
+            new DesignerActionPropertyItem(nameof(PreviewTab), "Preview tab", "Preview", "Show any authored tab without changing visibility, enabled values or startup selection."),
+            new DesignerActionMethodItem(this, nameof(PreviewBackstage), "Preview Backstage", "Preview", "Open an inert designer preview. Its Back button returns to the ribbon."),
+            new DesignerActionMethodItem(this, nameof(EditRibbon), "Edit Ribbon…", "Ribbon", "Edit tabs, groups and commands.", true),
+            new DesignerActionMethodItem(this, nameof(EditBackstage), "Edit Backstage…", "Ribbon", "Edit Backstage pages, commands and File routing.", true),
+            new DesignerActionMethodItem(this, nameof(SelectRibbon), "Select Ribbon", "Ribbon", "Select the ribbon control in Properties.")
+        };
+        if (Selection.QuickAccessSource is not null)
+            items.Add(new DesignerActionMethodItem(this, nameof(SelectSourceCommand), "Select source command", "Quick Access Toolbar", "Select this entry's command in Properties to edit its name, caption and events.", true));
+        return items;
+    }
 }
 internal sealed class RibbonPreviewTabConverter : StringConverter
 {
@@ -107,6 +115,7 @@ internal static class ComponentTree
             RibbonGroup group => group.Items,
             RibbonDropDownItem drop => drop.Items,
             RibbonBackstage backstage => backstage.NavigationItems,
+            RibbonCommandCatalog catalog => catalog.Commands,
             _ => []
         };
         foreach (var child in children)
@@ -140,7 +149,7 @@ public sealed class GroupContributionCollectionEditor(IServiceProvider servicePr
 }
 public sealed class ItemCollectionEditor(IServiceProvider serviceProvider, Type type) : CollectionEditor(serviceProvider, type)
 {
-    protected override Type[] CreateNewItemTypes() => [typeof(RibbonButtonItem), typeof(RibbonToggleItem), typeof(RibbonCheckBoxItem), typeof(RibbonRadioButtonItem), typeof(RibbonDropDownItem), typeof(RibbonGalleryItem), typeof(RibbonSplitButtonItem), typeof(RibbonTextBoxItem), typeof(RibbonComboBoxItem)];
+    protected override Type[] CreateNewItemTypes() => [typeof(RibbonButtonItem), typeof(RibbonToggleItem), typeof(RibbonCheckBoxItem), typeof(RibbonRadioButtonItem), typeof(RibbonDropDownItem), typeof(RibbonGalleryItem), typeof(RibbonSplitButtonItem), typeof(RibbonTextBoxItem), typeof(RibbonComboBoxItem), typeof(RibbonMenuSeparatorItem)];
 }
 public sealed class GalleryTileCollectionEditor(IServiceProvider serviceProvider, Type type) : CollectionEditor(serviceProvider, type)
 {

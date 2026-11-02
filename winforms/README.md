@@ -1736,6 +1736,32 @@ values as ordinary enum assignments. Reset restores None; the image preview stay
 **Tab content animation** offers Fade (default) or SlideDown and applies to tab
 bodies, arriving headers, ribbon group collapse/restore and Backstage page changes.
 Reset restores Fade. Both settings use the same detached draft and OK transaction.
+
+The **Quick Access Toolbar** branch in Edit Ribbon edits toolbar entries,
+visibility and placement. Add an existing command/group or create a QAT-only
+button/toggle with no tab slot. New commands use the existing command catalog;
+removing a toolbar entry keeps its source available to add again. Source editing,
+compatible source changes, aliases/KeyTips, reorder and guarded command deletion
+share the same Cancel/OK and Undo/Redo workflow. See
+[QAT designer authoring](docs/QAT-DESIGNER-AUTHORING.md) for the bounded contract
+and review checkpoint.
+Groups also expose **Layout = Columns, TwoRows or ThreeRows**. Columns keeps
+automatic Small/Medium stacking; explicit rows use each command's **Row** choice.
+**Add → Separator** inserts a vertical in-group divider. Split buttons expose
+their existing **Layout = Horizontal/Vertical** choice. See
+[group item layout](docs/GROUP-ITEM-LAYOUT.md) for authoring, centering and verification.
+Dropdown and split commands expose **DropDownHeader** and **MenuPresentation**;
+each child command's **Text**, **MenuDescription** and Icon produce a title with
+an inline explanation and artwork. Standard matches the Paste options example;
+IllustratedChoices offers larger artwork and bold titles. See
+[menu authoring steps](docs/DESIGNER-AUTHORING.md#dropdown-headings-and-descriptions--2026-11-01).
+**Move to…** moves existing commands between groups/menus across tabs, or groups
+to another tab, with a row picker for explicit layouts. Size-policy choices now
+offer only non-growing sequences while preserving existing authored values.
+ComboBox **ShowLabel** hides its native-field label without erasing Text;
+Small presentation opens a compact chooser using the same command/validation
+owner. See [designer rearrangement](docs/DESIGNER-REARRANGEMENT.md) for authoring
+and focused evidence.
 The current native catalog offers
 **Office2024Light** only; **(Application theme)** preserves the application value.
 Command **SizePolicy** values have a dropdown of fixed/adaptive choices.

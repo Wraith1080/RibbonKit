@@ -338,7 +338,16 @@ public partial class RibbonForm : Form
         base.WndProc(ref m);
     }
     /// <inheritdoc />
-    protected override void Dispose(bool disposing) { if (disposing) { _disposingBackdrop = true; ReleaseNativeBackdrop(); Ribbon = null; } base.Dispose(disposing); }
+    protected override void Dispose(bool disposing)
+    {
+        // DWM needs the current material/alpha through the final visible frame.
+        // Turning it off before Form destroys its HWND exposes the black client
+        // backing in Windows' native closing animation. Window destruction owns
+        // native attribute cleanup; detach managed associations afterwards.
+        if (disposing) _disposingBackdrop = true;
+        try { base.Dispose(disposing); }
+        finally { if (disposing) Ribbon = null; }
+    }
     [StructLayout(LayoutKind.Sequential)] private struct NativeRect { public int Left, Top, Right, Bottom; }
     [StructLayout(LayoutKind.Sequential)] private struct TrackMouse { public int Size, Flags; public nint Window; public uint HoverTime; }
     [DllImport("user32.dll")] private static extern bool IsZoomed(nint window);

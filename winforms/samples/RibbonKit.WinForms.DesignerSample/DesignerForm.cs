@@ -30,17 +30,25 @@ public partial class DesignerForm : RibbonForm
         using (var addedPaint = Graphics.FromImage(addedPixels))
         {
             addedStock.Draw(addedPaint, new Rectangle(0, 0, 32, 32), new RibbonIconContext(192, Color.DarkCyan, true));
-            bool any = false; for (int y = 0; y < 32; y++) for (int x = 0; x < 32; x++) any |= addedPixels.GetPixel(x, y).A != 0;
+            bool any = false;
+            for (int y = 0; y < 32; y++)
+            for (int x = 0; x < 32; x++)
+                any |= addedPixels.GetPixel(x, y).A != 0;
             Require(any, "Expanded stock asset renders outside Showcase");
         }
         foreach (int side in new[] { 16, 32, 64 })
         {
-            using var pixels = new Bitmap(side, side); using var paint = Graphics.FromImage(pixels);
+            using var pixels = new Bitmap(side, side);
+            using var paint = Graphics.FromImage(pixels);
             boldToggle.Icon!.Draw(paint, new Rectangle(0, 0, side, side), new RibbonIconContext(192, Color.DarkCyan, true));
-            bool drawn = false; for (int y = 0; y < side; y++) for (int x = 0; x < side; x++)
+            bool drawn = false;
+            for (int y = 0; y < side; y++)
+            for (int x = 0; x < side; x++)
             {
-                var pixel = pixels.GetPixel(x, y); drawn |= pixel.A != 0;
-                if (pixel.A > 200) Require(Math.Abs(pixel.R - Color.DarkCyan.R) <= 1 && Math.Abs(pixel.G - Color.DarkCyan.G) <= 1 && Math.Abs(pixel.B - Color.DarkCyan.B) <= 1, "SVG foreground color follows the public draw context: " + pixel);
+                var pixel = pixels.GetPixel(x, y);
+                drawn |= pixel.A != 0;
+                if (pixel.A > 200)
+                    Require(Math.Abs(pixel.R - Color.DarkCyan.R) <= 1 && Math.Abs(pixel.G - Color.DarkCyan.G) <= 1 && Math.Abs(pixel.B - Color.DarkCyan.B) <= 1, "SVG foreground color follows the public draw context: " + pixel);
             }
             Require(drawn, "Public-only SVG drawing at " + side);
         }
@@ -48,19 +56,24 @@ public partial class DesignerForm : RibbonForm
         Require(bindingTextBox.Text == "Model change", "Model-to-control binding");
         bindingTextBox.Text = "Control change";
         Require(nameField.Value == "Control change", "Control-to-model binding");
-        applyButton.PerformClick(); Require(statusLabel.Text == "Applied: Control change", "Click event hookup");
+        applyButton.PerformClick();
+        Require(statusLabel.Text == "Applied: Control change", "Click event hookup");
         Require(fontField.Items.SequenceEqual(new[] { "Segoe UI", "Arial", "Consolas" }) && fontField.SelectedIndex == 0, "Choice declarations");
         VerifyRuntimeEditors();
         Require(ribbon.Backstage.Items.Contains(infoPage) && ribbon.Backstage.Items.Contains(printPage) && ribbon.Backstage.Items.Contains(backstageSaveCommand), "Backstage generated components retained");
         VerifyPageContent();
         var infoContent = (BackstageInfoControl)infoPage.Content!;
         Require(ReferenceEquals(infoPage.Content, infoContent), "Designer-selected UserControl retained through the public ContentType API");
-        infoContent.NotesEditor.Text = "Native notes"; var notesHandle = infoContent.NotesEditor.Handle; infoContent.NotesEditor.Select(2, 4);
-        backstageSaveCommand.PerformClick(); Require(statusLabel.Text == "Backstage Save: Native notes", "Backstage command event retained");
+        infoContent.NotesEditor.Text = "Native notes";
+        var notesHandle = infoContent.NotesEditor.Handle;
+        infoContent.NotesEditor.Select(2, 4);
+        backstageSaveCommand.PerformClick();
+        Require(statusLabel.Text == "Backstage Save: Native notes", "Backstage command event retained");
         Require(infoContent.NotesEditor.Handle == notesHandle && infoContent.NotesEditor.SelectionStart == 2 && infoContent.NotesEditor.SelectionLength == 4, "Native page editor ownership and selection retained");
         using (var borrowed = new UserControl())
         {
-            var declaration = new RibbonBackstagePageItem { Content = borrowed }; declaration.Dispose();
+            var declaration = new RibbonBackstagePageItem { Content = borrowed };
+            declaration.Dispose();
             Require(!borrowed.IsDisposed && borrowed.Parent is null, "Page disposal releases application-owned content without disposing it");
         }
         Require(!typeof(RibbonControl).Assembly.GetReferencedAssemblies().Any(assembly => assembly.Name?.Contains("DesignTools") == true), "No designer SDK runtime dependency");
@@ -68,16 +81,23 @@ public partial class DesignerForm : RibbonForm
 
     private void VerifyRuntimeEditors()
     {
-        var startup = ribbon.SelectedTab; var animation = ribbon.AnimationLevel; bool minimized = ribbon.IsMinimized;
+        var startup = ribbon.SelectedTab;
+        var animation = ribbon.AnimationLevel;
+        bool minimized = ribbon.IsMinimized;
         try
         {
-            ribbon.AnimationLevel = RibbonAnimationLevel.None; ribbon.IsMinimized = false; ribbon.SelectedTab = editTab;
+            ribbon.AnimationLevel = RibbonAnimationLevel.None;
+            ribbon.IsMinimized = false;
+            ribbon.SelectedTab = editTab;
             _ = ribbon.Handle;
             var input = ChildControls(ribbon).OfType<TextBox>().Single(control => control.Text == nameField.Value);
             var choice = ChildControls(ribbon).OfType<ComboBox>().Single();
-            var inputHandle = input.Handle; var choiceHandle = choice.Handle;
-            using var pixels = new Bitmap(ribbon.Width, ribbon.Height); ribbon.DrawToBitmap(pixels, new(Point.Empty, pixels.Size));
-            ribbon.SelectedTab = homeTab; ribbon.SelectedTab = editTab;
+            var inputHandle = input.Handle;
+            var choiceHandle = choice.Handle;
+            using var pixels = new Bitmap(ribbon.Width, ribbon.Height);
+            ribbon.DrawToBitmap(pixels, new(Point.Empty, pixels.Size));
+            ribbon.SelectedTab = homeTab;
+            ribbon.SelectedTab = editTab;
             Require(ChildControls(ribbon).Contains(input) && ChildControls(ribbon).Contains(choice), "Runtime keeps native editors after tab switches");
             Require(input.Handle == inputHandle && choice.Handle == choiceHandle, "Native editor handles retained; designer field preview stays design-only");
             Require(input.Text == nameField.Value && choice.SelectedIndex == fontField.SelectedIndex, "Runtime native field values retained");
@@ -99,9 +119,19 @@ public partial class DesignerForm : RibbonForm
                 RibbonDropDownItem dropDown => dropDown.Items,
                 _ => Array.Empty<RibbonElement>()
             };
-            foreach (var child in Descendants(children)) yield return child;
+            foreach (var child in Descendants(children))
+                yield return child;
         }
     }
 
-    private static void Require(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
+    private static void Require(bool condition, string message)
+    {
+        if (!condition)
+            throw new InvalidOperationException(message);
+    }
+
+    private void saveButton_Click(object sender, EventArgs e)
+    {
+        MessageBox.Show("Save QAT command clicked");
+    }
 }

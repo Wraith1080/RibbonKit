@@ -16,7 +16,11 @@ internal static class RibbonThemePreviewRenderer
         var theme = RibbonDesignCommitter.ParseTheme(draft.BuiltInTheme);
         _ = RibbonDesignCommitter.ParseAnimation(draft.AnimationLevel);
         _ = RibbonDesignCommitter.ParseContentAnimation(draft.TabContentAnimation);
-        draft.ReservedIds = before.ReservedIds; draft.ReservedNames = before.ReservedNames; draft.Validate();
+        _ = RibbonDesignCommitter.ParseBackdrop(draft.Backdrop, before.CanSetBackdrop);
+        RibbonDesignCommitter.ValidateNavigationOpacity(draft.NavigationBackgroundOpacity);
+        draft.ReservedIds = before.ReservedIds; draft.ReservedNames = before.ReservedNames; draft.QuickAccessSources = before.QuickAccessSources; draft.Validate();
+        _ = RibbonDesignCommitter.ParseQuickAccessPosition(draft.QuickAccessPosition);
+        RibbonDesignCommitter.ValidateQuickAccessDraft(ribbon, host, before, draft);
         using var probe = new PreviewRibbon();
         probe.Site = new PreviewSite(probe);
         probe.Theme = ribbon.ApplicationTheme; probe.BuiltInTheme = theme;
@@ -27,8 +31,9 @@ internal static class RibbonThemePreviewRenderer
         probe.FileMenu.Text = ribbon.FileMenu.Text; probe.FileMenu.KeyTip = ribbon.FileMenu.KeyTip;
         probe.FileMenu.Visible = ribbon.FileMenu.Visible; probe.FileMenu.Enabled = ribbon.FileMenu.Enabled;
         probe.FileMenuMode = ribbon.FileMenuMode;
-        var originals = before.Nodes.ToDictionary(node => node.Key, StringComparer.Ordinal);
-        var components = ribbon.Tabs.SelectMany(tab => tab.Tree()).ToDictionary(RibbonDesignCommitter.Key, StringComparer.Ordinal);
+        var originals = before.CommandNodes.ToDictionary(node => node.Key, StringComparer.Ordinal);
+        var components = RibbonDesignCommitter.EditableElements(ribbon).ToDictionary(RibbonDesignCommitter.Key, StringComparer.Ordinal);
+        var models = new Dictionary<string, RibbonElement>(StringComparer.Ordinal);
         foreach (var node in draft.Tabs)
         {
             var tab = (RibbonTab)RibbonDesignCommitter.BuildProbe(node, originals, before.Templates);
@@ -37,6 +42,7 @@ internal static class RibbonThemePreviewRenderer
         }
         void CopyArtwork(RibbonDesignNode node, RibbonElement element)
         {
+            models[node.Key] = element;
             var icon = node.Icon.Kind == "Svg" ? new RibbonSvgIcon(node.Icon.Source, node.Icon.UseForegroundColor)
                 : node.Icon.Kind == "Custom" && components.TryGetValue(node.Key, out var source)
                     ? source is RibbonItem item ? item.Icon : (source as RibbonGroup)?.Icon : null;
@@ -55,6 +61,24 @@ internal static class RibbonThemePreviewRenderer
             };
             foreach (var pair in node.Children.Zip(children)) CopyArtwork(pair.First, pair.Second);
         }
+        var owned = draft.QuickAccessItems.Where(node => node.Kind == "OwnedQat").Select(node => node.SourceKey).ToHashSet(StringComparer.Ordinal);
+        foreach (var node in draft.CatalogCommands)
+        {
+            var command = (RibbonItem)RibbonDesignCommitter.BuildProbe(node, originals, before.Templates); CopyArtwork(node, command);
+            if (!owned.Contains(node.Key)) probe.CommandCatalog.Commands.Add(command);
+        }
+        foreach (var entry in draft.QuickAccessItems)
+        {
+            if (entry.Kind == "OwnedQat") probe.QuickAccessItems.Add(models[entry.SourceKey]);
+            else
+            {
+                var reference = RibbonDesignCommitter.BuildProbe(entry, originals, before.Templates);
+                if (models.TryGetValue(entry.SourceKey, out var source)) TypeDescriptor.GetProperties(reference)["Source"]!.SetValue(reference, source);
+                else if (reference.Text.Length == 0) reference.Text = draft.QuickAccessSources.FirstOrDefault(item => item.Key == entry.SourceKey)?.Caption ?? "Unavailable";
+                probe.QuickAccessItems.Add(reference);
+            }
+        }
+        probe.QuickAccessPosition = RibbonDesignCommitter.ParseQuickAccessPosition(draft.QuickAccessPosition); probe.QuickAccessVisible = draft.QuickAccessVisible;
         if (ribbon.SelectedTab is { } selected && draft.Tabs.FindIndex(node => node.Key == RibbonDesignCommitter.Key(selected)) is var index && index >= 0)
             probe.SetDesignPreviewTab(probe.Tabs[index]);
         using var pixels = new Bitmap(probe.Width, probe.Height);

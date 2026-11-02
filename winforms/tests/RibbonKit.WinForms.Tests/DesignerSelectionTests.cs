@@ -12,6 +12,55 @@ namespace RibbonKit.WinForms.Tests;
 public sealed class DesignerSelectionTests
 {
     [Theory]
+    [InlineData(RibbonQuickAccessPosition.TabRow, false)]
+    [InlineData(RibbonQuickAccessPosition.BelowRibbon, false)]
+    [InlineData(RibbonQuickAccessPosition.TabRow, true)]
+    [InlineData(RibbonQuickAccessPosition.BelowRibbon, true)]
+    public void Qat_picking_selects_the_entry_and_source_without_invocation(RibbonQuickAccessPosition position, bool owned) => FoundationTests.Sta(() =>
+    {
+        using var fixture = new Fixture(); var ribbon = fixture.Ribbon;
+        var source = new RibbonButtonItem { Text = "Save", Enabled = false };
+        fixture.Host.Container.Add(source, "saveCommand"); ribbon.CommandCatalog.Commands.Add(source);
+        RibbonElement entry = owned ? new RibbonToggleItem { Text = "Owned toggle" } : new RibbonQuickAccessReference { Source = source };
+        fixture.Host.Container.Add(entry, "qatSave"); ribbon.QuickAccessItems.Add(entry); ribbon.QuickAccessPosition = position;
+        int clicks = 0; source.Click += (_, _) => clicks++; if (entry is RibbonToggleItem toggle) toggle.Click += (_, _) => clicks++;
+        var selectedTab = ribbon.SelectedTab;
+        var target = ribbon.Snapshot.Targets.Single(t => ReferenceEquals(t.Element, entry));
+        Assert.Same(entry, fixture.Preview.HitTest(Center(target.VisibleBounds)));
+        Assert.True(fixture.Preview.SelectAt(Center(target.VisibleBounds)));
+        Assert.Same(entry, fixture.Selection.PrimarySelection); Assert.True(fixture.Preview.Active);
+        Assert.Equal(target.VisibleBounds, fixture.Preview.SelectionBounds(entry));
+        Assert.Equal(0, clicks); Assert.Null(ribbon.Popups.Top); Assert.Empty(ribbon.Controls.Cast<Control>());
+        if (entry is RibbonToggleItem ownedToggle) Assert.False(ownedToggle.Checked);
+        if (!owned)
+        {
+            Assert.Same(source, fixture.Preview.QuickAccessSource);
+            fixture.Preview.SelectQuickAccessSource();
+            Assert.Same(source, fixture.Selection.PrimarySelection); Assert.True(fixture.Preview.Active);
+            Assert.Equal(target.VisibleBounds, fixture.Preview.SelectionBounds(source));
+            Assert.NotNull(TypeDescriptor.GetEvents(source)["Click"]);
+        }
+        else Assert.Null(fixture.Preview.QuickAccessSource);
+        Assert.Same(selectedTab, ribbon.SelectedTab);
+    });
+
+    [Fact]
+    public void Unpinned_catalog_command_can_be_selected_from_the_editor_without_a_model_edit() => FoundationTests.Sta(() =>
+    {
+        using var fixture = new Fixture(); var ribbon = fixture.Ribbon;
+        var source = new RibbonButtonItem { Text = "Unpinned Save" };
+        fixture.Host.Container.Add(source, "saveCommand"); ribbon.CommandCatalog.Commands.Add(source);
+        var draft = RibbonDesignCommitter.Read(ribbon, fixture.Host);
+        draft.SelectionKey = draft.CatalogCommands.Single().Key;
+        string before = RibbonDesignCommitter.Read(ribbon, fixture.Host).Revision;
+        Assert.False(RibbonDesignCommitter.Apply(ribbon, fixture.Host, draft));
+        fixture.Preview.SelectDraft(draft);
+        Assert.Same(source, fixture.Selection.PrimarySelection); Assert.True(fixture.Preview.Active);
+        Assert.Equal(Rectangle.Empty, fixture.Preview.SelectionBounds(source)); Assert.Null(fixture.Preview.QuickAccessSource);
+        Assert.Equal(before, RibbonDesignCommitter.Read(ribbon, fixture.Host).Revision);
+    });
+
+    [Theory]
     [InlineData(RibbonLayoutMode.Classic)] [InlineData(RibbonLayoutMode.Simplified)]
     public void Hidden_disabled_contextual_preview_retains_authored_state_and_runtime_startup(RibbonLayoutMode mode) => FoundationTests.Sta(() =>
     {

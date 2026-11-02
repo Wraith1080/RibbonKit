@@ -136,6 +136,15 @@ internal sealed class RibbonMotionScene : IDisposable
             {
                 var origin = to.Bounds.Location; origin.Offset(-canvas.X, -canvas.Y);
                 graphics.ExcludeClip(new Rectangle(origin, new Size(to.Bounds.Width, ribbon.BackdropHeaderHeight)));
+                if (ribbon.KeepsBackdropFrame)
+                {
+                    // The live card owns its border, shadow and stationary QAT.
+                    // Carry only commands inside the opaque body interior.
+                    int inset = RibbonLayoutEngine.Scale(4, to.Dpi);
+                    var interior = Rectangle.Inflate(to.Body, -inset, -inset);
+                    interior.Offset(origin);
+                    graphics.SetClip(interior, CombineMode.Intersect);
+                }
             }
             RenderCore(graphics, canvas, ribbon, from, to, progress, alpha);
         }

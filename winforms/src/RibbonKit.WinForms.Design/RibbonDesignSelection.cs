@@ -19,7 +19,8 @@ internal sealed class RibbonDesignSelection : IDisposable
         Backstage = new(ribbon, selection, previewSurface ?? ribbon); Backstage.Changed += PreviewChanged;
         if (_selection is not null) _selection.SelectionChanged += SelectionChanged;
     }
-    internal bool Active => Backstage.IsOpen || ReferenceEquals(_selection?.PrimarySelection, _ribbon) || TabFor(_selection?.PrimarySelection) is not null;
+    internal bool Active => Backstage.IsOpen || ReferenceEquals(_selection?.PrimarySelection, _ribbon)
+        || TabFor(_selection?.PrimarySelection) is not null || QuickAccessComponent(_selection?.PrimarySelection);
     private void PreviewChanged(object? sender, EventArgs e) => Changed?.Invoke(this, EventArgs.Empty);
     internal object? Selected => _selection?.PrimarySelection;
     internal RibbonTab? TabFor(object? component)
@@ -45,7 +46,7 @@ internal sealed class RibbonDesignSelection : IDisposable
     {
         if (!_ribbon.ClientRectangle.Contains(point)) return null;
         var snapshot = _ribbon.Snapshot;
-        return snapshot.Targets.LastOrDefault(target => target.Kind is TargetKind.Tab or TargetKind.Group or TargetKind.Item
+        return snapshot.Targets.LastOrDefault(target => target.Kind is TargetKind.Tab or TargetKind.Group or TargetKind.Item or TargetKind.QuickAccess
                 && target.Element is not null && target.VisibleBounds.Contains(point))?.Element
             ?? snapshot.Groups.LastOrDefault(group => Rectangle.Intersect(group.Frame, snapshot.BodyViewport).Contains(point))?.Group;
     }
@@ -65,7 +66,7 @@ internal sealed class RibbonDesignSelection : IDisposable
     }
     internal void Select(object component)
     {
-        if (!ReferenceEquals(component, _ribbon) && TabFor(component) is null) return;
+        if (!ReferenceEquals(component, _ribbon) && TabFor(component) is null && !QuickAccessComponent(component)) return;
         Backstage.Close(false);
         if (TabFor(component) is { } tab) _ribbon.SetDesignPreviewTab(tab);
         _selection?.SetSelectedComponents(new[] { component }, SelectionTypes.Replace);
@@ -73,14 +74,36 @@ internal sealed class RibbonDesignSelection : IDisposable
     }
     internal void SelectDraft(RibbonDesignSnapshot draft)
     {
-        var name = draft.Nodes.FirstOrDefault(node => node.Key == draft.SelectionKey)?.ComponentName;
-        var selected = _ribbon.Tabs.SelectMany(tab => tab.Tree()).FirstOrDefault(element => name is not null && element.Site?.Name == name);
+        var key = draft.QuickAccessItems.FirstOrDefault(node => node.Key == draft.SelectionKey && node.Kind == "OwnedQat")?.SourceKey ?? draft.SelectionKey;
+        var name = draft.AllNodes.FirstOrDefault(node => node.Key == key)?.ComponentName;
+        var selected = _ribbon.Tabs.SelectMany(tab => tab.Tree()).Concat(_ribbon.CommandCatalog.Commands.SelectMany(command => command.Tree())).Concat(_ribbon.QuickAccessItems)
+            .FirstOrDefault(element => name is not null && element.Site?.Name == name);
         Select((object?)selected ?? _ribbon);
+    }
+    internal RibbonElement? QuickAccessSource => Selected is RibbonElement entry && _ribbon.QuickAccessItems.Contains(entry)
+        && RibbonQuickAccess.Source(entry) is { } source && !ReferenceEquals(entry, source) && ReferenceEquals(source.Ribbon, _ribbon) ? source : null;
+    internal void SelectQuickAccessSource() { if (QuickAccessSource is { } source) Select(source); }
+    private bool QuickAccessComponent(object? component)
+    {
+        if (component is not RibbonElement element || !ReferenceEquals(element.Ribbon, _ribbon)) return false;
+        for (RibbonElement? current = element; current != null; current = current.Parent as RibbonElement)
+            if (ReferenceEquals(current, _ribbon.CommandCatalog) || _ribbon.QuickAccessItems.Contains(current)) return true;
+        return false;
     }
     internal Rectangle SelectionBounds(object? component)
     {
-        if (TabFor(component) is null) return Rectangle.Empty;
+        if (component is not RibbonElement) return Rectangle.Empty;
         var snapshot = _ribbon.Snapshot;
+        if (TabFor(component) is null)
+        {
+            // Catalog sources can have several visible QAT presentations. A
+            // selected reference outlines only itself; a selected source reveals
+            // its visible presentations without activating the command.
+            return snapshot.Targets.Where(target => target.Kind == TargetKind.QuickAccess && target.Element is { } entry
+                    && (ReferenceEquals(entry, component) || ReferenceEquals(RibbonQuickAccess.Source(entry), component)))
+                .Select(target => target.VisibleBounds).Where(bounds => !bounds.IsEmpty).Aggregate(Rectangle.Empty,
+                    (bounds, next) => bounds.IsEmpty ? next : Rectangle.Union(bounds, next));
+        }
         for (var element = component as RibbonElement; element is not null; element = element.Parent as RibbonElement)
         {
             var bounds = snapshot.Targets.Where(target => ReferenceEquals(target.Element, element) && target.Kind is TargetKind.Tab or TargetKind.Group or TargetKind.Item)

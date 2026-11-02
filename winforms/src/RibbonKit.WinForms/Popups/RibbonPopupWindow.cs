@@ -5,16 +5,26 @@ internal sealed class RibbonPopupWindow : ToolStripDropDown
 {
     private readonly RibbonControl ribbon;
     private readonly Action activationChanged;
+    private readonly bool nonActivating;
     internal RibbonPopupMotion? OpeningMotion { get; private set; }
     internal void PrepareOpening(Control surface) { SettleMotion(); OpeningMotion = RibbonPopupMotion.Prepare(ribbon, this, surface); }
     internal void StartOpening() => OpeningMotion?.Start();
     internal void SettleMotion() { OpeningMotion?.Dispose(); OpeningMotion = null; }
-    internal RibbonPopupWindow(RibbonControl ribbon, Action activationChanged)
+    internal RibbonPopupWindow(RibbonControl ribbon, Action activationChanged, bool nonActivating = false)
     {
-        this.ribbon = ribbon; this.activationChanged = activationChanged;
+        this.ribbon = ribbon; this.activationChanged = activationChanged; this.nonActivating = nonActivating;
         AutoSize = false; AutoClose = false; Padding = new(1); Margin = Padding.Empty;
         DropShadowEnabled = false; CausesValidation = false;
         Renderer = new PopupFrameRenderer(ribbon);
+    }
+    protected override CreateParams CreateParams
+    {
+        get
+        {
+            var parameters = base.CreateParams;
+            if (nonActivating) parameters.ExStyle |= 0x08000000; // WS_EX_NOACTIVATE
+            return parameters;
+        }
     }
     private readonly PopupChromeWindow _chrome = new();
     private Size _shapeSize;
@@ -49,6 +59,12 @@ internal sealed class RibbonPopupWindow : ToolStripDropDown
     }
     protected override void WndProc(ref Message m)
     {
+        // Choice lists already route keys through their opener. ToolStrip's
+        // default handling allows hosted native controls to activate the popup
+        // before WM_LBUTTONDOWN, deactivating the owner even if the row itself
+        // avoids SetFocus. Keep the click (including scrollbar presses) without
+        // activating this window; other popup editors retain normal activation.
+        if (nonActivating && m.Msg == 0x21) { m.Result = 3; return; } // WM_MOUSEACTIVATE / MA_NOACTIVATE
         // WM_ACTIVATEAPP / WM_ACTIVATE also reach the popup when its owning
         // Form has already deactivated during the initial popup opening.
         bool deactivated = (m.Msg == 0x1C && m.WParam == 0) || (m.Msg == 0x6 && (m.WParam.ToInt64() & 0xffff) == 0);

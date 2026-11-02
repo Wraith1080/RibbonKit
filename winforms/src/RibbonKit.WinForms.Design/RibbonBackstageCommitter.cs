@@ -86,7 +86,7 @@ internal static class RibbonBackstageCommitter
         {
             if (string.IsNullOrWhiteSpace(node.Key) || !keys.Add(node.Key) || !names.Add(node.ComponentName) || string.IsNullOrWhiteSpace(node.ComponentName)) throw new ArgumentException("Backstage entries need unique component keys and names.");
             if (originals.TryGetValue(node.Key, out var original))
-            { if (node.Kind != original.Kind || node.ComponentName != original.ComponentName) throw new ArgumentException("Preserve existing component names and types; rename in Properties."); }
+            { if (node.Kind != original.Kind) throw new ArgumentException("Preserve existing component types."); }
             else if (!node.Key.StartsWith("new:", StringComparison.Ordinal)) throw new ArgumentException("Unsupported new component identity.");
             if (node.Kind is not ("Page" or "Button" or "Separator") || node.Children.Count != 0 || node.Choices.Count != 0) throw new ArgumentException("Backstage entries must be pages, buttons or separators without children.");
             var schema = before.Templates.Single(template => template.Kind == node.Kind).Properties;
@@ -142,6 +142,7 @@ internal static class RibbonBackstageCommitter
         using var probe = Probe(ribbon, host, draft, false);
         if (Fingerprint(draft) == before.Revision) return false;
         var existing = ribbon.Backstage.NavigationItems.ToDictionary(RibbonDesignCommitter.Key, StringComparer.Ordinal);
+        var names = new RibbonComponentNames(host, draft.Entries.Select(node => ((IComponent?)existing.GetValueOrDefault(node.Key), node.ComponentName)));
         var prepared = probe.Backstage.NavigationItems.ToDictionary(item => item.Id, StringComparer.Ordinal);
         foreach (var reference in ribbon.QuickAccessItems.OfType<RibbonQuickAccessReference>())
             if (reference.Source is { } source && existing.ContainsValue(source) && !draft.Entries.Any(node => node.Key == RibbonDesignCommitter.Key(source)))
@@ -153,6 +154,9 @@ internal static class RibbonBackstageCommitter
         using var transaction = host.CreateTransaction("Edit Backstage"); bool initializing = false;
         try
         {
+            if (RibbonComponentNames.SameEntries(before.Entries, draft.Entries)
+                && RibbonBackstageSnapshot.Json(before.Settings) == RibbonBackstageSnapshot.Json(draft.Settings))
+            { names.Apply(changes); transaction.Commit(); return true; }
             var target = new Dictionary<string, RibbonItem>(existing, StringComparer.Ordinal);
             foreach (var node in draft.Entries)
             {
@@ -201,7 +205,7 @@ internal static class RibbonBackstageCommitter
             changes.OnComponentChanged(ribbon, backstageProperty, null, null);
             if (fileChanged) changes.OnComponentChanged(ribbon, fileProperty, null, null);
             foreach (var removed in existing.Where(pair => !draft.Entries.Any(node => node.Key == pair.Key))) host.DestroyComponent(removed.Value);
-            initializing = false; ribbon.EndInit(); transaction.Commit(); return true;
+            initializing = false; ribbon.EndInit(); names.Apply(changes); transaction.Commit(); return true;
         }
         catch { transaction.Cancel(); throw; }
         finally { if (initializing) ribbon.EndInit(); }

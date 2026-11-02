@@ -21,12 +21,14 @@ public sealed class RibbonDesignRequest : Request
     public object? Ribbon { get; private set; }
     public string Draft { get; private set; } = "";
     public bool Preview { get; private set; }
-    public RibbonDesignRequest(SessionId session, object ribbon, string draft = "", bool preview = false) { SessionId = session; Ribbon = ribbon; Draft = draft; Preview = preview; }
+    public bool SelectOnly { get; private set; }
+    public RibbonDesignRequest(SessionId session, object ribbon, string draft = "", bool preview = false, bool selectOnly = false)
+    { SessionId = session; Ribbon = ribbon; Draft = draft; Preview = preview; SelectOnly = selectOnly; }
     public RibbonDesignRequest(IDataPipeReader reader) : base(reader) { }
     protected override void ReadProperties(IDataPipeReader reader)
-    { SessionId = reader.ReadSessionId(nameof(SessionId)); Ribbon = reader.ReadObject(nameof(Ribbon)); Draft = reader.ReadString(nameof(Draft)) ?? ""; Preview = reader.ReadBoolean(nameof(Preview)); }
+    { SessionId = reader.ReadSessionId(nameof(SessionId)); Ribbon = reader.ReadObject(nameof(Ribbon)); Draft = reader.ReadString(nameof(Draft)) ?? ""; Preview = reader.ReadBoolean(nameof(Preview)); SelectOnly = reader.ReadBoolean(nameof(SelectOnly)); }
     protected override void WriteProperties(IDataPipeWriter writer)
-    { writer.Write(nameof(SessionId), SessionId); writer.WriteObject(nameof(Ribbon), Ribbon); writer.Write(nameof(Draft), Draft); writer.Write(nameof(Preview), Preview); }
+    { writer.Write(nameof(SessionId), SessionId); writer.WriteObject(nameof(Ribbon), Ribbon); writer.Write(nameof(Draft), Draft); writer.Write(nameof(Preview), Preview); writer.Write(nameof(SelectOnly), SelectOnly); }
 }
 public sealed class RibbonDesignResponse : Response
 {

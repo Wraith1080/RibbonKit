@@ -109,7 +109,7 @@ internal sealed class RibbonBackstageDialog : Form
         {
             var node = _tree.SelectedNode?.Tag as RibbonDesignNode; _draft.SelectionKey = node?.Key ?? "";
             bool section = ReferenceEquals(_tree.SelectedNode, _main) || ReferenceEquals(_tree.SelectedNode, _bottom);
-            _properties.SelectedObject = section ? null : new RibbonEditorDialog.DraftProperties(node ?? new RibbonDesignNode { Kind = "Backstage", ComponentName = "Backstage", Properties = _draft.Settings });
+            _properties.SelectedObject = section ? null : new RibbonEditorDialog.DraftProperties(node ?? new RibbonDesignNode { Kind = "Backstage", ComponentName = "Backstage", Properties = _draft.Settings }, named: node is not null);
             _content.Text = section ? _tree.SelectedNode!.Text + " — use Add to create a page, command or separator." : ContentInfo(node);
             _split.Panel2.Controls.Find("BackstageIconActions", true).Single().Visible = node is not null && node.Kind != "Separator";
             _up.Enabled = node is not null && _tree.SelectedNode!.Index > 0;

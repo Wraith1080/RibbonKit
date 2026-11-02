@@ -14,6 +14,12 @@ Baseline: clean `4fc5c4b` on
 [the ribbon designer checkpoint](DESIGNER-AUTHORING.md#surface-preview-and-selection--2026-10-31).
 WPF runtime/build/CI and accepted Backstage runtime motion remain unchanged.
 
+Named page, command and separator entries now expose **Design → (Name)** for
+programmatic renaming. The shared [naming contract and evidence](DESIGNER-AUTHORING.md#programmatic-names-and-qat-selection--2026-11-01)
+covers validation, identity/content preservation and Undo/Redo; Text and Id remain
+separate properties. The protected Backstage settings root has no generated field
+to rename.
+
 ## Bounded contract presented before implementation
 
 Add **Edit Backstage…** alongside **Edit Ribbon…**, using a detached client draft

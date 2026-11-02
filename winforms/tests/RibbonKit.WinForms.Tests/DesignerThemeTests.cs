@@ -154,6 +154,10 @@ public sealed class DesignerThemeTests
             Assert.True(button.Right <= button.Parent.ClientSize.Width); Assert.True(button.Top >= choice.Bottom);
             Assert.True(animation.Top >= choice.Bottom); Assert.True(animation.Bottom <= button.Top); Assert.True(animation.Width >= 250 * scale);
             Assert.True(contentStyle.Top >= animation.Bottom); Assert.True(contentStyle.Bottom <= button.Top); Assert.True(contentStyle.Width >= 250 * scale);
+            var backdrop = (ComboBox)dialog.Controls.Find("Backdrop", true).Single();
+            Assert.True(backdrop.Top >= contentStyle.Bottom); Assert.True(backdrop.Bottom <= button.Top); Assert.True(backdrop.Width >= 250 * scale);
+            var transparent = dialog.Controls.Find("TransparentBackstage", true).Single();
+            Assert.True(transparent.Top >= backdrop.Bottom); Assert.True(transparent.Bottom <= button.Top); Assert.True(transparent.Right <= transparent.Parent!.ClientSize.Width);
         }
         if (scale == 1 && Environment.GetEnvironmentVariable("RIBBONKIT_THEME_CAPTURE") is { Length: > 0 } directory)
         {

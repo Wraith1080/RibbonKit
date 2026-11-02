@@ -527,8 +527,8 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
                     else _ribbon.Painter.DrawQuickAccessItem(primary, target.Element!, true);
                 }
                 else if (target.Element is RibbonMenuSeparatorItem separator)
-                    _ribbon.Painter.DrawMenuSeparator(context with { Bounds = target.Bounds }, separator);
-                else if (target.Element is RibbonItem item && item is not IRibbonEditorItem)
+                    _ribbon.Painter.DrawItem(context with { Bounds = target.Bounds }, separator, target.Size, MenuSource is not null || OwnerElement is RibbonQuickAccessOverflow);
+                else if (target.Element is RibbonItem item && !RibbonEditorLayout.IsField(item, target.Size))
                 {
                     var primary = context with
                     {
@@ -802,6 +802,9 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
             return true;
         }
         var targets = Targets.Where(t => t.Enabled && t.Element is not null).ToArray();
+        if (targets.FirstOrDefault(t => ReferenceEquals(t.Element, _focused)) is { Element: RibbonComboBoxItem compact, Size: RibbonItemSize.Small }
+            && keys is Keys.Down or Keys.F4 or (Keys.Alt | Keys.Down))
+        { compact.ShowDropDown(); return true; }
         if (keys is Keys.Enter or Keys.Space or Keys.Right)
         {
             var target = targets.FirstOrDefault(t => ReferenceEquals(t.Element, _focused) && t.DropDownPart == _focusedDropDown);

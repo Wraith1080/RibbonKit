@@ -14,10 +14,13 @@ internal sealed class RibbonDesignHandler : RequestHandler<RibbonDesignRequest, 
             var host = GetDesignerHost(request.SessionId) ?? throw new InvalidOperationException("A Visual Studio designer session is required.");
             if (request.Draft.Length == 0) return new(RibbonDesignCommitter.Read(ribbon, host).Serialize());
             var draft = RibbonDesignSnapshot.Deserialize(request.Draft);
+            if (request.SelectOnly)
+            {
+                if (host.GetDesigner(ribbon) is RibbonControlDesigner designer) designer.Selection.SelectDraft(draft);
+                return new();
+            }
             if (request.Preview) return new(RibbonBackstageSnapshot.Json(RibbonThemePreviewRenderer.Render(ribbon, host, draft)));
             RibbonDesignCommitter.Apply(ribbon, host, draft);
-            if (host.GetDesigner(ribbon) is RibbonControlDesigner designer)
-                designer.Selection.SelectDraft(draft);
             return new();
         }
         catch (Exception error) { return new(error: error.Message); }

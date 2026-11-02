@@ -10,6 +10,209 @@ the earlier deferral; it does not establish the cause or resolution of flicker.
 M5E persistence was implemented first as requested. Resumed review corrections
 and current evidence are recorded below.
 
+## Residual tab shadow pulse and black startup fields — 2026-11-02
+
+Status: **corrections implemented and packaged; focused/native checks passed;
+user visual review pending**. The user still saw a pulse around the card shadow
+after the white-interior check below passed, and reported black ComboBox text
+areas at startup. The earlier interior result did not cover these symptoms.
+
+For material tab-content transitions, the real ribbon now keeps drawing its
+stationary card, border, shadow and QAT. It masks only the changing commands and
+native fields. The animation cover is clipped to the body interior, so its
+translucent shadow cannot accumulate over the live shadow. If a host selection
+callback also changes card/QAT/message geometry, the controller settles that
+state immediately. Other geometry transitions keep their existing full cover.
+
+Newly redirected native fields previously became fully visible before their
+presenter and native text subtree had both painted. A startup capture reproduced
+the black text rectangle in Mica. Composition now starts covered at alpha 1,
+retaining native hit testing, and reveals the field only after synchronous
+presenter/native-text painting and GDI flush. An early motion-unmask request
+cannot expose an unprepared surface. The same native controls, handles and model
+values are retained; no timer, delayed host callback or public API was added.
+
+Relevant evidence, all normal Debug:
+
+- **27 geometry-motion regressions passed.** The material frame/handoff/editor
+  selection passed **14 cases**, followed by the corrected offscreen native-show
+  fixture passing **1 case** separately. The first fixture assertion had run
+  before WinForms dispatched its deferred Shown event; it now pumps that event.
+  Hidden ownership checks explicitly expect an unpainted surface to stay covered.
+  These are assembled focused runs, not a full-suite result.
+- The public package-only Designer Sample shadow probe compares against a fresh
+  departure frame for every switch, after the initial Windows opening motion.
+  Before: all **8 material variants** had eight changed-shadow observations over
+  four switches, maximum RGB-channel delta **20–21**. After: all **8** have zero
+  changed-shadow or clear-body observations, maximum delta **0**. Both styles,
+  Mica/Acrylic and with/without added Home ComboBoxes are covered. **4 Solid
+  variants** also passed with zero changes. Native handles were retained.
+- The startup probe watches the first native show/paint transaction in the
+  actual authored Form. Before: Solid passed; Mica had **4 black-field frames**
+  while the surrounding body was already white. After: **Solid, Mica and Acrylic
+  passed**, with zero black-field observations. Early and settled PNGs were
+  inspected. Both native probes ran at actual **120 DPI** and observe owned
+  windows only; they do not measure frame rate or establish human acceptance.
+- Debug Showcase and Designer Sample builds passed without warnings/errors.
+  The existing Designer Sample was refreshed in place with package
+  `0.1.0-designer.local20261102T005920376Z`; authored Form files were preserved.
+
+Logs/captures: `winforms/artifacts/ribbon-shadow-review/{before,after,solid-after}`
+and `winforms/artifacts/editor-startup-review/{before,after}`. Focused results:
+`material-frame-startup-related.trx`, `material-frame-startup-fixed.trx` and
+`material-editor-first-show-fixed.trx` under `winforms/artifacts/test-results`.
+The first two include the described fixture failures; their successful affected
+cases are retained rather than rerun. Other display scales/OS versions and human
+visual review remain open. No full native suite, WPF build/test or Release run.
+
+```powershell
+dotnet run --project winforms/samples/RibbonKit.WinForms.DesignerSample -c Debug --no-build -- --verify-tab-shadow winforms/artifacts/ribbon-shadow-review/after
+dotnet run --project winforms/samples/RibbonKit.WinForms.DesignerSample -c Debug --no-build -- --verify-tab-shadow-solid winforms/artifacts/ribbon-shadow-review/solid-after
+dotnet run --project winforms/samples/RibbonKit.WinForms.DesignerSample -c Debug --no-build -- --verify-editor-startup winforms/artifacts/editor-startup-review/after
+```
+
+## Whole ribbon flash during tab animation — 2026-11-02
+
+Status: **the clear-body gap was corrected; user review reported residual shadow
+flicker, addressed in the follow-up above**. The user separately confirmed no
+visible flicker in Solid mode during that review.
+
+The supplied `Screen Recording 2026-11-02 073024.mp4` shows the entire body/QAT
+disappearing for one frame during Home/Edit changes, including SlideDown. The
+shared geometry controller set `BackdropBodyMasked` before rendering/showing its
+departure cover. Masking repaints the live material body synchronously and lowers
+native editor opacity, exposing a transparent body before the cover exists.
+This path runs during tab animation and is separate from window disposal below.
+
+The controller now renders and presents the complete departure frame first, then
+masks the live body. The existing return path restores/repaints the real body
+under the still-visible cover. Animation styles, timing, editor ownership, Solid
+behavior and the closing correction remain in place. No new API, timer delay or
+host workaround is introduced.
+
+- The original four material/style regression cases failed at the initial mask:
+  the live body was cleared without a visible, opaque cover. The final selection
+  passed **10 cases**: eight handoff cases covering Mica/Acrylic, Fade/SlideDown,
+  with/without an added ComboBox, each in Compact/Touch; plus two retained-editor
+  composition regressions. All new cases observe both masking and restoration.
+- A public-API check uses the actual authored Designer Sample Form, Expressive
+  motion and four Home/Edit switches per variant at **120 DPI**. It optionally
+  removes the added Home ComboBoxes from that test instance; authored files are
+  not changed. The added ComboBoxes are not required to reproduce the gap.
+- The probe reads the owned ribbon after native WM_PAINT returns and requests a
+  compositor readback. This targets the handoff boundary rather than measuring
+  frame rate or smoothness. Foreground loss rejects capture. Baseline and settled
+  body surfaces must be white; a material-only frame in that same interior probe
+  detects the missing body. Critical before/after PNGs were inspected.
+
+| Native comparison | Before | Corrected package |
+| --- | --- | --- |
+| Mica/Acrylic × Fade/SlideDown × with/without added Home ComboBoxes (8 variants) | Four clear-body observations per four switches, in every variant | Zero clear-body observations in every variant |
+| Solid × Fade/SlideDown × with/without added Home ComboBoxes (4 variants) | Zero clear-body observations | Zero clear-body observations |
+
+Native editor handles were retained in all comparisons. Logs and PNGs are under
+`winforms/artifacts/ribbon-flicker-review/{before,after,solid-before,solid-after}`;
+the original recording's extracted frames are in their parent directory. Debug
+runtime/sample builds and local package refresh passed cleanly. Only these
+affected scopes ran; no full native or WPF suite was run. Actual user review,
+other OS versions and physical mixed-DPI behavior remain separate gates.
+
+```powershell
+dotnet run --project winforms/samples/RibbonKit.WinForms.DesignerSample -c Debug --no-build -- --verify-tab-motion-handoff winforms/artifacts/ribbon-flicker-review/after
+dotnet run --project winforms/samples/RibbonKit.WinForms.DesignerSample -c Debug --no-build -- --verify-tab-motion-handoff-solid winforms/artifacts/ribbon-flicker-review/solid-after
+```
+
+## Black material frame during window closing — 2026-11-02
+
+Status: **corrected; focused/native before-after checks passed on this machine;
+user review of the refreshed sample pending**.
+
+The user's `20261102-0015-18.5203387.mp4` recording shows the material-backed
+caption/client turning black immediately before the native close fade. This was
+different from the earlier live Material-to-Solid release correction. Disposal
+called `ReleaseNativeBackdrop` before `Form.Dispose` destroyed the HWND, disabling
+both material and bitmap alpha while the client still contained its zero-alpha
+black backing. The old package reproduced the flash in a public-only consumer.
+
+`RibbonForm.Dispose` now lets the base Form destroy its native window before
+detaching the managed ribbon association. `OnHandleDestroyed` forgets managed
+backdrop state and frees the caption buffer without disabling native attributes
+or repainting child composition. Windows releases HWND-scoped DWM state with the
+window. Handle recreation reapplies the requested preference normally. Explicit
+live Solid/fallback release retains its earlier synchronous repaint path. There
+is no new public API, custom close animation, delay or application workaround.
+
+Four new Mica/Acrylic Close/Dispose regressions failed against the old code:
+native backdrop was already None (1) at WM_DESTROY entry. After the correction,
+the six Close/Dispose and recreate/Solid cases passed; the five earlier passes
+from the same focused selection cover cancelled close, composition restart and
+opaque-panel lifecycle. These are 11 focused cases across runs, not a full suite.
+The bitmap-alpha getter is unsupported here even though setting the attribute
+succeeds; the component probe checks the active managed alpha mode at destruction
+instead of treating that unsupported getter as production failure.
+
+The permanent Designer Sample's public-API `--verify-backdrop-close` mode built
+against the previous and refreshed packages. It captured 48 timestamped frames
+per material over its two owned foreground windows at actual **120 DPI**, with
+foreground-loss rejection and a cancelled-close check before accepted close:
+
+| Material | Old native setting at destruction / worst caption black | Corrected setting / worst caption black |
+| --- | --- | --- |
+| Mica | None (1) / 100% | Mica (2) / 0% |
+| Acrylic | None (1) / 100% | Acrylic (3) / 0% |
+
+Critical before/after and fading frames were inspected. Logs and PNGs are in
+`winforms/artifacts/backdrop-close-review/before/` and `after/`; extracted frames
+from the supplied recording are in their parent directory. Normal Debug runtime
+and sample builds passed cleanly, and the permanent sample package was refreshed
+in place without changing authored Form files. No full native/WPF suite ran.
+These sampled results do not replace user review, older-Windows or mixed-monitor
+closing-animation acceptance.
+
+```powershell
+dotnet run --project winforms/samples/RibbonKit.WinForms.DesignerSample -c Debug --no-build -- --verify-backdrop-close winforms/artifacts/backdrop-close-review/after
+```
+
+## ComboBox popup activation — 2026-11-01
+
+The user narrowed this follow-up to preventing window deactivation/reactivation
+when using a ribbon ComboBox. Choice-list paint flicker is outside this fix.
+
+The package-only Designer Sample reproduced a real native activation round trip
+with Mica: clicking a choice sent the owner `WM_NCACTIVATE(false)` and
+`WM_ACTIVATE(WA_INACTIVE)`, then reactivated it when the popup closed. Opening
+alone did not reproduce that cycle. ToolStrip permits activation when clicking a
+hosted native child; suppressing the ListBox's row mouse-down focus change happens
+after [`WM_MOUSEACTIVATE`](https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-mouseactivate).
+The new native regression returned `MA_ACTIVATE` before correction.
+
+Only choice windows now request `WS_EX_NOACTIVATE` and return `MA_NOACTIVATE` for
+row/frame/scrollbar mouse activation. Existing opener-owned keyboard routing and
+row selection remain in place. Command/group popups retain their activation
+policy, including native text editors. Choices no longer need the temporary
+caption-state guard while opening. No runtime public API or preference changed.
+
+- **13 focused cases passed**, across two nonoverlapping runs: native choice
+  activation policy, editable/read-only inline and QAT mouse commit with retained
+  editor handles, unchanged command-popup policy, existing ComboBox binding,
+  validation, mutation, commit/cancel and shared Options choice behavior.
+- **Live Mica review:** mouse open/select and F4/Down/Enter keep the owner active
+  and the same native ComboBox focused, with no owner activation messages. A real
+  switch to Visual Studio deactivates normally, closes the open list, restores
+  the committed choice after a keyboard preview, and returns focus on reactivation.
+  Ignored evidence: `artifacts/choice-focus/{before,after,final}.log`.
+- The permanent sample offers opt-in `--trace-choice-focus <log-file>` logging of
+  owner activation, native editor focus and choice changes. It observes this
+  consumer only; it does not drive input or force activation.
+- Normal Debug runtime/designer/client/sample builds passed with zero warnings or
+  errors after closing the running sample instances that initially locked its
+  output. The sample was refreshed in place to local package
+  `0.1.0-designer.local20261101T123525021Z`, preserving authored Form files.
+
+This does not establish absence of native choice paint flicker. Acrylic, other
+Windows/DPI configurations and full-suite validation were not run for this bounded
+activation change; broader material acceptance above is unchanged.
+
 ## First-show material alpha and Windows opening motion — 2026-10-30
 
 The user withdrew the startup acceptance after the steady-state pointer review:

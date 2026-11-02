@@ -12,9 +12,12 @@ public sealed class MenuTests
         using var menu = new RibbonDropDownItem(); using var group = new RibbonGroup();
         using var separator = new RibbonMenuSeparatorItem { Text = "Ignored", KeyTip = "S" };
         separator.PerformClick(); Assert.Null(separator.Parent);
-        Assert.Throws<ArgumentException>(() => group.Items.Add(separator)); Assert.Empty(group.Items);
+        group.Items.Add(separator); Assert.Same(group, separator.Parent);
+        // Group separators are supported; moving an owned component still
+        // requires removal from its previous collection first.
+        Assert.Throws<InvalidOperationException>(() => menu.Items.Add(separator)); Assert.Empty(menu.Items);
+        group.Items.Remove(separator);
         var command = new RibbonButtonItem(); group.Items.Add(command);
-        Assert.Throws<ArgumentException>(() => group.Items[0] = separator); Assert.Same(command, group.Items[0]);
         menu.Items.Add(separator); Assert.Same(menu, separator.Parent);
         Assert.False(new RibbonTarget(TargetKind.Item, separator, new(0, 0, 200, 10), Rectangle.Empty, RibbonItemSize.Medium).Enabled);
         var property = TypeDescriptor.GetProperties(command)[nameof(command.MenuDescription)]!;

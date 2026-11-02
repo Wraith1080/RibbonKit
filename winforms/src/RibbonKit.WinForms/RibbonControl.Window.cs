@@ -51,6 +51,7 @@ public partial class RibbonControl
     private bool _backdropBodyMasked;
     internal bool CapturingBackdropScene;
     internal bool BackdropBodyMasked => _backdropBodyMasked;
+    internal bool KeepsBackdropFrame => _motion?.KeepsBodyFrame == true;
     internal void PrepareBackdropEditors(bool enabled)
     {
         _editors.SetBackdrop(enabled);

@@ -47,7 +47,7 @@ internal sealed class RibbonChoicePopup : IDisposable
         var bounds = CalculateBounds(anchor, Screen.FromRectangle(anchor).WorkingArea, width, _list.ItemHeight, item.Items.Count, ribbon.DeviceDpi, submenu);
         _list.Size = new(bounds.Width - 2, bounds.Height - 2);
         var host = new ToolStripControlHost(_list) { AutoSize = false, Size = _list.Size, Margin = Padding.Empty, Padding = Padding.Empty };
-        _window = new(ribbon, QueueActivationCheck) { Size = bounds.Size, Name = item.Id + ".popup" };
+        _window = new(ribbon, QueueActivationCheck, nonActivating: true) { Size = bounds.Size, Name = item.Id + ".popup" };
         _window.Items.Add(host);
         _window.Closed += (_, _) => { if (!_disposed) _cancel(); };
         _form = ribbon.FindForm();
@@ -57,7 +57,7 @@ internal sealed class RibbonChoicePopup : IDisposable
             _form.LocationChanged += OnMove;
             _form.ResizeBegin += OnMove;
         }
-        using (new RibbonPopupActivation(_form, _window)) _window.Show(bounds.Location);
+        _window.Show(bounds.Location);
     }
     internal static Rectangle CalculateBounds(Rectangle anchor, Rectangle work, int width, int rowHeight, int count, int dpi, bool submenu = false)
     {

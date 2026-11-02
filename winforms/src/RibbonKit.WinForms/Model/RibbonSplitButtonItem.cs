@@ -44,7 +44,7 @@ public sealed class RibbonSplitButtonItem : RibbonDropDownItem
     /// <summary>Occurs after Checked changes and before an activating primary Click.</summary>
     public event EventHandler? CheckedChanged;
     /// <summary>Gets or sets the preferred arrangement; Vertical applies only at Large size.</summary>
-    [DefaultValue(RibbonSplitButtonLayout.Horizontal), Category("Layout")]
+    [DefaultValue(RibbonSplitButtonLayout.Horizontal), Category("Layout"), Description("Horizontal places the menu arrow on the right. Vertical places the caption/menu half below the primary action at Large size; smaller items stay Horizontal.")]
     public RibbonSplitButtonLayout Layout
     {
         get => _layout;

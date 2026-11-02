@@ -9,7 +9,14 @@ public sealed class RibbonComboBoxItem : RibbonItem, IRibbonEditorItem
 {
     private string _value = "";
     private int _selectedIndex = -1, _inputWidth = 120, _maxLength = 32767;
-    private bool _isEditable;
+    private bool _isEditable, _showLabel = true;
+    /// <summary>Gets or sets whether the native field shows its Text label. Text remains the command name for compact, QAT and customization presentations.</summary>
+    [DefaultValue(true), Category("Appearance"), Description("Show the label beside the native field. Hiding it preserves Text as the command name for compact buttons, Quick Access and customization.")]
+    public bool ShowLabel
+    {
+        get => _showLabel;
+        set { Ribbon?.VerifyAccess(); if (_showLabel == value) return; _showLabel = value; Changed(); }
+    }
     private readonly record struct EditValue(string Value, int Index);
     /// <summary>Initializes an empty chooser with no selected item.</summary>
     public RibbonComboBoxItem() => Items = new(this);
@@ -97,13 +104,13 @@ public sealed class RibbonComboBoxItem : RibbonItem, IRibbonEditorItem
     public event EventHandler? ValueCommitted;
     /// <summary>Occurs after restoring a changed edit or unaccepted choice preview.</summary>
     public event EventHandler? EditCanceled;
-    /// <summary>Focuses the active native editor while preserving editable text selection.</summary>
+    /// <summary>Focuses the active native editor or compact button while preserving editable text selection.</summary>
     public override void PerformClick()
     {
         Ribbon?.VerifyAccess();
         if (EffectiveEnabled && Visible) Ribbon?.FocusEditor(this);
     }
-    /// <summary>Focuses the native editor and opens its themed choice popup when visible and enabled.</summary>
+    /// <summary>Focuses the field or compact button and opens its themed choice popup when visible and enabled. Compact buttons allow choosing existing values; text entry stays in the native field.</summary>
     public void ShowDropDown()
     {
         PerformClick();

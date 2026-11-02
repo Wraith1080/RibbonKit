@@ -7,6 +7,10 @@
 > scope, evidence and remaining review are in the [M5 ledger](../winforms/docs/M5-STATUS.md)
 > and [M4 ledger](../winforms/docs/M4-STATUS.md).
 > The [M3 ledger](../winforms/docs/M3-STATUS.md) retains QAT/projection evidence.
+> [Group item layout](../winforms/docs/GROUP-ITEM-LAYOUT.md) records the bounded
+> designer split-orientation, two/three-row and in-group separator increment.
+> [Designer rearrangement](../winforms/docs/DESIGNER-REARRANGEMENT.md) records the
+> ComboBox label/compact behavior, cross-owner moves and size-policy choices.
 > [Remaining slice sequence](../winforms/docs/M4-STATUS.md#remaining-slices) is a
 > bounded working decomposition of the milestones below.
 > Comprehensive theming is deferred

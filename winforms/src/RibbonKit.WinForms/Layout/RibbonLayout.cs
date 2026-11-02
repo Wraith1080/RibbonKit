@@ -88,16 +88,28 @@ internal sealed partial class RibbonLayoutEngine
         int x = S(GroupSideInset), row = 0, columnWidth = 0, columnStart = 0;
         int fontLogical = (int)Math.Ceiling(font.Height * 96d / dpi);
         int rowLogical = Math.Max(metrics.CommandRow, fontLogical + 8), captionLogical = Math.Max(20, fontLogical + 6);
+        int commandHeight = S(theme.BodyHeight - captionLogical - CommandVerticalInset);
+        bool explicitRows = group.Layout != RibbonGroupLayout.Columns, hasLarge = false;
+        int rowCount = group.Layout == RibbonGroupLayout.ThreeRows ? 3 : 2;
+        int occupiedRows = 0;
+        int[] rowWidths = new int[rowCount];
         var items = new List<MeasuredItem>();
         void FinishColumn()
         {
+            if (explicitRows)
+            {
+                x += rowWidths.Max();
+                Array.Clear(rowWidths);
+                columnStart = items.Count;
+                return;
+            }
             if (row == 0)
                 return;
             bool reserve = items.Skip(columnStart).Any(entry => entry.Item is RibbonCheckBoxItem or RibbonRadioButtonItem || entry.Item.Icon is not null || entry.Item.Image is not null || entry.Item.LargeImage is not null);
-            int labelWidth = items.Skip(columnStart).Where(entry => entry.Item is IRibbonEditorItem)
+            int labelWidth = items.Skip(columnStart).Where(entry => RibbonEditorLayout.IsField(entry.Item, entry.Size))
                 .Select(entry => RibbonEditorLayout.LabelWidth(entry.Item, font, dpi)).DefaultIfEmpty(0).Max();
-            foreach (var entry in items.Skip(columnStart).Where(entry => entry.Item is IRibbonEditorItem))
-                columnWidth = Math.Max(columnWidth, labelWidth + S(((IRibbonEditorItem)entry.Item).InputWidth + 6));
+            foreach (var entry in items.Skip(columnStart).Where(entry => RibbonEditorLayout.IsField(entry.Item, entry.Size)))
+                columnWidth = Math.Max(columnWidth, (entry.Item is RibbonComboBoxItem { ShowLabel: false } ? 0 : labelWidth) + S(((IRibbonEditorItem)entry.Item).InputWidth + 6));
             for (int index = columnStart; index < items.Count; index++)
             {
                 var entry = items[index];
@@ -108,7 +120,7 @@ internal sealed partial class RibbonLayoutEngine
                         Width = entry.Size == RibbonItemSize.Small ? entry.Bounds.Width : columnWidth
                     },
                     ReserveIcon = reserve,
-                    LabelWidth = entry.Item is IRibbonEditorItem ? labelWidth : 0
+                    LabelWidth = RibbonEditorLayout.IsField(entry.Item, entry.Size) && entry.Item is not RibbonComboBoxItem { ShowLabel: false } ? labelWidth : 0
                 };
             }
             x += columnWidth + S(metrics.ColumnGap);
@@ -118,7 +130,16 @@ internal sealed partial class RibbonLayoutEngine
         }
         foreach (var item in group.Items.Where(i => i.Visible))
         {
-            var size = item is IRibbonEditorItem or RibbonCheckBoxItem or RibbonRadioButtonItem ? RibbonItemSize.Medium : item.SizePolicy.At(state);
+            if (item is RibbonMenuSeparatorItem)
+            {
+                FinishColumn();
+                items.Add(new(item, new(x, S(CommandTopInset), S(9), commandHeight), RibbonItemSize.Small));
+                x += S(9 + metrics.ColumnGap);
+                columnStart = items.Count;
+                continue;
+            }
+            var size = item is RibbonComboBoxItem ? item.SizePolicy.At(state) == RibbonItemSize.Small ? RibbonItemSize.Small : RibbonItemSize.Medium
+                : item is IRibbonEditorItem or RibbonCheckBoxItem or RibbonRadioButtonItem ? RibbonItemSize.Medium : item.SizePolicy.At(state);
             // A reduced in-ribbon gallery stays a full-column command. Its
             // strip/dropdown presentation is independent of the painted size.
             bool galleryDropDown = item is RibbonGalleryItem { IsInRibbon: true } && size != RibbonItemSize.Large;
@@ -127,7 +148,8 @@ internal sealed partial class RibbonLayoutEngine
             int label = TextRenderer.MeasureText(item.Text, font, new Size(1000, 1000), TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine).Width;
             bool dropDownOnly = item is RibbonDropDownItem and not RibbonSplitButtonItem;
             int width = large ? LargeItemWidth(item, font, dpi, theme) : size == RibbonItemSize.Small ? S(metrics.SmallWidth) : Math.Max(S(metrics.MediumWidth), Math.Min(S(180 + (metrics.Touch ? 16 : 0)), label + S(metrics.CaptionPadding)));
-            if (item is IRibbonEditorItem editor)
+            if (item is RibbonComboBoxItem && size == RibbonItemSize.Small) width = S(metrics.SmallWidth + 12);
+            if (item is IRibbonEditorItem editor && RibbonEditorLayout.IsField(item, size))
                 width = RibbonEditorLayout.LabelWidth(item, font, dpi) + S(editor.InputWidth + 6);
             if (large && !galleryDropDown && item is RibbonGalleryItem { IsInRibbon: true } gallery)
                 width = S(gallery.InRibbonColumnCount * Math.Max(gallery.TileWidth, metrics.GalleryWidth) + metrics.GalleryUtility + 3 * RibbonGalleryStripLayout.Padding);
@@ -138,19 +160,39 @@ internal sealed partial class RibbonLayoutEngine
             if (large)
             {
                 FinishColumn();
-                items.Add(new(item, new(x, S(CommandTopInset), width, S(theme.BodyHeight - captionLogical - CommandVerticalInset)), size, GalleryDropDown: galleryDropDown));
+                hasLarge = true;
+                items.Add(new(item, new(x, S(CommandTopInset), width, commandHeight), size, GalleryDropDown: galleryDropDown));
                 x += width + S(metrics.ColumnGap);
                 columnStart = items.Count;
             }
             else
             {
-                items.Add(new(item, new(x, S(CommandTopInset + row * rowLogical), width, S(rowLogical - 1)), size));
-                columnWidth = Math.Max(columnWidth, width);
-                if (++row == 3)
-                    FinishColumn();
+                if (explicitRows)
+                {
+                    int itemRow = Math.Min((int)item.Row, rowCount - 1);
+                    int labelWidth = RibbonEditorLayout.IsField(item, size) ? RibbonEditorLayout.LabelWidth(item, font, dpi) : 0;
+                    bool reserve = item is RibbonCheckBoxItem or RibbonRadioButtonItem || item.Icon is not null || item.Image is not null || item.LargeImage is not null;
+                    items.Add(new(item, new(x + rowWidths[itemRow], S(CommandTopInset + itemRow * rowLogical), width, S(rowLogical - 1)), size, reserve, labelWidth));
+                    rowWidths[itemRow] += width + S(metrics.ColumnGap);
+                }
+                else
+                {
+                    items.Add(new(item, new(x, S(CommandTopInset + row * rowLogical), width, S(rowLogical - 1)), size));
+                    columnWidth = Math.Max(columnWidth, width);
+                    occupiedRows = Math.Max(occupiedRows, ++row);
+                    if (row == 3) FinishColumn();
+                }
             }
         }
         FinishColumn();
+        if (explicitRows || !hasLarge && occupiedRows == 2)
+        {
+            int bandRows = explicitRows ? rowCount : 2;
+            int verticalOffset = Math.Max(0, (commandHeight - S((bandRows - 1) * rowLogical) - S(rowLogical - 1)) / 2);
+            for (int index = 0; index < items.Count; index++)
+                if (items[index] is { Size: not RibbonItemSize.Large, Item: not RibbonMenuSeparatorItem } entry)
+                    items[index] = entry with { Bounds = entry.Bounds with { Y = entry.Bounds.Y + verticalOffset } };
+        }
         int header = TextRenderer.MeasureText(group.DisplayText, font).Width + S(20);
         int contentWidth = items.Count == 0 ? 0 : items.Max(i => i.Bounds.Right) - S(GroupSideInset);
         int groupWidth = Math.Max(contentWidth + 2 * S(GroupSideInset), header);

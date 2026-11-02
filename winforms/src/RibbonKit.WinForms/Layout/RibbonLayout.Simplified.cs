@@ -26,7 +26,8 @@ internal sealed partial class RibbonLayoutEngine
             var item = pair.Item; int size;
             if (item is null) size = Math.Max(S(metrics.MediumWidth), TextRenderer.MeasureText(pair.Group.DisplayText, ribbon.Font, Size.Empty, TextFormatFlags.SingleLine | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width
                 + 2 * S(6) + S(16) + (pair.Group.Icon is null ? 0 : S(24) + S(6)));
-            else if (item is RibbonComboBoxItem combo) size = S(combo.InputWidth + 6) + (pair.Size == RibbonItemSize.Medium ? RibbonEditorLayout.LabelWidth(item, ribbon.Font, ribbon.DeviceDpi) : 0);
+            else if (item is RibbonComboBoxItem combo) size = pair.Size == RibbonItemSize.Small ? S(metrics.SmallWidth + 12)
+                : S(combo.InputWidth + 6) + RibbonEditorLayout.LabelWidth(item, ribbon.Font, ribbon.DeviceDpi);
             else
             {
                 int label = pair.Size == RibbonItemSize.Small ? 0 : TextRenderer.MeasureText(item.Text, ribbon.Font, Size.Empty, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine).Width;

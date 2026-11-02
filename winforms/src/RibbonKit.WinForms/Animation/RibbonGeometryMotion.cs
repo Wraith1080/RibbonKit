@@ -18,6 +18,7 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
     private bool _disposed;
     private bool _headerArrival;
     private bool _messageChange;
+    internal bool KeepsBodyFrame { get; private set; }
     internal bool Changing { get; private set; }
     internal bool IsRunning => _from is not null && _to is not null;
     internal bool CanCoalesceHeaderSelection => _headerArrival && IsRunning && FrameIntervals.Count == 0;
@@ -26,7 +27,7 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
     internal bool? SystemPolicyOverride;
     internal string? LastSkipReason;
     internal bool SystemEnabled => SystemPolicyOverride ?? (SystemParametersInfo(0x1042, 0, out bool enabled, 0) && enabled);
-    internal void Change(bool toolbar, Action mutation, bool headers = false, bool messages = false)
+    internal void Change(bool toolbar, Action mutation, bool headers = false, bool messages = false, bool tabContents = false)
     {
         if (Changing) { mutation(); return; }
         if (IsRunning)
@@ -60,12 +61,16 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
         Changing = true;
         try
         {
+            KeepsBodyFrame = tabContents && ribbon.HasWindowBackdrop && !ribbon.IsMinimized;
             _from = new(ribbon); _form = ribbon.FindForm()!;
             try
             {
                 _window = new(_form, clipToOwner: _form is RibbonForm);
-                if (ribbon.HasWindowBackdrop) ribbon.SetBackdropBodyMasked(true);
                 _window.Render(ribbon, _from, _from, 0);
+                // Publish the opaque departure drawing before clearing the live
+                // material body or lowering native editor opacity. The mask
+                // repaints synchronously and can otherwise expose a bare frame.
+                if (ribbon.HasWindowBackdrop) ribbon.SetBackdropBodyMasked(true);
                 // Layering the real ribbon removes DWM material from its header.
                 // Keep that header live; the opaque body drawing covers the
                 // already-committed body without changing native window styles.
@@ -79,6 +84,9 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
             if (headers ? !arrivals : messages ? !_from.HasMessageChanges(ribbon) : before == (ribbon.LayoutMode, ribbon.Density, ribbon.QuickAccessPosition, ribbon.SelectedTab, ribbon.IsMinimized)) { Release(); return; }
             _to = new(ribbon);
             if (_to.Dpi != _from!.Dpi || _to.Bounds.Width != _from.Bounds.Width) { Release(); return; }
+            // A host selection callback may change geometry as well. Commit
+            // that exceptional state immediately instead of moving a live frame.
+            if (KeepsBodyFrame && (_from.Bounds != _to.Bounds || _from.Frame != _to.Frame || _from.Body != _to.Body || _from.Qat != _to.Qat || _from.Messages != _to.Messages)) { Release(); return; }
             _headerArrival = headers && arrivals;
             _messageChange = messages;
             _window!.Render(ribbon, _from, _to, 0);
@@ -163,6 +171,7 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
         if (!held && _window is not null && !ribbon.IsDisposed && ribbon.IsHandleCreated)
             RibbonDrawingHold.Repaint(ribbon.Handle);
         _window?.Dispose(); _window = null; _from?.Dispose(); _from = null; _to?.Dispose(); _to = null;
+        KeepsBodyFrame = false;
     }
     public void Dispose() { if (_disposed) return; _disposed = true; Settle(); _timer.Dispose(); }
     [DllImport("user32.dll")] private static extern bool SystemParametersInfo(uint action, uint parameter, out bool value, uint flags);

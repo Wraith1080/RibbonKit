@@ -234,6 +234,15 @@ public partial class RibbonRenderer : IDisposable
         using var brush = new SolidBrush(context.Theme.Border);
         context.Graphics.FillRectangle(brush, context.Bounds.Left + inset, context.Bounds.Top + (context.Bounds.Height - 1) / 2, context.Bounds.Width - 2 * inset, 1);
     }
+    /// <summary>Paints a decorative vertical separator within its measured group slot, including full-group flyouts. It has no interaction state.</summary>
+    public virtual void DrawGroupSeparator(RibbonPaintContext context, RibbonMenuSeparatorItem item)
+    {
+        int inset = RibbonLayoutEngine.Scale(3, context.DeviceDpi);
+        if (context.Bounds.Width <= 0 || context.Bounds.Height <= 2 * inset) return;
+        using var brush = new SolidBrush(context.Theme.Border);
+        context.Graphics.FillRectangle(brush, context.Bounds.Left + (context.Bounds.Width - 1) / 2,
+            context.Bounds.Top + inset, 1, context.Bounds.Height - 2 * inset);
+    }
     /// <summary>Paints a native editor's label and frame. The editor itself owns text, caret and selection.</summary>
     public virtual void DrawTextBox(RibbonPaintContext context, RibbonTextBoxItem item, Rectangle editorBounds)
     {
@@ -275,10 +284,13 @@ public partial class RibbonRenderer : IDisposable
             item.Items[index], item.EffectiveEnabled ? context.Theme.Foreground : context.Theme.DisabledColor,
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.EndEllipsis);
     }
-    private void DrawEditorLabel(RibbonPaintContext context, RibbonItem item, Rectangle editorBounds) =>
+    private void DrawEditorLabel(RibbonPaintContext context, RibbonItem item, Rectangle editorBounds)
+    {
+        if (item is RibbonComboBoxItem { ShowLabel: false }) return;
         DrawText(context with { Bounds = new(context.Bounds.Left, context.Bounds.Top, Math.Max(0, editorBounds.Left - context.Bounds.Left - RibbonLayoutEngine.Scale(6, context.DeviceDpi)), context.Bounds.Height) },
             item.Text, item.EffectiveEnabled ? context.Theme.Foreground : context.Theme.DisabledColor,
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding);
+    }
     /// <summary>Paints the File menu header using library-measured bounds and its original open/availability state.</summary>
     public virtual void DrawFileButton(RibbonPaintContext context, RibbonDropDownItem menu)
     {
@@ -381,11 +393,29 @@ public partial class RibbonRenderer : IDisposable
     {
         if (item is RibbonMenuSeparatorItem separator)
         {
-            if (menu) DrawMenuSeparator(context with { Hot = false, Pressed = false, Focused = false }, separator);
+            context = context with { Hot = false, Pressed = false, Focused = false };
+            if (menu) DrawMenuSeparator(context, separator);
+            else DrawGroupSeparator(context, separator);
             return;
         }
         bool enabled = item.EffectiveEnabled;
         context = EnabledContext(context, enabled);
+        if (!menu && item is RibbonComboBoxItem combo && size == RibbonItemSize.Small)
+        {
+            bool expanded = enabled && combo.IsDropDownOpen;
+            if (expanded || context.Hot || context.Pressed)
+                DrawChrome(context, expanded || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
+            int arrowWidth = RibbonLayoutEngine.Scale(12, context.DeviceDpi), side = RibbonLayoutEngine.Scale(16, context.DeviceDpi);
+            var content = context with { Bounds = context.Bounds with { Width = Math.Max(0, context.Bounds.Width - arrowWidth) } };
+            var color = enabled ? context.Theme.Foreground : context.Theme.DisabledColor;
+            if (item.Icon is not null || item.Image is not null || item.LargeImage is not null)
+                DrawItemImage(content with { Bounds = new(content.Bounds.Left + (content.Bounds.Width - side) / 2, content.Bounds.Top + (content.Bounds.Height - side) / 2, side, side) }, item, RibbonItemSize.Small);
+            else DrawText(content, item.Text.Length == 0 ? "" : System.Globalization.StringInfo.GetNextTextElement(item.Text), color,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
+            DrawDropDownArrow(context with { Bounds = new(context.Bounds.Right - arrowWidth, context.Bounds.Top, arrowWidth, context.Bounds.Height) }, color);
+            if (context.Focused) DrawFocus(context);
+            return;
+        }
         if (menu && RibbonMenuLayout.IsIllustratedChoice(item)) { DrawIllustratedChoice(context, item); return; }
         if (item is RibbonGalleryItem { IsInRibbon: true } && size == RibbonItemSize.Large && !menu && !context.IsGalleryDropDown)
         { DrawGalleryStripFrame(context); return; }

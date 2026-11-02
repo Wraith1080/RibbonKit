@@ -1,9 +1,11 @@
 # Native Backstage page content motion
 
-Status, **2026-11-01: implemented; user visual review pending**.
+Status, **2026-11-01: implemented; Solid-mode exposed-area correction accepted**.
 
 The user's subsequent TextBox/RichTextBox flicker report is addressed by the
-bounded repaint correction below. Visible acceptance of that correction is pending.
+bounded repaint correction below. The user reported "looks good" after the
+Solid-mode black-strip/rounded-corner correction and visible Info/Print review.
+The remaining material, DPI and frame-pacing limits below still apply.
 
 The user requested Fade/SlideDown when selecting another Backstage page, using
 the existing tab-content preference, and a matching dropdown in Ribbon settings.

@@ -31,7 +31,7 @@ public partial class RibbonControl
     {
         foreach (var target in _snapshot.Targets)
         {
-            if (target.Element is not RibbonItem item || item is not IRibbonEditorItem || target.VisibleBounds.IsEmpty) continue;
+            if (target.Element is not RibbonItem item || !RibbonEditorLayout.IsField(item, target.Size) || target.VisibleBounds.IsEmpty) continue;
             var state = graphics.Save();
             try
             {
