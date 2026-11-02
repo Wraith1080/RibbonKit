@@ -51,6 +51,7 @@ internal sealed class RibbonInputFilter(RibbonControl ribbon) : IMessageFilter, 
             ribbon.ExitKeyTips(false);
             uint position = GetMessagePos();
             var point = new Point(unchecked((short)position), unchecked((short)(position >> 16)));
+            if (ribbon.Popups.Surfaces.Any(surface => surface.ContainsContentListPoint(point))) return false;
             if (!ribbon.Editors.ContainsListPoint(point))
             {
                 ribbon.Editors.OutsidePress(point);
@@ -81,6 +82,9 @@ internal sealed class RibbonInputFilter(RibbonControl ribbon) : IMessageFilter, 
                 }
                 return true;
             }
+            var contentSurface = ribbon.Popups.Surfaces.LastOrDefault(surface => surface.OwnsContentInput(presenterOrigin));
+            if (contentSurface?.HasContentComboList == true) return false;
+            if (contentSurface?.ProcessContentKey(key | Control.ModifierKeys) == true) return true;
             if (ribbon.PopupOnly)
             {
                 if (key == Keys.Escape && Control.ModifierKeys == Keys.None) { ribbon.Popups.CloseTop(true); return true; }

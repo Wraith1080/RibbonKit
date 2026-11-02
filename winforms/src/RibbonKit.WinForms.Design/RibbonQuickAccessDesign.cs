@@ -54,13 +54,13 @@ internal static partial class RibbonDesignCommitter
         private readonly RibbonDesignSnapshot _before, _draft;
         private readonly Dictionary<string, RibbonElement> _existing, _external;
         private readonly Dictionary<string, RibbonDesignNode> _originals;
-        private readonly Type[] _presenterTypes;
+        private readonly Type[] _controlTypes;
         private readonly Dictionary<string, RibbonSvgIcon> _icons = new(StringComparer.Ordinal);
         private readonly bool _changed;
         internal QuickAccessPlan(RibbonControl ribbon, IDesignerHost host, RibbonDesignSnapshot before, RibbonDesignSnapshot draft)
         {
             _ribbon = ribbon; _host = host; _before = before; _draft = draft;
-            _presenterTypes = RibbonGalleryPresenterTypes.Available(host, ribbon);
+            _controlTypes = RibbonDropDownContentTypes.Available(host, ribbon);
             _existing = Elements(ribbon.CommandCatalog.Commands).Concat(ribbon.QuickAccessItems).Distinct().ToDictionary(Key, StringComparer.Ordinal);
             _external = QuickAccessSources(ribbon);
             _originals = RibbonDesignSnapshot.Flatten(before.CatalogCommands).Concat(before.QuickAccessItems.Where(node => node.Kind != "OwnedQat")).ToDictionary(node => node.Key, StringComparer.Ordinal);
@@ -106,9 +106,9 @@ internal static partial class RibbonDesignCommitter
             }
             if (!_changed) return;
             using var probe = new RibbonControl();
-            foreach (var node in draft.CatalogCommands) probe.CommandCatalog.Commands.Add((RibbonItem)BuildProbe(node, _originals, before.Templates, _presenterTypes));
+            foreach (var node in draft.CatalogCommands) probe.CommandCatalog.Commands.Add((RibbonItem)BuildProbe(node, _originals, before.Templates, _controlTypes));
             foreach (var entry in draft.QuickAccessItems.Where(node => node.Kind != "OwnedQat"))
-                using (BuildProbe(entry, _originals, before.Templates, _presenterTypes)) { }
+                using (BuildProbe(entry, _originals, before.Templates, _controlTypes)) { }
         }
         private static string State(RibbonDesignSnapshot value) => RibbonComponentNames.ContentState(new() { CatalogCommands = value.CatalogCommands, QuickAccessItems = value.QuickAccessItems });
         internal void Apply(Dictionary<string, RibbonElement> tabTargets, IComponentChangeService changes)
@@ -149,7 +149,7 @@ internal static partial class RibbonDesignCommitter
                     {
                         if (target is RibbonComboBoxItem && value.Name is "Value" or "SelectedIndex") continue;
                         if (original?.Properties.Single(property => property.Name == value.Name).Value == value.Value) continue;
-                        Set(target, value.Name, ConvertValue(CheckedProperty(target, value.Name), value.Value, _presenterTypes), changes);
+                        Set(target, value.Name, ConvertValue(CheckedProperty(target, value.Name), value.Value, _controlTypes), changes);
                     }
                     if (target is RibbonComboBoxItem selection && SelectionProperty(selection, node, original ?? _before.Templates.Single(template => template.Kind == node.Kind), choicesChanged) is { } selected)
                         Set(target, selected.Name, ConvertValue(CheckedProperty(target, selected.Name), selected.Value), changes);

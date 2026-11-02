@@ -29,6 +29,10 @@ internal static class InlineGalleryPresenterCheck
                 Require(context.IsActive && context.Presentation == RibbonGalleryPresentation.InRibbon && ReferenceEquals(context.Gallery, gallery), "Active inline view uses original source");
                 nint handle = inline.Handle; var cards = inline.Controls.OfType<GalleryStyleTileControl>().ToArray();
                 Require(cards.Length == gallery.Items.Count && cards.All(card => gallery.Items.Contains((RibbonGalleryTile)card.Tag!)), "All native cards bind original source tiles");
+                Require(!cards[^1].IsHandleCreated, "An unvisited offscreen row does not create native windows on first opening");
+                var firstRow = cards.Where(card => card.Visible).ToDictionary(card => card, card => card.Handle);
+                inline.ScrollView(RibbonGalleryScroll.RowForward); inline.ScrollView(RibbonGalleryScroll.RowBackward);
+                Require(firstRow.All(pair => pair.Key.Visible && pair.Key.Handle == pair.Value), "Browsing retains the visited native card objects and handles");
                 await Capture("inline-initial", form);
                 int commits = 0; gallery.SelectionCommitted += (_, _) => commits++;
                 inline.ScrollView(RibbonGalleryScroll.RowForward); int row = inline.ViewedRow;
@@ -67,7 +71,7 @@ internal static class InlineGalleryPresenterCheck
                 await Capture("inline-last-selected", form);
                 gallery.IsInRibbon = false;
                 Require(inline.IsDisposed && cards.All(card => card.IsDisposed) && gallery.Items.Count == 18, "Turning off inline disposes views and preserves source items");
-                log.WriteLine($"PASS: package-only public API; designer-authored separate inline/popup classes; original 18 source tiles; actual DPI={form.DeviceDpi}; retained native inline/card handles; independent popup lifetime; cancel row/focus; preview/programmatic selection/native child click/queued keyboard; exactly {commits} commits; hidden-context invalidation; owned disposal. Physical input, actual VS and mixed-monitor acceptance remain separate.");
+                log.WriteLine($"PASS: package-only public API; designer-authored separate inline/popup classes; original 18 source tiles; actual DPI={form.DeviceDpi}; deferred offscreen native windows; retained native inline/card handles through row browsing; independent popup lifetime; cancel row/focus; preview/programmatic selection/native child click/queued keyboard; exactly {commits} commits; hidden-context invalidation; owned disposal. Physical input, actual VS and mixed-monitor acceptance remain separate.");
             }
             catch (Exception error) { failure = error; log.WriteLine("FAIL: " + error); }
             finally { form.Close(); }

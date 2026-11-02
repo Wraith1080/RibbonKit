@@ -2,93 +2,120 @@ using RibbonKit.WinForms.Layout;
 
 namespace RibbonKit.WinForms;
 
-// One reusable library presenter per source. Tiles, selection and application
-// preview handlers stay on the source; popup/QAT surfaces only borrow the models.
+// Built-in strips remain movable. Custom views belong to fixed ribbon/session
+// slots; tiles, selection and application preview handlers stay on the source.
 internal sealed class RibbonGalleryStripManager(RibbonControl ribbon) : IDisposable
 {
     private readonly Dictionary<RibbonGalleryItem, RibbonGalleryStripSurface> _strips = [];
     private readonly Dictionary<RibbonGalleryItem, RibbonGalleryInlineSurface> _inline = [];
+    private readonly Dictionary<(RibbonGalleryItem Source, RibbonPopupSurface Host), RibbonGalleryInlineSurface> _temporary = [];
     private bool _syncing, _disposed;
+    private IEnumerable<RibbonGalleryInlineSurface> CustomViews => _temporary.Values.Concat(_inline.Values);
     internal RibbonGalleryStripSurface? SurfaceFor(RibbonGalleryItem source) => _strips.GetValueOrDefault(source);
     internal RibbonGalleryInlineSurface? InlineSurfaceFor(RibbonGalleryItem source) => _inline.GetValueOrDefault(source);
-    internal RibbonGalleryInlineSurface? CustomInputOwner(Control? origin) => _inline.Values.FirstOrDefault(view => view.OwnsInput(origin));
+    internal RibbonGalleryInlineSurface? InlineSurfaceFor(RibbonGalleryItem source, RibbonPopupSurface host) => _temporary.GetValueOrDefault((source, host));
+    internal RibbonGalleryInlineSurface? CustomInputOwner(Control? origin) => CustomViews.FirstOrDefault(view => view.OwnsInput(origin));
+    private RibbonTarget? CurrentSlot(RibbonGalleryItem source, Control parent)
+    {
+        if (parent.IsDisposed || parent is RibbonPopupSurface popup && !ribbon.Popups.Surfaces.Contains(popup)) return null;
+        var targets = parent is RibbonPopupSurface surface ? surface.Targets : ribbon.Snapshot.Targets;
+        return targets.FirstOrDefault(target => ReferenceEquals(target.Element, source) && target.Size == RibbonItemSize.Large && !target.GalleryDropDown && !target.VisibleBounds.IsEmpty);
+    }
     internal void Sync()
     {
         if (_syncing || _disposed || ribbon.IsInDesignMode) return;
         _syncing = true;
         try
         {
-            var sources = ribbon.RetainedElements.OfType<RibbonGalleryItem>().Where(g => g.IsInRibbon && !g.IsDisposed).ToArray();
+            var sources = ribbon.RetainedElements.OfType<RibbonGalleryItem>().Where(g => g.IsInRibbon && !g.IsDisposed).ToHashSet();
             foreach (var old in _strips.Keys.Except(sources).ToArray()) { _strips[old].Dispose(); _strips.Remove(old); }
             foreach (var old in _inline.Keys.Where(source => !sources.Contains(source) || !source.HasCustomInRibbonPresenter || !_inline[source].MatchesSelectors).ToArray())
             { var view = _inline[old]; _inline.Remove(old); view.Dispose(); }
-            var slots = new Dictionary<RibbonGalleryItem, (Control Parent, RibbonTarget Target)>();
-            void Add(Control parent, IEnumerable<RibbonTarget> targets)
-            {
-                foreach (var target in targets)
-                    if (target.Element is RibbonGalleryItem { IsInRibbon: true } gallery && target.Size == RibbonItemSize.Large && !target.GalleryDropDown && !target.VisibleBounds.IsEmpty)
-                        slots[gallery] = (parent, target);
-            }
-            Add(ribbon, ribbon.Snapshot.Targets);
-            foreach (var popup in ribbon.Popups.Surfaces) Add(popup, popup.Targets);
+            foreach (var key in _temporary.Keys.Where(key => !sources.Contains(key.Source) || !key.Source.HasCustomInRibbonPresenter || !_temporary[key].MatchesSelectors || !ribbon.Popups.Surfaces.Contains(key.Host)).ToArray())
+            { var view = _temporary[key]; _temporary.Remove(key); view.Dispose(); }
             foreach (var source in sources)
             {
-                bool shown = slots.TryGetValue(source, out var slot);
-                bool customBody = source.HasCustomInRibbonPresenter;
-                bool showCustom = shown && customBody && ReferenceEquals(slot.Parent, ribbon) && ribbon.Visible && !ribbon.IsBackstageOpen;
-                if (showCustom && !_inline.ContainsKey(source))
+                if (source.HasCustomInRibbonPresenter)
                 {
-                    var created = new RibbonGalleryInlineSurface(ribbon, source);
-                    if (source.IsDisposed || !source.IsInRibbon || !source.Visible || !ReferenceEquals(source.Ribbon, ribbon) || !created.MatchesSelectors)
-                    { created.Dispose(); continue; }
-                    var current = ribbon.Snapshot.Targets.FirstOrDefault(target => ReferenceEquals(target.Element, source) && target.Size == RibbonItemSize.Large && !target.GalleryDropDown && !target.VisibleBounds.IsEmpty);
-                    if (current is null) { created.Dispose(); continue; }
-                    slot = (ribbon, current);
-                    _inline[source] = created;
+                    var target = CurrentSlot(source, ribbon);
+                    bool shown = target is not null && ribbon.Visible && !ribbon.IsBackstageOpen;
+                    if (shown && !_inline.ContainsKey(source))
+                    {
+                        var created = new RibbonGalleryInlineSurface(ribbon, source);
+                        target = CurrentSlot(source, ribbon);
+                        if (!Valid(source, created) || target is null) { created.Dispose(); continue; }
+                        _inline[source] = created;
+                    }
+                    if (_inline.TryGetValue(source, out var permanent))
+                    {
+                        try { if (shown) permanent.Present(target!); else permanent.Park(); }
+                        catch { _inline.Remove(source); permanent.Dispose(); throw; }
+                        if (!Retained(source, permanent)) { _inline.Remove(source); permanent.Dispose(); }
+                    }
+                    foreach (var host in ribbon.Popups.Surfaces.ToArray())
+                    {
+                        var key = (source, host); target = CurrentSlot(source, host);
+                        if (target is not null && !_temporary.ContainsKey(key))
+                        {
+                            var created = new RibbonGalleryInlineSurface(ribbon, source, host);
+                            target = CurrentSlot(source, host);
+                            if (!Valid(source, created) || target is null) { created.Dispose(); continue; }
+                            _temporary[key] = created;
+                        }
+                        if (_temporary.TryGetValue(key, out var temporary))
+                        {
+                            try { if (target is not null) temporary.Present(target); else temporary.Park(); }
+                            catch { _temporary.Remove(key); temporary.Dispose(); throw; }
+                            if (!Retained(source, temporary) || !ribbon.Popups.Surfaces.Contains(host)) { _temporary.Remove(key); temporary.Dispose(); }
+                        }
+                    }
+                    if (_strips.TryGetValue(source, out var oldStrip)) oldStrip.Park();
                 }
-                if (_inline.TryGetValue(source, out var custom))
+                else
                 {
-                    try { if (showCustom) custom.Present(slot.Target); else custom.Park(); }
-                    catch { _inline.Remove(source); custom.Dispose(); throw; }
-                    if (source.IsDisposed || !source.IsInRibbon || !ReferenceEquals(source.Ribbon, ribbon) || !custom.MatchesSelectors)
-                    { _inline.Remove(source); custom.Dispose(); }
+                    // Preserve the built-in path's one movable strip per source.
+                    Control parent = ribbon; var target = CurrentSlot(source, ribbon);
+                    foreach (var host in ribbon.Popups.Surfaces)
+                        if (CurrentSlot(source, host) is { } slot) { parent = host; target = slot; }
+                    if (!_strips.TryGetValue(source, out var strip))
+                    {
+                        if (target is null) continue;
+                        _strips[source] = strip = new(ribbon, source);
+                    }
+                    if (target is not null) strip.Present(parent, target); else strip.Park();
                 }
-                // Temporary flyout bodies retain their built-in presentation
-                // until the separate multi-host slice is implemented.
-                shown &= !customBody || !ReferenceEquals(slot.Parent, ribbon);
-                if (!_strips.TryGetValue(source, out var strip))
-                {
-                    if (!shown) continue;
-                    _strips[source] = strip = new(ribbon, source);
-                }
-                if (shown) strip.Present(slot.Parent, slot.Target); else strip.Park();
             }
         }
         finally { _syncing = false; }
     }
+    private bool Retained(RibbonGalleryItem source, RibbonGalleryInlineSurface view) => !source.IsDisposed && source.IsInRibbon && ReferenceEquals(source.Ribbon, ribbon) && view.MatchesSelectors;
+    private bool Valid(RibbonGalleryItem source, RibbonGalleryInlineSurface view) => source.Visible && Retained(source, view);
     internal bool Focus(RibbonGalleryItem source)
     {
         if (ribbon.IsBackstageOpen) return false;
         Sync();
+        if (ribbon.Popups.Top is { } host && _temporary.TryGetValue((source, host), out var temporary) && temporary.Visible) return temporary.FocusView();
         if (_inline.TryGetValue(source, out var custom) && custom.Visible) return custom.FocusView();
         return _strips.TryGetValue(source, out var strip) && strip.Visible && strip.Focus();
     }
     internal void Release(Control parent)
     {
+        foreach (var key in _temporary.Keys.Where(key => ReferenceEquals(key.Host, parent)).ToArray())
+        { var view = _temporary[key]; _temporary.Remove(key); view.Dispose(); }
         foreach (var strip in _strips.Values.Where(s => ReferenceEquals(s.Parent, parent)).ToArray()) strip.Park();
         foreach (var view in _inline.Values.Where(s => ReferenceEquals(s.Parent, parent)).ToArray()) view.Park();
     }
     internal void CancelPreviews()
     {
         foreach (var strip in _strips.Values.ToArray()) strip.Source.CancelPreview(strip);
-        foreach (var view in _inline.Values.ToArray()) view.CancelPreview();
+        foreach (var view in CustomViews.ToArray()) view.CancelPreview();
     }
     internal void SetBackdropOpacity(byte alpha) { foreach (var view in _inline.Values.ToArray()) view.SetBackdropOpacity(alpha); }
     public void Dispose()
     {
         _disposed = true;
         foreach (var strip in _strips.Values.ToArray()) strip.Dispose(); _strips.Clear();
-        foreach (var view in _inline.Values.ToArray()) view.Dispose(); _inline.Clear();
+        foreach (var view in CustomViews.ToArray()) view.Dispose(); _temporary.Clear(); _inline.Clear();
     }
 }
 

@@ -663,25 +663,31 @@ InRibbonPresenterFactory instead. Null for both inline selectors retains the
 built-in strip. The inline class picker in Edit Ribbon/Properties is deferred;
 select this runtime class in code or an authored typeof assignment.
 
-RibbonKit creates the inline control only for a visible ordinary strip slot and
-retains it across hiding and popup expansion. The expanded popup creates its own
-fresh control. Both display the original source items and selection; focus, scroll
+RibbonKit creates the ordinary inline control for a visible strip slot and
+retains it across hiding and popup expansion. Collapsed-group, minimized-tab and
+QAT-group bodies create separate inline controls owned by their popup sessions.
+Closing those hosts disposes their bodies; reopening creates fresh ones. An
+expanded gallery popup also creates its own fresh control. All views display the
+original source items and selection; focus, scroll
 and preview ownership are per view. Hidden/suspended contexts become inert, and
 reactivation supplies another context. Replacement, final source detach or
 disposal releases the owned inline tree. The library controls viewport size,
 clipping, utility buttons, validation and keyboard routing; inline Tab leaves the
 gallery, while F4/Alt+Down expands it. Use context input requests for native child
 tiles and avoid a second keyboard/command dispatcher. Keep context-sized physical
-layout from being scaled again after parenting.
+layout from being scaled again after parenting. A presenter root that assigns
+physical bounds in Synchronize can use AutoScaleMode.None; its nested native
+UserControls retain normal designer scaling, as in both sample gallery views.
 Abort a child press if its native focus attempt was rejected or FocusItem returns
 false, so validation is not repeated on release.
 
 The permanent Designer Sample's Gallery tab uses a visually editable
 [GalleryStylesStripControl](samples/RibbonKit.WinForms.DesignerSample/GalleryStylesStripControl.cs)
-beside the existing popup example. Temporary group/minimized-tab/QAT-group bodies
-still use built-in views. Presenter types, controls and
+beside the existing popup example. Temporary bodies use the same inline selectors,
+with context.Presentation=InRibbon and route-aware context.IsQuickAccess. Expanding
+a QAT body still follows UseDropDownPresenterInQuickAccess. Presenter types, controls and
 transient view state stay out of customization JSON. See the
-[first-slice evidence and remaining gates](docs/GALLERY-PRESENTER-PLAN.md#first-inline-runtime-increment--2026-11-02).
+[temporary-host correction and current evidence](docs/GALLERY-PRESENTER-PLAN.md#popup-card-rendering-and-temporary-inline-hosts--2026-11-02).
 
 ### Custom gallery popups from Quick Access
 
@@ -1427,6 +1433,38 @@ choice/gallery previews and dismisses the popup chain through its ownership path
 then calls the Form's normal close handling. FormClosing may cancel; retained native
 editors and typed values remain available when menus reopen. Escape retains its
 existing one-level dismissal behavior.
+
+### UserControl popup bodies
+
+Ordinary dropdowns and split buttons can display a designer-editable UserControl:
+
+```csharp
+options.ContentType = typeof(MyOptionsControl);
+```
+
+Choose **ContentType** in Edit Ribbon or the component Properties view after
+building your project. Ribbon initialization creates the body before Form.Load;
+`options.Content` returns it. The item owns and retains this instance across source
+and QAT openings. Its native width/height plus popup padding determine the popup
+size, bounded by the monitor; application content owns any internal scrolling.
+No gallery presenter interface is required.
+
+Alternatively assign an unparented application-owned Control to **Content** from
+code. It remains borrowed and is never disposed by the ribbon. Content and
+ContentType are mutually exclusive. A body can belong to only one dropdown or
+Backstage declaration. Do not reparent it while assigned.
+
+Custom content replaces the visible menu rows. The Items collection is retained;
+clear ContentType/Content to restore it. Native controls retain text, selection
+and handles on reopening. Apply/Enter actions and validation belong to the
+application; call the source's existing CloseDropDown method to dismiss. Tab
+traverses native children, and Escape dismisses a native ComboBox list before the
+popup. A split button's primary action is independent. Gallery items continue
+using their separate presenter properties.
+
+The permanent Designer Sample's **Home → Select** and **Paste arrow** demonstrate
+this with `PopupOptionsControl`. Edit that body using its normal UserControl
+designer. [Contract, evidence and remaining review](docs/DROPDOWN-CONTENT-PLAN.md).
 
 ## Passive ScreenTips
 

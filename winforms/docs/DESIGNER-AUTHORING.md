@@ -836,6 +836,16 @@ or publish is authorized.
 
 ## User review steps
 
+For ordinary custom popup bodies, select a dropdown or split button in Edit
+Ribbon, then choose **Data → ContentType** after building the consumer project.
+Edit the selected class in the ordinary UserControl designer. `(None)` restores
+the existing Items menu; selecting a type preserves those menu declarations.
+The component Properties view offers the same metadata-only class selector.
+The permanent Designer Sample's **Home → Select** and **Paste arrow** use
+`PopupOptionsControl`. Verify class changes, Cancel/OK, one-step Undo/Redo and
+save/reopen in actual VS; those interactive gates remain pending. Runtime and
+automated designer evidence are in the [retained content plan](DROPDOWN-CONTENT-PLAN.md).
+
 A fresh Debug package consumer is ready at:
 
 ```text

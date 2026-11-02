@@ -44,8 +44,9 @@ partial class GalleryStylesControl
         bodySixCard.Name = "bodySixCard";
         bodySixCard.Size = new Size(171, 70);
 
-        AutoScaleDimensions = new SizeF(7F, 15F);
-        AutoScaleMode = AutoScaleMode.Font;
+        // Synchronize supplies physical pixel bounds; each native card scales
+        // its own designer children. Do not scale those bounds a second time.
+        AutoScaleMode = AutoScaleMode.None;
         Controls.AddRange(new Control[] { headingCard, bodyCard, quoteCard, captionCard, headingFiveCard, bodySixCard });
         Name = "GalleryStylesControl";
         Size = new Size(360, 234);

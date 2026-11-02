@@ -1,6 +1,8 @@
 # Optional native gallery presenter and dropdown content hosting
 
-Status, **2026-11-02: ordinary custom inline presentation accepted at the reviewed scope; QAT custom gallery popups implemented, human review pending**.
+Status, **2026-11-02: ordinary inline and source/QAT custom gallery popups accepted at the reviewed scope**.
+The subsequently reported popup-card clipping and temporary group-body fallback
+are tracked in the correction record below.
 The user previously confirmed the dropdown gallery presenter works.
 The user accepted the synchronized gallery fade/slide entrance on **2026-11-02**.
 Gallery UserControl class selection in the ribbon designer is implemented with
@@ -11,12 +13,15 @@ The user selected the custom gallery UserControl presenter as the next slice.
 The runtime contract and ownership decisions for this increment are recorded below;
 the existing built-in gallery remains the default.
 This is native RibbonKit.WinForms work; WPF runtime/build/CI remain outside scope.
-The deferred dropdown popup designer and custom UserControl hosting proposal is
-recorded separately below and remains deferred. Inline/QAT custom presenters
+The ordinary dropdown/split UserControl increment is tracked in the
+[retained content plan](DROPDOWN-CONTENT-PLAN.md); its inert popup designer preview
+remains deferred. Inline/QAT custom presenters
 now include the [first ordinary inline body increment](#first-inline-runtime-increment--2026-11-02).
 The [QAT gallery popup increment](#qat-gallery-popup-increment--2026-11-02) reuses the
-existing dropdown class/factory. Temporary custom bodies and inline designer class
-selection remain later slices under the [inline/QAT contract](#inline-and-qat-gallery-presenter-contract--proposal-2026-11-02).
+existing dropdown class/factory. The
+[temporary body correction](#popup-card-rendering-and-temporary-inline-hosts--2026-11-02)
+adds source-group, minimized-tab and QAT-group bodies. Inline designer class
+selection remains a later slice under the [inline/QAT contract](#inline-and-qat-gallery-presenter-contract--proposal-2026-11-02).
 
 ## First increment contract — 2026-11-02
 
@@ -542,12 +547,129 @@ Verification, **2026-11-02**:
 Review the third **Document styles** button in the normal Debug Designer Sample's
 BelowRibbon QAT, or press F10 then 3. It should open the same custom popup class
 as the ribbon gallery, including while another tab is selected. Selection from
-either route updates the same gallery. The next component slice remains separate
-session-owned custom inline bodies in temporary group/minimized-tab hosts.
+either route updates the same gallery. The subsequent temporary-host continuation
+is recorded below.
 
 ```powershell
 dotnet run --project winforms/samples/RibbonKit.WinForms.DesignerSample -c Debug --no-build -- --verify-qat-gallery-presenter winforms/artifacts/qat-gallery-presenter/consumer-final
 ```
+
+## Popup card rendering and temporary inline hosts — 2026-11-02
+
+**User accepted the popup-card rendering and collapsed/QAT group-body corrections on 2026-11-02.** The
+user accepted ordinary dropdown/split UserControl popups and reported two gallery
+defects: clipped native previews in the dropdown's six authored cards and built-in
+gallery bodies inside collapsed/QAT group hosts.
+
+- Reproduced the exact dropdown clipping in the package-only Designer Sample at
+  120 DPI. The first six cards had 40-pixel paper panels while later dynamically
+  created cards had 63-pixel panels. The popup example's root was applying another
+  font-scaling pass to physical layout supplied by its presenter. Its root now
+  uses AutoScaleMode.None, matching the inline example. Native nested cards keep
+  their ordinary designer scaling; all 18 popup panels are now 63 pixels high and
+  contain their preview labels. The accepted inline card appearance is preserved.
+- Custom inline bodies now have fixed ribbon or popup-session slots. Ordinary
+  source-group collapse, collapse while that group has a QAT reference, direct
+  QAT groups, QAT overflow groups and minimized-tab bodies use the existing inline
+  selectors. Each temporary host owns a fresh UserControl and context; closing it
+  disposes its native tree and invalidates callbacks. The retained ribbon view is
+  never moved or disposed by this handover. Its visibility follows the existing
+  group/layout ownership rules. Null selectors preserve the movable built-in path.
+- Temporary contexts report Presentation=InRibbon and the host's actual QAT
+  ancestry. A QAT reference elsewhere does not mark an ordinary collapsed group
+  as QAT. Expanding a body uses the existing dropdown selectors and QAT opt-in;
+  cancel restores the same temporary view, independently browsed row and focus.
+  Input dispatch, validation, preview, commit, native accessible bounds, motion
+  capture and parent-menu Tab navigation use the shared inline host. No public
+  API, source item cloning, new persistence state or alternate popup policy was
+  added. General customized command-copy presenter forwarding remains outside
+  this source-group increment.
+
+Verification, 2026-11-02:
+
+- Normal Debug runtime and package-consumer builds passed with zero warnings or
+  errors. The decisive focused run passed **80/80**: 17 new temporary-host cases,
+  16 existing inline cases, 20 expanded-presenter cases, 12 QAT-presenter cases,
+  11 popup-motion cases and 4 QAT-group cases. A separate built-in gallery/reduction
+  selection passed **13/13**. These are 93 distinct cases across two runs.
+  Earlier fixture failures were corrected before the 80-case pass; they are not
+  counted as additional successful cases. A reused or failing factory must unwind
+  the temporary host without disposing the retained ribbon body. Native QAT group
+  borrowing can keep that body parked until its reference is removed.
+- Evidence: `TestResults/gallery-temporary-related.trx` and
+  `TestResults/gallery-temporary-builtin-related.trx`. Initial/scoped diagnostic
+  runs remain beside those results. No new full-suite campaign was run; the prior
+  full-run limits remain in the ordinary dropdown content plan.
+- Independent package-only check passed at actual **120 DPI**:
+  `artifacts/gallery-hosts/consumer-final/result.log`. It verifies all authored and
+  dynamic popup cards on the initial and last pages; real collapsed-group pointer
+  opening with/without a QAT reference; direct/overflow QAT group KeyTips; a
+  minimized-tab body; native child-label commits; F4/Escape and focus/row
+  restoration; an inactive source tab; original permanent HWND and 18 tiles; and
+  three exactly-once commits. Source popup, collapsed-group, QAT overflow-group
+  and minimized-tab PNGs were inspected. Before/fixed clipping geometry and
+  captures remain under `artifacts/gallery-hosts/{before,card-scaling-fixed}`.
+- The accepted ordinary dropdown/split package consumer also passed with Subtle
+  motion against the corrected library:
+  `artifacts/gallery-hosts/retained-dropdown-check/result.log`.
+- Normal Release solution build and final Debug runtime/designer/client builds
+  passed with zero warnings/errors. The permanent Designer Sample was refreshed
+  in place to `0.1.0-designer.local20261102T121407933Z`; the complete gallery-host
+  check passed against that final package too:
+  `artifacts/gallery-hosts/consumer-package-final/result.log`.
+
+Actual Visual Studio authoring/save-reopen, physical pointer/touch/IME, RTL,
+mixed-monitor DPI and external accessibility
+remain separate gates. Existing motion policy is reused; this is not a new
+perceived-motion acceptance claim.
+
+## First Gallery-tab opening — 2026-11-02
+
+**Measured and optimized in the Designer Sample; user review pending.** The user
+reported a noticeable delay on the first visit to the Gallery tab. Fresh-process
+profiling separated native initialization, presenter synchronization and the
+existing Expressive/SlideDown transition at actual 120 DPI.
+
+The first visit created native windows for all 18 inline cards and their children:
+91 controls, including offscreen rows. The presenter constructor itself took about
+2 ms. The dominant avoidable cost was native window creation during synchronization.
+Disabling motion still reproduced a first-use delay, so the delay was not solely
+the chosen animation duration.
+
+The sample now hides newly connected cards before parenting and makes only the
+current row visible. Offscreen cards keep their managed objects, bindings and
+source identities; their native windows are created when first shown, then retained
+through later row browsing. First visibility completes normal native autoscaling
+before physical presenter bounds are applied. The three designer-authored cards
+remain intact. This changes sample presentation code only; no library API,
+initialization timing contract, eager preload or animation policy was changed.
+
+| Fresh-process scope | First tab selection | Presenter synchronization | Native windows |
+| --- | ---: | ---: | ---: |
+| Before, Expressive/SlideDown | 243.08 ms | 130.74 ms | 91 |
+| After, same motion | 123.69 ms | 15.60 ms | 16 |
+| After, second fresh process with additional timing probes | 108.08 ms | 12.52 ms | 16 |
+| Before, motion disabled | 122.51 ms | 88.45 ms | 91 |
+| After, motion disabled | 103.96 ms | 25.40 ms | 16 |
+
+These are local diagnostic measurements, not a performance guarantee. The first
+three authored cards account for the retained 16-window initial tree; only two
+cards are shown. First-use framework/capture work and the requested motion still
+contribute to total opening time. The improvement does not make cold and warm
+visits identical. Logs are under `artifacts/inline-gallery-first-tab/` in
+`before-{default,no-motion,builtin}`, `after-{default,no-motion,detailed}`.
+
+Normal Debug sample builds passed with zero warnings/errors. The existing
+package-only inline consumer now verifies that an unvisited row has no native
+window and returning to a visited row preserves the same card handles. Its source,
+selection, preview, child-click, keyboard, expansion/cancel and disposal checks
+passed: `artifacts/inline-gallery-first-tab/consumer-inline/result.log`.
+The complete collapsed/QAT/overflow/minimized-host consumer also passed:
+`artifacts/inline-gallery-first-tab/consumer-hosts/result.log`. Initial inline and
+collapsed-group native captures were inspected. The current library package is
+unchanged; normal Debug consumer output is rebuilt. No full-suite or Release
+campaign was rerun for this sample-only correction. Actual VS and physical
+mixed-monitor/IME review remain separate.
 
 ## Inline and QAT gallery presenter contract — proposal, 2026-11-02
 
@@ -556,10 +678,13 @@ The complete target contract below includes later, still-unimplemented slices.
 Its original inspection used the clean `codex/Ribbonkit-Winform` worktree at
 `d8d893b4c1a53cc66e1da636543609150fdf88ff` (`Gallery Usercontrol custom presentation
 pop up`). Inline selectors, the QAT opt-in and context.Presentation/IsQuickAccess
-are now available. The temporary custom-body and designer authoring slices remain.
+are now available, including the temporary source-group/minimized bodies above.
+Inline designer discovery and customized command-copy presenter forwarding remain
+later slices.
 The accepted popup entrance, designer-editable cards and earlier focus, native
 editor and backdrop fixes remain the baseline. Ordinary dropdown/split content
-hosting and popup designer previews remain in their separate deferred section.
+hosting is tracked in [its current plan](DROPDOWN-CONTENT-PLAN.md); the separate
+inert popup designer preview remains deferred.
 
 ### Presentations and selector boundaries
 
@@ -1023,6 +1148,11 @@ passing evidence unless a change or unresolved risk warrants rerunning it.
 
 ## Dropdown popup designer and custom content — deferred addition, 2026-11-01
 
+**Update, 2026-11-02:** the user approved retained ordinary dropdown/split content.
+Stage 2's first implementation and current evidence are now in the
+[retained content plan](DROPDOWN-CONTENT-PLAN.md). Stage 1's inert popup preview
+remains deferred. The following is the original proposal and decision checklist.
+
 Recorded at the user's request alongside the gallery hosting proposal. Keep
 ordinary dropdown/split-button menus and custom gallery presenters as distinct
 contracts; they share native hosting concerns but have different content behavior.
@@ -1093,6 +1223,5 @@ VS, visual/native input and physical-DPI review from automated evidence. This
 stage does not require the gallery-specific tile/preview/scroll interface for
 ordinary custom dropdown bodies.
 
-This deferred ordinary-dropdown record adds no acceptance evidence for custom
-dropdown/split content or popup designer previews. The implemented gallery-only
-increment and its current evidence are recorded above.
+This historical proposal adds no acceptance evidence. The linked retained-content
+plan owns current dropdown/split evidence; popup designer previews remain deferred.

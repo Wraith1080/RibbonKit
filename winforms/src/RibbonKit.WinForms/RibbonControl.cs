@@ -282,6 +282,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         foreach (var entry in QuickAccessItems) entry.MergeProvenance = GetMergeSource(entry);
         foreach (var gallery in AllElements.OfType<RibbonGalleryItem>().ToArray()) gallery.Reconcile();
         RefreshBackstage();
+        if (_popupContentInitialized) InitializePopupContent();
         if (layout)
         {
             _engine.Clear();
@@ -333,11 +334,12 @@ public partial class RibbonControl : Control, ISupportInitialize
     }
     /// <summary>Provides BeginInit for native ribbon presentation.</summary>
     public void BeginInit() => BeginUpdate();
-    /// <summary>Completes native ribbon initialization and creates ContentType page instances at runtime. Designer sessions do not create page content.</summary>
+    /// <summary>Completes native ribbon initialization and creates ContentType page and popup instances at runtime. Designer sessions do not create application content.</summary>
     public void EndInit()
     {
         EndUpdate();
         InitializeBackstageContent();
+        InitializePopupContent();
     }
     private void UpdateHeight()
     {
@@ -471,6 +473,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         // Code-created consumers need the same pre-Form.Load initialization
         // even when they do not use the designer's ISupportInitialize batch.
         InitializeBackstageContent();
+        InitializePopupContent();
     }
     /// <inheritdoc />
     protected override void OnHandleDestroyed(EventArgs e)

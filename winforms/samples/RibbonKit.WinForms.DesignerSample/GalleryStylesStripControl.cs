@@ -31,6 +31,9 @@ public partial class GalleryStylesStripControl : UserControl, IRibbonGalleryPres
             {
                 if (_views.ContainsKey(item)) continue;
                 var card = Controls.OfType<GalleryStyleTileControl>().FirstOrDefault(view => view.Tag is null) ?? new GalleryStyleTileControl();
+                // Offscreen rows do not need native child windows yet. Keep
+                // each card object so visited rows retain their native state.
+                card.Visible = false;
                 card.Tag = item; card.TabStop = false; _views.Add(item, card); ConnectPointer(card, item);
                 if (card.Parent is null) Controls.Add(card);
             }
@@ -49,8 +52,11 @@ public partial class GalleryStylesStripControl : UserControl, IRibbonGalleryPres
             var card = _views[_items[i]];
             int left = Context.Viewport.Width * (i % Columns) / Columns;
             int right = Context.Viewport.Width * (i % Columns + 1) / Columns;
+            // First visibility runs native child autoscaling before physical
+            // presenter bounds are applied, preserving the authored card layout.
+            card.Visible = i / Columns == _row;
             card.Bounds = new(left + gap, (i / Columns - _row) * Context.Viewport.Height + gap, Math.Max(1, right - left - 2 * gap), Math.Max(1, Context.Viewport.Height - 2 * gap));
-            card.Visible = true; card.ShowItem(_items[i], Context, ReferenceEquals(_hot, _items[i]));
+            card.ShowItem(_items[i], Context, ReferenceEquals(_hot, _items[i]));
         }
         Invalidate();
     }

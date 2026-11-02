@@ -1072,3 +1072,10 @@ RibbonKit.WinForms.RibbonGalleryScroll.PageBackward = 2 -> RibbonKit.WinForms.Ri
 RibbonKit.WinForms.RibbonGalleryScroll.PageForward = 3 -> RibbonKit.WinForms.RibbonGalleryScroll
 RibbonKit.WinForms.RibbonGalleryScroll.RowBackward = 0 -> RibbonKit.WinForms.RibbonGalleryScroll
 RibbonKit.WinForms.RibbonGalleryScroll.RowForward = 1 -> RibbonKit.WinForms.RibbonGalleryScroll
+RibbonKit.WinForms.RibbonDropDownItem.Content.get -> System.Windows.Forms.Control?
+RibbonKit.WinForms.RibbonDropDownItem.Content.set -> void
+RibbonKit.WinForms.RibbonDropDownItem.ContentChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonDropDownItem.ContentType.get -> System.Type?
+RibbonKit.WinForms.RibbonDropDownItem.ContentType.set -> void
+RibbonKit.WinForms.RibbonDropDownItem.ContentTypeChanged -> System.EventHandler?
+override RibbonKit.WinForms.RibbonDropDownItem.Dispose(bool disposing) -> void

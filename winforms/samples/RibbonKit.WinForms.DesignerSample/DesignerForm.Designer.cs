@@ -104,6 +104,7 @@ partial class DesignerForm
         // 
         // selectDropdown
         // 
+        selectDropdown.ContentType = typeof(PopupOptionsControl);
         selectDropdown.DropDownHeader = "Object Selection";
         selectDropdown.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:copy-select", true);
         selectDropdown.Id = "rk:e0b3a46259ba4a868a80219eb1d82b07";
@@ -135,6 +136,7 @@ partial class DesignerForm
         // 
         // pasteSplitButton
         // 
+        pasteSplitButton.ContentType = typeof(PopupOptionsControl);
         pasteSplitButton.DropDownHeader = "Paste Special";
         pasteSplitButton.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:paste", true);
         pasteSplitButton.Id = "rk:0ccb08fcbf7f4657b1eeceeb3c9b5d28";
@@ -264,6 +266,7 @@ partial class DesignerForm
         // 
         // galleryGroup
         // 
+        galleryGroup.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:home-garage", true);
         galleryGroup.Id = "gallery.styles";
         galleryGroup.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { documentStylesGallery });
         galleryGroup.Text = "Custom gallery";
@@ -271,6 +274,7 @@ partial class DesignerForm
         // documentStylesGallery
         // 
         documentStylesGallery.ColumnCount = 2;
+        documentStylesGallery.Content = null;
         documentStylesGallery.DropDownPresenterType = typeof(GalleryStylesControl);
         documentStylesGallery.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:desktop-edit", true);
         documentStylesGallery.Id = "gallery.documentStyles";
@@ -511,7 +515,7 @@ partial class DesignerForm
         // 
         AutoScaleDimensions = new SizeF(8F, 20F);
         AutoScaleMode = AutoScaleMode.Font;
-        Backdrop = RibbonKit.WinForms.RibbonWindowBackdrop.Mica;
+        BackColor = Color.White;
         ClientSize = new Size(1029, 667);
         Controls.Add(button1);
         Controls.Add(statusLabel);

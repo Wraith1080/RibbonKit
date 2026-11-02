@@ -2,11 +2,12 @@ using RibbonKit.WinForms.Layout;
 
 namespace RibbonKit.WinForms;
 
-// A permanent ribbon slot owns this surface and its application control. The
-// expanded popup owns another view; this control is never moved into a flyout.
+// One fixed ribbon or popup slot owns this surface and its application control.
+// Each other slot and expanded popup owns a separate view; no control is moved.
 internal sealed class RibbonGalleryInlineSurface : Control, IRibbonGalleryPresenterHost
 {
     private readonly RibbonControl _ribbon;
+    private readonly RibbonPopupSurface? _host;
     internal RibbonGalleryItem Source { get; }
     private readonly Type? _type;
     private readonly Func<Control>? _factory;
@@ -26,11 +27,12 @@ internal sealed class RibbonGalleryInlineSurface : Control, IRibbonGalleryPresen
     internal UserControl PresenterControl => _control;
     internal bool MatchesSelectors => _type == Source.InRibbonPresenterType && _factory == Source.InRibbonPresenterFactory;
     private bool Interactive => _shown && Visible && _ribbon.Visible && _ribbon.Enabled && Source.Visible && Source.EffectiveEnabled
-        && !Source.IsDisposed && ReferenceEquals(Source.Ribbon, _ribbon) && !_ribbon.IsBackstageOpen && !_ribbon.Popups.HasOpen;
+        && !Source.IsDisposed && ReferenceEquals(Source.Ribbon, _ribbon) && !_ribbon.IsBackstageOpen
+        && (_host is null ? !_ribbon.Popups.HasOpen : ReferenceEquals(_ribbon.Popups.Top, _host));
 
-    internal RibbonGalleryInlineSurface(RibbonControl ribbon, RibbonGalleryItem source)
+    internal RibbonGalleryInlineSurface(RibbonControl ribbon, RibbonGalleryItem source, RibbonPopupSurface? host = null)
     {
-        _ribbon = ribbon; Source = source; _type = source.InRibbonPresenterType; _factory = source.InRibbonPresenterFactory;
+        _ribbon = ribbon; _host = host; Source = source; _type = source.InRibbonPresenterType; _factory = source.InRibbonPresenterFactory;
         SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
         TabStop = false; CausesValidation = false; AccessibleName = source.Text + " gallery"; AccessibleRole = AccessibleRole.List;
         _control = RibbonGalleryPresenterOwnership.Accept(source.CreateInRibbonPresenter());
@@ -53,7 +55,7 @@ internal sealed class RibbonGalleryInlineSurface : Control, IRibbonGalleryPresen
         try
         {
             _shown = true;
-            if (Parent is null) _ribbon.Controls.Add(this);
+            if (Parent is null) (_host as Control ?? _ribbon).Controls.Add(this);
             Font = _ribbon.Font; BackColor = _ribbon.Theme.Surface; Enabled = Source.EffectiveEnabled;
             Bounds = target.Bounds;
             var clip = target.VisibleBounds; clip.Offset(-Left, -Top);
@@ -70,12 +72,12 @@ internal sealed class RibbonGalleryInlineSurface : Control, IRibbonGalleryPresen
                 DetachContext();
                 if (IsDisposed || Source.IsDisposed || !MatchesSelectors) return;
                 _inputEnabled = interactive;
-                _context = new(this, Source, _ribbon, RibbonGalleryPresentation.InRibbon);
+                _context = new(this, Source, _ribbon, RibbonGalleryPresentation.InRibbon, isQuickAccess: _host?.IsQuickAccess == true);
             }
             _context.Viewport = _viewport.ClientSize;
             SynchronizePresenter();
             if (_inputEnabled && !Interactive) DetachContext();
-            SetBackdropOpacity(_ribbon.BackdropBodyMasked ? (byte)1 : (byte)255);
+            SetBackdropOpacity(_host is null && _ribbon.BackdropBodyMasked ? (byte)1 : (byte)255);
             BringToFront(); Invalidate();
         }
         finally { _presenting = false; }
@@ -187,8 +189,17 @@ internal sealed class RibbonGalleryInlineSurface : Control, IRibbonGalleryPresen
         if (key is Keys.F4 or (Keys.Alt | Keys.Down)) { Expand(); return true; }
         if (key is Keys.Escape or Keys.Tab or (Keys.Tab | Keys.Shift))
         {
-            context.Preview(null); _ribbon.FocusElement(Source, enterEditor: false);
-            if (key != Keys.Escape) _ribbon.ProcessRibbonKey(key);
+            context.Preview(null);
+            if (_host is not null)
+            {
+                if (key == Keys.Escape) _ribbon.Popups.CloseTop(true);
+                else _host.NavigateFromElement(Source, key);
+            }
+            else
+            {
+                _ribbon.FocusElement(Source, enterEditor: false);
+                if (key != Keys.Escape) _ribbon.ProcessRibbonKey(key);
+            }
             return true;
         }
         if (key is Keys.Enter or Keys.Space) { if (_focused is { } tile) context.Commit(tile); return true; }
@@ -241,7 +252,11 @@ internal sealed class RibbonGalleryInlineSurface : Control, IRibbonGalleryPresen
         Scroll(e.Delta < 0 ? RibbonGalleryScroll.RowForward : RibbonGalleryScroll.RowBackward);
         if (e is HandledMouseEventArgs handled) handled.Handled = true;
     }
-    private void ViewFocused(object? sender, EventArgs e) { _ribbon.EditorFocused(Source); SynchronizePresenter(); }
+    private void ViewFocused(object? sender, EventArgs e)
+    {
+        if (_host is not null) _host.EditorFocused(Source); else _ribbon.EditorFocused(Source);
+        SynchronizePresenter();
+    }
     private void ViewLeft(object? sender, EventArgs e) => CancelPreview();
     protected override bool ProcessCmdKey(ref Message msg, Keys key) => ProcessKey(key) || base.ProcessCmdKey(ref msg, key);
     private IEnumerable<(RibbonGalleryStripButton Kind, Rectangle Bounds, bool Available)> Buttons()

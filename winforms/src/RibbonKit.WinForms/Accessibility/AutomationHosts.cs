@@ -55,7 +55,7 @@ internal sealed partial class RibbonPopupSurface
     protected override void WndProc(ref Message m)
     {
         if (HandleCustomizationContext(ref m)) return;
-        if (m.Msg == 0x3D && m.LParam.ToInt64() == -25)
+        if (m.Msg == 0x3D && m.LParam.ToInt64() == -25 && !HasCustomContent)
         {
             m.Result = UiaNative.UiaReturnRawElementProvider(Handle, m.WParam, m.LParam, AutomationRoot.NativeProvider);
             return;
@@ -66,6 +66,7 @@ internal sealed partial class RibbonPopupSurface
     {
         if (disposing)
         {
+            DetachContent();
             DisposeOverflowScrolling();
             _automation?.Disconnect();
             _automation = null;

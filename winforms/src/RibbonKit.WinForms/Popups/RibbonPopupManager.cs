@@ -154,6 +154,14 @@ internal sealed class RibbonPopupManager : IDisposable
             AccessibleName = (owner is RibbonQuickAccessDropDownReference or RibbonQuickAccessGroupReference ? RibbonQuickAccess.Caption(owner) : owner.Text) + " commands"
         };
         window.Items.Add(host);
+        surface.SizeChanged += (_, _) =>
+        {
+            if (!surface.HasCustomContent || window.IsDisposed) return;
+            host.Size = surface.Size;
+            var next = CalculateBounds(placementAnchor, work, new(surface.Width + 2, surface.Height + 2),
+                contextPoint is null && opener is RibbonPopupSurface, _ribbon.DeviceDpi);
+            window.Bounds = next;
+        };
         var session = new Session(owner, menuSource, opener, anchor, window, surface);
         _sessions.Add(session);
         if (surface.GroupSource is not null) _ribbon.RefreshBorrowedGroupPresentation();
@@ -293,6 +301,7 @@ internal sealed class RibbonPopupManager : IDisposable
             // A presentation failure must not strand an untracked live popup.
             _ribbon.Editors.Release(session.Surface);
             _ribbon.GalleryStrips.Release(session.Surface);
+            session.Surface.DetachContent();
             session.Window.Close(); session.Window.Dispose();
             _ribbon.SyncEditors();
         }
@@ -325,7 +334,7 @@ internal sealed class RibbonPopupManager : IDisposable
         {
             if (!_sessions.Contains(session)) continue;
             if (!CurrentProjection(session.Owner, session.MenuSource, session.Surface.GroupSource)
-                || session.MenuSource is RibbonGalleryItem gallery && (!gallery.EffectiveEnabled || !gallery.Visible || !ReferenceEquals(gallery.Ribbon, _ribbon))
+                || session.MenuSource is { } source && (!source.EffectiveEnabled || !source.Visible || !ReferenceEquals(source.Ribbon, _ribbon))
                 || ReferenceEquals(session.Owner, _ribbon.FileMenu) && (!session.Owner.EffectiveEnabled || !session.Owner.Visible)
                 || session.Surface.GroupSource is { } group && (!group.EffectiveEnabled || !group.Visible || !ReferenceEquals(group.Ribbon, _ribbon)))
             { Close(session.Owner, false); continue; }
@@ -431,6 +440,8 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
             galleryViewport = _galleryLayout.ViewportHeight;
             _targets.AddRange(_galleryLayout.Targets);
         }
+        else if (MenuSource?.Content is { } content)
+        { Size = InitializeContent(content, workArea); return; }
         else if (owner is RibbonQuickAccessOverflow)
         {
             IReadOnlyList<RibbonElement> items = owner is RibbonSimplifiedMore more ? more.Entries : ribbon.Snapshot.QuickAccessOverflowItems;
@@ -687,6 +698,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     }
     internal void FocusFirst()
     {
+        if (HasCustomContent) { FocusContent(); return; }
         if (HasGalleryPresenter && GallerySource is { } custom)
         { FocusPresenterItem(custom.SelectedItem is { } selectedItem && custom.Available(selectedItem) ? selectedItem : custom.Items.OfType<RibbonGalleryTile>().FirstOrDefault(custom.Available)); return; }
         if (GallerySource?.SelectedItem is { } selected && Targets.Any(t => ReferenceEquals(t.Element, selected) && t.Enabled))

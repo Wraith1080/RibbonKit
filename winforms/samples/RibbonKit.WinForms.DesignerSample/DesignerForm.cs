@@ -7,6 +7,18 @@ public partial class DesignerForm : RibbonForm
     public DesignerForm()
     {
         InitializeComponent();
+        ConfigurePopup(selectDropdown, "Select options");
+        ConfigurePopup(pasteSplitButton, "Paste options");
+        pasteSplitButton.Click += (_, _) => statusLabel.Text = "Paste primary action";
+    }
+
+    internal (RibbonDropDownItem DropDown, RibbonSplitButtonItem Split) PopupContentExample => (selectDropdown, pasteSplitButton);
+    private void ConfigurePopup(RibbonDropDownItem item, string caption)
+    {
+        if (item.Content is not PopupOptionsControl body) return;
+        body.Heading.Text = caption;
+        body.Applied += (_, _) => { statusLabel.Text = caption + ": " + body.ValueEditor.Text + " / " + body.ModeEditor.Text; item.CloseDropDown(); };
+        body.Dismissed += (_, _) => item.CloseDropDown();
     }
 
     internal (RibbonTab Tab, RibbonGalleryItem Gallery) GalleryPresenterExample => (galleryTab, documentStylesGallery);

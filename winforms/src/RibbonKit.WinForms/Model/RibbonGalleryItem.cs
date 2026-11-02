@@ -25,7 +25,7 @@ public sealed class RibbonGalleryItem : RibbonDropDownItem
     private Type? _dropDownPresenterType;
     private Func<Control>? _inRibbonPresenterFactory;
     private Type? _inRibbonPresenterType;
-    /// <summary>Gets or selects a public concrete UserControl implementing IRibbonGalleryPresenter with a public parameterless constructor for the ordinary ribbon body. Creation is lazy when a strip is visible. RibbonKit retains the owned view across hiding and disposes it on replacement, final source detach or ribbon disposal. Clear InRibbonPresenterFactory first. Null for both inline selectors preserves the built-in strip; temporary flyout bodies remain built-in. QAT gallery popups use the independent dropdown selectors when UseDropDownPresenterInQuickAccess is true.</summary>
+    /// <summary>Gets or selects a public concrete UserControl implementing IRibbonGalleryPresenter with a public parameterless constructor for inline strip slots. Creation is lazy. RibbonKit retains the ordinary ribbon view across hiding and creates separate session-owned views for collapsed-group, minimized-tab and QAT-group bodies. Views are never moved between hosts. Replacement, final source detach and ribbon disposal release owned views; closing a temporary host releases its view. Clear InRibbonPresenterFactory first. Null for both inline selectors preserves the built-in strip. Expanded QAT gallery popups use the independent dropdown selectors when UseDropDownPresenterInQuickAccess is true.</summary>
     [Browsable(false), Category("Data"), DefaultValue(null)]
     [Description("Custom inline gallery UserControl class, independent of the dropdown presenter. Body authoring stays in the ordinary UserControl designer; inline class discovery is a later designer increment.")]
     public Type? InRibbonPresenterType
@@ -41,7 +41,7 @@ public sealed class RibbonGalleryItem : RibbonDropDownItem
     }
     /// <summary>Occurs after the optional inline gallery presenter class changes.</summary>
     public event EventHandler? InRibbonPresenterTypeChanged;
-    /// <summary>Gets or sets an optional runtime factory for the ordinary inline gallery body. Return a fresh unparented UserControl implementing IRibbonGalleryPresenter. RibbonKit owns and retains it while its source is retained; it is never moved into the expanded popup. Clear InRibbonPresenterType first. Null for both inline selectors preserves the built-in strip. Factory delegates and view state are not serialized.</summary>
+    /// <summary>Gets or sets an optional runtime factory for inline gallery bodies. Return a fresh unparented UserControl implementing IRibbonGalleryPresenter for each requested slot. RibbonKit retains the ordinary ribbon view and disposes each separate temporary group/tab/QAT-group view with its popup host. Views are never moved between hosts or into an expanded popup. Clear InRibbonPresenterType first. Null for both inline selectors preserves the built-in strip. Factory delegates and view state are not serialized.</summary>
     [Browsable(false), DefaultValue(null), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Func<Control>? InRibbonPresenterFactory
     {

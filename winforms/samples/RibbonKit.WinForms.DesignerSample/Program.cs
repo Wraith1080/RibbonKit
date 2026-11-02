@@ -6,6 +6,24 @@ internal static class Program
     private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
+        if (args.Length == 2 && args[0] is "--profile-inline-gallery" or "--profile-inline-gallery-no-motion" or "--profile-inline-gallery-builtin")
+        {
+            try { InlineGalleryOpeningProfile.Run(args[1], args[0].EndsWith("-no-motion", StringComparison.Ordinal), args[0].EndsWith("-builtin", StringComparison.Ordinal)); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.AppendAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
+        if (args.Length == 2 && args[0] == "--verify-gallery-hosts")
+        {
+            try { GalleryHostPresentationCheck.Verify(args[1]); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.AppendAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
+        if (args.Length == 2 && args[0] is "--verify-dropdown-content" or "--verify-dropdown-content-animated")
+        {
+            try { DropDownContentCheck.Verify(args[1], args[0].EndsWith("-animated", StringComparison.Ordinal)); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.AppendAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
         if (args.Length == 2 && args[0] == "--verify-simplified-overflow-visual")
         {
             try { SimplifiedOverflowVisualCheck.Verify(args[1]); }

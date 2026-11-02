@@ -211,7 +211,7 @@ public sealed class InlineGalleryPresenterTests
     });
 
     [Fact]
-    public void Qat_popups_and_temporary_bodies_remain_builtin_without_moving_the_custom_ribbon_control() => FoundationTests.Sta(() =>
+    public void Qat_gallery_opt_out_stays_builtin_while_group_bodies_use_separate_custom_controls() => FoundationTests.Sta(() =>
     {
         using var f = new Fixture(); var view = f.Inline[0]; var parent = view.Parent; var handle = view.Handle;
         var reference = new RibbonQuickAccessDropDownReference { Source = f.Gallery }; f.Ribbon.QuickAccessItems.Add(reference);
@@ -220,10 +220,11 @@ public sealed class InlineGalleryPresenterTests
         f.Ribbon.Popups.CloseAll(true);
         var groupReference = new RibbonQuickAccessGroupReference { Source = (RibbonGroup)f.Gallery.Parent! }; f.Ribbon.QuickAccessItems.Add(groupReference);
         f.Ribbon.Activate(f.Ribbon.Snapshot.Targets.Single(t => ReferenceEquals(t.Element, groupReference)));
-        var builtIn = f.Ribbon.GalleryStrips.SurfaceFor(f.Gallery); Assert.NotNull(builtIn); Assert.Same(f.Ribbon.Popups.Top, builtIn.Parent);
-        Assert.False(view.IsDisposed); Assert.Same(parent, view.Parent); Assert.False(view.Visible);
+        var host = f.Ribbon.Popups.Top!; var temporary = f.Ribbon.GalleryStrips.InlineSurfaceFor(f.Gallery, host); Assert.NotNull(temporary); Assert.Same(host, temporary.Parent);
+        Assert.False(view.IsDisposed); Assert.Same(parent, view.Parent); Assert.False(view.Context.IsActive);
+        Assert.NotSame(view, temporary.PresenterControl); Assert.Equal(2, f.Inline.Count);
         f.Ribbon.Popups.CloseAll(true); f.Ribbon.QuickAccessItems.Remove(groupReference);
-        Assert.True(view.Visible); Assert.Equal(handle, view.Handle); Assert.Same(view, Assert.Single(f.Inline));
+        Assert.True(temporary.IsDisposed); Assert.True(view.Visible); Assert.Equal(handle, view.Handle); Assert.Same(view, f.Inline[0]);
     });
 
     [Fact]

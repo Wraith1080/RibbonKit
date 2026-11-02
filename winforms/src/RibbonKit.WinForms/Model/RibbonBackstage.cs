@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
 
 namespace RibbonKit.WinForms;
 
@@ -146,7 +145,6 @@ public sealed class RibbonBackstage : RibbonElement
 /// <summary>A Backstage page with borrowed native Content or an optional, page-owned UserControl selected through ContentType.</summary>
 public sealed class RibbonBackstagePageItem : RibbonItem
 {
-    private static readonly ConditionalWeakTable<Control, RibbonBackstagePageItem> Claims = new();
     private Control? _content;
     private Type? _contentType;
     private bool _ownsContent, _creatingContent, _releasingContent;
@@ -163,12 +161,12 @@ public sealed class RibbonBackstagePageItem : RibbonItem
             if (value is not null)
             {
                 ObjectDisposedException.ThrowIf(value.IsDisposed, value);
-                if (value.Parent is not null || value is Form { TopLevel: true } || value is RibbonControl || Claims.TryGetValue(value, out _))
+                if (value.Parent is not null || value is Form { TopLevel: true } || value is RibbonControl || RibbonContentOwnership.IsClaimed(value))
                     throw new ArgumentException("Backstage content must be an unparented native Control used by only one page.", nameof(value));
             }
             ReleaseContent();
             _content = value;
-            if (value is not null) { Claims.Add(value, this); value.Disposed += ContentDisposed; }
+            if (value is not null) { RibbonContentOwnership.Claim(value, this); value.Disposed += ContentDisposed; }
             Changed();
             ContentChanged?.Invoke(this, EventArgs.Empty);
         }
@@ -207,9 +205,9 @@ public sealed class RibbonBackstagePageItem : RibbonItem
         try
         {
             var control = (UserControl)Activator.CreateInstance(_contentType)!;
-            if (control.IsDisposed || control.Parent is not null || Claims.TryGetValue(control, out _))
+            if (control.IsDisposed || control.Parent is not null || RibbonContentOwnership.IsClaimed(control))
             { control.Dispose(); throw new InvalidOperationException("A page UserControl constructor must return a live, unparented control."); }
-            _content = control; _ownsContent = true; Claims.Add(control, this); control.Disposed += ContentDisposed;
+            _content = control; _ownsContent = true; RibbonContentOwnership.Claim(control, this); control.Disposed += ContentDisposed;
         }
         finally { _creatingContent = false; }
         ContentChanged?.Invoke(this, EventArgs.Empty);
@@ -225,7 +223,7 @@ public sealed class RibbonBackstagePageItem : RibbonItem
         if (_content is not { } old) return;
         old.Disposed -= ContentDisposed;
         Ribbon?.DetachBackstageContent(old);
-        Claims.Remove(old);
+        RibbonContentOwnership.Release(old);
         _content = null;
         bool owned = _ownsContent; _ownsContent = false;
         if (owned && !old.IsDisposed && !old.Disposing)
