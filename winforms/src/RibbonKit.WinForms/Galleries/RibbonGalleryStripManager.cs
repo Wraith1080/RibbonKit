@@ -7,8 +7,11 @@ namespace RibbonKit.WinForms;
 internal sealed class RibbonGalleryStripManager(RibbonControl ribbon) : IDisposable
 {
     private readonly Dictionary<RibbonGalleryItem, RibbonGalleryStripSurface> _strips = [];
+    private readonly Dictionary<RibbonGalleryItem, RibbonGalleryInlineSurface> _inline = [];
     private bool _syncing, _disposed;
     internal RibbonGalleryStripSurface? SurfaceFor(RibbonGalleryItem source) => _strips.GetValueOrDefault(source);
+    internal RibbonGalleryInlineSurface? InlineSurfaceFor(RibbonGalleryItem source) => _inline.GetValueOrDefault(source);
+    internal RibbonGalleryInlineSurface? CustomInputOwner(Control? origin) => _inline.Values.FirstOrDefault(view => view.OwnsInput(origin));
     internal void Sync()
     {
         if (_syncing || _disposed || ribbon.IsInDesignMode) return;
@@ -17,6 +20,8 @@ internal sealed class RibbonGalleryStripManager(RibbonControl ribbon) : IDisposa
         {
             var sources = ribbon.RetainedElements.OfType<RibbonGalleryItem>().Where(g => g.IsInRibbon && !g.IsDisposed).ToArray();
             foreach (var old in _strips.Keys.Except(sources).ToArray()) { _strips[old].Dispose(); _strips.Remove(old); }
+            foreach (var old in _inline.Keys.Where(source => !sources.Contains(source) || !source.HasCustomInRibbonPresenter || !_inline[source].MatchesSelectors).ToArray())
+            { var view = _inline[old]; _inline.Remove(old); view.Dispose(); }
             var slots = new Dictionary<RibbonGalleryItem, (Control Parent, RibbonTarget Target)>();
             void Add(Control parent, IEnumerable<RibbonTarget> targets)
             {
@@ -29,6 +34,28 @@ internal sealed class RibbonGalleryStripManager(RibbonControl ribbon) : IDisposa
             foreach (var source in sources)
             {
                 bool shown = slots.TryGetValue(source, out var slot);
+                bool customBody = source.HasCustomInRibbonPresenter;
+                bool showCustom = shown && customBody && ReferenceEquals(slot.Parent, ribbon) && ribbon.Visible && !ribbon.IsBackstageOpen;
+                if (showCustom && !_inline.ContainsKey(source))
+                {
+                    var created = new RibbonGalleryInlineSurface(ribbon, source);
+                    if (source.IsDisposed || !source.IsInRibbon || !source.Visible || !ReferenceEquals(source.Ribbon, ribbon) || !created.MatchesSelectors)
+                    { created.Dispose(); continue; }
+                    var current = ribbon.Snapshot.Targets.FirstOrDefault(target => ReferenceEquals(target.Element, source) && target.Size == RibbonItemSize.Large && !target.GalleryDropDown && !target.VisibleBounds.IsEmpty);
+                    if (current is null) { created.Dispose(); continue; }
+                    slot = (ribbon, current);
+                    _inline[source] = created;
+                }
+                if (_inline.TryGetValue(source, out var custom))
+                {
+                    try { if (showCustom) custom.Present(slot.Target); else custom.Park(); }
+                    catch { _inline.Remove(source); custom.Dispose(); throw; }
+                    if (source.IsDisposed || !source.IsInRibbon || !ReferenceEquals(source.Ribbon, ribbon) || !custom.MatchesSelectors)
+                    { _inline.Remove(source); custom.Dispose(); }
+                }
+                // Temporary flyout bodies retain their built-in presentation
+                // until the separate multi-host slice is implemented.
+                shown &= !customBody || !ReferenceEquals(slot.Parent, ribbon);
                 if (!_strips.TryGetValue(source, out var strip))
                 {
                     if (!shown) continue;
@@ -43,14 +70,26 @@ internal sealed class RibbonGalleryStripManager(RibbonControl ribbon) : IDisposa
     {
         if (ribbon.IsBackstageOpen) return false;
         Sync();
+        if (_inline.TryGetValue(source, out var custom) && custom.Visible) return custom.FocusView();
         return _strips.TryGetValue(source, out var strip) && strip.Visible && strip.Focus();
     }
     internal void Release(Control parent)
     {
         foreach (var strip in _strips.Values.Where(s => ReferenceEquals(s.Parent, parent)).ToArray()) strip.Park();
+        foreach (var view in _inline.Values.Where(s => ReferenceEquals(s.Parent, parent)).ToArray()) view.Park();
     }
-    internal void CancelPreviews() { foreach (var strip in _strips.Values.ToArray()) strip.Source.CancelPreview(strip); }
-    public void Dispose() { _disposed = true; foreach (var strip in _strips.Values.ToArray()) strip.Dispose(); _strips.Clear(); }
+    internal void CancelPreviews()
+    {
+        foreach (var strip in _strips.Values.ToArray()) strip.Source.CancelPreview(strip);
+        foreach (var view in _inline.Values.ToArray()) view.CancelPreview();
+    }
+    internal void SetBackdropOpacity(byte alpha) { foreach (var view in _inline.Values.ToArray()) view.SetBackdropOpacity(alpha); }
+    public void Dispose()
+    {
+        _disposed = true;
+        foreach (var strip in _strips.Values.ToArray()) strip.Dispose(); _strips.Clear();
+        foreach (var view in _inline.Values.ToArray()) view.Dispose(); _inline.Clear();
+    }
 }
 
 internal sealed class RibbonGalleryStripSurface : Control

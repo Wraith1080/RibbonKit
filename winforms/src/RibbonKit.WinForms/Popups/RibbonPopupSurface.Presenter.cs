@@ -2,8 +2,13 @@ using RibbonKit.WinForms.Layout;
 
 namespace RibbonKit.WinForms;
 
-internal sealed partial class RibbonPopupSurface
+internal sealed partial class RibbonPopupSurface : IRibbonGalleryPresenterHost
 {
+    bool IRibbonGalleryPresenterHost.IsCurrentPresenter(RibbonGalleryPresenterContext context) => IsCurrentPresenter(context);
+    bool IRibbonGalleryPresenterHost.PresenterPreview(RibbonGalleryPresenterContext context, RibbonGalleryTile? item) => PresenterPreview(context, item);
+    bool IRibbonGalleryPresenterHost.PresenterFocus(RibbonGalleryPresenterContext context, RibbonGalleryTile item) => PresenterFocus(context, item);
+    bool IRibbonGalleryPresenterHost.PresenterCommit(RibbonGalleryPresenterContext context, RibbonGalleryTile item) => PresenterCommit(context, item);
+    void IRibbonGalleryPresenterHost.PresenterViewChanged(RibbonGalleryPresenterContext context) => PresenterViewChanged(context);
     private IRibbonGalleryPresenter? _galleryPresenter;
     private Control? _galleryPresenterControl;
     private Panel? _galleryPresenterViewport;
@@ -16,12 +21,8 @@ internal sealed partial class RibbonPopupSurface
 
     private Size InitializeGalleryPresenter(RibbonGalleryItem gallery, Size maximum)
     {
-        var control = gallery.CreateDropDownPresenter();
-        if (control is not UserControl || control is not IRibbonGalleryPresenter presenter || control.IsDisposed || control.Parent is not null)
-        {
-            if (control is { IsDisposed: false, Parent: null }) control.Dispose();
-            throw new InvalidOperationException("A gallery presenter must be a fresh, unparented UserControl implementing IRibbonGalleryPresenter.");
-        }
+        var control = RibbonGalleryPresenterOwnership.Accept(gallery.CreateDropDownPresenter());
+        var presenter = (IRibbonGalleryPresenter)control;
         _galleryPresenterControl = control; _galleryPresenter = presenter;
         try
         {

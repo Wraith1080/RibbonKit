@@ -22,7 +22,41 @@ public sealed class RibbonGalleryItem : RibbonDropDownItem
     private int _columnCount = 4, _tileWidth = 80, _tileHeight = 72, _maxVisibleRows = 4;
     private Func<Control>? _dropDownPresenterFactory;
     private Type? _dropDownPresenterType;
-    /// <summary>Gets or sets an optional runtime factory for ordinary dropdown-gallery bodies. Return a fresh unparented UserControl implementing IRibbonGalleryPresenter. RibbonKit creates it after accepted opening and disposes it with that popup; reopening creates another view. Clear DropDownPresenterType before assigning a factory. Null for both selectors, inline strips and QAT use the built-in presenter. Factory delegates and presenter state are not serialized.</summary>
+    private Func<Control>? _inRibbonPresenterFactory;
+    private Type? _inRibbonPresenterType;
+    /// <summary>Gets or selects a public concrete UserControl implementing IRibbonGalleryPresenter with a public parameterless constructor for the ordinary ribbon body. Creation is lazy when a strip is visible. RibbonKit retains the owned view across hiding and disposes it on replacement, final source detach or ribbon disposal. Clear InRibbonPresenterFactory first. Null for both inline selectors preserves the built-in strip; temporary flyout bodies and QAT remain built-in in this increment.</summary>
+    [Browsable(false), Category("Data"), DefaultValue(null)]
+    [Description("Custom inline gallery UserControl class, independent of the dropdown presenter. Body authoring stays in the ordinary UserControl designer; inline class discovery is a later designer increment.")]
+    public Type? InRibbonPresenterType
+    {
+        get => _inRibbonPresenterType;
+        set
+        {
+            Ribbon?.VerifyAccess(); if (_inRibbonPresenterType == value) return;
+            if (value is not null && !IsPresenterType(value)) throw new ArgumentException("Choose a public concrete UserControl implementing IRibbonGalleryPresenter with a public parameterless constructor.", nameof(value));
+            if (value is not null && _inRibbonPresenterFactory is not null) throw new InvalidOperationException("Clear InRibbonPresenterFactory before selecting InRibbonPresenterType.");
+            _inRibbonPresenterType = value; Changed(); InRibbonPresenterTypeChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+    /// <summary>Occurs after the optional inline gallery presenter class changes.</summary>
+    public event EventHandler? InRibbonPresenterTypeChanged;
+    /// <summary>Gets or sets an optional runtime factory for the ordinary inline gallery body. Return a fresh unparented UserControl implementing IRibbonGalleryPresenter. RibbonKit owns and retains it while its source is retained; it is never moved into the expanded popup. Clear InRibbonPresenterType first. Null for both inline selectors preserves the built-in strip. Factory delegates and view state are not serialized.</summary>
+    [Browsable(false), DefaultValue(null), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Func<Control>? InRibbonPresenterFactory
+    {
+        get => _inRibbonPresenterFactory;
+        set
+        {
+            Ribbon?.VerifyAccess(); if (_inRibbonPresenterFactory == value) return;
+            if (value is not null && _inRibbonPresenterType is not null) throw new InvalidOperationException("Clear InRibbonPresenterType before assigning InRibbonPresenterFactory.");
+            _inRibbonPresenterFactory = value; Changed(); InRibbonPresenterFactoryChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+    /// <summary>Occurs after the optional inline gallery presenter factory changes.</summary>
+    public event EventHandler? InRibbonPresenterFactoryChanged;
+    internal bool HasCustomInRibbonPresenter => _inRibbonPresenterType is not null || _inRibbonPresenterFactory is not null;
+    internal Control CreateInRibbonPresenter() => _inRibbonPresenterType is { } type ? (Control)Activator.CreateInstance(type)! : _inRibbonPresenterFactory!();
+    /// <summary>Gets or sets an optional runtime factory for ordinary dropdown-gallery bodies. Return a fresh unparented UserControl implementing IRibbonGalleryPresenter. RibbonKit creates it after accepted opening and disposes it with that popup; reopening creates another view. Clear DropDownPresenterType before assigning a factory. Null for both dropdown selectors preserves the built-in popup. Inline selectors are independent; QAT popups remain built-in. Factory delegates and presenter state are not serialized.</summary>
     [Browsable(false), DefaultValue(null), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Func<Control>? DropDownPresenterFactory
     {
@@ -36,7 +70,7 @@ public sealed class RibbonGalleryItem : RibbonDropDownItem
     }
     /// <summary>Occurs after the optional dropdown presenter factory changes.</summary>
     public event EventHandler? DropDownPresenterFactoryChanged;
-    /// <summary>Gets or selects a public concrete UserControl implementing IRibbonGalleryPresenter with a public parameterless constructor. RibbonKit creates a fresh view after each accepted ordinary gallery opening and disposes it with the popup. Designer selection never creates the control. Clear DropDownPresenterFactory before selecting a type; null for both uses the built-in view. Inline strips and QAT keep their built-in presenters.</summary>
+    /// <summary>Gets or selects a public concrete UserControl implementing IRibbonGalleryPresenter with a public parameterless constructor. RibbonKit creates a fresh view after each accepted ordinary gallery opening and disposes it with the popup. Designer selection never creates the control. Clear DropDownPresenterFactory before selecting a type; null for both dropdown selectors uses the built-in popup. Inline selectors are independent; QAT popups remain built-in.</summary>
     [Category("Data"), DefaultValue(null)]
     [Description("Custom dropdown gallery UserControl class. Edit its body in the UserControl designer. Build the project to refresh available classes; (None) clears the class selection.")]
     public Type? DropDownPresenterType

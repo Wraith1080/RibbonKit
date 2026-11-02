@@ -1039,7 +1039,17 @@ RibbonKit.WinForms.RibbonGalleryItem.DropDownPresenterFactoryChanged -> System.E
 RibbonKit.WinForms.RibbonGalleryItem.DropDownPresenterType.get -> System.Type?
 RibbonKit.WinForms.RibbonGalleryItem.DropDownPresenterType.set -> void
 RibbonKit.WinForms.RibbonGalleryItem.DropDownPresenterTypeChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonGalleryItem.InRibbonPresenterFactory.get -> System.Func<System.Windows.Forms.Control!>?
+RibbonKit.WinForms.RibbonGalleryItem.InRibbonPresenterFactory.set -> void
+RibbonKit.WinForms.RibbonGalleryItem.InRibbonPresenterFactoryChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonGalleryItem.InRibbonPresenterType.get -> System.Type?
+RibbonKit.WinForms.RibbonGalleryItem.InRibbonPresenterType.set -> void
+RibbonKit.WinForms.RibbonGalleryItem.InRibbonPresenterTypeChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonGalleryPresentation
+RibbonKit.WinForms.RibbonGalleryPresentation.DropDown = 0 -> RibbonKit.WinForms.RibbonGalleryPresentation
+RibbonKit.WinForms.RibbonGalleryPresentation.InRibbon = 1 -> RibbonKit.WinForms.RibbonGalleryPresentation
 RibbonKit.WinForms.RibbonGalleryPresenterContext
+RibbonKit.WinForms.RibbonGalleryPresenterContext.Presentation.get -> RibbonKit.WinForms.RibbonGalleryPresentation
 RibbonKit.WinForms.RibbonGalleryPresenterContext.Commit(RibbonKit.WinForms.RibbonGalleryTile! item) -> bool
 RibbonKit.WinForms.RibbonGalleryPresenterContext.Density.get -> RibbonKit.WinForms.RibbonDensity
 RibbonKit.WinForms.RibbonGalleryPresenterContext.Dpi.get -> int

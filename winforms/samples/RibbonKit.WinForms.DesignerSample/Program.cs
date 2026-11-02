@@ -6,6 +6,12 @@ internal static class Program
     private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
+        if (args.Length == 2 && args[0] == "--verify-inline-gallery-presenter")
+        {
+            try { InlineGalleryPresenterCheck.Verify(args[1]); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.AppendAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
         if (args.Length == 2 && args[0] is "--profile-gallery-opening" or "--profile-gallery-opening-animated" or "--trace-gallery-opening")
         {
             try { GalleryOpeningProfile.Run(args[1], args[0] == "--trace-gallery-opening", args[0] == "--profile-gallery-opening-animated"); }

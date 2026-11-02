@@ -38,6 +38,13 @@ internal sealed class RibbonInputFilter(RibbonControl ribbon) : IMessageFilter, 
                 wheelPresenter.ScrollPresenter(delta < 0 ? RibbonGalleryScroll.RowForward : RibbonGalleryScroll.RowBackward);
             return true;
         }
+        if (m.Msg == 0x20A && ribbon.GalleryStrips.CustomInputOwner(presenterOrigin) is { } inlineWheel)
+        {
+            int delta = unchecked((short)((long)m.WParam >> 16));
+            if (delta != 0) for (int i = 0; i < Math.Max(1, Math.Abs(delta) / SystemInformation.MouseWheelScrollDelta); i++)
+                inlineWheel.Scroll(delta < 0 ? RibbonGalleryScroll.RowForward : RibbonGalleryScroll.RowBackward);
+            return true;
+        }
         if (m.Msg is 0x201 or 0x204 or 0x207)
         {
             ribbon.SetKeyboardFocusCues(false);
@@ -125,6 +132,8 @@ internal sealed class RibbonInputFilter(RibbonControl ribbon) : IMessageFilter, 
             }
             if (ribbon.Popups.Surfaces.LastOrDefault(surface => surface.OwnsPresenterInput(presenterOrigin)) is { } galleryPresenter
                 && galleryPresenter.ProcessPresenterKey(key | Control.ModifierKeys)) return true;
+            if (ribbon.GalleryStrips.CustomInputOwner(presenterOrigin) is { } inlinePresenter
+                && inlinePresenter.ProcessKey(key | Control.ModifierKeys)) return true;
             if (key == Keys.Escape && ribbon.IsModal && !ribbon.KeyTipsActive && !ribbon.Popups.HasOpen && !ribbon.Editors.ContainsFocus && Control.ModifierKeys == Keys.None)
             {
                 ribbon.ExitModalByUser(RibbonModalReason.Escape);

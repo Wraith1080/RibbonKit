@@ -1,6 +1,7 @@
 # Optional native gallery presenter and dropdown content hosting
 
-Status, **2026-11-02: user confirmed the dropdown gallery presenter works**.
+Status, **2026-11-02: first custom inline runtime body implemented; human review pending**.
+The user previously confirmed the dropdown gallery presenter works.
 The user accepted the synchronized gallery fade/slide entrance on **2026-11-02**.
 Gallery UserControl class selection in the ribbon designer is implemented with
 focused and package-consumer evidence below; actual VS review remains pending.
@@ -12,7 +13,9 @@ the existing built-in gallery remains the default.
 This is native RibbonKit.WinForms work; WPF runtime/build/CI remain outside scope.
 The deferred dropdown popup designer and custom UserControl hosting proposal is
 recorded separately below and remains deferred. Inline/QAT custom presenters
-remain subsequent increments.
+now include the [first ordinary inline body increment](#first-inline-runtime-increment--2026-11-02).
+Temporary custom bodies, QAT popup opt-in and inline designer class selection remain
+later slices under the [inline/QAT contract](#inline-and-qat-gallery-presenter-contract--proposal-2026-11-02).
 
 ## First increment contract — 2026-11-02
 
@@ -145,7 +148,7 @@ reopen/disposal checks. No runtime change, repack or unit-suite rerun was needed
   capture found a disposed view before sampling and is not a pass. The final
   fixture activates and verifies its owned foreground before opening/capture.
 
-The current local sample package is
+The local sample package used for that earlier dropdown increment was
 `0.1.0-designer.local20261102T052414776Z`. Run its public check with:
 
 ```powershell
@@ -351,6 +354,485 @@ owns appearance; source captions, selection and commands remain in the ribbon.
   more readable. This confirmation covers the sample authoring experience;
   broader actual VS, physical-input and display gates remain separate.
 
+## First inline runtime increment — 2026-11-02
+
+The user directed continuation with the plan. This implements its first bounded
+slice: **a custom body in the ordinary ribbon strip**, alongside the existing
+separately owned expanded popup. Temporary group/minimized-tab/QAT-group bodies
+and QAT gallery popups retain their built-in views. No QAT opt-in API, inline
+class-picker behavior, ordinary dropdown content hosting or popup designer preview
+was added. The existing accepted popup-card entrance and sample popup cards remain.
+
+- Added nullable `InRibbonPresenterType` / `InRibbonPresenterFactory` and their
+  Changed events. Their exclusivity is independent of the dropdown pair. Type
+  eligibility matches the existing popup selector. Type assignment is lazy; the
+  factory must return a fresh unparented UserControl implementing the existing
+  `IRibbonGalleryPresenter`. Both null keeps the built-in strip. The inline class
+  is code-selected and hidden from Properties until the dedicated designer slice;
+  an authored `typeof(...)` assignment remains serializable. Factory delegates
+  stay hidden from serialization. Only ten native Unshipped API entries were
+  added; shipped baselines and interface method signatures are unchanged.
+- Added `RibbonGalleryPresentation` and context.Presentation. The context now
+  connects internally to either host while keeping the existing application
+  request methods. The permanent inline native tree stays in its ribbon viewport;
+  opening a popup never moves it. Hiding/suspension retires its context, cancels
+  only its owned preview and releases pending pointer state. Resumption issues
+  another context while retaining native controls, row and focus identity. Final
+  source detach, disposal, selector replacement/reset or clearing IsInRibbon
+  disposes the owned tree. Failed initialization and reentrant factory detach
+  unwind ownership without disposing original source tiles.
+- Shared selection/reordering reveals the source tile without a user commit.
+  Input during synchronization, stale requests, foreign/unavailable tiles and
+  reentrant activation are rejected. Native root/child keys and wheel use one
+  library route; child pointer activation goes through the supplied context.
+  Validation can cancel or invalidate a request before accepted activation.
+  Cancelled expansion restores native focus without revealing an older focus
+  tile over the independently browsed row.
+- The library keeps the existing strip dimensions, equal-height utility buttons
+  and inset. Native MinimumSize is clipped by the allocated viewport. Font/theme/
+  density/DPI contexts refresh without replacing child controls. The custom body
+  participates in library motion capture and existing backdrop-body opacity
+  masks. Its viewport reuses RibbonBackdropPanel and composes its native children
+  as one opaque subtree, retaining handles over Mica. Logical native accessibility
+  exposes tile names, clipped bounds, selection/focus and the same activation route;
+  full gallery UIA patterns and combined external-tree acceptance are not claimed.
+- The existing Designer Sample declares the inline type, IsInRibbon and a readable
+  TileWidth in DesignerForm.Designer.cs. New
+  [GalleryStylesStripControl](../samples/RibbonKit.WinForms.DesignerSample/GalleryStylesStripControl.cs)
+  has three real designer-visible cards made from the same ordinary panels/labels;
+  the accepted two-column popup and its six example cards are unchanged. The strip
+  root uses context-sized physical layout without a second automatic scale pass.
+  Runtime views bind to the original 18 source tiles. View/scroll/context state
+  does not enter customization JSON.
+
+Verification recorded separately:
+
+- Normal Debug runtime/API/XML, native designer server/client and Designer Sample
+  builds passed with zero warnings/errors; the package-only sample was refreshed
+  in place. The native solution Release build also passed with zero warnings/errors.
+- **74 distinct cases passed across focused selections**, including **16 new inline
+  cases**. This is overlapping focused evidence, not a full-suite or single aggregate
+  pass. Retained results in `tests/RibbonKit.WinForms.Tests/TestResults/` are
+  `inline-gallery-related.trx` (50/50),
+  `inline-gallery-lifetime-accessibility-fixed.trx` (4/4),
+  `inline-gallery-native-surface.trx` (32/32),
+  `inline-gallery-final-focused.trx` (3/3),
+  `inline-gallery-selector-metadata.trx` (1/1) and
+  `inline-gallery-pointer-validation-accepted.trx` (1/1). Coverage includes native ownership,
+  stale/reentrant requests, validation, preview versus commit, source changes,
+  row/scroll/reveal, minimum-size clipping, native child routing, logical
+  accessibility bounds/actions, capture and affected popup/material motion.
+- Initial tests caught cancelled-expansion focus resetting the browsed row; that
+  correction and the affected cases pass. An attempted reentrant layout retry
+  caused a stack overflow and was removed; source validity is checked at construction
+  and synchronization boundaries instead. That aborted run is not passing evidence.
+  The final pointer regression caught UserControl's implicit focus validation
+  occurring before MouseDown. The host now abandons a failed native focus attempt
+  and validates explicit child-focus requests once through the library editor
+  path; the same test verifies one successful validation and one commit afterward.
+- The package-only public-API check passed at actual **120 DPI** in
+  `artifacts/inline-gallery-presenter/consumer-final/`, using local package
+  `0.1.0-designer.local20261102T075122572Z`. It verifies designer-authored
+  separate classes, original source identities, retained control/card handles,
+  independent popup disposal, cancel row/focus, stale contexts, native child-label
+  clicks and queued keyboard navigation, exactly two controlled commits, hiding
+  and owned disposal. The native strip, standalone card designer, expanded popup
+  and restored row PNGs were inspected. An earlier fixture left the existing
+  right-click customization menu open before the next gesture; the check now
+  dismisses it. A separate run stopped on foreground loss and is not a pass.
+- The first native capture exposed transparent native child drawing over Mica;
+  opaque subtree composition and removing duplicate scaling in the strip sample
+  corrected the inspected result. The application content outside the ribbon is
+  unchanged. Actual VS body authoring/class discovery, physical input,
+  mixed-monitor DPI, RTL, perceived motion/performance and external UIA/accessibility
+  certification remain separate review gates. No full suite or WPF checks ran.
+
+Review **Gallery → Document styles** in the normal Debug Designer Sample. Browse
+rows, expand/cancel, select from either view and switch tabs. To edit the new body,
+open GalleryStylesStripControl.cs in its ordinary UserControl designer. The inline
+selector is not yet offered in Edit Ribbon or Properties. The next bounded slice
+is separate session-owned custom bodies in temporary group/minimized-tab hosts;
+QAT popup opt-in and the designer class picker still follow afterward.
+
+```powershell
+dotnet run --project winforms/samples/RibbonKit.WinForms.DesignerSample -c Debug --no-build -- --verify-inline-gallery-presenter winforms/artifacts/inline-gallery-presenter/consumer-final
+```
+
+## Inline and QAT gallery presenter contract — proposal, 2026-11-02
+
+**User directed continuation on 2026-11-02; first runtime slice recorded above.**
+The complete target contract below includes later, still-unimplemented slices.
+Its original inspection used the clean `codex/Ribbonkit-Winform` worktree at
+`d8d893b4c1a53cc66e1da636543609150fdf88ff` (`Gallery Usercontrol custom presentation
+pop up`). Inline selectors and context.Presentation are now available; the QAT
+opt-in and context.IsQuickAccess remain proposed APIs.
+The accepted popup entrance, designer-editable cards and earlier focus, native
+editor and backdrop fixes remain the baseline. Ordinary dropdown/split content
+hosting and popup designer previews remain in their separate deferred section.
+
+### Presentations and selector boundaries
+
+| Presentation | Proposed body and settings | View owner and lifetime |
+| --- | --- | --- |
+| Inline ribbon body | Opt-in `InRibbonPresenterType` or `InRibbonPresenterFactory` when `IsInRibbon` actually receives a strip slot. Null for both retains the built-in strip. | Ribbon-owned control for that source/projection slot; retained while the source remains retained by this ribbon. |
+| Expanded gallery popup from that body, or an ordinary gallery dropdown | Existing `DropDownPresenterType` or `DropDownPresenterFactory`; independent of the inline selectors. Null for both retains the built-in popup. | Fresh popup-owned control after every accepted opening, disposed on close. Never the inline control. |
+| Direct gallery reference on the QAT toolbar | Keep the existing compact gallery launcher, caption/icon, KeyTip, sizing and overflow route. It is not a tile viewport and gets no UserControl in this proposal. | Existing QAT reference borrows the source; no custom body is constructed until an eligible popup opens. |
+| Gallery popup opened through QAT | Use the source's existing dropdown selectors only when the proposed `UseDropDownPresenterInQuickAccess` is true. Its default is false, preserving today's built-in QAT popup even on sources with a custom ordinary popup. | Fresh popup-owned control per accepted opening, including duplicate references, overflow and inactive source tabs. |
+
+A gallery strip inside a collapsed-group or minimized-tab popup is an **inline
+body in a temporary host**, not an expanded gallery popup. A QAT group flyout can
+also contain such a body: it uses the inline selectors and has its own control.
+Expanding that body uses the QAT-popup opt-in. A reduced gallery dropdown button
+has no inline control; opening it follows the appropriate dropdown route.
+The existing layout decides when a strip is available; this contract does not
+add a new Simplified layout, reduction mode or QAT tile-strip mode.
+
+QAT ancestry must follow the complete opener chain, including nested menus and
+borrowed groups, rather than testing only the immediate owner. Direct ordinary
+openings and body expansion must not acquire QAT behavior merely because another
+QAT reference points to the same source. QAT-only differences remain a routing
+choice on the source, with no presenter overrides on individual QAT references.
+
+### Proposed public surface and compatible defaults
+
+```csharp
+// Implemented first-slice additions to RibbonGalleryItem.
+public Type? InRibbonPresenterType { get; set; }                // default null
+public event EventHandler? InRibbonPresenterTypeChanged;
+public Func<Control>? InRibbonPresenterFactory { get; set; }    // default null
+public event EventHandler? InRibbonPresenterFactoryChanged;
+// Proposed QAT addition; not implemented.
+public bool UseDropDownPresenterInQuickAccess { get; set; }     // default false
+public event EventHandler? UseDropDownPresenterInQuickAccessChanged;
+
+// Implemented context metadata.
+public enum RibbonGalleryPresentation { DropDown = 0, InRibbon = 1 }
+// Add to RibbonGalleryPresenterContext:
+public RibbonGalleryPresentation Presentation { get; }
+// Proposed later context metadata; not implemented.
+public bool IsQuickAccess { get; }
+```
+
+Use the existing `IRibbonGalleryPresenter` without adding interface members or
+changing its method signatures. A class can serve both body kinds by inspecting
+`Presentation`, or an application can author separate ordinary UserControls.
+`IsQuickAccess` describes the view's opening/host route, including a QAT group
+body; it does not identify a different model. Existing ordinary popup contexts
+report `DropDown` and false. No borrowed-Control property, retained-popup option,
+QAT-toolbar presenter, general content host or context-aware factory is proposed.
+
+The new inline type/factory pair is mutually exclusive **within that pair**;
+clear one before setting the other. It is independent of the dropdown pair:
+both an inline type and a dropdown type may be assigned. Retain the existing
+dropdown pair's exclusivity. `UseDropDownPresenterInQuickAccess = true` with both
+dropdown selectors null still uses the built-in popup; it never falls back to
+the inline selector. Setting inline selectors does not turn `IsInRibbon` on.
+
+Type eligibility matches the existing dropdown selector: public, concrete,
+closed UserControl implementing `IRibbonGalleryPresenter`, with a public
+parameterless constructor. Runtime factories keep `Func<Control>` compatibility
+and must return a fresh, unparented, undisposed UserControl implementing that
+interface. A factory may supply constructor arguments. Reject controls already
+owned by any active or parked view, even if Parent is null. Application icons,
+fonts, renderer and source items remain borrowed under their existing contracts.
+
+Attached setters run on the ribbon UI thread, validate before changing the configuration,
+and raise their Changed event only for a real change. Inline type metadata uses
+Category Data and DefaultValue(null); the factory is non-browsable and hidden
+from designer serialization. The first runtime slice also hides the inline Type
+from Properties until its dedicated class picker is implemented. The QAT opt-in uses Category Behavior and
+DefaultValue(false). Invalid types/conflicting selectors leave the prior choice
+and live views intact. No constructor runs when assigning a type.
+
+### One model, separate controls and explicit lifetime
+
+The canonical source gallery owns Items, selection, availability, bindings and
+application event handlers. Resolve QAT/structural routing to that source before
+creating a context. Bind views to its original tiles; do not clone items, command
+state or bindings. Separate native card controls referring to those tiles are
+views, not new models. Each simultaneous body or popup has a distinct root
+Control, context, focused item, pointer state, preview-owner token and scroll
+position. The same source still has at most one expanded gallery popup under
+the existing popup-manager rule; opening it from a different launcher replaces
+the previous popup rather than introducing parallel popup sessions.
+
+| Transition | Proposed behavior |
+| --- | --- |
+| First visible inline slot | Construct lazily after the runtime layout allocates a nonempty slot, synchronize and attach to that slot's library-owned viewport. No construction for hidden tabs, reduced buttons, QAT launchers or design previews. |
+| Inline resize, selection, item or display refresh | Reuse the control and its children. Synchronize from source; do not reconstruct the view or create a second event subscription for each refresh. |
+| Tab hidden, clipped away, ribbon minimized or Backstage opened | Clear press/capture, cancel only that view's preview and invalidate its input context. Retain a permanent body hidden in its own ribbon host; it cannot receive focus or input. Resume with a new context and reconcile accumulated source changes. |
+| Expanded popup or modal route temporarily blocks a visible body | Keep its real control at the same bounds and allow it to remain drawn behind the popup. Cancel only its preview, clear press/capture and invalidate input context. Reactivation supplies a new context without recreating the control or resetting its row. |
+| Group/minimized-tab/QAT-group body slot opens | Create a separate session-owned inline view after accepted host opening. A permanent ribbon body may remain alive simultaneously. No transfer of its control into the flyout. |
+| Temporary body host closes | Invalidate context, cancel its preview, detach subscriptions and dispose its owned control/children before the host is destroyed. Reopening that host creates another view. |
+| Expanded gallery opens/closes | Preserve the accepted lazy/fresh popup lifetime and creation after DropDownOpening. Cancellation creates no popup view. Closing disposes only the popup view; the inline body and source survive. |
+| Selector replaced/reset or `IsInRibbon` cleared | Validate first; then retire affected contexts and dispose the affected views. Recreate lazily for the next eligible slot/opening, or use the built-in path after reset. Never mutate a live custom body into another control in place. |
+| QAT opt-in changes | Close an affected QAT gallery popup and invalidate its context; the next opening resolves the new policy. Preserve ordinary popup and inline configuration. |
+| QAT reference removed/rebound | Close sessions belonging to that reference, including descendant bodies/popups. Do not dispose the borrowed source, another reference's view or the permanent body. |
+| Source detached from this ribbon, no longer retained, disposed, or ribbon disposed | Invalidate all its contexts first, release preview/capture/focus and dispose every owned view and subscription. A retained inactive/merged source is not a final detach. Reattachment after final detach starts fresh. |
+
+An inline slot is keyed by canonical source, authored projection and owning
+container/session identity. A permanent slot stays with its ribbon host; a
+temporary slot stays with its popup session. Controls are never reparented
+between these slots, even when their visibility alternates. This deliberately
+differs from the existing built-in strip manager's one movable control per
+source. Keep the built-in path's current behavior when no custom body is chosen.
+
+Changing the inline selector pair retires inline views only; changing the
+dropdown pair closes affected expanded gallery views, including opted-in QAT
+popups, without replacing inline controls. Clearing `IsInRibbon` disposes inline
+views and retains the gallery's dropdown configuration. If a retired inline view
+is the opener of an expanded popup, close that descendant session first so it
+cannot retain a dead opener.
+
+Hiding a source retains an already created permanent body but makes it inactive;
+disabling it retains its visuals, rejects activation and cancels preview. Removing
+it from all retention paths disposes the body. On temporary suspension, preserve
+the browsed row if selection has not changed: cancelling expansion must not
+silently reset the inline position. A selection change while hidden is marked
+for reveal on resumption. No eager initialization before Form.Load is promised.
+
+Detach the context and stop library callbacks before invoking disposal or any
+cancellation callback that can reenter application code. Dispose only accepted
+owned controls and fresh invalid results; never dispose a rejected parented or
+already owned control borrowed from another view. Failed construction or initial
+synchronization must unwind the partial host and subscriptions without altering
+source selection. Report the failure through the existing UI-thread error path;
+do not silently substitute a built-in view or repeatedly invoke a failing factory
+from Paint. Retry belongs to a new presentation request or configuration change.
+Presenters release their own application subscriptions/resources in Dispose and
+must not dispose the borrowed source or assets.
+
+### Context, selection, preview and accepted activation
+
+Generalize the context's internal host connection to a view, while retaining its
+public Preview, FocusItem, Commit and NotifyViewChanged signatures. Display
+settings are read-only snapshots for an attachment period. Reissue the context
+on reactivation or font/theme/renderer/density/DPI changes; the old context stays
+inert permanently. Reuse the control, not the context. `Viewport` can change
+within that period during resize. Synchronize before measurement and again after
+the final viewport is supplied. All calls remain on the owning ribbon UI thread.
+
+`IsActive` means the context is current, attached, effectively visible/enabled,
+and permitted to interact in the current popup/Backstage/modal route. A lower
+inline view cannot accept input through an expanded popup. Preparation contexts
+are inactive; callbacks during Synchronize are rejected even if IsActive would
+otherwise be true. Stale Preview/FocusItem/Commit return false and stale
+NotifyViewChanged does nothing after close, hide, replacement, detach or disposal.
+Requests must also recheck source/tile ownership, availability and host generation.
+
+- `SelectedItem` is shared authoritative state. Synchronize every realized view
+  after its change, reveal the available selection without stealing keyboard
+  focus, and mark hidden retained views for reveal. Assigning it from code raises
+  SelectedItemChanged only, never SelectionCommitted or a second application action.
+  Removing a selected tile clears selection; hiding/disabling it retains authored
+  selection but prevents activation, matching the existing gallery model.
+- Focus and scroll are per view. FocusItem reveals and moves logical/native
+  gallery focus without selecting or previewing. Synchronize/Reveal/ScrollView/
+  NotifyViewChanged must not execute application commands or change selection.
+- The source has one active temporary preview with a view-owner token. A new
+  valid view request takes that ownership and reports the requested preview;
+  transfer does not insert a cancellation between successive previews. A stale
+  view's leave, close or Preview(null) cannot cancel the new owner's preview.
+  Source mutation/programmatic selection can cancel the current preview globally.
+  Successful commit ends preview without ItemPreviewCancelled; the application
+  continues to own document preview and rollback.
+- Commit is one accepted activation through RibbonKit's gallery activation and
+  validation route, including the already-selected tile. Validate the focused
+  library editor and applicable native focus transition once, then recheck context,
+  host/source and tile after reentrant application callbacks. A cancelled validation
+  leaves the view open/focused with no selection commit, command or dismissal.
+  Removal, replacement or disposal during validation makes the request stale.
+- Guard activation against reentrant delivery. One accepted pointer/key/UIA gesture
+  produces at most one SelectionCommitted and one existing application action;
+  later distinct activations may commit that same tile again. The presenter must
+  not also call PerformClick, invoke handlers or execute an application command.
+  Gallery actions continue through the existing source event contract; no new
+  tile Click/command-dispatch semantics are introduced by custom presentation.
+  Teardown on disposal/removal cannot be blocked by validation and never commits.
+
+Popup activation retains the existing dismissal policy and returns focus to its
+actual opener: inline body, QAT launcher, overflow row or parent flyout, if still
+available. Cancelling expansion restores the retained inline body's row and focus.
+Inline body activation leaves the ribbon body available; activation in a temporary
+body follows the existing group/tab popup dismissal policy. QAT activation never
+selects the source tab. If an opener disappears, use the existing ribbon/host
+focus fallback rather than keeping focus in a disposed native child.
+
+### Sizing, scrolling and display changes
+
+The library owns strip frame, equal-height up/down/expand buttons and their inset,
+popup frame/shadow/placement, popup scroll controls, clipping and accessible bounds.
+The application owns the body layout, native card visuals and application assets.
+All interface rectangles/points are physical pixels relative to the root custom
+control, including scroll offset; library hit testing intersects them with the
+actual viewport and rejects out-of-view tiles.
+
+- Inline geometry remains allocated by the existing ribbon layout: authored
+  TileWidth/InRibbonColumnCount, density/body height and reduction determine the
+  slot. The custom body fills only the interior viewport; GetPreferredSize or a
+  native MinimumSize cannot enlarge the ribbon or move its utility buttons.
+  InRibbonColumnCount remains a width/layout hint, not a mandate to reproduce
+  the built-in grid inside a custom control. A zero-area slot has no active view.
+- Popup sizing retains the existing Synchronize → GetPreferredSize(limit) → final
+  constrained viewport sequence. Use context.Dpi before parenting. Native minimum
+  sizes are preferences subject to screen/slot limits: clip an oversized control
+  inside a library viewport and require the presenter to make its tiles reachable.
+  Do not add popup resize handles, new sizing properties or automatic layout
+  inference from the application's child controls. ColumnCount/MaxVisibleRows and
+  tile metrics remain available source hints, not forced custom-layout dimensions.
+- Up/down and wheel dispatch RowBackward/RowForward; PageUp/PageDown navigation
+  and ScrollView page requests use the custom layout's actual viewport. Define a
+  row using that layout, not built-in tile indexes. CanScrollBackward/Forward must
+  match clamped endpoints. One owner handles each wheel gesture, including native
+  descendants; there must not be both native AutoScroll and a library row step.
+- Reveal makes an available tile reachable without committing, previews or focus
+  theft. On first presentation/reopen reveal selection; thereafter reveal on actual
+  selection/focus changes, not every Synchronize, preserving independent browsing.
+  Internal asynchronous layout/scroll changes call NotifyViewChanged to update
+  scroll buttons, hit bounds and accessibility. No gallery items still yields a
+  valid empty viewport with disabled scroll and no commit target.
+- Reflow retained controls on font, theme/renderer, Compact/Touch, resize and DPI
+  changes without replacing native children. Clamp scroll and preserve a source-tile
+  anchor where possible, then reveal keyboard focus if needed. Replace display
+  context before remeasurement, use current DPI once rather than scaling already
+  scaled bounds, and clip every painted/hit/accessibility layer consistently.
+  Do not force new handles merely to measure. Existing popup close/reopen policy
+  on host/DPI changes remains authoritative; do not add retention to bypass it.
+
+### Native input, focus and accessibility responsibilities
+
+RibbonKit remains the single keyboard dispatcher for the view root and its native
+descendants. Arrows/Home/End/PageUp/PageDown call Navigate using actual custom
+layout, then FocusItem/Preview; Enter/Space request one commit. Root pointer input
+is library-routed. Child pointer handlers translate to root coordinates and use
+the context, with matching left-button down/up on the same available visible tile,
+capture-loss/outside-release cancellation and no right-click commit. Native Click
+handlers must not dispatch the same activation again. Stationary pointer repaint
+messages must not overwrite a keyboard preview.
+If a selectable native child already attempted focus and validation rejected it,
+abandon its press; do not call FocusItem again for that failed attempt. If an
+explicit FocusItem request returns false, abandon that gesture before Commit.
+
+Inline Tab/Shift+Tab leaves the gallery for the containing ribbon/flyout navigation;
+F4/Alt+Down and expand open its gallery popup. Inline Escape cancels its preview
+and returns focus to the gallery command. Expanded-popup Tab/Shift+Tab retains
+the current popup item navigation contract; Escape dismisses one popup level.
+Library utility buttons participate through the existing focus route without
+adding independent tab stops. There is one native gallery focus entry with a
+logical focused tile; application tile children do not add competing tab stops
+or a second keyboard dispatcher. This proposal covers native tile/card controls,
+including panels, labels and activation buttons. It does not introduce arbitrary
+embedded text/IME editors or nested native dropdowns with conflicting key rules;
+those need a separate input-negotiation contract. Existing ribbon editors outside
+the gallery retain their validation, native state and ownership.
+
+The library must expose the source tile identity, clipped bounds, availability,
+selection/focus and accepted activation for **each view**; automation identity
+must distinguish the host slot as well as the source tile. Retained hidden bodies
+are offscreen/noninteractive; disposed popup providers become unavailable cleanly.
+The application supplies meaningful names/descriptions and native child
+accessibility for its visuals. Decorative panels/labels must not introduce a
+second selectable/invokable copy of a tile. Any custom child activation provider
+uses the same context validation route. Native UserControl accessibility alone
+does not prove gallery parity: focused inspection must check the combined native
+child and library tree for duplicate actions, focus and selection reporting.
+This proposal neither claims full gallery UIA patterns nor accessibility
+certification; the exact provider integration is an implementation verification
+gate, not evidence inherited from the accepted popup cards.
+
+### Motion, designer and persistence integration
+
+Include the custom bodies and their native children in existing library motion
+capture while preserving the one real control per view. Motion images are inert;
+they cannot focus, preview, commit or create another source/control. Keep the
+accepted complete-card/shadow fade and item slide on the same clock, fixed native
+bounds and input/policy settlement. Keep existing native editor handles, backdrop
+composition and focus-return behavior. No application timer, separate custom-body
+animation, new capture API or view caching for expanded popups is part of this
+contract. Verify panels/labels/buttons in capture; controls that cannot be captured
+must use the existing immediate/failure settlement path, not an empty animated
+frame or a live-control clone.
+
+Later designer work can reuse metadata-only class discovery, retained choices,
+detached draft/Cancel, single-transaction OK, Undo/Redo and CodeDOM typeof
+serialization for InRibbonPresenterType. Preserve runtime factory conflicts
+instead of silently clearing application delegates. Serialize the QAT opt-in as
+an ordinary nondefault bool. Selecting classes, validating drafts and inert ribbon
+previews must never construct or capture application UserControls. Body authoring
+stays in ordinary UserControl designers; preserve GalleryStyleTileControl's real
+panels/labels and GalleryStylesControl's six visible example cards. A compact
+inline sibling can reuse that card authoring approach without rewriting the
+accepted popup example into a dense custom-paint loop.
+
+Designer source serialization and customization persistence remain distinct.
+Presenter types/factories, controls, contexts, HWNDs, focus, preview, cached bounds
+and scroll offsets stay out of customization JSON; keep the QAT opt-in with the
+application's authored configuration as well. Existing stable source/reference
+IDs continue to drive customization and QAT routing. Add no persisted view state
+or new customization schema for this extension.
+
+### Proposed bounded implementation sequence and review decisions
+
+1. **First suggested slice: inline runtime in the ordinary ribbon body.** After
+   contract review, add only the inline selectors/events and context metadata used
+   by that slice, the owned fixed-slot host and source-mediated input. Demonstrate
+   a normal designer-editable strip UserControl alongside the existing popup:
+   distinct simultaneous controls, shared original tiles/selection, independent
+   scrolling, expansion/cancel/commit, retained hide/show and owned disposal.
+   Keep QAT custom popups and designer class-picker changes for later slices.
+2. **Temporary inline hosts.** Add separate controls in collapsed groups,
+   minimized-tab bodies and QAT group flyouts. Verify permanent/temporary views
+   coexist, popup teardown never disposes the permanent view, and no live body
+   is moved between hosts. Preserve default strip behavior.
+3. **QAT gallery popup opt-in.** Add the proposed bool/event and resolve dropdown
+   selectors through direct, duplicate, overflow, nested and inactive-tab routes.
+   Retain the compact toolbar launcher and one expanded popup per source. Verify
+   default-false compatibility and per-opening disposal separately from bodies.
+4. **Designer authoring.** Extend only the existing gallery class-selection and
+   bool authoring paths after the runtime contract works in an independent public
+   consumer. Add generated-code/Undo/Redo checks without constructing application
+   controls. Refresh the existing Designer Sample in place for actual VS review.
+
+Each slice should add the native API/XML baseline entries it actually implements,
+not reserve the entire proposal in advance. Use normal Debug outputs and direct
+native focused selections, not the WPF harness or the broad Test-Native.ps1
+campaign by default. Relevant existing scopes are GalleryPresenterTests,
+InRibbonGalleryTests, GalleryReductionTests and the affected QAT cases; motion,
+editor, theme/density and designer cases are included only when their paths change.
+
+New focused coverage must establish lazy/failed creation; selector reset/conflict;
+separate identities/parents; retention/disposal/subscription cleanup; stale and
+reentrant callbacks; preview ownership; selection versus commit/action counts;
+validation cancellation; row/page/reveal endpoints; child pointer/keyboard routing;
+and constrained font/density/DPI geometry. Verify the implemented slice in a
+package-only consumer without Showcase helpers, including default-presenter
+compatibility. Inspect combined accessibility bounds/actions and motion capture
+for any changed host. Actual VS, physical input, mixed-monitor DPI, perceived
+motion/performance and accessibility certification remain separately reported
+gates. Do not rerun unrelated or already successful historical scopes for
+repetition. The original contract-only session ran none of those checks; the
+implemented first-slice evidence is recorded separately above.
+
+Decisions for user review before implementation:
+
+- **QAT representation:** recommend retaining the compact launcher and customizing
+  its opened gallery only. An embedded QAT tile strip/UserControl would require
+  an additional toolbar sizing, overflow and accessibility contract outside this
+  proposal; confirm if that is the intended eventual presentation instead.
+- **QAT compatibility switch:** recommend default-false
+  UseDropDownPresenterInQuickAccess using the existing dropdown selectors, with
+  no per-reference override. Review the name and explicit opt-in rather than
+  silently changing how existing DropDownPresenterType assignments behave.
+- **Inline lifetime and geometry:** recommend retained fixed-host permanent bodies,
+  session-owned temporary bodies and layout-allocated inline size. Review that
+  tradeoff against reusing one movable control or allowing application preferred
+  sizes to drive ribbon reduction; neither alternative is assumed authorized.
+
+The user authorized continuation with the first bounded implementation above;
+the later slices remain the recorded target sequence.
+Arbitrary embedded editors, custom QAT toolbar bodies, new gallery UIA patterns,
+general dropdown hosting/preview, new themes and unrelated refactors stay deferred.
+
 ## Purpose and current boundary
 
 Allow an application to supply a custom gallery body, potentially an ordinary
@@ -366,8 +848,9 @@ remain the compatibility baseline.
 
 ## Original communication goals and later presentations
 
-The first dropdown increment above implements these goals. Inline/QAT extensions
-still need their own simultaneous-view and lifetime review:
+The first dropdown increment above implements these goals. The
+[inline/QAT proposal](#inline-and-qat-gallery-presenter-contract--proposal-2026-11-02)
+defines their simultaneous-view and lifetime recommendations for review:
 
 | Direction | Proposed responsibility |
 | --- | --- |
@@ -406,13 +889,13 @@ instances for different simultaneous presentations, sharing the source model.
 Each native Control has one parent; do not move a single live Control between
 simultaneous views or clone source items, bindings or command state to imitate it.
 
-A factory creating a presenter for each presentation is a candidate extension
-point. Before implementation, explicitly settle who creates/disposes those views,
-whether any borrowed-instance option is needed, creation timing (initialization
-or presentation opening), reuse/caching, detach and source-disposal behavior.
-Do not silently inherit Backstage's Content/ContentType lifetime rules: its
-single page-body contract differs from gallery presentations. Application assets
-remain application-owned under their existing contracts.
+The [inline/QAT proposal](#inline-and-qat-gallery-presenter-contract--proposal-2026-11-02)
+now specifies the creation, ownership, retention, replacement, detach and disposal
+target. The ordinary inline body is implemented above; temporary custom bodies and
+QAT extensions remain later slices. Do not
+silently inherit Backstage's Content/ContentType lifetime rules: its single
+page-body contract differs from gallery presentations. Application assets remain
+application-owned under their existing contracts.
 
 ## Original bounded delivery sequence
 

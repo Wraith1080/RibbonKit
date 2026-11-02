@@ -1,6 +1,15 @@
 namespace RibbonKit.WinForms;
 
-/// <summary>Chooses a row or page scroll in a custom dropdown gallery's own layout.</summary>
+/// <summary>Identifies the body displayed by a custom gallery view.</summary>
+public enum RibbonGalleryPresentation
+{
+    /// <summary>A separately owned expanded gallery popup.</summary>
+    DropDown,
+    /// <summary>A retained body inside the ribbon's allocated gallery strip.</summary>
+    InRibbon
+}
+
+/// <summary>Chooses a row or page scroll in a custom gallery's own layout.</summary>
 public enum RibbonGalleryScroll
 {
     /// <summary>Scrolls one row toward the beginning.</summary>
@@ -13,7 +22,7 @@ public enum RibbonGalleryScroll
     PageForward
 }
 
-/// <summary>Implemented by an application UserControl selected through DropDownPresenterType or returned by DropDownPresenterFactory. RibbonKit owns the view and navigation; the presenter owns its item layout and drawing. Root-control pointer input is routed by the library; native child pointer handlers use context.Preview, FocusItem and Commit instead of directly executing tiles. All coordinates are client pixels of that control, including its current scroll offset. Methods run on the owning UI thread.</summary>
+/// <summary>Implemented by an application UserControl selected through a gallery's inline or dropdown presenter selectors. RibbonKit owns the view and navigation; the presenter owns its item layout and drawing. Root-control pointer input is routed by the library; native child pointer handlers use context.Preview, FocusItem and Commit instead of directly executing tiles. All coordinates are client pixels of that control, including its current scroll offset. Methods run on the owning UI thread.</summary>
 public interface IRibbonGalleryPresenter
 {
     /// <summary>Refreshes drawing/layout from the authoritative source and display context. Do not commit, execute or create a second selection model here; context input requests are rejected during synchronization.</summary>
@@ -34,17 +43,19 @@ public interface IRibbonGalleryPresenter
     void ScrollView(RibbonGalleryScroll amount);
 }
 
-/// <summary>Connects one owned dropdown-gallery view to its original model. Preview, activation and bounds notifications are accepted only while this popup is current. The source, font, renderer and application assets are borrowed.</summary>
+/// <summary>Connects one owned gallery view to its original model. Input and bounds notifications are accepted only while its presentation is current. Hidden or suspended inline views receive another context when reactivated. The source, font, renderer and application assets are borrowed.</summary>
 public sealed class RibbonGalleryPresenterContext
 {
-    private RibbonPopupSurface? _surface;
-    internal RibbonGalleryPresenterContext(RibbonPopupSurface surface, RibbonGalleryItem gallery, RibbonControl ribbon)
+    private IRibbonGalleryPresenterHost? _host;
+    internal RibbonGalleryPresenterContext(IRibbonGalleryPresenterHost host, RibbonGalleryItem gallery, RibbonControl ribbon, RibbonGalleryPresentation presentation = RibbonGalleryPresentation.DropDown)
     {
-        _surface = surface; Gallery = gallery; Theme = ribbon.Theme; Renderer = ribbon.Painter;
+        _host = host; Gallery = gallery; Theme = ribbon.Theme; Renderer = ribbon.Painter; Presentation = presentation;
         Font = ribbon.Font; Density = ribbon.Density; Dpi = ribbon.DeviceDpi;
     }
     /// <summary>Gets the original gallery, including owned items and authoritative SelectedItem. Never clone its tiles or independently execute their actions.</summary>
     public RibbonGalleryItem Gallery { get; }
+    /// <summary>Gets whether this view is an expanded popup or an inline ribbon body.</summary>
+    public RibbonGalleryPresentation Presentation { get; }
     /// <summary>Gets the current immutable ribbon theme.</summary>
     public RibbonTheme Theme { get; }
     /// <summary>Gets the borrowed shared renderer for optional themed tile/heading drawing.</summary>
@@ -59,23 +70,32 @@ public sealed class RibbonGalleryPresenterContext
     public Size Viewport { get; internal set; }
     /// <summary>Gets the keyboard-focused source tile, independent of committed selection.</summary>
     public RibbonGalleryTile? FocusedItem { get; internal set; }
-    /// <summary>Gets whether this context still belongs to a current open popup.</summary>
-    public bool IsActive => _surface?.IsCurrentPresenter(this) == true;
+    /// <summary>Gets whether this context belongs to a current interactive presentation. Input requests during synchronization are rejected separately.</summary>
+    public bool IsActive => _host?.IsCurrentPresenter(this) == true;
     /// <summary>Requests temporary preview of an available owned tile, or cancels this view's preview with null. Returns false for a stale context or unavailable tile.</summary>
-    public bool Preview(RibbonGalleryTile? item) => _surface?.PresenterPreview(this, item) == true;
+    public bool Preview(RibbonGalleryTile? item) => _host?.PresenterPreview(this, item) == true;
     /// <summary>Requests keyboard focus and reveal for an available source tile without selecting or previewing it. Use this when a native child interaction identifies a tile. Returns false for an unavailable tile or stale context.</summary>
     public bool FocusItem(RibbonGalleryTile item)
     {
         ArgumentNullException.ThrowIfNull(item);
-        return _surface?.PresenterFocus(this, item) == true;
+        return _host?.PresenterFocus(this, item) == true;
     }
     /// <summary>Requests accepted activation through the ribbon's existing validation, commit and dismissal path. Returns false for a stale context or unavailable tile.</summary>
     public bool Commit(RibbonGalleryTile item)
     {
         ArgumentNullException.ThrowIfNull(item);
-        return _surface?.PresenterCommit(this, item) == true;
+        return _host?.PresenterCommit(this, item) == true;
     }
     /// <summary>Reports changed item bounds or scroll availability. This never changes gallery selection or customization persistence.</summary>
-    public void NotifyViewChanged() => _surface?.PresenterViewChanged(this);
-    internal void Detach() => _surface = null;
+    public void NotifyViewChanged() => _host?.PresenterViewChanged(this);
+    internal void Detach() => _host = null;
+}
+
+internal interface IRibbonGalleryPresenterHost
+{
+    bool IsCurrentPresenter(RibbonGalleryPresenterContext context);
+    bool PresenterPreview(RibbonGalleryPresenterContext context, RibbonGalleryTile? item);
+    bool PresenterFocus(RibbonGalleryPresenterContext context, RibbonGalleryTile item);
+    bool PresenterCommit(RibbonGalleryPresenterContext context, RibbonGalleryTile item);
+    void PresenterViewChanged(RibbonGalleryPresenterContext context);
 }

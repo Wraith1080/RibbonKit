@@ -269,12 +269,18 @@ partial class DesignerForm
         // 
         // documentStylesGallery
         // 
-        documentStylesGallery.Id = "gallery.documentStyles";
+        documentStylesGallery.ColumnCount = 2;
         documentStylesGallery.DropDownPresenterType = typeof(GalleryStylesControl);
+        documentStylesGallery.Id = "gallery.documentStyles";
+        documentStylesGallery.InRibbonColumnCount = 2;
+        documentStylesGallery.InRibbonPresenterType = typeof(GalleryStylesStripControl);
+        documentStylesGallery.IsInRibbon = true;
         documentStylesGallery.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { documentStyle1, documentStyle2, documentStyle3, documentStyle4, documentStyle5, documentStyle6, documentStyle7, documentStyle8, documentStyle9, documentStyle10, documentStyle11, documentStyle12, documentStyle13, documentStyle14, documentStyle15, documentStyle16, documentStyle17, documentStyle18 });
         documentStylesGallery.KeyTip = "S";
+        documentStylesGallery.MaxVisibleRows = 3;
         documentStylesGallery.SelectedItem = documentStyle1;
         documentStylesGallery.Text = "Document styles";
+        documentStylesGallery.TileWidth = 160;
         documentStylesGallery.SelectionCommitted += documentStylesGallery_SelectionCommitted;
         documentStylesGallery.ItemPreview += documentStylesGallery_ItemPreview;
         documentStylesGallery.ItemPreviewCancelled += documentStylesGallery_ItemPreviewCancelled;

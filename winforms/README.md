@@ -626,8 +626,8 @@ navigation route. Application visuals/data stay in the control.
 Each successful opening creates a fresh owned view; popup close disposes it and
 makes its context inert. The class and factory are mutually exclusive; clear one
 before setting the other. Null for both uses the built-in gallery. Class selection,
-draft validation and inert previews never construct the UserControl. Inline and
-QAT views remain built-in in this increment. The factory is excluded from designer
+draft validation and inert previews never construct the UserControl. Inline bodies
+have independent selectors below; QAT popups remain built-in. The factory is excluded from designer
 serialization; presenter controls/state are excluded from customization JSON.
 Ordinary dropdown/split UserControl bodies remain a separate planned increment.
 
@@ -643,6 +643,43 @@ the two-column grid. Captions/items still come from Edit Ribbon; the card's Capt
 property supplies illustrative text in the standalone designer. The sample paints
 only its selection outline, rather than drawing every thumbnail and label by hand.
 See the [contract, review steps and focused evidence](docs/GALLERY-PRESENTER-PLAN.md).
+
+### Custom inline gallery UserControls
+
+The ordinary in-ribbon strip can use a separate application-designed UserControl:
+
+```csharp
+gallery.IsInRibbon = true;
+gallery.InRibbonPresenterType = typeof(MyInlineGalleryControl);
+gallery.DropDownPresenterType = typeof(MyPopupGalleryControl);
+```
+
+Both implement the existing `IRibbonGalleryPresenter`; context.Presentation is
+InRibbon or DropDown. The two selector pairs are independent. For runtime
+construction with arguments, clear InRibbonPresenterType and assign
+InRibbonPresenterFactory instead. Null for both inline selectors retains the
+built-in strip. The inline class picker in Edit Ribbon/Properties is deferred;
+select this runtime class in code or an authored typeof assignment.
+
+RibbonKit creates the inline control only for a visible ordinary strip slot and
+retains it across hiding and popup expansion. The expanded popup creates its own
+fresh control. Both display the original source items and selection; focus, scroll
+and preview ownership are per view. Hidden/suspended contexts become inert, and
+reactivation supplies another context. Replacement, final source detach or
+disposal releases the owned inline tree. The library controls viewport size,
+clipping, utility buttons, validation and keyboard routing; inline Tab leaves the
+gallery, while F4/Alt+Down expands it. Use context input requests for native child
+tiles and avoid a second keyboard/command dispatcher. Keep context-sized physical
+layout from being scaled again after parenting.
+Abort a child press if its native focus attempt was rejected or FocusItem returns
+false, so validation is not repeated on release.
+
+The permanent Designer Sample's Gallery tab uses a visually editable
+[GalleryStylesStripControl](samples/RibbonKit.WinForms.DesignerSample/GalleryStylesStripControl.cs)
+beside the existing popup example. Temporary group/minimized-tab/QAT-group bodies
+and QAT gallery popups still use built-in views. Presenter types, controls and
+transient view state stay out of customization JSON. See the
+[first-slice evidence and remaining gates](docs/GALLERY-PRESENTER-PLAN.md#first-inline-runtime-increment--2026-11-02).
 
 ### Native Backstage
 

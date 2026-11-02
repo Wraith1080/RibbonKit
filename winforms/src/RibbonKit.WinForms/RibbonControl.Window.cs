@@ -67,6 +67,7 @@ public partial class RibbonControl
     {
         if (_backdropBodyMasked == masked) return;
         _backdropBodyMasked = masked; _editors.SetBackdropOpacity(BackdropBodyMasked ? (byte)1 : (byte)255);
+        _galleryStrips.SetBackdropOpacity(BackdropBodyMasked ? (byte)1 : (byte)255);
         if (!IsDisposed && IsHandleCreated) { Invalidate(); Update(); }
     }
     internal int WindowCaptionHeight => HasWindowCaption ? WindowHost!.CaptionHeight : 0;
