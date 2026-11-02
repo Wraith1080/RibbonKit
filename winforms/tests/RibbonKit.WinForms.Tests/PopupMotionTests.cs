@@ -36,8 +36,10 @@ public sealed class PopupMotionTests
         using var f = new Fixture(office); f.Ribbon.AnimationLevel = gallery ? RibbonAnimationLevel.Expressive : RibbonAnimationLevel.Subtle;
         var window = f.Open(gallery); var surface = f.Ribbon.Popups.Top!; var bounds = window.Bounds; var motion = window.OpeningMotion;
         Assert.True(f.Ribbon.IsAnimating); Assert.NotNull(motion); Assert.True(motion!.IsRunning); Assert.True(RibbonDrawingHold.HasOpacity(surface.Handle));
+        Assert.Equal(gallery, RibbonDrawingHold.HasOpacity(window.Handle));
         nint editor = gallery ? 0 : f.Ribbon.Editors.EditorFor(f.Combo)!.Handle; var owner = gallery ? f.Gallery.Items[0].Parent : f.Combo.Parent;
         window.SettleMotion(); Assert.False(f.Ribbon.IsAnimating); Assert.False(RibbonDrawingHold.HasOpacity(surface.Handle)); Assert.Equal(bounds, window.Bounds); Assert.True(window.Visible);
+        Assert.False(RibbonDrawingHold.HasOpacity(window.Handle));
         if (!gallery) Assert.Equal(editor, f.Ribbon.Editors.EditorFor(f.Combo)!.Handle);
         Assert.Same(owner, gallery ? f.Gallery.Items[0].Parent : f.Combo.Parent); Assert.True(f.Ribbon.Popups.HasOpen);
         f.Ribbon.Popups.CloseAll(false); Assert.False(f.Ribbon.IsAnimating); Assert.True(window.IsDisposed);
@@ -52,12 +54,13 @@ public sealed class PopupMotionTests
         {
             foreach (double progress in new[] { 0, .5, 1 })
             {
-                var frame = new Bitmap(surface.Width, surface.Height, PixelFormat.Format32bppPArgb); frames.Add(frame); using var graphics = Graphics.FromImage(frame); using var alpha = new ImageAttributes(); motion.Draw(graphics, alpha, progress);
+                var frame = new Bitmap(motion.Bounds.Width, motion.Bounds.Height, PixelFormat.Format32bppPArgb); frames.Add(frame); using var graphics = Graphics.FromImage(frame); using var alpha = new ImageAttributes(); motion.Draw(graphics, alpha, progress);
                 foreach (var point in new[] { Point.Empty, new Point(frame.Width - 1, 0), new Point(0, frame.Height - 1), new Point(frame.Width - 1, frame.Height - 1) })
-                    if (surface.Region is { } clip && !clip.IsVisible(point)) Assert.Equal(0, frame.GetPixel(point.X, point.Y).A);
+                    if (gallery || surface.Region is { } clip && !clip.IsVisible(point)) Assert.Equal(0, frame.GetPixel(point.X, point.Y).A);
             }
             var first = Pink(frames[0]); var middle = Pink(frames[1]); var last = Pink(frames[2]); Assert.True(first.IsEmpty); Assert.False(last.IsEmpty); Assert.Equal(last.Size, middle.Size); Assert.Equal(last.Left, middle.Left); Assert.True(middle.Top < last.Top);
-            var color = frames[1].GetPixel(middle.Left + middle.Width / 2, middle.Top + Math.Min(2, middle.Height - 1)); Assert.InRange(color.G, 1, 254);
+            var color = frames[1].GetPixel(middle.Left + middle.Width / 2, middle.Top + Math.Min(2, middle.Height - 1));
+            if (gallery) Assert.InRange(color.A, 1, 254); else Assert.InRange(color.G, 1, 254);
             string directory = Path.Combine("TestResults", "visual", "m6a-popup"); Directory.CreateDirectory(directory); for (int i = 0; i < frames.Count; i++) frames[i].Save(Path.Combine(directory, $"{gallery}-{i}.png"));
         }
         finally { foreach (var frame in frames) frame.Dispose(); }
@@ -72,6 +75,22 @@ public sealed class PopupMotionTests
         window = f.Open(); Assert.True(f.Ribbon.IsAnimating); f.Menu.Items[0].Text += " changed"; Assert.False(f.Ribbon.IsAnimating); Assert.True(window.IsDisposed);
         window = f.Open(); Assert.True(f.Ribbon.IsAnimating); f.Ribbon.AnimationLevel = RibbonAnimationLevel.None; Assert.False(f.Ribbon.IsAnimating); Assert.True(window.Visible); f.Ribbon.Popups.CloseAll(false); f.Ribbon.AnimationLevel = RibbonAnimationLevel.Subtle;
         window = f.Open(); Assert.True(f.Ribbon.IsAnimating); window.Width += 5; Assert.False(f.Ribbon.IsAnimating); f.Ribbon.Popups.CloseAll(false);
+    });
+
+    [Fact]
+    public void Gallery_policy_and_input_restore_both_native_drawing_holds_immediately() => FoundationTests.Sta(() =>
+    {
+        using var f = new Fixture(true); f.Ribbon.AnimationLevel = RibbonAnimationLevel.Expressive;
+        f.Ribbon.Motion.SystemPolicyOverride = false; var window = f.Open(true);
+        Assert.Null(window.OpeningMotion); Assert.False(RibbonDrawingHold.HasOpacity(window.Handle)); f.Gallery.CloseDropDown();
+        f.Ribbon.Motion.SystemPolicyOverride = true; window = f.Open(true); var surface = f.Ribbon.Popups.Top!;
+        Assert.True(RibbonDrawingHold.HasOpacity(window.Handle)); f.Ribbon.AnimationLevel = RibbonAnimationLevel.None;
+        Assert.False(f.Ribbon.IsAnimating); Assert.False(RibbonDrawingHold.HasOpacity(window.Handle)); Assert.False(RibbonDrawingHold.HasOpacity(surface.Handle));
+        Assert.True(window.Visible); f.Gallery.CloseDropDown();
+        f.Ribbon.AnimationLevel = RibbonAnimationLevel.Subtle; window = f.Open(true); surface = f.Ribbon.Popups.Top!;
+        var input = Message.Create(surface.Handle, 0x100, (nint)Keys.Down, 0); f.Ribbon.ObserveMotionInput(ref input);
+        Assert.False(f.Ribbon.IsAnimating); Assert.False(RibbonDrawingHold.HasOpacity(window.Handle)); Assert.False(RibbonDrawingHold.HasOpacity(surface.Handle));
+        Assert.True(window.Visible); Assert.True(f.Gallery.IsDropDownOpen);
     });
 
     [Fact]

@@ -140,7 +140,10 @@ internal sealed class RibbonPopupManager : IDisposable
             ? opener.RectangleToScreen(new Rectangle(S(_ribbon.LayoutTheme.BodyMargin.Left), _ribbon.WindowCaptionHeight + S(_ribbon.LayoutTheme.TabHeight + _ribbon.LayoutTheme.BodyMargin.Top),
                 Math.Max(1, opener.ClientSize.Width - S(_ribbon.LayoutTheme.BodyMargin.Left) - S(_ribbon.LayoutTheme.BodyMargin.Right)), 0)) : screenAnchor;
         var work = Screen.FromRectangle(placementAnchor).WorkingArea;
-        var surface = new RibbonPopupSurface(_ribbon, owner, new(Math.Max(1, work.Width - 2), Math.Max(1, work.Height - 2)), menuSource, groupSource);
+        var surface = new RibbonPopupSurface(_ribbon, owner, new(Math.Max(1, work.Width - 2), Math.Max(1, work.Height - 2)), menuSource, groupSource, customGallery: !IsQuickAccessContext(opener));
+        if (opener.IsDisposed || !opener.Visible || owner.IsDisposed || !owner.Visible || !owner.EffectiveEnabled || _ribbon.IsDisposed
+            || menuSource is not null && !ReferenceEquals(menuSource.Ribbon, _ribbon) || !CurrentProjection(owner, menuSource, groupSource))
+        { surface.Dispose(); return; }
         var host = new ToolStripControlHost(surface) { AutoSize = false, Size = surface.Size, Margin = Padding.Empty, Padding = Padding.Empty };
         var window = new RibbonPopupWindow(_ribbon, QueueActivationCheck)
         {
@@ -161,6 +164,7 @@ internal sealed class RibbonPopupManager : IDisposable
             surface.Size = new(Math.Max(1, bounds.Width - 2), Math.Max(1, bounds.Height - 2));
             host.Size = surface.Size;
         }
+        bool accessibilityPublished = false;
         using (new RibbonPopupActivation(_form, window))
         {
             window.PrepareOpening(surface);
@@ -168,11 +172,15 @@ internal sealed class RibbonPopupManager : IDisposable
             {
                 window.Show(bounds.Location);
                 opener.Invalidate(); _ribbon.Invalidate(); _ribbon.SyncEditors(); surface.FocusFirst();
+                if (window.OpeningMotion?.FadesGallery == true)
+                {
+                    _ribbon.AccessibilityChanged(); accessibilityPublished = true;
+                }
                 window.StartOpening();
             }
             catch { Close(owner, false); throw; }
         }
-        _ribbon.AccessibilityChanged();
+        if (!accessibilityPublished) _ribbon.AccessibilityChanged();
     }
     private static bool CurrentProjection(RibbonElement owner, RibbonDropDownItem? menuSource, RibbonGroup? groupSource) => owner switch
     {
@@ -314,6 +322,8 @@ internal sealed class RibbonPopupManager : IDisposable
                 || ReferenceEquals(session.Owner, _ribbon.FileMenu) && (!session.Owner.EffectiveEnabled || !session.Owner.Visible)
                 || session.Surface.GroupSource is { } group && (!group.EffectiveEnabled || !group.Visible || !ReferenceEquals(group.Ribbon, _ribbon)))
             { Close(session.Owner, false); continue; }
+            try { session.Surface.SynchronizePresenter(); }
+            catch { Close(session.Owner, false); throw; }
             session.Surface.Invalidate();
             session.Window.Invalidate();
         }
@@ -359,7 +369,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     internal RibbonLayoutSnapshot? BodyLayout => _bodyLayout;
     internal RibbonElement? FocusedElement => _focused;
     internal bool FocusedDropDownPart => _focusedDropDown;
-    internal IReadOnlyList<RibbonTarget> Targets => _targets.Select(t => t with
+    internal IReadOnlyList<RibbonTarget> Targets => HasGalleryPresenter ? PresenterTargets() : _targets.Select(t => t with
     {
         Bounds = new(t.Bounds.X + AutoScrollPosition.X, t.Bounds.Y + (OwnerElement is RibbonQuickAccessOverflow ? OverflowViewport.Top - _overflowOffset : AutoScrollPosition.Y),
             OwnerElement is RibbonQuickAccessOverflow ? Math.Max(0, ClientSize.Width - 2 * _contentPadding)
@@ -367,7 +377,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         Clip = OwnerElement is RibbonQuickAccessOverflow ? OverflowViewport : _bodyLayout is null ? ClientRectangle : Rectangle.Intersect(ClientRectangle,
             new(t.Clip.X + AutoScrollPosition.X, t.Clip.Y + AutoScrollPosition.Y, t.Clip.Width, t.Clip.Height))
     }).SelectMany(t => RibbonSplitLayout.Expand(t, _ribbon.DeviceDpi, MenuSource is not null || OwnerElement is RibbonQuickAccessOverflow)).ToArray();
-    internal RibbonPopupSurface(RibbonControl ribbon, RibbonElement owner, Size workArea, RibbonDropDownItem? menuSource = null, RibbonGroup? groupSource = null)
+    internal RibbonPopupSurface(RibbonControl ribbon, RibbonElement owner, Size workArea, RibbonDropDownItem? menuSource = null, RibbonGroup? groupSource = null, bool customGallery = true)
     {
         _ribbon = ribbon;
         OwnerElement = owner;
@@ -405,6 +415,8 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         }
         else if (GallerySource is { } gallery)
         {
+            if (customGallery && gallery.HasCustomDropDownPresenter && owner is not RibbonQuickAccessDropDownReference)
+            { Size = InitializeGalleryPresenter(gallery, workArea); return; }
             _galleryLayout = RibbonGalleryLayout.Build(gallery, Font, ribbon.DeviceDpi, workArea);
             width = _galleryLayout.Extent.Width; height = _galleryLayout.Extent.Height;
             galleryViewport = _galleryLayout.ViewportHeight;
@@ -503,7 +515,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
             finally { e.Graphics.Restore(saved); }
         }
         var targets = Targets;
-        foreach (var target in targets.Where(t => !t.DropDownPart))
+        foreach (var target in targets.Where(t => !t.DropDownPart && !HasGalleryPresenter))
         {
             if (target.VisibleBounds.IsEmpty && !(RibbonSplitLayout.IsSplit(target.Element)
                 && targets.Any(t => t.DropDownPart && ReferenceEquals(t.Element, target.Element) && !t.VisibleBounds.IsEmpty))) continue;
@@ -666,6 +678,8 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     }
     internal void FocusFirst()
     {
+        if (HasGalleryPresenter && GallerySource is { } custom)
+        { FocusPresenterItem(custom.SelectedItem is { } selectedItem && custom.Available(selectedItem) ? selectedItem : custom.Items.OfType<RibbonGalleryTile>().FirstOrDefault(custom.Available)); return; }
         if (GallerySource?.SelectedItem is { } selected && Targets.Any(t => ReferenceEquals(t.Element, selected) && t.Enabled))
         { FocusElement(selected); return; }
         if (Targets.FirstOrDefault(t => t.Enabled && t.Element is not null)?.Element is { } item)
@@ -676,6 +690,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     internal void FocusElement(RibbonElement item, bool dropDownPart = false, bool enterEditor = true)
     {
         if (item is RibbonMenuSeparatorItem || !item.EffectiveEnabled || !item.Visible) return;
+        if (HasGalleryPresenter && item is RibbonGalleryTile tile) { FocusPresenterItem(tile); return; }
         _focused = item;
         _focusedDropDown = RibbonSplitLayout.IsSplit(item) && dropDownPart;
         Focus();

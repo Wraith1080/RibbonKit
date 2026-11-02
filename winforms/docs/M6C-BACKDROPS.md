@@ -10,6 +10,29 @@ the earlier deferral; it does not establish the cause or resolution of flicker.
 M5E persistence was implemented first as requested. Resumed review corrections
 and current evidence are recorded below.
 
+## Translucent caption-button states — 2026-11-02
+
+Minimize, maximize/restore and Close now use translucent hover/pressed fills on
+the composited material caption, as requested. Normal-state backgrounds and
+opaque symbol ink are unchanged. Minimize/maximize reuse the existing
+`BackdropHover` / `BackdropPressed` fills (default foreground alpha 24 / 40);
+Close keeps its red fill at alpha 210 on hover and 235 when pressed. Solid mode
+retains its existing fills. The Restore symbol's front-window cutout reapplies
+the state tint after erasing the rear outline, avoiding an untinted patch.
+No public API was added.
+
+Debug build and **10 focused tests passed**, covering integrated/standalone
+captions, maximize/restore, normal/hover/pressed coverage, opaque symbols and
+activation colors. The refreshed package-only Designer Sample produced **21
+native caption captures** at actual **120 DPI** across Solid/Mica/Acrylic;
+representative hover/pressed PNGs were inspected. The capture fixture sends
+state messages only to its own form and invokes no caption command; this is not
+a physical pointer, Snap Layout, mixed-DPI or user acceptance claim. Results:
+`artifacts/test-results/caption-button-transparency.trx` and
+`artifacts/caption-button-review-flushed/`. Earlier capture attempts returned to
+the message pump too early or omitted GDI flush and are diagnostics only.
+User visual review remains pending; no full suite or WPF checks ran.
+
 ## Residual tab shadow pulse and black startup fields — 2026-11-02
 
 Status: **corrections implemented and packaged; focused/native checks passed;

@@ -7,9 +7,23 @@ internal sealed class RibbonPopupWindow : ToolStripDropDown
     private readonly Action activationChanged;
     private readonly bool nonActivating;
     internal RibbonPopupMotion? OpeningMotion { get; private set; }
-    internal void PrepareOpening(Control surface) { SettleMotion(); OpeningMotion = RibbonPopupMotion.Prepare(ribbon, this, surface); }
+    private bool _galleryAppearanceActive;
+    internal void PrepareOpening(Control surface)
+    {
+        SettleMotion(); OpeningMotion = RibbonPopupMotion.Prepare(ribbon, this, surface);
+        _galleryAppearanceActive = OpeningMotion?.FadesGallery == true;
+    }
     internal void StartOpening() => OpeningMotion?.Start();
     internal void SettleMotion() { OpeningMotion?.Dispose(); OpeningMotion = null; }
+    internal void CompleteGalleryAppearance(nint drawingWindow)
+    {
+        _galleryAppearanceActive = false;
+        if (Visible && !IsDisposed && IsHandleCreated)
+        {
+            _chrome.Update(this, ribbon, UpdateShape(), show: false);
+            _chrome.RevealAtHandoff(this, drawingWindow);
+        }
+    }
     internal RibbonPopupWindow(RibbonControl ribbon, Action activationChanged, bool nonActivating = false)
     {
         this.ribbon = ribbon; this.activationChanged = activationChanged; this.nonActivating = nonActivating;
@@ -43,14 +57,14 @@ internal sealed class RibbonPopupWindow : ToolStripDropDown
     protected override void OnVisibleChanged(EventArgs e)
     {
         base.OnVisibleChanged(e);
-        if (Visible) _chrome.Update(this, ribbon, UpdateShape());
+        if (Visible) _chrome.Update(this, ribbon, UpdateShape(), show: !_galleryAppearanceActive);
         else { SettleMotion(); _chrome.Dispose(); }
     }
     protected override void OnPaint(PaintEventArgs e)
     {
         int radius = UpdateShape();
         base.OnPaint(e);
-        _chrome.Update(this, ribbon, radius);
+        _chrome.Update(this, ribbon, radius, show: !_galleryAppearanceActive);
     }
     protected override void Dispose(bool disposing)
     {

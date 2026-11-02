@@ -82,9 +82,9 @@ public sealed record RibbonTheme
     public RibbonFill Checked { get; init; } = new(Color.FromArgb(217, 225, 237));
     /// <summary>Gets QAT hover/pressed/checked and header utility hover/pressed background coverage over an active window backdrop, from 0 to 1. Solid and popup presentations keep their authored fills. Text and icons retain their opacity.</summary>
     public float QuickAccessBackdropOpacity { get; init; } = .6f;
-    /// <summary>Gets an optional hover/selected-navigation fill over a window backdrop. Null uses Foreground at alpha 24. Applies to header Quick Access/utilities and Backstage entries; Solid mode and opaque command panels retain Hover.</summary>
+    /// <summary>Gets an optional hover/selected-navigation fill over a window backdrop. Null uses Foreground at alpha 24. Applies to header Quick Access/utilities, minimize/maximize caption buttons and Backstage entries; Solid mode and opaque command panels retain Hover.</summary>
     public RibbonFill? BackdropHover { get; init; }
-    /// <summary>Gets an optional pressed/open fill over a window backdrop. Null uses Foreground at alpha 40. Checked Quick Access entries use Accent at alpha 40 unless this fill is supplied. Solid mode and opaque command panels retain their authored state fills.</summary>
+    /// <summary>Gets an optional pressed/open fill over a window backdrop, including minimize/maximize caption buttons. Null uses Foreground at alpha 40. Checked Quick Access entries use Accent at alpha 40 unless this fill is supplied. Solid mode and opaque command panels retain their authored state fills.</summary>
     public RibbonFill? BackdropPressed { get; init; }
     /// <summary>Gets unselected tab/File hover-indicator coverage over a window backdrop, from 0 to 1. Default is .45. Solid mode and selected-tab accents retain their authored coverage.</summary>
     public float BackdropTabHoverOpacity { get; init; } = .45f;

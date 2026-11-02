@@ -69,6 +69,7 @@ internal sealed partial class RibbonPopupSurface
             DisposeOverflowScrolling();
             _automation?.Disconnect();
             _automation = null;
+            DetachPresenter();
         }
         base.Dispose(disposing);
     }

@@ -483,14 +483,33 @@ Form transparency, unavailable native support and unsafe surface bounds use the
 immediate path. User review, 2026-10-29: popup opening looks good at the reviewed
 scope. Existing performance/display and physical-input gates remain separate.
 
-The popup's actual anchor, window bounds, rounded frame/clip and shadow are fixed.
-Only a natural-size inner snapshot fades and slides down, using cubic ease-out:
+The popup's actual anchor, window bounds and rounded clip are fixed. For menus,
+the frame/shadow remain opaque while a natural-size inner snapshot fades and
+slides down, using cubic ease-out:
 Subtle requests 130 ms and 8 logical pixels; Expressive 182 ms and 12. The live
 surface is put into the existing alpha-1 drawing hold before Show, avoiding a
 destination-content flash while retaining native focus, input and editor HWNDs.
 Endpoint capture reuses the normal HWND printing/native-editor clipping path.
 One inert, nonactivating owned drawing plane reuses its DIB/DC until completion;
 capture and layout do not run per frame. All drawings remain in the library.
+
+The **2026-11-02 opening-delay correction** starts the menu opening clock before native
+show/layout/capture preparation and publishes its first image at elapsed progress.
+It no longer leaves an empty progress-zero drawing waiting for a timer and then
+adds the entire animation after setup. The existing duration/easing/travel and
+hold/ownership rules remain. The [gallery plan records the failed-before
+regression, focused results and native comparison](GALLERY-PRESENTER-PLAN.md#opening-delay-correction--2026-11-02).
+
+The subsequent **synchronized gallery entrance** fades the complete card, border
+and shadow while its natural-size items slide down inside the fixed viewport.
+Its linear fade and cubic item travel share one clock, started after body/frame/
+buffer preparation so the full entrance remains visible. The real popup and
+native controls retain alpha-1 drawing holds; static chrome is hidden while one
+inert drawing supplies the complete fade. Settlement repaints the real controls
+and swaps chrome/drawing visibility in one native position batch to avoid a
+shadow pulse. Existing durations, policy/input settlement and factory ownership
+remain. [Focused and native evidence](GALLERY-PRESENTER-PLAN.md#synchronized-gallery-entrance--2026-11-02)
+records the current verification and review status.
 
 Pointer movement into the popup, button/key/wheel input, source mutation, resize,
 policy changes, close/disposal and activation loss settle/release the presentation.

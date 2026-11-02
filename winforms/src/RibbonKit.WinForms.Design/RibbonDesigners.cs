@@ -54,6 +54,9 @@ public sealed class RibbonElementDesigner : ComponentDesigner
         if (Component is RibbonBackstagePageItem && properties[nameof(RibbonBackstagePageItem.ContentType)] is PropertyDescriptor contentType)
             properties[contentType.Name] = TypeDescriptor.CreateProperty(typeof(RibbonBackstagePageItem), contentType,
                 new TypeConverterAttribute(typeof(RibbonBackstageContentTypeConverter)));
+        if (Component is RibbonGalleryItem && properties[nameof(RibbonGalleryItem.DropDownPresenterType)] is PropertyDescriptor presenterType)
+            properties[presenterType.Name] = TypeDescriptor.CreateProperty(typeof(RibbonGalleryItem), presenterType,
+                new TypeConverterAttribute(typeof(RibbonGalleryPresenterTypeConverter)));
         if (Component is RibbonBackstage)
             foreach (string name in new[] { nameof(RibbonBackstage.Items), nameof(RibbonBackstage.FooterItems) })
                 if (properties[name] is PropertyDescriptor items)

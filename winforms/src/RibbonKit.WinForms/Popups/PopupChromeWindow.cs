@@ -18,7 +18,7 @@ internal sealed class PopupChromeWindow : NativeWindow, IDisposable
     private bool _shadowEnabled;
     private nint _owner;
 
-    internal void Update(Control popup, RibbonControl ribbon, int radius)
+    internal void Update(Control popup, RibbonControl ribbon, int radius, bool show = true)
     {
         bool shadow = ribbon.Theme.PopupShadowEnabled && SystemInformation.IsDropShadowEnabled;
         if (!popup.Visible || (!shadow && radius == 0))
@@ -67,8 +67,22 @@ internal sealed class PopupChromeWindow : NativeWindow, IDisposable
         // Hover repaints must not repeatedly enter native window positioning.
         // Still repair real moves, visibility and sibling Z-order changes (for
         // example when another owned popup or ScreenTip has been shown).
-        if (!GetWindowRect(Handle, out var current) || current.Rectangle != bounds || !IsWindowVisible(Handle) || GetWindow(popup.Handle, 2) != Handle)
+        if (!show)
+            SetWindowPos(Handle, popup.Handle, bounds.X, bounds.Y, bounds.Width, bounds.Height, 0x0090); // NOACTIVATE | HIDEWINDOW
+        else if (!GetWindowRect(Handle, out var current) || current.Rectangle != bounds || !IsWindowVisible(Handle) || GetWindow(popup.Handle, 2) != Handle)
             SetWindowPos(Handle, popup.Handle, bounds.X, bounds.Y, bounds.Width, bounds.Height, 0x0050); // NOACTIVATE | SHOWWINDOW
+    }
+
+    internal void RevealAtHandoff(Control popup, nint drawingWindow)
+    {
+        // Swap the inert shadow for the live chrome in one native position batch,
+        // so overlapping shadow alpha cannot create a dark pulse at the endpoint.
+        nint batch = BeginDeferWindowPos(2);
+        if (batch != 0 && Handle != 0) batch = DeferWindowPos(batch, Handle, popup.Handle, 0, 0, 0, 0, 0x0253);
+        if (batch != 0 && drawingWindow != 0) batch = DeferWindowPos(batch, drawingWindow, 0, 0, 0, 0, 0, 0x0297);
+        if (batch != 0 && EndDeferWindowPos(batch)) return;
+        if (Handle != 0) SetWindowPos(Handle, popup.Handle, 0, 0, 0, 0, 0x0253);
+        if (drawingWindow != 0) SetWindowPos(drawingWindow, 0, 0, 0, 0, 0, 0x0297);
     }
 
     private void Upload(Bitmap bitmap, Point location)
@@ -117,4 +131,7 @@ internal sealed class PopupChromeWindow : NativeWindow, IDisposable
     [DllImport("user32.dll", SetLastError = true)] private static extern bool UpdateLayeredWindow(nint window, nint screen, ref Point location, ref Size size, nint sourceDC, ref Point source, uint key, ref Blend blend, uint flags);
     [DllImport("user32.dll")] private static extern bool SetWindowPos(nint window, nint insertAfter, int x, int y, int width, int height, uint flags);
     [DllImport("user32.dll")] private static extern nint GetWindow(nint window, uint command);
+    [DllImport("user32.dll")] private static extern nint BeginDeferWindowPos(int count);
+    [DllImport("user32.dll")] private static extern nint DeferWindowPos(nint batch, nint window, nint insertAfter, int x, int y, int width, int height, uint flags);
+    [DllImport("user32.dll")] private static extern bool EndDeferWindowPos(nint batch);
 }

@@ -6,8 +6,8 @@ using RibbonKit.WinForms.Layout;
 
 namespace RibbonKit.WinForms;
 
-// A popup keeps its real frame/anchor/shadow. Only its inert inner drawing moves;
-// native editor HWNDs remain alive and focused behind the drawing hold.
+// Native editor HWNDs remain alive and focused behind an inert drawing. Galleries
+// fade their whole card/shadow while the items slide inside its fixed viewport.
 internal sealed class RibbonPopupMotion : IDisposable
 {
     private readonly RibbonControl _ribbon;
@@ -18,8 +18,12 @@ internal sealed class RibbonPopupMotion : IDisposable
     private readonly double _duration;
     private readonly int _travel;
     private RibbonDrawingHold? _hold;
+    private RibbonDrawingHold? _popupHold;
     private RibbonMotionWindow? _window;
     private Bitmap? _image;
+    private Bitmap? _frame, _composition;
+    private Graphics? _compositionGraphics;
+    private Point _contentOrigin;
     private Region? _clip;
     private SolidBrush? _background;
     private long _start, _last;
@@ -27,10 +31,13 @@ internal sealed class RibbonPopupMotion : IDisposable
     private readonly Point _initialPointer;
     internal Rectangle Bounds { get; private set; }
     internal bool IsRunning => !_disposed && _image is not null;
+    internal bool FadesGallery { get; }
     internal readonly List<double> FrameIntervals = new(24);
-    private RibbonPopupMotion(RibbonControl ribbon, RibbonPopupWindow popup, Control surface, RibbonDrawingHold hold)
+    private RibbonPopupMotion(RibbonControl ribbon, RibbonPopupWindow popup, Control surface, RibbonDrawingHold hold, long requestedAt)
     {
         _ribbon = ribbon; _popup = popup; _surface = surface; _hold = hold; _initialPointer = Cursor.Position;
+        _start = requestedAt;
+        FadesGallery = surface is RibbonPopupSurface { GallerySource: not null };
         bool expressive = ribbon.AnimationLevel == RibbonAnimationLevel.Expressive;
         _duration = expressive ? 182 : 130; _travel = RibbonLayoutEngine.Scale(expressive ? 12 : 8, ribbon.DeviceDpi); _timer.Tick += Tick;
     }
@@ -40,8 +47,16 @@ internal sealed class RibbonPopupMotion : IDisposable
             surface.Width < 1 || surface.Height < 1 || (long)surface.Width * surface.Height > 4_194_304) return null;
         if (ribbon.FindForm() is { } form && (form.Opacity != 1 || form.TransparencyKey != Color.Empty)) return null;
         if (RibbonDrawingHold.HasOpacity(surface.Handle)) return null;
-        try { return new(ribbon, popup, surface, RibbonDrawingHold.Create(surface.Handle)); }
-        catch (Win32Exception error) { Trace.WriteLine("Popup motion skipped: " + error.Message); return null; }
+        long requestedAt = Stopwatch.GetTimestamp();
+        RibbonPopupMotion? motion = null;
+        try
+        {
+            if (RibbonDrawingHold.HasOpacity(popup.Handle)) return null;
+            motion = new(ribbon, popup, surface, RibbonDrawingHold.Create(surface.Handle), requestedAt);
+            if (motion.FadesGallery) motion._popupHold = RibbonDrawingHold.Create(popup.Handle, compositeChildren: true);
+            return motion;
+        }
+        catch (Win32Exception error) { motion?.Dispose(); Trace.WriteLine("Popup motion skipped: " + error.Message); return null; }
     }
     internal void Start()
     {
@@ -55,8 +70,15 @@ internal sealed class RibbonPopupMotion : IDisposable
             RibbonMotionScene.Capture(_ribbon, _surface, _image);
             if (_disposed) return;
             _clip = _surface.Region?.Clone(); _background = new(_ribbon.Theme.Surface);
-            _window = new(_popup); _window.RenderPopup(this, 0);
-            _start = _last = Stopwatch.GetTimestamp();
+            if (FadesGallery) PrepareGallery();
+            _window = new(_popup);
+            _window.PreparePopup(Bounds);
+            // Gallery preparation happens behind a transparent native card.
+            // Its full fade and item slide receive the same fresh visible clock.
+            if (FadesGallery) _start = Stopwatch.GetTimestamp();
+            double initialProgress = FadesGallery ? 0 : Math.Clamp(Stopwatch.GetElapsedTime(_start).TotalMilliseconds / _duration, 0, 1);
+            _window.RenderPopup(this, initialProgress);
+            _last = Stopwatch.GetTimestamp();
             _popup.LocationChanged += Unsafe; _popup.ClientSizeChanged += Unsafe; _popup.VisibleChanged += Visibility; _popup.Disposed += Unsafe; _popup.HandleDestroyed += Unsafe;
             _surface.ClientSizeChanged += Unsafe; _surface.FontChanged += Unsafe; _surface.Disposed += Unsafe; _surface.HandleDestroyed += Unsafe;
             _subscribed = true; _timer.Start();
@@ -64,9 +86,44 @@ internal sealed class RibbonPopupMotion : IDisposable
         catch (Win32Exception error) { Trace.WriteLine("Popup motion skipped: " + error.Message); Dispose(); }
         catch { Dispose(); throw; }
     }
+    private void PrepareGallery()
+    {
+        var content = Bounds;
+        int padding = RibbonLayoutEngine.Scale(8, _ribbon.DeviceDpi);
+        Bounds = Rectangle.Inflate(_popup.Bounds, padding, padding);
+        _contentOrigin = new(content.X - Bounds.X, content.Y - Bounds.Y);
+        _clip ??= new Region(new Rectangle(Point.Empty, _surface.Size));
+        _clip.Translate(_contentOrigin.X, _contentOrigin.Y);
+        _frame = new(Bounds.Width, Bounds.Height, PixelFormat.Format32bppPArgb);
+        using (var graphics = Graphics.FromImage(_frame))
+        {
+            var context = new RibbonPaintContext(graphics, new(padding, padding, _popup.Width, _popup.Height), _ribbon.Theme, _ribbon.Font, _ribbon.DeviceDpi) { Density = _ribbon.Density };
+            if (_ribbon.Theme.PopupShadowEnabled && SystemInformation.IsDropShadowEnabled) _ribbon.Painter.DrawPopupShadow(context);
+            _ribbon.Painter.DrawPopupFrame(context);
+        }
+        _composition = new(Bounds.Width, Bounds.Height, PixelFormat.Format32bppPArgb);
+        _compositionGraphics = Graphics.FromImage(_composition);
+    }
     internal void Draw(Graphics graphics, ImageAttributes alpha, double progress)
     {
         graphics.CompositingMode = CompositingMode.SourceCopy; graphics.Clear(Color.Transparent); graphics.CompositingMode = CompositingMode.SourceOver;
+        if (FadesGallery)
+        {
+            var canvas = _compositionGraphics!;
+            canvas.Clear(Color.Transparent); canvas.DrawImageUnscaled(_frame!, Point.Empty);
+            var clip = canvas.Save();
+            double p = 1 - Math.Pow(1 - Math.Clamp(progress, 0, 1), 3);
+            try
+            {
+                canvas.SetClip(_clip!, CombineMode.Intersect);
+                canvas.DrawImageUnscaled(_image!, _contentOrigin.X, _contentOrigin.Y - (int)Math.Round(_travel * (1 - p)));
+            }
+            finally { canvas.Restore(clip); }
+            canvas.Flush();
+            _fade.Matrix33 = (float)Math.Clamp(progress, 0, 1); alpha.SetColorMatrix(_fade);
+            graphics.DrawImage(_composition!, new Rectangle(Point.Empty, Bounds.Size), 0, 0, Bounds.Width, Bounds.Height, GraphicsUnit.Pixel, alpha);
+            return;
+        }
         var saved = graphics.Save();
         try
         {
@@ -98,7 +155,10 @@ internal sealed class RibbonPopupMotion : IDisposable
             _popup.LocationChanged -= Unsafe; _popup.ClientSizeChanged -= Unsafe; _popup.VisibleChanged -= Visibility; _popup.Disposed -= Unsafe; _popup.HandleDestroyed -= Unsafe;
             _surface.ClientSizeChanged -= Unsafe; _surface.FontChanged -= Unsafe; _surface.Disposed -= Unsafe; _surface.HandleDestroyed -= Unsafe; _subscribed = false;
         }
-        _hold?.Dispose(); _hold = null; _window?.Dispose(); _window = null;
+        _hold?.Dispose(); _hold = null; _popupHold?.Dispose(); _popupHold = null;
+        if (FadesGallery) _popup.CompleteGalleryAppearance(_window?.Handle ?? 0);
+        _window?.Dispose(); _window = null;
+        _compositionGraphics?.Dispose(); _compositionGraphics = null; _composition?.Dispose(); _composition = null; _frame?.Dispose(); _frame = null;
         _image?.Dispose(); _image = null; _clip?.Dispose(); _clip = null; _background?.Dispose(); _background = null; _timer.Dispose();
     }
 }

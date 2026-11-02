@@ -9,6 +9,11 @@ public partial class DesignerForm : RibbonForm
         InitializeComponent();
     }
 
+    internal (RibbonTab Tab, RibbonGalleryItem Gallery) GalleryPresenterExample => (galleryTab, documentStylesGallery);
+    private void documentStylesGallery_ItemPreview(object? sender, RibbonGalleryPreviewEventArgs e) => statusLabel.Text = "Preview: " + e.Item.Text;
+    private void documentStylesGallery_ItemPreviewCancelled(object? sender, EventArgs e) => statusLabel.Text = "Selected: " + documentStylesGallery.SelectedItem?.Text;
+    private void documentStylesGallery_SelectionCommitted(object? sender, EventArgs e) => statusLabel.Text = "Selected: " + documentStylesGallery.SelectedItem?.Text;
+
     private void ApplyButton_Click(object? sender, EventArgs e) => statusLabel.Text = "Applied: " + nameField.Value;
     private void BackstageSaveCommand_Click(object? sender, EventArgs e) => statusLabel.Text = "Backstage Save: " + ((BackstageInfoControl?)infoPage.Content)?.NotesEditor.Text;
     private void BackstageOptionsCommand_Click(object? sender, EventArgs e) => statusLabel.Text = "Backstage Options";

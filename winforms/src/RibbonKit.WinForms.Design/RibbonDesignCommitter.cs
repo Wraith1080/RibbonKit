@@ -26,7 +26,7 @@ internal static partial class RibbonDesignCommitter
         "Id", "Text", "KeyTip", "Enabled", "Visible", "IsContextual", "ContextualColor", "CanClose", "CloseButtonText",
         "Priority", "ReductionMode", "Layout", "Row", "SizePolicy", "Checked", "CheckState", "GroupName", "MenuDescription", "DropDownHeader", "MenuPresentation",
         "ScreenTipTitle", "ScreenTipDescription", "ShowLabel", "IsEditable", "Value", "InputWidth", "ReadOnly", "MaxLength", "SelectedIndex",
-        "IsInRibbon", "InRibbonColumnCount", "ColumnCount", "TileWidth", "TileHeight", "MaxVisibleRows", "DropDownKeyTip"
+        "IsInRibbon", "InRibbonColumnCount", "ColumnCount", "TileWidth", "TileHeight", "MaxVisibleRows", "DropDownKeyTip", "DropDownPresenterType"
     ];
     private static readonly string[] SizePolicies = new[]
     {
@@ -40,6 +40,7 @@ internal static partial class RibbonDesignCommitter
     {
         EnsureNestedDesignModels(ribbon);
         var elements = EditableElements(ribbon).ToArray();
+        var presenterTypes = RibbonGalleryPresenterTypes.Available(host, ribbon);
         var used = new HashSet<string>(host.Container.Components.Cast<IComponent>().Select(component => component.Site?.Name ?? ""), StringComparer.OrdinalIgnoreCase);
         var backdropHost = BackdropHost(ribbon, host);
         var snapshot = new RibbonDesignSnapshot
@@ -66,7 +67,7 @@ internal static partial class RibbonDesignCommitter
         {
             string name = element.Site?.Name ?? UniqueName(element.GetType().Name, used);
             return new RibbonDesignNode { Key = Key(element), ComponentName = name, Kind = Kind(element),
-                Properties = Properties(element), Icon = ReadIcon(element), Choices = element is RibbonComboBoxItem choice ? choice.Items.ToList() : [], Children = ChildElements(element).Select(Map).ToList() };
+                Properties = Properties(element, presenterTypes), Icon = ReadIcon(element), Choices = element is RibbonComboBoxItem choice ? choice.Items.ToList() : [], Children = ChildElements(element).Select(Map).ToList() };
         }
         snapshot.Tabs = ribbon.Tabs.Select(Map).ToList();
         ReadQuickAccess(ribbon, snapshot, Map);
@@ -75,7 +76,7 @@ internal static partial class RibbonDesignCommitter
         foreach (var kind in Kinds)
         {
             using var element = (RibbonElement)Activator.CreateInstance(kind.Value)!;
-            snapshot.Templates.Add(new() { Kind = kind.Key, Properties = Properties(element) });
+            snapshot.Templates.Add(new() { Kind = kind.Key, Properties = Properties(element, presenterTypes) });
         }
         return snapshot;
     }
@@ -103,6 +104,13 @@ internal static partial class RibbonDesignCommitter
         draft.ReservedIds = before.ReservedIds; draft.ReservedNames = before.ReservedNames; draft.QuickAccessSources = before.QuickAccessSources; draft.Validate();
         var quickAccess = PrepareQuickAccess(ribbon, host, before, draft);
         var namedElements = EditableElements(ribbon).ToDictionary(Key, StringComparer.Ordinal);
+        var presenterTypes = RibbonGalleryPresenterTypes.Available(host, ribbon);
+        foreach (var node in draft.CommandNodes.Where(node => node.Kind == "Gallery"))
+        {
+            var type = RibbonGalleryPresenterTypes.Resolve(node.Properties.Single(property => property.Name == "DropDownPresenterType").Value, presenterTypes);
+            if (type is not null && namedElements.GetValueOrDefault(node.Key) is RibbonGalleryItem { DropDownPresenterFactory: not null })
+                throw new ArgumentException("Clear the application's DropDownPresenterFactory before selecting DropDownPresenterType. The designer preserves runtime factories.");
+        }
         var requestedNames = draft.AllNodes.Select(node => ((IComponent?)namedElements.GetValueOrDefault(node.Key), node.ComponentName)).ToList();
         if (before.ComponentName.Length != 0 || draft.ComponentName.Length != 0) requestedNames.Add((ribbon, draft.ComponentName));
         var names = new RibbonComponentNames(host, requestedNames);
@@ -131,7 +139,7 @@ internal static partial class RibbonDesignCommitter
         // Exercise conversions, setters, native choice constraints and runtime
         // collection/ID rules on detached built-in models before live mutation.
         using (var probe = new RibbonControl())
-            foreach (var node in draft.Tabs) probe.Tabs.Add((RibbonTab)BuildProbe(node, originalNodes, before.Templates));
+            foreach (var node in draft.Tabs) probe.Tabs.Add((RibbonTab)BuildProbe(node, originalNodes, before.Templates, presenterTypes));
         var retained = draft.Nodes.Select(node => node.Key).ToHashSet(StringComparer.Ordinal);
         var retainedComponents = existing.Where(pair => retained.Contains(pair.Key)).Select(pair => pair.Value).ToHashSet();
         var changes = (IComponentChangeService?)host.GetService(typeof(IComponentChangeService))
@@ -222,7 +230,7 @@ internal static partial class RibbonDesignCommitter
             }
             void SetScalar(RibbonElement element, RibbonDesignProperty value)
             {
-                var property = CheckedProperty(element, value.Name); object? old = property.GetValue(element), next = ConvertValue(property, value.Value);
+                var property = CheckedProperty(element, value.Name); object? old = property.GetValue(element), next = ConvertValue(property, value.Value, presenterTypes);
                 if (Equals(old, next)) return;
                 changes.OnComponentChanging(element, property); property.SetValue(element, next); changes.OnComponentChanged(element, property, old, next);
             }
@@ -250,7 +258,7 @@ internal static partial class RibbonDesignCommitter
         finally { if (initializing) ribbon.EndInit(); ((IDisposable)transaction).Dispose(); }
     }
 
-    internal static RibbonElement BuildProbe(RibbonDesignNode node, Dictionary<string, RibbonDesignNode> originals, List<RibbonDesignNode> templates)
+    internal static RibbonElement BuildProbe(RibbonDesignNode node, Dictionary<string, RibbonDesignNode> originals, List<RibbonDesignNode> templates, IEnumerable<Type>? presenterTypes = null)
     {
         var element = (RibbonElement)Activator.CreateInstance(Kinds[node.Kind])!;
         try
@@ -259,7 +267,7 @@ internal static partial class RibbonDesignCommitter
             foreach (var value in node.Properties)
             {
                 if (element is RibbonComboBoxItem && value.Name is "Value" or "SelectedIndex") continue;
-                var property = CheckedProperty(element, value.Name); property.SetValue(element, ConvertValue(property, value.Value));
+                var property = CheckedProperty(element, value.Name); property.SetValue(element, ConvertValue(property, value.Value, presenterTypes));
             }
             if (element is RibbonComboBoxItem selection)
             {
@@ -271,7 +279,7 @@ internal static partial class RibbonDesignCommitter
                     ?? node.Properties.Single(property => property.Name == "SelectedIndex");
                 var property = CheckedProperty(element, value.Name); property.SetValue(element, ConvertValue(property, value.Value));
             }
-            if (Collection(element) is { } children) foreach (var child in node.Children) children.Add(BuildProbe(child, originals, templates));
+            if (Collection(element) is { } children) foreach (var child in node.Children) children.Add(BuildProbe(child, originals, templates, presenterTypes));
             return element;
         }
         catch { element.Dispose(); throw; }
@@ -298,7 +306,8 @@ internal static partial class RibbonDesignCommitter
         if (!ScalarNames.Contains(name) || property is null || property.IsReadOnly) throw new ArgumentException("Unsupported property: " + name);
         return property;
     }
-    private static object? ConvertValue(PropertyDescriptor property, string value) => property.PropertyType == typeof(string) ? value : property.Converter.ConvertFromInvariantString(value);
+    private static object? ConvertValue(PropertyDescriptor property, string value, IEnumerable<Type>? presenterTypes = null) => property.Name == "DropDownPresenterType"
+        ? RibbonGalleryPresenterTypes.Resolve(value, presenterTypes ?? []) : property.PropertyType == typeof(string) ? value : property.Converter.ConvertFromInvariantString(value);
     internal static bool SameIcon(RibbonDesignIcon first, RibbonDesignIcon second) => first.Kind == second.Kind && first.Source == second.Source && first.UseForegroundColor == second.UseForegroundColor;
     internal static RibbonDesignIcon ReadIcon(RibbonElement element)
     {
@@ -307,7 +316,7 @@ internal static partial class RibbonDesignCommitter
         return icon is RibbonSvgIcon svg ? new() { Kind = "Svg", Source = svg.Source, Name = svg.Name, UseForegroundColor = svg.UseForegroundColor, HasRasterImage = raster }
             : new() { Kind = icon == null ? "None" : "Custom", Name = icon?.GetType().Name ?? "", HasRasterImage = raster };
     }
-    internal static List<RibbonDesignProperty> Properties(RibbonElement element) => ScalarNames
+    internal static List<RibbonDesignProperty> Properties(RibbonElement element, IEnumerable<Type>? presenterTypes = null) => ScalarNames
         .Where(name => name != "Checked" || element is not RibbonCheckBoxItem)
         .Where(name => name is not ("DropDownHeader" or "MenuPresentation") || element is not RibbonGalleryItem)
         .Select(name => TypeDescriptor.GetProperties(element)[name]).Where(property => property is { IsReadOnly: false })
@@ -320,8 +329,11 @@ internal static partial class RibbonDesignCommitter
                 "SizePolicy" => "Command sizes in the expanded, intermediate and minimum group states.",
                 _ => property.Description
             },
-            Type = property.PropertyType.Name, Value = property.PropertyType == typeof(string) ? (string?)property.GetValue(element) ?? "" : property.Converter.ConvertToInvariantString(property.GetValue(element)) ?? "",
-            Options = property.PropertyType.IsEnum ? Enum.GetNames(property.PropertyType) : property.PropertyType == typeof(RibbonSizePolicy)
+            Type = property.PropertyType == typeof(Type) ? "String" : property.PropertyType.Name,
+            Value = property.PropertyType == typeof(Type) ? RibbonGalleryPresenterTypes.Label(property.GetValue(element) as Type)
+                : property.PropertyType == typeof(string) ? (string?)property.GetValue(element) ?? "" : property.Converter.ConvertToInvariantString(property.GetValue(element)) ?? "",
+            Options = property.PropertyType == typeof(Type) ? new[] { RibbonGalleryPresenterTypes.None }.Concat((presenterTypes ?? []).Select(RibbonGalleryPresenterTypes.Label)).ToArray()
+                : property.PropertyType.IsEnum ? Enum.GetNames(property.PropertyType) : property.PropertyType == typeof(RibbonSizePolicy)
                 ? SizePolicies.Concat(new[] { property.Converter.ConvertToInvariantString(property.GetValue(element))! }).Distinct(StringComparer.Ordinal).ToArray() : [] }).ToList();
     private static string Kind(RibbonElement element) => Kinds.FirstOrDefault(pair => pair.Value == element.GetType()).Key
         ?? throw new ArgumentException("Edit Ribbon currently supports built-in component types. Use the existing property editor for " + element.GetType().Name + ".");

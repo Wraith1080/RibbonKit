@@ -30,6 +30,7 @@ internal sealed class RibbonMotionWindow : NativeWindow, IDisposable
     {
         Prepare(motion.Bounds); motion.Draw(_graphics!, _alpha, progress); Present();
     }
+    internal void PreparePopup(Rectangle bounds) => Prepare(bounds);
     internal void RenderGroup(RibbonGroupMotion motion, double progress)
     {
         Prepare(motion.Bounds); motion.Draw(_graphics!, _alpha, progress); Present();

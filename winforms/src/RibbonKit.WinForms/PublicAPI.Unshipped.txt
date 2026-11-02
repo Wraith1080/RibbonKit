@@ -1023,3 +1023,38 @@ RibbonKit.WinForms.Accessibility.INativeSelectionProvider.IsSelectionRequired(ou
 RibbonKit.WinForms.Accessibility.INativeToggleProvider
 RibbonKit.WinForms.Accessibility.INativeToggleProvider.Toggle() -> int
 RibbonKit.WinForms.Accessibility.INativeToggleProvider.ToggleState(out int value) -> int
+
+RibbonKit.WinForms.IRibbonGalleryPresenter
+RibbonKit.WinForms.IRibbonGalleryPresenter.CanScrollBackward.get -> bool
+RibbonKit.WinForms.IRibbonGalleryPresenter.CanScrollForward.get -> bool
+RibbonKit.WinForms.IRibbonGalleryPresenter.GetItemBounds(RibbonKit.WinForms.RibbonGalleryTile! item) -> System.Drawing.Rectangle
+RibbonKit.WinForms.IRibbonGalleryPresenter.HitTest(System.Drawing.Point location) -> RibbonKit.WinForms.RibbonGalleryTile?
+RibbonKit.WinForms.IRibbonGalleryPresenter.Navigate(RibbonKit.WinForms.RibbonGalleryTile? current, System.Windows.Forms.Keys key) -> RibbonKit.WinForms.RibbonGalleryTile?
+RibbonKit.WinForms.IRibbonGalleryPresenter.Reveal(RibbonKit.WinForms.RibbonGalleryTile! item) -> void
+RibbonKit.WinForms.IRibbonGalleryPresenter.ScrollView(RibbonKit.WinForms.RibbonGalleryScroll amount) -> void
+RibbonKit.WinForms.IRibbonGalleryPresenter.Synchronize(RibbonKit.WinForms.RibbonGalleryPresenterContext! context) -> void
+RibbonKit.WinForms.RibbonGalleryItem.DropDownPresenterFactory.get -> System.Func<System.Windows.Forms.Control!>?
+RibbonKit.WinForms.RibbonGalleryItem.DropDownPresenterFactory.set -> void
+RibbonKit.WinForms.RibbonGalleryItem.DropDownPresenterFactoryChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonGalleryItem.DropDownPresenterType.get -> System.Type?
+RibbonKit.WinForms.RibbonGalleryItem.DropDownPresenterType.set -> void
+RibbonKit.WinForms.RibbonGalleryItem.DropDownPresenterTypeChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonGalleryPresenterContext
+RibbonKit.WinForms.RibbonGalleryPresenterContext.Commit(RibbonKit.WinForms.RibbonGalleryTile! item) -> bool
+RibbonKit.WinForms.RibbonGalleryPresenterContext.Density.get -> RibbonKit.WinForms.RibbonDensity
+RibbonKit.WinForms.RibbonGalleryPresenterContext.Dpi.get -> int
+RibbonKit.WinForms.RibbonGalleryPresenterContext.FocusedItem.get -> RibbonKit.WinForms.RibbonGalleryTile?
+RibbonKit.WinForms.RibbonGalleryPresenterContext.Font.get -> System.Drawing.Font!
+RibbonKit.WinForms.RibbonGalleryPresenterContext.FocusItem(RibbonKit.WinForms.RibbonGalleryTile! item) -> bool
+RibbonKit.WinForms.RibbonGalleryPresenterContext.Gallery.get -> RibbonKit.WinForms.RibbonGalleryItem!
+RibbonKit.WinForms.RibbonGalleryPresenterContext.IsActive.get -> bool
+RibbonKit.WinForms.RibbonGalleryPresenterContext.NotifyViewChanged() -> void
+RibbonKit.WinForms.RibbonGalleryPresenterContext.Preview(RibbonKit.WinForms.RibbonGalleryTile? item) -> bool
+RibbonKit.WinForms.RibbonGalleryPresenterContext.Renderer.get -> RibbonKit.WinForms.RibbonRenderer!
+RibbonKit.WinForms.RibbonGalleryPresenterContext.Theme.get -> RibbonKit.WinForms.RibbonTheme!
+RibbonKit.WinForms.RibbonGalleryPresenterContext.Viewport.get -> System.Drawing.Size
+RibbonKit.WinForms.RibbonGalleryScroll
+RibbonKit.WinForms.RibbonGalleryScroll.PageBackward = 2 -> RibbonKit.WinForms.RibbonGalleryScroll
+RibbonKit.WinForms.RibbonGalleryScroll.PageForward = 3 -> RibbonKit.WinForms.RibbonGalleryScroll
+RibbonKit.WinForms.RibbonGalleryScroll.RowBackward = 0 -> RibbonKit.WinForms.RibbonGalleryScroll
+RibbonKit.WinForms.RibbonGalleryScroll.RowForward = 1 -> RibbonKit.WinForms.RibbonGalleryScroll

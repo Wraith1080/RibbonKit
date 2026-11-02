@@ -15,6 +15,10 @@
   <ItemGroup>
     <PackageReference Include="RibbonKit.WinForms" Version="$(RibbonKitDesignerSamplePackageVersion)" />
     <Compile Update="DesignerForm.cs"><SubType>Form</SubType></Compile>
+    <Compile Update="GalleryStylesControl.cs"><SubType>UserControl</SubType></Compile>
+    <Compile Update="GalleryStylesControl.Designer.cs"><DependentUpon>GalleryStylesControl.cs</DependentUpon></Compile>
+    <Compile Update="GalleryStyleTileControl.cs"><SubType>UserControl</SubType></Compile>
+    <Compile Update="GalleryStyleTileControl.Designer.cs"><DependentUpon>GalleryStyleTileControl.cs</DependentUpon></Compile>
     <Compile Update="DesignerForm.Designer.cs"><DependentUpon>DesignerForm.cs</DependentUpon></Compile>
     <EmbeddedResource Update="DesignerForm.resx"><DependentUpon>DesignerForm.cs</DependentUpon></EmbeddedResource>
     <Compile Update="BackstageInfoControl.cs"><SubType>UserControl</SubType></Compile>

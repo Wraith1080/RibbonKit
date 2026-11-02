@@ -35,6 +35,27 @@ partial class DesignerForm
         nameField = new RibbonKit.WinForms.RibbonTextBoxItem();
         bindingTextBox = new TextBox();
         fontField = new RibbonKit.WinForms.RibbonComboBoxItem();
+        galleryTab = new RibbonKit.WinForms.RibbonTab();
+        galleryGroup = new RibbonKit.WinForms.RibbonGroup();
+        documentStylesGallery = new RibbonKit.WinForms.RibbonGalleryItem();
+        documentStyle1 = new RibbonKit.WinForms.RibbonGalleryTile();
+        documentStyle2 = new RibbonKit.WinForms.RibbonGalleryTile();
+        documentStyle3 = new RibbonKit.WinForms.RibbonGalleryTile();
+        documentStyle4 = new RibbonKit.WinForms.RibbonGalleryTile();
+        documentStyle5 = new RibbonKit.WinForms.RibbonGalleryTile();
+        documentStyle6 = new RibbonKit.WinForms.RibbonGalleryTile();
+        documentStyle7 = new RibbonKit.WinForms.RibbonGalleryTile();
+        documentStyle8 = new RibbonKit.WinForms.RibbonGalleryTile();
+        documentStyle9 = new RibbonKit.WinForms.RibbonGalleryTile();
+        documentStyle10 = new RibbonKit.WinForms.RibbonGalleryTile();
+        documentStyle11 = new RibbonKit.WinForms.RibbonGalleryTile();
+        documentStyle12 = new RibbonKit.WinForms.RibbonGalleryTile();
+        documentStyle13 = new RibbonKit.WinForms.RibbonGalleryTile();
+        documentStyle14 = new RibbonKit.WinForms.RibbonGalleryTile();
+        documentStyle15 = new RibbonKit.WinForms.RibbonGalleryTile();
+        documentStyle16 = new RibbonKit.WinForms.RibbonGalleryTile();
+        documentStyle17 = new RibbonKit.WinForms.RibbonGalleryTile();
+        documentStyle18 = new RibbonKit.WinForms.RibbonGalleryTile();
         infoPage = new RibbonKit.WinForms.RibbonBackstagePageItem();
         printPage = new RibbonKit.WinForms.RibbonBackstagePageItem();
         backstageSaveCommand = new RibbonKit.WinForms.RibbonButtonItem();
@@ -71,6 +92,7 @@ partial class DesignerForm
         applyButton.Id = "apply";
         applyButton.Image = (Image)resources.GetObject("applyButton.Image");
         applyButton.KeyTip = "A";
+        applyButton.SimplifiedPlacement = RibbonKit.WinForms.RibbonSimplifiedPlacement.Inline;
         applyButton.Text = "Apply";
         applyButton.Click += ApplyButton_Click;
         // 
@@ -86,6 +108,7 @@ partial class DesignerForm
         selectDropdown.Id = "rk:e0b3a46259ba4a868a80219eb1d82b07";
         selectDropdown.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { selectObjectButton, ribbonSeparator1, selectAllButton });
         selectDropdown.MenuPresentation = RibbonKit.WinForms.RibbonMenuPresentation.IllustratedChoices;
+        selectDropdown.SimplifiedPlacement = RibbonKit.WinForms.RibbonSimplifiedPlacement.Inline;
         selectDropdown.Text = "Select";
         // 
         // selectObjectButton
@@ -111,9 +134,12 @@ partial class DesignerForm
         // 
         // pasteSplitButton
         // 
+        pasteSplitButton.DropDownHeader = "Paste Special";
         pasteSplitButton.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:paste", true);
         pasteSplitButton.Id = "rk:0ccb08fcbf7f4657b1eeceeb3c9b5d28";
         pasteSplitButton.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { pasteSpecialButton, pasteNoFormattingButton });
+        pasteSplitButton.Layout = RibbonKit.WinForms.RibbonSplitButtonLayout.Vertical;
+        pasteSplitButton.SimplifiedPlacement = RibbonKit.WinForms.RibbonSimplifiedPlacement.Inline;
         pasteSplitButton.Text = "Paste";
         // 
         // pasteSpecialButton
@@ -144,6 +170,7 @@ partial class DesignerForm
         cmbFont.Items.AddRange(new string[] { "Aptos", "Arial", "Segoe UI", "Tahoma", "Times New Roman", "Verdana" });
         cmbFont.SelectedIndex = 0;
         cmbFont.ShowLabel = false;
+        cmbFont.SimplifiedPlacement = RibbonKit.WinForms.RibbonSimplifiedPlacement.Inline;
         cmbFont.SizePolicy = RibbonKit.WinForms.RibbonSizePolicy.Adaptive(RibbonKit.WinForms.RibbonItemSize.Medium, RibbonKit.WinForms.RibbonItemSize.Medium, RibbonKit.WinForms.RibbonItemSize.Small);
         cmbFont.Text = "Font :";
         cmbFont.Value = "Aptos";
@@ -156,6 +183,7 @@ partial class DesignerForm
         cmbFontSize.Items.AddRange(new string[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15" });
         cmbFontSize.SelectedIndex = 9;
         cmbFontSize.ShowLabel = false;
+        cmbFontSize.SimplifiedPlacement = RibbonKit.WinForms.RibbonSimplifiedPlacement.Inline;
         cmbFontSize.SizePolicy = RibbonKit.WinForms.RibbonSizePolicy.Adaptive(RibbonKit.WinForms.RibbonItemSize.Medium, RibbonKit.WinForms.RibbonItemSize.Medium, RibbonKit.WinForms.RibbonItemSize.Small);
         cmbFontSize.Text = "Font Size :";
         cmbFontSize.Value = "10";
@@ -222,8 +250,124 @@ partial class DesignerForm
         fontField.Id = "font";
         fontField.Items.AddRange(new string[] { "Segoe UI", "Arial", "Consolas" });
         fontField.SelectedIndex = 0;
+        fontField.SimplifiedPlacement = RibbonKit.WinForms.RibbonSimplifiedPlacement.Inline;
         fontField.Text = "Font";
         fontField.Value = "Segoe UI";
+        // 
+        // galleryTab
+        // 
+        galleryTab.Groups.AddRange(new RibbonKit.WinForms.RibbonGroup[] { galleryGroup });
+        galleryTab.Id = "gallery";
+        galleryTab.KeyTip = "G";
+        galleryTab.Text = "Gallery";
+        // 
+        // galleryGroup
+        // 
+        galleryGroup.Id = "gallery.styles";
+        galleryGroup.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { documentStylesGallery });
+        galleryGroup.Text = "Custom gallery";
+        // 
+        // documentStylesGallery
+        // 
+        documentStylesGallery.Id = "gallery.documentStyles";
+        documentStylesGallery.DropDownPresenterType = typeof(GalleryStylesControl);
+        documentStylesGallery.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { documentStyle1, documentStyle2, documentStyle3, documentStyle4, documentStyle5, documentStyle6, documentStyle7, documentStyle8, documentStyle9, documentStyle10, documentStyle11, documentStyle12, documentStyle13, documentStyle14, documentStyle15, documentStyle16, documentStyle17, documentStyle18 });
+        documentStylesGallery.KeyTip = "S";
+        documentStylesGallery.SelectedItem = documentStyle1;
+        documentStylesGallery.Text = "Document styles";
+        documentStylesGallery.SelectionCommitted += documentStylesGallery_SelectionCommitted;
+        documentStylesGallery.ItemPreview += documentStylesGallery_ItemPreview;
+        documentStylesGallery.ItemPreviewCancelled += documentStylesGallery_ItemPreviewCancelled;
+        // 
+        // documentStyle1
+        // 
+        documentStyle1.Id = "gallery.style.01";
+        documentStyle1.Text = "Heading 1";
+        // 
+        // documentStyle2
+        // 
+        documentStyle2.Id = "gallery.style.02";
+        documentStyle2.Text = "Body 2";
+        // 
+        // documentStyle3
+        // 
+        documentStyle3.Id = "gallery.style.03";
+        documentStyle3.Text = "Quote 3";
+        // 
+        // documentStyle4
+        // 
+        documentStyle4.Id = "gallery.style.04";
+        documentStyle4.Text = "Caption 4";
+        // 
+        // documentStyle5
+        // 
+        documentStyle5.Id = "gallery.style.05";
+        documentStyle5.Text = "Heading 5";
+        // 
+        // documentStyle6
+        // 
+        documentStyle6.Id = "gallery.style.06";
+        documentStyle6.Text = "Body 6";
+        // 
+        // documentStyle7
+        // 
+        documentStyle7.Id = "gallery.style.07";
+        documentStyle7.Text = "Quote 7";
+        // 
+        // documentStyle8
+        // 
+        documentStyle8.Id = "gallery.style.08";
+        documentStyle8.Text = "Caption 8";
+        // 
+        // documentStyle9
+        // 
+        documentStyle9.Id = "gallery.style.09";
+        documentStyle9.Text = "Heading 9";
+        // 
+        // documentStyle10
+        // 
+        documentStyle10.Id = "gallery.style.10";
+        documentStyle10.Text = "Body 10";
+        // 
+        // documentStyle11
+        // 
+        documentStyle11.Id = "gallery.style.11";
+        documentStyle11.Text = "Quote 11";
+        // 
+        // documentStyle12
+        // 
+        documentStyle12.Id = "gallery.style.12";
+        documentStyle12.Text = "Caption 12";
+        // 
+        // documentStyle13
+        // 
+        documentStyle13.Id = "gallery.style.13";
+        documentStyle13.Text = "Heading 13";
+        // 
+        // documentStyle14
+        // 
+        documentStyle14.Id = "gallery.style.14";
+        documentStyle14.Text = "Body 14";
+        // 
+        // documentStyle15
+        // 
+        documentStyle15.Id = "gallery.style.15";
+        documentStyle15.Text = "Quote 15";
+        // 
+        // documentStyle16
+        // 
+        documentStyle16.Id = "gallery.style.16";
+        documentStyle16.Text = "Caption 16";
+        // 
+        // documentStyle17
+        // 
+        documentStyle17.Id = "gallery.style.17";
+        documentStyle17.Text = "Heading 17";
+        // 
+        // documentStyle18
+        // 
+        documentStyle18.Id = "gallery.style.18";
+        documentStyle18.Text = "Body 18";
         // 
         // infoPage
         // 
@@ -298,8 +442,9 @@ partial class DesignerForm
         ribbon.QuickAccessItems.AddRange(new RibbonKit.WinForms.RibbonElement[] { ribbonQatReference1, ribbonQatReference2 });
         ribbon.QuickAccessPosition = RibbonKit.WinForms.RibbonQuickAccessPosition.BelowRibbon;
         ribbon.Size = new Size(1029, 287);
+        ribbon.TabContentAnimation = RibbonKit.WinForms.RibbonTabContentAnimation.SlideDown;
         ribbon.TabIndex = 0;
-        ribbon.Tabs.AddRange(new RibbonKit.WinForms.RibbonTab[] { homeTab, editTab });
+        ribbon.Tabs.AddRange(new RibbonKit.WinForms.RibbonTab[] { homeTab, editTab, galleryTab });
         // 
         // backstageCommand1
         // 
@@ -367,6 +512,27 @@ partial class DesignerForm
     private RibbonKit.WinForms.RibbonControl ribbon = null!;
     private RibbonKit.WinForms.RibbonTab homeTab = null!;
     private RibbonKit.WinForms.RibbonTab editTab = null!;
+    private RibbonKit.WinForms.RibbonTab galleryTab = null!;
+    private RibbonKit.WinForms.RibbonGroup galleryGroup = null!;
+    private RibbonKit.WinForms.RibbonGalleryItem documentStylesGallery = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile documentStyle1 = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile documentStyle2 = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile documentStyle3 = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile documentStyle4 = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile documentStyle5 = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile documentStyle6 = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile documentStyle7 = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile documentStyle8 = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile documentStyle9 = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile documentStyle10 = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile documentStyle11 = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile documentStyle12 = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile documentStyle13 = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile documentStyle14 = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile documentStyle15 = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile documentStyle16 = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile documentStyle17 = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile documentStyle18 = null!;
     private RibbonKit.WinForms.RibbonGroup commandsGroup = null!;
     private RibbonKit.WinForms.RibbonGroup fieldsGroup = null!;
     private RibbonKit.WinForms.RibbonButtonItem applyButton = null!;

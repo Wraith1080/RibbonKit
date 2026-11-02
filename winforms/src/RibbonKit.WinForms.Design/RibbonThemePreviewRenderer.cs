@@ -12,6 +12,7 @@ internal static class RibbonThemePreviewRenderer
     internal static RibbonThemePreview Render(RibbonControl ribbon, IDesignerHost host, RibbonDesignSnapshot draft)
     {
         var before = RibbonDesignCommitter.Read(ribbon, host);
+        var presenterTypes = RibbonGalleryPresenterTypes.Available(host, ribbon);
         if (draft.Revision != before.Revision) throw new ArgumentException("The ribbon changed while the editor was open. Cancel and reopen Edit Ribbon.");
         var theme = RibbonDesignCommitter.ParseTheme(draft.BuiltInTheme);
         _ = RibbonDesignCommitter.ParseAnimation(draft.AnimationLevel);
@@ -36,7 +37,7 @@ internal static class RibbonThemePreviewRenderer
         var models = new Dictionary<string, RibbonElement>(StringComparer.Ordinal);
         foreach (var node in draft.Tabs)
         {
-            var tab = (RibbonTab)RibbonDesignCommitter.BuildProbe(node, originals, before.Templates);
+            var tab = (RibbonTab)RibbonDesignCommitter.BuildProbe(node, originals, before.Templates, presenterTypes);
             probe.Tabs.Add(tab);
             CopyArtwork(node, tab);
         }
@@ -64,7 +65,7 @@ internal static class RibbonThemePreviewRenderer
         var owned = draft.QuickAccessItems.Where(node => node.Kind == "OwnedQat").Select(node => node.SourceKey).ToHashSet(StringComparer.Ordinal);
         foreach (var node in draft.CatalogCommands)
         {
-            var command = (RibbonItem)RibbonDesignCommitter.BuildProbe(node, originals, before.Templates); CopyArtwork(node, command);
+            var command = (RibbonItem)RibbonDesignCommitter.BuildProbe(node, originals, before.Templates, presenterTypes); CopyArtwork(node, command);
             if (!owned.Contains(node.Key)) probe.CommandCatalog.Commands.Add(command);
         }
         foreach (var entry in draft.QuickAccessItems)
@@ -72,7 +73,7 @@ internal static class RibbonThemePreviewRenderer
             if (entry.Kind == "OwnedQat") probe.QuickAccessItems.Add(models[entry.SourceKey]);
             else
             {
-                var reference = RibbonDesignCommitter.BuildProbe(entry, originals, before.Templates);
+                var reference = RibbonDesignCommitter.BuildProbe(entry, originals, before.Templates, presenterTypes);
                 if (models.TryGetValue(entry.SourceKey, out var source)) TypeDescriptor.GetProperties(reference)["Source"]!.SetValue(reference, source);
                 else if (reference.Text.Length == 0) reference.Text = draft.QuickAccessSources.FirstOrDefault(item => item.Key == entry.SourceKey)?.Caption ?? "Unavailable";
                 probe.QuickAccessItems.Add(reference);

@@ -20,6 +20,42 @@ public sealed class RibbonGalleryItem : RibbonDropDownItem
     private bool _isInRibbon;
     private int _inRibbonColumnCount = 3;
     private int _columnCount = 4, _tileWidth = 80, _tileHeight = 72, _maxVisibleRows = 4;
+    private Func<Control>? _dropDownPresenterFactory;
+    private Type? _dropDownPresenterType;
+    /// <summary>Gets or sets an optional runtime factory for ordinary dropdown-gallery bodies. Return a fresh unparented UserControl implementing IRibbonGalleryPresenter. RibbonKit creates it after accepted opening and disposes it with that popup; reopening creates another view. Clear DropDownPresenterType before assigning a factory. Null for both selectors, inline strips and QAT use the built-in presenter. Factory delegates and presenter state are not serialized.</summary>
+    [Browsable(false), DefaultValue(null), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Func<Control>? DropDownPresenterFactory
+    {
+        get => _dropDownPresenterFactory;
+        set
+        {
+            Ribbon?.VerifyAccess(); if (_dropDownPresenterFactory == value) return;
+            if (value is not null && _dropDownPresenterType is not null) throw new InvalidOperationException("Clear DropDownPresenterType before assigning DropDownPresenterFactory.");
+            _dropDownPresenterFactory = value; Changed(); DropDownPresenterFactoryChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+    /// <summary>Occurs after the optional dropdown presenter factory changes.</summary>
+    public event EventHandler? DropDownPresenterFactoryChanged;
+    /// <summary>Gets or selects a public concrete UserControl implementing IRibbonGalleryPresenter with a public parameterless constructor. RibbonKit creates a fresh view after each accepted ordinary gallery opening and disposes it with the popup. Designer selection never creates the control. Clear DropDownPresenterFactory before selecting a type; null for both uses the built-in view. Inline strips and QAT keep their built-in presenters.</summary>
+    [Category("Data"), DefaultValue(null)]
+    [Description("Custom dropdown gallery UserControl class. Edit its body in the UserControl designer. Build the project to refresh available classes; (None) clears the class selection.")]
+    public Type? DropDownPresenterType
+    {
+        get => _dropDownPresenterType;
+        set
+        {
+            Ribbon?.VerifyAccess(); if (_dropDownPresenterType == value) return;
+            if (value is not null && !IsPresenterType(value)) throw new ArgumentException("Choose a public concrete UserControl implementing IRibbonGalleryPresenter with a public parameterless constructor.", nameof(value));
+            if (value is not null && _dropDownPresenterFactory is not null) throw new InvalidOperationException("Clear DropDownPresenterFactory before selecting DropDownPresenterType.");
+            _dropDownPresenterType = value; Changed(); DropDownPresenterTypeChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+    /// <summary>Occurs after the optional dropdown presenter class changes.</summary>
+    public event EventHandler? DropDownPresenterTypeChanged;
+    internal static bool IsPresenterType(Type type) => typeof(UserControl).IsAssignableFrom(type) && typeof(IRibbonGalleryPresenter).IsAssignableFrom(type)
+        && type.IsVisible && !type.IsAbstract && !type.ContainsGenericParameters && type.GetConstructor(Type.EmptyTypes) is not null;
+    internal bool HasCustomDropDownPresenter => _dropDownPresenterType is not null || _dropDownPresenterFactory is not null;
+    internal Control CreateDropDownPresenter() => _dropDownPresenterType is { } type ? (Control)Activator.CreateInstance(type)! : _dropDownPresenterFactory!();
     /// <summary>Gets the owned tile declarations. Only RibbonGalleryTile entries are permitted.</summary>
     [Category("Data"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     [Editor("RibbonKit.WinForms.Design.GalleryTileCollectionEditor, RibbonKit.WinForms.Design", "System.Drawing.Design.UITypeEditor, System.Drawing")]
@@ -107,15 +143,16 @@ public sealed class RibbonGalleryItem : RibbonDropDownItem
         if (_previewItem is { } preview && !Available(preview)) CancelPreview();
         if (_selectedItem is { } selected && (selected.IsDisposed || !Items.Contains(selected))) SelectedItem = null;
     }
-    internal void Commit(RibbonGalleryTile tile)
+    internal bool Commit(RibbonGalleryTile tile)
     {
         if (Ribbon?.CommandCatalog.Structure is { } structure && structure.IsProxy(this) && structure.Source(this) is RibbonGalleryItem source)
-        { if (Available(tile)) source.Commit((RibbonGalleryTile)structure.Source(tile)); return; }
+        { return Available(tile) && source.Commit((RibbonGalleryTile)structure.Source(tile)); }
         Ribbon?.VerifyAccess();
-        if (!Available(tile)) return;
+        if (!Available(tile)) return false;
         _previewItem = null; _previewOwner = null;
         SelectedItem = tile;
-        if (!IsDisposed && Available(tile) && ReferenceEquals(_selectedItem, tile)) SelectionCommitted?.Invoke(this, EventArgs.Empty);
+        if (IsDisposed || !Available(tile) || !ReferenceEquals(_selectedItem, tile)) return false;
+        SelectionCommitted?.Invoke(this, EventArgs.Empty); return true;
     }
     /// <inheritdoc />
     protected override void Dispose(bool disposing)

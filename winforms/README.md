@@ -597,6 +597,53 @@ Use `--gallery-strip-checks[-flat]` or `--qat-gallery-checks[-flat]` for separat
 strip or projection scopes; their consumer flags are
 `--validate-gallery-strip[-flat]` and `--validate-qat-gallery[-flat]`.
 
+### Custom dropdown gallery UserControls
+
+An ordinary gallery dropdown can use an application-designed UserControl. In
+**Edit Ribbon**, select the gallery and choose **Data → DropDownPresenterType**.
+Build the consumer project to refresh the list of available classes. The class
+must be public, concrete, implement `IRibbonGalleryPresenter` and have a public
+parameterless constructor. Generated code stores the class selection:
+
+```csharp
+gallery.DropDownPresenterType = typeof(MyGalleryControl);
+```
+
+For construction that needs application arguments, use the runtime factory instead:
+
+```csharp
+gallery.DropDownPresenterFactory = () => new MyGalleryControl();
+```
+
+The control implements `IRibbonGalleryPresenter` for bounds/hit testing, layout
+navigation, selection reveal and row/page scrolling. RibbonKit supplies a
+`RibbonGalleryPresenterContext` containing the original source, theme, renderer,
+font, DPI and constrained viewport. Its Preview, FocusItem and Commit methods
+use the existing gallery behavior; programmatic selection remains distinct from
+accepted activation. The library owns the popup frame, scroll buttons and
+navigation route. Application visuals/data stay in the control.
+
+Each successful opening creates a fresh owned view; popup close disposes it and
+makes its context inert. The class and factory are mutually exclusive; clear one
+before setting the other. Null for both uses the built-in gallery. Class selection,
+draft validation and inert previews never construct the UserControl. Inline and
+QAT views remain built-in in this increment. The factory is excluded from designer
+serialization; presenter controls/state are excluded from customization JSON.
+Ordinary dropdown/split UserControl bodies remain a separate planned increment.
+
+The Designer Sample's designer-declared **Gallery → Document styles** demonstrates the
+public API with [GalleryStylesControl](samples/RibbonKit.WinForms.DesignerSample/GalleryStylesControl.cs).
+Its tab, group, gallery, tiles, initial selection, event hookups and presenter-class
+assignment are in `DesignerForm.Designer.cs`, visible through Edit Ribbon. The
+UserControl body stays in its ordinary UserControl designer.
+Open **GalleryStyleTileControl.cs → View Designer** to edit one card using ordinary
+panels and labels. **GalleryStylesControl.cs → View Designer** shows six real card
+instances. At runtime the presenter connects a card to each source item and arranges
+the two-column grid. Captions/items still come from Edit Ribbon; the card's Caption
+property supplies illustrative text in the standalone designer. The sample paints
+only its selection outline, rather than drawing every thumbnail and label by hand.
+See the [contract, review steps and focused evidence](docs/GALLERY-PRESENTER-PLAN.md).
+
 ### Native Backstage
 
 `FileMenuMode` defaults to `CommandMenu`, preserving existing File consumers.

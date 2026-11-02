@@ -882,6 +882,9 @@ public partial class RibbonControl : Control, ISupportInitialize
             case RibbonItem editor when editor is IRibbonEditorItem:
                 editor.PerformClick();
                 break;
+            case RibbonGalleryTile tile:
+                ActivateGalleryTile(tile, opener, editorValidated: true);
+                break;
             case RibbonItem item:
                 bool keepGroup = KeepQuickAccessGroupOpen(item, opener);
                 item.PerformClick();
@@ -905,6 +908,18 @@ public partial class RibbonControl : Control, ISupportInitialize
         SyncEditors();
         Invalidate();
         AccessibilityChanged();
+    }
+    internal bool ActivateGalleryTile(RibbonGalleryTile tile, Control? opener, bool editorValidated = false)
+    {
+        SettleMotion(); _screenTips.Cancel();
+        if (IsBackstageOpen || tile.Parent is not RibbonGalleryItem gallery || !ReferenceEquals(gallery.Ribbon, this) || !gallery.Available(tile)
+            || !editorValidated && !_editors.CommitFocused()) return false;
+        // Validation can mutate the source or remove the requested tile.
+        if (!gallery.Available(tile) || !ReferenceEquals(gallery.Ribbon, this)) return false;
+        bool keepGroup = KeepQuickAccessGroupOpen(tile, opener);
+        bool committed = gallery.Commit(tile);
+        if (!keepGroup) _popups.CloseAll(true);
+        return committed;
     }
     internal void ActivateSplitPrimary(RibbonSplitButtonItem split, Control? opener = null)
     {
