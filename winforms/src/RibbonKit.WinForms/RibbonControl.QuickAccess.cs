@@ -75,12 +75,16 @@ public partial class RibbonControl
     private bool KeepStatePopupOpen(RibbonItem command, Control? opener, RibbonElement? entry = null)
     {
         var surface = opener as RibbonPopupSurface ?? _popups.Top;
-        if (surface is null || surface.GroupSource is null && surface.OwnerElement is not RibbonQuickAccessOverflow
+        if (surface is null) return false;
+        bool menuCheckBox = command is RibbonCheckBoxItem && surface.MenuSource is not null && !surface.IsApplicationMenu;
+        if (surface.GroupSource is null && surface.OwnerElement is not RibbonQuickAccessOverflow && !menuCheckBox
             || command is not (RibbonToggleItem or RibbonCheckBoxItem or RibbonRadioButtonItem or RibbonSplitButtonItem { CheckOnClick: true })) return false;
         var focused = entry ?? command;
         if (!surface.Targets.Any(target => ReferenceEquals(target.Element, focused) && target.Enabled)) return false;
         // State changes keep their command container open, independently of
         // whether a group is collapsed, in More Commands or retained by QAT.
+        // Ordinary/nested menu checkboxes also keep their current menu open;
+        // other menu choices retain their existing dismissal policy.
         // A command callback can still close or replace that container itself.
         surface.FocusElement(focused);
         return true;

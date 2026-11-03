@@ -1066,6 +1066,12 @@ Mouse, Space/Enter, KeyTips and `PerformClick` use that same path; programmatic
 state assignment raises no Click. Inherited size/image settings do not replace
 the compact indicator and label.
 
+Checkbox activation in an ordinary or nested dropdown keeps the same menu open,
+including menus opened through a QAT reference. Mouse and Space/Enter toggle the
+source state before Click while retaining native editor instances. Escape,
+ordinary commands, explicit application closure and other menu-choice dismissal
+retain their existing behavior. Application Menu-specific activation is unchanged.
+
 Checkboxes also expose bindable WinForms `CheckState` and `CheckStateChanged`.
 With `ThreeState = true`, activation cycles Unchecked â†’ Checked â†’ Indeterminate.
 `Checked` is true for both Checked and Indeterminate. For an enum-valued source,
@@ -1802,6 +1808,55 @@ underline, group separators, rounded chrome or Office focus/badge treatment.
 `RibbonOffice2024Renderer : RibbonRenderer` adds that presentation and remains
 the default when `RibbonControl.Renderer` is null. Both consume the selected
 `RibbonTheme`; choosing a renderer does not change layout or command ownership.
+
+Ordinary command menus, nested menus, QAT overflow and Simplified More Commands
+share five optional geometry roles on `RibbonTheme`: `MenuMinimumRowHeight`,
+`MenuIconSize`, `MenuLeadingPadding`, `MenuTrailingPadding`, and `MenuIconTextGap`.
+Values are 96-DPI logical integers; null retains each density's existing default.
+For example:
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    MenuMinimumRowHeight = 64, MenuIconSize = 36,
+    MenuLeadingPadding = 14, MenuTrailingPadding = 18, MenuIconTextGap = 16
+};
+```
+
+Row/icon values accept 1..1024; padding/gap accept 0..1024. Font/icon minima still
+apply, Touch retains a minimum 44-pixel row, and mixed rows use the tallest sibling.
+Set the five values to null to reset without changing other theme values. Theme
+changes dismiss stale popups; reopening measures the new geometry and retains
+native editors. This is code-only configuration through the existing hidden
+`Theme` property. Application Menu-specific geometry, illustrated-choice artwork,
+ComboBox choice lists and QAT strip buttons retain their component metrics. QAT
+group-reference rows retain their separate trailing chooser clearance. See the
+[geometry contract and verification](docs/GEOMETRY-CONSOLIDATION-PLAN.md).
+
+Four optional vertical roles share the same menu resolver:
+`MenuIconVerticalPadding` (Compact 4 / Touch 6),
+`MenuDescriptionVerticalPadding` (5 / 10), `MenuDescriptionGap` (2 / 4), and
+`MenuSeparatorHeight` (9 / 9). Padding/gap accept 0..1024; separator height accepts
+1..1024. All values are 96-DPI logical pixels; null restores the density fallback.
+For example:
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    MenuIconVerticalPadding = 12, MenuDescriptionVerticalPadding = 14,
+    MenuDescriptionGap = 10, MenuSeparatorHeight = 20
+};
+```
+
+Icon clearance contributes to the row minimum. Description padding/gap control
+the measured title/description stack; plain text and native field internals keep
+their own padding. Explicit vertical padding reserves both scaled sides at
+fractional DPI; null preserves existing rounding and appearance. Separator rows
+stay decorative, with a centered one-device-pixel line. These roles also apply to
+QAT/More menu rows. Illustrated-choice artwork/descriptions and Application
+Menu-specific geometry keep their component metrics; ordinary separator rows
+inside an illustrated menu use `MenuSeparatorHeight`. Reset these four values to
+null independently of the five horizontal/row roles.
 
 `RibbonTheme.DisabledForeground` optionally colors library-painted disabled text,
 vector command icons, arrows and check/radio indicators, including field labels,

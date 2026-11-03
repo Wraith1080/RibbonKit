@@ -167,6 +167,18 @@ internal static class Program
             return;
         }
         using var form = new DesignerForm();
+        if (args.Length == 2 && args[0] == "--verify-input-mode")
+        {
+            try { form.VerifyInputMode(args[1]); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.AppendAllText(Path.Combine(args[1], "result.log"), "\nFAIL: " + error); Environment.ExitCode = 1; }
+            return;
+        }
+        if (args.Length == 2 && args[0] == "--verify-menu-geometry-demo")
+        {
+            try { form.VerifyMenuGeometryDemo(args[1]); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
+            return;
+        }
         using var focusTrace = args.Length == 2 && args[0] == "--trace-choice-focus"
             ? new DesignerChoiceFocusTrace(form, args[1]) : null;
         if (args.Length == 2 && args[0] == "--verify-page-content")
@@ -187,6 +199,7 @@ internal static class Program
             catch (Exception error) { File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
             return;
         }
+        if (args.Contains("--menu-geometry-demo")) form.EnableMenuGeometryDemo();
         Application.Run(form);
     }
 }

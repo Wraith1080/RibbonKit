@@ -54,3 +54,42 @@ The preceding gallery scrollbar correction was preserved. No full suite, Release
 WPF, commit or push work is part of this slice. After user review, the next feature
 is the [Application Menu replacement](APPLICATION-MENU-PLAN.md), followed by
 geometry consolidation. Do not start that feature as part of this fix.
+
+## Ordinary-menu checkbox follow-up - 2026-11-03
+
+The geometry demo's **Keep formatting** is a `RibbonCheckBoxItem` with no closing
+handler. Its checked state already toggled correctly, but the shared retention
+predicate excluded ordinary dropdown menus. The user reported the resulting
+closure after passing the geometry appearance review.
+
+The bounded contract presented before editing extends that predicate to
+checkboxes in ordinary and nested menus, including QAT-hosted dropdowns. The
+same menu/focus/native editors remain; state still changes before exactly one
+Click. Ordinary commands, radio/other menu choices, nonchecking split primaries,
+Escape, callback-driven closure and Application Menu activation retain their
+existing dismissal. Existing group/overflow state-command retention is preserved.
+There is no public API, designer, ownership or geometry change.
+
+- Before the fix, **6/6 focused reproduction cases failed** at the same-session
+  assertion after checkbox pointer activation: ordinary, nested and QAT menus
+  in Compact/Touch (`menu-checkbox-before.trx`).
+- After the fix, **124/124 focused Debug cases passed** in
+  `menu-checkbox-after.trx`, including nine new checkbox retention/dismissal
+  cases and existing group/overflow, menu, choice and Application Menu contracts.
+  The nine new cases also passed in Release (`menu-checkbox-release.trx`);
+  this overlaps Debug evidence and is not a full-suite claim.
+- Native Release solution build and Debug runtime/designer/sample builds passed
+  with zero warnings/errors. The first sample refresh hit the running review
+  app's file lock; after closing that sample normally, the in-place refresh
+  passed with **`0.1.0-designer.local20261103T145247154Z`**. Authored files remain.
+- **4/4 isolated public-package native scopes passed at actual 120 DPI**:
+  Office/neutral x Compact/Touch in Solid mode. Real pointer and Space input
+  uncheck/recheck without closing or replacing the popup; native editor HWND/text
+  remain. The same checks cover nested command dismissal, KeyTips, exact geometry
+  reset and QAT/More. Evidence: `artifacts/geometry/menu-checkbox/`, including
+  checked/unchecked captures and package inventory. The prior material/geometry
+  matrix is retained; this follow-up did not repeat it or change its appearance.
+
+User interaction review of this correction and the geometry appearance are
+recorded in the [geometry plan](GEOMETRY-CONSOLIDATION-PLAN.md).
+No additional geometry/theme increment, full suite, WPF work, commit or push.

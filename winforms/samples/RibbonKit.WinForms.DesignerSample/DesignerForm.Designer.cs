@@ -66,10 +66,14 @@ partial class DesignerForm
         btnInsertPicture = new RibbonKit.WinForms.RibbonButtonItem();
         btnInsertLink = new RibbonKit.WinForms.RibbonButtonItem();
         btnInsertObject = new RibbonKit.WinForms.RibbonButtonItem();
+        inputModeGroup = new RibbonKit.WinForms.RibbonGroup();
+        inputModeSelector = new RibbonKit.WinForms.RibbonDropDownItem();
+        mouseModeOption = new RibbonKit.WinForms.RibbonRadioButtonItem();
+        touchModeOption = new RibbonKit.WinForms.RibbonRadioButtonItem();
         editTab = new RibbonKit.WinForms.RibbonTab();
         fieldsGroup = new RibbonKit.WinForms.RibbonGroup();
         nameField = new RibbonKit.WinForms.RibbonTextBoxItem();
-        bindingTextBox = new TextBox();
+        bindingValueLabel = new ToolStripStatusLabel();
         fontField = new RibbonKit.WinForms.RibbonComboBoxItem();
         galleryTab = new RibbonKit.WinForms.RibbonTab();
         galleryGroup = new RibbonKit.WinForms.RibbonGroup();
@@ -103,10 +107,13 @@ partial class DesignerForm
         saveButton = new RibbonKit.WinForms.RibbonButtonItem();
         ribbonQatReference1 = new RibbonKit.WinForms.RibbonQuickAccessReference();
         ribbonQatReference2 = new RibbonKit.WinForms.RibbonQuickAccessReference();
+        inputModeQatReference = new RibbonKit.WinForms.RibbonQuickAccessDropDownReference();
         documentStylesQatReference = new RibbonKit.WinForms.RibbonQuickAccessDropDownReference();
-        statusLabel = new Label();
-        button1 = new Button();
+        statusStrip = new StatusStrip();
+        statusLabel = new ToolStripStatusLabel();
+        bindingCaptionLabel = new ToolStripStatusLabel();
         ((System.ComponentModel.ISupportInitialize)ribbon).BeginInit();
+        statusStrip.SuspendLayout();
         SuspendLayout();
         // 
         // applicationNew
@@ -360,7 +367,7 @@ partial class DesignerForm
         // 
         // homeTab
         // 
-        homeTab.Groups.AddRange(new RibbonKit.WinForms.RibbonGroup[] { commandsGroup, ribbonGroup1, ribbonGroup2 });
+        homeTab.Groups.AddRange(new RibbonKit.WinForms.RibbonGroup[] { commandsGroup, ribbonGroup1, ribbonGroup2, inputModeGroup });
         homeTab.Id = "home";
         homeTab.KeyTip = "H";
         homeTab.Text = "Home";
@@ -536,6 +543,44 @@ partial class DesignerForm
         btnInsertObject.SizePolicy = RibbonKit.WinForms.RibbonSizePolicy.Adaptive(RibbonKit.WinForms.RibbonItemSize.Medium, RibbonKit.WinForms.RibbonItemSize.Medium, RibbonKit.WinForms.RibbonItemSize.Medium);
         btnInsertObject.Text = "Object...";
         // 
+        // inputModeGroup
+        // 
+        inputModeGroup.Id = "group.inputMode";
+        inputModeGroup.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { inputModeSelector });
+        inputModeGroup.Text = "Input mode";
+        // 
+        // inputModeSelector
+        // 
+        inputModeSelector.DropDownHeader = "Optimize spacing between commands";
+        inputModeSelector.Icon = new RibbonKit.WinForms.RibbonSvgIcon(resources.GetString("inputModeSelector.Icon"), false);
+        inputModeSelector.Id = "inputMode.selector";
+        inputModeSelector.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { mouseModeOption, touchModeOption });
+        inputModeSelector.KeyTip = "D";
+        inputModeSelector.MenuPresentation = RibbonKit.WinForms.RibbonMenuPresentation.IllustratedChoices;
+        inputModeSelector.ScreenTipDescription = "Choose compact Mouse spacing or roomier Touch targets. Text size stays the same.";
+        inputModeSelector.Text = "Mouse";
+        // 
+        // mouseModeOption
+        // 
+        mouseModeOption.Checked = true;
+        mouseModeOption.GroupName = "designer.density";
+        mouseModeOption.Icon = new RibbonKit.WinForms.RibbonSvgIcon(resources.GetString("mouseModeOption.Icon"), false);
+        mouseModeOption.Id = "inputMode.mouse";
+        mouseModeOption.KeyTip = "M";
+        mouseModeOption.MenuDescription = "Standard ribbon and commands.\nOptimized for use with mouse.";
+        mouseModeOption.Text = "Mouse";
+        mouseModeOption.Click += MouseModeOption_Click;
+        // 
+        // touchModeOption
+        // 
+        touchModeOption.GroupName = "designer.density";
+        touchModeOption.Icon = new RibbonKit.WinForms.RibbonSvgIcon(resources.GetString("touchModeOption.Icon"), false);
+        touchModeOption.Id = "inputMode.touch";
+        touchModeOption.KeyTip = "T";
+        touchModeOption.MenuDescription = "More space between commands.\nOptimized for use with touch.";
+        touchModeOption.Text = "Touch";
+        touchModeOption.Click += TouchModeOption_Click;
+        // 
         // editTab
         // 
         editTab.Groups.AddRange(new RibbonKit.WinForms.RibbonGroup[] { fieldsGroup });
@@ -552,20 +597,20 @@ partial class DesignerForm
         // 
         // nameField
         // 
-        nameField.DataBindings.Add(new Binding("Value", bindingTextBox, "Text", true, DataSourceUpdateMode.OnPropertyChanged));
+        nameField.DataBindings.Add(new Binding("Value", bindingValueLabel, "Text", true, DataSourceUpdateMode.OnPropertyChanged));
         nameField.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:text-t", true);
         nameField.Id = "name";
         nameField.Text = "Name";
         nameField.Value = "Initial value";
         // 
-        // bindingTextBox
+        // bindingValueLabel
         // 
-        bindingTextBox.Location = new Point(27, 320);
-        bindingTextBox.Margin = new Padding(3, 4, 3, 4);
-        bindingTextBox.Name = "bindingTextBox";
-        bindingTextBox.Size = new Size(342, 27);
-        bindingTextBox.TabIndex = 1;
-        bindingTextBox.Text = "Initial value";
+        bindingValueLabel.AutoSize = false;
+        bindingValueLabel.AutoToolTip = true;
+        bindingValueLabel.Name = "bindingValueLabel";
+        bindingValueLabel.Size = new Size(260, 20);
+        bindingValueLabel.Text = "Initial value";
+        bindingValueLabel.TextAlign = ContentAlignment.MiddleLeft;
         // 
         // fontField
         // 
@@ -784,12 +829,13 @@ partial class DesignerForm
         // 
         ribbon.MessageBar.Id = "rk:8433585172b34728b57d006d459f4081";
         ribbon.Name = "ribbon";
-        ribbon.QuickAccessItems.AddRange(new RibbonKit.WinForms.RibbonElement[] { ribbonQatReference1, ribbonQatReference2, documentStylesQatReference });
+        ribbon.QuickAccessItems.AddRange(new RibbonKit.WinForms.RibbonElement[] { ribbonQatReference1, ribbonQatReference2, inputModeQatReference, documentStylesQatReference });
         ribbon.QuickAccessPosition = RibbonKit.WinForms.RibbonQuickAccessPosition.BelowRibbon;
         ribbon.Size = new Size(1029, 287);
         ribbon.TabContentAnimation = RibbonKit.WinForms.RibbonTabContentAnimation.SlideDown;
         ribbon.TabIndex = 0;
         ribbon.Tabs.AddRange(new RibbonKit.WinForms.RibbonTab[] { homeTab, editTab, galleryTab });
+        ribbon.DensityChanged += Ribbon_DensityChanged;
         // 
         // backstageCommand1
         // 
@@ -816,6 +862,12 @@ partial class DesignerForm
         ribbonQatReference2.Id = "rk:7cf51470e7dc4796a830db3f28359224";
         ribbonQatReference2.Source = saveButton;
         // 
+        // inputModeQatReference
+        // 
+        inputModeQatReference.Id = "qat.inputMode";
+        inputModeQatReference.KeyTip = "D";
+        inputModeQatReference.Source = inputModeSelector;
+        // 
         // documentStylesQatReference
         // 
         documentStylesQatReference.Id = "qat.documentStyles";
@@ -823,24 +875,28 @@ partial class DesignerForm
         documentStylesQatReference.Source = documentStylesGallery;
         documentStylesQatReference.Text = "Document styles";
         // 
+        // statusStrip
+        // 
+        statusStrip.Dock = DockStyle.Bottom;
+        statusStrip.Items.AddRange(new ToolStripItem[] { statusLabel, bindingCaptionLabel, bindingValueLabel });
+        statusStrip.Name = "statusStrip";
+        statusStrip.SizingGrip = false;
+        statusStrip.TabIndex = 1;
+        statusStrip.Text = "Status";
+        //
         // statusLabel
-        // 
-        statusLabel.AutoSize = true;
-        statusLabel.Location = new Point(27, 387);
+        //
+        statusLabel.AutoToolTip = true;
         statusLabel.Name = "statusLabel";
-        statusLabel.Size = new Size(136, 20);
-        statusLabel.TabIndex = 0;
+        statusLabel.Spring = true;
         statusLabel.Text = "Designer consumer";
-        // 
-        // button1
-        // 
-        button1.ForeColor = Color.Black;
-        button1.Location = new Point(538, 401);
-        button1.Name = "button1";
-        button1.Size = new Size(186, 80);
-        button1.TabIndex = 2;
-        button1.Text = "button1";
-        button1.UseVisualStyleBackColor = true;
+        statusLabel.TextAlign = ContentAlignment.MiddleLeft;
+        //
+        // bindingCaptionLabel
+        //
+        bindingCaptionLabel.BorderSides = ToolStripStatusLabelBorderSides.Left;
+        bindingCaptionLabel.Name = "bindingCaptionLabel";
+        bindingCaptionLabel.Text = "Name:";
         // 
         // DesignerForm
         // 
@@ -848,9 +904,7 @@ partial class DesignerForm
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.White;
         ClientSize = new Size(1029, 667);
-        Controls.Add(button1);
-        Controls.Add(statusLabel);
-        Controls.Add(bindingTextBox);
+        Controls.Add(statusStrip);
         Controls.Add(ribbon);
         Margin = new Padding(3, 4, 3, 4);
         Name = "DesignerForm";
@@ -858,6 +912,8 @@ partial class DesignerForm
         Text = "RibbonKit independent designer consumer";
         TitleBarColor = Color.White;
         ((System.ComponentModel.ISupportInitialize)ribbon).EndInit();
+        statusStrip.ResumeLayout(false);
+        statusStrip.PerformLayout();
         ResumeLayout(false);
         PerformLayout();
     }
@@ -898,14 +954,20 @@ partial class DesignerForm
     private RibbonKit.WinForms.RibbonMenuSeparatorItem backstageMainSeparator = null!;
     private RibbonKit.WinForms.RibbonMenuSeparatorItem backstageFooterSeparator = null!;
     private RibbonKit.WinForms.RibbonButtonItem backstageOptionsCommand = null!;
-    private TextBox bindingTextBox = null!;
-    private Label statusLabel = null!;
+    private StatusStrip statusStrip = null!;
+    private ToolStripStatusLabel statusLabel = null!;
+    private ToolStripStatusLabel bindingCaptionLabel = null!;
+    private ToolStripStatusLabel bindingValueLabel = null!;
     private RibbonKit.WinForms.RibbonButtonItem backstageCommand1;
-    private Button button1;
     private RibbonKit.WinForms.RibbonButtonItem saveButton;
     private RibbonKit.WinForms.RibbonQuickAccessReference ribbonQatReference1;
     private RibbonKit.WinForms.RibbonQuickAccessReference ribbonQatReference2;
     private RibbonKit.WinForms.RibbonQuickAccessDropDownReference documentStylesQatReference;
+    private RibbonKit.WinForms.RibbonGroup inputModeGroup;
+    private RibbonKit.WinForms.RibbonDropDownItem inputModeSelector;
+    private RibbonKit.WinForms.RibbonRadioButtonItem mouseModeOption;
+    private RibbonKit.WinForms.RibbonRadioButtonItem touchModeOption;
+    private RibbonKit.WinForms.RibbonQuickAccessDropDownReference inputModeQatReference;
     private RibbonKit.WinForms.RibbonDropDownItem selectDropdown;
     private RibbonKit.WinForms.RibbonButtonItem selectObjectButton;
     private RibbonKit.WinForms.RibbonButtonItem selectAllButton;

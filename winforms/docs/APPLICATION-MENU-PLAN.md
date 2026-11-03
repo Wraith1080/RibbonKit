@@ -1,12 +1,13 @@
 # Native Application Menu
 
-Status, **2026-11-03: the bounded native Application Menu is implemented;
-the requested visual refinement and WPF-hover follow-up are implemented. Focused checks and
-package/native verification passed. User review is pending.
+Status, **2026-11-03: user accepted the current native Application Menu appearance
+and interaction, including hover pane ownership, split hover/selection fills,
+heading bands and framed/background treatment. Focused checks and package/native
+verification passed.
 The broader Release suite is not clean; see the evidence below. Geometry
-consolidation has not started**.
+consolidation is next; its [starting prompt](NEXT-SLICE-PROMPT.md) is prepared**.
 The preceding state-command popup correction is user-accepted. The current
-[starting prompt](NEXT-SLICE-PROMPT.md) defined this bounded implementation.
+Application Menu contract and implementation evidence are recorded below.
 
 The user clarified that Application Menu should replace the File button's simple
 command-dropdown presentation. At the implementation baseline, native File had CommandMenu
@@ -288,7 +289,7 @@ The user's recording and Print screenshot clarified the intended interaction and
 supersede the initial explicit-only pane-selection choice. The native contract
 was presented before editing: change main-navigation hover ownership and shared
 paint/layout while preserving public APIs, designer serialization, command
-activation and retained native controls. Existing uncommitted visual work remains.
+activation and retained native controls. Existing visual work was preserved.
 WPF `NotifyItemHoverChanged` and physical split-template triggers were read-only
 references; no WPF changes or checks ran.
 
@@ -330,5 +331,6 @@ as were the sample Print/Save As bands. Synthetic paint checks cover 96/120/144/
 DPI; they do not replace physical display/Touch or mixed-monitor review.
 Scoped whitespace review passed; the existing VS-generated `// ` comment-line
 spacing in `DesignerForm.Designer.cs` was preserved as an explicit exception.
-The earlier six full-suite failures and the pending VS/hardware/accessibility/
-human acceptance gates remain open. **Stop for review before geometry consolidation.**
+The earlier six full-suite failures and the pending VS/hardware/accessibility
+gates remain open. The user review above covers the requested Application Menu
+appearance and interaction, rather than those separate gates.

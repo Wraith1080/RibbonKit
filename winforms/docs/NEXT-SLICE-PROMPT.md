@@ -1,178 +1,163 @@
-# Starting prompt: native RibbonKit.WinForms Application Menu
+# Starting prompt: native RibbonKit.WinForms geometry consolidation
+
+Execution checkpoint, **2026-11-03**: the second ordinary-menu geometry set (vertical spacing) is
+implemented and verified in [the geometry plan](GEOMETRY-CONSOLIDATION-PLAN.md).
+**User review is pending. Do not start another geometry increment or additional
+themes.** The original bounded starting contract follows for context.
 
 Continue work in:
 
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Prepared **2026-11-03**. Implement the next bounded slice: **a native Application
-Menu replacing the File button's simple command-dropdown presentation, with a
-dedicated designer workflow**. Backstage remains the other File presentation.
-Application Menu comes before geometry consolidation, then additional themes.
-Stop for user review after this Application Menu slice.
-
-Start with a bounded review and present the proposed native API, ownership,
-layout and designer contract before runtime/public API edits. Then implement the
-authorized slice through appropriate verification. Resolve routine choices
-yourself; ask only when missing information materially changes scope,
-correctness or compatibility. Do not stop after another general roadmap.
+Prepared **2026-11-03**. Start the next bounded **native geometry consolidation**
+slice after the accepted Application Menu. Inventory the existing geometry,
+present a concrete native API/layout/designer contract before implementation,
+then complete a coherent first implementation and appropriate verification.
+Stop for user review before another geometry increment or additional themes.
+Do not stop at a general roadmap, and do not turn the inventory into permission
+for an unbounded rewrite.
 
 ## Live baseline and boundaries
 
 - Start with `git status --short` and verify branch/HEAD. At preparation:
   **`codex/Ribbonkit-Winform`**, HEAD
-  **`779f529b83de8835af95850eced5a8794d309c80`**
-  (`fix gallery scrollbar and toggle in popup`). The user committed the accepted
-  gallery scrollbar and state-command popup fixes while this handoff was being
-  prepared. Only `APPLICATION-MENU-PLAN.md`, `NEXT-SLICE-PROMPT.md` and
-  `STATE-COMMAND-POPUPS.md` under `winforms/docs/` have documentation edits at
-  handoff. Preserve all live tracked/untracked changes. The user may commit again
-  before the next chat, so recheck rather than restoring this baseline or assuming
-  the checkout is still dirty.
+  **`9dd0054b9ebe4f6f9ff5b57bf75198e443f5b4e5`**
+  (`Application Menu Implementation`), **clean before this documentation handoff**.
+  This handoff updates only `NEXT-SLICE-PROMPT.md`, `APPLICATION-MENU-PLAN.md` and
+  `M4I2-APPEARANCE-INVENTORY.md` under `winforms/docs/`; those changes may still be
+  uncommitted. The user committed the preceding implementation and accepted its
+  appearance/interaction. Recheck
+  live state; preserve all later tracked/untracked edits and commits.
 - Read root `AGENTS.md` and `winforms/AGENTS.md`. Use one agent. No commit, push,
   publish, branch switch, stash/reset/clean or disposal of existing work.
-- Implement only under `winforms/`. WPF sources are read-only references. Do not
-  modify/build/test WPF or add WPF hosting/runtime dependencies.
-- Use normal Debug/default outputs for review. Reuse the permanent Designer
-  Sample through `winforms/eng/Update-DesignerSample.ps1`; preserve its authored
-  Forms/UserControls/resources. Do not create another user review app.
-- Shared presentation, measurement, input, designer support and extension points
-  belong in the library. Hosts own commands, document/recent-file data,
-  persistence, icons and application lifetime. Verify a public-API consumer
-  without Showcase helpers/resources.
+- Implement only under `winforms/`. WPF is a read-only dimension/behavior reference;
+  do not modify/build/test WPF or add WPF hosting/dependencies. Native font
+  measurement, DPI, Touch and usability take precedence over copying WPF values.
+- Use normal Debug/default outputs for review and normal Release outputs for
+  required Release validation. Refresh the permanent Designer Sample in place
+  with `winforms/eng/Update-DesignerSample.ps1`; preserve authored Forms,
+  UserControls, resources and the selected startup File presentation. No new
+  user review app. An isolated package-only verification consumer is appropriate.
+- Reusable measurement, painting, input, clipping, scrolling, popup placement,
+  editor hosting, keyboard/KeyTips and accessibility stay in the library.
+  Applications own data, commands, icons, native page/document layout,
+  persistence, activation/capture and platform integration that requires a host.
 
-## Read bounded current sources
+## Sequence and preserved behavior
 
-- `winforms/docs/APPLICATION-MENU-PLAN.md` — selected replacement direction.
-- `winforms/docs/STATE-COMMAND-POPUPS.md` — latest accepted activation policy.
-- `winforms/docs/APPEARANCE-COLOR-ROLES.md` and affected portions of
-  `winforms/docs/M4I2-APPEARANCE-INVENTORY.md` — shared appearance/fallbacks.
-- Relevant File/popup/content/designer sections of `winforms/README.md` and
-  `docs/21-NATIVE-WINFORMS-PLAN.md`. Follow applicable design-index/history
-  pointers without loading the entire project history.
-- Native starting points: `RibbonControl.Backstage.cs`, File/open/activation paths
-  in `RibbonControl.cs`, `Model/RibbonBackstage.cs` (`RibbonFileMenuMode`), FileMenu/
-  dropdown models, retained content initialization, popup/window/menu layout,
-  editors, input/KeyTips/accessibility and shared renderers/theme.
-- Designer starting points: `RibbonFileDesignSettings.cs`,
-  `RibbonDesignCommitter.cs`, protocol/draft models, client editor and existing
-  inert popup/Backstage previews.
+Milestone sequence remains M6A motion -> M6B window integration/TitleBar QAT ->
+M6C backdrops -> deferred M4I2 appearance consolidation. Shared color/fill roles,
+the state-command popup correction and Application Menu precede this geometry
+slice. Additional built-in themes and final visual polish come later.
 
-WPF references, all read-only:
+Preserve the accepted behavior and current default dimensions:
 
-- `src/RibbonKit/Controls/RibbonApplicationMenu.cs` — default/active right pane,
-  per-item pane content/header, split primary/arrow and footer concepts.
-- `src/RibbonKit/Themes/Controls.ApplicationMenu.xaml` — command column, divider,
-  right-pane headers/viewports/scrolling, fixed footer and frame ownership.
-- `src/RibbonKit/Controls/ApplicationMenuGeometryConverter.cs` and
-  `src/RibbonKit/Themes/Tokens.Office2024.xaml` — dimensions and screen budgeting.
-- Relevant examples in `samples/RibbonKit.Showcase` and test sources such as
-  `ApplicationMenuHoverTests.cs`, `ApplicationMenuLayeringTests.cs` and
-  `ApplicationMenuViewportChecks.cs`, as behavior evidence only.
+- Application Menu: entering a navigation dropdown or either split half selects
+  its right pane without invoking. A plain command restores DefaultPane. Gaps,
+  separators, disabled rows and pane/footer transit retain selection. Reopen
+  starts on DefaultPane. Both split halves share normal hover fill; selected and
+  unhovered, the main half is lighter than the arrow. Keep shaded active-pane
+  title bands, the inset default heading, continuous inner border and matching
+  outer/default-pane background. Preserve validation vetoes, command order,
+  retained native content/HWND/text and navigation/footer scroll offsets.
+- State-command popups: accepted check/radio/toggle and split activation,
+  state-before-Click/one invocation, dismissal and retained-content policies.
+- Gallery UserControl cards/presenter, inline/QAT ownership and retention,
+  native editor/ComboBox behavior, scroll reveal and generated designer examples.
+- File alignment/anchoring, body/QAT/message joins, Classic/Simplified and
+  Compact/Touch behavior, TitleBar/TabRow/BelowRibbon QAT identity, independent
+  motion markers, whole-surface Backstage/caption motion and material startup.
+- Retained opaque Backstage designer preview, public renderer hooks, owned model
+  identities, authored handlers/bindings, serialization and shipped APIs.
+  A consolidation must not silently redesign these accepted surfaces.
 
-Current WPF Office 2024 reference values: navigation width **150**, pane width
-capped at **340**, item height **40**, footer height **36**, in 96-DPI logical
-units. Translate the intent through native font measurement, Compact/Touch and
-work-area constraints. The user allows better native ideas: explain meaningful
-departures with measurements or a comparison. Use one coherent measurement for
-paint, hit testing, keyboard/UIA bounds, scrolling and popup placement. Do not
-transplant WPF templates or force reference dimensions regardless of content/DPI.
+## Bounded reading and inventory
 
-## Bounded implementation
+Read current contracts, not every historical ledger:
 
-1. Replace the existing File command-list presentation, rather than adding a
-   third independent File mode. Reuse `FileMenu.Items`, commands, bindings,
-   identities and opening/closing/cancellation semantics where applicable.
-   Preserve `CommandMenu` enum/numeric/serialized compatibility and published
-   property contracts; do not silently rename/remove them. Keep Backstage and
-   ordinary dropdown/split controls elsewhere supported.
-2. Propose the smallest native model for left commands/navigation, a default
-   right pane (for example app-supplied recent documents), item-specific right
-   panes with optional headers, and footer actions. Define leaf action versus
-   pane selection, split primary/arrow behavior, empty/default states, collection
-   ownership and source identity. Borrow useful WPF behavior, not its framework.
-3. Define native Control/UserControl hosting before coding: app-owned instances
-   versus library-created types, initialization timing, retention across pane
-   switches/reopening, validation, focus, clipping, disposal and failure behavior.
-   Reuse accepted retained-content patterns where appropriate. Preserve one real
-   editor/control owner and native HWNDs. Designer previews must not instantiate
-   or execute arbitrary application content.
-4. Implement a reusable measured two-pane layout with a reachable footer. Budget
-   width/height against the work area and DPI; handle long captions, large fonts,
-   empty panes and overflow. Keep headers, viewports, scrolling and footer
-   ownership explicit. Reuse native popup/frame/shadow/motion infrastructure
-   where suitable, including reduced-motion fallback and input settlement.
-5. Use shared renderer/theme roles and compatible defaults. Native application
-   controls keep application styling. Add only settings this component requires;
-   do not begin broad geometry consolidation, theme authoring, an appearance
-   coordinator or orb/theme-variant expansion.
-6. Add a dedicated, discoverable Application Menu designer workflow for command,
-   section, pane and footer authoring, Properties selection and inert preview.
-   Define generated-code defaults/reset, serialization, Apply/Cancel/no-op,
-   one-transaction changes, Undo/Redo and save/reopen. Reuse the existing designer
-   protocol/commit mechanisms and package layout. Preview interaction selects
-   draft content without invoking commands or constructing native app pages.
-7. Cover pointer, keyboard/KeyTips, split/submenu navigation, pane switching,
-   scroll/reveal, footer reachability, Escape/outside-click dismissal, focus
-   return and accessibility. Preserve checked/disabled/focus states and one
-   command invocation per action. Callbacks/source removal must not orphan a
-   popup or reopen one deliberately closed.
-8. Demonstrate through public APIs in normal samples and an independent consumer.
-   Add XML docs, designer metadata and intentional additive
-   `PublicAPI.Unshipped.txt` entries; preserve the shipped baseline. Update the
-   native README and active Application Menu plan with the final contract,
-   actual evidence and remaining gates.
+- `winforms/docs/M4I2-APPEARANCE-INVENTORY.md` and
+  `winforms/docs/APPEARANCE-COLOR-ROLES.md` for geometry gaps and shared roles.
+- `winforms/docs/APPLICATION-MENU-PLAN.md` current status and WPF-hover follow-up;
+  `winforms/docs/STATE-COMMAND-POPUPS.md` for accepted activation policy.
+- Relevant geometry/theme/density/renderer/designer sections of `winforms/README.md`;
+  `docs/21-NATIVE-WINFORMS-PLAN.md` deferred-theming and DPI contracts.
+- `04-DESIGN-NOTES.md` section 5 and matching subsystem/history pointers as needed;
+  do not reopen unrelated WPF work or treat historical test counts as new evidence.
 
-## Accepted behavior to preserve
+Trace existing owners before proposing settings: `RibbonTheme`,
+`RibbonDensityMetrics`, core/header/content/Simplified layout, split/editor/menu/
+Application Menu/gallery/QAT/message/Backstage/caption layout, shared and Office
+renderers, popup windows/chrome, motion snapshots, editor hosting and designer
+previews. Follow the source owners relevant to each proposed metric rather than
+loading all implementations at once.
 
-- Built-in gallery opening captures include the native scrollbar track/thumb:
-  no first-opening black band. Keep accepted card fade/item slide, custom/
-  inline/QAT gallery hosting and retained owner semantics.
-- Toggles, checkboxes, radios and split primaries with `CheckOnClick=true` retain
-  group and More Commands/QAT overflow containers, including ordinary collapsed
-  and Simplified group flyouts. Ordinary/nonchecking actions dismiss; arrows,
-  nested menu commands and explicit callback closure keep existing semantics.
-  Retain the same session/focus and state-before-Click order. The user confirmed
-  the correction works on 2026-11-03.
-- Preserve retained dropdown/split UserControls, gallery synchronization and
-  stable native ComboBox text/arrow/list painting. Avoid speculative HWND
-  recreation, repaint loops or host-owned popup workarounds.
-- Keep RibbonForm/TitleBar QAT, ordinary Form fallback, actual Mica/Acrylic,
-  title-bar color/tint/reset/contrast, Backstage caption synchronization, native
-  editors, popup stacking and motion cancellation coherent.
-- Preserve command/QAT/customization identity, Apply/Cancel/profiles and
-  Compact/Touch. Groups remain addable in Customize QAT only. File alignment,
-  hit targets and popup anchors remain measured, not paint-only offsets.
+Produce a compact inventory by surface: existing public setting, current
+Compact/Touch default and units, current owner(s), every geometry consumer,
+consolidation candidate and deferred/platform rule. Include spacing/padding,
+icon/text/arrow slots, row heights, radii/border sides, indicator/scroll geometry
+and shadow clearance. Distinguish 96-DPI logical metrics from device-pixel
+hairlines/raster coverage, native system metrics and host-owned content. Equal
+numeric literals do not by themselves justify sharing one setting.
 
-## Evidence and completion
+## Contract before edits, then bounded implementation
 
-Previous results are context, not fresh Application Menu evidence:
+1. Present a concrete first set of geometry roles and its exact affected surfaces,
+   defaults, fallback/override rules and non-goals. Audit broadly, but implement
+   one cohesive initial set that can be reviewed and verified independently.
+   Explicitly list deferred roles; do not claim complete consolidation if they
+   remain. Create/update `winforms/docs/GEOMETRY-CONSOLIDATION-PLAN.md` to own the
+   selected contract, implementation checklist, evidence and current review gate.
+2. Propose the smallest per-ribbon immutable configuration/resolution contract.
+   Reuse existing public theme/density properties and renderer extension points;
+   preserve authored values, minimum-height meanings and unset/reset behavior.
+   Explain any additive public API before editing it; include XML documentation,
+   validation and PublicAPI bookkeeping. Do not silently rename/remove settings,
+   add a global coordinator or expose every rendering constant as a property.
+3. Define units, scaling/rounding once, font/content-driven minima, Compact/Touch
+   fallbacks, invalid-value handling and behavior on live theme/density/DPI changes.
+   Paint, layout, hit targets, native editor slots, keyboard/UIA bounds, scrolling,
+   popup placement/regions and motion endpoints must consume the same resolved
+   measurements. Radius/shadow changes require matching clipping, raster/cache
+   keys and reserved drawing space, not a paint-only adjustment.
+4. State the designer contract explicitly: how values are authored, defaults/reset
+   and serialization, inert preview behavior, ownership and Undo/Redo if affected.
+   Do not silently build a broad theme-authoring UI. If code-only configuration
+   is the bounded contract, say so and preserve existing designer round-trips.
+5. Implement the presented first set through shared library code and a small,
+   public-API demonstration in the permanent sample. Keep defaults visually and
+   behaviorally equivalent; demonstrate meaningful non-default values and reset.
+   Avoid consumer-only offsets, duplicate geometry formulas, layout animation or
+   replacement/recreation of native controls as a measurement workaround.
 
-- Accepted gallery correction: two new first/reopen raster cases and 12 public
-  package opening/reopening scopes passed across Solid/Mica/Acrylic and Compact/
-  Touch at actual 120 DPI, with 132 composed-screen samples. See its plan record.
-- Accepted state-command correction: **24 new + 40 related distinct focused
-  Debug cases** passed, plus an independent public-API native QAT group scope at
-  120 DPI. See `STATE-COMMAND-POPUPS.md`.
-- Designer Sample package at preparation:
-  **`0.1.0-designer.local20261103T101745293Z`**. Recheck `.local/last-refresh.json`.
-- Earlier full Release results and intermittent focus/order failures are recorded
-  in the plans. Passing isolated retries do not establish a clean aggregate.
+Resolve routine choices within this scope without repeated approval. Ask only
+when missing information materially changes scope, compatibility or correctness,
+and continue independent work while waiting.
 
-Run meaningful new/affected native checks and applicable API/Release/designer-
-package gates. Favor focused selections; broader checks require an affected
-contract or explicit gate. Do not run WPF checks or repeat unrelated passed
-campaigns. Verify public-only consumer behavior, generated designer code/package
-contents and actual captures. Refresh the permanent Designer Sample in normal
-Debug for review without replacing authored content.
+## Verification and review boundary
 
-Serialize foreground/input runs and verify fixture ownership. Stop input on
-focus loss; do not close user apps or add production focus-stealing workarounds.
-Capture motion off the UI thread and save after playback where needed. Await
-GUI process exit before another foreground run.
-
-Report build/API, focused tests, package/independent-consumer, actual VS and live
-native evidence separately. Verify effective Mica/Acrylic; Solid fallback is not
-material acceptance. Separate synthetic DPI from actual display/mixed-monitor,
-physical keyboard/touch/IME and user acceptance. Stop after this bounded
-Application Menu slice for review. No geometry consolidation, new themes,
-commit, push or publication in this session.
+- Establish baseline measurements/captures for affected surfaces before changing
+  them. Keep a requested-change checklist and compare actual painted bounds and
+  all four frame corners; default-parity and intentional override evidence are
+  separate. Inspect actual/diff captures before changing expectations/tolerances.
+- Run proportionate focused native regressions for the selected roles: defaults,
+  overrides/reset, density/font/DPI scaling, invalidation/cache changes, actual
+  paint/hit/editor/keyboard/UIA agreement, scroll/work-area constraints and any
+  affected popup/lifetime/motion/designer serialization contracts. Include
+  representative synthetic 96/120/144/192 DPI without calling it hardware coverage.
+- Build native Debug/Release, satisfy applicable API/package checks and refresh
+  the permanent sample. Verify a package-only consumer without Showcase helpers
+  or internals, both renderers and relevant material/density/layout presentations.
+  Run foreground native fixtures sequentially; stop input on focus loss.
+- Reuse passed evidence. Broaden/repeat only for a new change, failure, unresolved
+  risk or explicit gate. A broad API/cross-project change may require the native
+  full suite; a bounded change defaults to focused checks. Never run WPF checks
+  as evidence for this task.
+- Starting evidence is recorded, not freshly rerun: Application Menu's focused
+  Release scope passed 85/85 and its package consumer passed 12/12 actual-120-DPI
+  scopes. The prior broader Release aggregate still had six failures; do not
+  assume a clean suite or silently fix unrelated group/Backstage behavior.
+  Actual VS, external accessibility, physical touch/IME/RTL and genuine
+  multi-monitor DPI gates remain distinct from synthetic/fixture evidence.
+- Report the exact implemented roles, default/override results, native/package
+  checks, deferred geometry and remaining limits. Stop for user review. Do not
+  start additional geometry increments or themes as part of this slice.

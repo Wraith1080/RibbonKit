@@ -63,6 +63,24 @@ public sealed record RibbonTheme
     public RibbonFill? MenuHeadingBackground { get; init; }
     /// <summary>Gets command-menu heading text color. Empty preserves the renderer's gallery-heading treatment.</summary>
     public Color MenuHeadingForeground { get; init; } = Color.Empty;
+    /// <summary>Gets the optional ordinary command-menu minimum row height in 96-DPI logical pixels, from 1 to 1024. Null uses Compact 28 or Touch 44. Font/icon minima still apply; Touch retains at least 44. Includes nested menus, Quick Access overflow and Simplified More Commands; excludes Application Menu-specific and illustrated rows and ComboBox choice lists.</summary>
+    public int? MenuMinimumRowHeight { get; init; }
+    /// <summary>Gets the optional ordinary command-menu icon slot side in 96-DPI logical pixels, from 1 to 1024. Null uses Compact 24 or Touch 32. Check/radio glyphs retain their density size, capped to the slot.</summary>
+    public int? MenuIconSize { get; init; }
+    /// <summary>Gets the optional ordinary command-menu leading icon-slot padding in 96-DPI logical pixels, from 0 to 1024. Null uses 8 in either density.</summary>
+    public int? MenuLeadingPadding { get; init; }
+    /// <summary>Gets the optional ordinary command-menu text/arrow trailing padding in 96-DPI logical pixels, from 0 to 1024. Null uses 8 in either density. Quick Access group-reference rows retain their separate chooser clearance.</summary>
+    public int? MenuTrailingPadding { get; init; }
+    /// <summary>Gets the optional ordinary command-menu icon-to-text gap in 96-DPI logical pixels, from 0 to 1024. Null uses Compact 10 or Touch 12.</summary>
+    public int? MenuIconTextGap { get; init; }
+    /// <summary>Gets optional clearance above and below an ordinary menu icon slot in 96-DPI logical pixels, from 0 to 1024. Null uses Compact 4 or Touch 6. Contributes to the row's icon-driven minimum; includes QAT/More overflow rows.</summary>
+    public int? MenuIconVerticalPadding { get; init; }
+    /// <summary>Gets optional top/bottom padding for ordinary menu title/description stacks in 96-DPI logical pixels, from 0 to 1024. Null uses Compact 5 or Touch 10. Plain rows, native field internals, illustrated choices and Application Menu-specific content retain their own padding.</summary>
+    public int? MenuDescriptionVerticalPadding { get; init; }
+    /// <summary>Gets the optional ordinary menu title-to-description gap in 96-DPI logical pixels, from 0 to 1024. Null uses Compact 2 or Touch 4. Illustrated choices and Application Menu-specific content retain their own gap.</summary>
+    public int? MenuDescriptionGap { get; init; }
+    /// <summary>Gets the optional decorative separator row height in ordinary menus and QAT/More overflow, in 96-DPI logical pixels from 1 to 1024. Null uses 9 in either density. The line stays one device pixel and noninteractive; Application Menu-specific separators retain their own geometry.</summary>
+    public int? MenuSeparatorHeight { get; init; }
     /// <summary>Gets the optional RibbonForm caption color, overridden by RibbonForm.TitleBarColor. Empty retains Background in solid mode and a clear caption over a backdrop. Explicit values must be opaque.</summary>
     public Color TitleBarBackground { get; init; } = Color.Empty;
     /// <summary>Gets optional caption and TitleBar Quick Access foreground. Empty chooses contrast for a colored caption, or preserves Foreground for an unset caption.</summary>

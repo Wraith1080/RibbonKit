@@ -164,7 +164,7 @@ public partial class RibbonRenderer : IDisposable
         if (chooser) contentContext = context with { Bounds = context.Bounds with { Width = Math.Max(0, context.Bounds.Width - RibbonLayoutEngine.Scale(menu ? 16 : 12, context.DeviceDpi)) } };
         if (menu && entry is RibbonQuickAccessGroupReference)
         {
-            var metrics = RibbonDensityMetrics.For(context.Density);
+            var metrics = RibbonMenuMetrics.For(context.Density, context.Theme);
             if (entry is RibbonQuickAccessGroupReference { Source.Icon: { } groupIcon })
             {
                 int side = RibbonLayoutEngine.Scale(metrics.MenuIcon, context.DeviceDpi);
@@ -432,7 +432,7 @@ public partial class RibbonRenderer : IDisposable
             if (context.Hot || context.Pressed)
                 DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
             var content = RibbonContentLayout.Calculate(context.Bounds, RibbonItemSize.Medium, menu, true, context.DeviceDpi, context.Font);
-            if (menu) content = RibbonMenuLayout.Content(content, item, context.Bounds, context.Font, context.DeviceDpi, context.Density);
+            if (menu) content = RibbonMenuLayout.Content(content, item, context.Bounds, context.Font, context.DeviceDpi, context.Density, context.Theme);
             if (item is RibbonCheckBoxItem box) DrawCheckBoxIndicator(context with { Bounds = content.Icon }, box);
             else DrawRadioButtonIndicator(context with { Bounds = content.Icon }, (RibbonRadioButtonItem)item);
             DrawText(context with { Bounds = content.Text }, item.Text, enabled ? context.Theme.Foreground : context.Theme.DisabledColor, content.Flags);
@@ -576,7 +576,7 @@ public partial class RibbonRenderer : IDisposable
         int captionRows = touchVertical ? _captions.Wrap(item.Text, context.Font, context.DeviceDpi,
             Math.Max(0, context.Bounds.Width - 2 * RibbonLayoutEngine.Scale(5, context.DeviceDpi))).Lines.Length : 2;
         var content = RibbonContentLayout.Calculate(context.Bounds, size, menu, context.ReserveIcon || hasIcon, context.DeviceDpi, context.Font, context.Density, touchVertical, captionRows);
-        if (menu) content = RibbonMenuLayout.Content(content, item, context.Bounds, context.Font, context.DeviceDpi, context.Density);
+        if (menu) content = RibbonMenuLayout.Content(content, item, context.Bounds, context.Font, context.DeviceDpi, context.Density, context.Theme);
         var iconBounds = content.Icon;
         var textBounds = content.Text;
         var arrow = Rectangle.Empty;
@@ -640,7 +640,7 @@ public partial class RibbonRenderer : IDisposable
     private void DrawMenuDescription(RibbonPaintContext context, RibbonItem item, Rectangle title, bool? enabledOverride = null, bool illustrated = false)
     {
         if (!RibbonMenuLayout.HasDescription(item)) return;
-        var bounds = RibbonMenuLayout.Description(title, context.Bounds, context.Font, context.DeviceDpi, illustrated ? RibbonDensity.Compact : context.Density);
+        var bounds = RibbonMenuLayout.Description(title, context.Bounds, context.Font, context.DeviceDpi, illustrated ? RibbonDensity.Compact : context.Density, illustrated ? null : context.Theme);
         if (bounds.Width > 0 && bounds.Height > 0)
             DrawText(context with { Bounds = bounds }, item.MenuDescription, (enabledOverride ?? item.EffectiveEnabled) ? context.Theme.SecondaryText : context.Theme.DisabledColor, RibbonMenuLayout.DescriptionFlags);
     }

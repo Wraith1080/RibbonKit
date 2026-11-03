@@ -9,6 +9,7 @@ internal static class GalleryPresenterDemo
     {
         Directory.CreateDirectory(output); using var log = new StreamWriter(Path.Combine(output, "result.log")) { AutoFlush = true };
         using var form = new DesignerForm { StartPosition = FormStartPosition.Manual, Location = new(180, 120) };
+        var status = form.Controls.OfType<StatusStrip>().Single().Items["statusLabel"]!;
         var ribbon = form.Controls.OfType<RibbonControl>().Single(); var (tab, gallery) = form.GalleryPresenterExample;
         Require(ribbon.Tabs.Contains(tab) && tab.Groups.Any(group => group.Items.Contains(gallery)) && gallery.Items.Count == 18,
             "Designer-authored tab, gallery and tile declarations exist before Form.Load");
@@ -44,7 +45,7 @@ internal static class GalleryPresenterDemo
                 int previews = 0, cancels = 0, commits = 0; gallery.ItemPreview += (_, _) => previews++; gallery.ItemPreviewCancelled += (_, _) => cancels++; gallery.SelectionCommitted += (_, _) => commits++;
                 var last = (RibbonGalleryTile)gallery.Items[^1]; var original = gallery.SelectedItem;
                 Require(context.Preview(last) && ReferenceEquals(gallery.SelectedItem, original), "Preview leaves committed selection intact");
-                Require(form.Controls.Find("statusLabel", true).Single().Text == "Preview: " + last.Text, "Designer-wired preview event");
+                Require(status.Text == "Preview: " + last.Text, "Designer-wired preview event");
                 Require(context.Preview(null) && cancels == 1, "Preview cancellation");
                 gallery.SelectedItem = last; Require(commits == 0 && first.GetItemBounds(last).IntersectsWith(first.ClientRectangle), "Programmatic selection reveals without committing");
                 Require(first.Handle == handle, "Live native handle retained through synchronization and reveal");
@@ -52,7 +53,7 @@ internal static class GalleryPresenterDemo
                 await Capture("last-selected", first);
                 Require(context.Commit(last) && commits == 1 && first.IsDisposed && !context.IsActive, "Accepted source commit and view disposal");
                 Require(firstCards.All(card => card.IsDisposed), "Popup close releases all native tile views");
-                Require(form.Controls.Find("statusLabel", true).Single().Text == "Selected: " + last.Text, "Designer-wired commit event");
+                Require(status.Text == "Selected: " + last.Text, "Designer-wired commit event");
                 Require(!context.Commit(last) && !context.Preview(last), "Old context is inert");
                 gallery.ShowDropDown(); await Task.Delay(250); var current = FindPresenter(); Require(!ReferenceEquals(current, first), "Reopen constructs another view");
                 Require(ReferenceEquals(gallery.SelectedItem, last), "Source selection retained across views");

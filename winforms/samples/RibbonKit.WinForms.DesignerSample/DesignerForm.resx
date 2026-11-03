@@ -125,4 +125,37 @@
         AABJRU5ErkJggg==
 </value>
   </data>
+  <data name="inputModeSelector.Icon" xml:space="preserve">
+    <value>&lt;svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"&gt;
+  &lt;title&gt;Mouse spacing&lt;/title&gt;
+  &lt;g stroke="#5b6577" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" fill="white"&gt;
+    &lt;path d="M5 12 A10 10 0 0 1 25 12 L25 23 A10 10 0 0 1 5 23 Z"/&gt;
+    &lt;path d="M5 13 H25 M15 2 V13" fill="none"/&gt;
+    &lt;path d="M21 16 L36 30 H29 L33 37 L29 39 L25 32 L21 36 Z"/&gt;
+  &lt;/g&gt;
+  &lt;path d="M11 5 V10" stroke="#0078d4" stroke-width="2"/&gt;
+&lt;/svg&gt;</value>
+  </data>
+  <data name="mouseModeOption.Icon" xml:space="preserve">
+    <value>&lt;svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"&gt;
+  &lt;title&gt;Mouse spacing&lt;/title&gt;
+  &lt;g stroke="#5b6577" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" fill="white"&gt;
+    &lt;path d="M5 12 A10 10 0 0 1 25 12 L25 23 A10 10 0 0 1 5 23 Z"/&gt;
+    &lt;path d="M5 13 H25 M15 2 V13" fill="none"/&gt;
+    &lt;path d="M21 16 L36 30 H29 L33 37 L29 39 L25 32 L21 36 Z"/&gt;
+  &lt;/g&gt;
+  &lt;path d="M11 5 V10" stroke="#0078d4" stroke-width="2"/&gt;
+&lt;/svg&gt;</value>
+  </data>
+  <data name="touchModeOption.Icon" xml:space="preserve">
+    <value>&lt;svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"&gt;
+  &lt;title&gt;Touch spacing&lt;/title&gt;
+  &lt;g fill="none" stroke="#0078d4" stroke-width="2"&gt;
+    &lt;circle cx="12.5" cy="8.5" r="7.5"/&gt;
+    &lt;circle cx="12.5" cy="8.5" r="3.5"/&gt;
+  &lt;/g&gt;
+  &lt;path d="M12 26 V10 C12 6 17 6 17 10 V22 C17 18 23 18 23 22 C23 19 29 20 29 24 C29 21 35 23 35 27 V31 C35 37 32 39 26 39 H21 C17 39 15 36 13 34 L6 27 C6 27 4 22 8 22 C8 22 10 23 12 26 Z"
+        fill="white" stroke="#5b6577" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/&gt;
+&lt;/svg&gt;</value>
+  </data>
 </root>

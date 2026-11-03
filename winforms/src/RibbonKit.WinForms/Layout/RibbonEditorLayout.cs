@@ -11,7 +11,7 @@ internal static class RibbonEditorLayout
         int inset = RibbonLayoutEngine.Scale(4, dpi);
         return new(field.Left + inset, field.Top, Math.Max(0, ComboButton(field, dpi, density).Left - field.Left - 2 * inset), field.Height);
     }
-    internal static int ComboRowHeight(Font font, int dpi, RibbonDensity density = RibbonDensity.Compact) => Math.Max(RibbonLayoutEngine.Scale(RibbonDensityMetrics.For(density).MenuRow, dpi), font.Height + RibbonLayoutEngine.Scale(10, dpi));
+    internal static int ComboRowHeight(Font font, int dpi, RibbonDensity density = RibbonDensity.Compact) => Math.Max(RibbonLayoutEngine.Scale(RibbonDensityMetrics.For(density).ComboChoiceRow, dpi), font.Height + RibbonLayoutEngine.Scale(10, dpi));
     internal static int LabelWidth(RibbonItem item, Font font, int dpi) =>
         item is RibbonComboBoxItem { ShowLabel: false } || string.IsNullOrEmpty(item.Text) ? 0 : TextRenderer.MeasureText(item.Text, font, new Size(10000, 1000),
             TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding).Width + RibbonLayoutEngine.Scale(6, dpi);

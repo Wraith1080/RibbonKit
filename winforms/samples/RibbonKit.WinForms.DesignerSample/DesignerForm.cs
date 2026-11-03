@@ -7,6 +7,7 @@ public partial class DesignerForm : RibbonForm
     public DesignerForm()
     {
         InitializeComponent();
+        SynchronizeInputMode();
         ConfigurePopup(selectDropdown, "Select options");
         ConfigurePopup(pasteSplitButton, "Paste options");
         ConfigurePopup(applicationOpen, "Open options");
@@ -75,9 +76,9 @@ public partial class DesignerForm : RibbonForm
             Require(drawn, "Public-only SVG drawing at " + side);
         }
         nameField.Value = "Model change";
-        Require(bindingTextBox.Text == "Model change", "Model-to-control binding");
-        bindingTextBox.Text = "Control change";
-        Require(nameField.Value == "Control change", "Control-to-model binding");
+        Require(bindingValueLabel.Text == "Model change", "Model-to-status-label binding");
+        bindingValueLabel.Text = "Control change";
+        Require(nameField.Value == "Control change", "Status-label-to-model binding");
         applyButton.PerformClick();
         Require(statusLabel.Text == "Applied: Control change", "Click event hookup");
         Require(fontField.Items.SequenceEqual(new[] { "Segoe UI", "Arial", "Consolas" }) && fontField.SelectedIndex == 0, "Choice declarations");

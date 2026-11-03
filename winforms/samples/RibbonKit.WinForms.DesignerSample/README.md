@@ -1,5 +1,55 @@
 # RibbonKit WinForms Designer Sample
 
+The bottom-docked `statusStrip` replaces the floating binding textbox and status
+label. Its designer-authored labels show the latest status message and the
+current **Name:** value. Edit **Name** on the ribbon's Edit tab to see the bound
+value update; status messages from commands, galleries and Mouse/Touch changes
+use the left label. The value label is read-only in the UI and remains the
+source of the existing WinForms binding.
+
+The Showcase-style **Mouse/Touch** selector is available under **Home → Input mode**
+and as the **third Quick Access entry**, including while reviewing the geometry
+tab. It uses the illustrated choices, heading, descriptions and Mouse/Touch
+artwork. Choosing a mode updates ribbon density, the selected radio, caption and
+icon; rejected native-editor validation restores the effective selection.
+
+The group, dropdown, radio choices, QAT source reference and named event hookups
+are declared in `DesignerForm.Designer.cs`, so they remain editable through
+**Edit Ribbon…** and Properties. `DesignerForm.InputMode.cs` contains only the
+density event handlers/synchronization. `DesignerForm.resx` owns typed SVG icon
+resources, adapted from Showcase's vector artwork; there is no
+Showcase assembly/helper dependency or runtime-created selector.
+
+Verification, 2026-11-03: normal Debug sample build passed with zero warnings or
+errors. `--verify-input-mode` passed public-package native pointer/keyboard checks
+at actual 120 DPI, retained editor HWND/value, no-op/current choice, external
+density synchronization and validation veto. Menu metadata/QAT source CodeDOM
+serialization and SVG converter round-trips passed; Mouse/Touch captures were
+inspected in `artifacts/designer-input-mode/`. The reported line-836 designer
+error was corrected with standard typed-resource assignments for all three Icon
+properties. The post-fix Debug build and `--verify-input-mode` passed, now including
+those Icon serialization paths and compiled typed resources; evidence is in
+`artifacts/designer-input-mode/icon-designer-fix/`. **User confirmed the repaired
+designer works on 2026-11-03** ("everything works now"). Separate save/reopen/Undo
+cycles were not recorded. The older `--verify-roundtrip` helper stops at its pre-existing
+Command identity expectation: it expects Bold in Commands, while read-only HEAD
+already declares it in Formatting. That helper and the authored grouping are
+unchanged; evidence is in `artifacts/designer-input-mode/roundtrip/`.
+
+For the opt-in ordinary-menu geometry example, launch the normal Debug sample
+with `--menu-geometry-demo`. On its **Menu geometry** tab, use **Wider menu spacing**,
+open **Try this menu**, then use **Reset menu spacing** and reopen it. The example
+uses only public theme properties; ordinary startup and the authored File
+presentation stay unchanged. The [geometry plan](../../docs/GEOMETRY-CONSOLIDATION-PLAN.md)
+records the bounded scope and review gate.
+
+The same tab now includes **Vertical menu spacing**. Open **Try described menu**
+at defaults, close it, choose **More vertical spacing**, and reopen. Check the
+icon clearance, title/description gap, separator spacing and native Name field.
+The **Keep formatting** checkbox should toggle without closing the menu. Use
+**Reset vertical spacing** and reopen to compare; this resets only the four
+vertical roles and preserves any horizontal settings from the first group.
+
 This is the permanent editable review project, migrated from the existing
 bottom-navigation review solution with its reviewed Forms, UserControls,
 resources and assets preserved. Keep making designer changes here.

@@ -439,7 +439,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         TabStop = true;
         SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.Selectable, true);
         int S(double n) => RibbonLayoutEngine.Scale(n, ribbon.DeviceDpi);
-        var menuMetrics = RibbonDensityMetrics.For(ribbon.Density);
+        var menuMetrics = RibbonMenuMetrics.For(ribbon.Density, ribbon.Theme);
         _contentPadding = S(4);
         int width, height, galleryViewport = 0;
         if (owner is RibbonTab tab)
@@ -481,7 +481,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
             IReadOnlyList<RibbonElement> items = owner is RibbonSimplifiedMore more ? more.Entries : ribbon.Snapshot.QuickAccessOverflowItems;
             width = Math.Max(S(menuMetrics.MenuMinimumWidth), items.Select(e => TextRenderer.MeasureText(RibbonQuickAccess.Caption(e), Font).Width + S(menuMetrics.MenuWidthPadding)).DefaultIfEmpty(S(menuMetrics.MenuMinimumWidth)).Max());
             if (items.Select(RibbonQuickAccess.Command).Any(c => c is not null && RibbonMenuLayout.HasDescription(c))) width = Math.Max(width, S(menuMetrics.MenuDescriptionWidth));
-            var heights = RibbonMenuLayout.RowHeights(items.Select(e => e as RibbonMenuSeparatorItem ?? RibbonQuickAccess.Command(e)).ToArray(), width - S(8), Font, ribbon.DeviceDpi, ribbon.Density, illustrated: false);
+            var heights = RibbonMenuLayout.RowHeights(items.Select(e => e as RibbonMenuSeparatorItem ?? RibbonQuickAccess.Command(e)).ToArray(), width - S(8), Font, ribbon.DeviceDpi, ribbon.Density, illustrated: false, theme: ribbon.Theme);
             int top = S(4);
             var visible = owner is RibbonSimplifiedMore simplified ? simplified.Entries : ribbon.QuickAccessItems.Where(e => e.Visible).ToList();
             for (int i = 0; i < items.Count; i++)
@@ -508,7 +508,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
                 int headerHeight = Font.Height + S(menuMetrics.Touch ? 16 : 12);
                 _menuHeader = new(S(4), top, width - S(8), headerHeight); top += headerHeight + S(4);
             }
-            var heights = RibbonMenuLayout.RowHeights(items, width - S(8), Font, ribbon.DeviceDpi, ribbon.Density);
+            var heights = RibbonMenuLayout.RowHeights(items, width - S(8), Font, ribbon.DeviceDpi, ribbon.Density, theme: ribbon.Theme);
             for (int i = 0; i < items.Length; i++)
             {
                 int rowHeight = heights[i];

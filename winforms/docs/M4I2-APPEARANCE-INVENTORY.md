@@ -3,12 +3,15 @@
 Status, **2026-11-03: shared color/fill roles and selectable title-bar tint
 implemented; review and validation are recorded in
 [the color-role slice](APPEARANCE-COLOR-ROLES.md)**. Earlier KeyTip/backdrop,
-Backstage and disabled/state increments remain. Geometry overrides and new
-built-in themes are separate later slices.
-User sequencing update, **2026-11-03**: finish the
-[state-command popup correction](STATE-COMMAND-POPUPS.md), then implement the
-[Application Menu replacement](APPLICATION-MENU-PLAN.md) before geometry
-consolidation. Stop for review after each slice.
+Backstage and disabled/state increments remain. The bounded ordinary-menu
+horizontal and vertical geometry sets are tracked in the
+[geometry consolidation plan](GEOMETRY-CONSOLIDATION-PLAN.md), which owns their review scope.
+Further geometry and new built-in themes remain separate later increments.
+Current slice, **2026-11-03**: geometry consolidation, following the
+[state-command popup correction](STATE-COMMAND-POPUPS.md) and
+[Application Menu checkpoint](APPLICATION-MENU-PLAN.md). Use the
+[contract-first starting prompt](NEXT-SLICE-PROMPT.md). Stop for review after this
+bounded implementation; additional themes follow consolidation.
 This starts the appearance-consolidation checkpoint after the main component and
 M6C work. It does not complete comprehensive theming or add another built-in theme.
 Designer authoring, localization/RTL and additional palettes retain their later
