@@ -70,8 +70,8 @@ internal sealed class RibbonPopupManager : IDisposable
         return false;
     }
     internal bool BorrowsGroup(RibbonGroup group) => _sessions.Any(s => ReferenceEquals(s.Surface.GroupSource, group));
-    internal bool IsExpanded(RibbonElement element) => _sessions.Any(s => ReferenceEquals(s.Owner, element) || element is RibbonGroup group && ReferenceEquals(s.Surface.GroupSource, group));
-    internal bool IsMenuExpanded(RibbonDropDownItem source) => _sessions.Any(s => ReferenceEquals(s.MenuSource, source));
+    internal bool IsExpanded(RibbonElement element) => _sessions.Any(s => ReferenceEquals(s.Surface.ApplicationPane, element) || ReferenceEquals(s.Owner, element) || element is RibbonGroup group && ReferenceEquals(s.Surface.GroupSource, group));
+    internal bool IsMenuExpanded(RibbonDropDownItem source) => _sessions.Any(s => ReferenceEquals(s.MenuSource, source) || ReferenceEquals(s.Surface.ApplicationPane, source));
     internal void Toggle(RibbonElement owner, Control opener, Rectangle anchor, Point? contextPoint = null)
     {
         _ribbon.SettleMotion();
@@ -80,9 +80,10 @@ internal sealed class RibbonPopupManager : IDisposable
         _ribbon.ScreenTips.Cancel();
         if (_ribbon.IsInDesignMode || _ribbon.IsBackstageOpen)
             return;
+        if (ReferenceEquals(owner, _ribbon.FileMenu) && _ribbon.FileMenu.Content is null && (!_ribbon.ApplicationMenu.Visible || !_ribbon.ApplicationMenu.EffectiveEnabled)) return;
         if (IsExpanded(owner))
         {
-            Close(owner, true);
+            if (_sessions.FirstOrDefault(s => ReferenceEquals(s.Owner, owner)) is not { } existing || existing.Surface.ValidateApplicationContent()) Close(owner, true);
             return;
         }
         var menuSource = owner is RibbonQuickAccessDropDownReference reference ? reference.Source : owner as RibbonDropDownItem;
@@ -141,7 +142,11 @@ internal sealed class RibbonPopupManager : IDisposable
                 Math.Max(1, opener.ClientSize.Width - S(_ribbon.LayoutTheme.BodyMargin.Left) - S(_ribbon.LayoutTheme.BodyMargin.Right)), 0)) : screenAnchor;
         var work = Screen.FromRectangle(placementAnchor).WorkingArea;
         bool quickAccess = _ribbon.QuickAccessItems.Contains(owner) || ReferenceEquals(owner, _ribbon.QuickAccessOverflow) || IsQuickAccessContext(opener);
-        var surface = new RibbonPopupSurface(_ribbon, owner, new(Math.Max(1, work.Width - 2), Math.Max(1, work.Height - 2)), menuSource, groupSource, quickAccess);
+        // File budgets its two panes against the larger usable side of its
+        // anchor, keeping overflow in the menu instead of covering the header.
+        int availableHeight = ReferenceEquals(owner, _ribbon.FileMenu) && menuSource?.Content is null
+            ? Math.Max(work.Bottom - placementAnchor.Bottom, placementAnchor.Top - work.Top) : work.Height;
+        var surface = new RibbonPopupSurface(_ribbon, owner, new(Math.Max(1, work.Width - 2), Math.Max(1, availableHeight - 2)), menuSource, groupSource, quickAccess);
         if (opener.IsDisposed || !opener.Visible || owner.IsDisposed || !owner.Visible || !owner.EffectiveEnabled || _ribbon.IsDisposed
             || menuSource is not null && !ReferenceEquals(menuSource.Ribbon, _ribbon) || !CurrentProjection(owner, menuSource, groupSource)
             || surface.HasGalleryPresenter && quickAccess && menuSource is RibbonGalleryItem { UseDropDownPresenterInQuickAccess: false })
@@ -253,9 +258,9 @@ internal sealed class RibbonPopupManager : IDisposable
         int inside = _sessions.FindLastIndex(s =>
             (s.Window.Bounds.Contains(point) && (s.Window.Region is null || s.Window.Region.IsVisible(s.Window.PointToClient(point))))
             || s.Opener.RectangleToScreen(s.Anchor).Contains(point));
-        if (inside < 0)
+        if (inside < 0 && _sessions.All(s => s.Surface.ValidateApplicationContent()))
             CloseAll(false, animateTab: true);
-        else
+        else if (inside >= 0)
             while (_sessions.Count > inside + 1)
                 CloseTop(false);
         return false;
@@ -271,7 +276,32 @@ internal sealed class RibbonPopupManager : IDisposable
     }
     internal void CloseMenu(RibbonDropDownItem source, bool restoreFocus)
     {
-        if (_sessions.FirstOrDefault(s => ReferenceEquals(s.MenuSource, source)) is { } session) Close(session.Owner, restoreFocus);
+        if (_sessions.FirstOrDefault(s => ReferenceEquals(s.MenuSource, source) || ReferenceEquals(s.Surface.ApplicationPane, source)) is { } session) Close(session.Owner, restoreFocus);
+    }
+    internal bool PrepareApplicationPane(RibbonPopupSurface surface, RibbonDropDownItem pane)
+    {
+        if (!surface.ValidateApplicationContent()) return false;
+        var previous = _preparingMenu; _preparingMenu = pane;
+        try { return pane.CanOpen() && _sessions.Any(s => ReferenceEquals(s.Surface, surface)); }
+        finally { _preparingMenu = previous; }
+    }
+    internal bool SelectApplicationPane(RibbonDropDownItem pane)
+    {
+        foreach (var surface in Surfaces.ToArray())
+            if (surface.SelectApplicationPane(pane)) return true;
+        return false;
+    }
+    internal bool ApplicationAction(RibbonTarget target)
+    {
+        var root = Surfaces.FirstOrDefault(s => s.IsApplicationMenu);
+        if (root is null || target.Element is not RibbonItem item || !Surfaces.Any(s => s.Targets.Any(t => ReferenceEquals(t.Element, item)))) return false;
+        if (root.IsApplicationNavigation(item) && item is RibbonDropDownItem drop and not RibbonGalleryItem
+            && (item is not RibbonSplitButtonItem || target.DropDownPart)) return root.SelectApplicationPane(drop);
+        if (item is RibbonDropDownItem && (item is not RibbonSplitButtonItem || target.DropDownPart) || item is IRibbonEditorItem or RibbonMenuSeparatorItem) return false;
+        if (!root.ValidateApplicationContent()) return true;
+        CloseAll(true);
+        if (!item.IsDisposed && item.Visible && item.EffectiveEnabled && ReferenceEquals(item.Ribbon, _ribbon)) item.PerformClick();
+        return true;
     }
     internal void CloseQuickAccessGallery(RibbonGalleryItem source)
     {
@@ -336,6 +366,7 @@ internal sealed class RibbonPopupManager : IDisposable
             if (!CurrentProjection(session.Owner, session.MenuSource, session.Surface.GroupSource)
                 || session.MenuSource is { } source && (!source.EffectiveEnabled || !source.Visible || !ReferenceEquals(source.Ribbon, _ribbon))
                 || ReferenceEquals(session.Owner, _ribbon.FileMenu) && (!session.Owner.EffectiveEnabled || !session.Owner.Visible)
+                || session.Surface.IsApplicationMenu && (!_ribbon.ApplicationMenu.EffectiveEnabled || !_ribbon.ApplicationMenu.Visible || session.Surface.ApplicationPane is { } pane && (!pane.EffectiveEnabled || !pane.Visible || !ReferenceEquals(pane.Ribbon, _ribbon)))
                 || session.Surface.GroupSource is { } group && (!group.EffectiveEnabled || !group.Visible || !ReferenceEquals(group.Ribbon, _ribbon)))
             { Close(session.Owner, false); continue; }
             try { session.Surface.SynchronizePresenter(); }
@@ -387,7 +418,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     internal RibbonLayoutSnapshot? BodyLayout => _bodyLayout;
     internal RibbonElement? FocusedElement => _focused;
     internal bool FocusedDropDownPart => _focusedDropDown;
-    internal IReadOnlyList<RibbonTarget> Targets => HasGalleryPresenter ? PresenterTargets() : _targets.Select(t => t with
+    internal IReadOnlyList<RibbonTarget> Targets => IsApplicationMenu ? ApplicationTargets() : HasGalleryPresenter ? PresenterTargets() : _targets.Select(t => t with
     {
         Bounds = new(t.Bounds.X + AutoScrollPosition.X, t.Bounds.Y + (OwnerElement is RibbonQuickAccessOverflow ? OverflowViewport.Top - _overflowOffset : AutoScrollPosition.Y),
             OwnerElement is RibbonQuickAccessOverflow ? Math.Max(0, ClientSize.Width - 2 * _contentPadding)
@@ -443,6 +474,8 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         }
         else if (MenuSource?.Content is { } content)
         { Size = InitializeContent(content, workArea); return; }
+        else if (ReferenceEquals(owner, ribbon.FileMenu))
+        { InitializeApplicationMenu(workArea); return; }
         else if (owner is RibbonQuickAccessOverflow)
         {
             IReadOnlyList<RibbonElement> items = owner is RibbonSimplifiedMore more ? more.Entries : ribbon.Snapshot.QuickAccessOverflowItems;
@@ -508,6 +541,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         base.OnPaint(e);
         var context = new RibbonPaintContext(e.Graphics, ClientRectangle, _ribbon.Theme, Font, DeviceDpi) { Density = _ribbon.Density };
         _ribbon.Painter.DrawSurface(context, true);
+        PaintApplicationMenu(context);
         PaintGalleryHeadings(e.Graphics);
         if (!_menuHeader.IsEmpty && MenuSource is { } source)
         {
@@ -567,7 +601,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
                     {
                         Bounds = target.Bounds,
                         Hot = target.Enabled && !_hotDropDown && ReferenceEquals(_hot, item),
-                        Pressed = target.Enabled && !_pressedDropDown && ReferenceEquals(_pressed, item),
+                        Pressed = target.Enabled && !_pressedDropDown && (ReferenceEquals(_pressed, item) || IsApplicationNavigation(item) && ReferenceEquals(_applicationPane, item)),
                         Focused = target.Enabled && !_focusedDropDown && _ribbon.KeyboardFocusCues && Focused && ReferenceEquals(_focused, item),
                         ReserveIcon = target.ReserveIcon,
                         IsGalleryDropDown = target.GalleryDropDown
@@ -699,7 +733,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     }
     internal void FocusFirst()
     {
-        if (HasCustomContent) { FocusContent(); return; }
+        if (HasCustomContent && (!IsApplicationMenu || !_ribbon.FileMenu.Items.Any(i => i.Visible && i.EffectiveEnabled))) { FocusContent(); return; }
         if (HasGalleryPresenter && GallerySource is { } custom)
         { FocusPresenterItem(custom.SelectedItem is { } selectedItem && custom.Available(selectedItem) ? selectedItem : custom.Items.OfType<RibbonGalleryTile>().FirstOrDefault(custom.Available)); return; }
         if (GallerySource?.SelectedItem is { } selected && Targets.Any(t => ReferenceEquals(t.Element, selected) && t.Enabled))
@@ -724,7 +758,8 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         }
         if (_targets.SelectMany(t => RibbonSplitLayout.Expand(t, _ribbon.DeviceDpi, MenuSource is not null || OwnerElement is RibbonQuickAccessOverflow)).FirstOrDefault(t => ReferenceEquals(t.Element, item) && t.DropDownPart == _focusedDropDown) is { } target)
         {
-            if (OwnerElement is RibbonQuickAccessOverflow)
+            if (IsApplicationMenu) RevealApplicationTarget(target);
+            else if (OwnerElement is RibbonQuickAccessOverflow)
             {
                 int offset = _overflowOffset;
                 if (target.Bounds.Top - _contentPadding < offset) offset = target.Bounds.Top - _contentPadding;
@@ -809,6 +844,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     }
     protected override void OnMouseWheel(MouseEventArgs e)
     {
+        if (ScrollApplicationMenu(e)) return;
         if (e.Delta != 0) GalleryScrolled();
         if (OwnerElement is RibbonQuickAccessOverflow)
         {
@@ -827,13 +863,14 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         if (keys is Keys.Escape or Keys.Enter or Keys.Space or Keys.Tab or (Keys.Tab | Keys.Shift)
             or Keys.Left or Keys.Right or Keys.Up or Keys.Down or Keys.Home or Keys.End)
             _ribbon.SetKeyboardFocusCues(true);
+        if (ProcessApplicationKey(keys)) return true;
         if (keys == Keys.Escape)
         {
             _ribbon.Popups.CloseTop(true);
             return true;
         }
         if (GallerySource is not null && ProcessGalleryKey(keys)) return true;
-        if (keys == Keys.Left && MenuSource is not null)
+        if (keys == Keys.Left && MenuSource is not null && !IsApplicationMenu)
         {
             _ribbon.Popups.CloseTop(true);
             return true;

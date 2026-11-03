@@ -58,7 +58,7 @@ try {
     $registryType = $sdk.GetType('Microsoft.DotNet.DesignTools.Protocol.ProtocolDefinition', $true)
     $create = $registryType.GetMethod('Create', [Reflection.BindingFlags]'Static,Public,NonPublic')
     $registry = $create.Invoke($null, [object[]]@($composition))
-    foreach ($name in @('RibbonKit.EditRibbon', 'RibbonKit.EditBackstage')) {
+    foreach ($name in @('RibbonKit.EditRibbon', 'RibbonKit.EditBackstage', 'RibbonKit.EditApplicationMenu')) {
         $endpoint = $registry.GetEndpoint($name)
         if (-not [object]::ReferenceEquals($endpoint, $registry.GetEndpoint($endpoint.RequestType)) -or
             -not [object]::ReferenceEquals($endpoint, $registry.GetEndpoint($endpoint.ResponseType))) {

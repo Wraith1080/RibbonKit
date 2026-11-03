@@ -25,7 +25,7 @@ public class RibbonElementCollection<T> : Collection<T> where T : RibbonElement
             throw new ArgumentException("Backstage pages belong to Backstage.Items or FooterItems.", nameof(item));
         if (_owner is RibbonBackstage && item is not (RibbonBackstagePageItem or RibbonMenuSeparatorItem) && item.GetType() != typeof(RibbonButtonItem))
             throw new ArgumentException("Backstage entries must be pages, button commands or decorative separators.", nameof(item));
-        if (item is RibbonMenuSeparatorItem && _owner is not (RibbonGroup or RibbonDropDownItem or RibbonBackstage))
+        if (item is RibbonMenuSeparatorItem && _owner is not (RibbonGroup or RibbonDropDownItem or RibbonBackstage or RibbonApplicationMenu))
             throw new ArgumentException("Separators belong to a group, dropdown or Backstage navigation collection.", nameof(item));
         if (item.IsDisposed)
             throw new ObjectDisposedException(item.GetType().Name);

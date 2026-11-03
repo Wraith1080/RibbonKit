@@ -13,6 +13,11 @@ partial class DesignerForm
     private void InitializeComponent()
     {
         System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DesignerForm));
+        applicationOpen = new RibbonKit.WinForms.RibbonDropDownItem();
+        applicationSave = new RibbonKit.WinForms.RibbonSplitButtonItem();
+        applicationSaveCopy = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationRecent = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationOptions = new RibbonKit.WinForms.RibbonButtonItem();
         homeTab = new RibbonKit.WinForms.RibbonTab();
         commandsGroup = new RibbonKit.WinForms.RibbonGroup();
         applyButton = new RibbonKit.WinForms.RibbonButtonItem();
@@ -485,6 +490,35 @@ partial class DesignerForm
         // 
         ribbon.FileMenu.Id = "rk:0d5299d1f5ec4fe98abb382d675c498f";
         ribbon.FileMenu.Visible = true;
+        // Application Menu and Backstage keep independent declarations.
+        applicationOpen.Id = "application.open";
+        applicationOpen.Text = "Open";
+        applicationOpen.KeyTip = "O";
+        applicationOpen.DropDownHeader = "Open options";
+        applicationOpen.ContentType = typeof(PopupOptionsControl);
+        applicationSave.Id = "application.save";
+        applicationSave.Text = "Save";
+        applicationSave.KeyTip = "S";
+        applicationSave.DropDownKeyTip = "A";
+        applicationSave.DropDownHeader = "Save as";
+        applicationSave.Click += ApplicationCommand_Click;
+        applicationSaveCopy.Id = "application.save.copy";
+        applicationSaveCopy.Text = "Save a copy";
+        applicationSaveCopy.KeyTip = "C";
+        applicationSaveCopy.Click += ApplicationCommand_Click;
+        applicationSave.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationSaveCopy });
+        applicationRecent.Id = "application.recent";
+        applicationRecent.Text = "Example document";
+        applicationRecent.KeyTip = "E";
+        applicationRecent.Click += ApplicationCommand_Click;
+        applicationOptions.Id = "application.options";
+        applicationOptions.Text = "Options";
+        applicationOptions.KeyTip = "P";
+        applicationOptions.Click += ApplicationCommand_Click;
+        ribbon.FileMenu.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationOpen, applicationSave });
+        ribbon.ApplicationMenu.DefaultPane.DropDownHeader = "Recent documents";
+        ribbon.ApplicationMenu.DefaultPane.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationRecent });
+        ribbon.ApplicationMenu.FooterItems.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationOptions });
         ribbon.FileMenuMode = RibbonKit.WinForms.RibbonFileMenuMode.Backstage;
         ribbon.Location = new Point(0, 0);
         ribbon.Margin = new Padding(3, 4, 3, 4);
@@ -633,4 +667,10 @@ partial class DesignerForm
     private RibbonKit.WinForms.RibbonButtonItem btnInsertPicture;
     private RibbonKit.WinForms.RibbonButtonItem btnInsertLink;
     private RibbonKit.WinForms.RibbonButtonItem btnInsertObject;
+    private RibbonKit.WinForms.RibbonDropDownItem applicationOpen;
+    private RibbonKit.WinForms.RibbonSplitButtonItem applicationSave;
+    private RibbonKit.WinForms.RibbonButtonItem applicationSaveCopy;
+    private RibbonKit.WinForms.RibbonButtonItem applicationRecent;
+    private RibbonKit.WinForms.RibbonButtonItem applicationOptions;
+
 }

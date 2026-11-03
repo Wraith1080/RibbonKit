@@ -16,7 +16,8 @@ internal sealed class RibbonTypeRouting : TypeRoutingDefinitionProvider
 {
     public override IEnumerable<TypeRoutingDefinition> GetDefinitions() => new[]
     { new TypeRoutingDefinition(TypeRoutingKinds.Editor, RibbonDesignEndpoint.EditorName, typeof(RibbonEditor)),
-      new TypeRoutingDefinition(TypeRoutingKinds.Editor, RibbonBackstageEndpoint.EditorName, typeof(RibbonBackstageEditor)) };
+      new TypeRoutingDefinition(TypeRoutingKinds.Editor, RibbonBackstageEndpoint.EditorName, typeof(RibbonBackstageEditor)),
+      new TypeRoutingDefinition(TypeRoutingKinds.Editor, RibbonApplicationMenuEndpoint.EditorName, typeof(RibbonApplicationMenuEditor)) };
 }
 
 internal sealed class RibbonBackstageEditor : UITypeEditor
@@ -39,6 +40,39 @@ internal sealed class RibbonBackstageEditor : UITypeEditor
             return RibbonBackstageSnapshot.FromJson<RibbonBackstagePreview>(result.Snapshot);
         });
         provider.GetRequiredService<IWindowsFormsEditorService>().ShowDialog(dialog); return value;
+    }
+}
+
+internal sealed class RibbonApplicationMenuEditor : UITypeEditor
+{
+    public override UITypeEditorEditStyle GetEditStyle(ITypeDescriptorContext? context) => UITypeEditorEditStyle.Modal;
+    public override object? EditValue(ITypeDescriptorContext? context, IServiceProvider provider, object? value)
+    {
+        if (context?.Instance is null || provider is null) return value;
+        var client = provider.GetRequiredService<IDesignToolsClient>(); var session = provider.GetRequiredService<DesignerSession>();
+        var sender = client.Protocol.GetEndpoint<RibbonApplicationMenuEndpoint>().GetSender(client);
+        var response = sender.SendRequest(new RibbonApplicationMenuRequest(session.Id, context.Instance));
+        if (response.Error.Length != 0) { MessageBox.Show(response.Error, "Edit Application Menu", MessageBoxButtons.OK, MessageBoxIcon.Error); return value; }
+        string? accepted = null;
+        using var dialog = new RibbonApplicationMenuDialog(RibbonBackstageSnapshot.Deserialize(response.Snapshot), draft =>
+        {
+            var result = sender.SendRequest(new RibbonApplicationMenuRequest(session.Id, context.Instance, draft.Serialize())); if (result.Error.Length == 0) accepted = draft.Serialize(); return result.Error.Length == 0 ? null : result.Error;
+        }, draft =>
+        {
+            var result = sender.SendRequest(new RibbonApplicationMenuRequest(session.Id, context.Instance, draft.Serialize(), true));
+            if (result.Error.Length != 0) throw new InvalidOperationException(result.Error);
+            return RibbonBackstageSnapshot.FromJson<RibbonBackstagePreview>(result.Snapshot);
+        });
+        if (provider.GetRequiredService<IWindowsFormsEditorService>().ShowDialog(dialog) == DialogResult.OK && accepted is { } selection)
+        {
+            void SelectAccepted()
+            {
+                var result = sender.SendRequest(new RibbonApplicationMenuRequest(session.Id, context.Instance, selection, selectOnly: true));
+                if (result.Error.Length != 0) MessageBox.Show(result.Error, "Select Application Menu component", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            if (SynchronizationContext.Current is { } ui) ui.Post(_ => SelectAccepted(), null); else SelectAccepted();
+        }
+        return value;
     }
 }
 

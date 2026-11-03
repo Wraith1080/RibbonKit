@@ -38,6 +38,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         QuickAccessOverflow = new(this);
         FileMenu = RibbonFileMenuDefaults.Create();
         FileMenu.Parent = this;
+        ApplicationMenu = new() { Text = "Application Menu", Parent = this };
         Backstage = new() { Text = "Backstage" };
         Backstage.Parent = this;
         MessageBar = new() { Text = "Messages", Parent = this };
@@ -191,7 +192,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     internal RibbonGalleryStripManager GalleryStrips => _galleryStrips;
     internal RibbonScreenTipManager ScreenTips => _screenTips;
     internal bool KeyTipsActive => _keyTips;
-    internal IEnumerable<RibbonElement> AllElements => Tabs.SelectMany(t => t.Tree()).Concat(_merges?.ActiveElements ?? []).Concat(QuickAccessItems.SelectMany(e => e.Tree())).Concat(FileMenu.Tree()).Concat(Backstage.Tree()).Concat(MessageBar.Tree()).Concat(CommandCatalog.Tree()).Concat(IsModal ? _modalClose.Tree() : []).Concat(_simplified?.Elements ?? []);
+    internal IEnumerable<RibbonElement> AllElements => Tabs.SelectMany(t => t.Tree()).Concat(_merges?.ActiveElements ?? []).Concat(QuickAccessItems.SelectMany(e => e.Tree())).Concat(FileMenu.Tree()).Concat(ApplicationMenu.Tree()).Concat(Backstage.Tree()).Concat(MessageBar.Tree()).Concat(CommandCatalog.Tree()).Concat(IsModal ? _modalClose.Tree() : []).Concat(_simplified?.Elements ?? []);
     internal void VerifyAccess()
     {
         if (Environment.CurrentManagedThreadId != _threadId)
@@ -233,8 +234,14 @@ public partial class RibbonControl : Control, ISupportInitialize
             case RibbonControl r when ReferenceEquals(element, r.FileMenu):
                 r.ModelChanged();
                 break;
+            case RibbonControl r when ReferenceEquals(element, r.ApplicationMenu):
+                r.ModelChanged();
+                break;
             case RibbonControl r when ReferenceEquals(element, r.Backstage):
                 r.ModelChanged();
+                break;
+            case RibbonApplicationMenu application when element is RibbonItem footer:
+                if (!application.FooterItems.Remove(footer)) application.Ribbon?.ModelChanged();
                 break;
             case RibbonBackstage backstage when element is RibbonItem entry:
                 if (!backstage.Items.Remove(entry)) backstage.FooterItems.Remove(entry);
@@ -420,7 +427,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     {
         base.OnBindingContextChanged(e);
         if (Tabs is not null)
-            foreach (var element in Tabs.Cast<RibbonElement>().Concat(QuickAccessItems).Append(FileMenu).Append(Backstage).Append(MessageBar).Append(CommandCatalog))
+            foreach (var element in Tabs.Cast<RibbonElement>().Concat(QuickAccessItems).Append(FileMenu).Append(ApplicationMenu).Append(Backstage).Append(MessageBar).Append(CommandCatalog))
                 element.BindingContext = BindingContext;
     }
     /// <inheritdoc />
@@ -863,6 +870,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         { _editors.CloseQuickAccess(openReference); return; }
         if ((target.Element is not RibbonItem field || !RibbonEditorLayout.IsField(field, target.Size)) && !_editors.CommitFocused()) return;
         if (target.Element is { } element && !ReferenceEquals(element.Ribbon, this)) return;
+        if (_popups.ApplicationAction(target)) return;
         if (target.Kind is TargetKind.MessageAction or TargetKind.MessageClose) { ActivateMessageTarget(target); return; }
         if (target.Kind == TargetKind.QuickAccess)
         {
@@ -1041,6 +1049,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             return;
         }
         if (IsBackstageOpen) return;
+        if (_popups.SelectApplicationPane(item)) return;
         if (!_editors.CommitFocused() || !ReferenceEquals(item.Ribbon, this) || !item.EffectiveEnabled || !item.Visible) return;
         foreach (var surface in _popups.Surfaces.Reverse())
             if (surface.Targets.Where(t => ReferenceEquals(t.Element, item)).ToArray() is { Length: > 0 } rows)
@@ -1086,6 +1095,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             foreach (var entry in QuickAccessItems.ToArray()) entry.Dispose();
             QuickAccessItems.Clear();
             FileMenu.Dispose();
+            ApplicationMenu.Dispose();
             Backstage.Dispose();
             MessageBar.Dispose();
             CommandCatalog.Dispose();

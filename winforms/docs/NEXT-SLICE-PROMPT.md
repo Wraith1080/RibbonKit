@@ -1,186 +1,178 @@
-# Continuation prompt: native RibbonKit.WinForms M6B window integration and title-bar QAT
+# Starting prompt: native RibbonKit.WinForms Application Menu
 
-Continue the native RibbonKit.WinForms implementation in:
+Continue work in:
 
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Prepared **2026-10-29**. The user responded positively to the latest group motion
-and shared Fade/Slide selector and requested continuation to the next slice.
-The next bounded slice is **M6B: optional RibbonForm/window integration and
-TitleBar Quick Access Toolbar hosting**. M6B has not been implemented.
+Prepared **2026-11-03**. Implement the next bounded slice: **a native Application
+Menu replacing the File button's simple command-dropdown presentation, with a
+dedicated designer workflow**. Backstage remains the other File presentation.
+Application Menu comes before geometry consolidation, then additional themes.
+Stop for user review after this Application Menu slice.
 
-Inspect the current implementation and relevant WPF behavior, state a small
-native API/ownership/interaction proposal, then implement the authorized slice
-and run relevant verification. Resolve routine choices without asking again;
-ask only when missing information materially changes scope or correctness.
-Do not implement the remaining roadmap in this session.
+Start with a bounded review and present the proposed native API, ownership,
+layout and designer contract before runtime/public API edits. Then implement the
+authorized slice through appropriate verification. Resolve routine choices
+yourself; ask only when missing information materially changes scope,
+correctness or compatibility. Do not stop after another general roadmap.
 
-## Starting state and working agreement
+## Live baseline and boundaries
 
-- Start with `git status --short`. At handoff the branch is
-  `codex/Ribbonkit-Winform`, HEAD **07c864c — Ribbonkit Winform - Animation WIP 2**.
-  The checkout was clean before this handoff/acceptance documentation edit.
-  The user committed the preceding implementation. Recheck live state; preserve
-  all tracked/untracked work and do not assume older dirty-checkout notes apply.
+- Start with `git status --short` and verify branch/HEAD. At preparation:
+  **`codex/Ribbonkit-Winform`**, HEAD
+  **`779f529b83de8835af95850eced5a8794d309c80`**
+  (`fix gallery scrollbar and toggle in popup`). The user committed the accepted
+  gallery scrollbar and state-command popup fixes while this handoff was being
+  prepared. Only `APPLICATION-MENU-PLAN.md`, `NEXT-SLICE-PROMPT.md` and
+  `STATE-COMMAND-POPUPS.md` under `winforms/docs/` have documentation edits at
+  handoff. Preserve all live tracked/untracked changes. The user may commit again
+  before the next chat, so recheck rather than restoring this baseline or assuming
+  the checkout is still dirty.
 - Read root `AGENTS.md` and `winforms/AGENTS.md`. Use one agent. No commit, push,
-  publication, branch switch, stash/reset/clean or new worktree unless requested.
-- Work in `winforms/`. Keep WPF runtime/build/CI unchanged. WPF provides behavior
-  and visual references, not controls/templates to host or runtime code to share.
-- Use normal Debug configuration and default outputs. The user explicitly wants
-  **relevant tests only**. Retain passed evidence; do not rerun unrelated motion,
-  customization or component campaigns. No automatic full suite, Release or package
-  campaign. A new failure or affected contract can justify a targeted rerun.
-- Reusable ribbon/window behavior belongs in the library and must work for another
-  application through public APIs. Commands, document Controls/data, icons,
-  persistence storage, startup DPI declaration and application lifetime stay with
-  the consumer. Do not make Showcase helpers responsible for shared behavior.
-- Comprehensive appearance/theme work, M6C backdrop effects, localization/RTL,
-  optional ICommand, accessibility compatibility and actual VS designer work remain
-  separate slices. Existing bridges/behavior must continue working. Physical
-  mixed-monitor, hardware touch/IME and performance acceptance are separate gates.
+  publish, branch switch, stash/reset/clean or disposal of existing work.
+- Implement only under `winforms/`. WPF sources are read-only references. Do not
+  modify/build/test WPF or add WPF hosting/runtime dependencies.
+- Use normal Debug/default outputs for review. Reuse the permanent Designer
+  Sample through `winforms/eng/Update-DesignerSample.ps1`; preserve its authored
+  Forms/UserControls/resources. Do not create another user review app.
+- Shared presentation, measurement, input, designer support and extension points
+  belong in the library. Hosts own commands, document/recent-file data,
+  persistence, icons and application lifetime. Verify a public-API consumer
+  without Showcase helpers/resources.
 
 ## Read bounded current sources
 
-- `docs/21-NATIVE-WINFORMS-PLAN.md`: current banner, optional native-window proposal
-  near "Optional native window, proposed 2026-10-26", M6 row and M3A hosting boundary.
-- `winforms/docs/M4-STATUS.md`: pre-M6B review fixes, additional corrections and
-  Remaining slices. `winforms/docs/M6A-MOTION-PLAN.md`: current contract and final
-  Group collapse and restore section. Earlier "next" narration is historical.
-- `winforms/docs/M5D-SIMPLIFIED-RIBBON.md`, relevant QAT/customization contracts in
-  `winforms/README.md`, and the affected part of `winforms/docs/M5-STATUS.md` only
-  if placement/profile/context-menu behavior changes.
-- Before code changes, follow root AGENTS' relevant design-index/history pointers.
-  WPF `src/RibbonKit/Controls/RibbonWindow.cs` and
-  `src/RibbonKit/Controls/RibbonQuickAccessToolBar.cs` are read-only references.
-  Do not start WPF implementation or WPF tests.
-- Native starting points: `RibbonControl.QuickAccess.cs`, `Model/RibbonQuickAccess.cs`,
-  `Layout/RibbonQuickAccessLayout.cs`, `Layout/RibbonLayout.cs`, popup/editor managers,
-  customization placement commands/state, renderer/theme contracts, motion helpers
-  and Showcase MainForm/Program/manifest. Inspect only affected code.
+- `winforms/docs/APPLICATION-MENU-PLAN.md` — selected replacement direction.
+- `winforms/docs/STATE-COMMAND-POPUPS.md` — latest accepted activation policy.
+- `winforms/docs/APPEARANCE-COLOR-ROLES.md` and affected portions of
+  `winforms/docs/M4I2-APPEARANCE-INVENTORY.md` — shared appearance/fallbacks.
+- Relevant File/popup/content/designer sections of `winforms/README.md` and
+  `docs/21-NATIVE-WINFORMS-PLAN.md`. Follow applicable design-index/history
+  pointers without loading the entire project history.
+- Native starting points: `RibbonControl.Backstage.cs`, File/open/activation paths
+  in `RibbonControl.cs`, `Model/RibbonBackstage.cs` (`RibbonFileMenuMode`), FileMenu/
+  dropdown models, retained content initialization, popup/window/menu layout,
+  editors, input/KeyTips/accessibility and shared renderers/theme.
+- Designer starting points: `RibbonFileDesignSettings.cs`,
+  `RibbonDesignCommitter.cs`, protocol/draft models, client editor and existing
+  inert popup/Backstage previews.
 
-## Current behavior to preserve
+WPF references, all read-only:
 
-- Native tabs/groups/buttons/splits/options/editors, rich ScreenTips/KeyTips,
-  Backstage/application pages, galleries, contextual tabs, merge/modal services,
-  Compact/Touch, message panels, QAT/Ribbon customization and Simplified mode exist.
-- QAT currently supports **TabRow and BelowRibbon in ordinary Forms**. TitleBar is
-  not yet exposed by the placement enum. Reuse the same declarations, source state,
-  order, bindings and lifetime; never create another command owner or model tree.
-  Native editor Controls retain their handles when borrowed into full-group popups.
-- Groups are available as whole entries in Customize QAT, not in Customize Ribbon's
-  available-command list. Classic/Simplified share structural customization;
-  inline selections and QAT preferences remain independent. Apply/Cancel and
-  existing versioned JSON behavior must remain intact.
-- Preserve File's measured invariant: `File.Left == scaled BodyMargin.Left`.
-  Paint, hit testing, tabs/QAT placement and popup anchors share measured geometry.
-- Office 2024 joins a BelowRibbon QAT to the body; ordinary QAT targets are square.
-  Attached messages omit the duplicate first top border and use a continuous
-  combined shadow. When the body is minimized/hidden and QAT is **not BelowRibbon**,
-  messages keep their standalone frame. This condition must cover TitleBar too.
-- A minimized tab's temporary body keeps side margins and overlays QAT/messages;
-  outside-click dismissal animates without delaying real input or editor return.
-- Customization pages share column/search/button geometry. Apply/OK holds native
-  tree/list redraw and preserves scroll/handles. Office rounded controls, themed
-  ribbon action menus, plain checkmarks, swapped transfer icons and deferred VS
-  testing must be retained.
-- Simplified More Commands aligns with the body's right inset. Inline ComboBoxes
-  have slightly taller fields. While a full-group popup borrows controls, inline
-  commands become one medium group button and restore their current values/checked
-  states on close. This temporary presentation never changes profiles.
-- Showcase Chart/Print Preview have Simplified defaults; Picture Format follows
-  normal authored tabs and precedes merged contributions. Tab-header scrollers
-  use body-scroller styling/vector chevrons with their own dimensions retained.
+- `src/RibbonKit/Controls/RibbonApplicationMenu.cs` — default/active right pane,
+  per-item pane content/header, split primary/arrow and footer concepts.
+- `src/RibbonKit/Themes/Controls.ApplicationMenu.xaml` — command column, divider,
+  right-pane headers/viewports/scrolling, fixed footer and frame ownership.
+- `src/RibbonKit/Controls/ApplicationMenuGeometryConverter.cs` and
+  `src/RibbonKit/Themes/Tokens.Office2024.xaml` — dimensions and screen budgeting.
+- Relevant examples in `samples/RibbonKit.Showcase` and test sources such as
+  `ApplicationMenuHoverTests.cs`, `ApplicationMenuLayeringTests.cs` and
+  `ApplicationMenuViewportChecks.cs`, as behavior evidence only.
 
-## Motion checkpoint
+Current WPF Office 2024 reference values: navigation width **150**, pane width
+capped at **340**, item height **40**, footer height **36**, in 96-DPI logical
+units. Translate the intent through native font measurement, Compact/Touch and
+work-area constraints. The user allows better native ideas: explain meaningful
+departures with measurements or a comparison. Use one coherent measurement for
+paint, hit testing, keyboard/UIA bounds, scrolling and popup placement. Do not
+transplant WPF templates or force reference dimensions regardless of content/DPI.
 
-- Existing `AnimationLevel`: None (library default), Subtle, Expressive. Showcase
-  opts into Subtle. System-disabled animation and unsafe contexts stay immediate.
-- Geometry/layout/density/QAT placement, tab body/header arrival and indicator,
-  minimize/restore, popup opening, Backstage/pages/open/close and message motion
-  exist. Library coordination owns completion; hosts must not complete transitions
-  or dismiss library popups for it. Application content currently reflows immediately.
-  Optional host synchronization remains separate unless needed and proposed.
-- Latest group motion covers Classic adaptive collapse/restore, Simplified width
-  overflow/return and temporary borrowed-group buttons, including minimized bodies.
-  It follows the **existing TabContentAnimation Fade/SlideDown selector**:
-  Fade crossfades; SlideDown uses leftward group collapse and rightward restoration
-  while tab/header travel stays vertical. No separate group selector is wanted.
-- Group motion uses 150 ms / 12 logical pixels (Subtle), 210 ms / 20 (Expressive).
-  Text/icons retain natural size. Real geometry commits once; inert drawings retain
-  no input or model ownership. Continued width changes update arrival without
-  restarting the clock. Input, policy/style changes, movement/hiding/disposal settle
-  drawings; source values and HWNDs survive. Do not regress old ComboBox native-arrow
-  clipping, bold/flickering captured text, stationary tab markers or popup z-order.
+## Bounded implementation
 
-## M6B: bounded first implementation
+1. Replace the existing File command-list presentation, rather than adding a
+   third independent File mode. Reuse `FileMenu.Items`, commands, bindings,
+   identities and opening/closing/cancellation semantics where applicable.
+   Preserve `CommandMenu` enum/numeric/serialized compatibility and published
+   property contracts; do not silently rename/remove them. Keep Backstage and
+   ordinary dropdown/split controls elsewhere supported.
+2. Propose the smallest native model for left commands/navigation, a default
+   right pane (for example app-supplied recent documents), item-specific right
+   panes with optional headers, and footer actions. Define leaf action versus
+   pane selection, split primary/arrow behavior, empty/default states, collection
+   ownership and source identity. Borrow useful WPF behavior, not its framework.
+3. Define native Control/UserControl hosting before coding: app-owned instances
+   versus library-created types, initialization timing, retention across pane
+   switches/reopening, validation, focus, clipping, disposal and failure behavior.
+   Reuse accepted retained-content patterns where appropriate. Preserve one real
+   editor/control owner and native HWNDs. Designer previews must not instantiate
+   or execute arbitrary application content.
+4. Implement a reusable measured two-pane layout with a reachable footer. Budget
+   width/height against the work area and DPI; handle long captions, large fonts,
+   empty panes and overflow. Keep headers, viewports, scrolling and footer
+   ownership explicit. Reuse native popup/frame/shadow/motion infrastructure
+   where suitable, including reduced-motion fallback and input settlement.
+5. Use shared renderer/theme roles and compatible defaults. Native application
+   controls keep application styling. Add only settings this component requires;
+   do not begin broad geometry consolidation, theme authoring, an appearance
+   coordinator or orb/theme-variant expansion.
+6. Add a dedicated, discoverable Application Menu designer workflow for command,
+   section, pane and footer authoring, Properties selection and inert preview.
+   Define generated-code defaults/reset, serialization, Apply/Cancel/no-op,
+   one-transaction changes, Undo/Redo and save/reopen. Reuse the existing designer
+   protocol/commit mechanisms and package layout. Preview interaction selects
+   draft content without invoking commands or constructing native app pages.
+7. Cover pointer, keyboard/KeyTips, split/submenu navigation, pane switching,
+   scroll/reveal, footer reachability, Escape/outside-click dismissal, focus
+   return and accessibility. Preserve checked/disabled/focus states and one
+   command invocation per action. Callbacks/source removal must not orphan a
+   popup or reopen one deliberately closed.
+8. Demonstrate through public APIs in normal samples and an independent consumer.
+   Add XML docs, designer metadata and intentional additive
+   `PublicAPI.Unshipped.txt` entries; preserve the shipped baseline. Update the
+   native README and active Application Menu plan with the final contract,
+   actual evidence and remaining gates.
 
-1. Propose the minimal optional `RibbonForm : Form` and ribbon association/hosting
-   contract before runtime API edits. Define responsibilities, ownership, attach/
-   detach/disposal and ordinary-Form fallback. Keep document hosting application-owned.
-2. Add a functional DPI-aware caption/window foundation using public WinForms/Win32
-   APIs. Preserve caption dragging, resizing, system menu, minimize/maximize/restore,
-   maximized work-area edges and native Snap behavior. Reserve caption/button areas
-   consistently; interactive QAT targets must not behave as draggable caption.
-3. Add real TitleBar QAT hosting only with a supporting host. Reuse existing QAT
-   source declarations and projection/popup/editor infrastructure; no duplicate
-   collections, source reparenting or second model owner. Define behavior if a
-   TitleBar placement is requested in an ordinary/unsupported Form, or the host
-   detaches. No silent invisible/orphaned toolbar.
-4. Extend placement/context/customization/profile behavior only as required for
-   this host. Preserve existing TabRow/BelowRibbon meanings and older profiles.
-   Define TitleBar availability, hidden-QAT retained preferences and host switching.
-   Include dropdown/group/gallery/ComboBox chooser anchoring and validation/focus.
-5. Use consistent DPI-scaled measured rectangles for painting, hit testing, drag
-   exclusion, keyboard targets and popup anchors. Include Compact/Touch, Classic/
-   Simplified, minimized bodies and messages. Review BelowRibbon <-> TitleBar
-   movement against existing motion; any immediate first-pass fallback must be
-   explicit, bounded and documented rather than claimed as animated parity.
-6. Demonstrate the optional host through public APIs in Showcase and an independent
-   consumer; retain ordinary Form support. Document public additions with XML,
-   appropriate metadata and the unshipped API baseline. Actual VS testing remains
-   deferred to the designer slice; do not expand into a designer redesign.
-7. Start with the existing Office 2024/neutral presentation and relevant checks.
-   Mica/Acrylic/glass, broad theme consolidation, native MDI/document management,
-   broad accessibility expansion and M6C effects are not prerequisites or part of
-   this bounded implementation.
+## Accepted behavior to preserve
 
-## Evidence to retain and verification for M6B
+- Built-in gallery opening captures include the native scrollbar track/thumb:
+  no first-opening black band. Keep accepted card fade/item slide, custom/
+  inline/QAT gallery hosting and retained owner semantics.
+- Toggles, checkboxes, radios and split primaries with `CheckOnClick=true` retain
+  group and More Commands/QAT overflow containers, including ordinary collapsed
+  and Simplified group flyouts. Ordinary/nonchecking actions dismiss; arrows,
+  nested menu commands and explicit callback closure keep existing semantics.
+  Retain the same session/focus and state-before-Click order. The user confirmed
+  the correction works on 2026-11-03.
+- Preserve retained dropdown/split UserControls, gallery synchronization and
+  stable native ComboBox text/arrow/list painting. Avoid speculative HWND
+  recreation, repaint loops or host-owned popup workarounds.
+- Keep RibbonForm/TitleBar QAT, ordinary Form fallback, actual Mica/Acrylic,
+  title-bar color/tint/reset/contrast, Backstage caption synchronization, native
+  editors, popup stacking and motion cancellation coherent.
+- Preserve command/QAT/customization identity, Apply/Cancel/profiles and
+  Compact/Touch. Groups remain addable in Customize QAT only. File alignment,
+  hit targets and popup anchors remain measured, not paint-only offsets.
 
-These are recorded previous results, not a new full-suite pass:
+## Evidence and completion
 
-- Normal Debug native solution build: zero warnings/errors, including XML/API and
-  design compilation. Focused results/evidence details are in the active plans.
-- Latest group checks: 26/26 selected render/source/popup/Simplified regressions;
-  6/6 final Fade/Slide drawing/policy checks; lifecycle/fallback/width scopes have
-  separately recorded passing prefixes/repairs. Counts overlap; do not add them or
-  describe them as one clean aggregate. Earlier failed probes remain diagnostic.
-- Final public-only group checks passed at actual **120 DPI**, both densities,
-  both renderers and both styles, with real resizing, full-group/temporary-button
-  actions, minimized rows, autonomous completion and value/HWND/profile retention:
-  `artifacts/m6a-groups-slide-office-final/`,
-  `artifacts/m6a-groups-slide-neutral-final/`,
-  `artifacts/m6a-groups-fade-office-click/`,
-  `artifacts/m6a-groups-fade-neutral-final/`.
-- The user's latest positive review authorizes moving to M6B. It does not establish
-  performance budgets, compositor/high-refresh tracing, physical mixed-monitor
-  DPI, hardware touch/IME, fresh-package or actual VS acceptance.
+Previous results are context, not fresh Application Menu evidence:
 
-For the new slice, build only the native solution in normal Debug, select meaningful
-new and affected regression checks, and verify the host/title-bar QAT in a public-only
-consumer plus ordinary Form fallback. Cover real caption/resize/maximize/system-menu
-interaction as feasible and inspect actual captures. Explicitly separate synthetic
-DPI geometry, actual native 120-DPI results and unrun physical-monitor/OS gates.
-Do not run a full WPF/native/Release/package campaign by default.
+- Accepted gallery correction: two new first/reopen raster cases and 12 public
+  package opening/reopening scopes passed across Solid/Mica/Acrylic and Compact/
+  Touch at actual 120 DPI, with 132 composed-screen samples. See its plan record.
+- Accepted state-command correction: **24 new + 40 related distinct focused
+  Debug cases** passed, plus an independent public-API native QAT group scope at
+  120 DPI. See `STATE-COMMAND-POPUPS.md`.
+- Designer Sample package at preparation:
+  **`0.1.0-designer.local20261103T101745293Z`**. Recheck `.local/last-refresh.json`.
+- Earlier full Release results and intermittent focus/order failures are recorded
+  in the plans. Passing isolated retries do not establish a clean aggregate.
 
-Native automation needs verified foreground ownership. Windows can deny a background
-SetForegroundWindow request. Stop input when another application owns focus; do not
-add production focus-stealing workarounds for test failures. Allow a real press/release
-interval so MouseUp reaches its target after focus/capture changes. Do continued-motion
-assertions before potentially slow PNG encoding. Serialize foreground runs and await
-GUI process exit before the next one; direct PowerShell invocation of a GUI exe may
-return before that application closes. Do not close user-owned apps to unlock builds.
+Run meaningful new/affected native checks and applicable API/Release/designer-
+package gates. Favor focused selections; broader checks require an affected
+contract or explicit gate. Do not run WPF checks or repeat unrelated passed
+campaigns. Verify public-only consumer behavior, generated designer code/package
+contents and actual captures. Refresh the permanent Designer Sample in normal
+Debug for review without replacing authored content.
 
-Update the native README and the active M6B status/plan with concise implementation,
-actual evidence and remaining limits. Keep acceptance in the active plan, not mirrored
-through README/history/design indexes. Finish with what changed, where to try it and
-what actually ran. No commit/push. No runtime work is needed merely to read this handoff.
+Serialize foreground/input runs and verify fixture ownership. Stop input on
+focus loss; do not close user apps or add production focus-stealing workarounds.
+Capture motion off the UI thread and save after playback where needed. Await
+GUI process exit before another foreground run.
+
+Report build/API, focused tests, package/independent-consumer, actual VS and live
+native evidence separately. Verify effective Mica/Acrylic; Solid fallback is not
+material acceptance. Separate synthetic DPI from actual display/mixed-monitor,
+physical keyboard/touch/IME and user acceptance. Stop after this bounded
+Application Menu slice for review. No geometry consolidation, new themes,
+commit, push or publication in this session.

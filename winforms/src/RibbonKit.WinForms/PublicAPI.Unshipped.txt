@@ -1105,3 +1105,10 @@ RibbonKit.WinForms.RibbonForm.TitleBarColorChanged -> System.EventHandler?
 RibbonKit.WinForms.RibbonForm.TitleBarTintOpacity.get -> float
 RibbonKit.WinForms.RibbonForm.TitleBarTintOpacity.set -> void
 RibbonKit.WinForms.RibbonForm.TitleBarTintOpacityChanged -> System.EventHandler?
+
+RibbonKit.WinForms.RibbonApplicationMenu
+RibbonKit.WinForms.RibbonApplicationMenu.RibbonApplicationMenu() -> void
+RibbonKit.WinForms.RibbonApplicationMenu.DefaultPane.get -> RibbonKit.WinForms.RibbonDropDownItem!
+RibbonKit.WinForms.RibbonApplicationMenu.FooterItems.get -> RibbonKit.WinForms.RibbonItemCollection!
+RibbonKit.WinForms.RibbonControl.ApplicationMenu.get -> RibbonKit.WinForms.RibbonApplicationMenu!
+virtual RibbonKit.WinForms.RibbonRenderer.DrawApplicationMenuBackground(RibbonKit.WinForms.RibbonPaintContext context, System.Drawing.Rectangle navigation, System.Drawing.Rectangle pane, System.Drawing.Rectangle footer) -> void

@@ -5,7 +5,7 @@ namespace RibbonKit.WinForms;
 /// <summary>Chooses the surface opened by the ribbon's single File entry.</summary>
 public enum RibbonFileMenuMode
 {
-    /// <summary>Uses the existing FileMenu command dropdown.</summary>
+    /// <summary>Uses FileMenu's native two-pane Application Menu; the serialized value remains zero.</summary>
     CommandMenu,
     /// <summary>Uses the owned Backstage navigation and native pages.</summary>
     Backstage

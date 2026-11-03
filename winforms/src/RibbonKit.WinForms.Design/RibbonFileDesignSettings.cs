@@ -14,12 +14,12 @@ internal sealed class RibbonFileDesignSettings(RibbonControl ribbon, Func<Type, 
     }
     internal string Opens
     {
-        get => ribbon.FileMenuMode == RibbonFileMenuMode.Backstage ? "Backstage" : "Command menu";
+        get => ribbon.FileMenuMode == RibbonFileMenuMode.Backstage ? "Backstage" : "Application Menu";
         set => Set(ribbon, nameof(ribbon.FileMenuMode), value switch
         {
             "Backstage" => RibbonFileMenuMode.Backstage,
-            "Command menu" => RibbonFileMenuMode.CommandMenu,
-            _ => throw new ArgumentException("Choose Command menu or Backstage.", nameof(value))
+            "Application Menu" or "Command menu" => RibbonFileMenuMode.CommandMenu,
+            _ => throw new ArgumentException("Choose Application Menu or Backstage.", nameof(value))
         }, null, "Change File destination");
     }
     private void Set(object owner, string name, object value, string? rootName, string description)
@@ -46,5 +46,5 @@ internal sealed class RibbonFileModeConverter : StringConverter
 {
     public override bool GetStandardValuesSupported(ITypeDescriptorContext? context) => true;
     public override bool GetStandardValuesExclusive(ITypeDescriptorContext? context) => true;
-    public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext? context) => new(new[] { "Command menu", "Backstage" });
+    public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext? context) => new(new[] { "Application Menu", "Backstage" });
 }

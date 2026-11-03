@@ -24,7 +24,7 @@ internal static partial class RibbonDesignCommitter
     private static readonly string[] ScalarNames =
     [
         "Id", "Text", "KeyTip", "Enabled", "Visible", "IsContextual", "ContextualColor", "CanClose", "CloseButtonText",
-        "Priority", "ReductionMode", "Layout", "Row", "SizePolicy", "Checked", "CheckState", "GroupName", "MenuDescription", "DropDownHeader", "MenuPresentation",
+        "CheckOnClick", "Priority", "ReductionMode", "Layout", "Row", "SizePolicy", "Checked", "CheckState", "GroupName", "MenuDescription", "DropDownHeader", "MenuPresentation",
         "ScreenTipTitle", "ScreenTipDescription", "ShowLabel", "IsEditable", "Value", "InputWidth", "ReadOnly", "MaxLength", "SelectedIndex",
         "IsInRibbon", "InRibbonColumnCount", "ColumnCount", "TileWidth", "TileHeight", "MaxVisibleRows", "DropDownKeyTip", "DropDownPresenterType", "InRibbonPresenterType", "ContentType"
     ];
@@ -84,8 +84,14 @@ internal static partial class RibbonDesignCommitter
     {
         // Stable content models need qualified names for absolute Undo state.
         if (ribbon.Site?.GetService(typeof(INestedContainer)) is not INestedContainer nested) return;
+        if (ribbon.FileMenu.Site is null) nested.Add(ribbon.FileMenu, nameof(ribbon.FileMenu));
+        if (ribbon.ApplicationMenu.Site is null) nested.Add(ribbon.ApplicationMenu, nameof(ribbon.ApplicationMenu));
         if (ribbon.Backstage.Site is null) nested.Add(ribbon.Backstage, nameof(ribbon.Backstage));
         if (ribbon.CommandCatalog.Site is null) nested.Add(ribbon.CommandCatalog, nameof(ribbon.CommandCatalog));
+        // One nested name avoids framework absolute-serialization lookup of
+        // three-part paths. Normal generated code still follows the content
+        // property expression ApplicationMenu.DefaultPane.
+        if (ribbon.ApplicationMenu.DefaultPane.Site is null) nested.Add(ribbon.ApplicationMenu.DefaultPane, "ApplicationMenuDefaultPane");
     }
     internal static bool Apply(RibbonControl ribbon, IDesignerHost host, RibbonDesignSnapshot draft)
     {
@@ -400,10 +406,11 @@ internal static partial class RibbonDesignCommitter
     private static IEnumerable<RibbonElement> ChildElements(RibbonElement element) => element switch
     {
         RibbonTab tab => tab.Groups, RibbonGroup group => group.Items, RibbonDropDownItem drop => drop.Items,
+        RibbonApplicationMenu application => application.Children,
         RibbonBackstage backstage => backstage.NavigationItems, RibbonCommandCatalog catalog => catalog.Commands,
         RibbonMessageBar messages => messages.Items, RibbonMessage message => [message.Action], _ => []
     };
-    private static IEnumerable<RibbonElement> OutsideElements(RibbonControl ribbon) => Elements(new RibbonElement[] { ribbon.FileMenu, ribbon.Backstage, ribbon.CommandCatalog, ribbon.MessageBar }.Concat(ribbon.QuickAccessItems));
+    private static IEnumerable<RibbonElement> OutsideElements(RibbonControl ribbon) => Elements(new RibbonElement[] { ribbon.FileMenu, ribbon.ApplicationMenu, ribbon.Backstage, ribbon.CommandCatalog, ribbon.MessageBar }.Concat(ribbon.QuickAccessItems));
     private static IList? Collection(object owner) => owner switch { RibbonControl ribbon => ribbon.Tabs, RibbonTab tab => tab.Groups, RibbonGroup group => group.Items, RibbonDropDownItem drop => drop.Items, _ => null };
     private static string CollectionName(object owner) => owner is RibbonControl ? "Tabs" : owner is RibbonTab ? "Groups" : "Items";
 }

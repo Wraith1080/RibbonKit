@@ -1,8 +1,7 @@
 # State commands in group and overflow popups
 
 Status, **2026-11-03: implemented and packaged; focused/native checks passed;
-user review pending**. The preceding accepted gallery scrollbar work remains in
-the worktree alongside this correction.
+the user confirmed "everything works" for the popup-retention correction**.
 
 The user reported split-button checking primaries, checkboxes and radio buttons
 closing ordinary collapsed-group and Simplified group flyouts, while QAT groups

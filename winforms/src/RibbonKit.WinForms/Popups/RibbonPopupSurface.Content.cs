@@ -52,6 +52,7 @@ internal sealed partial class RibbonPopupSurface
     }
     internal bool ProcessContentKey(Keys keys)
     {
+        if (ProcessApplicationContentKey(keys)) return true;
         if (_customContent is not { } body || keys is not (Keys.Tab or (Keys.Tab | Keys.Shift))) return false;
         var focused = Descendants(body).FirstOrDefault(control => control.Focused);
         body.SelectNextControl(focused, keys == Keys.Tab, true, true, true);
@@ -67,6 +68,7 @@ internal sealed partial class RibbonPopupSurface
         if (_customContent is not { } body) return;
         _customContent = null;
         body.SizeChanged -= ContentSizeChanged;
+        if (IsApplicationMenu) DetachApplicationContent(body);
         if (ReferenceEquals(body.Parent, this)) Controls.Remove(body);
         if (!body.IsDisposed)
         {
@@ -74,7 +76,7 @@ internal sealed partial class RibbonPopupSurface
             body.Location = _savedContentLocation; body.Visible = _savedContentVisible;
         }
     }
-    protected override AccessibleObject CreateAccessibilityInstance() => HasCustomContent ? new ContentAccessibleObject(this) : base.CreateAccessibilityInstance();
+    protected override AccessibleObject CreateAccessibilityInstance() => IsApplicationMenu ? new ApplicationMenuAccessibleObject(this) : HasCustomContent ? new ContentAccessibleObject(this) : base.CreateAccessibilityInstance();
     private sealed class ContentAccessibleObject(RibbonPopupSurface owner) : ControlAccessibleObject(owner)
     {
         public override AccessibleRole Role => AccessibleRole.Pane;

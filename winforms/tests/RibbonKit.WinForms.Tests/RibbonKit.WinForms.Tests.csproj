@@ -14,6 +14,8 @@
     <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonBackstageDesignPreview.cs" Link="Designer/RibbonBackstageDesignPreview.cs" />
     <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonBackstagePreviewLayer.cs" Link="Designer/RibbonBackstagePreviewLayer.cs" />
     <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonDesignerRepaint.cs" Link="Designer/RibbonDesignerRepaint.cs" />
+    <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonApplicationMenuCommitter.cs" Link="Designer/RibbonApplicationMenuCommitter.cs" />
+    <Compile Include="../../src/RibbonKit.WinForms.Design.Client/RibbonApplicationMenuDialog.cs" Link="Designer/RibbonApplicationMenuDialog.cs" />
     <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonBackstageCommitter.cs" Link="Designer/RibbonBackstageCommitter.cs" />
     <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonBackstageContentTypes.cs" Link="Designer/RibbonBackstageContentTypes.cs" />
     <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonGalleryPresenterTypes.cs" Link="Designer/RibbonGalleryPresenterTypes.cs" />

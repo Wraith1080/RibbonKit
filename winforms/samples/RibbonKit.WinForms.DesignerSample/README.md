@@ -14,6 +14,13 @@ Then open `RibbonKit.WinForms.DesignerSample.sln` in this folder and open
 `DesignerForm` in the Visual Studio Form designer. Reopen the solution after a
 package refresh so Visual Studio reloads the design assemblies. F5 runs the sample.
 
+For Application Menu review, select the ribbon and use **File opens → Application
+Menu**, then **Edit Application Menu…**. The generated example has an Open pane
+using `PopupOptionsControl`, a split Save/Save a copy command, default recent
+documents and an Options footer. Its existing Backstage declaration/startup choice
+is preserved. `--verify-application-menu <evidence-folder>` runs the bounded
+package/generated-code and retained native content check in this same sample.
+
 The refresh builds the native runtime/design server/client in normal Debug
 folders, creates a local package, restores and builds the existing sample.
 `-NoBuild` reuses already-built matching designer outputs; `-Configuration Release`

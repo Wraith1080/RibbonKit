@@ -9,6 +9,7 @@ public partial class DesignerForm : RibbonForm
         InitializeComponent();
         ConfigurePopup(selectDropdown, "Select options");
         ConfigurePopup(pasteSplitButton, "Paste options");
+        ConfigurePopup(applicationOpen, "Open options");
         pasteSplitButton.Click += (_, _) => statusLabel.Text = "Paste primary action";
     }
 
@@ -25,6 +26,8 @@ public partial class DesignerForm : RibbonForm
     private void documentStylesGallery_ItemPreview(object? sender, RibbonGalleryPreviewEventArgs e) => statusLabel.Text = "Preview: " + e.Item.Text;
     private void documentStylesGallery_ItemPreviewCancelled(object? sender, EventArgs e) => statusLabel.Text = "Selected: " + documentStylesGallery.SelectedItem?.Text;
     private void documentStylesGallery_SelectionCommitted(object? sender, EventArgs e) => statusLabel.Text = "Selected: " + documentStylesGallery.SelectedItem?.Text;
+
+    private void ApplicationCommand_Click(object? sender, EventArgs e) => statusLabel.Text = "Application Menu: " + (sender as RibbonItem)?.Text;
 
     private void ApplyButton_Click(object? sender, EventArgs e) => statusLabel.Text = "Applied: " + nameField.Value;
     private void BackstageSaveCommand_Click(object? sender, EventArgs e) => statusLabel.Text = "Backstage Save: " + ((BackstageInfoControl?)infoPage.Content)?.NotesEditor.Text;

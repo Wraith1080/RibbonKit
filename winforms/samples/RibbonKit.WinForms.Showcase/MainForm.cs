@@ -27,6 +27,7 @@ public partial class MainForm : RibbonForm
         ribbon.FileMenu.Items.AddRange(newDocument, openDocument, saveDocument, new RibbonMenuSeparatorItem(), recentDocuments);
         formattingSource.DataSource = _formatting;
         InitializeBackstage();
+        InitializeApplicationMenu();
         InitializeGalleries();
         bold.DataBindings.Add(new Binding(nameof(RibbonToggleItem.Checked), formattingSource, nameof(FormattingState.Bold), true, DataSourceUpdateMode.OnPropertyChanged));
         nameInput.DataBindings.Add(new Binding(nameof(RibbonTextBoxItem.Value), formattingSource, nameof(FormattingState.Name), true, DataSourceUpdateMode.OnPropertyChanged));

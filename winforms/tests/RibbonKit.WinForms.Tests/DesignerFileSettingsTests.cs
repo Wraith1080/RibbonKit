@@ -12,7 +12,7 @@ public sealed class DesignerFileSettingsTests
     public void Reading_defaults_and_repeating_current_values_does_not_enable_file_or_create_undo_entries() => FoundationTests.Sta(() =>
     {
         using var fixture = new Fixture(); var settings = fixture.Settings;
-        Assert.False(settings.Visible); Assert.Equal("Command menu", settings.Opens);
+        Assert.False(settings.Visible); Assert.Equal("Application Menu", settings.Opens);
         settings.Visible = false; settings.Opens = "Command menu";
         Assert.Equal(0, fixture.Host.Transactions); Assert.Empty(fixture.Changes.Notifications);
         Assert.DoesNotContain(fixture.Ribbon.Snapshot.Targets, target => target.Kind == TargetKind.FileMenu);

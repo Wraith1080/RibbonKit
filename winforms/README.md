@@ -8,7 +8,7 @@ split buttons and native TextBox/ComboBox editing. The current [M3 slice](docs/M
 adds button/toggle Quick Access, checkbox/radio icon references, ComboBox choosers
 and dropdown/split/group references.
 The current [M4 slice](docs/M4-STATUS.md) adds contextual-tab header colors,
-the File command menu, native Backstage pages, dropdown/in-ribbon/QAT galleries
+the two-pane Application Menu, native Backstage pages, dropdown/in-ribbon/QAT galleries
 and source-owned tab/group merging with modal scopes and Compact/Touch density. [Remaining slices](docs/M4-STATUS.md#remaining-slices)
 record the working sequence through galleries, customization and window integration.
 The [M5 implementation](docs/M5-STATUS.md) adds shared catalog discovery, detached
@@ -20,7 +20,7 @@ QAT group entries and customization lists, using the same vector contract as com
 The library also supplies immutable `RibbonSvgIcon` artwork and a curated
 `RibbonStockIcons` catalog with 512 regular icons. In Edit Ribbon, select a
 group/command and choose
-**Icon → Choose icon…** to search stock SVGs or import project artwork. SVG source
+**Icon â†’ Choose iconâ€¦** to search stock SVGs or import project artwork. SVG source
 is embedded for save/reopen; original colors are retained unless **Use ribbon
 color** is selected. Stock icons opt into foreground/disabled tinting. Existing
 Image/LargeImage fallback remains available when a vector icon is cleared.
@@ -29,7 +29,7 @@ serialization, dependency notices, code examples and pending actual-VS review.
 The [Simplified Ribbon implementation](docs/M5D-SIMPLIFIED-RIBBON.md) adds a single
 command row, More Commands/full-group access and a grouped customization page.
 Classic and Simplified share tab/group structure; per-tab inline selections and
-QAT preferences apply independently. In Showcase, choose **Options → Show →
+QAT preferences apply independently. In Showcase, choose **Options â†’ Show â†’
 Simplified Ribbon**. Paste, Copy, Cut, Bold, Italic and representative commands have
 authored inline defaults. Human visual review remains pending.
 The [first M6A motion pass](docs/M6A-MOTION-PLAN.md) adds opt-in layout, density,
@@ -239,7 +239,7 @@ the drawing. Same-direction changes before the first frame share one transition;
 opposite/repeated requests settle to the latest state. Startup, update batches,
 disposal, caption edits and collection replacements remain immediate.
 
-Showcase's **View → Ribbon animation** group selects None, Subtle or Expressive.
+Showcase's **View â†’ Ribbon animation** group selects None, Subtle or Expressive.
 Its **Tab content** menu chooses Fade or Slide down. Slide down moves the arriving
 body at natural size inside the existing viewport, without a content fade; the
 other geometry transitions keep their existing behavior. These appearance choices
@@ -284,7 +284,7 @@ total width can exceed `LargeButtonMaxWidth`; the authored metric is unchanged.
 Compact content positions and standard menu-row layout retain their existing
 geometry.
 
-Showcase's third QAT entry, also under **View → Input mode**, demonstrates a
+Showcase's third QAT entry, also under **View â†’ Input mode**, demonstrates a
 host-owned Mouse/Touch selector. Actual VS property editing remains deferred to the
 designer slice. Office 2024 joins a BelowRibbon QAT to the body's outer frame;
 the minimized toolbar becomes a standalone card.
@@ -292,7 +292,7 @@ the minimized toolbar becomes a standalone card.
 ## Message panels
 
 Messages are library-owned models attached to the ribbon. The application owns
-their text, icons and actions. Showcase demonstrates them in the **View → Messages** dropdown.
+their text, icons and actions. Showcase demonstrates them in the **View â†’ Messages** dropdown.
 
 ```csharp
 var notice = new RibbonMessage
@@ -351,9 +351,73 @@ Opening File retains tab selection. Hide/disable/dispose closes its open stack.
 `DrawFileButton` lets custom renderers paint the header using measured bounds.
 The header uses Text; command rows use normal icons. FileMenu itself is owned by
 the ribbon and cannot be reparented; its direct disposal permanently releases that
-stable declaration. Images/renderers remain borrowed. The legacy two-pane
-application menu/orb remains separate. New accessibility compatibility and actual
-VS acceptance remain deferred.
+stable declaration. Images/renderers remain borrowed.
+
+### Native Application Menu
+
+`RibbonFileMenuMode.CommandMenu` (numeric value 0) now opens the two-pane
+Application Menu. Existing `FileMenu.Items` are its left commands. A left dropdown
+selects a right pane; a split primary invokes its command and its arrow selects
+the pane. Right-pane dropdowns continue using ordinary submenus. Each opening
+starts with `ApplicationMenu.DefaultPane`. Selection is transient.
+
+```csharp
+ribbon.ApplicationMenu.DefaultPane.DropDownHeader = "Recent documents";
+ribbon.ApplicationMenu.DefaultPane.Items.Add(
+    new RibbonButtonItem { Id = "recent.report", Text = "Quarterly report" });
+var export = new RibbonSplitButtonItem {
+    Id = "file.export", Text = "Export", DropDownHeader = "Export document" };
+export.Click += (_, _) => ExportDefault();
+export.Items.Add(new RibbonButtonItem { Id = "export.pdf", Text = "PDF document" });
+ribbon.FileMenu.Items.Add(export);
+ribbon.ApplicationMenu.FooterItems.Add(
+    new RibbonButtonItem { Id = "file.options", Text = "Options" });
+```
+
+`ApplicationMenu`, its `DefaultPane` and `FooterItems` are stable owned content
+properties. Pane declarations reuse dropdown `Items`, `DropDownHeader`, `Content`
+and `ContentType`; do not put a component into two collections. Plain commands
+close File before invoking once. Native validation can veto pane changes/actions,
+Escape or outside dismissal. Structural/lifetime teardown still closes. Existing
+File opening cancellation and closed events remain. Explicit `FileMenu.Content`
+or `ContentType` retains the compatible whole-body override.
+
+Native content follows the [retained dropdown contract](#usercontrol-popup-bodies):
+explicit unparented Controls remain application-owned; selected UserControl types
+are created before Form.Load, retained and declaration-owned. Pane changes/reopen
+preserve controls, values and HWNDs. The library clips/scrolls the hosting slot;
+the application owns body layout, commands, data and styling. Constructor failures
+propagate without retaining an untracked popup.
+
+The measured layout starts from 150/340/40/36 logical pixels for navigation/pane/
+command row/footer. Navigation grows up to 260 for native text and scrollbar space;
+rows grow for fonts and to at least 44 in Touch. Columns scroll independently and
+footer actions have reserved space with wrapping/overflow. The popup fits the
+monitor work area on a usable side of File. Paint, pointer, keyboard reveal,
+KeyTips and accessibility share these bounds. `DrawApplicationMenuBackground`
+uses shared menu/border roles; application controls retain their own appearance.
+Unlike WPF's hover-driven pane changes, native pane selection is explicit, so
+moving the pointer does not validate or replace a focused native editor.
+
+Choose **Edit Application Menuâ€¦** from the ribbon smart tag or the ApplicationMenu
+property editor. The dedicated tree edits left commands, the default pane, nested
+pane commands, section separators and footer actions. Properties and preview
+clicks select draft entries. Native bodies are inert placeholders. OK applies one
+transaction; Cancel/no-op does not mutate. Existing components, bindings/events,
+icons and borrowed content retain identity. The accepted component is selected in
+Properties after the modal editor closes. Framework Undo/Redo and generated-code
+checks have automated evidence; actual VS save/reopen remains a review gate.
+
+Showcase starts with Application Menu and offers a Backstage footer action; its
+Backstage offers a return action. The permanent Designer Sample retains its
+Backstage startup choice and adds designer-authored Application Menu examples:
+choose **File opens â†’ Application Menu** to review them. No extra review app is
+required. See [contract, evidence and remaining gates](docs/APPLICATION-MENU-PLAN.md).
+
+After refreshing the permanent sample, `eng/Test-ApplicationMenu.ps1` builds an
+isolated package-only consumer and runs the selected native material/density/
+renderer scopes. Its foreground fixtures run sequentially and stop input on
+focus loss.
 
 ### Illustrated command choices
 
@@ -432,7 +496,7 @@ including parked references after source disposal, so future structural storage
 does not persist context-owned content. A source's lifetime belongs to the app.
 There is no automatic source-QAT, File/Backstage or nested-source merging.
 
-Showcase **View → Chart → Chart context** adds Chart Design and Home's Chart context
+Showcase **View â†’ Chart â†’ Chart context** adds Chart Design and Home's Chart context
 group. Public-only shown checks are available through `--merge-checks` /
 `--merge-checks-flat` on the native runner, followed by an evidence directory;
 the independent consumer includes `--validate-merge` / `--validate-merge-flat`.
@@ -481,7 +545,7 @@ modal tab while active; authored Tabs/Visible values remain appropriate inputs
 for future structural persistence. The library does not own a print document,
 printer, preview paint, application content visibility or nested modal stack.
 
-Showcase **View → Print preview** demonstrates an application-owned preview
+Showcase **View â†’ Print preview** demonstrates an application-owned preview
 page with native Copies/Zoom fields. The shared public-only consumer checks use
 `--modal-checks` / `--modal-checks-flat` on the native runner, or
 `--validate-modal` / `--validate-modal-flat` in the independent consumer, followed
@@ -528,8 +592,8 @@ stationary-pointer messages must not override keyboard preview.
 
 Consecutive visible tiles with the same nonempty GroupName share a noninteractive
 heading. Authored order and blank-heading groups are retained. ColumnCount is a
-preferred count (1–32); TileWidth/TileHeight are logical-pixel metrics (32–512),
-and MaxVisibleRows is a preferred upper row budget (1–32). Fonts, headings and
+preferred count (1â€“32); TileWidth/TileHeight are logical-pixel metrics (32â€“512),
+and MaxVisibleRows is a preferred upper row budget (1â€“32). Fonts, headings and
 screen work-area limits constrain the actual grid/viewport; long contents use
 native scrolling. Images retain aspect ratio; a renderer can override
 `DrawGalleryTile` and `DrawGalleryHeading`. Another application can provide rich
@@ -544,11 +608,11 @@ grid, Home/End and PageUp/PageDown navigate long content, Enter/Space and tile
 KeyTips commit, and Escape dismisses one popup level. Opening respects native
 editor validation and normal DropDownOpening cancellation. Layout-affecting
 mutation closes stale geometry; native editors/command models are not cloned.
-Showcase Home → Galleries demonstrates Styles and Text color with host-owned
+Showcase Home â†’ Galleries demonstrates Styles and Text color with host-owned
 document preview and commit actions.
 
 Set `IsInRibbon = true` to display a single-row strip in Large presentations.
-`InRibbonColumnCount` (1–12, default 3) sets its columns independently of popup
+`InRibbonColumnCount` (1â€“12, default 3) sets its columns independently of popup
 ColumnCount. TileWidth determines its logical width; ribbon body height determines
 its height. SizePolicy entries of Medium/Small select a full-height Large dropdown
 fallback in its own column. They do not create stacked medium/small gallery
@@ -600,7 +664,7 @@ strip or projection scopes; their consumer flags are
 ### Custom dropdown gallery UserControls
 
 An ordinary gallery dropdown can use an application-designed UserControl. In
-**Edit Ribbon**, select the gallery and choose **Data → DropDownPresenterType**.
+**Edit Ribbon**, select the gallery and choose **Data â†’ DropDownPresenterType**.
 Build the consumer project to refresh the list of available classes. The class
 must be public, concrete, implement `IRibbonGalleryPresenter` and have a public
 parameterless constructor. Generated code stores the class selection:
@@ -634,13 +698,13 @@ serialization; presenter controls/state are excluded from customization JSON.
 Ordinary dropdown/split UserControl bodies use the separate
 [retained-content contract](docs/DROPDOWN-CONTENT-PLAN.md).
 
-The Designer Sample's designer-declared **Gallery → Document styles** demonstrates the
+The Designer Sample's designer-declared **Gallery â†’ Document styles** demonstrates the
 public API with [GalleryStylesControl](samples/RibbonKit.WinForms.DesignerSample/GalleryStylesControl.cs).
 Its tab, group, gallery, tiles, initial selection, event hookups and presenter-class
 assignment are in `DesignerForm.Designer.cs`, visible through Edit Ribbon. The
 UserControl body stays in its ordinary UserControl designer.
-Open **GalleryStyleTileControl.cs → View Designer** to edit one card using ordinary
-panels and labels. **GalleryStylesControl.cs → View Designer** shows six real card
+Open **GalleryStyleTileControl.cs â†’ View Designer** to edit one card using ordinary
+panels and labels. **GalleryStylesControl.cs â†’ View Designer** shows six real card
 instances. At runtime the presenter connects a card to each source item and arranges
 the two-column grid. Captions/items still come from Edit Ribbon; the card's Caption
 property supplies illustrative text in the standalone designer. The sample paints
@@ -661,7 +725,7 @@ Both implement the existing `IRibbonGalleryPresenter`; context.Presentation is
 InRibbon or DropDown. The two selector pairs are independent. For runtime
 construction with arguments, clear InRibbonPresenterType and assign
 InRibbonPresenterFactory instead. Null for both inline selectors retains the
-built-in strip. After building the consumer, select **Data → InRibbonPresenterType**
+built-in strip. After building the consumer, select **Data â†’ InRibbonPresenterType**
 in Edit Ribbon or component Properties. Its class list is independent of
 DropDownPresenterType, and `(None)` restores the built-in inline strip. Discovery
 and inert previews never construct the application UserControl; generated code
@@ -724,7 +788,7 @@ See [QAT evidence and review steps](docs/GALLERY-PRESENTER-PLAN.md#qat-gallery-p
 `FileMenuMode` defaults to `CommandMenu`, preserving existing File consumers.
 Choose `Backstage` to route the same File header, pointer/keyboard activation and
 `FileMenu.ShowDropDown()` to the library-owned surface. `FileMenu.Items` remains
-the command-menu declaration; `Backstage.Items` owns separate navigation models.
+the Application Menu left-command declaration; `Backstage.Items` owns separate navigation models.
 No header duplication, custom Form subclass or Showcase helper is required.
 
 ```csharp
@@ -826,7 +890,7 @@ detaches it, restores its authored Dock/Bounds/Visible and never disposes it.
 The application must eventually dispose content assigned through `Content`.
 
 For a designer-selected page body, use the optional `ContentType` instead. In
-**Edit Backstage…**, select a page and choose its **ContentType** from the
+**Edit Backstageâ€¦**, select a page and choose its **ContentType** from the
 **Page content** category. Build the consuming project first so its public
 UserControl classes are available. Each class needs a public parameterless
 constructor; edit its layout in its ordinary UserControl designer, including
@@ -991,7 +1055,7 @@ state assignment raises no Click. Inherited size/image settings do not replace
 the compact indicator and label.
 
 Checkboxes also expose bindable WinForms `CheckState` and `CheckStateChanged`.
-With `ThreeState = true`, activation cycles Unchecked → Checked → Indeterminate.
+With `ThreeState = true`, activation cycles Unchecked â†’ Checked â†’ Indeterminate.
 `Checked` is true for both Checked and Indeterminate. For an enum-valued source,
 use `formattingEnabled: false` in its CheckState Binding: formatted WinForms
 binding maps Indeterminate to a null source value. Bind `Checked` for boolean data.
@@ -1416,7 +1480,7 @@ surrounding ribbon background without changing `ribbon.Theme` or `Theme.Surface`
 Honor that background and delegate composited
 text to the base `DrawText` method to preserve glyph alpha. The neutral and Office
 renderers use the same library path. Host content, persistence and DPI startup stay
-application-owned. Showcase exposes **View → Window → Backdrop**; its default is
+application-owned. Showcase exposes **View â†’ Window â†’ Backdrop**; its default is
 Solid on first use. The selected backdrop and transparent Backstage choice are
 saved in Showcase's application preferences and restored on restart. Its document
 and status bar use the shared opaque panel, with material
@@ -1501,14 +1565,14 @@ traverses native children, and Escape dismisses a native ComboBox list before th
 popup. A split button's primary action is independent. Gallery items continue
 using their separate presenter properties.
 
-The permanent Designer Sample's **Home → Select** and **Paste arrow** demonstrate
+The permanent Designer Sample's **Home â†’ Select** and **Paste arrow** demonstrate
 this with `PopupOptionsControl`. Edit that body using its normal UserControl
 designer. [Contract, evidence and remaining review](docs/DROPDOWN-CONTENT-PLAN.md).
 
 In **Edit Ribbon**, select a dropdown/split button or menu child and choose
-**Preview popup…**. Click rows to select their Properties, use arrows to preview
+**Preview popupâ€¦**. Click rows to select their Properties, use arrows to preview
 submenus, and use **Parent menu** to return. A selected dropdown/split also offers
-**Edit popup…** in designer actions. Fields are static and UserControl bodies show
+**Edit popupâ€¦** in designer actions. Fields are static and UserControl bodies show
 a placeholder; previewing runs no command or application control. Existing
 OK/Cancel and Undo/Redo behavior is retained.
 [Preview workflow and verification](docs/POPUP-DESIGNER-PREVIEW.md).
@@ -1919,7 +1983,7 @@ code remains MIT. Application distributors must include the applicable notices
 from the package's `licenses/` folder. These files are not automatically copied
 into application publish or installer output; see [dependency notices](THIRD-PARTY-NOTICES.md).
 
-Select a ribbon in the Form designer and choose **Edit Ribbon…** from its smart
+Select a ribbon in the Form designer and choose **Edit Ribbonâ€¦** from its smart
 tag, or open the **Tabs** property ellipsis. The custom window edits built-in
 tabs/groups/commands as a detached draft; OK requests one designer transaction,
 while Cancel leaves live components unchanged. Its **Add** menu includes contextual
@@ -1944,7 +2008,7 @@ share the same Cancel/OK and Undo/Redo workflow. See
 and review checkpoint.
 Groups also expose **Layout = Columns, TwoRows or ThreeRows**. Columns keeps
 automatic Small/Medium stacking; explicit rows use each command's **Row** choice.
-**Add → Separator** inserts a vertical in-group divider. Split buttons expose
+**Add â†’ Separator** inserts a vertical in-group divider. Split buttons expose
 their existing **Layout = Horizontal/Vertical** choice. See
 [group item layout](docs/GROUP-ITEM-LAYOUT.md) for authoring, centering and verification.
 Dropdown and split commands expose **DropDownHeader** and **MenuPresentation**;
@@ -1952,7 +2016,7 @@ each child command's **Text**, **MenuDescription** and Icon produce a title with
 an inline explanation and artwork. Standard matches the Paste options example;
 IllustratedChoices offers larger artwork and bold titles. See
 [menu authoring steps](docs/DESIGNER-AUTHORING.md#dropdown-headings-and-descriptions--2026-11-01).
-**Move to…** moves existing commands between groups/menus across tabs, or groups
+**Move toâ€¦** moves existing commands between groups/menus across tabs, or groups
 to another tab, with a row picker for explicit layouts. Size-policy choices now
 offer only non-growing sequences while preserving existing authored values.
 ComboBox **ShowLabel** hides its native-field label without erasing Text;
@@ -1982,7 +2046,7 @@ or commands to select their components in Properties. The smart tag's **Preview
 tab** selector also reveals hidden/disabled contextual tabs without changing
 authored properties or runtime startup selection. Fields use static designer
 illustrations; preview clicks do not activate commands or open popups. **Edit
-Ribbon…** reveals the selected component, and OK returns its tree selection to
+Ribbonâ€¦** reveals the selected component, and OK returns its tree selection to
 Properties. See the [preview contract and current acceptance](docs/DESIGNER-AUTHORING.md#surface-preview-and-selection--2026-10-31);
 physical-DPI and mixed-monitor review remain separate gates.
 
@@ -1993,7 +2057,7 @@ The owned File declaration has matching designer defaults: caption **File**, Key
 **F**, visibility false. Enabling it serializes `FileMenu.Visible = true`; Reset
 restores the File caption without affecting ordinary dropdown defaults.
 
-The **Edit Backstage…** smart-tag action (also the **Backstage** property ellipsis)
+The **Edit Backstageâ€¦** smart-tag action (also the **Backstage** property ellipsis)
 opens a detached pages/commands/separators editor with icon picking, ordering, File routing
 and a renderer-backed navigation preview. OK applies one designer transaction;
 Cancel leaves the live model unchanged. Native page bodies are designed in
@@ -2001,7 +2065,7 @@ separate UserControls. Choose a page's optional `ContentType` in this editor for
 page-owned runtime creation, or continue assigning application-owned instances
 through `RibbonBackstagePageItem.Content`.
 Select the protected **Main entries** or **Bottom entries** group before using
-**Add → Page / Command / Separator**. Change an entry's **Placement** dropdown
+**Add â†’ Page / Command / Separator**. Change an entry's **Placement** dropdown
 between **Main** and **Bottom** to move it; Move up/down orders its current section.
 Both the editor image and Form designer preview show the bottom section.
 All entries share one body placeholder in both previews; selection updates the

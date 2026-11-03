@@ -4,6 +4,10 @@ namespace RibbonKit.WinForms;
 
 public partial class RibbonControl
 {
+    /// <summary>Gets File's stable Application Menu declaration. Left commands remain in FileMenu.Items; CommandMenu keeps its numeric and serialized identity.</summary>
+    [Category("Data"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [TypeConverter(typeof(ExpandableObjectConverter))]
+    public RibbonApplicationMenu ApplicationMenu { get; }
     private RibbonFileMenuMode _fileMenuMode;
     private RibbonBackstageSurface? _backstageSurface;
     private Form? _backstageForm;

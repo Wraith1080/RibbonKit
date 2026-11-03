@@ -17,6 +17,7 @@ public sealed class RibbonControlDesigner : ControlDesigner
     internal RibbonDesignSelection Selection => _selection!;
     internal RibbonFileDesignSettings FileSettings => _fileSettings!;
     internal void EditRibbon() => this.InvokePropertyEditor(nameof(RibbonControl.Tabs));
+    internal void EditApplicationMenu() => this.InvokePropertyEditor(nameof(RibbonControl.ApplicationMenu));
     internal void EditBackstage() => this.InvokePropertyEditor(nameof(RibbonControl.Backstage));
     public override void Initialize(IComponent component)
     {
@@ -40,11 +41,14 @@ public sealed class RibbonControlDesigner : ControlDesigner
         if (properties[nameof(RibbonControl.Tabs)] is PropertyDescriptor tabs)
             properties[nameof(RibbonControl.Tabs)] = TypeDescriptor.CreateProperty(typeof(RibbonControl), tabs,
                 new EditorAttribute(RibbonDesignEndpoint.EditorName, "System.Drawing.Design.UITypeEditor, System.Drawing"));
+        if (properties[nameof(RibbonControl.ApplicationMenu)] is PropertyDescriptor application)
+            properties[nameof(RibbonControl.ApplicationMenu)] = TypeDescriptor.CreateProperty(typeof(RibbonControl), application,
+                new EditorAttribute(RibbonApplicationMenuEndpoint.EditorName, "System.Drawing.Design.UITypeEditor, System.Drawing"));
         if (properties[nameof(RibbonControl.Backstage)] is PropertyDescriptor backstage)
             properties[nameof(RibbonControl.Backstage)] = TypeDescriptor.CreateProperty(typeof(RibbonControl), backstage,
                 new EditorAttribute(RibbonBackstageEndpoint.EditorName, "System.Drawing.Design.UITypeEditor, System.Drawing"));
     }
-    public override IReadOnlyCollection<IComponent> AssociatedComponents => ((RibbonControl)Component).Tabs.Cast<RibbonElement>().Concat(((RibbonControl)Component).QuickAccessItems).Append(((RibbonControl)Component).FileMenu).Append(((RibbonControl)Component).Backstage).Append(((RibbonControl)Component).CommandCatalog).SelectMany(t => t.TreeForDesigner()).ToArray();
+    public override IReadOnlyCollection<IComponent> AssociatedComponents => ((RibbonControl)Component).Tabs.Cast<RibbonElement>().Concat(((RibbonControl)Component).QuickAccessItems).Append(((RibbonControl)Component).FileMenu).Append(((RibbonControl)Component).ApplicationMenu).Append(((RibbonControl)Component).Backstage).Append(((RibbonControl)Component).CommandCatalog).SelectMany(t => t.TreeForDesigner()).ToArray();
 }
 public sealed class RibbonElementDesigner : ComponentDesigner
 {
@@ -86,6 +90,7 @@ internal sealed class RibbonSurfaceActions(IComponent component, RibbonControlDe
     [TypeConverter(typeof(RibbonPreviewTabConverter))]
     public string PreviewTab { get => Selection.PreviewTab; set => Selection.PreviewTab = value; }
     public void EditRibbon() => designer.EditRibbon();
+    public void EditApplicationMenu() => designer.EditApplicationMenu();
     public void EditBackstage() => designer.EditBackstage();
     public void PreviewBackstage() => Selection.Backstage.Open();
     public void EditPopup() { if (Selection.PopupSource is { } source) { Selection.Select(source); designer.EditRibbon(); } }
@@ -96,10 +101,11 @@ internal sealed class RibbonSurfaceActions(IComponent component, RibbonControlDe
         var items = new DesignerActionItemCollection
         {
             new DesignerActionPropertyItem(nameof(ShowFileButton), "Show File button", "File", "Show or hide the ribbon's existing File header."),
-            new DesignerActionPropertyItem(nameof(FileOpens), "File opens", "File", "Choose a command menu or Backstage. Showing File does not change its destination."),
+            new DesignerActionPropertyItem(nameof(FileOpens), "File opens", "File", "Choose Application Menu or Backstage. Showing File does not change its destination."),
             new DesignerActionPropertyItem(nameof(PreviewTab), "Preview tab", "Preview", "Show any authored tab without changing visibility, enabled values or startup selection."),
             new DesignerActionMethodItem(this, nameof(PreviewBackstage), "Preview Backstage", "Preview", "Open an inert designer preview. Its Back button returns to the ribbon."),
             new DesignerActionMethodItem(this, nameof(EditRibbon), "Edit Ribbon…", "Ribbon", "Edit tabs, groups and commands.", true),
+            new DesignerActionMethodItem(this, nameof(EditApplicationMenu), "Edit Application Menu…", "File", "Edit File commands, right panes and footer with an inert preview.", true),
             new DesignerActionMethodItem(this, nameof(EditBackstage), "Edit Backstage…", "Ribbon", "Edit Backstage pages, commands and File routing.", true),
             new DesignerActionMethodItem(this, nameof(SelectRibbon), "Select Ribbon", "Ribbon", "Select the ribbon control in Properties.")
         };
@@ -129,6 +135,7 @@ internal static class ComponentTree
             RibbonTab tab => tab.Groups,
             RibbonGroup group => group.Items,
             RibbonDropDownItem drop => drop.Items,
+            RibbonApplicationMenu application => application.Children,
             RibbonBackstage backstage => backstage.NavigationItems,
             RibbonCommandCatalog catalog => catalog.Commands,
             _ => []
