@@ -36,6 +36,23 @@ Command identity expectation: it expects Bold in Commands, while read-only HEAD
 already declares it in Formatting. That helper and the authored grouping are
 unchanged; evidence is in `artifacts/designer-input-mode/roundtrip/`.
 
+Touch correction, 2026-11-04: Small command icons center within their usable
+button area. After the user found the initial arrow-only width allowance too
+small, ComboBoxes and TextBoxes now scale their widths by the field-height
+increase, using the same current font/DPI rule. For example, 24 → 42 pixel height
+gives 1.75× width. The arrow allowance remains a floor for larger fonts.
+Increase either model's
+`InputWidth` in Layout properties for more width; the authored value is the Compact
+width and stays unchanged when switching density. The refreshed normal Debug
+package preserves the authored Form/resources. Review **Home → Formatting** in
+Mouse and Touch; live Visual Studio review remains user-owned.
+
+`--verify-group-layout <evidence-folder>` also checks centered Small Touch icons,
+proportional matching field widths and retained native handles through public package APIs on
+an offscreen Form. This bounded check passed at actual 120 DPI; its captures and
+result are in `artifacts/touch-width-proportional/package-group/`. It uses no
+Showcase resources, global input or computer-use automation.
+
 For the opt-in ordinary-menu geometry example, launch the normal Debug sample
 with `--menu-geometry-demo`. On its **Menu geometry** tab, use **Wider menu spacing**,
 open **Try this menu**, then use **Reset menu spacing** and reopen it. The example

@@ -584,6 +584,11 @@ public partial class RibbonRenderer : IDisposable
         int arrowSpan = appendArrow && item is RibbonDropDownItem ? RibbonLayoutEngine.Scale(menu && context.Density == RibbonDensity.Touch ? 28 : 16, context.DeviceDpi) : 0;
         if (arrowSpan > 0 && !large)
         {
+            if (!menu && size == RibbonItemSize.Small && context.Density == RibbonDensity.Touch)
+                iconBounds = RibbonContentLayout.SmallIconBounds(context.Bounds with
+                {
+                    Width = Math.Max(0, context.Bounds.Width - RibbonLayoutEngine.Scale(RibbonDensityMetrics.For(context.Density).CommandDropDownArrow, context.DeviceDpi))
+                }, context.DeviceDpi);
             arrow = menu ? new(textBounds.Right - arrowSpan, context.Bounds.Top, arrowSpan, context.Bounds.Height)
                 : new(textBounds.Right - arrowSpan, textBounds.Top, arrowSpan, Math.Min(context.Font.Height, textBounds.Height));
             textBounds.Width = Math.Max(0, textBounds.Width - arrowSpan);

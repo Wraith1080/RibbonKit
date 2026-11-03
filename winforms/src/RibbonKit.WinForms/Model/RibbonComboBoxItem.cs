@@ -61,8 +61,8 @@ public sealed class RibbonComboBoxItem : RibbonItem, IRibbonEditorItem
             if (!SetState(!value && _selectedIndex < 0 ? "" : _value, _selectedIndex)) Changed(false);
         }
     }
-    /// <summary>Gets or sets the native editor width in 96-DPI logical pixels, excluding its label.</summary>
-    [DefaultValue(120), Category("Layout")]
+    /// <summary>Gets or sets the Compact native editor width in 96-DPI logical pixels, excluding its label. Touch scales width with field height while preserving the Compact text budget.</summary>
+    [DefaultValue(120), Category("Layout"), Description("Compact field width in 96-DPI logical pixels, excluding the label. Touch scales width with field height using the current font and DPI; TextBoxes use the same rule.")]
     public int InputWidth
     {
         get => _inputWidth;

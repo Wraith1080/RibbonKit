@@ -109,7 +109,8 @@ internal sealed partial class RibbonLayoutEngine
             int labelWidth = items.Skip(columnStart).Where(entry => RibbonEditorLayout.IsField(entry.Item, entry.Size))
                 .Select(entry => RibbonEditorLayout.LabelWidth(entry.Item, font, dpi)).DefaultIfEmpty(0).Max();
             foreach (var entry in items.Skip(columnStart).Where(entry => RibbonEditorLayout.IsField(entry.Item, entry.Size)))
-                columnWidth = Math.Max(columnWidth, (entry.Item is RibbonComboBoxItem { ShowLabel: false } ? 0 : labelWidth) + S(((IRibbonEditorItem)entry.Item).InputWidth + 6));
+                columnWidth = Math.Max(columnWidth, (entry.Item is RibbonComboBoxItem { ShowLabel: false } ? 0 : labelWidth)
+                    + RibbonEditorLayout.InputWidth((IRibbonEditorItem)entry.Item, dpi, group.Ribbon?.Density ?? RibbonDensity.Compact, font, 6));
             for (int index = columnStart; index < items.Count; index++)
             {
                 var entry = items[index];
@@ -150,13 +151,13 @@ internal sealed partial class RibbonLayoutEngine
             int width = large ? LargeItemWidth(item, font, dpi, theme) : size == RibbonItemSize.Small ? S(metrics.SmallWidth) : Math.Max(S(metrics.MediumWidth), Math.Min(S(180 + (metrics.Touch ? 16 : 0)), label + S(metrics.CaptionPadding)));
             if (item is RibbonComboBoxItem && size == RibbonItemSize.Small) width = S(metrics.SmallWidth + 12);
             if (item is IRibbonEditorItem editor && RibbonEditorLayout.IsField(item, size))
-                width = RibbonEditorLayout.LabelWidth(item, font, dpi) + S(editor.InputWidth + 6);
+                width = RibbonEditorLayout.LabelWidth(item, font, dpi) + RibbonEditorLayout.InputWidth(editor, dpi, group.Ribbon?.Density ?? RibbonDensity.Compact, font, 6);
             if (large && !galleryDropDown && item is RibbonGalleryItem { IsInRibbon: true } gallery)
                 width = S(gallery.InRibbonColumnCount * Math.Max(gallery.TileWidth, metrics.GalleryWidth) + metrics.GalleryUtility + 3 * RibbonGalleryStripLayout.Padding);
             if (item is RibbonSplitButtonItem && !large)
                 width = Math.Max(width, S(metrics.HorizontalSplitPrimaryMinimum)) + S(metrics.HorizontalSplitArrow);
             else if (dropDownOnly && !large)
-                width += S(metrics.Touch ? 28 : 16);
+                width += S(metrics.CommandDropDownArrow);
             if (large)
             {
                 FinishColumn();

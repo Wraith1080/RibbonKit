@@ -1,8 +1,8 @@
 # Native geometry consolidation
 
-Status, **2026-11-03: second ordinary-menu geometry set (vertical spacing)
-implemented and verified; user review pending. Stop here; themes and other
-geometry remain deferred**.
+Status, **2026-11-04: second ordinary-menu geometry set appearance accepted;
+bounded Touch Small-icon and editor-width corrections verified, awaiting review. Themes and
+further geometry increments remain deferred**.
 Baseline: `codex/Ribbonkit-Winform`, `9dd0054b9ebe4f6f9ff5b57bf75198e443f5b4e5`.
 The three existing documentation handoff edits are preserved. This plan owns the
 bounded geometry contract and review gate; additional geometry and themes require
@@ -281,7 +281,9 @@ opt-in `--menu-geometry-demo`; preserve the first example and its reset scope.
 
 ### Second-set review gate
 
-**Pending user review.** Launch the normal Debug sample with
+**2026-11-04: user accepted the vertical-spacing appearance** ("vertical spacing
+looks okay i think"). This confirms appearance only. The review procedure was:
+launch the normal Debug sample with
 `--menu-geometry-demo`. In **Vertical menu spacing**, open **Try described menu**
 at defaults; close it, choose **More vertical spacing**, and reopen. Review icon
 clearance, title/description spacing, separator gap and Name field placement.
@@ -299,3 +301,118 @@ mixed-monitor DPI were not run here. The recorded input/foreground retries limit
 the native fixture evidence; this is not an exhaustive stability claim. The
 previous six broader Release failures remain open, and the full suite was not
 rerun. No commit, push or publication.
+
+### Touch correction contract — 2026-11-04
+
+Reported during review: Small Bold/Italic/Underline icons retain the Compact
+left inset in their wider Touch slots; a narrow font-size ComboBox loses text
+space because its arrow grows from 24 to 32 logical pixels while the field stays
+the same width. The user also requested matching TextBox widths.
+
+Current correction baseline: `codex/Ribbonkit-Winform`,
+`11873710ef6e14968aa3953f4a055293c30e6199`, initially clean.
+
+- Public API/designer: keep the existing `InputWidth` property and serialization.
+  It remains the Compact field width in 96-DPI logical pixels, excluding the
+  label. Following width review, Touch scales both ComboBox and TextBox widths
+  by their field-height increase, using the current font/DPI and the surface's
+  height minima. The arrow-width difference remains a minimum increase, so large
+  fonts retain the Compact text budget. Equal authored widths use the same rule.
+  Increasing `InputWidth` in Properties increases either field normally. Density
+  changes do not mutate authored values, fonts, selections or model identities.
+- Resolve height and width centrally in device pixels; round proportional widths
+  upward and reserve both field insets to avoid clipping at fractional DPI.
+  Classic columns/explicit rows, Simplified full ComboBoxes, ordinary-menu sizing
+  and actual editor bounds consume this resolver; existing available-space clamps
+  remain in force. Compact sizing retains its existing rounding.
+- Center Small Touch icons in the actual command content bounds. Ordinary
+  dropdowns reserve their existing arrow area; split buttons center in their
+  primary half. Keep icon size, hit targets, menu gutters, Medium/Large and QAT
+  geometry, Compact rendering and accepted menu behavior.
+- Keep reusable behavior in the library and preserve the sample's authored
+  fields/resources. Verify focused regressions and offscreen paint, then refresh
+  the permanent Debug sample in place. User performs live/VS review; no computer
+  use, automatic review-app launch, extra themes or subsequent slice.
+
+Initial implementation and verification (the arrow-only width policy is
+superseded by the proportional-width follow-up below):
+
+- Shared Small-icon bounds now center Touch icons; the renderer reserves the
+  ordinary dropdown's measured arrow region. `CommandDropDownArrow` is resolved
+  through the same density metric in Classic/Simplified measurement and painting.
+  Split content uses its actual primary half. Compact/menu placement is retained.
+- Shared editor width resolution now feeds every authored-width measurement and
+  actual field rectangle. Existing `InputWidth` XML/Properties descriptions and
+  the README explain density behavior; there are no new public APIs or authored
+  sample Form/resource changes.
+- Five new Release regression cases reproduced both defects before the fix and
+  passed afterward. They cover both renderers, Small toggles/dropdowns/splits,
+  pressed/rest states, 96/120/144/192 DPI painting; Columns/TwoRows/ThreeRows and
+  Simplified full fields, authored width changes, retained Compact sizing and
+  ComboBox text budgets at 96/104/120/144/168/192 synthetic DPI.
+- **116/116 related Release checks passed** for native editor alignment/lifetime,
+  density, ComboBoxes/QAT, group/Simplified layout, renderer bounds, ordinary
+  menus/checkbox retention and affected designer previews. After consolidating
+  the unchanged arrow-width constants, **31/31 affected checks passed** (including
+  the five new cases); these are overlapping focused runs, not a full-suite run.
+- Normal Debug runtime/designer/client and permanent package-only sample builds
+  passed with zero warnings/errors. The sample was refreshed in place with local
+  package `0.1.0-designer.local20261103T232028591Z`.
+- The extended existing `--verify-group-layout` public-package check passed at
+  **actual 120 DPI** using an offscreen, non-activating Form: centered Small Touch
+  icons, matching native field widths, unchanged `InputWidth`, retained ComboBox
+  and TextBox HWNDs/values and ordinary group layout. No Showcase helpers/global
+  input/computer use. Compact's existing one-pixel summed-padding clamp at this
+  DPI is preserved; the check compares Touch against the measured Compact width.
+- Evidence: `artifacts/touch-geometry-correction/` contains before/after/focused/
+  final TRX files, renderer captures and `package-group/result.log`. Before/after
+  Small-icon captures and the package Touch capture were inspected.
+
+**Review gate:** reopen the permanent sample solution to load the refreshed
+package. In **Home → Formatting**, compare Mouse and Touch: Small B/I/U icons
+should be centered and the narrow font-size value should retain its text space.
+Matching TextBox/ComboBox `InputWidth` values receive the same Touch increase;
+Properties can increase either authored width. Review these two corrections
+before another geometry increment or themes. Actual Visual Studio authoring,
+physical touch/IME/RTL and mixed-monitor checks remain user-owned/unrun here;
+previous broader-suite failures remain outside this correction.
+
+### Proportional Touch field widths — 2026-11-04
+
+The user found the initial width increase insufficient: preserving text space
+alone still left fields much taller without a comparable width increase. The
+revised contract above replaces the fixed extra allowance with the same growth
+ratio used by the field's Compact/Touch heights. For example, 24 → 42 pixel
+height yields 1.75× width (50 → 88 pixels after rounding). ComboBoxes and TextBoxes
+share this rule; Simplified full ComboBoxes use their own 26/44 logical-pixel
+height minima. The extra arrow width is still a floor when larger fonts reduce
+the height ratio. Authored `InputWidth`, Compact sizing and Small-icon centering
+remain intact. This is a correction within the pending review, not a new slice.
+
+Verification:
+
+- The three extended field-width cases failed against the arrow-only policy
+  (50-pixel input: expected 88, actual 58) and passed with proportional sizing.
+  Coverage includes 9/14-point fonts, authored widths 50/100/120, six synthetic
+  DPI values, all three Classic group layouts and Simplified full ComboBoxes.
+  Assertions cover equal field widths, unchanged authored values/Compact layout
+  and at least the original ComboBox text budget. Touch measurement now reserves
+  both scaled field insets; Compact's original rounding is retained.
+- **62/62 focused Release checks passed** for the corrected geometry, native
+  density/editor alignment/lifetime, group/Simplified layout, popup layout and
+  ordinary menu geometry. After aligning Simplified's width ratio with its
+  actual Compact minimum height, **12/12 affected checks passed**. These overlap;
+  the full suite was not rerun.
+- Normal Debug runtime/designer/client/package/sample builds passed without
+  warnings or errors. Permanent sample refreshed in place with
+  `0.1.0-designer.local20261103T232732724Z`; authored Forms/resources unchanged.
+- The public-package offscreen group check passed at actual **120 DPI**, checking
+  proportional matching native field widths, retained handles/values and centered
+  Small icons. The old/new Touch captures were inspected. Evidence is in
+  `artifacts/touch-width-proportional/` (before/focused/final TRX files and
+  `package-group/result.log` plus captures).
+
+**Stop for the user's review of the wider Touch fields in the refreshed sample.**
+Actual VS/native touch/IME/RTL/mixed-monitor acceptance and the previously noted
+broader-suite failures remain outside these automated results. No subsequent
+geometry increment, additional theme, commit, push or publication.

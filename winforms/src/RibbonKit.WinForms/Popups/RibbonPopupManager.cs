@@ -501,7 +501,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
             if (MenuSource.MenuPresentation == RibbonMenuPresentation.IllustratedChoices) width = Math.Max(width, S(RibbonMenuLayout.IllustratedWidth));
             if (MenuSource.DropDownHeader.Length > 0) width = Math.Max(width, Math.Min(S(420), TextRenderer.MeasureText(MenuSource.DropDownHeader, Font).Width + S(28)));
             int labelWidth = items.Where(i => i is IRibbonEditorItem).Select(i => RibbonEditorLayout.LabelWidth(i, Font, ribbon.DeviceDpi)).DefaultIfEmpty(0).Max();
-            width = Math.Max(width, items.OfType<IRibbonEditorItem>().Select(i => labelWidth + S(i.InputWidth + 14)).DefaultIfEmpty(0).Max());
+            width = Math.Max(width, items.OfType<IRibbonEditorItem>().Select(i => labelWidth + RibbonEditorLayout.InputWidth(i, ribbon.DeviceDpi, ribbon.Density, Font, 14)).DefaultIfEmpty(0).Max());
             int top = S(4);
             if (MenuSource.DropDownHeader.Length > 0)
             {

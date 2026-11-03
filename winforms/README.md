@@ -1135,6 +1135,15 @@ An unmatched Value in selection-only mode clears the selection and text. Choice
 mutations preserve a surviving selection, update its index and close a stale list.
 This slice has no object DataSource/DisplayMember/ValueMember adapter.
 
+Set `InputWidth` in the designer's Layout properties to widen a ComboBox or
+TextBox. It defines the Compact field width, excluding the label. Touch scales
+both field types' widths by their height increase, using the current font and DPI.
+For example, a height increase from 24 to 42 pixels gives a width factor of 1.75.
+The wider arrow's extra space remains a minimum increase so large fonts retain
+the Compact ComboBox text budget. Equal authored widths use the same scaling.
+Switching density leaves the authored `InputWidth` unchanged. Small Touch command
+icons center within their command area, with dropdown/split arrows kept separate.
+
 `PerformClick()` and KeyTips focus the editor. `ShowDropDown()`, F4 or Alt+Down
 opens a library-owned choice popup containing a native ListBox; `CloseDropDown()`
 cancels its pending selection. The Windows ComboLBox stays closed.

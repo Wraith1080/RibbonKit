@@ -9,6 +9,7 @@ internal readonly record struct RibbonDensityMetrics(bool Touch)
     internal int TabHeight => Touch ? 48 : 40;
     internal int HeaderQuickAccessOffset => 2;
     internal int SmallWidth => Touch ? 44 : 28;
+    internal int CommandDropDownArrow => Touch ? 28 : 16;
     internal int LargeWidth => Touch ? 80 : 60;
     internal int MediumWidth => Touch ? 64 : 54;
     internal int CaptionPadding => Touch ? 48 : 38;

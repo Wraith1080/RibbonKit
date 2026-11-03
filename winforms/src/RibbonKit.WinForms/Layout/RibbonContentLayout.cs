@@ -35,6 +35,8 @@ internal readonly record struct RibbonContentLayout(Rectangle Icon, Rectangle Te
         }
         else
         {
+            if (size == RibbonItemSize.Small && !menu && density == RibbonDensity.Touch)
+                icon = SmallIconBounds(bounds, dpi);
             if (reserveIcon || menu)
             {
                 text.X += S(26);
@@ -45,6 +47,12 @@ internal readonly record struct RibbonContentLayout(Rectangle Icon, Rectangle Te
             flags |= TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter;
         }
         return new(icon, text, flags);
+    }
+
+    internal static Rectangle SmallIconBounds(Rectangle bounds, int dpi)
+    {
+        int side = RibbonLayoutEngine.Scale(16, dpi);
+        return new(bounds.Left + (bounds.Width - side) / 2, bounds.Top + (bounds.Height - side) / 2, side, side);
     }
 
     internal static int LargeImageBandHeight(Rectangle bounds, Font font, int dpi, RibbonDensity density)

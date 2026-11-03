@@ -27,13 +27,13 @@ internal sealed partial class RibbonLayoutEngine
             if (item is null) size = Math.Max(S(metrics.MediumWidth), TextRenderer.MeasureText(pair.Group.DisplayText, ribbon.Font, Size.Empty, TextFormatFlags.SingleLine | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width
                 + 2 * S(6) + S(16) + (pair.Group.Icon is null ? 0 : S(24) + S(6)));
             else if (item is RibbonComboBoxItem combo) size = pair.Size == RibbonItemSize.Small ? S(metrics.SmallWidth + 12)
-                : S(combo.InputWidth + 6) + RibbonEditorLayout.LabelWidth(item, ribbon.Font, ribbon.DeviceDpi);
+                : RibbonEditorLayout.InputWidth(combo, ribbon.DeviceDpi, ribbon.Density, ribbon.Font, 6, simplified: true) + RibbonEditorLayout.LabelWidth(item, ribbon.Font, ribbon.DeviceDpi);
             else
             {
                 int label = pair.Size == RibbonItemSize.Small ? 0 : TextRenderer.MeasureText(item.Text, ribbon.Font, Size.Empty, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine).Width;
                 int icon = item.Icon is not null || item.Image is not null || item.LargeImage is not null || item is RibbonCheckBoxItem or RibbonRadioButtonItem ? S(24) : 0;
                 size = Math.Max(S(metrics.SmallWidth), label + icon + S(12));
-                if (item is RibbonDropDownItem) size += S(item is RibbonSplitButtonItem ? metrics.Touch ? metrics.HorizontalSplitArrow : metrics.SplitArrow : metrics.Touch ? 28 : 16);
+                if (item is RibbonDropDownItem) size += S(item is RibbonSplitButtonItem ? metrics.Touch ? metrics.HorizontalSplitArrow : metrics.SplitArrow : metrics.CommandDropDownArrow);
             }
             return new SimplifiedCommandMeasurement(pair.Id, pair.Group.Id, size, pair.Priority);
         }).ToArray();

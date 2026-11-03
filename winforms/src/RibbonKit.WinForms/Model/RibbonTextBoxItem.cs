@@ -24,8 +24,8 @@ public sealed class RibbonTextBoxItem : RibbonItem, IRibbonEditorItem
             ValueChanged?.Invoke(this, EventArgs.Empty);
         }
     }
-    /// <summary>Gets or sets the editor width in 96-DPI logical pixels, excluding its label.</summary>
-    [DefaultValue(120), Category("Layout")]
+    /// <summary>Gets or sets the Compact editor width in 96-DPI logical pixels, excluding its label. Touch scales width with field height using the same rule as ComboBoxes.</summary>
+    [DefaultValue(120), Category("Layout"), Description("Compact field width in 96-DPI logical pixels, excluding the label. Touch scales width with field height using the current font and DPI; ComboBoxes use the same rule.")]
     public int InputWidth
     {
         get => _inputWidth;
