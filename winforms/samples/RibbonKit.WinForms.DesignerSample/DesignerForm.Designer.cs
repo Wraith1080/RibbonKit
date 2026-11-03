@@ -516,6 +516,7 @@ partial class DesignerForm
         AutoScaleDimensions = new SizeF(8F, 20F);
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.White;
+        Backdrop = RibbonKit.WinForms.RibbonWindowBackdrop.Mica;
         ClientSize = new Size(1029, 667);
         Controls.Add(button1);
         Controls.Add(statusLabel);

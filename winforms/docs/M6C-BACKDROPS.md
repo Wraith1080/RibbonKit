@@ -10,6 +10,88 @@ the earlier deferral; it does not establish the cause or resolution of flicker.
 M5E persistence was implemented first as requested. Resumed review corrections
 and current evidence are recorded below.
 
+## ComboBox selection and backdrop hover painting — 2026-11-03
+
+The user's recording showed the main font/size field retaining its previous
+choice with backdrop disabled. Native selection drawing can run before
+`SelectedIndexChanged` updates the model. The later presenter synchronization
+repainted the frame but left the child ComboBox HWND displaying the old value.
+The initial extra child invalidation fixed that value, but user review exposed
+flicker during popup opening, hovering the body/rows, and in the arrow button.
+The final selection draw uses DRAWITEM's native index, which is already current
+before the managed event. It needs no second value-change repaint.
+
+The native field now uses Standard rather than Flat drawing: RibbonKit already
+owns its frame and arrow, so the framework's additional flat-border hover paint
+was redundant. Presenter frame invalidations exclude the native text region.
+ComboBox background/frame/arrow paint is buffered together, including in material
+mode; the text remains in the retained child. Popup hover invalidations request
+no background erase, and each complete row is buffered before being published.
+Row rendering uses the buffer's local origin, since TextRenderer does not follow
+Graphics translation. A new six-row regression covers the temporary first-row-only
+defect found during this change. Palette/renderer changes still repaint the text;
+unchanged synchronization remains quiet. No public API, validation, popup activation
+or ownership contract changed.
+
+The original Solid pixel regression failed before the correction: model/native
+text were Beta while native pixels still contained Alpha. The strengthened test
+also failed before the final correction when inspecting the first draw before
+another message-pump pass. It now covers Solid/Mica/Acrylic × Compact/Touch,
+preview, Escape rollback, Enter commit, external selection, no extra native
+invalidation and unchanged synchronization. Focused results and limits follow.
+
+**43 focused tests passed** (`combo-backdrop-final.trx`), including selection,
+six-row buffered text, alignment, compact/QAT/menu choices, popup focus, disabled
+paint suppression, material composition and tab return. Normal Debug runtime,
+designer/client and independent package-consumer builds passed without warnings.
+The final package repeated all **72 selection observations** successfully in
+`artifacts/combo-backdrop-flicker/final-selection/`. Existing startup capture also
+passed: Solid 26, Mica 38 and Acrylic 38 eligible observations, with zero black
+field frames (`artifacts/combo-backdrop-flicker/final-startup/`).
+
+The independent package consumer's `--verify-combo-selection-paint <directory>`
+uses the authored font and size fields and public APIs. With the old package it
+captured Aptos while the selected value was Verdana (406 differing pixels).
+The initial refresh passed **72 existing-pixel observations at actual 120 DPI**:
+Solid/Mica/Acrylic × Compact/Touch × both fields, each with initial, preview,
+cancel, commit, external and native mouse selection. It reads the native surface
+before forcing a reference repaint, so a forced refresh cannot conceal stale
+text. Representative old/new field PNGs were inspected. Evidence:
+`tests/RibbonKit.WinForms.Tests/TestResults/combo-selection-focused.trx` and
+`artifacts/combo-solid-repaint/{package-before,package-after-shown}/`.
+The hidden-start consumer attempt did not establish foreground input routing and
+is diagnostic only; the completed consumer ran through its shown form.
+
+The subsequent `--verify-combo-backdrop-paint <directory>` checks composed screen
+pixels on a worker while the UI thread performs six hover/press/open/body-hover/
+row-hover/return/close cycles per mode. It starts with Mica and Acrylic and checks
+EffectiveBackdrop before running Solid as a comparison. The pre-fix capture found
+blank text in both material modes; later text-only passes missed the arrow flashes.
+The expanded capture found blank arrow glyphs under Mica/Acrylic and a blank hover
+row. After the final correction, **658 region observations passed** (Mica 220,
+Acrylic 214, Solid 224): no missing text/arrow/row ink or black backing. All six
+popup rows were inspected in complete screenshots for every mode. Evidence:
+`artifacts/combo-backdrop-flicker/buffered-chrome/`. Earlier intermediate directories
+are diagnostics, not acceptance; a sampler attempt without a ready baseline was
+inconclusive. The fixture now waits for its first foreground sample.
+
+The user supplied [WinForms issue #13325](https://github.com/dotnet/winforms/issues/13325),
+whose maintainer recommends avoiding background erasure and publishing buffered
+drawing together; it was closed without confirming an OS bug. Microsoft's
+[ComboBox source](https://github.com/dotnet/winforms/blob/v10.0.0/src/System.Windows.Forms/System/Windows/Forms/Controls/ComboBox/ComboBox.cs#L3476)
+shows the additional Flat/Popup WM_PAINT path. These support the bounded painting
+approach rather than replacing the native editor or changing global OS settings.
+
+The persistent Designer Sample package is refreshed in place; authored Form
+edits are preserved. Current checks cover fixture-generated input and this
+machine's 120-DPI display, not physical pointer, other Windows builds, actual
+Visual Studio or mixed-monitor/DPI. No full suite, Release
+or WPF checks ran for this bounded correction.
+
+User review, **2026-11-03:** ComboBox selection and backdrop popup/hover stability
+accepted as very stable on the current machine. Other platform and designer gates
+remain separate.
+
 ## Translucent caption-button states — 2026-11-02
 
 Minimize, maximize/restore and Close now use translucent hover/pressed fills on

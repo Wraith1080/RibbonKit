@@ -138,9 +138,16 @@ internal sealed class RibbonChoicePopup : IDisposable
             // DRAWITEM carries the row's current native state even during a
             // selection transition, when querying SelectedIndex can still
             // return the previous row and leave its selected paint behind.
-            ribbon.Painter.DrawComboBoxItem(new(e.Graphics, e.Bounds, ribbon.Theme, Font, ribbon.DeviceDpi,
+            // Publish background, highlight and glyphs together rather than
+            // exposing the cleared row between separate drawing operations.
+            using var buffer = BufferedGraphicsManager.Current.Allocate(e.Graphics, e.Bounds);
+            // TextRenderer uses the DC origin, not Graphics' translation.
+            // Keep every row at the buffer's local origin, including rows > 0.
+            buffer.Graphics.ResetTransform();
+            ribbon.Painter.DrawComboBoxItem(new(buffer.Graphics, new(Point.Empty, e.Bounds.Size), ribbon.Theme, Font, ribbon.DeviceDpi,
                 Hot: e.Index == _hot, Pressed: e.Index == _pressed && Capture) { Density = ribbon.Density },
                 owner._item, e.Index, (e.State & DrawItemState.Selected) != 0);
+            buffer.Render(e.Graphics);
         }
         protected override void OnMouseMove(MouseEventArgs e)
         {
@@ -162,8 +169,16 @@ internal sealed class RibbonChoicePopup : IDisposable
         }
         private void InvalidateRow(int index)
         {
-            if (index >= 0 && index < Items.Count) Invalidate(GetItemRectangle(index));
+            if (index < 0 || index >= Items.Count || !IsHandleCreated) return;
+            var bounds = GetItemRectangle(index);
+            var row = new RowRect { Left = bounds.Left, Top = bounds.Top, Right = bounds.Right, Bottom = bounds.Bottom };
+            // DrawComboBoxItem replaces the complete row. Erasing it first can
+            // publish a blank between the native erase and owner-draw callback.
+            InvalidateRect(Handle, ref row, false);
         }
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RowRect { internal int Left, Top, Right, Bottom; }
+        [DllImport("user32.dll")] private static extern bool InvalidateRect(nint window, ref RowRect rectangle, bool erase);
         protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); ClearHot(); }
         protected override void OnMouseCaptureChanged(EventArgs e)
         {

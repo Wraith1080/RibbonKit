@@ -169,10 +169,10 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
                     _backdropAlpha = 1;
                     _backdropOpacity = RibbonDrawingHold.Create(Handle, _backdropAlpha, compositeChildren: true);
                 }
-                // Native composition already buffers the complete field subtree.
-                // A second managed buffer can publish a cleared frame separately
-                // from the native text. Keep exactly one buffering owner here.
-                SetStyle(ControlStyles.OptimizedDoubleBuffer, _backdropOpacity is null);
+                // Publish a ComboBox's background, frame and arrow together.
+                // InvalidateFrame excludes the native text from that buffer's
+                // updates; the child keeps its own already-painted selection.
+                SetStyle(ControlStyles.OptimizedDoubleBuffer, _backdropOpacity is null || _editor is ComboBox);
                 if (!_backdropSurfaceReady && _editor.IsHandleCreated && IsWindowVisible(Handle) && IsWindowVisible(_editor.Handle))
                     PaintNativeSurface();
                 SetBackdropOpacity(_ribbon.BackdropBodyMasked ? (byte)1 : (byte)255);
@@ -262,7 +262,9 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
             TabStop = false;
             if (item is RibbonComboBoxItem)
             {
-                var combo = new NativeComboBox(this) { TabStop = false, Name = item.Id, FlatStyle = FlatStyle.Flat, IntegralHeight = false, DrawMode = DrawMode.OwnerDrawVariable };
+                // The renderer owns the frame/arrow. Native Flat drawing adds
+                // hover erases even though its border is outside our text clip.
+                var combo = new NativeComboBox(this) { TabStop = false, Name = item.Id, FlatStyle = FlatStyle.Standard, IntegralHeight = false, DrawMode = DrawMode.OwnerDrawVariable };
                 _editor = combo;
                 combo.SelectedIndexChanged += (_, _) => ReadNativeValue(true);
                 combo.SelectionChangeCommitted += (_, _) =>
@@ -421,12 +423,12 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
                 _item.EffectiveEnabled, _ribbon.HasWindowBackdrop, _ribbon.LayoutMode);
             if (_presentation != next)
             {
-                // A disabled native control's ForeColor stays system-owned, so
-                // a changed owner-drawn selection color needs its own repaint.
-                bool selectionColorChanged = _editor is ComboBox { DropDownStyle: ComboBoxStyle.DropDownList }
-                    && !next.Enabled && _presentation?.Theme.DisabledColor != next.Theme.DisabledColor;
-                _presentation = next; Invalidate();
-                if (selectionColorChanged) _editor.Invalidate();
+                // Renderer/palette changes also refresh the child-owned text;
+                // ordinary frame state updates leave its pixels alone.
+                bool selectionPaintChanged = _editor is ComboBox { DropDownStyle: ComboBoxStyle.DropDownList }
+                    && (_presentation?.Renderer != next.Renderer || _presentation?.Theme != next.Theme);
+                _presentation = next; InvalidateFrame();
+                if (selectionPaintChanged) _editor.Invalidate();
             }
             // Showing a retained presenter must also refresh its native text
             // subtree, not leave that work until after the tab motion uncovers it.
@@ -519,7 +521,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
             _ribbon.ExitKeyTips(false);
             if (Parent is RibbonPopupSurface popup) popup.EditorFocused(_item);
             else _ribbon.EditorFocused(_item);
-            Invalidate();
+            InvalidateFrame();
         }
         private void ValidateEdit(CancelEventArgs args)
         {
@@ -594,7 +596,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
             if (cancel) RestoreList();
             _listStart = null;
             popup?.Dispose();
-            if (!IsDisposed) Invalidate();
+            if (!IsDisposed) InvalidateFrame();
             if (opener is { IsDisposed: false }) opener.Invalidate();
             _ribbon.Invalidate();
         }
@@ -615,7 +617,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
                     if (!CommitAndCloseList()) CloseChoice(true);
                     if (!IsDisposed) FocusEditor();
                 }, () => CloseChoice(true));
-            Invalidate();
+            InvalidateFrame();
         }
         internal bool CommitAndCloseList()
         {
@@ -688,26 +690,37 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
             {
                 Capture = true;
                 _comboPressed = true;
-                Invalidate();
+                InvalidateFrame();
             }
         }
         protected override void OnMouseUp(MouseEventArgs e)
         {
             base.OnMouseUp(e);
             bool open = _comboPressed && e.Button == MouseButtons.Left && _field.Contains(e.Location);
-            _comboPressed = false; Capture = false; Invalidate();
+            _comboPressed = false; Capture = false; InvalidateFrame();
             if (open && _editor is ComboBox) SetDropDown(!ListOpen);
         }
-        protected override void OnMouseCaptureChanged(EventArgs e) { base.OnMouseCaptureChanged(e); _comboPressed = false; Invalidate(); }
+        protected override void OnMouseCaptureChanged(EventArgs e) { base.OnMouseCaptureChanged(e); _comboPressed = false; InvalidateFrame(); }
         private void SetComboHot(bool hot)
         {
             hot &= _item.EffectiveEnabled;
             if (_comboHot == hot) return;
-            _comboHot = hot; Invalidate();
+            _comboHot = hot; InvalidateFrame();
         }
         private void UpdateComboHotFromCursor() => SetComboHot(_field.Contains(PointToClient(MousePosition)));
         protected override void OnMouseMove(MouseEventArgs e) { base.OnMouseMove(e); if (_editor is ComboBox) SetComboHot(_field.Contains(e.Location)); }
         protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); if (_editor is ComboBox) UpdateComboHotFromCursor(); }
+        private void InvalidateFrame()
+        {
+            if (_editor is not ComboBox { IsHandleCreated: true, Visible: true }) { Invalidate(); return; }
+            // The native selection owns these pixels. Repainting label/frame
+            // states over them can expose a cleared child in a composed frame.
+            using var frame = new Region(ClientRectangle);
+            using var text = _editor.Region?.Clone() ?? new Region(_editor.ClientRectangle);
+            text.Translate(_editor.Left, _editor.Top);
+            frame.Exclude(text);
+            Invalidate(frame);
+        }
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
@@ -784,8 +797,12 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
                 {
                     using var fill = new SolidBrush(ribbon.Theme.Surface);
                     e.Graphics.FillRectangle(fill, e.Bounds);
+                    // DRAWITEM describes the new native selection before the
+                    // managed SelectedIndexChanged callback updates the model.
+                    // Draw it correctly once instead of queuing a second paint.
+                    string value = e.Index >= 0 && e.Index < Items.Count ? GetItemText(Items[e.Index]) ?? "" : "";
                     ribbon.Painter.DrawText(context with { Bounds = RibbonEditorLayout.ComboText(ClientRectangle, ribbon.DeviceDpi, ribbon.Density) },
-                        item.Value, item.EffectiveEnabled ? ribbon.Theme.Foreground : ribbon.Theme.DisabledColor,
+                        value, item.EffectiveEnabled ? ribbon.Theme.Foreground : ribbon.Theme.DisabledColor,
                         TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.EndEllipsis);
                 }
                 else if (e.Index >= 0 && e.Index < item.Items.Count)
@@ -812,9 +829,9 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
             protected override void OnFontChanged(EventArgs e) { base.OnFontChanged(e); ApplyMetrics(); }
             protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); presenter.SetComboHot(true); }
             protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); presenter.UpdateComboHotFromCursor(); }
-            protected override void OnMouseDown(MouseEventArgs e) { presenter._comboPressed = true; presenter.Invalidate(); base.OnMouseDown(e); }
-            protected override void OnMouseUp(MouseEventArgs e) { presenter._comboPressed = false; presenter.Invalidate(); base.OnMouseUp(e); }
-            protected override void OnMouseCaptureChanged(EventArgs e) { base.OnMouseCaptureChanged(e); presenter._comboPressed = false; presenter.Invalidate(); }
+            protected override void OnMouseDown(MouseEventArgs e) { presenter._comboPressed = true; presenter.InvalidateFrame(); base.OnMouseDown(e); }
+            protected override void OnMouseUp(MouseEventArgs e) { presenter._comboPressed = false; presenter.InvalidateFrame(); base.OnMouseUp(e); }
+            protected override void OnMouseCaptureChanged(EventArgs e) { base.OnMouseCaptureChanged(e); presenter._comboPressed = false; presenter.InvalidateFrame(); }
             protected override void Dispose(bool disposing)
             {
                 if (disposing) { Region = null; _textRegion?.Dispose(); _textRegion = null; }
@@ -837,7 +854,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
             protected override bool ProcessCmdKey(ref Message msg, Keys keyData) =>
                 presenter.ProcessEditorKey(keyData) || base.ProcessCmdKey(ref msg, keyData);
             protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); presenter.BeginEdit(); }
-            protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); presenter._editing = false; presenter.Invalidate(); }
+            protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); presenter._editing = false; presenter.InvalidateFrame(); }
             protected override void OnValidating(CancelEventArgs e) { base.OnValidating(e); presenter.ValidateEdit(e); }
             protected override void OnValidated(EventArgs e) { base.OnValidated(e); presenter.AcceptEdit(); }
         }

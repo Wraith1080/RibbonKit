@@ -80,6 +80,31 @@ public sealed class ChoicePopupFocusTests
         Assert.Equal(foreground, GetForegroundWindow());
     });
 
+    [Fact]
+    public void Buffered_choice_text_renders_in_every_row_not_only_the_first() => FoundationTests.Sta(() =>
+    {
+        using var ribbon = new RibbonControl();
+        using var item = new RibbonComboBoxItem(); item.Items.AddRange("Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta");
+        using var choice = new RibbonChoicePopup(ribbon, item, new(10, 10, 180, 24), _ => { }, () => { }, () => { });
+        var list = Field<ListBox>(choice, "_list");
+        Field<RibbonPopupWindow>(choice, "_window").Location = new(-16000, -16000);
+        var draw = list.GetType().GetMethod("OnDrawItem", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        using var image = new Bitmap(list.Width, list.ItemHeight * item.Items.Count);
+        using (var graphics = Graphics.FromImage(image))
+        {
+            graphics.Clear(Color.White);
+            for (int index = 0; index < item.Items.Count; index++)
+                draw.Invoke(list, [new DrawItemEventArgs(graphics, list.Font, new(0, index * list.ItemHeight, list.Width, list.ItemHeight), index, DrawItemState.None)]);
+        }
+        for (int index = 0; index < item.Items.Count; index++)
+        {
+            int ink = 0;
+            for (int y = index * list.ItemHeight; y < (index + 1) * list.ItemHeight; y++)
+            for (int x = 0; x < image.Width; x++)
+            { var pixel = image.GetPixel(x, y); if (pixel.R < 120 && pixel.G < 120 && pixel.B < 120) ink++; }
+            Assert.True(ink > 10, $"Choice {index} ({item.Items[index]}) must retain its text after buffered drawing.");
+        }
+    });
     private static T Field<T>(object value, string name) => (T)value.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(value)!;
     [DllImport("user32.dll")] private static extern nint GetActiveWindow();
     [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
