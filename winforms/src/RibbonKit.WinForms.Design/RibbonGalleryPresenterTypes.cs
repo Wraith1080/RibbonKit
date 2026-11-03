@@ -13,7 +13,8 @@ internal static class RibbonGalleryPresenterTypes
     internal static Type[] Available(IDesignerHost host, RibbonControl? ribbon = null)
     {
         var discovered = (host.GetService(typeof(ITypeDiscoveryService)) as ITypeDiscoveryService)?.GetTypes(typeof(UserControl), true).OfType<Type>() ?? [];
-        var retained = ribbon is null ? [] : RibbonDesignCommitter.EditableElements(ribbon).OfType<RibbonGalleryItem>().Select(gallery => gallery.DropDownPresenterType).OfType<Type>();
+        var retained = ribbon is null ? [] : RibbonDesignCommitter.EditableElements(ribbon).OfType<RibbonGalleryItem>()
+            .SelectMany(gallery => new[] { gallery.DropDownPresenterType, gallery.InRibbonPresenterType }).OfType<Type>();
         return discovered.Concat(retained).Where(RibbonGalleryItem.IsPresenterType).Distinct().OrderBy(Label, StringComparer.Ordinal).ToArray();
     }
     internal static Type? Resolve(string label, IEnumerable<Type> types) => label == None ? null

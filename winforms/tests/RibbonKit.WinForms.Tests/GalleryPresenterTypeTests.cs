@@ -55,47 +55,54 @@ public sealed class GalleryPresenterTypeTests
         Assert.Same(factory, gallery.DropDownPresenterFactory); Assert.Null(gallery.DropDownPresenterType); Assert.Equal(2, changes);
     });
 
-    [Fact]
-    public void Designer_discovery_draft_preview_apply_and_reset_never_construct_application_controls() => FoundationTests.Sta(() =>
+    [Theory]
+    [InlineData("DropDownPresenterType")] [InlineData("InRibbonPresenterType")]
+    public void Designer_discovery_draft_preview_apply_and_reset_never_construct_application_controls(string propertyName) => FoundationTests.Sta(() =>
     {
         Presenter.Constructions = 0;
         using var host = new DesignerAuthoringTests.Host { TypeDiscovery = new Discovery() }; using var ribbon = DesignerAuthoringTests.MakeRibbon(host);
         var gallery = ribbon.Tabs[0].Groups[0].Items.OfType<RibbonGalleryItem>().Single(); var selected = gallery.SelectedItem;
+        gallery.IsInRibbon = true;
+        Assert.True(TypeDescriptor.GetProperties(gallery)[propertyName]!.IsBrowsable);
         var draft = RibbonDesignSnapshot.Deserialize(RibbonDesignCommitter.Read(ribbon, host).Serialize());
-        var property = draft.Nodes.Single(node => node.Kind == "Gallery").Properties.Single(property => property.Name == "DropDownPresenterType");
+        var property = draft.Nodes.Single(node => node.Kind == "Gallery").Properties.Single(property => property.Name == propertyName);
         Assert.Equal("(None)", property.Value); Assert.Equal(new[] { "(None)", RibbonGalleryPresenterTypes.Label(typeof(Presenter)) }, property.Options);
         var descriptors = TypeDescriptor.GetProperties(new RibbonEditorDialog.DraftProperties(draft.Nodes.Single(node => node.Kind == "Gallery")));
         Assert.True(descriptors[property.Name]!.Converter.GetStandardValuesExclusive());
         property.Value = RibbonGalleryPresenterTypes.Label(typeof(Presenter));
         _ = RibbonThemePreviewRenderer.Render(ribbon, host, draft);
-        Assert.Null(gallery.DropDownPresenterType); Assert.Equal(0, host.Transactions); Assert.Equal(0, Presenter.Constructions);
+        Assert.Null(SelectedType(gallery, propertyName)); Assert.Equal(0, host.Transactions); Assert.Equal(0, Presenter.Constructions);
         Assert.True(RibbonDesignCommitter.Apply(ribbon, host, draft)); Assert.Equal(1, host.Committed);
-        Assert.Equal(typeof(Presenter), gallery.DropDownPresenterType); Assert.Same(selected, gallery.SelectedItem); Assert.Equal(0, Presenter.Constructions);
+        Assert.Equal(typeof(Presenter), SelectedType(gallery, propertyName)); Assert.Same(selected, gallery.SelectedItem); Assert.Equal(0, Presenter.Constructions);
         host.TypeDiscovery = null; var retained = RibbonDesignCommitter.Read(ribbon, host);
         Assert.Contains(RibbonGalleryPresenterTypes.Label(typeof(Presenter)), retained.Nodes.Single(node => node.Kind == "Gallery").Properties.Single(value => value.Name == property.Name).Options);
         Assert.False(RibbonDesignCommitter.Apply(ribbon, host, retained)); Assert.Equal(1, host.Transactions);
         retained.Nodes.Single(node => node.Kind == "Gallery").Properties.Single(value => value.Name == property.Name).Value = "(None)";
-        Assert.True(RibbonDesignCommitter.Apply(ribbon, host, retained)); Assert.Null(gallery.DropDownPresenterType); Assert.Equal(0, Presenter.Constructions);
+        Assert.True(RibbonDesignCommitter.Apply(ribbon, host, retained)); Assert.Null(SelectedType(gallery, propertyName)); Assert.Equal(0, Presenter.Constructions);
     });
 
-    [Fact]
-    public void Unavailable_classes_and_factory_conflicts_are_rejected_before_live_mutation() => FoundationTests.Sta(() =>
+    [Theory]
+    [InlineData("DropDownPresenterType")] [InlineData("InRibbonPresenterType")]
+    public void Unavailable_classes_and_factory_conflicts_are_rejected_before_live_mutation(string propertyName) => FoundationTests.Sta(() =>
     {
         using var host = new DesignerAuthoringTests.Host { TypeDiscovery = new Discovery() }; using var ribbon = DesignerAuthoringTests.MakeRibbon(host);
         var gallery = ribbon.Tabs[0].Groups[0].Items.OfType<RibbonGalleryItem>().Single();
-        Func<Control> factory = () => new Presenter(); gallery.DropDownPresenterFactory = factory;
+        Func<Control> factory = () => new Presenter();
+        if (propertyName == "DropDownPresenterType") gallery.DropDownPresenterFactory = factory; else gallery.InRibbonPresenterFactory = factory;
         foreach (var label in new[] { "Untrusted.Type [OtherAssembly]", RibbonGalleryPresenterTypes.Label(typeof(Presenter)) })
         {
             var draft = RibbonDesignCommitter.Read(ribbon, host);
-            var property = draft.Nodes.Single(node => node.Kind == "Gallery").Properties.Single(value => value.Name == "DropDownPresenterType");
+            var property = draft.Nodes.Single(node => node.Kind == "Gallery").Properties.Single(value => value.Name == propertyName);
             property.Value = label; property.Options = [label];
             Assert.Throws<ArgumentException>(() => RibbonDesignCommitter.Apply(ribbon, host, draft));
-            Assert.Equal(0, host.Transactions); Assert.Null(gallery.DropDownPresenterType); Assert.Same(factory, gallery.DropDownPresenterFactory);
+            Assert.Equal(0, host.Transactions); Assert.Null(SelectedType(gallery, propertyName));
+            Assert.Same(factory, propertyName == "DropDownPresenterType" ? gallery.DropDownPresenterFactory : gallery.InRibbonPresenterFactory);
         }
     });
 
-    [Fact]
-    public void Class_selection_is_one_framework_undo_redo_unit_without_creating_a_presenter() => FoundationTests.Sta(() =>
+    [Theory]
+    [InlineData("DropDownPresenterType")] [InlineData("InRibbonPresenterType")]
+    public void Class_selection_is_one_framework_undo_redo_unit_without_creating_a_presenter(string propertyName) => FoundationTests.Sta(() =>
     {
         Presenter.Constructions = 0;
         using var surface = new DesignSurface(typeof(Form)); var host = (IDesignerHost)surface.GetService(typeof(IDesignerHost))!;
@@ -109,26 +116,47 @@ public sealed class GalleryPresenterTypeTests
         var gallery = (RibbonGalleryItem)host.CreateComponent(typeof(RibbonGalleryItem), "stylesGallery"); group.Items.Add(gallery);
         using var undo = new UndoRecorder(host);
         var draft = RibbonDesignCommitter.Read(ribbon, host);
-        draft.Nodes.Single(node => node.Kind == "Gallery").Properties.Single(value => value.Name == "DropDownPresenterType").Value = RibbonGalleryPresenterTypes.Label(typeof(Presenter));
-        Assert.True(RibbonDesignCommitter.Apply(ribbon, host, draft)); Assert.Equal(1, undo.Count); Assert.Equal(typeof(Presenter), gallery.DropDownPresenterType);
-        undo.Toggle(); Assert.Null(gallery.DropDownPresenterType); Assert.Same(gallery, group.Items.Single());
-        undo.Toggle(); Assert.Equal(typeof(Presenter), gallery.DropDownPresenterType); Assert.Equal(0, Presenter.Constructions);
+        draft.Nodes.Single(node => node.Kind == "Gallery").Properties.Single(value => value.Name == propertyName).Value = RibbonGalleryPresenterTypes.Label(typeof(Presenter));
+        Assert.True(RibbonDesignCommitter.Apply(ribbon, host, draft)); Assert.Equal(1, undo.Count); Assert.Equal(typeof(Presenter), SelectedType(gallery, propertyName));
+        undo.Toggle(); Assert.Null(SelectedType(gallery, propertyName)); Assert.Same(gallery, group.Items.Single());
+        undo.Toggle(); Assert.Equal(typeof(Presenter), SelectedType(gallery, propertyName)); Assert.Equal(0, Presenter.Constructions);
     });
 
-    [Fact]
-    public void Real_serializer_emits_typeof_and_does_not_serialize_a_factory_or_control() => FoundationTests.Sta(() =>
+    [Theory]
+    [InlineData("DropDownPresenterType")] [InlineData("InRibbonPresenterType")]
+    public void Real_serializer_emits_typeof_and_does_not_serialize_a_factory_or_control(string propertyName) => FoundationTests.Sta(() =>
     {
-        using var gallery = new RibbonGalleryItem { DropDownPresenterType = typeof(Presenter) };
+        using var gallery = new RibbonGalleryItem();
         var properties = TypeDescriptor.GetProperties(gallery);
+        properties[propertyName]!.SetValue(gallery, typeof(Presenter));
         Assert.Equal(DesignerSerializationVisibility.Hidden, properties[nameof(gallery.DropDownPresenterFactory)]!.SerializationVisibility);
+        Assert.Equal(DesignerSerializationVisibility.Hidden, properties[nameof(gallery.InRibbonPresenterFactory)]!.SerializationVisibility);
         var serialization = new DesignerSerializationManager(); using var session = serialization.CreateSession();
         var manager = (IDesignerSerializationManager)serialization; manager.SetName(gallery, "stylesGallery");
         var serializer = Assert.IsAssignableFrom<CodeDomSerializer>(manager.GetSerializer(typeof(RibbonGalleryItem), typeof(CodeDomSerializer)));
-        var statements = serializer.SerializeMember(manager, gallery, properties[nameof(gallery.DropDownPresenterType)]!);
-        Assert.Contains(statements.Cast<CodeStatement>().OfType<CodeAssignStatement>(), statement => statement.Left is CodePropertyReferenceExpression { PropertyName: "DropDownPresenterType" }
+        var statements = serializer.SerializeMember(manager, gallery, properties[propertyName]!);
+        Assert.Contains(statements.Cast<CodeStatement>().OfType<CodeAssignStatement>(), statement => statement.Left is CodePropertyReferenceExpression property && property.PropertyName == propertyName
             && statement.Right is CodeTypeOfExpression type && type.Type.BaseType == typeof(Presenter).FullName);
         Assert.Empty(serialization.Errors.Cast<object>());
     });
+
+    [Fact]
+    public void Inline_and_popup_choices_remain_independent_when_discovery_is_unavailable() => FoundationTests.Sta(() =>
+    {
+        Presenter.Constructions = 0;
+        using var host = new DesignerAuthoringTests.Host(); using var ribbon = DesignerAuthoringTests.MakeRibbon(host);
+        var gallery = ribbon.Tabs[0].Groups[0].Items.OfType<RibbonGalleryItem>().Single();
+        gallery.InRibbonPresenterType = typeof(InlinePresenter); gallery.DropDownPresenterType = typeof(Presenter);
+        Assert.Equal(new[] { typeof(InlinePresenter), typeof(Presenter) }, RibbonGalleryPresenterTypes.Available(host, ribbon));
+        var draft = RibbonDesignCommitter.Read(ribbon, host);
+        var node = draft.Nodes.Single(node => node.Kind == "Gallery");
+        node.Properties.Single(property => property.Name == "InRibbonPresenterType").Value = "(None)";
+        Assert.True(RibbonDesignCommitter.Apply(ribbon, host, draft));
+        Assert.Null(gallery.InRibbonPresenterType); Assert.Equal(typeof(Presenter), gallery.DropDownPresenterType);
+        Assert.Equal(0, Presenter.Constructions);
+    });
+
+    private static Type? SelectedType(RibbonGalleryItem gallery, string propertyName) => (Type?)TypeDescriptor.GetProperties(gallery)[propertyName]!.GetValue(gallery);
 
     public class Presenter : UserControl, IRibbonGalleryPresenter
     {
@@ -146,6 +174,7 @@ public sealed class GalleryPresenterTypeTests
         public bool CanScrollForward => false;
     }
     public abstract class AbstractPresenter : Presenter { }
+    public sealed class InlinePresenter : Presenter { }
     public sealed class NoDefaultPresenter : Presenter { public NoDefaultPresenter(int unused) { } }
     public sealed class GenericPresenter<T> : Presenter { }
     private sealed class PrivatePresenter : Presenter { }

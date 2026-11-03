@@ -631,7 +631,8 @@ have independent selectors below. QAT popups use these dropdown selectors when
 UseDropDownPresenterInQuickAccess is true; its default false preserves the built-in
 QAT popup. The factory is excluded from designer
 serialization; presenter controls/state are excluded from customization JSON.
-Ordinary dropdown/split UserControl bodies remain a separate planned increment.
+Ordinary dropdown/split UserControl bodies use the separate
+[retained-content contract](docs/DROPDOWN-CONTENT-PLAN.md).
 
 The Designer Sample's designer-declared **Gallery → Document styles** demonstrates the
 public API with [GalleryStylesControl](samples/RibbonKit.WinForms.DesignerSample/GalleryStylesControl.cs).
@@ -660,8 +661,11 @@ Both implement the existing `IRibbonGalleryPresenter`; context.Presentation is
 InRibbon or DropDown. The two selector pairs are independent. For runtime
 construction with arguments, clear InRibbonPresenterType and assign
 InRibbonPresenterFactory instead. Null for both inline selectors retains the
-built-in strip. The inline class picker in Edit Ribbon/Properties is deferred;
-select this runtime class in code or an authored typeof assignment.
+built-in strip. After building the consumer, select **Data → InRibbonPresenterType**
+in Edit Ribbon or component Properties. Its class list is independent of
+DropDownPresenterType, and `(None)` restores the built-in inline strip. Discovery
+and inert previews never construct the application UserControl; generated code
+stores its `typeof(...)` assignment. Edit the body in the ordinary UserControl designer.
 
 RibbonKit creates the ordinary inline control for a visible strip slot and
 retains it across hiding and popup expansion. Collapsed-group, minimized-tab and

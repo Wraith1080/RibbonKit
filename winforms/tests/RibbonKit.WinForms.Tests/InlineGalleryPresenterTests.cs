@@ -187,7 +187,7 @@ public sealed class InlineGalleryPresenterTests
         var context = typed.Context; var group = (RibbonGroup)f.Gallery.Parent!; group.Items.Remove(f.Gallery);
         Assert.True(typed.IsDisposed); Assert.False(context.IsActive); Assert.False(f.Gallery.IsDisposed); Assert.Equal(15, f.Gallery.Items.Count);
         Assert.Equal(DesignerSerializationVisibility.Hidden, TypeDescriptor.GetProperties(f.Gallery)[nameof(f.Gallery.InRibbonPresenterFactory)]!.SerializationVisibility);
-        Assert.False(TypeDescriptor.GetProperties(f.Gallery)[nameof(f.Gallery.InRibbonPresenterType)]!.IsBrowsable); // The dedicated inline class-picker slice is deferred.
+        Assert.True(TypeDescriptor.GetProperties(f.Gallery)[nameof(f.Gallery.InRibbonPresenterType)]!.IsBrowsable);
         Assert.Null(f.Gallery.InRibbonPresenterFactory); Assert.Equal(typeof(View), f.Gallery.InRibbonPresenterType);
     });
 

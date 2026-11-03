@@ -1,3 +1,6 @@
+using System.CodeDom;
+using System.ComponentModel;
+using System.ComponentModel.Design.Serialization;
 using System.Runtime.InteropServices;
 using RibbonKit.WinForms;
 
@@ -18,6 +21,23 @@ internal static class InlineGalleryPresenterCheck
         using var form = new DesignerForm { StartPosition = FormStartPosition.Manual, Location = new(180, 120) };
         var ribbon = form.Controls.OfType<RibbonControl>().Single(); var (tab, gallery) = form.GalleryPresenterExample;
         Require(gallery.IsInRibbon && gallery.InRibbonPresenterType == typeof(GalleryStylesStripControl), "Designer-authored inline class assignment");
+        var properties = TypeDescriptor.GetProperties(gallery);
+        Require(properties[nameof(gallery.InRibbonPresenterType)]!.IsBrowsable, "Inline class selection is visible to the designer");
+        var serialization = new DesignerSerializationManager();
+        using (serialization.CreateSession())
+        {
+            var manager = (IDesignerSerializationManager)serialization; manager.SetName(gallery, "documentStylesGallery");
+            var serializer = (CodeDomSerializer)manager.GetSerializer(typeof(RibbonGalleryItem), typeof(CodeDomSerializer))!;
+            foreach (string name in new[] { nameof(gallery.InRibbonPresenterType), nameof(gallery.DropDownPresenterType) })
+            {
+                var statements = serializer.SerializeMember(manager, gallery, properties[name]!);
+                var expected = ((Type)properties[name]!.GetValue(gallery)!).FullName;
+                Require(statements.Cast<CodeStatement>().OfType<CodeAssignStatement>().Any(statement => statement.Left is CodePropertyReferenceExpression property
+                    && property.PropertyName == name && statement.Right is CodeTypeOfExpression type && type.Type.BaseType == expected), "Generated typeof assignment: " + name);
+            }
+            Require(serialization.Errors.Count == 0, "Independent type serialization has no errors");
+        }
+        log.WriteLine("PASS: package-only inline property is browsable; real CodeDOM stores independent inline/popup typeof assignments already compiled in the authored Form.");
         Require(gallery.DropDownPresenterType == typeof(GalleryStylesControl), "Existing popup class remains independent");
         ribbon.SelectedTab = tab; Exception? failure = null;
         form.Shown += async (_, _) =>

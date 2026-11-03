@@ -26,8 +26,8 @@ public sealed class RibbonGalleryItem : RibbonDropDownItem
     private Func<Control>? _inRibbonPresenterFactory;
     private Type? _inRibbonPresenterType;
     /// <summary>Gets or selects a public concrete UserControl implementing IRibbonGalleryPresenter with a public parameterless constructor for inline strip slots. Creation is lazy. RibbonKit retains the ordinary ribbon view across hiding and creates separate session-owned views for collapsed-group, minimized-tab and QAT-group bodies. Views are never moved between hosts. Replacement, final source detach and ribbon disposal release owned views; closing a temporary host releases its view. Clear InRibbonPresenterFactory first. Null for both inline selectors preserves the built-in strip. Expanded QAT gallery popups use the independent dropdown selectors when UseDropDownPresenterInQuickAccess is true.</summary>
-    [Browsable(false), Category("Data"), DefaultValue(null)]
-    [Description("Custom inline gallery UserControl class, independent of the dropdown presenter. Body authoring stays in the ordinary UserControl designer; inline class discovery is a later designer increment.")]
+    [Category("Data"), DefaultValue(null)]
+    [Description("Custom inline gallery UserControl class, independent of the dropdown presenter. Edit its body in the UserControl designer. Build the project to refresh available classes; (None) restores the built-in strip.")]
     public Type? InRibbonPresenterType
     {
         get => _inRibbonPresenterType;

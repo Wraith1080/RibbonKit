@@ -1,6 +1,8 @@
 # Optional native gallery presenter and dropdown content hosting
 
 Status, **2026-11-02: ordinary inline and source/QAT custom gallery popups accepted at the reviewed scope**.
+**2026-11-03:** the [inline class-picker increment](#inline-gallery-designer-class-selection--2026-11-03)
+is implemented with focused and package-consumer evidence; actual VS review remains pending.
 The subsequently reported popup-card clipping and temporary group-body fallback
 are tracked in the correction record below.
 The user previously confirmed the dropdown gallery presenter works.
@@ -21,7 +23,7 @@ The [QAT gallery popup increment](#qat-gallery-popup-increment--2026-11-02) reus
 existing dropdown class/factory. The
 [temporary body correction](#popup-card-rendering-and-temporary-inline-hosts--2026-11-02)
 adds source-group, minimized-tab and QAT-group bodies. Inline designer class
-selection remains a later slice under the [inline/QAT contract](#inline-and-qat-gallery-presenter-contract--proposal-2026-11-02).
+selection is now implemented under the [inline/QAT contract](#inline-and-qat-gallery-presenter-contract--proposal-2026-11-02).
 
 ## First increment contract — 2026-11-02
 
@@ -270,6 +272,56 @@ presenter caching, factory ownership or application animation code was added.
   user-review gates. User review, **2026-11-02**: the gallery fade/slide entrance
   looks good at the reviewed scope; broader physical-input/display gates remain.
 
+## Inline gallery designer class selection — 2026-11-03
+
+Implemented as the first user-authorized follow-up, starting from clean
+`codex/Ribbonkit-Winform` at `669af3ddfbbfe3f58b404114480ace6713ecbec5`.
+This completes the existing inline selector's designer authoring; runtime view
+creation, sizing, routing and ownership are unchanged. The user requested stopping
+after each slice. Popup designer preview and appearance consolidation remain next,
+one at a time, with themes afterward; none was implemented in this increment.
+
+After building the consumer, select the gallery in **Edit Ribbon → Data →
+InRibbonPresenterType**, or use the component's **Properties → Data** class picker.
+Choose a public concrete UserControl implementing `IRibbonGalleryPresenter` with
+a public parameterless constructor. `(None)` restores the built-in inline strip.
+Keep `IsInRibbon = true` for the strip; `DropDownPresenterType` remains the separate
+expanded-popup choice. The body is edited in its normal UserControl designer.
+
+The existing metadata-only picker now serves both selectors and retains both
+assigned classes when discovery is unavailable. Detached drafts, inert previews,
+Cancel, Apply, CodeDOM and Undo/Redo never construct application controls. Each
+selector rejects its own runtime factory conflict before live mutation; the other
+selector and source selection remain intact. Factories stay excluded from saved
+code. No public member, customization schema, runtime painting or popup preview
+was added.
+
+Verification:
+
+- **16 picker tests passed**, including both selectors' discovery, eligible-only
+  choices, retained types, draft/preview/Cancel/reset, invalid choices, factory
+  conflicts, framework Undo/Redo and actual `typeof(...)` serialization.
+- The affected existing designer/inline/temporary/QAT/retained-dropdown selection
+  passed **124/125** initially. Its remaining assertion required the formerly hidden
+  inline property. It now checks the intentionally visible metadata; only that
+  case was rerun and passed **1/1**. These are 141 distinct passing cases assembled
+  across runs, not a full-suite or single aggregate result. Logs:
+  `inline-gallery-class-picker.trx`, `inline-gallery-class-picker-related.trx` and
+  `inline-gallery-class-picker-metadata.trx` under the native test project's TestResults.
+- Normal Debug runtime, designer server/client, local package and permanent
+  Designer Sample builds passed with zero warnings/errors. The sample was refreshed
+  in place using `0.1.0-designer.local20261103T032226969Z`; authored Forms and
+  UserControls were preserved.
+- The package-only public consumer passed at actual **120 DPI**, including visible
+  property metadata, independent inline/popup CodeDOM type assignments already
+  compiled in the authored Form, source selection, retained native cards/handles,
+  separate popup lifetime, cancel/commit, keyboard/child input, hiding and disposal.
+  Evidence: `artifacts/inline-gallery-class-picker/consumer/`.
+
+Actual Visual Studio class discovery, Properties/Edit Ribbon interaction,
+save/reopen and Undo/Redo review remain separate from those automated checks.
+No full suite, Release, WPF, commit or push work ran. This slice stops here.
+
 ## Gallery presenter class selection — 2026-11-02
 
 Implemented as the user-selected bounded designer increment. Nullable
@@ -456,10 +508,11 @@ Verification recorded separately:
 Review **Gallery → Document styles** in the normal Debug Designer Sample. Browse
 rows, expand/cancel, select from either view and switch tabs. To edit the new body,
 open GalleryStylesStripControl.cs in its ordinary UserControl designer. The inline
-selector is not yet offered in Edit Ribbon or Properties. The following QAT
-increment now reuses the source dropdown selectors through an explicit opt-in,
-retaining the compact QAT launcher. Separate custom bodies in temporary
-group/minimized-tab hosts and the inline designer class picker remain later slices.
+selector is now offered in Edit Ribbon and Properties by the
+[designer increment](#inline-gallery-designer-class-selection--2026-11-03).
+The following QAT increment reuses the source dropdown selectors through an
+explicit opt-in, retaining the compact QAT launcher. Separate custom bodies in
+temporary group/minimized-tab hosts are implemented in the later correction record.
 
 ```powershell
 dotnet run --project winforms/samples/RibbonKit.WinForms.DesignerSample -c Debug --no-build -- --verify-inline-gallery-presenter winforms/artifacts/inline-gallery-presenter/consumer-final
@@ -1004,10 +1057,10 @@ or new customization schema for this extension.
    minimized-tab bodies and QAT group flyouts. Verify permanent/temporary views
    coexist, popup teardown never disposes the permanent view, and no live body
    is moved between hosts. Preserve default strip behavior.
-4. **Designer authoring.** Extend only the existing gallery class-selection and
-   bool authoring paths after the runtime contract works in an independent public
-   consumer. Add generated-code/Undo/Redo checks without constructing application
-   controls. Refresh the existing Designer Sample in place for actual VS review.
+4. **Designer authoring — implemented.** The
+   [inline class picker](#inline-gallery-designer-class-selection--2026-11-03)
+   extends the existing metadata-only selection path, with generated-code/Undo/Redo
+   checks and an in-place package-consumer refresh. Actual VS review remains separate.
 
 Each slice should add the native API/XML baseline entries it actually implements,
 not reserve the entire proposal in advance. Use normal Debug outputs and direct
@@ -1044,8 +1097,9 @@ Recorded contract review decisions:
   tradeoff against reusing one movable control or allowing application preferred
   sizes to drive ribbon reduction; neither alternative is assumed authorized.
 
-The user authorized the ordinary inline and QAT popup increments above;
-the later slices remain the recorded target sequence.
+The four runtime/authoring stages above are implemented; their separate review
+gates are recorded in the corresponding increments. Inert popup designer preview
+remains deferred.
 Arbitrary embedded editors, custom QAT toolbar bodies, new gallery UIA patterns,
 general dropdown hosting/preview, new themes and unrelated refactors stay deferred.
 

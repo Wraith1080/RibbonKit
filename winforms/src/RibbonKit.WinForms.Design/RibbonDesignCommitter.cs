@@ -26,7 +26,7 @@ internal static partial class RibbonDesignCommitter
         "Id", "Text", "KeyTip", "Enabled", "Visible", "IsContextual", "ContextualColor", "CanClose", "CloseButtonText",
         "Priority", "ReductionMode", "Layout", "Row", "SizePolicy", "Checked", "CheckState", "GroupName", "MenuDescription", "DropDownHeader", "MenuPresentation",
         "ScreenTipTitle", "ScreenTipDescription", "ShowLabel", "IsEditable", "Value", "InputWidth", "ReadOnly", "MaxLength", "SelectedIndex",
-        "IsInRibbon", "InRibbonColumnCount", "ColumnCount", "TileWidth", "TileHeight", "MaxVisibleRows", "DropDownKeyTip", "DropDownPresenterType", "ContentType"
+        "IsInRibbon", "InRibbonColumnCount", "ColumnCount", "TileWidth", "TileHeight", "MaxVisibleRows", "DropDownKeyTip", "DropDownPresenterType", "InRibbonPresenterType", "ContentType"
     ];
     private static readonly string[] SizePolicies = new[]
     {
@@ -107,9 +107,13 @@ internal static partial class RibbonDesignCommitter
         var controlTypes = RibbonDropDownContentTypes.Available(host, ribbon);
         foreach (var node in draft.CommandNodes.Where(node => node.Kind == "Gallery"))
         {
-            var type = RibbonGalleryPresenterTypes.Resolve(node.Properties.Single(property => property.Name == "DropDownPresenterType").Value, controlTypes);
-            if (type is not null && namedElements.GetValueOrDefault(node.Key) is RibbonGalleryItem { DropDownPresenterFactory: not null })
-                throw new ArgumentException("Clear the application's DropDownPresenterFactory before selecting DropDownPresenterType. The designer preserves runtime factories.");
+            foreach (string name in new[] { "DropDownPresenterType", "InRibbonPresenterType" })
+            {
+                var type = RibbonGalleryPresenterTypes.Resolve(node.Properties.Single(property => property.Name == name).Value, controlTypes);
+                if (type is not null && namedElements.GetValueOrDefault(node.Key) is RibbonGalleryItem gallery
+                    && (name == "DropDownPresenterType" ? gallery.DropDownPresenterFactory : gallery.InRibbonPresenterFactory) is not null)
+                    throw new ArgumentException($"Clear the application's {name.Replace("Type", "Factory")} before selecting {name}. The designer preserves runtime factories.");
+            }
         }
         foreach (var node in draft.CommandNodes.Where(node => node.Kind is "DropDown" or "SplitButton"))
         {
@@ -313,7 +317,7 @@ internal static partial class RibbonDesignCommitter
         return property;
     }
     private static object? ConvertValue(PropertyDescriptor property, string value, IEnumerable<Type>? controlTypes = null) => property.Name == "ContentType"
-        ? RibbonDropDownContentTypes.Resolve(value, controlTypes ?? []) : property.Name == "DropDownPresenterType"
+        ? RibbonDropDownContentTypes.Resolve(value, controlTypes ?? []) : property.Name is "DropDownPresenterType" or "InRibbonPresenterType"
         ? RibbonGalleryPresenterTypes.Resolve(value, controlTypes ?? []) : property.PropertyType == typeof(string) ? value : property.Converter.ConvertFromInvariantString(value);
     internal static bool SameIcon(RibbonDesignIcon first, RibbonDesignIcon second) => first.Kind == second.Kind && first.Source == second.Source && first.UseForegroundColor == second.UseForegroundColor;
     internal static RibbonDesignIcon ReadIcon(RibbonElement element)
@@ -341,7 +345,7 @@ internal static partial class RibbonDesignCommitter
             Type = property.PropertyType == typeof(Type) ? "String" : property.PropertyType.Name,
             Value = property.PropertyType == typeof(Type) ? RibbonGalleryPresenterTypes.Label(property.GetValue(element) as Type)
                 : property.PropertyType == typeof(string) ? (string?)property.GetValue(element) ?? "" : property.Converter.ConvertToInvariantString(property.GetValue(element)) ?? "",
-            Options = property.PropertyType == typeof(Type) ? new[] { RibbonGalleryPresenterTypes.None }.Concat((controlTypes ?? []).Where(type => property.Name != "DropDownPresenterType" || RibbonGalleryItem.IsPresenterType(type)).Select(RibbonGalleryPresenterTypes.Label)).ToArray()
+            Options = property.PropertyType == typeof(Type) ? new[] { RibbonGalleryPresenterTypes.None }.Concat((controlTypes ?? []).Where(type => property.Name is not ("DropDownPresenterType" or "InRibbonPresenterType") || RibbonGalleryItem.IsPresenterType(type)).Select(RibbonGalleryPresenterTypes.Label)).ToArray()
                 : property.PropertyType.IsEnum ? Enum.GetNames(property.PropertyType) : property.PropertyType == typeof(RibbonSizePolicy)
                 ? SizePolicies.Concat(new[] { property.Converter.ConvertToInvariantString(property.GetValue(element))! }).Distinct(StringComparer.Ordinal).ToArray() : [] }).ToList();
     private static string Kind(RibbonElement element) => Kinds.FirstOrDefault(pair => pair.Value == element.GetType()).Key

@@ -11,7 +11,7 @@ internal static class RibbonDropDownContentTypes
     {
         var discovered = (host.GetService(typeof(ITypeDiscoveryService)) as ITypeDiscoveryService)?.GetTypes(typeof(UserControl), true).OfType<Type>() ?? [];
         var retained = ribbon is null ? [] : RibbonDesignCommitter.EditableElements(ribbon).OfType<RibbonDropDownItem>()
-            .SelectMany(item => new[] { item.ContentType, (item as RibbonGalleryItem)?.DropDownPresenterType }).OfType<Type>();
+            .SelectMany(item => new[] { item.ContentType, (item as RibbonGalleryItem)?.DropDownPresenterType, (item as RibbonGalleryItem)?.InRibbonPresenterType }).OfType<Type>();
         return discovered.Concat(retained).Where(RibbonBackstagePageItem.IsContentType).Distinct().OrderBy(RibbonBackstageContentTypes.Label, StringComparer.Ordinal).ToArray();
     }
     internal static Type? Resolve(string label, IEnumerable<Type> types) => label == RibbonBackstageContentTypes.None ? null
