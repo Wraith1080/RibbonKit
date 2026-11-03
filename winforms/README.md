@@ -1242,8 +1242,11 @@ existing editor contract: native presenters are disposed, while models, values
 and bindings survive for reinsertion. `IsDropDownOpen` describes each reference.
 Source/reference disable, replacement, removal and disposal close stale flyouts.
 
-Toggles, checkboxes, radios and checking split primaries keep the retained group
-flyout open; ordinary commands dismiss it. KeyTips and nested Escape navigation
+Toggles, checkboxes, radios and split primaries with `CheckOnClick=true` keep
+group and More Commands/QAT overflow popups open. This includes ordinary
+collapsed groups, Simplified full-group flyouts and QAT groups. Ordinary commands
+and nonchecking split primaries dismiss them; split arrows open their own menus.
+KeyTips and nested Escape navigation
 use the original command level and restore each opener. Showcase's Input fields
 reference demonstrates this with the Fields group. Group-specific icon/ScreenTip
 metadata is not added in this slice; custom renderers can override

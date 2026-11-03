@@ -65,9 +65,9 @@ internal sealed class RibbonMotionScene : IDisposable
         finally { ribbon.CapturingMotionIndicators = previous; ribbon.CapturingBackdropScene = material; }
     }
     public void Dispose() => Image.Dispose();
-    internal static void Capture(RibbonControl ribbon, Control surface, Bitmap image)
+    internal static void Capture(RibbonControl ribbon, Control surface, Bitmap image, bool includeNonClient = false)
     {
-        PrintClient(surface, image);
+        PrintClient(surface, image, includeNonClient);
         if (ReferenceEquals(surface, ribbon) && ribbon.HasWindowBackdrop) ribbon.CopyBackdropSnapshot(image);
         CaptureChildren(ribbon, surface.Controls.Cast<Control>(), image);
     }
@@ -112,12 +112,14 @@ internal sealed class RibbonMotionScene : IDisposable
         // in those slots; only incoming headers fade or travel vertically.
         return _headerTracks = Headers.Select(h => new HeaderTrack(h.Value, !from.Headers.ContainsKey(h.Key))).ToArray();
     }
-    internal static void PrintClient(Control control, Bitmap image)
+    internal static void PrintClient(Control control, Bitmap image, bool includeNonClient = false)
     {
         // WM_PRINT without PRF_CHILDREN uses the normal HWND paint context and
         // font metrics. Owned editors are composed separately with their clips.
+        // Whole gallery cards also need PRF_NONCLIENT: native scrollbars lie
+        // outside ClientRectangle but inside the captured control's Size.
         using var graphics = Graphics.FromImage(image); var dc = graphics.GetHdc();
-        try { SendMessage(control.Handle, 0x317, dc, 0xC); }
+        try { SendMessage(control.Handle, 0x317, dc, includeNonClient ? 0xE : 0xC); }
         finally { graphics.ReleaseHdc(dc); }
     }
     [DllImport("user32.dll", EntryPoint = "SendMessageW")] private static extern nint SendMessage(nint window, uint message, nint parameter, nint flags);

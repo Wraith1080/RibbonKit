@@ -5,6 +5,10 @@ implemented; review and validation are recorded in
 [the color-role slice](APPEARANCE-COLOR-ROLES.md)**. Earlier KeyTip/backdrop,
 Backstage and disabled/state increments remain. Geometry overrides and new
 built-in themes are separate later slices.
+User sequencing update, **2026-11-03**: finish the
+[state-command popup correction](STATE-COMMAND-POPUPS.md), then implement the
+[Application Menu replacement](APPLICATION-MENU-PLAN.md) before geometry
+consolidation. Stop for review after each slice.
 This starts the appearance-consolidation checkpoint after the main component and
 M6C work. It does not complete comprehensive theming or add another built-in theme.
 Designer authoring, localization/RTL and additional palettes retain their later

@@ -7,6 +7,9 @@ The subsequently reported popup-card clipping and temporary group-body fallback
 are tracked in the correction record below.
 The user previously confirmed the dropdown gallery presenter works.
 The user accepted the synchronized gallery fade/slide entrance on **2026-11-02**.
+The built-in gallery's first-opening scrollbar capture correction is recorded
+[below](#built-in-gallery-scrollbar-opening-capture--2026-11-03). User review,
+**2026-11-03**: the reported first-opening black scrollbar is "fixed perfectly".
 Gallery UserControl class selection in the ribbon designer is implemented with
 focused and package-consumer evidence below; actual VS review remains pending.
 The follow-up moves the Designer Sample hierarchy into designer-managed code;
@@ -231,6 +234,53 @@ not a public extension contract. The normal sample and `--verify-gallery-present
 continue to use public APIs only. User-perceived response/smoothness and other
 machines remain acceptance gates. Reusing controls may help genuinely expensive
 application views, but is a separate ownership/lifetime decision, not this fix.
+
+## Built-in gallery scrollbar opening capture — 2026-11-03
+
+Baseline: clean `codex/Ribbonkit-Winform` at `b4af3ca` (title-bar customization).
+The user reported a black native scrollbar during the ordinary gallery's first
+opening. The supplied recording shows the black band during the fade/slide,
+followed by the correctly drawn native track/thumb at handoff.
+
+The inert opening bitmap had the control's full `Size`, but its `WM_PRINT`
+request covered only client/background drawing. Native scrollbars occupy the
+nonclient portion, so those pixels remained black. Gallery opening captures now
+also request `PRF_NONCLIENT`; the default capture path for other motion remains
+client-only. The capture still composes owned child controls separately and keeps
+the real popup, scrollbar, selection and input owners. No public API, palette,
+scroll geometry or animation-policy change was added.
+See the platform's [WM_PRINT drawing flags](https://learn.microsoft.com/en-us/windows/win32/gdi/wm-print).
+
+Evidence under `artifacts/gallery-scrollbar/` and the native test project's
+`TestResults/`:
+
+- Two new Office/neutral raster tests reproduced the first-opening black band
+  before the fix (`gallery-scrollbar-before.trx`). Both now pass for first opening
+  and reopening (`gallery-scrollbar-after.trx`), checking the actual native track
+  and thumb rather than a replacement background fill. Before/after PNGs were
+  inspected.
+- The related regression selection ran **89 passed / 1 failed / 90 total** in
+  `gallery-scrollbar-regressions.trx`. The inline descendant synthetic-keyboard
+  case also failed its first isolated retry, then passed against both the
+  previously packaged baseline and the fixed runtime in fresh processes
+  (`gallery-scrollbar-focus-{baseline,fixed-confirm}.trx`). The fixed test-output
+  DLL was restored and hash-checked after the baseline comparison. This is not a
+  clean aggregate pass; no unrelated input behavior was changed.
+- The independent public-API package consumer reproduced the real screen defect
+  with the old package (`native-before/result.log`: first opening had a fully
+  dark scrollbar sample). The fixed package passed **12 first/reopening scopes**:
+  Solid/Mica/Acrylic × Compact/Touch × two openings, with **132 composed-screen
+  samples at actual 120 DPI**. Requested Mica/Acrylic were confirmed effective;
+  every sampled scrollbar had zero detected near-black coverage. Evidence and
+  captured PNGs: `native-after/`. Fixture-owned windows and asynchronous capture
+  preserve the real opening timer; no physical input was injected.
+- Normal Debug runtime/designer server/client, package consumer and Showcase
+  builds passed with zero warnings/errors. The permanent Designer Sample was
+  refreshed in place to **`0.1.0-designer.local20261103T073843725Z`**, preserving
+  authored Forms/UserControls/resources.
+
+Human review, actual VS interaction and mixed-monitor DPI remain separate.
+No full suite, Release, WPF, commit or push work ran for this bounded correction.
 
 ## Synchronized gallery entrance — 2026-11-02
 

@@ -67,19 +67,22 @@ public partial class RibbonControl
             return;
         }
         var command = RibbonQuickAccess.Command(entry)!;
-        bool keepOverflow = opener is RibbonPopupSurface { OwnerElement: RibbonQuickAccessOverflow }
-            && command is RibbonToggleItem or RibbonCheckBoxItem or RibbonRadioButtonItem or RibbonSplitButtonItem { CheckOnClick: true };
-        if (keepOverflow) ((RibbonPopupSurface)opener).FocusElement(entry);
+        bool keepPopup = KeepStatePopupOpen(command, opener, entry);
         command.PerformClick();
-        if (!keepOverflow) _popups.CloseAll(false);
+        if (!keepPopup) _popups.CloseAll(false);
         ExitKeyTips(false);
     }
-    private bool KeepQuickAccessGroupOpen(RibbonItem command, Control? opener)
+    private bool KeepStatePopupOpen(RibbonItem command, Control? opener, RibbonElement? entry = null)
     {
         var surface = opener as RibbonPopupSurface ?? _popups.Top;
-        if (surface?.GroupSource is not { } group || !RibbonQuickAccess.RetainsGroup(group)
+        if (surface is null || surface.GroupSource is null && surface.OwnerElement is not RibbonQuickAccessOverflow
             || command is not (RibbonToggleItem or RibbonCheckBoxItem or RibbonRadioButtonItem or RibbonSplitButtonItem { CheckOnClick: true })) return false;
-        surface.FocusElement(command);
+        var focused = entry ?? command;
+        if (!surface.Targets.Any(target => ReferenceEquals(target.Element, focused) && target.Enabled)) return false;
+        // State changes keep their command container open, independently of
+        // whether a group is collapsed, in More Commands or retained by QAT.
+        // A command callback can still close or replace that container itself.
+        surface.FocusElement(focused);
         return true;
     }
 }
