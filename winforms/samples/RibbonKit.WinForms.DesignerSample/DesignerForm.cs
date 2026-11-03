@@ -27,6 +27,8 @@ public partial class DesignerForm : RibbonForm
     private void documentStylesGallery_ItemPreviewCancelled(object? sender, EventArgs e) => statusLabel.Text = "Selected: " + documentStylesGallery.SelectedItem?.Text;
     private void documentStylesGallery_SelectionCommitted(object? sender, EventArgs e) => statusLabel.Text = "Selected: " + documentStylesGallery.SelectedItem?.Text;
 
+    private void ApplicationExit_Click(object? sender, EventArgs e) => Close();
+
     private void ApplicationCommand_Click(object? sender, EventArgs e) => statusLabel.Text = "Application Menu: " + (sender as RibbonItem)?.Text;
 
     private void ApplyButton_Click(object? sender, EventArgs e) => statusLabel.Text = "Applied: " + nameField.Value;

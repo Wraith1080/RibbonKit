@@ -578,6 +578,8 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
             try
             {
                 e.Graphics.SetClip(target.Clip);
+                if (IsApplicationMenu && _applicationLayout is { } menuLayout && target.Clip != menuLayout.Footer && _applicationItemClip is not null)
+                    e.Graphics.SetClip(_applicationItemClip, System.Drawing.Drawing2D.CombineMode.Intersect);
                 if (target.Kind == TargetKind.QuickAccessOverflow) _ribbon.Painter.DrawQuickAccessOverflow(context with { Bounds = target.Bounds, Hot = ReferenceEquals(_hot, target.Element), Pressed = ReferenceEquals(_pressed, target.Element) });
                 else if (target.Kind == TargetKind.QuickAccess)
                 {
@@ -601,10 +603,11 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
                     {
                         Bounds = target.Bounds,
                         Hot = target.Enabled && !_hotDropDown && ReferenceEquals(_hot, item),
-                        Pressed = target.Enabled && !_pressedDropDown && (ReferenceEquals(_pressed, item) || IsApplicationNavigation(item) && ReferenceEquals(_applicationPane, item)),
+                        Pressed = target.Enabled && !_pressedDropDown && ReferenceEquals(_pressed, item),
                         Focused = target.Enabled && !_focusedDropDown && _ribbon.KeyboardFocusCues && Focused && ReferenceEquals(_focused, item),
                         ReserveIcon = target.ReserveIcon,
-                        IsGalleryDropDown = target.GalleryDropDown
+                        IsGalleryDropDown = target.GalleryDropDown,
+                        ApplicationMenuPart = ApplicationPart(target)
                     };
                     if (item is RibbonGalleryTile tile && GallerySource is { } gallery)
                         _ribbon.Painter.DrawGalleryTile(primary, tile, ReferenceEquals(gallery.SelectedItem, tile));
@@ -653,7 +656,11 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         _hotDropDown = target?.DropDownPart ?? false;
         PreviewGalleryPointer(target?.Element as RibbonGalleryTile);
         UpdateOverflowHover(_hotKind);
-        if (changed) Invalidate();
+        if (changed)
+        {
+            HoverApplicationNavigation(target);
+            if (!IsDisposed) Invalidate();
+        }
     }
     protected override void OnMouseLeave(EventArgs e)
     {
@@ -756,7 +763,8 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
                 : bodyTarget.Bounds.Right > body.BodyViewport.Right ? bodyTarget.Bounds.Right - body.BodyViewport.Right : 0;
             if (delta != 0) ScrollBody(delta);
         }
-        if (_targets.SelectMany(t => RibbonSplitLayout.Expand(t, _ribbon.DeviceDpi, MenuSource is not null || OwnerElement is RibbonQuickAccessOverflow)).FirstOrDefault(t => ReferenceEquals(t.Element, item) && t.DropDownPart == _focusedDropDown) is { } target)
+        var rawTargets = IsApplicationMenu ? RawApplicationTargets() : _targets.SelectMany(t => RibbonSplitLayout.Expand(t, _ribbon.DeviceDpi, MenuSource is not null || OwnerElement is RibbonQuickAccessOverflow));
+        if (rawTargets.FirstOrDefault(t => ReferenceEquals(t.Element, item) && t.DropDownPart == _focusedDropDown) is { } target)
         {
             if (IsApplicationMenu) RevealApplicationTarget(target);
             else if (OwnerElement is RibbonQuickAccessOverflow)

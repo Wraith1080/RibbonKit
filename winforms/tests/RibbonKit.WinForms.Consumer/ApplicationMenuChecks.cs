@@ -25,16 +25,19 @@ internal static class ApplicationMenuChecks
         var editor = new TextBox { Name = "RetainedEditor", AccessibleName = "Retained editor", Text = "Retained", Location = new(16, 55), Width = 270 };
         var combo = new ComboBox { Location = new(16, 95), Width = 270, DropDownStyle = ComboBoxStyle.DropDownList }; combo.Items.AddRange(["Document", "Template"]); combo.SelectedIndex = 0;
         body.Controls.AddRange([editor, combo]);
-        var open = new RibbonDropDownItem { Text = "Open", KeyTip = "O", DropDownHeader = "Open document", Content = body };
-        var save = new RibbonSplitButtonItem { Text = "Save", KeyTip = "S", DropDownKeyTip = "A", CheckOnClick = true, DropDownHeader = "Save a copy" };
+        var plain = new RibbonButtonItem { Text = "New", Icon = RibbonStockIcons.Create("new"), KeyTip = "N" };
+        var open = new RibbonDropDownItem { Text = "Open", Icon = RibbonStockIcons.Create("open"), KeyTip = "O", DropDownHeader = "Open document", Content = body };
+        var save = new RibbonSplitButtonItem { Text = "Save", Icon = RibbonStockIcons.Create("save"), KeyTip = "S", DropDownKeyTip = "A", CheckOnClick = true, DropDownHeader = "Save a copy" };
         var nested = new RibbonDropDownItem { Text = "Export", KeyTip = "X" }; var leaf = new RibbonButtonItem { Text = "PDF document", KeyTip = "P" }; nested.Items.Add(leaf); save.Items.Add(nested);
-        var options = new RibbonButtonItem { Text = "Options", KeyTip = "T" }; var disabled = new RibbonButtonItem { Text = "Unavailable", Enabled = false };
-        ribbon.FileMenu.Items.AddRange(open, save, disabled, new RibbonMenuSeparatorItem());
+        save.MenuPresentation = RibbonMenuPresentation.IllustratedChoices;
+        save.Items.Add(new RibbonButtonItem { Text = "Word Document", Icon = RibbonStockIcons.Create("save"), MenuDescription = "Save the document in the default file format." });
+        var options = new RibbonButtonItem { Text = "Options", Icon = RibbonStockIcons.Create("settings"), KeyTip = "T" }; var disabled = new RibbonButtonItem { Text = "Unavailable", Enabled = false };
+        ribbon.FileMenu.Items.AddRange(plain, open, save, disabled, new RibbonMenuSeparatorItem());
         for (int i = 0; i < 22; i++) ribbon.FileMenu.Items.Add(new RibbonButtonItem { Text = "Additional command " + i });
         ribbon.ApplicationMenu.DefaultPane.DropDownHeader = "Recent documents";
         for (int i = 0; i < 30; i++) ribbon.ApplicationMenu.DefaultPane.Items.Add(new RibbonButtonItem { Text = "Report " + (i + 1), KeyTip = i == 0 ? "R" : "" });
         ribbon.ApplicationMenu.FooterItems.Add(options);
-        int actions = 0; bool stateBeforeClick = false; save.Click += (_, _) => { actions++; stateBeforeClick = save.Checked; }; options.Click += (_, _) => actions++; leaf.Click += (_, _) => actions++;
+        int actions = 0; bool stateBeforeClick = false; plain.Click += (_, _) => actions++; save.Click += (_, _) => { actions++; stateBeforeClick = save.Checked; }; options.Click += (_, _) => actions++; leaf.Click += (_, _) => actions++;
         Exception? failure = null; var log = new List<string>(); var pointer = Cursor.Position; bool complete = false;
         form.Shown += async (_, _) =>
         {
@@ -45,10 +48,19 @@ internal static class ApplicationMenuChecks
                 ribbon.Refresh(); await Click(ribbon, record.File); var surface = Surface(); await Capture("default");
                 Check(record.Footer.Height > 0 && record.Footer.Top >= record.Navigation.Bottom && record.Footer.Top >= record.Pane.Bottom, "Independent measured columns and fixed reachable footer");
                 var ao = surface.AccessibilityObject;
+                await Hover(Children(ao).Single(c => c.Name == open.Text)); Check(open.IsDropDownOpen && body.Parent is not null, "Pointer hover selects the dropdown's retained right pane without a click");
+                var splitRow = Children(ao).Single(c => c.Name == save.Text);
+                await Hover(splitRow); Check(save.IsDropDownOpen && body.Parent is null && actions == 0, "Split primary hover selects its pane without invoking"); await Capture("split-hover-main");
+                await Hover(splitRow.GetChild(0)!); Check(save.IsDropDownOpen && actions == 0, "Split arrow hover keeps the pane without invoking"); await Capture("split-hover-arrow");
+                await Move(surface.PointToScreen(new(record.Pane.Left + 4, record.Pane.Bottom - 12))); Check(save.IsDropDownOpen, "Moving into the right pane retains selection"); await Capture("split-selected");
+                await Move(surface.PointToScreen(new(record.Navigation.Right + 2, record.Navigation.Top + 4))); Check(save.IsDropDownOpen, "Navigation-to-pane gap is neutral");
+                await Hover(Children(ao).Single(c => c.Name == disabled.Text)); Check(save.IsDropDownOpen, "Disabled navigation is neutral");
+                await Hover(Children(ao).Single(c => c.Name == plain.Text)); Check(!save.IsDropDownOpen && !open.IsDropDownOpen && Children(ao).Any(c => c.Name == "Report 1") && actions == 0, "Plain command hover restores default content without invoking"); await Capture("default-restored");
                 var unavailable = Children(ao).Single(c => c.Name == disabled.Text); Check((unavailable.State & AccessibleStates.Unavailable) != 0, "Disabled command accessibility state");
                 var last = Children(ao).Single(c => c.Name == "Additional command 21"); last.Select(AccessibleSelection.TakeFocus); await Task.Delay(40);
                 Check(!last.Bounds.IsEmpty && surface.RectangleToScreen(record.Navigation).IntersectsWith(last.Bounds), "Accessibility focus reveals navigation overflow");
                 Check(!Children(ao).Single(c => c.Name == options.Text).Bounds.IsEmpty, "Footer stays reachable while navigation scrolls");
+                Children(ao).Single(c => c.Name == open.Text).Select(AccessibleSelection.TakeFocus); await Task.Delay(40);
                 open.ShowDropDown(); await Task.Delay(80); Check(open.IsDropDownOpen && body.Parent is not null, "Public ShowDropDown selects retained native pane");
                 editor.Focus(); var handle = editor.Handle; await Key("{END}!"); Check(editor.Text == "Retained!", "Native editor accepts keyboard messages"); await Capture("native-pane");
                 Check(Children(ao).Any(c => c.Name == "Application menu content"), "Native content accessibility region is present alongside commands");
@@ -76,6 +88,12 @@ internal static class ApplicationMenuChecks
         void Check(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); log.Add("PASS: " + message); }
         void Guard() { if (GetForegroundWindow() != form.Handle && Control.FromHandle(GetForegroundWindow()) is not ToolStripDropDown) throw new InvalidOperationException("Fixture lost foreground; input stopped."); }
         async Task Key(string keys) { Guard(); SendKeys.SendWait(keys); await Task.Delay(75); }
+        async Task Move(Point screen) { Guard(); Cursor.Position = screen; await Task.Delay(80); Guard(); }
+        async Task Hover(AccessibleObject row)
+        {
+            var bounds = row.Bounds; Check(!bounds.IsEmpty, "Hover target is visible");
+            await Move(new(bounds.Left + bounds.Width / 2, bounds.Top + bounds.Height / 2));
+        }
         async Task Click(Control control, Rectangle bounds)
         {
             Guard(); bounds.Intersect(control.ClientRectangle); Check(bounds.Width > 0 && bounds.Height > 0, "Pointer target is visible");

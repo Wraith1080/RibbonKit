@@ -1,5 +1,6 @@
 param(
     [ValidateSet('Debug', 'Release')][string]$Configuration = 'Debug',
+    [string]$EvidenceDirectory,
     [string[]]$Modes = @('Office-Solid-Compact', 'Office-Solid-Touch', 'Office-Mica-Compact', 'Office-Mica-Touch', 'Office-Acrylic-Compact', 'Office-Acrylic-Touch',
         'Flat-Solid-Compact', 'Flat-Solid-Touch', 'Flat-Mica-Compact', 'Flat-Mica-Touch', 'Flat-Acrylic-Compact', 'Flat-Acrylic-Touch')
 )
@@ -7,7 +8,7 @@ $ErrorActionPreference = 'Stop'
 $nativeRoot = Split-Path $PSScriptRoot -Parent
 $refresh = Get-Content -LiteralPath (Join-Path $nativeRoot 'samples/RibbonKit.WinForms.DesignerSample/.local/last-refresh.json') | ConvertFrom-Json
 if ($refresh.Configuration -ne $Configuration) { throw 'Refresh the permanent Designer Sample in the requested configuration first.' }
-$evidence = Join-Path $nativeRoot 'artifacts/application-menu'
+$evidence = if ($EvidenceDirectory) { [IO.Path]::GetFullPath($EvidenceDirectory) } else { Join-Path $nativeRoot 'artifacts/application-menu' }
 New-Item -ItemType Directory -Path $evidence -Force | Out-Null
 $consumerRoot = Join-Path ([IO.Path]::GetTempPath()) ('RibbonKit-ApplicationMenu-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $consumerRoot | Out-Null

@@ -16,10 +16,14 @@ package refresh so Visual Studio reloads the design assemblies. F5 runs the samp
 
 For Application Menu review, select the ribbon and use **File opens → Application
 Menu**, then **Edit Application Menu…**. The generated example has an Open pane
-using `PopupOptionsControl`, a split Save/Save a copy command, default recent
-documents and an Options footer. Its existing Backstage declaration/startup choice
+using `PopupOptionsControl`, large command icons, split Save As with illustrated
+format choices, Print/Prepare/Send/Publish panes, numbered recent documents and
+Options/Exit footer buttons. Its existing Backstage declaration/startup choice
 is preserved. `--verify-application-menu <evidence-folder>` runs the bounded
-package/generated-code and retained native content check in this same sample.
+package/generated-code and retained native content check in this same sample,
+and saves actual default/Print/native/Save As captures in that folder. Hover a
+left dropdown or either Save As half to show its pane; hover New/Save/Close to
+restore recent documents. Moving into the right pane retains the selected source.
 
 The refresh builds the native runtime/design server/client in normal Debug
 folders, creates a local package, restores and builds the existing sample.

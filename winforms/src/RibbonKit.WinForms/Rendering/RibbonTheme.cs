@@ -155,6 +155,8 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     public bool IsQuickAccessToolbarJoined { get; init; }
     internal bool IsBodyScrollButton { get; init; }
     internal bool IsMenuHeading { get; init; }
+    internal Layout.RibbonApplicationMenuPart ApplicationMenuPart { get; init; }
+    internal bool ApplicationMenuDefaultPane { get; init; }
     internal bool CompositedText { get; init; }
     internal bool WindowBackdrop { get; init; }
     internal Rectangle GroupSeparatorBounds { get; init; }

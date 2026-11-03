@@ -8,6 +8,9 @@ input/window-activation and keyboard-focus-cue follow-ups are uncommitted. The a
 published or merged these changes.
 The WPF runtime/build/CI are unchanged.
 
+Current Application Menu evidence and pending VS, hardware, accessibility and
+human review gates are tracked in the [Application Menu checkpoint](APPLICATION-MENU-PLAN.md#wpf-hover-parity-follow-up---2026-11-03).
+
 The implementation uses independent .NET 10 projects in this subtree, an ordinary
 Form, component collections, a native layout/paint/input pipeline, ToolStrip popup
 windows and a public Windows COM UIA bridge. The provisional public API remains

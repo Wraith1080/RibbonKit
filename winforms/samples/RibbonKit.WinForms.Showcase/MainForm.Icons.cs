@@ -12,6 +12,12 @@ public partial class MainForm
         void Item(RibbonItem item)
         {
             if (!seen.Add(item) || item is RibbonMenuSeparatorItem or RibbonGalleryTile) return;
+            if (item.Id.StartsWith("application.", StringComparison.Ordinal) && item.Icon is not null)
+            {
+                _iconAudit.Add((item.Icon is RibbonSvgIcon svg ? svg.Source : item.Icon.GetType().Name) + "\t" + item.Text);
+                if (item is RibbonDropDownItem applicationPane) foreach (var child in applicationPane.Items) Item(child);
+                return;
+            }
             if (item.Icon is not DensityModeIcon)
             {
                 string asset = IconName(item); item.Icon = new CommandIcon(asset, ribbon); _iconAudit.Add(asset + "\t" + item.Text);

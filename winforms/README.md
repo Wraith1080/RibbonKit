@@ -356,10 +356,13 @@ stable declaration. Images/renderers remain borrowed.
 ### Native Application Menu
 
 `RibbonFileMenuMode.CommandMenu` (numeric value 0) now opens the two-pane
-Application Menu. Existing `FileMenu.Items` are its left commands. A left dropdown
-selects a right pane; a split primary invokes its command and its arrow selects
-the pane. Right-pane dropdowns continue using ordinary submenus. Each opening
-starts with `ApplicationMenu.DefaultPane`. Selection is transient.
+Application Menu. Existing `FileMenu.Items` are its left commands. Hovering a left
+dropdown or either split half selects its right pane without invoking a command.
+A split primary still invokes on activation; its arrow selects the pane. Hovering
+a plain command restores the default pane. Gaps, separators, disabled rows, footer
+and right-pane transit retain the selected pane. Right-pane dropdowns continue
+using ordinary submenus. Each opening starts with `ApplicationMenu.DefaultPane`.
+Selection is transient.
 
 ```csharp
 ribbon.ApplicationMenu.DefaultPane.DropDownHeader = "Recent documents";
@@ -389,15 +392,24 @@ preserve controls, values and HWNDs. The library clips/scrolls the hosting slot;
 the application owns body layout, commands, data and styling. Constructor failures
 propagate without retaining an untracked popup.
 
-The measured layout starts from 150/340/40/36 logical pixels for navigation/pane/
-command row/footer. Navigation grows up to 260 for native text and scrollbar space;
-rows grow for fonts and to at least 44 in Touch. Columns scroll independently and
-footer actions have reserved space with wrapping/overflow. The popup fits the
+The measured layout starts from 150/340 logical pixels for navigation/pane width;
+navigation grows up to 260 for native text and scrollbar space. Navigation rows
+start at 40, plain pane rows at 28, and footer buttons at 30; all reach at least
+44 in Touch and grow for native fonts. Navigation and illustrated choices use
+32-pixel icons. `MenuPresentation = IllustratedChoices` on a pane enables bold
+choice titles and measured descriptions. A continuous inner frame encloses both
+columns, with an aligned divider. Default content has an inset accent heading;
+selected panes have a full-width shaded heading band. The surrounding inset and
+footer share the default pane's background color. Footer buttons align right
+and reserve space for wrapping/overflow. Split sections share one painted perimeter;
+an open split's unhovered primary has a lighter fill than its arrow. Hovering
+either half gives both the same normal hover fill. Columns
+scroll independently, and text preserves each viewport's clip. The popup fits the
 monitor work area on a usable side of File. Paint, pointer, keyboard reveal,
 KeyTips and accessibility share these bounds. `DrawApplicationMenuBackground`
 uses shared menu/border roles; application controls retain their own appearance.
-Unlike WPF's hover-driven pane changes, native pane selection is explicit, so
-moving the pointer does not validate or replace a focused native editor.
+Native validation can veto a hover-driven pane change or default-pane reset.
+Switches retain each native body and preserve navigation/footer scroll position.
 
 Choose **Edit Application Menuâ€¦** from the ribbon smart tag or the ApplicationMenu
 property editor. The dedicated tree edits left commands, the default pane, nested

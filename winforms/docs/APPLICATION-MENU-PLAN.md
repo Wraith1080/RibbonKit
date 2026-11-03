@@ -1,7 +1,8 @@
 # Native Application Menu
 
 Status, **2026-11-03: the bounded native Application Menu is implemented;
-focused checks and package/native verification passed. User review is pending.
+the requested visual refinement and WPF-hover follow-up are implemented. Focused checks and
+package/native verification passed. User review is pending.
 The broader Release suite is not clean; see the evidence below. Geometry
 consolidation has not started**.
 The preceding state-command popup correction is user-accepted. The current
@@ -100,17 +101,19 @@ next work and are not authorized by this implementation contract.
 - A single layout result owns both command columns, optional pane heading,
   footer, scroll offsets and target clips. Navigation measures captions/icon/
   arrow/scrollbar space from a 150-unit starting width, capped at 260. Pane width
-  is capped at 340. Rows start at 40 (Touch 44) and grow for the native font and
-  descriptions. Footer rows start at 36 (Touch 44), wrap, and use a separately
+  is capped at 340. Navigation rows start at 40, plain pane rows at 28 (Touch 44),
+  and illustrated choices grow for 32-unit artwork and measured descriptions.
+  Footer rows start at 30 (Touch 44), wrap, and use a separately
   reserved scroll viewport when needed. Large font/narrow-work-area tests cover
   reachability without requiring every caption to fit untruncated.
 - File budgets height on the larger usable side of its anchor, rather than
   consuming the entire monitor height and covering the File header. Existing
   popup placement/frame/shadow/motion and reduced-motion fallback are reused.
-- Pane selection is explicit by click, arrow, Right or KeyTip. WPF changes panes
-  on hover/focus; avoiding pointer-driven validation/reparenting of native
-  editors is the intentional native usability difference. Every opening starts
-  with the default pane. Leaf and split-primary actions close before invoking;
+- Pane selection follows WPF's main-navigation hover ownership, plus existing
+  click, arrow, Right and KeyTip activation. Hovering a plain command restores the
+  default pane; gaps, separators, disabled rows and pane/footer transit are neutral.
+  Native validation can veto hover switches and default resets. Every opening
+  starts with the default pane. Leaf and split-primary actions close before invoking;
   nested right-pane menus keep the existing stack and Escape ordering.
 - App-owned native controls remain borrowed, with their own appearance/layout.
   The library's content viewport uses the shared popup background, clips and
@@ -197,11 +200,11 @@ next work and are not authorized by this implementation contract.
   12-scope matrix was repeated against the final package after the ordinary-popup
   validation boundary correction.
 
-## Review checkpoint
+## Initial implementation checkpoint
 
-The permanent Designer Sample uses final local package
+The initial permanent Designer Sample checkpoint used local package
 **`0.1.0-designer.local20261103T112055535Z`**, refreshed in place in normal Debug.
-The final 12-scope native matrix used this same package. The package entries are
+That checkpoint's 12-scope native matrix used this same package. The package entries are
 recorded in `artifacts/application-menu/package-contents.txt` and the final audit
 is `artifacts/application-menu/final-package-audit.json`.
 `--verify-application-menu` passed against this package: its generated declarations,
@@ -222,4 +225,110 @@ save/reopen; external UIA/screen readers; physical keyboard/touch/IME, RTL and
 actual display/mixed-monitor DPI beyond the fixture's 120 DPI; human visual and
 usability acceptance; and resolution of the broader aggregate failures above.
 No WPF changes/checks, geometry consolidation, additional themes, commit, push or
-publication were performed. **Stop here for user review before geometry work.**
+publication were performed.
+
+## Bounded visual refinement checkpoint - 2026-11-03
+
+Starting baseline: `codex/Ribbonkit-Winform`,
+`f633aec3952b7dc2681f91110945d7aa571e50c1`, clean checkout. The user's WPF screenshots
+showed the native sample was too bare. The visual contract was presented before
+editing: preserve the public model, designer protocol and retained content;
+scope layout/paint to Application Menu using shared appearance roles; enrich the
+permanent sample and Showcase through public declarations. WPF remained read-only.
+
+Requested-fix checklist, implemented and awaiting human review:
+
+- Continuous rounded inner border around both columns, aligned divider and pane
+  insets. The inner fill and row artwork are clipped inside the border so all
+  four corner strokes remain intact. Scroll-stress capture exposed GDI text
+  escaping a viewport; Application Menu text now preserves that clip too.
+- Large navigation/illustrated icons, accent bold headings with a rule, compact
+  recent-document rows and measured rich choice descriptions. Native font, Touch
+  and work-area constraints take precedence over WPF reference dimensions.
+- Right-aligned framed Options/Exit footer actions and accent-filled open File.
+  No new theme, geometry settings or public API was introduced.
+- Split primary/arrow targets share top/bottom bounds. A reproduced paint mismatch
+  made the arrow two device pixels taller at 120 DPI; both sections now clip one
+  inset perimeter. Open/selected state is separate from actual pointer press:
+  an unhovered selected primary blends toward the popup background, while the
+  arrow keeps the darker open fill. The later WPF-hover follow-up below supersedes
+  this checkpoint's independent-half hover treatment.
+- Comparable New/Open/Save/Save As/Print/Prepare/Send/Publish/Close examples,
+  numbered recent documents and illustrated format choices. The Designer Sample
+  preserves original Open/native-body, split/event identities, Forms/UserControls,
+  resources and Backstage startup choice. Hosts still own icons/data/commands.
+
+Final focused Release evidence is `application-menu-visual-frame-final-release.trx`:
+**63/63 passed**, covering Application Menu/designer, File lifecycle and ordinary
+split chrome. It includes **32 appearance cases** for both renderers, Compact/Touch,
+inner-frame corner strokes and split paint at synthetic 96/120/144/192 DPI,
+footer/row/icon measurement and opaque popup text clipping. Earlier overlapping
+visual selections are retained, not added to this count. Normal native Debug and
+Release solution builds and local Release packing passed with zero warnings/errors.
+The broader full suite was not repeated; its earlier six failures remain open.
+
+The permanent Designer Sample was refreshed in place to
+**`0.1.0-designer.local20261103T131408521Z`** in normal Debug. Its generated-code,
+pre-Load native-content initialization, retained HWND/text, split pane and footer
+event/dismissal check passed. Actual default/native/Save As captures are in
+`artifacts/application-menu/visual-refinement/designer-sample/`.
+
+The final package-only native matrix passed **12/12 scopes** at actual 120 DPI:
+Office/neutral renderer x Solid/effective Mica/effective Acrylic x Compact/Touch.
+Its **36 captures**, package inventory and consumer path are under
+`artifacts/application-menu/visual-refinement/`. Final representative sample and
+native material/Touch captures were inspected for framing, split fills/perimeters,
+clipped overflow and retained native content. These are fixture checks, not actual
+VS editing or physical multi-monitor/touch acceptance. The pending gates listed
+above remain open. **Stop for user review before geometry consolidation.**
+
+## WPF hover parity follow-up - 2026-11-03
+
+The user's recording and Print screenshot clarified the intended interaction and
+supersede the initial explicit-only pane-selection choice. The native contract
+was presented before editing: change main-navigation hover ownership and shared
+paint/layout while preserving public APIs, designer serialization, command
+activation and retained native controls. Existing uncommitted visual work remains.
+WPF `NotifyItemHoverChanged` and physical split-template triggers were read-only
+references; no WPF changes or checks ran.
+
+- Entering an enabled navigation dropdown or either split half selects its pane
+  immediately without invoking. Entering a plain command restores DefaultPane.
+  Right-pane/footer transit, separators, disabled rows, gaps and row leave keep
+  the current selection. Reopening still starts on DefaultPane.
+- Both split halves use the same normal hover fill when either is hovered.
+  With its pane selected and neither half hovered, the primary is subdued and
+  the arrow is darker. Real press, command invocation and separate action targets
+  remain. Hovering a selected ordinary dropdown also uses normal hover fill.
+- Selected-pane headings use a shaded band spanning the right pane, clipped
+  inside the inner frame. The default heading retains its inset rule treatment.
+  Existing explicit heading/background roles still apply.
+- The surrounding inset/footer matches the default pane background in both
+  default and selected states; inner frame/corner strokes remain intact.
+- Native validation vetoes hover switches/default resets. A successful switch
+  closes obsolete nested submenus, retains native controls/HWND/text, and
+  preserves navigation/footer scroll offsets. Hover does not focus a pane.
+
+`application-menu-hover-parity-release.trx` passed **85/85 focused Release cases**:
+Application Menu/designer, File lifecycle, split chrome, popup hover and color
+roles. This includes 40 appearance cases and four new hover/lifetime/scroll cases;
+it overlaps prior selections and is not an aggregate-suite claim. Debug/Release
+native solution builds and Release packing passed with zero warnings/errors.
+
+The permanent Designer Sample uses normal Debug package
+**`0.1.0-designer.local20261103T135514205Z`**. Its generated-content/retention/split/
+footer check passed and saved default/Print/native/Save As captures. The independent
+public-package consumer passed **12/12 scopes** at actual 120 DPI: both renderers
+x Solid/effective Mica/effective Acrylic x Compact/Touch. It now exercises real
+pointer hover on dropdown/main/arrow, pane/gap/disabled transit and plain-command
+default restoration, alongside the existing key/command/content/dismissal checks.
+
+Evidence: `artifacts/application-menu/hover-parity/`, including 84 native captures,
+four sample captures and the package inventory. Actual split main/arrow hover,
+selected-unhovered, restored-default and material/Touch captures were inspected,
+as were the sample Print/Save As bands. Synthetic paint checks cover 96/120/144/192
+DPI; they do not replace physical display/Touch or mixed-monitor review.
+Scoped whitespace review passed; the existing VS-generated `// ` comment-line
+spacing in `DesignerForm.Designer.cs` was preserved as an explicit exception.
+The earlier six full-suite failures and the pending VS/hardware/accessibility/
+human acceptance gates remain open. **Stop for review before geometry consolidation.**

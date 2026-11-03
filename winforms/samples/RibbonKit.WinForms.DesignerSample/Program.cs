@@ -9,7 +9,7 @@ internal static class Program
         if (args.Length == 2 && args[0] == "--verify-application-menu")
         {
             Directory.CreateDirectory(args[1]);
-            try { using var example = new DesignerForm(); example.VerifyApplicationMenu(); File.WriteAllText(Path.Combine(args[1], "result.log"), "PASS: permanent package-only Designer Sample; generated File/default/footer models, ContentType initialization, source-specific controls, retained HWND/text, split pane and footer event/dismissal."); }
+            try { using var example = new DesignerForm(); example.VerifyApplicationMenu(args[1]); File.WriteAllText(Path.Combine(args[1], "result.log"), "PASS: permanent package-only Designer Sample; generated File/default/footer models, ContentType initialization, source-specific controls, retained HWND/text, split pane and footer event/dismissal."); }
             catch (Exception error) { File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
             return;
         }

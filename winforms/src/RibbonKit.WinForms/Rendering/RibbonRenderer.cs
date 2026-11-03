@@ -214,6 +214,7 @@ public partial class RibbonRenderer : IDisposable
     /// <summary>Paints text inside a measured content slot, preserving its layout flags and glyph alpha on library material surfaces. Custom renderers can delegate here for composited text.</summary>
     public virtual void DrawText(RibbonPaintContext context, string text, Color color, TextFormatFlags flags)
     {
+        if (context.ApplicationMenuPart != RibbonApplicationMenuPart.None) flags |= TextFormatFlags.PreserveGraphicsClipping;
         if (context.CompositedText) RibbonBackdropBuffer.DrawText(context, text, color, flags);
         else TextRenderer.DrawText(context.Graphics, text, context.Font, context.Bounds, color, flags);
     }
@@ -299,6 +300,7 @@ public partial class RibbonRenderer : IDisposable
     /// <summary>Paints the File menu header using library-measured bounds and its original open/availability state.</summary>
     public virtual void DrawFileButton(RibbonPaintContext context, RibbonDropDownItem menu)
     {
+        if (DrawApplicationFileButton(context, menu)) return;
         bool enabled = menu.EffectiveEnabled;
         context = EnabledContext(context, enabled);
         bool open = enabled && menu.IsDropDownOpen && !context.FileMenuClosing;
@@ -405,6 +407,7 @@ public partial class RibbonRenderer : IDisposable
         }
         bool enabled = item.EffectiveEnabled;
         context = EnabledContext(context, enabled);
+        if (context.ApplicationMenuPart != RibbonApplicationMenuPart.None) { DrawApplicationMenuItem(context, item); return; }
         if (!menu && item is RibbonComboBoxItem combo && size == RibbonItemSize.Small)
         {
             bool expanded = enabled && combo.IsDropDownOpen;
@@ -446,7 +449,11 @@ public partial class RibbonRenderer : IDisposable
             DrawFocus(context);
     }
     /// <summary>Paints a noninteractive command-dropdown heading. Uses the renderer's existing themed heading treatment.</summary>
-    public virtual void DrawMenuHeader(RibbonPaintContext context, string text) => DrawGalleryHeading(context with { IsMenuHeading = true }, text);
+    public virtual void DrawMenuHeader(RibbonPaintContext context, string text)
+    {
+        if (context.ApplicationMenuPart != RibbonApplicationMenuPart.None) DrawApplicationMenuHeader(context, text);
+        else DrawGalleryHeading(context with { IsMenuHeading = true }, text);
+    }
 
     private void DrawIllustratedChoice(RibbonPaintContext context, RibbonItem item)
     {
@@ -515,6 +522,7 @@ public partial class RibbonRenderer : IDisposable
     /// <summary>Paints a split command from its independently measured primary and dropdown action contexts.</summary>
     public virtual void DrawSplitItem(RibbonPaintContext primary, RibbonPaintContext dropDown, RibbonSplitButtonItem item, RibbonItemSize size, bool menu)
     {
+        if (primary.ApplicationMenuPart != RibbonApplicationMenuPart.None) { DrawApplicationMenuSplit(primary, dropDown, item); return; }
         primary = EnabledContext(primary, item.EffectiveEnabled);
         dropDown = EnabledContext(dropDown, item.EffectiveEnabled);
         var whole = primary with { Bounds = Rectangle.Union(primary.Bounds, dropDown.Bounds), Hot = false, Pressed = false, Focused = false };

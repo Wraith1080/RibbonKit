@@ -13,6 +13,32 @@ partial class DesignerForm
     private void InitializeComponent()
     {
         System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DesignerForm));
+        applicationNew = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationSaveDocument = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationPrintDocument = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationQuickPrint = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationPrint = new RibbonKit.WinForms.RibbonDropDownItem();
+        applicationProperties = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationInspect = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationProtect = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationPrepare = new RibbonKit.WinForms.RibbonDropDownItem();
+        applicationEmail = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationEmailPdf = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationSend = new RibbonKit.WinForms.RibbonDropDownItem();
+        applicationPublishPdf = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationPublishShared = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationPublish = new RibbonKit.WinForms.RibbonDropDownItem();
+        applicationClose = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationTemplate = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationLegacy = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationOtherFormats = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationRecentNotes = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationRecentRoadmap = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationRecentTheme = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationManageRecent = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationExit = new RibbonKit.WinForms.RibbonButtonItem();
+        applicationMainSeparator = new RibbonKit.WinForms.RibbonMenuSeparatorItem();
+        applicationCloseSeparator = new RibbonKit.WinForms.RibbonMenuSeparatorItem();
         applicationOpen = new RibbonKit.WinForms.RibbonDropDownItem();
         applicationSave = new RibbonKit.WinForms.RibbonSplitButtonItem();
         applicationSaveCopy = new RibbonKit.WinForms.RibbonButtonItem();
@@ -82,6 +108,255 @@ partial class DesignerForm
         button1 = new Button();
         ((System.ComponentModel.ISupportInitialize)ribbon).BeginInit();
         SuspendLayout();
+        // 
+        // applicationNew
+        // 
+        applicationNew.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:new", true);
+        applicationNew.Id = "application.new";
+        applicationNew.KeyTip = "N";
+        applicationNew.Text = "New";
+        applicationNew.Click += ApplicationCommand_Click;
+        // 
+        // applicationSaveDocument
+        // 
+        applicationSaveDocument.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:save", true);
+        applicationSaveDocument.Id = "application.saveDocument";
+        applicationSaveDocument.KeyTip = "S";
+        applicationSaveDocument.Text = "Save";
+        applicationSaveDocument.Click += ApplicationCommand_Click;
+        // 
+        // applicationPrintDocument
+        // 
+        applicationPrintDocument.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:print", true);
+        applicationPrintDocument.Id = "application.print.document";
+        applicationPrintDocument.MenuDescription = "Choose a printer, number of copies and other print options.";
+        applicationPrintDocument.Text = "Print";
+        applicationPrintDocument.Click += ApplicationCommand_Click;
+        // 
+        // applicationQuickPrint
+        // 
+        applicationQuickPrint.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:print", true);
+        applicationQuickPrint.Id = "application.print.quick";
+        applicationQuickPrint.MenuDescription = "Send the document to your default printer.";
+        applicationQuickPrint.Text = "Quick Print";
+        applicationQuickPrint.Click += ApplicationCommand_Click;
+        // 
+        // applicationPrint
+        // 
+        applicationPrint.DropDownHeader = "Print document";
+        applicationPrint.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:print", true);
+        applicationPrint.Id = "application.print";
+        applicationPrint.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationPrintDocument, applicationQuickPrint });
+        applicationPrint.KeyTip = "P";
+        applicationPrint.MenuPresentation = RibbonKit.WinForms.RibbonMenuPresentation.IllustratedChoices;
+        applicationPrint.Text = "Print";
+        // 
+        // applicationProperties
+        // 
+        applicationProperties.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:info", true);
+        applicationProperties.Id = "application.prepare.properties";
+        applicationProperties.MenuDescription = "Review the title, author and document details.";
+        applicationProperties.Text = "Document Properties";
+        applicationProperties.Click += ApplicationCommand_Click;
+        // 
+        // applicationInspect
+        // 
+        applicationInspect.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:find", true);
+        applicationInspect.Id = "application.prepare.inspect";
+        applicationInspect.MenuDescription = "Check the document before sharing it.";
+        applicationInspect.Text = "Inspect Document";
+        applicationInspect.Click += ApplicationCommand_Click;
+        // 
+        // applicationProtect
+        // 
+        applicationProtect.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:document-lock", true);
+        applicationProtect.Id = "application.prepare.protect";
+        applicationProtect.MenuDescription = "Choose how others can open or edit this document.";
+        applicationProtect.Text = "Protect Document";
+        applicationProtect.Click += ApplicationCommand_Click;
+        // 
+        // applicationPrepare
+        // 
+        applicationPrepare.DropDownHeader = "Prepare the document";
+        applicationPrepare.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:settings", true);
+        applicationPrepare.Id = "application.prepare";
+        applicationPrepare.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationProperties, applicationInspect, applicationProtect });
+        applicationPrepare.KeyTip = "R";
+        applicationPrepare.MenuPresentation = RibbonKit.WinForms.RibbonMenuPresentation.IllustratedChoices;
+        applicationPrepare.Text = "Prepare";
+        // 
+        // applicationEmail
+        // 
+        applicationEmail.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:mail", true);
+        applicationEmail.Id = "application.send.email";
+        applicationEmail.MenuDescription = "Send a copy as an email attachment.";
+        applicationEmail.Text = "Email";
+        applicationEmail.Click += ApplicationCommand_Click;
+        // 
+        // applicationEmailPdf
+        // 
+        applicationEmailPdf.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:document-pdf", true);
+        applicationEmailPdf.Id = "application.send.pdf";
+        applicationEmailPdf.MenuDescription = "Send a fixed-layout PDF copy of the document.";
+        applicationEmailPdf.Text = "Email as PDF";
+        applicationEmailPdf.Click += ApplicationCommand_Click;
+        // 
+        // applicationSend
+        // 
+        applicationSend.DropDownHeader = "Send a copy of the document";
+        applicationSend.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:send", true);
+        applicationSend.Id = "application.send";
+        applicationSend.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationEmail, applicationEmailPdf });
+        applicationSend.KeyTip = "D";
+        applicationSend.MenuPresentation = RibbonKit.WinForms.RibbonMenuPresentation.IllustratedChoices;
+        applicationSend.Text = "Send";
+        // 
+        // applicationPublishPdf
+        // 
+        applicationPublishPdf.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:document-pdf", true);
+        applicationPublishPdf.Id = "application.publish.pdf";
+        applicationPublishPdf.MenuDescription = "Publish a copy that preserves the document layout.";
+        applicationPublishPdf.Text = "Create PDF";
+        applicationPublishPdf.Click += ApplicationCommand_Click;
+        // 
+        // applicationPublishShared
+        // 
+        applicationPublishShared.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:folder", true);
+        applicationPublishShared.Id = "application.publish.shared";
+        applicationPublishShared.MenuDescription = "Publish to a location that other people can access.";
+        applicationPublishShared.Text = "Shared Location";
+        applicationPublishShared.Click += ApplicationCommand_Click;
+        // 
+        // applicationPublish
+        // 
+        applicationPublish.DropDownHeader = "Publish the document";
+        applicationPublish.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:share", true);
+        applicationPublish.Id = "application.publish";
+        applicationPublish.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationPublishPdf, applicationPublishShared });
+        applicationPublish.KeyTip = "U";
+        applicationPublish.MenuPresentation = RibbonKit.WinForms.RibbonMenuPresentation.IllustratedChoices;
+        applicationPublish.Text = "Publish";
+        // 
+        // applicationClose
+        // 
+        applicationClose.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:arrow-exit", true);
+        applicationClose.Id = "application.close";
+        applicationClose.KeyTip = "C";
+        applicationClose.Text = "Close";
+        applicationClose.Click += ApplicationCommand_Click;
+        // 
+        // applicationTemplate
+        // 
+        applicationTemplate.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:new", true);
+        applicationTemplate.Id = "application.save.template";
+        applicationTemplate.MenuDescription = "Save the document as a template that can be used to format future documents.";
+        applicationTemplate.Text = "Word Template";
+        applicationTemplate.Click += ApplicationCommand_Click;
+        // 
+        // applicationLegacy
+        // 
+        applicationLegacy.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:save", true);
+        applicationLegacy.Id = "application.save.legacy";
+        applicationLegacy.MenuDescription = "Save a copy that is compatible with Word 97-2003.";
+        applicationLegacy.Text = "Word 97-2003 Document";
+        applicationLegacy.Click += ApplicationCommand_Click;
+        // 
+        // applicationOtherFormats
+        // 
+        applicationOtherFormats.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:settings", true);
+        applicationOtherFormats.Id = "application.save.other";
+        applicationOtherFormats.MenuDescription = "Open Save As to choose from all possible file types.";
+        applicationOtherFormats.Text = "Other Formats";
+        applicationOtherFormats.Click += ApplicationCommand_Click;
+        // 
+        // applicationRecentNotes
+        // 
+        applicationRecentNotes.Id = "application.recent.notes";
+        applicationRecentNotes.KeyTip = "2";
+        applicationRecentNotes.Text = "2  Meeting notes.docx";
+        applicationRecentNotes.Click += ApplicationCommand_Click;
+        // 
+        // applicationRecentRoadmap
+        // 
+        applicationRecentRoadmap.Id = "application.recent.roadmap";
+        applicationRecentRoadmap.KeyTip = "3";
+        applicationRecentRoadmap.Text = "3  RibbonKit roadmap.docx";
+        applicationRecentRoadmap.Click += ApplicationCommand_Click;
+        // 
+        // applicationRecentTheme
+        // 
+        applicationRecentTheme.Id = "application.recent.theme";
+        applicationRecentTheme.KeyTip = "4";
+        applicationRecentTheme.Text = "4  Office 2024 theme plan.docx";
+        applicationRecentTheme.Click += ApplicationCommand_Click;
+        // 
+        // applicationManageRecent
+        // 
+        applicationManageRecent.Id = "application.recent.manage";
+        applicationManageRecent.KeyTip = "M";
+        applicationManageRecent.Text = "Manage recent locations";
+        applicationManageRecent.Click += ApplicationCommand_Click;
+        // 
+        // applicationExit
+        // 
+        applicationExit.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:arrow-exit", true);
+        applicationExit.Id = "application.exit";
+        applicationExit.KeyTip = "X";
+        applicationExit.Text = "Exit";
+        applicationExit.Click += ApplicationExit_Click;
+        // 
+        // applicationMainSeparator
+        // 
+        applicationMainSeparator.Id = "application.applicationMainSeparator";
+        // 
+        // applicationCloseSeparator
+        // 
+        applicationCloseSeparator.Id = "application.applicationCloseSeparator";
+        // 
+        // applicationOpen
+        // 
+        applicationOpen.ContentType = typeof(PopupOptionsControl);
+        applicationOpen.DropDownHeader = "Open options";
+        applicationOpen.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:open", true);
+        applicationOpen.Id = "application.open";
+        applicationOpen.KeyTip = "O";
+        applicationOpen.Text = "Open";
+        // 
+        // applicationSave
+        // 
+        applicationSave.DropDownHeader = "Save a copy of the document";
+        applicationSave.DropDownKeyTip = "V";
+        applicationSave.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:save-copy", true);
+        applicationSave.Id = "application.save";
+        applicationSave.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationSaveCopy, applicationTemplate, applicationLegacy, applicationOtherFormats });
+        applicationSave.KeyTip = "A";
+        applicationSave.MenuPresentation = RibbonKit.WinForms.RibbonMenuPresentation.IllustratedChoices;
+        applicationSave.Text = "Save As";
+        applicationSave.Click += ApplicationCommand_Click;
+        // 
+        // applicationSaveCopy
+        // 
+        applicationSaveCopy.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:save", true);
+        applicationSaveCopy.Id = "application.save.copy";
+        applicationSaveCopy.KeyTip = "C";
+        applicationSaveCopy.MenuDescription = "Save the document in the default file format.";
+        applicationSaveCopy.Text = "Word Document";
+        applicationSaveCopy.Click += ApplicationCommand_Click;
+        // 
+        // applicationRecent
+        // 
+        applicationRecent.Id = "application.recent";
+        applicationRecent.KeyTip = "E";
+        applicationRecent.Text = "1  Quarterly report.docx";
+        applicationRecent.Click += ApplicationCommand_Click;
+        // 
+        // applicationOptions
+        // 
+        applicationOptions.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:settings", true);
+        applicationOptions.Id = "application.options";
+        applicationOptions.KeyTip = "P";
+        applicationOptions.Text = "Options";
+        applicationOptions.Click += ApplicationCommand_Click;
         // 
         // homeTab
         // 
@@ -472,6 +747,17 @@ partial class DesignerForm
         ribbon.AccessibleName = "Ribbon";
         ribbon.AnimationLevel = RibbonKit.WinForms.RibbonAnimationLevel.Expressive;
         // 
+        // ribbon.ApplicationMenu
+        // 
+        // 
+        // ribbon.ApplicationMenuDefaultPane
+        // 
+        ribbon.ApplicationMenu.DefaultPane.DropDownHeader = "Recent documents";
+        ribbon.ApplicationMenu.DefaultPane.Id = "rk:696d8d78948c4a78a25c9561a3bfb98c";
+        ribbon.ApplicationMenu.DefaultPane.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationRecent, applicationRecentNotes, applicationRecentRoadmap, applicationRecentTheme, applicationManageRecent });
+        ribbon.ApplicationMenu.FooterItems.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationOptions, applicationExit });
+        ribbon.ApplicationMenu.Id = "rk:aeef0a38b56a403bbbf9e23f0801ab05";
+        // 
         // ribbon.Backstage
         // 
         ribbon.Backstage.FooterItems.AddRange(new RibbonKit.WinForms.RibbonItem[] { backstageFooterSeparator, backstageOptionsCommand, backstageCommand1 });
@@ -486,40 +772,11 @@ partial class DesignerForm
         ribbon.CommandCatalog.Id = "rk:4a4d409b0c2f4b02b1929bee7dc3279e";
         ribbon.Dock = DockStyle.Top;
         // 
-        // 
+        // ribbon.FileMenu
         // 
         ribbon.FileMenu.Id = "rk:0d5299d1f5ec4fe98abb382d675c498f";
+        ribbon.FileMenu.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationNew, applicationOpen, applicationSaveDocument, applicationSave, applicationMainSeparator, applicationPrint, applicationPrepare, applicationSend, applicationPublish, applicationCloseSeparator, applicationClose });
         ribbon.FileMenu.Visible = true;
-        // Application Menu and Backstage keep independent declarations.
-        applicationOpen.Id = "application.open";
-        applicationOpen.Text = "Open";
-        applicationOpen.KeyTip = "O";
-        applicationOpen.DropDownHeader = "Open options";
-        applicationOpen.ContentType = typeof(PopupOptionsControl);
-        applicationSave.Id = "application.save";
-        applicationSave.Text = "Save";
-        applicationSave.KeyTip = "S";
-        applicationSave.DropDownKeyTip = "A";
-        applicationSave.DropDownHeader = "Save as";
-        applicationSave.Click += ApplicationCommand_Click;
-        applicationSaveCopy.Id = "application.save.copy";
-        applicationSaveCopy.Text = "Save a copy";
-        applicationSaveCopy.KeyTip = "C";
-        applicationSaveCopy.Click += ApplicationCommand_Click;
-        applicationSave.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationSaveCopy });
-        applicationRecent.Id = "application.recent";
-        applicationRecent.Text = "Example document";
-        applicationRecent.KeyTip = "E";
-        applicationRecent.Click += ApplicationCommand_Click;
-        applicationOptions.Id = "application.options";
-        applicationOptions.Text = "Options";
-        applicationOptions.KeyTip = "P";
-        applicationOptions.Click += ApplicationCommand_Click;
-        ribbon.FileMenu.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationOpen, applicationSave });
-        ribbon.ApplicationMenu.DefaultPane.DropDownHeader = "Recent documents";
-        ribbon.ApplicationMenu.DefaultPane.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationRecent });
-        ribbon.ApplicationMenu.FooterItems.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationOptions });
-        ribbon.FileMenuMode = RibbonKit.WinForms.RibbonFileMenuMode.Backstage;
         ribbon.Location = new Point(0, 0);
         ribbon.Margin = new Padding(3, 4, 3, 4);
         // 
@@ -673,4 +930,30 @@ partial class DesignerForm
     private RibbonKit.WinForms.RibbonButtonItem applicationRecent;
     private RibbonKit.WinForms.RibbonButtonItem applicationOptions;
 
+    private RibbonKit.WinForms.RibbonButtonItem applicationNew;
+    private RibbonKit.WinForms.RibbonButtonItem applicationSaveDocument;
+    private RibbonKit.WinForms.RibbonButtonItem applicationPrintDocument;
+    private RibbonKit.WinForms.RibbonButtonItem applicationQuickPrint;
+    private RibbonKit.WinForms.RibbonDropDownItem applicationPrint;
+    private RibbonKit.WinForms.RibbonButtonItem applicationProperties;
+    private RibbonKit.WinForms.RibbonButtonItem applicationInspect;
+    private RibbonKit.WinForms.RibbonButtonItem applicationProtect;
+    private RibbonKit.WinForms.RibbonDropDownItem applicationPrepare;
+    private RibbonKit.WinForms.RibbonButtonItem applicationEmail;
+    private RibbonKit.WinForms.RibbonButtonItem applicationEmailPdf;
+    private RibbonKit.WinForms.RibbonDropDownItem applicationSend;
+    private RibbonKit.WinForms.RibbonButtonItem applicationPublishPdf;
+    private RibbonKit.WinForms.RibbonButtonItem applicationPublishShared;
+    private RibbonKit.WinForms.RibbonDropDownItem applicationPublish;
+    private RibbonKit.WinForms.RibbonButtonItem applicationClose;
+    private RibbonKit.WinForms.RibbonButtonItem applicationTemplate;
+    private RibbonKit.WinForms.RibbonButtonItem applicationLegacy;
+    private RibbonKit.WinForms.RibbonButtonItem applicationOtherFormats;
+    private RibbonKit.WinForms.RibbonButtonItem applicationRecentNotes;
+    private RibbonKit.WinForms.RibbonButtonItem applicationRecentRoadmap;
+    private RibbonKit.WinForms.RibbonButtonItem applicationRecentTheme;
+    private RibbonKit.WinForms.RibbonButtonItem applicationManageRecent;
+    private RibbonKit.WinForms.RibbonButtonItem applicationExit;
+    private RibbonKit.WinForms.RibbonMenuSeparatorItem applicationMainSeparator;
+    private RibbonKit.WinForms.RibbonMenuSeparatorItem applicationCloseSeparator;
 }
