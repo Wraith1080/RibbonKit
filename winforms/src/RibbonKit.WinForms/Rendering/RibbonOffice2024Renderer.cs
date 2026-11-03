@@ -79,7 +79,7 @@ public class RibbonOffice2024Renderer : RibbonRenderer
             DrawBody(context); // A minimized ribbon leaves a complete standalone card.
         else if (context.Bounds.Width > 2)
         {
-            using var separator = new SolidBrush(context.Theme.Border);
+            using var separator = new SolidBrush(context.Theme.BodyBorderColor);
             context.Graphics.FillRectangle(separator, context.Bounds.Left + 1, context.Bounds.Top, context.Bounds.Width - 2, 1);
         }
     }
@@ -87,10 +87,11 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     public override void DrawGalleryHeading(RibbonPaintContext context, string text)
     {
         context = context with { Hot = false, Pressed = false, Focused = false };
-        DrawChrome(context, context.Theme.GalleryHeadingBackground, Color.Transparent);
+        DrawChrome(context, context.IsMenuHeading ? context.Theme.MenuHeadingBackground ?? context.Theme.GalleryHeadingBackground : context.Theme.GalleryHeadingBackground, Color.Transparent);
         int inset = Layout.RibbonLayoutEngine.Scale(6, context.DeviceDpi);
         using var font = new Font(context.Font, context.Font.Style | FontStyle.Bold);
-        DrawText(context with { Bounds = Rectangle.Inflate(context.Bounds, -inset, 0), Font = font }, text, context.Theme.GalleryHeadingForeground,
+        var foreground = context.IsMenuHeading && !context.Theme.MenuHeadingForeground.IsEmpty ? context.Theme.MenuHeadingForeground : context.Theme.GalleryHeadingForeground;
+        DrawText(context with { Bounds = Rectangle.Inflate(context.Bounds, -inset, 0), Font = font }, text, foreground,
             TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
     }
     /// <inheritdoc />
@@ -106,7 +107,7 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     {
         int radius = context.Theme.CornerRadius * context.DeviceDpi / 48;
         PaintShadow(context, radius);
-        PaintRounded(context, radius, new(context.Theme.Surface), context.Theme.Border);
+        PaintRounded(context, radius, context.Theme.BodyFill, context.Theme.BodyBorderColor);
     }
     /// <inheritdoc />
     public override void DrawScrollButton(RibbonPaintContext context, bool backward)

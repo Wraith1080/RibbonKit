@@ -47,6 +47,32 @@ public sealed record RibbonTheme
     public Color Background { get; init; } = Color.White;
     /// <summary>Gets the command and popup surface color.</summary>
     public Color Surface { get; init; } = Color.White;
+    /// <summary>Gets the optional opaque ribbon body fill. Null uses Surface. Both explicit stops must be opaque. Does not recolor application-owned controls.</summary>
+    public RibbonFill? BodyBackground { get; init; }
+    /// <summary>Gets the body frame color. Empty uses Border.</summary>
+    public Color BodyBorder { get; init; } = Color.Empty;
+    /// <summary>Gets the opaque floating popup background. Empty uses Surface; explicit values must be opaque.</summary>
+    public Color PopupBackground { get; init; } = Color.Empty;
+    /// <summary>Gets the opaque native editor field background. Empty uses Surface; explicit values must be opaque.</summary>
+    public Color EditorBackground { get; init; } = Color.Empty;
+    /// <summary>Gets enabled native editor text, label and arrow color. Empty uses Foreground.</summary>
+    public Color EditorForeground { get; init; } = Color.Empty;
+    /// <summary>Gets the idle native editor frame color. Empty uses Border; active fields retain Accent.</summary>
+    public Color EditorBorder { get; init; } = Color.Empty;
+    /// <summary>Gets the optional command-menu heading fill. Null preserves the renderer's gallery-heading treatment.</summary>
+    public RibbonFill? MenuHeadingBackground { get; init; }
+    /// <summary>Gets command-menu heading text color. Empty preserves the renderer's gallery-heading treatment.</summary>
+    public Color MenuHeadingForeground { get; init; } = Color.Empty;
+    /// <summary>Gets the optional RibbonForm caption color, overridden by RibbonForm.TitleBarColor. Empty retains Background in solid mode and a clear caption over a backdrop. Explicit values must be opaque.</summary>
+    public Color TitleBarBackground { get; init; } = Color.Empty;
+    /// <summary>Gets optional caption and TitleBar Quick Access foreground. Empty chooses contrast for a colored caption, or preserves Foreground for an unset caption.</summary>
+    public Color TitleBarForeground { get; init; } = Color.Empty;
+    internal RibbonFill BodyFill => BodyBackground ?? new(Surface);
+    internal Color BodyBorderColor => BodyBorder.IsEmpty ? Border : BodyBorder;
+    internal Color PopupColor => PopupBackground.IsEmpty ? Surface : PopupBackground;
+    internal Color EditorColor => EditorBackground.IsEmpty ? Surface : EditorBackground;
+    internal Color EditorTextColor => EditorForeground.IsEmpty ? Foreground : EditorForeground;
+    internal Color EditorBorderColor => EditorBorder.IsEmpty ? Border : EditorBorder;
     /// <summary>Gets the separator and outline color.</summary>
     public Color Border { get; init; } = Color.FromArgb(224, 224, 224);
     /// <summary>Gets the outline color of floating ribbon popup windows.</summary>
@@ -128,6 +154,7 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     /// <summary>Gets whether this Quick Access toolbar paint joins an expanded body. DrawBody receives the combined outer frame; this row paints only its internal separator. Minimized standalone rows are false.</summary>
     public bool IsQuickAccessToolbarJoined { get; init; }
     internal bool IsBodyScrollButton { get; init; }
+    internal bool IsMenuHeading { get; init; }
     internal bool CompositedText { get; init; }
     internal bool WindowBackdrop { get; init; }
     internal Rectangle GroupSeparatorBounds { get; init; }

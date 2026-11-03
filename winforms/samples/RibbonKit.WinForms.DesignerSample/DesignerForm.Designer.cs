@@ -30,6 +30,11 @@ partial class DesignerForm
         boldToggle = new RibbonKit.WinForms.RibbonToggleItem();
         btnItalic = new RibbonKit.WinForms.RibbonToggleItem();
         btnUnderline = new RibbonKit.WinForms.RibbonToggleItem();
+        ribbonGroup2 = new RibbonKit.WinForms.RibbonGroup();
+        btnInsert = new RibbonKit.WinForms.RibbonDropDownItem();
+        btnInsertPicture = new RibbonKit.WinForms.RibbonButtonItem();
+        btnInsertLink = new RibbonKit.WinForms.RibbonButtonItem();
+        btnInsertObject = new RibbonKit.WinForms.RibbonButtonItem();
         editTab = new RibbonKit.WinForms.RibbonTab();
         fieldsGroup = new RibbonKit.WinForms.RibbonGroup();
         nameField = new RibbonKit.WinForms.RibbonTextBoxItem();
@@ -70,11 +75,6 @@ partial class DesignerForm
         documentStylesQatReference = new RibbonKit.WinForms.RibbonQuickAccessDropDownReference();
         statusLabel = new Label();
         button1 = new Button();
-        ribbonGroup2 = new RibbonKit.WinForms.RibbonGroup();
-        btnInsert = new RibbonKit.WinForms.RibbonDropDownItem();
-        btnInsertPicture = new RibbonKit.WinForms.RibbonButtonItem();
-        btnInsertLink = new RibbonKit.WinForms.RibbonButtonItem();
-        btnInsertObject = new RibbonKit.WinForms.RibbonButtonItem();
         ((System.ComponentModel.ISupportInitialize)ribbon).BeginInit();
         SuspendLayout();
         // 
@@ -220,6 +220,41 @@ partial class DesignerForm
         btnUnderline.Row = RibbonKit.WinForms.RibbonItemRow.Second;
         btnUnderline.SizePolicy = RibbonKit.WinForms.RibbonSizePolicy.Adaptive(RibbonKit.WinForms.RibbonItemSize.Small, RibbonKit.WinForms.RibbonItemSize.Small, RibbonKit.WinForms.RibbonItemSize.Small);
         btnUnderline.Text = "Underline";
+        // 
+        // ribbonGroup2
+        // 
+        ribbonGroup2.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:picture", true);
+        ribbonGroup2.Id = "rk:763efeb1f6d64090980b3b91af13eac6";
+        ribbonGroup2.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { btnInsert });
+        ribbonGroup2.Text = "Insert";
+        // 
+        // btnInsert
+        // 
+        btnInsert.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:cloud-arrow-down", true);
+        btnInsert.Id = "rk:32b4f84a52e5437497fc272db4ac8f05";
+        btnInsert.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { btnInsertPicture, btnInsertLink, btnInsertObject });
+        btnInsert.Text = "Insert";
+        // 
+        // btnInsertPicture
+        // 
+        btnInsertPicture.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:picture", true);
+        btnInsertPicture.Id = "rk:2104dafca95246cbb395e08ca24cca5e";
+        btnInsertPicture.SizePolicy = RibbonKit.WinForms.RibbonSizePolicy.Adaptive(RibbonKit.WinForms.RibbonItemSize.Medium, RibbonKit.WinForms.RibbonItemSize.Medium, RibbonKit.WinForms.RibbonItemSize.Medium);
+        btnInsertPicture.Text = "Picture...";
+        // 
+        // btnInsertLink
+        // 
+        btnInsertLink.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:link", true);
+        btnInsertLink.Id = "rk:8f9352d3f2384379bce34b7aa8be5062";
+        btnInsertLink.SizePolicy = RibbonKit.WinForms.RibbonSizePolicy.Adaptive(RibbonKit.WinForms.RibbonItemSize.Medium, RibbonKit.WinForms.RibbonItemSize.Medium, RibbonKit.WinForms.RibbonItemSize.Medium);
+        btnInsertLink.Text = "Link";
+        // 
+        // btnInsertObject
+        // 
+        btnInsertObject.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:tag", true);
+        btnInsertObject.Id = "rk:c92c4620b8da45d49e3334e78fb23140";
+        btnInsertObject.SizePolicy = RibbonKit.WinForms.RibbonSizePolicy.Adaptive(RibbonKit.WinForms.RibbonItemSize.Medium, RibbonKit.WinForms.RibbonItemSize.Medium, RibbonKit.WinForms.RibbonItemSize.Medium);
+        btnInsertObject.Text = "Object...";
         // 
         // editTab
         // 
@@ -516,47 +551,11 @@ partial class DesignerForm
         button1.Text = "button1";
         button1.UseVisualStyleBackColor = true;
         // 
-        // ribbonGroup2
-        // 
-        ribbonGroup2.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:picture", true);
-        ribbonGroup2.Id = "rk:763efeb1f6d64090980b3b91af13eac6";
-        ribbonGroup2.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { btnInsert });
-        ribbonGroup2.Text = "Insert";
-        // 
-        // btnInsert
-        // 
-        btnInsert.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:cloud-arrow-down", true);
-        btnInsert.Id = "rk:32b4f84a52e5437497fc272db4ac8f05";
-        btnInsert.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { btnInsertPicture, btnInsertLink, btnInsertObject });
-        btnInsert.Text = "Insert";
-        // 
-        // btnInsertPicture
-        // 
-        btnInsertPicture.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:picture", true);
-        btnInsertPicture.Id = "rk:2104dafca95246cbb395e08ca24cca5e";
-        btnInsertPicture.SizePolicy = RibbonKit.WinForms.RibbonSizePolicy.Adaptive(RibbonKit.WinForms.RibbonItemSize.Medium, RibbonKit.WinForms.RibbonItemSize.Medium, RibbonKit.WinForms.RibbonItemSize.Medium);
-        btnInsertPicture.Text = "Picture...";
-        // 
-        // btnInsertLink
-        // 
-        btnInsertLink.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:link", true);
-        btnInsertLink.Id = "rk:8f9352d3f2384379bce34b7aa8be5062";
-        btnInsertLink.SizePolicy = RibbonKit.WinForms.RibbonSizePolicy.Adaptive(RibbonKit.WinForms.RibbonItemSize.Medium, RibbonKit.WinForms.RibbonItemSize.Medium, RibbonKit.WinForms.RibbonItemSize.Medium);
-        btnInsertLink.Text = "Link";
-        // 
-        // btnInsertObject
-        // 
-        btnInsertObject.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:tag", true);
-        btnInsertObject.Id = "rk:c92c4620b8da45d49e3334e78fb23140";
-        btnInsertObject.SizePolicy = RibbonKit.WinForms.RibbonSizePolicy.Adaptive(RibbonKit.WinForms.RibbonItemSize.Medium, RibbonKit.WinForms.RibbonItemSize.Medium, RibbonKit.WinForms.RibbonItemSize.Medium);
-        btnInsertObject.Text = "Object...";
-        // 
         // DesignerForm
         // 
         AutoScaleDimensions = new SizeF(8F, 20F);
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.White;
-        Backdrop = RibbonKit.WinForms.RibbonWindowBackdrop.Mica;
         ClientSize = new Size(1029, 667);
         Controls.Add(button1);
         Controls.Add(statusLabel);
@@ -566,6 +565,7 @@ partial class DesignerForm
         Name = "DesignerForm";
         Ribbon = ribbon;
         Text = "RibbonKit independent designer consumer";
+        TitleBarColor = Color.White;
         ((System.ComponentModel.ISupportInitialize)ribbon).EndInit();
         ResumeLayout(false);
         PerformLayout();

@@ -69,7 +69,7 @@ internal sealed class RibbonPopupMotion : IDisposable
             _image = new(_surface.Width, _surface.Height, PixelFormat.Format24bppRgb);
             RibbonMotionScene.Capture(_ribbon, _surface, _image);
             if (_disposed) return;
-            _clip = _surface.Region?.Clone(); _background = new(_ribbon.Theme.Surface);
+            _clip = _surface.Region?.Clone(); _background = new(_ribbon.Theme.PopupColor);
             if (FadesGallery) PrepareGallery();
             _window = new(_popup);
             _window.PreparePopup(Bounds);

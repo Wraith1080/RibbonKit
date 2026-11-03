@@ -15,7 +15,7 @@ public partial class RibbonRenderer : IDisposable
     public virtual int GetPopupCornerRadius(RibbonTheme theme, int deviceDpi) => 0;
     /// <summary>Paints the outer frame of a floating ribbon popup. The hosted content is inset by one device pixel.</summary>
     public virtual void DrawPopupFrame(RibbonPaintContext context) =>
-        PaintRounded(context, GetPopupCornerRadius(context.Theme, context.DeviceDpi), new(context.Theme.Surface), context.Theme.PopupBorder);
+        PaintRounded(context, GetPopupCornerRadius(context.Theme, context.DeviceDpi), new(context.Theme.PopupColor), context.Theme.PopupBorder);
     /// <summary>Paints a floating popup's shadow onto a transparent surface. Bounds describe the popup; eight logical pixels of clearance surround it.</summary>
     public virtual void DrawPopupShadow(RibbonPaintContext context)
     {
@@ -26,12 +26,17 @@ public partial class RibbonRenderer : IDisposable
     /// <summary>Paints the ribbon or popup background.</summary>
     public virtual void DrawSurface(RibbonPaintContext context, bool popup)
     {
-        using var brush = new SolidBrush(popup ? context.Theme.Surface : context.Theme.Background);
+        using var brush = new SolidBrush(popup ? context.Theme.PopupColor : context.Theme.Background);
         context.Graphics.FillRectangle(brush, context.Bounds);
     }
     /// <summary>Paints the ribbon body panel. Shadows may extend into its surrounding margins; item clipping is handled separately.</summary>
     public virtual void DrawBody(RibbonPaintContext context)
     {
+        if (context.Theme.BodyBackground is not null || !context.Theme.BodyBorder.IsEmpty)
+        {
+            PaintRounded(context, 0, context.Theme.BodyFill, context.Theme.BodyBorder.IsEmpty ? Color.Transparent : context.Theme.BodyBorder, context.Theme.BodyBorder.IsEmpty ? 0 : 1);
+            return;
+        }
         using var brush = new SolidBrush(context.Theme.Surface);
         context.Graphics.FillRectangle(brush, context.Bounds);
     }
@@ -40,14 +45,14 @@ public partial class RibbonRenderer : IDisposable
         => DrawBodyScrollButton(context, backward);
     internal void DrawBodyScrollButton(RibbonPaintContext context, bool backward)
     {
-        DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : new(context.Theme.Surface),
+        DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.BodyFill,
             context.Hot || context.Pressed ? context.Theme.Accent : context.Theme.PopupBorder);
         RibbonArrowPainter.DrawHorizontal(context.Graphics, context.Bounds, context.DeviceDpi, context.Theme.Foreground, backward);
     }
     /// <summary>Paints an opaque vertical overflow-menu scroll band in device-pixel bounds, including its direction and endpoint availability.</summary>
     public virtual void DrawOverflowScrollButton(RibbonPaintContext context, bool upward, bool enabled)
     {
-        using (var background = new SolidBrush(Color.FromArgb(255, context.Theme.Surface)))
+        using (var background = new SolidBrush(Color.FromArgb(255, context.Theme.PopupColor)))
             context.Graphics.FillRectangle(background, context.Bounds);
         if (enabled && (context.Hot || context.Pressed))
             DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
@@ -247,8 +252,8 @@ public partial class RibbonRenderer : IDisposable
     public virtual void DrawTextBox(RibbonPaintContext context, RibbonTextBoxItem item, Rectangle editorBounds)
     {
         DrawEditorLabel(context, item, editorBounds);
-        DrawChrome(context with { Bounds = editorBounds }, new(context.Theme.Surface),
-            context.Focused && item.EffectiveEnabled ? context.Theme.Accent : context.Theme.Border);
+        DrawChrome(context with { Bounds = editorBounds }, new(context.Theme.EditorColor),
+            context.Focused && item.EffectiveEnabled ? context.Theme.Accent : context.Theme.EditorBorderColor);
     }
     /// <summary>Paints a ComboBox label, frame and arrow. Text input remains in the native editor.</summary>
     public virtual void DrawComboBox(RibbonPaintContext context, RibbonComboBoxItem item, Rectangle editorBounds)
@@ -257,8 +262,8 @@ public partial class RibbonRenderer : IDisposable
         context = EnabledContext(context, item.EffectiveEnabled);
         bool open = item.IsDropDownOpen && item.EffectiveEnabled;
         var field = context with { Bounds = editorBounds };
-        var border = context.Hot || context.Focused || context.Pressed || open ? context.Theme.Accent : context.Theme.Border;
-        DrawChrome(field, new(context.Theme.Surface), border);
+        var border = context.Hot || context.Focused || context.Pressed || open ? context.Theme.Accent : context.Theme.EditorBorderColor;
+        DrawChrome(field, new(context.Theme.EditorColor), border);
         var button = RibbonEditorLayout.ComboButton(editorBounds, context.DeviceDpi, context.Density);
         if (context.Hot || context.Pressed || open)
         {
@@ -270,25 +275,25 @@ public partial class RibbonRenderer : IDisposable
             }
             finally { context.Graphics.Restore(saved); }
         }
-        DrawDropDownArrow(context with { Bounds = button }, item.EffectiveEnabled ? context.Theme.Foreground : context.Theme.DisabledColor);
+        DrawDropDownArrow(context with { Bounds = button }, item.EffectiveEnabled ? context.Theme.EditorTextColor : context.Theme.DisabledColor);
     }
     /// <summary>Paints a native choice row. Selected is the native selection or keyboard preview; Hot and Pressed describe pointer interaction separately.</summary>
     public virtual void DrawComboBoxItem(RibbonPaintContext context, RibbonComboBoxItem item, int index, bool selected)
     {
-        using var surface = new SolidBrush(context.Theme.Surface);
+        using var surface = new SolidBrush(context.Theme.PopupColor);
         context.Graphics.FillRectangle(surface, context.Bounds);
         context = EnabledContext(context, item.EffectiveEnabled);
         if (selected || context.Hot || context.Pressed)
             DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, Color.Transparent);
         DrawText(context with { Bounds = Rectangle.Inflate(context.Bounds, -RibbonLayoutEngine.Scale(6, context.DeviceDpi), 0) },
-            item.Items[index], item.EffectiveEnabled ? context.Theme.Foreground : context.Theme.DisabledColor,
+            item.Items[index], item.EffectiveEnabled ? context.Theme.EditorTextColor : context.Theme.DisabledColor,
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.EndEllipsis);
     }
     private void DrawEditorLabel(RibbonPaintContext context, RibbonItem item, Rectangle editorBounds)
     {
         if (item is RibbonComboBoxItem { ShowLabel: false }) return;
         DrawText(context with { Bounds = new(context.Bounds.Left, context.Bounds.Top, Math.Max(0, editorBounds.Left - context.Bounds.Left - RibbonLayoutEngine.Scale(6, context.DeviceDpi)), context.Bounds.Height) },
-            item.Text, item.EffectiveEnabled ? context.Theme.Foreground : context.Theme.DisabledColor,
+            item.Text, item.EffectiveEnabled ? context.Theme.EditorTextColor : context.Theme.DisabledColor,
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding);
     }
     /// <summary>Paints the File menu header using library-measured bounds and its original open/availability state.</summary>
@@ -441,7 +446,7 @@ public partial class RibbonRenderer : IDisposable
             DrawFocus(context);
     }
     /// <summary>Paints a noninteractive command-dropdown heading. Uses the renderer's existing themed heading treatment.</summary>
-    public virtual void DrawMenuHeader(RibbonPaintContext context, string text) => DrawGalleryHeading(context, text);
+    public virtual void DrawMenuHeader(RibbonPaintContext context, string text) => DrawGalleryHeading(context with { IsMenuHeading = true }, text);
 
     private void DrawIllustratedChoice(RibbonPaintContext context, RibbonItem item)
     {

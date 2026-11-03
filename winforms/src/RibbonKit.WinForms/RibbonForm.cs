@@ -185,8 +185,9 @@ public partial class RibbonForm : Form
     }
     internal void PaintCaption(Graphics graphics, RibbonControl? ribbon, bool composited = false)
     {
-        var geometry = Caption; var theme = ribbon?.Theme ?? RibbonThemes.Office2024Light;
-        using var background = new SolidBrush(ribbon?.CaptionBackground(composited) ?? (composited ? Color.Transparent : theme.Background));
+        var geometry = Caption; var sourceTheme = ribbon?.Theme ?? RibbonThemes.Office2024Light;
+        var captionTheme = CaptionTheme(sourceTheme, composited);
+        using var background = new SolidBrush(CaptionColor(sourceTheme, composited));
         var captionBounds = new Rectangle(0, 0, ClientSize.Width, CaptionHeight);
         if (ribbon is not null) ribbon.PaintCaptionBackground(graphics, captionBounds, composited);
         else graphics.FillRectangle(background, captionBounds);
@@ -194,43 +195,57 @@ public partial class RibbonForm : Form
         int left = geometry.ContentLeft;
         if (ribbon?.EffectiveQuickAccessPosition == RibbonQuickAccessPosition.TitleBar && ribbon.ShowQuickAccess) left = ribbon.Snapshot.QuickAccessBounds.Right + RibbonLayoutEngine.Scale(10, DeviceDpi);
         var text = Rectangle.FromLTRB(Math.Min(left, geometry.Buttons.Left), 0, geometry.Buttons.Left, CaptionHeight);
-        var textContext = new RibbonPaintContext(graphics, text, theme, Font, DeviceDpi);
-        var flags = TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix;
-        if (composited) RibbonBackdropBuffer.DrawText(textContext, Text, _captionActive ? theme.Foreground : theme.SecondaryText, flags);
-        else TextRenderer.DrawText(graphics, Text, Font, text, _captionActive ? theme.Foreground : theme.SecondaryText, flags);
-        foreach (var (bounds, hit) in geometry.Targets)
+        if (ribbon is { IsBackstageOpen: true } && !ReferenceEquals(sourceTheme, captionTheme))
         {
-            if (bounds.IsEmpty) continue;
-            bool hot = _hotCaption == hit, pressed = hot && _pressedCaption == hit;
-            Color fill;
-            if (hit == 20) fill = Color.FromArgb(composited ? pressed ? 235 : 210 : 255, 232, 17, 35);
-            else if (!composited) fill = pressed ? theme.Pressed.Start : theme.Hover.Start;
-            else fill = pressed ? theme.BackdropPressed?.Start ?? Color.FromArgb(40, theme.Foreground)
-                : theme.BackdropHover?.Start ?? Color.FromArgb(24, theme.Foreground);
-            using var hover = new SolidBrush(fill);
-            if (hot) graphics.FillRectangle(hover, bounds);
-            using var pen = new Pen(_hotCaption == 20 && hit == 20 ? Color.White : theme.Foreground, Math.Max(1, DeviceDpi / 96f));
-            int size = RibbonLayoutEngine.Scale(10, DeviceDpi), x = bounds.Left + (bounds.Width - size) / 2, y = bounds.Top + (bounds.Height - size) / 2;
-            if (hit == 8) graphics.DrawLine(pen, x, y + size / 2, x + size, y + size / 2);
-            else if (hit == 9)
+            var state = graphics.Save();
+            try { graphics.ExcludeClip(ribbon.CaptionOverlayBounds); PaintContents(captionTheme); }
+            finally { graphics.Restore(state); }
+            state = graphics.Save();
+            try { graphics.SetClip(ribbon.CaptionOverlayBounds, System.Drawing.Drawing2D.CombineMode.Intersect); PaintContents(sourceTheme); }
+            finally { graphics.Restore(state); }
+        }
+        else PaintContents(captionTheme);
+
+        void PaintContents(RibbonTheme theme)
+        {
+            var textContext = new RibbonPaintContext(graphics, text, theme, Font, DeviceDpi);
+            var flags = TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix;
+            if (composited) RibbonBackdropBuffer.DrawText(textContext, Text, _captionActive ? theme.Foreground : theme.SecondaryText, flags);
+            else TextRenderer.DrawText(graphics, Text, Font, text, _captionActive ? theme.Foreground : theme.SecondaryText, flags);
+            foreach (var (bounds, hit) in geometry.Targets)
             {
-                if (WindowState == FormWindowState.Maximized)
+                if (bounds.IsEmpty) continue;
+                bool hot = _hotCaption == hit, pressed = hot && _pressedCaption == hit;
+                Color fill;
+                if (hit == 20) fill = Color.FromArgb(composited ? pressed ? 235 : 210 : 255, 232, 17, 35);
+                else if (!composited) fill = pressed ? theme.Pressed.Start : theme.Hover.Start;
+                else fill = pressed ? theme.BackdropPressed?.Start ?? Color.FromArgb(40, theme.Foreground)
+                    : theme.BackdropHover?.Start ?? Color.FromArgb(24, theme.Foreground);
+                using var hover = new SolidBrush(fill);
+                if (hot) graphics.FillRectangle(hover, bounds);
+                using var pen = new Pen(_hotCaption == 20 && hit == 20 ? Color.White : theme.Foreground, Math.Max(1, DeviceDpi / 96f));
+                int size = RibbonLayoutEngine.Scale(10, DeviceDpi), x = bounds.Left + (bounds.Width - size) / 2, y = bounds.Top + (bounds.Height - size) / 2;
+                if (hit == 8) graphics.DrawLine(pen, x, y + size / 2, x + size, y + size / 2);
+                else if (hit == 9)
                 {
-                    graphics.DrawRectangle(pen, x + 3, y, size - 3, size - 3);
-                    var mode = graphics.CompositingMode;
-                    if (composited) graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
-                    var restoreBounds = new Rectangle(x, y + 3, size - 3, size - 3);
-                    if (ribbon is not null) ribbon.PaintCaptionBackground(graphics, restoreBounds, composited);
-                    else graphics.FillRectangle(background, restoreBounds);
-                    graphics.CompositingMode = mode;
-                    // Erasing the rear restore outline must retain the same
-                    // translucent state fill inside the front window outline.
-                    if (composited && hot) graphics.FillRectangle(hover, restoreBounds);
-                    graphics.DrawRectangle(pen, x, y + 3, size - 3, size - 3);
+                    if (WindowState == FormWindowState.Maximized)
+                    {
+                        graphics.DrawRectangle(pen, x + 3, y, size - 3, size - 3);
+                        var mode = graphics.CompositingMode;
+                        if (composited) graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+                        var restoreBounds = new Rectangle(x, y + 3, size - 3, size - 3);
+                        if (ribbon is not null) ribbon.PaintCaptionBackground(graphics, restoreBounds, composited);
+                        else graphics.FillRectangle(background, restoreBounds);
+                        graphics.CompositingMode = mode;
+                        // Erasing the rear restore outline must retain the same
+                        // translucent state fill inside the front window outline.
+                        if (hot) graphics.FillRectangle(hover, restoreBounds);
+                        graphics.DrawRectangle(pen, x, y + 3, size - 3, size - 3);
+                    }
+                    else graphics.DrawRectangle(pen, x, y, size, size);
                 }
-                else graphics.DrawRectangle(pen, x, y, size, size);
+                else { graphics.DrawLine(pen, x, y, x + size, y + size); graphics.DrawLine(pen, x + size, y, x, y + size); }
             }
-            else { graphics.DrawLine(pen, x, y, x + size, y + size); graphics.DrawLine(pen, x + size, y, x, y + size); }
         }
     }
     internal int CaptionHitTest(Point point)

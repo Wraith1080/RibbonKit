@@ -1,6 +1,8 @@
 # Inert dropdown and split-button designer preview
 
-Status, **2026-11-03: implemented and packaged; actual Visual Studio and user review pending**.
+Status, **2026-11-03: implemented and packaged; the user tested the popup preview
+workflow and confirmed "tested and worked"**. The specific VS save/reopen,
+Undo/Redo and mixed-DPI gates below were not individually reported.
 Baseline: clean `codex/Ribbonkit-Winform` at
 `bc5b05a733492c02b51dc58708952443a9fc595d`.
 This is the second user-authorized follow-up after the inline gallery class picker.

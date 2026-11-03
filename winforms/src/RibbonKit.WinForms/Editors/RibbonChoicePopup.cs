@@ -29,8 +29,8 @@ internal sealed class RibbonChoicePopup : IDisposable
         _preview = preview; _accept = accept; _cancel = cancel;
         _list = new(this)
         {
-            Name = item.Id + ".choices", Font = ribbon.Font, BackColor = ribbon.Theme.Surface,
-            ForeColor = ribbon.Theme.Foreground, BorderStyle = BorderStyle.None,
+            Name = item.Id + ".choices", Font = ribbon.Font, BackColor = ribbon.Theme.PopupColor,
+            ForeColor = ribbon.Theme.EditorTextColor, BorderStyle = BorderStyle.None,
             DrawMode = DrawMode.OwnerDrawFixed, IntegralHeight = false, TabStop = false,
             CausesValidation = false, ItemHeight = RibbonEditorLayout.ComboRowHeight(ribbon.Font, ribbon.DeviceDpi, ribbon.Density)
         };

@@ -31,12 +31,12 @@ internal sealed partial class RibbonPopupSurface : IRibbonGalleryPresenterHost
             int footer = S(24), padding = 2 * _contentPadding;
             var limit = new Size(Math.Max(1, maximum.Width - S(24) - padding), Math.Max(1, maximum.Height - S(32) - footer - padding));
             _galleryContext = new(this, gallery, _ribbon, isQuickAccess: IsQuickAccess) { Viewport = limit };
-            control.Font = Font; control.BackColor = _ribbon.Theme.Surface;
+            control.Font = Font; control.BackColor = _ribbon.Theme.PopupColor;
             presenter.Synchronize(_galleryContext);
             var preferred = control.GetPreferredSize(limit);
             var viewport = new Size(Math.Clamp(preferred.Width, 1, limit.Width), Math.Clamp(preferred.Height, 1, limit.Height));
             _galleryContext.Viewport = viewport;
-            _galleryPresenterViewport = new Panel { Bounds = new(_contentPadding, _contentPadding, viewport.Width, viewport.Height), BackColor = _ribbon.Theme.Surface, TabStop = false };
+            _galleryPresenterViewport = new Panel { Bounds = new(_contentPadding, _contentPadding, viewport.Width, viewport.Height), BackColor = _ribbon.Theme.PopupColor, TabStop = false };
             Controls.Add(_galleryPresenterViewport);
             control.Dock = DockStyle.Fill; _galleryPresenterViewport.Controls.Add(control);
             control.MouseMove += PresenterMouseMove; control.MouseLeave += PresenterMouseLeave; control.MouseDown += PresenterMouseDown; control.MouseUp += PresenterMouseUp;
@@ -195,7 +195,7 @@ internal sealed partial class RibbonPopupSurface : IRibbonGalleryPresenterHost
         }
         protected override void OnPaint(PaintEventArgs e)
         {
-            using var background = new SolidBrush(_surface._ribbon.Theme.Surface); e.Graphics.FillRectangle(background, ClientRectangle);
+            using var background = new SolidBrush(_surface._ribbon.Theme.PopupColor); e.Graphics.FillRectangle(background, ClientRectangle);
             _surface._ribbon.Painter.DrawGalleryStripButton(
                 new(e.Graphics, ClientRectangle, _surface._ribbon.Theme, Font, _surface._ribbon.DeviceDpi, Hot: _hot, Pressed: _pressed) { Density = _surface._ribbon.Density },
                 _forward ? RibbonGalleryStripButton.Down : RibbonGalleryStripButton.Up, Enabled);

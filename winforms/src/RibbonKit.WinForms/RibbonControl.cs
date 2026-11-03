@@ -104,6 +104,12 @@ public partial class RibbonControl : Control, ISupportInitialize
         {
             VerifyAccess();
             ArgumentNullException.ThrowIfNull(value);
+            if ((!value.PopupBackground.IsEmpty && value.PopupBackground.A != 255) ||
+                (!value.EditorBackground.IsEmpty && value.EditorBackground.A != 255) ||
+                (!value.TitleBarBackground.IsEmpty && value.TitleBarBackground.A != 255))
+                throw new ArgumentException("Popup, native editor and title-bar colors must be opaque or Empty.", nameof(value));
+            if (value.BodyBackground is { } body && (body.Start.A != 255 || body.End.A != 255))
+                throw new ArgumentException("Both body fill stops must be opaque.", nameof(value));
             if (value.TabHeight <= 0 || value.BodyHeight <= 0 || value.BodyScrollButtonVerticalInset < 0 || value.HeaderButtonInset < 0 || value.LargeButtonMaxWidth < 60 || value.CollapsedGroupMaxWidth < 80 || value.CornerRadius < 0 || value.PopupCornerRadius < 0 ||
                 !float.IsFinite(value.BackstageNavigationFontSize) || value.BackstageNavigationFontSize <= 0 || value.MessageMinimumHeight <= 0 ||
                 !float.IsFinite(value.QuickAccessBackdropOpacity) || value.QuickAccessBackdropOpacity < 0 || value.QuickAccessBackdropOpacity > 1 ||
@@ -539,8 +545,11 @@ public partial class RibbonControl : Control, ISupportInitialize
         PaintMessages(context);
         if (!_snapshot.BodyBounds.IsEmpty) Painter.DrawBody(context with { Bounds = _snapshot.BodyFrameBounds, IsBottomEdgeConnected = MessageBar.HasOpenMessages && MessageTopConnected });
         if (HasWindowCaption) WindowHost!.PaintCaption(e.Graphics, this, composited);
+        var qatTheme = HasWindowCaption && EffectiveQuickAccessPosition == RibbonQuickAccessPosition.TitleBar ? WindowHost!.CaptionTheme(Theme, composited) : Theme;
+        if (ReferenceEquals(qatTheme, Theme)) qatTheme = context.Theme;
         if (!_snapshot.QuickAccessBounds.IsEmpty) Painter.DrawQuickAccessToolbar(context with
             { Bounds = _snapshot.QuickAccessBounds,
+            Theme = qatTheme,
             IsQuickAccessToolbarJoined = JoinBelowRibbonQuickAccess && !_snapshot.BodyBounds.IsEmpty,
             IsBottomEdgeConnected = MessageBar.HasOpenMessages && MessageTopConnected }, EffectiveQuickAccessPosition);
         PaintMessageContents(context);
@@ -577,6 +586,7 @@ public partial class RibbonControl : Control, ISupportInitialize
                 e.Graphics.SetClip(target.Clip);
                 var ctx = context with
                 {
+                    Theme = target.Kind is TargetKind.QuickAccess or TargetKind.QuickAccessOverflow ? qatTheme : context.Theme,
                     Bounds = target.Bounds,
                     Hot = target.Enabled && !_hotDropDown && ReferenceEquals(target.Element, _hot),
                     Pressed = target.Enabled && !_pressedDropDown && ReferenceEquals(target.Element, _pressed),

@@ -348,7 +348,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
                     Parent = surface;
                 }
                 Font = _ribbon.Font;
-                BackColor = _ribbon.Theme.Surface;
+                BackColor = ReferenceEquals(surface, _ribbon) ? _ribbon.Theme.Surface : _ribbon.Theme.PopupColor;
                 Bounds = target.Bounds;
                 _labelWidth = target.LabelWidth;
                 var clip = Rectangle.Intersect(target.Bounds, target.Clip);
@@ -407,8 +407,8 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
                 _lastModel = _value.CaptureEdit();
                 // Disabled EDIT text remains Windows-owned. The theme's disabled
                 // role applies to our label/frame glyphs and owner-drawn selection.
-                _editor.ForeColor = _item.EffectiveEnabled ? _ribbon.Theme.Foreground : SystemColors.GrayText;
-                _editor.BackColor = BackColor;
+                _editor.ForeColor = _item.EffectiveEnabled ? _ribbon.Theme.EditorTextColor : SystemColors.GrayText;
+                _editor.BackColor = _ribbon.Theme.EditorColor;
                 Enabled = _item.EffectiveEnabled;
             }
             finally { _applying = false; }
@@ -721,6 +721,19 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
             frame.Exclude(text);
             Invalidate(frame);
         }
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            base.OnPaintBackground(e);
+            if (ReferenceEquals(Parent, _ribbon) && _ribbon.Theme.BodyBackground is not null)
+            {
+                // Use the full body origin so gradients continue behind editor
+                // labels instead of restarting inside each native presenter.
+                var bounds = _ribbon.Snapshot.BodyFrameBounds;
+                bounds.Offset(-Left, -Top);
+                _ribbon.Painter.DrawBody(new(e.Graphics, bounds, _ribbon.Theme, Font, _ribbon.DeviceDpi)
+                    { Density = _ribbon.Density, SuppressShadow = true });
+            }
+        }
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
@@ -795,14 +808,14 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
                 var context = new RibbonPaintContext(e.Graphics, e.Bounds, ribbon.Theme, Font, ribbon.DeviceDpi) { Density = ribbon.Density };
                 if (e.State.HasFlag(DrawItemState.ComboBoxEdit))
                 {
-                    using var fill = new SolidBrush(ribbon.Theme.Surface);
+                    using var fill = new SolidBrush(ribbon.Theme.EditorColor);
                     e.Graphics.FillRectangle(fill, e.Bounds);
                     // DRAWITEM describes the new native selection before the
                     // managed SelectedIndexChanged callback updates the model.
                     // Draw it correctly once instead of queuing a second paint.
                     string value = e.Index >= 0 && e.Index < Items.Count ? GetItemText(Items[e.Index]) ?? "" : "";
                     ribbon.Painter.DrawText(context with { Bounds = RibbonEditorLayout.ComboText(ClientRectangle, ribbon.DeviceDpi, ribbon.Density) },
-                        value, item.EffectiveEnabled ? ribbon.Theme.Foreground : ribbon.Theme.DisabledColor,
+                        value, item.EffectiveEnabled ? ribbon.Theme.EditorTextColor : ribbon.Theme.DisabledColor,
                         TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.EndEllipsis);
                 }
                 else if (e.Index >= 0 && e.Index < item.Items.Count)

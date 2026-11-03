@@ -41,9 +41,12 @@ public partial class RibbonRenderer
     public virtual void DrawGalleryHeading(RibbonPaintContext context, string text)
     {
         context = context with { Hot = false, Pressed = false, Focused = false };
+        if (context.IsMenuHeading && context.Theme.MenuHeadingBackground is { } fill)
+            DrawChrome(context, fill, Color.Transparent);
         int inset = RibbonLayoutEngine.Scale(6, context.DeviceDpi);
         using var font = new Font(context.Font, context.Font.Style | FontStyle.Bold);
-        DrawText(context with { Bounds = Rectangle.Inflate(context.Bounds, -inset, 0), Font = font }, text, context.Theme.SecondaryText,
+        var foreground = context.IsMenuHeading && !context.Theme.MenuHeadingForeground.IsEmpty ? context.Theme.MenuHeadingForeground : context.Theme.SecondaryText;
+        DrawText(context with { Bounds = Rectangle.Inflate(context.Bounds, -inset, 0), Font = font }, text, foreground,
             TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
     }
     /// <summary>Paints an owned gallery tile using its borrowed artwork, selection and independent preview/focus state. Bounds are measured device pixels.</summary>

@@ -16,9 +16,14 @@ internal sealed class RibbonGroupScene : IDisposable
     internal readonly int Dpi;
     internal readonly Dictionary<Key, Slot> Groups;
     private readonly Rectangle[] _fixedTargets;
+    private readonly RibbonFill? _bodyBackground;
+    private readonly Rectangle _bodyFrame;
+    private readonly RoundedPainter _backgroundPainter = new();
     internal RibbonGroupScene(RibbonControl ribbon, Control surface, RibbonLayoutSnapshot layout)
     {
         Dpi = ribbon.DeviceDpi; Origin = surface.PointToScreen(Point.Empty);
+        _bodyBackground = surface == ribbon ? ribbon.Theme.BodyBackground : null;
+        _bodyFrame = layout.BodyFrameBounds;
         var viewport = Rectangle.Intersect(surface.ClientRectangle, layout.BodyViewport);
         for (var parent = surface.Parent; parent is not null; parent = parent.Parent)
             viewport = Rectangle.Intersect(viewport, surface.RectangleToClient(parent.RectangleToScreen(parent.ClientRectangle)));
@@ -63,7 +68,8 @@ internal sealed class RibbonGroupScene : IDisposable
         // Only the body viewport is covered. Headers, frame, QAT, messages and
         // popup windows keep their live drawings and their own motion.
         graphics.TranslateTransform(-to.Viewport.Left, -to.Viewport.Top);
-        using var background = new SolidBrush(surface); graphics.FillRectangle(background, to.Viewport);
+        if (to._bodyBackground is { } fill) to._backgroundPainter.Draw(graphics, to._bodyFrame, 0, fill, Color.Transparent, 0);
+        else { using var background = new SolidBrush(surface); graphics.FillRectangle(background, to.Viewport); }
         var saved = graphics.Save();
         try
         {
@@ -112,5 +118,5 @@ internal sealed class RibbonGroupScene : IDisposable
             finally { graphics.Restore(state); }
         }
     }
-    public void Dispose() => Image.Dispose();
+    public void Dispose() { Image.Dispose(); _backgroundPainter.Dispose(); }
 }

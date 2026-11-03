@@ -1292,6 +1292,38 @@ TabRow/BelowRibbon movement retains its existing opt-in animation; the caption
 band stays steady during body/header motion. Document/MDI management remains
 application-owned. [M6B scope and evidence](docs/M6B-WINDOW-INTEGRATION.md).
 
+Select **TitleBarColor** on the Form's Properties panel to choose its caption
+color. Reset follows `ribbon.Theme.TitleBarBackground`, whose default retains the
+existing appearance. With Mica/Acrylic, the color tints the retained material;
+`TitleBarTintOpacity` controls coverage (default `.6`). Without a backdrop, the
+color is solid. Caption text/buttons and TitleBar QAT choose black/white contrast;
+`Theme.TitleBarForeground` can override it. TabRow/BelowRibbon QAT and document
+controls retain their own palette. Close hover keeps its red/white treatment.
+
+```csharp
+window.TitleBarColor = Color.DarkSlateBlue;
+window.TitleBarTintOpacity = .6f;
+// Reset the Form override, following the theme again:
+window.TitleBarColor = Color.Empty;
+
+ribbon.Theme = ribbon.Theme with
+{
+    BodyBackground = new RibbonFill(Color.White, Color.AliceBlue),
+    BodyBorder = Color.LightSteelBlue,
+    PopupBackground = Color.Ivory,
+    EditorBackground = Color.White,
+    EditorForeground = Color.DarkSlateGray,
+    EditorBorder = Color.SlateGray,
+    MenuHeadingBackground = new RibbonFill(Color.AliceBlue),
+    MenuHeadingForeground = Color.DarkSlateBlue
+};
+```
+
+Unset roles retain the existing palette. Body fill stops, popup/editor backgrounds
+and caption colors are opaque; material caption coverage uses the separate opacity
+setting. [Color roles, fallbacks and review scope](docs/APPEARANCE-COLOR-ROLES.md).
+Theme roles do not recursively recolor application-owned UserControls.
+
 ### Optional native window backdrops
 
 **Experimental.** [Current evidence, user review and remaining platform checks](docs/M6C-BACKDROPS.md#first-show-material-alpha-and-windows-opening-motion--2026-10-30).
