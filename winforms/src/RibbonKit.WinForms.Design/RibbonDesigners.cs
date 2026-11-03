@@ -88,6 +88,7 @@ internal sealed class RibbonSurfaceActions(IComponent component, RibbonControlDe
     public void EditRibbon() => designer.EditRibbon();
     public void EditBackstage() => designer.EditBackstage();
     public void PreviewBackstage() => Selection.Backstage.Open();
+    public void EditPopup() { if (Selection.PopupSource is { } source) { Selection.Select(source); designer.EditRibbon(); } }
     public void SelectRibbon() => Selection.Select(designer.Component);
     public void SelectSourceCommand() => Selection.SelectQuickAccessSource();
     public override DesignerActionItemCollection GetSortedActionItems()
@@ -104,6 +105,8 @@ internal sealed class RibbonSurfaceActions(IComponent component, RibbonControlDe
         };
         if (Selection.QuickAccessSource is not null)
             items.Add(new DesignerActionMethodItem(this, nameof(SelectSourceCommand), "Select source command", "Quick Access Toolbar", "Select this entry's command in Properties to edit its name, caption and events.", true));
+        if (Selection.PopupSource is not null)
+            items.Add(new DesignerActionMethodItem(this, nameof(EditPopup), "Edit popup…", "Ribbon", "Edit this dropdown or split button with a static popup preview.", true));
         return items;
     }
 }

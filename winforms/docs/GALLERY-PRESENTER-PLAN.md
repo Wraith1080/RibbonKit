@@ -16,8 +16,8 @@ The runtime contract and ownership decisions for this increment are recorded bel
 the existing built-in gallery remains the default.
 This is native RibbonKit.WinForms work; WPF runtime/build/CI remain outside scope.
 The ordinary dropdown/split UserControl increment is tracked in the
-[retained content plan](DROPDOWN-CONTENT-PLAN.md); its inert popup designer preview
-remains deferred. Inline/QAT custom presenters
+[retained content plan](DROPDOWN-CONTENT-PLAN.md); the separate
+[inert popup designer preview](POPUP-DESIGNER-PREVIEW.md) is now implemented. Inline/QAT custom presenters
 now include the [first ordinary inline body increment](#first-inline-runtime-increment--2026-11-02).
 The [QAT gallery popup increment](#qat-gallery-popup-increment--2026-11-02) reuses the
 existing dropdown class/factory. The
@@ -732,12 +732,12 @@ Its original inspection used the clean `codex/Ribbonkit-Winform` worktree at
 `d8d893b4c1a53cc66e1da636543609150fdf88ff` (`Gallery Usercontrol custom presentation
 pop up`). Inline selectors, the QAT opt-in and context.Presentation/IsQuickAccess
 are now available, including the temporary source-group/minimized bodies above.
-Inline designer discovery and customized command-copy presenter forwarding remain
-later slices.
+Inline designer discovery is implemented; customized command-copy presenter
+forwarding remains a later slice.
 The accepted popup entrance, designer-editable cards and earlier focus, native
 editor and backdrop fixes remain the baseline. Ordinary dropdown/split content
 hosting is tracked in [its current plan](DROPDOWN-CONTENT-PLAN.md); the separate
-inert popup designer preview remains deferred.
+inert popup designer preview is implemented in [its own plan](POPUP-DESIGNER-PREVIEW.md).
 
 ### Presentations and selector boundaries
 
@@ -1099,7 +1099,7 @@ Recorded contract review decisions:
 
 The four runtime/authoring stages above are implemented; their separate review
 gates are recorded in the corresponding increments. Inert popup designer preview
-remains deferred.
+is now implemented separately in the [popup preview plan](POPUP-DESIGNER-PREVIEW.md).
 Arbitrary embedded editors, custom QAT toolbar bodies, new gallery UIA patterns,
 general dropdown hosting/preview, new themes and unrelated refactors stay deferred.
 
@@ -1204,8 +1204,9 @@ passing evidence unless a change or unresolved risk warrants rerunning it.
 
 **Update, 2026-11-02:** the user approved retained ordinary dropdown/split content.
 Stage 2's first implementation and current evidence are now in the
-[retained content plan](DROPDOWN-CONTENT-PLAN.md). Stage 1's inert popup preview
-remains deferred. The following is the original proposal and decision checklist.
+[retained content plan](DROPDOWN-CONTENT-PLAN.md). **2026-11-03:** Stage 1's inert popup
+preview is implemented in the [popup preview plan](POPUP-DESIGNER-PREVIEW.md).
+The following is the original proposal and decision checklist.
 
 Recorded at the user's request alongside the gallery hosting proposal. Keep
 ordinary dropdown/split-button menus and custom gallery presenters as distinct
@@ -1278,4 +1279,5 @@ stage does not require the gallery-specific tile/preview/scroll interface for
 ordinary custom dropdown bodies.
 
 This historical proposal adds no acceptance evidence. The linked retained-content
-plan owns current dropdown/split evidence; popup designer previews remain deferred.
+plan owns dropdown/split runtime evidence; the [popup preview plan](POPUP-DESIGNER-PREVIEW.md)
+owns current designer-preview evidence.

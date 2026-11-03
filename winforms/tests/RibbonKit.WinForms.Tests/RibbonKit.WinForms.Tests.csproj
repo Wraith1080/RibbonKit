@@ -20,6 +20,8 @@
     <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonDropDownContentTypes.cs" Link="Designer/RibbonDropDownContentTypes.cs" />
     <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonBackstagePreviewRenderer.cs" Link="Designer/RibbonBackstagePreviewRenderer.cs" />
     <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonThemePreviewRenderer.cs" Link="Designer/RibbonThemePreviewRenderer.cs" />
+    <Compile Include="../../src/RibbonKit.WinForms.Design/RibbonPopupPreviewRenderer.cs" Link="Designer/RibbonPopupPreviewRenderer.cs" />
+    <Compile Include="../../src/RibbonKit.WinForms.Design.Client/RibbonEditorDialog.PopupPreview.cs" Link="Designer/RibbonEditorDialog.PopupPreview.cs" />
     <Compile Include="../../src/RibbonKit.WinForms.Design.Client/RibbonEditorDialog.cs" Link="Designer/RibbonEditorDialog.cs" />
     <Compile Include="../../src/RibbonKit.WinForms.Design.Client/RibbonBackstageDialog.cs" Link="Designer/RibbonBackstageDialog.cs" />
     <Compile Include="../../src/RibbonKit.WinForms.Design.Client/RibbonIconPickerDialog.cs" Link="Designer/RibbonIconPickerDialog.cs" />

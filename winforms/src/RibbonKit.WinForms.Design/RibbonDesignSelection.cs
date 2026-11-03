@@ -83,6 +83,16 @@ internal sealed class RibbonDesignSelection : IDisposable
     internal RibbonElement? QuickAccessSource => Selected is RibbonElement entry && _ribbon.QuickAccessItems.Contains(entry)
         && RibbonQuickAccess.Source(entry) is { } source && !ReferenceEquals(entry, source) && ReferenceEquals(source.Ribbon, _ribbon) ? source : null;
     internal void SelectQuickAccessSource() { if (QuickAccessSource is { } source) Select(source); }
+    internal RibbonDropDownItem? PopupSource
+    {
+        get
+        {
+            for (var element = QuickAccessSource ?? Selected as RibbonElement; element is not null; element = element.Parent as RibbonElement)
+                if (element is RibbonDropDownItem and not RibbonGalleryItem && RibbonDesignCommitter.EditableElements(_ribbon).Contains(element))
+                    return (RibbonDropDownItem)element;
+            return null;
+        }
+    }
     private bool QuickAccessComponent(object? component)
     {
         if (component is not RibbonElement element || !ReferenceEquals(element.Ribbon, _ribbon)) return false;

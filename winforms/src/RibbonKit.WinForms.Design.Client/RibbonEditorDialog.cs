@@ -10,7 +10,7 @@ using RibbonKit.WinForms.Design.Protocol;
 
 namespace RibbonKit.WinForms.Design.Client;
 
-internal sealed class RibbonEditorDialog : Form
+internal sealed partial class RibbonEditorDialog : Form
 {
     private readonly RibbonDesignSnapshot _draft;
     private readonly Func<RibbonDesignSnapshot, string?> _commit;
@@ -69,7 +69,7 @@ internal sealed class RibbonEditorDialog : Form
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.Controls.Add(new Label { Text = "Arrange tabs, groups and commands.", AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 8) }, 0, 0);
         ((ToolStripDropDownMenu)_add.DropDown).ShowImageMargin = false;
-        _tools.Items.AddRange(new ToolStripItem[] { _add, new ToolStripSeparator(), _up, _down, _moveTo, new ToolStripSeparator(), _remove });
+        _tools.Items.AddRange(new ToolStripItem[] { _add, new ToolStripSeparator(), _up, _down, _moveTo, new ToolStripSeparator(), _remove, new ToolStripSeparator(), _previewPopup });
         layout.Controls.Add(_tools, 0, 1); layout.Controls.Add(_split, 0, 2);
         var structure = ColumnLayout(); structure.RowCount = 2;
         structure.RowStyles.Add(new RowStyle(SizeType.AutoSize)); structure.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
@@ -135,7 +135,7 @@ internal sealed class RibbonEditorDialog : Form
         qatActions.Controls.AddRange(new Control[] { addExisting, newButton, newToggle, _editQatSource, _changeQatSource });
         qatLayout.Controls.Add(qatActions); qatLayout.Controls.Add(_qatSource); _qatBox.Controls.Add(qatLayout); details.Controls.Add(_qatBox, 0, 3);
         preview.Click += (_, _) => PreviewTheme();
-        _properties.Name = "ComponentProperties"; details.Controls.Add(_properties, 0, 4);
+        _properties.Name = "ComponentProperties"; details.Controls.Add(InitializePopupPreview(), 0, 4);
         _choiceBox.Controls.Add(_choices); details.Controls.Add(_choiceBox, 0, 5); _split.Panel2.Controls.Add(details);
         var footer = new TableLayoutPanel { Name = "DialogFooter", ColumnCount = 3, RowCount = 1, AutoSize = true, Dock = DockStyle.Fill, Padding = new Padding(0, 12, 0, 0), Margin = new Padding(0) };
         footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -170,7 +170,7 @@ internal sealed class RibbonEditorDialog : Form
         _choices.TextChanged += (_, _) =>
         {
             if (!_showing && _tree.SelectedNode?.Tag is RibbonDesignNode node && node.Kind == "ComboBox")
-                node.Choices = _choices.Text.Length == 0 ? new List<string>() : _choices.Text.Replace("\r", "").Split('\n').ToList();
+            { node.Choices = _choices.Text.Length == 0 ? new List<string>() : _choices.Text.Replace("\r", "").Split('\n').ToList(); RefreshPopupPreview(); }
         };
         _split.SizeChanged += (_, _) => UpdateSplitterConstraints();
         _tree.Nodes.Add(_root);
@@ -180,11 +180,12 @@ internal sealed class RibbonEditorDialog : Form
         _tree.SelectedNode = draft.SelectionKey == "qat:root" ? _qatRoot : Descendants(_root).FirstOrDefault(tree => tree.Tag is RibbonDesignNode node && node.Key == draft.SelectionKey) ?? _root;
         ShowSelection();
         ResumeLayout(true);
+        Shown += (_, _) => { if (PopupOwnerForSelection() is not null && _render is not null) TryPreviewPopup(); };
     }
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing) _components.Dispose();
+        if (disposing) { ClosePopupPreview(); _components.Dispose(); }
         base.Dispose(disposing);
     }
     private static TableLayoutPanel ColumnLayout() => new() { ColumnCount = 1, Dock = DockStyle.Fill, Margin = new Padding(0), ColumnStyles = { new ColumnStyle(SizeType.Percent, 100) } };
@@ -302,6 +303,9 @@ internal sealed class RibbonEditorDialog : Form
             _contextMenu.Items.Add(MenuAction("Move down", "MoveDown", () => MoveNode(1), _down.Enabled));
             _contextMenu.Items.Add(MenuAction("Move to…", "MoveTo", () => { using var move = CreateMoveDialog(); move.ShowDialog(this); }, _moveTo.Enabled));
             _contextMenu.Items.Add(new ToolStripSeparator()); _contextMenu.Items.Add(MenuAction(_remove.Text, "Remove", Remove, _remove.Enabled));
+            UpdatePopupPreviewSelection();
+            _contextMenu.Items.Add(new ToolStripSeparator());
+            _contextMenu.Items.Add(MenuAction("Preview popup…", "PreviewPopup", TryPreviewPopup, _previewPopup.Enabled));
         }
         finally { _showing = false; }
     }

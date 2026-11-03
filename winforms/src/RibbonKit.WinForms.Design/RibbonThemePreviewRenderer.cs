@@ -89,7 +89,12 @@ internal static class RibbonThemePreviewRenderer
         if ((ribbon.Backstage.SelectedPage ?? ribbon.Backstage.NavigationItems.OfType<RibbonBackstagePageItem>().FirstOrDefault(page => page.Visible && page.EffectiveEnabled)) is { } page)
             backstage.SelectionKey = RibbonDesignCommitter.Key(page);
         backstage.PreviewWidth = probe.Width; backstage.PreviewHeight = 420; backstage.PreviewDpi = probe.DeviceDpi;
-        return new() { RibbonPng = Convert.ToBase64String(stream.ToArray()), BackstagePng = RibbonBackstagePreviewRenderer.Render(ribbon, host, backstage, probe.Theme).Png };
+        var popupOwner = draft.CommandNodes.FirstOrDefault(node => node.Key == draft.SelectionKey && node.Kind is "DropDown" or "SplitButton");
+        var parent = popupOwner is null ? null : draft.CommandNodes.FirstOrDefault(node => node.Children.Contains(popupOwner) && node.Kind is "DropDown" or "SplitButton");
+        return new() { RibbonPng = Convert.ToBase64String(stream.ToArray()), BackstagePng = RibbonBackstagePreviewRenderer.Render(ribbon, host, backstage, probe.Theme).Png,
+            Popup = popupOwner is not null && models.GetValueOrDefault(popupOwner.Key) is RibbonDropDownItem popup
+                ? RibbonPopupPreviewRenderer.Render(probe, popup, popupOwner.Key, parent?.Key ?? "", models.ToDictionary(pair => pair.Value, pair => pair.Key),
+                    components.GetValueOrDefault(popupOwner.Key) is RibbonDropDownItem { ContentType: null, Content: not null }) : null };
     }
     private sealed class PreviewRibbon : RibbonControl
     {

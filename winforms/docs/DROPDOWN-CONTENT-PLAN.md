@@ -3,8 +3,9 @@
 Status, **2026-11-02: user accepted dropdown/split UserControl popup behavior; actual Visual Studio authoring review remains pending**.
 The user selected ordinary dropdown/split-button hosting after the gallery popup
 work, approved retained content, and requested a popup that fits the body size.
-This is native WinForms work. The separate inert popup designer preview remains
-deferred; this increment adds runtime hosting and class selection in Edit Ribbon.
+This is native WinForms work. This increment adds runtime hosting and class
+selection in Edit Ribbon. The separate
+[inert popup designer preview](POPUP-DESIGNER-PREVIEW.md) is now implemented.
 
 ## Contract
 

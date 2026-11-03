@@ -380,6 +380,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     }
     internal RibbonControl Ribbon => _ribbon;
     internal RibbonDropDownItem? MenuSource { get; }
+    internal Rectangle MenuHeaderBounds => _menuHeader;
     internal RibbonGalleryItem? GallerySource => MenuSource as RibbonGalleryItem;
     internal bool IsQuickAccess { get; }
     internal RibbonGroup? GroupSource { get; }

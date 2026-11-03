@@ -80,7 +80,8 @@ public sealed class DesignerEditorUxTests
             var tools = Control<ToolStrip>(dialog, "StructureTools"); var split = Control<SplitContainer>(dialog, "StructureSplit");
             Assert.True(tools.Bottom <= split.Top); Assert.True(split.Bottom <= footer.Top);
             var header = Control<GroupBox>(dialog, "TabHeader"); var grid = Control<PropertyGrid>(dialog, "ComponentProperties");
-            Assert.True(header.Bottom <= grid.Top, $"Header/grid overlap: {header.Bounds}, {grid.Bounds}");
+            var propertyHost = Control<SplitContainer>(dialog, "PopupPreviewSplit");
+            Assert.True(header.Bottom <= propertyHost.Top, $"Header/property host overlap: {header.Bounds}, {propertyHost.Bounds}");
             AssertChildrenFit(header);
             Assert.True(grid.Height > 80 * scale, $"Property grid too small: {grid.Bounds}");
             Assert.True(split.Panel1.Width > 100 * scale && split.Panel2.Width > 250 * scale);

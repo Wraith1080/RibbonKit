@@ -6,6 +6,8 @@ increment and preserves the accepted Backstage behavior.
 
 Latest increment, **2026-11-02: ComboBox label/compact presentation, cross-owner
 moves and shrinking size-policy choices**; see [designer rearrangement](DESIGNER-REARRANGEMENT.md).
+The [inert dropdown/split popup preview](POPUP-DESIGNER-PREVIEW.md) is implemented
+as of **2026-11-03**, using Edit Ribbon's existing tree, Properties and transaction.
 The earlier menu increment is recorded under
 [dropdown headings and descriptions](#dropdown-headings-and-descriptions--2026-11-01).
 [Group item layout](GROUP-ITEM-LAYOUT.md) owns the earlier split-orientation,

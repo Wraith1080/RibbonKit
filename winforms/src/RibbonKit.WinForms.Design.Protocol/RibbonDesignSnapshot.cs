@@ -122,6 +122,28 @@ public sealed class RibbonThemePreview
 {
     [DataMember] public string RibbonPng { get; set; } = "";
     [DataMember] public string BackstagePng { get; set; } = "";
+    [DataMember] public RibbonPopupPreview? Popup { get; set; }
+}
+
+[DataContract]
+public sealed class RibbonPopupPreview
+{
+    [DataMember] public string OwnerKey { get; set; } = "";
+    [DataMember] public string ParentKey { get; set; } = "";
+    [DataMember] public string Caption { get; set; } = "";
+    [DataMember] public string Png { get; set; } = "";
+    [DataMember] public List<RibbonPopupPreviewHit> Hits { get; set; } = new();
+}
+
+[DataContract]
+public sealed class RibbonPopupPreviewHit
+{
+    [DataMember] public string Key { get; set; } = "";
+    [DataMember] public int X { get; set; }
+    [DataMember] public int Y { get; set; }
+    [DataMember] public int Width { get; set; }
+    [DataMember] public int Height { get; set; }
+    [DataMember] public bool OpensSubmenu { get; set; }
 }
 
 [DataContract]

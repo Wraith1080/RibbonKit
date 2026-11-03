@@ -6,6 +6,12 @@ internal static class Program
     private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
+        if (args.Length == 3 && args[0] == "--verify-popup-designer-package")
+        {
+            try { PopupDesignerPackageCheck.Verify(args[1], args[2]); }
+            catch (Exception error) { Directory.CreateDirectory(args[2]); File.AppendAllText(Path.Combine(args[2], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
         if (args.Length == 2 && args[0] == "--verify-combo-backdrop-paint")
         {
             try { ComboBackdropPaintCheck.Verify(args[1]); }

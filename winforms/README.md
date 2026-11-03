@@ -1470,6 +1470,14 @@ The permanent Designer Sample's **Home → Select** and **Paste arrow** demonstr
 this with `PopupOptionsControl`. Edit that body using its normal UserControl
 designer. [Contract, evidence and remaining review](docs/DROPDOWN-CONTENT-PLAN.md).
 
+In **Edit Ribbon**, select a dropdown/split button or menu child and choose
+**Preview popup…**. Click rows to select their Properties, use arrows to preview
+submenus, and use **Parent menu** to return. A selected dropdown/split also offers
+**Edit popup…** in designer actions. Fields are static and UserControl bodies show
+a placeholder; previewing runs no command or application control. Existing
+OK/Cancel and Undo/Redo behavior is retained.
+[Preview workflow and verification](docs/POPUP-DESIGNER-PREVIEW.md).
+
 ## Passive ScreenTips
 
 Every `RibbonItem` supports localizable, designer-editable `ScreenTipTitle` and
