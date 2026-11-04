@@ -6,6 +6,7 @@ internal interface IRibbonEditorItem
 {
     string Value { get; set; }
     int InputWidth { get; }
+    bool FillMenuWidth { get; }
     int MaxLength { get; }
     object CaptureEdit();
     bool IsEditChanged(object baseline);

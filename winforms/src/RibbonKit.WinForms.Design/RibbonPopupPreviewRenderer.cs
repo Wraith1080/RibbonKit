@@ -48,7 +48,9 @@ internal static class RibbonPopupPreviewRenderer
                         var row = context with { Bounds = target.Bounds, ReserveIcon = target.ReserveIcon };
                         if (item is IRibbonEditorItem editor)
                         {
-                            var field = RibbonEditorLayout.Field(target.Bounds, item, target.LabelWidth, ribbon.Font, ribbon.DeviceDpi);
+                            var content = RibbonEditorLayout.ContentBounds(target.Bounds, item, ribbon.DeviceDpi, ribbon.Density, ribbon.Theme, surface.UsesMenuEditorGutter);
+                            row = row with { Bounds = content };
+                            var field = RibbonEditorLayout.Field(content, item, target.LabelWidth, ribbon.Font, ribbon.DeviceDpi, menu: surface.UsesMenuEditorGutter);
                             if (item is RibbonComboBoxItem combo) ribbon.Painter.DrawComboBox(row, combo, field);
                             else ribbon.Painter.DrawTextBox(row, (RibbonTextBoxItem)item, field);
                             var text = item is RibbonComboBoxItem ? RibbonEditorLayout.ComboText(field, ribbon.DeviceDpi, ribbon.Density)
@@ -69,7 +71,7 @@ internal static class RibbonPopupPreviewRenderer
                         {
                             var arrow = item is RibbonSplitButtonItem
                                 ? targets.Single(t => ReferenceEquals(t.Element, item) && t.DropDownPart).VisibleBounds
-                                : RibbonEditorLayout.ComboButton(target.Bounds, ribbon.DeviceDpi, ribbon.Density);
+                                : RibbonMenuLayout.ArrowColumn(target.Bounds, ribbon.DeviceDpi, ribbon.Density, ribbon.Theme);
                             Hit(itemKey, arrow, true);
                         }
                     }

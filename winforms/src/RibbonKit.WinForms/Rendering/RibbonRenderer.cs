@@ -161,7 +161,9 @@ public partial class RibbonRenderer : IDisposable
         var caption = RibbonQuickAccess.Caption(entry);
         var color = enabled ? context.Theme.Foreground : context.Theme.DisabledColor;
         var contentContext = context;
-        if (chooser) contentContext = context with { Bounds = context.Bounds with { Width = Math.Max(0, context.Bounds.Width - RibbonLayoutEngine.Scale(menu ? 16 : 12, context.DeviceDpi)) } };
+        if (chooser) contentContext = context with { Bounds = context.Bounds with { Width = Math.Max(0, context.Bounds.Width - (menu
+            ? RibbonMenuLayout.ArrowCaptionReservation(context.Bounds.Width, context.DeviceDpi, context.Density, context.Theme, true)
+            : RibbonLayoutEngine.Scale(12, context.DeviceDpi))) } };
         if (menu && entry is RibbonQuickAccessGroupReference)
         {
             var metrics = RibbonMenuMetrics.For(context.Density, context.Theme);
@@ -170,8 +172,8 @@ public partial class RibbonRenderer : IDisposable
                 int side = RibbonLayoutEngine.Scale(metrics.MenuIcon, context.DeviceDpi);
                 groupIcon.Draw(context.Graphics, new(contentContext.Bounds.Left + RibbonLayoutEngine.Scale(metrics.MenuIconInset, context.DeviceDpi), context.Bounds.Top + (context.Bounds.Height - side) / 2, side, side), new(context.DeviceDpi, color, enabled));
             }
-            var label = contentContext with { Bounds = Rectangle.FromLTRB(contentContext.Bounds.Left + RibbonLayoutEngine.Scale(metrics.MenuTextInset, context.DeviceDpi),
-                contentContext.Bounds.Top, contentContext.Bounds.Right, contentContext.Bounds.Bottom) };
+            var text = RibbonMenuLayout.TextBounds(contentContext.Bounds, context.Font, context.DeviceDpi, context.Density, context.Theme);
+            var label = contentContext with { Bounds = new(text.Left, context.Bounds.Top, text.Width, context.Bounds.Height) };
             DrawText(label, caption, color, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
         }
         else if (menu && command is not null)
@@ -190,7 +192,8 @@ public partial class RibbonRenderer : IDisposable
         }
         if (chooser)
         {
-            var arrow = context with { Bounds = Rectangle.FromLTRB(contentContext.Bounds.Right, context.Bounds.Top, context.Bounds.Right, context.Bounds.Bottom) };
+            var arrow = context with { Bounds = menu ? RibbonMenuLayout.ArrowColumn(context.Bounds, context.DeviceDpi, context.Density, context.Theme)
+                : Rectangle.FromLTRB(contentContext.Bounds.Right, context.Bounds.Top, context.Bounds.Right, context.Bounds.Bottom) };
             if (menu) DrawSubmenuArrow(arrow, color); else DrawDropDownArrow(arrow, color);
         }
     }
@@ -235,7 +238,8 @@ public partial class RibbonRenderer : IDisposable
     /// <summary>Paints a decorative command-menu separator within its measured row. It has no interaction state.</summary>
     public virtual void DrawMenuSeparator(RibbonPaintContext context, RibbonMenuSeparatorItem item)
     {
-        int inset = RibbonLayoutEngine.Scale(8, context.DeviceDpi);
+        int inset = RibbonLayoutEngine.Scale(context.ApplicationMenuPart == RibbonApplicationMenuPart.None
+            ? RibbonMenuMetrics.For(context.Density, context.Theme).MenuSeparatorHorizontalPadding : 8, context.DeviceDpi);
         if (context.Bounds.Width <= 2 * inset || context.Bounds.Height <= 0) return;
         using var brush = new SolidBrush(context.Theme.Border);
         context.Graphics.FillRectangle(brush, context.Bounds.Left + inset, context.Bounds.Top + (context.Bounds.Height - 1) / 2, context.Bounds.Width - 2 * inset, 1);
@@ -576,12 +580,14 @@ public partial class RibbonRenderer : IDisposable
         int captionRows = touchVertical ? _captions.Wrap(item.Text, context.Font, context.DeviceDpi,
             Math.Max(0, context.Bounds.Width - 2 * RibbonLayoutEngine.Scale(5, context.DeviceDpi))).Lines.Length : 2;
         var content = RibbonContentLayout.Calculate(context.Bounds, size, menu, context.ReserveIcon || hasIcon, context.DeviceDpi, context.Font, context.Density, touchVertical, captionRows);
-        if (menu) content = RibbonMenuLayout.Content(content, item, context.Bounds, context.Font, context.DeviceDpi, context.Density, context.Theme);
+        if (menu) content = RibbonMenuLayout.Content(content, item, context.Bounds, context.Font, context.DeviceDpi, context.Density, context.Theme, projectedEditorCaption: enabledOverride.HasValue);
         var iconBounds = content.Icon;
         var textBounds = content.Text;
         var arrow = Rectangle.Empty;
         bool large = size == RibbonItemSize.Large && !menu;
-        int arrowSpan = appendArrow && item is RibbonDropDownItem ? RibbonLayoutEngine.Scale(menu && context.Density == RibbonDensity.Touch ? 28 : 16, context.DeviceDpi) : 0;
+        int arrowSpan = appendArrow && item is RibbonDropDownItem ? menu
+            ? RibbonMenuLayout.ArrowCaptionReservation(context.Bounds.Width, context.DeviceDpi, context.Density, context.Theme, false)
+            : RibbonLayoutEngine.Scale(16, context.DeviceDpi) : 0;
         if (arrowSpan > 0 && !large)
         {
             if (!menu && size == RibbonItemSize.Small && context.Density == RibbonDensity.Touch)
@@ -589,7 +595,7 @@ public partial class RibbonRenderer : IDisposable
                 {
                     Width = Math.Max(0, context.Bounds.Width - RibbonLayoutEngine.Scale(RibbonDensityMetrics.For(context.Density).CommandDropDownArrow, context.DeviceDpi))
                 }, context.DeviceDpi);
-            arrow = menu ? new(textBounds.Right - arrowSpan, context.Bounds.Top, arrowSpan, context.Bounds.Height)
+            arrow = menu ? RibbonMenuLayout.ArrowColumn(context.Bounds, context.DeviceDpi, context.Density, context.Theme)
                 : new(textBounds.Right - arrowSpan, textBounds.Top, arrowSpan, Math.Min(context.Font.Height, textBounds.Height));
             textBounds.Width = Math.Max(0, textBounds.Width - arrowSpan);
         }

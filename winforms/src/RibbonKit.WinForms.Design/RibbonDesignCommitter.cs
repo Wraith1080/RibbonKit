@@ -25,7 +25,7 @@ internal static partial class RibbonDesignCommitter
     [
         "Id", "Text", "KeyTip", "Enabled", "Visible", "IsContextual", "ContextualColor", "CanClose", "CloseButtonText",
         "CheckOnClick", "Priority", "ReductionMode", "Layout", "Row", "SizePolicy", "Checked", "CheckState", "GroupName", "MenuDescription", "DropDownHeader", "MenuPresentation",
-        "ScreenTipTitle", "ScreenTipDescription", "ShowLabel", "IsEditable", "Value", "InputWidth", "ReadOnly", "MaxLength", "SelectedIndex",
+        "ScreenTipTitle", "ScreenTipDescription", "ShowLabel", "IsEditable", "Value", "InputWidth", "FillMenuWidth", "ReadOnly", "MaxLength", "SelectedIndex",
         "IsInRibbon", "InRibbonColumnCount", "ColumnCount", "TileWidth", "TileHeight", "MaxVisibleRows", "DropDownKeyTip", "DropDownPresenterType", "InRibbonPresenterType", "ContentType"
     ];
     private static readonly string[] SizePolicies = new[]

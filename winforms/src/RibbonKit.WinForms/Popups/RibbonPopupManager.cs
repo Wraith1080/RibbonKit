@@ -411,6 +411,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     }
     internal RibbonControl Ribbon => _ribbon;
     internal RibbonDropDownItem? MenuSource { get; }
+    internal bool UsesMenuEditorGutter => MenuSource is not null && GroupSource is null && GallerySource is null && !IsApplicationMenu && MenuSource.Content is null;
     internal Rectangle MenuHeaderBounds => _menuHeader;
     internal RibbonGalleryItem? GallerySource => MenuSource as RibbonGalleryItem;
     internal bool IsQuickAccess { get; }
@@ -479,9 +480,9 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         else if (owner is RibbonQuickAccessOverflow)
         {
             IReadOnlyList<RibbonElement> items = owner is RibbonSimplifiedMore more ? more.Entries : ribbon.Snapshot.QuickAccessOverflowItems;
-            width = Math.Max(S(menuMetrics.MenuMinimumWidth), items.Select(e => TextRenderer.MeasureText(RibbonQuickAccess.Caption(e), Font).Width + S(menuMetrics.MenuWidthPadding)).DefaultIfEmpty(S(menuMetrics.MenuMinimumWidth)).Max());
+            width = Math.Max(S(menuMetrics.MenuMinimumWidth), items.Select(e => TextRenderer.MeasureText(RibbonQuickAccess.Caption(e), Font).Width + S(menuMetrics.QuickAccessWidthPadding)).DefaultIfEmpty(S(menuMetrics.MenuMinimumWidth)).Max());
             if (items.Select(RibbonQuickAccess.Command).Any(c => c is not null && RibbonMenuLayout.HasDescription(c))) width = Math.Max(width, S(menuMetrics.MenuDescriptionWidth));
-            var heights = RibbonMenuLayout.RowHeights(items.Select(e => e as RibbonMenuSeparatorItem ?? RibbonQuickAccess.Command(e)).ToArray(), width - S(8), Font, ribbon.DeviceDpi, ribbon.Density, illustrated: false, theme: ribbon.Theme);
+            var heights = RibbonMenuLayout.RowHeights(items.Select(e => e as RibbonMenuSeparatorItem ?? RibbonQuickAccess.Command(e)).ToArray(), width - S(8), Font, ribbon.DeviceDpi, ribbon.Density, illustrated: false, theme: ribbon.Theme, quickAccess: true);
             int top = S(4);
             var visible = owner is RibbonSimplifiedMore simplified ? simplified.Entries : ribbon.QuickAccessItems.Where(e => e.Visible).ToList();
             for (int i = 0; i < items.Count; i++)
@@ -496,17 +497,17 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         else
         {
             var items = MenuSource!.Items.Where(i => i.Visible).ToArray();
-            width = Math.Max(S(menuMetrics.MenuMinimumWidth), items.Where(i => i is not RibbonMenuSeparatorItem).Select(i => TextRenderer.MeasureText(i.Text, Font).Width + S(menuMetrics.MenuWidthPadding)).DefaultIfEmpty(S(menuMetrics.MenuMinimumWidth)).Max());
+            width = Math.Max(S(menuMetrics.MenuMinimumWidth), items.Where(i => i is not RibbonMenuSeparatorItem and not IRibbonEditorItem).Select(i => TextRenderer.MeasureText(i.Text, Font).Width + S(menuMetrics.MenuWidthPadding)).DefaultIfEmpty(S(menuMetrics.MenuMinimumWidth)).Max());
             if (items.Any(RibbonMenuLayout.HasDescription)) width = Math.Max(width, S(menuMetrics.MenuDescriptionWidth));
             if (MenuSource.MenuPresentation == RibbonMenuPresentation.IllustratedChoices) width = Math.Max(width, S(RibbonMenuLayout.IllustratedWidth));
-            if (MenuSource.DropDownHeader.Length > 0) width = Math.Max(width, Math.Min(S(420), TextRenderer.MeasureText(MenuSource.DropDownHeader, Font).Width + S(28)));
+            if (MenuSource.DropDownHeader.Length > 0) width = Math.Max(width, Math.Min(S(420), TextRenderer.MeasureText(MenuSource.DropDownHeader, Font).Width + menuMetrics.HeaderWidthPadding(ribbon.DeviceDpi)));
             int labelWidth = items.Where(i => i is IRibbonEditorItem).Select(i => RibbonEditorLayout.LabelWidth(i, Font, ribbon.DeviceDpi)).DefaultIfEmpty(0).Max();
-            width = Math.Max(width, items.OfType<IRibbonEditorItem>().Select(i => labelWidth + RibbonEditorLayout.InputWidth(i, ribbon.DeviceDpi, ribbon.Density, Font, 14)).DefaultIfEmpty(0).Max());
+            width = Math.Max(width, items.Where(i => i is IRibbonEditorItem).Select(i => RibbonEditorLayout.MenuWidth(i, labelWidth, Font, ribbon.DeviceDpi, ribbon.Density, ribbon.Theme)).DefaultIfEmpty(0).Max());
             int top = S(4);
             if (MenuSource.DropDownHeader.Length > 0)
             {
-                int headerHeight = Font.Height + S(menuMetrics.Touch ? 16 : 12);
-                _menuHeader = new(S(4), top, width - S(8), headerHeight); top += headerHeight + S(4);
+                int headerHeight = menuMetrics.HeaderHeight(Font, ribbon.DeviceDpi);
+                _menuHeader = new(S(4), top, width - S(8), headerHeight); top += headerHeight + S(menuMetrics.MenuHeaderBottomGap);
             }
             var heights = RibbonMenuLayout.RowHeights(items, width - S(8), Font, ribbon.DeviceDpi, ribbon.Density, theme: ribbon.Theme);
             for (int i = 0; i < items.Length; i++)

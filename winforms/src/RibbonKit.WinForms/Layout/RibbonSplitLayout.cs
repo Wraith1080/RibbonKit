@@ -14,8 +14,14 @@ internal static class RibbonSplitLayout
             int primaryHeight = RibbonContentLayout.LargeImageBandHeight(bounds, font ?? item.Ribbon?.Font ?? Control.DefaultFont, dpi, item.Ribbon?.Density ?? RibbonDensity.Compact);
             return (bounds with { Height = primaryHeight }, new(bounds.Left, bounds.Top + primaryHeight, bounds.Width, Math.Max(0, bounds.Height - primaryHeight)));
         }
+        if (menu)
+        {
+            var arrow = RibbonMenuLayout.ArrowColumn(bounds, dpi, item.Ribbon?.Density ?? RibbonDensity.Compact, item.Ribbon?.Theme);
+            return (bounds with { Width = Math.Max(0, bounds.Width - arrow.Width) }, arrow);
+        }
         bool touchHorizontal = metrics.Touch && !menu;
-        int arrowWidth = Math.Min(RibbonLayoutEngine.Scale(touchHorizontal ? metrics.HorizontalSplitArrow : metrics.SplitArrow, dpi),
+        int desiredArrow = touchHorizontal ? metrics.HorizontalSplitArrow : metrics.SplitArrow;
+        int arrowWidth = Math.Min(RibbonLayoutEngine.Scale(desiredArrow, dpi),
             Math.Max(1, touchHorizontal ? (bounds.Width - 1) / 2 : bounds.Width / 3));
         return (bounds with { Width = bounds.Width - arrowWidth }, new(bounds.Right - arrowWidth, bounds.Top, arrowWidth, bounds.Height));
     }
@@ -25,7 +31,8 @@ internal static class RibbonSplitLayout
         if (target.Element is RibbonQuickAccessDropDownReference { Source: RibbonSplitButtonItem } reference)
         {
             var metrics = RibbonDensityMetrics.For(reference.Ribbon?.Density ?? RibbonDensity.Compact);
-            int span = Math.Min(RibbonLayoutEngine.Scale(menu ? metrics.SplitArrow : metrics.QuickAccessArrow, dpi), Math.Max(1, target.Bounds.Width / 3));
+            int span = menu ? RibbonMenuLayout.ArrowColumn(target.Bounds, dpi, reference.Ribbon?.Density ?? RibbonDensity.Compact, reference.Ribbon?.Theme).Width
+                : Math.Min(RibbonLayoutEngine.Scale(metrics.QuickAccessArrow, dpi), Math.Max(1, target.Bounds.Width / 3));
             var primary = target.Bounds with { Width = Math.Max(0, target.Bounds.Width - span) };
             var arrow = new Rectangle(primary.Right, primary.Top, span, primary.Height);
             string automatic = target.AutomaticKeyTip ?? "";

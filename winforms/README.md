@@ -1867,6 +1867,102 @@ Menu-specific geometry keep their component metrics; ordinary separator rows
 inside an illustrated menu use `MenuSeparatorHeight`. Reset these four values to
 null independently of the five horizontal/row roles.
 
+Menu containers, headings and overflow bands have six further optional roles:
+
+| Property | Null Compact / Touch | Meaning |
+| --- | --- | --- |
+| `MenuMinimumWidth` | 170 / 220 | Desired minimum dropdown/QAT/More width. |
+| `MenuDescriptionMinimumWidth` | 280 / 320 | Desired minimum when ordinary command descriptions are present. |
+| `MenuHeaderHorizontalPadding` | 6 / 6 | Text inset on each side of a dropdown heading. |
+| `MenuHeaderVerticalPadding` | 6 / 8 | Padding above/below heading text. |
+| `MenuHeaderBottomGap` | 4 / 4 | Space below a present heading. |
+| `MenuOverflowScrollButtonHeight` | 16 / 28 | QAT/More top/bottom scroll-button bands. |
+
+Widths and band height accept 1..1024; padding/gap accept 0..1024, in 96-DPI
+logical pixels. Null resets each role independently. Content/font minima and
+available screen space still govern actual sizes. Touch overflow bands retain
+at least 28 logical pixels; tiny work areas clamp both bands to leave a viewport.
+Plain dropdowns retain Windows scrollbar metrics. The shared dropdown container
+and heading can surround illustrated choices without changing illustrated row
+metrics. Application Menu-specific, gallery, native choice-list and custom-content
+geometry stays independent. Example:
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    MenuMinimumWidth = 380, MenuDescriptionMinimumWidth = 520,
+    MenuHeaderHorizontalPadding = 24, MenuHeaderVerticalPadding = 16,
+    MenuHeaderBottomGap = 12, MenuOverflowScrollButtonHeight = 44
+};
+```
+
+Heading paint/measurement and overflow paint/hit/reveal/clip geometry share the
+resolved values, including inert designer previews. Theme remains code-authored;
+the existing opt-in sample geometry tab demonstrates apply/reset for this batch.
+
+Four further nullable menu-row roles control reserved arrow areas and separator
+clearance without changing glyph shapes:
+
+| Property | Null Compact / Touch |
+| --- | --- |
+| `MenuSubmenuArrowWidth` | 16 / 28 |
+| `MenuSplitArrowWidth` | 20 / 28 |
+| `MenuChooserArrowWidth` | 16 / 16 |
+| `MenuSeparatorHorizontalPadding` | 8 / 8 |
+
+Arrow widths accept 1..1024; separator padding accepts 0..1024, in 96-DPI logical
+pixels. Null restores the current density default. All ordinary submenu and
+QAT/More chooser glyphs use one trailing visual column defined by the resolved
+split secondary region. Split width also controls its hit/keyboard/KeyTip bounds;
+Touch retains a preferred minimum 28 and narrow rows keep their existing one-third
+cap. Submenu and chooser widths are minimum caption reservations; each also
+reserves at least the shared column. Larger authored values add text clearance
+without moving the glyph. Trailing padding and projected ComboBox/group caption
+bounds use the same menu text rules. Description measurement shares those actual
+reservations. The existing UIA command bounds continue following the primary target.
+Separator padding changes only the line ends; thickness stays one device pixel.
+
+These theme roles exclude strip/group-flyout arrows and Application Menu-specific
+layout/separators. Choice-list geometry, field fill, glyph shapes, popup margins
+and frame/shadow geometry are unchanged. Values remain code-authored; inert preview
+arrow-opening hit areas use the same shared column. Example:
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    MenuSubmenuArrowWidth = 52, MenuSplitArrowWidth = 64,
+    MenuChooserArrowWidth = 44, MenuSeparatorHorizontalPadding = 24
+};
+```
+
+Native fields in ordinary dropdown menus use the same command-text gutter and
+trailing clearance as neighboring commands. TextBox and visible ComboBox labels
+start at that text column; their fields share the measured label span. With
+`ShowLabel=false`, a ComboBox starts its field directly at the command-text column
+without reserving label space or measuring its hidden command name. Menu sizing
+reserves the gutter, label and authored `InputWidth`, so adding the gutter may
+widen a menu. Field width/height and Touch scaling retain their existing rules.
+Runtime native presenters and inert designer previews use one content rectangle;
+strip/Simplified fields, group flyouts and Application Menu-specific fields retain
+their own layout. The alignment itself needs no extra setting.
+
+Set `FillMenuWidth=true` on a `RibbonTextBoxItem` or `RibbonComboBoxItem` to fill
+the remaining ordinary dropdown row. This is an optional Layout property in
+Properties and Edit Ribbon; its default/reset value is false. A visible label
+keeps the shared label column; a hidden-label ComboBox fills from the command-text
+column. Fields end at the menu's trailing clearance. Font and height remain
+unchanged. `InputWidth` remains the preferred minimum used to measure the menu,
+subject to available space and existing scrolling/clipping. Turning fill off
+restores fixed sizing without changing the authored width or value. Strip,
+Simplified, group-flyout and Application Menu-specific fields retain their own
+sizing even when the flag is true. Designer drafts/Boolean serialization and
+customization copies preserve the setting.
+
+```csharp
+nameField.FillMenuWidth = true;
+fontChooser.FillMenuWidth = true; // Also works with ShowLabel=false.
+```
+
 `RibbonTheme.DisabledForeground` optionally colors library-painted disabled text,
 vector command icons, arrows and check/radio indicators, including field labels,
 selection-only ComboBox text and choice rows. Its default `Color.Empty` preserves

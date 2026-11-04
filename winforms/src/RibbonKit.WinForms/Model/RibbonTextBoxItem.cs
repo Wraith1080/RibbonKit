@@ -8,7 +8,7 @@ public sealed class RibbonTextBoxItem : RibbonItem, IRibbonEditorItem
 {
     private string _value = "";
     private int _inputWidth = 120, _maxLength = 32767;
-    private bool _readOnly;
+    private bool _readOnly, _fillMenuWidth;
     /// <summary>Gets or sets the live text, including uncommitted user edits.</summary>
     [DefaultValue(""), Bindable(true), Localizable(true), Category("Data")]
     public string Value
@@ -24,8 +24,8 @@ public sealed class RibbonTextBoxItem : RibbonItem, IRibbonEditorItem
             ValueChanged?.Invoke(this, EventArgs.Empty);
         }
     }
-    /// <summary>Gets or sets the Compact editor width in 96-DPI logical pixels, excluding its label. Touch scales width with field height using the same rule as ComboBoxes.</summary>
-    [DefaultValue(120), Category("Layout"), Description("Compact field width in 96-DPI logical pixels, excluding the label. Touch scales width with field height using the current font and DPI; ComboBoxes use the same rule.")]
+    /// <summary>Gets or sets the Compact editor width in 96-DPI logical pixels, excluding its label. Touch scales width with field height using the same rule as ComboBoxes. When FillMenuWidth is true, this remains the preferred minimum for menu measurement.</summary>
+    [DefaultValue(120), Category("Layout"), Description("Compact field width in 96-DPI logical pixels, excluding the label. Touch scales with field height. With FillMenuWidth enabled, this is the preferred minimum used to size the menu.")]
     public int InputWidth
     {
         get => _inputWidth;
@@ -37,6 +37,13 @@ public sealed class RibbonTextBoxItem : RibbonItem, IRibbonEditorItem
             _inputWidth = value;
             Changed();
         }
+    }
+    /// <summary>Gets or sets whether the field fills the remaining ordinary dropdown menu row after its label and padding. False preserves fixed InputWidth sizing. InputWidth remains the preferred menu-width minimum; height and non-menu presentations are unchanged.</summary>
+    [DefaultValue(false), Category("Layout"), Description("Fill the remaining ordinary dropdown menu row after the label and padding. InputWidth remains the preferred minimum. Height and non-menu presentations are unchanged.")]
+    public bool FillMenuWidth
+    {
+        get => _fillMenuWidth;
+        set { Ribbon?.VerifyAccess(); if (_fillMenuWidth == value) return; _fillMenuWidth = value; Changed(); }
     }
     /// <summary>Gets or sets whether typing is prevented while selection and copying remain available.</summary>
     [DefaultValue(false), Category("Behavior")]

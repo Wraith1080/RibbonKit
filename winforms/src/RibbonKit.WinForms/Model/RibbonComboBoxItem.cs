@@ -9,7 +9,7 @@ public sealed class RibbonComboBoxItem : RibbonItem, IRibbonEditorItem
 {
     private string _value = "";
     private int _selectedIndex = -1, _inputWidth = 120, _maxLength = 32767;
-    private bool _isEditable, _showLabel = true;
+    private bool _isEditable, _showLabel = true, _fillMenuWidth;
     /// <summary>Gets or sets whether the native field shows its Text label. Text remains the command name for compact, QAT and customization presentations.</summary>
     [DefaultValue(true), Category("Appearance"), Description("Show the label beside the native field. Hiding it preserves Text as the command name for compact buttons, Quick Access and customization.")]
     public bool ShowLabel
@@ -61,8 +61,8 @@ public sealed class RibbonComboBoxItem : RibbonItem, IRibbonEditorItem
             if (!SetState(!value && _selectedIndex < 0 ? "" : _value, _selectedIndex)) Changed(false);
         }
     }
-    /// <summary>Gets or sets the Compact native editor width in 96-DPI logical pixels, excluding its label. Touch scales width with field height while preserving the Compact text budget.</summary>
-    [DefaultValue(120), Category("Layout"), Description("Compact field width in 96-DPI logical pixels, excluding the label. Touch scales width with field height using the current font and DPI; TextBoxes use the same rule.")]
+    /// <summary>Gets or sets the Compact native editor width in 96-DPI logical pixels, excluding its label. Touch scales width with field height while preserving the Compact text budget. When FillMenuWidth is true, this remains the preferred minimum for menu measurement.</summary>
+    [DefaultValue(120), Category("Layout"), Description("Compact field width in 96-DPI logical pixels, excluding the label. Touch scales with field height. With FillMenuWidth enabled, this is the preferred minimum used to size the menu.")]
     public int InputWidth
     {
         get => _inputWidth;
@@ -74,6 +74,13 @@ public sealed class RibbonComboBoxItem : RibbonItem, IRibbonEditorItem
             _inputWidth = value;
             Changed();
         }
+    }
+    /// <summary>Gets or sets whether the field fills the remaining ordinary dropdown menu row after its visible label and padding. With ShowLabel false it fills from the command-text column. False preserves fixed InputWidth sizing. InputWidth remains the preferred menu-width minimum; height and non-menu presentations are unchanged.</summary>
+    [DefaultValue(false), Category("Layout"), Description("Fill the remaining ordinary dropdown menu row after the label and padding. Hidden-label fields fill from the command-text column. InputWidth remains the preferred minimum; height and non-menu presentations are unchanged.")]
+    public bool FillMenuWidth
+    {
+        get => _fillMenuWidth;
+        set { Ribbon?.VerifyAccess(); if (_fillMenuWidth == value) return; _fillMenuWidth = value; Changed(); }
     }
     /// <summary>Gets or sets the native editable-input limit; zero means unlimited. Programmatic values are not truncated.</summary>
     [DefaultValue(32767), Category("Behavior")]

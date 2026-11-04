@@ -1,8 +1,10 @@
 # Native geometry consolidation
 
-Status, **2026-11-04: second ordinary-menu geometry set appearance accepted;
-bounded Touch Small-icon and editor-width corrections verified, awaiting review. Themes and
-further geometry increments remain deferred**.
+Status, **2026-11-04: user authorized continuation after the Touch corrections;
+the fill-width review is recorded below. The fourth batch groups menu arrow
+slots and separator clearance; its shared arrow-column correction is implemented
+and verified, with the review result recorded below. Await instruction before
+another batch or additional themes**.
 Baseline: `codex/Ribbonkit-Winform`, `9dd0054b9ebe4f6f9ff5b57bf75198e443f5b4e5`.
 The three existing documentation handoff edits are preserved. This plan owns the
 bounded geometry contract and review gate; additional geometry and themes require
@@ -18,7 +20,7 @@ The inventory identifies ownership, not new acceptance of deferred surfaces.
 | Body and groups | `BodyHeight=110` minimum, `BodyMargin=(7,1,7,7)`, `LargeButtonMaxWidth=108`, `CollapsedGroupMaxWidth=108`, scroll vertical inset 2 | `RibbonTheme`, `RibbonLayout`, content/reduction/Simplified layout, Office renderer, body viewport, hit targets, group motion | Preserve font-driven three rows and joined frame. Group separator clearance 12 and collapsed opener insets 6/8 are separate deferred roles. |
 | Header, tabs and utilities | `TabHeight=40` minimum (Touch 48), `HeaderButtonInset=4`; QAT optical offset 2 | density/header/caption layout, Office tab paint/indicator measurement, hit targets, KeyTips/UIA, independent indicator motion | Tab label/indicator and caption geometry deferred. Device-pixel hairlines are raster rules. |
 | Commands, splits and native editors | rows 26/45; split arrow 20/28, horizontal 20/44; combo button 24/32; native editor height font+8 / at least 42 | density/content/split/editor layout, renderer, editor manager and borrowed popup editors, keyboard/UIA | Authored input widths and native font minima retained. Editor padding, arrow/check/radio glyphs and system EDIT rendering deferred. |
-| Ordinary command menus, nested menus, QAT overflow, Simplified More | rows 28/44; icon 24/32; leading 8; trailing 8; icon/text gap 10/12. No existing public override | density metrics, `RibbonMenuLayout`, popup sizing, shared renderer and QAT group-reference paint; targets feed scrolling, keyboard/KeyTips/UIA and editor hosting | **Selected first set:** five nullable theme overrides below, one shared resolver. Description vertical padding 5/10, gap 2/4, icon vertical clearance 4/6, separator 9, minimum width 170/220 and description width 280/320 remain internal density defaults. |
+| Ordinary command menus, nested menus, QAT overflow, Simplified More | rows 28/44; icon 24/32; leading/trailing 8; icon/text gap 10/12; desired width 170/220, described 280/320 | `RibbonMenuMetrics`, row/container/heading layout, popup sizing, shared renderer, overflow bands and inert preview; targets feed scrolling, keyboard/KeyTips/UIA and editor hosting | First/second sets expose row/horizontal/vertical roles. Third exposes container/heading/overflow bands; fourth exposes menu arrow slots and separator clearance. Popup inner margin, glyph shapes and platform work-area rules remain separate. |
 | Application Menu | model navigation/pane dimensions and font/content minima; nav rows 40/44, pane 28/44; arrow 26/44 | component-specific metrics/layout, Application Menu renderer, native pane hosting and column scrolling, designer preview | Deferred. Accepted hover/default-pane/split ownership and every current default retained. Nested ordinary submenus use the selected ordinary-menu contract. |
 | Illustrated menu choices and ComboBox choices | illustrated width 300, icon 36, row at least 64; ComboBox choice rows 28/44 or font+10 | `RibbonMenuLayout` illustrated path, editor layout/list window, designer popup preview | Distinct presentations. Illustrated rows, choice lists and native value slots retain existing geometry. |
 | Galleries | model tile sizes; density fallback 32x32 / 64x80, utility width 18/32 | gallery strip/popup layout, renderer, presenter viewport/scroll, borrowed UserControl cards, UIA | Tile padding, heading/utility slots deferred. Application artwork and card content stay host-owned. |
@@ -412,7 +414,439 @@ Verification:
   `artifacts/touch-width-proportional/` (before/focused/final TRX files and
   `package-group/result.log` plus captures).
 
-**Stop for the user's review of the wider Touch fields in the refreshed sample.**
+**2026-11-04: user requested continuation after the wider Touch fields**, asking
+to group subsequent geometry work into batches. This releases that review gate;
+it does not establish additional VS/hardware acceptance.
 Actual VS/native touch/IME/RTL/mixed-monitor acceptance and the previously noted
 broader-suite failures remain outside these automated results. No subsequent
 geometry increment, additional theme, commit, push or publication.
+
+## Third batch: menu containers, headings and overflow
+
+Baseline: `codex/Ribbonkit-Winform`, `70c2d47b2474ffb771447a8d44c9463062f386c1`,
+initially clean. Group three connected areas into one reviewable batch, preserving
+accepted row/vertical/Touch geometry and all unset defaults.
+
+| Additive nullable `RibbonTheme` property | Null Compact / Touch | Meaning |
+| --- | --- | --- |
+| `MenuMinimumWidth` | 170 / 220 | Desired minimum ordinary-dropdown/QAT overflow/More width; labels, fields and available work area still govern actual size. |
+| `MenuDescriptionMinimumWidth` | 280 / 320 | Additional desired minimum when ordinary command descriptions are present. |
+| `MenuHeaderHorizontalPadding` | 6 / 6 | Text inset on each side of an ordinary dropdown heading. Shared gallery-heading hooks apply this only for menu headings. |
+| `MenuHeaderVerticalPadding` | 6 / 8 | Clearance above/below heading text; font height remains the content minimum. |
+| `MenuHeaderBottomGap` | 4 / 4 | Space between the heading band and first row. |
+| `MenuOverflowScrollButtonHeight` | 16 / 28 | QAT/More overflow top/bottom button bands; Touch retains at least 28, and tiny work areas clamp bands to leave a viewport. |
+
+Widths/band height accept 1..1024; padding/gap accept 0..1024. All are logical
+96-DPI pixels. Null restores density defaults; explicit values apply to both
+densities subject to stated floors/clamps. Assignment validation is atomic.
+Keep the same immutable per-ribbon Theme contract, built-in/reset semantics and
+Unshipped API bookkeeping. No mutable geometry owner or new renderer API.
+
+Resolve values through `RibbonMenuMetrics`; share heading measurement/text bounds
+between runtime painting and inert designer preview. Preserve default summed
+rounding; explicit symmetric padding reserves separately scaled sides. Overflow
+paint, hit rectangles, clips, row reveal, keyboard/UIA and scroll limits use the
+same band/viewport geometry. Ordinary menus keep native/system scrollbar metrics;
+the new band property applies only to QAT/More overflow.
+
+Application Menu-specific geometry, native ComboBox choice lists, custom content,
+gallery tiles/headings and illustrated-choice row metrics retain their owners.
+The shared dropdown container/heading still surrounds illustrated choices; its
+new container settings apply there without changing illustrated row metrics.
+Arrow widths/glyphs, overall width caps/work-area safety gaps, inner popup margin,
+body/header/QAT strip geometry, galleries, Backstage, radii/shadows and additional
+themes are deferred to later coherent batches.
+
+Designer/configuration contract: these remain code-authored theme values; Theme
+stays hidden from generic VS property serialization. Add apply/reset examples to
+the existing opt-in `--menu-geometry-demo` tab in the permanent sample, preserving
+authored Forms/resources and startup behavior. Reset only this batch's six values.
+Detached previews consume the same geometry without native editors, transactions
+or application commands. User performs actual VS/live review; use no computer use
+or foreground/global-input fixtures for this batch.
+
+- [x] Capture default measurements/paint, then implement shared resolution.
+- [x] Verify overrides/reset/invalid values, font/DPI/density, native editor and
+  scroll reachability, inert preview and excluded surfaces.
+- [x] Build native Debug/Release, inspect API/package artifacts and refresh the
+  permanent sample. Check public-only package API/paint without Showcase helpers.
+- [x] Record evidence/limits and stop before the next batch or additional themes.
+
+### Third-batch implementation and evidence — 2026-11-04
+
+- Added the six nullable properties with XML comments, atomic validation and 12
+  Unshipped accessor entries. Existing theme selection/reset and all authored
+  model values/identities remain intact. No WPF or authored sample designer/
+  resource files changed.
+- `RibbonMenuMetrics` resolves widths, header pads/gap and band height. Heading
+  text rectangles are shared by both renderer paths; inert preview uses the same
+  runtime surface. Overflow's existing viewport supplies paint/hit/clip/reveal
+  geometry from one band height. Application Menu/gallery heading paths remain
+  independent. Extreme heading padding clamps text width to zero safely.
+- **40 before/after captures match every pixel and recorded rectangle**: 32
+  heading/scroll paint scenes cover both renderers/densities, 9/14-point fonts and
+  synthetic 96/120/144/192 DPI; eight runtime ordinary/QAT container scenes at the STA host DPI
+  include headings, descriptions, a native field target and overflow clipping.
+  Whole-frame captures including all four corners were inspected at representative
+  120/144 DPI, along with the public package override render.
+- **10/10 batch checks passed** (default parity plus nine override cases): resolved
+  padding/measurement/paint, zero/large values, atomic rejection/reset/isolation,
+  ordinary/QAT/More desired widths, font and editor-content minima, work-area
+  clamps, scroll-band clips/row reveal/Touch floor/tiny areas, excluded heading
+  geometry and detached designer preview without commands/editors/transactions.
+- **159/159 related focused Release checks passed**, including accepted menu
+  geometry/checkbox retention, overflow scrolling, Simplified, Touch fields and
+  density, renderer boundaries, designer theme/menu preview and Application Menu.
+  After moving compositing coverage out of the public helper, **2/2 affected
+  heading cases passed** in opaque/composited contexts. These overlap earlier
+  batch cases; this is not a full-suite run or hardware/material acceptance.
+- Normal native solution **Debug and Release builds passed**, each with zero
+  warnings/errors. The Debug package runtime/XML/design server/client/protocol
+  contents and all six XML API entries were inspected. Permanent sample refreshed
+  in place with `0.1.0-designer.local20261103T234733759Z`.
+- The package-only `--verify-menu-container-geometry` check passed through public
+  APIs: both renderers and Compact/Touch paint, six-property apply/reset/validation,
+  and permanent demo actions including adding/removing only temporary QAT examples.
+  It shows no Form, opens no popup and uses no Showcase helpers or global input.
+  Its first build correctly exposed an internal-only compositing flag in the
+  verification helper; that dependency was removed, with composited paint kept
+  in STA coverage. No internal API was promoted to bypass that boundary.
+- Evidence: `artifacts/geometry/menu-container/` contains baseline/parity/override/
+  focused/composited TRX files, `before/`, `after/`, `overrides/`, public-package
+  captures and `package/result.log`, plus inspected `package-contents.txt`.
+
+### Third-batch review gate
+
+Reopen the permanent Designer Sample solution, launch its normal Debug output
+with `--menu-geometry-demo`, and use **Menu geometry → Menu size, heading and
+overflow**. Open **Try headed menu** at defaults, apply **Roomier menu containers**
+and reopen. Compare width, heading inset/height, the gap before the first row and
+Name field/checkbox behavior. Enable **Overflow examples**, open QAT overflow,
+then scroll/reveal rows in Mouse and Touch. Toggle the examples off to restore
+the original QAT membership. **Reset menu containers** restores only these six
+roles; earlier horizontal/vertical settings remain independently applied.
+
+**2026-11-04: user passed the third-batch review, including combining the current
+settings with the earlier implemented geometry tests** ("everything seems fine").
+This records the reviewed combination; it does not expand the verification scope.
+
+Actual VS Undo/Redo/save-reopen, external accessibility,
+native foreground input, physical touch/IME/RTL, actual Mica/Acrylic hosts and
+mixed-monitor/display-DPI checks were not run for this batch. The previous broader
+suite failures remain outside these focused results. Arrow geometry, body/header/
+QAT strip roles, galleries, Backstage, frame/radius/shadow geometry and additional
+themes remain later work. No commit, push or publication.
+
+### Menu editor alignment follow-up — 2026-11-04
+
+The user reported that Wider menu spacing moves command content but leaves the
+native TextBox/label at the popup edge, and explicitly included labelled and
+hidden-label ComboBoxes in the correction.
+
+Contract: use the ordinary menu's resolved command-text gutter and trailing
+clearance for native editor content. Visible TextBox/ComboBox labels start at
+the command text column, with their fields after the existing shared measured
+label span. `ShowLabel=false` ComboBoxes start the field at that text column and
+reserve no label span; their hidden command name remains intact and does not
+inflate menu measurement. Keep `InputWidth`, field height/Touch scaling and native
+identity/value behavior. This is alignment with fixed authored widths, not a new
+fill-width mode or public API/designer setting. Application Menu-specific fields,
+strip/Simplified fields, group flyouts, custom content and choice lists retain
+their own layout. Ordinary nested dropdowns follow the corrected menu contract.
+
+Implementation/evidence:
+
+- Shared `RibbonEditorLayout` menu insets/content bounds now feed actual native
+  presentation, painting and inert preview. Desired menu width reserves the same
+  gutter, visible label, exact authored field and trailing clearance. Menu
+  containers with fields can intentionally grow; command-only defaults and all
+  existing public settings remain unchanged. Full-row hit/clip/UIA targets stay
+  intact while native field bounds move within them.
+- Two renderer regression cases reproduced the screenshot's mismatch in both
+  densities, then passed after the fix. Before/after previews were retained and
+  inspected. Fractional-DPI measurement coverage includes default/wider/minimal
+  gutters, 9/14-point fonts and synthetic 96/120/144/192 DPI, shown/hidden labels,
+  exact field widths and non-menu exclusions.
+- **155/155 focused Release checks passed**, including those three alignment
+  cases and related menu/container/ComboBox/native alignment/density/Touch/
+  Simplified/designer/Application Menu scopes. A subsequent **1/1 live native STA
+  popup check passed at its reported 96 DPI**: actual native presenter label/field
+  columns, retained TextBox and both ComboBox handles/values/authored widths
+  across default/wider themes and both densities. Its capture was inspected.
+  These are focused results; the full suite and physical display changes were
+  not run.
+- Native solution Release build and Debug runtime/design-server/client plus
+  permanent sample builds passed with zero warnings/errors. The refreshed local
+  package is `0.1.0-designer.local20261104T001328624Z`; packaged runtime and design
+  server hashes match the current Debug builds. The public-only package API/demo
+  check passed, including labelled/hidden-label example declarations. It does not
+  claim native package popup or actual VS acceptance.
+- Evidence: `artifacts/geometry/menu-editor-alignment/` contains before/after/
+  focused/native TRX files, before/after preview captures, native captures and
+  `package/result.log`. No authored Form/resource or WPF file was changed; no
+  computer-use tools, global input, commit, push or publication.
+
+Review: reopen the permanent sample, run `--menu-geometry-demo`, apply **Wider
+menu spacing**, then open **Try this menu**. Compare **Name**, **Font family** and
+the unlabelled chooser with the command text column in Mouse/Touch; confirm the
+first two fields line up after their labels and the unlabelled field begins at
+the text column. Reset and compare default spacing too. Stop for this correction's
+review before further geometry batches or themes. Prior third-batch acceptance
+and the previously documented hardware/VS/material/full-suite limits remain scoped
+to their recorded evidence.
+
+### Optional menu editor fill width — 2026-11-04
+
+The user approved the optional menu-only sizing mode discussed after alignment.
+Add `FillMenuWidth`, a Boolean CLR property defaulting to false, to
+`RibbonTextBoxItem` and `RibbonComboBoxItem`. True fills the available ordinary
+dropdown row after the measured shared label column and trailing clearance.
+`ShowLabel=false` ComboBoxes fill from the command-text column. Keep label/font/
+height/Touch rules and authored `InputWidth`; it remains the preferred minimum
+when the menu is measured, with existing screen-space/scroll/clipping limits.
+False preserves the accepted fixed-width geometry. Strip/Simplified fields,
+group flyouts, Application Menu-specific fields and native choice lists ignore
+the fill setting. Ordinary nested/QAT-source dropdowns use the menu contract.
+
+Designer contract: expose the property under Layout, reset to false, emit a
+normal Boolean assignment only when true. Include it in detached drafts and
+one-transaction Apply/Undo/Redo, preserving component/binding/event identities.
+Customization copies inherit the source's flag through existing synchronization;
+no new customization persistence schema. Add XML docs and four Unshipped accessor
+entries. No enum, global sizing coordinator or broad designer UI.
+
+Layout/native/preview contract: the existing shared content/field rectangles
+resolve both fixed and fill modes. Menu measurement still reserves `InputWidth`;
+only the final field width consumes the remaining row. Height and full-row hit/
+clip/UIA targets remain intact. Changing the layout flag follows normal model
+invalidation and closes a stale popup; reopening retains native HWNDs and values.
+
+The opt-in geometry demo explicitly enables filling for its menu editors, with
+**Fill menu fields** toggling all those examples back to fixed sizing for
+comparison. Normal application/default model behavior stays fixed; authored
+Form/resource files and startup presentation remain untouched. Review combines
+Wider menu spacing and Roomier menu containers in Mouse/Touch. Finish the bounded
+checks, refresh the permanent sample and stop for review; no additional theme.
+
+Implementation and verification:
+
+- Added the two documented CLR properties, default/reset metadata and four
+  Unshipped accessor entries. The shared field resolver fills only when the
+  ordinary-menu presentation and model flag both request it. Menu measurement
+  still uses the authored preferred minimum. Native paint/placement and inert
+  preview consume the same rectangle; presentation invalidation includes the flag.
+- Added the flag to designer scalar drafts and customization-source copying.
+  Standard CodeDOM emits a Boolean literal, and framework component serialization
+  demonstrated one-transaction Apply, Undo and Redo without replacing the models.
+- **7/7 final focused fill checks passed**: both renderer previews and both
+  densities, changing menu widths, shown/hidden labels, exact trailing edges,
+  unchanged left/height/value/width properties, fonts 9/14 at synthetic
+  96/120/144/192 DPI, constrained/non-menu layouts, native HWND/value retention,
+  designer draft/default/reset/serialization/Undo/Redo and customization copies.
+  The earlier four fixed-width alignment regressions also passed with default
+  `FillMenuWidth=false`.
+- The larger related Release run recorded **187 passes / 1 failure out of 188**.
+  Six of those passes overlap the new fill cases; the remaining **181 related
+  checks passed**. The failed native fixture found its popup closed after message
+  pumping even at fixed/default mode. The final fixture inspects synchronous
+  native layout/retention before processing external activation messages, then
+  closes/drains its own popup between stages; all seven fill cases passed after
+  that test-only correction. This does not establish native focus/input acceptance
+  or a single clean 188-case run. Do not rerun those passed related scopes merely
+  to replace the aggregate result.
+- Native solution Release build and Debug runtime/design-server/client/sample
+  builds passed with zero warnings/errors. The permanent sample was refreshed
+  in place using `0.1.0-designer.local20261104T002943794Z`. Packaged runtime/design
+  server hashes match the Debug builds, and XML contains both new public APIs.
+- The public-only package check passed model Layout metadata/default/set/reset
+  for both editor types and the permanent demo's fill/fixed toggle. Existing
+  renderer/density/theme/QAT demo checks also passed. No Form is shown and no
+  Showcase helper/global input/computer-use tool is used by that package check.
+- Fixed/fill preview and native captures were inspected, including the filled
+  TextBox, labelled ComboBox and hidden-label ComboBox sharing one trailing edge.
+  Evidence: `artifacts/geometry/menu-editor-fill/`, including the initial and
+  focused results, `menu-fill-final.trx`, `after/` captures and `package/result.log`.
+
+**Review gate (passed 2026-11-04):** the user confirmed "everything here is good
+now" and requested the next batches, covering the reviewed editor alignment/fill
+work. This records that review, not additional VS/hardware acceptance. The review
+procedure was: reopen the permanent sample and run `--menu-geometry-demo`.
+**Fill menu fields** starts enabled. Combine **Wider menu spacing** and **Roomier
+menu containers**, then open **Try this menu**. Verify Name/Font family keep their
+label column, the unlabelled chooser fills from the command-text column, and all
+fields share the trailing edge without becoming taller. Toggle **Fill menu
+fields** off/on to compare fixed/fill modes in Mouse and Touch. The same toggle
+also applies to the vertical and headed-menu editor examples. Resetting theme
+geometry does not reset this independent model flag.
+
+Stop for review before another batch or theme. Actual VS save/reopen and target
+machine input/IME/RTL/material/mixed-monitor checks remain separate; previous
+broader-suite failures remain outside this slice. Authored Forms/resources and
+WPF files are preserved. No commit, push or publication.
+
+## Fourth batch: menu arrow slots and separator clearance
+
+Baseline remains `codex/Ribbonkit-Winform`,
+`70c2d47b2474ffb771447a8d44c9463062f386c1`, with all preceding worktree changes
+preserved. Complete another bounded group of connected menu-row roles.
+
+| Additive nullable `RibbonTheme` property | Null Compact / Touch | Meaning |
+| --- | --- | --- |
+| `MenuSubmenuArrowWidth` | 16 / 28 | Reserved text/indicator width for ordinary non-split submenu rows. |
+| `MenuSplitArrowWidth` | 20 / 28 | Desired ordinary-menu and QAT/More split secondary region width; existing one-third narrow-row cap and Touch minimum 28 remain. |
+| `MenuChooserArrowWidth` | 16 / 16 | Reserved caption/indicator width for QAT/More menu, ComboBox and group references. |
+| `MenuSeparatorHorizontalPadding` | 8 / 8 | Inset at each end of ordinary/QAT/More decorative separator lines. |
+
+Arrow widths accept 1..1024; separator padding accepts 0..1024, all in logical
+96-DPI pixels. Null resets only that role. Positive desired widths remain subject
+to content/row/work-area clamps. Preserve exact default summed rounding and
+current glyph shapes, strokes, colors and one-device-pixel separator thickness.
+Validation is atomic; keep immutable per-ribbon Theme, built-in/reset behavior,
+XML documentation and Unshipped accessor bookkeeping.
+
+One resolver supplies menu measurement/description budgets, text/arrow paint slots
+and split hit/keyboard/KeyTip/UIA rectangles. QAT/More chooser budgets use their
+own arrow role; ordinary submenu width must not accidentally resize QAT chooser
+slots. Recompute description rows using the corresponding reserved width. Inert
+previews share the same split regions; explicit submenu widths also update their
+arrow-opening hit rectangle while null retains the existing preview click map.
+
+Exclude ribbon/Simplified strip and group-flyout arrows, QAT strip buttons,
+Application Menu-specific layout and separator geometry, native choice lists,
+field sizing/labels, glyph shapes, popup margin/frames/radii/shadows and themes.
+Ordinary nested dropdowns remain in scope, including ones opened from QAT.
+
+Designer contract remains code-authored Theme values (hidden from generic VS
+serialization), with no new theme editor. Extend the existing opt-in permanent
+sample with apply/reset and actual submenu/split/chooser/separator examples. Reset
+only these four theme values, preserving prior geometry and editor fill flags.
+Do not change authored Forms/resources or startup presentation. Verify defaults,
+overrides, narrow clamps, hit/paint/keyboard/UIA agreement and inert preview; refresh
+the native Debug package and stop for review. User owns actual VS/hardware/input
+review; use no computer-use tools or global-input fixtures.
+
+### Fourth-batch implementation and evidence — 2026-11-04
+
+- Added four documented/validated nullable properties and eight Unshipped accessor
+  entries. `RibbonMenuMetrics` owns separate submenu, split and chooser roles.
+  Ordinary and QAT/More width/description budgets select the corresponding role;
+  changing submenu width does not alter chooser budgeting, and vice versa.
+- Ordinary/QAT split regions flow through `RibbonSplitLayout` into paint, hit,
+  keyboard/KeyTip and existing UIA command bounds. Narrow rows retain the one-third
+  cap. The existing UIA command node follows the primary target; no new UIA node
+  or whole-row bounding policy was introduced. An initial test incorrectly assumed
+  a union bound; corrected expectations now check the existing primary policy.
+- Explicit submenu widths update inert preview arrow-opening hit rectangles;
+  null retains the prior click map. Menu separator line ends resolve the new pad,
+  while Application Menu-specific separators retain 8 and group lines retain
+  their own implementation. Glyph shapes/strokes and field fill are unchanged.
+- **32 default paint/measurement captures match exactly**, covering both renderers,
+  both densities, 9/14-point fonts and synthetic 96/120/144/192 DPI. Scenes include
+  ordinary submenu/split, QAT menu/ComboBox/group choosers, QAT split and separator.
+  Default and package override images were inspected, including all four frame
+  corners at representative 120/144 DPI; no approvals/tolerances were changed.
+- **8 batch cases passed** across focused runs (one default-parity case and seven
+  override cases): role-specific paint/text slots, narrow and Touch split clamps,
+  ordinary/QAT/More hit/keyboard/UIA geometry, separator endpoints/exclusions,
+  invalid/reset/isolation/built-in behavior, description budgets and inert preview
+  hit maps. The related run recorded **154 passes / 1 failure out of 155**, with
+  seven new cases included among its passes. Its failure was the older native
+  alignment fixture losing its popup after message pumping. Applying the same
+  synchronous-layout-before-external-activation scope used by the fill fixture
+  yielded **1/1 targeted pass**. Passed scopes were retained, not rerun to replace
+  the aggregate. This is not a single clean full-suite or native input result.
+- Native solution Release and Debug runtime/design-server/client/permanent-sample
+  builds passed without warnings/errors. Sample refreshed in place with
+  `0.1.0-designer.local20261104T005024662Z`. Packaged runtime/design server hashes
+  and all four new XML API entries were verified.
+- Public-only package check passed both renderers/densities, container/arrow
+  reset, submenu/chooser/split paint slots, fill metadata and all demo actions.
+  The demo adds/removes 28 temporary QAT entries (24 commands, four references)
+  without changing authored QAT identities/order. It shows no Form, opens no
+  popup and uses no Showcase helpers or internal layout APIs; actual runtime hit/
+  keyboard/UIA geometry is separate STA evidence. Authored Forms/resources and
+  startup presentation remain intact.
+- Evidence: `artifacts/geometry/menu-arrows/` contains before/default-parity/
+  override/hit-preview/focused/native-layout TRX files, `before/`, `after/`, package
+  captures and `package/result.log`.
+
+### Fourth-batch review gate
+
+Reopen the permanent sample and launch `--menu-geometry-demo`. In **Menu arrows
+and separators**, compare **Try arrow menu** before/after **Wider arrow areas**.
+Export should open its nested menu; Paste's primary should toggle and its arrow
+should open choices, with clearly separated hover areas. Check separator ends.
+Enable **Overflow examples** in the container group, open QAT overflow and scroll
+to the last four reference entries (Export/Paste/Font family/ordinary-menu group).
+Compare Mouse/Touch, then **Reset arrow areas**. Earlier row/container/heading
+overrides and editor fill flags should remain independently applied. Turning
+Overflow examples off must preserve the original QAT entries/order.
+
+Stop for review before another batch or theme. Actual VS save/reopen/Undo/Redo,
+native input/physical touch/IME/RTL, actual material hosts and mixed-monitor DPI
+remain separate. The previous broader-suite failures are unchanged. Body/header/
+QAT strip, galleries, Backstage, glyph/radius/shadow/frame and popup inner-margin
+roles remain later work. No WPF changes, computer-use tools, global input, commit,
+push or publication.
+
+### Shared menu arrow column correction — 2026-11-04
+
+The user reported nonuniform arrow positions in the QAT overflow capture and
+approved a shared trailing column using the split button's position as reference.
+
+Contract/implementation: add no public setting and preserve authored theme values.
+The resolved split secondary width, with its existing narrow-row cap, defines
+`RibbonMenuLayout.ArrowColumn`. Ordinary submenu and QAT/More menu/ComboBox/group
+indicators use this column. Existing submenu/chooser widths remain minimum caption
+reservations; each reserves at least the shared column. Larger authored values
+can add text space without moving glyphs. Common text bounds/trailing padding
+align caption ends, including projected ComboBox and group captions. Native
+editor fields and glyph shapes are untouched.
+
+Split measurement and QAT split expansion use the same column helper; existing
+nonzero-row hit areas/primary/secondary actions remain unchanged. Zero-width rows
+now safely return an empty indicator region. Inert preview arrow-opening hit areas
+also use the shared column in both default and overridden themes. Menu description
+measurement consumes actual device-pixel reservations. Application Menu-specific,
+strip/group-flyout and field/fill geometry retain their owners. Default menu arrow
+positions and some caption clearances intentionally change for this correction;
+the previous batch's default-paint parity is historical, not a current pixel gate.
+
+Evidence:
+
+- Two new renderer regression cases reproduced the mismatch before the change,
+  then passed. Coverage includes default/mixed role widths, combined leading/
+  trailing/icon overrides, both densities, 9/14-point fonts and synthetic
+  96/120/144/192 DPI. A separate narrow/zero/larger-reservation case passed.
+- **32 before/after split-region measurement files remain identical.** Arrow/
+  caption pixel changes are intentional. Before/after renderer scenes and the
+  public-package override render were inspected, including representative frame
+  corners. The submenu/split/menu-reference/ComboBox-reference/group-reference
+  centers align, with no split target-width change.
+- The related focused Release run recorded **161 passes / 1 failure out of 162**.
+  Its failure was the old QAT group-caption assertion that required separate
+  chooser clearance. Updated it to the approved common column/trailing rule;
+  **1/1 targeted check passed** at all four synthetic DPIs/both densities/renderers.
+  Passed scopes were retained, not rerun. This is not a single clean full-suite run.
+- Release native solution and Debug runtime/design server/client/sample builds
+  passed with zero warnings/errors. Permanent sample refreshed in place with
+  `0.1.0-designer.local20261104T012835997Z`; runtime/design-server package hashes
+  match current Debug outputs. No authored Form/resource or WPF file changed.
+- The public-only package check passed shared submenu/chooser/split column
+  positions through both renderers/densities and retained demo/reset/fill/QAT
+  behavior. It shows no windows, opens no popup and uses no internal layout APIs.
+  Actual native input/focus/VS/hardware/material gates remain separate.
+- Evidence: `artifacts/geometry/menu-arrow-column/`, with before/regression/related/
+  targeted TRX files, `before/`, `after/` and `package/result.log`/captures.
+
+**2026-11-04: user accepted the shared arrow-column appearance** ("looks good
+now"). This confirms appearance only; existing verification limits remain.
+
+Review procedure: use the refreshed normal Debug sample with `--menu-geometry-demo`. Compare
+**Try arrow menu** and the final four **Overflow examples** references at defaults
+and with **Wider arrow areas**, in Mouse/Touch and with prior spacing overrides.
+All chevrons should share a trailing column; captions should keep consistent
+clearance. Paste's primary/arrow boundary and actions should be unchanged. Await
+instruction before any further batch or theme. Prior live/input/
+hardware/full-suite limits still apply; no computer use, global input, commit,
+push or publication.

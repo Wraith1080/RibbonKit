@@ -1,10 +1,10 @@
 # Starting prompt: native RibbonKit.WinForms geometry consolidation
 
-Execution checkpoint, **2026-11-04**: the second ordinary-menu geometry set's
-vertical-spacing appearance is accepted. The bounded Touch Small-icon/editor-width
-correction is tracked in [the geometry plan](GEOMETRY-CONSOLIDATION-PLAN.md).
-**Touch correction review is pending. Do not start another geometry increment or
-additional themes.** The original bounded starting contract follows for context.
+Execution checkpoint, **2026-11-04**: the fourth batch's menu arrows now share the
+split secondary column, with consistent caption clearance. This correction is
+implemented and verified in [the geometry plan](GEOMETRY-CONSOLIDATION-PLAN.md).
+**Shared-column review is pending. Do not start another geometry batch or additional
+themes.** The original bounded starting contract follows for context.
 
 Continue work in:
 

@@ -73,9 +73,9 @@ internal sealed partial class RibbonStructureManager
                     case (RibbonCheckBoxItem p, RibbonCheckBoxItem s): p.ThreeState = s.ThreeState; p.CheckState = s.CheckState; break;
                     case (RibbonRadioButtonItem p, RibbonRadioButtonItem s): p.Checked = s.Checked; break;
                     case (RibbonSplitButtonItem p, RibbonSplitButtonItem s): p.Layout = s.Layout; p.CheckOnClick = s.CheckOnClick; p.Checked = s.Checked; p.DropDownKeyTip = s.DropDownKeyTip; break;
-                    case (RibbonTextBoxItem p, RibbonTextBoxItem s): p.InputWidth = s.InputWidth; p.MaxLength = s.MaxLength; p.ReadOnly = s.ReadOnly; p.Value = s.Value; break;
+                    case (RibbonTextBoxItem p, RibbonTextBoxItem s): p.InputWidth = s.InputWidth; p.FillMenuWidth = s.FillMenuWidth; p.MaxLength = s.MaxLength; p.ReadOnly = s.ReadOnly; p.Value = s.Value; break;
                     case (RibbonComboBoxItem p, RibbonComboBoxItem s):
-                        p.ShowLabel = s.ShowLabel; p.InputWidth = s.InputWidth; p.MaxLength = s.MaxLength; p.IsEditable = s.IsEditable;
+                        p.ShowLabel = s.ShowLabel; p.InputWidth = s.InputWidth; p.FillMenuWidth = s.FillMenuWidth; p.MaxLength = s.MaxLength; p.IsEditable = s.IsEditable;
                         if (!p.Items.SequenceEqual(s.Items)) { p.Items.Clear(); p.Items.AddRange(s.Items.ToArray()); }
                         p.SelectedIndex = s.SelectedIndex; p.Value = s.Value; break;
                     case (RibbonGalleryItem p, RibbonGalleryItem s): SyncGallery(p, s); break;

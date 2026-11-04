@@ -91,7 +91,8 @@ public class RibbonOffice2024Renderer : RibbonRenderer
         int inset = Layout.RibbonLayoutEngine.Scale(6, context.DeviceDpi);
         using var font = new Font(context.Font, context.Font.Style | FontStyle.Bold);
         var foreground = context.IsMenuHeading && !context.Theme.MenuHeadingForeground.IsEmpty ? context.Theme.MenuHeadingForeground : context.Theme.GalleryHeadingForeground;
-        DrawText(context with { Bounds = Rectangle.Inflate(context.Bounds, -inset, 0), Font = font }, text, foreground,
+        var textBounds = context.IsMenuHeading ? Layout.RibbonMenuLayout.HeaderTextBounds(context.Bounds, context.DeviceDpi, context.Density, context.Theme) : Rectangle.Inflate(context.Bounds, -inset, 0);
+        DrawText(context with { Bounds = textBounds, Font = font }, text, foreground,
             TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
     }
     /// <inheritdoc />

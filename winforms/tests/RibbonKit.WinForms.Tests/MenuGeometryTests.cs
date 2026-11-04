@@ -181,7 +181,7 @@ public sealed class MenuGeometryTests
 
     private sealed class Slots { internal Rectangle Icon, Text, Indicator; }
     [Fact]
-    public void Qat_group_rows_share_icon_and_leading_slots_while_retaining_their_chooser_clearance() => FoundationTests.Sta(() =>
+    public void Qat_group_rows_share_icon_leading_and_trailing_caption_slots_with_the_split_column() => FoundationTests.Sta(() =>
     {
         using var ribbon = new RibbonControl(); var tab = new RibbonTab(); var icon = new GroupIcon();
         var group = new RibbonGroup { Text = "Commands", Icon = icon }; tab.Groups.Add(group); ribbon.Tabs.Add(tab);
@@ -195,7 +195,7 @@ public sealed class MenuGeometryTests
             using var pixels = new Bitmap(S(300), S(90)); using var graphics = Graphics.FromImage(pixels);
             renderer.DrawQuickAccessItem(new(graphics, new(Point.Empty, pixels.Size), Custom, ribbon.Font, dpi) { Density = density }, reference, true);
             Assert.Equal(S(13), icon.Bounds.Left); Assert.Equal(S(36), icon.Bounds.Width); Assert.Equal(S(64), slots.Text.Left);
-            Assert.Equal(pixels.Width - S(16), slots.Text.Right);
+            Assert.Equal(pixels.Width - S(density == RibbonDensity.Touch ? 28 : 20) + S(64) - S(81), slots.Text.Right);
         }
     });
     private sealed class GroupIcon : IRibbonIcon

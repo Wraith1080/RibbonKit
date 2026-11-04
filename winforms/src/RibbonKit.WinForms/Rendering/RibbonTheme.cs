@@ -81,6 +81,26 @@ public sealed record RibbonTheme
     public int? MenuDescriptionGap { get; init; }
     /// <summary>Gets the optional decorative separator row height in ordinary menus and QAT/More overflow, in 96-DPI logical pixels from 1 to 1024. Null uses 9 in either density. The line stays one device pixel and noninteractive; Application Menu-specific separators retain their own geometry.</summary>
     public int? MenuSeparatorHeight { get; init; }
+    /// <summary>Gets the optional desired minimum dropdown, Quick Access overflow and More Commands width in 96-DPI logical pixels, from 1 to 1024. Null uses Compact 170 or Touch 220. Content minima and work-area limits still apply; excludes Application Menu, custom content and native choice lists.</summary>
+    public int? MenuMinimumWidth { get; init; }
+    /// <summary>Gets the optional desired minimum menu width when command descriptions are present, in 96-DPI logical pixels from 1 to 1024. Null uses Compact 280 or Touch 320. Content and work-area limits still apply.</summary>
+    public int? MenuDescriptionMinimumWidth { get; init; }
+    /// <summary>Gets optional horizontal padding on each side of a dropdown heading in 96-DPI logical pixels, from 0 to 1024. Null uses 6. Gallery and Application Menu headings retain their own geometry.</summary>
+    public int? MenuHeaderHorizontalPadding { get; init; }
+    /// <summary>Gets optional padding above and below dropdown heading text in 96-DPI logical pixels, from 0 to 1024. Null uses Compact 6 or Touch 8. Font height remains the content minimum; Application Menu headings retain their own geometry.</summary>
+    public int? MenuHeaderVerticalPadding { get; init; }
+    /// <summary>Gets the optional gap below a dropdown heading in 96-DPI logical pixels, from 0 to 1024. Null uses 4. Menus without a heading reserve no gap.</summary>
+    public int? MenuHeaderBottomGap { get; init; }
+    /// <summary>Gets the optional height of Quick Access and More Commands overflow scroll-button bands in 96-DPI logical pixels, from 1 to 1024. Null uses Compact 16 or Touch 28. Touch retains at least 28; small viewports clamp the bands to preserve content space. Native system scrollbars are unchanged.</summary>
+    public int? MenuOverflowScrollButtonHeight { get; init; }
+    /// <summary>Gets the optional minimum caption reservation before ordinary submenu indicators in 96-DPI logical pixels, from 1 to 1024. Null uses Compact 16 or Touch 28. The shared split-arrow column can reserve additional space; glyphs align in that column. Excludes strip, Application Menu-specific and native choice-list arrows.</summary>
+    public int? MenuSubmenuArrowWidth { get; init; }
+    /// <summary>Gets the optional desired ordinary-menu and Quick Access/More overflow split secondary width and shared visual indicator-column width in 96-DPI logical pixels, from 1 to 1024. Null uses Compact 20 or Touch 28. Touch retains at least 28; narrow rows retain the existing one-third cap.</summary>
+    public int? MenuSplitArrowWidth { get; init; }
+    /// <summary>Gets the optional minimum caption reservation before Quick Access/More overflow menu, ComboBox and group chooser indicators in 96-DPI logical pixels, from 1 to 1024. Null uses 16 in both densities. The shared split-arrow column can reserve additional space; glyphs align in that column. QAT strip buttons and native choice lists retain their own geometry.</summary>
+    public int? MenuChooserArrowWidth { get; init; }
+    /// <summary>Gets optional horizontal padding at each end of ordinary-menu and Quick Access/More separator lines in 96-DPI logical pixels, from 0 to 1024. Null uses 8. Lines stay one device pixel; Application Menu-specific and group separators retain their own geometry.</summary>
+    public int? MenuSeparatorHorizontalPadding { get; init; }
     /// <summary>Gets the optional RibbonForm caption color, overridden by RibbonForm.TitleBarColor. Empty retains Background in solid mode and a clear caption over a backdrop. Explicit values must be opaque.</summary>
     public Color TitleBarBackground { get; init; } = Color.Empty;
     /// <summary>Gets optional caption and TitleBar Quick Access foreground. Empty chooses contrast for a colored caption, or preserves Foreground for an unset caption.</summary>

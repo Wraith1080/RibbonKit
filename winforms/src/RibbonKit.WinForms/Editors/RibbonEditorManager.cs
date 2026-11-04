@@ -147,7 +147,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
         private Presentation? _presentation;
         private sealed record Presentation(Control Surface, Rectangle Bounds, int LabelWidth, Rectangle Clip,
             RibbonTheme Theme, RibbonRenderer Renderer, Font Font, RibbonDensity Density, int Dpi, string Label, object Value,
-            int ChoicesVersion, bool Editable, bool ReadOnly, bool Enabled, bool Material, RibbonLayoutMode Layout);
+            int ChoicesVersion, bool Editable, bool ReadOnly, bool FillMenuWidth, bool Enabled, bool Material, RibbonLayoutMode Layout);
         internal void SetBackdrop(bool enabled)
         {
             _backdrop = enabled;
@@ -360,7 +360,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
                     Region = _ownedRegion = new Region(clip);
                     previous?.Dispose();
                 }
-                var field = _field = RibbonEditorLayout.Field(ClientRectangle, _item, _labelWidth, Font, _ribbon.DeviceDpi, SimplifiedInline);
+                var field = _field = RibbonEditorLayout.Field(EditorContentBounds, _item, _labelWidth, Font, _ribbon.DeviceDpi, SimplifiedInline, IsMenuEditor);
                 if (_editor is NativeComboBox nativeCombo)
                 {
                     nativeCombo.ApplyMetrics();
@@ -419,7 +419,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
             var next = new Presentation(surface, Bounds, _labelWidth, _clip, _ribbon.Theme, _ribbon.Painter, Font,
                 _ribbon.Density, _ribbon.DeviceDpi, _item.Text, _lastModel,
                 _item is RibbonComboBoxItem choices ? choices.ChoicesVersion : -1,
-                _item is RibbonComboBoxItem { IsEditable: true }, _item is RibbonTextBoxItem { ReadOnly: true },
+                _item is RibbonComboBoxItem { IsEditable: true }, _item is RibbonTextBoxItem { ReadOnly: true }, ((IRibbonEditorItem)_item).FillMenuWidth,
                 _item.EffectiveEnabled, _ribbon.HasWindowBackdrop, _ribbon.LayoutMode);
             if (_presentation != next)
             {
@@ -734,13 +734,17 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
                     { Density = _ribbon.Density, SuppressShadow = true });
             }
         }
+        private bool IsMenuEditor => Parent is RibbonPopupSurface { UsesMenuEditorGutter: true };
+        private Rectangle EditorContentBounds => RibbonEditorLayout.ContentBounds(ClientRectangle, _item, _ribbon.DeviceDpi,
+            _ribbon.Density, _ribbon.Theme, IsMenuEditor);
+
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
-            var context = new RibbonPaintContext(e.Graphics, ClientRectangle, _ribbon.Theme, Font, _ribbon.DeviceDpi,
+            var context = new RibbonPaintContext(e.Graphics, EditorContentBounds, _ribbon.Theme, Font, _ribbon.DeviceDpi,
                 Hot: _item.EffectiveEnabled && (_editor is ComboBox ? _comboHot : _field.Contains(PointToClient(MousePosition))),
                 Pressed: _item.EffectiveEnabled && _comboPressed, Focused: _editor.ContainsFocus) { Density = _ribbon.Density };
-            var field = RibbonEditorLayout.Field(ClientRectangle, _item, _labelWidth, Font, _ribbon.DeviceDpi, SimplifiedInline);
+            var field = RibbonEditorLayout.Field(EditorContentBounds, _item, _labelWidth, Font, _ribbon.DeviceDpi, SimplifiedInline, IsMenuEditor);
             if (_item is RibbonTextBoxItem text) _ribbon.Painter.DrawTextBox(context, text, field);
             else _ribbon.Painter.DrawComboBox(context, (RibbonComboBoxItem)_item, field);
         }

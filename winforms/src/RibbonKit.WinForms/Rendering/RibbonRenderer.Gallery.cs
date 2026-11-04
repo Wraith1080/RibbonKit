@@ -46,7 +46,8 @@ public partial class RibbonRenderer
         int inset = RibbonLayoutEngine.Scale(6, context.DeviceDpi);
         using var font = new Font(context.Font, context.Font.Style | FontStyle.Bold);
         var foreground = context.IsMenuHeading && !context.Theme.MenuHeadingForeground.IsEmpty ? context.Theme.MenuHeadingForeground : context.Theme.SecondaryText;
-        DrawText(context with { Bounds = Rectangle.Inflate(context.Bounds, -inset, 0), Font = font }, text, foreground,
+        var textBounds = context.IsMenuHeading ? Layout.RibbonMenuLayout.HeaderTextBounds(context.Bounds, context.DeviceDpi, context.Density, context.Theme) : Rectangle.Inflate(context.Bounds, -inset, 0);
+        DrawText(context with { Bounds = textBounds, Font = font }, text, foreground,
             TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
     }
     /// <summary>Paints an owned gallery tile using its borrowed artwork, selection and independent preview/focus state. Bounds are measured device pixels.</summary>

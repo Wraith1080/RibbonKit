@@ -67,6 +67,69 @@ The **Keep formatting** checkbox should toggle without closing the menu. Use
 **Reset vertical spacing** and reopen to compare; this resets only the four
 vertical roles and preserves any horizontal settings from the first group.
 
+The third group, **Menu size, heading and overflow**, batches the next six theme
+roles. Open **Try headed menu** at defaults; choose **Roomier menu containers**
+and reopen to compare width, heading padding and the gap before the first row.
+Turn **Overflow examples** on, then open Quick Access overflow and review the
+top/bottom scroll bands and row reveal in Mouse/Touch. Turn the toggle off to
+remove only those 28 temporary entries (24 commands and four references); authored
+QAT entries/order are retained.
+**Reset menu containers** resets only this batch's six properties, preserving
+the earlier horizontal/vertical settings and the accepted Touch field scaling.
+These opt-in controls are public-API demo code; the authored Form/resources and
+normal startup presentation are preserved.
+
+Menu-editor alignment follow-up: **Try this menu** also contains a labelled
+**Font family** ComboBox and an unlabelled chooser. With **Wider menu spacing**
+applied, **Name** and **Font family** labels align with neighboring command text,
+and their fields share a starting column. The unlabelled ComboBox starts directly
+at the command-text column. Compare Mouse/Touch and Reset; authored `InputWidth`
+and existing Touch scaling remain in effect. The same content geometry is used
+by native presenters and inert designer preview. No authored Form/resource file
+was changed for these opt-in examples.
+
+Menu fill-width follow-up: the opt-in demo's editor examples now explicitly use
+`FillMenuWidth=true`. **Fill menu fields** starts checked; turn it off to compare
+fixed `InputWidth` sizing, then back on to fill the available row in all three
+example menus. Combine **Wider menu spacing** with **Roomier menu containers**
+for a clear width comparison. Visible labels stay aligned; the unlabelled chooser
+fills from the command-text column, and heights stay unchanged in each density.
+The model property defaults to false outside these explicitly configured examples.
+It is available under Layout in the designer, with Boolean serialization/reset;
+actual Visual Studio review remains user-owned.
+
+The fourth group, **Menu arrows and separators**, has **Wider arrow areas**,
+**Reset arrow areas** and **Try arrow menu**. Compare the Export submenu indicator,
+the two Paste split areas and separator ends at defaults and with overrides.
+Paste's primary toggles its state; its arrow opens the choices. Check Mouse and
+Touch, then Reset; earlier spacing/container and fill-field settings are retained.
+
+Enable **Overflow examples** in the container group, open QAT overflow and scroll
+to its last four entries: Export, Paste, Font family and the ordinary-menu group
+reference. These demonstrate menu/split/ComboBox/group indicators using the same
+arrow roles. Turning the toggle off removes all temporary commands/references
+while retaining authored QAT identities/order. The public package check verifies
+the demo apply/reset and the separate submenu/chooser/split paint slots without
+showing a Form or using internal layout APIs. Runtime split hit/keyboard/UIA and
+inert preview hit rectangles are covered by the STA tests.
+
+Arrow alignment correction: ordinary dropdown, split and QAT/More chooser
+indicators now share the split arrow's trailing column, even with different
+submenu/split/chooser reservation values. Caption ends and trailing clearance
+are aligned too; larger submenu/chooser reservations can still add extra text
+space without moving the glyph. Split hit areas and actions are retained.
+Reopen the refreshed sample and compare Export/Paste/Font family/group arrows in
+**Try arrow menu** and the last four **Overflow examples** entries, in Mouse/Touch,
+at defaults and with **Wider arrow areas**. No extra setting is needed.
+
+`--verify-menu-container-geometry <evidence-folder>` verifies public package
+properties, validation/reset and heading/scroll paint with both renderers and
+Compact/Touch. It also invokes the permanent
+demo's apply/reset/toggle actions without showing a Form. It uses no Showcase
+helpers, global input or computer use. Runtime popup measurement/reveal and inert
+designer-preview/composited-paint coverage are separate STA tests; actual VS/live review remains
+user-owned.
+
 This is the permanent editable review project, migrated from the existing
 bottom-navigation review solution with its reviewed Forms, UserControls,
 resources and assets preserved. Keep making designer changes here.
