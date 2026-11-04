@@ -1197,6 +1197,28 @@ RibbonKit.WinForms.RibbonForm.TitleBarTintOpacity.set -> void
 RibbonKit.WinForms.RibbonForm.TitleBarTintOpacityChanged -> System.EventHandler?
 
 RibbonKit.WinForms.RibbonApplicationMenu
+RibbonKit.WinForms.RibbonTheme.GroupHorizontalPadding.get -> int?
+RibbonKit.WinForms.RibbonTheme.GroupHorizontalPadding.init -> void
+RibbonKit.WinForms.RibbonTheme.GroupColumnGap.get -> int?
+RibbonKit.WinForms.RibbonTheme.GroupColumnGap.init -> void
+RibbonKit.WinForms.RibbonTheme.BodyContentHorizontalPadding.get -> int?
+RibbonKit.WinForms.RibbonTheme.BodyContentHorizontalPadding.init -> void
+RibbonKit.WinForms.RibbonTheme.GroupSeparatorVerticalInset.get -> int?
+RibbonKit.WinForms.RibbonTheme.GroupSeparatorVerticalInset.init -> void
+RibbonKit.WinForms.RibbonTheme.TabHorizontalPadding.get -> int?
+RibbonKit.WinForms.RibbonTheme.TabHorizontalPadding.init -> void
+RibbonKit.WinForms.RibbonTheme.TabMinimumWidth.get -> int?
+RibbonKit.WinForms.RibbonTheme.TabMinimumWidth.init -> void
+RibbonKit.WinForms.RibbonTheme.HeaderIndicatorPadding.get -> int?
+RibbonKit.WinForms.RibbonTheme.HeaderIndicatorPadding.init -> void
+RibbonKit.WinForms.RibbonTheme.QuickAccessHorizontalPadding.get -> int?
+RibbonKit.WinForms.RibbonTheme.QuickAccessHorizontalPadding.init -> void
+RibbonKit.WinForms.RibbonTheme.QuickAccessItemGap.get -> int?
+RibbonKit.WinForms.RibbonTheme.QuickAccessItemGap.init -> void
+RibbonKit.WinForms.RibbonTheme.MessageActionGap.get -> int?
+RibbonKit.WinForms.RibbonTheme.MessageActionGap.init -> void
+RibbonKit.WinForms.RibbonTheme.MessageTitleTextGap.get -> int?
+RibbonKit.WinForms.RibbonTheme.MessageTitleTextGap.init -> void
 RibbonKit.WinForms.RibbonApplicationMenu.RibbonApplicationMenu() -> void
 RibbonKit.WinForms.RibbonApplicationMenu.DefaultPane.get -> RibbonKit.WinForms.RibbonDropDownItem!
 RibbonKit.WinForms.RibbonApplicationMenu.FooterItems.get -> RibbonKit.WinForms.RibbonItemCollection!

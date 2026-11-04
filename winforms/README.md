@@ -1935,6 +1935,54 @@ ribbon.Theme = ribbon.Theme with
 };
 ```
 
+Body/group, header and QAT/message spacing share optional per-ribbon theme roles:
+
+| Property | Null behavior |
+| --- | --- |
+| `GroupHorizontalPadding` | Expanded groups 6; Classic collapsed outer clearance 3. Simplified group openers use 6. |
+| `GroupColumnGap` | Classic Compact 3 / Touch 6; Simplified inter-command gap 3. |
+| `BodyContentHorizontalPadding` | Inner body viewport inset: Classic 2 / Simplified 4. |
+| `GroupSeparatorVerticalInset` | Office Classic divider clearance 12; Simplified 6. |
+| `TabHorizontalPadding` | Tab/File horizontal label-width allowance of 14 per side. |
+| `TabMinimumWidth` | 58, before font/padding requirements. File retains its separate minimum of 50. |
+| `HeaderIndicatorPadding` | Office tab/File indicator label extension and edge clearance 4. |
+| `QuickAccessHorizontalPadding` | QAT edge padding 2. |
+| `QuickAccessItemGap` | Between QAT entries and before overflow: 0. |
+| `MessageActionGap` | Horizontal text-to-inline-action gap 10. |
+| `MessageTitleTextGap` | Inline title-to-body gap 8. |
+
+Values are logical pixels at 96 DPI. Spacing accepts 0..1024; `TabMinimumWidth`
+accepts 1..1024 and retains Touch's 44-pixel floor. Each null value restores the
+existing geometry independently. Larger collapsed-group outer padding reserves
+width beyond the legacy caption-width cap; command/editor dimensions stay intact.
+Body/indicator/divider insets clamp within available bounds. Neutral Classic
+keeps its divider/indicator policy. Tab overflow, group reduction/scrolling,
+borrowed groups, hit targets, keyboard/KeyTips/UIA and inert designer previews
+consume the same layout as paint.
+
+QAT sizing/entry selection includes gaps before overflow in TabRow, BelowRibbon
+and supported TitleBar slots; original sources and intrinsic button/row sizes
+remain. Message inline-versus-wrapped measurement and action/close targets share
+the resulting rectangles. Existing `BodyMargin`, `BodyHeight`, `TabHeight`,
+`HeaderButtonInset`, `MessageMinimumHeight` and `MessageContentPadding` remain the
+corresponding APIs. Native caption buttons, font/Touch minima, message stacked
+action vertical gap, intrinsic artwork and connected frame/radius/shadow rules
+retain their existing owners. No theme-authoring UI or new renderer API is added.
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    GroupHorizontalPadding = 12, GroupColumnGap = 10,
+    BodyContentHorizontalPadding = 12, GroupSeparatorVerticalInset = 20,
+    TabHorizontalPadding = 22, TabMinimumWidth = 90, HeaderIndicatorPadding = 8,
+    QuickAccessHorizontalPadding = 8, QuickAccessItemGap = 6,
+    MessageActionGap = 18, MessageTitleTextGap = 12
+};
+```
+
+Theme stays immutable, hidden/nonserialized and code-only. Invalid values are
+rejected before assignment, preserving the current theme and built-in selection.
+
 Horizontal command split buttons share three optional theme roles:
 
 | Property | Null behavior |
@@ -1982,9 +2030,15 @@ values retain density/preferred-width minima. Vertical padding is a minimum
 clearance above/below text and 16-pixel artwork; containing Classic rows and
 Simplified bands grow when needed, retaining centered content and font/density
 minima. Small Touch icons keep their accepted centering. Native editor fields
-keep their dimensions/handles even when a shared command row grows. Actual Large
-content placement, gallery content, menu/QAT projections and intrinsic glyphs
-retain their own geometry. Null resets each setting independently.
+keep their dimensions/handles even when a shared command row grows. With vertical
+padding above 3, fitting Large buttons/dropdowns/splits use shared icon, two-line
+caption and below-caption arrow bands, centered as one reservation. Unused bands
+remain reserved: icons and caption starts align across one/two-line labels, and
+vertical split arrows share a row. Vertical split boundaries follow those bands
+for hit testing, keyboard and UIA. Text-only commands retain the caption baseline.
+Null, horizontal-only padding and vertical padding at most 3 preserve legacy
+placement; constrained bounds fall back to it. Gallery content, menu/QAT projections
+and intrinsic glyph sizes keep their owners. Null resets independently.
 
 Application Menu spacing has five separate optional theme roles:
 

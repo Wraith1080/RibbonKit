@@ -6,7 +6,8 @@ implemented; review and validation are recorded in
 Backstage and disabled/state increments remain. The bounded ordinary-menu
 horizontal/vertical, container/heading/overflow, shared arrow-column and native
 editor/choice-row, illustrated-choice, horizontal command-split, Small/Medium
-command-content and Application Menu spacing batches are tracked in the
+command-content, Application Menu, body/group, header/tab and QAT/message spacing
+batches are tracked in the
 [geometry consolidation plan](GEOMETRY-CONSOLIDATION-PLAN.md), which owns their review scope.
 Related batches may share a session and one review; further geometry and new
 built-in themes remain later increments after that review.

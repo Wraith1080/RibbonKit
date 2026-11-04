@@ -5,7 +5,6 @@ public class RibbonOffice2024Renderer : RibbonRenderer
 {
     // WPF reference: two logical pixels around the groups row plus ten
     // inside the group separator. Retain a crisp one-device-pixel hairline.
-    private const int GroupSeparatorInset = 12;
     /// <summary>Initializes the default Office 2024 inspired renderer.</summary>
     public RibbonOffice2024Renderer() { }
     /// <inheritdoc />
@@ -130,7 +129,8 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     {
         int S(int value) => Layout.RibbonLayoutEngine.Scale(value, context.DeviceDpi);
         int labelWidth = Layout.RibbonCaptionLayout.TextWidth(text, context.Font);
-        int width = Math.Max(0, Math.Min(labelWidth + 2 * S(4), context.Bounds.Width - 2 * S(4)));
+        int padding = S(new Layout.RibbonChromeMetrics(context.Theme, context.Density).IndicatorPadding);
+        int width = Math.Max(0, Math.Min(labelWidth + 2 * padding, context.Bounds.Width - 2 * padding));
         int height = Math.Min(S(3), Math.Max(0, context.Bounds.Height - S(1)));
         if (width == 0 || height == 0) return Rectangle.Empty;
         return new(context.Bounds.Left + (context.Bounds.Width - width) / 2, context.Bounds.Bottom - height - S(1), width, height);
@@ -167,7 +167,7 @@ public class RibbonOffice2024Renderer : RibbonRenderer
         base.DrawGroup(context, group, collapsed);
         if (context.IsSimplifiedGroup) return;
         var frame = context.GroupSeparatorBounds.IsEmpty ? context.Bounds : context.GroupSeparatorBounds;
-        int inset = Layout.RibbonLayoutEngine.Scale(GroupSeparatorInset, context.DeviceDpi);
+        int inset = Math.Min(frame.Height / 2, Layout.RibbonLayoutEngine.Scale(new Layout.RibbonChromeMetrics(context.Theme, context.Density).SeparatorInset(), context.DeviceDpi));
         int height = frame.Height - 2 * inset;
         if (frame.Width > 0 && height > 0)
         {

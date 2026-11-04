@@ -19,12 +19,14 @@ internal static class RibbonQuickAccessLayout
         int S(double n) => RibbonLayoutEngine.Scale(n, ribbon.DeviceDpi);
         var entries = ribbon.QuickAccessItems.Where(e => e.Visible).ToArray();
         var metrics = RibbonDensityMetrics.For(ribbon.Density);
-        int slot = S(metrics.QuickAccessButton), padding = Math.Min(S(2), slotBounds.Width / 2);
+        var chrome = new RibbonChromeMetrics(ribbon.Theme, ribbon.Density);
+        int slot = S(metrics.QuickAccessButton), padding = Math.Min(S(chrome.QuickAccessPadding), slotBounds.Width / 2), gap = S(chrome.QuickAccessGap);
         var widths = entries.Select(e => S(RibbonQuickAccess.Width(e) == RibbonQuickAccess.ButtonWidth ? metrics.QuickAccessButton : metrics.QuickAccessMenu)).ToArray();
-        bool overflow = widths.Sum() + 2 * padding > slotBounds.Width;
-        int count = 0, used = 0, available = Math.Max(0, slotBounds.Width - 2 * padding - (overflow ? slot : 0));
-        while (count < entries.Length && used + widths[count] <= available) used += widths[count++];
-        int width = fillWidth ? slotBounds.Width : Math.Min(slotBounds.Width, used + (overflow ? slot : 0) + 2 * padding);
+        bool overflow = widths.Sum() + Math.Max(0, entries.Length - 1) * gap + 2 * padding > slotBounds.Width;
+        int count = 0, used = 0, available = Math.Max(0, slotBounds.Width - 2 * padding - (overflow ? slot + gap : 0));
+        while (count < entries.Length && used + (count > 0 ? gap : 0) + widths[count] <= available)
+        { used += (count > 0 ? gap : 0) + widths[count++]; }
+        int width = fillWidth ? slotBounds.Width : Math.Min(slotBounds.Width, used + (overflow ? slot + (count > 0 ? gap : 0) : 0) + 2 * padding);
         var clip = slotBounds with { Width = width };
         result.QuickAccessBounds = clip;
         int rowHeight = fillWidth ? clip.Height : Math.Min(clip.Height, S(metrics.QuickAccessRow));
@@ -36,12 +38,12 @@ internal static class RibbonQuickAccessLayout
             var target = new RibbonTarget(TargetKind.QuickAccess, entries[i], new(left, targetTop, widths[i], targetHeight), clip,
                 RibbonItemSize.Small, AutomaticKeyTip: RibbonQuickAccess.AutomaticKeyTip(i, entries.Length));
             result.Targets.AddRange(RibbonSplitLayout.Expand(target, ribbon.DeviceDpi, false));
-            left += widths[i];
+            left += widths[i] + gap;
         }
         if (!overflow) return result;
         result.QuickAccessOverflowItems.AddRange(entries.Skip(count));
         result.Targets.Add(new(TargetKind.QuickAccessOverflow, ribbon.QuickAccessOverflow,
-            new(left, targetTop, Math.Max(0, Math.Min(slot, width - 2 * padding - used)), targetHeight), clip));
+            new(left, targetTop, Math.Max(0, Math.Min(slot, clip.Right - padding - left)), targetHeight), clip));
         return result;
     }
 }

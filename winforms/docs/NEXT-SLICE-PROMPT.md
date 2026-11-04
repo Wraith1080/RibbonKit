@@ -1,14 +1,24 @@
 # Starting prompt: native RibbonKit.WinForms geometry consolidation
 
-Execution checkpoint, **2026-11-04**: the seventh batch is accepted and committed
-at `c695fbc51596e66f3f6c29bcf77d59abfc9684f2` on `codex/Ribbonkit-Winform`.
-The user then authorized related batches together: the eighth (Small/Medium
-command-content padding) and ninth (Application Menu spacing) are implemented
-and verified, with **one combined user review pending**. The reported Roomier
-Application Menu navigation/title/divider gap is corrected in the same review
-scope; use the latest refreshed sample and the plan's correction evidence.
-[The geometry plan](GEOMETRY-CONSOLIDATION-PLAN.md) owns both contracts, evidence,
-review checklist and the provisional 6–8 remaining implementation-batch estimate.
+Execution checkpoint, **2026-11-04**: the eighth/ninth session, including the
+Roomier Application Menu join correction combined with Roomier command content,
+was accepted and committed at `2a06fda610c52b263a9d74cffffa220f481bf857` on
+`codex/Ribbonkit-Winform` (clean starting state for this session).
+The user authorized body/groups plus header/QAT/message spacing together.
+The tenth–twelfth batches and follow-up **Roomier Large-command shared bands**
+correction are implemented and verified. [The geometry plan](GEOMETRY-CONSOLIDATION-PLAN.md)
+owns the current review results, contracts and evidence. The user is committing
+this session before continuation; do not assume that commit has happened. On
+resumption, recheck git status/branch/HEAD and preserve all later user edits.
+The estimate remains **4–5 implementation batches**: galleries (1), Backstage (1),
+tips/caption (1–2), and frames/shadows/connected joins (1). Galleries and Backstage
+are candidates for the next grouped session, subject to a fresh bounded inventory
+and upfront contracts after user instruction. Do not begin them during commit prep.
+Preserve the accepted shared Large icon/two-caption-row/arrow reservation; do not
+return to centering individual visible stacks. The opt-in review surface remains
+the same Debug sample with `--menu-geometry-demo`; **Command content** includes
+all five Large examples. Earlier geometry tabs remain available. The latest package is
+`0.1.0-designer.local20261104T125226399Z`; authored Forms/resources are preserved.
 Going forward, select 2–3 coherent batches per session when appropriate, present
 all selected API/layout/designer contracts upfront, preserve accepted behavior,
 verify the combined scope and refresh the permanent sample once. Stop for that

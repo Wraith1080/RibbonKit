@@ -1,14 +1,48 @@
 # RibbonKit WinForms Designer Sample
 
+The latest `--menu-geometry-demo` launch adds **Body and groups** and **Header QAT
+messages**, selecting the latter after the earlier geometry tabs. These remain
+opt-in public-API controls; authored Forms/resources and normal startup are preserved.
+
+- **Body and groups:** compare **Roomier body and groups** / **Reset body and
+  groups** in Mouse/Touch and Classic/Simplified. Check side padding, column gaps,
+  body inset and divider clearance. Resize to collapse the example group, then
+  open it and check the retained Name field and split/check state.
+- **Header QAT messages:** compare **Roomier headers** / **Reset headers** for
+  tab/File widths and Office indicators. Compare **Roomier QAT and messages** /
+  **Reset QAT and messages**. **Move QAT** cycles TabRow, BelowRibbon and TitleBar
+  (the latter uses the host's existing caption support). Existing entries and
+  overflow should remain usable. **Review message** adds/reopens only its own
+  retained message; try its action and close button, and resize to see wrapping.
+- Combine with the earlier command/menu presets. Each reset clears only its own
+  4 / 3 / 4 theme roles. Layout, density, QAT placement, File mode, authored models,
+  native field values and earlier geometry remain. Existing message minimum and
+  outer padding APIs are not changed by these presets.
+
+The public-package `--verify-chrome-geometry <output>` check observes actual
+automatic layout through public paint callbacks: both renderers/densities/layouts,
+TabRow/BelowRibbon, all presets, source identity and exact default/reset pixels.
+It also checks the permanent demo's independent resets and retained message/QAT
+behavior without shown windows, internals or global input. Native TitleBar/editor
+HWND, synthetic DPI/font and inert-preview evidence is separate library STA scope.
+The [geometry plan](../../docs/GEOMETRY-CONSOLIDATION-PLAN.md) owns the combined
+review and current verification limits.
+
 The paired **Command content** / **Application Menu geometry** review tabs are
 available with `--menu-geometry-demo`, alongside **Menu geometry**, **Illustrated
-menus** and **Command splits**. This launch selects Application Menu geometry;
+menus** and **Command splits**. Application Menu geometry remains selectable;
 normal startup and authored Forms/resources remain unchanged.
 
 - **Command content:** compare **Roomier command content** / **Reset command
   content** in Mouse/Touch and Classic/Simplified. Check centered Small icons,
   Medium caption clearance, check/radio alignment and separate split actions.
+  The same tab now includes Large plain/dropdown/horizontal-split/vertical-split
+  examples, including a wrapped vertical caption. In Classic, Roomier centers a
+  common icon/two-caption-row/arrow reservation, keeping unused bands and aligned
+  icon/caption/vertical-arrow rows. Split boundaries follow the bands; Reset restores the
+  original placement. Simplified retains its Small/Medium presentations.
   Apply sets horizontal padding 12 / vertical padding 16; reset clears only these.
+
 - **Application Menu geometry:** apply **Roomier Application Menu**, then **Open
   Application Menu** to open the existing authored File example in CommandMenu
   mode. Compare navigation/pane/footer row spacing, pane inset, wrapped footer
@@ -21,6 +55,10 @@ normal startup and authored Forms/resources remain unchanged.
   editor text, File/default/footer models, command state, handlers and QAT sources
   should remain. These tabs use public, code-only Theme settings; they do not add
   theme properties to the designer or replace the generated initializer.
+
+For a focused public-package check, `--verify-large-command-geometry <output>`
+verifies actual automatic Large layout in both renderers/densities, including
+short/wrapped/text-only alignment, vertical action regions and exact reset.
 
 Build/package evidence and the combined review gate are in the
 [geometry plan](../../docs/GEOMETRY-CONSOLIDATION-PLAN.md). The opt-in

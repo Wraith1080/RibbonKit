@@ -1,10 +1,11 @@
 # Native geometry consolidation
 
-Status, **2026-11-04: paired eighth/ninth batches (Small/Medium command-content
-padding and Application Menu spacing) are implemented and verified; the current
-user-review result is recorded below**. The seventh batch is accepted below. The user authorized
+Status, **2026-11-04: grouped tenth–twelfth review and the subsequent Roomier
+Large-command shared-band review are recorded below. This session is ready for
+the user's commit; await instruction before further implementation**.
+The eighth/ninth review is accepted below. The user authorized
 2–3 related implementation batches per session, with contracts upfront, shared
-verification and one combined review. Await user instruction before further batches
+verification and one combined review. Stop for that review before further batches
 or additional themes.
 Baseline: `codex/Ribbonkit-Winform`, `9dd0054b9ebe4f6f9ff5b57bf75198e443f5b4e5`.
 The three existing documentation handoff edits are preserved. This plan owns the
@@ -18,14 +19,14 @@ The inventory identifies ownership, not new acceptance of deferred surfaces.
 
 | Surface | Public settings and current defaults | Owners and consumers | Consolidation / boundary |
 | --- | --- | --- | --- |
-| Body and groups | `BodyHeight=110` minimum, `BodyMargin=(7,1,7,7)`, `LargeButtonMaxWidth=108`, `CollapsedGroupMaxWidth=108`, scroll vertical inset 2 | `RibbonTheme`, `RibbonLayout`, content/reduction/Simplified layout, Office renderer, body viewport, hit targets, group motion | Preserve font-driven three rows and joined frame. Group separator clearance 12 and collapsed opener insets 6/8 are separate deferred roles. |
-| Header, tabs and utilities | `TabHeight=40` minimum (Touch 48), `HeaderButtonInset=4`; QAT optical offset 2 | density/header/caption layout, Office tab paint/indicator measurement, hit targets, KeyTips/UIA, independent indicator motion | Tab label/indicator and caption geometry deferred. Device-pixel hairlines are raster rules. |
+| Body and groups | Existing body height/margins and command width caps; group side padding 6 expanded / 3 collapsed, column gap 3/6, body inner inset 2 Classic / 4 Simplified, divider inset 12 Classic / 6 Simplified | `RibbonChromeMetrics`, layout/reduction/Simplified and borrowed groups, Office paint, shared viewport/targets | Tenth owns the four spacing roles. Font-driven rows, command content, native fields and frame joins retain their owners. Intrinsic glyph/caption/vertical optical rules remain separate. |
+| Header, tabs and utilities | Existing tab height 40/48 and header-button inset 4; tab padding 14, tab minimum 58, indicator padding 4; QAT optical offset 2 | shared chrome metrics, header layout, Office indicator measurement/paint, hit targets, KeyTips/UIA and indicator motion | Eleventh owns tab/File width spacing and indicator padding. Caption buttons and indicator thickness remain intrinsic; device-pixel hairlines remain raster rules. |
 | Commands, splits and native editors | rows 26/45; menu split arrow 20/28, horizontal command split 20/44; combo button 24/32; native editor height font+8 / at least 42 | density/content/split/editor layout, renderer, editor manager and borrowed popup editors, keyboard/UIA | Fifth owns native fields; seventh owns horizontal command splits; eighth adds Small/Medium content padding and containing row minima. Authored widths/font minima remain. Intrinsic Large/glyph geometry, outer spacing and system EDIT rendering retain separate owners. |
 | Ordinary command menus, nested menus, QAT overflow, Simplified More | rows 28/44; icon 24/32; leading/trailing 8; icon/text gap 10/12; desired width 170/220, described 280/320 | `RibbonMenuMetrics`, row/container/heading layout, popup sizing, shared renderer, overflow bands and inert preview; targets feed scrolling, keyboard/KeyTips/UIA and editor hosting | First/second sets expose row/horizontal/vertical roles. Third exposes container/heading/overflow bands; fourth exposes menu arrow slots and separator clearance. Popup inner margin, glyph shapes and platform work-area rules remain separate. |
 | Application Menu | nav rows 40/44, pane 28/44, footer 30/44; pane inset 10, footer gap 6; arrow 26/44 | component-specific metrics/layout, Application Menu renderer, native pane hosting and column scrolling, designer preview | Ninth adds navigation/pane/footer row minima, pane inset and footer gap. Hover/default-pane/split ownership and null defaults retained. Nested ordinary submenus keep ordinary-menu geometry; intrinsic columns/arrows/frame rules remain separate. |
 | Illustrated menu choices and ComboBox choices | illustrated width 300, icon 36, row at least 64; ComboBox choice rows 28/44 or font+10 | `RibbonIllustratedMenuMetrics`, illustrated layout/renderer and ordinary popup sizing/preview; editor layout/list window | Sixth batch exposes illustrated width/row/artwork/insets/gaps. Fifth batch owns ComboBox choice minimum and vertical text padding. Choice-list horizontal padding stays separate. |
 | Galleries | model tile sizes; density fallback 32x32 / 64x80, utility width 18/32 | gallery strip/popup layout, renderer, presenter viewport/scroll, borrowed UserControl cards, UIA | Tile padding, heading/utility slots deferred. Application artwork and card content stay host-owned. |
-| QAT strip and message joins | QAT button 28/44, row 32/48; message minimum 34 (Touch floor), content padding (12,4,8,4) | QAT/message layout, renderer and joined body frame, native caption host, motion endpoints | Strip metrics and frame joins deferred. QAT overflow menu rows are selected; source identity/placement is unchanged. |
+| QAT strip and message joins | QAT button 28/44 and row 32/48; edge padding 2, item gap 0; existing message minimum/content padding, action gap 10 and title/text gap 8 | shared chrome metrics, QAT/message layout, joined renderer frames, optional caption host and motion endpoints | Twelfth owns edge/inter-entry and message horizontal gaps. Button/row sizes, source identity and placements retain their owners. Join/radius/shadow geometry remains grouped with deferred frames. |
 | Backstage | navigation width bounds/model opacity; font minimum 14; rows 42/52, Back button 36/44 | Backstage layout/renderer, live native page clipping/hosting, whole-surface motion, retained designer layer | Deferred. Host page layout/HWND ownership and moving caption coverage retained. |
 | Frames, radii, shadows | `CornerRadius=4`, popup radius 6 (Office; neutral square), popup shadow enable/color; blur 6, reserved chrome 8, downward offset 2 | shared/Office renderer, popup chrome/regions, raster/cache keys, body/QAT/message joins and Backstage page clipping | Deferred together: painting, clipping, clearance and caches must change as one contract. One-device-pixel borders/coverage and Windows shadow policy stay platform rules. |
 | ScreenTips, KeyTips and caption | ScreenTip width cap 320, padding 12, title gap 6, placement gap 8; KeyTip Office radius 2 / neutral square | ScreenTip layout/window, badge renderer, caption layout/Win32 hit testing | Deferred. Native system frame, scrollbars and host document content are not theme geometry. |
@@ -929,14 +930,15 @@ geometry batch or theme.**
 
 This is a **working grouping, not a pre-existing fixed slice count**. These six
 broad review groups can require more than one bounded implementation batch.
-The sixth implements illustrated choices and the seventh horizontal split widths.
-The paired eighth/ninth session below implements Small/Medium command content and
-the selected Application Menu spacing roles. After their combined review, the
-working estimate is **6–8 further implementation batches**: body/groups (1),
-header/QAT/message spacing (1–2), galleries (1), Backstage (1), tips/caption (1–2),
-and frames/shadows (1). Related batches may share a session and review; this is
-not a session count. Intrinsic Large/glyph and platform rules need inventory,
-not automatic new theme knobs. This replaces the earlier 8–10 estimate.
+The sixth implements illustrated choices, seventh horizontal split widths, and
+eighth/ninth Small/Medium content and selected Application Menu spacing. The
+grouped tenth–twelfth session below implements selected body/group, header/tab and
+QAT/message spacing. The working estimate is
+**4–5 further implementation batches**: galleries (1), Backstage (1), tips/caption
+(1–2), and frames/shadows including connected joins (1). Related batches may share
+a session and review; this is not a session count. Intrinsic Large/glyph and
+platform rules need inventory, not automatic new theme knobs. This replaces the
+earlier 6–8 estimate.
 
 1. Command/split content, glyph slots and special/illustrated menu geometry.
 2. Ribbon body/groups/header/tabs and QAT/message spacing/joins.
@@ -1424,3 +1426,209 @@ Combined review checklist:
 
 The current review result is recorded above. Await user instruction before more
 batches or additional themes.
+
+## Grouped tenth–twelfth batches: body, header and QAT/message spacing — 2026-11-04
+
+After accepting the corrected Roomier Application Menu combined with command
+content, the user authorized body/groups plus header/QAT/message spacing in one
+session. Clean starting baseline: `codex/Ribbonkit-Winform`,
+`2a06fda610c52b263a9d74cffffa220f481bf857`. All three native API/layout/designer
+contracts were presented before implementation. This session selects spacing,
+with one sample refresh and one combined review; no additional themes.
+
+| Batch / nullable `RibbonTheme` role | Null behavior | Selected review value |
+| --- | --- | --- |
+| 10 / `GroupHorizontalPadding` | Expanded/Simplified opener 6; Classic collapsed outer clearance 3. | 12 |
+| 10 / `GroupColumnGap` | Classic 3 Compact / 6 Touch; Simplified 3. | 10 |
+| 10 / `BodyContentHorizontalPadding` | Classic 2 / Simplified 4. | 12 |
+| 10 / `GroupSeparatorVerticalInset` | Office Classic 12 / Simplified 6. | 20 |
+| 11 / `TabHorizontalPadding` | Tab/File label-width allowance 14 per side. | 22 |
+| 11 / `TabMinimumWidth` | 58; text/padding minima remain. | 90 |
+| 11 / `HeaderIndicatorPadding` | Office tab/File label extension and edge clearance 4. | 8 |
+| 12 / `QuickAccessHorizontalPadding` | Edge padding 2. | 8 |
+| 12 / `QuickAccessItemGap` | Inter-entry and pre-overflow gap 0. | 6 |
+| 12 / `MessageActionGap` | Horizontal inline-action clearance 10. | 18 |
+| 12 / `MessageTitleTextGap` | Inline title/body gap 8. | 12 |
+
+All are 96-DPI logical pixels. Spacing accepts 0..1024; tab minimum accepts
+1..1024 with Touch's 44 floor. Null resets independently. Assignment validates
+all roles before changing Theme/BuiltInTheme. XML comments and 22 additive
+Unshipped accessors document the eleven properties; shipped APIs remain intact.
+Theme stays immutable, per-ribbon, hidden/nonserialized and code-only. No new
+model setting, renderer hook, theme authoring UI or generated-code change.
+
+`RibbonChromeMetrics` resolves spacing without state or coordination. Expanded,
+explicit-row and collapsed group measurements share padding/gap values with
+root reduction/scrolling and borrowed group bodies. Collapsed outer padding
+reserves additional preferred width while preserving the legacy caption budget.
+Simplified command gaps, borrowed openers and divider rectangles use the same
+roles. Body/indicator/divider insets clamp within their bounds. Group captions,
+intrinsic icon/arrow offsets, command row heights, Large content alignment and
+native editor dimensions retain established owners. Existing body height/margin
+and command/editor padding APIs still apply and can be combined.
+
+Tab/File label measurement and tab minimum determine shared header targets and
+overflow. Office indicators resolve the selected padding in both normal paint
+and independently measured motion endpoints; neutral rendering keeps its policy.
+Tab height, header-button inset, indicator thickness and device-pixel rules remain.
+
+QAT visible-entry selection, target spacing and overflow include edge padding and
+the gap preceding overflow. TabRow reservation and the optional RibbonForm caption
+slot minimum share that padding; BelowRibbon keeps its existing joined bounds.
+Native caption button geometry, QAT source identities, placements, button/row sizes
+and menu projection remain unchanged. Message gaps govern inline/wrapped text and
+horizontal action clearance; paint, actions, close, keyboard and UIA use the shared
+rectangles. Existing message minimum/outer padding and stacked-action vertical
+gap remain. Connected body/QAT/message frame joins are preserved and stay in the
+later frame/radius/shadow group rather than becoming new spacing parameters.
+
+The same `--menu-geometry-demo` sample adds **Body and groups** and **Header QAT
+messages** after earlier tabs. Independent apply/reset pairs set the table's
+4 / 3 / 4 roles. The body example can collapse when the window narrows, retaining
+its Name editor and split/check state; another group exposes divider spacing.
+Both tabs provide an inline Classic/Simplified toggle. **Move QAT** cycles existing
+placements. **Review message** creates only its own retained notification and
+supports action, close and reopen; existing messages/models are preserved. Normal
+startup, authored Form/resx, File mode and prior command/menu presets are retained.
+
+Verification and combined review gate:
+
+- [x] **32 saved default paint/measurement captures match exactly** at null across
+  both renderers/densities/layouts, TabRow/BelowRibbon and 9/14-point fonts. Actual
+  ribbon/QAT/container captures are at the STA control's native **96 DPI**. The
+  same records separately cover group and message measurements and header-indicator
+  bounds at synthetic 96/120/144/192 DPI; these are not four hardware-DPI UI runs.
+- [x] **27 distinct new cases passed across focused runs**: eleven atomic role/
+  independent-reset cases; two defaults; density-specific group column/explicit-row/
+  collapsed budgets and exact reset, QAT zero/narrow/overflow/source spacing,
+  message inline/wrapped disjoint bounds; combined Classic/Simplified native
+  retention/targets in all three QAT placements; both-renderer indicator and Office
+  divider bounds; inert designer preview; and narrow tab/body overflow with full
+  last-target scroll reveal. Group/message/indicator matrices
+  cover 9/24-point fonts and all four synthetic DPIs. Native tests combine earlier
+  command/editor overrides and retain field HWNDs, sizes and text.
+  Test-only setup corrections retained the existing zero-slot QAT behavior,
+  kept Font objects alive with their fixture, and explicitly selected two Inline
+  groups before asserting a Simplified divider. The passed evidence is retained
+  across runs, not represented as one clean aggregate.
+- [x] Related Release scope passed **212/212**, covering group rows/padding/icons,
+  collapsed dividers, header utilities/density/Simplified selection, QAT/menu/group/
+  overflow/editor/frame behavior, message layout/motion, geometry motion, designer
+  groups/QAT/theme/popup preview and accepted paired/Application Menu joins.
+  The previously recorded broader minimized GroupMotion failure was not included
+  or claimed resolved. This is focused evidence, not a full-suite claim.
+- [x] Normal native Release solution and Debug runtime/design server/client/sample
+  builds passed with zero warnings/errors, including API/XML analyzers. Refreshed
+  the permanent sample once using `0.1.0-designer.local20261104T120831662Z`.
+  Packaged runtime/design-server hashes match current Debug outputs; authored
+  Forms/resources and normal startup were preserved.
+- [x] Public-package check passed **16/16 automatic layout/paint/reset
+  presentations** at reported native **120 DPI**: both renderers/densities/layouts
+  and TabRow/BelowRibbon. Public callbacks verify tab minima, group padding,
+  QAT/message gaps, model ownership and exact default/reset pixels. Permanent
+  sample checks preserve earlier roles and authored models through independent
+  reset, mode/QAT cycle and retained message action/dismiss/reopen. No shown
+  windows, internal layout calls, Showcase helpers or global input. Native TitleBar/
+  HWND/preview and synthetic DPI evidence remains the separate library STA scope.
+- [x] Inspected representative default/override/package/preview captures, including
+  all four joined frame corners at native 120 DPI. No approvals/tolerances changed.
+- [x] **2026-11-04: user passed the body/group, header/tab and QAT/message visual
+  review** ("all of them looks good"). The separately reported Roomier Large-command
+  alignment issue is handled in the follow-up below. Actual VS designer,
+  external accessibility, physical touch/IME/RTL and mixed-monitor/material hardware
+  gates remain separate. Visual Studio was not opened/controlled; no computer use.
+
+Evidence: `artifacts/geometry/body-header-qat-messages/`, with `before/`, `after/`,
+baseline/default/override/preview/related TRX files, `focused-evidence.txt` and
+`package/result.log`/captures. No commit, push or publication.
+
+Combined review checklist:
+
+1. Launch the refreshed Debug sample with `--menu-geometry-demo`. On **Body and
+   groups**, compare Roomier/Reset in Mouse/Touch and Classic/Simplified. Resize
+   to collapse the example and open it; check spacing, dividers, native Name text
+   and separate split actions.
+2. On **Header QAT messages**, compare Roomier/Reset headers. Check tab/File width,
+   Office indicators and tab scrolling when the window is narrow.
+3. Apply Roomier QAT/messages. Cycle **Move QAT**, check entries/overflow, then
+   enable **Review message** and try its action, close/reopen and narrow wrapping.
+4. Combine the earlier menu/command-content settings, then reset each new group
+   independently. Values, state, QAT sources/order and unrelated settings should
+   remain. Review the authored Form in VS when convenient; opt-in tabs are code-only.
+
+Stop here for one combined review before further geometry batches or themes.
+
+### Roomier Large-command centering and missing review examples — 2026-11-04
+
+The user accepted the spacing batch's appearance, then identified that Roomier
+command content left Large commands at the top of the taller body. The Command
+content review tab lacked Large examples. The user now explicitly authorized
+centering these commands, superseding the earlier withdrawn Large-paste alignment
+request and the original opt-in Large-placement exclusion. This is a correction
+within the current review cycle, not another consolidation batch or theme.
+
+The first correction centered each command's actual stack independently. Its
+five new cases, 144 related passes and 4+8 package evidence remain under
+`artifacts/geometry/large-command-centering/`, but the user rejected the staggered
+icon/caption rows in visual review. The user approved the replacement rule below;
+individual visible-stack centering is superseded.
+
+With `CommandContentVerticalPadding > 3`, fitting Large buttons/dropdowns/splits
+now reserve common icon, two-caption-row and below-caption-arrow bands. The same
+reservation is centered within the existing command/primary height. Empty icon,
+second-caption and arrow bands remain reserved. Icons share a row, every first
+caption line starts at the same height, and short/wrapped vertical split arrows
+share the fixed row beneath both caption slots. Text-only commands retain the
+same caption baseline. Horizontal split arrows retain their separate action-slot
+policy; ordinary dropdown arrows remain inline with their caption.
+
+`RibbonLargeCommandLayout` supplies the shared content and image/caption action
+boundary. Vertical split target calculation no longer measures caption wrapping:
+the boundary is independent of caption length and image presence. Paint, hover,
+keyboard/KeyTips and UIA share it. Caption wrapping, font/artwork sizes and optical
+icon/text gaps retain their owners. Constrained heights fall back to legacy
+geometry. Null, horizontal-only padding and vertical padding at most 3 retain
+default placement; menu/QAT projections stay independent. No public API added.
+
+**Command content** now includes five Large examples in that same tab: plain
+button, dropdown, horizontal split, vertical split and wrapped-caption vertical
+split. They retain source identity/state through Roomier/Reset. Simplified still
+uses its established Small/Medium presentation. Authored Form/resx and startup
+are preserved; this remains the existing opt-in review surface.
+
+- Reproduced the shared-band failure in both renderers against the first attempt.
+  Updated focused scope passed **7/7**: two actual-render matrix cases across both
+  densities, synthetic 96/120/144/192 DPI, 9/14-point fonts, short/wrapped captions
+  and all four Large control kinds; two unused-image/arrow band cases; two native
+  root/group cases; and opt-in/constrained fallback. Cross-item assertions now
+  compare icon rows, caption starts and vertical arrow rows, not independent ink
+  envelope centers. Native primary/arrow actions, KeyTips and accessibility bounds
+  remain correct. **256/256 saved default PNGs match the previous implementation
+  by SHA256**, and every default/reset pair matches exactly.
+- Related Release scope passed **99/99**, including default Touch alignment,
+  split geometry, paired/chrome geometry, group layout and designer previews.
+- Native Release solution and Debug runtime/design server/client/sample builds
+  passed with zero warnings/errors. Refreshed the same sample with
+  **`0.1.0-designer.local20261104T125226399Z`**. Runtime/design-server package hashes
+  match current Debug outputs; no authored Form/resource or WPF file changed.
+- Public-package Large checks passed **4/4** at native **120 DPI**, both renderers/
+  densities: actual automatic icon/caption/vertical-arrow alignment across short,
+  wrapped and text-only commands, action-region containment and exact reset.
+  The initial combined checker reached the Large check after its paired scope,
+  then incorrectly treated the empty text-only image slot as a drawn icon.
+  The consumer-only assertion was corrected; the four Large checks passed via
+  `--verify-large-command-geometry` without rerunning the completed paired scope.
+  The failed combined log is retained with its follow-up pointer, not claimed as
+  a clean aggregate. No shown windows, internals, Showcase helpers, computer use or
+  global input. Inspected package captures, including all four frame corners.
+- Current evidence: `artifacts/geometry/large-command-shared-bands/`, including
+  repro/focused/related TRX files, `default-parity.log`, `after/`, `package/large/`
+  and package hashes. Earlier attempt evidence is retained separately as above.
+  No full-suite, external accessibility, actual VS or physical hardware acceptance
+  is claimed; no commit, push or publication.
+- [x] **2026-11-04: user passed the Roomier Large-command shared-band visual
+  recheck** ("looks perfect now"). This accepts the reviewed shared icon/caption
+  rows and vertical-arrow alignment; earlier spacing approval remains recorded
+  above. Automated, actual VS, external accessibility and physical hardware
+  evidence retain their stated scopes. The user will commit before continuation;
+  await instruction before more batches/themes.

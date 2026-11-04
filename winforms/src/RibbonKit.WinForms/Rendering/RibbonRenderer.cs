@@ -353,7 +353,8 @@ public partial class RibbonRenderer : IDisposable
             if (open || context.Hot || context.Pressed) DrawChrome(context, open || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, context.Theme.Border);
             int S(int n) => RibbonLayoutEngine.Scale(n, context.DeviceDpi);
             var color = group.EffectiveEnabled ? context.Theme.Foreground : context.Theme.DisabledColor;
-            var text = Rectangle.Inflate(context.Bounds, -S(6), 0); int arrow = Math.Min(text.Width, S(16));
+            int groupInset = Math.Min(S(new RibbonChromeMetrics(context.Theme, context.Density).GroupPadding()), context.Bounds.Width / 2);
+            var text = Rectangle.Inflate(context.Bounds, -groupInset, 0); int arrow = Math.Min(text.Width, S(16));
             if (group.Icon is { } icon)
             {
                 int side = Math.Min(S(24), text.Height); icon.Draw(context.Graphics, new(text.Left, text.Top + (text.Height - side) / 2, side, side), new(context.DeviceDpi, color, group.EffectiveEnabled));
@@ -592,6 +593,17 @@ public partial class RibbonRenderer : IDisposable
         int arrowSpan = appendArrow && item is RibbonDropDownItem ? menu
             ? RibbonMenuLayout.ArrowCaptionReservation(context.Bounds.Width, context.DeviceDpi, context.Density, context.Theme, false)
             : RibbonLayoutEngine.Scale(16, context.DeviceDpi) : 0;
+        RibbonLargeCommandLayout? centeredLarge = null;
+        RibbonCaptionLayout.Caption? centeredCaption = null;
+        if (large && !enabledOverride.HasValue && RibbonLargeCommandLayout.Enabled(context.Theme))
+        {
+            var measured = _captions.Wrap(item.Text, context.Font, context.DeviceDpi, textBounds.Width, arrowBelowSingle ? 0 : arrowSpan, arrowBelowSingle);
+            if (RibbonLargeCommandLayout.TryCalculate(context.Bounds, context.Font, context.DeviceDpi, context.Density, context.Theme,
+                arrowBelowSingle, hasIcon, out var centered))
+            {
+                centeredLarge = centered; centeredCaption = measured; iconBounds = centered.Icon; textBounds = centered.Caption;
+            }
+        }
         if (arrowSpan > 0 && !large)
         {
             if (!menu && size == RibbonItemSize.Small && context.Density == RibbonDensity.Touch)
@@ -619,7 +631,7 @@ public partial class RibbonRenderer : IDisposable
         {
             if (large && textBounds.Width > 0)
             {
-                var caption = _captions.Wrap(item.Text, context.Font, context.DeviceDpi, textBounds.Width, touchVertical ? 0 : arrowSpan, arrowBelowSingle);
+                var caption = centeredCaption ?? _captions.Wrap(item.Text, context.Font, context.DeviceDpi, textBounds.Width, touchVertical ? 0 : arrowSpan, arrowBelowSingle);
                 int advance = RibbonCaptionLayout.LineAdvance(context.Font, context.DeviceDpi);
                 for (int index = 0; index < caption.Lines.Length; index++)
                 {
@@ -627,7 +639,9 @@ public partial class RibbonRenderer : IDisposable
                     var line = new Rectangle(textBounds.Left, top, textBounds.Width, Math.Min(context.Font.Height, Math.Max(0, textBounds.Bottom - top)));
                     if (arrowSpan > 0 && index == caption.Lines.Length - 1)
                     {
-                        if (touchVertical)
+                        if (centeredLarge is { } centered && arrowBelowSingle)
+                            arrow = centered.Arrow;
+                        else if (touchVertical)
                             arrow = RibbonContentLayout.LargeDropDownArrow(context.Bounds, context.Font, context.DeviceDpi, context.Density, caption.Lines.Length);
                         else if (arrowBelowSingle && caption.Lines.Length == 1)
                             arrow = new(context.Bounds.Left, context.Bounds.Bottom - RibbonLayoutEngine.Scale(13, context.DeviceDpi), context.Bounds.Width, RibbonLayoutEngine.Scale(12, context.DeviceDpi));

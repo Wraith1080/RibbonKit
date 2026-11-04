@@ -10,7 +10,14 @@ internal static class RibbonSplitLayout
     {
         if (IsVertical(item, size, menu))
         {
-            int primaryHeight = RibbonContentLayout.LargeImageBandHeight(bounds, font ?? item.Ribbon?.Font ?? Control.DefaultFont, dpi, item.Ribbon?.Density ?? RibbonDensity.Compact);
+            var actualFont = font ?? item.Ribbon?.Font ?? Control.DefaultFont;
+            var density = item.Ribbon?.Density ?? RibbonDensity.Compact;
+            int primaryHeight = RibbonContentLayout.LargeImageBandHeight(bounds, actualFont, dpi, density);
+            if (RibbonLargeCommandLayout.Enabled(item.Ribbon?.Theme))
+            {
+                if (RibbonLargeCommandLayout.TryCalculate(bounds, actualFont, dpi, density, item.Ribbon?.Theme, true,
+                    item.Icon is not null || item.Image is not null || item.LargeImage is not null, out var centered)) primaryHeight = centered.PrimaryHeight;
+            }
             return (bounds with { Height = primaryHeight }, new(bounds.Left, bounds.Top + primaryHeight, bounds.Width, Math.Max(0, bounds.Height - primaryHeight)));
         }
         if (menu)

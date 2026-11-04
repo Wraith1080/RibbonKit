@@ -76,14 +76,17 @@ internal sealed partial class RibbonLayoutEngine
             return cached;
         int S(double n) => Scale(n, dpi);
         var metrics = RibbonDensityMetrics.For(group.Ribbon?.Density ?? RibbonDensity.Compact);
+        var chrome = new RibbonChromeMetrics(theme, group.Ribbon?.Density ?? RibbonDensity.Compact);
         if (state == 3)
         {
             int caption = RibbonCaptionLayout.TextWidth(group.DisplayText, font);
             int desired = caption + S(2 * (CollapsedGroupSideInset + CollapsedGroupCaptionInset));
             int width = Math.Clamp(desired, S(metrics.Touch ? 80 : 62), S(theme.CollapsedGroupMaxWidth));
+            width += 2 * Math.Max(0, S(chrome.GroupPadding(true)) - S(CollapsedGroupSideInset));
             return _cache[(group, state, dpi)] = new(width + GroupDividerWidth, []);
         }
-        int x = S(GroupSideInset), row = 0, columnWidth = 0, columnStart = 0;
+        int side = chrome.GroupPadding(), columnGap = chrome.ColumnGap();
+        int x = S(side), row = 0, columnWidth = 0, columnStart = 0;
         int fontLogical = (int)Math.Ceiling(font.Height * 96d / dpi);
         bool fields = group.Items.Any(i => i.Visible && RibbonEditorLayout.IsField(i, i is RibbonComboBoxItem ? i.SizePolicy.At(state) : RibbonItemSize.Medium));
         int rowLogical = RibbonEditorLayout.CommandRowLogical(font, dpi, group.Ribbon?.Density ?? RibbonDensity.Compact, theme, fields), captionLogical = Math.Max(20, fontLogical + 6);
@@ -127,7 +130,7 @@ internal sealed partial class RibbonLayoutEngine
                     LabelWidth = RibbonEditorLayout.IsField(entry.Item, entry.Size) && entry.Item is not RibbonComboBoxItem { ShowLabel: false } ? labelWidth : 0
                 };
             }
-            x += columnWidth + S(metrics.ColumnGap);
+            x += columnWidth + S(columnGap);
             row = 0;
             columnWidth = 0;
             columnStart = items.Count;
@@ -138,7 +141,7 @@ internal sealed partial class RibbonLayoutEngine
             {
                 FinishColumn();
                 items.Add(new(item, new(x, S(CommandTopInset), S(9), commandHeight), RibbonItemSize.Small));
-                x += S(9 + metrics.ColumnGap);
+                x += S(9 + columnGap);
                 columnStart = items.Count;
                 continue;
             }
@@ -170,7 +173,7 @@ internal sealed partial class RibbonLayoutEngine
                 FinishColumn();
                 hasLarge = true;
                 items.Add(new(item, new(x, S(CommandTopInset), width, commandHeight), size, GalleryDropDown: galleryDropDown));
-                x += width + S(metrics.ColumnGap);
+                x += width + S(columnGap);
                 columnStart = items.Count;
             }
             else
@@ -181,7 +184,7 @@ internal sealed partial class RibbonLayoutEngine
                     int labelWidth = RibbonEditorLayout.IsField(item, size) ? RibbonEditorLayout.LabelWidth(item, font, dpi) : 0;
                     bool reserve = item is RibbonCheckBoxItem or RibbonRadioButtonItem || item.Icon is not null || item.Image is not null || item.LargeImage is not null;
                     items.Add(new(item, new(x + rowWidths[itemRow], S(CommandTopInset + itemRow * rowLogical), width, S(rowLogical - 1)), size, reserve, labelWidth));
-                    rowWidths[itemRow] += width + S(metrics.ColumnGap);
+                    rowWidths[itemRow] += width + S(columnGap);
                 }
                 else
                 {
@@ -202,12 +205,12 @@ internal sealed partial class RibbonLayoutEngine
                     items[index] = entry with { Bounds = entry.Bounds with { Y = entry.Bounds.Y + verticalOffset } };
         }
         int header = TextRenderer.MeasureText(group.DisplayText, font).Width + S(20);
-        int contentWidth = items.Count == 0 ? 0 : items.Max(i => i.Bounds.Right) - S(GroupSideInset);
-        int groupWidth = Math.Max(contentWidth + 2 * S(GroupSideInset), header);
+        int contentWidth = items.Count == 0 ? 0 : items.Max(i => i.Bounds.Right) - S(side);
+        int groupWidth = Math.Max(contentWidth + 2 * S(side), header);
         // Caption-driven width is shared equally, without retaining the final
         // inter-column gap. The right divider owns a separate device-pixel lane.
         if ((groupWidth - contentWidth) % 2 != 0) groupWidth++;
-        int offset = (groupWidth - contentWidth) / 2 - S(GroupSideInset);
+        int offset = (groupWidth - contentWidth) / 2 - S(side);
         if (offset != 0)
             for (int i = 0; i < items.Count; i++) items[i] = items[i] with { Bounds = items[i].Bounds with { X = items[i].Bounds.X + offset } };
         return _cache[(group, state, dpi)] = new(groupWidth + GroupDividerWidth, items);
@@ -221,7 +224,8 @@ internal sealed partial class RibbonLayoutEngine
         var placement = ribbon.EffectiveQuickAccessPosition;
         var client = ribbon.ClientRectangle;
         var tabs = ribbon.GetPresentedTabs().Where(t => t.Visible || ReferenceEquals(t, ribbon.DesignPreviewTab)).ToArray();
-        var widths = tabs.Select(t => Math.Max(S(58), TextRenderer.MeasureText(t.DisplayText, ribbon.Font).Width + S(28))).ToArray();
+        var chrome = new RibbonChromeMetrics(ribbon.Theme, ribbon.Density);
+        var widths = tabs.Select(t => Math.Max(S(chrome.TabMinimum), TextRenderer.MeasureText(t.DisplayText, ribbon.Font).Width + S(2 * chrome.TabPadding))).ToArray();
         var action = ribbon.HeaderAction;
         var metrics = RibbonDensityMetrics.For(ribbon.Density);
         int actionWidth = action?.Element is { } command ? TextRenderer.MeasureText(command.Text, ribbon.Font).Width + S(metrics.Touch ? 44 : 36) : S(metrics.SmallWidth);
@@ -229,11 +233,11 @@ internal sealed partial class RibbonLayoutEngine
         int tabsStart = 0;
         if (ribbon.HasFileMenu)
         {
-            int keepQuickAccess = ribbon.ShowQuickAccess && placement == RibbonQuickAccessPosition.TabRow ? S(metrics.QuickAccessButton + 4) : 0;
+            int keepQuickAccess = ribbon.ShowQuickAccess && placement == RibbonQuickAccessPosition.TabRow ? S(metrics.QuickAccessButton + 2 * chrome.QuickAccessPadding) : 0;
             int available = Math.Max(0, client.Width - utilityWidth - S(24) - keepQuickAccess);
             int left = Math.Min(S(ribbon.LayoutTheme.BodyMargin.Left), available);
             int width = Math.Min(Math.Max(S(50), TextRenderer.MeasureText(ribbon.FileMenu.Text, ribbon.Font, Size.Empty,
-                TextFormatFlags.SingleLine | TextFormatFlags.NoPadding).Width + S(28)), Math.Max(0, available - left));
+                TextFormatFlags.SingleLine | TextFormatFlags.NoPadding).Width + S(2 * chrome.TabPadding)), Math.Max(0, available - left));
             if (width > 0)
             {
                 var bounds = new Rectangle(left, tabTop, width, tabHeight);
@@ -319,7 +323,8 @@ internal sealed partial class RibbonLayoutEngine
             Math.Max(0, width - S(margin.Left) - S(margin.Right)), bodyHeight);
         result.BodyBounds = body;
         result.BodyFrameBounds = body;
-        int inset = Math.Min(S(2), body.Width / 2);
+        var chrome = new RibbonChromeMetrics(ribbon.Theme, ribbon.Density);
+        int inset = Math.Min(S(chrome.BodyInset()), body.Width / 2);
         int available = Math.Max(0, body.Width - 2 * inset);
         int[] states = ReductionAlgorithm.ComputeStates(available, tables, order);
         int total = groups.Select((g, i) => (int)tables[i][states[i]]).Sum();
@@ -340,8 +345,12 @@ internal sealed partial class RibbonLayoutEngine
             var measure = Measure(groups[i], state, ribbon.Font, dpi, ribbon.LayoutTheme);
             var bounds = new Rectangle(x, body.Top, measure.Width, bodyHeight);
             var frame = bounds;
-            if (state == 3) bounds = Rectangle.FromLTRB(bounds.Left + S(CollapsedGroupSideInset), bounds.Top + S(CommandTopInset),
-                bounds.Right - GroupDividerWidth - S(CollapsedGroupSideInset), bounds.Bottom - S(CommandBottomInset));
+            if (state == 3)
+            {
+                int side = Math.Min(S(chrome.GroupPadding(true)), Math.Max(0, (bounds.Width - GroupDividerWidth) / 2));
+                bounds = Rectangle.FromLTRB(bounds.Left + side, bounds.Top + S(CommandTopInset),
+                    bounds.Right - GroupDividerWidth - side, bounds.Bottom - S(CommandBottomInset));
+            }
             result.Groups.Add(new(groups[i], bounds, state == 3, frame));
             if (state == 3)
                 result.Targets.Add(new(TargetKind.Group, groups[i], bounds, viewport));

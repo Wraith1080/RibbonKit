@@ -17,6 +17,28 @@ public readonly record struct RibbonFill(Color Start, Color End)
 /// <summary>Immutable named appearance and 96-DPI metrics for one ribbon.</summary>
 public sealed record RibbonTheme
 {
+    /// <summary>Gets the optional group side padding in 96-DPI logical pixels, 0..1024. Null retains expanded 6 / collapsed 3. Larger collapsed padding reserves width beyond the legacy caption cap; Simplified openers use the expanded value.</summary>
+    public int? GroupHorizontalPadding { get; init; }
+    /// <summary>Gets the optional gap between group columns/explicit-row items in 96-DPI logical pixels, 0..1024. Null retains Compact 3 / Touch 6, and Simplified 3. Menu rows and native field dimensions retain their own geometry.</summary>
+    public int? GroupColumnGap { get; init; }
+    /// <summary>Gets the optional inner body viewport inset in 96-DPI logical pixels, 0..1024. Null retains Classic 2 / Simplified 4. Insets clamp within available width; reduction and scrolling use the resulting viewport.</summary>
+    public int? BodyContentHorizontalPadding { get; init; }
+    /// <summary>Gets the optional group-divider clearance at top/bottom in 96-DPI logical pixels, 0..1024. Null retains Classic Office 12 / Simplified 6. Clamps within the frame; neutral Classic keeps its renderer policy.</summary>
+    public int? GroupSeparatorVerticalInset { get; init; }
+    /// <summary>Gets the optional horizontal padding on each side of tab and File labels in 96-DPI logical pixels, 0..1024. Null retains 14. Measurement, overflow and interaction targets share the resulting width.</summary>
+    public int? TabHorizontalPadding { get; init; }
+    /// <summary>Gets the optional minimum tab width in 96-DPI logical pixels, 1..1024. Null retains 58. Text/padding requirements and Touch's 44-pixel minimum still apply; File retains its separate 50-pixel minimum.</summary>
+    public int? TabMinimumWidth { get; init; }
+    /// <summary>Gets the optional Office tab/File indicator label extension and edge clearance in 96-DPI logical pixels, 0..1024. Null retains 4. Bounds clamp within the header; neutral rendering and indicator thickness retain their policies.</summary>
+    public int? HeaderIndicatorPadding { get; init; }
+    /// <summary>Gets the optional horizontal Quick Access edge padding in 96-DPI logical pixels, 0..1024. Null retains 2. TabRow, BelowRibbon and TitleBar slots clamp available space; source identities and button/row sizes remain.</summary>
+    public int? QuickAccessHorizontalPadding { get; init; }
+    /// <summary>Gets the optional gap between Quick Access entries and before overflow in 96-DPI logical pixels, 0..1024. Null retains 0. Visible-entry selection, overflow and targets share the spacing; menu projections keep their own geometry.</summary>
+    public int? QuickAccessItemGap { get; init; }
+    /// <summary>Gets the optional horizontal gap between message text and an inline action in 96-DPI logical pixels, 0..1024. Null retains 10. Action wrapping/targets share the value; stacked-action vertical clearance retains 4.</summary>
+    public int? MessageActionGap { get; init; }
+    /// <summary>Gets the optional gap between inline message title and text in 96-DPI logical pixels, 0..1024. Null retains 8. Inline-versus-wrapped measurement and painted rectangles share the value.</summary>
+    public int? MessageTitleTextGap { get; init; }
     /// <summary>Gets the shared notification background fill.</summary>
     public RibbonFill MessageBackground { get; init; } = new(Color.FromArgb(255, 244, 206));
     /// <summary>Gets the shared notification text color.</summary>
@@ -119,7 +141,7 @@ public sealed record RibbonTheme
     public int? CommandLargeSplitPrimaryMinimumWidth { get; init; }
     /// <summary>Gets optional symmetric Small/Medium command content padding in 96-DPI logical pixels, from 0 to 1024. Null preserves 5 and existing optical icon offsets. Larger values reserve width; smaller values retain density minima. Excludes Large commands, menus, QAT projections, native editors and galleries.</summary>
     public int? CommandContentHorizontalPadding { get; init; }
-    /// <summary>Gets optional minimum clearance above/below Small/Medium command text and 16-pixel artwork in 96-DPI logical pixels, from 0 to 1024. Null preserves existing rows and the intrinsic 3-pixel text inset. Explicit values grow containing rows/bands as needed; density/font minima and centered content remain.</summary>
+    /// <summary>Gets optional minimum clearance above/below Small/Medium command text and 16-pixel artwork in 96-DPI logical pixels, from 0 to 1024. Null preserves existing rows and the intrinsic 3-pixel text inset. Explicit values grow containing rows/bands as needed; density/font minima remain. Values above 3 also center shared Large icon/two-caption-row/arrow bands, reserving unused bands and synchronizing vertical split regions.</summary>
     public int? CommandContentVerticalPadding { get; init; }
     /// <summary>Gets the optional Application Menu navigation-row minimum height in 96-DPI logical pixels, from 1 to 1024. Null retains Compact 40 / Touch 44 and existing native-editor minima. Content minima still apply; Touch retains 44.</summary>
     public int? ApplicationMenuNavigationMinimumRowHeight { get; init; }

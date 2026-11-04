@@ -95,7 +95,7 @@ public partial class RibbonForm : Form
         var geometry = Caption;
         int available = Math.Max(0, geometry.Buttons.Left - geometry.ContentLeft);
         int cap = RibbonLayoutEngine.Scale(ribbon.QuickAccessMaxWidth, DeviceDpi);
-        int minimum = RibbonLayoutEngine.Scale(RibbonDensityMetrics.For(ribbon.Density).QuickAccessButton + 4, DeviceDpi);
+        int minimum = RibbonLayoutEngine.Scale(RibbonDensityMetrics.For(ribbon.Density).QuickAccessButton + 2 * new RibbonChromeMetrics(ribbon.Theme, ribbon.Density).QuickAccessPadding, DeviceDpi);
         // At narrow widths preserve the overflow target before sacrificing the title.
         int width = Math.Min(available, Math.Min(cap, Math.Max(minimum, available - RibbonLayoutEngine.Scale(100, DeviceDpi))));
         return new(geometry.ContentLeft, 0, Math.Max(0, width), CaptionHeight);

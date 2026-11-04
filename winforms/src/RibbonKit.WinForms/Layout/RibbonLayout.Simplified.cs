@@ -6,6 +6,7 @@ internal sealed partial class RibbonLayoutEngine
     {
         int S(double value) => Scale(value, ribbon.DeviceDpi);
         var metrics = RibbonDensityMetrics.For(ribbon.Density); var theme = ribbon.LayoutTheme; var margin = theme.BodyMargin;
+        var chrome = new RibbonChromeMetrics(theme, ribbon.Density);
         var result = new RibbonLayoutSnapshot();
         var body = new Rectangle(S(margin.Left), top + S(margin.Top), Math.Max(0, width - S(margin.Horizontal)), S(theme.BodyHeight));
         result.BodyBounds = result.BodyFrameBounds = body;
@@ -25,7 +26,7 @@ internal sealed partial class RibbonLayoutEngine
         {
             var item = pair.Item; int size;
             if (item is null) size = Math.Max(S(metrics.MediumWidth), TextRenderer.MeasureText(pair.Group.DisplayText, ribbon.Font, Size.Empty, TextFormatFlags.SingleLine | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width
-                + 2 * S(6) + S(16) + (pair.Group.Icon is null ? 0 : S(24) + S(6)));
+                + 2 * S(chrome.GroupPadding()) + S(16) + (pair.Group.Icon is null ? 0 : S(24) + S(6)));
             else if (item is RibbonComboBoxItem combo) size = pair.Size == RibbonItemSize.Small ? S(metrics.SmallWidth + 12)
                 : RibbonEditorLayout.InputWidth(combo, ribbon.DeviceDpi, ribbon.Density, ribbon.Font, 6, simplified: true) + RibbonEditorLayout.LabelWidth(item, ribbon.Font, ribbon.DeviceDpi);
             else
@@ -39,7 +40,8 @@ internal sealed partial class RibbonLayoutEngine
             }
             return new SimplifiedCommandMeasurement(pair.Id, pair.Group.Id, size, pair.Priority);
         }).ToArray();
-        int inset = S(4), available = Math.Max(0, body.Width - 2 * inset), moreWidth = S(metrics.SimplifiedMore), gap = S(metrics.SimplifiedGap), divider = S(metrics.SimplifiedDivider);
+        int inset = theme.BodyContentHorizontalPadding is null ? S(chrome.BodyInset(true)) : Math.Min(S(chrome.BodyInset(true)), body.Width / 2);
+        int available = Math.Max(0, body.Width - 2 * inset), moreWidth = S(metrics.SimplifiedMore), gap = S(chrome.ColumnGap(true)), divider = S(metrics.SimplifiedDivider);
         var plan = RibbonSimplifiedSelection.Compute(measured, groups.Select(g => g.Id).ToArray(), available, moreWidth, gap, divider);
         int scroll = plan.RequiresScrolling ? Math.Min(S(metrics.ScrollButton), Math.Max(0, (available - S(16)) / 2)) : 0;
         if (scroll > 0) { available = Math.Max(0, available - 2 * scroll); plan = RibbonSimplifiedSelection.Compute(measured, groups.Select(g => g.Id).ToArray(), available, moreWidth, gap, divider); }
@@ -52,7 +54,12 @@ internal sealed partial class RibbonLayoutEngine
             var pair = selected[index]; var item = pair.Item;
             if (previousGroup is not null)
             {
-                if (previousGroup != pair.Group.Id) { result.SimplifiedDividers.Add(new(x + divider / 2, body.Top + S(6), 1, Math.Max(0, body.Height - S(12)))); x += divider; }
+                if (previousGroup != pair.Group.Id)
+                {
+                    int separatorInset = Math.Min(S(chrome.SeparatorInset(true)), body.Height / 2);
+                    int total = theme.GroupSeparatorVerticalInset is null ? S(12) : 2 * separatorInset;
+                    result.SimplifiedDividers.Add(new(x + divider / 2, body.Top + separatorInset, 1, Math.Max(0, body.Height - total))); x += divider;
+                }
                 else x += gap;
             }
             var bounds = new Rectangle(x, body.Top + clearance, measured[index].Width, Math.Max(0, body.Height - 2 * clearance));

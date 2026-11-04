@@ -172,7 +172,7 @@ public sealed class PairedGeometryTests
     });
 
     [Fact]
-    public void Command_padding_keeps_large_menu_and_qat_paint_independent() => FoundationTests.Sta(() =>
+    public void Command_padding_keeps_menu_and_qat_paint_independent() => FoundationTests.Sta(() =>
     {
         using var f = new Fixture(); var item = (RibbonToggleItem)f.Group.Items[0];
         foreach (bool office in new[] { false, true })
@@ -185,7 +185,6 @@ public sealed class PairedGeometryTests
             {
                 using var pixels = new Bitmap(800, 700); using var g = Graphics.FromImage(pixels); g.Clear(Color.White);
                 var c = new RibbonPaintContext(g, new(4, 4, 320, 260), theme, font, dpi) { Density = density, Hot = true };
-                painter.DrawItem(c, item, RibbonItemSize.Large, false);
                 painter.DrawItem(c with { Bounds = new(4, 280, 700, 150) }, item, RibbonItemSize.Medium, true);
                 painter.DrawQuickAccessItem(c with { Bounds = new(4, 450, 100, 100) }, item, false);
                 using var stream = new MemoryStream(); pixels.Save(stream, System.Drawing.Imaging.ImageFormat.Png); return stream.ToArray();

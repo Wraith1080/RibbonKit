@@ -33,6 +33,15 @@ public partial class DesignerForm
         var check = new RibbonCheckBoxItem { Text = "Keep formatting", Checked = true, SimplifiedPlacement = RibbonSimplifiedPlacement.Inline };
         var radio = new RibbonRadioButtonItem { Text = "Original style", Checked = true, SimplifiedPlacement = RibbonSimplifiedPlacement.Inline };
         examples.Items.AddRange(small, open, split, check, radio); commands.Groups.Add(examples); ribbon.Tabs.Add(commands);
+        var large = new RibbonGroup { Text = "Large layouts — compare with Roomier", CanResize = false };
+        var largeButton = new RibbonButtonItem { Text = "Large button", Icon = RibbonStockIcons.Create("open"), SizePolicy = RibbonSizePolicy.Fixed(RibbonItemSize.Large), SimplifiedPlacement = RibbonSimplifiedPlacement.Inline };
+        largeButton.Click += (_, _) => statusLabel.Text = "Large button invoked."; large.Items.Add(largeButton);
+        var dropdown = new RibbonDropDownItem { Text = "Large dropdown", Icon = RibbonStockIcons.Create("open"), SizePolicy = RibbonSizePolicy.Fixed(RibbonItemSize.Large), SimplifiedPlacement = RibbonSimplifiedPlacement.Inline };
+        dropdown.Items.Add(new RibbonButtonItem { Text = "Open document" }); large.Items.Add(dropdown);
+        large.Items.AddRange(CreateCommandSplitExample("Large paste", RibbonItemSize.Large, RibbonSplitButtonLayout.Horizontal),
+            CreateCommandSplitExample("Vertical paste", RibbonItemSize.Large, RibbonSplitButtonLayout.Vertical),
+            CreateCommandSplitExample("Keep source formatting", RibbonItemSize.Large, RibbonSplitButtonLayout.Vertical));
+        commands.Groups.Add(large);
 
         var application = new RibbonTab { Text = "Application Menu geometry" };
         var appSettings = new RibbonGroup { Text = "File spacing", CanResize = false };
@@ -69,6 +78,9 @@ public partial class DesignerForm
         var file = ribbon.FileMenu.Items.ToArray(); var recent = ribbon.ApplicationMenu.DefaultPane.Items.ToArray();
         var footer = ribbon.ApplicationMenu.FooterItems.ToArray(); var qat = ribbon.QuickAccessItems.ToArray();
         EnablePairedGeometryDemo(); var app = ribbon.SelectedTab!; var commands = ribbon.Tabs.First(t => t.Text == "Command content");
+        var largeSources = commands.Groups[2].Items.ToArray();
+        if (largeSources.Length != 5 || largeSources.Any(i => i.SizePolicy.Large != RibbonItemSize.Large))
+            throw new InvalidOperationException("Large command examples are missing from the command-content tab.");
         commands.Groups[0].Items[0].PerformClick(); app.Groups[0].Items[0].PerformClick();
         if (ribbon.Theme.CommandContentHorizontalPadding != 12 || ribbon.Theme.CommandContentVerticalPadding != 16 ||
             ribbon.Theme.ApplicationMenuNavigationMinimumRowHeight != 64 || ribbon.Theme.ApplicationMenuPaneMinimumRowHeight != 72 ||
@@ -82,7 +94,7 @@ public partial class DesignerForm
         commands.Groups[0].Items[1].PerformClick();
         if (ribbon.Theme != original || ribbon.FileMenuMode != fileMode || ribbon.LayoutMode != mode || !small.Checked ||
             !file.SequenceEqual(ribbon.FileMenu.Items) || !recent.SequenceEqual(ribbon.ApplicationMenu.DefaultPane.Items) ||
-            !footer.SequenceEqual(ribbon.ApplicationMenu.FooterItems) || !qat.SequenceEqual(ribbon.QuickAccessItems))
+            !footer.SequenceEqual(ribbon.ApplicationMenu.FooterItems) || !qat.SequenceEqual(ribbon.QuickAccessItems) || !largeSources.SequenceEqual(commands.Groups[2].Items))
             throw new InvalidOperationException("Paired demo changed prior roles, File models, modes, toggle state or QAT ownership.");
     }
 }
