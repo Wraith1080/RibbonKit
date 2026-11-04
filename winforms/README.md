@@ -1935,6 +1935,44 @@ ribbon.Theme = ribbon.Theme with
 };
 ```
 
+Illustrated-choice dropdown rows have their own optional theme roles:
+
+| Property | Null default, Compact and Touch |
+| --- | --- |
+| `IllustratedMenuMinimumWidth` | 300 |
+| `IllustratedMenuMinimumRowHeight` | 64 |
+| `IllustratedMenuIconSize` | 36 |
+| `IllustratedMenuLeadingPadding` | 8 |
+| `IllustratedMenuTrailingPadding` | 8 |
+| `IllustratedMenuIconTextGap` | 12 |
+| `IllustratedMenuDescriptionGap` | 2 |
+
+These are 96-DPI logical pixels. Dimensions accept 1..1024; padding/gap accept
+0..1024. Null resets each role independently and preserves previous measurements
+and paint. Font/artwork minima still apply, Touch keeps at least 44, and mixed
+menu rows use the tallest sibling. Existing title/font sizing, bold title,
+two-line description and state/invocation policy remain. For example:
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    IllustratedMenuMinimumWidth = 540, IllustratedMenuMinimumRowHeight = 88,
+    IllustratedMenuIconSize = 48, IllustratedMenuLeadingPadding = 18,
+    IllustratedMenuTrailingPadding = 22, IllustratedMenuIconTextGap = 20,
+    IllustratedMenuDescriptionGap = 8
+};
+```
+
+Desired widths reserve larger artwork/insets; work-area limits and scrolling
+remain authoritative. Explicit geometry clips slots safely inside constrained
+rows. Popup sizing, title/artwork/description paint and inert preview share one
+resolver. Theme assignment closes stale popups; reopening retains the source
+models and native mixed editors. Code-only configuration leaves designer model
+authoring/serialization unchanged. The roles apply to ordinary illustrated menus
+opened directly, nested or from a QAT source reference. Standard menus, QAT/More
+projection rows, Application Menu-specific rows, native editor geometry and split
+actions keep their separate contracts.
+
 Native editor content and ComboBox choice rows have seven optional theme roles:
 
 | Property | Null Compact / Touch |

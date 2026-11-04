@@ -115,6 +115,20 @@ public sealed record RibbonTheme
     public int? MenuChooserArrowWidth { get; init; }
     /// <summary>Gets optional horizontal padding at each end of ordinary-menu and Quick Access/More separator lines in 96-DPI logical pixels, from 0 to 1024. Null uses 8. Lines stay one device pixel; Application Menu-specific and group separators retain their own geometry.</summary>
     public int? MenuSeparatorHorizontalPadding { get; init; }
+    /// <summary>Gets the optional illustrated-choice menu desired minimum width in 96-DPI logical pixels, from 1 to 1024. Null uses 300 in both densities. Content/header minima and work-area limits still apply. Excludes Application Menu-specific and QAT/More projection rows.</summary>
+    public int? IllustratedMenuMinimumWidth { get; init; }
+    /// <summary>Gets the optional illustrated-choice row minimum height in 96-DPI logical pixels, from 1 to 1024. Null uses 64 in both densities. Font/artwork minima still apply; Touch retains at least 44. Mixed menu rows use the tallest sibling.</summary>
+    public int? IllustratedMenuMinimumRowHeight { get; init; }
+    /// <summary>Gets the optional illustrated-choice artwork slot side in 96-DPI logical pixels, from 1 to 1024. Null uses 36. Explicit illustrated geometry keeps artwork within constrained rows and grows the row's artwork minimum.</summary>
+    public int? IllustratedMenuIconSize { get; init; }
+    /// <summary>Gets the optional illustrated-choice leading artwork padding in 96-DPI logical pixels, from 0 to 1024. Null uses 8.</summary>
+    public int? IllustratedMenuLeadingPadding { get; init; }
+    /// <summary>Gets the optional illustrated-choice trailing text padding in 96-DPI logical pixels, from 0 to 1024. Null uses 8.</summary>
+    public int? IllustratedMenuTrailingPadding { get; init; }
+    /// <summary>Gets the optional illustrated-choice artwork-to-text gap in 96-DPI logical pixels, from 0 to 1024. Null uses 12.</summary>
+    public int? IllustratedMenuIconTextGap { get; init; }
+    /// <summary>Gets the optional illustrated-choice title-to-description gap in 96-DPI logical pixels, from 0 to 1024. Null uses 2 in both densities. Measurement and painting retain the existing two-line description and font sizing.</summary>
+    public int? IllustratedMenuDescriptionGap { get; init; }
     /// <summary>Gets the optional RibbonForm caption color, overridden by RibbonForm.TitleBarColor. Empty retains Background in solid mode and a clear caption over a backdrop. Explicit values must be opaque.</summary>
     public Color TitleBarBackground { get; init; } = Color.Empty;
     /// <summary>Gets optional caption and TitleBar Quick Access foreground. Empty chooses contrast for a colored caption, or preserves Foreground for an unset caption.</summary>

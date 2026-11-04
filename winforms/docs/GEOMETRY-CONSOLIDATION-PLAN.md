@@ -1,9 +1,8 @@
 # Native geometry consolidation
 
-Status, **2026-11-04: the fifth batch's editor spacing, choice-row geometry and
-taller-field Roomier extension are implemented and verified. The current review
-result is recorded below. Await instruction before another batch or additional
-themes**.
+Status, **2026-11-04: the sixth batch's illustrated-choice menu geometry is
+implemented and verified. Its current review result is recorded below. Await
+instruction before another batch or additional themes**.
 Baseline: `codex/Ribbonkit-Winform`, `9dd0054b9ebe4f6f9ff5b57bf75198e443f5b4e5`.
 The three existing documentation handoff edits are preserved. This plan owns the
 bounded geometry contract and review gate; additional geometry and themes require
@@ -21,7 +20,7 @@ The inventory identifies ownership, not new acceptance of deferred surfaces.
 | Commands, splits and native editors | rows 26/45; split arrow 20/28, horizontal 20/44; combo button 24/32; native editor height font+8 / at least 42 | density/content/split/editor layout, renderer, editor manager and borrowed popup editors, keyboard/UIA | Fifth batch exposes editor label gap, text inset and ComboBox button width. Authored input widths and native font minima retained. Outer padding, command/split geometry, glyph shapes and system EDIT rendering remain deferred/platform-owned. |
 | Ordinary command menus, nested menus, QAT overflow, Simplified More | rows 28/44; icon 24/32; leading/trailing 8; icon/text gap 10/12; desired width 170/220, described 280/320 | `RibbonMenuMetrics`, row/container/heading layout, popup sizing, shared renderer, overflow bands and inert preview; targets feed scrolling, keyboard/KeyTips/UIA and editor hosting | First/second sets expose row/horizontal/vertical roles. Third exposes container/heading/overflow bands; fourth exposes menu arrow slots and separator clearance. Popup inner margin, glyph shapes and platform work-area rules remain separate. |
 | Application Menu | model navigation/pane dimensions and font/content minima; nav rows 40/44, pane 28/44; arrow 26/44 | component-specific metrics/layout, Application Menu renderer, native pane hosting and column scrolling, designer preview | Deferred. Accepted hover/default-pane/split ownership and every current default retained. Nested ordinary submenus use the selected ordinary-menu contract. |
-| Illustrated menu choices and ComboBox choices | illustrated width 300, icon 36, row at least 64; ComboBox choice rows 28/44 or font+10 | `RibbonMenuLayout` illustrated path, editor layout/list window, designer popup preview | Fifth batch exposes ComboBox choice minimum and vertical text padding. Illustrated rows and choice-list horizontal padding remain distinct deferred roles. |
+| Illustrated menu choices and ComboBox choices | illustrated width 300, icon 36, row at least 64; ComboBox choice rows 28/44 or font+10 | `RibbonIllustratedMenuMetrics`, illustrated layout/renderer and ordinary popup sizing/preview; editor layout/list window | Sixth batch exposes illustrated width/row/artwork/insets/gaps. Fifth batch owns ComboBox choice minimum and vertical text padding. Choice-list horizontal padding stays separate. |
 | Galleries | model tile sizes; density fallback 32x32 / 64x80, utility width 18/32 | gallery strip/popup layout, renderer, presenter viewport/scroll, borrowed UserControl cards, UIA | Tile padding, heading/utility slots deferred. Application artwork and card content stay host-owned. |
 | QAT strip and message joins | QAT button 28/44, row 32/48; message minimum 34 (Touch floor), content padding (12,4,8,4) | QAT/message layout, renderer and joined body frame, native caption host, motion endpoints | Strip metrics and frame joins deferred. QAT overflow menu rows are selected; source identity/placement is unchanged. |
 | Backstage | navigation width bounds/model opacity; font minimum 14; rows 42/52, Back button 36/44 | Backstage layout/renderer, live native page clipping/hosting, whole-surface motion, retained designer layer | Deferred. Host page layout/HWND ownership and moving caption coverage retained. |
@@ -925,8 +924,10 @@ geometry batch or theme.**
 
 ### Remaining review batches
 
-This is a **working grouping, not a pre-existing fixed slice count**. About
-**six further review batches** remain, grouped as follows:
+This is a **working grouping, not a pre-existing fixed slice count**. These six
+broad review groups can require more than one bounded implementation batch.
+The illustrated-choice portion of the first group is implemented in the sixth
+batch below; its command/split and Application Menu-specific portions remain.
 
 1. Command/split content, glyph slots and special/illustrated menu geometry.
 2. Ribbon body/groups/header/tabs and QAT/message spacing/joins.
@@ -1047,3 +1048,116 @@ clearance. Paste's primary/arrow boundary and actions should be unchanged. Await
 instruction before any further batch or theme. Prior live/input/
 hardware/full-suite limits still apply; no computer use, global input, commit,
 push or publication.
+
+## Sixth batch: illustrated-choice menu geometry — 2026-11-04
+
+The user authorized continuation after the fifth batch's appearance review.
+Baseline: clean `codex/Ribbonkit-Winform`,
+`9a0196182264aca4ed41650b7c9417de7da2d444`. The next bounded contract was presented
+before implementation. This advances the command/special-menu review group;
+it does not complete command-strip, glyph-shape or Application Menu geometry.
+
+### API, layout and designer contract
+
+Seven additive nullable `RibbonTheme` integer properties resolve through an
+internal `RibbonIllustratedMenuMetrics`. Values are 96-DPI logical pixels; all
+defaults are the same in Compact and Touch. Null resets a role independently.
+
+| Property | Null default | Meaning |
+| --- | --- | --- |
+| `IllustratedMenuMinimumWidth` | 300 | Desired minimum for ordinary dropdowns with IllustratedChoices presentation, including nested and QAT-source openers. |
+| `IllustratedMenuMinimumRowHeight` | 64 | Illustrated choice-row minimum, before font/artwork minima and tallest-sibling normalization. Touch retains at least 44. |
+| `IllustratedMenuIconSize` | 36 | Artwork slot side. Explicit geometry reserves artwork plus the existing vertical clearance. |
+| `IllustratedMenuLeadingPadding` | 8 | Row-left to artwork-left clearance. |
+| `IllustratedMenuTrailingPadding` | 8 | Text trailing clearance. |
+| `IllustratedMenuIconTextGap` | 12 | Artwork-right to title/description-left distance. |
+| `IllustratedMenuDescriptionGap` | 2 | Title-to-description gap; descriptions retain their two-line cap. |
+
+Dimensions accept 1..1024; padding/gap accept 0..1024. Theme assignment validates
+before changing Theme/BuiltInTheme. Null preserves existing row-padding/font
+rounding and paint, including with earlier geometry settings. Explicit geometry
+retains the fixed vertical clearance and adds the exact scaled description-gap
+difference to row measurement. Row minima reserve font text and artwork; larger
+slots/insets also contribute to desired width. Work-area limits and existing
+scrollbars remain authoritative. Explicit slots clamp safely within narrow rows,
+including an empty text/artwork slot when necessary.
+
+Popup sizing, row/description measurement, artwork/title/description paint and
+inert preview share the resolver. Existing targets feed hit testing, keyboard
+selection/scroll reveal, UIA, popup placement/regions and motion endpoints.
+Native font sizing, bold titles, state colors, selection/invocation order and
+source ownership are retained. Reassigning theme/density uses existing popup
+invalidation; reopened menus measure new values and native mixed editors remain
+retained. No new coordinator, animation, renderer hook or public measurement API
+is introduced.
+
+These roles apply to illustrated choices in ordinary dropdown surfaces. Standard
+rows within mixed menus retain their content metrics, while mixed row heights
+continue to normalize to the tallest sibling. Standard menus, QAT/More projection
+rows, Application Menu-specific rows, editor field geometry, split actions,
+separators, glyph shapes and popup/frame metrics retain their owners. Opening a
+referenced illustrated menu from QAT still uses its real source's illustrated
+geometry; the reference row itself keeps ordinary QAT geometry.
+
+Theme remains code-only, hidden/nonserialized. XML comments and fourteen additive
+Unshipped accessors document the API; the shipped baseline is untouched. Model
+authoring, existing properties, designer Undo/Redo/generated-code round trips,
+handlers and bindings remain. Preview creates no application editor/content or
+commands. No broad theme-authoring UI is added.
+
+The permanent sample keeps normal startup intact. `--menu-geometry-demo` now
+adds/selects a separate **Illustrated menus** tab alongside the existing **Menu
+geometry** tab. It demonstrates roomier/reset, nested choices and a temporary QAT
+reference to the same source. Roomier uses 540 width, 88 row, 48 artwork, 18/22
+leading/trailing, 20 icon/text gap and 8 description gap. Reset clears only these
+seven roles. Authored InitializeComponent/resources/File presentation remain.
+
+### Verification and review gate
+
+- [x] Saved 32 pre-change default scenes/measurement files across both renderers,
+  densities, 9/14-point fonts and synthetic 96/120/144/192 DPI. All after-default
+  measurement files and PNG bytes match exactly. Default/previous illustrated
+  tests passed **5/5**, including the two new matrix cases.
+- [x] New override/validation/native scopes passed **15/15**: independent invalid/
+  reset/built-in/isolation checks, font/DPI minima, artwork/title/description
+  alignment, mixed row heights, narrow/empty slots, source/QAT/nested openers,
+  inert preview, scrolling, UIA and mixed native-editor HWND/value preservation.
+- [x] Strengthened hit-testing/Touch-floor/large-artwork width scopes passed
+  **4/4**. Standard/QAT-projection/Application Menu-specific paint remains exact
+  with the new roles applied. An empty-artwork callback regression reproduced
+  before its guard and passed **1/1** after the fix. The library skips an
+  application icon when its constrained slot is empty. The new class now contains
+  19 distinct cases;
+  these counts describe focused runs, not a full-suite aggregate.
+- [x] Related Release checks passed **164/164**, including earlier menu/editor/
+  editor-height, arrow, Application Menu appearance/hover and designer scopes.
+  The prior broader minimized-group-motion/lifetime limitation remains recorded
+  in the fifth batch; no full-suite or hardware acceptance is claimed.
+- [x] Native Release solution build passed with zero warnings/errors. Default,
+  override and native-DPI preview scenes inspected. Frame/radius changes are not
+  selected; representative package-frame corner inspection follows refresh.
+- [x] Debug runtime/design server/client/sample builds passed with zero warnings/
+  errors. Refreshed the same sample with package
+  `0.1.0-designer.local20261104T055059170Z`; runtime/design-server package hashes
+  match current Debug outputs. Authored Forms/resources remain unchanged.
+- [x] Public-package API/reset/validation and artwork/title/description paint
+  passed both renderers/densities at four synthetic DPIs (16 presentations).
+  Permanent demo apply/reset, toggle state, same-source QAT add/remove and prior
+  editor/menu/File/QAT ownership contracts passed without shown windows, popup,
+  internals or Showcase helpers. Representative Office/neutral package frames
+  were inspected at fractional DPI, including all four corners.
+- [x] **2026-11-04: user accepted the illustrated-menu appearance and confirmed
+  the menu became roomier** ("everything is good"). This confirms appearance
+  only. Actual VS designer, physical touch/IME, external UIA clients and
+  mixed-monitor/material hardware gates remain separate.
+
+Evidence: `artifacts/geometry/illustrated/` (`before/`, `after/`, `package/` with
+`result.log`, and baseline/default/override/related/hit-width/empty-before/empty-after
+TRX files). Review the refreshed sample with
+`--menu-geometry-demo`, **Illustrated menus** tab. Compare **Try illustrated menu**
+before/after **Roomier illustrated menu**, then **Reset illustrated menu**, in
+Mouse/Touch. Check artwork/title/description clearance and selected fill; try
+**Nested choices** and **Menu on QAT**. Earlier spacing/editor overrides should
+survive reset, and the QAT toggle should remove only its temporary reference.
+**Await instruction before another geometry batch or additional theme.** No
+computer use, global input, WPF edits, commit, push or publication.

@@ -464,10 +464,13 @@ public partial class RibbonRenderer : IDisposable
         bool selected = item is RibbonToggleItem { Checked: true } or RibbonRadioButtonItem { Checked: true } or RibbonCheckBoxItem { Checked: true };
         if (selected || context.Hot || context.Pressed)
             DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, Color.Transparent);
-        var content = RibbonMenuLayout.IllustratedContent(context.Bounds, context.Font, context.DeviceDpi, RibbonMenuLayout.HasDescription(item));
-        var saved = context.Graphics.Save();
-        try { context.Graphics.SetClip(content.Icon, CombineMode.Intersect); DrawItemImage(context with { Bounds = content.Icon }, item, RibbonItemSize.Large); }
-        finally { context.Graphics.Restore(saved); }
+        var content = RibbonMenuLayout.IllustratedContent(context.Bounds, context.Font, context.DeviceDpi, RibbonMenuLayout.HasDescription(item), context.Theme);
+        if (content.Icon.Width > 0 && content.Icon.Height > 0)
+        {
+            var saved = context.Graphics.Save();
+            try { context.Graphics.SetClip(content.Icon, CombineMode.Intersect); DrawItemImage(context with { Bounds = content.Icon }, item, RibbonItemSize.Large); }
+            finally { context.Graphics.Restore(saved); }
+        }
         using var titleFont = new Font(context.Font, context.Font.Style | FontStyle.Bold);
         DrawText(context with { Bounds = content.Text, Font = titleFont }, item.Text, item.EffectiveEnabled ? context.Theme.Foreground : context.Theme.DisabledColor, content.Flags);
         DrawMenuDescription(context, item, content.Text, illustrated: true);
@@ -651,7 +654,8 @@ public partial class RibbonRenderer : IDisposable
     private void DrawMenuDescription(RibbonPaintContext context, RibbonItem item, Rectangle title, bool? enabledOverride = null, bool illustrated = false)
     {
         if (!RibbonMenuLayout.HasDescription(item)) return;
-        var bounds = RibbonMenuLayout.Description(title, context.Bounds, context.Font, context.DeviceDpi, illustrated ? RibbonDensity.Compact : context.Density, illustrated ? null : context.Theme);
+        var bounds = illustrated ? RibbonMenuLayout.IllustratedDescription(title, context.Bounds, context.Font, context.DeviceDpi, context.Theme)
+            : RibbonMenuLayout.Description(title, context.Bounds, context.Font, context.DeviceDpi, context.Density, context.Theme);
         if (bounds.Width > 0 && bounds.Height > 0)
             DrawText(context with { Bounds = bounds }, item.MenuDescription, (enabledOverride ?? item.EffectiveEnabled) ? context.Theme.SecondaryText : context.Theme.DisabledColor, RibbonMenuLayout.DescriptionFlags);
     }

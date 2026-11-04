@@ -134,6 +134,24 @@ vertically centered with the same font size. Existing Touch widths remain.
 Reset affects only the seven editor theme roles. No InitializeComponent or authored
 Form/resource changes are needed.
 
+The same `--menu-geometry-demo` launch now also adds and selects **Illustrated
+menus**; the earlier **Menu geometry** tab remains available. Use **Roomier
+illustrated menu**, **Reset illustrated menu** and **Try illustrated menu** to
+compare artwork size, row height, title/description gaps and desired width in
+Mouse/Touch. **Nested choices** opens a separate illustrated example. **Menu on
+QAT** adds a temporary reference to the direct menu's same source; turn it off
+to remove only that reference. Selected choices keep their state through theme
+reset. Earlier menu/editor overrides and the authored startup File mode remain.
+
+`--verify-illustrated-geometry <evidence-folder>` checks the public package's
+seven illustrated roles/reset/validation and artwork/title/description paint in
+both renderers/densities at synthetic 96/120/144/192 DPI. It verifies the permanent
+demo's apply/reset, toggle state and retained File/QAT/source identities without
+showing windows, opening popups or using internals/Showcase helpers. Library STA
+checks separately cover measured menus, nested/QAT openers, preview, scroll/hit/
+UIA bounds and retained native mixed editors. Actual VS/input/hardware acceptance
+remains user-owned.
+
 `--verify-editor-geometry <evidence-folder>` checks the refreshed public package's
 new API/reset/validation, both renderers/densities and synthetic 96/120/144/192-DPI
 label/button paint. It also checks public Classic/Simplified ribbon height growth

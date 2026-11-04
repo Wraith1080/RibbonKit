@@ -1,12 +1,12 @@
 # Starting prompt: native RibbonKit.WinForms geometry consolidation
 
-Execution checkpoint, **2026-11-04**: the user accepted the fourth batch's shared
-arrow-column appearance and authorized continuation. The fifth batch groups
-native editor label/text/button spacing with ComboBox choice-row geometry and
-the user-requested taller-field Roomier preset extension;
-[the geometry plan](GEOMETRY-CONSOLIDATION-PLAN.md) owns its completed contract and
-verification evidence. **The height extension's user review is pending. Do not start another
-batch or additional themes.** The original bounded starting contract follows for context.
+Execution checkpoint, **2026-11-04**: the user accepted the fifth batch's editor
+spacing/height appearance and authorized continuation. The sixth batch groups
+illustrated-choice menu width, row, artwork and text slots;
+[the geometry plan](GEOMETRY-CONSOLIDATION-PLAN.md) owns its contract and evidence.
+**The illustrated-menu batch is implemented and verified; user review is pending.
+Do not start another batch or additional themes.** Command-strip and Application Menu-specific
+geometry remain deferred. The original bounded starting contract follows for context.
 
 Continue work in:
 

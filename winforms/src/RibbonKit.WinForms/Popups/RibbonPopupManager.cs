@@ -497,9 +497,12 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         else
         {
             var items = MenuSource!.Items.Where(i => i.Visible).ToArray();
-            width = Math.Max(S(menuMetrics.MenuMinimumWidth), items.Where(i => i is not RibbonMenuSeparatorItem and not IRibbonEditorItem).Select(i => TextRenderer.MeasureText(i.Text, Font).Width + S(menuMetrics.MenuWidthPadding)).DefaultIfEmpty(S(menuMetrics.MenuMinimumWidth)).Max());
+            var illustrated = RibbonIllustratedMenuMetrics.For(ribbon.Density, ribbon.Theme);
+            width = Math.Max(S(menuMetrics.MenuMinimumWidth), items.Where(i => i is not RibbonMenuSeparatorItem and not IRibbonEditorItem).Select(i => TextRenderer.MeasureText(i.Text, Font).Width
+                + (RibbonMenuLayout.IsIllustratedChoice(i) ? illustrated.WidthPadding(ribbon.DeviceDpi, menuMetrics.MenuWidthPadding) : S(menuMetrics.MenuWidthPadding))).DefaultIfEmpty(S(menuMetrics.MenuMinimumWidth)).Max());
             if (items.Any(RibbonMenuLayout.HasDescription)) width = Math.Max(width, S(menuMetrics.MenuDescriptionWidth));
-            if (MenuSource.MenuPresentation == RibbonMenuPresentation.IllustratedChoices) width = Math.Max(width, S(RibbonMenuLayout.IllustratedWidth));
+            if (MenuSource.MenuPresentation == RibbonMenuPresentation.IllustratedChoices)
+                width = Math.Max(width, Math.Max(S(illustrated.MinimumWidth), illustrated.HasOverride ? illustrated.ContentWidth(ribbon.DeviceDpi) + S(8) : 0));
             if (MenuSource.DropDownHeader.Length > 0) width = Math.Max(width, Math.Min(S(420), TextRenderer.MeasureText(MenuSource.DropDownHeader, Font).Width + menuMetrics.HeaderWidthPadding(ribbon.DeviceDpi)));
             int labelWidth = items.Where(i => i is IRibbonEditorItem).Select(i => RibbonEditorLayout.LabelWidth(i, Font, ribbon.DeviceDpi)).DefaultIfEmpty(0).Max();
             width = Math.Max(width, items.Where(i => i is IRibbonEditorItem).Select(i => RibbonEditorLayout.MenuWidth(i, labelWidth, Font, ribbon.DeviceDpi, ribbon.Density, ribbon.Theme)).DefaultIfEmpty(0).Max());

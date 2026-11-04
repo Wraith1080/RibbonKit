@@ -3,7 +3,6 @@ namespace RibbonKit.WinForms.Layout;
 // Menu-only geometry; strip/group command slots and native editor metrics stay independent.
 internal static class RibbonMenuLayout
 {
-    internal const int IllustratedWidth = 300, IllustrationSize = 36, IllustratedMinimumHeight = 64;
     internal const TextFormatFlags DescriptionFlags = TextFormatFlags.WordBreak | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.TextBoxControl;
     // The split secondary area defines one visual indicator column. Keep the
     // same existing narrow-row cap for every menu presentation, including zero.
@@ -38,7 +37,7 @@ internal static class RibbonMenuLayout
         int S(int value) => RibbonLayoutEngine.Scale(value, dpi);
         var metrics = RibbonMenuMetrics.For(density ?? item.Ribbon?.Density ?? RibbonDensity.Compact, theme);
         if (item is RibbonMenuSeparatorItem) return S(metrics.MenuSeparatorHeight);
-        if (illustrated && IsIllustratedChoice(item)) return Math.Max(S(IllustratedMinimumHeight), font.Height * (HasDescription(item) ? 3 : 1) + S(12));
+        if (illustrated && IsIllustratedChoice(item)) return RibbonIllustratedMenuMetrics.For(metrics.Density, theme).RowHeight(font, dpi, HasDescription(item));
         int basic = Math.Max(S(metrics.MenuRow), font.Height + S(10));
         var editorTheme = theme ?? item.Ribbon?.Theme;
         if (!quickAccess && item is IRibbonEditorItem && RibbonEditorMetrics.HasHeightOverride(editorTheme))
@@ -58,13 +57,29 @@ internal static class RibbonMenuLayout
         int tallest = items.Select((item, index) => item is RibbonMenuSeparatorItem ? 0 : heights[index]).DefaultIfEmpty(0).Max();
         return items.Select((item, index) => item is RibbonMenuSeparatorItem ? heights[index] : tallest).ToArray();
     }
-    internal static RibbonContentLayout IllustratedContent(Rectangle row, Font font, int dpi, bool description)
+    internal static RibbonContentLayout IllustratedContent(Rectangle row, Font font, int dpi, bool description, RibbonTheme? theme = null)
     {
         int S(int value) => RibbonLayoutEngine.Scale(value, dpi);
-        int iconSize = S(IllustrationSize), textHeight = font.Height * (description ? 3 : 1) + (description ? S(2) : 0);
-        var icon = new Rectangle(row.Left + S(8), row.Top + (row.Height - iconSize) / 2, iconSize, iconSize);
-        var text = new Rectangle(icon.Right + S(12), row.Top + (row.Height - textHeight) / 2, Math.Max(0, row.Right - S(8) - icon.Right - S(12)), font.Height);
+        var metrics = RibbonIllustratedMenuMetrics.For(RibbonDensity.Compact, theme);
+        int iconSize = S(metrics.IconSize), textHeight = font.Height * (description ? 3 : 1) + (description ? S(metrics.DescriptionGap) : 0);
+        int left = row.Left + S(metrics.Leading), right = row.Right - S(metrics.Trailing);
+        if (metrics.HasOverride)
+        {
+            left = Math.Min(row.Right, left); right = Math.Max(left, right);
+            iconSize = Math.Min(iconSize, Math.Max(0, Math.Min(right - left, row.Height)));
+        }
+        var icon = new Rectangle(left, row.Top + (row.Height - iconSize) / 2, iconSize, iconSize);
+        int textLeft = icon.Right + S(metrics.IconTextGap), textTop = row.Top + (row.Height - textHeight) / 2;
+        if (metrics.HasOverride) { textLeft = Math.Min(right, textLeft); textTop = Math.Max(row.Top, textTop); }
+        var text = new Rectangle(textLeft, textTop, Math.Max(0, right - textLeft), metrics.HasOverride ? Math.Min(font.Height, Math.Max(0, row.Bottom - textTop)) : font.Height);
         return new(icon, text, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
+    }
+    internal static Rectangle IllustratedDescription(Rectangle title, Rectangle row, Font font, int dpi, RibbonTheme theme)
+    {
+        var metrics = RibbonIllustratedMenuMetrics.For(RibbonDensity.Compact, theme);
+        int top = title.Bottom + RibbonLayoutEngine.Scale(metrics.DescriptionGap, dpi);
+        if (metrics.HasOverride) top = Math.Min(row.Bottom, top);
+        return new(title.Left, top, title.Width, Math.Min(2 * font.Height, Math.Max(0, row.Bottom - RibbonLayoutEngine.Scale(5, dpi) - top)));
     }
     internal static RibbonContentLayout Content(RibbonContentLayout content, RibbonItem item, Rectangle bounds, Font font, int dpi, RibbonDensity density = RibbonDensity.Compact, RibbonTheme? theme = null, bool projectedEditorCaption = false)
     {
