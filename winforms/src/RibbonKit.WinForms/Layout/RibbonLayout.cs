@@ -87,8 +87,10 @@ internal sealed partial class RibbonLayoutEngine
         }
         int x = S(GroupSideInset), row = 0, columnWidth = 0, columnStart = 0;
         int fontLogical = (int)Math.Ceiling(font.Height * 96d / dpi);
-        int rowLogical = Math.Max(metrics.CommandRow, fontLogical + 8), captionLogical = Math.Max(20, fontLogical + 6);
+        bool fields = group.Items.Any(i => i.Visible && RibbonEditorLayout.IsField(i, i is RibbonComboBoxItem ? i.SizePolicy.At(state) : RibbonItemSize.Medium));
+        int rowLogical = RibbonEditorLayout.CommandRowLogical(font, dpi, group.Ribbon?.Density ?? RibbonDensity.Compact, theme, fields), captionLogical = Math.Max(20, fontLogical + 6);
         int commandHeight = S(theme.BodyHeight - captionLogical - CommandVerticalInset);
+        if (fields && RibbonEditorMetrics.HasHeightOverride(theme)) commandHeight = Math.Max(commandHeight, S(3 * rowLogical));
         bool explicitRows = group.Layout != RibbonGroupLayout.Columns, hasLarge = false;
         int rowCount = group.Layout == RibbonGroupLayout.ThreeRows ? 3 : 2;
         int occupiedRows = 0;

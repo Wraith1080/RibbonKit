@@ -122,6 +122,27 @@ Reopen the refreshed sample and compare Export/Paste/Font family/group arrows in
 **Try arrow menu** and the last four **Overflow examples** entries, in Mouse/Touch,
 at defaults and with **Wider arrow areas**. No extra setting is needed.
 
+The fifth group, **Native editor spacing**, has **Roomier editors**, **Reset
+editors** and **Try editor menu**. Compare taller fields, label gaps, field text
+insets, wider ComboBox buttons and choice-row spacing in Mouse/Touch. The menu contains a
+TextBox, labelled editable ComboBox and unlabelled selection-only ComboBox. Open
+both choice lists, retain a typed value, then reset. Combine with previous menu
+spacing and **Fill menu fields**, and compare the authored Formatting fields.
+The preset requests a 54-pixel field minimum and 10-pixel top/bottom text padding.
+TextBox/ComboBox fields and their containing rows grow together; text/labels stay
+vertically centered with the same font size. Existing Touch widths remain.
+Reset affects only the seven editor theme roles. No InitializeComponent or authored
+Form/resource changes are needed.
+
+`--verify-editor-geometry <evidence-folder>` checks the refreshed public package's
+new API/reset/validation, both renderers/densities and synthetic 96/120/144/192-DPI
+label/button paint. It also checks public Classic/Simplified ribbon height growth
+and reset in both densities, the permanent demo's seven-role apply/reset actions and
+retained File/QAT/fill behavior without showing windows, creating native editors,
+opening popups or using internals. Separate library STA tests cover native layout,
+text clipping, choice heights, UIA bounds and HWND retention. Actual VS/native
+input/hardware acceptance remains user-owned.
+
 `--verify-menu-container-geometry <evidence-folder>` verifies public package
 properties, validation/reset and heading/scroll paint with both renderers and
 Compact/Touch. It also invokes the permanent

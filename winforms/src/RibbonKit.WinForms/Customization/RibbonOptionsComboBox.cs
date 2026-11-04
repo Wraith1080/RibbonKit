@@ -27,7 +27,7 @@ internal sealed class RibbonOptionsComboBox : ComboBox, IMessageFilter
         _model.Enabled = Enabled;
         var context = new RibbonPaintContext(e.Graphics, ClientRectangle, _appearance.Theme, Font, DeviceDpi, Hot: _hot, Pressed: ChoiceOpen, Focused: Focused) { Density = _appearance.Density };
         _appearance.Painter.DrawComboBox(context, _model, ClientRectangle);
-        int inset = RibbonLayoutEngine.Scale(6, DeviceDpi); var arrow = RibbonEditorLayout.ComboButton(ClientRectangle, DeviceDpi, _appearance.Density);
+        int inset = RibbonLayoutEngine.Scale(6, DeviceDpi); var arrow = RibbonEditorLayout.ComboButton(ClientRectangle, DeviceDpi, _appearance.Density, _appearance.Theme);
         var text = new Rectangle(inset, 0, Math.Max(0, arrow.Left - inset), Height);
         _appearance.Painter.DrawText(context with { Bounds = text }, GetItemText(SelectedItem) ?? "", Enabled ? _appearance.Theme.Foreground : SystemColors.GrayText,
             TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);

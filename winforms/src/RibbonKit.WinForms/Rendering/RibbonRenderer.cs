@@ -269,7 +269,7 @@ public partial class RibbonRenderer : IDisposable
         var field = context with { Bounds = editorBounds };
         var border = context.Hot || context.Focused || context.Pressed || open ? context.Theme.Accent : context.Theme.EditorBorderColor;
         DrawChrome(field, new(context.Theme.EditorColor), border);
-        var button = RibbonEditorLayout.ComboButton(editorBounds, context.DeviceDpi, context.Density);
+        var button = RibbonEditorLayout.ComboButton(editorBounds, context.DeviceDpi, context.Density, context.Theme);
         if (context.Hot || context.Pressed || open)
         {
             var saved = context.Graphics.Save();
@@ -297,7 +297,7 @@ public partial class RibbonRenderer : IDisposable
     private void DrawEditorLabel(RibbonPaintContext context, RibbonItem item, Rectangle editorBounds)
     {
         if (item is RibbonComboBoxItem { ShowLabel: false }) return;
-        DrawText(context with { Bounds = new(context.Bounds.Left, context.Bounds.Top, Math.Max(0, editorBounds.Left - context.Bounds.Left - RibbonLayoutEngine.Scale(6, context.DeviceDpi)), context.Bounds.Height) },
+        DrawText(context with { Bounds = new(context.Bounds.Left, context.Bounds.Top, Math.Max(0, editorBounds.Left - context.Bounds.Left - RibbonLayoutEngine.Scale(RibbonEditorMetrics.For(context.Density, context.Theme).LabelGap, context.DeviceDpi)), context.Bounds.Height) },
             item.Text, item.EffectiveEnabled ? context.Theme.EditorTextColor : context.Theme.DisabledColor,
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding);
     }

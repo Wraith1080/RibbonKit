@@ -59,6 +59,20 @@ public sealed record RibbonTheme
     public Color EditorForeground { get; init; } = Color.Empty;
     /// <summary>Gets the idle native editor frame color. Empty uses Border; active fields retain Accent.</summary>
     public Color EditorBorder { get; init; } = Color.Empty;
+    /// <summary>Gets the optional native editor label-to-field gap in 96-DPI logical pixels, from 0 to 1024. Null uses 6. Hidden ComboBox labels reserve no gap.</summary>
+    public int? EditorLabelGap { get; init; }
+    /// <summary>Gets the optional horizontal native field text inset in 96-DPI logical pixels, from 0 to 1024. Null uses 4. Text is clipped to available field space; authored field widths and heights are retained.</summary>
+    public int? EditorTextInset { get; init; }
+    /// <summary>Gets the optional native TextBox/ComboBox field minimum height in 96-DPI logical pixels, from 1 to 1024. Null preserves the density/font minimum. Font padding still applies; Touch retains at least 42, or 44 for an inline Simplified ComboBox. Containing rows grow to fit. Does not change authored input widths.</summary>
+    public int? EditorMinimumHeight { get; init; }
+    /// <summary>Gets optional padding above and below native field text in 96-DPI logical pixels, from 0 to 1024. Null preserves scaled summed padding of 8. Explicit values scale each side separately. Font size stays unchanged; text and labels remain vertically centered.</summary>
+    public int? EditorVerticalPadding { get; init; }
+    /// <summary>Gets the optional native ComboBox button width in 96-DPI logical pixels, from 1 to 1024. Null uses Compact 24 or Touch 32. Touch retains at least 32; the slot is capped to the field width. Excludes Small command projections and menu-reference arrows.</summary>
+    public int? ComboBoxButtonWidth { get; init; }
+    /// <summary>Gets the optional native ComboBox choice-row minimum height in 96-DPI logical pixels, from 1 to 1024. Null uses Compact 28 or Touch 44. Font/padding minima and the Touch floor of 44 apply, capped at the native list limit of 255 device pixels.</summary>
+    public int? ComboBoxMinimumChoiceHeight { get; init; }
+    /// <summary>Gets optional padding above and below native ComboBox choice text in 96-DPI logical pixels, from 0 to 1024. Null uses 5 with legacy summed rounding. Explicit values scale each side separately; native choice rows are capped at 255 device pixels.</summary>
+    public int? ComboBoxChoiceVerticalPadding { get; init; }
     /// <summary>Gets the optional command-menu heading fill. Null preserves the renderer's gallery-heading treatment.</summary>
     public RibbonFill? MenuHeadingBackground { get; init; }
     /// <summary>Gets command-menu heading text color. Empty preserves the renderer's gallery-heading treatment.</summary>

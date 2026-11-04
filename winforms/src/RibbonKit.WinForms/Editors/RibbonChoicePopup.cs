@@ -32,7 +32,7 @@ internal sealed class RibbonChoicePopup : IDisposable
             Name = item.Id + ".choices", Font = ribbon.Font, BackColor = ribbon.Theme.PopupColor,
             ForeColor = ribbon.Theme.EditorTextColor, BorderStyle = BorderStyle.None,
             DrawMode = DrawMode.OwnerDrawFixed, IntegralHeight = false, TabStop = false,
-            CausesValidation = false, ItemHeight = RibbonEditorLayout.ComboRowHeight(ribbon.Font, ribbon.DeviceDpi, ribbon.Density)
+            CausesValidation = false, ItemHeight = RibbonEditorLayout.ComboRowHeight(ribbon.Font, ribbon.DeviceDpi, ribbon.Density, ribbon.Theme)
         };
         _list.Items.AddRange(item.Items.Cast<object>().ToArray());
         _list.SelectedIndex = item.SelectedIndex;

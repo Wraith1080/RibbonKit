@@ -9,11 +9,16 @@ internal static class RibbonApplicationMenuMetrics
     internal static bool Illustrated(RibbonItem item) => item is not (RibbonDropDownItem or IRibbonEditorItem or RibbonMenuSeparatorItem)
         && item.Parent is RibbonDropDownItem { MenuPresentation: RibbonMenuPresentation.IllustratedChoices };
     internal static int ArrowWidth(int dpi, RibbonDensity density) => RibbonLayoutEngine.Scale(density == RibbonDensity.Touch ? 44 : 26, dpi);
-    internal static int RowHeight(RibbonItem item, int width, Font font, int dpi, RibbonDensity density, bool navigation)
+    internal static int RowHeight(RibbonItem item, int width, Font font, int dpi, RibbonDensity density, bool navigation, RibbonTheme? theme = null)
     {
         int S(int n) => RibbonLayoutEngine.Scale(n, dpi);
         if (item is RibbonMenuSeparatorItem) return S(9);
-        if (item is IRibbonEditorItem) return Math.Max(S(density == RibbonDensity.Touch ? 44 : 32), RibbonMenuLayout.RowHeight(item, width, font, dpi, density));
+        if (item is IRibbonEditorItem)
+        {
+            int height = Math.Max(S(density == RibbonDensity.Touch ? 44 : 32), RibbonMenuLayout.RowHeight(item, width, font, dpi, density, quickAccess: true));
+            return RibbonEditorMetrics.HasHeightOverride(theme ?? item.Ribbon?.Theme)
+                ? Math.Max(height, RibbonEditorLayout.Height(font, dpi, density, theme: theme ?? item.Ribbon?.Theme) + S(2)) : height;
+        }
         int minimum = S(density == RibbonDensity.Touch ? 44 : navigation ? 40 : 28);
         bool rich = !navigation && Illustrated(item);
         int textInset = navigation || rich ? S(52) : HasIcon(item) ? S(30) : S(6);

@@ -1,10 +1,9 @@
 # Native geometry consolidation
 
-Status, **2026-11-04: user authorized continuation after the Touch corrections;
-the fill-width review is recorded below. The fourth batch groups menu arrow
-slots and separator clearance; its shared arrow-column correction is implemented
-and verified, with the review result recorded below. Await instruction before
-another batch or additional themes**.
+Status, **2026-11-04: the fifth batch's editor spacing, choice-row geometry and
+taller-field Roomier extension are implemented and verified. The current review
+result is recorded below. Await instruction before another batch or additional
+themes**.
 Baseline: `codex/Ribbonkit-Winform`, `9dd0054b9ebe4f6f9ff5b57bf75198e443f5b4e5`.
 The three existing documentation handoff edits are preserved. This plan owns the
 bounded geometry contract and review gate; additional geometry and themes require
@@ -19,10 +18,10 @@ The inventory identifies ownership, not new acceptance of deferred surfaces.
 | --- | --- | --- | --- |
 | Body and groups | `BodyHeight=110` minimum, `BodyMargin=(7,1,7,7)`, `LargeButtonMaxWidth=108`, `CollapsedGroupMaxWidth=108`, scroll vertical inset 2 | `RibbonTheme`, `RibbonLayout`, content/reduction/Simplified layout, Office renderer, body viewport, hit targets, group motion | Preserve font-driven three rows and joined frame. Group separator clearance 12 and collapsed opener insets 6/8 are separate deferred roles. |
 | Header, tabs and utilities | `TabHeight=40` minimum (Touch 48), `HeaderButtonInset=4`; QAT optical offset 2 | density/header/caption layout, Office tab paint/indicator measurement, hit targets, KeyTips/UIA, independent indicator motion | Tab label/indicator and caption geometry deferred. Device-pixel hairlines are raster rules. |
-| Commands, splits and native editors | rows 26/45; split arrow 20/28, horizontal 20/44; combo button 24/32; native editor height font+8 / at least 42 | density/content/split/editor layout, renderer, editor manager and borrowed popup editors, keyboard/UIA | Authored input widths and native font minima retained. Editor padding, arrow/check/radio glyphs and system EDIT rendering deferred. |
+| Commands, splits and native editors | rows 26/45; split arrow 20/28, horizontal 20/44; combo button 24/32; native editor height font+8 / at least 42 | density/content/split/editor layout, renderer, editor manager and borrowed popup editors, keyboard/UIA | Fifth batch exposes editor label gap, text inset and ComboBox button width. Authored input widths and native font minima retained. Outer padding, command/split geometry, glyph shapes and system EDIT rendering remain deferred/platform-owned. |
 | Ordinary command menus, nested menus, QAT overflow, Simplified More | rows 28/44; icon 24/32; leading/trailing 8; icon/text gap 10/12; desired width 170/220, described 280/320 | `RibbonMenuMetrics`, row/container/heading layout, popup sizing, shared renderer, overflow bands and inert preview; targets feed scrolling, keyboard/KeyTips/UIA and editor hosting | First/second sets expose row/horizontal/vertical roles. Third exposes container/heading/overflow bands; fourth exposes menu arrow slots and separator clearance. Popup inner margin, glyph shapes and platform work-area rules remain separate. |
 | Application Menu | model navigation/pane dimensions and font/content minima; nav rows 40/44, pane 28/44; arrow 26/44 | component-specific metrics/layout, Application Menu renderer, native pane hosting and column scrolling, designer preview | Deferred. Accepted hover/default-pane/split ownership and every current default retained. Nested ordinary submenus use the selected ordinary-menu contract. |
-| Illustrated menu choices and ComboBox choices | illustrated width 300, icon 36, row at least 64; ComboBox choice rows 28/44 or font+10 | `RibbonMenuLayout` illustrated path, editor layout/list window, designer popup preview | Distinct presentations. Illustrated rows, choice lists and native value slots retain existing geometry. |
+| Illustrated menu choices and ComboBox choices | illustrated width 300, icon 36, row at least 64; ComboBox choice rows 28/44 or font+10 | `RibbonMenuLayout` illustrated path, editor layout/list window, designer popup preview | Fifth batch exposes ComboBox choice minimum and vertical text padding. Illustrated rows and choice-list horizontal padding remain distinct deferred roles. |
 | Galleries | model tile sizes; density fallback 32x32 / 64x80, utility width 18/32 | gallery strip/popup layout, renderer, presenter viewport/scroll, borrowed UserControl cards, UIA | Tile padding, heading/utility slots deferred. Application artwork and card content stay host-owned. |
 | QAT strip and message joins | QAT button 28/44, row 32/48; message minimum 34 (Touch floor), content padding (12,4,8,4) | QAT/message layout, renderer and joined body frame, native caption host, motion endpoints | Strip metrics and frame joins deferred. QAT overflow menu rows are selected; source identity/placement is unchanged. |
 | Backstage | navigation width bounds/model opacity; font minimum 14; rows 42/52, Back button 36/44 | Backstage layout/renderer, live native page clipping/hosting, whole-surface motion, retained designer layer | Deferred. Host page layout/HWND ownership and moving caption coverage retained. |
@@ -788,6 +787,204 @@ remain separate. The previous broader-suite failures are unchanged. Body/header/
 QAT strip, galleries, Backstage, glyph/radius/shadow/frame and popup inner-margin
 roles remain later work. No WPF changes, computer-use tools, global input, commit,
 push or publication.
+
+## Fifth batch: native editor content and ComboBox choice rows — 2026-11-04
+
+The user accepted the shared arrow-column appearance and requested the next
+batches. Implementation starts from clean `codex/Ribbonkit-Winform`,
+`9800f76a195df7bc626ced0442d90a4479b33fce`. The following contract was presented
+before runtime edits. No WPF files, authored Forms/resources, or previous theme
+settings are selected for change.
+
+### API, layout and designer contract
+
+Five additive nullable `RibbonTheme` integer properties share an internal
+`RibbonEditorMetrics` resolver. Values are 96-DPI logical pixels, resolved per
+ribbon/density. Null resets each role independently to its existing default.
+
+| Property | Null Compact / Touch | Meaning and limits |
+| --- | --- | --- |
+| `EditorLabelGap` | 6 / 6 | Label reservation and paint clearance, 0..1024. Hidden ComboBox labels reserve none; existing outer field inset remains. |
+| `EditorTextInset` | 4 / 4 | Horizontal field text clearance on both sides, 0..1024. Editable and selection-only ComboBox text use the same slot as inert preview. Authored field width/height remain. |
+| `ComboBoxButtonWidth` | 24 / 32 | Painted field button and native text exclusion, 1..1024. Touch keeps at least 32. The slot clamps to the actual field width. |
+| `ComboBoxMinimumChoiceHeight` | 28 / 44 | Native choice-row minimum, 1..1024, subject to font/padding and Touch's 44 floor. |
+| `ComboBoxChoiceVerticalPadding` | 5 / 5 | Padding above/below choice text, 0..1024. Null retains scaled summed 10; explicit values reserve separately rounded sides. |
+
+The resolved choice height is capped at the native ListBox limit of **255 device
+pixels**, including at synthetic high DPI or extreme settings. Field/choice
+measurement, label painting, ComboBox button painting, native EDIT/text clipping,
+choice ListBox row height and popup sizing consume the shared values. Text slots
+clamp to empty inside narrow fields rather than escaping past the field/button.
+Touch width scaling still uses the accepted font/DPI-aware height ratio and an
+arrow-growth floor shared by TextBox and ComboBox. A wider button does not change
+authored `InputWidth` or `FillMenuWidth`. Height scaling, menu label gutters,
+shared label columns, matching field widths and fill behavior remain intact.
+
+Classic, Simplified, group/menu/Application Menu editor fields inherit these
+editor roles. Small command projections and QAT/More chooser arrows keep their
+accepted command/menu geometry. The options ComboBox uses the same painted button
+width while retaining its separate dialog text inset. Choice-list horizontal
+padding, illustrated rows, outer editor padding, native selection/caret/IME and
+system EDIT paint remain separate. The following review extension adds field-height roles.
+
+Theme assignment validates all five roles before changing Theme/BuiltInTheme.
+Existing theme/density/font/DPI invalidation closes stale lists/popups; reopen
+measures current values. Existing editor models and HWNDs remain retained.
+Hit targets, keyboard focus and UIA continue using the measured row/field targets;
+no new event, coordinator, motion or public measurement hook is added.
+
+The existing hidden/nonserialized Theme remains code-authored. XML comments and
+ten Unshipped accessors document the API; shipped API is untouched. Model
+serialization, detached drafts, designer Undo/Redo and authored handlers/bindings
+are unchanged. Inert popup and ribbon previews use the same text/button slots;
+they do not create native editors or invoke application commands. The permanent
+sample's opt-in demo adds a fifth group with apply/reset and editable/selection-
+only, labelled/hidden-label examples, without editing InitializeComponent.
+
+### Review extension: taller fields in Roomier editors — 2026-11-04
+
+The user said the initial editor spacing looked good, then requested that the
+Roomier option also increase editor height. This extends the fifth batch; it is
+not a new geometry batch or theme. The native API/layout/designer contract was
+presented before implementation.
+
+| Additional nullable `RibbonTheme` property | Unset behavior | Explicit behavior |
+| --- | --- | --- |
+| `EditorMinimumHeight` | Existing density/font minima: font+8 in Compact; Touch at least 42; Simplified ComboBox at least 26/44. | 1..1024 logical pixels; font/padding and density floors still apply. |
+| `EditorVerticalPadding` | 4 logical pixels per side, preserving scaled summed 8. | 0..1024 logical pixels per side, scaled separately. |
+
+Both TextBox and ComboBox fields share the resolved height. Native text and
+painted labels remain vertically centered, with unchanged font size. Actual
+field height still clamps to its available slot; command/menu measurement now
+reserves the requested height first. Ordinary mixed menu rows normalize to the
+tallest sibling. Classic editor-containing command rows and group flyouts grow;
+the classic ribbon body reserves their three-row band. Simplified inline field
+candidates reserve their taller body band, including while their group is
+borrowed, so ownership changes retain the band height. Menu-only fields and Small
+projections do not enlarge the ribbon body. Application Menu editor rows/footer
+grow within their existing work-area/scroll constraints; other File geometry
+and accepted behavior remain.
+
+The existing font/DPI/density ratio continues to size Touch field widths.
+Explicit height settings do not rescale authored widths or narrow Touch fields.
+FillMenuWidth, shared label columns, hidden-label behavior, row hit/keyboard/UIA
+bounds, editor identity/HWNDs and transient-popup invalidation are retained.
+Tab selection updates the containing ribbon height and clears group measurements
+when height overrides are present, avoiding stale bands measured from a different
+tab or borrowed QAT group. Unset height settings retain the prior path.
+
+Configuration stays code-only through the hidden Theme, with XML documentation,
+validation before assignment and four additive Unshipped accessors. No model
+property, broad designer UI, serialization/Undo/Redo contract, control replacement
+or animation is added. Native presenters and inert previews use the same field
+height helper. The existing Roomier preset sets **54 minimum / 10 vertical
+padding**, together with its previous five roles; Reset clears all seven. The
+permanent sample's authored InitializeComponent/resources remain untouched.
+
+Verification:
+
+- The initial focused run passed **12/12**, including saved default-pixel/
+  measurement parity and the new native-height cases. Two-renderer menu checks
+  exercise both densities, fill/fixed widths, visible/hidden labels and retained
+  HWND/value/UIA bounds. Synthetic 96/120/144/192 DPI and 9/14-point fonts cover
+  padding/minimum/floor/reset and extreme values without changing widths.
+- Related checks recorded **185 passes / 1 failure out of 186**. The minimized
+  group-motion case failed again in isolation (**1 pass / 1 failure out of 2**).
+  Its same failure, "The group stays open after motion", is recorded in the
+  **2026-11-03 pre-Application-Menu baseline** at
+  `artifacts/application-menu/baseline/pre-application-menu-order-sensitive.trx`.
+  It remains a pre-existing motion/lifetime gate, not a clean aggregate pass.
+- After the tab-switch and Application Menu refinements, targeted checks passed
+  **58/58**. Strengthened fractional-padding/off-tab-group/work-area cases passed
+  **2/2**, tab/cache/native-centering cases **4/4**, and a 30-field scrolling menu
+  reveal/retained-native-editor case **1/1**. Passed scopes were retained.
+- Native Release solution build passed with zero warnings/errors.
+- Debug runtime/design server/client/sample builds passed with zero warnings/
+  errors. Refreshed the same sample with package
+  `0.1.0-designer.local20261104T051922952Z`; runtime/design-server package hashes
+  match current Debug outputs. Authored Forms/resources remain unchanged.
+- Public-package verification passed all seven roles/reset/demo actions, both
+  renderers/densities and synthetic 96/120/144/192-DPI paint. A public-only check
+  also passed Classic/Simplified ribbon height growth and exact reset in both
+  densities, without showing windows or using internals. Representative Office/
+  neutral package frames were inspected at fractional DPI, including all corners.
+- Actual VS, native input/IME, material and mixed-monitor hardware acceptance
+  remain separate. No computer use, global input, WPF edits, commit, push or
+  publication; no clean full-suite pass is claimed.
+
+Evidence: `artifacts/geometry/editor-height/`, including `package/result.log`,
+public-package/native-DPI menu/inline captures and focused/related/isolated/tab/
+surface/cache/scroll TRX files. Inert menu
+captures show the painted/native text contract; DrawToBitmap inline captures can
+include Windows' unused ComboBox chrome and are not onscreen input acceptance.
+Review **Roomier editors → Try editor menu** in Mouse/Touch, then compare the
+authored Formatting fields and reset. Fields and rows should become taller,
+labels/text should remain centered, and widths/values should remain stable.
+**Current review result is recorded below; await instruction before another
+geometry batch or theme.**
+
+### Remaining review batches
+
+This is a **working grouping, not a pre-existing fixed slice count**. About
+**six further review batches** remain, grouped as follows:
+
+1. Command/split content, glyph slots and special/illustrated menu geometry.
+2. Ribbon body/groups/header/tabs and QAT/message spacing/joins.
+3. Gallery tiles, headings and utility slots.
+4. Backstage navigation and page-container geometry.
+5. ScreenTips, KeyTips and caption geometry.
+6. Frames/radii/shadows and matching popup inner clearance/clipping/cache keys.
+
+Inventory/review may split a broad group or leave platform-owned rules unchanged.
+These groups are a roadmap, not authorization to implement all of them in one
+turn. Additional built-in themes still follow consolidation.
+
+### Verification and current review gate
+
+- [x] Saved 32 before/after default measurement/paint pairs across both renderers,
+  densities, 9/14-point fonts and synthetic 96/120/144/192 DPI. Measurement files
+  and every captured default pixel match. These synthetic paint fixtures are
+  separate from real device-DC/hardware rendering.
+- [x] Five-role overrides/reset/invalid assignment, Touch floors, fractional-DPI
+  padding and native row cap; field/button/text/label agreement, fill/fixed widths,
+  narrow/empty slots and TextBox/ComboBox width parity covered.
+- [x] Native STA editor/preview cases cover default/override/extreme/reset,
+  retained HWND/value, native text clipping, UIA row bounds, actual ListBox row
+  height and keyboard selection. No global input is injected.
+- [x] First new scope **12/12 passed**. Related scope **69 passed / 1 failed out
+  of 70**; the customization context-menu lifetime case passed **1/1 isolated**
+  without a code change. This is an aggregate fixture/lifetime limitation, not
+  a clean aggregate pass. Additional layout/designer scope **94/94 passed**,
+  including the strengthened native/preview cases. Passed scopes were retained.
+  A final targeted **4/4** covered Classic/Simplified inline measurement and
+  retained native handles in both densities with apply/reset.
+- [x] Native Release solution build passed with zero warnings/errors.
+- [x] Debug runtime/design server/client/sample builds passed with zero warnings/
+  errors. Refreshed the same permanent sample with package
+  `0.1.0-designer.local20261104T045532630Z`; runtime/design-server package hashes
+  match current Debug assemblies. No authored Form/resource or WPF file changed.
+- [x] Public-package API/reset/validation and label/button/hidden-label paint
+  passed both renderers/densities at four synthetic DPIs (16 presentations),
+  plus permanent demo apply/reset and retained previous geometry/Fill/File/QAT
+  contracts. No window/popup/internal/Showcase helper is used by this check.
+  Inspected representative Office/neutral package scenes, all four frame corners,
+  and native-DPI default/override inert previews. These are separate from actual
+  hardware/material acceptance.
+- [x] **2026-11-04: user accepted the editor spacing and taller-field appearance**
+  ("looks good now"). This confirms appearance only. Actual VS designer, physical
+  touch/IME, external accessibility and mixed-monitor/material hardware gates
+  remain separate; no full-suite pass is claimed.
+
+Evidence is under `artifacts/geometry/editors/`: `before/`, `after/`, `previews/`
+and the baseline/new/related/isolated/layout-designer/inline TRX files, plus
+`package/result.log` and public-package captures. Review normal
+Debug sample with `--menu-geometry-demo`: **Native editor spacing**, then compare
+**Roomier editors** and **Reset editors** using **Try editor menu** in Mouse/Touch.
+Open both labelled editable and unlabelled selection-only font choices. Combine
+with prior menu spacing and fill toggles, and compare the authored Formatting
+fields. Captions should remain aligned, text should clear the wider button,
+choice rows should grow, and values should survive reset. **Await instruction
+before implementing another batch or theme.**
 
 ### Shared menu arrow column correction — 2026-11-04
 

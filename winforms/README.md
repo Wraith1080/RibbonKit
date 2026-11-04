@@ -1935,6 +1935,51 @@ ribbon.Theme = ribbon.Theme with
 };
 ```
 
+Native editor content and ComboBox choice rows have seven optional theme roles:
+
+| Property | Null Compact / Touch |
+| --- | --- |
+| `EditorLabelGap` | 6 / 6 |
+| `EditorTextInset` | 4 / 4 |
+| `EditorMinimumHeight` | Font minimum / 42 |
+| `EditorVerticalPadding` | 4 / 4 |
+| `ComboBoxButtonWidth` | 24 / 32 |
+| `ComboBoxMinimumChoiceHeight` | 28 / 44 |
+| `ComboBoxChoiceVerticalPadding` | 5 / 5 |
+
+Values are 96-DPI logical pixels. Gaps/padding/insets accept 0..1024; button and
+field/choice minima accept 1..1024. Null resets each role independently. Touch keeps a
+32-pixel button minimum and 44-pixel choice-row minimum. Font/padding minima apply;
+native choice height is capped at 255 device pixels. Explicit vertical padding
+scales each side separately; null preserves the existing summed rounding.
+For example:
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    EditorLabelGap = 18, EditorTextInset = 10, EditorMinimumHeight = 54,
+    EditorVerticalPadding = 10, ComboBoxButtonWidth = 48,
+    ComboBoxMinimumChoiceHeight = 60, ComboBoxChoiceVerticalPadding = 14
+};
+```
+
+Layout, paint, native text clipping and inert previews share these roles. Hidden
+ComboBox labels reserve no gap; narrow text slots clamp to empty within the
+field/button. Authored `InputWidth`, `FillMenuWidth` and the accepted proportional
+Touch width rules remain. Optional height/padding values grow native TextBox and
+ComboBox fields together, with centered text/labels and unchanged font size.
+Classic command rows, group flyouts, menu/Application Menu rows and the Simplified
+field band reserve their resolved height. Menu-only fields and Small command
+projections do not enlarge the ribbon body. Touch fields retain a minimum of 42,
+or 44 for inline Simplified ComboBoxes; Simplified Compact retains 26. Unset field
+padding preserves scaled summed 8; explicit padding scales each side separately.
+Height overrides do not rescale field widths. Changing theme closes stale lists/popups;
+reopening uses current metrics without replacing the native editors. Small command
+projections and menu-reference arrows retain their separate geometry. Choice-list
+horizontal padding, outer field insets, system EDIT/caret/IME and application
+content remain outside this contract. Theme configuration is code-only; existing
+designer model authoring and generated code are unchanged.
+
 Native fields in ordinary dropdown menus use the same command-text gutter and
 trailing clearance as neighboring commands. TextBox and visible ComboBox labels
 start at that text column; their fields share the measured label span. With

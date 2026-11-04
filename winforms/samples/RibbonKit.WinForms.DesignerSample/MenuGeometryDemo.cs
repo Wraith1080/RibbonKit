@@ -118,6 +118,26 @@ public partial class DesignerForm
             statusLabel.Text = "Arrow and separator clearance reset; previous geometry and field-fill settings retained.";
         };
         arrowGroup.Items.AddRange(widerArrows, resetArrows, arrowMenu);
+        var editorGroup = new RibbonGroup { Text = "Native editor spacing" }; tab.Groups.Add(editorGroup);
+        var roomierEditors = new RibbonButtonItem { Text = "Roomier editors", SizePolicy = RibbonSizePolicy.Fixed(RibbonItemSize.Medium) };
+        var resetEditors = new RibbonButtonItem { Text = "Reset editors", SizePolicy = RibbonSizePolicy.Fixed(RibbonItemSize.Medium) };
+        var editorMenu = new RibbonDropDownItem { Text = "Try editor menu", SizePolicy = RibbonSizePolicy.Fixed(RibbonItemSize.Medium) };
+        var editorText = new RibbonTextBoxItem { Text = "Name", Value = "Retained native editor", InputWidth = 120, FillMenuWidth = true };
+        var editorCombo = new RibbonComboBoxItem { Text = "Font family", InputWidth = 120, FillMenuWidth = true, IsEditable = true };
+        var editorHidden = new RibbonComboBoxItem { Text = "Unlabelled font chooser", ShowLabel = false, InputWidth = 120, FillMenuWidth = true };
+        foreach (var chooser in new[] { editorCombo, editorHidden }) { chooser.Items.AddRange("Aptos", "Segoe UI", "Arial", "Times New Roman"); chooser.SelectedIndex = 0; }
+        editorMenu.Items.AddRange(editorText, editorCombo, editorHidden);
+        roomierEditors.Click += (_, _) =>
+        {
+            ribbon.Theme = ribbon.Theme with { EditorLabelGap = 18, EditorTextInset = 10, EditorMinimumHeight = 54, EditorVerticalPadding = 10, ComboBoxButtonWidth = 48, ComboBoxMinimumChoiceHeight = 60, ComboBoxChoiceVerticalPadding = 14 };
+            statusLabel.Text = "Taller editor fields and roomier choices applied. Compare Try editor menu and the Formatting fields in Mouse/Touch.";
+        };
+        resetEditors.Click += (_, _) =>
+        {
+            ribbon.Theme = ribbon.Theme with { EditorLabelGap = null, EditorTextInset = null, EditorMinimumHeight = null, EditorVerticalPadding = null, ComboBoxButtonWidth = null, ComboBoxMinimumChoiceHeight = null, ComboBoxChoiceVerticalPadding = null };
+            statusLabel.Text = "Editor spacing reset; prior menu spacing and field-fill settings retained.";
+        };
+        editorGroup.Items.AddRange(roomierEditors, resetEditors, editorMenu);
         ribbon.Tabs.Add(tab); ribbon.SelectedTab = tab;
     }
 
@@ -149,6 +169,13 @@ public partial class DesignerForm
             throw new InvalidOperationException("Arrow demo did not apply all four roles.");
         arrows[1].PerformClick();
         if (ribbon.Theme != original || chooserExamples.Any(i => !i.FillMenuWidth)) throw new InvalidOperationException("Arrow reset changed prior theme/fill settings.");
+        var editors = ribbon.SelectedTab.Groups[4].Items; editors[0].PerformClick();
+        if (ribbon.Theme.EditorLabelGap != 18 || ribbon.Theme.EditorTextInset != 10 || ribbon.Theme.EditorMinimumHeight != 54 || ribbon.Theme.EditorVerticalPadding != 10 || ribbon.Theme.ComboBoxButtonWidth != 48 ||
+            ribbon.Theme.ComboBoxMinimumChoiceHeight != 60 || ribbon.Theme.ComboBoxChoiceVerticalPadding != 14)
+            throw new InvalidOperationException("Editor demo did not apply all seven roles.");
+        editors[1].PerformClick();
+        if (ribbon.Theme != original || !qat.SequenceEqual(ribbon.QuickAccessItems) || ribbon.FileMenuMode != fileMode)
+            throw new InvalidOperationException("Editor reset changed prior theme/QAT/File settings.");
     }
 
     internal void VerifyMenuGeometryDemo(string directory)

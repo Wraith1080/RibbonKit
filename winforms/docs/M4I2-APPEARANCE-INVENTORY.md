@@ -4,7 +4,8 @@ Status, **2026-11-03: shared color/fill roles and selectable title-bar tint
 implemented; review and validation are recorded in
 [the color-role slice](APPEARANCE-COLOR-ROLES.md)**. Earlier KeyTip/backdrop,
 Backstage and disabled/state increments remain. The bounded ordinary-menu
-horizontal/vertical and container/heading/overflow geometry batches are tracked in the
+horizontal/vertical, container/heading/overflow, shared arrow-column and native
+editor/choice-row geometry batches are tracked in the
 [geometry consolidation plan](GEOMETRY-CONSOLIDATION-PLAN.md), which owns their review scope.
 Further geometry and new built-in themes remain separate later increments.
 Current slice, **2026-11-03**: geometry consolidation, following the

@@ -1,10 +1,12 @@
 # Starting prompt: native RibbonKit.WinForms geometry consolidation
 
-Execution checkpoint, **2026-11-04**: the fourth batch's menu arrows now share the
-split secondary column, with consistent caption clearance. This correction is
-implemented and verified in [the geometry plan](GEOMETRY-CONSOLIDATION-PLAN.md).
-**Shared-column review is pending. Do not start another geometry batch or additional
-themes.** The original bounded starting contract follows for context.
+Execution checkpoint, **2026-11-04**: the user accepted the fourth batch's shared
+arrow-column appearance and authorized continuation. The fifth batch groups
+native editor label/text/button spacing with ComboBox choice-row geometry and
+the user-requested taller-field Roomier preset extension;
+[the geometry plan](GEOMETRY-CONSOLIDATION-PLAN.md) owns its completed contract and
+verification evidence. **The height extension's user review is pending. Do not start another
+batch or additional themes.** The original bounded starting contract follows for context.
 
 Continue work in:
 

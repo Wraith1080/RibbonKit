@@ -373,9 +373,9 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
                 }
                 else
                 {
-                    int inset = RibbonLayoutEngine.Scale(4, _ribbon.DeviceDpi);
-                    _editor.Bounds = new(field.Left + inset, field.Top + (field.Height - Font.Height) / 2,
-                        Math.Max(1, field.Width - 2 * inset), Font.Height);
+                    var text = RibbonEditorLayout.TextBounds(field, _ribbon.DeviceDpi, _ribbon.Theme);
+                    _editor.Bounds = new(text.Left, field.Top + (field.Height - Font.Height) / 2,
+                        text.Width, Font.Height);
                 }
                 if (Choice is { } currentChoice && !currentChoice.Matches(_quickOpener is null ? RectangleToScreen(field) : ScreenField)) CloseChoice(true);
                 if (IsDisposed) return;
@@ -784,7 +784,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
             }
             internal void ClipToText()
             {
-                var text = RibbonEditorLayout.ComboText(ClientRectangle, presenter._ribbon.DeviceDpi, presenter._ribbon.Density);
+                var text = RibbonEditorLayout.ComboText(ClientRectangle, presenter._ribbon.DeviceDpi, presenter._ribbon.Density, presenter._ribbon.Theme);
                 text.Y = (Height - Font.Height) / 2; text.Height = Font.Height;
                 if (_textClip != text)
                 {
@@ -798,11 +798,11 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
             protected override void OnMeasureItem(MeasureItemEventArgs e)
             {
                 base.OnMeasureItem(e);
-                e.ItemHeight = RibbonEditorLayout.ComboRowHeight(Font, presenter._ribbon.DeviceDpi, presenter._ribbon.Density);
+                e.ItemHeight = RibbonEditorLayout.ComboRowHeight(Font, presenter._ribbon.DeviceDpi, presenter._ribbon.Density, presenter._ribbon.Theme);
             }
             protected override void OnDropDown(EventArgs e)
             {
-                DropDownHeight = RibbonEditorLayout.ComboRowHeight(Font, presenter._ribbon.DeviceDpi, presenter._ribbon.Density) * Math.Max(1, Math.Min(Items.Count, MaxDropDownItems)) + 2;
+                DropDownHeight = RibbonEditorLayout.ComboRowHeight(Font, presenter._ribbon.DeviceDpi, presenter._ribbon.Density, presenter._ribbon.Theme) * Math.Max(1, Math.Min(Items.Count, MaxDropDownItems)) + 2;
                 base.OnDropDown(e);
             }
             protected override void OnDrawItem(DrawItemEventArgs e)
@@ -818,7 +818,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
                     // managed SelectedIndexChanged callback updates the model.
                     // Draw it correctly once instead of queuing a second paint.
                     string value = e.Index >= 0 && e.Index < Items.Count ? GetItemText(Items[e.Index]) ?? "" : "";
-                    ribbon.Painter.DrawText(context with { Bounds = RibbonEditorLayout.ComboText(ClientRectangle, ribbon.DeviceDpi, ribbon.Density) },
+                    ribbon.Painter.DrawText(context with { Bounds = RibbonEditorLayout.ComboText(ClientRectangle, ribbon.DeviceDpi, ribbon.Density, ribbon.Theme) },
                         value, item.EffectiveEnabled ? ribbon.Theme.EditorTextColor : ribbon.Theme.DisabledColor,
                         TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.EndEllipsis);
                 }

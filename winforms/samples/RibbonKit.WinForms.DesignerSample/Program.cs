@@ -6,6 +6,12 @@ internal static class Program
     private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
+        if (args.Length == 2 && args[0] == "--verify-editor-geometry")
+        {
+            try { EditorGeometryCheck.Verify(args[1]); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
+            return;
+        }
         if (args.Length == 2 && args[0] == "--verify-menu-container-geometry")
         {
             try { MenuContainerGeometryCheck.Verify(args[1]); }

@@ -42,12 +42,12 @@ public partial class RibbonControl
                 if (item is RibbonComboBoxItem combo)
                 {
                     Painter.DrawComboBox(context, combo, field); text = combo.Value;
-                    textBounds = RibbonEditorLayout.ComboText(field, DeviceDpi, Density);
+                    textBounds = RibbonEditorLayout.ComboText(field, DeviceDpi, Density, Theme);
                 }
                 else if (item is RibbonTextBoxItem input)
                 {
                     Painter.DrawTextBox(context, input, field); text = input.Value;
-                    textBounds = Rectangle.Inflate(field, -RibbonLayoutEngine.Scale(4, DeviceDpi), 0);
+                    textBounds = RibbonEditorLayout.TextBounds(field, DeviceDpi, Theme);
                 }
                 else continue;
                 if (textBounds.Width <= 0 || textBounds.Height <= 0) continue;

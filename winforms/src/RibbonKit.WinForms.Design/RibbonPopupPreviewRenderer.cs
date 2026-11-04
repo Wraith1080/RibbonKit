@@ -53,8 +53,8 @@ internal static class RibbonPopupPreviewRenderer
                             var field = RibbonEditorLayout.Field(content, item, target.LabelWidth, ribbon.Font, ribbon.DeviceDpi, menu: surface.UsesMenuEditorGutter);
                             if (item is RibbonComboBoxItem combo) ribbon.Painter.DrawComboBox(row, combo, field);
                             else ribbon.Painter.DrawTextBox(row, (RibbonTextBoxItem)item, field);
-                            var text = item is RibbonComboBoxItem ? RibbonEditorLayout.ComboText(field, ribbon.DeviceDpi, ribbon.Density)
-                                : Rectangle.Inflate(field, -RibbonLayoutEngine.Scale(4, ribbon.DeviceDpi), 0);
+                            var text = item is RibbonComboBoxItem ? RibbonEditorLayout.ComboText(field, ribbon.DeviceDpi, ribbon.Density, ribbon.Theme)
+                                : RibbonEditorLayout.TextBounds(field, ribbon.DeviceDpi, ribbon.Theme);
                             ribbon.Painter.DrawText(context with { Bounds = text }, editor.Value,
                                 item.EffectiveEnabled ? ribbon.Theme.Foreground : ribbon.Theme.DisabledColor,
                                 TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis);

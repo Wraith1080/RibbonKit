@@ -84,6 +84,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             _selectedTab = value;
             _bodyOffset = 0;
             _layoutDirty = true;
+            if (RibbonEditorMetrics.HasHeightOverride(_theme)) { _engine.Clear(); UpdateHeight(); }
             if (_focused is not RibbonTab)
             {
                 _focused = value;
@@ -106,6 +107,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             VerifyAccess();
             ArgumentNullException.ThrowIfNull(value);
             RibbonMenuMetrics.Validate(value);
+            RibbonEditorMetrics.Validate(value);
             if ((!value.PopupBackground.IsEmpty && value.PopupBackground.A != 255) ||
                 (!value.EditorBackground.IsEmpty && value.EditorBackground.A != 255) ||
                 (!value.TitleBarBackground.IsEmpty && value.TitleBarBackground.A != 255))
@@ -166,7 +168,9 @@ public partial class RibbonControl : Control, ISupportInitialize
         {
             int text = (int)Math.Ceiling(Font.Height * 96d / DeviceDpi);
             var metrics = RibbonDensityMetrics.For(Density);
-            int rows = Math.Max(metrics.CommandRow, text + 8) * 3 + Math.Max(20, text + 6) + RibbonLayoutEngine.CommandVerticalInset;
+            bool fields = RibbonEditorMetrics.HasHeightOverride(_theme) && SelectedTab is { } tab && GetPresentedGroups(tab)
+                .Any(g => g.Visible && g.Items.Any(i => i.Visible && RibbonEditorLayout.IsField(i, i is RibbonComboBoxItem ? i.SizePolicy.At(0) : RibbonItemSize.Medium)));
+            int rows = RibbonEditorLayout.CommandRowLogical(Font, DeviceDpi, Density, _theme, fields) * 3 + Math.Max(20, text + 6) + RibbonLayoutEngine.CommandVerticalInset;
             return _theme with
             {
                 TabHeight = Math.Max(Math.Max(_theme.TabHeight, metrics.Touch ? metrics.TabHeight : 0), text + 12),
@@ -174,10 +178,20 @@ public partial class RibbonControl : Control, ISupportInitialize
             };
         }
     }
-    internal RibbonTheme LayoutTheme => LayoutMode == RibbonLayoutMode.Classic ? ClassicLayoutTheme : ClassicLayoutTheme with
+    internal RibbonTheme LayoutTheme
     {
-        BodyHeight = Math.Max(RibbonDensityMetrics.For(Density).SimplifiedBody, (int)Math.Ceiling(Font.Height * 96d / DeviceDpi) + (Density == RibbonDensity.Touch ? 20 : 14))
-    };
+        get
+        {
+            var theme = ClassicLayoutTheme;
+            if (LayoutMode == RibbonLayoutMode.Classic) return theme;
+            var metrics = RibbonDensityMetrics.For(Density);
+            int height = Math.Max(metrics.SimplifiedBody, (int)Math.Ceiling(Font.Height * 96d / DeviceDpi) + (metrics.Touch ? 20 : 14));
+            if (RibbonEditorMetrics.HasHeightOverride(_theme) && SelectedTab is { } tab && Simplified.Selected(tab)
+                .Any(p => p.Command.Item is RibbonComboBoxItem && p.Size != RibbonItemSize.Small))
+                height = Math.Max(height, (int)Math.Ceiling(RibbonEditorLayout.Height(Font, DeviceDpi, Density, true, _theme) * 96d / DeviceDpi) + 2 * metrics.SimplifiedClearance);
+            return theme with { BodyHeight = height };
+        }
+    }
     internal RibbonRenderer Painter => Renderer ?? _defaultRenderer;
     internal RibbonLayoutEngine Engine => _engine;
     internal RibbonLayoutSnapshot Snapshot

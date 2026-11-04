@@ -29,11 +29,13 @@ internal sealed class RibbonApplicationMenuLayout
         int width = Math.Max(1, Math.Min(maximum.Width, navWidth + S(340) + 2 * pad + 3));
         navWidth = Math.Min(navWidth, Math.Max(1, width * 3 / 5));
         int paneWidth = Math.Max(1, width - navWidth - 2 * pad - 3);
-        int[] Heights(RibbonItem[] items, int w, bool navigation) => items.Select(i => RibbonApplicationMenuMetrics.RowHeight(i, w, font, dpi, density, navigation)).ToArray();
+        int[] Heights(RibbonItem[] items, int w, bool navigation) => items.Select(i => RibbonApplicationMenuMetrics.RowHeight(i, w, font, dpi, density, navigation, ribbon.Theme)).ToArray();
         var lh = Heights(left, Math.Max(1, navWidth - bar), true);
         var rh = Heights(right, Math.Max(1, paneWidth - 2 * inset - bar), false);
         int header = pane.DropDownHeader.Length == 0 ? 0 : Math.Max(S(28), font.Height + S(12));
         int footerRow = Math.Max(S(touch ? 44 : 30), font.Height + S(10)), footerGap = S(6);
+        if (footer.Any(i => i is IRibbonEditorItem) && RibbonEditorMetrics.HasHeightOverride(ribbon.Theme))
+            footerRow = Math.Max(footerRow, RibbonEditorLayout.Height(font, dpi, density, theme: ribbon.Theme) + S(2));
         var footerRects = new List<Rectangle>(); int fx = 0, fy = 0;
         int footerAvailable = Math.Max(1, width - 2 * pad - bar);
         foreach (var item in footer)

@@ -40,6 +40,9 @@ internal static class RibbonMenuLayout
         if (item is RibbonMenuSeparatorItem) return S(metrics.MenuSeparatorHeight);
         if (illustrated && IsIllustratedChoice(item)) return Math.Max(S(IllustratedMinimumHeight), font.Height * (HasDescription(item) ? 3 : 1) + S(12));
         int basic = Math.Max(S(metrics.MenuRow), font.Height + S(10));
+        var editorTheme = theme ?? item.Ribbon?.Theme;
+        if (!quickAccess && item is IRibbonEditorItem && RibbonEditorMetrics.HasHeightOverride(editorTheme))
+            basic = Math.Max(basic, RibbonEditorLayout.Height(font, dpi, metrics.Density, theme: editorTheme) + S(2));
         if (item is not IRibbonEditorItem) basic = Math.Max(basic, metrics.IconMinimumRowHeight(dpi));
         if (!HasDescription(item)) return basic;
         int arrow = item is RibbonSplitButtonItem ? ArrowColumn(new(0, 0, width, 1), dpi, metrics.Density, theme).Width
