@@ -117,6 +117,20 @@ public sealed record RibbonTheme
     public int? CommandSplitPrimaryMinimumWidth { get; init; }
     /// <summary>Gets the optional Large horizontal command split primary minimum width in 96-DPI logical pixels, from 0 to 1024. Null retains Compact 0 / Touch 72 and existing caption sizing. Explicit geometry keeps Touch's 72 floor and arrow cap. Large vertical and menu/QAT presentations retain their own geometry.</summary>
     public int? CommandLargeSplitPrimaryMinimumWidth { get; init; }
+    /// <summary>Gets optional symmetric Small/Medium command content padding in 96-DPI logical pixels, from 0 to 1024. Null preserves 5 and existing optical icon offsets. Larger values reserve width; smaller values retain density minima. Excludes Large commands, menus, QAT projections, native editors and galleries.</summary>
+    public int? CommandContentHorizontalPadding { get; init; }
+    /// <summary>Gets optional minimum clearance above/below Small/Medium command text and 16-pixel artwork in 96-DPI logical pixels, from 0 to 1024. Null preserves existing rows and the intrinsic 3-pixel text inset. Explicit values grow containing rows/bands as needed; density/font minima and centered content remain.</summary>
+    public int? CommandContentVerticalPadding { get; init; }
+    /// <summary>Gets the optional Application Menu navigation-row minimum height in 96-DPI logical pixels, from 1 to 1024. Null retains Compact 40 / Touch 44 and existing native-editor minima. Content minima still apply; Touch retains 44.</summary>
+    public int? ApplicationMenuNavigationMinimumRowHeight { get; init; }
+    /// <summary>Gets the optional Application Menu right-pane row minimum height in 96-DPI logical pixels, from 1 to 1024. Null retains Compact 28 / Touch 44 and existing illustrated/editor content minima. Touch retains 44.</summary>
+    public int? ApplicationMenuPaneMinimumRowHeight { get; init; }
+    /// <summary>Gets the optional Application Menu footer-row minimum height in 96-DPI logical pixels, from 1 to 1024. Null uses Compact 30 / Touch 44. Font/icon/editor minima and the Touch floor of 44 still apply.</summary>
+    public int? ApplicationMenuFooterMinimumRowHeight { get; init; }
+    /// <summary>Gets the optional Application Menu pane-content/default-heading horizontal inset in 96-DPI logical pixels, from 0 to 1024. Null preserves 10. Larger insets reserve desired width and extend navigation by the excess over 10; explicit values clamp within the available pane. Active-pane title bands keep their full width.</summary>
+    public int? ApplicationMenuPaneHorizontalPadding { get; init; }
+    /// <summary>Gets the optional gap between Application Menu footer items and wrapped footer rows in 96-DPI logical pixels, from 0 to 1024. Null preserves 6. Footer scrolling and work-area limits remain.</summary>
+    public int? ApplicationMenuFooterItemGap { get; init; }
     /// <summary>Gets the optional minimum caption reservation before Quick Access/More overflow menu, ComboBox and group chooser indicators in 96-DPI logical pixels, from 1 to 1024. Null uses 16 in both densities. The shared split-arrow column can reserve additional space; glyphs align in that column. QAT strip buttons and native choice lists retain their own geometry.</summary>
     public int? MenuChooserArrowWidth { get; init; }
     /// <summary>Gets optional horizontal padding at each end of ordinary-menu and Quick Access/More separator lines in 96-DPI logical pixels, from 0 to 1024. Null uses 8. Lines stay one device pixel; Application Menu-specific and group separators retain their own geometry.</summary>
@@ -228,6 +242,7 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     internal bool IsBodyScrollButton { get; init; }
     internal bool IsMenuHeading { get; init; }
     internal Layout.RibbonApplicationMenuPart ApplicationMenuPart { get; init; }
+    internal int? ApplicationMenuDividerX { get; init; }
     internal bool ApplicationMenuDefaultPane { get; init; }
     internal bool CompositedText { get; init; }
     internal bool WindowBackdrop { get; init; }

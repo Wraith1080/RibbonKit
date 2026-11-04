@@ -1,12 +1,15 @@
 # Native geometry consolidation
 
-Status, **2026-11-04: the seventh batch's horizontal command-split widths are
-implemented and verified. Its current review result is recorded below. Await
-instruction before another batch or additional themes**.
+Status, **2026-11-04: paired eighth/ninth batches (Small/Medium command-content
+padding and Application Menu spacing) are implemented and verified; the current
+user-review result is recorded below**. The seventh batch is accepted below. The user authorized
+2–3 related implementation batches per session, with contracts upfront, shared
+verification and one combined review. Await user instruction before further batches
+or additional themes.
 Baseline: `codex/Ribbonkit-Winform`, `9dd0054b9ebe4f6f9ff5b57bf75198e443f5b4e5`.
 The three existing documentation handoff edits are preserved. This plan owns the
-bounded geometry contract and review gate; additional geometry and themes require
-a later increment after user review.
+bounded geometry contract and review gate; the selected session's batches are
+bounded together. Further geometry and themes require a later increment after review.
 
 ## Surface inventory
 
@@ -17,9 +20,9 @@ The inventory identifies ownership, not new acceptance of deferred surfaces.
 | --- | --- | --- | --- |
 | Body and groups | `BodyHeight=110` minimum, `BodyMargin=(7,1,7,7)`, `LargeButtonMaxWidth=108`, `CollapsedGroupMaxWidth=108`, scroll vertical inset 2 | `RibbonTheme`, `RibbonLayout`, content/reduction/Simplified layout, Office renderer, body viewport, hit targets, group motion | Preserve font-driven three rows and joined frame. Group separator clearance 12 and collapsed opener insets 6/8 are separate deferred roles. |
 | Header, tabs and utilities | `TabHeight=40` minimum (Touch 48), `HeaderButtonInset=4`; QAT optical offset 2 | density/header/caption layout, Office tab paint/indicator measurement, hit targets, KeyTips/UIA, independent indicator motion | Tab label/indicator and caption geometry deferred. Device-pixel hairlines are raster rules. |
-| Commands, splits and native editors | rows 26/45; menu split arrow 20/28, horizontal command split 20/44; combo button 24/32; native editor height font+8 / at least 42 | density/content/split/editor layout, renderer, editor manager and borrowed popup editors, keyboard/UIA | Fifth batch owns native field geometry. Seventh adds shared horizontal command-split arrow/primary widths. Authored input widths/font minima remain. Command content, outer padding, glyph shapes and system EDIT rendering stay deferred/platform-owned. |
+| Commands, splits and native editors | rows 26/45; menu split arrow 20/28, horizontal command split 20/44; combo button 24/32; native editor height font+8 / at least 42 | density/content/split/editor layout, renderer, editor manager and borrowed popup editors, keyboard/UIA | Fifth owns native fields; seventh owns horizontal command splits; eighth adds Small/Medium content padding and containing row minima. Authored widths/font minima remain. Intrinsic Large/glyph geometry, outer spacing and system EDIT rendering retain separate owners. |
 | Ordinary command menus, nested menus, QAT overflow, Simplified More | rows 28/44; icon 24/32; leading/trailing 8; icon/text gap 10/12; desired width 170/220, described 280/320 | `RibbonMenuMetrics`, row/container/heading layout, popup sizing, shared renderer, overflow bands and inert preview; targets feed scrolling, keyboard/KeyTips/UIA and editor hosting | First/second sets expose row/horizontal/vertical roles. Third exposes container/heading/overflow bands; fourth exposes menu arrow slots and separator clearance. Popup inner margin, glyph shapes and platform work-area rules remain separate. |
-| Application Menu | model navigation/pane dimensions and font/content minima; nav rows 40/44, pane 28/44; arrow 26/44 | component-specific metrics/layout, Application Menu renderer, native pane hosting and column scrolling, designer preview | Deferred. Accepted hover/default-pane/split ownership and every current default retained. Nested ordinary submenus use the selected ordinary-menu contract. |
+| Application Menu | nav rows 40/44, pane 28/44, footer 30/44; pane inset 10, footer gap 6; arrow 26/44 | component-specific metrics/layout, Application Menu renderer, native pane hosting and column scrolling, designer preview | Ninth adds navigation/pane/footer row minima, pane inset and footer gap. Hover/default-pane/split ownership and null defaults retained. Nested ordinary submenus keep ordinary-menu geometry; intrinsic columns/arrows/frame rules remain separate. |
 | Illustrated menu choices and ComboBox choices | illustrated width 300, icon 36, row at least 64; ComboBox choice rows 28/44 or font+10 | `RibbonIllustratedMenuMetrics`, illustrated layout/renderer and ordinary popup sizing/preview; editor layout/list window | Sixth batch exposes illustrated width/row/artwork/insets/gaps. Fifth batch owns ComboBox choice minimum and vertical text padding. Choice-list horizontal padding stays separate. |
 | Galleries | model tile sizes; density fallback 32x32 / 64x80, utility width 18/32 | gallery strip/popup layout, renderer, presenter viewport/scroll, borrowed UserControl cards, UIA | Tile padding, heading/utility slots deferred. Application artwork and card content stay host-owned. |
 | QAT strip and message joins | QAT button 28/44, row 32/48; message minimum 34 (Touch floor), content padding (12,4,8,4) | QAT/message layout, renderer and joined body frame, native caption host, motion endpoints | Strip metrics and frame joins deferred. QAT overflow menu rows are selected; source identity/placement is unchanged. |
@@ -926,13 +929,14 @@ geometry batch or theme.**
 
 This is a **working grouping, not a pre-existing fixed slice count**. These six
 broad review groups can require more than one bounded implementation batch.
-The illustrated-choice portion of the first group is implemented in the sixth
-batch below; the seventh addresses horizontal split widths. Command content and
-Application Menu-specific portions remain. The current estimate is **8–10 further
-review batches**:
-command content (1), Application Menu geometry (1), body/groups (1), header/QAT/
-message spacing (1–2), galleries (1), Backstage (1), tips/caption (1–2), and frames/
-shadows (1). This replaces the earlier overly broad six-batch estimate.
+The sixth implements illustrated choices and the seventh horizontal split widths.
+The paired eighth/ninth session below implements Small/Medium command content and
+the selected Application Menu spacing roles. After their combined review, the
+working estimate is **6–8 further implementation batches**: body/groups (1),
+header/QAT/message spacing (1–2), galleries (1), Backstage (1), tips/caption (1–2),
+and frames/shadows (1). Related batches may share a session and review; this is
+not a session count. Intrinsic Large/glyph and platform rules need inventory,
+not automatic new theme knobs. This replaces the earlier 8–10 estimate.
 
 1. Command/split content, glyph slots and special/illustrated menu geometry.
 2. Ribbon body/groups/header/tabs and QAT/message spacing/joins.
@@ -1261,3 +1265,162 @@ comparison in Classic, and **Split on QAT** for retained QAT sizing. Source stat
 and earlier editor/menu geometry should survive reset. **Await instruction before
 another batch or additional theme.** No computer use, global input, WPF edits,
 commit, push or publication.
+
+## Paired eighth/ninth batches: command content and Application Menu spacing — 2026-11-04
+
+The user authorized several related batches per session after accepting and
+committing the seventh. Clean starting baseline: `codex/Ribbonkit-Winform`,
+`c695fbc51596e66f3f6c29bcf77d59abfc9684f2`. Both native API/layout/designer
+contracts were presented before implementation. This session selects only
+Small/Medium command-content padding and Application Menu spacing, with shared
+verification, one permanent-sample refresh and one combined review. No themes.
+
+| Additive nullable `RibbonTheme` property | Null behavior | Explicit behavior |
+| --- | --- | --- |
+| `CommandContentHorizontalPadding` | Existing 5-pixel text padding and optical icon offsets. | 0..1024; symmetric content-width allowance. Smaller values retain density/preferred-width minima. |
+| `CommandContentVerticalPadding` | Existing rows/intrinsic 3-pixel text inset. | 0..1024; minimum clear space around text/16-pixel artwork, growing rows/bands as needed. |
+| `ApplicationMenuNavigationMinimumRowHeight` | 40 / 44 Compact/Touch; legacy editor minima. | 1..1024; font/artwork/editor minima and Touch 44 floor remain. |
+| `ApplicationMenuPaneMinimumRowHeight` | 28 / 44; legacy illustrated/editor minima. | 1..1024; content minima and Touch 44 floor remain. |
+| `ApplicationMenuFooterMinimumRowHeight` | 30 / 44. | 1..1024; font/artwork/editor minima and Touch 44 floor remain. |
+| `ApplicationMenuPaneHorizontalPadding` | 10. | 0..1024; content/default-heading inset and desired-width allowance. Excess over 10 also extends navigation to its divider; available space clamps geometry. |
+| `ApplicationMenuFooterItemGap` | 6. | 0..1024; gaps between footer items and wrapped rows. |
+
+All values are 96-DPI logical pixels. Null resets independently. Validation runs
+before Theme assignment; XML comments and 14 Unshipped accessors document the
+seven additions. Theme remains immutable, per-ribbon, hidden/nonserialized and
+code-only. No model/renderer API, theme authoring UI, generated initializer or
+resource changes. Existing designer serialization/Undo/Redo stays unchanged.
+
+`RibbonCommandContentMetrics` supplies width allowance and minimum row height;
+Classic/Simplified/group layout and content paint consume them. The existing
+split-width resolver accepts the extra content budget, preserving primary text
+space and the authored arrow slot together. Check/radio rows participate.
+Small Touch icons retain their accepted centering; Medium icon/text keep their
+optical relationship. Classic body and Simplified band height follow the selected
+tab's eligible commands, and tab changes invalidate the relevant measurements.
+Large-only fixed-policy tabs retain their former dimensions. Actual Large content
+placement, Large vertical split layout, native editor field dimensions/HWNDs,
+menu/QAT projection and gallery content remain under their established owners.
+The withdrawn Large-paste alignment request was not reintroduced.
+
+`RibbonApplicationMenuMetrics` owns navigation/pane/footer row minima, pane inset
+and footer gap. Native layout, target expansion and inert designer preview use
+the same resolved geometry. Larger pane insets reserve desired width when
+unconstrained; narrow work areas clamp the inset. Selected-pane title bands stay
+full-width. Footer rows wrap and scroll with their existing owner. Font/artwork,
+editor and Touch minima remain. Nested ordinary menus, navigation/arrow widths,
+heading/frame/separator/glyph rules retain their existing contracts. Hover selects
+without invoking, plain navigation restores DefaultPane, reopen starts there,
+validation may veto, and app-owned native content/handles remain retained.
+
+The same `--menu-geometry-demo` sample now adds **Command content** and
+**Application Menu geometry** after the earlier three tabs. It opens on the last
+tab without changing the startup File mode. Command apply sets 12/16; Application
+Menu apply sets 64/72/52, inset 22 and gap 12. Each reset clears only its own roles,
+retaining earlier editor/illustrated/split/menu settings. Command examples provide
+a priority inline Classic/Simplified switch and Small/Medium/check/radio/split
+models. **Open Application Menu** explicitly switches File to CommandMenu and
+opens the original authored example; **Restore startup File mode** restores the
+captured presentation. File/default/footer models are reused, with original
+handlers/content and QAT ownership retained. Normal startup remains unchanged.
+
+Verification and combined review gate:
+
+- [x] **32 pre-change/default capture pairs** match PNG bytes and measurement
+  records exactly at null: both renderers/densities, 9/14-point fonts and synthetic
+  96/120/144/192 DPI. These exercise command content and Application Menu row paint;
+  full Application Menu container metadata is recorded separately at the STA
+  control's native **96 DPI**, not claimed as four hardware-DPI container checks.
+- [x] **21 distinct new cases passed across focused runs**: seven role validation/
+  independent-reset cases, the two defaults, both-renderer command padding,
+  Classic/Simplified native row/tab/editor retention, both-density Application
+  Menu insets/footer/scroll reveal/UIA targets, low-value content floors,
+  Large/menu/QAT paint isolation, and hover/validation/retained HWND apply/reset.
+  Two inert designer-preview cases match native override targets exactly with
+  no open popup or transaction. The command synthetic matrix covers all four
+  DPIs; Application Menu row/footer floors additionally cover 9/24-point fonts.
+  Early fixture corrections aligned Font with cached layout, separated unscrolled
+  width from scrollbar width, used a validating UserControl, and re-entered a
+  vetoed hover row before retrying. Passed scopes were retained; this is not a
+  single clean aggregate or full-suite claim.
+- [x] Related Release checks passed **248/248**: previous split/Touch/alignment,
+  group rows/density/Simplified, editor and ordinary/illustrated menu geometry,
+  Application Menu behavior/hover/appearance/designer, theme and popup preview.
+  The prior broader minimized GroupMotion failure remains recorded in the
+  Application Menu plan and was not rerun or claimed resolved.
+- [x] Native Release solution and normal Debug runtime/design server/client/sample
+  builds passed with zero warnings/errors. Refreshed the permanent sample once
+  with `0.1.0-designer.local20261104T065927900Z`; runtime/design-server package hashes
+  match current Debug outputs. Authored Forms/resources were preserved.
+- [x] Public-package checks passed **8/8 actual command layout/paint/reset
+  presentations** at reported native **120 DPI**, covering both renderers,
+  densities and layouts, combined seven-role assignment, atomic rejection and
+  exact default/reset pixels. Permanent demo checks preserve independent resets,
+  prior roles, mode toggles and File/default/footer/QAT models. No shown windows,
+  internals or Showcase helpers. Native Application Menu container/input/hosting
+  evidence is the separate library STA scope, not this package check.
+- [x] Inspected representative command/package/native Application Menu captures,
+  including all four rounded frame corners; no approvals/tolerances changed.
+- [x] **2026-11-04: user passed the Roomier Application Menu join correction's
+  visual review, including its combination with Roomier command content**
+  ("looks good now, even combined with roomier command content"). Actual VS designer,
+  external accessibility, physical touch/IME/RTL, mixed-monitor/material hardware
+  gates remain separate. No computer use or global input was used.
+
+Evidence: `artifacts/geometry/command-content-and-application-menu/`, with `before/`,
+`after/`, focused and related TRX files and `package/result.log`/captures. Existing
+passes are retained across runs. No commit, push or publication.
+
+### Roomier Application Menu join correction — 2026-11-04
+
+The user reported that the wider pane inset left the title-band start and
+navigation rows short of the painted divider. The renderer still subtracted the
+old 10-pixel inset from the pane rectangle. Navigation now extends by the inset's
+excess over 10, within existing width limits; desired width also reserves that
+extension, retaining the right content's configured inset and preferred width.
+Layout records the structural divider before removing scrollbar width from the
+navigation viewport. Paint consumes that boundary through internal paint context;
+the public renderer hook continues receiving the same viewport arguments. Its
+standalone fallback resolves the selected inset instead of a hardcoded 10.
+Active titles start at divider + 1. Rows, hits, hover, scrollbars and inert preview
+continue to use shared layout. No public API, ownership or designer changes.
+
+- Reproduced the missing join in both renderers before correction. All **94/94
+  focused Release checks passed** afterward, including four new join cases,
+  Application Menu behavior/hover/appearance/designer and the paired geometry
+  class. The 32 saved null/default paint/measurement records still match exactly.
+  Join paint covers synthetic 96/120/144/192 DPI; native layout covers both
+  densities, padding 0/10/22/1024, unconstrained/constrained sizes and scrollbar
+  clearance. Existing retained HWND/validation and inert-preview tests passed.
+- Normal native Release solution and Debug runtime/design server/client/sample
+  builds passed with zero warnings/errors. The correction's sample refresh uses
+  **`0.1.0-designer.local20261104T075754133Z`**, superseding the earlier package above.
+  Packaged runtime/design-server hashes match Debug outputs. Authored Form/resx
+  and normal startup were preserved.
+- Public-package verification passed **8/8** presentations at native **120 DPI**,
+  adding the standalone Application Menu background-join check to the existing
+  automatic command layout/reset and demo-ownership checks. Native menu hosting/
+  input/preview remains separate STA evidence. Captures inspected at representative
+  DPI, including all four frame corners; no approvals/tolerances changed.
+- Evidence: `artifacts/geometry/application-menu-joins/` (`join-repro.trx`,
+  `join-paint.trx`, `join-focused.trx`, `before/`, `after/`, `package/`). Full-suite,
+  actual VS and physical input/hardware gates remain separate. The current combined
+  visual-review result is recorded above; await instruction before further batches/themes.
+
+Combined review checklist:
+
+1. Run the refreshed Debug sample with `--menu-geometry-demo`. On **Command
+   content**, compare **Roomier command content** / **Reset command content** in
+   Mouse/Touch and Classic/Simplified. Check Small icons stay centered, Medium
+   icons/captions have room, checks/radios center vertically, and split arrows
+   still open separately from primary toggles.
+2. On **Application Menu geometry**, apply roomier spacing and **Open Application
+   Menu**. Check navigation/pane/footer row spacing and pane inset; hover between
+   native-content and ordinary panes, reopen, and reach long/wrapped rows by
+   scrolling. Native text and normal command behavior should remain.
+3. Combine with earlier geometry tabs. Each reset should affect only its own
+   settings. **Restore startup File mode** should return the original presentation.
+   Review the authored Form in VS when convenient; these opt-in tabs are code-only.
+
+The current review result is recorded above. Await user instruction before more
+batches or additional themes.

@@ -87,8 +87,11 @@ internal sealed partial class RibbonLayoutEngine
         int fontLogical = (int)Math.Ceiling(font.Height * 96d / dpi);
         bool fields = group.Items.Any(i => i.Visible && RibbonEditorLayout.IsField(i, i is RibbonComboBoxItem ? i.SizePolicy.At(state) : RibbonItemSize.Medium));
         int rowLogical = RibbonEditorLayout.CommandRowLogical(font, dpi, group.Ribbon?.Density ?? RibbonDensity.Compact, theme, fields), captionLogical = Math.Max(20, fontLogical + 6);
+        var contentMetrics = new RibbonCommandContentMetrics(theme);
+        bool padded = group.Items.Any(i => i.Visible && RibbonCommandContentMetrics.Applies(i, RibbonCommandContentMetrics.Size(i, state)));
+        if (padded) rowLogical = Math.Max(rowLogical, contentMetrics.RowLogical(font, dpi));
         int commandHeight = S(theme.BodyHeight - captionLogical - CommandVerticalInset);
-        if (fields && RibbonEditorMetrics.HasHeightOverride(theme)) commandHeight = Math.Max(commandHeight, S(3 * rowLogical));
+        if (fields && RibbonEditorMetrics.HasHeightOverride(theme) || padded && contentMetrics.HasVertical) commandHeight = Math.Max(commandHeight, S(3 * rowLogical));
         bool explicitRows = group.Layout != RibbonGroupLayout.Columns, hasLarge = false;
         int rowCount = group.Layout == RibbonGroupLayout.ThreeRows ? 3 : 2;
         int occupiedRows = 0;
@@ -154,10 +157,14 @@ internal sealed partial class RibbonLayoutEngine
                 width = RibbonEditorLayout.LabelWidth(item, font, dpi) + RibbonEditorLayout.InputWidth(editor, dpi, group.Ribbon?.Density ?? RibbonDensity.Compact, font, 6);
             if (large && !galleryDropDown && item is RibbonGalleryItem { IsInRibbon: true } gallery)
                 width = S(gallery.InRibbonColumnCount * Math.Max(gallery.TileWidth, metrics.GalleryWidth) + metrics.GalleryUtility + 3 * RibbonGalleryStripLayout.Padding);
+            int contentExtra = RibbonCommandContentMetrics.Applies(item, size) ? contentMetrics.ExtraWidth(dpi) : 0;
             if (item is RibbonSplitButtonItem && !large)
-                width = RibbonCommandSplitMetrics.For(group.Ribbon?.Density ?? RibbonDensity.Compact, theme).MeasureWidth(width, dpi, false);
-            else if (dropDownOnly && !large)
-                width += S(metrics.CommandDropDownArrow);
+                width = RibbonCommandSplitMetrics.For(group.Ribbon?.Density ?? RibbonDensity.Compact, theme).MeasureWidth(width, dpi, false, contentExtra: contentExtra);
+            else
+            {
+                width += contentExtra;
+                if (dropDownOnly && !large) width += S(metrics.CommandDropDownArrow);
+            }
             if (large)
             {
                 FinishColumn();

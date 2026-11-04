@@ -1969,6 +1969,61 @@ regions, ordinary dropdowns, editor dimensions and content vertical alignment
 retain their own contracts. Theme stays code-only and nonserialized; existing
 designer authoring and round trips are unchanged.
 
+Small/Medium command content has two optional theme roles:
+
+| Property | Null behavior |
+| --- | --- |
+| `CommandContentHorizontalPadding` | Existing 5-pixel text padding and optical icon offsets. |
+| `CommandContentVerticalPadding` | Existing rows and intrinsic 3-pixel text inset. |
+
+Both accept 0..1024 logical pixels at 96 DPI. Larger horizontal padding reserves
+symmetric caption space and width, including split primary content. Smaller
+values retain density/preferred-width minima. Vertical padding is a minimum
+clearance above/below text and 16-pixel artwork; containing Classic rows and
+Simplified bands grow when needed, retaining centered content and font/density
+minima. Small Touch icons keep their accepted centering. Native editor fields
+keep their dimensions/handles even when a shared command row grows. Actual Large
+content placement, gallery content, menu/QAT projections and intrinsic glyphs
+retain their own geometry. Null resets each setting independently.
+
+Application Menu spacing has five separate optional theme roles:
+
+| Property | Null default, Compact / Touch |
+| --- | --- |
+| `ApplicationMenuNavigationMinimumRowHeight` | 40 / 44 |
+| `ApplicationMenuPaneMinimumRowHeight` | 28 / 44 |
+| `ApplicationMenuFooterMinimumRowHeight` | 30 / 44 |
+| `ApplicationMenuPaneHorizontalPadding` | 10 / 10 |
+| `ApplicationMenuFooterItemGap` | 6 / 6 |
+
+Row minima accept 1..1024; padding/gap accept 0..1024, in 96-DPI logical pixels.
+Font, artwork, native editor and Touch 44 minima remain. The pane inset applies
+to content and the default heading; selected-pane title bands retain full width.
+Insets above the legacy 10 also extend the navigation column by the excess,
+reserving desired width so rows reach the shared divider and active-title boundary.
+The right content retains its configured inset; available space still clamps
+geometry. Footer gap applies between items and wrapped rows. Work-area limits,
+independent column/footer scrolling, hover selection, validation and retained
+native content stay with existing owners. Nested ordinary menus use their own
+metrics. Each null setting preserves legacy geometry, including editor minima.
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    CommandContentHorizontalPadding = 12, CommandContentVerticalPadding = 16,
+    ApplicationMenuNavigationMinimumRowHeight = 64,
+    ApplicationMenuPaneMinimumRowHeight = 72,
+    ApplicationMenuFooterMinimumRowHeight = 52,
+    ApplicationMenuPaneHorizontalPadding = 22,
+    ApplicationMenuFooterItemGap = 12
+};
+```
+
+These immutable per-ribbon settings use the existing code-only, hidden and
+nonserialized `Theme` property. Measurement, paint and inert designer preview
+share library geometry. Authored models, bindings, handlers and designer-generated
+code retain their existing contracts; no theme-authoring UI is introduced.
+
 Illustrated-choice dropdown rows have their own optional theme roles:
 
 | Property | Null default, Compact and Touch |

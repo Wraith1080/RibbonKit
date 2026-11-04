@@ -1,5 +1,35 @@
 # RibbonKit WinForms Designer Sample
 
+The paired **Command content** / **Application Menu geometry** review tabs are
+available with `--menu-geometry-demo`, alongside **Menu geometry**, **Illustrated
+menus** and **Command splits**. This launch selects Application Menu geometry;
+normal startup and authored Forms/resources remain unchanged.
+
+- **Command content:** compare **Roomier command content** / **Reset command
+  content** in Mouse/Touch and Classic/Simplified. Check centered Small icons,
+  Medium caption clearance, check/radio alignment and separate split actions.
+  Apply sets horizontal padding 12 / vertical padding 16; reset clears only these.
+- **Application Menu geometry:** apply **Roomier Application Menu**, then **Open
+  Application Menu** to open the existing authored File example in CommandMenu
+  mode. Compare navigation/pane/footer row spacing, pane inset, wrapped footer
+  gaps and scroll reachability. Roomier navigation extends to the shared divider;
+  the active title starts beside it, with the content inset retained. Apply sets
+  64/72/52, inset 22 and gap 12. Reset
+  clears only these five roles; **Restore startup File mode** restores the
+  presentation captured when the demo was enabled.
+- Combine these with earlier geometry tabs, then reset independently. Existing
+  editor text, File/default/footer models, command state, handlers and QAT sources
+  should remain. These tabs use public, code-only Theme settings; they do not add
+  theme properties to the designer or replace the generated initializer.
+
+Build/package evidence and the combined review gate are in the
+[geometry plan](../../docs/GEOMETRY-CONSOLIDATION-PLAN.md). The opt-in
+`--verify-paired-geometry <output>` check exercises actual public command layout/
+paint in both renderers/densities/layouts, combined settings, exact reset and
+sample ownership without shown windows or global input. Application Menu native
+layout/scroll/hover/validation/retained HWND and inert preview checks are separate
+library STA evidence. Actual VS and physical input/hardware review remains separate.
+
 The bottom-docked `statusStrip` replaces the floating binding textbox and status
 label. Its designer-authored labels show the latest status message and the
 current **Name:** value. Edit **Name** on the ribbon's Edit tab to see the bound
@@ -134,7 +164,7 @@ vertically centered with the same font size. Existing Touch widths remain.
 Reset affects only the seven editor theme roles. No InitializeComponent or authored
 Form/resource changes are needed.
 
-The same `--menu-geometry-demo` launch now also adds and selects **Illustrated
+The same `--menu-geometry-demo` launch also includes **Illustrated
 menus**; the earlier **Menu geometry** tab remains available. Use **Roomier
 illustrated menu**, **Reset illustrated menu** and **Try illustrated menu** to
 compare artwork size, row height, title/description gaps and desired width in
@@ -143,7 +173,7 @@ QAT** adds a temporary reference to the direct menu's same source; turn it off
 to remove only that reference. Selected choices keep their state through theme
 reset. Earlier menu/editor overrides and the authored startup File mode remain.
 
-The same opt-in launch also adds/selects **Command splits**. Compare **Roomier
+The same opt-in launch also includes **Command splits**. Compare **Roomier
 command splits** and **Reset command splits**, using the existing Mouse/Touch
 selector and the priority inline **Simplified layout** toggle. Small/Medium/Large
 horizontal examples use the same width roles. Primary clicks toggle once; arrows

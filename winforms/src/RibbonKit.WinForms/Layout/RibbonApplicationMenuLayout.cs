@@ -6,6 +6,8 @@ internal sealed class RibbonApplicationMenuLayout
     internal Size Size { get; private init; }
     internal Rectangle Frame { get; private init; }
     internal Rectangle Navigation { get; private init; }
+    // The viewport excludes an optional scrollbar; this boundary never does.
+    internal int NavigationDividerX { get; private init; }
     internal Rectangle Pane { get; private init; }
     internal Rectangle Header { get; private init; }
     internal Rectangle Footer { get; private init; }
@@ -18,24 +20,28 @@ internal sealed class RibbonApplicationMenuLayout
         int dpi = ribbon.DeviceDpi;
         int S(int n) => RibbonLayoutEngine.Scale(n, dpi);
         var font = ribbon.Font; var density = ribbon.Density; bool touch = density == RibbonDensity.Touch;
-        int pad = S(5), inset = S(10), bar = SystemInformation.GetVerticalScrollBarWidthForDpi(dpi);
+        int pad = S(5), inset = S(RibbonApplicationMenuMetrics.PanePadding(ribbon.Theme)), bar = SystemInformation.GetVerticalScrollBarWidthForDpi(dpi);
         var left = ribbon.FileMenu.Items.Where(i => i.Visible).ToArray();
         var right = pane.Items.Where(i => i.Visible).ToArray();
         var footer = ribbon.ApplicationMenu.FooterItems.Where(i => i.Visible).ToArray();
         int navWidth = Math.Clamp(left.Where(i => i is not RibbonMenuSeparatorItem)
             .Select(i => TextRenderer.MeasureText(i.Text, font).Width + S(60) + (i is RibbonDropDownItem ? RibbonApplicationMenuMetrics.ArrowWidth(dpi, density) : 0))
             .DefaultIfEmpty(S(150)).Max(), S(150), S(260));
-        if (left.Length * S(touch ? 44 : 40) > maximum.Height - S(48)) navWidth = Math.Min(S(260), navWidth + bar);
-        int width = Math.Max(1, Math.Min(maximum.Width, navWidth + S(340) + 2 * pad + 3));
+        if (left.Length * S(RibbonApplicationMenuMetrics.NavigationMinimum(density, ribbon.Theme)) > maximum.Height - S(48)) navWidth = Math.Min(S(260), navWidth + bar);
+        int extraInset = Math.Max(0, inset - S(10));
+        // Roomier navigation reaches the former spare strip beside its rows.
+        // Reserve that width as well as the right pane's authored content inset.
+        navWidth += extraInset;
+        int extraPane = 2 * extraInset;
+        int width = Math.Max(1, Math.Min(maximum.Width, navWidth + S(340) + extraPane + 2 * pad + 3));
         navWidth = Math.Min(navWidth, Math.Max(1, width * 3 / 5));
         int paneWidth = Math.Max(1, width - navWidth - 2 * pad - 3);
+        if (ribbon.Theme.ApplicationMenuPaneHorizontalPadding is not null) inset = Math.Min(inset, Math.Max(0, (paneWidth - 1) / 2));
         int[] Heights(RibbonItem[] items, int w, bool navigation) => items.Select(i => RibbonApplicationMenuMetrics.RowHeight(i, w, font, dpi, density, navigation, ribbon.Theme)).ToArray();
         var lh = Heights(left, Math.Max(1, navWidth - bar), true);
         var rh = Heights(right, Math.Max(1, paneWidth - 2 * inset - bar), false);
         int header = pane.DropDownHeader.Length == 0 ? 0 : Math.Max(S(28), font.Height + S(12));
-        int footerRow = Math.Max(S(touch ? 44 : 30), font.Height + S(10)), footerGap = S(6);
-        if (footer.Any(i => i is IRibbonEditorItem) && RibbonEditorMetrics.HasHeightOverride(ribbon.Theme))
-            footerRow = Math.Max(footerRow, RibbonEditorLayout.Height(font, dpi, density, theme: ribbon.Theme) + S(2));
+        int footerRow = RibbonApplicationMenuMetrics.FooterRowHeight(footer, font, dpi, density, ribbon.Theme), footerGap = S(RibbonApplicationMenuMetrics.FooterGap(ribbon.Theme));
         var footerRects = new List<Rectangle>(); int fx = 0, fy = 0;
         int footerAvailable = Math.Max(1, width - 2 * pad - bar);
         foreach (var item in footer)
@@ -69,7 +75,7 @@ internal sealed class RibbonApplicationMenuLayout
         if (footerExtent > footerRect.Height) footerRect.Width = Math.Max(1, footerRect.Width - bar);
         var result = new RibbonApplicationMenuLayout
         {
-            Size = new(width, height), Frame = frame, Navigation = nav, Pane = paneRect,
+            Size = new(width, height), Frame = frame, Navigation = nav, NavigationDividerX = paneLeft - 1, Pane = paneRect,
             Header = header == 0 ? Rectangle.Empty : ReferenceEquals(pane, ribbon.ApplicationMenu.DefaultPane)
                 ? new(paneLeft + inset, nav.Top, Math.Max(1, paneWidth - 2 * inset), header)
                 : new(paneLeft, nav.Top, Math.Max(1, frame.Right - 1 - paneLeft), header),

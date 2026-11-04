@@ -5,9 +5,11 @@ implemented; review and validation are recorded in
 [the color-role slice](APPEARANCE-COLOR-ROLES.md)**. Earlier KeyTip/backdrop,
 Backstage and disabled/state increments remain. The bounded ordinary-menu
 horizontal/vertical, container/heading/overflow, shared arrow-column and native
-editor/choice-row, illustrated-choice and horizontal command-split geometry batches are tracked in the
+editor/choice-row, illustrated-choice, horizontal command-split, Small/Medium
+command-content and Application Menu spacing batches are tracked in the
 [geometry consolidation plan](GEOMETRY-CONSOLIDATION-PLAN.md), which owns their review scope.
-Further geometry and new built-in themes remain separate later increments.
+Related batches may share a session and one review; further geometry and new
+built-in themes remain later increments after that review.
 Current slice, **2026-11-03**: geometry consolidation, following the
 [state-command popup correction](STATE-COMMAND-POPUPS.md) and
 [Application Menu checkpoint](APPLICATION-MENU-PLAN.md). Use the

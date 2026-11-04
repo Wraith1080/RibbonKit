@@ -15,16 +15,16 @@ internal readonly record struct RibbonCommandSplitMetrics(RibbonDensity Density,
         Math.Min(desired, Math.Max(1, Defaults.Touch ? (width - 1) / 2 : width / 3)));
     internal int ArrowWidth(int width, int dpi) => ClampArrow(width, RibbonLayoutEngine.Scale(Arrow, dpi));
 
-    internal int MeasureWidth(int baseWidth, int dpi, bool large, bool simplified = false)
+    internal int MeasureWidth(int baseWidth, int dpi, bool large, bool simplified = false, int contentExtra = 0)
     {
         int S(int n) => RibbonLayoutEngine.Scale(n, dpi);
         int legacyArrow = S(Defaults.HorizontalSplitArrow);
         int legacy = large ? Defaults.Touch ? Math.Max(S(Defaults.LargeHorizontalSplitPrimaryMinimum) + legacyArrow,
             baseWidth + legacyArrow - S(Defaults.SplitArrow)) : baseWidth
             : (simplified ? baseWidth : Math.Max(baseWidth, S(Defaults.HorizontalSplitPrimaryMinimum))) + legacyArrow;
-        if (!HasOverride(large)) return legacy;
+        if (!HasOverride(large) && contentExtra == 0) return legacy;
         int arrow = S(Arrow);
-        int primary = Math.Max(S(PrimaryMinimum(large)), legacy - ClampArrow(legacy, legacyArrow));
+        int primary = Math.Max(S(PrimaryMinimum(large)), legacy - ClampArrow(legacy, legacyArrow) + contentExtra);
         // Preserve the existing half/third cap while reserving the authored slot
         // at preferred size. Only externally constrained rows need to clip it.
         return Math.Max(primary + arrow, Defaults.Touch ? 2 * arrow + 1 : 3 * arrow);

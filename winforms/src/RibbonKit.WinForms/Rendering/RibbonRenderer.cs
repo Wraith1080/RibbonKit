@@ -435,7 +435,7 @@ public partial class RibbonRenderer : IDisposable
         {
             if (context.Hot || context.Pressed)
                 DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
-            var content = RibbonContentLayout.Calculate(context.Bounds, RibbonItemSize.Medium, menu, true, context.DeviceDpi, context.Font);
+            var content = RibbonContentLayout.Calculate(context.Bounds, RibbonItemSize.Medium, menu, true, context.DeviceDpi, context.Font, context.Density, theme: menu ? null : context.Theme);
             if (menu) content = RibbonMenuLayout.Content(content, item, context.Bounds, context.Font, context.DeviceDpi, context.Density, context.Theme);
             if (item is RibbonCheckBoxItem box) DrawCheckBoxIndicator(context with { Bounds = content.Icon }, box);
             else DrawRadioButtonIndicator(context with { Bounds = content.Icon }, (RibbonRadioButtonItem)item);
@@ -582,7 +582,8 @@ public partial class RibbonRenderer : IDisposable
         bool touchVertical = arrowBelowSingle && context.Density == RibbonDensity.Touch;
         int captionRows = touchVertical ? _captions.Wrap(item.Text, context.Font, context.DeviceDpi,
             Math.Max(0, context.Bounds.Width - 2 * RibbonLayoutEngine.Scale(5, context.DeviceDpi))).Lines.Length : 2;
-        var content = RibbonContentLayout.Calculate(context.Bounds, size, menu, context.ReserveIcon || hasIcon, context.DeviceDpi, context.Font, context.Density, touchVertical, captionRows);
+        var content = RibbonContentLayout.Calculate(context.Bounds, size, menu, context.ReserveIcon || hasIcon, context.DeviceDpi, context.Font, context.Density, touchVertical, captionRows,
+            menu || enabledOverride.HasValue ? null : context.Theme);
         if (menu) content = RibbonMenuLayout.Content(content, item, context.Bounds, context.Font, context.DeviceDpi, context.Density, context.Theme, projectedEditorCaption: enabledOverride.HasValue);
         var iconBounds = content.Icon;
         var textBounds = content.Text;

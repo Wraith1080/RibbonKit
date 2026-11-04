@@ -183,7 +183,8 @@ internal sealed partial class RibbonPopupSurface
     private void PaintApplicationMenu(RibbonPaintContext context)
     {
         if (_applicationLayout is not { } layout) return;
-        context = context with { ApplicationMenuDefaultPane = ReferenceEquals(_applicationPane, _ribbon.ApplicationMenu.DefaultPane) };
+        context = context with { ApplicationMenuDefaultPane = ReferenceEquals(_applicationPane, _ribbon.ApplicationMenu.DefaultPane),
+            ApplicationMenuDividerX = layout.NavigationDividerX };
         _ribbon.Painter.DrawApplicationMenuBackground(context, layout.Navigation, layout.Pane, layout.Footer);
         if (!layout.Header.IsEmpty)
         {

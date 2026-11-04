@@ -4,7 +4,7 @@ namespace RibbonKit.WinForms.Layout;
 // consumes these rectangles; it does not independently invent row/column offsets.
 internal readonly record struct RibbonContentLayout(Rectangle Icon, Rectangle Text, TextFormatFlags Flags)
 {
-    internal static RibbonContentLayout Calculate(Rectangle bounds, RibbonItemSize size, bool menu, bool reserveIcon, int dpi, Font font, RibbonDensity density = RibbonDensity.Compact, bool verticalSplit = false, int captionRows = 2)
+    internal static RibbonContentLayout Calculate(Rectangle bounds, RibbonItemSize size, bool menu, bool reserveIcon, int dpi, Font font, RibbonDensity density = RibbonDensity.Compact, bool verticalSplit = false, int captionRows = 2, RibbonTheme? theme = null)
     {
         int S(double n) => RibbonLayoutEngine.Scale(n, dpi);
         int iconSize = S(size == RibbonItemSize.Large && !menu ? 32 : 16);
@@ -35,6 +35,12 @@ internal readonly record struct RibbonContentLayout(Rectangle Icon, Rectangle Te
         }
         else
         {
+            int shift = menu ? 0 : new RibbonCommandContentMetrics(theme).HorizontalShift(dpi);
+            if (shift != 0)
+            {
+                text.X += shift; text.Width = Math.Max(0, text.Width - 2 * shift);
+                icon.X += size == RibbonItemSize.Small ? Math.Max(0, shift) : shift;
+            }
             if (size == RibbonItemSize.Small && !menu && density == RibbonDensity.Touch)
                 icon = SmallIconBounds(bounds, dpi);
             if (reserveIcon || menu)

@@ -1,13 +1,21 @@
 # Starting prompt: native RibbonKit.WinForms geometry consolidation
 
-Execution checkpoint, **2026-11-04**: the seventh batch groups horizontal command-
-split arrow/primary widths across Classic/Simplified/group flyouts.
-[The geometry plan](GEOMETRY-CONSOLIDATION-PLAN.md) owns its completed contract,
-verification evidence and current user-review record.
-**Await user instruction before another geometry batch or additional themes.**
-Command content and Application Menu-specific geometry remain deferred. The
-revised estimate is 8–10 further review batches. The original bounded starting
-contract follows for context.
+Execution checkpoint, **2026-11-04**: the seventh batch is accepted and committed
+at `c695fbc51596e66f3f6c29bcf77d59abfc9684f2` on `codex/Ribbonkit-Winform`.
+The user then authorized related batches together: the eighth (Small/Medium
+command-content padding) and ninth (Application Menu spacing) are implemented
+and verified, with **one combined user review pending**. The reported Roomier
+Application Menu navigation/title/divider gap is corrected in the same review
+scope; use the latest refreshed sample and the plan's correction evidence.
+[The geometry plan](GEOMETRY-CONSOLIDATION-PLAN.md) owns both contracts, evidence,
+review checklist and the provisional 6–8 remaining implementation-batch estimate.
+Going forward, select 2–3 coherent batches per session when appropriate, present
+all selected API/layout/designer contracts upfront, preserve accepted behavior,
+verify the combined scope and refresh the permanent sample once. Stop for that
+review before more batches or themes. This supersedes the original one-batch
+session boundary below; the other scope and preservation rules still apply.
+Visual Studio was closed by the user; do not open/control it. No computer use.
+The original bounded starting contract follows for context.
 
 Continue work in:
 

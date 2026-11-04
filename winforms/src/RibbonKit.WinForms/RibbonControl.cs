@@ -84,7 +84,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             _selectedTab = value;
             _bodyOffset = 0;
             _layoutDirty = true;
-            if (RibbonEditorMetrics.HasHeightOverride(_theme)) { _engine.Clear(); UpdateHeight(); }
+            if (RibbonEditorMetrics.HasHeightOverride(_theme) || _theme.CommandContentVerticalPadding is not null) { _engine.Clear(); UpdateHeight(); }
             if (_focused is not RibbonTab)
             {
                 _focused = value;
@@ -110,6 +110,8 @@ public partial class RibbonControl : Control, ISupportInitialize
             RibbonEditorMetrics.Validate(value);
             RibbonIllustratedMenuMetrics.Validate(value);
             RibbonCommandSplitMetrics.Validate(value);
+            RibbonCommandContentMetrics.Validate(value);
+            RibbonApplicationMenuMetrics.Validate(value);
             if ((!value.PopupBackground.IsEmpty && value.PopupBackground.A != 255) ||
                 (!value.EditorBackground.IsEmpty && value.EditorBackground.A != 255) ||
                 (!value.TitleBarBackground.IsEmpty && value.TitleBarBackground.A != 255))
@@ -172,7 +174,10 @@ public partial class RibbonControl : Control, ISupportInitialize
             var metrics = RibbonDensityMetrics.For(Density);
             bool fields = RibbonEditorMetrics.HasHeightOverride(_theme) && SelectedTab is { } tab && GetPresentedGroups(tab)
                 .Any(g => g.Visible && g.Items.Any(i => i.Visible && RibbonEditorLayout.IsField(i, i is RibbonComboBoxItem ? i.SizePolicy.At(0) : RibbonItemSize.Medium)));
-            int rows = RibbonEditorLayout.CommandRowLogical(Font, DeviceDpi, Density, _theme, fields) * 3 + Math.Max(20, text + 6) + RibbonLayoutEngine.CommandVerticalInset;
+            int row = RibbonEditorLayout.CommandRowLogical(Font, DeviceDpi, Density, _theme, fields);
+            if (_theme.CommandContentVerticalPadding is not null && SelectedTab is { } commandTab && GetPresentedGroups(commandTab).Any(RibbonCommandContentMetrics.HasCandidate))
+                row = Math.Max(row, new RibbonCommandContentMetrics(_theme).RowLogical(Font, DeviceDpi));
+            int rows = row * 3 + Math.Max(20, text + 6) + RibbonLayoutEngine.CommandVerticalInset;
             return _theme with
             {
                 TabHeight = Math.Max(Math.Max(_theme.TabHeight, metrics.Touch ? metrics.TabHeight : 0), text + 12),
@@ -191,6 +196,9 @@ public partial class RibbonControl : Control, ISupportInitialize
             if (RibbonEditorMetrics.HasHeightOverride(_theme) && SelectedTab is { } tab && Simplified.Selected(tab)
                 .Any(p => p.Command.Item is RibbonComboBoxItem && p.Size != RibbonItemSize.Small))
                 height = Math.Max(height, (int)Math.Ceiling(RibbonEditorLayout.Height(Font, DeviceDpi, Density, true, _theme) * 96d / DeviceDpi) + 2 * metrics.SimplifiedClearance);
+            if (_theme.CommandContentVerticalPadding is not null && SelectedTab is { } commandTab && Simplified.Selected(commandTab)
+                .Any(p => RibbonCommandContentMetrics.Applies(p.Command.Item, p.Size)))
+                height = Math.Max(height, (int)Math.Ceiling(new RibbonCommandContentMetrics(_theme).MinimumHeight(Font, DeviceDpi) * 96d / DeviceDpi) + 2 * metrics.SimplifiedClearance);
             return theme with { BodyHeight = height };
         }
     }

@@ -13,7 +13,7 @@ public partial class RibbonRenderer
         var frame = ApplicationFrame(context.Bounds, navigation);
         int radius = Math.Max(0, GetPopupCornerRadius(context.Theme, context.DeviceDpi) - 1);
         PaintRounded(context with { Bounds = frame }, radius, new(context.Theme.PopupColor), context.Theme.Border);
-        int divider = pane.Left - S(10) - 1;
+        int divider = context.ApplicationMenuDividerX ?? pane.Left - S(RibbonApplicationMenuMetrics.PanePadding(context.Theme)) - 1;
         var state = context.Graphics.Save();
         try
         {
