@@ -3,21 +3,23 @@ using System.Runtime.InteropServices;
 
 namespace RibbonKit.WinForms;
 
-// Logical constants are local to this component until the planned theming inventory.
+// Shared measurements retain the passive native window and work-area policy.
 internal sealed record RibbonScreenTipLayout(Size Size, Rectangle Title, Rectangle Description)
 {
     internal const TextFormatFlags TextFlags = TextFormatFlags.WordBreak | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.TextBoxControl;
     internal static string TitleFor(RibbonItem item) => string.IsNullOrEmpty(item.ScreenTipTitle) ? item.Text : item.ScreenTipTitle;
 
-    internal static RibbonScreenTipLayout Measure(string title, string description, Font font, int dpi, Size available)
+    internal static RibbonScreenTipLayout Measure(string title, string description, Font font, int dpi, Size available, RibbonTheme? theme = null)
     {
         int S(int n) => RibbonLayoutEngine.Scale(n, dpi);
-        int padding = Math.Min(S(12), Math.Max(0, (Math.Min(available.Width, available.Height) - 2) / 2));
-        int width = Math.Max(1, Math.Min(S(320), available.Width) - 2 * padding);
+        var metrics = new RibbonTipMetrics(theme);
+        int outerWidth = Math.Max(1, Math.Min(S(metrics.MaximumWidth), available.Width));
+        int padding = Math.Min(S(metrics.ContentPadding), Math.Max(0, (Math.Min(outerWidth, available.Height) - 2) / 2));
+        int width = Math.Max(1, outerWidth - 2 * padding);
         using var titleFont = new Font(font, font.Style | FontStyle.Bold);
         var titleSize = TextRenderer.MeasureText(title, titleFont, new(width, int.MaxValue), TextFlags);
         var descriptionSize = string.IsNullOrEmpty(description) ? Size.Empty : TextRenderer.MeasureText(description, font, new(width, int.MaxValue), TextFlags);
-        int gap = descriptionSize.IsEmpty || title.Length == 0 ? 0 : S(6);
+        int gap = descriptionSize.IsEmpty || title.Length == 0 ? 0 : S(metrics.TitleGap);
         int height = Math.Max(1, available.Height - 2 * padding);
         int titleHeight = title.Length == 0 ? 0 : Math.Min(height, titleSize.Height);
         int descriptionHeight = Math.Min(Math.Max(0, height - titleHeight - gap), descriptionSize.Height);
@@ -26,9 +28,9 @@ internal sealed record RibbonScreenTipLayout(Size Size, Rectangle Title, Rectang
         return new(size, new(padding, padding, contentWidth, titleHeight), descriptionHeight == 0 ? Rectangle.Empty : new(padding, padding + titleHeight + gap, contentWidth, descriptionHeight));
     }
 
-    internal static Rectangle Place(Rectangle anchor, Point pointer, Size size, Rectangle work, int dpi)
+    internal static Rectangle Place(Rectangle anchor, Point pointer, Size size, Rectangle work, int dpi, RibbonTheme? theme = null)
     {
-        int gap = RibbonLayoutEngine.Scale(8, dpi);
+        int gap = RibbonLayoutEngine.Scale(new RibbonTipMetrics(theme).PlacementGap, dpi);
         int y = Math.Max(anchor.Bottom + gap, pointer.Y + gap);
         if (y + size.Height > work.Bottom) y = Math.Min(anchor.Top - gap - size.Height, pointer.Y - gap - size.Height);
         return new(Math.Clamp(anchor.Left, work.Left, Math.Max(work.Left, work.Right - size.Width)),
@@ -51,12 +53,12 @@ internal sealed class RibbonScreenTipWindow : Form
         var work = Screen.FromRectangle(anchor).WorkingArea;
         int inset = RibbonLayoutEngine.Scale(8, ribbon.DeviceDpi);
         if (work.Width > 2 * inset && work.Height > 2 * inset) work.Inflate(-inset, -inset);
-        _layout = RibbonScreenTipLayout.Measure(_title, _description, ribbon.Font, ribbon.DeviceDpi, work.Size);
+        _layout = RibbonScreenTipLayout.Measure(_title, _description, ribbon.Font, ribbon.DeviceDpi, work.Size, ribbon.Theme);
         FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false; StartPosition = FormStartPosition.Manual;
         AutoScaleMode = AutoScaleMode.None; CausesValidation = false; TabStop = false;
         SetStyle(ControlStyles.Selectable, false);
         SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
-        Bounds = RibbonScreenTipLayout.Place(anchor, pointer, _layout.Size, work, ribbon.DeviceDpi);
+        Bounds = RibbonScreenTipLayout.Place(anchor, pointer, _layout.Size, work, ribbon.DeviceDpi, ribbon.Theme);
         _radius = Math.Clamp(ribbon.Painter.GetPopupCornerRadius(ribbon.Theme, ribbon.DeviceDpi), 0, Math.Min(Width, Height) / 2);
         Region = _radius > 0 ? RoundedPainter.CreateOpaqueRegion(Size, _radius) : null;
     }

@@ -68,8 +68,9 @@ public partial class RibbonControl
         }
         var command = RibbonQuickAccess.Command(entry)!;
         bool keepPopup = KeepStatePopupOpen(command, opener, entry);
+        var popupBeforeClick = _popups.Top;
         command.PerformClick();
-        if (!keepPopup) _popups.CloseAll(false);
+        if (!keepPopup && ReferenceEquals(popupBeforeClick, _popups.Top)) _popups.CloseAll(false);
         ExitKeyTips(false);
     }
     private bool KeepStatePopupOpen(RibbonItem command, Control? opener, RibbonElement? entry = null)

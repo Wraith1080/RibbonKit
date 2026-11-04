@@ -175,6 +175,50 @@ public sealed record RibbonTheme
     public Color TitleBarBackground { get; init; } = Color.Empty;
     /// <summary>Gets optional caption and TitleBar Quick Access foreground. Empty chooses contrast for a colored caption, or preserves Foreground for an unset caption.</summary>
     public Color TitleBarForeground { get; init; } = Color.Empty;
+    /// <summary>Gets the optional container and inline viewport/utility gap in 96-DPI logical pixels, from 0 to 1024. Null uses 4. Resets independently; available bounds clamp spacing.</summary>
+    public int? GalleryContentPadding { get; init; }
+    /// <summary>Gets the optional inline utility width in 96-DPI logical pixels, from 1 to 1024. Null uses Compact 18 / Touch 32; Touch retains 32. Resets independently; available bounds clamp spacing.</summary>
+    public int? GalleryUtilityWidth { get; init; }
+    /// <summary>Gets the optional built-in tile content padding; application presenter internals remain host-owned in 96-DPI logical pixels, from 0 to 1024. Null uses 4. Resets independently; available bounds clamp spacing.</summary>
+    public int? GalleryTilePadding { get; init; }
+    /// <summary>Gets the optional gallery heading horizontal padding in 96-DPI logical pixels, from 0 to 1024. Null uses 6. Resets independently; available bounds clamp spacing.</summary>
+    public int? GalleryHeadingHorizontalPadding { get; init; }
+    /// <summary>Gets the optional gallery heading padding above and below text in 96-DPI logical pixels, from 0 to 1024. Null uses 6. Resets independently; available bounds clamp spacing.</summary>
+    public int? GalleryHeadingVerticalPadding { get; init; }
+    /// <summary>Gets the optional Backstage row minimum; font minima remain in 96-DPI logical pixels, from 1 to 1024. Null uses Compact 42 / Touch 52; Touch retains 52. Resets independently; available bounds clamp spacing.</summary>
+    public int? BackstageMinimumRowHeight { get; init; }
+    /// <summary>Gets the optional Backstage row side and footer-bottom padding in 96-DPI logical pixels, from 0 to 1024. Null uses 8. Resets independently; available bounds clamp spacing.</summary>
+    public int? BackstageNavigationPadding { get; init; }
+    /// <summary>Gets the optional Backstage Back button side in 96-DPI logical pixels, from 1 to 1024. Null uses Compact 36 / Touch 44; Touch retains 44. Resets independently; available bounds clamp spacing.</summary>
+    public int? BackstageBackButtonSize { get; init; }
+    /// <summary>Gets the optional Backstage Back button top and left inset in 96-DPI logical pixels, from 0 to 1024. Null uses 20. Resets independently; available bounds clamp spacing.</summary>
+    public int? BackstageBackButtonInset { get; init; }
+    /// <summary>Gets the optional gap below the Backstage Back button in 96-DPI logical pixels, from 0 to 1024. Null uses 24. Resets independently; available bounds clamp spacing.</summary>
+    public int? BackstageBackButtonBottomGap { get; init; }
+    /// <summary>Gets the optional Backstage navigation icon-to-text gap in 96-DPI logical pixels, from 0 to 1024. Null uses 12. Resets independently; available bounds clamp spacing.</summary>
+    public int? BackstageIconTextGap { get; init; }
+    /// <summary>Gets the optional padding inside the Backstage page frame; native content layout remains host-owned in 96-DPI logical pixels, from 0 to 1024. Null uses 0. Resets independently; available bounds clamp spacing.</summary>
+    public int? BackstagePagePadding { get; init; }
+    /// <summary>Gets the optional maximum passive ScreenTip outer width in 96-DPI logical pixels, from 1 to 1024. Null uses 320. Resets independently; available-space limits remain.</summary>
+    public int? ScreenTipMaximumWidth { get; init; }
+    /// <summary>Gets the optional padding on each side of passive ScreenTip content in 96-DPI logical pixels, from 0 to 1024. Null uses 12. Resets independently; available-space limits remain.</summary>
+    public int? ScreenTipContentPadding { get; init; }
+    /// <summary>Gets the optional passive ScreenTip title-to-description gap in 96-DPI logical pixels, from 0 to 1024. Null uses 6. Resets independently; available-space limits remain.</summary>
+    public int? ScreenTipTitleGap { get; init; }
+    /// <summary>Gets the optional passive ScreenTip clearance from the anchor and pointer in 96-DPI logical pixels, from 0 to 1024. Null uses 8. Resets independently; available-space limits remain.</summary>
+    public int? ScreenTipPlacementGap { get; init; }
+    /// <summary>Gets the optional horizontal keyboard-badge padding on each side in 96-DPI logical pixels, from 0 to 1024. Null uses the existing root/menu size or Backstage 4; null retains summed DPI rounding. Resets independently; available-space limits remain.</summary>
+    public int? KeyTipHorizontalPadding { get; init; }
+    /// <summary>Gets the optional vertical keyboard-badge padding on each side in 96-DPI logical pixels, from 0 to 1024. Null uses the existing root/menu size or Backstage 2; null retains summed DPI rounding. Resets independently; available-space limits remain.</summary>
+    public int? KeyTipVerticalPadding { get; init; }
+    /// <summary>Gets the optional RibbonForm caption leading padding in 96-DPI logical pixels, from 0 to 1024. Null uses 10 with an icon or 8 without an icon. Resets independently; available-space limits remain.</summary>
+    public int? CaptionLeadingPadding { get; init; }
+    /// <summary>Gets the optional RibbonForm caption icon-to-content gap in 96-DPI logical pixels, from 0 to 1024. Null uses 10. Resets independently; available-space limits remain.</summary>
+    public int? CaptionIconTextGap { get; init; }
+    /// <summary>Gets the optional RibbonForm TitleBar QAT-to-title gap in 96-DPI logical pixels, from 0 to 1024. Null uses 10. Resets independently; available-space limits remain.</summary>
+    public int? CaptionQuickAccessTextGap { get; init; }
+    /// <summary>Gets the optional RibbonForm title-width reservation beside TitleBar QAT, before the QAT-to-title gap in 96-DPI logical pixels, from 1 to 1024. Null uses 100. Resets independently; available-space limits remain.</summary>
+    public int? CaptionTitleReservationWidth { get; init; }
     internal RibbonFill BodyFill => BodyBackground ?? new(Surface);
     internal Color BodyBorderColor => BodyBorder.IsEmpty ? Border : BodyBorder;
     internal Color PopupColor => PopupBackground.IsEmpty ? Surface : PopupBackground;

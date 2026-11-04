@@ -1,8 +1,44 @@
 # RibbonKit WinForms Designer Sample
 
-The latest `--menu-geometry-demo` launch adds **Body and groups** and **Header QAT
-messages**, selecting the latter after the earlier geometry tabs. These remain
+The latest `--menu-geometry-demo` launch adds **Tips geometry** and **Caption
+geometry**, selecting Tips geometry after the earlier tabs. These remain
 opt-in public-API controls; authored Forms/resources and normal startup are preserved.
+
+- **Tips geometry:** compare **Roomier ScreenTips** / **Reset ScreenTips** by
+  hovering the example and menu rows. Compare **Roomier KeyTips** / **Reset
+  KeyTips** with F10 then TG. **Backstage KeyTips** opens existing authored pages
+  for F10 badge review; **Restore File mode** restores the prior routing choice.
+- **Caption geometry:** compare **Roomier caption** / **Reset caption**, enable
+  **Use caption QAT**, and resize to inspect QAT/title allocation and overflow.
+  Native caption height/system buttons and document controls retain their sizes.
+  Each preset resets only its own roles and keeps prior gallery/Backstage settings.
+- `--verify-tip-caption-geometry <output>` checks actual passive tips, native
+  editor selection/focus, caption/QAT hit targets, resets and F10/TG badges using
+  public APIs and owned native fixtures. Its window is positioned under the
+  stationary pointer; it stops if that pointer moves or foreground is lost.
+  `--capture-caption-geometry <output>` captures caption variants without hover/input.
+
+- **Gallery geometry:** compare **Roomier galleries** / **Reset galleries** for
+  built-in tiles/headings and native cards. Try Mouse/Touch, Classic/Simplified,
+  utility scrolling, expand/choose/cancel, and resize to collapse/open a group.
+  **Gallery in QAT** adds a direct native gallery and a borrowed built-in group;
+  disable it to remove only those references. Borrowed groups collapse their source
+  under the existing QAT ownership contract. Native card internals stay host-owned.
+  The two review galleries start pinned in Simplified. **Open built-in gallery**
+  now retains the popup opened by its Click callback. The source must currently
+  be presented; open a collapsed/overflow gallery through that presentation.
+  Expand bars are short, centered and thicker at every density and Roomier setting.
+- **Backstage geometry:** compare **Roomier navigation** / **Reset navigation**
+  independently of **Inset page content** / **Reset page inset**. **Open Backstage**
+  uses the existing authored Info/Print pages; **Restore File mode** restores the
+  prior routing choice. Check native fields/values, Back, footer/scrolling and
+  close/reopen. Default startup routing is unchanged.
+- `--verify-gallery-backstage-geometry <output>` runs four package-only automatic
+  shown renderer/density fixtures without global input: native handles/selection,
+  popup/page insets and exact default/reset pixels. It checks the demo's independent
+  resets too. Backstage captures target the native surface directly because Form
+  `DrawToBitmap` can paint the covered ribbon last. Actual VS/hardware/external UIA
+  and the two inherited related-suite failures remain separate; see the geometry plan.
 
 - **Body and groups:** compare **Roomier body and groups** / **Reset body and
   groups** in Mouse/Touch and Classic/Simplified. Check side padding, column gaps,
@@ -18,6 +54,12 @@ opt-in public-API controls; authored Forms/resources and normal startup are pres
   4 / 3 / 4 theme roles. Layout, density, QAT placement, File mode, authored models,
   native field values and earlier geometry remain. Existing message minimum and
   outer padding APIs are not changed by these presets.
+
+`--verify-gallery-review-correction <output>` checks the actual review-button
+click in a fresh shown package consumer across both renderers/densities/layouts
+and normal/Roomier spacing. It verifies foreground ownership, message-loop popup
+retention, original selection and one explicit close. The wider test fixture keeps
+the source anchor visible and does not change the authored sample's default size.
 
 The public-package `--verify-chrome-geometry <output>` check observes actual
 automatic layout through public paint callbacks: both renderers/densities/layouts,

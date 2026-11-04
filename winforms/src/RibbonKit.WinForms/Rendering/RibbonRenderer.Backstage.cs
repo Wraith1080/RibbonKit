@@ -64,6 +64,7 @@ public partial class RibbonRenderer
             var saved = context.Graphics.Save();
             try
             {
+                context.Graphics.SetClip(context.Bounds, CombineMode.Intersect);
                 context.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
                 using var pen = new Pen(color, Math.Max(1f, 1.5f * context.DeviceDpi / 96f)) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round };
                 float x = context.Bounds.Left + context.Bounds.Width / 2f, y = context.Bounds.Top + context.Bounds.Height / 2f;
@@ -88,7 +89,9 @@ public partial class RibbonRenderer
             var icon = new Rectangle(context.Bounds.Left + S(16), context.Bounds.Top + (context.Bounds.Height - S(16)) / 2, S(16), S(16));
             if (item.Icon is { } vector) vector.Draw(context.Graphics, icon, new(context.DeviceDpi, color, enabled));
             else if (item.Image is { } image) context.Graphics.DrawImage(image, icon);
-            var text = Rectangle.FromLTRB(context.Bounds.Left + S(44), context.Bounds.Top, context.Bounds.Right - S(8), context.Bounds.Bottom);
+            int textOffset = new RibbonBackstageMetrics(context.Theme, context.Density).TextOffset;
+            int right = Math.Max(context.Bounds.Left, context.Bounds.Right - S(8));
+            var text = Rectangle.FromLTRB(Math.Min(right, context.Bounds.Left + S(textOffset)), context.Bounds.Top, right, context.Bounds.Bottom);
             DrawText(context with { Bounds = text }, item.Text, color,
                 TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
         }

@@ -89,7 +89,7 @@ public partial class RibbonForm : Form
         && FormBorderStyle is FormBorderStyle.Sizable or FormBorderStyle.FixedSingle or FormBorderStyle.Fixed3D;
     internal int CaptionHeight => RibbonLayoutEngine.Scale(Math.Max(36, Ribbon is { Density: RibbonDensity.Touch } ? 48 : 36), DeviceDpi);
     internal bool CustomCaption => FormBorderStyle is FormBorderStyle.Sizable or FormBorderStyle.FixedSingle or FormBorderStyle.Fixed3D;
-    internal RibbonCaptionGeometry Caption => RibbonCaptionGeometry.Measure(ClientSize.Width, CaptionHeight, DeviceDpi, ControlBox, MinimizeBox, MaximizeBox, ShowIcon);
+    internal RibbonCaptionGeometry Caption => RibbonCaptionGeometry.Measure(ClientSize.Width, CaptionHeight, DeviceDpi, ControlBox, MinimizeBox, MaximizeBox, ShowIcon, _ribbon is { HasWindowCaption: true } ribbon ? ribbon.Theme : null);
     internal Rectangle QuickAccessSlot(RibbonControl ribbon)
     {
         var geometry = Caption;
@@ -97,8 +97,16 @@ public partial class RibbonForm : Form
         int cap = RibbonLayoutEngine.Scale(ribbon.QuickAccessMaxWidth, DeviceDpi);
         int minimum = RibbonLayoutEngine.Scale(RibbonDensityMetrics.For(ribbon.Density).QuickAccessButton + 2 * new RibbonChromeMetrics(ribbon.Theme, ribbon.Density).QuickAccessPadding, DeviceDpi);
         // At narrow widths preserve the overflow target before sacrificing the title.
-        int width = Math.Min(available, Math.Min(cap, Math.Max(minimum, available - RibbonLayoutEngine.Scale(100, DeviceDpi))));
+        int width = Math.Min(available, Math.Min(cap, Math.Max(minimum, available - RibbonLayoutEngine.Scale(new RibbonCaptionMetrics(ribbon.Theme).TitleReservation, DeviceDpi))));
         return new(geometry.ContentLeft, 0, Math.Max(0, width), CaptionHeight);
+    }
+    internal Rectangle CaptionTextBounds(RibbonControl? ribbon)
+    {
+        var geometry = Caption;
+        int left = geometry.ContentLeft;
+        if (ribbon?.EffectiveQuickAccessPosition == RibbonQuickAccessPosition.TitleBar && ribbon.ShowQuickAccess)
+            left = ribbon.Snapshot.QuickAccessBounds.Right + RibbonLayoutEngine.Scale(new RibbonCaptionMetrics(ribbon.Theme).QuickAccessGap, DeviceDpi);
+        return Rectangle.FromLTRB(Math.Min(left, geometry.Buttons.Left), 0, geometry.Buttons.Left, CaptionHeight);
     }
     private void RibbonDisposed(object? sender, EventArgs e) => Ribbon = null;
     private void RibbonChanged(object? sender, EventArgs e)
@@ -192,9 +200,7 @@ public partial class RibbonForm : Form
         if (ribbon is not null) ribbon.PaintCaptionBackground(graphics, captionBounds, composited);
         else graphics.FillRectangle(background, captionBounds);
         if (ShowIcon && Icon is { } icon && !geometry.Icon.IsEmpty) graphics.DrawIcon(icon, geometry.Icon);
-        int left = geometry.ContentLeft;
-        if (ribbon?.EffectiveQuickAccessPosition == RibbonQuickAccessPosition.TitleBar && ribbon.ShowQuickAccess) left = ribbon.Snapshot.QuickAccessBounds.Right + RibbonLayoutEngine.Scale(10, DeviceDpi);
-        var text = Rectangle.FromLTRB(Math.Min(left, geometry.Buttons.Left), 0, geometry.Buttons.Left, CaptionHeight);
+        var text = CaptionTextBounds(ribbon);
         if (ribbon is { IsBackstageOpen: true } && !ReferenceEquals(sourceTheme, captionTheme))
         {
             var state = graphics.Save();
@@ -389,7 +395,7 @@ public partial class RibbonForm : Form
 
 internal sealed record RibbonCaptionGeometry(Rectangle Icon, int ContentLeft, Rectangle Buttons, (Rectangle Bounds, int Hit)[] Targets)
 {
-    internal static RibbonCaptionGeometry Measure(int width, int height, int dpi, bool controlBox, bool minimize, bool maximize, bool icon)
+    internal static RibbonCaptionGeometry Measure(int width, int height, int dpi, bool controlBox, bool minimize, bool maximize, bool icon, RibbonTheme? theme = null)
     {
         int S(int n) => RibbonLayoutEngine.Scale(n, dpi);
         int button = Math.Min(S(46), Math.Max(0, width / 3));
@@ -401,8 +407,9 @@ internal sealed record RibbonCaptionGeometry(Rectangle Icon, int ContentLeft, Re
                 if (hit == 9 && !maximize || hit == 8 && !minimize) continue;
                 right -= button; targets.Add((new(right, 0, button, height), hit));
             }
+        var metrics = new RibbonCaptionMetrics(theme);
         int size = Math.Min(S(16), height);
-        var iconBounds = icon && right >= S(32) ? new Rectangle(S(10), (height - size) / 2, size, size) : Rectangle.Empty;
-        return new(iconBounds, Math.Min(right, iconBounds.IsEmpty ? S(8) : iconBounds.Right + S(10)), new(right, 0, width - right, height), targets.ToArray());
+        var iconBounds = icon && right >= S(32) ? new Rectangle(Math.Min(S(metrics.Leading(true)), Math.Max(0, right - size)), (height - size) / 2, size, size) : Rectangle.Empty;
+        return new(iconBounds, Math.Min(right, iconBounds.IsEmpty ? S(metrics.Leading(false)) : iconBounds.Right + S(metrics.IconGap)), new(right, 0, width - right, height), targets.ToArray());
     }
 }

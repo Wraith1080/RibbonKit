@@ -2161,6 +2161,72 @@ horizontal padding, outer field insets, system EDIT/caret/IME and application
 content remain outside this contract. Theme configuration is code-only; existing
 designer model authoring and generated code are unchanged.
 
+Gallery and Backstage spacing is also code-only through nullable `RibbonTheme`
+roles, with independent null reset:
+
+| Surface | Properties and null defaults (96-DPI logical pixels) |
+| --- | --- |
+| Galleries | `GalleryContentPadding` 4; `GalleryUtilityWidth` Compact 18 / Touch 32; `GalleryTilePadding` 4; `GalleryHeadingHorizontalPadding` 6; `GalleryHeadingVerticalPadding` 6 |
+| Backstage | `BackstageMinimumRowHeight` Compact 42 / Touch 52; `BackstageNavigationPadding` 8; `BackstageBackButtonSize` Compact 36 / Touch 44; `BackstageBackButtonInset` 20; `BackstageBackButtonBottomGap` 24; `BackstageIconTextGap` 12; `BackstagePagePadding` 0 |
+
+Spacing accepts 0..1024, utility/row/button sizes 1..1024. Touch retains utility
+32, row 52 and Back button 44 minima; font/content minima and available-space
+clamps still apply. Assignment validates all roles before changing the theme.
+Gallery container padding covers inline and dropdown/native presenter viewports;
+utility width is inline-only, while custom dropdown footer buttons retain their
+existing slots. Built-in tile padding retains artwork allowances and two-line
+popup font minima; inline artwork fits the existing body-height allocation.
+Model tile dimensions/columns, native card internals and custom preferred sizes
+remain application-owned. Ordinary menu headings keep their separate roles.
+
+Backstage Auto rail measurement and entry painting share the icon/text offset.
+Existing `Backstage.NavigationWidth`, width bounds, navigation font and opacity
+APIs remain. Page padding insets the native page host inside its existing frame;
+application page layout, Controls/HWNDs, selection/validation and whole-surface
+motion/caption coverage retain their owners. The opaque designer preview shares
+selected geometry without hosting or capturing application content. There is no
+new designer theme-authoring UI or generated-code change.
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    GalleryContentPadding = 10, GalleryUtilityWidth = 40,
+    GalleryTilePadding = 10, GalleryHeadingHorizontalPadding = 16,
+    GalleryHeadingVerticalPadding = 12,
+    BackstageMinimumRowHeight = 62, BackstageNavigationPadding = 14,
+    BackstageBackButtonSize = 52, BackstageBackButtonInset = 28,
+    BackstageBackButtonBottomGap = 32, BackstageIconTextGap = 22,
+    BackstagePagePadding = 18
+};
+// Reset a single role without changing any other setting.
+ribbon.Theme = ribbon.Theme with { BackstagePagePadding = null };
+```
+
+The existing sample's `--menu-geometry-demo` includes **Gallery geometry** and
+**Backstage geometry**, with independent gallery/navigation/page apply/reset
+controls. See the [grouped contract, evidence and pending combined review](docs/GEOMETRY-CONSOLIDATION-PLAN.md#grouped-thirteenthfourteenth-batches-galleries-and-backstage--2026-11-04).
+
+ScreenTip/KeyTip and caption spacing also uses independently nullable,
+code-only `RibbonTheme` roles:
+
+| Role | Null default, 96-DPI logical pixels |
+| --- | --- |
+| `ScreenTipMaximumWidth`, `ScreenTipContentPadding`, `ScreenTipTitleGap`, `ScreenTipPlacementGap` | 320, 12, 6, 8 |
+| `KeyTipHorizontalPadding`, `KeyTipVerticalPadding` | Existing root/menu TextRenderer sizing; Backstage 4 / 2 per side with legacy summed DPI rounding |
+| `CaptionLeadingPadding`, `CaptionIconTextGap`, `CaptionQuickAccessTextGap`, `CaptionTitleReservationWidth` | Leading 10 with icon / 8 without; gaps 10 / 10; title reservation 100 before the QAT/title gap |
+
+Widths accept 1..1024; spacing accepts 0..1024. Null resets independently. Passive
+work-area bounds, inherited fonts, hover/cancellation/nonactivation and existing
+badge keyboard targets remain. Explicit badge padding fits existing targets;
+Backstage retains its outer row/trailing clearance. Caption settings govern the
+optional supported RibbonForm's icon/content/QAT/title allocation. Native caption
+height, system buttons/glyphs, frame/resize/drag behavior and material/Backstage
+motion remain unchanged. The title reservation yields to the existing QAT minimum
+and narrow-window overflow/fallback. There is no new designer theme editor or
+model serialization change. The sample's **Tips geometry** and **Caption geometry**
+tabs demonstrate independent presets/reset; the [active geometry plan](docs/GEOMETRY-CONSOLIDATION-PLAN.md)
+owns actual evidence and the pending combined review.
+
 Native fields in ordinary dropdown menus use the same command-text gutter and
 trailing clearance as neighboring commands. TextBox and visible ComboBox labels
 start at that text column; their fields share the measured label span. With

@@ -113,6 +113,10 @@ public partial class RibbonControl : Control, ISupportInitialize
             RibbonCommandContentMetrics.Validate(value);
             RibbonApplicationMenuMetrics.Validate(value);
             RibbonChromeMetrics.Validate(value);
+            RibbonGalleryMetrics.Validate(value);
+            RibbonBackstageMetrics.Validate(value);
+            RibbonTipMetrics.Validate(value);
+            RibbonCaptionMetrics.Validate(value);
             if ((!value.PopupBackground.IsEmpty && value.PopupBackground.A != 255) ||
                 (!value.EditorBackground.IsEmpty && value.EditorBackground.A != 255) ||
                 (!value.TitleBarBackground.IsEmpty && value.TitleBarBackground.A != 255))
@@ -682,7 +686,9 @@ public partial class RibbonControl : Control, ISupportInitialize
             if (targets[i].VisibleBounds.IsEmpty || !keys[i].StartsWith(_keyPrefix, StringComparison.Ordinal))
                 continue;
             var rect = targets[i].VisibleBounds;
-            var size = TextRenderer.MeasureText(keys[i], Font);
+            var metrics = new RibbonTipMetrics(Theme);
+            var size = metrics.BadgeSize(TextRenderer.MeasureText(keys[i], Font), DeviceDpi);
+            if (metrics.HasBadgeOverride) size = new(Math.Min(rect.Width, size.Width), Math.Min(rect.Height, size.Height));
             var badge = new Rectangle(rect.Left + Math.Max(0, (rect.Width - size.Width) / 2), Math.Max(rect.Top, rect.Bottom - size.Height), size.Width, size.Height);
             Painter.DrawKeyTip(new(graphics, badge, Theme, Font, DeviceDpi) { Density = Density, CompositedText = composited }, keys[i]);
         }
@@ -934,8 +940,11 @@ public partial class RibbonControl : Control, ISupportInitialize
                 break;
             case RibbonItem item:
                 bool keepGroup = KeepStatePopupOpen(item, opener);
+                var popupBeforeClick = _popups.Top;
                 item.PerformClick();
-                if (!keepGroup) _popups.CloseAll(true);
+                // Click may deliberately open another library popup. Dismiss
+                // only the unchanged command surface, never its replacement.
+                if (!keepGroup && ReferenceEquals(popupBeforeClick, _popups.Top)) _popups.CloseAll(true);
                 break;
             default:
                 if (target.Kind == TargetKind.Minimize) IsMinimized = !IsMinimized;
@@ -971,8 +980,9 @@ public partial class RibbonControl : Control, ISupportInitialize
     internal void ActivateSplitPrimary(RibbonSplitButtonItem split, Control? opener = null)
     {
         bool keepGroup = KeepStatePopupOpen(split, opener);
+        var popupBeforeClick = _popups.Top;
         split.PerformClick();
-        if (!keepGroup) _popups.CloseAll(true);
+        if (!keepGroup && ReferenceEquals(popupBeforeClick, _popups.Top)) _popups.CloseAll(true);
     }
     internal bool KeyboardFocusCues => _keyboardFocusCues;
     internal void SetKeyboardFocusCues(bool visible)

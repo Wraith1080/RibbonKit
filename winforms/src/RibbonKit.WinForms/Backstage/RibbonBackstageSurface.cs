@@ -320,9 +320,9 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             _pageFrameBounds = layout.Page;
             int border = RibbonBackstageLayout.PageBorderWidth(_ribbon.Painter, _ribbon.Theme, DeviceDpi, layout.Page.Size);
             int radius = RibbonBackstageLayout.PageCornerRadius(_ribbon.Painter, _ribbon.Theme, DeviceDpi, layout.Page.Size);
-            _pages.Bounds = new(layout.Page.Left + border, layout.Page.Top + border,
-                Math.Max(0, layout.Page.Width - border), Math.Max(0, layout.Page.Height - border));
-            UpdatePageRegion(Math.Max(0, radius - border));
+            _pages.Bounds = layout.PageContentBounds(_ribbon.Theme, DeviceDpi, border);
+            int padding = RibbonLayoutEngine.Scale(_ribbon.Theme.BackstagePagePadding ?? 0, DeviceDpi);
+            UpdatePageRegion(Math.Max(0, radius - border - padding));
             _navigation.SuspendLayout(); _footer.SuspendLayout();
             try
             {
@@ -570,7 +570,8 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             {
                 var text = TextRenderer.MeasureText(graphics, Tip, Font, Size.Empty, TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
                 int S(int n) => RibbonLayoutEngine.Scale(n, DeviceDpi);
-                var size = new Size(Math.Min(Math.Max(0, Width - S(8)), text.Width + S(8)), Math.Min(Math.Max(0, Height - S(4)), text.Height + S(4)));
+                var desired = new RibbonTipMetrics(ribbon.Theme).BadgeSize(text, DeviceDpi, backstage: true);
+                var size = new Size(Math.Min(Math.Max(0, Width - S(8)), desired.Width), Math.Min(Math.Max(0, Height - S(4)), desired.Height));
                 ribbon.Painter.DrawKeyTip(context with { Bounds = new(bounds.Left + Math.Max(0, Width - S(4) - size.Width), bounds.Top + (Height - size.Height) / 2, size.Width, size.Height) }, Tip);
             }
         }

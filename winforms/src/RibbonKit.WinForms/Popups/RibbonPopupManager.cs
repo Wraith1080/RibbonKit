@@ -466,6 +466,8 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         }
         else if (GallerySource is { } gallery)
         {
+            var spacing = new RibbonGalleryMetrics(ribbon.Theme, ribbon.Density);
+            _contentPadding = Math.Min(S(spacing.ContentPadding), Math.Max(0, Math.Min(workArea.Width - S(24) - 1, workArea.Height - S(56) - 1) / 2));
             if (gallery.HasCustomDropDownPresenter && (!IsQuickAccess || gallery.UseDropDownPresenterInQuickAccess))
             { Size = InitializeGalleryPresenter(gallery, workArea); return; }
             _galleryLayout = RibbonGalleryLayout.Build(gallery, Font, ribbon.DeviceDpi, workArea);

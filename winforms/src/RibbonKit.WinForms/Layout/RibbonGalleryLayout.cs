@@ -6,13 +6,15 @@ internal sealed record RibbonGalleryLayout(Size Extent, int ViewportHeight, int 
     internal static RibbonGalleryLayout Build(RibbonGalleryItem gallery, Font font, int dpi, Size workArea)
     {
         int S(int value) => RibbonLayoutEngine.Scale(value, dpi);
-        int padding = S(4), maxWidth = Math.Max(1, workArea.Width - S(24));
+        var spacing = new RibbonGalleryMetrics(gallery.Ribbon?.Theme, gallery.Ribbon?.Density ?? RibbonDensity.Compact);
+        int maxWidth = Math.Max(1, workArea.Width - S(24));
+        int padding = Math.Min(S(spacing.ContentPadding), Math.Max(0, (maxWidth - 1) / 2));
         int scroll = SystemInformation.GetVerticalScrollBarWidthForDpi(dpi);
         var metrics = RibbonDensityMetrics.For(gallery.Ribbon?.Density ?? RibbonDensity.Compact);
         int tileWidth = Math.Min(S(Math.Max(gallery.TileWidth, metrics.GalleryWidth)), Math.Max(1, maxWidth - 2 * padding - scroll));
         int columns = Math.Clamp((maxWidth - 2 * padding - scroll) / Math.Max(1, tileWidth), 1, gallery.ColumnCount);
-        int tileHeight = Math.Max(S(Math.Max(gallery.TileHeight, metrics.GalleryHeight)), 2 * font.Height + S(36));
-        int headingHeight = font.Height + S(12), y = padding, column = 0;
+        int tileHeight = Math.Max(S(Math.Max(gallery.TileHeight, metrics.GalleryHeight)), 2 * font.Height + S(24 + 3 * spacing.TilePadding));
+        int headingHeight = font.Height + S(2 * spacing.HeadingVerticalPadding), y = padding, column = 0;
         string? group = null;
         var targets = new List<RibbonTarget>(); var headings = new List<RibbonGalleryHeading>();
         int width = columns * tileWidth + 2 * padding;

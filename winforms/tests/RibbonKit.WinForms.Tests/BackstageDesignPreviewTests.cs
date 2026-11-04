@@ -10,6 +10,24 @@ namespace RibbonKit.WinForms.Tests;
 public sealed class BackstageDesignPreviewTests
 {
     [Fact]
+    public void Geometry_overrides_share_opaque_preview_bounds_without_hosting_native_pages() => FoundationTests.Sta(() =>
+    {
+        using var fixture = new Fixture(); var preview = fixture.Selection.Backstage; preview.Open();
+        var originalTheme = fixture.Ribbon.Theme; var original = preview.CaptureState()!;
+        fixture.Ribbon.Theme = originalTheme with { BackstageMinimumRowHeight = 62, BackstageNavigationPadding = 14,
+            BackstageBackButtonSize = 52, BackstageBackButtonInset = 28, BackstageBackButtonBottomGap = 32, BackstageIconTextGap = 22, BackstagePagePadding = 18 };
+        var state = preview.CaptureState()!; int S(int n) => RibbonLayoutEngine.Scale(n, fixture.Ribbon.DeviceDpi);
+        Assert.Equal(S(28), preview.BackBounds.Left); Assert.Equal(preview.Bounds.Top + S(28), preview.BackBounds.Top);
+        Assert.Equal(S(62), preview.Layout.RowHeight); Assert.Equal(original.TextBounds.Left + S(18), state.TextBounds.Left);
+        using var layer = new RibbonBackstagePreviewLayer(fixture.Surface); layer.Present(preview.Bounds, () => preview.CreateFrame(120, 120));
+        var handle = layer.Handle; preview.Click(Center(preview.Rows().Single(row => row.Item == fixture.Second).VisibleBounds));
+        layer.Present(preview.Bounds, () => preview.CreateFrame(120, 120)); Assert.Equal(handle, layer.Handle);
+        Assert.Equal(0, fixture.Body.Paints); Assert.Null(fixture.Body.Parent); Assert.False(fixture.Ribbon.IsBackstageOpen);
+        Assert.Same(fixture.First, fixture.Ribbon.Backstage.SelectedPage);
+        fixture.Ribbon.Theme = originalTheme; Assert.Equal(original.TextBounds, preview.CaptureState()!.TextBounds);
+    });
+
+    [Fact]
     public void Page_selection_uses_one_placeholder_and_never_dirties_the_page_body() => FoundationTests.Sta(() =>
     {
         using var fixture = new Fixture(); var preview = fixture.Selection.Backstage; preview.Open();

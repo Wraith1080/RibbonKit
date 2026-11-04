@@ -159,7 +159,10 @@ internal sealed partial class RibbonLayoutEngine
             if (item is IRibbonEditorItem editor && RibbonEditorLayout.IsField(item, size))
                 width = RibbonEditorLayout.LabelWidth(item, font, dpi) + RibbonEditorLayout.InputWidth(editor, dpi, group.Ribbon?.Density ?? RibbonDensity.Compact, font, 6);
             if (large && !galleryDropDown && item is RibbonGalleryItem { IsInRibbon: true } gallery)
-                width = S(gallery.InRibbonColumnCount * Math.Max(gallery.TileWidth, metrics.GalleryWidth) + metrics.GalleryUtility + 3 * RibbonGalleryStripLayout.Padding);
+            {
+                var spacing = new RibbonGalleryMetrics(theme, group.Ribbon?.Density ?? RibbonDensity.Compact);
+                width = S(gallery.InRibbonColumnCount * Math.Max(gallery.TileWidth, metrics.GalleryWidth) + spacing.UtilityWidth + 3 * spacing.ContentPadding);
+            }
             int contentExtra = RibbonCommandContentMetrics.Applies(item, size) ? contentMetrics.ExtraWidth(dpi) : 0;
             if (item is RibbonSplitButtonItem && !large)
                 width = RibbonCommandSplitMetrics.For(group.Ribbon?.Density ?? RibbonDensity.Compact, theme).MeasureWidth(width, dpi, false, contentExtra: contentExtra);

@@ -22,6 +22,13 @@ internal sealed record RibbonBackstageLayout(Rectangle Back, Rectangle Navigatio
         }
         Add(backstage.Items, false); Add(backstage.FooterItems, true); return rows;
     }
+    internal Rectangle PageContentBounds(RibbonTheme theme, int dpi, int border = 0)
+    {
+        var bounds = new Rectangle(Page.Left + border, Page.Top + border, Math.Max(0, Page.Width - border), Math.Max(0, Page.Height - border));
+        int padding = RibbonLayoutEngine.Scale(theme.BackstagePagePadding ?? 0, dpi);
+        int x = Math.Min(padding, bounds.Width / 2), y = Math.Min(padding, bounds.Height / 2);
+        return Rectangle.FromLTRB(bounds.Left + x, bounds.Top + y, bounds.Right - x, bounds.Bottom - y);
+    }
     internal static int PageShadowInset(RibbonRenderer renderer, RibbonTheme theme, int dpi, Size size) =>
         Math.Clamp(renderer.GetBackstagePageShadowInset(theme, dpi), 0, Math.Max(0,
             Math.Min(RibbonLayoutEngine.Scale(32, dpi), Math.Min(size.Width, size.Height - 1))));
@@ -34,8 +41,8 @@ internal sealed record RibbonBackstageLayout(Rectangle Back, Rectangle Navigatio
     internal static RibbonBackstageLayout Build(Size size, Font font, int dpi, RibbonBackstage? backstage = null, RibbonItem? reveal = null)
     {
         int S(int value) => RibbonLayoutEngine.Scale(value, dpi);
-        var metrics = RibbonDensityMetrics.For(backstage?.Ribbon?.Density ?? RibbonDensity.Compact);
-        int inset = S(8), row = Math.Max(S(metrics.BackstageRow), font.Height + S(16));
+        var metrics = new RibbonBackstageMetrics(backstage?.Ribbon?.Theme, backstage?.Ribbon?.Density ?? RibbonDensity.Compact);
+        int inset = S(metrics.NavigationPadding), row = Math.Max(S(metrics.RowHeight), font.Height + S(16));
         int width = Math.Max(0, size.Width);
         int shadow = backstage?.Ribbon is { HasWindowBackdrop: true } ribbon ? PageShadowInset(ribbon.Painter, ribbon.Theme, dpi, size) : 0;
         // Preserve 240 logical pixels for a page when possible; very narrow hosts
@@ -49,14 +56,16 @@ internal sealed record RibbonBackstageLayout(Rectangle Back, Rectangle Navigatio
             foreach (var item in backstage.NavigationItems.Where(i => (i.Visible || ReferenceEquals(i, reveal)) && !i.IsDisposed && i is not RibbonMenuSeparatorItem))
             {
                 int label = TextRenderer.MeasureText(item.Text, font, Size.Empty, TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding).Width;
-                // Shared entry text begins at 44, ends 8 before the edge, and is
-                // inset by 8 on each side. Reserve the native vertical scrollbar.
-                auto = (int)Math.Min(int.MaxValue, Math.Max((long)auto, (long)label + S(68 + 18) + shadow));
+                // Reserve the same entry text offset as painting, row side
+                // padding, trailing clearance and the native vertical scrollbar.
+                auto = (int)Math.Min(int.MaxValue, Math.Max((long)auto, (long)label + S(metrics.AutoWidthPadding) + shadow));
             }
         int rail = Math.Clamp(backstage?.NavigationWidth is { } authored ? ToDevice(authored) : auto, minimum, maximum);
         int navigation = rail;
-        int back = Math.Min(S(metrics.BackButton), Math.Max(0, navigation - 2 * inset));
-        int top = Math.Min(size.Height, S(20) + back + S(24));
+        inset = Math.Min(inset, Math.Max(0, (navigation - shadow) / 2));
+        int backTop = Math.Min(S(metrics.BackInset), Math.Max(0, size.Height));
+        int back = Math.Min(S(metrics.BackSize), Math.Min(Math.Max(0, navigation - 2 * inset), Math.Max(0, size.Height - backTop)));
+        int top = Math.Min(size.Height, backTop + back + S(metrics.BackGap));
         int EntryHeight(RibbonItem item) => item is RibbonMenuSeparatorItem ? S(9) : row;
         int mainHeight = backstage?.Items.Where(item => !item.IsDisposed && (item.Visible || ReferenceEquals(item, reveal))).Sum(EntryHeight) ?? 0;
         int bottomHeight = backstage?.FooterItems.Where(item => !item.IsDisposed && (item.Visible || ReferenceEquals(item, reveal))).Sum(EntryHeight) ?? 0;
@@ -64,7 +73,7 @@ internal sealed record RibbonBackstageLayout(Rectangle Back, Rectangle Navigatio
         bool inline = footerHeight > 0 && footerHeight + Math.Min(row, mainHeight) > availableHeight;
         if (inline) footerHeight = 0;
         var nav = new Rectangle(0, top, Math.Max(0, navigation - shadow), availableHeight - footerHeight);
-        return new(new(Math.Min(S(20), Math.Max(0, navigation - back)), S(20), back, back), nav,
+        return new(new(Math.Min(S(metrics.BackInset), Math.Max(0, navigation - back)), backTop, back, back), nav,
             new(rail, shadow, width - rail, Math.Max(0, size.Height - shadow)), row, inset)
         {
             Footer = footerHeight > 0 ? new(0, size.Height - footerHeight, nav.Width, footerHeight) : Rectangle.Empty,

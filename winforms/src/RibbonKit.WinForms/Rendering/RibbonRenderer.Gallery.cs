@@ -33,8 +33,14 @@ public partial class RibbonRenderer
         if (button == RibbonGalleryStripButton.Expand)
         {
             int inset = RibbonLayoutEngine.Scale(4, context.DeviceDpi);
-            using var pen = new Pen(color);
-            context.Graphics.DrawLine(pen, glyph.Left + inset, glyph.Top + inset, glyph.Right - inset, glyph.Top + inset);
+            int width = Math.Min(RibbonLayoutEngine.Scale(10, context.DeviceDpi), glyph.Width - 2 * inset);
+            int stroke = Math.Max(1, RibbonLayoutEngine.Scale(2, context.DeviceDpi));
+            if (width > 0 && glyph.Height > inset + stroke)
+            {
+                float center = glyph.Left + (glyph.Width - 1) / 2f;
+                using var pen = new Pen(color, stroke);
+                context.Graphics.DrawLine(pen, center - width / 2f, glyph.Top + inset, center + width / 2f, glyph.Top + inset);
+            }
         }
     }
     /// <summary>Paints a noninteractive heading above a consecutive group of gallery tiles.</summary>
@@ -43,10 +49,9 @@ public partial class RibbonRenderer
         context = context with { Hot = false, Pressed = false, Focused = false };
         if (context.IsMenuHeading && context.Theme.MenuHeadingBackground is { } fill)
             DrawChrome(context, fill, Color.Transparent);
-        int inset = RibbonLayoutEngine.Scale(6, context.DeviceDpi);
         using var font = new Font(context.Font, context.Font.Style | FontStyle.Bold);
         var foreground = context.IsMenuHeading && !context.Theme.MenuHeadingForeground.IsEmpty ? context.Theme.MenuHeadingForeground : context.Theme.SecondaryText;
-        var textBounds = context.IsMenuHeading ? Layout.RibbonMenuLayout.HeaderTextBounds(context.Bounds, context.DeviceDpi, context.Density, context.Theme) : Rectangle.Inflate(context.Bounds, -inset, 0);
+        var textBounds = context.IsMenuHeading ? Layout.RibbonMenuLayout.HeaderTextBounds(context.Bounds, context.DeviceDpi, context.Density, context.Theme) : new Layout.RibbonGalleryMetrics(context.Theme, context.Density).HeadingTextBounds(context.Bounds, context.DeviceDpi);
         DrawText(context with { Bounds = textBounds, Font = font }, text, foreground,
             TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
     }
@@ -60,9 +65,12 @@ public partial class RibbonRenderer
                 selected ? context.Theme.Accent : Color.Transparent);
         int S(int value) => RibbonLayoutEngine.Scale(value, context.DeviceDpi);
         var bounds = context.Bounds;
-        int textHeight = Math.Min(2 * context.Font.Height, Math.Max(0, bounds.Height - S(24)));
-        var label = new Rectangle(bounds.Left + S(4), bounds.Bottom - S(4) - textHeight, Math.Max(1, bounds.Width - S(8)), textHeight);
-        var artwork = Rectangle.FromLTRB(bounds.Left + S(8), bounds.Top + S(6), bounds.Right - S(8), Math.Max(bounds.Top + S(6), label.Top - S(4)));
+        int padding = new RibbonGalleryMetrics(context.Theme, context.Density).TilePadding;
+        int textHeight = Math.Min(2 * context.Font.Height, Math.Max(0, bounds.Height - S(12 + 3 * padding)));
+        int side = Math.Min(S(padding), bounds.Width / 2), bottom = Math.Min(S(padding), bounds.Height);
+        var label = new Rectangle(bounds.Left + side, Math.Max(bounds.Top, bounds.Bottom - bottom - textHeight), Math.Max(0, bounds.Width - 2 * side), textHeight);
+        int artSide = Math.Min(S(padding + 4), bounds.Width / 2), artTop = Math.Min(bounds.Bottom, bounds.Top + S(padding + 2));
+        var artwork = Rectangle.FromLTRB(bounds.Left + artSide, artTop, bounds.Right - artSide, Math.Max(artTop, label.Top - S(padding)));
         var color = enabled ? context.Theme.Foreground : context.Theme.DisabledColor;
         if (artwork.Width > 0 && artwork.Height > 0)
         {

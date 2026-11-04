@@ -1,8 +1,9 @@
 # Native geometry consolidation
 
-Status, **2026-11-04: grouped tenth–twelfth review and the subsequent Roomier
-Large-command shared-band review are recorded below. This session is ready for
-the user's commit; await instruction before further implementation**.
+Status, **2026-11-05: the current 15–16 review result is recorded in its existing
+row below. Await instruction before frames/shadows or additional themes**.
+The accepted tenth–twelfth spacing and Roomier Large-command shared-band reviews
+remain recorded below.
 The eighth/ninth review is accepted below. The user authorized
 2–3 related implementation batches per session, with contracts upfront, shared
 verification and one combined review. Stop for that review before further batches
@@ -25,11 +26,11 @@ The inventory identifies ownership, not new acceptance of deferred surfaces.
 | Ordinary command menus, nested menus, QAT overflow, Simplified More | rows 28/44; icon 24/32; leading/trailing 8; icon/text gap 10/12; desired width 170/220, described 280/320 | `RibbonMenuMetrics`, row/container/heading layout, popup sizing, shared renderer, overflow bands and inert preview; targets feed scrolling, keyboard/KeyTips/UIA and editor hosting | First/second sets expose row/horizontal/vertical roles. Third exposes container/heading/overflow bands; fourth exposes menu arrow slots and separator clearance. Popup inner margin, glyph shapes and platform work-area rules remain separate. |
 | Application Menu | nav rows 40/44, pane 28/44, footer 30/44; pane inset 10, footer gap 6; arrow 26/44 | component-specific metrics/layout, Application Menu renderer, native pane hosting and column scrolling, designer preview | Ninth adds navigation/pane/footer row minima, pane inset and footer gap. Hover/default-pane/split ownership and null defaults retained. Nested ordinary submenus keep ordinary-menu geometry; intrinsic columns/arrows/frame rules remain separate. |
 | Illustrated menu choices and ComboBox choices | illustrated width 300, icon 36, row at least 64; ComboBox choice rows 28/44 or font+10 | `RibbonIllustratedMenuMetrics`, illustrated layout/renderer and ordinary popup sizing/preview; editor layout/list window | Sixth batch exposes illustrated width/row/artwork/insets/gaps. Fifth batch owns ComboBox choice minimum and vertical text padding. Choice-list horizontal padding stays separate. |
-| Galleries | model tile sizes; density fallback 32x32 / 64x80, utility width 18/32 | gallery strip/popup layout, renderer, presenter viewport/scroll, borrowed UserControl cards, UIA | Tile padding, heading/utility slots deferred. Application artwork and card content stay host-owned. |
+| Galleries | model tile sizes; density fallback 32x32 / 64x80, utility width 18/32 | gallery strip/popup layout, renderer, presenter viewport/scroll, borrowed UserControl cards, UIA | Thirteenth owns container/tile padding, heading padding and inline utility width. Application artwork and card internals stay host-owned. |
 | QAT strip and message joins | QAT button 28/44 and row 32/48; edge padding 2, item gap 0; existing message minimum/content padding, action gap 10 and title/text gap 8 | shared chrome metrics, QAT/message layout, joined renderer frames, optional caption host and motion endpoints | Twelfth owns edge/inter-entry and message horizontal gaps. Button/row sizes, source identity and placements retain their owners. Join/radius/shadow geometry remains grouped with deferred frames. |
-| Backstage | navigation width bounds/model opacity; font minimum 14; rows 42/52, Back button 36/44 | Backstage layout/renderer, live native page clipping/hosting, whole-surface motion, retained designer layer | Deferred. Host page layout/HWND ownership and moving caption coverage retained. |
+| Backstage | navigation width bounds/model opacity; font minimum 14; rows 42/52, Back button 36/44 | Backstage layout/renderer, live native page clipping/hosting, whole-surface motion, retained designer layer | Fourteenth owns row/navigation/Back-button spacing, icon-text gap and page-host inset. Existing width/font/opacity and page HWND/motion/preview owners retained. |
 | Frames, radii, shadows | `CornerRadius=4`, popup radius 6 (Office; neutral square), popup shadow enable/color; blur 6, reserved chrome 8, downward offset 2 | shared/Office renderer, popup chrome/regions, raster/cache keys, body/QAT/message joins and Backstage page clipping | Deferred together: painting, clipping, clearance and caches must change as one contract. One-device-pixel borders/coverage and Windows shadow policy stay platform rules. |
-| ScreenTips, KeyTips and caption | ScreenTip width cap 320, padding 12, title gap 6, placement gap 8; KeyTip Office radius 2 / neutral square | ScreenTip layout/window, badge renderer, caption layout/Win32 hit testing | Deferred. Native system frame, scrollbars and host document content are not theme geometry. |
+| ScreenTips, KeyTips and caption | ScreenTip width cap 320, padding 12, title gap 6, placement gap 8; KeyTip Office radius 2 / neutral square | ScreenTip layout/window, badge renderer, caption layout/Win32 hit testing | Fifteenth/sixteenth own tip padding/width/placement and caption content/QAT/title spacing. Native caption height, button targets/glyphs, system frame and host content retain their owners. |
 
 ## First contract: ordinary command-menu rows and horizontal content
 
@@ -933,9 +934,10 @@ broad review groups can require more than one bounded implementation batch.
 The sixth implements illustrated choices, seventh horizontal split widths, and
 eighth/ninth Small/Medium content and selected Application Menu spacing. The
 grouped tenth–twelfth session below implements selected body/group, header/tab and
-QAT/message spacing. The working estimate is
-**4–5 further implementation batches**: galleries (1), Backstage (1), tips/caption
-(1–2), and frames/shadows including connected joins (1). Related batches may share
+QAT/message spacing. The grouped thirteenth/fourteenth session implements gallery
+and Backstage spacing below. The grouped fifteenth/sixteenth session implements tips and caption spacing below.
+The revised remaining estimate is **one frames/shadows/connected-joins batch**,
+after the current combined review. Related batches may share
 a session and review; this is not a session count. Intrinsic Large/glyph and
 platform rules need inventory, not automatic new theme knobs. This replaces the
 earlier 6–8 estimate.
@@ -1632,3 +1634,358 @@ are preserved; this remains the existing opt-in review surface.
   above. Automated, actual VS, external accessibility and physical hardware
   evidence retain their stated scopes. The user will commit before continuation;
   await instruction before more batches/themes.
+
+
+## Grouped thirteenth/fourteenth batches: galleries and Backstage — 2026-11-04
+
+Starting HEAD: `codex/Ribbonkit-Winform`,
+`0ac1351bff0f11fcea27831b75d6f71564989919`. The existing plan/continuation
+handoff edits were present and preserved. Both source inventories and concrete
+native API/layout/designer contracts were presented before runtime edits.
+
+| Batch / nullable `RibbonTheme` role | Null behavior (96-DPI logical pixels) | Review value |
+| --- | --- | --- |
+| 13 / `GalleryContentPadding` | 4 around dropdown/inline content and between strip viewport and utilities | 10 |
+| 13 / `GalleryUtilityWidth` | Compact 18 / Touch 32; Touch retains 32 | 40 |
+| 13 / `GalleryTilePadding` | Built-in label inset/bottom/gap 4; intrinsic artwork allowances remain | 10 |
+| 13 / `GalleryHeadingHorizontalPadding` | 6 on each side | 16 |
+| 13 / `GalleryHeadingVerticalPadding` | 6 above/below text | 12 |
+| 14 / `BackstageMinimumRowHeight` | Compact 42 / Touch 52; font+16 and Touch 52 minima remain | 62 |
+| 14 / `BackstageNavigationPadding` | 8 at row sides and footer bottom | 14 |
+| 14 / `BackstageBackButtonSize` | Compact 36 / Touch 44; Touch retains 44, constrained to host | 52 |
+| 14 / `BackstageBackButtonInset` | 20 at top/left | 28 |
+| 14 / `BackstageBackButtonBottomGap` | 24 below Back | 32 |
+| 14 / `BackstageIconTextGap` | 12 after the retained 16-pixel icon slot | 22 |
+| 14 / `BackstagePagePadding` | 0 inside the existing page frame/border | 18 |
+
+Spacing accepts 0..1024, utility/row/button sizes 1..1024; null resets each
+independently. Validation precedes Theme/BuiltInTheme changes. XML comments and
+24 additive Unshipped accessors document the roles; shipped APIs are unchanged.
+Theme remains immutable, per-ribbon, hidden/nonserialized and code-only. There
+is no new model setting, renderer hook, designer theme editor or protocol field.
+
+`RibbonGalleryMetrics` supplies strip preferred width, built-in and native inline
+viewports, popup outer padding, tile content and heading slots. Model tile widths,
+heights, columns/visible rows and density minima remain authoritative; built-in
+popup height retains two text lines plus its artwork minimum and selected padding.
+Inline slots retain existing body-height constraints; extra padding can reduce
+artwork within that allocation. Native card artwork/internal layout and custom
+popup preferred sizes remain application-owned. Custom popup footer buttons keep
+their existing 24-pixel slots; the selected utility-width role is inline only.
+The existing viewport/targets drive paint, keyboard reveal, preview/commit,
+KeyTips/accessibility and scrolling, including QAT and borrowed group bodies.
+Extreme spacing clamps to available space; a utility too narrow for its expansion
+bar omits that bar instead of painting into its neighbor. Source/selection and
+permanent native view handles are retained; temporary views retain their established
+independent lifetime. Theme changes still dismiss transient popups.
+
+`RibbonBackstageMetrics` shares navigation text offset with Auto rail sizing,
+row and Back-button bounds. Existing authored navigation width/minimum/maximum,
+font minimum and opacity APIs still govern. Navigation/footer clipping and
+scrolling retain their owners. Shared `PageContentBounds` insets the live native
+page container inside the existing frame and moves the inert preview placeholder
+by the same selected padding. It never changes application page content layout
+or replaces/reparents page Controls. The opaque retained preview, whole-surface
+motion, moving caption coverage, border/shadow/radius policy and validation remain.
+
+The same `--menu-geometry-demo` adds **Gallery geometry** and **Backstage geometry**,
+initially selecting Gallery geometry. Earlier tabs and normal startup/File routing
+remain. Gallery controls compare built-in and designer-editable native cards;
+**Gallery in QAT** adds/removes only its direct gallery and borrowed-group references.
+The borrowed reference intentionally collapses its source under the accepted QAT
+ownership contract. Resize/open a collapsed group, switch Classic/Simplified and
+Mouse/Touch, expand/scroll/choose, and compare independent resets. Backstage uses
+existing authored Info/Print bodies: navigation and page-inset presets/reset are
+separate; **Open Backstage** is explicit and **Restore File mode** restores the
+pre-demo routing choice. Authored Forms/UserControls/resources were not edited.
+
+Verification and combined review gate:
+
+- [x] **32 pre-change default PNG/measurement records match exactly** after the
+  runtime changes: both renderers/densities, 9/14-point fonts and synthetic
+  96/120/144/192 DPI. These are offscreen renderer/layout fixtures, not four native
+  monitor-DPI runs. The records include popup/strip bounds and group preferred
+  width plus Backstage navigation/Back/footer/page geometry. No approval/tolerance
+  changed.
+- [x] **25 distinct new unit/STA cases passed across focused runs**: twelve atomic
+  validation/isolation/reset cases; four density-specific gallery/Backstage
+  DPI/font/extreme-space matrices; live native inline/page retention without
+  validation; default parity; two renderer paint matrices; collapsed/QAT/minimized
+  borrowed presenters and direct-QAT custom popup insets; inert opaque preview;
+  and override keyboard reveal/commit plus native accessible target bounds.
+  Evidence is retained across runs, not described as one clean aggregate.
+  Fixture corrections made File visible before opening Backstage and created the
+  permanent gallery view before attaching a QAT group reference (which correctly
+  collapses/parks the original group). No accepted runtime behavior was changed
+  to satisfy those fixture errors.
+- [x] Related Release selection: **385 passed / 2 failed / 387 total**. This includes
+  gallery/presenter/selection/reduction/scrollbar, Backstage/page/preview/designer,
+  paired/chrome geometry and all seven accepted Large shared-band cases.
+  The two failures are `WindowBackdropTests.Enabling_material_on_an_open_backstage_keeps_opaque_gdi_composition_owned_by_the_surface`
+  (`Assert.True`, line 133) and
+  `WindowMotionRegressionTests.Backstage_slides_and_immediate_page_switches_keep_one_opaque_layer_until_hidden`
+  (`Assert.False`, line 74). Both names and failures were verified in the retained
+  **pre-change** `artifacts/application-menu/baseline/pre-application-menu.trx`.
+  They remain unresolved inherited limits; no full-suite pass is claimed.
+- [x] Normal native Release solution/API/XML-analyzer build and Release pack passed
+  with zero warnings/errors. Normal Debug runtime/design-server/client/sample
+  builds passed with zero warnings/errors. Refreshed the permanent sample **once**
+  using **`0.1.0-designer.local20261104T133428788Z`**. Runtime/server/client hashes in
+  that package match the current Debug outputs. The later sample-only build fixed
+  its capture helper and did not refresh or change the runtime package.
+- [x] Public-package checks: **4/4 renderer/density presentations** passed at
+  reported native **120 DPI**, using shown automatic fixtures and public APIs,
+  callbacks and native Controls/HWNDs, without Showcase or runtime internals/global
+  input. Checks cover automatic inline utility width, native card handles, QAT
+  source/relocation retention, built-in/custom dropdowns, native popup padding,
+  exact default/reset ribbon pixels and native page inset/HWND/text/focus/selection
+  with no validation. Permanent demo independently resets gallery/navigation/page
+  roles while retaining earlier geometry, authored pages and File routing.
+  Direct/borrowed QAT popup activation is the separate library STA scope above.
+- [x] Inspected representative default/override/package PNGs: both renderers,
+  Compact/Touch, popup and native-page surfaces and all four existing frame corners
+  at native 120 DPI. Initial Form-level Backstage captures painted the covered
+  ribbon last because of WinForms `DrawToBitmap` child order; the sample capture
+  helper now targets the native Backstage surface directly. Those corrected
+  captures are in `package-surface/`; the initial attempt is retained in `package/`.
+- [x] **2026-11-04: user accepted the combined gallery/Backstage review, including
+  the command-opening and expand-glyph corrections** ("everything looks good and
+  works perfectly, including the backstages"). No actual VS designer, external UIA/screen
+  reader, physical touch/IME/RTL, mixed-monitor DPI or new material/motion hardware
+  acceptance is claimed. The two inherited failures and previously recorded broader
+  aggregate limits remain open. VS was not opened or controlled; no computer use,
+  WPF edit/build/test, commit, push or publication occurred.
+
+Evidence: `artifacts/geometry/gallery-backstage/`: `before/`, `after/`, `final/`,
+`overrides/`, focused/related TRX files, `package/`, corrected `package-surface/`,
+`package-hashes.json`, `focused-evidence.json` and `release-package/`.
+
+Combined review checklist:
+
+1. Launch the refreshed Debug sample with `--menu-geometry-demo`. On **Gallery
+   geometry**, compare Roomier/Reset in Mouse/Touch and Classic/Simplified. Check
+   built-in tile/heading spacing, utilities, scrolling, selection and native cards.
+2. Enable **Gallery in QAT**; open the direct native gallery and borrowed built-in
+   group. Resize/open a collapsed source, expand/cancel/reopen and select an item;
+   source selection/cards remain coherent. Disable the opt-in QAT references.
+3. On **Backstage geometry**, apply navigation and page inset, then **Open
+   Backstage**. Check Back, rail/footer/scrolling and retained Info/Print field
+   values while switching pages and closing/reopening. Compare resets separately.
+4. Combine earlier Roomier command/menu/chrome settings, reset each new group,
+   and confirm the accepted Large icon/two-caption-row/arrow bands and split
+   actions remain. Review authored Forms/opaque preview in VS when convenient.
+
+Stop for this combined review. Remaining estimate: **2–3 implementation batches**
+(tips/caption 1–2; frames/shadows/connected joins 1), subject to later authorization.
+No further implementation batches or additional themes in this session.
+
+
+### Gallery review corrections: command opening and expand glyph — 2026-11-04
+
+The user reported that **Open built-in gallery** briefly opened then closed,
+that the Simplified example required pinning, and that the expand glyph's bar
+stretched too far in Roomier and should be thicker at every density. This is a
+bounded correction inside the existing combined review, not a new geometry batch.
+
+Source and native local-click reproduction showed ordinary button/split-primary/
+QAT command cleanup closing the popup opened by its own Click callback. The
+cleanup now dismisses only when the top popup is still the same one that existed
+before Click. A callback-created replacement/nested popup remains; unchanged
+ordinary commands still dismiss, explicit callback closure still works, and
+state-before-Click/single invocation and state-command retention are preserved.
+No focus/activation-loss handling, layout API, timing workaround or coordinator
+was added. The same fix is shared library behavior across these command routes.
+
+The two new review galleries now explicitly use `SimplifiedPlacement.Inline`,
+so their ordinary Simplified dropdown projections have visible anchors. This is
+an opt-in sample declaration; model defaults, customization and unrelated authored
+galleries remain. `ShowDropDown` still needs an on-screen current source anchor:
+a gallery moved into a collapsed group/overflow is opened through that presentation.
+The programmatic review button does not reveal an otherwise hidden projection.
+
+The shared expand glyph now reserves a centered **10-logical-pixel** horizontal
+bar with a **2-logical-pixel** stroke. Its width does not stretch with the utility
+button; constrained slots omit a bar that cannot fit. Both renderers, built-in
+and native inline presenters, normal/Roomier and Compact/Touch share the painter.
+Only the requested glyph pixels intentionally change; metrics/targets, arrow
+placement, selection, card ownership, frames and default dimensions remain.
+The earlier exact default-paint evidence belongs to the pre-glyph checkpoint.
+
+- Native local-pointer regressions failed before the fix for all six root/plain,
+  split and QAT/layout cases; both glyph cases reproduced the long-bar failure.
+  **10 distinct new focused cases passed across runs**: six command/layout cases
+  (both densities), two existing-menu replacement cases and two renderer glyph
+  matrices covering density, normal/Roomier and synthetic 96/120/144/192 DPI.
+  Inspected representative glyph and full sample PNGs; no approvals/tolerances
+  were changed. The saved glyph matrix contains 32 images.
+- Related Release regressions passed **142/142**, covering state-command and menu
+  checkbox retention, ordinary/split/QAT/menu/group/overflow behavior, gallery/
+  presenter borrowing and popup motion. Earlier inherited broader failures remain
+  recorded above; this is focused evidence, not a full-suite claim.
+- Normal native Release solution/API/XML build and Debug runtime/design-server/
+  client/sample builds passed with zero warnings/errors. The permanent sample was
+  refreshed once for this **follow-up correction** to
+  **`0.1.0-designer.local20261104T135811151Z`**. Runtime/server/client package hashes
+  match Debug outputs. The original grouped session's one refresh remains its
+  earlier checkpoint; this later user-requested correction requires the new package.
+  Authored Forms/UserControls/resources were preserved.
+- Fresh shown public-package check passed **16/16** at reported native **120 DPI**:
+  both renderers/densities/layouts and normal/Roomier, using the **actual sample
+  action** located through public paint callbacks and fixture-local native messages.
+  Foreground ownership was checked before input and after 200ms of message-loop
+  retention; opening/explicit closing each occurred once, selection stayed unchanged.
+  No Showcase helpers, runtime internals or global input were used.
+- Initial per-STA queued-focus checks lost real foreground ownership between test
+  windows. Their traces showed the legitimate activation-loss dismissal, so they
+  are not claimed as passing foreground evidence; the synchronous cleanup regression
+  and fresh package check are separate. The first package attempt passed its default
+  case, then reached a Roomier source collapsed by the narrow fixture (no anchor).
+  The final package matrix uses a wider **test fixture only**, preserving the actual
+  sample's authored default size and the current-anchor contract. No assertion or
+  activation-loss rule was weakened to force a pass.
+
+Evidence: `artifacts/geometry/gallery-review-correction/`, with repro/cleanup/
+existing-popup/glyph/related TRX scopes, `glyphs/`, initial `package/`, final
+`package-visible/result.log`/captures, `package-hashes.json` and
+`focused-evidence.json`. No full suite, actual VS, external UIA, physical touch/
+IME/RTL, mixed-monitor or new material/motion hardware acceptance is claimed.
+No WPF work, computer use, commit, push or publication.
+
+Review: in `--menu-geometry-demo`, keep the built-in gallery presented and try
+**Open built-in gallery** in Classic/Simplified and Mouse/Touch; compare normal/
+Roomier expand bars on both built-in/native strips. Select/cancel/reopen, then
+confirm unchanged ordinary command dismissal and state-command retention. The
+combined gallery/Backstage acceptance is recorded in its review row above.
+
+
+## Grouped fifteenth/sixteenth batches: tips and caption spacing — 2026-11-05
+
+The user accepted galleries and Backstage (recorded once in the existing review
+row above) and authorized continuation. Branch/committed HEAD still matched
+`codex/Ribbonkit-Winform`, `0ac1351bff0f11fcea27831b75d6f71564989919`; all prior
+uncommitted implementation, sample and documentation changes were preserved.
+The selected two contracts were inventoried and presented before runtime edits.
+
+| Batch / nullable `RibbonTheme` role | Null behavior, 96-DPI logical pixels | Review value |
+| --- | --- | --- |
+| 15 / `ScreenTipMaximumWidth` | Outer width cap 320; working-area limits remain | 420 |
+| 15 / `ScreenTipContentPadding` | 12 at each side | 20 |
+| 15 / `ScreenTipTitleGap` | 6 between a nonempty title and description | 12 |
+| 15 / `ScreenTipPlacementGap` | 8 from the anchor/pointer when space allows | 16 |
+| 15 / `KeyTipHorizontalPadding` | Root/menu retain existing TextRenderer sizing; Backstage retains 4 per side | 6 |
+| 15 / `KeyTipVerticalPadding` | Root/menu retain existing TextRenderer sizing; Backstage retains 2 per side | 4 |
+| 16 / `CaptionLeadingPadding` | Icon inset 10; content inset 8 without an icon | 22 |
+| 16 / `CaptionIconTextGap` | 10 from icon to caption content/QAT start | 18 |
+| 16 / `CaptionQuickAccessTextGap` | 10 between TitleBar QAT and title text | 18 |
+| 16 / `CaptionTitleReservationWidth` | 100 reserved beside the QAT slot, before its title gap | 180 |
+
+Widths accept 1..1024; padding/gaps accept 0..1024. Each null resets independently.
+Assignment validates before Theme/BuiltInTheme changes; XML comments and 20
+additive Unshipped accessors describe the ten properties. No shipped API changes,
+new model settings, public measurement types, renderer hooks or global coordinator.
+Theme remains immutable, per-ribbon, hidden/nonserialized and code-only.
+
+`RibbonTipMetrics` supplies the passive window's measure/placement and keyboard
+badge sizes. ScreenTip maximum width is an outer cap; large content padding clamps
+to the cap and work area, preventing padding alone from exceeding the selected
+width. Text keeps the inherited font/bold-title policy, title-only semantics,
+wrapping and clipping. Existing 600ms hover timing, cancellation, nonactivation,
+no-capture behavior, popup layering and metadata remain. Working-area clearance
+and native shadow/frame rules remain separate. Root/popups share `DrawTips`;
+Backstage uses the same selected badge padding with its own trailing/row clearance.
+Null preserves legacy summed fractional-DPI Backstage padding rounding. Explicit
+badge sizes clamp to their existing target/row; the model, keyboard sequence,
+KeyTip resolution and underlying hit/UIA targets are unchanged. Neutral square
+and Office badge radius policy remain renderer-owned.
+
+`RibbonCaptionMetrics` supplies shared icon/content geometry, QAT slot reservation
+and title bounds. Geometry feeds existing painting, icon/system-menu hit space,
+TitleBar QAT placement and drag exclusion. The title reservation is desired space
+beside QAT before its text gap; existing QAT minimum/overflow and narrow-width
+fallback remain authoritative. Caption height stays 36 Compact / 48 Touch, button
+slots 46, artwork 16 and caption glyphs 10. System button hit values, DWM/frame/
+resize/maximize semantics, source identity, native handles, material tint and
+Backstage moving caption coverage are preserved. Unsupported hosts keep existing
+fallback; no native caption-control authoring surface is added.
+
+The existing `--menu-geometry-demo` now adds **Tips geometry** (selected initially)
+and **Caption geometry**. ScreenTip/KeyTip/caption apply/reset groups are independent.
+Hover the example and menu rows; F10 then TG enters the command-badge level. The
+Backstage action opens existing authored pages for F10 badge review, with an
+explicit restore-File-mode action. **Use caption QAT** enables the existing caption
+placement and restores the prior placement when toggled back. Resize to compare
+title reservation/overflow. Normal startup, authored Forms/UserControls/resources,
+existing tabs, gallery/Backstage settings and accepted Large bands are preserved.
+
+Evidence and combined review:
+
+- [x] **32 saved default PNG/measurement pairs match exactly** after changes,
+  across both renderers/densities, 9/14-point fonts and synthetic 96/120/144/192 DPI.
+  ScreenTip layout/paint and caption geometry are synthetic; the associated caption
+  raster uses the fixture's native 96 DPI, not four monitor runs. The original
+  composite capture has a TextRenderer/graphics-transform caption-text overlay,
+  so those PNG comparisons establish repeatability, not a clean composed visual
+  reference. Native `package-positioned/` and `package-caption/` PNGs below supply
+  the actual tip/badge/caption visual review. No approvals/tolerances changed.
+- [x] **18 distinct new focused unit/STA cases passed across runs**: ten atomic
+  validation/independent-reset/isolation cases retaining earlier geometry; two
+  title-only/described width/font/work-area matrices including extreme values;
+  two renderer badge/target/default-legacy-pixel and fractional-DPI cases; two
+  density-specific caption/QAT/native-hit/handle/reset and narrow/DPI matrices;
+  one passive native tip/Backstage-badge focus/selection/handle case; default parity.
+  An initially empty synthetic target Clip was corrected in the badge fixture;
+  no production behavior was changed for that test setup error.
+- [x] Related Release scope passed **106/106**, covering passive tips, RibbonForm,
+  Backstage navigation/caption, caption-button backdrop paint, shared color roles
+  and designer theme/backdrop behavior. No full-suite result is claimed. Previously
+  inherited aggregate/material/page-switch failures retain their earlier limits.
+- [x] Native normal Release solution/API/XML build and pack passed; normal Debug
+  runtime/design-server/client/sample builds passed, all with zero warnings/errors.
+  Refreshed the permanent sample **once for 15–16**, to
+  **`0.1.0-designer.local20261104T142333305Z`**. Package runtime/server/client hashes
+  match current Debug outputs. Later builds changed only capture/check helpers;
+  they did not refresh or change the library package.
+- [x] Fresh public-package native check passed **8/8 renderer/density/default-versus-
+  Roomier cases at reported native 120 DPI**, plus the permanent demo reset contract.
+  It exercised the actual delayed passive HWND, measured title/description padding/
+  gap/width, retained native editor focus/selection, caption-derived QAT positions,
+  QAT/client and Close hit values, HWND/value/reset retention and F10/TG keyboard
+  badges. It uses public APIs/callbacks, owned test windows and local messages,
+  with no Showcase helpers, runtime internals or global cursor/input movement.
+  To exercise hover, the fixture positions its own topmost window beneath the
+  stationary pointer and stops on pointer movement or foreground loss. The first
+  attempt's automatic Windows placement left the command elsewhere; explicit
+  Manual placement corrected the fixture without a runtime change.
+- [x] Inspected actual default/Roomier tips and badges, caption/QAT PNGs and all
+  four existing tip-frame corners at native 120 DPI. A later attempt to add caption
+  captures stopped immediately when the pointer moved; it is retained in
+  `package-final/` and is not claimed as a completed rerun. The already-passed eight
+  cases are retained in `package-positioned/`. Separate caption-only capture of
+  all eight cases used no hover/input (`package-caption/`).
+- [x] **2026-11-05: user accepted the reviewed ScreenTip/KeyTip and caption
+  appearance** ("looks good"). Actual VS designer, external UIA/
+  screen readers, physical keyboard/touch/IME/RTL, mixed-monitor and new material/
+  motion hardware acceptance remain separate. No WPF work, computer-use tools,
+  commit, push or publication. Native system/frame behavior was not redesigned.
+
+Evidence: `artifacts/geometry/tips-caption/`: `before/`, `after/`, `final/`,
+`overrides/`, focused/related TRX files, `package-positioned/`, `package-caption/`,
+initial/aborted package folders, `package-hashes.json`, `focused-evidence.json`
+and `release-package/`.
+
+Combined review checklist:
+
+1. Launch the refreshed Debug sample with `--menu-geometry-demo`. On **Tips
+   geometry**, compare Roomier/Reset ScreenTips on the hover example and menu rows.
+   Check title/description spacing and placement near a screen edge.
+2. Compare Roomier/Reset KeyTips with F10 then TG, and F10 on existing Backstage
+   pages. Check native field selection, normal keyboard activation and resets.
+3. On **Caption geometry**, enable **Use caption QAT**, compare Roomier/Reset,
+   and resize for title/QAT allocation and overflow. Check system buttons, dragging
+   and the normal Backstage caption transition.
+4. Combine earlier gallery/Backstage/command/chrome settings and reset each new
+   group independently. Existing values, owners and accepted Large bands remain.
+
+The review result is recorded above. The remaining geometry estimate is **one
+grouped frames/radii/shadows/connected-joins batch**, subject to later authorization;
+additional themes remain deferred.
