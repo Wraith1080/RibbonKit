@@ -33,7 +33,8 @@ internal sealed partial class RibbonLayoutEngine
                 int label = pair.Size == RibbonItemSize.Small ? 0 : TextRenderer.MeasureText(item.Text, ribbon.Font, Size.Empty, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine).Width;
                 int icon = item.Icon is not null || item.Image is not null || item.LargeImage is not null || item is RibbonCheckBoxItem or RibbonRadioButtonItem ? S(24) : 0;
                 size = Math.Max(S(metrics.SmallWidth), label + icon + S(12));
-                if (item is RibbonDropDownItem) size += S(item is RibbonSplitButtonItem ? metrics.Touch ? metrics.HorizontalSplitArrow : metrics.SplitArrow : metrics.CommandDropDownArrow);
+                if (item is RibbonSplitButtonItem) size = RibbonCommandSplitMetrics.For(ribbon.Density, theme).MeasureWidth(size, ribbon.DeviceDpi, false, simplified: true);
+                else if (item is RibbonDropDownItem) size += S(metrics.CommandDropDownArrow);
             }
             return new SimplifiedCommandMeasurement(pair.Id, pair.Group.Id, size, pair.Priority);
         }).ToArray();

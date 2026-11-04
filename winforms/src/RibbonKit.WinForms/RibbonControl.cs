@@ -109,6 +109,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             RibbonMenuMetrics.Validate(value);
             RibbonEditorMetrics.Validate(value);
             RibbonIllustratedMenuMetrics.Validate(value);
+            RibbonCommandSplitMetrics.Validate(value);
             if ((!value.PopupBackground.IsEmpty && value.PopupBackground.A != 255) ||
                 (!value.EditorBackground.IsEmpty && value.EditorBackground.A != 255) ||
                 (!value.TitleBarBackground.IsEmpty && value.TitleBarBackground.A != 255))

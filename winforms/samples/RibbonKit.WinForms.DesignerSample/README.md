@@ -143,6 +143,25 @@ QAT** adds a temporary reference to the direct menu's same source; turn it off
 to remove only that reference. Selected choices keep their state through theme
 reset. Earlier menu/editor overrides and the authored startup File mode remain.
 
+The same opt-in launch also adds/selects **Command splits**. Compare **Roomier
+command splits** and **Reset command splits**, using the existing Mouse/Touch
+selector and the priority inline **Simplified layout** toggle. Small/Medium/Large
+horizontal examples use the same width roles. Primary clicks toggle once; arrows
+open their menus independently. **Vertical paste** is the unchanged Large vertical
+comparison in Classic; Simplified presents it horizontally at Medium. **Split on
+QAT** adds/removes only a temporary reference, retaining QAT's own geometry.
+Reset clears only the three split-width roles and preserves mode, state, earlier
+menu/editor geometry and authored File presentation.
+
+`--verify-command-split-geometry <evidence-folder>` checks automatic layout and
+painting of the actual public RibbonControl through DrawToBitmap, without showing
+windows or calling internal layout APIs. It verifies both renderers/densities and
+Classic/Simplified, full arrow slots, primary/caption budgets, tiled regions, exact
+default/reset pixels and public demo mode/state/QAT contracts. Its log records the
+control's reported native DPI. Separate library STA tests cover synthetic DPI,
+native hit/keyboard/UIA/action and editor-retention scopes; actual VS/input/hardware
+acceptance remains separate.
+
 `--verify-illustrated-geometry <evidence-folder>` checks the public package's
 seven illustrated roles/reset/validation and artwork/title/description paint in
 both renderers/densities at synthetic 96/120/144/192 DPI. It verifies the permanent

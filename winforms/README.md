@@ -1935,6 +1935,40 @@ ribbon.Theme = ribbon.Theme with
 };
 ```
 
+Horizontal command split buttons share three optional theme roles:
+
+| Property | Null behavior |
+| --- | --- |
+| `CommandSplitArrowWidth` | Existing desired Compact 20 / Touch 44. |
+| `CommandSplitPrimaryMinimumWidth` | Classic Small/Medium 0 / 56; Simplified retains its current content-based sizing. |
+| `CommandLargeSplitPrimaryMinimumWidth` | Large horizontal Compact 0 / Touch 72, including existing caption sizing. |
+
+These are 96-DPI logical pixels. Arrow width accepts 1..1024; primary minima
+accept 0..1024. Null resets each role independently and preserves default layout
+and paint. Explicit relevant geometry reserves the primary caption budget and
+full arrow slot, including enough width for existing narrow-target caps. Touch
+retains arrow 44 and primary 56/72 floors. Content/cap requirements may exceed an
+authored minimum. For example:
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    CommandSplitArrowWidth = 48,
+    CommandSplitPrimaryMinimumWidth = 104,
+    CommandLargeSplitPrimaryMinimumWidth = 144
+};
+```
+
+Classic, Simplified and group flyouts consume the same preferred-width/target
+resolver. Paint, hit testing, keyboard/KeyTips and UIA use the resulting regions;
+primary state/invocation and separate dropdown actions remain. Narrow external
+rectangles keep the existing Compact third / Touch half cap; zero-width horizontal
+targets stay nonnegative. Large-only and Small/Medium-only primary settings remain
+independent. Actual Large vertical splits, menu/QAT/Application Menu-specific
+regions, ordinary dropdowns, editor dimensions and content vertical alignment
+retain their own contracts. Theme stays code-only and nonserialized; existing
+designer authoring and round trips are unchanged.
+
 Illustrated-choice dropdown rows have their own optional theme roles:
 
 | Property | Null default, Compact and Touch |

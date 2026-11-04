@@ -6,6 +6,12 @@ internal static class Program
     private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
+        if (args.Length == 2 && args[0] == "--verify-command-split-geometry")
+        {
+            try { CommandSplitGeometryCheck.Verify(args[1]); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
+            return;
+        }
         if (args.Length == 2 && args[0] == "--verify-illustrated-geometry")
         {
             try { IllustratedGeometryCheck.Verify(args[1]); }
@@ -217,7 +223,7 @@ internal static class Program
             catch (Exception error) { File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
             return;
         }
-        if (args.Contains("--menu-geometry-demo")) { form.EnableMenuGeometryDemo(); form.EnableIllustratedGeometryDemo(); }
+        if (args.Contains("--menu-geometry-demo")) { form.EnableMenuGeometryDemo(); form.EnableIllustratedGeometryDemo(); form.EnableCommandSplitGeometryDemo(); }
         Application.Run(form);
     }
 }

@@ -1,6 +1,6 @@
 # Native geometry consolidation
 
-Status, **2026-11-04: the sixth batch's illustrated-choice menu geometry is
+Status, **2026-11-04: the seventh batch's horizontal command-split widths are
 implemented and verified. Its current review result is recorded below. Await
 instruction before another batch or additional themes**.
 Baseline: `codex/Ribbonkit-Winform`, `9dd0054b9ebe4f6f9ff5b57bf75198e443f5b4e5`.
@@ -17,7 +17,7 @@ The inventory identifies ownership, not new acceptance of deferred surfaces.
 | --- | --- | --- | --- |
 | Body and groups | `BodyHeight=110` minimum, `BodyMargin=(7,1,7,7)`, `LargeButtonMaxWidth=108`, `CollapsedGroupMaxWidth=108`, scroll vertical inset 2 | `RibbonTheme`, `RibbonLayout`, content/reduction/Simplified layout, Office renderer, body viewport, hit targets, group motion | Preserve font-driven three rows and joined frame. Group separator clearance 12 and collapsed opener insets 6/8 are separate deferred roles. |
 | Header, tabs and utilities | `TabHeight=40` minimum (Touch 48), `HeaderButtonInset=4`; QAT optical offset 2 | density/header/caption layout, Office tab paint/indicator measurement, hit targets, KeyTips/UIA, independent indicator motion | Tab label/indicator and caption geometry deferred. Device-pixel hairlines are raster rules. |
-| Commands, splits and native editors | rows 26/45; split arrow 20/28, horizontal 20/44; combo button 24/32; native editor height font+8 / at least 42 | density/content/split/editor layout, renderer, editor manager and borrowed popup editors, keyboard/UIA | Fifth batch exposes editor label gap, text inset and ComboBox button width. Authored input widths and native font minima retained. Outer padding, command/split geometry, glyph shapes and system EDIT rendering remain deferred/platform-owned. |
+| Commands, splits and native editors | rows 26/45; menu split arrow 20/28, horizontal command split 20/44; combo button 24/32; native editor height font+8 / at least 42 | density/content/split/editor layout, renderer, editor manager and borrowed popup editors, keyboard/UIA | Fifth batch owns native field geometry. Seventh adds shared horizontal command-split arrow/primary widths. Authored input widths/font minima remain. Command content, outer padding, glyph shapes and system EDIT rendering stay deferred/platform-owned. |
 | Ordinary command menus, nested menus, QAT overflow, Simplified More | rows 28/44; icon 24/32; leading/trailing 8; icon/text gap 10/12; desired width 170/220, described 280/320 | `RibbonMenuMetrics`, row/container/heading layout, popup sizing, shared renderer, overflow bands and inert preview; targets feed scrolling, keyboard/KeyTips/UIA and editor hosting | First/second sets expose row/horizontal/vertical roles. Third exposes container/heading/overflow bands; fourth exposes menu arrow slots and separator clearance. Popup inner margin, glyph shapes and platform work-area rules remain separate. |
 | Application Menu | model navigation/pane dimensions and font/content minima; nav rows 40/44, pane 28/44; arrow 26/44 | component-specific metrics/layout, Application Menu renderer, native pane hosting and column scrolling, designer preview | Deferred. Accepted hover/default-pane/split ownership and every current default retained. Nested ordinary submenus use the selected ordinary-menu contract. |
 | Illustrated menu choices and ComboBox choices | illustrated width 300, icon 36, row at least 64; ComboBox choice rows 28/44 or font+10 | `RibbonIllustratedMenuMetrics`, illustrated layout/renderer and ordinary popup sizing/preview; editor layout/list window | Sixth batch exposes illustrated width/row/artwork/insets/gaps. Fifth batch owns ComboBox choice minimum and vertical text padding. Choice-list horizontal padding stays separate. |
@@ -927,7 +927,12 @@ geometry batch or theme.**
 This is a **working grouping, not a pre-existing fixed slice count**. These six
 broad review groups can require more than one bounded implementation batch.
 The illustrated-choice portion of the first group is implemented in the sixth
-batch below; its command/split and Application Menu-specific portions remain.
+batch below; the seventh addresses horizontal split widths. Command content and
+Application Menu-specific portions remain. The current estimate is **8–10 further
+review batches**:
+command content (1), Application Menu geometry (1), body/groups (1), header/QAT/
+message spacing (1–2), galleries (1), Backstage (1), tips/caption (1–2), and frames/
+shadows (1). This replaces the earlier overly broad six-batch estimate.
 
 1. Command/split content, glyph slots and special/illustrated menu geometry.
 2. Ribbon body/groups/header/tabs and QAT/message spacing/joins.
@@ -1161,3 +1166,98 @@ Mouse/Touch. Check artwork/title/description clearance and selected fill; try
 survive reset, and the QAT toggle should remove only its temporary reference.
 **Await instruction before another geometry batch or additional theme.** No
 computer use, global input, WPF edits, commit, push or publication.
+
+## Seventh batch: horizontal command-split widths — 2026-11-04
+
+The user authorized the next bounded batch after accepting illustrated menus.
+Baseline: clean `codex/Ribbonkit-Winform`,
+`d473fc657b83827cf2f44b863aadc2cb2b66de4c`. The native API/layout/designer
+contract was presented before implementation. This batch owns width resolution;
+existing content vertical alignment and Large vertical split geometry remain.
+
+| Additive nullable `RibbonTheme` property | Null behavior | Explicit behavior |
+| --- | --- | --- |
+| `CommandSplitArrowWidth` | Existing desired Compact 20 / Touch 44, including existing preferred-width/cap behavior. | 1..1024 logical pixels; Touch retains 44. |
+| `CommandSplitPrimaryMinimumWidth` | Classic Small/Medium 0 / 56; Simplified retains current content-based sizing. | 0..1024; Touch retains 56. |
+| `CommandLargeSplitPrimaryMinimumWidth` | Large horizontal Compact 0 / Touch 72, with existing caption sizing. | 0..1024; Touch retains 72. |
+
+Values are 96-DPI logical pixels. Null resets independently and preserves legacy
+widths/rounding. `RibbonCommandSplitMetrics` resolves the three roles for Classic,
+Simplified and group flyouts. Explicit relevant geometry preserves the intrinsic
+primary-caption budget, reserves the desired arrow and primary minimum, and
+reserves enough total width for the existing one-third Compact / half Touch cap.
+Thus an authored minimum can be exceeded by content or cap requirements. Narrow
+external bounds retain those caps; zero-width horizontal targets safely produce
+empty regions instead of a negative primary width. Touch floor rules apply when
+explicit geometry is selected, including Simplified. A Large-only primary override
+does not change Small/Medium sizing, and vice versa.
+
+Measured primary/secondary regions feed both renderers, pointer activation,
+keyboard/KeyTips and UIA. Source identity, state-before-Click, one primary
+invocation and separate dropdown-opening behavior remain. Width changes use the
+existing adaptive/overflow/scroll and group-flyout owners. Null capture parity is
+separate from intentional nondefault width changes. No layout animation or new
+coordinator is introduced.
+
+These settings govern real horizontal command split presentations. Reduced
+vertical commands use horizontal sizing at Small/Medium. Large vertical splits,
+menu/split/chooser columns, QAT references, Application Menu-specific geometry,
+ordinary dropdowns and native editor dimensions retain their owners. Shared
+columns may grow to fit commands, while native editor InputWidth/height/HWNDs and
+values stay retained. Existing icon/caption positioning is preserved.
+
+Theme stays code-only through the hidden/nonserialized property. XML comments,
+validation before assignment and six additive Unshipped accessors document the
+API. No model property, generic theme-authoring UI or generated-code/Undo/Redo
+change is introduced. Shared targets also serve existing designer previews.
+
+The same opt-in sample now adds/selects **Command splits** alongside the previous
+review tabs. **Roomier command splits** sets arrow 48, Small/Medium primary 104,
+Large primary 144; **Reset command splits** clears only these three roles. A
+priority inline **Simplified layout** toggle keeps the mode switch available;
+the Small/Medium/Large examples and a Large vertical/QAT comparison retain source
+models and state. Normal startup and authored Forms/resources remain unchanged.
+
+Verification and current review gate:
+
+- [x] Saved 32 before/after measurement/paint pairs across both renderers,
+  densities, synthetic 96/120/144/192 DPI and 9/14-point fonts. PNG bytes and
+  measurements match exactly at null. The same files also record Simplified
+  snapshots at the STA host's native DPI, separately from synthetic Classic DPI.
+  Baseline/default/Touch-width scope passed **3/3**.
+- [x] New override/validation/action scopes passed **11/11**: full preferred arrow
+  widths, caption/minimum/cap budgets, role isolation, built-in/reset/invalid
+  assignment, zero/narrow targets, paint/KeyTip/UIA/hit agreement and independent
+  primary/secondary activation in Classic/Simplified/root/group contexts. Shared
+  native-editor column retention passed **1/1** in both densities. The new class
+  contains 14 distinct cases, retained across focused runs.
+- [x] Related Release checks passed **125/125**, including split input/chrome,
+  Touch geometry/alignment, Simplified, menu-arrow, group-row, designer and
+  Application Menu appearance scopes. Existing broader motion/lifetime limits
+  remain; this is not a full-suite or physical input/hardware acceptance claim.
+- [x] Native Release solution and Debug runtime/design server/client/sample
+  builds passed with zero warnings/errors. Refreshed the same sample with
+  `0.1.0-designer.local20261104T061550273Z`; runtime/design-server package hashes
+  match current Debug outputs. Authored Forms/resources remain unchanged.
+- [x] Public-package verification passed **8/8 automatic layout/paint/reset
+  presentations** (both renderers/densities and Classic/Simplified) at the
+  consumer control's reported native **120 DPI**. It paints the actual public
+  RibbonControl through DrawToBitmap, with no internal layout calls or shown
+  windows. Exact default/reset pixels, caption budgets, tiled regions, primary
+  state, mode toggle, QAT source ownership and prior editor/illustrated/File
+  contracts passed. Representative override/package scenes inspected, including
+  all command-frame corners and the unchanged Large vertical comparison.
+- [x] **2026-11-04: user passed the horizontal command-split sample review**
+  ("everything works"). This records the reviewed sample appearance/interaction;
+  actual VS designer, external accessibility, physical touch/IME and
+  mixed-monitor/material hardware gates remain separate.
+
+Evidence: `artifacts/geometry/command-splits/`, with `before/`, `after/`, focused/
+related/native-editor TRX files and `package/result.log`/captures. Reopen the
+refreshed Debug sample with `--menu-geometry-demo`, **Command splits** tab. Compare
+Roomier/Reset in Mouse/Touch and Classic/Simplified. Primary clicks should toggle
+once; arrow clicks should open the menu separately. Check the Large vertical
+comparison in Classic, and **Split on QAT** for retained QAT sizing. Source state
+and earlier editor/menu geometry should survive reset. **Await instruction before
+another batch or additional theme.** No computer use, global input, WPF edits,
+commit, push or publication.

@@ -65,10 +65,8 @@ internal sealed partial class RibbonLayoutEngine
         var metrics = RibbonDensityMetrics.For(item.Ribbon?.Density ?? RibbonDensity.Compact);
         int padding = item is RibbonDropDownItem and not RibbonSplitButtonItem ? 30 : 14;
         int width = Math.Clamp(label + S(padding + (metrics.Touch ? 8 : 0)), S(metrics.LargeWidth), S(Math.Max(metrics.LargeWidth, theme.LargeButtonMaxWidth)));
-        if (metrics.Touch && item is RibbonSplitButtonItem { Layout: RibbonSplitButtonLayout.Horizontal })
-            // Reserve the wider arrow without reducing the existing caption budget.
-            width = Math.Max(S(metrics.LargeHorizontalSplitPrimaryMinimum) + S(metrics.HorizontalSplitArrow),
-                width + S(metrics.HorizontalSplitArrow) - S(metrics.SplitArrow));
+        if (item is RibbonSplitButtonItem { Layout: RibbonSplitButtonLayout.Horizontal })
+            width = RibbonCommandSplitMetrics.For(item.Ribbon?.Density ?? RibbonDensity.Compact, theme).MeasureWidth(width, dpi, true);
         return width;
     }
     internal static int Scale(double value, int dpi) => (int)Math.Round(value * dpi / 96d);
@@ -157,7 +155,7 @@ internal sealed partial class RibbonLayoutEngine
             if (large && !galleryDropDown && item is RibbonGalleryItem { IsInRibbon: true } gallery)
                 width = S(gallery.InRibbonColumnCount * Math.Max(gallery.TileWidth, metrics.GalleryWidth) + metrics.GalleryUtility + 3 * RibbonGalleryStripLayout.Padding);
             if (item is RibbonSplitButtonItem && !large)
-                width = Math.Max(width, S(metrics.HorizontalSplitPrimaryMinimum)) + S(metrics.HorizontalSplitArrow);
+                width = RibbonCommandSplitMetrics.For(group.Ribbon?.Density ?? RibbonDensity.Compact, theme).MeasureWidth(width, dpi, false);
             else if (dropDownOnly && !large)
                 width += S(metrics.CommandDropDownArrow);
             if (large)

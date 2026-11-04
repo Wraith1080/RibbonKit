@@ -5,7 +5,7 @@ implemented; review and validation are recorded in
 [the color-role slice](APPEARANCE-COLOR-ROLES.md)**. Earlier KeyTip/backdrop,
 Backstage and disabled/state increments remain. The bounded ordinary-menu
 horizontal/vertical, container/heading/overflow, shared arrow-column and native
-editor/choice-row and illustrated-choice geometry batches are tracked in the
+editor/choice-row, illustrated-choice and horizontal command-split geometry batches are tracked in the
 [geometry consolidation plan](GEOMETRY-CONSOLIDATION-PLAN.md), which owns their review scope.
 Further geometry and new built-in themes remain separate later increments.
 Current slice, **2026-11-03**: geometry consolidation, following the

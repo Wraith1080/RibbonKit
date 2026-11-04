@@ -111,6 +111,12 @@ public sealed record RibbonTheme
     public int? MenuSubmenuArrowWidth { get; init; }
     /// <summary>Gets the optional desired ordinary-menu and Quick Access/More overflow split secondary width and shared visual indicator-column width in 96-DPI logical pixels, from 1 to 1024. Null uses Compact 20 or Touch 28. Touch retains at least 28; narrow rows retain the existing one-third cap.</summary>
     public int? MenuSplitArrowWidth { get; init; }
+    /// <summary>Gets the optional horizontal command split secondary width in 96-DPI logical pixels, from 1 to 1024. Null preserves Compact 20 or Touch 44 and existing preferred sizing. Touch retains at least 44. Explicit geometry reserves content and the existing half/third cap budget. Excludes menus, QAT projection rows and Large vertical splits.</summary>
+    public int? CommandSplitArrowWidth { get; init; }
+    /// <summary>Gets the optional Small/Medium horizontal command split primary minimum width in 96-DPI logical pixels, from 0 to 1024. Null retains existing layout sizing: Classic Compact 0 / Touch 56; Simplified keeps its current content-based width. Explicit geometry keeps Touch's 56 floor and the existing arrow cap. Reduced vertical commands use their horizontal presentation.</summary>
+    public int? CommandSplitPrimaryMinimumWidth { get; init; }
+    /// <summary>Gets the optional Large horizontal command split primary minimum width in 96-DPI logical pixels, from 0 to 1024. Null retains Compact 0 / Touch 72 and existing caption sizing. Explicit geometry keeps Touch's 72 floor and arrow cap. Large vertical and menu/QAT presentations retain their own geometry.</summary>
+    public int? CommandLargeSplitPrimaryMinimumWidth { get; init; }
     /// <summary>Gets the optional minimum caption reservation before Quick Access/More overflow menu, ComboBox and group chooser indicators in 96-DPI logical pixels, from 1 to 1024. Null uses 16 in both densities. The shared split-arrow column can reserve additional space; glyphs align in that column. QAT strip buttons and native choice lists retain their own geometry.</summary>
     public int? MenuChooserArrowWidth { get; init; }
     /// <summary>Gets optional horizontal padding at each end of ordinary-menu and Quick Access/More separator lines in 96-DPI logical pixels, from 0 to 1024. Null uses 8. Lines stay one device pixel; Application Menu-specific and group separators retain their own geometry.</summary>

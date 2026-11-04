@@ -1,12 +1,13 @@
 # Starting prompt: native RibbonKit.WinForms geometry consolidation
 
-Execution checkpoint, **2026-11-04**: the user accepted the fifth batch's editor
-spacing/height appearance and authorized continuation. The sixth batch groups
-illustrated-choice menu width, row, artwork and text slots;
-[the geometry plan](GEOMETRY-CONSOLIDATION-PLAN.md) owns its contract and evidence.
-**The illustrated-menu batch is implemented and verified; user review is pending.
-Do not start another batch or additional themes.** Command-strip and Application Menu-specific
-geometry remain deferred. The original bounded starting contract follows for context.
+Execution checkpoint, **2026-11-04**: the seventh batch groups horizontal command-
+split arrow/primary widths across Classic/Simplified/group flyouts.
+[The geometry plan](GEOMETRY-CONSOLIDATION-PLAN.md) owns its completed contract,
+verification evidence and current user-review record.
+**Await user instruction before another geometry batch or additional themes.**
+Command content and Application Menu-specific geometry remain deferred. The
+revised estimate is 8–10 further review batches. The original bounded starting
+contract follows for context.
 
 Continue work in:
 

@@ -8,7 +8,6 @@ internal static class RibbonSplitLayout
 
     internal static (Rectangle Primary, Rectangle DropDown) Calculate(Rectangle bounds, RibbonSplitButtonItem item, RibbonItemSize size, bool menu, int dpi, Font? font = null)
     {
-        var metrics = RibbonDensityMetrics.For(item.Ribbon?.Density ?? RibbonDensity.Compact);
         if (IsVertical(item, size, menu))
         {
             int primaryHeight = RibbonContentLayout.LargeImageBandHeight(bounds, font ?? item.Ribbon?.Font ?? Control.DefaultFont, dpi, item.Ribbon?.Density ?? RibbonDensity.Compact);
@@ -19,10 +18,7 @@ internal static class RibbonSplitLayout
             var arrow = RibbonMenuLayout.ArrowColumn(bounds, dpi, item.Ribbon?.Density ?? RibbonDensity.Compact, item.Ribbon?.Theme);
             return (bounds with { Width = Math.Max(0, bounds.Width - arrow.Width) }, arrow);
         }
-        bool touchHorizontal = metrics.Touch && !menu;
-        int desiredArrow = touchHorizontal ? metrics.HorizontalSplitArrow : metrics.SplitArrow;
-        int arrowWidth = Math.Min(RibbonLayoutEngine.Scale(desiredArrow, dpi),
-            Math.Max(1, touchHorizontal ? (bounds.Width - 1) / 2 : bounds.Width / 3));
+        int arrowWidth = RibbonCommandSplitMetrics.For(item.Ribbon?.Density ?? RibbonDensity.Compact, item.Ribbon?.Theme).ArrowWidth(bounds.Width, dpi);
         return (bounds with { Width = bounds.Width - arrowWidth }, new(bounds.Right - arrowWidth, bounds.Top, arrowWidth, bounds.Height));
     }
 

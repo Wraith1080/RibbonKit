@@ -1145,6 +1145,12 @@ RibbonKit.WinForms.RibbonTheme.MenuSubmenuArrowWidth.get -> int?
 RibbonKit.WinForms.RibbonTheme.MenuSubmenuArrowWidth.init -> void
 RibbonKit.WinForms.RibbonTheme.MenuSplitArrowWidth.get -> int?
 RibbonKit.WinForms.RibbonTheme.MenuSplitArrowWidth.init -> void
+RibbonKit.WinForms.RibbonTheme.CommandSplitArrowWidth.get -> int?
+RibbonKit.WinForms.RibbonTheme.CommandSplitArrowWidth.init -> void
+RibbonKit.WinForms.RibbonTheme.CommandSplitPrimaryMinimumWidth.get -> int?
+RibbonKit.WinForms.RibbonTheme.CommandSplitPrimaryMinimumWidth.init -> void
+RibbonKit.WinForms.RibbonTheme.CommandLargeSplitPrimaryMinimumWidth.get -> int?
+RibbonKit.WinForms.RibbonTheme.CommandLargeSplitPrimaryMinimumWidth.init -> void
 RibbonKit.WinForms.RibbonTheme.MenuChooserArrowWidth.get -> int?
 RibbonKit.WinForms.RibbonTheme.MenuChooserArrowWidth.init -> void
 RibbonKit.WinForms.RibbonTheme.MenuSeparatorHorizontalPadding.get -> int?
