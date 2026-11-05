@@ -219,6 +219,18 @@ public sealed record RibbonTheme
     public int? CaptionQuickAccessTextGap { get; init; }
     /// <summary>Gets the optional RibbonForm title-width reservation beside TitleBar QAT, before the QAT-to-title gap in 96-DPI logical pixels, from 1 to 1024. Null uses 100. Resets independently; available-space limits remain.</summary>
     public int? CaptionTitleReservationWidth { get; init; }
+    /// <summary>Gets the optional Office body/connected QAT/message panel corner radius in 96-DPI logical pixels, from 0 to 64. Null uses twice CornerRadius with legacy rounding; neutral stays square. Resets independently; existing renderer and native space limits remain.</summary>
+    public int? BodyCornerRadius { get; init; }
+    /// <summary>Gets the optional Office Backstage top-left page corner radius in 96-DPI logical pixels, from 0 to 64. Null uses twice CornerRadius; neutral stays square. Resets independently; existing renderer and native space limits remain.</summary>
+    public int? BackstagePageCornerRadius { get; init; }
+    /// <summary>Gets the optional Office body/connected-panel shadow blur reach in 96-DPI logical pixels, from 0 to 32. Null uses 6; zero suppresses the shadow. Resets independently; existing renderer and native space limits remain.</summary>
+    public int? BodyShadowBlur { get; init; }
+    /// <summary>Gets the optional Office body/connected-panel shadow vertical offset in 96-DPI logical pixels, from -32 to 32. Null uses 2; positive moves downward. Resets independently; existing renderer and native space limits remain.</summary>
+    public int? BodyShadowVerticalOffset { get; init; }
+    /// <summary>Gets the optional floating-popup shadow blur reach in 96-DPI logical pixels, from 0 to 32. Null uses 6; zero suppresses the shadow. Resets independently; existing renderer and native space limits remain.</summary>
+    public int? PopupShadowBlur { get; init; }
+    /// <summary>Gets the optional floating-popup shadow vertical offset in 96-DPI logical pixels, from -32 to 32. Null uses 2; positive moves downward. Resets independently; existing renderer and native space limits remain.</summary>
+    public int? PopupShadowVerticalOffset { get; init; }
     internal RibbonFill BodyFill => BodyBackground ?? new(Surface);
     internal Color BodyBorderColor => BodyBorder.IsEmpty ? Border : BodyBorder;
     internal Color PopupColor => PopupBackground.IsEmpty ? Surface : PopupBackground;

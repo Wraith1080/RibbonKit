@@ -14,7 +14,7 @@ internal sealed class PopupChromeWindow : NativeWindow, IDisposable
     private RibbonRenderer? _renderer;
     private Size _size;
     private int _dpi;
-    private int _radius;
+    private int _radius, _padding;
     private bool _shadowEnabled;
     private nint _owner;
 
@@ -40,9 +40,9 @@ internal sealed class PopupChromeWindow : NativeWindow, IDisposable
             });
             _owner = owner;
         }
-        int padding = RibbonLayoutEngine.Scale(8, ribbon.DeviceDpi);
+        int padding = RibbonFrameMetrics.PopupPadding(ribbon.Painter, ribbon.Theme, ribbon.DeviceDpi);
         var bounds = Rectangle.Inflate(popup.Bounds, padding, padding);
-        if (_size != bounds.Size || _theme != ribbon.Theme || !ReferenceEquals(_renderer, ribbon.Painter) || _dpi != ribbon.DeviceDpi || _radius != radius || _shadowEnabled != shadow)
+        if (_size != bounds.Size || _theme != ribbon.Theme || !ReferenceEquals(_renderer, ribbon.Painter) || _dpi != ribbon.DeviceDpi || _radius != radius || _padding != padding || _shadowEnabled != shadow)
         {
             using var bitmap = new Bitmap(bounds.Width, bounds.Height, PixelFormat.Format32bppPArgb);
             using (var graphics = Graphics.FromImage(bitmap))
@@ -56,7 +56,7 @@ internal sealed class PopupChromeWindow : NativeWindow, IDisposable
             _theme = ribbon.Theme;
             _renderer = ribbon.Painter;
             _dpi = ribbon.DeviceDpi;
-            _radius = radius;
+            _radius = radius; _padding = padding;
             _shadowEnabled = shadow;
         }
         // Share the popup's native owner, rather than owning this from the

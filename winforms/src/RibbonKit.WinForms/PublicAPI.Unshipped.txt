@@ -1268,3 +1268,20 @@ RibbonKit.WinForms.RibbonTheme.CaptionQuickAccessTextGap.get -> int?
 RibbonKit.WinForms.RibbonTheme.CaptionQuickAccessTextGap.init -> void
 RibbonKit.WinForms.RibbonTheme.CaptionTitleReservationWidth.get -> int?
 RibbonKit.WinForms.RibbonTheme.CaptionTitleReservationWidth.init -> void
+RibbonKit.WinForms.RibbonTheme.BodyCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonTheme.BodyCornerRadius.init -> void
+RibbonKit.WinForms.RibbonTheme.BackstagePageCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonTheme.BackstagePageCornerRadius.init -> void
+RibbonKit.WinForms.RibbonTheme.BodyShadowBlur.get -> int?
+RibbonKit.WinForms.RibbonTheme.BodyShadowBlur.init -> void
+RibbonKit.WinForms.RibbonTheme.BodyShadowVerticalOffset.get -> int?
+RibbonKit.WinForms.RibbonTheme.BodyShadowVerticalOffset.init -> void
+RibbonKit.WinForms.RibbonTheme.PopupShadowBlur.get -> int?
+RibbonKit.WinForms.RibbonTheme.PopupShadowBlur.init -> void
+RibbonKit.WinForms.RibbonTheme.PopupShadowVerticalOffset.get -> int?
+RibbonKit.WinForms.RibbonTheme.PopupShadowVerticalOffset.init -> void
+virtual RibbonKit.WinForms.RibbonRenderer.GetBodyCornerRadius(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int
+virtual RibbonKit.WinForms.RibbonRenderer.GetBodyShadowPadding(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> System.Windows.Forms.Padding
+virtual RibbonKit.WinForms.RibbonRenderer.GetPopupShadowPadding(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int
+override RibbonKit.WinForms.RibbonOffice2024Renderer.GetBodyCornerRadius(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int
+override RibbonKit.WinForms.RibbonOffice2024Renderer.GetBodyShadowPadding(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> System.Windows.Forms.Padding

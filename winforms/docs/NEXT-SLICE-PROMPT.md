@@ -1,75 +1,106 @@
-# Continuation: native RibbonKit.WinForms tips/caption combined review
+# Closed: native RibbonKit.WinForms geometry consolidation
 
-Updated **2026-11-05**. The grouped ScreenTip/KeyTip and caption-spacing session
-(15–16) is implemented. **The current acceptance result is recorded in the active
-geometry plan; await instruction before frames/shadows or additional themes.** Work in:
+Updated **2026-11-05**. The seventeenth grouped frames/radii/shadows/connected-joins
+session and the selected geometry sequence are closed. **The final review result
+is recorded in the active geometry plan; no further batch is queued.** Workspace:
 
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
 ## Verified checkpoint
 
 - Branch: `codex/Ribbonkit-Winform`.
-- Committed HEAD at session start: `0ac1351bff0f11fcea27831b75d6f71564989919`,
-  `Geometry Consolidation 7 WIP`. Recheck branch/HEAD/worktree and preserve later edits.
-- Gallery/Backstage implementation and follow-up edits were already uncommitted;
-  they were preserved. Their user acceptance is recorded once in the existing
-  [geometry plan](GEOMETRY-CONSOLIDATION-PLAN.md) review row. Preserve that behavior.
-- The same plan's final 15–16 section owns current contracts, evidence, capture
-  limitations and current acceptance row. Do not repeat completed
-  checks or refresh packages for a routine acceptance confirmation.
+- Requested baseline: `0ac1351bff0f11fcea27831b75d6f71564989919`.
+  Live recheck found later user commit
+  **`47c2c38f27d1736a4f5693098da15de03f81aa17`**, `Geometry Consolidation 8`.
+  Preserve it and later edits; recheck branch/HEAD/worktree before resuming.
+- The active [geometry plan](GEOMETRY-CONSOLIDATION-PLAN.md#seventeenth-session-frames-and-shadows-2026-11-05)
+  owns the current contract, evidence, limits and review result. Earlier
+  gallery/Backstage and tips/caption acceptance stays recorded once in its existing
+  rows. Preserve accepted behavior and Roomier Large bands.
 - Current permanent Designer Sample package:
-  **`0.1.0-designer.local20261104T142333305Z`**. It was refreshed once for this grouped
-  session; runtime/server/client hashes match Debug outputs. Later sample-only
-  builds changed capture helpers without changing the library package.
+  **`0.1.0-designer.local20261105T002434167Z`**. The user approved one corrective
+  second refresh after the final source audit; see the active plan. Runtime/
+  server/client package hashes match normal Debug outputs. Do not refresh again
+  for a routine review or acceptance.
 
-## Current scope and evidence
+## Implemented scope
 
-Both native API/layout/designer contracts were presented before implementation.
-Optional code-only RibbonTheme roles cover ScreenTip width/padding/title gap/
-placement, KeyTip horizontal/vertical padding, and caption leading/icon/QAT/title
-spacing. Each null resets independently. Native caption height/buttons/glyphs,
-frame/resize/drag behavior, passive tip timing/focus/cancellation, keyboard targets,
-Backstage motion/opaque preview and existing gallery/command geometry remain.
+Six optional code-only RibbonTheme roles cover body/page corner radii and body/
+popup shadow blur/vertical offset. Null resets independently and preserves exact
+legacy dimensions/pixels. Reuse existing popup radius, shadow colors/enable and
+renderer ownership. Three additive device-pixel renderer measurements report body
+radius, body-shadow clearance and popup-shadow clearance. Explicit body-shadow
+settings reserve at least the renderer footprint and authored margins; authored
+Theme.BodyMargin is unchanged. Null retains legacy margins exactly. Existing
+command/editor sizes and native one-device-pixel frame insets remain.
 
-- 32 saved default PNG/measurement pairs match exactly. Synthetic ScreenTip and
-  caption-geometry matrices cover 96/120/144/192 DPI; native caption paint in that
-  fixture is 96 DPI. The initial composites have a TextRenderer transform overlap,
-  so use actual native package PNGs for visual review, not those composite layouts.
-- 18 distinct new focused unit/STA cases passed across runs. Related scope passed
-  106/106. Normal Release native solution/API/XML build and pack and normal Debug
-  runtime/design-server/client/sample builds passed with zero warnings/errors.
-- Eight fresh public-package cases passed at native 120 DPI: real passive hover,
-  editor focus/selection, caption-derived QAT/client/Close targets, native HWND/value/
-  reset and F10/TG badges. The fixture positions its owned window under the
-  stationary pointer and stops if the pointer moves or foreground is lost.
-- Actual visual evidence: `artifacts/geometry/tips-caption/package-positioned/`
-  (the eight completed checks), `package-caption/` (eight caption-only captures),
-  `package-hashes.json` and `focused-evidence.json`. Initial fixture placement and
-  a later pointer-movement stop are retained with their limits; no clean aggregate
-  or completed rerun is inferred from those attempts.
+Connected body/QAT/messages keep square adjoining corners and one outer shadow;
+standalone minimized cards share the same roles. Popup chrome and gallery motion
+share clearance with temporary-ribbon dismissal and passive ScreenTip edge inset.
+Both null popup-shadow roles retain exact legacy scaled-eight DPI rounding.
+Ordinary popup placement clamps the opaque frame; external shadows may be trimmed
+at a display edge. Native popup/host regions and Backstage page clipping retain
+shared radius hooks. Backstage keeps only its top-left page corner, zero page
+shadow inset, native page owners, accepted motion/caption synchronization and
+opaque retained designer preview. Theme remains hidden/nonserialized/code-only.
+No theme editor, coordinator, native-frame change or additional theme.
+
+## Evidence and limits
+
+- 32 saved default PNG/measurement pairs match exactly across both renderers/
+  densities, expanded/minimized and synthetic 96/120/144/192 DPI.
+- 19 distinct new unit/STA cases passed across focused runs: validation/reset/
+  isolation, four-corner odd/even and signed shadow/DPI matrices, effective margins/
+  joins, native HWND/value retention, popup chrome/cache/gallery motion footprint,
+  custom renderer clamps, joined QAT separator, opaque designer preview, passive
+  tip edge/focus/selection and legacy popup clearance at integer DPI 96..240.
+  Final consumer scopes passed 3/3 and 4/4 after the last source corrections.
+- Related Release scope: **99 passed / 1 failed**. The native nonclient top-edge
+  screen-capture test failed (800/2000 changed pixels; focused retry 603). A public
+  probe against the previous accepted package also failed (2000/2000 at 120 DPI).
+  It remains an existing capture/frame limit; no repair or clean aggregate is
+  claimed. Earlier material/page-switch aggregate failures remain separate.
+- Normal Release native solution/API/XML build and pack and normal Debug runtime/
+  designer/client/sample builds passed with zero warnings/errors. No full-suite
+  run, WPF work, computer-use tools, commit, push or publication.
+- Eight corrected public-package renderer/density/layout cases passed at native 120 DPI,
+  plus the permanent demo independent-reset/owner contract. Checks retained
+  native inline/parked field, popup editor and page HWNDs, exact reset pixels,
+  QAT sources, gallery selection, chrome bounds/styles and page clip.
+- Four settled composed native renderer/density popup/Backstage capture pairs
+  were reviewed at 120 DPI. Initial immediate popup screen captures preceded OS
+  presentation; `composed-settled/` corrects that timing. DrawToBitmap captures
+  alone do not establish native child-region/layered-shadow appearance.
+- Evidence: `artifacts/geometry/frames/`, especially `focused-evidence.json`,
+  TRX files, `package-final/`, `composed-settled/`, `package-hashes.json`,
+  `native-edge-baseline/` and `release-package/`.
 - Actual VS, external UIA/screen readers, physical keyboard/touch/IME/RTL,
-  mixed-monitor and new material/motion hardware acceptance remain separate.
-  Earlier inherited broader aggregate failures remain unresolved. No WPF work,
-  computer-use tools, commit, push or publication.
+  mixed-monitor DPI, material/motion hardware and human review remain separate.
 
-## Review delivery
+## Combined review delivery
 
 Use the existing permanent `winforms/samples/RibbonKit.WinForms.DesignerSample`
-with `--menu-geometry-demo`. **Tips geometry** and **Caption geometry** are new;
-Tips geometry is initially selected. Authored Forms/UserControls/resources and
-normal startup remain intact.
+with **`--menu-geometry-demo`**. **Frame geometry** is initially selected;
+**Frame joins** contains the connected-panel controls. Normal startup and authored
+Forms/UserControls/resources remain intact.
 
-1. Hover the example and menu rows; compare Roomier/Reset ScreenTips and screen-edge
-   placement. Check native editor selection and nonactivation.
-2. Compare Roomier/Reset KeyTips with F10 then TG and F10 in existing Backstage pages.
-3. On Caption geometry, enable Use caption QAT, compare Roomier/Reset, resize for
-   title/QAT allocation/overflow and check native buttons/dragging/Backstage caption.
-4. Combine prior gallery/Backstage/command/chrome settings and reset each new group
-   independently. Preserve values, native handles/owners and accepted Large bands.
+1. Compare Rounder corners, Wider panel shadow and Wider popup shadow, resetting
+   each independently. Open the menu/nested menu/gallery in Mouse/Touch and
+   Classic/Simplified; check all corners and shadow clearance.
+2. On Frame joins, move QAT below the ribbon, show the review message and compare
+   expanded/minimized joins: square internal corners and one outer shadow. Check
+   TabRow/TitleBar QAT placements too.
+3. Open existing Backstage pages, check the top-left corner and retained native
+   content/motion. In VS, review the retained opaque preview.
+4. Combine previous gallery/Backstage/tip/caption/command settings and reset new
+   groups independently, preserving values, native owners and accepted Large bands.
 
-Use the active plan for the review result. Remaining estimate: **one grouped frames/radii/shadows/
-connected-joins batch**, subject to later authorization. Do not begin it or add
-another theme merely because it is on the roadmap.
+The final user confirmation is recorded once in the active plan's existing review item.
+For a routine acceptance, read only that section, batch the text edit and run
+`git diff --check`; no rebuild, repeated tests, launch or package refresh.
+The selected geometry sequence is closed; this checklist remains a review record.
+Additional themes, platform-frame work and unselected intrinsic metrics need a
+later bounded instruction; do not begin them automatically.
 
 ## Preserved working boundaries
 

@@ -89,7 +89,7 @@ internal sealed class RibbonPopupMotion : IDisposable
     private void PrepareGallery()
     {
         var content = Bounds;
-        int padding = RibbonLayoutEngine.Scale(8, _ribbon.DeviceDpi);
+        int padding = RibbonFrameMetrics.PopupPadding(_ribbon.Painter, _ribbon.Theme, _ribbon.DeviceDpi);
         Bounds = Rectangle.Inflate(_popup.Bounds, padding, padding);
         _contentOrigin = new(content.X - Bounds.X, content.Y - Bounds.Y);
         _clip ??= new Region(new Rectangle(Point.Empty, _surface.Size));

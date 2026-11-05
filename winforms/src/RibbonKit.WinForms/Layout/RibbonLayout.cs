@@ -294,8 +294,8 @@ internal sealed partial class RibbonLayoutEngine
         var messages = RibbonMessageLayout.Measure(ribbon, ribbon.MessageWidth, dpi);
         if (messages.Height > 0)
         {
-            int left = ribbon.JoinMessageBar ? Math.Min(client.Width, S(ribbon.Theme.BodyMargin.Left)) : 0;
-            int top = client.Height - messages.Height - (ribbon.JoinMessageBar ? S(ribbon.Theme.BodyMargin.Bottom) : 0);
+            int left = ribbon.JoinMessageBar ? Math.Min(client.Width, S(ribbon.LayoutTheme.BodyMargin.Left)) : 0;
+            int top = client.Height - messages.Height - (ribbon.JoinMessageBar ? S(ribbon.LayoutTheme.BodyMargin.Bottom) : 0);
             result.MessageBounds = new(left, top, ribbon.MessageWidth, messages.Height);
             int index = 0;
             foreach (var measured in messages.Rows)

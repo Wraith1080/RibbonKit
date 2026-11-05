@@ -25,7 +25,7 @@ internal sealed class RibbonTabPopupDismissal : IDisposable
         _ribbon = ribbon; _form = ribbon.FindForm()!;
         bool expressive = ribbon.AnimationLevel == RibbonAnimationLevel.Expressive;
         _duration = expressive ? 182 : 130; _travel = RibbonLayoutEngine.Scale(expressive ? 12 : 8, ribbon.DeviceDpi);
-        int pad = RibbonLayoutEngine.Scale(8, ribbon.DeviceDpi); Bounds = Rectangle.Inflate(popup.Bounds, pad, pad);
+        int pad = RibbonFrameMetrics.PopupPadding(ribbon.Painter, ribbon.Theme, ribbon.DeviceDpi); Bounds = Rectangle.Inflate(popup.Bounds, pad, pad);
         try
         {
             _image = new(Bounds.Width, Bounds.Height, PixelFormat.Format32bppPArgb);

@@ -51,7 +51,7 @@ internal sealed class RibbonScreenTipWindow : Form
         _ribbon = ribbon;
         _title = RibbonScreenTipLayout.TitleFor(item); _description = item.ScreenTipDescription;
         var work = Screen.FromRectangle(anchor).WorkingArea;
-        int inset = RibbonLayoutEngine.Scale(8, ribbon.DeviceDpi);
+        int inset = RibbonFrameMetrics.PopupPadding(ribbon.Painter, ribbon.Theme, ribbon.DeviceDpi);
         if (work.Width > 2 * inset && work.Height > 2 * inset) work.Inflate(-inset, -inset);
         _layout = RibbonScreenTipLayout.Measure(_title, _description, ribbon.Font, ribbon.DeviceDpi, work.Size, ribbon.Theme);
         FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false; StartPosition = FormStartPosition.Manual;

@@ -208,6 +208,12 @@ internal static class Program
             catch (Exception error) { File.WriteAllText(args[1] + ".error.log", error.ToString()); Environment.ExitCode = 1; }
             return;
         }
+        if (args.Length == 2 && args[0] is "--verify-frame-geometry" or "--capture-frame-surfaces")
+        {
+            try { if (args[0] == "--capture-frame-surfaces") FrameGeometryCheck.CaptureNativeSurfaces(args[1]); else FrameGeometryCheck.Verify(args[1]); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
+            return;
+        }
         if (args.Length == 2 && args[0] is "--verify-tip-caption-geometry" or "--capture-caption-geometry")
         {
             try { TipCaptionGeometryCheck.Verify(args[1], args[0] == "--capture-caption-geometry"); }
@@ -259,7 +265,7 @@ internal static class Program
             catch (Exception error) { File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
             return;
         }
-        if (args.Contains("--menu-geometry-demo")) { form.EnableMenuGeometryDemo(); form.EnableIllustratedGeometryDemo(); form.EnableCommandSplitGeometryDemo(); form.EnablePairedGeometryDemo(); form.EnableChromeGeometryDemo(); form.EnableGalleryBackstageGeometryDemo(); form.EnableTipCaptionGeometryDemo(); }
+        if (args.Contains("--menu-geometry-demo")) { form.EnableMenuGeometryDemo(); form.EnableIllustratedGeometryDemo(); form.EnableCommandSplitGeometryDemo(); form.EnablePairedGeometryDemo(); form.EnableChromeGeometryDemo(); form.EnableGalleryBackstageGeometryDemo(); form.EnableTipCaptionGeometryDemo(); form.EnableFrameGeometryDemo(); }
         Application.Run(form);
     }
 }

@@ -1,7 +1,9 @@
 # Native geometry consolidation
 
-Status, **2026-11-05: the current 15–16 review result is recorded in its existing
-row below. Await instruction before frames/shadows or additional themes**.
+Status, **2026-11-05: the selected geometry sequence is closed; the final review
+result is recorded in the existing item below. No further batch is queued**.
+The accepted 15–16 result remains
+recorded once in its existing row below.
 The accepted tenth–twelfth spacing and Roomier Large-command shared-band reviews
 remain recorded below.
 The eighth/ninth review is accepted below. The user authorized
@@ -27,9 +29,9 @@ The inventory identifies ownership, not new acceptance of deferred surfaces.
 | Application Menu | nav rows 40/44, pane 28/44, footer 30/44; pane inset 10, footer gap 6; arrow 26/44 | component-specific metrics/layout, Application Menu renderer, native pane hosting and column scrolling, designer preview | Ninth adds navigation/pane/footer row minima, pane inset and footer gap. Hover/default-pane/split ownership and null defaults retained. Nested ordinary submenus keep ordinary-menu geometry; intrinsic columns/arrows/frame rules remain separate. |
 | Illustrated menu choices and ComboBox choices | illustrated width 300, icon 36, row at least 64; ComboBox choice rows 28/44 or font+10 | `RibbonIllustratedMenuMetrics`, illustrated layout/renderer and ordinary popup sizing/preview; editor layout/list window | Sixth batch exposes illustrated width/row/artwork/insets/gaps. Fifth batch owns ComboBox choice minimum and vertical text padding. Choice-list horizontal padding stays separate. |
 | Galleries | model tile sizes; density fallback 32x32 / 64x80, utility width 18/32 | gallery strip/popup layout, renderer, presenter viewport/scroll, borrowed UserControl cards, UIA | Thirteenth owns container/tile padding, heading padding and inline utility width. Application artwork and card internals stay host-owned. |
-| QAT strip and message joins | QAT button 28/44 and row 32/48; edge padding 2, item gap 0; existing message minimum/content padding, action gap 10 and title/text gap 8 | shared chrome metrics, QAT/message layout, joined renderer frames, optional caption host and motion endpoints | Twelfth owns edge/inter-entry and message horizontal gaps. Button/row sizes, source identity and placements retain their owners. Join/radius/shadow geometry remains grouped with deferred frames. |
+| QAT strip and message joins | QAT button 28/44 and row 32/48; edge padding 2, item gap 0; existing message minimum/content padding, action gap 10 and title/text gap 8 | shared chrome metrics, QAT/message layout, joined renderer frames, optional caption host and motion endpoints | Twelfth owns edge/inter-entry and message horizontal gaps. Seventeenth shares panel radius/shadow/clearance across connected edges and standalone minimized cards. Button/row sizes, source identity and placements retain their owners. |
 | Backstage | navigation width bounds/model opacity; font minimum 14; rows 42/52, Back button 36/44 | Backstage layout/renderer, live native page clipping/hosting, whole-surface motion, retained designer layer | Fourteenth owns row/navigation/Back-button spacing, icon-text gap and page-host inset. Existing width/font/opacity and page HWND/motion/preview owners retained. |
-| Frames, radii, shadows | `CornerRadius=4`, popup radius 6 (Office; neutral square), popup shadow enable/color; blur 6, reserved chrome 8, downward offset 2 | shared/Office renderer, popup chrome/regions, raster/cache keys, body/QAT/message joins and Backstage page clipping | Deferred together: painting, clipping, clearance and caches must change as one contract. One-device-pixel borders/coverage and Windows shadow policy stay platform rules. |
+| Frames, radii, shadows | `CornerRadius=4`; body and Backstage page use twice that radius, popup radius 6 (Office; neutral square); blur 6, popup clearance 8, downward offset 2; existing shadow colors/enable | shared frame metrics and renderer measurement hooks, popup chrome/regions/motion, raster/cache keys, body/QAT/message joins and Backstage page clipping | Seventeenth exposes optional body/page radii and body/popup shadow blur/offset. Explicit panel shadow overrides reserve renderer clearance without rewriting authored margins. Backstage keeps only its top-left page corner. One-device-pixel borders/coverage, page shadow policy and Windows/native-frame rules remain. |
 | ScreenTips, KeyTips and caption | ScreenTip width cap 320, padding 12, title gap 6, placement gap 8; KeyTip Office radius 2 / neutral square | ScreenTip layout/window, badge renderer, caption layout/Win32 hit testing | Fifteenth/sixteenth own tip padding/width/placement and caption content/QAT/title spacing. Native caption height, button targets/glyphs, system frame and host content retain their owners. |
 
 ## First contract: ordinary command-menu rows and horizontal content
@@ -936,9 +938,10 @@ eighth/ninth Small/Medium content and selected Application Menu spacing. The
 grouped tenth–twelfth session below implements selected body/group, header/tab and
 QAT/message spacing. The grouped thirteenth/fourteenth session implements gallery
 and Backstage spacing below. The grouped fifteenth/sixteenth session implements tips and caption spacing below.
-The revised remaining estimate is **one frames/shadows/connected-joins batch**,
-after the current combined review. Related batches may share
-a session and review; this is not a session count. Intrinsic Large/glyph and
+The seventeenth session below implements the final selected frames/shadows/
+connected-joins batch. **Its combined review is pending; no further batch is
+automatically authorized.** Related batches may share a session and review;
+this is not a session count. Intrinsic Large/glyph and
 platform rules need inventory, not automatic new theme knobs. This replaces the
 earlier 6–8 estimate.
 
@@ -1986,6 +1989,161 @@ Combined review checklist:
 4. Combine earlier gallery/Backstage/command/chrome settings and reset each new
    group independently. Existing values, owners and accepted Large bands remain.
 
-The review result is recorded above. The remaining geometry estimate is **one
-grouped frames/radii/shadows/connected-joins batch**, subject to later authorization;
-additional themes remain deferred.
+The review result is recorded above. The subsequently authorized frames/radii/
+shadows/connected-joins session is recorded below; additional themes remain deferred.
+
+## Seventeenth session: frames and shadows (2026-11-05)
+
+The user authorized the final grouped frame contract after accepting 15–16.
+Requested baseline was `0ac1351bff0f11fcea27831b75d6f71564989919`; the live recheck
+found later user commit `47c2c38f27d1736a4f5693098da15de03f81aa17`, **Geometry
+Consolidation 8**, on `codex/Ribbonkit-Winform`. It and later edits were preserved.
+Inventory identified three existing geometry owners: panel painting/connected
+joins, native popup chrome/regions, and Backstage page painting/clipping. Gallery
+entrance composition also needs the popup's exact clearance. These native API,
+layout and designer contracts were presented before implementation.
+
+| Nullable `RibbonTheme` role | Null behavior, 96-DPI logical pixels | Review value / range |
+| --- | --- | --- |
+| `BodyCornerRadius` | Office uses twice `CornerRadius`, preserving legacy integer rounding; neutral square | 14 / 0..64 |
+| `BackstagePageCornerRadius` | Existing renderer policy: Office twice `CornerRadius`, neutral square | 18 / 0..64 |
+| `BodyShadowBlur` | Office blur reach 6 | 12 / 0..32 |
+| `BodyShadowVerticalOffset` | Office downward offset 2 | 4 / -32..32 |
+| `PopupShadowBlur` | Shared popup blur reach 6 | 12 / 0..32 |
+| `PopupShadowVerticalOffset` | Shared popup downward offset 2 | 4 / -32..32 |
+
+Each null resets independently. Zero blur suppresses that painted shadow;
+positive offsets move downward. Validation is atomic before Theme/BuiltInTheme
+assignment. XML comments and 12 additive Unshipped accessors describe the roles.
+Existing `PopupCornerRadius`, shadow colors/enable, authored `BodyMargin` and
+renderer extension points retain their ownership. No shipped API changed.
+
+Three additive public virtual renderer measurements return **device pixels**:
+`GetBodyCornerRadius`, `GetBodyShadowPadding` and `GetPopupShadowPadding`.
+Office overrides the first two; neutral defaults to square/empty body clearance.
+Popup clearance retains legacy scaled-eight rounding when both shadow roles
+are null; explicit roles use scaled blur plus absolute scaled offset, with at
+least one device pixel for the frame. Custom shadow painters must report their
+complete footprint; layout/chrome clamp reported clearance to 0..128 logical
+pixels per side. Measurements must not mutate ribbon state.
+
+When either new body-shadow role is explicit, effective layout margins reserve
+at least renderer-reported shadow clearance, rounded outward to logical pixels,
+and at least authored `BodyMargin`. Theme.BodyMargin itself is unchanged. When
+both roles are null, legacy margins are exact, including existing default shadow
+trimming. An explicit 6/2 therefore can reserve more space than null. Height,
+body/QAT/message width and File alignment consume the same effective margins;
+command bands, artwork and native editor sizes are unchanged. A wider reserved
+margin can reduce available content width and trigger existing overflow/reduction.
+
+Body/connected QAT/messages and standalone minimized cards share body radius and
+shadow roles. Adjoining corners stay square, the QAT keeps its one-device-pixel
+internal separator, and the outer joined stack owns one shadow. Popup chrome
+and gallery fade composition, temporary minimized-ribbon dismissal and passive
+ScreenTip work-area inset share the same footprint. Ordinary popup placement
+still clamps the opaque popup to the work area; its external shadow can be
+trimmed at a monitor edge. Native popup/host Regions
+continue to share `GetPopupCornerRadius`, with the existing size clamps and
+one-device-pixel frame inset. The chrome cache includes the selected padding;
+existing rounded/shadow raster caches already key radius, blur, colors and edge
+flags. Position-only offset remains placement, rather than raster identity.
+
+Backstage page paint, native page clip and opaque synthetic designer preview use
+the existing shared page-radius hook. Only the top-left page corner is rounded;
+the one-device-pixel border and **zero page-shadow inset** remain. No page hosting,
+selection, motion/caption synchronization, retained-preview ownership or native
+window/DWM policy changed. Theme remains per-ribbon, immutable, hidden/
+nonserialized and code-only; no theme editor, coordinator or designer service.
+
+The permanent sample's existing `--menu-geometry-demo` adds **Frame geometry**
+(initially selected) and **Frame joins**. Three independent preset/reset groups
+cover corners, panel shadow and popup shadow. The corner preset also demonstrates
+the existing popup-radius API (12), restoring the previously authored popup radius
+on reset. Examples use ordinary menu fields/checks/nesting and a built-in gallery.
+The joins tab moves existing QAT sources, toggles its own message/minimized state,
+and opens existing authored Backstage pages with a restore-File-mode action.
+Earlier review tabs, normal startup and authored Forms/UserControls/resources remain.
+
+Evidence and limits:
+
+- [x] **32 saved default PNG/measurement pairs match exactly**, across both
+  renderers/densities, expanded/minimized and synthetic 96/120/144/192 DPI.
+  No approvals or tolerances changed.
+- [x] **19 distinct new unit/STA cases pass across focused runs**: six atomic
+  role/reset/isolation cases, two radius/corner/blur/offset/DPI matrices, two
+  native effective-margin/join/handle cases, native Backstage clip/retention,
+  two native popup chrome/cache/gallery-motion footprint cases, custom renderer
+  clearance bounds, one-pixel-only joined QAT separator, opaque retained preview,
+  default parity, passive-tip edge clearance/focus/selection and legacy null
+  popup-clearance rounding at every integer DPI from 96 through 240. All four
+  panel corners were compared for odd/even sizes at four synthetic DPIs; popup
+  shadow containment includes both offset signs. Final consumer checks passed
+  3/3 (gallery/chrome/dismissal and tip edge), then 4/4 (legacy rounding and three
+  existing ScreenTip cases).
+- [x] Related Release scope: **99 passed / 1 failed**, not a clean aggregate.
+  Failure: `NativeFramePaintTests.Nonclient_repaint_does_not_overwrite_the_reclaimed_top_client_edge`
+  (800/2000 pixels changed; focused retry 603). The same public native top-edge
+  probe also fails against the previous accepted package
+  `0.1.0-designer.local20261104T142333305Z` (2000/2000 at 120 DPI). This establishes
+  a pre-existing capture/frame limitation, not a fixed native-frame gate. No
+  window-frame repair was included. Earlier material/page-switch aggregate
+  failures also remain outside this slice. No full-suite pass is claimed.
+- [x] Normal Release native solution/API/XML build and pack passed; normal
+  Debug runtime/design-server/client/sample builds passed with zero warnings/errors.
+  Final permanent sample package: **`0.1.0-designer.local20261105T002434167Z`**.
+  All three packaged DLL hashes match Debug runtime/server/client outputs.
+  The initial refresh was premature: a final search found fixed-eight margins in
+  temporary ribbon dismissal and ScreenTip edge placement. Those paths now use
+  the shared footprint; null keeps exact legacy summed DPI rounding. After the
+  source fixes and checks were ready, the user explicitly approved one corrective
+  second refresh. No further refresh is planned.
+- [x] **8/8 public-package native cases passed at 120 DPI** across both renderers,
+  densities and Classic/Simplified: exact reset pixels/bounds, panel clearance/
+  joins, authored margins, retained inline/parked field, popup editor and page
+  HWNDs/values, QAT source, native chrome bounds/styles, gallery selection and page
+  clip. The final corrected package was checked again after the source changes.
+  The permanent sample reset contract also passed, retaining earlier roles
+  and an authored popup radius of 9. No internals, Showcase helpers or global input.
+- [x] Inspected actual joined body/QAT/message captures, all four popup corners,
+  neutral/Office native popup shadows and Backstage top-left page clip. Four
+  composed renderer/density cases at 120 DPI are in `composed-settled/`. Initial
+  immediate captures in `composed/` caught a newly opened native menu before OS
+  presentation completed; those popup PNGs are not visual acceptance. Waiting
+  400ms in the capture fixture corrected that evidence without a runtime change.
+  These settled appearance captures predate the two final consumer-margin fixes;
+  popup/panel/page paint did not change in those fixes. Their native edge/motion
+  evidence is the separate focused checks above.
+  `DrawToBitmap` page/popup PNGs omit reliable native child-region/layered-shadow
+  composition; use settled screen captures for those layers. Test fixture fixes
+  also created the designer root HWND explicitly and created the Classic editor
+  before checking its parked Simplified owner; production behavior was unchanged.
+- [x] **2026-11-05: user accepted the combined frame/shadow/connected-join review**
+  ("everything seems to be okay") and requested closure of the selected geometry
+  sequence. Actual VS designer, external UIA/screen
+  readers, physical keyboard/touch/IME/RTL, mixed-monitor DPI, material and motion
+  hardware acceptance remain separate. No WPF work, computer-use tools, commit,
+  push, publication, authored Form/resource rewrite or additional theme.
+
+Evidence: `artifacts/geometry/frames/`: `before/`, `after/`, `overrides/`,
+focused/related TRX files, `focused-evidence.json`, `package-final/`, initial
+`package/`, `composed-settled/`,
+initial capture folders, `native-edge-baseline/`, its package-only probe source,
+`package-hashes.json` and `release-package/`.
+
+Combined review checklist:
+
+1. Launch the refreshed Debug sample with `--menu-geometry-demo`. On **Frame
+   geometry**, compare each corner/shadow preset and reset independently; open
+   the menu, nested menu and gallery in Mouse/Touch and Classic/Simplified. Check
+   ScreenTips near display edges with the wider popup shadow selected.
+2. On **Frame joins**, move QAT below the ribbon, show the review message and
+   compare expanded/minimized edges: square internal joins, one outer shadow,
+   and no clipped wider shadow. Check caption/TabRow QAT placements too.
+3. Open the existing Backstage pages and check the top-left page corner, retained
+   native content and accepted motion. In VS, review the retained opaque preview.
+4. Combine earlier gallery/Backstage/tip/caption/command presets and reset the
+   new groups independently. Preserve values, owners and accepted Large bands.
+
+The selected geometry sequence is closed. Additional themes, platform-frame
+changes and unselected intrinsic metrics require a later bounded instruction;
+no further work is queued.

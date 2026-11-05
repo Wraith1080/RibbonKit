@@ -117,6 +117,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             RibbonBackstageMetrics.Validate(value);
             RibbonTipMetrics.Validate(value);
             RibbonCaptionMetrics.Validate(value);
+            RibbonFrameMetrics.Validate(value);
             if ((!value.PopupBackground.IsEmpty && value.PopupBackground.A != 255) ||
                 (!value.EditorBackground.IsEmpty && value.EditorBackground.A != 255) ||
                 (!value.TitleBarBackground.IsEmpty && value.TitleBarBackground.A != 255))
@@ -186,7 +187,8 @@ public partial class RibbonControl : Control, ISupportInitialize
             return _theme with
             {
                 TabHeight = Math.Max(Math.Max(_theme.TabHeight, metrics.Touch ? metrics.TabHeight : 0), text + 12),
-                BodyHeight = Math.Max(_theme.BodyHeight, rows)
+                BodyHeight = Math.Max(_theme.BodyHeight, rows),
+                BodyMargin = new RibbonFrameMetrics(_theme).LayoutMargin(Painter, DeviceDpi)
             };
         }
     }
@@ -390,8 +392,8 @@ public partial class RibbonControl : Control, ISupportInitialize
             return;
         var layout = LayoutTheme;
         Height = WindowCaptionHeight + RibbonLayoutEngine.Scale(layout.TabHeight, DeviceDpi) + (IsMinimized ? 0 : RibbonLayoutEngine.Scale(layout.BodyHeight, DeviceDpi)
-            + RibbonLayoutEngine.Scale(_theme.BodyMargin.Top, DeviceDpi) + RibbonLayoutEngine.Scale(_theme.BodyMargin.Bottom, DeviceDpi)) + QuickAccessHeight
-            + (IsMinimized && (JoinBelowRibbonQuickAccess || MessageBar.HasOpenMessages && JoinMessageBar) ? RibbonLayoutEngine.Scale(_theme.BodyMargin.Top, DeviceDpi) + RibbonLayoutEngine.Scale(_theme.BodyMargin.Bottom, DeviceDpi) : 0)
+            + RibbonLayoutEngine.Scale(layout.BodyMargin.Top, DeviceDpi) + RibbonLayoutEngine.Scale(layout.BodyMargin.Bottom, DeviceDpi)) + QuickAccessHeight
+            + (IsMinimized && (JoinBelowRibbonQuickAccess || MessageBar.HasOpenMessages && JoinMessageBar) ? RibbonLayoutEngine.Scale(layout.BodyMargin.Top, DeviceDpi) + RibbonLayoutEngine.Scale(layout.BodyMargin.Bottom, DeviceDpi) : 0)
             + MessageHeight;
     }
     private void EnsureLayout()

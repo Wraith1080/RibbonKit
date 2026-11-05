@@ -8,11 +8,21 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     /// <summary>Initializes the default Office 2024 inspired renderer.</summary>
     public RibbonOffice2024Renderer() { }
     /// <inheritdoc />
+    public override int GetBodyCornerRadius(RibbonTheme theme, int deviceDpi) => theme.BodyCornerRadius is { } radius ? Layout.RibbonLayoutEngine.Scale(radius, deviceDpi) : theme.CornerRadius * deviceDpi / 48;
+    /// <inheritdoc />
+    public override Padding GetBodyShadowPadding(RibbonTheme theme, int deviceDpi)
+    {
+        var metrics = new Layout.RibbonFrameMetrics(theme);
+        if (metrics.BodyBlur == 0 || theme.BodyShadowColor.A == 0) return Padding.Empty;
+        int blur = Layout.RibbonLayoutEngine.Scale(metrics.BodyBlur, deviceDpi), offset = Layout.RibbonLayoutEngine.Scale(metrics.BodyOffset, deviceDpi);
+        return new(blur, Math.Max(0, blur - offset), blur, Math.Max(0, blur + offset));
+    }
+    /// <inheritdoc />
     public override int GetBackstagePageShadowInset(RibbonTheme theme, int deviceDpi) => 0;
     /// <inheritdoc />
     public override int GetBackstagePageBorderWidth(RibbonTheme theme, int deviceDpi) => 1;
     /// <inheritdoc />
-    public override int GetBackstagePageCornerRadius(RibbonTheme theme, int deviceDpi) => Layout.RibbonLayoutEngine.Scale(2d * theme.CornerRadius, deviceDpi);
+    public override int GetBackstagePageCornerRadius(RibbonTheme theme, int deviceDpi) => Layout.RibbonLayoutEngine.Scale(theme.BackstagePageCornerRadius ?? 2d * theme.CornerRadius, deviceDpi);
     /// <inheritdoc />
     public override void DrawBackstageBackground(RibbonPaintContext context, int navigationWidth)
     {
@@ -47,13 +57,13 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     public override bool JoinMessageBarToBody => true;
     internal override bool PaintConnectedMessageShadow(RibbonPaintContext context, Rectangle upper, Rectangle messages)
     {
-        PaintShadow(context with { Bounds = Rectangle.Union(upper, messages), IsTopEdgeConnected = false, IsBottomEdgeConnected = false }, context.Theme.CornerRadius * context.DeviceDpi / 48);
+        PaintShadow(context with { Bounds = Rectangle.Union(upper, messages), IsTopEdgeConnected = false, IsBottomEdgeConnected = false }, GetBodyCornerRadius(context.Theme, context.DeviceDpi));
         return true;
     }
     /// <inheritdoc />
     public override void DrawMessageBar(RibbonPaintContext context)
     {
-        int radius = context.Theme.CornerRadius * context.DeviceDpi / 48;
+        int radius = GetBodyCornerRadius(context.Theme, context.DeviceDpi);
         PaintShadow(context, radius);
         // The preceding body/QAT already owns the shared horizontal edge.
         var saved = context.Graphics.Save();
@@ -104,7 +114,7 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     /// <inheritdoc />
     public override void DrawBody(RibbonPaintContext context)
     {
-        int radius = context.Theme.CornerRadius * context.DeviceDpi / 48;
+        int radius = GetBodyCornerRadius(context.Theme, context.DeviceDpi);
         PaintShadow(context, radius);
         PaintRounded(context, radius, context.Theme.BodyFill, context.Theme.BodyBorderColor);
     }

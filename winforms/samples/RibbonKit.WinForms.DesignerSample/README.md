@@ -1,9 +1,23 @@
 # RibbonKit WinForms Designer Sample
 
-The latest `--menu-geometry-demo` launch adds **Tips geometry** and **Caption
-geometry**, selecting Tips geometry after the earlier tabs. These remain
+The latest `--menu-geometry-demo` launch adds **Frame geometry** and **Frame
+joins**, selecting Frame geometry after the earlier tabs. These remain
 opt-in public-API controls; authored Forms/resources and normal startup are preserved.
 
+- **Frame geometry:** compare **Rounder corners**, **Wider panel shadow** and
+  **Wider popup shadow**, resetting each independently. Corner reset restores
+  the popup radius authored before the demo. Open the native menu, nested menu
+  and gallery in Mouse/Touch and Classic/Simplified.
+- **Frame joins:** move the existing QAT below the ribbon, toggle the review
+  message/minimized state and check connected edges/outer shadow. Open the existing
+  authored Backstage pages; **Restore File mode** restores prior routing.
+- `--verify-frame-geometry <output>` checks eight renderer/density/layout cases
+  through public APIs: exact resets, effective panel margins/joins, native field/
+  popup/page handles, popup chrome footprint/styles, gallery selection and page
+  clip. `--capture-frame-surfaces <output>` captures four native renderer/density
+  popup/Backstage pairs after OS presentation settles. It stops on foreground
+  loss or an off-display surface; neither mode sends global input. VS and hardware
+  acceptance remain separate. See the [current contract/evidence/review checklist](../../docs/GEOMETRY-CONSOLIDATION-PLAN.md#seventeenth-session-frames-and-shadows-2026-11-05).
 - **Tips geometry:** compare **Roomier ScreenTips** / **Reset ScreenTips** by
   hovering the example and menu rows. Compare **Roomier KeyTips** / **Reset
   KeyTips** with F10 then TG. **Backstage KeyTips** opens existing authored pages

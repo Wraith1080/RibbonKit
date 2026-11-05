@@ -16,12 +16,13 @@ public partial class RibbonRenderer : IDisposable
     /// <summary>Paints the outer frame of a floating ribbon popup. The hosted content is inset by one device pixel.</summary>
     public virtual void DrawPopupFrame(RibbonPaintContext context) =>
         PaintRounded(context, GetPopupCornerRadius(context.Theme, context.DeviceDpi), new(context.Theme.PopupColor), context.Theme.PopupBorder);
-    /// <summary>Paints a floating popup's shadow onto a transparent surface. Bounds describe the popup; eight logical pixels of clearance surround it.</summary>
+    /// <summary>Paints a floating popup's shadow onto a transparent surface. Bounds describe the popup; GetPopupShadowPadding reserves its complete shadow/frame clearance.</summary>
     public virtual void DrawPopupShadow(RibbonPaintContext context)
     {
         var bounds = context.Bounds;
-        bounds.Offset(0, RibbonLayoutEngine.Scale(2, context.DeviceDpi));
-        _shadow.Draw(context.Graphics, bounds, GetPopupCornerRadius(context.Theme, context.DeviceDpi), RibbonLayoutEngine.Scale(6, context.DeviceDpi), context.Theme.PopupShadowColor);
+        var metrics = new RibbonFrameMetrics(context.Theme);
+        bounds.Offset(0, RibbonLayoutEngine.Scale(metrics.PopupOffset, context.DeviceDpi));
+        _shadow.Draw(context.Graphics, bounds, GetPopupCornerRadius(context.Theme, context.DeviceDpi), RibbonLayoutEngine.Scale(metrics.PopupBlur, context.DeviceDpi), context.Theme.PopupShadowColor);
     }
     /// <summary>Paints the ribbon or popup background.</summary>
     public virtual void DrawSurface(RibbonPaintContext context, bool popup)
@@ -727,11 +728,12 @@ public partial class RibbonRenderer : IDisposable
     {
         if (context.SuppressShadow) return;
         var bounds = context.Bounds;
-        bounds.Offset(0, RibbonLayoutEngine.Scale(2, context.DeviceDpi));
+        var metrics = new RibbonFrameMetrics(context.Theme);
+        bounds.Offset(0, RibbonLayoutEngine.Scale(metrics.BodyOffset, context.DeviceDpi));
         var saved = context.Graphics.Save();
         try
         {
-            int blur = RibbonLayoutEngine.Scale(6, context.DeviceDpi);
+            int blur = RibbonLayoutEngine.Scale(metrics.BodyBlur, context.DeviceDpi);
             if (context.IsBottomEdgeConnected)
                 context.Graphics.SetClip(Rectangle.FromLTRB(bounds.Left - blur, bounds.Top - blur, bounds.Right + blur, context.Bounds.Bottom), CombineMode.Intersect);
             _shadow.Draw(context.Graphics, bounds, radius, blur, context.Theme.BodyShadowColor, context.IsTopEdgeConnected, context.IsBottomEdgeConnected);

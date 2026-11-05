@@ -2308,7 +2308,7 @@ with the renderer's drawing hooks to customize the complete popup shape.
 `DrawPopupFrame` paints all four sides using `PopupBorder`. `PopupShadowEnabled`
 enables the library's soft shadow, subject to Windows' shadow setting.
 `DrawPopupShadow` uses `PopupShadowColor` (the same default opacity as the body),
-six logical pixels of blur and a two-pixel logical downward offset. A separate
+six logical pixels of blur and a two-pixel logical downward offset by default. A separate
 nonactivating, click-through layered window composites the shadow and partially
 covered frame-edge pixels through
 [UpdateLayeredWindow](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-updatelayeredwindow);
@@ -2318,6 +2318,46 @@ pass pointer input through and count as outside presses for popup dismissal.
 The library owns and destroys the frame/shadow window with its popup. The darker
 native ToolStrip and ComboLBox shadows are disabled or kept hidden. Choice popups
 use the same rounded Office frame, square neutral frame and soft shadow hooks.
+
+Frame geometry is also code-only through independently nullable `RibbonTheme`
+roles. `BodyCornerRadius` and `BackstagePageCornerRadius` accept 0..64 logical
+pixels; null keeps Office's existing doubled `CornerRadius` and neutral square
+policy. Backstage rounds only the top-left page corner. `BodyShadowBlur` and
+`PopupShadowBlur` accept 0..32 (null 6, zero suppresses the painted shadow).
+`BodyShadowVerticalOffset` and `PopupShadowVerticalOffset` accept -32..32
+(null 2, positive downward). Each null resets only that role; invalid assignment
+leaves the previous Theme/BuiltInTheme intact. Existing `PopupCornerRadius`,
+shadow colors/enable and authored `BodyMargin` remain separate.
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    BodyCornerRadius = 14, BackstagePageCornerRadius = 18,
+    BodyShadowBlur = 12, BodyShadowVerticalOffset = 4,
+    PopupShadowBlur = 12, PopupShadowVerticalOffset = 4
+};
+// Reset the panel shadow independently of corners and popup settings.
+ribbon.Theme = ribbon.Theme with { BodyShadowBlur = null, BodyShadowVerticalOffset = null };
+```
+
+`GetBodyCornerRadius`, `GetBodyShadowPadding` and `GetPopupShadowPadding` are
+virtual renderer measurements in **device pixels**, without state mutation.
+Custom shadow painters report their complete footprint; consumers clamp clearance
+to 0..128 logical pixels per side. Explicit body-shadow roles reserve at least
+that footprint and authored `BodyMargin` without rewriting Theme.BodyMargin.
+Both null preserve exact legacy margins, so explicitly selecting default blur/
+offset can reserve more space than null. The extra reservation changes available
+panel width/height and can trigger existing reduction/overflow; command bands and
+native field sizes retain their own metrics. Connected body/QAT/messages keep
+square adjoining corners and one outer shadow, including standalone minimized
+cards. Popup chrome, gallery motion, temporary-ribbon dismissal and passive tip
+work-area inset share the renderer's popup clearance. Both null preserve legacy
+scaled-eight rounding; explicit roles use scaled blur plus absolute offset, at
+least one device pixel. Ordinary popup placement still clamps the opaque frame;
+external shadows can be trimmed at a display edge. Borders/insets remain one
+device pixel. Windows shadow policy, native frames, Backstage motion and
+opaque designer preview retain their existing behavior. See the
+[frame contract, evidence and review gate](docs/GEOMETRY-CONSOLIDATION-PLAN.md#seventeenth-session-frames-and-shadows-2026-11-05).
 
 Derive from `RibbonRenderer` for a flat/custom presentation, or from
 `RibbonOffice2024Renderer` to retain Office styling while overriding selected

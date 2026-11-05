@@ -10,6 +10,25 @@ namespace RibbonKit.WinForms.Tests;
 public sealed class BackstageDesignPreviewTests
 {
     [Fact]
+    public void Page_radius_override_keeps_the_retained_preview_opaque_without_creating_page_handles() => FoundationTests.Sta(() =>
+    {
+        using var fixture = new Fixture(); var preview = fixture.Selection.Backstage; preview.Open(); var original = fixture.Ribbon.Theme;
+        using var before = preview.CreateFrame(120, 120); _ = fixture.Surface.Handle; using var layer = new RibbonBackstagePreviewLayer(fixture.Surface); nint retainedHandle = 0;
+        foreach (int radius in new[] { 0, 18, 64 })
+        {
+            fixture.Ribbon.Theme = original with { BackstagePageCornerRadius = radius, BodyShadowBlur = 12, PopupShadowBlur = 12 };
+            using var frame = preview.CreateFrame(120, 120); Assert.Equal(before.Size, frame.Size);
+            for (int y = 0; y < frame.Height; y += 7) for (int x = 0; x < frame.Width; x += 7) Assert.Equal(255, frame.GetPixel(x, y).A);
+            Assert.True(layer.Present(preview.Bounds, () => preview.CreateFrame(120, 120))); var handle = layer.Handle;
+            if (retainedHandle != 0) Assert.Equal(retainedHandle, handle); retainedHandle = handle;
+            fixture.Surface.Invalidate(true); fixture.Surface.Update(); layer.Update(); Assert.Equal(handle, layer.Handle); Assert.True(layer.IsPresented);
+            Assert.False(fixture.Body.IsHandleCreated); Assert.False(fixture.Input.IsHandleCreated); Assert.Null(fixture.Body.Parent); Assert.Equal(0, fixture.Body.Paints); Assert.False(fixture.Ribbon.IsBackstageOpen);
+        }
+        fixture.Ribbon.Theme = original; using var reset = preview.CreateFrame(120, 120);
+        using var a = new MemoryStream(); using var b = new MemoryStream(); before.Save(a, System.Drawing.Imaging.ImageFormat.Png); reset.Save(b, System.Drawing.Imaging.ImageFormat.Png); Assert.Equal(a.ToArray(), b.ToArray());
+    });
+
+    [Fact]
     public void Geometry_overrides_share_opaque_preview_bounds_without_hosting_native_pages() => FoundationTests.Sta(() =>
     {
         using var fixture = new Fixture(); var preview = fixture.Selection.Backstage; preview.Open();
