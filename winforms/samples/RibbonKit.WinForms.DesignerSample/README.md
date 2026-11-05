@@ -1,5 +1,11 @@
 # RibbonKit WinForms Designer Sample
 
+The focused tab-header clipping check is `--verify-tab-header-clipping <output>`.
+It uses public paint callbacks and local scroll-button messages across 24 native
+renderer/density/layout/File/QAT arrangements. For review, use the existing
+`--menu-geometry-demo`, scroll the tab strip beside File, then beside inline and
+overflow TabRow QAT. No authored Form/resource or startup changes are required.
+
 The latest `--menu-geometry-demo` launch adds **Frame geometry** and **Frame
 joins**, selecting Frame geometry after the earlier tabs. These remain
 opt-in public-API controls; authored Forms/resources and normal startup are preserved.

@@ -322,7 +322,8 @@ public partial class RibbonRenderer : IDisposable
         if (selected || context.Hot)
             DrawChrome(context, selected ? new(context.Theme.Surface) : context.Theme.Hover, Color.Transparent);
         var color = !tab.EffectiveEnabled ? context.Theme.DisabledColor : tab.IsContextual ? ContextualTabColor(context, tab, selected) : context.Theme.Foreground;
-        DrawText(context, tab.DisplayText, color, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
+        // Scrolled tab bounds can extend across File/QAT; GDI must retain the viewport clip.
+        DrawText(context, tab.DisplayText, color, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.PreserveGraphicsClipping);
         if (context.Focused)
             DrawFocus(context);
         if (tab.EffectiveEnabled && !context.SuppressTabIndicators && (selected || context.Hot || context.Pressed || context.Focused))

@@ -1,29 +1,28 @@
-# Closed: native RibbonKit.WinForms geometry consolidation
+# Native WinForms: focused tab-header correction
 
-Updated **2026-11-05**. The seventeenth grouped frames/radii/shadows/connected-joins
-session and the selected geometry sequence are closed. **The final review result
-is recorded in the active geometry plan; no further batch is queued.** Workspace:
+Updated **2026-11-05**. The selected geometry sequence is closed. A subsequent
+user-requested tab-header overlap correction is implemented; its focused evidence
+and targeted review are in the [final geometry-plan section](GEOMETRY-CONSOLIDATION-PLAN.md#tab-header-overlap-correction-2026-11-05).
+**Stop for that review; no further batch or theme is queued.** Workspace:
 
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
 ## Verified checkpoint
 
 - Branch: `codex/Ribbonkit-Winform`.
-- Requested baseline: `0ac1351bff0f11fcea27831b75d6f71564989919`.
-  Live recheck found later user commit
-  **`47c2c38f27d1736a4f5693098da15de03f81aa17`**, `Geometry Consolidation 8`.
+- Current correction baseline: later user commit
+  **`7b1d73368cd251597998a57b054cd63a120e1ea7`**, with a clean worktree at entry.
   Preserve it and later edits; recheck branch/HEAD/worktree before resuming.
 - The active [geometry plan](GEOMETRY-CONSOLIDATION-PLAN.md#seventeenth-session-frames-and-shadows-2026-11-05)
   owns the current contract, evidence, limits and review result. Earlier
   gallery/Backstage and tips/caption acceptance stays recorded once in its existing
   rows. Preserve accepted behavior and Roomier Large bands.
 - Current permanent Designer Sample package:
-  **`0.1.0-designer.local20261105T002434167Z`**. The user approved one corrective
-  second refresh after the final source audit; see the active plan. Runtime/
-  server/client package hashes match normal Debug outputs. Do not refresh again
-  for a routine review or acceptance.
+  **`0.1.0-designer.local20261105T023755822Z`**. Refreshed once for the focused
+  tab-header correction. Runtime/server/client package hashes match normal Debug
+  outputs. Do not refresh again for a routine review or acceptance.
 
-## Implemented scope
+## Preserved geometry scope
 
 Six optional code-only RibbonTheme roles cover body/page corner radii and body/
 popup shadow blur/vertical offset. Null resets independently and preserves exact

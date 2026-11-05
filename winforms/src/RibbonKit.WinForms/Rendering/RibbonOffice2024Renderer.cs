@@ -126,7 +126,7 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     {
         bool enabled = tab.EffectiveEnabled;
         DrawText(context, tab.DisplayText, !enabled ? context.Theme.DisabledColor : tab.IsContextual ? ContextualTabColor(context, tab, selected) : selected ? context.Theme.Accent : context.Theme.Foreground,
-            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
+            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.PreserveGraphicsClipping);
         if (enabled && !context.SuppressTabIndicators && (selected || context.Hot || context.Pressed || context.Focused))
         {
             DrawTabIndicator(context with { Bounds = GetTabIndicatorBounds(context, tab) }, tab, selected);

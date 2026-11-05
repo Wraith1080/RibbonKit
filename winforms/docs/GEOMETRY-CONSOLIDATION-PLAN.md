@@ -2,6 +2,7 @@
 
 Status, **2026-11-05: the selected geometry sequence is closed; the final review
 result is recorded in the existing item below. No further batch is queued**.
+The later focused tab-header overlap correction is recorded at the end of this plan.
 The accepted 15–16 result remains
 recorded once in its existing row below.
 The accepted tenth–twelfth spacing and Roomier Large-command shared-band reviews
@@ -2147,3 +2148,61 @@ Combined review checklist:
 The selected geometry sequence is closed. Additional themes, platform-frame
 changes and unselected intrinsic metrics require a later bounded instruction;
 no further work is queued.
+
+## Tab-header overlap correction (2026-11-05)
+
+The user reported scrolled tab labels painting over File, or the last TabRow QAT
+item/overflow button. Live branch `codex/Ribbonkit-Winform` was clean at later
+user commit `7b1d73368cd251597998a57b054cd63a120e1ea7`; that checkpoint is preserved.
+
+Layout already reserved the correct File/QAT/scroller slots and tab viewport.
+The concrete correction contract was to honor that existing viewport when painting
+labels in both renderers, retaining dimensions, text alignment, partial-tab
+scrolling, hit/keyboard/UIA geometry, source ownership and accepted command bands.
+No runtime API, layout property, model or theme was added.
+
+Both `DrawTab` implementations now request `PreserveGraphicsClipping`. The material
+text path also reproduced escaped glyphs despite its native HDC clip. For an
+explicitly clip-preserving, partially visible text slot, it now renders an
+alpha-preserving DIB bounded to the visible rectangle, retaining the original
+text rectangle/alignment, then composites through the caller's graphics clip.
+Fully visible slots keep the existing drawing path. This also honors the existing
+clip-preserving Application Menu text contract; its related regressions passed.
+
+Evidence:
+
+- Before the fix, all six automatic header fixtures reproduced escaped pixels
+  over File/QAT/overflow (45–54 in their first failing Compact/Classic captures).
+  A public consumer using the previous package reproduced 198 escaped pixels at
+  native 120 DPI after an actual local scroll-button click.
+- **10 distinct new unit/STA cases pass across focused runs**: six automatic
+  native header cases spanning both renderers, no QAT/inline QAT/overflow QAT,
+  Compact/Touch and Classic/Simplified, plus four direct native/composited clipping
+  cases at synthetic 96/120/144/192 DPI. Initial composited fixture background
+  needed an explicit white DIB clear; correcting it still reproduced escaped
+  glyphs before the material-path fix. No approvals or tolerances changed.
+- **161 related cases passed** across header/QAT/contextual/geometry motion,
+  backdrop appearance/transparency/opacity, Application Menu appearance/joins
+  and material tab frames. No full-suite or new hardware acceptance is claimed;
+  earlier documented native-frame/material limits remain separate.
+- Native Release solution/API/XML build and normal Debug runtime/design server/
+  client/sample builds passed, zero warnings/errors. The permanent sample was
+  refreshed **once for this correction**, to
+  **`0.1.0-designer.local20261105T023755822Z`**; packaged runtime/server/client
+  hashes match normal Debug outputs. Authored Forms/UserControls/resources and
+  normal startup are untouched.
+- **24/24 public-package native cases passed at 120 DPI**, each with two local
+  scroll-button clicks: both renderers/densities/layouts and the three File/QAT
+  arrangements. Tagged glyph scans establish zero viewport escapes; ordinary-color
+  captures were inspected for all three reported Office arrangements. File/QAT/
+  viewport slots, sources and tabs remain stable. No runtime internals, Showcase
+  helpers, global input or computer-use tools.
+- [ ] Targeted user review: reopen the refreshed Designer Sample with
+  `--menu-geometry-demo`, scroll left/right beside File with QAT below/in the
+  caption, then beside inline and overflow TabRow QAT in Mouse/Touch. Actual VS,
+  physical input, mixed-monitor and live material hardware review remain separate.
+
+Evidence lives in `artifacts/tab-header-clipping/`: before/after/final PNGs and
+TRX files, `package-before/`, `package-after/` and `package-hashes.json`. Public
+sample check: `--verify-tab-header-clipping <output>`. Stop after this correction;
+the completed geometry sequence stays closed and no theme work is queued.

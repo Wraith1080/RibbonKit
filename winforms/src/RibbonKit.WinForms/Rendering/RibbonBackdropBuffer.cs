@@ -65,11 +65,25 @@ internal sealed class RibbonBackdropBuffer : IDisposable
     internal static void DrawText(RibbonPaintContext context, string text, Color color, TextFormatFlags flags)
     {
         if (string.IsNullOrEmpty(text) || context.Bounds.Width <= 0 || context.Bounds.Height <= 0) return;
+        var clip = Rectangle.Round(context.Graphics.ClipBounds);
+        if ((flags & TextFormatFlags.PreserveGraphicsClipping) != 0 && !clip.Contains(context.Bounds))
+        {
+            var visible = Rectangle.Intersect(clip, context.Bounds);
+            if (visible.Width <= 0 || visible.Height <= 0) return;
+            // DTT_COMPOSITED can write beyond the HDC clip. Bound its DIB to the
+            // visible area, retaining the original text rectangle/alignment.
+            using var layer = new RibbonBackdropBuffer(); using var staging = new Bitmap(visible.Width, visible.Height);
+            using var graphics = Graphics.FromImage(staging);
+            var bounds = context.Bounds; bounds.Offset(-visible.Left, -visible.Top);
+            layer.Paint(graphics, visible.Size, visible.Height, Color.Transparent,
+                canvas => DrawText(context with { Graphics = canvas, Bounds = bounds }, text, color, flags & ~TextFormatFlags.PreserveGraphicsClipping));
+            context.Graphics.DrawImageUnscaled(layer.Image, visible.Location);
+            return;
+        }
         // GDI TextRenderer does not maintain glyph alpha. Composited theme text
         // paints glyph coverage into the DIB, including black text over material.
         nint theme = OpenThemeData(0, "WINDOW");
         if (theme == 0) throw new Win32Exception("Composited window text is unavailable.");
-        var clip = Rectangle.Round(context.Graphics.ClipBounds);
         nint dc = context.Graphics.GetHdc(), font = 0, old = 0; int saved = SaveDC(dc);
         try
         {

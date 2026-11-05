@@ -208,6 +208,12 @@ internal static class Program
             catch (Exception error) { File.WriteAllText(args[1] + ".error.log", error.ToString()); Environment.ExitCode = 1; }
             return;
         }
+        if (args.Length == 2 && args[0] == "--verify-tab-header-clipping")
+        {
+            try { TabHeaderClippingCheck.Verify(args[1]); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
+            return;
+        }
         if (args.Length == 2 && args[0] is "--verify-frame-geometry" or "--capture-frame-surfaces")
         {
             try { if (args[0] == "--capture-frame-surfaces") FrameGeometryCheck.CaptureNativeSurfaces(args[1]); else FrameGeometryCheck.Verify(args[1]); }
