@@ -6,6 +6,7 @@ internal sealed record RibbonBackstageLayout(Rectangle Back, Rectangle Navigatio
     internal bool FooterInline { get; init; }
     internal int SeparatorHeight { get; init; }
     internal int NavigationContentHeight { get; init; }
+    internal int PagePadding { get; init; }
     internal int EntryHeight(RibbonItem item) => item is RibbonMenuSeparatorItem ? SeparatorHeight : RowHeight;
     internal IReadOnlyList<RibbonBackstageEntrySlot> Arrange(RibbonBackstage backstage, int scrollOffset = 0, RibbonItem? reveal = null)
     {
@@ -22,10 +23,10 @@ internal sealed record RibbonBackstageLayout(Rectangle Back, Rectangle Navigatio
         }
         Add(backstage.Items, false); Add(backstage.FooterItems, true); return rows;
     }
-    internal Rectangle PageContentBounds(RibbonTheme theme, int dpi, int border = 0)
+    internal Rectangle PageContentBounds(int border = 0)
     {
         var bounds = new Rectangle(Page.Left + border, Page.Top + border, Math.Max(0, Page.Width - border), Math.Max(0, Page.Height - border));
-        int padding = RibbonLayoutEngine.Scale(theme.BackstagePagePadding ?? 0, dpi);
+        int padding = PagePadding;
         int x = Math.Min(padding, bounds.Width / 2), y = Math.Min(padding, bounds.Height / 2);
         return Rectangle.FromLTRB(bounds.Left + x, bounds.Top + y, bounds.Right - x, bounds.Bottom - y);
     }
@@ -39,7 +40,7 @@ internal sealed record RibbonBackstageLayout(Rectangle Back, Rectangle Navigatio
         Math.Clamp(renderer.GetBackstagePageCornerRadius(theme, dpi), 0, Math.Max(0,
             Math.Min(RibbonLayoutEngine.Scale(32, dpi), Math.Min(size.Width, size.Height) / 2)));
     internal static RibbonBackstageLayout Build(Size size, Font font, int dpi, RibbonBackstage? backstage = null, RibbonItem? reveal = null, int captionHeight = 0)
-        => RibbonPresentationResolver.Backstage(backstage?.Ribbon?.Theme).Layout.Build(size, font, dpi, backstage, reveal, captionHeight);
+        => RibbonBackstageLayoutMeasurement.Build(size, font, dpi, backstage, reveal, captionHeight);
 }
 
 internal sealed record RibbonBackstageEntrySlot(RibbonItem Item, Rectangle Bounds, Rectangle Clip, bool Footer)

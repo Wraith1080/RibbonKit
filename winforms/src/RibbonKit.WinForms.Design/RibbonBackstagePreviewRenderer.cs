@@ -39,7 +39,7 @@ internal static class RibbonBackstagePreviewRenderer
             finally { graphics.Restore(state); }
             result.Regions.Add(new() { Key = node.Key, X = bounds.X, Y = bounds.Y, Width = bounds.Width, Height = bounds.Height });
         }
-        var pageBounds = Rectangle.Inflate(layout.PageContentBounds(theme, dpi), -RibbonLayoutEngine.Scale(16, dpi), -RibbonLayoutEngine.Scale(16, dpi));
+        var pageBounds = Rectangle.Inflate(layout.PageContentBounds(), -RibbonLayoutEngine.Scale(16, dpi), -RibbonLayoutEngine.Scale(16, dpi));
         TextRenderer.DrawText(graphics, RibbonBackstageDesignPreview.PlaceholderText, font, pageBounds, theme.Foreground,
             TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.WordBreak | TextFormatFlags.NoPrefix | TextFormatFlags.PreserveGraphicsClipping);
         using var stream = new MemoryStream(); pixels.Save(stream, ImageFormat.Png); result.Png = Convert.ToBase64String(stream.ToArray()); return result;

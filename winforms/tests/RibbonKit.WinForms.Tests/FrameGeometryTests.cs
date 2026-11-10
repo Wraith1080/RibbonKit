@@ -197,7 +197,7 @@ public sealed class FrameGeometryTests
     {
         using var form = new Form { Width = 1050, Height = 700 }; var ribbon = new RibbonControl { FileMenuMode = RibbonFileMenuMode.Backstage, AnimationLevel = RibbonAnimationLevel.None }; form.Controls.Add(ribbon); ribbon.FileMenu.Visible = true;
         using var page = new TextBox { Text = "Retained page" }; var model = new RibbonBackstagePageItem { Text = "Info", Content = page }; ribbon.Backstage.Items.Add(model);
-        form.Show(); ribbon.IsBackstageOpen = true; Application.DoEvents(); nint handle = page.Handle; var parent = page.Parent; var frame = page.Parent!.Parent!;
+        form.Show(); ribbon.IsBackstageOpen = true; Application.DoEvents(); nint handle = page.Handle; var parent = page.Parent; var frame = ribbon.BackstageSurface!.PageArea;
         var before = frame.Bounds;
         foreach (int radius in new[] { 0, 18, 64 })
         {

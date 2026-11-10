@@ -4,7 +4,10 @@ namespace RibbonKit.WinForms;
 
 // Stateless family helpers are paired here. Drawing caches and native state
 // remain with the active public renderer and the ribbon/window that own them.
-internal sealed record RibbonBackstagePresentation(RibbonBackstageLayoutProvider Layout, RibbonBackstageRenderer Renderer);
+internal sealed record RibbonBackstagePresentation(RibbonBackstageLayoutProvider Layout, RibbonBackstageRenderer Renderer)
+{
+    internal RibbonBackstageMetrics ResolveMetrics(RibbonTheme? theme, RibbonDensity density) => new(theme, density, Layout.Defaults);
+}
 
 internal static class RibbonPresentationResolver
 {

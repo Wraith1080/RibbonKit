@@ -21,7 +21,7 @@ public sealed class Office2019BackstageTests
         Assert.Equal(S(14), layout.Footer.Bottom - rows.Last().Bounds.Bottom);
         using var painter = new RibbonOffice2024Renderer();
         Assert.Equal(0, painter.GetBackstagePageBorderWidth(ribbon.Theme, dpi));
-        Assert.Equal(layout.Page, layout.PageContentBounds(ribbon.Theme, dpi));
+        Assert.Equal(layout.Page, layout.PageContentBounds());
         ribbon.Backstage.NavigationWidth = 260;
         Assert.Equal(S(260), RibbonBackstageLayout.Build(new(S(1000), S(600)), font, dpi, ribbon.Backstage).Page.Left);
         Assert.True(RibbonBackstageLayout.Build(new(S(300), S(110)), font, dpi, ribbon.Backstage).FooterInline);
@@ -125,7 +125,7 @@ public sealed class Office2019BackstageTests
             BackstageNavigationIconInset = 9, BackstageNavigationIconSize = 20, BackstageTitleCentered = false, BackstagePageBorderWidth = 2 };
         ribbon.Theme = custom;
         Assert.Equal(Color.Navy, ribbon.Theme.BackstageNavigationColor); Assert.Equal(Color.Lime, ribbon.Theme.BackstageHoverFill.Start);
-        Assert.Equal(41, new RibbonBackstageMetrics(custom, RibbonDensity.Compact).TextOffset);
+        Assert.Equal(41, RibbonPresentationResolver.Backstage(custom).ResolveMetrics(custom, RibbonDensity.Compact).TextOffset);
         using (var painter = new RibbonRenderer())
         using (var image = new Bitmap(180, 100))
         using (var graphics = Graphics.FromImage(image))

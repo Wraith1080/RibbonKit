@@ -89,7 +89,7 @@ public sealed class BackstageStyleIsolationTests
         var selected = ribbon.Theme;
         Assert.Throws<ArgumentOutOfRangeException>(() => ribbon.Theme = selected with { BackstageStyle = (RibbonBackstageStyle)27 });
         Assert.Same(selected, ribbon.Theme);
-        var classicDefaults = new RibbonBackstageMetrics(RibbonThemes.Office2019Light with
+        var classicDefaults = RibbonPresentationResolver.Backstage(RibbonThemes.Office2019Light).ResolveMetrics(RibbonThemes.Office2019Light with
         { BackstageNavigationPadding = null, BackstageNavigationIconInset = null, BackstageAutoMinimumNavigationWidth = null, BackstageFooterBottomPadding = null }, RibbonDensity.Compact);
         Assert.Equal(0, classicDefaults.NavigationPadding); Assert.Equal(26, classicDefaults.IconInset);
         Assert.Equal(220, classicDefaults.AutoMinimumWidth); Assert.Equal(14, classicDefaults.FooterBottomPadding);
@@ -143,7 +143,7 @@ public sealed class BackstageStyleIsolationTests
             var layout = RibbonBackstageLayout.Build(surface.ClientSize, ribbon.Font, ribbon.DeviceDpi, ribbon.Backstage, captionHeight: surface.CaptionHeight);
             Assert.Equal(S(classic ? 220 : 200), layout.Page.Left);
             Assert.Equal(S(classic ? 0 : 8), layout.Inset);
-            Assert.Equal(layout.PageContentBounds(authored, ribbon.DeviceDpi, classic ? 0 : 1), surface.PageArea.Bounds);
+            Assert.Equal(layout.PageContentBounds(classic ? 0 : 1), surface.PageArea.Bounds);
             Assert.Equal(fullHeight ? 0 : form.CaptionHeight, surface.Top);
             Assert.Equal(fullHeight, ribbon.HasBackstageCaption); Assert.Null(form.CaptionTitleMotion);
             Assert.Equal(classic || fullHeight, ribbon.BackstageCaptionTintBounds.IsEmpty);
@@ -177,7 +177,7 @@ public sealed class BackstageStyleIsolationTests
             painter.Border = border; painter.Radius = border == 4 ? 14 : 0;
             ribbon.Renderer = painter; // The same borrowed instance may change its metric policy.
             var layout = RibbonBackstageLayout.Build(surface.ClientSize, ribbon.Font, ribbon.DeviceDpi, ribbon.Backstage);
-            Assert.Equal(layout.PageContentBounds(ribbon.Theme, ribbon.DeviceDpi, border), surface.PageArea.Bounds);
+            Assert.Equal(layout.PageContentBounds(border), surface.PageArea.Bounds);
             if (painter.Radius > 0) Assert.NotNull(surface.PageArea.Region); else Assert.Null(surface.PageArea.Region);
             painter.Backgrounds = painter.Entries = 0; surface.Refresh(); Application.DoEvents();
             Assert.True(painter.Backgrounds > 0); Assert.True(painter.Entries > 0);

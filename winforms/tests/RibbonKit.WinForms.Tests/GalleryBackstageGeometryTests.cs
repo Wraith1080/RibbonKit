@@ -97,7 +97,7 @@ public sealed class GalleryBackstageGeometryTests
             Assert.Equal(Math.Max(S(62), font.Height + S(16)), changed.RowHeight); Assert.Equal(S(28), changed.Back.Left); Assert.Equal(S(28), changed.Back.Top);
             Assert.Equal(S(52), changed.Back.Width); Assert.Equal(changed.Back.Bottom + S(32), changed.Navigation.Top);
             Assert.Equal(S(14), changed.Arrange(ribbon.Backstage)[0].Bounds.Left); Assert.True(changed.Page.Left > before.Page.Left);
-            var content = changed.PageContentBounds(ribbon.Theme, dpi, 1);
+            var content = changed.PageContentBounds(1);
             Assert.Equal(changed.Page.Left + 1 + S(18), content.Left); Assert.Equal(changed.Page.Right - S(18), content.Right);
             foreach (int width in new[] { 0, 19, 220, 1200 })
             foreach (int height in new[] { 0, 13, 110, 700 })
@@ -105,7 +105,7 @@ public sealed class GalleryBackstageGeometryTests
                 ribbon.Theme = Roomier with { BackstageNavigationPadding = 1024, BackstagePagePadding = 1024, BackstageBackButtonInset = 1024 };
                 var small = RibbonBackstageLayout.Build(new(S(width), S(height)), font, dpi, ribbon.Backstage);
                 Assert.True(small.Back.Width >= 0 && small.Back.Bottom <= S(height)); Assert.True(small.Navigation.Height >= 0);
-                Assert.True(small.PageContentBounds(ribbon.Theme, dpi).Width >= 0); Assert.True(small.PageContentBounds(ribbon.Theme, dpi).Height >= 0);
+                Assert.True(small.PageContentBounds().Width >= 0); Assert.True(small.PageContentBounds().Height >= 0);
             }
             ribbon.Theme = RibbonThemes.Office2024Light; Assert.Equal(before, RibbonBackstageLayout.Build(size, font, dpi, ribbon.Backstage));
         }

@@ -89,13 +89,14 @@ public partial class RibbonRenderer
         }
         else
         {
-            BackstageStyleRenderer(context.Theme).DrawEntryState(this, context, selected);
+            var presentation = RibbonPresentationResolver.Backstage(context.Theme);
+            presentation.Renderer.DrawEntryState(this, context, selected);
             if (selected && context.Theme.BackstageSelectionIndicatorVisible)
             {
                 var marker = new Rectangle(context.Bounds.Left + S(2), context.Bounds.Top + S(10), S(3), Math.Max(1, context.Bounds.Height - S(20)));
                 PaintRounded(context with { Bounds = marker }, RibbonFrameMetrics.Radius(context.Theme.NavigationMarkerCornerRadius, marker.Width / 2, context.DeviceDpi), new(context.Theme.Accent), Color.Transparent, 0);
             }
-            var metrics = new RibbonBackstageMetrics(context.Theme, context.Density);
+            var metrics = presentation.ResolveMetrics(context.Theme, context.Density);
             int iconInset = Math.Min(S(metrics.IconInset), context.Bounds.Width);
             int iconSize = Math.Min(S(metrics.IconSize), Math.Min(Math.Max(0, context.Bounds.Width - iconInset), context.Bounds.Height));
             var icon = new Rectangle(context.Bounds.Left + iconInset, context.Bounds.Top + (context.Bounds.Height - iconSize) / 2, iconSize, iconSize);
@@ -103,7 +104,7 @@ public partial class RibbonRenderer
             else if (item.Icon is { } vector) vector.Draw(context.Graphics, icon, new(context.DeviceDpi, color, enabled));
             else if (item.Image is { } image) context.Graphics.DrawImage(image, icon);
             int textOffset = metrics.TextOffset;
-            int right = Math.Max(context.Bounds.Left, context.Bounds.Right - S(8));
+            int right = Math.Max(context.Bounds.Left, context.Bounds.Right - S(metrics.TrailingPadding));
             var text = Rectangle.FromLTRB(Math.Min(right, context.Bounds.Left + S(textOffset)), context.Bounds.Top, right, context.Bounds.Bottom);
             DrawText(context with { Bounds = text }, item.Text, color,
                 TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);

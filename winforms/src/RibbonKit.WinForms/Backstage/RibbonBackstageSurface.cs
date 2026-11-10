@@ -347,9 +347,9 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             _pageFrameBounds = layout.Page;
             int border = RibbonBackstageLayout.PageBorderWidth(_ribbon.Painter, _ribbon.Theme, DeviceDpi, layout.Page.Size);
             int radius = RibbonBackstageLayout.PageCornerRadius(_ribbon.Painter, _ribbon.Theme, DeviceDpi, layout.Page.Size);
-            _pages.Bounds = layout.PageContentBounds(_ribbon.Theme, DeviceDpi, border);
+            _pages.Bounds = layout.PageContentBounds(border);
             _pageContent.Bounds = new(0, Math.Min(CaptionHeight, _pages.Height), _pages.Width, Math.Max(0, _pages.Height - CaptionHeight));
-            int padding = RibbonLayoutEngine.Scale(_ribbon.Theme.BackstagePagePadding ?? 0, DeviceDpi);
+            int padding = layout.PagePadding;
             UpdatePageRegion(Math.Max(0, radius - border - padding));
             _navigation.SuspendLayout(); _footer.SuspendLayout();
             try

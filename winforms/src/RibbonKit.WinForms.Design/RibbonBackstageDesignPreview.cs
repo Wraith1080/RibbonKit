@@ -95,7 +95,7 @@ internal sealed class RibbonBackstageDesignPreview(RibbonControl ribbon, ISelect
     internal const string PlaceholderText = "Backstage page content\r\n\r\nShared design preview — select a navigation entry to edit its properties.\r\nDesign each page body in its separate UserControl designer. Use Back to return to the ribbon.";
     private Rectangle PageTextBounds
     {
-        get { var bounds = Layout.PageContentBounds(ribbon.Theme, ribbon.DeviceDpi); bounds.Offset(Bounds.Location); bounds.Inflate(-RibbonLayoutEngine.Scale(16, ribbon.DeviceDpi), -RibbonLayoutEngine.Scale(16, ribbon.DeviceDpi)); return bounds; }
+        get { var bounds = Layout.PageContentBounds(); bounds.Offset(Bounds.Location); bounds.Inflate(-RibbonLayoutEngine.Scale(16, ribbon.DeviceDpi), -RibbonLayoutEngine.Scale(16, ribbon.DeviceDpi)); return bounds; }
     }
     private const TextFormatFlags PageTextFlags = TextFormatFlags.WordBreak | TextFormatFlags.NoPrefix | TextFormatFlags.PreserveGraphicsClipping;
     internal RibbonBackstagePreviewState? CaptureState()

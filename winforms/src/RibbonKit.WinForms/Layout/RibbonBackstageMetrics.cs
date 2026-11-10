@@ -1,21 +1,46 @@
 namespace RibbonKit.WinForms.Layout;
 
-internal readonly record struct RibbonBackstageMetrics(RibbonTheme? Theme, RibbonDensity Density)
+internal readonly record struct RibbonBackstageMetrics
 {
-    private RibbonBackstageLayoutProvider Layout => RibbonPresentationResolver.Backstage(Theme).Layout;
-    internal int RowHeight => Math.Max(Theme?.BackstageMinimumRowHeight ?? (Density == RibbonDensity.Touch ? 52 : 42), Density == RibbonDensity.Touch ? 52 : 1);
-    internal int NavigationPadding => Theme?.BackstageNavigationPadding ?? Layout.NavigationPadding;
-    internal int BackSize => Math.Max(Theme?.BackstageBackButtonSize ?? (Density == RibbonDensity.Touch ? 44 : 36), Density == RibbonDensity.Touch ? 44 : 1);
-    internal int BackInset => Theme?.BackstageBackButtonInset ?? 20;
-    internal int BackGap => Theme?.BackstageBackButtonBottomGap ?? 24;
-    internal int IconTextGap => Theme?.BackstageIconTextGap ?? 12;
-    internal int IconInset => Theme?.BackstageNavigationIconInset ?? Layout.IconInset;
-    internal int IconSize => Theme?.BackstageNavigationIconSize ?? 16;
+    internal RibbonBackstageMetrics(RibbonTheme? theme, RibbonDensity density, RibbonBackstageLayoutDefaults defaults)
+    {
+        bool touch = density == RibbonDensity.Touch;
+        RowHeight = Math.Max(theme?.BackstageMinimumRowHeight ?? (touch ? defaults.TouchRowHeight : defaults.CompactRowHeight), touch ? defaults.TouchRowHeight : 1);
+        NavigationPadding = theme?.BackstageNavigationPadding ?? defaults.NavigationPadding;
+        BackSize = Math.Max(theme?.BackstageBackButtonSize ?? (touch ? defaults.TouchBackSize : defaults.CompactBackSize), touch ? defaults.TouchBackSize : 1);
+        BackInset = theme?.BackstageBackButtonInset ?? defaults.BackInset;
+        BackGap = theme?.BackstageBackButtonBottomGap ?? defaults.BackGap;
+        IconTextGap = theme?.BackstageIconTextGap ?? defaults.IconTextGap;
+        IconInset = theme?.BackstageNavigationIconInset ?? defaults.IconInset;
+        IconSize = theme?.BackstageNavigationIconSize ?? defaults.IconSize;
+        AutoMinimumWidth = theme?.BackstageAutoMinimumNavigationWidth ?? defaults.AutoMinimumWidth;
+        FooterBottomPadding = theme?.BackstageFooterBottomPadding ?? defaults.FooterBottomPadding ?? NavigationPadding;
+        FooterUsesNavigationInset = theme?.BackstageFooterBottomPadding is null && defaults.FooterBottomPadding is null;
+        PagePadding = theme?.BackstagePagePadding ?? defaults.PagePadding;
+        RowTextVerticalPadding = defaults.RowTextVerticalPadding;
+        SeparatorHeight = defaults.SeparatorHeight;
+        MinimumPageWidth = defaults.MinimumPageWidth;
+        TrailingPadding = defaults.TrailingPadding;
+        AutoWidthPadding = 2 * NavigationPadding + TextOffset + TrailingPadding + defaults.ScrollbarWidth;
+    }
+    internal int RowHeight { get; }
+    internal int NavigationPadding { get; }
+    internal int BackSize { get; }
+    internal int BackInset { get; }
+    internal int BackGap { get; }
+    internal int IconTextGap { get; }
+    internal int IconInset { get; }
+    internal int IconSize { get; }
     internal int TextOffset => IconInset + IconSize + IconTextGap;
-    internal int AutoMinimumWidth => Theme?.BackstageAutoMinimumNavigationWidth ?? Layout.AutoMinimumWidth;
-    internal int FooterBottomPadding => Theme?.BackstageFooterBottomPadding ?? Layout.FooterBottomPadding(NavigationPadding);
-    internal int AutoWidthPadding => 2 * NavigationPadding + TextOffset + 8 + 18;
-    internal int PagePadding => Theme?.BackstagePagePadding ?? 0;
+    internal int AutoMinimumWidth { get; }
+    internal int FooterBottomPadding { get; }
+    internal bool FooterUsesNavigationInset { get; }
+    internal int AutoWidthPadding { get; }
+    internal int PagePadding { get; }
+    internal int RowTextVerticalPadding { get; }
+    internal int SeparatorHeight { get; }
+    internal int MinimumPageWidth { get; }
+    internal int TrailingPadding { get; }
     internal static void Validate(RibbonTheme theme)
     {
         if (!Enum.IsDefined(theme.BackstageStyle)) throw new ArgumentOutOfRangeException(nameof(theme));

@@ -1,9 +1,10 @@
 # Native WinForms theme architecture
 
-**B1 implemented, 2026-11-10, following the user's go-ahead after planning.**
-Backstage now uses one layout/drawing registration. B2/B3 and later extractions
-remain separate proposed slices; human appearance acceptance remains pending.
-Current evidence is recorded in the [themes plan](THEMES-PLAN.md#backstage-registration-b1--2026-11-10).
+**B1 and B2 implemented; latest delivery 2026-11-11.** Backstage uses one
+layout/drawing registration, explicit family defaults and measured layout inputs.
+B3 caption/motion policy and later extractions remain separate proposed slices.
+Current evidence and user review are recorded in the
+[themes plan](THEMES-PLAN.md#explicit-backstage-layout-inputs-b2--2026-11-11).
 
 The [themes plan](THEMES-PLAN.md) retains appearance requirements and acceptance.
 This document proposes implementation boundaries and a migration sequence; it
@@ -30,13 +31,13 @@ parallel layout engines or repeat the closed geometry campaign.
 
 ## Source assessment and reusable pieces
 
-The pilot already had sibling inheritance. B1 unified composition; explicit
-inputs and the remaining policy ownership are later work.
+The pilot already had sibling inheritance. B1 unified composition; B2 made
+measurement/defaults explicit. The remaining caption/motion policy belongs to B3.
 
 | Current owner | Retain | Remaining coupling |
 | --- | --- | --- |
-| [Backstage layout provider](../src/RibbonKit.WinForms/Layout/RibbonBackstageLayoutProvider.cs) and its 2019/2024 subclasses | One shared width, row, footer, narrow-host and DPI algorithm; sibling classes supply different defaults. | B1 removed concrete registration and `For` from the base. `Build` still reads a live ribbon, resolves metrics and asks its renderer for frame geometry. The base also calculates host bounds from a Form; those dependencies belong to B2/B3. |
-| [Backstage metrics](../src/RibbonKit.WinForms/Layout/RibbonBackstageMetrics.cs) | Existing validated nullable overrides, density minima and shared text/Auto-width arithmetic. | Metrics still resolve the registered layout separately from `Build`. Passing resolved inputs and gathering scattered fallback values belong to B2. |
+| [Backstage layout provider](../src/RibbonKit.WinForms/Layout/RibbonBackstageLayoutProvider.cs) and its 2019/2024 subclasses | One shared width, row, footer, narrow-host and DPI algorithm; sibling classes explicitly supply immutable defaults. | B2 removed live ribbon/model/font/renderer and Form access from `Build`; it consumes numeric inputs. Host bounds remain in the ribbon's window adapter. Caption policy extraction remains B3. |
+| [Backstage metrics](../src/RibbonKit.WinForms/Layout/RibbonBackstageMetrics.cs) | Validated nullable overrides, density minima and shared text/Auto-width arithmetic, resolved through the selected registration. | B2 metrics contain values rather than a theme reference or family selector. The measurement adapter gathers model/text/frame inputs once; the snapshot also retains the device page padding used by native clipping and previews. |
 | [Backstage renderer base](../src/RibbonKit.WinForms/Rendering/RibbonBackstageRenderer.cs) and its 2019/2024 subclasses | Small sibling drawing strategies, borrowing the active public renderer's primitives. | B1 replaced the second selector with a resolver adapter. The base still contains a navigation-state recipe and reads window/runtime state for caption painting; these are more than a drawing contract. |
 | [Public Office renderer](../src/RibbonKit.WinForms/Rendering/RibbonOffice2024Renderer.cs) | Public virtual entry points and application subclass behavior. | It is also the default dispatcher for Office 2019. Its historical public name must not make it the base class for new family implementations. |
 | [Window integration](../src/RibbonKit.WinForms/RibbonControl.Window.cs), [title integration](../src/RibbonKit.WinForms/RibbonForm.Title.cs) and [pane motion](../src/RibbonKit.WinForms/Animation/RibbonBackstageMotion.cs) | Real panes, transparent caption foreground, current timing, interruption and ownership. | Coverage/centering read theme flags directly, 2024 tint lives in its renderer, and travel defaults live in motion/window code. There is no single resolved presentation policy. |
@@ -86,10 +87,12 @@ caches cannot be global. Avoid a process-wide cache of application theme clones.
 ## One composition point and compatibility rules
 
 The internal [RibbonPresentationResolver](../src/RibbonKit.WinForms/Rendering/RibbonPresentationResolver.cs)
-now returns a small `RibbonBackstagePresentation` registration containing the
-existing layout provider and renderer. Add defaults/window/motion policy members
-only when those responsibilities move in their later slices; no empty extension
-interfaces, reflection discovery, service container or public plugin framework.
+returns a small `RibbonBackstagePresentation` registration containing the layout
+provider and renderer. It resolves the selected layout's immutable defaults into
+value-only metrics. The [measurement adapter](../src/RibbonKit.WinForms/Layout/RibbonBackstageLayoutMeasurement.cs)
+gathers model/text/frame facts; shared layout consumes the resulting inputs.
+Add window/motion policy members when those responsibilities move in B3; no empty
+extension interfaces, reflection discovery or public plugin framework.
 
 | Backstage selector | Registered layout | Registered drawing |
 | --- | --- | --- |
@@ -201,7 +204,7 @@ automated evidence or visual acceptance. Implement the following separately.
 | Slice | Bounded change and principal risk | Smallest relevant verification |
 | --- | --- | --- |
 | B1. Backstage registration — implemented | Register existing sibling pairs once and route current callers through it. Preserve existing algorithms, caption methods and motion. Risk: stale/mixed selection or bypassed application hooks. | Focused cases and the package-only comparison are recorded in the [themes plan](THEMES-PLAN.md#backstage-registration-b1--2026-11-10). The delivery criteria below remain the contract. |
-| B2. Explicit layout inputs/defaults | Move family fallbacks out of neutral bases/metrics selection; pass host reservation, measured content and effective renderer frame values into the existing algorithm. Risk: DPI rounding, Auto width, footer fallback or native page inset changes. | Selected `BackstageWidthTests`, `BackstageNavigationTests`, `GalleryBackstageGeometryTests`, `Office2019BackstageTests` and the Backstage-only frame/page-shadow cases. Use existing 96/120/144/192 synthetic cases and narrow/short hosts, plus an unchanged-family paint comparison. |
+| B2. Explicit layout inputs/defaults — implemented | Family fallbacks are immutable values; shared layout consumes measured content, host reservation and renderer shadow clearance. Page content padding is retained in the snapshot. Risk: DPI rounding, Auto width, footer fallback or native page inset changes. | Selected width/footer/spacing/frame/preview/ownership checks and exact default paint/geometry comparison are recorded in the [themes plan](THEMES-PLAN.md#explicit-backstage-layout-inputs-b2--2026-11-11). |
 | B3. Caption and motion policy | Move tint/coverage/title/travel decisions behind the registration; window and motion code execute them. Keep native services and transition engines. Risk: the original 2024 caption regression, title fading, pane/caption drift, interruption or foreground leaks. | Relevant `BackstageStyleIsolationTests`, `CaptionTitleMotionTests`, `BackstageSynchronizationTests`, and selected page-motion cancellation/retention cases. Existing package-only Solid live-frame scopes for both families, neutral/authored captions, open/close/reversal and resize. No full material matrix. |
 | C1. Headers | Apply the resolver/sibling pattern to Filled/Underline drawing and header-specific geometry policy; keep the shared strip engine. Risk: scrollers, colored caption extension, File/QAT reservations and text clipping. | Affected `Office2019ThemeTests`, header cases in `Office2019ReviewTests`, `TabHeaderClippingTests` and selected QAT/header geometry checks. Compare both light families at normal/narrow widths and applicable ordinary/material paths. |
 | C2. Body and connected frames | Extract body/group/frame policy without changing reduction or ownership. Risk: inner padding, full-width 2019 body, QAT/message joins, seams and popup anchoring. | Selected `FrameGeometryTests`, body/group geometry and QAT/message join cases, two-family comparison in Classic/Simplified and Compact/Touch where affected. No new geometry audit. |
@@ -253,8 +256,8 @@ Completion criteria:
   authored Forms/resources change. Review the diff and record focused results
   and remaining human appearance/input gates in the themes plan.
 
-B2/B3 and header/body extraction remain outside the B1 change. B2 is the next
-proposed implementation scope.
+B2 was delivered as a separate change. B3 caption/motion policy is next;
+header/body extraction remains outside these Backstage slices.
 
 ## Verification and delivery budget
 
@@ -301,5 +304,5 @@ host/default dependencies described above. No runtime/sample/test code changed
 and no app, package refresh, build or test ran during that planning-only refresh.
 
 The user then authorized B1 and asked whether geometry consolidation remained
-useful. Its retained role is stated above. B1 implementation/evidence are in
-the themes plan; B2 is next, with caption/motion extraction reserved for B3.
+useful. Its retained role is stated above. B1/B2 implementation and current
+review/evidence are in the themes plan; caption/motion extraction is next in B3.
