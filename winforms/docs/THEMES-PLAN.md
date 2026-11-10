@@ -1,5 +1,12 @@
 # Native WinForms themes
 
+**Architecture planning, 2026-11-10:** the user requested planning before continuing
+the broader rewrite. The [theme architecture draft](THEME-ARCHITECTURE-PLAN.md)
+owns the proposed boundaries and migration order. The latest Backstage extraction
+and neutral-caption correction remain uncommitted drafts; further implementation
+has stopped for this planning discussion. Earlier appearance requirements and
+evidence below remain in place.
+
 Status, **2026-11-10: Office 2019 review corrections, the demo Backstage toggle,
 native Showcase theme selector and WPF Classic-style Office 2019 Backstage are
 implemented. Scroller borders are restored at the tab-header size. Office 2019
@@ -347,7 +354,7 @@ Backstage. Stop for this review before another theme.
 | Item | Status |
 | --- | --- |
 | Direction | **2026-11-10: user selected Office 2019 first and light themes before dark.** |
-| Planning | Source inventory/proposed native contract documented, including both supplied header references, zero corner radii, an edge-to-edge body background with zero outer margin and retained inner padding, minimal resting borders and bordered/shadowed floating popups; later family order is provisional. |
+| Planning | Appearance contract retained. **2026-11-10: broader rewrite planning requested; see [architecture draft](THEME-ARCHITECTURE-PLAN.md).** Review the uncommitted Backstage pilot before widening implementation; later family order remains provisional. |
 | Runtime/API/rendering | Implemented. Initial native Debug/Release solution builds passed. Latest bounded changes built through Release runtime/tests and Debug Showcase/designer/sample with zero warnings/errors; no full solution or broad suite was repeated. |
 | Designer/sample/package consumer | Refreshed normal Debug sample; independent Release package restored/built; six generated Form/RibbonForm initializers compiled and reopened successfully. |
 | Focused Release verification | Latest theme-boundary/title checks: **18 focused cases passed**, followed by **5 title cases passed** after the requested 75% placement/25% slide adjustment; four title cases overlap the earlier run. Earlier structural/page-motion evidence remains below. No broad suite ran. |

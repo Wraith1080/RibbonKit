@@ -13,6 +13,8 @@ public partial class RibbonRenderer
     public virtual int GetBackstagePageCornerRadius(RibbonTheme theme, int deviceDpi) => 0;
     /// <summary>Paints the native Backstage surface and its measured navigation rail.</summary>
     public virtual void DrawBackstageBackground(RibbonPaintContext context, int navigationWidth)
+        => DrawNeutralBackstageBackground(context, navigationWidth);
+    internal void DrawNeutralBackstageBackground(RibbonPaintContext context, int navigationWidth)
     {
         int width = Math.Clamp(navigationWidth, 0, context.Bounds.Width);
         int shadow = context.WindowBackdrop || context.CompositedText ? RibbonBackstageLayout.PageShadowInset(this, context.Theme, context.DeviceDpi, context.Bounds.Size) : 0;
@@ -87,13 +89,7 @@ public partial class RibbonRenderer
         }
         else
         {
-            if (context.Hot || context.Pressed || selected)
-            {
-                var fill = context.Pressed ? context.Theme.BackstageNavigationSelected ?? context.Theme.Pressed : selected ? context.Theme.BackstageSelectedFill : context.Theme.BackstageHoverFill;
-                if (context.Theme.BackstageFullWidthNavigation)
-                    PaintRounded(context, 0, selected || context.Pressed ? context.Theme.BackstageSelectedFill : context.Theme.BackstageHoverFill, Color.Transparent, 0);
-                else DrawChrome(context, context.WindowBackdrop || context.CompositedText ? BackdropStateFill(context, context.Pressed) : fill, Color.Transparent);
-            }
+            BackstageStyleRenderer(context.Theme).DrawEntryState(this, context, selected);
             if (selected && context.Theme.BackstageSelectionIndicatorVisible)
             {
                 var marker = new Rectangle(context.Bounds.Left + S(2), context.Bounds.Top + S(10), S(3), Math.Max(1, context.Bounds.Height - S(20)));

@@ -1,4 +1,11 @@
-# Native WinForms: Office 2019 Light review
+# Native WinForms: theme architecture planning
+
+**Current instruction, 2026-11-10:** plan the broader theme rewrite before further
+implementation. Start with [THEME-ARCHITECTURE-PLAN](THEME-ARCHITECTURE-PLAN.md).
+The Backstage extraction and restored 2024 neutral caption are uncommitted drafts;
+preserve them for review. Do not resume code changes, builds or tests merely to
+discuss the plan. The appearance review instructions below remain available for
+when that review resumes.
 
 Updated **2026-11-10**. The [native themes plan](THEMES-PLAN.md) owns the selected
 first theme, proposed contract, implementation slices and future acceptance.

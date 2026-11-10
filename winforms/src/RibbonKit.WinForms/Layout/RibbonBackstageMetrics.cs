@@ -2,21 +2,23 @@ namespace RibbonKit.WinForms.Layout;
 
 internal readonly record struct RibbonBackstageMetrics(RibbonTheme? Theme, RibbonDensity Density)
 {
+    private RibbonBackstageLayoutProvider Layout => RibbonBackstageLayoutProvider.For(Theme);
     internal int RowHeight => Math.Max(Theme?.BackstageMinimumRowHeight ?? (Density == RibbonDensity.Touch ? 52 : 42), Density == RibbonDensity.Touch ? 52 : 1);
-    internal int NavigationPadding => Theme?.BackstageNavigationPadding ?? 8;
+    internal int NavigationPadding => Theme?.BackstageNavigationPadding ?? Layout.NavigationPadding;
     internal int BackSize => Math.Max(Theme?.BackstageBackButtonSize ?? (Density == RibbonDensity.Touch ? 44 : 36), Density == RibbonDensity.Touch ? 44 : 1);
     internal int BackInset => Theme?.BackstageBackButtonInset ?? 20;
     internal int BackGap => Theme?.BackstageBackButtonBottomGap ?? 24;
     internal int IconTextGap => Theme?.BackstageIconTextGap ?? 12;
-    internal int IconInset => Theme?.BackstageNavigationIconInset ?? 16;
+    internal int IconInset => Theme?.BackstageNavigationIconInset ?? Layout.IconInset;
     internal int IconSize => Theme?.BackstageNavigationIconSize ?? 16;
     internal int TextOffset => IconInset + IconSize + IconTextGap;
-    internal int AutoMinimumWidth => Theme?.BackstageAutoMinimumNavigationWidth ?? 200;
-    internal int FooterBottomPadding => Theme?.BackstageFooterBottomPadding ?? NavigationPadding;
+    internal int AutoMinimumWidth => Theme?.BackstageAutoMinimumNavigationWidth ?? Layout.AutoMinimumWidth;
+    internal int FooterBottomPadding => Theme?.BackstageFooterBottomPadding ?? Layout.FooterBottomPadding(NavigationPadding);
     internal int AutoWidthPadding => 2 * NavigationPadding + TextOffset + 8 + 18;
     internal int PagePadding => Theme?.BackstagePagePadding ?? 0;
     internal static void Validate(RibbonTheme theme)
     {
+        if (!Enum.IsDefined(theme.BackstageStyle)) throw new ArgumentOutOfRangeException(nameof(theme));
         if (theme.BackstageTitleSlideDistanceRatio is { } titleRatio && (!double.IsFinite(titleRatio) || titleRatio < 0 || titleRatio > 1))
             throw new ArgumentOutOfRangeException(nameof(theme), "Backstage title slide distance must be a finite fraction from 0 to 1, or null for the final 25 percent.");
         if (theme.BackstageSlideDistanceRatio is { } ratio && (!double.IsFinite(ratio) || ratio < 0 || ratio > 1))

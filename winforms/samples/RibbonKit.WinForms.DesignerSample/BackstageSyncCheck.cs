@@ -14,7 +14,7 @@ internal static class BackstageSyncCheck
         var results = new List<object>();
         foreach (var theme in new[] { RibbonBuiltInTheme.Office2019Light, RibbonBuiltInTheme.Office2024Light })
         {
-            using var form = new RibbonForm { Text = "Backstage synchronization", TitleBarColor = Color.Navy, ClientSize = new(1050, 580), StartPosition = FormStartPosition.Manual, Location = new(30, 30) };
+            using var form = new RibbonForm { Text = "Backstage synchronization", TitleBarColor = theme == RibbonBuiltInTheme.Office2019Light ? Color.Navy : Color.Empty, ClientSize = new(1050, 580), StartPosition = FormStartPosition.Manual, Location = new(30, 30) };
             using var painter = new ProbeRenderer();
             using var ribbon = new RibbonControl { BuiltInTheme = theme, Renderer = painter, FileMenuMode = RibbonFileMenuMode.Backstage };
             using var page = new Panel { BackColor = Color.White };
@@ -74,7 +74,14 @@ internal static class BackstageSyncCheck
                             int? delta = fullHeight ? caption is { } a && body is { } b ? Math.Abs(a - b) : null : 0;
                             if (!fullHeight)
                                 foreach (int x in new[] { 100, image.Width / 2, image.Width - 100 })
-                                    Require(image.GetPixel(x, captionRow).ToArgb() == Color.Navy.ToArgb(), "Office 2024's separate title bar was covered by Backstage.");
+                                {
+                                    var pixel = image.GetPixel(x, captionRow); var grey = ribbon.Theme.BackstageNavigationBackground;
+                                    bool tinted = x < surface.Right;
+                                    Require(pixel.R >= (tinted ? grey.R : 255) && pixel.R <= 255 &&
+                                        pixel.G >= (tinted ? grey.G : 255) && pixel.G <= 255 &&
+                                        pixel.B >= (tinted ? grey.B : 255) && pixel.B <= 255,
+                                        "Office 2024's neutral caption tint did not respect the moving edge.");
+                                }
                             if (delta is { } difference) { measured++; phaseMeasured++; maximumDelta = Math.Max(maximumDelta, difference); }
                             frames.Add(new { phase, index, elapsedMs = watch.ElapsedMilliseconds, caption, body, delta, surface.Left, surface.Top });
                             image.Save(Path.Combine(output, $"{theme}-{phase}-{index++:D2}.png"));
@@ -85,6 +92,16 @@ internal static class BackstageSyncCheck
                         Require(phaseMeasured >= 2, $"Too few visible {phase} frames were measured.");
                         Require(moved, $"The {phase} transition did not slide.");
                         Require(ribbon.IsBackstageOpen == !closing, "Backstage lifecycle did not finish correctly.");
+                        form.Refresh(); DwmFlush();
+                        using var settled = new Bitmap(form.ClientSize.Width, Math.Max(16, surface.Top));
+                        using (var graphics = Graphics.FromImage(settled)) graphics.CopyFromScreen(form.PointToScreen(Point.Empty), Point.Empty, settled.Size);
+                        settled.Save(Path.Combine(output, $"{theme}-{phase}-settled.png"));
+                        if (!fullHeight)
+                        {
+                            var expected = closing ? ribbon.Theme.Background : ribbon.Theme.BackstageNavigationBackground;
+                            Require(settled.GetPixel(settled.Width / 2, 8).ToArgb() == expected.ToArgb(),
+                                "Office 2024's settled neutral caption or close restoration is incorrect.");
+                        }
                     }
                     Require(measured >= 4, "Too few visible transition frames were measured.");
                     results.Add(new { theme = theme.ToString(), fullHeight, dpi = ribbon.DeviceDpi, frames = frames.Count, measured, maximumDelta, passed = true });
@@ -101,7 +118,7 @@ internal static class BackstageSyncCheck
             if (failure is not null) throw new InvalidOperationException(theme + " actual-frame check failed.", failure);
             File.WriteAllText(Path.Combine(output, "results.json"), JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true }));
         }
-        File.WriteAllText(Path.Combine(output, "result.log"), "PASS: two package-only light-theme scopes; Office 2019 panes slide behind the transparent caption and Office 2024 stays below its separate title bar. Actual opening/closing compositor frames retain native page handles/parent/text. See results.json for measured frames and maximum pixel delta.");
+        File.WriteAllText(Path.Combine(output, "result.log"), "PASS: two package-only light-theme scopes; Office 2019 panes slide behind the transparent caption and Office 2024 stays below its separate title bar with animated neutral grey tint and close restoration. Actual opening/closing compositor frames retain native page handles/parent/text. See results.json for measured frames and maximum pixel delta.");
     }
 
     private static int? Edge(Bitmap image, int y, int expected)

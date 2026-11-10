@@ -18,6 +18,15 @@ public enum RibbonHeaderPresentation
     Filled
 }
 
+/// <summary>Chooses the native Backstage layout and rendering family independently of its palette.</summary>
+public enum RibbonBackstageStyle
+{
+    /// <summary>Office 2024's inset navigation, page frame and separate caption treatment.</summary>
+    Modern,
+    /// <summary>Office 2019's flat navigation and page treatment.</summary>
+    Classic
+}
+
 /// <summary>A solid or vertical two-stop gradient fill; contains no disposable resources.</summary>
 public readonly record struct RibbonFill(Color Start, Color End)
 {
@@ -115,6 +124,8 @@ public sealed record RibbonTheme
     public Padding MessageContentPadding { get; init; } = new(12, 4, 8, 4);
     /// <summary>Gets the Office 2024 Backstage navigation rail color. Backstage.NavigationBackgroundOpacity can expose an active window backdrop behind it.</summary>
     public Color BackstageNavigationBackground { get; init; } = Color.FromArgb(245, 244, 243);
+    /// <summary>Gets the Backstage layout and renderer family. Defaults to Modern; Office 2019 selects Classic. Individual appearance and caption settings remain independently configurable.</summary>
+    public RibbonBackstageStyle BackstageStyle { get; init; }
     /// <summary>Gets whether Backstage navigation and its caption tint follow Accent. False preserves BackstageNavigationBackground. Options dialogs retain their neutral navigation background.</summary>
     public bool BackstageNavigationUsesAccent { get; init; }
     /// <summary>Gets whether navigation state fills reach every edge of their measured row. False retains ordinary inset chrome.</summary>
@@ -414,6 +425,7 @@ public static class RibbonThemes
         CollapsedGroupBorder = Color.Transparent, ApplicationMenuSplitDividerVisible = false, OptionsButtonCornerRadius = 0,
         MessageSideBordersVisible = false, HeaderScrollButtonsMatchTabHeight = true,
         ApplicationMenuWorkAreaInset = 0,
+        BackstageStyle = RibbonBackstageStyle.Classic,
         BackstageNavigationUsesAccent = true, BackstageFullWidthNavigation = true,
         BackstageExtendsIntoTitleBar = true, BackstageTitleCentered = true,
         BackstageNavigationForeground = Color.White, BackstageSelectedForeground = Color.White,

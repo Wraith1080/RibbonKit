@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using RibbonKit.WinForms.Layout;
 
 namespace RibbonKit.WinForms;
 
@@ -60,10 +61,7 @@ public partial class RibbonControl
     public event EventHandler? IsBackstageOpenChanged;
     internal RibbonBackstageSurface? BackstageSurface => _backstageSurface;
     private Rectangle BackstageHostBounds(Form form)
-    {
-        int caption = !HasFullHeightBackstage && form is RibbonForm { CustomCaption: true } window ? window.CaptionHeight : 0;
-        return new(0, caption, form.ClientSize.Width, Math.Max(0, form.ClientSize.Height - caption));
-    }
+        => RibbonBackstageLayoutProvider.For(Theme).HostBounds(this, form);
     private bool CanShowBackstage => !_disposing && !IsDisposed && !IsInDesignMode && !IsModal && Visible && Enabled
         && FileMenuMode == RibbonFileMenuMode.Backstage && HasFileMenu && FileMenu.EffectiveEnabled
         && !Backstage.IsDisposed && Backstage.Visible && Backstage.EffectiveEnabled;

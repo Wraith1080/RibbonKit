@@ -1,4 +1,9 @@
 #nullable enable
+RibbonKit.WinForms.RibbonBackstageStyle
+RibbonKit.WinForms.RibbonBackstageStyle.Modern = 0 -> RibbonKit.WinForms.RibbonBackstageStyle
+RibbonKit.WinForms.RibbonBackstageStyle.Classic = 1 -> RibbonKit.WinForms.RibbonBackstageStyle
+RibbonKit.WinForms.RibbonTheme.BackstageStyle.get -> RibbonKit.WinForms.RibbonBackstageStyle
+RibbonKit.WinForms.RibbonTheme.BackstageStyle.init -> void
 RibbonKit.WinForms.RibbonHeaderPresentation
 RibbonKit.WinForms.RibbonHeaderPresentation.Underline = 0 -> RibbonKit.WinForms.RibbonHeaderPresentation
 RibbonKit.WinForms.RibbonHeaderPresentation.Filled = 1 -> RibbonKit.WinForms.RibbonHeaderPresentation

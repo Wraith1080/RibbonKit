@@ -18,39 +18,14 @@ public class RibbonOffice2024Renderer : RibbonRenderer
         return new(blur, Math.Max(0, blur - offset), blur, Math.Max(0, blur + offset));
     }
     /// <inheritdoc />
-    public override int GetBackstagePageShadowInset(RibbonTheme theme, int deviceDpi) => 0;
+    public override int GetBackstagePageShadowInset(RibbonTheme theme, int deviceDpi) => BackstageStyleRenderer(theme).GetBackstagePageShadowInset(theme, deviceDpi);
     /// <inheritdoc />
-    public override int GetBackstagePageBorderWidth(RibbonTheme theme, int deviceDpi) => theme.BackstagePageBorderWidth is { } width ? Layout.RibbonLayoutEngine.Scale(width, deviceDpi) : 1;
+    public override int GetBackstagePageBorderWidth(RibbonTheme theme, int deviceDpi) => BackstageStyleRenderer(theme).GetBackstagePageBorderWidth(theme, deviceDpi);
     /// <inheritdoc />
-    public override int GetBackstagePageCornerRadius(RibbonTheme theme, int deviceDpi) => Layout.RibbonLayoutEngine.Scale(theme.BackstagePageCornerRadius ?? 2d * theme.CornerRadius, deviceDpi);
+    public override int GetBackstagePageCornerRadius(RibbonTheme theme, int deviceDpi) => BackstageStyleRenderer(theme).GetBackstagePageCornerRadius(theme, deviceDpi);
     /// <inheritdoc />
     public override void DrawBackstageBackground(RibbonPaintContext context, int navigationWidth)
-    {
-        using var rail = new SolidBrush(context.Theme.BackstageNavigationColor);
-        context.Graphics.FillRectangle(rail, context.Bounds);
-        int width = Math.Clamp(navigationWidth, 0, context.Bounds.Width);
-        var page = new Rectangle(context.Bounds.Left + width, context.Bounds.Top, context.Bounds.Width - width, context.Bounds.Height);
-        if (page.Width <= 0 || page.Height <= 0) return;
-        int radius = Layout.RibbonBackstageLayout.PageCornerRadius(this, context.Theme, context.DeviceDpi, page.Size);
-        int stroke = Layout.RibbonBackstageLayout.PageBorderWidth(this, context.Theme, context.DeviceDpi, page.Size);
-        using var fill = new SolidBrush(context.Theme.Surface); using var border = new SolidBrush(context.Theme.Border);
-        context.Graphics.FillRectangle(fill, page.Left + radius, page.Top, page.Width - radius, page.Height);
-        context.Graphics.FillRectangle(fill, page.Left, page.Top + radius, radius, page.Height - radius);
-        if (radius > 0)
-        {
-            var state = context.Graphics.Save();
-            try
-            {
-                // Cache only the small corner. Page resizing must not allocate
-                // a full-page rounded bitmap for each intermediate size.
-                context.Graphics.SetClip(new Rectangle(page.Location, new Size(radius, radius)), System.Drawing.Drawing2D.CombineMode.Intersect);
-                PaintRounded(context with { Bounds = new(page.Location, new Size(2 * radius, 2 * radius)) }, radius, new(context.Theme.Surface), context.Theme.Border, stroke);
-            }
-            finally { context.Graphics.Restore(state); }
-        }
-        context.Graphics.FillRectangle(border, page.Left + radius, page.Top, page.Width - radius, stroke);
-        context.Graphics.FillRectangle(border, page.Left, page.Top + radius, stroke, page.Height - radius);
-    }
+        => BackstageStyleRenderer(context.Theme).DrawBackground(this, context, navigationWidth);
     /// <inheritdoc />
     public override bool JoinBelowRibbonQuickAccess => true;
     /// <inheritdoc />

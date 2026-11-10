@@ -43,7 +43,8 @@ public partial class RibbonControl
         }
         return chrome ? _headerChromeTheme! : _headerTheme!;
     }
-    internal Color CaptionBackground(bool composited) => WindowHost?.CaptionColor(Theme, composited) ?? (composited ? Color.Transparent : Theme.Background);
+    internal Color CaptionBackground(bool composited) => Painter.BackstageStyleRenderer(Theme).CaptionColor(this, composited);
+    internal Rectangle BackstageCaptionTintBounds => Painter.BackstageStyleRenderer(Theme).CaptionTintBounds(this);
     internal Rectangle CaptionOverlayBounds => HasFullHeightBackstage && IsBackstageOpen
         ? new(0, 0, _backstageMotion is { IsRunning: true } motion ? motion.VisibleWidth : WindowHost?.ClientSize.Width ?? Width, WindowCaptionHeight) : Rectangle.Empty;
     internal Rectangle CaptionPageBounds
@@ -61,10 +62,7 @@ public partial class RibbonControl
     internal Rectangle CaptionNavigationBounds => Rectangle.FromLTRB(CaptionOverlayBounds.Left, CaptionOverlayBounds.Top,
         IsBackstageOpen ? CaptionPageBounds.Left : 0, CaptionOverlayBounds.Bottom);
     internal void PaintCaptionBackground(Graphics graphics, Rectangle bounds, bool composited)
-    {
-        using var normal = new SolidBrush(WindowHost?.CaptionColor(Theme, composited) ?? (composited ? Color.Transparent : Theme.Background));
-        graphics.FillRectangle(normal, bounds);
-    }
+        => Painter.BackstageStyleRenderer(Theme).PaintCaptionBackground(this, graphics, bounds, composited);
     internal void InvalidateBackstageCaption()
     {
         if (!IsDisposed && HasWindowCaption)
