@@ -97,9 +97,9 @@ internal static class Program
             catch (Exception error) { Directory.CreateDirectory(args[1]); File.AppendAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
             return;
         }
-        if (args.Length == 2 && args[0] is "--verify-dropdown-content" or "--verify-dropdown-content-animated")
+        if (args.Length == 2 && args[0] is "--verify-dropdown-content" or "--verify-dropdown-content-animated" or "--verify-dropdown-content-expressive")
         {
-            try { DropDownContentCheck.Verify(args[1], args[0].EndsWith("-animated", StringComparison.Ordinal)); }
+            try { DropDownContentCheck.Verify(args[1], args[0] != "--verify-dropdown-content", args[0].EndsWith("-expressive", StringComparison.Ordinal) ? RibbonKit.WinForms.RibbonAnimationLevel.Expressive : RibbonKit.WinForms.RibbonAnimationLevel.Subtle); }
             catch (Exception error) { Directory.CreateDirectory(args[1]); File.AppendAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
             return;
         }

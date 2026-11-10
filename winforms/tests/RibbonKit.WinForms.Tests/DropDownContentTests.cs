@@ -7,6 +7,53 @@ public sealed class DropDownContentTests
 {
     [Theory]
     [InlineData(false, false)] [InlineData(true, false)] [InlineData(false, true)] [InlineData(true, true)]
+    public void Retained_body_opening_animates_without_a_native_drawing_hold_failure(bool split, bool created) => FoundationTests.Sta(() =>
+    {
+        using var fixture = new Fixture(split);
+        var ribbon = fixture.Ribbon; var item = fixture.Item; var body = item.Content!;
+        if (created) _ = body.Handle;
+        ribbon.AnimationLevel = RibbonAnimationLevel.Subtle; ribbon.Motion.SystemPolicyOverride = true;
+        var failures = new List<Exception>();
+        void ObserveException(object? sender, System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs e)
+        {
+            if (e.Exception is Win32Exception && e.Exception.Message.StartsWith("Native child drawing hold failed:", StringComparison.Ordinal)) failures.Add(e.Exception);
+        }
+        AppDomain.CurrentDomain.FirstChanceException += ObserveException;
+        try
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                item.ShowDropDown();
+                Assert.Empty(failures);
+                var surface = ribbon.Popups.Top!; var window = (RibbonPopupWindow)surface.Parent!;
+                Assert.NotNull(window.OpeningMotion); Assert.True(window.OpeningMotion.IsRunning);
+                Assert.True(RibbonDrawingHold.HasOpacity(surface.Handle));
+                window.SettleMotion(); Assert.False(RibbonDrawingHold.HasOpacity(surface.Handle));
+                Assert.Same(body, item.Content); Assert.False(body.IsDisposed);
+                item.CloseDropDown(); Assert.Null(body.Parent);
+            }
+        }
+        finally { AppDomain.CurrentDomain.FirstChanceException -= ObserveException; }
+    });
+
+    [Theory]
+    [InlineData(false)] [InlineData(true)]
+    public void Native_body_Load_failure_or_owner_removal_leaves_no_popup_and_retains_the_body(bool throws) => FoundationTests.Sta(() =>
+    {
+        using var fixture = new Fixture(); var item = fixture.Item; var body = (Body)item.Content!;
+        body.Load += (_, _) =>
+        {
+            if (throws) throw new InvalidOperationException("Application Load failed");
+            item.Visible = false;
+        };
+        if (throws) Assert.Throws<InvalidOperationException>(item.ShowDropDown);
+        else item.ShowDropDown();
+        Assert.False(item.IsDropDownOpen); Assert.Null(fixture.Ribbon.Popups.Top);
+        Assert.Null(body.Parent); Assert.False(body.IsDisposed);
+    });
+
+    [Theory]
+    [InlineData(false, false)] [InlineData(true, false)] [InlineData(false, true)] [InlineData(true, true)]
     public void Types_exist_before_Load_including_nested_and_unavailable_items(bool split, bool init) => FoundationTests.Sta(() =>
     {
         using var form = new Form { ShowInTaskbar = false };

@@ -1,6 +1,9 @@
 # Retained dropdown and split-button UserControl bodies
 
 Status, **2026-11-02: user accepted dropdown/split UserControl popup behavior; actual Visual Studio authoring review remains pending**.
+The **2026-11-10** [native drawing-hold correction](#native-drawing-hold-correction--2026-11-10)
+fixes the subsequently reported error 87; focused and live native checks pass,
+with user review of this correction pending.
 The user selected ordinary dropdown/split-button hosting after the gallery popup
 work, approved retained content, and requested a popup that fits the body size.
 This is native WinForms work. This increment adds runtime hosting and class
@@ -116,3 +119,52 @@ Actual Visual Studio class discovery, save/reopen and Undo interaction, human
 visual acceptance, physical mouse/touch/IME, RTL, external accessibility and
 mixed-monitor DPI transitions remain separate review gates. Ordinary popup motion
 is reused; no new animation policy or gallery interface is introduced.
+
+## Native drawing-hold correction — 2026-11-10
+
+The user reported `Win32Exception` / `Native child drawing hold failed: 87` in
+the permanent Designer Sample. Its Windows compatibility manifest was already
+correct. A first-chance exception observer reproduced six caught failures while
+the earlier consumer's content/input assertions still passed. That earlier
+"animated" pass did not establish that opening motion actually ran.
+
+`InitializeContent` explicitly forced the popup surface HWND while it was still
+unparented. Windows subsequently refused its layered opacity style: the measured
+extended style remained `0x10000` rather than gaining `WS_EX_LAYERED`, and
+SetLayeredWindowAttributes returned error 87. The library caught the exception
+and opened immediately. The correction removes only that premature surface
+handle access. `content.CreateControl()` still performs the body's native
+initialization, Load and autoscaling before sizing; the surface gets its native
+parent through the ToolStrip host before opening motion requests its handle.
+The constructor-order speed improvement, retained body/field HWNDs, source/QAT
+identity, gallery lazy cards, animation duration and public API are unchanged.
+
+- Four new ordinary/split, fresh/precreated-body motion cases failed before the
+  correction and pass after. They assert zero caught native drawing-hold failures,
+  active opening motion, actual native opacity hold, cleanup and reopening.
+  Two further cases preserve body Load failure/owner-removal behavior and cleanup.
+- The final focused Release slice passed **160/160** across those cases and
+  related content/routing, popup motion/window creation, custom gallery and
+  Application Menu cases. This is not a full-suite run.
+- The final package-only Designer Sample passed both **Subtle and Expressive**
+  native dropdown/split checks at actual **120 DPI**. They now require active
+  motion and zero first-chance drawing-hold exceptions, alongside retained native
+  editor state, queued Tab/Escape, native ComboBox first-Escape, validation/Apply
+  and inactive-tab QAT routes. The 1,000-entry gallery check also passed.
+- Debug runtime/designer/client/package and sample builds passed cleanly. Refresh
+  version: `0.1.0-designer.local20261110T041833936Z`.
+- Evidence is under `artifacts/popup-drawing-hold/`: `before/`, `tests/`,
+  `final-ready-animated/`, `final-ready-expressive/` and
+  `final-ready-gallery-1000/`. Intermediate native keyboard attempts lost
+  foreground to LDPlayer; those attempts are not passes. The final runs completed
+  after the user made the desktop available. No other application was changed.
+
+Reproduce the Expressive native scope after the usual Debug sample refresh:
+
+```powershell
+dotnet run --project winforms/samples/RibbonKit.WinForms.DesignerSample -c Debug --no-build -- --verify-dropdown-content-expressive winforms/artifacts/popup-drawing-hold/review
+```
+
+Actual Visual Studio debugging/user acceptance and the earlier physical-input,
+external accessibility and mixed-monitor limits remain separate. No WPF changes,
+commit or publication were made.

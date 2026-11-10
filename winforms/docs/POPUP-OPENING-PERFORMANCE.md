@@ -96,6 +96,9 @@ selection/preview, commands, motion duration and geometry contracts are unchange
 - Package-only animated retained dropdown/split content and QAT gallery checks
   passed, preserving native editor state, native ComboBox first-Escape handling,
   validation, inactive-tab/QAT overflow routes and exactly-once activation.
+  That earlier retained-content check did not assert that motion actually ran.
+  The subsequent [drawing-hold correction](DROPDOWN-CONTENT-PLAN.md#native-drawing-hold-correction--2026-11-10)
+  reproduces and fixes the caught error 87 and adds active-motion/no-exception gates.
 
 Run from the parent checkout after refreshing the normal Designer Sample package:
 

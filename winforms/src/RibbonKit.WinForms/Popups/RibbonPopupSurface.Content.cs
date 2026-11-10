@@ -23,12 +23,13 @@ internal sealed partial class RibbonPopupSurface
         AutoScroll = false;
         try
         {
-            // Native UserControl autoscaling runs once when its handle is first
-            // created. Measure the resulting Size, rather than scaling it again.
+            // Create/autoscale the body without forcing this surface's HWND.
+            // The surface must first acquire its native parent from the popup
+            // host, otherwise Windows rejects its opening drawing hold.
             if (content.BindingContext is { } context) content.BindingContext = context;
             content.Dock = DockStyle.None; content.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             Controls.Add(content); content.Location = new(_contentPadding, _contentPadding); content.Visible = true;
-            _ = Handle; content.CreateControl();
+            content.CreateControl();
             content.SizeChanged += ContentSizeChanged;
             return ContentSurfaceSize();
         }
