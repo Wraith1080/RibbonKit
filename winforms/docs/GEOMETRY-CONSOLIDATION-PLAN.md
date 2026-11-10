@@ -2197,12 +2197,11 @@ Evidence:
   captures were inspected for all three reported Office arrangements. File/QAT/
   viewport slots, sources and tabs remain stable. No runtime internals, Showcase
   helpers, global input or computer-use tools.
-- [ ] Targeted user review: reopen the refreshed Designer Sample with
-  `--menu-geometry-demo`, scroll left/right beside File with QAT below/in the
-  caption, then beside inline and overflow TabRow QAT in Mouse/Touch. Actual VS,
-  physical input, mixed-monitor and live material hardware review remain separate.
+- [x] **2026-11-10: user confirmed QAT and tab-header clipping are fixed** after
+  checking both. This closes the targeted user review of this correction. Actual
+  VS, physical input, mixed-monitor and live material hardware review remain separate.
 
 Evidence lives in `artifacts/tab-header-clipping/`: before/after/final PNGs and
 TRX files, `package-before/`, `package-after/` and `package-hashes.json`. Public
-sample check: `--verify-tab-header-clipping <output>`. Stop after this correction;
-the completed geometry sequence stays closed and no theme work is queued.
+sample check: `--verify-tab-header-clipping <output>`. The completed geometry
+sequence stays closed and no theme work is queued.
