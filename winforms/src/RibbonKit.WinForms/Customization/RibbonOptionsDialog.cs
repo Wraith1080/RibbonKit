@@ -117,7 +117,7 @@ public class RibbonOptionsDialog : Form
         {
             _rounded.Draw(e.Graphics, bounds, _ribbon.Painter.GetPopupCornerRadius(theme, DeviceDpi), theme.Checked, Color.Transparent, 0);
             var marker = new Rectangle(bounds.Left, bounds.Top + ScaleLogical(7), ScaleLogical(3), Math.Max(0, bounds.Height - ScaleLogical(14)));
-            _rounded.Draw(e.Graphics, marker, marker.Width / 2, new(theme.Accent), Color.Transparent, 0);
+            _rounded.Draw(e.Graphics, marker, RibbonKit.WinForms.Layout.RibbonFrameMetrics.Radius(theme.NavigationMarkerCornerRadius, marker.Width / 2, DeviceDpi), new(theme.Accent), Color.Transparent, 0);
         }
         bounds.Inflate(-ScaleLogical(12), 0);
         TextRenderer.DrawText(e.Graphics, page.Text, Font, bounds, selected ? theme.Accent : theme.Foreground, TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);

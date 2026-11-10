@@ -89,7 +89,8 @@ public class RibbonOffice2024Renderer : RibbonRenderer
         else if (context.Bounds.Width > 2)
         {
             using var separator = new SolidBrush(context.Theme.BodyBorderColor);
-            context.Graphics.FillRectangle(separator, context.Bounds.Left + 1, context.Bounds.Top, context.Bounds.Width - 2, 1);
+            int inset = context.Theme.BodyBottomBorderOnly ? 0 : 1;
+            context.Graphics.FillRectangle(separator, context.Bounds.Left + inset, context.Bounds.Top, context.Bounds.Width - 2 * inset, 1);
         }
     }
     /// <inheritdoc />
@@ -110,13 +111,19 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     /// <inheritdoc />
     public override void DrawCheckBoxIndicator(RibbonPaintContext context, RibbonCheckBoxItem item) =>
         PaintCheckIndicator(item.EffectiveEnabled ? context : context with { Hot = false, Pressed = false, Focused = false },
-            item.CheckState, item.EffectiveEnabled, Layout.RibbonLayoutEngine.Scale(2, context.DeviceDpi));
+            item.CheckState, item.EffectiveEnabled, Layout.RibbonFrameMetrics.Radius(context.Theme.CheckBoxCornerRadius, Layout.RibbonLayoutEngine.Scale(2, context.DeviceDpi), context.DeviceDpi));
     /// <inheritdoc />
     public override void DrawBody(RibbonPaintContext context)
     {
         int radius = GetBodyCornerRadius(context.Theme, context.DeviceDpi);
         PaintShadow(context, radius);
-        PaintRounded(context, radius, context.Theme.BodyFill, context.Theme.BodyBorderColor);
+        if (context.Theme.BodyBottomBorderOnly)
+        {
+            PaintRounded(context, radius, context.Theme.BodyFill, Color.Transparent, 0);
+            using var border = new SolidBrush(context.Theme.BodyBorderColor);
+            if (context.Bounds.Height > 0) context.Graphics.FillRectangle(border, context.Bounds.Left, context.Bounds.Bottom - 1, context.Bounds.Width, 1);
+        }
+        else PaintRounded(context, radius, context.Theme.BodyFill, context.Theme.BodyBorderColor);
     }
     /// <inheritdoc />
     public override void DrawScrollButton(RibbonPaintContext context, bool backward)
@@ -124,8 +131,20 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     /// <inheritdoc />
     public override void DrawTab(RibbonPaintContext context, RibbonTab tab, bool selected)
     {
+        if (context.Theme.HeaderPresentation == RibbonHeaderPresentation.Filled)
+        {
+            bool available = tab.EffectiveEnabled;
+            if (selected || available && (context.Hot || context.Pressed))
+                PaintRounded(context, 0, selected ? new(context.Theme.Surface) : context.Pressed ? context.Theme.HeaderPressed ?? context.Theme.Pressed : context.Theme.HeaderHover ?? context.Theme.Hover, Color.Transparent, 0);
+            var ink = !available ? context.Theme.DisabledColor : selected ? context.Theme.Foreground : context.Theme.HeaderTextColor;
+            if (available && tab.IsContextual) ink = ContextualTabColor(context with { Theme = context.Theme with { Foreground = ink } }, tab, selected);
+            DrawText(context, tab.DisplayText, ink,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.PreserveGraphicsClipping);
+            if (available && context.Focused) DrawFocus(context);
+            return;
+        }
         bool enabled = tab.EffectiveEnabled;
-        DrawText(context, tab.DisplayText, !enabled ? context.Theme.DisabledColor : tab.IsContextual ? ContextualTabColor(context, tab, selected) : selected ? context.Theme.Accent : context.Theme.Foreground,
+        DrawText(context, tab.DisplayText, !enabled ? context.Theme.DisabledColor : tab.IsContextual ? ContextualTabColor(context, tab, selected) : selected ? context.Theme.Accent : context.Theme.HeaderTextColor,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.PreserveGraphicsClipping);
         if (enabled && !context.SuppressTabIndicators && (selected || context.Hot || context.Pressed || context.Focused))
         {
@@ -133,7 +152,7 @@ public class RibbonOffice2024Renderer : RibbonRenderer
         }
     }
     /// <inheritdoc />
-    public override Rectangle GetTabIndicatorBounds(RibbonPaintContext context, RibbonTab tab) => HeaderIndicatorBounds(context, tab.DisplayText);
+    public override Rectangle GetTabIndicatorBounds(RibbonPaintContext context, RibbonTab tab) => context.Theme.HeaderPresentation == RibbonHeaderPresentation.Filled ? Rectangle.Empty : HeaderIndicatorBounds(context, tab.DisplayText);
     private static Rectangle HeaderIndicatorBounds(RibbonPaintContext context, string text)
     {
         int S(int value) => Layout.RibbonLayoutEngine.Scale(value, context.DeviceDpi);
@@ -147,7 +166,7 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     /// <inheritdoc />
     public override void DrawTabIndicator(RibbonPaintContext context, RibbonTab tab, bool selected)
     {
-        if (!tab.EffectiveEnabled || context.Bounds.IsEmpty) return;
+        if (!tab.EffectiveEnabled || context.Bounds.IsEmpty || context.Theme.HeaderPresentation == RibbonHeaderPresentation.Filled) return;
         var tint = selected ? tab.IsContextual ? ContextualTabColor(context, tab, true) : context.Theme.Accent : context.Theme.SecondaryText;
         PaintHeaderIndicator(context, tint, selected);
     }
@@ -155,14 +174,24 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     {
         if (!selected && (context.CompositedText || context.WindowBackdrop))
             tint = Color.FromArgb((int)Math.Round(tint.A * context.Theme.BackdropTabHoverOpacity), tint);
-        PaintRounded(context, context.Bounds.Height / 2, new(tint), Color.Transparent, 0);
+        PaintRounded(context, Layout.RibbonFrameMetrics.Radius(context.Theme.HeaderIndicatorCornerRadius, context.Bounds.Height / 2, context.DeviceDpi), new(tint), Color.Transparent, 0);
     }
     /// <inheritdoc />
     public override void DrawFileButton(RibbonPaintContext context, RibbonDropDownItem menu)
     {
+        if (context.Theme.HeaderPresentation == RibbonHeaderPresentation.Filled)
+        {
+            bool available = menu.EffectiveEnabled, expanded = available && menu.IsDropDownOpen && !context.FileMenuClosing;
+            if (available && (expanded || context.Hot || context.Pressed))
+                PaintRounded(context, 0, expanded || context.Pressed ? context.Theme.HeaderPressed ?? context.Theme.Pressed : context.Theme.HeaderHover ?? context.Theme.Hover, Color.Transparent, 0);
+            DrawText(context, menu.Text, available ? context.Theme.HeaderTextColor : context.Theme.DisabledColor,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.PreserveGraphicsClipping);
+            if (available && context.Focused) DrawFocus(context);
+            return;
+        }
         if (DrawApplicationFileButton(context, menu)) return;
         bool enabled = menu.EffectiveEnabled, open = enabled && menu.IsDropDownOpen && !context.FileMenuClosing;
-        DrawText(context, menu.Text, !enabled ? context.Theme.DisabledColor : open ? context.Theme.Accent : context.Theme.Foreground,
+        DrawText(context, menu.Text, !enabled ? context.Theme.DisabledColor : open ? context.Theme.Accent : context.Theme.HeaderTextColor,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
         if (enabled && !context.SuppressTabIndicators && (open || context.Hot || context.Pressed || context.Focused))
         {
@@ -187,11 +216,11 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     }
     /// <inheritdoc />
     public override void DrawFocus(RibbonPaintContext context) =>
-        PaintRounded(context with { Bounds = Rectangle.Inflate(context.Bounds, -2, -2) }, Math.Max(1, context.Theme.CornerRadius * context.DeviceDpi / 96), new(Color.Transparent), context.Theme.Accent);
+        PaintRounded(context with { Bounds = Rectangle.Inflate(context.Bounds, -2, -2) }, Layout.RibbonFrameMetrics.Radius(context.Theme.FocusCornerRadius, Math.Max(1, context.Theme.CornerRadius * context.DeviceDpi / 96), context.DeviceDpi), new(Color.Transparent), context.Theme.Accent);
     /// <inheritdoc />
     public override void DrawKeyTip(RibbonPaintContext context, string keys)
     {
-        PaintRounded(context, 2, context.Theme.KeyTipBackground ?? new(Color.FromArgb(255, 255, 225)),
+        PaintRounded(context, Layout.RibbonFrameMetrics.Radius(context.Theme.KeyTipCornerRadius, 2, context.DeviceDpi), context.Theme.KeyTipBackground ?? new(Color.FromArgb(255, 255, 225)),
             context.Theme.KeyTipBorder.IsEmpty ? context.Theme.Border : context.Theme.KeyTipBorder);
         DrawText(context, keys, context.Theme.KeyTipForeground.IsEmpty ? Color.Black : context.Theme.KeyTipForeground,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);

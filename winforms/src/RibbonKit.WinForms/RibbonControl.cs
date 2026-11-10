@@ -106,6 +106,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         {
             VerifyAccess();
             ArgumentNullException.ThrowIfNull(value);
+            if (!Enum.IsDefined(value.HeaderPresentation)) throw new ArgumentOutOfRangeException(nameof(value));
             RibbonMenuMetrics.Validate(value);
             RibbonEditorMetrics.Validate(value);
             RibbonIllustratedMenuMetrics.Validate(value);
@@ -151,6 +152,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             {
                 null => _applicationTheme,
                 RibbonBuiltInTheme.Office2024Light => RibbonThemes.Office2024Light,
+                RibbonBuiltInTheme.Office2019Light => RibbonThemes.Office2019Light,
                 _ => throw new ArgumentOutOfRangeException(nameof(value))
             };
             if (_builtInTheme == value) return;
@@ -576,6 +578,19 @@ public partial class RibbonControl : Control, ISupportInitialize
         var context = new RibbonPaintContext(e.Graphics, ClientRectangle, composited ? WindowPaintTheme : Theme, Font, DeviceDpi) { Density = Density, SuppressTabIndicators = CapturingMotionIndicators, CompositedText = composited };
         bool maskContent = composited && _backdropBodyMasked && KeepsBackdropFrame && !CapturingBackdropScene;
         Painter.DrawSurface(context, false);
+        var headerTheme = HeaderPaintTheme(composited);
+        var headerChromeTheme = HeaderPaintTheme(composited, chrome: true);
+        if (!ReferenceEquals(headerTheme, context.Theme))
+        {
+            var headerState = e.Graphics.Save();
+            try
+            {
+                if (composited) e.Graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+                using var headerBrush = new SolidBrush(headerTheme.Background);
+                e.Graphics.FillRectangle(headerBrush, 0, WindowCaptionHeight, Width, RibbonLayoutEngine.Scale(LayoutTheme.TabHeight, DeviceDpi));
+            }
+            finally { e.Graphics.Restore(headerState); }
+        }
         if (MessageTopConnected && !_snapshot.MessageBounds.IsEmpty)
         {
             var upper = !_snapshot.BodyFrameBounds.IsEmpty ? _snapshot.BodyFrameBounds : _snapshot.QuickAccessBounds;
@@ -584,7 +599,8 @@ public partial class RibbonControl : Control, ISupportInitialize
         PaintMessages(context);
         if (!_snapshot.BodyBounds.IsEmpty) Painter.DrawBody(context with { Bounds = _snapshot.BodyFrameBounds, IsBottomEdgeConnected = MessageBar.HasOpenMessages && MessageTopConnected });
         if (HasWindowCaption) WindowHost!.PaintCaption(e.Graphics, this, composited);
-        var qatTheme = HasWindowCaption && EffectiveQuickAccessPosition == RibbonQuickAccessPosition.TitleBar ? WindowHost!.CaptionTheme(Theme, composited) : Theme;
+        var qatTheme = HasWindowCaption && EffectiveQuickAccessPosition == RibbonQuickAccessPosition.TitleBar ? WindowHost!.CaptionTheme(Theme, composited)
+            : EffectiveQuickAccessPosition == RibbonQuickAccessPosition.TabRow ? headerChromeTheme : Theme;
         if (ReferenceEquals(qatTheme, Theme)) qatTheme = context.Theme;
         if (!_snapshot.QuickAccessBounds.IsEmpty) Painter.DrawQuickAccessToolbar(context with
             { Bounds = _snapshot.QuickAccessBounds,
@@ -625,7 +641,9 @@ public partial class RibbonControl : Control, ISupportInitialize
                 e.Graphics.SetClip(target.Clip);
                 var ctx = context with
                 {
-                    Theme = target.Kind is TargetKind.QuickAccess or TargetKind.QuickAccessOverflow ? qatTheme : context.Theme,
+                    Theme = target.Kind is TargetKind.QuickAccess or TargetKind.QuickAccessOverflow ? qatTheme
+                        : target.Kind is TargetKind.Tab or TargetKind.FileMenu or TargetKind.TabBack or TargetKind.TabNext ? headerTheme
+                        : target.Kind is TargetKind.Minimize or TargetKind.ModalClose ? headerChromeTheme : context.Theme,
                     Bounds = target.Bounds,
                     Hot = target.Enabled && !_hotDropDown && ReferenceEquals(target.Element, _hot),
                     Pressed = target.Enabled && !_pressedDropDown && ReferenceEquals(target.Element, _pressed),

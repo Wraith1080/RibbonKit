@@ -366,6 +366,7 @@ internal static partial class RibbonDesignCommitter
     {
         "" => null,
         nameof(RibbonBuiltInTheme.Office2024Light) => RibbonBuiltInTheme.Office2024Light,
+        nameof(RibbonBuiltInTheme.Office2019Light) => RibbonBuiltInTheme.Office2019Light,
         _ => throw new ArgumentException("Select a supported built-in theme or the application theme.")
     };
     internal static RibbonAnimationLevel ParseAnimation(string value) => value switch

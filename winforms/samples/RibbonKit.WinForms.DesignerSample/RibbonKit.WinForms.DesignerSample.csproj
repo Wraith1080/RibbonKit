@@ -13,6 +13,7 @@
     <RootNamespace>RibbonKitDesignerConsumer</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../tests/RibbonKit.WinForms.DesignerConsumer/Office2019ThemeCheck.cs" Link="Diagnostics/Office2019ThemeCheck.cs" />
     <PackageReference Include="RibbonKit.WinForms" Version="$(RibbonKitDesignerSamplePackageVersion)" />
     <Compile Update="DesignerForm.cs"><SubType>Form</SubType></Compile>
     <Compile Update="DesignerForm.InputMode.cs"><DependentUpon>DesignerForm.cs</DependentUpon></Compile>

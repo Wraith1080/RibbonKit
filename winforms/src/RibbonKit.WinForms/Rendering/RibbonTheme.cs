@@ -4,7 +4,18 @@ namespace RibbonKit.WinForms;
 public enum RibbonBuiltInTheme
 {
     /// <summary>The Office 2024 inspired light palette.</summary>
-    Office2024Light
+    Office2024Light,
+    /// <summary>The flat Office 2019 inspired light palette.</summary>
+    Office2019Light
+}
+
+/// <summary>Identifies the default Office renderer's tab and File presentation.</summary>
+public enum RibbonHeaderPresentation
+{
+    /// <summary>Text with the Office 2024 selection and interaction underline.</summary>
+    Underline,
+    /// <summary>Square filled headers with a selected tab continuous with the body.</summary>
+    Filled
 }
 
 /// <summary>A solid or vertical two-stop gradient fill; contains no disposable resources.</summary>
@@ -17,6 +28,39 @@ public readonly record struct RibbonFill(Color Start, Color End)
 /// <summary>Immutable named appearance and 96-DPI metrics for one ribbon.</summary>
 public sealed record RibbonTheme
 {
+    /// <summary>Gets the default Office renderer's header presentation. Defaults to Underline. Explicit custom renderers retain their drawing policy.</summary>
+    public RibbonHeaderPresentation HeaderPresentation { get; init; }
+    /// <summary>Gets an optional header hover fill. Null uses Hover for filled headers and preserves the legacy underline presentation.</summary>
+    public RibbonFill? HeaderHover { get; init; }
+    /// <summary>Gets an optional header pressed/open fill. Null uses Pressed for filled headers.</summary>
+    public RibbonFill? HeaderPressed { get; init; }
+    /// <summary>Gets inactive header text and glyph color. Empty uses Foreground. Selected filled tabs retain Foreground on Surface.</summary>
+    public Color HeaderForeground { get; init; } = Color.Empty;
+    /// <summary>Gets whether a supporting RibbonForm extends its active caption color into the tab band. Defaults to false. Does not change authored caption or theme values.</summary>
+    public bool ExtendTitleBarColorToHeader { get; init; }
+    /// <summary>Gets whether the default Office body draws only its bottom border. Defaults to false; popup borders and shadows are independent.</summary>
+    public bool BodyBottomBorderOnly { get; init; }
+    /// <summary>Gets an optional hover fill for a header following an active caption color. Null uses the caption's contrast-derived state fill.</summary>
+    public RibbonFill? ColoredHeaderHover { get; init; }
+    /// <summary>Gets an optional pressed/open fill for a header following an active caption color. Null uses the caption's contrast-derived state fill.</summary>
+    public RibbonFill? ColoredHeaderPressed { get; init; }
+    /// <summary>Gets an optional Office focus-outline corner radius in 96-DPI logical pixels, 0..64. Null preserves the existing command-radius-derived value.</summary>
+    public int? FocusCornerRadius { get; init; }
+    /// <summary>Gets an optional Office KeyTip corner radius in 96-DPI logical pixels, 0..64. Null preserves the existing two-device-pixel Office radius; neutral badges remain square.</summary>
+    public int? KeyTipCornerRadius { get; init; }
+    /// <summary>Gets an optional Office checkbox frame corner radius in 96-DPI logical pixels, 0..64. Null preserves two logical pixels; the neutral frame remains square.</summary>
+    public int? CheckBoxCornerRadius { get; init; }
+    /// <summary>Gets an optional Backstage Back-button frame corner radius in 96-DPI logical pixels, 0..64. Null preserves its circular frame.</summary>
+    public int? BackstageBackButtonCornerRadius { get; init; }
+    /// <summary>Gets an optional Backstage and options-navigation selection-marker radius in 96-DPI logical pixels, 0..64. Null preserves the half-width radius.</summary>
+    public int? NavigationMarkerCornerRadius { get; init; }
+    /// <summary>Gets an optional Application Menu footer-button radius in 96-DPI logical pixels, 0..64. Null preserves three logical pixels.</summary>
+    public int? ApplicationMenuFooterCornerRadius { get; init; }
+    /// <summary>Gets an optional open Application Menu File-button radius in 96-DPI logical pixels, 0..64. Null preserves three logical pixels.</summary>
+    public int? ApplicationMenuFileButtonCornerRadius { get; init; }
+    /// <summary>Gets an optional Office header-underline corner radius in 96-DPI logical pixels, 0..64. Null preserves the half-height capsule; filled headers have no underline.</summary>
+    public int? HeaderIndicatorCornerRadius { get; init; }
+    internal Color HeaderTextColor => HeaderForeground.IsEmpty ? Foreground : HeaderForeground;
     /// <summary>Gets the optional group side padding in 96-DPI logical pixels, 0..1024. Null retains expanded 6 / collapsed 3. Larger collapsed padding reserves width beyond the legacy caption cap; Simplified openers use the expanded value.</summary>
     public int? GroupHorizontalPadding { get; init; }
     /// <summary>Gets the optional gap between group columns/explicit-row items in 96-DPI logical pixels, 0..1024. Null retains Compact 3 / Touch 6, and Simplified 3. Menu rows and native field dimensions retain their own geometry.</summary>
@@ -294,6 +338,23 @@ public static class RibbonThemes
 {
     /// <summary>Gets the initial Office 2024 inspired light palette.</summary>
     public static RibbonTheme Office2024Light { get; } = new();
+    /// <summary>Gets the flat Office 2019 light theme with filled headers, square chrome, full-width body and bordered, shadowed popups.</summary>
+    public static RibbonTheme Office2019Light { get; } = new()
+    {
+        HeaderPresentation = RibbonHeaderPresentation.Filled, ExtendTitleBarColorToHeader = true,
+        BodyBottomBorderOnly = true, Background = Color.FromArgb(230, 230, 230),
+        Surface = Color.White, Foreground = Color.FromArgb(32, 31, 30), SecondaryText = Color.FromArgb(96, 94, 92),
+        Border = Color.FromArgb(200, 198, 196), PopupBorder = Color.FromArgb(200, 198, 196),
+        Hover = new(Color.FromArgb(222, 220, 218)), Pressed = new(Color.FromArgb(207, 205, 203)),
+        Checked = new(Color.FromArgb(206, 220, 240)),
+        HeaderHover = new(Color.FromArgb(237, 237, 237)), HeaderPressed = new(Color.FromArgb(216, 216, 216)),
+        CornerRadius = 0, PopupCornerRadius = 0, BodyCornerRadius = 0, BackstagePageCornerRadius = 0,
+        FocusCornerRadius = 0, KeyTipCornerRadius = 0, CheckBoxCornerRadius = 0, BackstageBackButtonCornerRadius = 0,
+        NavigationMarkerCornerRadius = 0, ApplicationMenuFooterCornerRadius = 0, ApplicationMenuFileButtonCornerRadius = 0,
+        HeaderIndicatorCornerRadius = 0,
+        BodyMargin = Padding.Empty, BodyShadowColor = Color.Transparent,
+        GalleryHeadingBackground = new(Color.FromArgb(243, 242, 241)), GalleryHeadingForeground = Color.FromArgb(32, 31, 30)
+    };
 }
 
 /// <summary>Draws a borrowed application icon into device-pixel bounds.</summary>

@@ -1,5 +1,13 @@
 # RibbonKit WinForms Designer Sample
 
+Launch the normal Debug sample with `--office2019-theme-demo` for the light-theme
+comparison. **Office 2019 Light** provides 2019/2024/Application/custom choices,
+blue/neutral title bars, Mouse/Touch, Classic/Simplified, inner-padding and popup-
+shadow examples, a nested popup and existing Backstage pages. Normal startup and
+authored Forms/resources remain intact. `--verify-office2019-theme <output>` runs
+the public-package native switching/ownership/composed-capture check. See the
+[themes plan](../../docs/THEMES-PLAN.md) for scope, evidence and remaining review.
+
 The focused tab-header clipping check is `--verify-tab-header-clipping <output>`.
 It uses public paint callbacks and local scroll-button messages across 24 native
 renderer/density/layout/File/QAT arrangements. For review, use the existing

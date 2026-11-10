@@ -56,7 +56,7 @@ public partial class RibbonRenderer
         if (paintChrome && (footer || context.Hot || context.Pressed || check || open))
         {
             var fill = context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : open ? context.Theme.Pressed : check ? context.Theme.Checked : new RibbonFill(context.Theme.PopupColor);
-            PaintRounded(context with { Bounds = Rectangle.Inflate(bounds, -1, -1) }, footer ? S(3) : 0, fill, footer ? context.Theme.PopupBorder : Color.Transparent, footer ? 1 : 0);
+            PaintRounded(context with { Bounds = Rectangle.Inflate(bounds, -1, -1) }, footer ? RibbonFrameMetrics.Radius(context.Theme.ApplicationMenuFooterCornerRadius, S(3), context.DeviceDpi) : 0, fill, footer ? context.Theme.PopupBorder : Color.Transparent, footer ? 1 : 0);
         }
         bool navigation = context.ApplicationMenuPart == RibbonApplicationMenuPart.Navigation;
         bool rich = context.ApplicationMenuPart == RibbonApplicationMenuPart.Pane && RibbonApplicationMenuMetrics.Illustrated(item);
@@ -130,7 +130,7 @@ public partial class RibbonRenderer
                 var fill = half.Pressed ? half.Theme.Pressed : rowHot ? half.Theme.Hover : expanded ? half.Theme.Pressed
                     : selected ? new RibbonFill(SelectedPrimary(half.Theme.PopupColor, half.Theme.Pressed.Start), SelectedPrimary(half.Theme.PopupColor, half.Theme.Pressed.End))
                     : check ? half.Theme.Checked : new RibbonFill(half.Theme.PopupColor);
-                PaintRounded(whole with { Bounds = Rectangle.Inflate(whole.Bounds, -1, -1) }, footer ? RibbonLayoutEngine.Scale(3, whole.DeviceDpi) : 0,
+                PaintRounded(whole with { Bounds = Rectangle.Inflate(whole.Bounds, -1, -1) }, footer ? RibbonFrameMetrics.Radius(whole.Theme.ApplicationMenuFooterCornerRadius, RibbonLayoutEngine.Scale(3, whole.DeviceDpi), whole.DeviceDpi) : 0,
                     fill, footer ? whole.Theme.PopupBorder : Color.Transparent, footer ? 1 : 0);
             }
             finally { whole.Graphics.Restore(state); }
@@ -141,7 +141,7 @@ public partial class RibbonRenderer
         if (!menu.EffectiveEnabled || !menu.IsDropDownOpen || context.FileMenuClosing || menu.Ribbon?.FileMenuMode != RibbonFileMenuMode.CommandMenu) return false;
         int inset = RibbonLayoutEngine.Scale(3, context.DeviceDpi);
         var bounds = Rectangle.Inflate(context.Bounds, -inset, -inset);
-        PaintRounded(context with { Bounds = bounds }, inset, new(context.Theme.Accent), Color.Transparent, 0);
+        PaintRounded(context with { Bounds = bounds }, RibbonFrameMetrics.Radius(context.Theme.ApplicationMenuFileButtonCornerRadius, inset, context.DeviceDpi), new(context.Theme.Accent), Color.Transparent, 0);
         static double Channel(byte channel) { double v = channel / 255d; return v <= .04045 ? v / 12.92 : Math.Pow((v + .055) / 1.055, 2.4); }
         var accent = context.Theme.Accent;
         var foreground = .2126 * Channel(accent.R) + .7152 * Channel(accent.G) + .0722 * Channel(accent.B) > .179 ? Color.Black : Color.White;

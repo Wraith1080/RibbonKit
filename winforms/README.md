@@ -124,12 +124,22 @@ Custom renderers override `DrawSplitItem` to receive both measured action contex
 The retained foundation bridge does not provide complete accessibility semantics
 for this new item; no split accessibility compatibility is claimed.
 
-Office2024 light, Compact/Touch density and LTR are the current appearance scope.
+Office 2024 Light and Office 2019 Light, Compact/Touch density and LTR are the current appearance scope.
 The optional `RibbonForm` supplies the native caption and title-bar QAT described
 below. Optional native Mica/Acrylic form backgrounds are available through that host;
 full Glass/translucent command panels and further theme treatments remain later work.
 WPF template/resource compatibility is outside this independent native library.
 Ordinary application controls remain native Forms controls. The runtime references neither WPF nor the designer SDK.
+
+The [native themes plan](docs/THEMES-PLAN.md) tracks Office 2019 Light verification
+and review, plus later light-theme work. Dark variants remain deferred.
+
+Select `ribbon.BuiltInTheme = RibbonBuiltInTheme.Office2019Light;` for square,
+filled headers, a flat full-width white body with retained inner padding, fine
+dividers and square bordered/shadowed popups. With a supporting `RibbonForm`,
+active title-bar coloring extends across the tab band; reset restores grey.
+The selected tab stays white with dark text. Office 2024 remains the default.
+Custom values can start from `RibbonThemes.Office2019Light with { ... }`.
 
 KeyTip colors can be configured without a custom renderer:
 
@@ -1400,8 +1410,11 @@ color. Reset follows `ribbon.Theme.TitleBarBackground`, whose default retains th
 existing appearance. With Mica/Acrylic, the color tints the retained material;
 `TitleBarTintOpacity` controls coverage (default `.6`). Without a backdrop, the
 color is solid. Caption text/buttons and TitleBar QAT choose black/white contrast;
-`Theme.TitleBarForeground` can override it. TabRow/BelowRibbon QAT and document
-controls retain their own palette. Close hover keeps its red/white treatment.
+`Theme.TitleBarForeground` can override it. A theme with
+`ExtendTitleBarColorToHeader` (Office 2019 Light) also colors the tab band and
+contrasts its inactive labels, TabRow QAT and utilities. BelowRibbon QAT and
+document controls retain their own palette. Office 2024 retains its caption-only
+coloring. Close hover keeps its red/white treatment.
 
 ```csharp
 window.TitleBarColor = Color.DarkSlateBlue;
@@ -1434,6 +1447,11 @@ The following API describes the experimental implementation.
 
 `RibbonForm.Backdrop` defaults to `RibbonWindowBackdrop.None`. Opt into `Mica` or
 `Acrylic` to use native material across the form background and behind the ribbon.
+The host application must declare Windows 8-or-later compatibility in its
+application manifest for layered native child editors; PerMonitorV2 startup alone
+does not supply that declaration. See the permanent Designer Sample's
+[manifest](samples/RibbonKit.WinForms.DesignerSample/app.manifest). The isolated
+designer consumer carries the same compatibility declaration.
 The ribbon's main body remains opaque:
 
 ```csharp
@@ -1819,6 +1837,20 @@ instead of squeezing its columns. A larger application-set `MinimumSize.Width`
 is retained through font changes; WinForms scales the native minimum for DPI.
 
 ## Renderer customization
+
+The immutable theme exposes `HeaderPresentation` (Underline/Filled), optional
+`HeaderHover`, `HeaderPressed`, `HeaderForeground`, `ColoredHeaderHover` and
+`ColoredHeaderPressed`, `ExtendTitleBarColorToHeader` and `BodyBottomBorderOnly`.
+An explicit renderer retains its policy. Header presentation survives custom
+theme clones and does not depend on the built-in selection enum.
+
+Additional nullable corner settings share validation and DPI scaling:
+`FocusCornerRadius`, `KeyTipCornerRadius`, `CheckBoxCornerRadius`,
+`BackstageBackButtonCornerRadius`, `NavigationMarkerCornerRadius`,
+`ApplicationMenuFooterCornerRadius`, `ApplicationMenuFileButtonCornerRadius` and
+`HeaderIndicatorCornerRadius`. Values accept 0..64 logical pixels; null preserves
+the previous owner-specific default. Office 2019 sets them to zero. Popup radius,
+border and shadow settings remain independent of the body.
 
 `RibbonRenderer` is the flat foundation. It shares measured content, image
 scaling/clipping, dropdown arrows and interaction states without the Office
@@ -2537,7 +2569,7 @@ Small presentation opens a compact chooser using the same command/validation
 owner. See [designer rearrangement](docs/DESIGNER-REARRANGEMENT.md) for authoring
 and focused evidence.
 The current native catalog offers
-**Office2024Light** only; **(Application theme)** preserves the application value.
+**Office2024Light** and **Office2019Light**; **(Application theme)** preserves the application value.
 Command **SizePolicy** values have a dropdown of fixed/adaptive choices.
 `BuiltInTheme` defaults to null; Reset restores the last application-assigned
 `Theme`, initially Office 2024 Light. An explicit choice serializes as

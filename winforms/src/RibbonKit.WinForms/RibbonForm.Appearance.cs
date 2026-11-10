@@ -11,7 +11,7 @@ public partial class RibbonForm
     private float _captionThemeOpacity;
     private bool _captionThemeComposited;
 
-    /// <summary>Gets or sets the caption color. Empty follows the ribbon theme. A selected color is solid without a backdrop and tints Mica/Acrylic using TitleBarTintOpacity. Must be opaque or Empty. Application content is unaffected.</summary>
+    /// <summary>Gets or sets the caption color. Empty follows the ribbon theme. A selected color is solid without a backdrop and tints Mica/Acrylic using TitleBarTintOpacity. Themes opting into ExtendTitleBarColorToHeader also color the associated ribbon's tab band. Must be opaque or Empty. Application content is unaffected.</summary>
     [Category("Appearance"), DefaultValue(typeof(Color), ""), Description("Caption color. Reset follows the ribbon theme. Tints Mica/Acrylic without replacing the backdrop.")]
     public Color TitleBarColor
     {
@@ -21,6 +21,7 @@ public partial class RibbonForm
             _ribbon?.VerifyAccess();
             if (!value.IsEmpty && value.A != 255) throw new ArgumentException("Choose an opaque caption color or reset to Empty.", nameof(value));
             if (_titleBarColor == value) return;
+            if (_ribbon?.Theme.ExtendTitleBarColorToHeader == true) _ribbon.SettleMotion();
             _titleBarColor = value; InvalidateCaption(); TitleBarColorChanged?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -37,6 +38,7 @@ public partial class RibbonForm
             _ribbon?.VerifyAccess();
             if (!float.IsFinite(value) || value < 0 || value > 1) throw new ArgumentOutOfRangeException(nameof(value));
             if (_titleBarTintOpacity == value) return;
+            if (_ribbon?.Theme.ExtendTitleBarColorToHeader == true) _ribbon.SettleMotion();
             _titleBarTintOpacity = value; InvalidateCaption(); TitleBarTintOpacityChanged?.Invoke(this, EventArgs.Empty);
         }
     }

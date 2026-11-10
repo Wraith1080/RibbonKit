@@ -168,6 +168,11 @@ internal sealed class RibbonMotionScene : IDisposable
         var occupied = Local(Between(from.Bounds, to.Bounds, p));
         var messageFrame = messages ? Interpolate(from.Messages.IsEmpty ? to.Messages with { Height = 0 } : from.Messages, to.Messages.IsEmpty ? from.Messages with { Height = 0 } : to.Messages) : Rectangle.Empty;
         using (var background = new SolidBrush(ribbon.WindowPaintTheme.Background)) graphics.FillRectangle(background, occupied);
+        if (ribbon.Theme.ExtendTitleBarColorToHeader && !ribbon.HasWindowBackdrop)
+        {
+            using var header = new SolidBrush(ribbon.HeaderPaintTheme(false).Background);
+            graphics.FillRectangle(header, Interpolate(from.Header, to.Header));
+        }
         var belowFrom = from.Placement == RibbonQuickAccessPosition.BelowRibbon && !from.Qat.IsEmpty;
         var belowTo = to.Placement == RibbonQuickAccessPosition.BelowRibbon && !to.Qat.IsEmpty;
         bool joined = minimize ? body.Height > 0 && (from.Joined || to.Joined) : to.Joined || from.Joined;

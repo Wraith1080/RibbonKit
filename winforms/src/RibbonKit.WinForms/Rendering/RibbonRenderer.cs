@@ -311,7 +311,7 @@ public partial class RibbonRenderer : IDisposable
         bool open = enabled && menu.IsDropDownOpen && !context.FileMenuClosing;
         if (open || context.Hot || context.Pressed)
             DrawChrome(context, open || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
-        DrawText(context, menu.Text, !enabled ? context.Theme.DisabledColor : open ? context.Theme.Accent : context.Theme.Foreground,
+        DrawText(context, menu.Text, !enabled ? context.Theme.DisabledColor : open ? context.Theme.Accent : context.Theme.HeaderTextColor,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.EndEllipsis);
         if (context.Focused) DrawFocus(context);
     }
@@ -321,7 +321,7 @@ public partial class RibbonRenderer : IDisposable
         context = EnabledContext(context, tab.EffectiveEnabled);
         if (selected || context.Hot)
             DrawChrome(context, selected ? new(context.Theme.Surface) : context.Theme.Hover, Color.Transparent);
-        var color = !tab.EffectiveEnabled ? context.Theme.DisabledColor : tab.IsContextual ? ContextualTabColor(context, tab, selected) : context.Theme.Foreground;
+        var color = !tab.EffectiveEnabled ? context.Theme.DisabledColor : tab.IsContextual ? ContextualTabColor(context, tab, selected) : selected ? context.Theme.Foreground : context.Theme.HeaderTextColor;
         // Scrolled tab bounds can extend across File/QAT; GDI must retain the viewport clip.
         DrawText(context, tab.DisplayText, color, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.PreserveGraphicsClipping);
         if (context.Focused)

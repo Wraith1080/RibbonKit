@@ -1,4 +1,21 @@
 #nullable enable
+RibbonKit.WinForms.RibbonHeaderPresentation
+RibbonKit.WinForms.RibbonHeaderPresentation.Underline = 0 -> RibbonKit.WinForms.RibbonHeaderPresentation
+RibbonKit.WinForms.RibbonHeaderPresentation.Filled = 1 -> RibbonKit.WinForms.RibbonHeaderPresentation
+RibbonKit.WinForms.RibbonBuiltInTheme.Office2019Light = 1 -> RibbonKit.WinForms.RibbonBuiltInTheme
+static RibbonKit.WinForms.RibbonThemes.Office2019Light.get -> RibbonKit.WinForms.RibbonTheme!
+RibbonKit.WinForms.RibbonTheme.HeaderPresentation.get -> RibbonKit.WinForms.RibbonHeaderPresentation
+RibbonKit.WinForms.RibbonTheme.HeaderPresentation.init -> void
+RibbonKit.WinForms.RibbonTheme.HeaderHover.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonTheme.HeaderHover.init -> void
+RibbonKit.WinForms.RibbonTheme.HeaderPressed.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonTheme.HeaderPressed.init -> void
+RibbonKit.WinForms.RibbonTheme.HeaderForeground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.HeaderForeground.init -> void
+RibbonKit.WinForms.RibbonTheme.ExtendTitleBarColorToHeader.get -> bool
+RibbonKit.WinForms.RibbonTheme.ExtendTitleBarColorToHeader.init -> void
+RibbonKit.WinForms.RibbonTheme.BodyBottomBorderOnly.get -> bool
+RibbonKit.WinForms.RibbonTheme.BodyBottomBorderOnly.init -> void
 RibbonKit.WinForms.RibbonComboBoxItem.ShowLabel.get -> bool
 RibbonKit.WinForms.RibbonComboBoxItem.ShowLabel.set -> void
 RibbonKit.WinForms.RibbonGroupLayout
@@ -1285,3 +1302,23 @@ virtual RibbonKit.WinForms.RibbonRenderer.GetBodyShadowPadding(RibbonKit.WinForm
 virtual RibbonKit.WinForms.RibbonRenderer.GetPopupShadowPadding(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int
 override RibbonKit.WinForms.RibbonOffice2024Renderer.GetBodyCornerRadius(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int
 override RibbonKit.WinForms.RibbonOffice2024Renderer.GetBodyShadowPadding(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> System.Windows.Forms.Padding
+RibbonKit.WinForms.RibbonTheme.ApplicationMenuFileButtonCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonTheme.ApplicationMenuFileButtonCornerRadius.init -> void
+RibbonKit.WinForms.RibbonTheme.ApplicationMenuFooterCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonTheme.ApplicationMenuFooterCornerRadius.init -> void
+RibbonKit.WinForms.RibbonTheme.BackstageBackButtonCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonTheme.BackstageBackButtonCornerRadius.init -> void
+RibbonKit.WinForms.RibbonTheme.CheckBoxCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonTheme.CheckBoxCornerRadius.init -> void
+RibbonKit.WinForms.RibbonTheme.ColoredHeaderHover.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonTheme.ColoredHeaderHover.init -> void
+RibbonKit.WinForms.RibbonTheme.ColoredHeaderPressed.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonTheme.ColoredHeaderPressed.init -> void
+RibbonKit.WinForms.RibbonTheme.FocusCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonTheme.FocusCornerRadius.init -> void
+RibbonKit.WinForms.RibbonTheme.HeaderIndicatorCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonTheme.HeaderIndicatorCornerRadius.init -> void
+RibbonKit.WinForms.RibbonTheme.KeyTipCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonTheme.KeyTipCornerRadius.init -> void
+RibbonKit.WinForms.RibbonTheme.NavigationMarkerCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonTheme.NavigationMarkerCornerRadius.init -> void

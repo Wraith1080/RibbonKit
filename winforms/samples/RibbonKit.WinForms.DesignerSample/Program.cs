@@ -238,6 +238,12 @@ internal static class Program
             catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
             return;
         }
+        if (args.Length == 2 && args[0] == "--verify-office2019-theme")
+        {
+            try { Office2019ThemeCheck.Verify(args[1]); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
         using var form = new DesignerForm();
         if (args.Length == 2 && args[0] == "--verify-input-mode")
         {
@@ -272,6 +278,7 @@ internal static class Program
             return;
         }
         if (args.Contains("--menu-geometry-demo")) { form.EnableMenuGeometryDemo(); form.EnableIllustratedGeometryDemo(); form.EnableCommandSplitGeometryDemo(); form.EnablePairedGeometryDemo(); form.EnableChromeGeometryDemo(); form.EnableGalleryBackstageGeometryDemo(); form.EnableTipCaptionGeometryDemo(); form.EnableFrameGeometryDemo(); }
+        if (args.Contains("--office2019-theme-demo")) form.EnableOffice2019ThemeDemo();
         Application.Run(form);
     }
 }

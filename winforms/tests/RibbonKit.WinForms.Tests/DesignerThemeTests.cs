@@ -29,16 +29,17 @@ public sealed class DesignerThemeTests
     });
 
     [Theory]
-    [InlineData(false)] [InlineData(true)]
-    public void Explicit_selection_serializes_as_an_enum_and_default_or_reset_omits_assignment(bool customApplicationTheme) => FoundationTests.Sta(() =>
+    [InlineData(false, RibbonBuiltInTheme.Office2024Light)] [InlineData(true, RibbonBuiltInTheme.Office2024Light)]
+    [InlineData(false, RibbonBuiltInTheme.Office2019Light)] [InlineData(true, RibbonBuiltInTheme.Office2019Light)]
+    public void Explicit_selection_serializes_as_an_enum_and_default_or_reset_omits_assignment(bool customApplicationTheme, RibbonBuiltInTheme selectedTheme) => FoundationTests.Sta(() =>
     {
         using var ribbon = new RibbonControl();
         if (customApplicationTheme) ribbon.Theme = ribbon.Theme with { Accent = Color.DarkMagenta };
         Assert.Empty(Serialize(ribbon).OfType<CodeAssignStatement>());
-        ribbon.BuiltInTheme = RibbonBuiltInTheme.Office2024Light;
+        ribbon.BuiltInTheme = selectedTheme;
         var assignment = Assert.Single(Serialize(ribbon).OfType<CodeAssignStatement>());
         Assert.Equal(nameof(ribbon.BuiltInTheme), Assert.IsType<CodePropertyReferenceExpression>(assignment.Left).PropertyName);
-        Assert.Equal(nameof(RibbonBuiltInTheme.Office2024Light), Assert.IsType<CodeFieldReferenceExpression>(assignment.Right).FieldName);
+        Assert.Equal(selectedTheme.ToString(), Assert.IsType<CodeFieldReferenceExpression>(assignment.Right).FieldName);
         ribbon.BuiltInTheme = null; Assert.Empty(Serialize(ribbon).OfType<CodeAssignStatement>());
         Assert.Equal(customApplicationTheme ? Color.DarkMagenta : RibbonThemes.Office2024Light.Accent, ribbon.Theme.Accent);
     });
@@ -53,7 +54,7 @@ public sealed class DesignerThemeTests
         using var dialog = new RibbonEditorDialog(draft, value => { RibbonDesignCommitter.Apply(ribbon, host, value); return null; });
         var tree = (TreeView)dialog.Controls.Find("StructureTree", true).Single(); _ = tree.Handle;
         var choice = (ComboBox)dialog.Controls.Find("BuiltInTheme", true).Single();
-        Assert.Equal(2, choice.Items.Count); Assert.Equal(0, choice.SelectedIndex); Assert.Equal("Custom application theme", draft.ApplicationTheme);
+        Assert.Equal(3, choice.Items.Count); Assert.Equal(0, choice.SelectedIndex); Assert.Equal("Custom application theme", draft.ApplicationTheme);
         choice.SelectedIndex = 1; Assert.Equal("Office2024Light", draft.BuiltInTheme);
         Assert.Null(ribbon.BuiltInTheme); Assert.Same(custom, ribbon.Theme); Assert.Equal(0, host.Transactions);
         if (acceptUnchanged) { choice.SelectedIndex = 0; dialog.AcceptDraft(); }
@@ -88,18 +89,18 @@ public sealed class DesignerThemeTests
         Assert.Throws<ArgumentException>(() => RibbonDesignCommitter.Apply(ribbon, host, draft)); Assert.Equal(0, host.Transactions);
     });
 
-    [Fact]
-    public void Framework_undo_redo_restores_the_custom_theme_and_noop_accept_creates_no_unit() => FoundationTests.Sta(() =>
+    [Theory] [InlineData(RibbonBuiltInTheme.Office2024Light)] [InlineData(RibbonBuiltInTheme.Office2019Light)]
+    public void Framework_undo_redo_restores_the_custom_theme_and_noop_accept_creates_no_unit(RibbonBuiltInTheme selectedTheme) => FoundationTests.Sta(() =>
     {
         using var surface = new DesignSurface(typeof(Form)); var host = (IDesignerHost)surface.GetService(typeof(IDesignerHost))!;
         var ribbon = (RibbonControl)host.CreateComponent(typeof(RibbonControl), "ribbon");
         var custom = ribbon.Theme with { Background = Color.Beige }; ribbon.Theme = custom;
         ((IServiceContainer)surface.GetService(typeof(IServiceContainer))!).AddService(typeof(ComponentSerializationService), new CodeDomComponentSerializationService(host));
         using var undo = new UndoRecorder(host);
-        var draft = RibbonDesignCommitter.Read(ribbon, host); draft.BuiltInTheme = "Office2024Light";
+        var draft = RibbonDesignCommitter.Read(ribbon, host); draft.BuiltInTheme = selectedTheme.ToString();
         Assert.True(RibbonDesignCommitter.Apply(ribbon, host, draft)); Assert.Equal(1, undo.Count);
         undo.Toggle(0); Assert.Null(ribbon.BuiltInTheme); Assert.Same(custom, ribbon.Theme);
-        undo.Toggle(0); Assert.Equal(RibbonBuiltInTheme.Office2024Light, ribbon.BuiltInTheme); Assert.Same(RibbonThemes.Office2024Light, ribbon.Theme);
+        undo.Toggle(0); Assert.Equal(selectedTheme, ribbon.BuiltInTheme); Assert.Same(selectedTheme == RibbonBuiltInTheme.Office2019Light ? RibbonThemes.Office2019Light : RibbonThemes.Office2024Light, ribbon.Theme);
         Assert.False(RibbonDesignCommitter.Apply(ribbon, host, RibbonDesignCommitter.Read(ribbon, host))); Assert.Equal(1, undo.Count);
         draft = RibbonDesignCommitter.Read(ribbon, host); draft.BuiltInTheme = ""; RibbonDesignCommitter.Apply(ribbon, host, draft);
         Assert.Same(custom, ribbon.Theme); Assert.Equal(2, undo.Count);

@@ -1,6 +1,12 @@
 # M4I2 appearance inventory and palette increments
 
-Status, **2026-11-03: shared color/fill roles and selectable title-bar tint
+Current direction, **2026-11-10:** theme implementation and review are in the
+[native themes plan](THEMES-PLAN.md). The selected geometry sequence and its
+follow-up review are closed in the
+[geometry plan](GEOMETRY-CONSOLIDATION-PLAN.md). This document remains the earlier
+appearance ownership inventory and implementation record.
+
+Earlier checkpoint, **2026-11-03: shared color/fill roles and selectable title-bar tint
 implemented; review and validation are recorded in
 [the color-role slice](APPEARANCE-COLOR-ROLES.md)**. Earlier KeyTip/backdrop,
 Backstage and disabled/state increments remain. The bounded ordinary-menu
@@ -9,13 +15,12 @@ editor/choice-row, illustrated-choice, horizontal command-split, Small/Medium
 command-content, Application Menu, body/group, header/tab, QAT/message, gallery and
 Backstage spacing batches are tracked in the
 [geometry consolidation plan](GEOMETRY-CONSOLIDATION-PLAN.md), which owns their review scope.
-Related batches may share a session and one review; further geometry and new
-built-in themes remain later increments after that review.
-Current slice, **2026-11-03**: geometry consolidation, following the
+The geometry plan owns those batches and their review; the themes plan owns
+subsequent palette and presentation scope.
+Earlier slice, **2026-11-03**: geometry consolidation, following the
 [state-command popup correction](STATE-COMMAND-POPUPS.md) and
-[Application Menu checkpoint](APPLICATION-MENU-PLAN.md). Use the
-[contract-first starting prompt](NEXT-SLICE-PROMPT.md). Stop for review after this
-bounded implementation; additional themes follow consolidation.
+[Application Menu checkpoint](APPLICATION-MENU-PLAN.md). The
+[starting prompt](NEXT-SLICE-PROMPT.md) now points to the current themes work.
 This starts the appearance-consolidation checkpoint after the main component and
 M6C work. It does not complete comprehensive theming or add another built-in theme.
 Designer authoring, localization/RTL and additional palettes retain their later

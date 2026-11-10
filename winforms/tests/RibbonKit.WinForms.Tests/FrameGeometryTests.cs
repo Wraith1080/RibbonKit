@@ -10,6 +10,10 @@ public sealed class FrameGeometryTests
     private static RibbonTheme Rounder => RibbonThemes.Office2024Light with { BodyCornerRadius = 14, BackstagePageCornerRadius = 18, BodyShadowBlur = 12, BodyShadowVerticalOffset = 4, PopupShadowBlur = 12, PopupShadowVerticalOffset = 4 };
     public static TheoryData<string, int, int> Roles => new()
     {
+        { nameof(RibbonTheme.FocusCornerRadius), 0, 64 }, { nameof(RibbonTheme.KeyTipCornerRadius), 0, 64 },
+        { nameof(RibbonTheme.CheckBoxCornerRadius), 0, 64 }, { nameof(RibbonTheme.BackstageBackButtonCornerRadius), 0, 64 },
+        { nameof(RibbonTheme.NavigationMarkerCornerRadius), 0, 64 }, { nameof(RibbonTheme.ApplicationMenuFooterCornerRadius), 0, 64 },
+        { nameof(RibbonTheme.ApplicationMenuFileButtonCornerRadius), 0, 64 }, { nameof(RibbonTheme.HeaderIndicatorCornerRadius), 0, 64 },
         { nameof(RibbonTheme.BodyCornerRadius), 0, 64 }, { nameof(RibbonTheme.BackstagePageCornerRadius), 0, 64 },
         { nameof(RibbonTheme.BodyShadowBlur), 0, 32 }, { nameof(RibbonTheme.PopupShadowBlur), 0, 32 },
         { nameof(RibbonTheme.BodyShadowVerticalOffset), -32, 32 }, { nameof(RibbonTheme.PopupShadowVerticalOffset), -32, 32 }

@@ -23,7 +23,7 @@ if (-not $NoBuild) {
 dotnet pack (Join-Path $nativeRoot 'src/RibbonKit.WinForms/RibbonKit.WinForms.csproj') -c $Configuration --no-build -o $feed
 if ($LASTEXITCODE) { throw 'Local native pack failed.' }
 $fixture = Join-Path $nativeRoot 'tests/RibbonKit.WinForms.DesignerConsumer'
-Get-ChildItem -LiteralPath $fixture -File | Where-Object Extension -In '.cs', '.csproj', '.resx' | Copy-Item -Destination $appRoot
+Get-ChildItem -LiteralPath $fixture -File | Where-Object Extension -In '.cs', '.csproj', '.resx', '.manifest' | Copy-Item -Destination $appRoot
 Copy-Item -LiteralPath (Join-Path $fixture 'Assets') -Destination $appRoot -Recurse
 $config = [xml]'<configuration><packageSources><clear/><add key="local" value=""/><add key="nuget.org" value="https://api.nuget.org/v3/index.json"/></packageSources><config><add key="globalPackagesFolder" value="../packages"/></config></configuration>'
 $config.configuration.packageSources.add[0].value = $feed

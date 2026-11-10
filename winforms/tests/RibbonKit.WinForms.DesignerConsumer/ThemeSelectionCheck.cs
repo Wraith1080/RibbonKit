@@ -14,16 +14,16 @@ internal static class ThemeSelectionCheck
     {
         using var source = new StringWriter(); source.WriteLine("namespace RibbonKitDesignerConsumer;");
         foreach (bool ribbonForm in new[] { false, true })
-        foreach (bool selected in new[] { false, true })
+        foreach (RibbonBuiltInTheme? selected in new RibbonBuiltInTheme?[] { null, RibbonBuiltInTheme.Office2024Light, RibbonBuiltInTheme.Office2019Light })
         {
             using var ribbon = new RibbonControl { Theme = RibbonThemes.Office2024Light with { Background = Color.Beige } };
-            if (selected) ribbon.BuiltInTheme = RibbonBuiltInTheme.Office2024Light;
+            ribbon.BuiltInTheme = selected;
             var serialization = new DesignerSerializationManager(); using var session = serialization.CreateSession();
             var manager = (IDesignerSerializationManager)serialization; manager.SetName(ribbon, "ribbon");
             var serializer = (CodeDomSerializer)manager.GetSerializer(typeof(RibbonControl), typeof(CodeDomSerializer))!;
             var statements = serializer.SerializeMember(manager, ribbon, TypeDescriptor.GetProperties(ribbon)[nameof(ribbon.BuiltInTheme)]!);
             if (serialization.Errors.Count != 0) throw new InvalidOperationException(string.Join("\n", serialization.Errors.Cast<object>()));
-            if (statements.Cast<CodeStatement>().OfType<CodeAssignStatement>().Count() != (selected ? 1 : 0)) throw new InvalidOperationException("Theme selection persistence omitted an override or replaced application defaults.");
+            if (statements.Cast<CodeStatement>().OfType<CodeAssignStatement>().Count() != (selected.HasValue ? 1 : 0)) throw new InvalidOperationException("Theme selection persistence omitted an override or replaced application defaults.");
             using var provider = CodeDomProvider.CreateProvider("CSharp"); using var code = new StringWriter();
             foreach (CodeStatement statement in statements) provider.GenerateCodeFromStatement(statement, code, new());
             string name = Name(ribbonForm, selected), parent = ribbonForm ? "RibbonKit.WinForms.RibbonForm" : "System.Windows.Forms.Form";
@@ -39,12 +39,13 @@ internal static class ThemeSelectionCheck
     {
         Directory.CreateDirectory(output);
         foreach (bool ribbonForm in new[] { false, true })
-        foreach (bool selected in new[] { false, true })
+        foreach (RibbonBuiltInTheme? selected in new RibbonBuiltInTheme?[] { null, RibbonBuiltInTheme.Office2024Light, RibbonBuiltInTheme.Office2019Light })
         {
             var type = typeof(ThemeSelectionCheck).Assembly.GetType("RibbonKitDesignerConsumer." + Name(ribbonForm, selected))
                 ?? throw new InvalidOperationException("Generate theme forms in App and rebuild first.");
             using var form = (Form)Activator.CreateInstance(type)!; var ribbon = form.Controls.OfType<RibbonControl>().Single();
-            if (ribbon.BuiltInTheme != (selected ? RibbonBuiltInTheme.Office2024Light : null) || ribbon.Theme.Background != (selected ? Color.White : Color.Beige))
+            var expected = selected == RibbonBuiltInTheme.Office2019Light ? RibbonThemes.Office2019Light.Background : selected.HasValue ? Color.White : Color.Beige;
+            if (ribbon.BuiltInTheme != selected || ribbon.Theme.Background != expected)
                 throw new InvalidOperationException("Reopened initializer lost the built-in/application choice.");
             using var body = new TextBox { BackColor = Color.Coral, Text = "Application content" };
             ribbon.Backstage.Items.Add(new RibbonBackstagePageItem { Text = "Info", Content = body });
@@ -60,5 +61,5 @@ internal static class ThemeSelectionCheck
         }
         File.WriteAllText(Path.Combine(output, "result.log"), "PASS: public-only packed runtime; actual CodeDOM generation, normal compilation and fresh-process reopen for Form/RibbonForm with explicit/default choices; custom application fallback, Reset, direct Theme precedence and borrowed native content styling/ownership retained.");
     }
-    private static string Name(bool ribbonForm, bool selected) => "GeneratedTheme" + (ribbonForm ? "RibbonForm" : "Form") + (selected ? "Selected" : "Application");
+    private static string Name(bool ribbonForm, RibbonBuiltInTheme? selected) => "GeneratedTheme" + (ribbonForm ? "RibbonForm" : "Form") + (selected == RibbonBuiltInTheme.Office2019Light ? "Selected2019" : selected.HasValue ? "Selected" : "Application");
 }

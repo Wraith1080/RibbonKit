@@ -59,7 +59,7 @@ public partial class RibbonRenderer
             var fill = context.Pressed || context.Hot
                 ? context.WindowBackdrop || context.CompositedText ? BackdropStateFill(context, context.Pressed) : context.Pressed ? context.Theme.Pressed : context.Theme.Hover
                 : new RibbonFill(Color.Transparent);
-            PaintRounded(context with { Bounds = circle }, diameter / 2, fill,
+            PaintRounded(context with { Bounds = circle }, RibbonFrameMetrics.Radius(context.Theme.BackstageBackButtonCornerRadius, diameter / 2, context.DeviceDpi), fill,
                 context.Focused ? context.Theme.Accent : color, Math.Max(1, RibbonLayoutEngine.Scale(1.5, context.DeviceDpi)));
             var saved = context.Graphics.Save();
             try
@@ -84,7 +84,7 @@ public partial class RibbonRenderer
             if (selected)
             {
                 var marker = new Rectangle(context.Bounds.Left + S(2), context.Bounds.Top + S(10), S(3), Math.Max(1, context.Bounds.Height - S(20)));
-                PaintRounded(context with { Bounds = marker }, marker.Width / 2, new(context.Theme.Accent), Color.Transparent, 0);
+                PaintRounded(context with { Bounds = marker }, RibbonFrameMetrics.Radius(context.Theme.NavigationMarkerCornerRadius, marker.Width / 2, context.DeviceDpi), new(context.Theme.Accent), Color.Transparent, 0);
             }
             var icon = new Rectangle(context.Bounds.Left + S(16), context.Bounds.Top + (context.Bounds.Height - S(16)) / 2, S(16), S(16));
             if (item.Icon is { } vector) vector.Draw(context.Graphics, icon, new(context.DeviceDpi, color, enabled));

@@ -175,7 +175,7 @@ public partial class RibbonForm : Form
         var bounds = new Rectangle(0, 0, ClientSize.Width, Math.Min(ClientSize.Height, CaptionHeight));
         if (bounds.Width > 0 && bounds.Height > 0) Invalidate(bounds);
         if (_ribbon is { HasWindowCaption: true, IsDisposed: false } ribbon)
-            ribbon.Invalidate(new Rectangle(0, 0, ribbon.Width, ribbon.WindowCaptionHeight));
+            ribbon.Invalidate(new Rectangle(0, 0, ribbon.Width, ribbon.Theme.ExtendTitleBarColorToHeader ? ribbon.BackdropHeaderHeight : ribbon.WindowCaptionHeight));
     }
     /// <inheritdoc />
     protected override void OnPaint(PaintEventArgs e)
