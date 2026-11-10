@@ -121,15 +121,15 @@ internal static class Program
             catch (Exception error) { Directory.CreateDirectory(args[1]); File.AppendAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
             return;
         }
-        if (args.Length == 2 && args[0] is "--profile-gallery-opening" or "--profile-gallery-opening-animated" or "--trace-gallery-opening")
+        if (args.Length is 2 or 3 && args[0] is "--profile-gallery-opening" or "--profile-gallery-opening-animated" or "--trace-gallery-opening")
         {
-            try { GalleryOpeningProfile.Run(args[1], args[0] == "--trace-gallery-opening", args[0] == "--profile-gallery-opening-animated"); }
+            try { GalleryOpeningProfile.Run(args[1], args[0] == "--trace-gallery-opening", args[0] == "--profile-gallery-opening-animated", args.Length == 3 ? int.Parse(args[2]) : null); }
             catch (Exception error) { Directory.CreateDirectory(args[1]); File.AppendAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
             return;
         }
-        if (args.Length == 2 && args[0] == "--verify-gallery-presenter")
+        if (args.Length is 2 or 3 && args[0] == "--verify-gallery-presenter")
         {
-            try { GalleryPresenterDemo.Verify(args[1]); }
+            try { GalleryPresenterDemo.Verify(args[1], args.Length == 3 ? int.Parse(args[2]) : 18); }
             catch (Exception error) { Directory.CreateDirectory(args[1]); File.AppendAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
             return;
         }

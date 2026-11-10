@@ -27,9 +27,12 @@ internal sealed class RibbonPopupWindow : ToolStripDropDown
     internal RibbonPopupWindow(RibbonControl ribbon, Action activationChanged, bool nonActivating = false)
     {
         this.ribbon = ribbon; this.activationChanged = activationChanged; this.nonActivating = nonActivating;
-        AutoSize = false; AutoClose = false; Padding = new(1); Margin = Padding.Empty;
+        AutoSize = false; Padding = new(1); Margin = Padding.Empty;
+        // AutoClose changes native topmost state and creates the HWND. Configure
+        // its class shadow first, avoiding a second HWND and native setup pass.
         DropShadowEnabled = false; CausesValidation = false;
         Renderer = new PopupFrameRenderer(ribbon);
+        AutoClose = false;
     }
     protected override CreateParams CreateParams
     {

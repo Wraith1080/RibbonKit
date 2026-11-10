@@ -16,16 +16,30 @@ internal static class Benchmark
     private static readonly List<double> DropDowns = [], Groups = [], Nested = [];
     [DllImport("user32.dll")] private static extern int GetGuiResources(nint process, int flag);
 
-    internal static int Run(string output, bool measureResize = true, int popupCycles = 100)
+    internal static int Run(string output, bool measureResize = true, int popupCycles = 100, int galleryItems = 0, int contentItems = 0)
     {
+        if (galleryItems is < 0 or > 10_000 || contentItems is < 0 or > 10_000) throw new ArgumentOutOfRangeException(nameof(galleryItems));
         WF.Application.SetHighDpiMode(WF.HighDpiMode.PerMonitorV2);
         WF.Application.EnableVisualStyles();
         WF.Application.SetUnhandledExceptionMode(WF.UnhandledExceptionMode.ThrowException);
         using var form = new WF.Form { Text = "RibbonKit native baseline", Width = 1100, Height = 350, StartPosition = WF.FormStartPosition.CenterScreen };
         using var ribbon = new MeasuredRibbon();
         var home = new RibbonTab { Text = "Home" };
-        var menu = new RibbonDropDownItem { Text = "Menu" };
-        menu.Items.Add(new RibbonButtonItem { Text = "Choice" });
+        RibbonDropDownItem menu = galleryItems > 0 ? new RibbonGalleryItem { Text = "Styles" } : new RibbonDropDownItem { Text = "Menu" };
+        if (menu is RibbonGalleryItem gallery)
+            for (int i = 0; i < galleryItems; i++) gallery.Items.Add(new RibbonGalleryTile { Text = $"Style {i + 1}" });
+        else menu.Items.Add(new RibbonButtonItem { Text = "Choice" });
+        using var content = contentItems > 0 ? new WF.UserControl { Size = new(360, 234) } : null;
+        if (content is not null)
+        {
+            var choices = new WF.ListBox { Dock = WF.DockStyle.Fill };
+            choices.Items.AddRange(Enumerable.Range(1, contentItems).Select(i => (object)$"Choice {i}").ToArray());
+            content.Controls.Add(choices);
+            // Reflection keeps the same workload compilable in historical
+            // checkouts preceding the retained-body API; that scope is skipped there.
+            var property = typeof(RibbonDropDownItem).GetProperty("Content") ?? throw new NotSupportedException("This revision has no custom dropdown body.");
+            property.SetValue(menu, content);
+        }
         for (int g = 0; g < 5; g++)
         {
             var group = new RibbonGroup { Text = "Group " + g, ReductionMode = RibbonGroupReductionMode.ResizeThenCollapse };
@@ -164,7 +178,9 @@ internal static class Benchmark
             OS = RuntimeInformation.OSDescription,
             CpuCount = Environment.ProcessorCount,
             Architecture = RuntimeInformation.ProcessArchitecture.ToString(),
-            CommandCount = 32,
+            CommandCount = 32 + Math.Max(0, galleryItems - 1),
+            GalleryItemCount = galleryItems,
+            ContentItemCount = contentItems,
             Displays = WF.Screen.AllScreens.Select(s => new { s.DeviceName, Bounds = s.Bounds.ToString(), s.Primary }),
             Dpi = ribbon.DeviceDpi,
             ResizeSweeps = Sweeps,

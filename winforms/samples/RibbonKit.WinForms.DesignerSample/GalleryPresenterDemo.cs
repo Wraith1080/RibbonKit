@@ -5,7 +5,7 @@ namespace RibbonKitDesignerConsumer;
 
 internal static class GalleryPresenterDemo
 {
-    internal static void Verify(string output)
+    internal static void Verify(string output, int entryCount = 18)
     {
         Directory.CreateDirectory(output); using var log = new StreamWriter(Path.Combine(output, "result.log")) { AutoFlush = true };
         using var form = new DesignerForm { StartPosition = FormStartPosition.Manual, Location = new(180, 120) };
@@ -18,6 +18,14 @@ internal static class GalleryPresenterDemo
         ribbon.SelectedTab = tab;
         Require(gallery.DropDownPresenterType == typeof(GalleryStylesControl) && gallery.DropDownPresenterFactory is null,
             "Designer-authored presenter class without a runtime factory hookup");
+        if (entryCount is < 18 or > 10_000) throw new ArgumentOutOfRangeException(nameof(entryCount));
+        ribbon.BeginUpdate();
+        try
+        {
+            for (int i = gallery.Items.Count; i < entryCount; i++)
+                gallery.Items.Add(new RibbonGalleryTile { Id = $"stress-style-{i}", Text = $"Style {i + 1}" });
+        }
+        finally { ribbon.EndUpdate(); }
         using (var preview = new GalleryStylesControl())
         {
             Require(preview.Controls.OfType<GalleryStyleTileControl>().Count() == 6, "Six real tile controls exist without a runtime context");
@@ -38,7 +46,10 @@ internal static class GalleryPresenterDemo
                 Require(!first.IsDisposed, "Popup closed before capture; check foreground/dismissal log");
                 nint handle = first.Handle;
                 var firstCards = first.Controls.OfType<GalleryStyleTileControl>().ToArray();
-                Require(firstCards.Length == gallery.Items.Count && firstCards.All(card => gallery.Items.Contains((RibbonGalleryTile)card.Tag!)), "Native tile views refer to original source items");
+                Require(firstCards.Where(card => card.Tag is not null).All(card => gallery.Items.Contains((RibbonGalleryTile)card.Tag!)), "Native tile views refer to original source items");
+                Require(firstCards.Where(card => !card.Visible).All(card => !card.IsHandleCreated), "Offscreen cards do not create native windows");
+                if (entryCount >= 200) Require(firstCards.Length < 50, "Unvisited rows do not allocate card trees for all source items");
+                var firstHandles = firstCards.Where(card => card.Visible).ToDictionary(card => card, card => card.Handle);
                 Require(context.IsActive && ReferenceEquals(context.Gallery, gallery), "One active view of the original source");
                 Require(context.Dpi == form.DeviceDpi && first.Parent is not null, "Native parenting and DPI context");
                 await Capture("initial", first);
@@ -49,16 +60,20 @@ internal static class GalleryPresenterDemo
                 Require(context.Preview(null) && cancels == 1, "Preview cancellation");
                 gallery.SelectedItem = last; Require(commits == 0 && first.GetItemBounds(last).IntersectsWith(first.ClientRectangle), "Programmatic selection reveals without committing");
                 Require(first.Handle == handle, "Live native handle retained through synchronization and reveal");
-                Require(firstCards.SequenceEqual(first.Controls.OfType<GalleryStyleTileControl>()), "Selection and reveal retain the native tile controls");
+                Require(firstCards.All(card => !card.IsDisposed && ReferenceEquals(card.Parent, first)), "Selection and reveal retain visited tile controls");
                 await Capture("last-selected", first);
+                gallery.SelectedItem = original;
+                Require(firstHandles.All(pair => pair.Key.IsHandleCreated && pair.Key.Handle == pair.Value), "Returning to a visited row retains its native card handles");
+                gallery.SelectedItem = last;
+                var allCards = first.Controls.OfType<GalleryStyleTileControl>().ToArray();
                 Require(context.Commit(last) && commits == 1 && first.IsDisposed && !context.IsActive, "Accepted source commit and view disposal");
-                Require(firstCards.All(card => card.IsDisposed), "Popup close releases all native tile views");
+                Require(allCards.All(card => card.IsDisposed), "Popup close releases all visited and unused tile views");
                 Require(status.Text == "Selected: " + last.Text, "Designer-wired commit event");
                 Require(!context.Commit(last) && !context.Preview(last), "Old context is inert");
                 gallery.ShowDropDown(); await Task.Delay(250); var current = FindPresenter(); Require(!ReferenceEquals(current, first), "Reopen constructs another view");
                 Require(ReferenceEquals(gallery.SelectedItem, last), "Source selection retained across views");
                 current!.ScrollView(RibbonGalleryScroll.PageBackward); await Capture("reopened-page-up", current);
-                var clicked = current.Controls.OfType<GalleryStyleTileControl>().First(card => current.ClientRectangle.Contains(card.Bounds));
+                var clicked = current.Controls.OfType<GalleryStyleTileControl>().First(card => card.Visible && current.ClientRectangle.Contains(card.Bounds));
                 var label = clicked.Controls.OfType<Label>().Single(child => child.Name == "titleLabel");
                 var clickedItem = (RibbonGalleryTile)clicked.Tag!;
                 _ = SendMessage(label.Handle, 0x204, 2, (nint)(5 | 5 << 16));
@@ -70,8 +85,8 @@ internal static class GalleryPresenterDemo
                 _ = SendMessage(label.Handle, 0x201, 1, (nint)(5 | 5 << 16));
                 _ = SendMessage(label.Handle, 0x202, 0, (nint)(5 | 5 << 16));
                 Require(commits == 2 && ReferenceEquals(gallery.SelectedItem, clickedItem), "Native child-label click commits its source exactly once");
-                Require(current.IsDisposed && gallery.Items.Count == 18, "Native child click closes and releases the view; source items retained");
-                log.WriteLine($"PASS: package-only designer-selected UserControl class without factory hookup; six designer-visible cards and 18 source-bound native tiles; source hierarchy/selection and wired events; native viewport/DPI={form.DeviceDpi}; preview={previews}, cancel={cancels}, commit={commits}; native child-label click, reveal, tile/control retention, fresh reopening, stale requests and disposal. Actual VS and physical input remain separate.");
+                Require(current.IsDisposed && gallery.Items.Count == entryCount, "Native child click closes and releases the view; source items retained");
+                log.WriteLine($"PASS: package-only designer-selected UserControl class; six designer-visible cards; {entryCount} source entries; initial card trees={firstCards.Length}, initial native cards={firstHandles.Count}; source hierarchy/selection and wired events; native viewport/DPI={form.DeviceDpi}; preview={previews}, cancel={cancels}, commit={commits}; offscreen lazy allocation, native child-label click, distant reveal, visited handle retention, fresh reopening, stale requests and disposal. Actual VS and physical input remain separate.");
             }
             catch (Exception error) { failure = error; log.WriteLine("FAIL: " + error); }
             finally { form.Close(); }

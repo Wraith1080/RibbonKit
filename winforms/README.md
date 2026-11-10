@@ -717,11 +717,20 @@ assignment are in `DesignerForm.Designer.cs`, visible through Edit Ribbon. The
 UserControl body stays in its ordinary UserControl designer.
 Open **GalleryStyleTileControl.cs â†’ View Designer** to edit one card using ordinary
 panels and labels. **GalleryStylesControl.cs â†’ View Designer** shows six real card
-instances. At runtime the presenter connects a card to each source item and arranges
-the two-column grid. Captions/items still come from Edit Ribbon; the card's Caption
-property supplies illustrative text in the standalone designer. The sample paints
+instances. At runtime the presenter creates cards for visible rows of the
+two-column grid and retains visited cards for that popup. Bounds for unvisited
+items are calculated without creating controls. Captions/items still come from
+Edit Ribbon; the card's Caption property supplies illustrative text in the
+standalone designer. The sample paints
 only its selection outline, rather than drawing every thumbnail and label by hand.
 See the [contract, review steps and focused evidence](docs/GALLERY-PRESENTER-PLAN.md).
+
+For large custom galleries, keep `GetItemBounds` inexpensive and create native
+child controls only for visible rows. Initial synchronization receives the monitor
+budget before preferred size is measured; bound realization by the presenter's
+natural size too. The library preserves fresh-view ownership and cannot virtualize
+an application's arbitrary control tree. See the
+[opening measurements and 1,000-entry checks](docs/POPUP-OPENING-PERFORMANCE.md).
 
 ### Custom inline gallery UserControls
 

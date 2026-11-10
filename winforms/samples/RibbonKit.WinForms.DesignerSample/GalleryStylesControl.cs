@@ -8,6 +8,7 @@ public partial class GalleryStylesControl : UserControl, IRibbonGalleryPresenter
 {
     private const int ColumnCount = 2;
     private readonly Dictionary<RibbonGalleryTile, GalleryStyleTileControl> _views = [];
+    private readonly Dictionary<RibbonGalleryTile, int> _indices = [];
     private RibbonGalleryPresenterContext? _context;
     private RibbonGalleryTile[] _items = [];
     private RibbonGalleryTile? _hotItem;
@@ -21,7 +22,10 @@ public partial class GalleryStylesControl : UserControl, IRibbonGalleryPresenter
     private int RowHeight => Scale(_context?.Density == RibbonDensity.Touch ? 88 : 76);
     private int Gap => Scale(6);
     private int RowCount => (_items.Length + ColumnCount - 1) / ColumnCount;
-    private int MaximumOffset => Math.Max(0, Gap + RowCount * RowHeight - Context.Viewport.Height);
+    // The initial synchronization receives the monitor budget, before preferred
+    // size is measured. Keep realization within this presenter's natural size.
+    private Size ViewSize => new(Math.Min(Context.Viewport.Width, Scale(360)), Math.Min(Context.Viewport.Height, Scale(234)));
+    private int MaximumOffset => Math.Max(0, Gap + RowCount * RowHeight - ViewSize.Height);
 
     public GalleryStylesControl()
     {
@@ -36,6 +40,8 @@ public partial class GalleryStylesControl : UserControl, IRibbonGalleryPresenter
     {
         _context = context;
         _items = context.Gallery.Items.OfType<RibbonGalleryTile>().Where(item => item.Visible).ToArray();
+        _indices.Clear();
+        for (int i = 0; i < _items.Length; i++) _indices.Add(_items[i], i);
         if (_hotItem is { Enabled: false }) _hotItem = null;
         BackColor = context.Theme.Surface;
 
@@ -44,18 +50,8 @@ public partial class GalleryStylesControl : UserControl, IRibbonGalleryPresenter
         try
         {
             RemoveOldCards();
-            foreach (var item in _items)
-            {
-                if (_views.ContainsKey(item)) continue;
-
-                // Reuse the six cards visible in this control's designer first.
-                var card = Controls.OfType<GalleryStyleTileControl>().FirstOrDefault(view => view.Tag is null)
-                    ?? new GalleryStyleTileControl();
-                card.Tag = item;
-                ConnectPointerEvents(card, item);
-                _views.Add(item, card);
-                if (card.Parent is null) Controls.Add(card);
-            }
+            // Keep the six designer-authored cards, but do not create HWNDs or
+            // managed card trees for the unvisited rows of a large gallery.
             foreach (var unused in Controls.OfType<GalleryStyleTileControl>().Where(card => card.Tag is null))
                 unused.Visible = false;
 
@@ -71,7 +67,7 @@ public partial class GalleryStylesControl : UserControl, IRibbonGalleryPresenter
 
     private void RemoveOldCards()
     {
-        foreach (var item in _views.Keys.Except(_items).ToArray())
+        foreach (var item in _views.Keys.Where(item => !_indices.ContainsKey(item)).ToArray())
         {
             _views[item].Dispose();
             _views.Remove(item);
@@ -84,24 +80,49 @@ public partial class GalleryStylesControl : UserControl, IRibbonGalleryPresenter
     {
         if (_context is null) return;
         _scrollOffset = Math.Clamp(_scrollOffset, 0, MaximumOffset);
-        int cardWidth = Math.Max(1, (Context.Viewport.Width - (ColumnCount + 1) * Gap) / ColumnCount);
-        for (int index = 0; index < _items.Length; index++)
+        SuspendLayout();
+        try
         {
-            int column = index % ColumnCount;
-            int row = index / ColumnCount;
-            var card = _views[_items[index]];
-            card.Bounds = new(Gap + column * (cardWidth + Gap), Gap + row * RowHeight - _scrollOffset, cardWidth, RowHeight - Gap);
-            card.Visible = true;
+            var viewport = new Rectangle(Point.Empty, ViewSize);
+            foreach (var pair in _views)
+                if (!GetItemBounds(pair.Key).IntersectsWith(viewport)) pair.Value.Visible = false;
+            int firstRow = Math.Max(0, (_scrollOffset - Gap) / RowHeight);
+            int lastRow = Math.Min(RowCount - 1, (_scrollOffset + ViewSize.Height - 1 - Gap) / RowHeight);
+            for (int index = firstRow * ColumnCount; index < Math.Min(_items.Length, (lastRow + 1) * ColumnCount); index++)
+            {
+                var item = _items[index];
+                if (!_views.TryGetValue(item, out var card))
+                {
+                    card = Controls.OfType<GalleryStyleTileControl>().FirstOrDefault(view => view.Tag is null)
+                        ?? new GalleryStyleTileControl();
+                    card.Visible = false;
+                    card.Tag = item;
+                    ConnectPointerEvents(card, item);
+                    _views.Add(item, card);
+                    if (card.Parent is null) Controls.Add(card);
+                }
+                card.ShowItem(item, Context, ReferenceEquals(_hotItem, item));
+                // Complete first-show native autoscaling before applying bounds
+                // measured in the context's physical pixels.
+                card.Visible = true;
+                card.Bounds = GetItemBounds(item);
+            }
         }
+        finally { ResumeLayout(false); }
     }
 
     private void RefreshCardStates()
     {
-        foreach (var item in _items)
-            _views[item].ShowItem(item, Context, ReferenceEquals(_hotItem, item));
+        foreach (var pair in _views)
+            if (pair.Value.Visible) pair.Value.ShowItem(pair.Key, Context, ReferenceEquals(_hotItem, pair.Key));
     }
 
-    public Rectangle GetItemBounds(RibbonGalleryTile item) => _views.TryGetValue(item, out var card) ? card.Bounds : Rectangle.Empty;
+    public Rectangle GetItemBounds(RibbonGalleryTile item)
+    {
+        if (!_indices.TryGetValue(item, out int index)) return Rectangle.Empty;
+        int cardWidth = Math.Max(1, (ViewSize.Width - (ColumnCount + 1) * Gap) / ColumnCount);
+        return new(Gap + index % ColumnCount * (cardWidth + Gap), Gap + index / ColumnCount * RowHeight - _scrollOffset, cardWidth, RowHeight - Gap);
+    }
 
     public RibbonGalleryTile? HitTest(Point location) => ClientRectangle.Contains(location)
         ? _items.FirstOrDefault(item => GetItemBounds(item).Contains(location)) : null;
@@ -123,7 +144,7 @@ public partial class GalleryStylesControl : UserControl, IRibbonGalleryPresenter
         bool backwards = key is Keys.Up or Keys.PageUp;
         var origin = GetItemBounds(available[index]);
         bool page = key is Keys.PageUp or Keys.PageDown;
-        int targetTop = origin.Top + (page ? Context.Viewport.Height * (backwards ? -1 : 1) : 0);
+        int targetTop = origin.Top + (page ? ViewSize.Height * (backwards ? -1 : 1) : 0);
         return available.Where(item => backwards ? GetItemBounds(item).Top < origin.Top : GetItemBounds(item).Top > origin.Top)
             .OrderBy(item => Math.Abs(GetItemBounds(item).Top - targetTop))
             .ThenBy(item => Math.Abs(GetItemBounds(item).Left - origin.Left))
@@ -135,7 +156,7 @@ public partial class GalleryStylesControl : UserControl, IRibbonGalleryPresenter
         var bounds = GetItemBounds(item);
         if (bounds.IsEmpty) return;
         if (bounds.Top < Gap) _scrollOffset += bounds.Top - Gap;
-        else if (bounds.Bottom > Context.Viewport.Height - Gap) _scrollOffset += bounds.Bottom - Context.Viewport.Height + Gap;
+        else if (bounds.Bottom > ViewSize.Height - Gap) _scrollOffset += bounds.Bottom - ViewSize.Height + Gap;
         LayoutCards();
     }
 
@@ -146,7 +167,7 @@ public partial class GalleryStylesControl : UserControl, IRibbonGalleryPresenter
     {
         bool backwards = amount is RibbonGalleryScroll.RowBackward or RibbonGalleryScroll.PageBackward;
         bool page = amount is RibbonGalleryScroll.PageBackward or RibbonGalleryScroll.PageForward;
-        int step = page ? Context.Viewport.Height : RowHeight;
+        int step = page ? ViewSize.Height : RowHeight;
         _scrollOffset += backwards ? -step : step;
         LayoutCards();
         Context.NotifyViewChanged();

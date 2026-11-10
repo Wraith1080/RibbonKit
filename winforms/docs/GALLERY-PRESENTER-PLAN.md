@@ -1,5 +1,9 @@
 # Optional native gallery presenter and dropdown content hosting
 
+The **2026-11-10** [opening-performance correction](POPUP-OPENING-PERFORMANCE.md)
+records the historical comparison, shared popup setup fix and large custom-gallery
+lazy card creation. Human review of that correction is pending.
+
 Status, **2026-11-02: ordinary inline and source/QAT custom gallery popups accepted at the reviewed scope**.
 **2026-11-03:** the [inline class-picker increment](#inline-gallery-designer-class-selection--2026-11-03)
 is implemented with focused and package-consumer evidence; actual VS review remains pending.

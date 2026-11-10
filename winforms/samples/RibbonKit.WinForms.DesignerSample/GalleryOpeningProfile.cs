@@ -8,11 +8,24 @@ namespace RibbonKitDesignerConsumer;
 // Measures only fixture-owned popup openings. No desktop input is injected.
 internal static class GalleryOpeningProfile
 {
-    internal static void Run(string output, bool captureFrames = false, bool animatedOnly = false)
+    internal static void Run(string output, bool captureFrames = false, bool animatedOnly = false, int? entryCount = null)
     {
         Directory.CreateDirectory(output); using var log = new StreamWriter(Path.Combine(output, "result.log")) { AutoFlush = true };
         using var form = new DesignerForm { StartPosition = FormStartPosition.Manual, Location = new(180, 120) };
         var ribbon = form.Controls.OfType<RibbonControl>().Single(); var (tab, gallery) = form.GalleryPresenterExample; ribbon.SelectedTab = tab;
+        if (entryCount is { } count)
+        {
+            if (count is < 1 or > 10_000) throw new ArgumentOutOfRangeException(nameof(entryCount));
+            ribbon.BeginUpdate();
+            try
+            {
+                gallery.Items.Clear();
+                for (int i = 0; i < count; i++) gallery.Items.Add(new RibbonGalleryTile { Text = $"Style {i + 1}" });
+                gallery.SelectedItem = (RibbonGalleryTile)gallery.Items[0];
+            }
+            finally { ribbon.EndUpdate(); }
+        }
+        log.WriteLine($"Entries={gallery.Items.Count} DPI={ribbon.DeviceDpi}");
         gallery.DropDownPresenterType = null; // This timing diagnostic substitutes instrumented factories.
         var clock = new Stopwatch(); using var renderer = new TimedRenderer(); ribbon.Renderer = renderer;
         var captures = new List<(string Name, Bitmap Image)>();
@@ -35,6 +48,7 @@ internal static class GalleryOpeningProfile
                     } : null;
                     for (int index = 0; index < (captureFrames ? 1 : 4); index++)
                     {
+                        form.Activate(); await Task.Delay(80);
                         Require(GetForegroundWindow() == form.Handle, "Foreground unavailable before opening");
                         data = new(); renderer.Shadow = renderer.Frame = 0; clock.Restart(); gallery.ShowDropDown();
                         double synchronous = clock.Elapsed.TotalMilliseconds;
@@ -69,8 +83,9 @@ internal static class GalleryOpeningProfile
                                 } while (!stop.IsCancellationRequested);
                             });
                         }
-                        while (ribbon.IsAnimating && clock.ElapsedMilliseconds < 2000)
+                        while (ribbon.IsAnimating && clock.Elapsed.TotalMilliseconds - synchronous < 2000)
                         { await Task.Delay(15); }
+                        Require(!ribbon.IsAnimating, "Popup opening motion did not settle");
                         double settled = clock.Elapsed.TotalMilliseconds; await Task.Delay(20);
                         if (captureStop is not null)
                         {
@@ -79,7 +94,9 @@ internal static class GalleryOpeningProfile
                         foreach (var capture in captures) { capture.Image.Save(Path.Combine(output, capture.Name)); capture.Image.Dispose(); }
                         captures.Clear();
                         var ticks = timedMotion?.GetType().GetField("FrameIntervals", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(timedMotion) as List<double>;
-                        log.WriteLine(FormattableString.Invariant($"{level} custom={custom} open={index} sync={synchronous:F2}ms settled={settled:F2}ms factory={data.Factory:F2}ms syncView={data.Sync:F2}ms measure={data.Measure:F2}ms handle={data.Handle:F2}ms load={data.Load:F2}ms print={data.Print:F2}ms paint={data.Paint:F2}ms nativePaintAt={data.FirstNativePaint:F2}ms shadow={renderer.Shadow:F2}ms frame={renderer.Frame:F2}ms boundsCalls={data.Bounds} paintCalls={data.Paints} ticks={ticks?.Count ?? 0} firstTick={ticks?.FirstOrDefault() ?? 0:F2}ms"));
+                        int cards = data.View?.Controls.OfType<GalleryStyleTileControl>().Count() ?? 0;
+                        int nativeCards = data.View?.Controls.OfType<GalleryStyleTileControl>().Count(card => card.IsHandleCreated) ?? 0;
+                        log.WriteLine(FormattableString.Invariant($"{level} custom={custom} open={index} sync={synchronous:F2}ms settled={settled:F2}ms factory={data.Factory:F2}ms syncView={data.Sync:F2}ms measure={data.Measure:F2}ms handle={data.Handle:F2}ms load={data.Load:F2}ms print={data.Print:F2}ms paint={data.Paint:F2}ms nativePaintAt={data.FirstNativePaint:F2}ms shadow={renderer.Shadow:F2}ms frame={renderer.Frame:F2}ms boundsCalls={data.Bounds} paintCalls={data.Paints} cards={cards} nativeCards={nativeCards} ticks={ticks?.Count ?? 0} firstTick={ticks?.FirstOrDefault() ?? 0:F2}ms"));
                         gallery.CloseDropDown(); await Task.Delay(50);
                     }
                 }

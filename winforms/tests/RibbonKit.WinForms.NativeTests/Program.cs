@@ -155,6 +155,10 @@ internal static partial class Program
         }
         if (args.Length == 2 && args[0] == "--benchmark")
             return Benchmark.Run(args[1]);
+        if (args.Length == 3 && args[0] == "--benchmark-gallery")
+            return Benchmark.Run(args[1], false, 20, galleryItems: int.Parse(args[2]));
+        if (args.Length == 3 && args[0] == "--benchmark-content")
+            return Benchmark.Run(args[1], false, 20, contentItems: int.Parse(args[2]));
         if (args.Length == 2 && args[0] == "--benchmark-popups")
             return Benchmark.Run(args[1], false);
         if (args.Length == 2 && args[0] == "--benchmark-first-popups")
