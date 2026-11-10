@@ -30,7 +30,7 @@ internal sealed class RibbonCustomizationGroupDialog : Form
         Label Label(string text) => new() { Text = text, AutoSize = true, Margin = new(0, 0, 0, S(4)) };
         body.Controls.Add(Label("Name:")); body.Controls.Add(nameFrame); body.Controls.Add(Label("Icon (from this ribbon's commands):")); body.Controls.Add(iconFrame); body.Controls.Add(Label("Group layout:")); body.Controls.Add(_layout);
         var ok = new RibbonOptionsAccentButton(ribbon) { Name = "AcceptGroup", Text = "OK", Size = new(S(86), height) };
-        var cancel = new Button { Name = "CancelGroup", Text = "Cancel", Size = ok.Size, DialogResult = DialogResult.Cancel, CausesValidation = false };
+        var cancel = new RibbonOptionsButton(ribbon) { Name = "CancelGroup", Text = "Cancel", Size = ok.Size, DialogResult = DialogResult.Cancel, CausesValidation = false };
         var footer = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, FlowDirection = FlowDirection.RightToLeft, Padding = new(S(12)), WrapContents = false }; footer.Controls.Add(cancel); footer.Controls.Add(ok);
         ok.Click += (_, _) =>
         {

@@ -11,6 +11,7 @@ internal sealed class RibbonMotionWindow : NativeWindow, IDisposable
     private nint _dc, _dib, _old;
     private Bitmap? _bitmap;
     private Graphics? _graphics;
+    private RibbonBackdropBuffer? _captionBuffer;
     private readonly ImageAttributes _alpha = new();
     private Rectangle _bounds;
     private readonly Control? _clipOwner;
@@ -44,6 +45,17 @@ internal sealed class RibbonMotionWindow : NativeWindow, IDisposable
         Prepare(bounds); _graphics!.Clear(Color.Transparent); _alpha.SetColorMatrix(new ColorMatrix { Matrix33 = (float)opacity });
         _graphics.DrawImage(image, new Rectangle(0, offset, image.Width, image.Height), 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, _alpha); Present();
     }
+    internal void RenderCaption(RibbonForm form, RibbonControl ribbon)
+    {
+        Prepare(form.RectangleToScreen(new(0, 0, form.ClientSize.Width, form.CaptionHeight)));
+        _graphics!.Clear(Color.Transparent);
+        // Composited theme text needs a real selected DIB/DC. A GDI+ image HDC
+        // can substitute its stock font when drawing the transparent caption.
+        (_captionBuffer ??= new()).Paint(_graphics, _bounds.Size, _bounds.Height, Color.Transparent,
+            graphics => form.PaintCaption(graphics, ribbon, composited: true, foregroundOnly: true), copyToDestination: false);
+        _graphics.DrawImageUnscaled(_captionBuffer.Image, Point.Empty);
+        Present();
+    }
     private void Prepare(Rectangle bounds) { if (_bitmap?.Size != bounds.Size) Allocate(bounds.Size); _bounds = bounds; }
     private void Present()
     {
@@ -67,6 +79,7 @@ internal sealed class RibbonMotionWindow : NativeWindow, IDisposable
     internal Rectangle Bounds => _bounds;
     private void ReleaseBuffer()
     {
+        _captionBuffer?.Dispose(); _captionBuffer = null;
         _graphics?.Dispose(); _graphics = null; _bitmap?.Dispose(); _bitmap = null;
         if (_old != 0) { SelectObject(_dc, _old); _old = 0; } if (_dib != 0) { DeleteObject(_dib); _dib = 0; } if (_dc != 0) { DeleteDC(_dc); _dc = 0; }
     }

@@ -33,6 +33,7 @@ public partial class MainForm
                 var preferences = ShowcasePreferences.FromJson(json);
                 ribbon.LayoutMode = preferences.LayoutMode;
                 ribbon.Density = preferences.Density;
+                ribbon.BuiltInTheme = preferences.BuiltInTheme;
                 ribbon.IsMinimized = preferences.IsMinimized;
                 ribbon.TabContentAnimation = preferences.TabContentAnimation;
                 document.WordWrap = preferences.WordWrap;
@@ -42,7 +43,7 @@ public partial class MainForm
                 level = preferences.AnimationLevel;
             }));
         }
-        finally { ribbon.AnimationLevel = level; _syncAnimationChoices?.Invoke(); }
+        finally { ribbon.AnimationLevel = level; _syncAnimationChoices?.Invoke(); _syncThemeChoices?.Invoke(); }
         if (_startupPlacement is { } placement)
         {
             StartPosition = FormStartPosition.Manual;
@@ -86,6 +87,7 @@ public partial class MainForm
     private ShowcasePreferences CapturePreferences() => new()
     {
         LayoutMode = ribbon.LayoutMode, Density = ribbon.Density, IsMinimized = ribbon.IsMinimized,
+        BuiltInTheme = ribbon.BuiltInTheme,
         AnimationLevel = ribbon.AnimationLevel, TabContentAnimation = ribbon.TabContentAnimation, WordWrap = document.WordWrap,
         Backdrop = Backdrop, TransparentBackstage = ribbon.Backstage.NavigationBackgroundOpacity < 1,
         Window = new(_normalWindowBounds.X, _normalWindowBounds.Y, _normalWindowBounds.Width, _normalWindowBounds.Height,

@@ -13,6 +13,12 @@ internal static class Program
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
+        if (args.Length == 2 && args[0] == "--check-theme-selector-hidden")
+        {
+            try { MainForm.CheckThemeSelectorHidden(args[1]); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
+            return;
+        }
         if (args.Length == 2 && args[0] == "--check-backdrop-preferences-hidden")
         {
             try { MainForm.CheckBackdropPreferencesHidden(args[1]); }

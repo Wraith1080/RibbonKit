@@ -98,8 +98,53 @@ internal static class Office2019ThemeCheck
         Capture(form, Path.Combine(output, scope + "-backstage.png"));
         ribbon.IsBackstageOpen = false; Pump(80);
         Require(page.Handle == pageHandle && page.Text == "Retained native Backstage page" && page.BackColor == Color.LemonChiffon, "Application page changed.");
+        if (integrated && backdrop == RibbonWindowBackdrop.None)
+        {
+            ribbon.BuiltInTheme = RibbonBuiltInTheme.Office2024Light;
+            ribbon.IsBackstageOpen = true; Pump(80);
+            Capture(form, Path.Combine(output, scope + "-2024-backstage-title.png"));
+            ribbon.IsBackstageOpen = false; Pump(80);
+            Require(page.Handle == pageHandle && page.Text == "Retained native Backstage page", "2024 Backstage replaced native page content.");
+            CheckReviewSurfaces(form, ribbon, renderer, output, scope);
+        }
         File.WriteAllText(Path.Combine(output, scope + ".json"), JsonSerializer.Serialize(new { dpi = ribbon.DeviceDpi, backdropRequested = backdrop.ToString(), backdropEffective = (form as RibbonForm)?.EffectiveBackdrop.ToString(), body = renderer.Body, editorHandle = editorHandle.ToInt64(), pageHandle = pageHandle.ToInt64() }));
         form.Close();
+    }
+
+    private static void CheckReviewSurfaces(Form form, RibbonControl ribbon, ProbeRenderer renderer, string output, string scope)
+    {
+        ribbon.BuiltInTheme = RibbonBuiltInTheme.Office2019Light;
+        for (int i = 0; i < 10; i++) ribbon.Tabs.Add(new RibbonTab { Text = "Overflow header " + i });
+        var collapsed = new RibbonGroup { Text = "Collapsed dropdown" };
+        for (int i = 0; i < 8; i++) collapsed.Items.Add(new RibbonButtonItem { Text = "Command " + i });
+        ribbon.Tabs[0].Groups.Add(collapsed);
+        ribbon.MessageBar.Items.Add(new RibbonMessage { Title = "Notice", Text = "Edge-to-edge message without side borders." });
+        form.ClientSize = new(650, 570); Pump(80);
+        Require(renderer.HeaderScroll.Width == renderer.HeaderScroll.Height, "Native header scroller did not match the tab height.");
+        Capture(form, Path.Combine(output, scope + "-review-header-message-groups.png"));
+        using (var dialog = new RibbonQuickAccessCustomizationForm(ribbon, "office2019-review"))
+        {
+            dialog.Show(form); Pump(80);
+            foreach (var options in dialog.Pages)
+            {
+                dialog.SelectedPage = options; Pump(40);
+                Capture(dialog, Path.Combine(output, scope + "-review-options-" + options.Name + ".png"));
+            }
+            ((Button)dialog.CancelButton!).PerformClick(); Pump(40);
+        }
+        ribbon.FileMenuMode = RibbonFileMenuMode.CommandMenu;
+        ribbon.FileMenu.Items.Add(new RibbonSplitButtonItem { Text = "Save As" });
+        form.WindowState = FormWindowState.Maximized; Pump(80);
+        ribbon.FileMenu.ShowDropDown(); Pump(80);
+        Require(ribbon.FileMenu.IsDropDownOpen, "Maximized Application Menu did not open.");
+        var popups = new List<ToolStripDropDown>();
+        EnumThreadWindows(GetCurrentThreadId(), (handle, _) =>
+        { if (Control.FromHandle(handle) is ToolStripDropDown { Visible: true } dropdown) popups.Add(dropdown); return true; }, 0);
+        var popup = popups.Single();
+        int expected = Math.Max(Screen.FromControl(form).WorkingArea.Left, ribbon.PointToScreen(renderer.FileButton.Location).X);
+        Require(popup.Left == expected, "Maximized Application Menu retained a left gutter.");
+        Capture(form, Path.Combine(output, scope + "-review-maximized-menu.png"));
+        ribbon.FileMenu.CloseDropDown(); Pump(40);
     }
 
     private static IEnumerable<Control> Descendants(Control parent)
@@ -128,7 +173,7 @@ internal static class Office2019ThemeCheck
         double a = Luminance(text.R, text.G, text.B), b = Luminance(tint.R * alpha + background.R * (1 - alpha), tint.G * alpha + background.G * (1 - alpha), tint.B * alpha + background.B * (1 - alpha));
         return (Math.Max(a, b) + .05) / (Math.Min(a, b) + .05);
     }
-    private static void Capture(Form form, string path)
+    internal static void Capture(Form form, string path)
     {
         for (int attempt = 0; attempt < 3 && !FixtureHasForeground(); attempt++)
         { form.Activate(); form.BringToFront(); SetForegroundWindow(form.Handle); Pump(100); }
@@ -141,9 +186,16 @@ internal static class Office2019ThemeCheck
     private static bool FixtureHasForeground() { GetWindowThreadProcessId(GetForegroundWindow(), out uint process); return process == Environment.ProcessId; }
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(nint window, out uint process);
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint window);
+    private delegate bool EnumWindow(nint window, nint state);
+    [DllImport("user32.dll")] private static extern bool EnumThreadWindows(uint threadId, EnumWindow callback, nint state);
+    [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
     private sealed class ProbeRenderer : RibbonOffice2024Renderer
     {
-        internal Rectangle Body; internal Color HeaderBackground, InactiveHeaderText;
+        internal Rectangle Body, HeaderScroll, FileButton; internal Color HeaderBackground, InactiveHeaderText;
+        public override void DrawScrollButton(RibbonPaintContext context, bool backward)
+        { if (context.Bounds.Bottom <= Body.Top) HeaderScroll = context.Bounds; base.DrawScrollButton(context, backward); }
+        public override void DrawFileButton(RibbonPaintContext context, RibbonDropDownItem menu)
+        { FileButton = context.Bounds; base.DrawFileButton(context, menu); }
         public override void DrawBody(RibbonPaintContext context) { Body = context.Bounds; base.DrawBody(context); }
         public override void DrawTab(RibbonPaintContext context, RibbonTab tab, bool selected)
         {

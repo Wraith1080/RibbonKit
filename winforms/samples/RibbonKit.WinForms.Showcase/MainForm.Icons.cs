@@ -33,7 +33,7 @@ public partial class MainForm
                 "Illustrations" => "group-illustrations", "Links" => "group-links", "Native editors" => "group-fields",
                 "Input states" => "group-input-states", "Editing actions" => "group-input-actions", "Show" => "group-show",
                 "Document view" or "Window" => "group-view", "More options" => "group-more", "Picture" => "group-picture",
-                "Galleries" => "group-galleries", "Application context" => "group-context", "Modal preview" => "group-preview",
+                "Galleries" or "Theme" => "group-galleries", "Application context" => "group-context", "Modal preview" => "group-preview",
                 "Input mode" => "group-input-mode", "Messages" => "group-messages", "Ribbon animation" => "animation-controls",
                 "Chart data" => "group-chart-data", "Chart context" => "group-chart-context", "Preview settings" => "group-preview-settings",
                 _ => throw new InvalidOperationException("Add an explicit group icon for " + group.Text)
@@ -51,6 +51,7 @@ public partial class MainForm
     }
     private static string IconName(RibbonItem item)
     {
+        if (item.Id.StartsWith("demo.theme", StringComparison.Ordinal)) return "page-color";
         if (item is RibbonTextBoxItem) return item.Text switch { "Name" => "name", "Read-only" => "read-only", "Unavailable" => "disabled-input", "Popup value" => "popup-value", "Copies" => "copies", "Series" => "series", _ => throw new InvalidOperationException("Missing field icon: " + item.Text) };
         if (item is RibbonComboBoxItem) return item.Text switch { "Font" => "font", "Zoom" => "zoom", "Unavailable" => "disabled-choice", "Choice" => "choice", "Type" => "chart-type", _ => throw new InvalidOperationException("Missing choice icon: " + item.Text) };
         return item.Text switch

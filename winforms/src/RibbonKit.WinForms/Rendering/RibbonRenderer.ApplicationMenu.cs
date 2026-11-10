@@ -108,7 +108,7 @@ public partial class RibbonRenderer
         if (footer || active)
         {
             Half(primary, item.Checked, false, selected: open); Half(dropDown, false, open, selected: false);
-            if (active)
+            if (active && primary.Theme.ApplicationMenuSplitDividerVisible)
             {
                 using var pen = new Pen(primary.Theme.Border);
                 primary.Graphics.DrawLine(pen, dropDown.Bounds.Left, whole.Bounds.Top + 1, dropDown.Bounds.Left, whole.Bounds.Bottom - 2);

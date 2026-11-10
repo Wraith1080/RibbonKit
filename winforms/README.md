@@ -141,6 +141,37 @@ active title-bar coloring extends across the tab band; reset restores grey.
 The selected tab stays white with dark text. Office 2024 remains the default.
 Custom values can start from `RibbonThemes.Office2019Light with { ... }`.
 
+The native Showcase offers **View > Theme** with Office 2019 Light, Office 2024
+Light and Application theme; the application saves that choice between sessions.
+The Designer Sample's `--office2019-theme-demo` starts with a neutral header and
+offers a working Toggle Backstage action that restores the original File routing.
+
+Shared per-ribbon settings also cover `CollapsedGroupBorder`,
+`ApplicationMenuSplitDividerVisible`, `OptionsButtonCornerRadius`,
+`MessageSideBordersVisible`, `HeaderScrollButtonsMatchTabHeight`,
+`HeaderScrollButtonWidth`, `HeaderScrollButtonBackground`,
+`HeaderScrollButtonBorder` and `ApplicationMenuWorkAreaInset`. The 2019 preset
+uses borderless collapsed groups, undivided menu splits, square library dialog
+buttons, messages with horizontal rules, tab-sized scrollers and zero File menu
+work-area clearance. Defaults preserve Office 2024 behavior. Explicit options
+button radii use the shared palette while retaining native button behavior;
+application-owned controls keep their own appearance.
+
+Office 2019 also uses WPF Classic-style Backstage: an accent rail, white navigation
+and monochrome icon silhouettes, full-width square state fills, a 220-logical-pixel
+Auto width starting point, and a flush page. Authored width constraints and native
+page content remain effective. Office 2024 retains its inset Modern layout below
+its separate title bar. Office 2019 enables `BackstageExtendsIntoTitleBar`: the
+live navbar/page panes extend to the top of `RibbonForm`, behind a transparent
+foreground containing the centered title and caption controls. Native page content
+stays clear of the caption controls. The Back button is circular.
+`BackstageTitleCentered` enables title centering for 2019; its default is false
+for 2024. Closing Backstage restores the normal caption and authored color.
+Navigation colors/state fills, icon masking/spacing, Auto width minimum, footer
+clearance and page border are shared `RibbonTheme.Backstage*` settings.
+Header scrollers retain tab-height-sized slots and visible `PopupBorder` borders;
+`HeaderScrollButtonBorder` remains independently configurable.
+
 KeyTip colors can be configured without a custom renderer:
 
 ```csharp
@@ -215,15 +246,24 @@ real popup/editors immediately and fades/slides an inert drawing away over
 None, system policy and update batches retain immediate dismissal; a new request,
 resize, movement, deactivation or disposal releases the outgoing drawing.
 
-The complete Backstage surface starts 85% visible and slides right into place;
-closing moves it 15% left before hiding it, using 220 ms for Subtle and 308 ms for
-Expressive. Navigation, page frame and live native pages travel together at their
-normal size. The integrated RibbonForm title-bar tint follows the same edge.
+The real Backstage panes slide and fade as one surface, starting 15% left of their
+settled location. `Theme.BackstageExtendsIntoTitleBar` chooses whether they extend
+behind the integrated caption's transparent foreground (Office 2019) or stay below
+the separate title bar (Office 2024). Their backgrounds are not duplicated by a
+separate caption color animation. `Theme.BackstageSlideDistanceRatio` chooses
+travel as a width fraction from 0 to 1: null uses 15%, zero explicitly requests
+fading without travel. Subtle uses 220 ms and Expressive 308 ms; None and reduced-
+motion policy remain immediate. When title centering is enabled, opening and
+closing place the title 75% toward its destination immediately, then slide the
+remaining 25% with the same duration and easing, without fading the title.
+`Theme.BackstageTitleSlideDistanceRatio` configures that animated fraction: null
+uses 25%, zero snaps, and one animates the entire distance. Resize, maximize and
+restore immediately remeasure and recenter the title without animation.
 The title-bar QAT is hidden throughout Backstage opening, display and closing;
 its authored visibility, placement and commands return when Backstage closes.
 TabRow and BelowRibbon QAT presentation is retained, including a TitleBar
 preference that currently falls back to TabRow. Caption buttons
-stay in place. Opening and closing also fade the surface and caption tint to
+stay in place above the real panes. Opening and closing also fade the surface to
 soften their appearance/disappearance. Page changes use the shared
 `TabContentAnimation`: Fade fades in the incoming native page body; SlideDown
 slides it down 8/12 logical pixels for Subtle/Expressive. Navigation, page frame
@@ -1509,13 +1549,14 @@ fallback remains opaque. Showcase exposes **Transparent Backstage** in its Backd
 menu when material is active; this option uses a fully clear rail background.
 Neither setting changes application window opacity.
 
-Solid and transparent/material Backstage use the same complete-surface slide.
-Native material layers repaint as the surface moves and fades so page fields remain
-visible. Moving pages discard clipped cached pixels to prevent a black edge strip.
-Reopening restores the open location; input and unsafe changes settle the motion.
-[Current Backstage motion and evidence](docs/M4I2-APPEARANCE-INVENTORY.md#whole-surface-backstage-and-caption-slide--2026-10-30).
+Solid and material Backstage share the full-surface slide/fade policy. Native
+material layers retain page fields throughout motion. Explicitly sliding pages
+discard clipped cached pixels to prevent a black edge strip. Reopening restores
+the open location; input and unsafe changes settle the motion. See the
+[current theme-specific caption and title-motion evidence](docs/THEMES-PLAN.md#theme-specific-title-bars-and-short-title-slide--2026-11-10)
+and [earlier slide implementation](docs/M4I2-APPEARANCE-INVENTORY.md#whole-surface-backstage-and-caption-slide--2026-10-30).
 
-Solid Office Backstage pages sit flush below the title bar with a thin grey top/
+Solid Office 2024 Backstage pages sit flush below the title bar with a thin grey top/
 left `Border` and only their top-left corner rounded. There is no reserved grey
 shadow band. `GetBackstagePageBorderWidth` and `GetBackstagePageCornerRadius` share
 the frame dimensions with the native page clip; other corners stay square.
@@ -1523,11 +1564,11 @@ Material mode keeps the soft left/top shadow and six-logical-pixel clearance,
 using `BodyShadowColor` and `GetBackstagePageShadowInset`. Neutral stays flat.
 The page frame does not paint into the caption or add a bottom/right edge.
 
-While Backstage is open, the integrated `RibbonForm` title bar matches its
-navigation background, including the navigation-opacity preference over material.
-The tint slides with Backstage while the title-bar QAT is hidden. Closing uncovers the normal
-caption background and restores that QAT without changing the authored theme,
-toolbar preferences or window style.
+Office 2019's real navigation/page backgrounds continue behind the transparent
+`RibbonForm` caption, including navigation opacity over material. Office 2024 keeps
+its ordinary title bar above Backstage. The title-bar QAT is hidden while Backstage
+is open and returns on closing, preserving its authored theme, toolbar preferences
+and window style.
 
 Custom renderers receive a transparent paint-time `Theme.Background` for the material
 surrounding ribbon background without changing `ribbon.Theme` or `Theme.Surface`.

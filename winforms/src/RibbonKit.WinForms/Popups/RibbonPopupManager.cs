@@ -164,7 +164,7 @@ internal sealed class RibbonPopupManager : IDisposable
             if (!surface.HasCustomContent || window.IsDisposed) return;
             host.Size = surface.Size;
             var next = CalculateBounds(placementAnchor, work, new(surface.Width + 2, surface.Height + 2),
-                contextPoint is null && opener is RibbonPopupSurface, _ribbon.DeviceDpi);
+                contextPoint is null && opener is RibbonPopupSurface, _ribbon.DeviceDpi, surface.IsApplicationMenu ? _ribbon.Theme.ApplicationMenuWorkAreaInset : null);
             window.Bounds = next;
         };
         var session = new Session(owner, menuSource, opener, anchor, window, surface);
@@ -172,7 +172,7 @@ internal sealed class RibbonPopupManager : IDisposable
         if (surface.GroupSource is not null) _ribbon.RefreshBorrowedGroupPresentation();
         window.Closed += (_, _) => { if (_sessions.Contains(session)) Close(owner, false); };
         bool submenu = contextPoint is null && opener is RibbonPopupSurface parentSurface && (parentSurface.MenuSource is not null || parentSurface.OwnerElement is RibbonQuickAccessOverflow);
-        var bounds = owner is RibbonTab ? CalculateTabBounds(placementAnchor, work, window.Size) : CalculateBounds(placementAnchor, work, window.Size, submenu, _ribbon.DeviceDpi);
+        var bounds = owner is RibbonTab ? CalculateTabBounds(placementAnchor, work, window.Size) : CalculateBounds(placementAnchor, work, window.Size, submenu, _ribbon.DeviceDpi, surface.IsApplicationMenu ? _ribbon.Theme.ApplicationMenuWorkAreaInset : null);
         if (bounds.Size != window.Size)
         {
             window.Size = bounds.Size;
@@ -203,9 +203,10 @@ internal sealed class RibbonPopupManager : IDisposable
         RibbonQuickAccessGroupReference group => RibbonQuickAccess.Available(group) && ReferenceEquals(group.Source, groupSource),
         _ => true
     };
-    internal static Rectangle CalculateBounds(Rectangle anchor, Rectangle work, Size size, bool submenu, int dpi)
+    internal static Rectangle CalculateBounds(Rectangle anchor, Rectangle work, Size size, bool submenu, int dpi, int? workAreaInset = null)
     {
-        int inset = RibbonLayoutEngine.Scale(8, dpi), rowPadding = RibbonLayoutEngine.Scale(4, dpi);
+        int inset = RibbonLayoutEngine.Scale(workAreaInset ?? 8, dpi), rowPadding = RibbonLayoutEngine.Scale(4, dpi);
+        if (workAreaInset is not null) inset = Math.Min(inset, Math.Max(0, (Math.Min(work.Width, work.Height) - 1) / 2));
         if (work.Width > 2 * inset && work.Height > 2 * inset) work.Inflate(-inset, -inset);
         size = new(Math.Max(1, Math.Min(size.Width, work.Width)), Math.Max(1, Math.Min(size.Height, work.Height)));
         // The row is inset by the menu padding and the one-device-pixel frame.

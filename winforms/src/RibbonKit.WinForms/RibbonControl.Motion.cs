@@ -47,7 +47,7 @@ public partial class RibbonControl
     public RibbonAnimationLevel AnimationLevel
     {
         get => _animationLevel;
-        set { VerifyAccess(); if (!Enum.IsDefined(value)) throw new ArgumentOutOfRangeException(nameof(value)); if (_animationLevel == value) return; _groupMotion?.Settle(); _motion?.Settle(); _popups?.SettleMotion(); _backstageSurface?.SettlePageMotion(); _backstageMotion?.Dispose(); _animationLevel = value; }
+        set { VerifyAccess(); if (!Enum.IsDefined(value)) throw new ArgumentOutOfRangeException(nameof(value)); if (_animationLevel == value) return; _groupMotion?.Settle(); _motion?.Settle(); _popups?.SettleMotion(); _backstageSurface?.SettlePageMotion(); _backstageMotion?.Dispose(); _animationLevel = value; WindowHost?.SnapCaptionTitle(); }
     }
     /// <summary>Gets or sets Fade or SlideDown for expanded tab content, arriving tab headers, group collapse/restore and live Backstage page changes. Groups slide horizontally in the collapse/restore direction. Changing this application-owned preference settles active content motion; AnimationLevel.None and the system policy still produce immediate changes. Backstage native content remains live and is never captured.</summary>
     [Category("Appearance"), DefaultValue(RibbonTabContentAnimation.Fade)]
@@ -58,8 +58,8 @@ public partial class RibbonControl
     }
     /// <summary>Gets whether geometry, group, message-panel, popup or Backstage motion is active. Animated Backstage closing retains visibility until completion; geometry and message drawings follow committed layout.</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public bool IsAnimating => _groupMotion?.IsRunning == true || _motion?.IsRunning == true || _popups.IsAnimating || _backstageMotion?.IsRunning == true || _backstageSurface?.IsPageAnimating == true;
-    internal void SettleMotion() { if (_groupMotion is { Changing: false }) _groupMotion.Settle(); if (_motion is { Changing: false }) _motion.Settle(); _popups?.SettleMotion(); _backstageSurface?.SettlePageMotion(); _backstageMotion?.Dispose(); }
+    public bool IsAnimating => _groupMotion?.IsRunning == true || _motion?.IsRunning == true || _popups.IsAnimating || _backstageMotion?.IsRunning == true || _backstageSurface?.IsPageAnimating == true || WindowHost?.IsCaptionTitleAnimating == true;
+    internal void SettleMotion() { if (_groupMotion is { Changing: false }) _groupMotion.Settle(); if (_motion is { Changing: false }) _motion.Settle(); _popups?.SettleMotion(); _backstageSurface?.SettlePageMotion(); _backstageMotion?.Dispose(); WindowHost?.SnapCaptionTitle(); }
     internal bool ObserveMotionInput(ref Message message) { _groupMotion?.ObserveInput(ref message); _motion?.ObserveInput(ref message); _popups.ObserveMotionInput(ref message); _backstageSurface?.ObservePageMotionInput(ref message); return _backstageMotion?.ObserveInput(ref message) ?? false; }
     internal bool MotionBottomConnected => MessageBar.HasOpenMessages && MessageTopConnected;
 }

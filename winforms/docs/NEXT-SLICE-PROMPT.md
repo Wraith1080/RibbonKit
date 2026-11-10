@@ -2,7 +2,15 @@
 
 Updated **2026-11-10**. The [native themes plan](THEMES-PLAN.md) owns the selected
 first theme, proposed contract, implementation slices and future acceptance.
-**Implementation is delivered for user review; dark variants remain deferred.**
+**The review fixes, demo Backstage toggle, native Showcase selector and WPF-style
+Office 2019 Backstage are implemented. Scroller borders are restored at tab-header
+size. Office 2019 Backstage extends its real navigation/page backgrounds behind
+a transparent caption with a centered title. Office 2024 keeps its separate title
+bar above Backstage. Both use a circular Back button. The user rejected
+fade-in-place; pane travel is shared through `BackstageSlideDistanceRatio`.
+The 2019 title is placed 75% toward its destination, then slides the remaining
+25% without fading on open/close. Resize centering is immediate.
+User appearance review remains pending; dark variants remain deferred.**
 
 Workspace: `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
@@ -30,10 +38,24 @@ identity and results are recorded once in the themes plan.
    and popup borders/shadows. Try both densities/layouts and narrow widths.
 4. Open existing galleries/Backstage and check retained native content. In actual
    VS, separately review selection, previews, Save/reopen and Undo/Redo.
+5. Check the reported collapsed-group border, split-row divider, square dialog
+   buttons, message sides, full-height header scrollers and maximized File menu.
+   Toggle Backstage must open and close, then restore File's Application Menu.
+6. In the native Showcase, use View > Theme and restart to check the saved choice.
+7. Compare the 2019 accent rail, full-width square selections, white icons and
+   flush page with the 2024 inset layout. Only 2019's pane backgrounds continue
+   into the title bar, behind a transparent foreground. Office 2024 must retain
+   its own title bar above Backstage, including after switching from 2019.
+   Check the circular Back button, caption drag/buttons and native page editing.
+8. In 2019, opening/closing should place the title 75% toward its destination,
+   then slide the remaining 25% without fading. Resize/maximize/restore must
+   recenter immediately. None/reduced-motion remains immediate.
 
 Record confirmation in the themes plan's existing review row. Do not refresh the
 package or repeat builds/tests for a routine acceptance. Further theme families
 require a later bounded instruction after this review.
+The user explicitly requested relevant tests only to conserve usage. The broad
+correction run was stopped; do not restart it or expand testing without a request.
 
 ## Preserved boundaries
 

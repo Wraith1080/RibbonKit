@@ -9,18 +9,27 @@ public partial class RibbonRenderer
     /// <summary>Gets whether message frames use body margins and connect to its/QAT's lower edge. Neutral rendering keeps a separate full-width stack.</summary>
     public virtual bool JoinMessageBarToBody => false;
     /// <summary>Paints the measured message stack frame; IsTopEdgeConnected distinguishes attached from standalone presentations.</summary>
-    public virtual void DrawMessageBar(RibbonPaintContext context) => PaintRounded(context, 0, context.Theme.MessageBackground, context.Theme.MessageBorder);
+    public virtual void DrawMessageBar(RibbonPaintContext context) => PaintMessageFrame(context, 0);
+    internal void PaintMessageFrame(RibbonPaintContext context, int radius)
+    {
+        if (context.Theme.MessageSideBordersVisible) { PaintRounded(context, radius, context.Theme.MessageBackground, context.Theme.MessageBorder); return; }
+        PaintRounded(context, radius, context.Theme.MessageBackground, Color.Transparent, 0);
+        using var border = new SolidBrush(context.Theme.MessageBorder);
+        if (!context.IsTopEdgeConnected) context.Graphics.FillRectangle(border, context.Bounds.Left, context.Bounds.Top, context.Bounds.Width, 1);
+        if (!context.IsBottomEdgeConnected && context.Bounds.Height > 0) context.Graphics.FillRectangle(border, context.Bounds.Left, context.Bounds.Bottom - 1, context.Bounds.Width, 1);
+    }
     /// <summary>Paints a message's library-measured title/body/icon slots and optional row separator. Action and close targets have separate callbacks.</summary>
     public virtual void DrawMessage(RibbonPaintContext context, RibbonMessage message, Rectangle titleBounds, Rectangle textBounds, Rectangle iconBounds, bool first)
     {
         var saved = context.Graphics.Save();
         try
         {
-            context.Graphics.SetClip(new Rectangle(context.Bounds.Left + 1, context.Bounds.Top, Math.Max(0, context.Bounds.Width - 2), Math.Max(0, context.Bounds.Height - 1)), CombineMode.Intersect);
+            int inset = context.Theme.MessageSideBordersVisible ? 1 : 0;
+            context.Graphics.SetClip(new Rectangle(context.Bounds.Left + inset, context.Bounds.Top, Math.Max(0, context.Bounds.Width - 2 * inset), Math.Max(0, context.Bounds.Height - 1)), CombineMode.Intersect);
             if (!first)
             {
                 using var border = new SolidBrush(context.Theme.MessageBorder);
-                context.Graphics.FillRectangle(border, context.Bounds.Left + 1, context.Bounds.Top, Math.Max(0, context.Bounds.Width - 2), 1);
+                context.Graphics.FillRectangle(border, context.Bounds.Left + inset, context.Bounds.Top, Math.Max(0, context.Bounds.Width - 2 * inset), 1);
             }
             var color = message.EffectiveEnabled ? context.Theme.MessageForeground : context.Theme.DisabledColor;
             if (!titleBounds.IsEmpty)

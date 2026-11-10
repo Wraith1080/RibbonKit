@@ -57,6 +57,7 @@ public partial class MainForm : RibbonForm
         InitializeSimplified();
         InitializeAnimation();
         InitializeBackdrops();
+        InitializeThemes();
         InitializeCustomization();
         InitializeCommandIcons();
         document.AppendText("\r\n\r\nView > Chart contains the three chart context actions. Chart context adds a source-owned Chart Design tab and a Chart context group on Home. Switch the context off and on to retain its fields and bindings. Application activation drives merging; moving keyboard focus does not.");

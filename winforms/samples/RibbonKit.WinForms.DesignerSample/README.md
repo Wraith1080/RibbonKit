@@ -3,10 +3,23 @@
 Launch the normal Debug sample with `--office2019-theme-demo` for the light-theme
 comparison. **Office 2019 Light** provides 2019/2024/Application/custom choices,
 blue/neutral title bars, Mouse/Touch, Classic/Simplified, inner-padding and popup-
-shadow examples, a nested popup and existing Backstage pages. Normal startup and
+shadow examples, a nested popup and existing Backstage pages. The demo starts
+with a neutral header; Toggle Backstage temporarily selects Backstage routing
+and restores the original File mode after closing. Normal startup and
 authored Forms/resources remain intact. `--verify-office2019-theme <output>` runs
 the public-package native switching/ownership/composed-capture check. See the
 [themes plan](../../docs/THEMES-PLAN.md) for scope, evidence and remaining review.
+`--verify-office2019-review-demo <output>` checks neutral startup, the toggle,
+canceled opening/closing, restored File routing and retained page identity.
+`--verify-backstage-sync <output>` checks actual opening/closing screen frames for
+both light themes, 2019 caption/pane edge alignment, 2024's separate title bar and
+retained native pages. It uses isolated forms, guards foreground ownership and
+writes PNG/JSON evidence. Office 2019 slides full-height panes behind a transparent
+caption; Office 2024 stays below its own title bar. The probe requires actual travel.
+`Theme.BackstageExtendsIntoTitleBar` and `Theme.BackstageSlideDistanceRatio` configure
+the pane boundary and travel. The 2019 title moves 75% immediately, then slides the
+remaining 25% without fade; `BackstageTitleSlideDistanceRatio` configures that final
+fraction. Resize/maximize/restore centering is immediate.
 
 The focused tab-header clipping check is `--verify-tab-header-clipping <output>`.
 It uses public paint callbacks and local scroll-button messages across 24 native

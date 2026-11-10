@@ -46,6 +46,16 @@ public partial class RibbonRenderer : IDisposable
         => DrawBodyScrollButton(context, backward);
     internal void DrawBodyScrollButton(RibbonPaintContext context, bool backward)
     {
+        if (!context.IsBodyScrollButton && (context.Theme.HeaderScrollButtonsMatchTabHeight || context.Theme.HeaderScrollButtonWidth is not null
+            || context.Theme.HeaderScrollButtonBackground is not null || !context.Theme.HeaderScrollButtonBorder.IsEmpty))
+        {
+            var fill = context.Pressed ? context.Theme.HeaderPressed ?? context.Theme.Pressed : context.Hot ? context.Theme.HeaderHover ?? context.Theme.Hover
+                : context.Theme.HeaderScrollButtonBackground ?? new(context.Theme.Surface);
+            var border = context.Theme.HeaderScrollButtonBorder.IsEmpty ? context.Theme.PopupBorder : context.Theme.HeaderScrollButtonBorder;
+            PaintRounded(context, 0, fill, border, border.A == 0 ? 0 : 1);
+            RibbonArrowPainter.DrawHorizontal(context.Graphics, context.Bounds, context.DeviceDpi, context.Theme.Foreground, backward);
+            return;
+        }
         DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.BodyFill,
             context.Hot || context.Pressed ? context.Theme.Accent : context.Theme.PopupBorder);
         RibbonArrowPainter.DrawHorizontal(context.Graphics, context.Bounds, context.DeviceDpi, context.Theme.Foreground, backward);
@@ -352,7 +362,7 @@ public partial class RibbonRenderer : IDisposable
         if (context.IsSimplifiedGroup)
         {
             bool open = group.Ribbon?.Popups.BorrowsGroup(group) == true;
-            if (open || context.Hot || context.Pressed) DrawChrome(context, open || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, context.Theme.Border);
+            if (open || context.Hot || context.Pressed) DrawChrome(context, open || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, context.Theme.CollapsedGroupBorder.IsEmpty ? context.Theme.Border : context.Theme.CollapsedGroupBorder);
             int S(int n) => RibbonLayoutEngine.Scale(n, context.DeviceDpi);
             var color = group.EffectiveEnabled ? context.Theme.Foreground : context.Theme.DisabledColor;
             int groupInset = Math.Min(S(new RibbonChromeMetrics(context.Theme, context.Density).GroupPadding()), context.Bounds.Width / 2);
@@ -370,7 +380,7 @@ public partial class RibbonRenderer : IDisposable
         {
             bool open = group.EffectiveEnabled && group.Ribbon?.Popups.IsExpanded(group) == true;
             if (open || context.Hot || context.Pressed)
-                DrawChrome(context, open || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, context.Theme.Border);
+                DrawChrome(context, open || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, context.Theme.CollapsedGroupBorder.IsEmpty ? context.Theme.Border : context.Theme.CollapsedGroupBorder);
             int inset = RibbonLayoutEngine.Scale(RibbonLayoutEngine.CollapsedGroupCaptionInset, context.DeviceDpi);
             var bounds = Rectangle.Inflate(context.Bounds, -inset, -inset);
             var flags = TextFormatFlags.HorizontalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding;

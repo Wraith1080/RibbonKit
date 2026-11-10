@@ -173,7 +173,7 @@ public sealed class Office2019ThemeTests
         g.Clear(Color.Magenta); painter.DrawItem(context with { ApplicationMenuPart = RibbonApplicationMenuPart.Footer }, new RibbonButtonItem(), RibbonItemSize.Medium, true);
         Assert.Equal(theme.PopupBorder.ToArgb(), image.GetPixel(11, 11).ToArgb());
         g.Clear(Color.Magenta); painter.DrawBackstageEntry(context, null, false);
-        // The Back control has its own square frame, centered in the wider row.
+        // The circular Back control is centered in the wider row.
         int side = Math.Min(bounds.Width, bounds.Height) - 2 * RibbonLayoutEngine.Scale(2, context.DeviceDpi);
         int left = bounds.Left + (bounds.Width - side) / 2, top = bounds.Top + (bounds.Height - side) / 2;
         Assert.NotEqual(Color.Magenta.ToArgb(), image.GetPixel(left, top).ToArgb());

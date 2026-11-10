@@ -20,13 +20,13 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     /// <inheritdoc />
     public override int GetBackstagePageShadowInset(RibbonTheme theme, int deviceDpi) => 0;
     /// <inheritdoc />
-    public override int GetBackstagePageBorderWidth(RibbonTheme theme, int deviceDpi) => 1;
+    public override int GetBackstagePageBorderWidth(RibbonTheme theme, int deviceDpi) => theme.BackstagePageBorderWidth is { } width ? Layout.RibbonLayoutEngine.Scale(width, deviceDpi) : 1;
     /// <inheritdoc />
     public override int GetBackstagePageCornerRadius(RibbonTheme theme, int deviceDpi) => Layout.RibbonLayoutEngine.Scale(theme.BackstagePageCornerRadius ?? 2d * theme.CornerRadius, deviceDpi);
     /// <inheritdoc />
     public override void DrawBackstageBackground(RibbonPaintContext context, int navigationWidth)
     {
-        using var rail = new SolidBrush(context.Theme.BackstageNavigationBackground);
+        using var rail = new SolidBrush(context.Theme.BackstageNavigationColor);
         context.Graphics.FillRectangle(rail, context.Bounds);
         int width = Math.Clamp(navigationWidth, 0, context.Bounds.Width);
         var page = new Rectangle(context.Bounds.Left + width, context.Bounds.Top, context.Bounds.Width - width, context.Bounds.Height);
@@ -72,7 +72,7 @@ public class RibbonOffice2024Renderer : RibbonRenderer
             context.Graphics.SetClip(context.Bounds, System.Drawing.Drawing2D.CombineMode.Intersect);
             var bounds = context.Bounds;
             if (context.IsTopEdgeConnected) { bounds.Y--; bounds.Height++; }
-            PaintRounded(context with { Bounds = bounds }, radius, context.Theme.MessageBackground, context.Theme.MessageBorder);
+            PaintMessageFrame(context with { Bounds = bounds }, radius);
         }
         finally { context.Graphics.Restore(saved); }
     }

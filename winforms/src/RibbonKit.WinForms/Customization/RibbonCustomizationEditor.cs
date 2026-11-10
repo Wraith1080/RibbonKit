@@ -93,7 +93,7 @@ public sealed class RibbonCustomizationEditor : UserControl
         catch (ArgumentException e) when (version == Session.ApplyVersion) { Status(e.Message); return false; }
     }
     private void Status(string text) { _status.Text = text; _status.Visible = text.Length > 0; }
-    private static Button Button(string name, string text, Action click) { var b = new Button { Name = name, Text = text, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, UseVisualStyleBackColor = true }; b.Click += (_, _) => click(); return b; }
+    private Button Button(string name, string text, Action click) { var b = new RibbonOptionsButton(_ribbon) { Name = name, Text = text, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, UseVisualStyleBackColor = true }; b.Click += (_, _) => click(); return b; }
     private RibbonOptionsFrame Frame(string name, Control child, DockStyle dock) { var frame = new RibbonOptionsFrame(_ribbon) { Name = name, Dock = dock, Margin = Padding.Empty }; frame.Controls.Add(child); return frame; }
     private static FlowLayoutPanel Flow(bool vertical, params Control[] buttons)
     { var flow = new FlowLayoutPanel { AutoSize = true, Anchor = AnchorStyles.None, FlowDirection = vertical ? FlowDirection.TopDown : FlowDirection.LeftToRight, WrapContents = false, Margin = Padding.Empty }; flow.Controls.AddRange(buttons); return flow; }
@@ -224,7 +224,7 @@ public sealed class RibbonCustomizationEditor : UserControl
         content.Controls.Add(new Label { Text = "Display name:", AutoSize = true }); content.Controls.Add(name);
         if (selected.Data is RibbonCustomizationCommand) content.Controls.Add(size);
         var ok = new RibbonOptionsAccentButton(_ribbon) { Text = "OK", Width = ScaleLogical(82), Height = height };
-        var cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = ScaleLogical(82), Height = height };
+        var cancel = new RibbonOptionsButton(_ribbon) { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = ScaleLogical(82), Height = height };
         var footer = Flow(false, ok, cancel); footer.Dock = DockStyle.Bottom; footer.Padding = new(gap); dialog.Controls.Add(content); dialog.Controls.Add(footer); dialog.AcceptButton = ok; dialog.CancelButton = cancel;
         ok.Click += (_, _) => { if (!string.IsNullOrWhiteSpace(name.Text)) dialog.DialogResult = DialogResult.OK; else name.Focus(); };
         if (dialog.ShowDialog(FindForm()) != DialogResult.OK) return;

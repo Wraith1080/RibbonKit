@@ -51,7 +51,7 @@ public sealed partial class RibbonSimplifiedCustomizationEditor
         var text = new TextBox { Name = "SimplifiedDisplayName", AccessibleName = "Display name", Text = current, MaxLength = 512, Dock = DockStyle.Top, Margin = new(gap) };
         var label = new Label { Text = "Display name:", AutoSize = true, Dock = DockStyle.Top, Padding = new(0, 0, 0, gap) };
         var body = new Panel { Dock = DockStyle.Fill, Padding = new(gap) }; body.Controls.Add(text); body.Controls.Add(label);
-        var ok = new RibbonOptionsAccentButton(_ribbon) { Text = "OK", Size = new(S(86), height) }; var cancel = new Button { Text = "Cancel", Size = new(S(86), height), DialogResult = DialogResult.Cancel, CausesValidation = false };
+        var ok = new RibbonOptionsAccentButton(_ribbon) { Text = "OK", Size = new(S(86), height) }; var cancel = new RibbonOptionsButton(_ribbon) { Text = "Cancel", Size = new(S(86), height), DialogResult = DialogResult.Cancel, CausesValidation = false };
         ok.Click += (_, _) => { if (!string.IsNullOrWhiteSpace(text.Text)) dialog.DialogResult = DialogResult.OK; else text.Focus(); };
         var footer = Flow(false, ok, cancel); footer.Dock = DockStyle.Bottom; footer.Padding = new(gap); dialog.Controls.Add(body); dialog.Controls.Add(footer); dialog.AcceptButton = ok; dialog.CancelButton = cancel;
         return dialog.ShowDialog(FindForm()) == DialogResult.OK ? text.Text.Trim() : null;

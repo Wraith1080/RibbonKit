@@ -16,7 +16,17 @@ public partial class RibbonControl
     private bool _backstageClosing;
     private bool _backstageContentInitialized, _initializingBackstageContent;
     private RibbonBackstageMotion? _backstageMotion;
+    private RibbonMotionWindow? _backstageCaption;
     internal RibbonBackstageMotion? BackstageOpeningMotion => _backstageMotion;
+    internal bool HasFullHeightBackstage => HasWindowCaption && Theme.BackstageExtendsIntoTitleBar;
+    internal bool HasBackstageCaption => HasFullHeightBackstage && (IsBackstageOpen || WindowHost?.IsCaptionTitleAnimating == true);
+    internal Bitmap? CaptureBackstageCaption() => _backstageCaption?.CaptureFrame();
+    internal void UpdateBackstageCaption()
+    {
+        if (!HasBackstageCaption || _disposing || IsDisposed || WindowHost is not { IsDisposed: false, Disposing: false } host)
+        { _backstageCaption?.Dispose(); _backstageCaption = null; return; }
+        (_backstageCaption ??= new RibbonMotionWindow(host, clipToOwner: true)).RenderCaption(host, this);
+    }
 
     /// <summary>Gets the stable owned Backstage declaration. Explicit page Content remains application-owned; optional ContentType instances are page-owned.</summary>
     [Category("Data"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
@@ -39,7 +49,7 @@ public partial class RibbonControl
     }
     /// <summary>Occurs after FileMenuMode changes.</summary>
     public event EventHandler? FileMenuModeChanged;
-    /// <summary>Gets or requests Backstage visibility. AnimationLevel slides the complete native surface and integrated caption tint. An accepted animated close retains true until its slide completes; Closing/validation cancellation keeps it open. Command, mode and modal transitions close immediately. The selected ribbon tab and minimized state are retained.</summary>
+    /// <summary>Gets or requests Backstage visibility. AnimationLevel slides/fades the live panes; Theme.BackstageExtendsIntoTitleBar chooses whether they extend behind an integrated transparent caption, and Theme.BackstageSlideDistanceRatio controls travel. An accepted animated close retains true until motion completes; Closing/validation cancellation keeps it open. Command, mode and modal transitions close immediately. The selected ribbon tab and minimized state are retained.</summary>
     [Category("Behavior"), Bindable(true), DefaultValue(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool IsBackstageOpen
     {
@@ -49,9 +59,9 @@ public partial class RibbonControl
     /// <summary>Occurs after Backstage visibility changes, including forced teardown.</summary>
     public event EventHandler? IsBackstageOpenChanged;
     internal RibbonBackstageSurface? BackstageSurface => _backstageSurface;
-    private static Rectangle BackstageHostBounds(Form form)
+    private Rectangle BackstageHostBounds(Form form)
     {
-        int caption = form is RibbonForm { CustomCaption: true } window ? window.CaptionHeight : 0;
+        int caption = !HasFullHeightBackstage && form is RibbonForm { CustomCaption: true } window ? window.CaptionHeight : 0;
         return new(0, caption, form.ClientSize.Width, Math.Max(0, form.ClientSize.Height - caption));
     }
     private bool CanShowBackstage => !_disposing && !IsDisposed && !IsInDesignMode && !IsModal && Visible && Enabled
@@ -61,7 +71,8 @@ public partial class RibbonControl
     {
         if (_backstageClosing)
         {
-            _backstageClosing = false; var closing = _backstageMotion; _backstageMotion = null; closing?.Cancel(); return;
+            _backstageClosing = false; var closing = _backstageMotion; _backstageMotion = null; closing?.Cancel();
+            WindowHost?.BeginBackstageTitle(this, opening: true); UpdateBackstageCaption(); return;
         }
         if (_backstageOpen || _backstageChanging || !CanShowBackstage || FindForm() is not { Visible: true, IsDisposed: false } form) return;
         if (!_editors.CommitFocused()) return;
@@ -96,11 +107,13 @@ public partial class RibbonControl
             _backstageMotion?.Dispose();
             _backstageMotion = RibbonBackstageMotion.Prepare(this, _backstageSurface, form);
             if (_backstageMotion is { } opening) { opening.HoldBackground(openingBackground); openingBackground = null; }
+            WindowHost?.BeginBackstageTitle(this, opening: true);
             _backstageOpen = true;
             _layoutDirty = true; // Suppress title-bar QAT presentation without changing its preference or host height.
             _backstageSurface.Visible = true;
             _backstageSurface.BringToFront();
             _backstageSurface.FocusInitial(tips);
+            UpdateBackstageCaption();
             _backstageMotion?.Start();
             Invalidate();
             IsBackstageOpenChanged?.Invoke(this, EventArgs.Empty);
@@ -112,6 +125,7 @@ public partial class RibbonControl
     private void BackstageHostResized(object? sender, EventArgs e)
     {
         if (_backstageSurface is { IsDisposed: false } surface && _backstageForm is { } form) surface.Bounds = BackstageHostBounds(form);
+        WindowHost?.SnapCaptionTitle();
     }
     internal bool ValidateBackstagePage() => !IsBackstageOpen || _backstageSurface?.ValidatePage() != false;
     private bool CloseBackstage(bool restoreFocus, bool force = false, bool animate = true)
@@ -128,17 +142,18 @@ public partial class RibbonControl
             if (!force && (!ValidateBackstagePage() || !Backstage.CanClose())) return false;
             if (!_backstageOpen) return true; // A callback may force teardown.
             bool hadFocus = FindForm()?.ContainsFocus == true;
+            WindowHost?.BeginBackstageTitle(this, opening: false, allowMotion: !force && animate);
             if (!force && animate && _backstageSurface is { IsDisposed: false } closingSurface && _backstageForm is { } form)
             {
                 _backstageMotion = RibbonBackstageMotion.Prepare(this, closingSurface, form, true, () => FinishBackstageClose(restoreFocus, hadFocus));
                 if (_backstageMotion is not null) { _backstageClosing = true; _backstageMotion.Start(); return true; }
             }
-            FinishBackstageClose(restoreFocus, hadFocus);
+            FinishBackstageClose(restoreFocus, hadFocus, animateTitle: !force && animate);
             return true;
         }
         finally { _backstageChanging = changing; }
     }
-    private void FinishBackstageClose(bool restoreFocus, bool hadFocus)
+    private void FinishBackstageClose(bool restoreFocus, bool hadFocus, bool animateTitle = true)
     {
         if (!_backstageOpen) return;
         bool changing = _backstageChanging; _backstageChanging = true;
@@ -146,6 +161,8 @@ public partial class RibbonControl
         {
             _backstageClosing = false; _backstageMotion = null; _backstageOpen = false;
             _layoutDirty = true;
+            WindowHost?.RetargetClosedTitle(this, animateTitle);
+            UpdateBackstageCaption();
             if (_backstageSurface is { IsDisposed: false } surface) { surface.HideKeyTips(); surface.Visible = false; }
             if (restoreFocus && !_disposing && hadFocus && FindForm() is { Disposing: false, IsDisposed: false, ContainsFocus: true })
             {
@@ -187,6 +204,8 @@ public partial class RibbonControl
     {
         _backstageMotion?.Dispose(); _backstageMotion = null;
         CloseBackstage(false, true);
+        WindowHost?.SnapCaptionTitle();
+        _backstageCaption?.Dispose(); _backstageCaption = null;
         if (_backstageForm is { } form) form.ClientSizeChanged -= BackstageHostResized;
         _backstageForm = null;
         var surface = _backstageSurface;

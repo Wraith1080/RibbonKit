@@ -43,26 +43,27 @@ public partial class RibbonControl
         }
         return chrome ? _headerChromeTheme! : _headerTheme!;
     }
-    internal Color CaptionBackground(bool composited) => IsBackstageOpen
-        ? Color.FromArgb((int)Math.Round((HasWindowBackdrop ? Backstage.NavigationBackgroundOpacity : 1) *
-            (_backstageMotion is { IsRunning: true } motion ? motion.Opacity : 255)), Theme.BackstageNavigationBackground)
-        : WindowHost?.CaptionColor(Theme, composited) ?? (composited ? Color.Transparent : Theme.Background);
-    internal Rectangle CaptionOverlayBounds => IsBackstageOpen
-        ? new(0, 0, _backstageMotion is { IsRunning: true } motion ? motion.VisibleWidth : Width, WindowCaptionHeight) : Rectangle.Empty;
+    internal Color CaptionBackground(bool composited) => WindowHost?.CaptionColor(Theme, composited) ?? (composited ? Color.Transparent : Theme.Background);
+    internal Rectangle CaptionOverlayBounds => HasFullHeightBackstage && IsBackstageOpen
+        ? new(0, 0, _backstageMotion is { IsRunning: true } motion ? motion.VisibleWidth : WindowHost?.ClientSize.Width ?? Width, WindowCaptionHeight) : Rectangle.Empty;
+    internal Rectangle CaptionPageBounds
+    {
+        get
+        {
+            var overlay = CaptionOverlayBounds;
+            if (overlay.IsEmpty || _backstageSurface is not { IsDisposed: false } surface) return Rectangle.Empty;
+            // Use the live surface position: the caption split moves with the
+            // navigation/page boundary throughout opening and closing.
+            int left = Math.Clamp(surface.Left + surface.NavigationBounds.Right, overlay.Left, overlay.Right);
+            return Rectangle.FromLTRB(left, overlay.Top, overlay.Right, overlay.Bottom);
+        }
+    }
+    internal Rectangle CaptionNavigationBounds => Rectangle.FromLTRB(CaptionOverlayBounds.Left, CaptionOverlayBounds.Top,
+        IsBackstageOpen ? CaptionPageBounds.Left : 0, CaptionOverlayBounds.Bottom);
     internal void PaintCaptionBackground(Graphics graphics, Rectangle bounds, bool composited)
     {
         using var normal = new SolidBrush(WindowHost?.CaptionColor(Theme, composited) ?? (composited ? Color.Transparent : Theme.Background));
         graphics.FillRectangle(normal, bounds);
-        if (!IsBackstageOpen) return;
-        var tint = Rectangle.Intersect(bounds, CaptionOverlayBounds);
-        using var background = new SolidBrush(CaptionBackground(composited));
-        var mode = graphics.CompositingMode;
-        try
-        {
-            graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceOver;
-            graphics.FillRectangle(background, tint);
-        }
-        finally { graphics.CompositingMode = mode; }
     }
     internal void InvalidateBackstageCaption()
     {

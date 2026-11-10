@@ -21,6 +21,7 @@ internal readonly record struct RibbonFrameMetrics(RibbonTheme Theme)
     internal static void Validate(RibbonTheme theme)
     {
         if (theme.BodyCornerRadius is < 0 or > 64 || theme.BackstagePageCornerRadius is < 0 or > 64 ||
+            theme.OptionsButtonCornerRadius is < 0 or > 64 ||
             theme.FocusCornerRadius is < 0 or > 64 || theme.KeyTipCornerRadius is < 0 or > 64 ||
             theme.CheckBoxCornerRadius is < 0 or > 64 || theme.BackstageBackButtonCornerRadius is < 0 or > 64 ||
             theme.NavigationMarkerCornerRadius is < 0 or > 64 || theme.ApplicationMenuFooterCornerRadius is < 0 or > 64 ||

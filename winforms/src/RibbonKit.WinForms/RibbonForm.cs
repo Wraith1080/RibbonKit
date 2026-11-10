@@ -103,10 +103,20 @@ public partial class RibbonForm : Form
     internal Rectangle CaptionTextBounds(RibbonControl? ribbon)
     {
         var geometry = Caption;
+        if (ribbon is { IsBackstageOpen: true, Theme.BackstageTitleCentered: true })
+        {
+            return CenteredCaptionTextBounds();
+        }
         int left = geometry.ContentLeft;
         if (ribbon?.EffectiveQuickAccessPosition == RibbonQuickAccessPosition.TitleBar && ribbon.ShowQuickAccess)
             left = ribbon.Snapshot.QuickAccessBounds.Right + RibbonLayoutEngine.Scale(new RibbonCaptionMetrics(ribbon.Theme).QuickAccessGap, DeviceDpi);
         return Rectangle.FromLTRB(Math.Min(left, geometry.Buttons.Left), 0, geometry.Buttons.Left, CaptionHeight);
+    }
+    private Rectangle CenteredCaptionTextBounds()
+    {
+        var geometry = Caption;
+        int inset = Math.Min(ClientSize.Width / 2, Math.Max(geometry.ContentLeft, ClientSize.Width - geometry.Buttons.Left));
+        return Rectangle.FromLTRB(inset, 0, ClientSize.Width - inset, CaptionHeight);
     }
     private void RibbonDisposed(object? sender, EventArgs e) => Ribbon = null;
     private void RibbonChanged(object? sender, EventArgs e)
@@ -153,6 +163,7 @@ public partial class RibbonForm : Form
         // Dock layout owns width changes and their group-motion handoff. A model
         // refresh here would settle the animation that layout just started.
         base.OnResize(e); Invalidate(); _ribbon?.Invalidate();
+        SnapCaptionTitle();
     }
     /// <inheritdoc />
     protected override void OnLayout(LayoutEventArgs e)
@@ -175,7 +186,10 @@ public partial class RibbonForm : Form
         var bounds = new Rectangle(0, 0, ClientSize.Width, Math.Min(ClientSize.Height, CaptionHeight));
         if (bounds.Width > 0 && bounds.Height > 0) Invalidate(bounds);
         if (_ribbon is { HasWindowCaption: true, IsDisposed: false } ribbon)
+        {
             ribbon.Invalidate(new Rectangle(0, 0, ribbon.Width, ribbon.Theme.ExtendTitleBarColorToHeader ? ribbon.BackdropHeaderHeight : ribbon.WindowCaptionHeight));
+            ribbon.UpdateBackstageCaption();
+        }
     }
     /// <inheritdoc />
     protected override void OnPaint(PaintEventArgs e)
@@ -191,33 +205,46 @@ public partial class RibbonForm : Form
             PaintCaption(e.Graphics, null);
         }
     }
-    internal void PaintCaption(Graphics graphics, RibbonControl? ribbon, bool composited = false)
+    internal void PaintCaption(Graphics graphics, RibbonControl? ribbon, bool composited = false, bool foregroundOnly = false)
     {
         var geometry = Caption; var sourceTheme = ribbon?.Theme ?? RibbonThemes.Office2024Light;
         var captionTheme = CaptionTheme(sourceTheme, composited);
+        var backstageTheme = ribbon is { IsBackstageOpen: true } ? sourceTheme.BackstageCaptionTheme : sourceTheme;
         using var background = new SolidBrush(CaptionColor(sourceTheme, composited));
         var captionBounds = new Rectangle(0, 0, ClientSize.Width, CaptionHeight);
-        if (ribbon is not null) ribbon.PaintCaptionBackground(graphics, captionBounds, composited);
-        else graphics.FillRectangle(background, captionBounds);
+        if (!foregroundOnly)
+        {
+            if (ribbon is not null) ribbon.PaintCaptionBackground(graphics, captionBounds, composited);
+            else graphics.FillRectangle(background, captionBounds);
+            if (ribbon is { HasBackstageCaption: true }) return; // The transparent foreground plane owns the chrome.
+        }
         if (ShowIcon && Icon is { } icon && !geometry.Icon.IsEmpty) graphics.DrawIcon(icon, geometry.Icon);
         var text = CaptionTextBounds(ribbon);
-        if (ribbon is { IsBackstageOpen: true } && !ReferenceEquals(sourceTheme, captionTheme))
+        if (ribbon is { IsBackstageOpen: true })
         {
             var state = graphics.Save();
             try { graphics.ExcludeClip(ribbon.CaptionOverlayBounds); PaintContents(captionTheme); }
             finally { graphics.Restore(state); }
-            state = graphics.Save();
-            try { graphics.SetClip(ribbon.CaptionOverlayBounds, System.Drawing.Drawing2D.CombineMode.Intersect); PaintContents(sourceTheme); }
-            finally { graphics.Restore(state); }
+            PaintPart(ribbon.CaptionNavigationBounds, backstageTheme);
+            PaintPart(ribbon.CaptionPageBounds, sourceTheme);
         }
         else PaintContents(captionTheme);
 
+        void PaintPart(Rectangle bounds, RibbonTheme theme)
+        {
+            if (bounds.Width <= 0 || bounds.Height <= 0) return;
+            var state = graphics.Save();
+            try { graphics.SetClip(bounds, System.Drawing.Drawing2D.CombineMode.Intersect); PaintContents(theme); }
+            finally { graphics.Restore(state); }
+        }
+
         void PaintContents(RibbonTheme theme)
         {
-            var textContext = new RibbonPaintContext(graphics, text, theme, Font, DeviceDpi);
-            var flags = TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix;
+            var title = ribbon is null ? text : CaptionTitleDrawingBounds(ribbon);
+            var textContext = new RibbonPaintContext(graphics, title, theme, Font, DeviceDpi);
+            var flags = TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.PreserveGraphicsClipping;
             if (composited) RibbonBackdropBuffer.DrawText(textContext, Text, _captionActive ? theme.Foreground : theme.SecondaryText, flags);
-            else TextRenderer.DrawText(graphics, Text, Font, text, _captionActive ? theme.Foreground : theme.SecondaryText, flags);
+            else TextRenderer.DrawText(graphics, Text, Font, title, _captionActive ? theme.Foreground : theme.SecondaryText, flags);
             foreach (var (bounds, hit) in geometry.Targets)
             {
                 if (bounds.IsEmpty) continue;
@@ -238,9 +265,10 @@ public partial class RibbonForm : Form
                     {
                         graphics.DrawRectangle(pen, x + 3, y, size - 3, size - 3);
                         var mode = graphics.CompositingMode;
-                        if (composited) graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+                        if (composited || foregroundOnly) graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
                         var restoreBounds = new Rectangle(x, y + 3, size - 3, size - 3);
-                        if (ribbon is not null) ribbon.PaintCaptionBackground(graphics, restoreBounds, composited);
+                        if (foregroundOnly) { using var clear = new SolidBrush(Color.Transparent); graphics.FillRectangle(clear, restoreBounds); }
+                        else if (ribbon is not null) ribbon.PaintCaptionBackground(graphics, restoreBounds, composited);
                         else graphics.FillRectangle(background, restoreBounds);
                         graphics.CompositingMode = mode;
                         // Erasing the rear restore outline must retain the same
@@ -375,7 +403,7 @@ public partial class RibbonForm : Form
         // Turning it off before Form destroys its HWND exposes the black client
         // backing in Windows' native closing animation. Window destruction owns
         // native attribute cleanup; detach managed associations afterwards.
-        if (disposing) _disposingBackdrop = true;
+        if (disposing) { _disposingBackdrop = true; _captionTitleMotion?.Dispose(); _captionTitleMotion = null; }
         try { base.Dispose(disposing); }
         finally { if (disposing) Ribbon = null; }
     }

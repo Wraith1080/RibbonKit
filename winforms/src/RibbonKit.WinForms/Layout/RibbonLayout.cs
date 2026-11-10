@@ -264,7 +264,7 @@ internal sealed partial class RibbonLayoutEngine
         bool tabOverflow = tabTotal > tabsWidth;
         // Keep part of a tab reachable when the utility and two full-size
         // scrollers would otherwise consume the complete narrow tab strip.
-        int tabScrollWidth = tabOverflow ? Math.Min(S(metrics.ScrollButton), Math.Max(0, (tabsWidth - S(24)) / 2)) : 0;
+        int tabScrollWidth = tabOverflow ? Math.Min(chrome.HeaderScrollWidth(dpi, tabHeight), Math.Max(0, (tabsWidth - S(24)) / 2)) : 0;
         var tabViewport = new Rectangle(tabsStart + tabScrollWidth, tabTop, Math.Max(0, tabsWidth - 2 * tabScrollWidth), tabHeight);
         result.TabExtent = tabTotal;
         result.TabViewport = tabViewport;

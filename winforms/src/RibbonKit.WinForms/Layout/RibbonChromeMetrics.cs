@@ -15,11 +15,18 @@ internal readonly record struct RibbonChromeMetrics(RibbonTheme Theme, RibbonDen
     internal int QuickAccessGap => Theme.QuickAccessItemGap ?? 0;
     internal int ActionGap => Theme.MessageActionGap ?? 10;
     internal int TitleGap => Theme.MessageTitleTextGap ?? 8;
+    internal int HeaderScrollWidth(int dpi, int tabHeight)
+    {
+        int legacy = RibbonLayoutEngine.Scale(RibbonDensityMetrics.For(Density).ScrollButton, dpi);
+        int desired = Theme.HeaderScrollButtonWidth is { } width ? RibbonLayoutEngine.Scale(width, dpi)
+            : Theme.HeaderScrollButtonsMatchTabHeight ? tabHeight : legacy;
+        return Density == RibbonDensity.Touch ? Math.Max(legacy, desired) : desired;
+    }
     internal static void Validate(RibbonTheme theme)
     {
         int?[] spacing = [theme.GroupHorizontalPadding, theme.GroupColumnGap, theme.BodyContentHorizontalPadding, theme.GroupSeparatorVerticalInset,
-            theme.TabHorizontalPadding, theme.HeaderIndicatorPadding, theme.QuickAccessHorizontalPadding, theme.QuickAccessItemGap, theme.MessageActionGap, theme.MessageTitleTextGap];
-        if (spacing.Any(n => n is < 0 or > 1024) || theme.TabMinimumWidth is < 1 or > 1024)
+            theme.TabHorizontalPadding, theme.HeaderIndicatorPadding, theme.QuickAccessHorizontalPadding, theme.QuickAccessItemGap, theme.MessageActionGap, theme.MessageTitleTextGap, theme.ApplicationMenuWorkAreaInset];
+        if (spacing.Any(n => n is < 0 or > 1024) || theme.TabMinimumWidth is < 1 or > 1024 || theme.HeaderScrollButtonWidth is < 1 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(theme), "Chrome spacing must be 0..1024, tab minimum 1..1024, or null for existing geometry.");
     }
 }

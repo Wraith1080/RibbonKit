@@ -6,6 +6,17 @@ public partial class DesignerForm
 {
     internal void EnableOffice2019ThemeDemo()
     {
+        // The authored sample uses a white caption override. Let this demo use
+        // the theme's neutral caption until the user explicitly colors it.
+        TitleBarColor = Color.Empty;
+        RibbonFileMenuMode? previousFileMode = null;
+        void RestoreFileMode()
+        {
+            if (ribbon.IsBackstageOpen || previousFileMode is not { } previous) return;
+            previousFileMode = null;
+            if (ribbon.FileMenuMode == RibbonFileMenuMode.Backstage) ribbon.FileMenuMode = previous;
+        }
+        ribbon.IsBackstageOpenChanged += (_, _) => RestoreFileMode();
         var tab = new RibbonTab { Text = "Office 2019 Light" };
         var themes = new RibbonGroup { Text = "Light themes" };
         Add(themes, "Office 2019 Light", () => ribbon.BuiltInTheme = RibbonBuiltInTheme.Office2019Light);
@@ -23,7 +34,14 @@ public partial class DesignerForm
         menu.Items.AddRange(new RibbonCheckBoxItem { Text = "Keep formatting", Checked = true },
             new RibbonTextBoxItem { Text = "Name", Value = "Retained popup field", FillMenuWidth = true }, nested);
         surfaces.Items.Add(menu);
-        Add(surfaces, "Open Backstage", () => ribbon.IsBackstageOpen = true);
+        Add(surfaces, "Toggle Backstage", () =>
+        {
+            if (ribbon.IsBackstageOpen) { ribbon.IsBackstageOpen = false; return; }
+            previousFileMode = ribbon.FileMenuMode;
+            ribbon.FileMenuMode = RibbonFileMenuMode.Backstage;
+            try { ribbon.IsBackstageOpen = true; }
+            finally { RestoreFileMode(); } // Also restore after a canceled opening.
+        });
         Add(surfaces, "Show message", () => ribbon.MessageBar.Items.Add(new RibbonMessage { Title = "Office 2019", Text = "Square joins and a flat ribbon body." }));
         var settings = new RibbonGroup { Text = "Shared theme settings" };
         Add(settings, "Larger inner padding", () => ribbon.Theme = ribbon.Theme with { BodyContentHorizontalPadding = 12 });
@@ -39,5 +57,32 @@ public partial class DesignerForm
             var button = new RibbonButtonItem { Text = text, SizePolicy = RibbonSizePolicy.Fixed(RibbonItemSize.Medium), SimplifiedPlacement = RibbonSimplifiedPlacement.Inline };
             button.Click += (_, _) => action(); group.Items.Add(button);
         }
+    }
+
+    internal void VerifyOffice2019ReviewDemo(string output)
+    {
+        Directory.CreateDirectory(output); EnableOffice2019ThemeDemo();
+        ribbon.AnimationLevel = RibbonAnimationLevel.None;
+        void Require(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
+        var toggle = ribbon.SelectedTab!.Groups.SelectMany(g => g.Items).Single(i => i.Text == "Toggle Backstage");
+        var originalMode = ribbon.FileMenuMode;
+        Show(); Application.DoEvents();
+        Require(TitleBarColor.IsEmpty && ribbon.Theme.Background == RibbonThemes.Office2019Light.Background, "Demo did not start with the neutral theme header.");
+        var pages = ribbon.Backstage.Items.OfType<RibbonBackstagePageItem>().Select(p => p.Content).ToArray();
+        System.ComponentModel.CancelEventHandler cancel = (_, e) => e.Cancel = true;
+        ribbon.Backstage.Opening += cancel; toggle.PerformClick(); ribbon.Backstage.Opening -= cancel;
+        Require(!ribbon.IsBackstageOpen && ribbon.FileMenuMode == originalMode, "Canceled opening changed File routing.");
+        toggle.PerformClick(); Application.DoEvents();
+        Require(ribbon.IsBackstageOpen && ribbon.FileMenuMode == RibbonFileMenuMode.Backstage, "Toggle did not open Backstage.");
+        ribbon.Backstage.Closing += cancel; toggle.PerformClick(); ribbon.Backstage.Closing -= cancel;
+        Require(ribbon.IsBackstageOpen && ribbon.FileMenuMode == RibbonFileMenuMode.Backstage, "Canceled close lost Backstage or routing.");
+        toggle.PerformClick(); Application.DoEvents();
+        Require(!ribbon.IsBackstageOpen && ribbon.FileMenuMode == originalMode, "Toggle close did not restore File routing.");
+        toggle.PerformClick(); ribbon.IsBackstageOpen = false; Application.DoEvents();
+        Require(ribbon.FileMenuMode == originalMode, "Back/Escape close did not restore File routing.");
+        Require(pages.SequenceEqual(ribbon.Backstage.Items.OfType<RibbonBackstagePageItem>().Select(p => p.Content)), "Demo replaced native page content.");
+        Office2019ThemeCheck.Capture(this, Path.Combine(output, "neutral-demo.png"));
+        Close();
+        File.WriteAllText(Path.Combine(output, "result.log"), "PASS: neutral demo startup; toggle open/close, Back/Escape close, canceled opening/closing, prior File mode and retained native pages.");
     }
 }

@@ -13,7 +13,7 @@ internal sealed class RibbonBackdropBuffer : IDisposable
     private Bitmap? _image;
     private Graphics? _graphics;
     internal Bitmap Image => _image!;
-    internal void Paint(Graphics destination, Size size, int headerHeight, Color fallback, Action<Graphics> paint, bool opaque = false, byte opacity = 255, Point origin = default)
+    internal void Paint(Graphics destination, Size size, int headerHeight, Color fallback, Action<Graphics> paint, bool opaque = false, byte opacity = 255, Point origin = default, bool copyToDestination = true)
     {
         if (size.Width < 1 || size.Height < 1 || (long)size.Width * size.Height > 4_194_304) throw new Win32Exception("Backdrop drawing exceeds its bounded pixel budget.");
         if (_image?.Size != size) Allocate(size);
@@ -44,6 +44,7 @@ internal sealed class RibbonBackdropBuffer : IDisposable
             }
             Marshal.Copy(_opaquePixels, 0, _bits, length);
         }
+        if (!copyToDestination) return;
         nint output = destination.GetHdc();
         try { if (!BitBlt(output, origin.X, origin.Y, size.Width, size.Height, _dc, 0, 0, 0x00CC0020)) throw new Win32Exception(Marshal.GetLastWin32Error()); }
         finally { destination.ReleaseHdc(output); }

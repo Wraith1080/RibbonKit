@@ -32,11 +32,13 @@ internal sealed class RibbonBackstageMotion : IDisposable
     {
         _ribbon = ribbon; _surface = surface; _form = form; IsClosing = closing; _completed = completed;
         _origin = surface.Location; _width = surface.Width;
-        _travel = Math.Max(1, (int)Math.Round(_width * .15));
+        double ratio = ribbon.Theme.BackstageSlideDistanceRatio ?? .15;
+        _travel = ratio == 0 ? 0 : Math.Max(1, (int)Math.Round(_width * ratio));
         Bounds = surface.RectangleToScreen(surface.ClientRectangle);
-        _duration = ribbon.AnimationLevel == RibbonAnimationLevel.Expressive ? 308 : 220;
+        _duration = DurationFor(ribbon.AnimationLevel);
         _timer.Tick += Tick;
     }
+    internal static double DurationFor(RibbonAnimationLevel level) => level == RibbonAnimationLevel.Expressive ? 308 : 220;
     internal static RibbonBackstageMotion? Prepare(RibbonControl ribbon, RibbonBackstageSurface surface, Form form, bool closing = false, Action? completed = null)
     {
         if (ribbon.AnimationLevel == RibbonAnimationLevel.None || !ribbon.CanAnimatePopupOpening || !ribbon.Motion.SystemEnabled ||
@@ -61,7 +63,7 @@ internal sealed class RibbonBackstageMotion : IDisposable
         _surface.ClientSizeChanged += Unsafe; _surface.HandleDestroyed += Unsafe; _surface.VisibleChanged += Visibility; _surface.Disposed += Unsafe;
         _form.LocationChanged += Unsafe; _form.Deactivate += Unsafe; _form.HandleDestroyed += Unsafe;
         _subscribed = true; _start = Stopwatch.GetTimestamp(); _timer.Start();
-        try { _surface.RepaintBackdrop(); _ribbon.InvalidateBackstageCaption(); }
+        try { PaintFrame(); }
         catch (Win32Exception error) { Trace.WriteLine("Backstage presentation skipped: " + error.Message); Dispose(); }
         catch { Dispose(); throw; }
     }
@@ -81,8 +83,13 @@ internal sealed class RibbonBackstageMotion : IDisposable
         _surface.SetMotionAlpha((byte)Math.Clamp((int)Math.Round(255 * (IsClosing ? 1 - fade : fade)), 1, 255));
         int offset = (int)Math.Round(_travel * (IsClosing ? p : 1 - p));
         _surface.MoveForMotion(new(_origin.X - offset, _origin.Y));
-        _surface.RepaintBackdrop(retainPage: true);
+        PaintFrame(retainPage: true);
+    }
+    private void PaintFrame(bool retainPage = false)
+    {
+        _surface.RepaintBackdrop(retainPage, publishOpacity: false);
         _ribbon.InvalidateBackstageCaption();
+        _surface.PublishMotionOpacity();
     }
     private void Tick(object? sender, EventArgs e)
     {

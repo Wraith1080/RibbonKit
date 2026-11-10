@@ -38,7 +38,7 @@ internal sealed record RibbonBackstageLayout(Rectangle Back, Rectangle Navigatio
     internal static int PageCornerRadius(RibbonRenderer renderer, RibbonTheme theme, int dpi, Size size) =>
         Math.Clamp(renderer.GetBackstagePageCornerRadius(theme, dpi), 0, Math.Max(0,
             Math.Min(RibbonLayoutEngine.Scale(32, dpi), Math.Min(size.Width, size.Height) / 2)));
-    internal static RibbonBackstageLayout Build(Size size, Font font, int dpi, RibbonBackstage? backstage = null, RibbonItem? reveal = null)
+    internal static RibbonBackstageLayout Build(Size size, Font font, int dpi, RibbonBackstage? backstage = null, RibbonItem? reveal = null, int captionHeight = 0)
     {
         int S(int value) => RibbonLayoutEngine.Scale(value, dpi);
         var metrics = new RibbonBackstageMetrics(backstage?.Ribbon?.Theme, backstage?.Ribbon?.Density ?? RibbonDensity.Compact);
@@ -51,7 +51,7 @@ internal sealed record RibbonBackstageLayout(Rectangle Back, Rectangle Navigatio
         int ToDevice(int logical) => (int)Math.Clamp(Math.Round(logical * (double)dpi / 96), 0, available);
         int minimum = ToDevice(backstage?.MinimumNavigationWidth ?? 160);
         int maximum = Math.Max(minimum, ToDevice(backstage?.MaximumNavigationWidth ?? 320));
-        int auto = S(200);
+        int auto = S(metrics.AutoMinimumWidth);
         if (backstage is not null)
             foreach (var item in backstage.NavigationItems.Where(i => (i.Visible || ReferenceEquals(i, reveal)) && !i.IsDisposed && i is not RibbonMenuSeparatorItem))
             {
@@ -63,13 +63,14 @@ internal sealed record RibbonBackstageLayout(Rectangle Back, Rectangle Navigatio
         int rail = Math.Clamp(backstage?.NavigationWidth is { } authored ? ToDevice(authored) : auto, minimum, maximum);
         int navigation = rail;
         inset = Math.Min(inset, Math.Max(0, (navigation - shadow) / 2));
-        int backTop = Math.Min(S(metrics.BackInset), Math.Max(0, size.Height));
+        int backTop = Math.Min(Math.Max(0, captionHeight) + S(metrics.BackInset), Math.Max(0, size.Height));
         int back = Math.Min(S(metrics.BackSize), Math.Min(Math.Max(0, navigation - 2 * inset), Math.Max(0, size.Height - backTop)));
         int top = Math.Min(size.Height, backTop + back + S(metrics.BackGap));
         int EntryHeight(RibbonItem item) => item is RibbonMenuSeparatorItem ? S(9) : row;
         int mainHeight = backstage?.Items.Where(item => !item.IsDisposed && (item.Visible || ReferenceEquals(item, reveal))).Sum(EntryHeight) ?? 0;
         int bottomHeight = backstage?.FooterItems.Where(item => !item.IsDisposed && (item.Visible || ReferenceEquals(item, reveal))).Sum(EntryHeight) ?? 0;
-        int availableHeight = Math.Max(0, size.Height - top), footerHeight = bottomHeight == 0 ? 0 : bottomHeight + inset;
+        int footerPadding = metrics.Theme?.BackstageFooterBottomPadding is null ? inset : Math.Min(S(metrics.FooterBottomPadding), Math.Max(0, size.Height));
+        int availableHeight = Math.Max(0, size.Height - top), footerHeight = bottomHeight == 0 ? 0 : bottomHeight + footerPadding;
         bool inline = footerHeight > 0 && footerHeight + Math.Min(row, mainHeight) > availableHeight;
         if (inline) footerHeight = 0;
         var nav = new Rectangle(0, top, Math.Max(0, navigation - shadow), availableHeight - footerHeight);

@@ -40,6 +40,24 @@ public sealed record RibbonTheme
     public bool ExtendTitleBarColorToHeader { get; init; }
     /// <summary>Gets whether the default Office body draws only its bottom border. Defaults to false; popup borders and shadows are independent.</summary>
     public bool BodyBottomBorderOnly { get; init; }
+    /// <summary>Gets the active collapsed Classic/Simplified group opener border. Empty uses Border; Transparent removes it without changing focus or hit targets.</summary>
+    public Color CollapsedGroupBorder { get; init; } = Color.Empty;
+    /// <summary>Gets whether active Application Menu split rows draw a divider between their unchanged action regions. Defaults to true.</summary>
+    public bool ApplicationMenuSplitDividerVisible { get; init; } = true;
+    /// <summary>Gets an optional library options-button radius in 96-DPI logical pixels, 0..64. Null preserves system painting for ordinary buttons and existing accent-button chrome; explicit values use shared theme painting with native Button semantics.</summary>
+    public int? OptionsButtonCornerRadius { get; init; }
+    /// <summary>Gets whether message frames include side borders. Defaults to true. False keeps horizontal rules and existing connected-edge ownership.</summary>
+    public bool MessageSideBordersVisible { get; init; } = true;
+    /// <summary>Gets whether header scrollers use the effective tab height as their desired width when HeaderScrollButtonWidth is null. Defaults to false. Narrow-strip clamps still apply.</summary>
+    public bool HeaderScrollButtonsMatchTabHeight { get; init; }
+    /// <summary>Gets an optional header-scroller width in 96-DPI logical pixels, 1..1024. Null uses the density width or opted-in tab height. Touch keeps its density minimum; narrow strips clamp width.</summary>
+    public int? HeaderScrollButtonWidth { get; init; }
+    /// <summary>Gets an optional header-scroller resting fill. Null uses Surface for explicitly configured full-slot header chrome, or preserves legacy body-scroll drawing otherwise. Body scrollers are independent.</summary>
+    public RibbonFill? HeaderScrollButtonBackground { get; init; }
+    /// <summary>Gets the header-scroller border. Empty preserves the legacy inset border; an explicit value enables full-slot header chrome and Transparent removes its border. Body scrollers are independent.</summary>
+    public Color HeaderScrollButtonBorder { get; init; } = Color.Empty;
+    /// <summary>Gets an optional Application Menu work-area clearance in 96-DPI logical pixels, 0..1024. Null retains eight; zero permits alignment with a maximized client edge. Placement and custom-pane resize share it; ordinary menus are unchanged.</summary>
+    public int? ApplicationMenuWorkAreaInset { get; init; }
     /// <summary>Gets an optional hover fill for a header following an active caption color. Null uses the caption's contrast-derived state fill.</summary>
     public RibbonFill? ColoredHeaderHover { get; init; }
     /// <summary>Gets an optional pressed/open fill for a header following an active caption color. Null uses the caption's contrast-derived state fill.</summary>
@@ -97,6 +115,56 @@ public sealed record RibbonTheme
     public Padding MessageContentPadding { get; init; } = new(12, 4, 8, 4);
     /// <summary>Gets the Office 2024 Backstage navigation rail color. Backstage.NavigationBackgroundOpacity can expose an active window backdrop behind it.</summary>
     public Color BackstageNavigationBackground { get; init; } = Color.FromArgb(245, 244, 243);
+    /// <summary>Gets whether Backstage navigation and its caption tint follow Accent. False preserves BackstageNavigationBackground. Options dialogs retain their neutral navigation background.</summary>
+    public bool BackstageNavigationUsesAccent { get; init; }
+    /// <summary>Gets whether navigation state fills reach every edge of their measured row. False retains ordinary inset chrome.</summary>
+    public bool BackstageFullWidthNavigation { get; init; }
+    /// <summary>Gets whether the real Backstage panes extend behind a transparent integrated title bar. False keeps Backstage below the title bar. Enabled by Office 2019 Light.</summary>
+    public bool BackstageExtendsIntoTitleBar { get; init; }
+    /// <summary>Gets whether an open Backstage centers the integrated window title on the full client width. Enabled by Office 2019 Light; false retains ordinary left-aligned caption placement.</summary>
+    public bool BackstageTitleCentered { get; init; }
+    /// <summary>Gets the animated fraction of the title's total distance on Backstage opening and closing, from 0 to 1. Null uses the final 25 percent after immediate placement 75 percent toward the destination. Zero snaps; one animates the full distance. The title never fades. Must be finite.</summary>
+    public double? BackstageTitleSlideDistanceRatio { get; init; }
+    /// <summary>Gets optional Backstage slide travel as a fraction of its width, from 0 to 1. Null retains 15 percent travel. Zero disables travel while keeping the configured fade. Must be finite.</summary>
+    public double? BackstageSlideDistanceRatio { get; init; }
+    /// <summary>Gets navigation and integrated Backstage caption ink. Empty retains Foreground and existing caption behavior. Native application pages keep their own colors.</summary>
+    public Color BackstageNavigationForeground { get; init; } = Color.Empty;
+    /// <summary>Gets selected navigation ink. Empty retains Accent.</summary>
+    public Color BackstageSelectedForeground { get; init; } = Color.Empty;
+    /// <summary>Gets disabled navigation ink. Empty retains DisabledColor.</summary>
+    public Color BackstageDisabledForeground { get; init; } = Color.Empty;
+    /// <summary>Gets an optional navigation hover fill. Null retains Hover, or an Accent-to-white 22 percent mix when BackstageNavigationUsesAccent is true.</summary>
+    public RibbonFill? BackstageNavigationHover { get; init; }
+    /// <summary>Gets an optional selected/pressed navigation fill. Null retains Hover, or an Accent-to-black 28 percent mix when BackstageNavigationUsesAccent is true.</summary>
+    public RibbonFill? BackstageNavigationSelected { get; init; }
+    /// <summary>Gets whether selected Backstage rows draw the accent indicator. Defaults to true.</summary>
+    public bool BackstageSelectionIndicatorVisible { get; init; } = true;
+    /// <summary>Gets whether Backstage icons and images use their alpha silhouette tinted with navigation ink. False retains authored colors; true matches the WPF Classic navigation mask.</summary>
+    public bool BackstageMonochromeIcons { get; init; }
+    /// <summary>Gets the optional logical navigation icon left inset, 0..1024. Null retains 16. Text placement and Auto width use the same value.</summary>
+    public int? BackstageNavigationIconInset { get; init; }
+    /// <summary>Gets the optional logical navigation icon size, 1..1024. Null retains 16. Text placement and Auto width use the same value.</summary>
+    public int? BackstageNavigationIconSize { get; init; }
+    /// <summary>Gets the optional Auto navigation width starting minimum in logical pixels, 1..1024. Null retains 200. Captions, authored width constraints and available page space still apply.</summary>
+    public int? BackstageAutoMinimumNavigationWidth { get; init; }
+    /// <summary>Gets the optional logical footer bottom clearance, 0..1024. Null uses BackstageNavigationPadding. Short hosts still use inline scrolling.</summary>
+    public int? BackstageFooterBottomPadding { get; init; }
+    /// <summary>Gets the optional logical top/left page border width, 0..32. Null retains each renderer's existing border. Zero keeps page content flush; layout and painting share it.</summary>
+    public int? BackstagePageBorderWidth { get; init; }
+    internal Color BackstageNavigationColor => BackstageNavigationUsesAccent ? Accent : BackstageNavigationBackground;
+    internal Color BackstageNavigationInk => BackstageNavigationForeground.IsEmpty ? Foreground : BackstageNavigationForeground;
+    internal RibbonTheme BackstageCaptionTheme => BackstageNavigationForeground.IsEmpty ? this : this with
+    {
+        Foreground = BackstageNavigationInk, SecondaryText = BackstageNavigationInk,
+        Hover = BackstageHoverFill, Pressed = BackstageSelectedFill,
+        BackdropHover = BackstageHoverFill, BackdropPressed = BackstageSelectedFill
+    };
+    internal RibbonFill BackstageHoverFill => BackstageNavigationHover ?? (BackstageNavigationUsesAccent ? new(MixBackstageAccent(Color.White, .22)) : Hover);
+    internal RibbonFill BackstageSelectedFill => BackstageNavigationSelected ?? (BackstageNavigationUsesAccent ? new(MixBackstageAccent(Color.Black, .28)) : Hover);
+    private Color MixBackstageAccent(Color target, double amount) => Color.FromArgb(
+        (int)Math.Round(Accent.R * (1 - amount) + target.R * amount),
+        (int)Math.Round(Accent.G * (1 - amount) + target.G * amount),
+        (int)Math.Round(Accent.B * (1 - amount) + target.B * amount));
     /// <summary>Gets the minimum Backstage navigation font size in 96-DPI logical pixels. Defaults to 14, matching the WPF Modern navigation; larger ribbon fonts are retained. Must be positive and finite. Page content retains the host font.</summary>
     public float BackstageNavigationFontSize { get; init; } = 14;
     /// <summary>Gets the paired background fill for Office 2024 noninteractive gallery section headings.</summary>
@@ -343,13 +411,22 @@ public static class RibbonThemes
     {
         HeaderPresentation = RibbonHeaderPresentation.Filled, ExtendTitleBarColorToHeader = true,
         BodyBottomBorderOnly = true, Background = Color.FromArgb(230, 230, 230),
+        CollapsedGroupBorder = Color.Transparent, ApplicationMenuSplitDividerVisible = false, OptionsButtonCornerRadius = 0,
+        MessageSideBordersVisible = false, HeaderScrollButtonsMatchTabHeight = true,
+        ApplicationMenuWorkAreaInset = 0,
+        BackstageNavigationUsesAccent = true, BackstageFullWidthNavigation = true,
+        BackstageExtendsIntoTitleBar = true, BackstageTitleCentered = true,
+        BackstageNavigationForeground = Color.White, BackstageSelectedForeground = Color.White,
+        BackstageDisabledForeground = Color.FromArgb(180, 195, 215), BackstageSelectionIndicatorVisible = false, BackstageMonochromeIcons = true,
+        BackstageNavigationPadding = 0, BackstageNavigationIconInset = 26, BackstageAutoMinimumNavigationWidth = 220,
+        BackstageFooterBottomPadding = 14, BackstagePageBorderWidth = 0,
         Surface = Color.White, Foreground = Color.FromArgb(32, 31, 30), SecondaryText = Color.FromArgb(96, 94, 92),
         Border = Color.FromArgb(200, 198, 196), PopupBorder = Color.FromArgb(200, 198, 196),
         Hover = new(Color.FromArgb(222, 220, 218)), Pressed = new(Color.FromArgb(207, 205, 203)),
         Checked = new(Color.FromArgb(206, 220, 240)),
         HeaderHover = new(Color.FromArgb(237, 237, 237)), HeaderPressed = new(Color.FromArgb(216, 216, 216)),
         CornerRadius = 0, PopupCornerRadius = 0, BodyCornerRadius = 0, BackstagePageCornerRadius = 0,
-        FocusCornerRadius = 0, KeyTipCornerRadius = 0, CheckBoxCornerRadius = 0, BackstageBackButtonCornerRadius = 0,
+        FocusCornerRadius = 0, KeyTipCornerRadius = 0, CheckBoxCornerRadius = 0,
         NavigationMarkerCornerRadius = 0, ApplicationMenuFooterCornerRadius = 0, ApplicationMenuFileButtonCornerRadius = 0,
         HeaderIndicatorCornerRadius = 0,
         BodyMargin = Padding.Empty, BodyShadowColor = Color.Transparent,

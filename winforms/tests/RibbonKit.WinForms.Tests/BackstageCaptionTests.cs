@@ -7,11 +7,11 @@ public sealed class BackstageCaptionTests
     [Theory] [InlineData(RibbonWindowBackdrop.None, 1f)]
     [InlineData(RibbonWindowBackdrop.Mica, 0f)] [InlineData(RibbonWindowBackdrop.Mica, .65f)] [InlineData(RibbonWindowBackdrop.Mica, 1f)]
     [InlineData(RibbonWindowBackdrop.Acrylic, .65f)]
-    public void Caption_tint_tracks_the_surface_edge_and_fade_in_both_directions(RibbonWindowBackdrop material, float opacity) => FoundationTests.Sta(() =>
+    public void Full_height_surface_owns_caption_background_during_both_slide_directions(RibbonWindowBackdrop material, float opacity) => FoundationTests.Sta(() =>
     {
         using var host = new RibbonForm { Bounds = new(180, 120, 950, 650), Backdrop = material };
         using var page = new Panel(); var field = new TextBox { Text = "Retained" }; page.Controls.Add(field);
-        var ribbon = new RibbonControl { FileMenuMode = RibbonFileMenuMode.Backstage, AnimationLevel = RibbonAnimationLevel.Expressive };
+        var ribbon = new RibbonControl { BuiltInTheme = RibbonBuiltInTheme.Office2019Light, FileMenuMode = RibbonFileMenuMode.Backstage, AnimationLevel = RibbonAnimationLevel.Expressive };
         ribbon.FileMenu.Visible = true; ribbon.Tabs.Add(new RibbonTab { Text = "Home" });
         ribbon.Backstage.Items.Add(new RibbonBackstagePageItem { Text = "Info", Content = page }); ribbon.Backstage.NavigationBackgroundOpacity = opacity;
         host.Controls.Add(ribbon); host.Ribbon = ribbon; host.Show(); Application.DoEvents(); ribbon.Motion.SystemPolicyOverride = true;
@@ -23,22 +23,17 @@ public sealed class BackstageCaptionTests
             foreach (double progress in new[] { 0, .25, .5, 1 })
             {
                 motion.SetProgress(progress); int edge = surface.Right;
-                Assert.Equal(ribbon.WindowCaptionHeight, surface.Top);
-                Assert.Equal(host.PointToScreen(new(0, ribbon.WindowCaptionHeight)).Y, surface.PointToScreen(Point.Empty).Y);
+                Assert.Equal(0, surface.Top); Assert.Equal(host.ClientSize.Height, surface.Height);
+                Assert.Equal(host.PointToScreen(Point.Empty).Y, surface.PointToScreen(Point.Empty).Y);
+                Assert.True(surface.PageArea.Top < host.CaptionHeight);
                 using var frame = new Bitmap(ribbon.Width, ribbon.WindowCaptionHeight); using var graphics = Graphics.FromImage(frame);
                 graphics.Clear(Color.Transparent); ribbon.PaintCaptionBackground(graphics, new(Point.Empty, frame.Size), ribbon.HasWindowBackdrop);
-                Color normal = ribbon.HasWindowBackdrop ? Color.Transparent : ribbon.Theme.Background;
-                if (edge > 0)
-                {
-                    var tint = ribbon.CaptionBackground(ribbon.HasWindowBackdrop);
-                    using var expectedImage = new Bitmap(1, 1); using (var paint = Graphics.FromImage(expectedImage))
-                    { paint.Clear(normal); using var brush = new SolidBrush(tint); paint.FillRectangle(brush, 0, 0, 1, 1); }
-                    var expected = expectedImage.GetPixel(0, 0); var actual = frame.GetPixel(edge - 1, 2);
-                    Assert.Equal(expected.A, actual.A);
-                    if (expected.A > 0) // GDI+ premultiplies partial-alpha channels with integer rounding.
-                    { Assert.InRange(Math.Abs(expected.R - actual.R), 0, 1); Assert.InRange(Math.Abs(expected.G - actual.G), 0, 1); Assert.InRange(Math.Abs(expected.B - actual.B), 0, 1); }
-                }
-                if (edge < frame.Width) Assert.Equal(normal.A == 0 ? 0 : normal.ToArgb(), frame.GetPixel(edge, 2).ToArgb());
+                Color normal = host.CaptionColor(ribbon.Theme, ribbon.HasWindowBackdrop);
+                // No duplicate color animation remains in the original caption.
+                Assert.Equal(normal.A == 0 ? 0 : normal.ToArgb(), frame.GetPixel(Math.Max(0, edge - 1), 2).ToArgb());
+                Assert.Equal(Math.Max(0, surface.Left + surface.NavigationBounds.Right), ribbon.CaptionPageBounds.Left);
+                using var foreground = ribbon.CaptureBackstageCaption(); Assert.NotNull(foreground);
+                Assert.Equal(0, foreground.GetPixel(100, 2).A);
                 Assert.Same(parent, field.Parent); Assert.Equal(handle, field.Handle); Assert.Equal("Retained", field.Text);
             }
         }
@@ -46,11 +41,11 @@ public sealed class BackstageCaptionTests
     });
 
     [Theory] [InlineData(0f)] [InlineData(.65f)] [InlineData(1f)]
-    public void Open_caption_matches_rail_and_qat_is_hidden_without_changing_its_preference(float opacity) => FoundationTests.Sta(() =>
+    public void Transparent_caption_keeps_underlay_and_hides_qat_without_changing_its_preference(float opacity) => FoundationTests.Sta(() =>
     {
         using var host = new RibbonForm { StartPosition = FormStartPosition.Manual, Bounds = new(180, 120, 950, 650) };
         using var painter = new CaptionProbe(); using var page = new Panel();
-        var ribbon = new RibbonControl { Renderer = painter, FileMenuMode = RibbonFileMenuMode.Backstage, QuickAccessPosition = RibbonQuickAccessPosition.TitleBar };
+        var ribbon = new RibbonControl { BuiltInTheme = RibbonBuiltInTheme.Office2019Light, Renderer = painter, FileMenuMode = RibbonFileMenuMode.Backstage, QuickAccessPosition = RibbonQuickAccessPosition.TitleBar };
         var command = new RibbonButtonItem { Text = "Save" }; var group = new RibbonGroup(); group.Items.Add(command); var tab = new RibbonTab { Text = "Home" }; tab.Groups.Add(group); ribbon.Tabs.Add(tab);
         ribbon.QuickAccessItems.Add(new RibbonQuickAccessReference { Source = command }); ribbon.FileMenu.Visible = true;
         ribbon.Backstage.Items.Add(new RibbonBackstagePageItem { Text = "Info", Content = page }); ribbon.Backstage.NavigationBackgroundOpacity = opacity;
@@ -60,14 +55,12 @@ public sealed class BackstageCaptionTests
             host.Backdrop = material; bool composited = ribbon.HasWindowBackdrop;
             Assert.Equal(composited ? Color.Transparent : authored.Background, ribbon.CaptionBackground(composited));
             painter.ToolbarPaints = 0; ribbon.IsBackstageOpen = true; ribbon.Refresh();
-            int alpha = composited ? (int)Math.Round(255 * opacity) : 255;
-            Assert.Equal(Color.FromArgb(alpha, authored.BackstageNavigationBackground), ribbon.CaptionBackground(composited));
+            Assert.Equal(composited ? Color.Transparent : authored.Background, ribbon.CaptionBackground(composited));
             Assert.Equal(0, painter.ToolbarPaints); Assert.True(ribbon.Snapshot.QuickAccessBounds.IsEmpty); Assert.True(ribbon.QuickAccessVisible);
             if (composited)
             {
-                using var image = new Bitmap(ribbon.Width, ribbon.Height); ribbon.CopyBackdropSnapshot(image);
-                var color = image.GetPixel(ribbon.Snapshot.QuickAccessBounds.Right + 20, 2);
-                Assert.InRange(color.A, Math.Max(0, alpha - 1), Math.Min(255, alpha + 1));
+                using var foreground = ribbon.CaptureBackstageCaption(); Assert.NotNull(foreground);
+                Assert.Equal(0, foreground.GetPixel(100, 2).A);
             }
             ribbon.IsBackstageOpen = false; ribbon.Refresh();
             Assert.True(painter.ToolbarPaints > 0); Assert.False(ribbon.Snapshot.QuickAccessBounds.IsEmpty);

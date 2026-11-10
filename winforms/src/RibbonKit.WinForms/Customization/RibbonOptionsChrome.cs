@@ -59,26 +59,57 @@ internal sealed class RibbonOptionsFrame : Panel
 
 // Button keeps the WinForms IButtonControl/default-button and keyboard behavior;
 // only its painting uses the same palette and mirrored corners as other chrome.
-internal sealed class RibbonOptionsAccentButton : Button
+internal class RibbonOptionsButton : Button
 {
     private readonly RibbonControl _ribbon;
     private readonly RoundedPainter _painter = new();
+    private readonly bool _accent;
     private bool _hot, _pressed;
-    internal RibbonOptionsAccentButton(RibbonControl ribbon)
+    internal RibbonOptionsButton(RibbonControl ribbon, bool accent = false)
     {
-        _ribbon = ribbon;
-        SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
-        FlatStyle = FlatStyle.Flat; FlatAppearance.BorderSize = 0; UseVisualStyleBackColor = false; BackColor = Color.Transparent;
+        _ribbon = ribbon; _accent = accent;
+        if (accent)
+        {
+            SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
+            FlatStyle = FlatStyle.Flat; FlatAppearance.BorderSize = 0; UseVisualStyleBackColor = false; BackColor = Color.Transparent;
+        }
     }
     protected override void OnPaint(PaintEventArgs e)
     {
         var theme = _ribbon.Theme;
-        var fill = !Enabled ? theme.Hover : _pressed ? theme.Pressed : _hot ? theme.Checked : new RibbonFill(theme.Accent);
-        var color = !Enabled ? SystemColors.GrayText : _hot || _pressed ? theme.Foreground : theme.Surface;
-        RibbonOptionsChrome.Surface(_painter, e.Graphics, ClientRectangle, _ribbon, DeviceDpi, fill, fill.Start, 0);
+        if (!_accent && theme.OptionsButtonCornerRadius is null) { base.OnPaint(e); return; }
+        var fill = _accent ? !Enabled ? theme.Hover : _pressed ? theme.Pressed : _hot ? theme.Checked : new RibbonFill(theme.Accent)
+            : !Enabled ? new(theme.Surface) : _pressed ? theme.Pressed : _hot ? theme.Hover : new(theme.Surface);
+        var color = _accent ? !Enabled ? SystemColors.GrayText : _hot || _pressed ? theme.Foreground : theme.Surface
+            : Enabled ? theme.Foreground : theme.DisabledColor;
+        if (!_accent)
+        {
+            using var background = new SolidBrush(Parent?.BackColor is { A: 255 } parentColor ? parentColor : theme.Surface);
+            e.Graphics.FillRectangle(background, ClientRectangle);
+        }
+        int radius = RibbonKit.WinForms.Layout.RibbonFrameMetrics.Radius(theme.OptionsButtonCornerRadius, RibbonOptionsChrome.Radius(_ribbon, DeviceDpi), DeviceDpi);
+        _painter.Draw(e.Graphics, ClientRectangle, radius, fill, _accent ? fill.Start : theme.PopupBorder, _accent || theme.PopupBorder.A == 0 ? 0 : 1);
+        var label = Rectangle.FromLTRB(Padding.Left, Padding.Top, Math.Max(Padding.Left, Width - Padding.Right), Math.Max(Padding.Top, Height - Padding.Bottom));
+        if (Image is { } image)
+        {
+            int x = ImageAlign is ContentAlignment.TopLeft or ContentAlignment.MiddleLeft or ContentAlignment.BottomLeft ? label.Left
+                : ImageAlign is ContentAlignment.TopRight or ContentAlignment.MiddleRight or ContentAlignment.BottomRight ? label.Right - image.Width : label.Left + (label.Width - image.Width) / 2;
+            int y = ImageAlign is ContentAlignment.TopLeft or ContentAlignment.TopCenter or ContentAlignment.TopRight ? label.Top
+                : ImageAlign is ContentAlignment.BottomLeft or ContentAlignment.BottomCenter or ContentAlignment.BottomRight ? label.Bottom - image.Height : label.Top + (label.Height - image.Height) / 2;
+            if (Enabled) e.Graphics.DrawImageUnscaled(image, x, y); else ControlPaint.DrawImageDisabled(e.Graphics, image, x, y, theme.Surface);
+            if (TextImageRelation == TextImageRelation.ImageBeforeText) label = Rectangle.FromLTRB(Math.Min(label.Right, x + image.Width), label.Top, label.Right, label.Bottom);
+            else if (TextImageRelation == TextImageRelation.TextBeforeImage) label.Width = Math.Max(0, x - label.Left);
+        }
         var flags = TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis;
+        if (!_accent)
+        {
+            if (TextAlign is ContentAlignment.TopLeft or ContentAlignment.MiddleLeft or ContentAlignment.BottomLeft) flags &= ~TextFormatFlags.HorizontalCenter;
+            else if (TextAlign is ContentAlignment.TopRight or ContentAlignment.MiddleRight or ContentAlignment.BottomRight) flags = flags & ~TextFormatFlags.HorizontalCenter | TextFormatFlags.Right;
+            if (TextAlign is ContentAlignment.TopLeft or ContentAlignment.TopCenter or ContentAlignment.TopRight) flags &= ~TextFormatFlags.VerticalCenter;
+            else if (TextAlign is ContentAlignment.BottomLeft or ContentAlignment.BottomCenter or ContentAlignment.BottomRight) flags = flags & ~TextFormatFlags.VerticalCenter | TextFormatFlags.Bottom;
+        }
         if (!ShowKeyboardCues) flags |= TextFormatFlags.HidePrefix;
-        TextRenderer.DrawText(e.Graphics, Text, Font, ClientRectangle, color, flags);
+        TextRenderer.DrawText(e.Graphics, Text, Font, _accent ? ClientRectangle : label, color, flags);
         if (Focused && ShowFocusCues)
             ControlPaint.DrawFocusRectangle(e.Graphics, Rectangle.Inflate(ClientRectangle, -4, -4), color, fill.Start);
     }
@@ -93,3 +124,5 @@ internal sealed class RibbonOptionsAccentButton : Button
     protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); _pressed = false; Invalidate(); }
     protected override void Dispose(bool disposing) { base.Dispose(disposing); if (disposing) _painter.Dispose(); }
 }
+
+internal sealed class RibbonOptionsAccentButton(RibbonControl ribbon) : RibbonOptionsButton(ribbon, accent: true);

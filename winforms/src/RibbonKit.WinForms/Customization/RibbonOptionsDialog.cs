@@ -59,9 +59,9 @@ public class RibbonOptionsDialog : Form
         foreach (var page in _pages.ToArray()) if (!page.CommitDraft()) { SelectedPage = page; return false; }
         return true;
     }
-    private static Button Button(string name, string text, Action action)
+    private Button Button(string name, string text, Action action)
     {
-        var button = new Button { Name = name, Text = text, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, UseVisualStyleBackColor = true };
+        var button = new RibbonOptionsButton(_ribbon) { Name = name, Text = text, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, UseVisualStyleBackColor = true };
         button.Click += (_, _) => action(); return button;
     }
     private int ScaleLogical(int value) => (int)Math.Ceiling(value * DeviceDpi / 96d);

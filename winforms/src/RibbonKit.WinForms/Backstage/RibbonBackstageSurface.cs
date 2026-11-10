@@ -10,7 +10,8 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     private readonly RibbonControl _ribbon;
     private readonly Panel _navigation;
     private readonly Panel _footer;
-    private readonly Panel _pages = new() { TabIndex = 3 };
+    private readonly Panel _pages;
+    private readonly Panel _pageContent = new() { TabIndex = 0 };
     private readonly EntryButton _back;
     private readonly Dictionary<RibbonItem, Control> _entries = [];
     private bool _arranging;
@@ -39,8 +40,14 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     // at full rail opacity; changing the tint must not change redirection owners.
     private bool MaterialPaint => _ribbon.HasWindowBackdrop;
     internal bool TransparentNavigation => _ribbon.HasWindowBackdrop && _ribbon.Backstage.NavigationBackgroundOpacity < 1;
-    internal RibbonTheme PaintTheme => _ribbon.Theme with { BackstageNavigationBackground = Color.FromArgb(
-        TransparentNavigation ? (int)Math.Round(255 * _ribbon.Backstage.NavigationBackgroundOpacity) : 255, _ribbon.Theme.BackstageNavigationBackground) };
+    internal RibbonTheme PaintTheme => _ribbon.Theme with
+    {
+        BackstageNavigationUsesAccent = false,
+        BackstageNavigationHover = _ribbon.Theme.BackstageNavigationUsesAccent ? _ribbon.Theme.BackstageHoverFill : _ribbon.Theme.BackstageNavigationHover,
+        BackstageNavigationSelected = _ribbon.Theme.BackstageNavigationUsesAccent ? _ribbon.Theme.BackstageSelectedFill : _ribbon.Theme.BackstageNavigationSelected,
+        BackstageNavigationBackground = Color.FromArgb(TransparentNavigation ? (int)Math.Round(255 * _ribbon.Backstage.NavigationBackgroundOpacity) : 255,
+            _ribbon.Theme.BackstageNavigationColor)
+    };
     private Control MotionTarget => MaterialPaint ? _pages : this;
     internal bool HasApplicationOpacity => _motionOpacity is null && RibbonDrawingHold.HasOpacity(MotionTarget.Handle);
     internal RibbonDrawingHold AcquireMotionOpacity(byte alpha)
@@ -57,7 +64,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     {
         if (Visible && IsHandleCreated && !HasApplicationOpacity) AcquireMotionOpacity(255).CompositeChildren();
     }
-    internal void RepaintBackdrop(bool retainPage = false)
+    internal void RepaintBackdrop(bool retainPage = false, bool publishOpacity = true)
     {
         if (retainPage && MaterialPaint)
         {
@@ -76,8 +83,9 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             RibbonDrawingHold.Repaint(Handle);
             if (_motionTarget is { IsDisposed: false, IsHandleCreated: true } target && !ReferenceEquals(target, this)) RibbonDrawingHold.Repaint(target.Handle);
         }
-        _motionOpacity?.SetOpacity(MotionAlpha);
+        if (publishOpacity) PublishMotionOpacity();
     }
+    internal void PublishMotionOpacity() => _motionOpacity?.SetOpacity(MotionAlpha);
     // Publish native opacity after painting the corresponding moved frame.
     internal void SetMotionAlpha(byte alpha) => MotionAlpha = alpha;
     internal void RestoreMotionOpacity()
@@ -115,6 +123,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     }
     protected override void WndProc(ref Message message)
     {
+        if (IsCaptionHit(message)) { message.Result = -1; return; }
         if (_movingForMotion && message.Msg == 0x46) // WINDOWPOSCHANGING
         {
             var position = Marshal.PtrToStructure<MotionWindowPosition>(message.LParam);
@@ -123,14 +132,31 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         }
         base.WndProc(ref message);
     }
+    private bool IsCaptionHit(Message message)
+    {
+        if (message.Msg != 0x84 || CaptionHeight <= 0) return false;
+        var point = PointToClient(new(unchecked((short)(long)message.LParam), unchecked((short)((long)message.LParam >> 16))));
+        return point.Y >= 0 && point.Y < CaptionHeight;
+    }
+    private sealed class PagePanel(RibbonBackstageSurface surface) : Panel
+    {
+        protected override void WndProc(ref Message message)
+        {
+            if (surface.IsCaptionHit(message)) { message.Result = -1; return; }
+            base.WndProc(ref message);
+        }
+    }
     [StructLayout(LayoutKind.Sequential)] private struct MotionWindowPosition
     { internal nint Window, After; internal int X, Y, Width, Height; internal uint Flags; }
     private void ReleaseMotionOpacity() { _motionOpacity?.Dispose(); _motionOpacity = null; _motionTarget = null; }
     internal Rectangle NavigationBounds => new(0, 0, _pageFrameBounds.Left, ClientSize.Height);
     internal Control PageArea => _pages;
+    internal int CaptionHeight => _ribbon.HasFullHeightBackstage ? _ribbon.WindowCaptionHeight : 0;
     internal RibbonBackstageSurface(RibbonControl ribbon)
     {
         _ribbon = ribbon;
+        _pages = new PagePanel(this) { TabIndex = 3 };
+        _pages.Controls.Add(_pageContent);
         _navigation = new NavigationPanel(this) { AutoScroll = true, TabIndex = 1 };
         _footer = new NavigationPanel(this) { TabIndex = 2, Visible = false };
         SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
@@ -156,10 +182,11 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             if (_ribbon.IsBackstageOpen && !ReferenceEquals(_shownPage, _ribbon.Backstage.SelectedPage)) _ribbon.BackstageOpeningMotion?.Dispose();
             Font = _ribbon.Font;
             UpdateNavigationFont();
-            BackColor = _ribbon.Theme.BackstageNavigationBackground;
-            _navigation.BackColor = _ribbon.Theme.BackstageNavigationBackground;
+            BackColor = _ribbon.Theme.BackstageNavigationColor;
+            _navigation.BackColor = _ribbon.Theme.BackstageNavigationColor;
             _footer.BackColor = _navigation.BackColor;
             _pages.BackColor = _ribbon.Theme.Surface;
+            _pageContent.BackColor = _ribbon.Theme.Surface;
             if (_motionOpacity is not null && !ReferenceEquals(_motionTarget, MotionTarget)) ReleaseMotionOpacity();
             if (Visible && _ribbon.HasWindowBackdrop && _motionOpacity is null) PrepareBackdrop();
             var items = _ribbon.Backstage.NavigationItems.Where(i => i.Visible && !i.IsDisposed).ToArray();
@@ -189,12 +216,12 @@ internal sealed class RibbonBackstageSurface : ContainerControl
                 {
                     slot = new(page.Content!);
                     _slots.Add(page, slot);
-                    _pages.Controls.Add(slot);
+                    _pageContent.Controls.Add(slot);
                 }
             }
             PerformLayout();
             if (animatePage && _ribbon.Backstage.SelectedPage is { } selected && _slots.TryGetValue(selected, out var arriving))
-                _pageMotion = RibbonBackstagePageMotion.Prepare(_ribbon, arriving, _pages);
+                _pageMotion = RibbonBackstagePageMotion.Prepare(_ribbon, arriving, _pageContent);
             foreach (var pair in _slots) pair.Value.Visible = ReferenceEquals(pair.Key, _ribbon.Backstage.SelectedPage);
             bool movedFocus = hadFocus && (!ContainsFocus || hadPageFocus && !ReferenceEquals(_shownPage, _ribbon.Backstage.SelectedPage));
             _shownPage = _ribbon.Backstage.SelectedPage;
@@ -313,7 +340,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         _arranging = true;
         try
         {
-            var layout = RibbonBackstageLayout.Build(ClientSize, _navigation.Font, DeviceDpi, _ribbon.Backstage);
+            var layout = RibbonBackstageLayout.Build(ClientSize, _navigation.Font, DeviceDpi, _ribbon.Backstage, captionHeight: CaptionHeight);
             _back.Bounds = layout.Back;
             _navigation.Bounds = layout.Navigation;
             _footer.Bounds = layout.Footer;
@@ -321,6 +348,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             int border = RibbonBackstageLayout.PageBorderWidth(_ribbon.Painter, _ribbon.Theme, DeviceDpi, layout.Page.Size);
             int radius = RibbonBackstageLayout.PageCornerRadius(_ribbon.Painter, _ribbon.Theme, DeviceDpi, layout.Page.Size);
             _pages.Bounds = layout.PageContentBounds(_ribbon.Theme, DeviceDpi, border);
+            _pageContent.Bounds = new(0, Math.Min(CaptionHeight, _pages.Height), _pages.Width, Math.Max(0, _pages.Height - CaptionHeight));
             int padding = RibbonLayoutEngine.Scale(_ribbon.Theme.BackstagePagePadding ?? 0, DeviceDpi);
             UpdatePageRegion(Math.Max(0, radius - border - padding));
             _navigation.SuspendLayout(); _footer.SuspendLayout();
@@ -339,7 +367,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             }
             finally { _navigation.ResumeLayout(false); _footer.ResumeLayout(false); }
             foreach (var slot in _slots.Values)
-                if (!IsPageAnimating || !ReferenceEquals(_pageMotion!.Target, slot)) slot.Bounds = new(Point.Empty, _pages.ClientSize);
+                if (!IsPageAnimating || !ReferenceEquals(_pageMotion!.Target, slot)) slot.Bounds = new(Point.Empty, _pageContent.ClientSize);
         }
         finally { _arranging = false; }
     }

@@ -10,6 +10,7 @@ internal sealed record ShowcasePreferences
     [JsonRequired] public int Version { get; init; } = 1;
     public RibbonLayoutMode LayoutMode { get; init; }
     public RibbonDensity Density { get; init; }
+    public RibbonBuiltInTheme? BuiltInTheme { get; init; }
     public bool IsMinimized { get; init; }
     public RibbonAnimationLevel AnimationLevel { get; init; } = RibbonAnimationLevel.Subtle;
     public RibbonTabContentAnimation TabContentAnimation { get; init; }
@@ -32,7 +33,8 @@ internal sealed record ShowcasePreferences
             ?? throw new InvalidOperationException("The preferences file is empty.");
         if (value.Format != new ShowcasePreferences().Format || value.Version != 1
             || !Enum.IsDefined(value.LayoutMode) || !Enum.IsDefined(value.Density)
-            || !Enum.IsDefined(value.AnimationLevel) || !Enum.IsDefined(value.TabContentAnimation) || !Enum.IsDefined(value.Backdrop))
+            || !Enum.IsDefined(value.AnimationLevel) || !Enum.IsDefined(value.TabContentAnimation) || !Enum.IsDefined(value.Backdrop)
+            || value.BuiltInTheme is { } theme && !Enum.IsDefined(theme))
             throw new InvalidOperationException("The preferences format or version is unsupported.");
         value.Window?.Validate();
         return value;
