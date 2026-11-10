@@ -3,14 +3,6 @@ namespace RibbonKit.WinForms.Layout;
 // Shared space negotiation and DPI arithmetic; families own their defaults.
 internal abstract class RibbonBackstageLayoutProvider
 {
-    private static readonly RibbonBackstageLayoutProvider Modern = new RibbonBackstage2024Layout();
-    private static readonly RibbonBackstageLayoutProvider Classic = new RibbonBackstage2019Layout();
-    internal static RibbonBackstageLayoutProvider For(RibbonTheme? theme) => (theme?.BackstageStyle ?? RibbonBackstageStyle.Modern) switch
-    {
-        RibbonBackstageStyle.Modern => Modern,
-        RibbonBackstageStyle.Classic => Classic,
-        _ => throw new ArgumentOutOfRangeException(nameof(theme))
-    };
     internal abstract int NavigationPadding { get; }
     internal abstract int IconInset { get; }
     internal abstract int AutoMinimumWidth { get; }

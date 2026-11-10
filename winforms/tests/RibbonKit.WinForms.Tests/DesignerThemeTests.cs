@@ -191,8 +191,8 @@ public sealed class DesignerThemeTests
         Assert.Equal(0, host.Transactions);
     });
 
-    [Fact]
-    public void Theme_preview_never_initializes_declared_hidden_or_disabled_native_pages() => FoundationTests.Sta(() =>
+    [Theory] [InlineData(RibbonBuiltInTheme.Office2024Light)] [InlineData(RibbonBuiltInTheme.Office2019Light)]
+    public void Theme_preview_never_initializes_declared_hidden_or_disabled_native_pages(RibbonBuiltInTheme selectedTheme) => FoundationTests.Sta(() =>
     {
         NeverCreateContent.InstancesCreated = 0;
         using var host = new DesignerAuthoringTests.Host(); using var ribbon = DesignerAuthoringTests.MakeRibbon(host);
@@ -201,7 +201,7 @@ public sealed class DesignerThemeTests
         ribbon.Backstage.Items.Add(new RibbonBackstagePageItem { Text = "Hidden", Visible = false, ContentType = typeof(NeverCreateContent) });
         ribbon.Backstage.FooterItems.Add(new RibbonBackstagePageItem { Text = "Disabled", Enabled = false, ContentType = typeof(NeverCreateContent) });
         ribbon.EndInit();
-        var draft = RibbonDesignCommitter.Read(ribbon, host); draft.BuiltInTheme = "Office2024Light";
+        var draft = RibbonDesignCommitter.Read(ribbon, host); draft.BuiltInTheme = selectedTheme.ToString();
         RibbonThemePreviewRenderer.Render(ribbon, host, draft);
         Assert.Equal(0, NeverCreateContent.InstancesCreated); Assert.All(ribbon.Backstage.NavigationItems.OfType<RibbonBackstagePageItem>(), page => Assert.Null(page.Content));
         Assert.Equal(0, host.Transactions);

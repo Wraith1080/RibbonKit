@@ -769,7 +769,6 @@ public partial class RibbonRenderer : IDisposable
     {
         if (disposing)
         {
-            _modernBackstageRenderer = null; _classicBackstageRenderer = null;
             _rounded.Dispose();
             _shadow.Dispose();
             _captions.Clear();

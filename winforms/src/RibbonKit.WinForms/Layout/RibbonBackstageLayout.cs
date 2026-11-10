@@ -39,7 +39,7 @@ internal sealed record RibbonBackstageLayout(Rectangle Back, Rectangle Navigatio
         Math.Clamp(renderer.GetBackstagePageCornerRadius(theme, dpi), 0, Math.Max(0,
             Math.Min(RibbonLayoutEngine.Scale(32, dpi), Math.Min(size.Width, size.Height) / 2)));
     internal static RibbonBackstageLayout Build(Size size, Font font, int dpi, RibbonBackstage? backstage = null, RibbonItem? reveal = null, int captionHeight = 0)
-        => RibbonBackstageLayoutProvider.For(backstage?.Ribbon?.Theme).Build(size, font, dpi, backstage, reveal, captionHeight);
+        => RibbonPresentationResolver.Backstage(backstage?.Ribbon?.Theme).Layout.Build(size, font, dpi, backstage, reveal, captionHeight);
 }
 
 internal sealed record RibbonBackstageEntrySlot(RibbonItem Item, Rectangle Bounds, Rectangle Clip, bool Footer)

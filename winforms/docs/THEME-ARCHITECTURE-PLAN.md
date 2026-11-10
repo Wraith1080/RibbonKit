@@ -1,8 +1,9 @@
 # Native WinForms theme architecture
 
-**Draft for discussion, 2026-11-10. The user requested planning before continuing
-the broader theme rewrite. No further runtime changes or tests are part of this
-planning step.**
+**B1 implemented, 2026-11-10, following the user's go-ahead after planning.**
+Backstage now uses one layout/drawing registration. B2/B3 and later extractions
+remain separate proposed slices; human appearance acceptance remains pending.
+Current evidence is recorded in the [themes plan](THEMES-PLAN.md#backstage-registration-b1--2026-11-10).
 
 The [themes plan](THEMES-PLAN.md) retains appearance requirements and acceptance.
 This document proposes implementation boundaries and a migration sequence; it
@@ -20,43 +21,119 @@ and immutable theme definitions that compose those presentations with colors and
 metrics. A new palette should reuse an existing presentation where appropriate.
 A different visual structure should add a sibling implementation.
 
-## Proposed ownership
+The [geometry consolidation](GEOMETRY-CONSOLIDATION-PLAN.md) remains the shared
+foundation: adjustable metrics, DPI/rounding, layout snapshots, clipping, native
+content bounds and regression contracts are reused. This migration changes
+presentation ownership and selection. B1 changes no geometry calculation; later
+extractions must preserve consolidated overrides and defaults rather than create
+parallel layout engines or repeat the closed geometry campaign.
 
-| Layer | Owns | Boundary |
+## Source assessment and reusable pieces
+
+The pilot already had sibling inheritance. B1 unified composition; explicit
+inputs and the remaining policy ownership are later work.
+
+| Current owner | Retain | Remaining coupling |
 | --- | --- | --- |
-| Theme definition | Palette, fills, logical metrics, and selection of presentation families. | Preserve `RibbonTheme`, built-in selection, application theme and Reset semantics. Keep settings independently adjustable. |
-| Pure layout base | Space negotiation, DPI arithmetic and a measured result consumed by drawing, hit testing and native controls. | No Office-specific default padding, page frame, caption coverage or selection shape. Different structures can override measurement. |
-| Pure presentation base | Drawing contracts and access to neutral primitives and existing application renderer hooks. | No Office 2019/2024 palette or visual defaults, and no inheritance from one Office family to another. |
-| Family implementations | Header/selection treatment, frames, Backstage structure, caption treatment and style defaults. | Sibling classes with separate files. A change to one family has an explicit verification scope for the others. |
-| Shared control/runtime | Commands, selection, keyboard/accessibility, validation, ownership, native page/editor handles and animation lifecycle. | Theme switching changes presentation without replacing application controls or mutating authored state. |
-| Host integration | Native window controls, resize/drag, material composition, and applying the selected caption policy. | `RibbonForm` consumes a presentation policy; a family-specific effect must not become unconditional window behavior. |
+| [Backstage layout provider](../src/RibbonKit.WinForms/Layout/RibbonBackstageLayoutProvider.cs) and its 2019/2024 subclasses | One shared width, row, footer, narrow-host and DPI algorithm; sibling classes supply different defaults. | B1 removed concrete registration and `For` from the base. `Build` still reads a live ribbon, resolves metrics and asks its renderer for frame geometry. The base also calculates host bounds from a Form; those dependencies belong to B2/B3. |
+| [Backstage metrics](../src/RibbonKit.WinForms/Layout/RibbonBackstageMetrics.cs) | Existing validated nullable overrides, density minima and shared text/Auto-width arithmetic. | Metrics still resolve the registered layout separately from `Build`. Passing resolved inputs and gathering scattered fallback values belong to B2. |
+| [Backstage renderer base](../src/RibbonKit.WinForms/Rendering/RibbonBackstageRenderer.cs) and its 2019/2024 subclasses | Small sibling drawing strategies, borrowing the active public renderer's primitives. | B1 replaced the second selector with a resolver adapter. The base still contains a navigation-state recipe and reads window/runtime state for caption painting; these are more than a drawing contract. |
+| [Public Office renderer](../src/RibbonKit.WinForms/Rendering/RibbonOffice2024Renderer.cs) | Public virtual entry points and application subclass behavior. | It is also the default dispatcher for Office 2019. Its historical public name must not make it the base class for new family implementations. |
+| [Window integration](../src/RibbonKit.WinForms/RibbonControl.Window.cs), [title integration](../src/RibbonKit.WinForms/RibbonForm.Title.cs) and [pane motion](../src/RibbonKit.WinForms/Animation/RibbonBackstageMotion.cs) | Real panes, transparent caption foreground, current timing, interruption and ownership. | Coverage/centering read theme flags directly, 2024 tint lives in its renderer, and travel defaults live in motion/window code. There is no single resolved presentation policy. |
 
-Keep the existing neutral `RibbonRenderer` primitives and public virtual hooks.
-Prefer a small pure Backstage presentation base over inheriting the complete
-ribbon renderer for each Backstage style. Keep family implementations internal
-initially; another application can still supply its public `RibbonRenderer` and
-immutable theme settings. A new public extension contract needs a concrete
-consumer requirement and a separate compatibility decision.
+Both existing entry-state implementations currently have the same recipe. Share
+that recipe through an explicit helper when useful; do not duplicate it merely
+to give each family a file. Siblings isolate decisions, not every line of code.
+Existing inheritance tests prove the class relationship, not complete isolation
+of selection, host integration or native presentation.
 
-## Composition and selection
+The parent design index's [Modern Backstage history](../../docs/history/library/01-core-controls.md#311-backstage-redesign-modern-2024--icons)
+explains the Classic/Modern visual distinction. Native implementation and current
+acceptance are owned by the native source and [themes plan](THEMES-PLAN.md).
+WPF remains read-only and is not a migration dependency.
 
-1. Resolve a theme definition once into presentation choices for headers/body,
-   commands, popups, galleries, Backstage and library dialogs.
-2. Preserve explicit application-supplied renderer precedence. Family helpers
-   must continue invoking that renderer's text, focus, separator and metric hooks.
-3. Keep layout and rendering selections together in one resolver/registration
-   point. Avoid independent switches that can pair one family's layout with
-   another family's drawing accidentally.
-4. Keep palette changes independent from structure. A new color scheme can reuse
-   Modern or Classic; a structurally different Backstage adds a sibling pair.
-5. Keep current `RibbonTheme` properties as the compatibility surface. Grouping
-   their internal resolved values is preferable to immediately renaming/removing
-   public properties. Validate choices before assignment and retain per-ribbon
-   isolation, custom clones and Reset.
+## Target responsibilities and dependencies
 
-The draft `RibbonBackstageStyle` selector is a possible first step, not a frozen
-design. Review its naming, placement and resolver before expanding it to other
-surfaces. Pure bases should expose contracts; registration belongs in the resolver.
+| Layer | Owns and consumes | Boundary |
+| --- | --- | --- |
+| Theme definition | Existing immutable `RibbonTheme`: colors/fills, adjustable logical metrics, structural selectors and authored policy values. Built-ins remain values in `RibbonThemes`. | No new public theme-definition hierarchy. Public Office 2024 defaults stay compatible; a neutral internal base need not remove those public defaults. |
+| Family defaults | Immutable fallback values used only when an existing nullable setting is null, plus explicit structural choices. | No colors or live controls in layout defaults. Keep application values separate from fallbacks; never rewrite a theme to materialize defaults. |
+| Pure layout base | Shared measurement, arrangement, scaling and safe clamps over explicit inputs; emits one layout snapshot for painting, hit testing, scrolling and native content. | No concrete-family registration, palette, window access or hidden Office defaults. Different structures may override arrangement; palette differences reuse it. |
+| Pure presentation base | Drawing contracts and neutral, parameter-driven primitives; consumes resolved values and measured bounds. | No implicit Office selection recipe or window policy. A common state-paint helper is opt-in and receives its resolved fill/shape. |
+| Family implementations | Sibling layout/drawing strategies and presentation-specific fallback/policy choices, initially the existing 2019 and 2024 classes. | Neither family inherits the other. Reuse shared algorithms and primitives; add an override only for a real structural difference. |
+| Resolver and registration | One mapping from each surface selector to its matching layout/drawing pair; later extracted defaults and policy belong to that same registration. | Pure bases never choose concrete families. Resolve from effective theme settings, not built-in identity, theme name or renderer type. |
+| Shared runtime | Commands, selection, binding, validation, focus, keyboard/accessibility, native controls, ownership and transition lifecycle. | Receives presentation results. Theme changes retain authored controls, state and handles and use existing refresh/settle paths. |
+| Window adapter | Measures actual caption/host facts, invokes native hit testing and material/window services, applies resolved coverage/tint/title policy. | `RibbonForm` executes policy without deciding that all Backstage presentations share one Office design. Ordinary Form hosts remain supported. |
+| Motion engines | Clocks, applying supplied timing/curves, progress, interruption/reversal, cancellation, reduced motion and disposal. | Consume resolved visual motion choices. Do not own family selection or create a second pane background to imitate real full-height panes. |
+
+Dependency flow is **theme -> resolver -> family and resolved values -> shared
+layout/drawing**, with host facts supplied by the window adapter. The runtime
+retains the resulting geometry and feeds transition progress back to presentation.
+Neither a pure base nor a family drawing helper reaches into `RibbonForm` to
+discover which design is active.
+
+For layout, the adapter gathers visibility/text measurements, authored width
+constraints, caption reservation and effective frame insets from the active
+renderer. The shared algorithm receives those values rather than a live Form or
+reselecting a family. Keep existing rounding, density minima, short-host fallback
+and safety clamps. Do not turn the current one-device-pixel Modern default border
+into one logical pixel during this extraction.
+
+Keep renderer-owned drawing caches and their existing disposal. Stateless
+registrations can be shared; resolved geometry, motion, controls and mutable
+caches cannot be global. Avoid a process-wide cache of application theme clones.
+
+## One composition point and compatibility rules
+
+The internal [RibbonPresentationResolver](../src/RibbonKit.WinForms/Rendering/RibbonPresentationResolver.cs)
+now returns a small `RibbonBackstagePresentation` registration containing the
+existing layout provider and renderer. Add defaults/window/motion policy members
+only when those responsibilities move in their later slices; no empty extension
+interfaces, reflection discovery, service container or public plugin framework.
+
+| Backstage selector | Registered layout | Registered drawing |
+| --- | --- | --- |
+| `Modern` | `RibbonBackstage2024Layout` | `RibbonBackstage2024Renderer` |
+| `Classic` | `RibbonBackstage2019Layout` | `RibbonBackstage2019Renderer` |
+
+B1 removed `RibbonBackstageLayoutProvider.For` and replaced the switch in
+`RibbonRenderer.BackstageStyleRenderer` with a forwarding adapter. Layout,
+metrics, background/entry drawing, frame measurements and caption queries all
+obtain the same registration for the same effective theme. Inert designer
+previews use the same route, including their explicit candidate theme.
+
+Preserve these rules throughout:
+
+1. `Theme` assignment validates before changing application/effective theme or
+   built-in selection. `BuiltInTheme = null`/Reset restores the last application
+   theme; direct `Theme` assignment clears the built-in choice, even for equal
+   values. Keep code-only/hidden theme serialization and per-ribbon isolation.
+2. Keep `RibbonBackstageStyle.Modern/Classic` and existing properties unchanged
+   for this migration. They already describe structure independently of palette;
+   neither rename them nor expand them for hypothetical families now.
+3. Every current nonnullable flag remains authoritative, including false.
+   `BackstageStyle` must not silently enable title coverage, centering, accent
+   navigation or monochrome icons. Nullable overrides retain their own fallback
+   rules. A clone selecting Classic with title coverage disabled remains valid;
+   selecting Modern on a 2019 clone must not reset its other authored settings.
+4. Preserve `Painter = Renderer ?? existing default renderer` and the borrowed
+   renderer's lifetime. The public `RibbonOffice2024Renderer` remains a compatible
+   facade whose built-in methods delegate to internal siblings. Do not change
+   the public `RibbonRenderer` flat presentation into Office painting.
+5. Surface painting still enters through public virtual methods on the actual
+   application renderer. Its background/entry/frame overrides take precedence;
+   inherited built-in methods may delegate to the family. Text, focus, separator
+   and metric hooks continue reaching that same owner. Do not dispatch family
+   painting directly from a control and bypass those hooks.
+6. Read one effective theme/registration for a measurement or paint operation;
+   refresh it through existing theme, renderer, density and DPI invalidation.
+   Open-surface switching uses the existing settle/refresh ordering, preserving
+   native page identity and caption-foreground acquisition/release. Do not retain
+   stale resolved frame values after renderer reassignment.
+
+The family registration binds compatible default pieces. Deliberate application
+renderer overrides and independently authored settings remain supported escape
+points, rather than mismatches to reject.
 
 ## Visual contracts to protect
 
@@ -68,24 +145,116 @@ surfaces. Pure bases should expose contracts; registration belongs in the resolv
 | Navigation/page | Existing inset selections, indicator and page frame. | Flat accent rail, full-width state fills, white icon silhouettes and flush page. |
 | Other surfaces | Preserve established defaults. | Square theme-owned elements, circular Back exception, edge-to-edge body with retained inner padding, bordered/shadowed popups. |
 
-Animation code owns clocks, interruption, validation/cancellation, reduced motion
-and lifetime. A presentation supplies distances and caption policy. Keep pane
-motion, caption tint and title position on consistent progress where they must
-present together; do not create unrelated color animations to imitate real panes.
+At the later policy extraction, represent caption coverage, tint eligibility,
+title alignment and travel as resolved values. Supply open/close state, actual
+pane bounds/alpha, caption geometry, material state and authored color presence
+as inputs. Preserve the current Form-color-then-theme-color precedence. The
+Modern neutral tint applies only when neither is authored and the panes are
+below the caption; it tracks the existing pane reveal/opacity and material rail
+opacity. Classic's full-height panes supply their own backgrounds.
 
-## Migration slices
+Retain 15% default pane travel, the current pane fade, the 25% title travel and
+opaque title ink. Existing explicit zero/snap overrides remain effective. Moving
+these choices into policy must not replace clocks or restart the rejected
+fade-in-place design. Reuse existing progress/timing where effects must agree;
+timer consolidation is outside this migration unless a focused reproduction
+shows it is necessary.
 
-| Slice | Work | Completion evidence |
+Presentation policy supplies travel, opacity curves, easing and timing resolved
+from the existing animation settings; engines execute those choices with the
+shared lifecycle and motion-disable rules. Both families can reuse identical
+policy values. Preserve the current durations and curves during extraction.
+
+## Adding themes after the migration
+
+- **Palette or spacing variant:** start from an existing `RibbonTheme` value with
+  `with { ... }`, change its colors/fills/metrics and retain its structural
+  selectors. No new layout/renderer class or built-in catalog entry is needed
+  for an application-owned variant. A selected future built-in additionally
+  needs catalog, designer selection/serialization and sample persistence work.
+- **Different structure on one surface:** implement a sibling layout/drawing
+  strategy for that surface and register the pair with its defaults/policy.
+  Other surfaces reuse their existing registrations. Expose a new public selector
+  value only when an actual selected theme needs it, with XML/API review and
+  validation; do not infer structure from the palette's name or release year.
+- **Application rendering:** retain the existing public renderer extension path.
+  Internal family classes are not a new public extensibility promise. A new
+  public family-registration API requires a concrete consumer need and its own
+  compatibility decision.
+
+Do not add a monolithic family subclass that duplicates the complete ribbon
+layout engine. Future light-theme order remains unscheduled; dark variants stay
+deferred. Definition values may compose existing surface families independently.
+
+Apply this per surface rather than adding one all-or-nothing Office-family enum.
+Headers already have `HeaderPresentation` for Underline/Filled pairing. For body
+work, prefer resolved data for the existing border, margin, radius, shadow and
+join choices; a different color or corner value alone needs no new strategy.
+Assess an actual structural difference before adding a body selector. Do not
+infer body or Backstage structure from a header choice or zero corner radius.
+
+## Migration slices and relevant checks
+
+The source map above completes planning inventory A; it does not establish new
+automated evidence or visual acceptance. Implement the following separately.
+
+| Slice | Bounded change and principal risk | Smallest relevant verification |
 | --- | --- | --- |
-| A. Baseline and contracts | Inventory existing appearance owners and document the two accepted design targets, caption precedence and current exceptions. Review the draft Backstage extraction against this architecture. | A small ownership map and retained reference scenes. Identify which existing checks protect each boundary. |
-| B. Backstage pilot | Finish a pure base, one layout/renderer pair per structural family and one resolver. Include the Office 2024 grey-caption regression fix. Preserve shared native-page and motion behavior. | Only affected layout/rendering/caption/ownership tests, plus a focused package-only comparison of the two layouts. User appearance review remains separate. |
-| C. Headers and body | Move family-specific tab/header/body presentation behind the same composition pattern, preserving geometry, QAT joins, scroller borders and clipping. | Affected header/body/QAT checks and a small comparison scene for each existing family. |
-| D. Remaining surfaces | Migrate commands, popups/Application Menu, galleries, tips and dialogs in bounded slices. Extract an owner only where structure differs; retain reusable neutral primitives. | Checks for the changed surface and unchanged-family comparison. Preserve borrowed editors, presenters and icons. |
-| E. Catalog growth | Add the next selected light theme through definitions and existing presentation families where possible. Add sibling classes only for actual structural differences. | Independent-consumer use and focused visual/state checks. Dark variants remain deferred. |
+| B1. Backstage registration — implemented | Register existing sibling pairs once and route current callers through it. Preserve existing algorithms, caption methods and motion. Risk: stale/mixed selection or bypassed application hooks. | Focused cases and the package-only comparison are recorded in the [themes plan](THEMES-PLAN.md#backstage-registration-b1--2026-11-10). The delivery criteria below remain the contract. |
+| B2. Explicit layout inputs/defaults | Move family fallbacks out of neutral bases/metrics selection; pass host reservation, measured content and effective renderer frame values into the existing algorithm. Risk: DPI rounding, Auto width, footer fallback or native page inset changes. | Selected `BackstageWidthTests`, `BackstageNavigationTests`, `GalleryBackstageGeometryTests`, `Office2019BackstageTests` and the Backstage-only frame/page-shadow cases. Use existing 96/120/144/192 synthetic cases and narrow/short hosts, plus an unchanged-family paint comparison. |
+| B3. Caption and motion policy | Move tint/coverage/title/travel decisions behind the registration; window and motion code execute them. Keep native services and transition engines. Risk: the original 2024 caption regression, title fading, pane/caption drift, interruption or foreground leaks. | Relevant `BackstageStyleIsolationTests`, `CaptionTitleMotionTests`, `BackstageSynchronizationTests`, and selected page-motion cancellation/retention cases. Existing package-only Solid live-frame scopes for both families, neutral/authored captions, open/close/reversal and resize. No full material matrix. |
+| C1. Headers | Apply the resolver/sibling pattern to Filled/Underline drawing and header-specific geometry policy; keep the shared strip engine. Risk: scrollers, colored caption extension, File/QAT reservations and text clipping. | Affected `Office2019ThemeTests`, header cases in `Office2019ReviewTests`, `TabHeaderClippingTests` and selected QAT/header geometry checks. Compare both light families at normal/narrow widths and applicable ordinary/material paths. |
+| C2. Body and connected frames | Extract body/group/frame policy without changing reduction or ownership. Risk: inner padding, full-width 2019 body, QAT/message joins, seams and popup anchoring. | Selected `FrameGeometryTests`, body/group geometry and QAT/message join cases, two-family comparison in Classic/Simplified and Compact/Touch where affected. No new geometry audit. |
+| D. Remaining surfaces, one per slice | Commands/editors; ordinary popups and Application Menu; galleries; tips; library dialogs. Reuse helpers when only palette/metrics differ. Risk: public drawing hooks, command geometry, borrowed editors/presenters/icons and popup retention. | Select only the changed surface's geometry/paint/state/ownership checks and one unchanged-family comparison. For native content, include retained handle/value/validation evidence; for designer previews, use inert candidate-theme checks. Choose exact filters at each slice. |
+| E. Selected catalog growth | Add one later chosen light definition, reusing surface registrations or adding an actually needed sibling. Risk: selection/Reset/serialization/persistence and unsupported consumer dependencies. | Definition/selection tests, relevant designer/generated-code checks, and a focused independent-consumer visual/state scope. Wait for existing appearance review before another theme. |
 
-Do not migrate every surface in one patch or implement another theme during the
-architecture discussion. Avoid prebuilding a new framework for hypothetical
-themes; use the Backstage pilot to establish the smallest useful contracts.
+For each implementation slice, build affected native projects in their normal
+outputs and select tests by actual dependency impact. Test classes above are
+coverage sources, not instructions to run every listed class. Do not restart the
+full suite or native matrix. Expand only for a new failure or unresolved risk.
+
+## First implementation: B1 (implemented 2026-11-10)
+
+Make the existing Backstage pairing authoritative before moving more behavior.
+This is a selection refactor with unchanged intended appearance, not a new theme
+or another neutral-caption fix; that fix is already committed.
+
+1. Introduce the internal resolver/registration with the two existing sibling
+   pairs. Move concrete construction/selection out of both base classes. Keep
+   current renderer cache ownership/disposal; pass the active owner to helpers.
+2. Route layout/metrics selection, default Office drawing/frame delegation and
+   caption queries to that registration. Ensure standalone/default and designer
+   candidate-theme paths also resolve through it. Preserve the current Modern
+   fallback for calls with no attached ribbon at the adapter boundary.
+3. Retain all public entry points, inheritance and precedence. Add behavioral
+   regression cases for mixed style/coverage settings and custom frame metrics
+   only where existing tests do not already cover those boundaries. Verify
+   consistent geometry and owner callbacks, rather than merely testing that the
+   resolver returns its own constants or expanding inheritance-only assertions.
+4. Run the selected checks in B1 and one existing package-only comparison of
+   2019/2024. Keep any new test/native filter explicit and record executed scope;
+   use the permanent sample in normal Debug only when refreshing review delivery.
+
+Completion criteria:
+
+- One selection mapping covers both supported Backstage styles; no independent
+  switch remains in layout, renderer or window code. Both families remain siblings.
+- Built-ins, custom clones and mixed settings preserve their existing meaning.
+  Invalid assignment preserves the prior theme/selection; application Reset and
+  explicit flat/custom renderer behavior remain intact.
+- Layout and paint agree on page frame geometry through the actual renderer's
+  virtual hooks. Both ordinary and inert designer paths select the same family
+  for the supplied theme, without constructing authored page content in previews.
+- The focused comparison retains native page/editor handles and values, 2019's
+  full-height panes and 2024's separate caption, including switching while open.
+  Existing neutral/authored caption regression assertions still pass. Do not
+  claim live timing evidence from static or synthetic checks.
+- No intended pixel, motion, public API, serialization, sample-selection or
+  authored Forms/resources change. Review the diff and record focused results
+  and remaining human appearance/input gates in the themes plan.
+
+B2/B3 and header/body extraction remain outside the B1 change. B2 is the next
+proposed implementation scope.
 
 ## Verification and delivery budget
 
@@ -103,16 +272,17 @@ themes; use the Backstage pilot to establish the smallest useful contracts.
 
 ## Current draft checkpoint
 
-The committed starting point for this planning discussion is `a24a831` on
-`codex/Ribbonkit-Winform`. A Backstage extraction and neutral-caption correction
-were implemented before the user requested planning and remain **uncommitted**.
-Do not treat them as an accepted architecture or revert them as part of planning.
+The planning discussion began at `a24a831` on `codex/Ribbonkit-Winform`. When the
+starting prompt was prepared on 2026-11-10, HEAD was `47d42cd` (`Backstage fix`)
+and the working tree was clean. The Backstage extraction and neutral-caption
+correction are now committed. Do not treat that commit as architectural acceptance
+or revert its fixes as part of planning. Recheck the live checkout before continuing.
 
-The draft introduces sibling `RibbonBackstage2019Layout` / `2024Layout` providers
+The pilot introduced sibling `RibbonBackstage2019Layout` / `2024Layout` providers
 and sibling `RibbonBackstage2019Renderer` / `2024Renderer` implementations. Both
 renderer classes derive from a pure `RibbonBackstageRenderer`; both layout classes
-derive from `RibbonBackstageLayoutProvider`. The draft still needs review against
-the single-resolver and family-ownership boundaries proposed above.
+derive from `RibbonBackstageLayoutProvider`. B1 added the single resolver;
+the remaining family/host/default boundaries are covered by the later slices.
 
 Evidence already obtained before planning: the first focused run passed 30 cases
 and failed two new named-color identity assertions. Correcting those assertions
@@ -124,4 +294,12 @@ grey caption and close restoration. Evidence is under
 without warnings/errors; local sample package is
 `0.1.0-designer.local20261110T150147762Z`. Human appearance acceptance remains pending.
 
-Next: discuss this structure and the Backstage pilot before extending the rewrite.
+Planning refresh before the user's B1 go-ahead, 2026-11-10: branch/HEAD matched `codex/Ribbonkit-Winform`
+at `47d42cd`. Entry had three modified planning documents; those edits are
+preserved. Source inspection identified the separate selectors and remaining
+host/default dependencies described above. No runtime/sample/test code changed
+and no app, package refresh, build or test ran during that planning-only refresh.
+
+The user then authorized B1 and asked whether geometry consolidation remained
+useful. Its retained role is stated above. B1 implementation/evidence are in
+the themes plan; B2 is next, with caption/motion extraction reserved for B3.

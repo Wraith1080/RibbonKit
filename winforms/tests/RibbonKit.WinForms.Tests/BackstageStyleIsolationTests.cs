@@ -84,8 +84,8 @@ public sealed class BackstageStyleIsolationTests
         Assert.Equal(typeof(RibbonBackstageRenderer), modern.GetType().BaseType);
         Assert.True(typeof(RibbonBackstageRenderer).IsAbstract);
         Assert.Equal(typeof(object), typeof(RibbonBackstageRenderer).BaseType);
-        Assert.Equal(RibbonBackstageLayoutProvider.For(RibbonThemes.Office2024Light).GetType().BaseType,
-            RibbonBackstageLayoutProvider.For(RibbonThemes.Office2019Light).GetType().BaseType);
+        Assert.Equal(RibbonPresentationResolver.Backstage(RibbonThemes.Office2024Light).Layout.GetType().BaseType,
+            RibbonPresentationResolver.Backstage(RibbonThemes.Office2019Light).Layout.GetType().BaseType);
         var selected = ribbon.Theme;
         Assert.Throws<ArgumentOutOfRangeException>(() => ribbon.Theme = selected with { BackstageStyle = (RibbonBackstageStyle)27 });
         Assert.Same(selected, ribbon.Theme);
@@ -117,6 +117,95 @@ public sealed class BackstageStyleIsolationTests
             painter.DrawBackstageEntry(new(graphics, new(0, 0, 300, 50), theme, Control.DefaultFont, 96) { Hot = true, Focused = true }, item, true);
         Assert.Equal(2, painter.TextCalls); Assert.Equal(2, painter.FocusCalls);
     });
+
+    [Theory] [InlineData(false)] [InlineData(true)]
+    public void Switching_structure_preserves_independent_caption_settings_and_native_page_state(bool fullHeight) => FoundationTests.Sta(() =>
+    {
+        using var form = new RibbonForm { ClientSize = new(900, 560) };
+        using var ribbon = Create(form); ribbon.AnimationLevel = RibbonAnimationLevel.None;
+        using var field = new TextBox { Text = "Authored native value" };
+        ((RibbonBackstagePageItem)ribbon.Backstage.Items[0]).Content = field;
+        var application = RibbonThemes.Office2019Light with
+        {
+            Accent = Color.Magenta, BackstageExtendsIntoTitleBar = fullHeight, BackstageTitleCentered = false,
+            BackstageNavigationUsesAccent = false, BackstageMonochromeIcons = false,
+            BackstageNavigationPadding = null, BackstageNavigationIconInset = null,
+            BackstageAutoMinimumNavigationWidth = null, BackstageFooterBottomPadding = null,
+            BackstagePageBorderWidth = null, BackstagePageCornerRadius = null
+        };
+        ribbon.Theme = application; form.Show(); Application.DoEvents(); ribbon.IsBackstageOpen = true;
+        var handle = field.Handle; var parent = field.Parent;
+        foreach (var style in new[] { RibbonBackstageStyle.Classic, RibbonBackstageStyle.Modern, RibbonBackstageStyle.Classic })
+        {
+            var authored = application with { BackstageStyle = style }; ribbon.Theme = authored;
+            var surface = ribbon.BackstageSurface!; bool classic = style == RibbonBackstageStyle.Classic;
+            int S(int value) => RibbonLayoutEngine.Scale(value, ribbon.DeviceDpi);
+            var layout = RibbonBackstageLayout.Build(surface.ClientSize, ribbon.Font, ribbon.DeviceDpi, ribbon.Backstage, captionHeight: surface.CaptionHeight);
+            Assert.Equal(S(classic ? 220 : 200), layout.Page.Left);
+            Assert.Equal(S(classic ? 0 : 8), layout.Inset);
+            Assert.Equal(layout.PageContentBounds(authored, ribbon.DeviceDpi, classic ? 0 : 1), surface.PageArea.Bounds);
+            Assert.Equal(fullHeight ? 0 : form.CaptionHeight, surface.Top);
+            Assert.Equal(fullHeight, ribbon.HasBackstageCaption); Assert.Null(form.CaptionTitleMotion);
+            Assert.Equal(classic || fullHeight, ribbon.BackstageCaptionTintBounds.IsEmpty);
+            if (!classic && !fullHeight) Assert.Equal(authored.BackstageNavigationBackground.ToArgb(), ribbon.CaptionBackground(false).ToArgb());
+            using var pixels = new Bitmap(surface.Width, 2); using var graphics = Graphics.FromImage(pixels);
+            ribbon.Painter.DrawBackstageBackground(new(graphics, new(Point.Empty, surface.Size), authored, ribbon.Font, ribbon.DeviceDpi), layout.Page.Left);
+            Assert.Equal((classic ? authored.Surface : authored.Border).ToArgb(), pixels.GetPixel(layout.Page.Left + 40, 0).ToArgb());
+            Assert.Equal(authored, ribbon.Theme); Assert.Same(authored, ribbon.ApplicationTheme); Assert.Null(ribbon.BuiltInTheme);
+            Assert.Equal(handle, field.Handle); Assert.Same(parent, field.Parent); Assert.Equal("Authored native value", field.Text);
+            Assert.False(ribbon.Theme.BackstageNavigationUsesAccent); Assert.False(ribbon.Theme.BackstageMonochromeIcons);
+        }
+        ribbon.IsBackstageOpen = false; Assert.Null(ribbon.CaptureBackstageCaption());
+        Assert.Equal(handle, field.Handle); Assert.Same(parent, field.Parent);
+        var standalone = RibbonBackstageLayout.Build(new(900, 560), ribbon.Font, 96);
+        Assert.Equal(200, standalone.Page.Left); Assert.Equal(8, standalone.Inset);
+    });
+
+    [Theory] [InlineData(RibbonBackstageStyle.Modern)] [InlineData(RibbonBackstageStyle.Classic)]
+    public void Application_frame_and_paint_overrides_remain_authoritative_after_renderer_reassignment(RibbonBackstageStyle style) => FoundationTests.Sta(() =>
+    {
+        using var form = new RibbonForm { ClientSize = new(900, 560) };
+        using var ribbon = Create(form); ribbon.AnimationLevel = RibbonAnimationLevel.None;
+        ribbon.Theme = ribbon.Theme with { BackstageStyle = style };
+        using var painter = new FrameRenderer(); ribbon.Renderer = painter;
+        using var field = new TextBox { Text = "Retained renderer value" };
+        ((RibbonBackstagePageItem)ribbon.Backstage.Items[0]).Content = field;
+        form.Show(); Application.DoEvents(); ribbon.IsBackstageOpen = true;
+        var surface = ribbon.BackstageSurface!; var handle = field.Handle; var parent = field.Parent;
+        foreach (int border in new[] { 4, 7 })
+        {
+            painter.Border = border; painter.Radius = border == 4 ? 14 : 0;
+            ribbon.Renderer = painter; // The same borrowed instance may change its metric policy.
+            var layout = RibbonBackstageLayout.Build(surface.ClientSize, ribbon.Font, ribbon.DeviceDpi, ribbon.Backstage);
+            Assert.Equal(layout.PageContentBounds(ribbon.Theme, ribbon.DeviceDpi, border), surface.PageArea.Bounds);
+            if (painter.Radius > 0) Assert.NotNull(surface.PageArea.Region); else Assert.Null(surface.PageArea.Region);
+            painter.Backgrounds = painter.Entries = 0; surface.Refresh(); Application.DoEvents();
+            Assert.True(painter.Backgrounds > 0); Assert.True(painter.Entries > 0);
+            using var pixels = new Bitmap(surface.Width, 20); using var graphics = Graphics.FromImage(pixels);
+            painter.DrawBackstageBackground(new(graphics, new(Point.Empty, surface.Size), ribbon.Theme, ribbon.Font, ribbon.DeviceDpi), layout.Page.Left);
+            Assert.Equal(ribbon.Theme.Border.ToArgb(), pixels.GetPixel(layout.Page.Left + 40, border - 1).ToArgb());
+            Assert.Equal(ribbon.Theme.Surface.ToArgb(), pixels.GetPixel(layout.Page.Left + 40, border).ToArgb());
+            Assert.Equal(handle, field.Handle); Assert.Same(parent, field.Parent);
+        }
+        using var flat = new RibbonRenderer(); ribbon.Renderer = flat;
+        Assert.Same(flat, ribbon.Painter); Assert.Null(surface.PageArea.Region);
+        var flatLayout = RibbonBackstageLayout.Build(surface.ClientSize, ribbon.Font, ribbon.DeviceDpi, ribbon.Backstage);
+        Assert.Equal(flatLayout.Page, surface.PageArea.Bounds);
+        ribbon.Renderer = null;
+        Assert.Equal(flatLayout.Page.Left + (style == RibbonBackstageStyle.Modern ? 1 : 0), surface.PageArea.Left);
+        Assert.Equal(handle, field.Handle); Assert.Equal("Retained renderer value", field.Text);
+    });
+
+    private sealed class FrameRenderer : RibbonOffice2024Renderer
+    {
+        internal int Border = 4, Radius = 14, Backgrounds, Entries;
+        public override int GetBackstagePageBorderWidth(RibbonTheme theme, int deviceDpi) => Border;
+        public override int GetBackstagePageCornerRadius(RibbonTheme theme, int deviceDpi) => Radius;
+        public override void DrawBackstageBackground(RibbonPaintContext context, int navigationWidth)
+        { Backgrounds++; base.DrawBackstageBackground(context, navigationWidth); }
+        public override void DrawBackstageEntry(RibbonPaintContext context, RibbonItem? item, bool selected)
+        { Entries++; base.DrawBackstageEntry(context, item, selected); }
+    }
 
     private sealed class HookRenderer : RibbonOffice2024Renderer
     {

@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using RibbonKit.WinForms.Design;
+using RibbonKit.WinForms.Layout;
 using RibbonKit.WinForms.Design.Client;
 using RibbonKit.WinForms.Design.Protocol;
 using Xunit;
@@ -201,6 +202,24 @@ public sealed class BackstageDesignerTests
         using var a = new Bitmap(firstStream); using var b = new Bitmap(secondStream);
         for (int y = 0; y < a.Height; y++) for (int x = 350; x < a.Width; x++) Assert.Equal(a.GetPixel(x, y), b.GetPixel(x, y));
         Assert.Equal(0, fixture.Content.Paints); Assert.Null(fixture.Content.Parent); Assert.Equal(0, fixture.Host.Transactions);
+    });
+
+    [Theory] [InlineData(RibbonBackstageStyle.Modern)] [InlineData(RibbonBackstageStyle.Classic)]
+    public void Candidate_theme_pairs_preview_row_geometry_and_page_paint_without_changing_the_live_theme(RibbonBackstageStyle style) => FoundationTests.Sta(() =>
+    {
+        using var fixture = new Fixture();
+        fixture.Ribbon.Theme = fixture.Ribbon.Theme with { BackstageStyle = style == RibbonBackstageStyle.Modern ? RibbonBackstageStyle.Classic : RibbonBackstageStyle.Modern };
+        var liveTheme = fixture.Ribbon.Theme; var draft = fixture.Read(); draft.PreviewDpi = 120; draft.PreviewWidth = 900;
+        var candidate = RibbonThemes.Office2024Light with { BackstageStyle = style };
+        var result = RibbonBackstagePreviewRenderer.Render(fixture.Ribbon, fixture.Host, draft, candidate);
+        using var stream = new MemoryStream(Convert.FromBase64String(result.Png)); using var pixels = new Bitmap(stream);
+        bool classic = style == RibbonBackstageStyle.Classic;
+        Assert.Equal(RibbonLayoutEngine.Scale(classic ? 0 : 8, 120), result.Regions[0].X);
+        int pageLeft = RibbonLayoutEngine.Scale(classic ? 220 : 200, 120);
+        Assert.Equal((classic ? candidate.Surface : candidate.Border).ToArgb(), pixels.GetPixel(pageLeft + 40, 0).ToArgb());
+        Assert.Same(liveTheme, fixture.Ribbon.Theme); Assert.Null(fixture.Ribbon.BuiltInTheme);
+        Assert.Null(fixture.Content.Parent); Assert.False(fixture.Content.IsHandleCreated); Assert.False(fixture.Input.IsHandleCreated);
+        Assert.Equal(0, fixture.Content.Paints); Assert.False(fixture.Ribbon.IsBackstageOpen);
     });
 
     private static IEnumerable<Control> Controls(Control parent) => parent.Controls.Cast<Control>().SelectMany(child => new[] { child }.Concat(Controls(child)));

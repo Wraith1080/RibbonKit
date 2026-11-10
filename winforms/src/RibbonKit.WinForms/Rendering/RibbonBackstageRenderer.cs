@@ -36,13 +36,7 @@ internal abstract class RibbonBackstageRenderer
 
 public partial class RibbonRenderer
 {
-    private RibbonBackstageRenderer? _modernBackstageRenderer, _classicBackstageRenderer;
-    internal RibbonBackstageRenderer BackstageStyleRenderer(RibbonTheme theme) => theme.BackstageStyle switch
-    {
-        RibbonBackstageStyle.Classic => _classicBackstageRenderer ??= new RibbonBackstage2019Renderer(),
-        RibbonBackstageStyle.Modern => _modernBackstageRenderer ??= new RibbonBackstage2024Renderer(),
-        _ => throw new ArgumentOutOfRangeException(nameof(theme))
-    };
+    internal RibbonBackstageRenderer BackstageStyleRenderer(RibbonTheme theme) => RibbonPresentationResolver.Backstage(theme).Renderer;
     internal void PaintBackstageChrome(RibbonPaintContext context, RibbonFill fill) => DrawChrome(context, fill, Color.Transparent);
     internal static RibbonFill BackstageStateFill(RibbonPaintContext context, bool pressed) => BackdropStateFill(context, pressed);
 }

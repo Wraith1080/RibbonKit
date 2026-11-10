@@ -61,7 +61,7 @@ public partial class RibbonControl
     public event EventHandler? IsBackstageOpenChanged;
     internal RibbonBackstageSurface? BackstageSurface => _backstageSurface;
     private Rectangle BackstageHostBounds(Form form)
-        => RibbonBackstageLayoutProvider.For(Theme).HostBounds(this, form);
+        => RibbonPresentationResolver.Backstage(Theme).Layout.HostBounds(this, form);
     private bool CanShowBackstage => !_disposing && !IsDisposed && !IsInDesignMode && !IsModal && Visible && Enabled
         && FileMenuMode == RibbonFileMenuMode.Backstage && HasFileMenu && FileMenu.EffectiveEnabled
         && !Backstage.IsDisposed && Backstage.Visible && Backstage.EffectiveEnabled;

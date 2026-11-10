@@ -2,7 +2,7 @@ namespace RibbonKit.WinForms.Layout;
 
 internal readonly record struct RibbonBackstageMetrics(RibbonTheme? Theme, RibbonDensity Density)
 {
-    private RibbonBackstageLayoutProvider Layout => RibbonBackstageLayoutProvider.For(Theme);
+    private RibbonBackstageLayoutProvider Layout => RibbonPresentationResolver.Backstage(Theme).Layout;
     internal int RowHeight => Math.Max(Theme?.BackstageMinimumRowHeight ?? (Density == RibbonDensity.Touch ? 52 : 42), Density == RibbonDensity.Touch ? 52 : 1);
     internal int NavigationPadding => Theme?.BackstageNavigationPadding ?? Layout.NavigationPadding;
     internal int BackSize => Math.Max(Theme?.BackstageBackButtonSize ?? (Density == RibbonDensity.Touch ? 44 : 36), Density == RibbonDensity.Touch ? 44 : 1);

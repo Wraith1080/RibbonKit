@@ -1,11 +1,12 @@
 # Native WinForms themes
 
-**Architecture planning, 2026-11-10:** the user requested planning before continuing
-the broader rewrite. The [theme architecture draft](THEME-ARCHITECTURE-PLAN.md)
-owns the proposed boundaries and migration order. The latest Backstage extraction
-and neutral-caption correction remain uncommitted drafts; further implementation
-has stopped for this planning discussion. Earlier appearance requirements and
-evidence below remain in place.
+**Architecture B1 implemented, 2026-11-10:** after planning, the user authorized
+the first bounded theme rewrite slice. Backstage now selects its sibling layout
+and drawing helpers through one internal registration. The
+[theme architecture plan](THEME-ARCHITECTURE-PLAN.md) owns later boundaries and
+migration order; [B1 evidence](#backstage-registration-b1--2026-11-10) is below.
+The earlier Backstage extraction and neutral-caption correction remain committed
+at `47d42cd`. Existing appearance requirements and pending human review remain.
 
 Status, **2026-11-10: Office 2019 review corrections, the demo Backstage toggle,
 native Showcase theme selector and WPF Classic-style Office 2019 Backstage are
@@ -354,12 +355,12 @@ Backstage. Stop for this review before another theme.
 | Item | Status |
 | --- | --- |
 | Direction | **2026-11-10: user selected Office 2019 first and light themes before dark.** |
-| Planning | Appearance contract retained. **2026-11-10: broader rewrite planning requested; see [architecture draft](THEME-ARCHITECTURE-PLAN.md).** Review the uncommitted Backstage pilot before widening implementation; later family order remains provisional. |
-| Runtime/API/rendering | Implemented. Initial native Debug/Release solution builds passed. Latest bounded changes built through Release runtime/tests and Debug Showcase/designer/sample with zero warnings/errors; no full solution or broad suite was repeated. |
+| Planning | **2026-11-10: user authorized B1 after architecture planning; B1 is implemented.** [Architecture plan](THEME-ARCHITECTURE-PLAN.md) retains B2 explicit layout inputs/defaults as the next proposed slice, then B3 caption/motion policy. Later family order remains provisional. |
+| Runtime/API/rendering | B1 is internal-only; public APIs, layout algorithms and motion are unchanged. Affected Release runtime/tests and normal Debug runtime/designer/client/sample builds passed without warnings/errors. No full solution or broad suite was repeated. |
 | Designer/sample/package consumer | Refreshed normal Debug sample; independent Release package restored/built; six generated Form/RibbonForm initializers compiled and reopened successfully. |
-| Focused Release verification | Latest theme-boundary/title checks: **18 focused cases passed**, followed by **5 title cases passed** after the requested 75% placement/25% slide adjustment; four title cases overlap the earlier run. Earlier structural/page-motion evidence remains below. No broad suite ran. |
+| Focused Release verification | B1: **19 distinct relevant cases passed across targeted runs**; the initial two new identity assertions were corrected, and only affected cases reran. Scope, overlap and files are in the B1 section below. Earlier structural/title evidence remains below. No broad suite ran. |
 | Office 2024 default parity | **32 PNG/measurement pairs unchanged**, both renderers/densities, expanded/minimized, synthetic 96/120/144/192 DPI. Rechecked for review corrections against `office2019-review/before-frames/`; default options-button PNGs also unchanged. |
-| Composed native package verification | **2/2 theme-specific live-frame scopes passed** at actual 120 DPI, opening/closing, Solid: full-height panes for 2019, a separate title bar above 2024. Nonzero pane travel and retained native page state were required. No full native matrix was repeated. |
+| Composed native package verification | B1: **2/2 package-only Solid scopes passed** at actual 120 DPI, opening/closing: full-height 2019 panes and 2024's separate caption with animated neutral tint and close restoration. Native state was retained; no full native matrix ran. |
 | Broader Release suite | Initial implementation: 1,485 passed / 6 failed / 1,491 total (historical evidence above). Correction run **stopped at the user's request**, 1,089 passed / 3 failed / 1,092 executed; incomplete, no full-suite result claimed. Do not restart it. |
 | User appearance review | **2026-11-10: user resumed the seven fixes, added a working demo Backstage toggle and requested a native Showcase theme selector.** Corrections are implemented below; appearance is not accepted yet. Geometry acceptance stays in its own plan. |
 | Actual VS/physical input/mixed-monitor | Not run for themes; report separately. |
@@ -739,3 +740,67 @@ warnings/errors. Current local Debug package:
 `0.1.0-designer.local20261110T144252552Z`. Authored Forms/resources remain untouched.
 User appearance/input review and actual VS review remain pending; no all-material,
 mixed-monitor or all-hardware timing claim is made from these two display scopes.
+
+## Backstage registration B1 — 2026-11-10
+
+After the architecture discussion, the user authorized its first implementation
+slice and asked whether geometry consolidation remained useful. It remains the
+shared measurement/override foundation. This slice changes selection ownership,
+with no geometry algorithm, family drawing, caption or motion calculation change.
+The closed geometry sequence and its acceptance are not reopened.
+
+`RibbonPresentationResolver` now registers Modern's 2024 layout/drawing helpers
+and Classic's 2019 helpers as immutable pairs. The layout base no longer chooses
+concrete Office classes; host bounds, measured layout and metrics use the same
+mapping as the renderer's existing drawing/frame/caption adapter. There is one
+style switch. Helpers are stateless and can be shared; native controls/motion
+remain ribbon/window-owned and mutable drawing caches remain renderer-owned.
+Public APIs, application/Reset semantics and explicit renderer precedence are
+unchanged. Standalone measurement still defaults to Modern.
+
+Regression coverage adds mixed style/coverage settings with open native pages,
+actual surface dispatch to application background/entry overrides, custom
+border/radius policy and same-renderer reassignment, explicit flat/default
+renderer switching, and candidate-theme preview geometry/painting. Hidden and
+disabled `ContentType` preview coverage now exercises both built-ins. Preview
+checks retain the authored live theme and create no native page handles/content.
+
+Only the selected Release cases ran:
+
+- `BackstageStyleIsolationTests`, the 2024 caption-boundary/switching case, the
+  two-family real-pane/handle case, application theme/clone/Reset ownership,
+  candidate-theme preview pairing and no-content-creation preview cases.
+- `artifacts/theme-registration/tests/backstage-registration.trx`: 17 passed,
+  two new mixed-settings cases failed an incorrect reference-identity assertion.
+  Existing `Theme` semantics can retain an equal effective instance while
+  recording the newly assigned application theme. The assertion now checks
+  effective value equality and application-theme identity; runtime behavior was
+  preserved. The two-case `backstage-registration-mixed-settings.trx` follow-up
+  passed. A missing namespace import in the new preview test had been corrected
+  before this run executed.
+- Review strengthened the custom-renderer check to require callbacks from the
+  actual native surface. Only those two cases reran and passed in
+  `backstage-registration-native-hooks.trx`. These overlap the first run:
+  **19 distinct relevant cases have passing latest results, not 21 or 23.**
+
+The permanent Designer Sample was refreshed once through the normal Debug
+workflow to `0.1.0-designer.local20261110T152350085Z`. Runtime/designer server,
+designer client and package-only sample builds passed with zero warnings/errors;
+the affected Release runtime/test build also passed. Authored sample code,
+Forms/UserControls/resources and project files were not changed. No whole-solution
+build, broad suite, full native matrix or WPF build/test ran.
+
+The existing package-only `--verify-backstage-sync` probe passed **2/2 Solid
+scopes at actual 120 DPI** using that refreshed package. Office 2019 captured
+eight opening/closing frames with seven measurable pane-edge pairs, maximum
+caption/body delta **0 px**. Office 2024 captured nine transition frames and
+verified its separate caption's grey tint/reveal plus settled open and restored
+closed colors. Both required slide motion and retained native page handles,
+parent and text. Evidence is in `artifacts/theme-registration/native/`.
+Representative opening frames and 2024's settled open/closed captions were
+visually inspected. These are bounded results on this display; human appearance,
+actual VS, physical input, mixed-monitor and all-material acceptance remain open.
+
+B1 is complete at its bounded automated/package scope. B2 explicit layout
+inputs/defaults is the next proposed slice; B3 caption/motion policy and later
+headers/body work remain separate in the architecture plan.
