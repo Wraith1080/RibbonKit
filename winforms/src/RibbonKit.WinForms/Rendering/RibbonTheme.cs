@@ -75,6 +75,8 @@ public sealed record RibbonTheme
     public bool BodyBottomBorderOnly { get; init; }
     /// <summary>Gets optional immutable body/connected-frame border, divider and join overrides. Null retains existing renderer defaults and geometry contracts.</summary>
     public RibbonBodyAppearanceSettings? BodyAppearance { get; init; }
+    /// <summary>Gets optional immutable ordinary command-state/split chrome overrides. Null retains actual renderer recipes, content geometry, native editor frames and popup ownership.</summary>
+    public RibbonCommandAppearanceSettings? CommandAppearance { get; init; }
     /// <summary>Gets the active collapsed Classic/Simplified group opener border. Empty uses Border; Transparent removes it without changing focus or hit targets.</summary>
     public Color CollapsedGroupBorder { get; init; } = Color.Empty;
     /// <summary>Gets whether active Application Menu split rows draw a divider between their unchanged action regions. Defaults to true.</summary>
@@ -506,6 +508,7 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     internal bool IsBodyScrollButton { get; init; }
     internal bool IsBackstageNavigationState { get; init; }
     internal bool IsHeaderScrollButton { get; init; }
+    internal bool IsCommandState { get; init; }
     internal bool IsMenuHeading { get; init; }
     internal Layout.RibbonApplicationMenuPart ApplicationMenuPart { get; init; }
     internal int? ApplicationMenuDividerX { get; init; }

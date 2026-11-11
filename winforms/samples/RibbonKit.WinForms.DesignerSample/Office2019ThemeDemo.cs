@@ -79,6 +79,7 @@ public partial class DesignerForm
         ribbon.BuiltInTheme = RibbonBuiltInTheme.Office2019Light;
         EnableSharedThemeEffectsDemo();
         EnableBodyPresentationDemo();
+        EnableCommandAppearanceDemo();
         statusLabel.Text = "Office 2019 Light: compare neutral/blue headers, flat body, inner padding and square shadowed popups.";
 
         void Add(RibbonGroup group, string text, Action action)

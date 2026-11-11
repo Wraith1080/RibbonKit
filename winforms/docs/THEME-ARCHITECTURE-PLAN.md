@@ -1,17 +1,18 @@
 # Native WinForms theme architecture
 
-**B1–B3 and C1–C2 implemented; latest delivery 2026-11-11.** Backstage uses one registration
+**B1–B3, C1–C2 and D1a implemented; latest delivery 2026-11-12.** Backstage uses one registration
 for sibling layout/drawing helpers, explicit defaults, measured layout inputs and
 caption/motion profiles. Headers register sibling Filled/Underline drawing with
 explicit geometry defaults and adjustable effects. C2 resolves body/connected
-frame data through shared helpers without another family selector. D1 commands/
-editors is next proposed; the user may select another remaining surface.
+frame data through shared helpers without another family selector. D1a extracts
+ordinary command-state/split chrome; command content/indicators and native editor
+recipes remain later bounded slices.
 The earlier-slice review found adjustability gaps. A00–A04 fill routing/motion
 and A06–A09 decoration/spacing plus A11–A16 header/shared overrides are implemented;
 track the separate caption/layout/tip candidates in the
 [source audit and correction order](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 Current evidence and user review are recorded in the
-[themes plan](THEMES-PLAN.md#body-and-connected-frames-c2--2026-11-11).
+[themes plan](THEMES-PLAN.md#command-state-and-split-chrome-d1a--2026-11-12).
 
 The [themes plan](THEMES-PLAN.md) retains appearance requirements and acceptance.
 This document proposes implementation boundaries and a migration sequence; it
@@ -246,6 +247,7 @@ automated evidence or visual acceptance. Implement the following separately.
 | B3. Caption and motion policy — implemented | Caption coverage/tint/title and pane/title/page visual motion resolve through registered profiles. Native services, clocks and lifecycle remain shared. Risk: the original 2024 caption regression, title fading, pane/caption drift, interruption or foreground leaks. | Focused caption/title/page/lifecycle regressions and two package-only Solid scopes with neutral/authored captions, open/close/reversal and resize are recorded in the [themes plan](THEMES-PLAN.md#backstage-caption-and-motion-policy-b3--2026-11-11). No full material matrix ran. |
 | C1. Headers — implemented | Register sibling Filled/Underline drawing with explicit geometry defaults; keep the shared strip engine. Six additional theme roles make fixed header effects adjustable. Public renderer hooks, colored caption extension, File/QAT reservations and text clipping remain intact. | Focused tests, exact two-family before/after comparison and four package-consumer scopes are recorded in the [themes plan](THEMES-PLAN.md#header-presentation-c1--2026-11-11). |
 | C2. Body and connected frames — implemented | Resolve body/group-frame decoration and connected-frame policy without changing reduction or ownership. Existing geometry, full-width 2019 body, native identity and public renderer hooks are retained; fixed frame effects have independently resettable settings. | Focused frame/group/QAT/message/motion and borrowed-popup checks, 80 exact image/geometry pairs and four package scopes are recorded in the [C2 record](THEMES-PLAN.md#body-and-connected-frames-c2--2026-11-11). No new geometry audit. |
+| D1a. Ordinary command state/split chrome — implemented | Shared model-free perimeter/half-fill/separator drawing over existing bounds; immutable public appearance settings. Content, native fields, indicator glyphs and Application Menu recipes retain their owners. | 38 focused Release cases, 32 exact default image/geometry pairs and four package-consumer scopes plus tab checks are recorded in the [D1a record](THEMES-PLAN.md#command-state-and-split-chrome-d1a--2026-11-12). |
 | D. Remaining surfaces, one per slice | Commands/editors; ordinary popups and Application Menu; galleries; tips; library dialogs. Reuse helpers when only palette/metrics differ. Risk: public drawing hooks, command geometry, borrowed editors/presenters/icons and popup retention. | Select only the changed surface's geometry/paint/state/ownership checks and one unchanged-family comparison. For native content, include retained handle/value/validation evidence; for designer previews, use inert candidate-theme checks. Choose exact filters at each slice. |
 | E. Selected catalog growth | Add one later chosen light definition, reusing surface registrations or adding an actually needed sibling. Risk: selection/Reset/serialization/persistence and unsupported consumer dependencies. | Definition/selection tests, relevant designer/generated-code checks, and a focused independent-consumer visual/state scope. Wait for existing appearance review before another theme. |
 
@@ -294,8 +296,9 @@ Completion criteria:
   authored Forms/resources change. Review the diff and record focused results
   and remaining human appearance/input gates in the themes plan.
 
-B2/B3 and C1–C2 were delivered as separate slices. D1 commands/editors is next
-proposed; the consolidated geometry remains the foundation.
+B2/B3, C1–C2 and D1a were delivered as separate slices. D1b command content/
+indicators is next proposed, with native editor recipes remaining separate;
+the consolidated geometry remains the foundation.
 
 ## Verification and delivery budget
 

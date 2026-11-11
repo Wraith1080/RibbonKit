@@ -1,9 +1,9 @@
-# Continue native WinForms theme architecture after C2 body/connected frames
+# Continue native WinForms theme architecture after D1a command-state chrome
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-11**. **B1–B3 Backstage and C1–C2 header/body extraction are implemented.**
+Updated **2026-11-12**. **B1–B3, C1–C2 and D1a command-state chrome are implemented.**
 Current evidence and review scope are in the
 [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger) and
 [C1 record](THEMES-PLAN.md#header-presentation-c1--2026-11-11).
@@ -13,17 +13,18 @@ The [adjustability audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) is complete.
 is implemented and reviewed. [A06–A09 decoration/spacing](THEMES-PLAN.md#backstage-decoration-and-spacing-overrides--2026-11-11)
 is implemented; [A11–A16 header/shared helpers](THEMES-PLAN.md#header-and-shared-effect-overrides--2026-11-11)
 are implemented. [C2 body/connected frames](THEMES-PLAN.md#body-and-connected-frames-c2--2026-11-11)
-is implemented and verified. D1 commands/editors is next proposed; follow
+is implemented. [D1a command state/split chrome](THEMES-PLAN.md#command-state-and-split-chrome-d1a--2026-11-12)
+is implemented and verified. D1b command content/indicators is next proposed; follow
 the user's selected scope. A05's caption choices,
 A10's page-width preference and A17's shared tip placement remain separate.
 
 ## Establish scope from the user's current request
 
-- Start with `git status --short` and inspect live branch/HEAD. C2 entered clean on
-  `codex/Ribbonkit-Winform` at `bee7a08`, after the user committed the preceding
-  slices. Recheck live state and preserve user edits/commits and later changes.
+- Start with `git status --short` and inspect live branch/HEAD. During D1a the user
+  committed C2 as `f83a0ef` on `codex/Ribbonkit-Winform`; that commit was rechecked
+  and preserved. Recheck live state and preserve user edits/commits and later work.
 - Read the audit findings first. On an implementation continuation, preserve
-  A00–A04/A06–A09/A11–A16 and C2. Continue the user's selected remaining surface.
+  A00–A04/A06–A09/A11–A16, C2 and D1a. Continue the user's selected remaining surface.
   Preserve current defaults and keep the separately deferred title-ink defect
   separate. The audit is a recommendation for follow-up, not a new approval gate
   if the user selects C2 or another scope.
@@ -43,19 +44,26 @@ A10's page-width preference and A17's shared tip placement remain separate.
   inset/width, shared tab-content/header-arrival slide distance and indicator
   spring amount. Keep null/Empty defaults, actual renderer precedence, body/header
   scroller separation, native focus visibility and scene-captured theme values.
-- **User instruction, 2026-11-11:** the existing Office 2019 review tab is full.
-  Add new demo groups/buttons to **Theme effects 2** and keep using that tab until
-  the user says it is full. Reuse the sample's `ThemeEffectsReviewTab`; do not add
-  more buttons to the Office 2019 tab or decide it is full from layout alone.
+- **User instruction:** Office 2019 and **Theme effects 2** are full. Add new
+  review groups/buttons to **Theme effects 3** until the user says it is full.
+  Reuse `ThemeEffectsReviewTab` (now tab 3); `ThemeEffects2ReviewTab` pins existing
+  shared/body groups to tab 2. Do not add buttons to either full tab or declare
+  tab 3 full from layout alone.
 - C2 resolves explicit neutral/Office body defaults into value-only frame metrics
   and shared drawing. `BodyAppearance` adds border/divider/join overrides and
   `DrawGroupSeparator` serves Classic/Simplified paint. Preserve null device-pixel
   defaults, actual renderer capabilities/hooks, existing snapshots/reduction,
   native identity, margins/shadows, full-width 2019 body and popup anchors.
+- Preserve `CommandAppearance`, value-only metrics and the shared split-perimeter
+  helper. Ordinary/menu/QAT command states use actual virtual chrome hooks;
+  null preserves one-device-pixel geometry. Explicit companion fills precede
+  material fallback; existing state fills/QAT opacity and active-half precedence
+  remain. Content layout, split targets/KeyTips, native editors and Application
+  Menu recipes retain their existing owners.
 - Read [THEME-ARCHITECTURE-PLAN](THEME-ARCHITECTURE-PLAN.md), especially D and
-  ownership/compatibility rules. D1 commands/editors is next proposed: inspect
-  the shared command chrome/content recipes, metrics, native editor boundaries
-  and public rendering hooks, then choose the first bounded control surface.
+  ownership/compatibility rules. D1b command content/indicators is next proposed:
+  inspect the remaining shared content/glyph recipes and metrics, then choose a
+  bounded surface. Native editor styling remains a separate subsequent slice.
   Group/caption command content remains with those owners; C2 extracted frames.
   A new family selector is justified only by actual structural difference;
   do not infer presentation from palette name, header style or corner radius.

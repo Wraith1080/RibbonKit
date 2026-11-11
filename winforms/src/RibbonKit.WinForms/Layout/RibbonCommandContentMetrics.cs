@@ -17,6 +17,7 @@ internal readonly record struct RibbonCommandContentMetrics(RibbonTheme? Theme)
         (Applies(i, Size(i, 0)) || group.CanResize && (Applies(i, Size(i, 1)) || Applies(i, Size(i, 2)))));
     internal static void Validate(RibbonTheme theme)
     {
+        RibbonCommandAppearanceSettings.Validate(theme.CommandAppearance);
         if (theme.CommandContentHorizontalPadding is < 0 or > 1024 || theme.CommandContentVerticalPadding is < 0 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(theme), "Command content padding must be 0..1024 logical pixels, or null for existing geometry.");
     }

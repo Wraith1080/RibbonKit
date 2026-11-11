@@ -6,7 +6,7 @@ public partial class DesignerForm
 {
     private void EnableBodyPresentationDemo()
     {
-        var tab = ThemeEffectsReviewTab;
+        var tab = ThemeEffects2ReviewTab;
         if (tab.Groups.Any(group => group.Id == "review-body-frames")) return;
         var frames = new RibbonGroup { Id = "review-body-frames", Text = "Body and connected frames" };
         Add("Preview connected panels", () =>
@@ -37,7 +37,7 @@ public partial class DesignerForm
     {
         StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); ShowInTaskbar = false;
         EnableOffice2019ThemeDemo(); Show(); Application.DoEvents();
-        var original = ribbon.Tabs.Single(tab => tab.Text == "Office 2019 Light"); var review = ThemeEffectsReviewTab;
+        var original = ribbon.Tabs.Single(tab => tab.Text == "Office 2019 Light"); var review = ThemeEffects2ReviewTab;
         if (original.Groups.Count != 7 || review.Groups.Count != 5) throw new InvalidOperationException("Body controls were not added to the existing review tab.");
         ribbon.SelectedTab = review;
         void Click(string text) => review.Groups.SelectMany(group => group.Items).Single(item => item.Text == text).PerformClick();

@@ -104,7 +104,7 @@ public partial class RibbonRenderer : IDisposable
         bool check = command is RibbonToggleItem { Checked: true } or RibbonCheckBoxItem { Checked: true } or RibbonRadioButtonItem { Checked: true } or RibbonSplitButtonItem { Checked: true };
         bool open = entry is RibbonQuickAccessComboBoxReference { IsDropDownOpen: true } or RibbonQuickAccessDropDownReference { IsDropDownOpen: true } or RibbonQuickAccessGroupReference { IsDropDownOpen: true };
         if (check || open || context.Hot || context.Pressed)
-            DrawChrome(context, QuickAccessFill(context, open || context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, menu,
+            PaintCommandState(context, QuickAccessFill(context, open || context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, menu,
                 pressed: open || context.Pressed, marked: check && !context.Hot), Color.Transparent);
         DrawQuickAccessContent(context, entry, menu);
         if (command is RibbonCheckBoxItem { CheckState: CheckState.Indeterminate })
@@ -126,33 +126,15 @@ public partial class RibbonRenderer : IDisposable
         bool check = entry.Source is RibbonSplitButtonItem { Checked: true };
         var whole = primary with { Bounds = Rectangle.Union(primary.Bounds, dropDown.Bounds), Hot = false, Pressed = false, Focused = false };
         bool open = enabled && entry.IsDropDownOpen;
-        if (check || open || primary.Hot || dropDown.Hot || primary.Pressed || dropDown.Pressed)
-        {
-            Half(primary, check, false); Half(dropDown, false, open);
-            using var separator = new SolidBrush(primary.Theme.Border);
-            primary.Graphics.FillRectangle(separator, dropDown.Bounds.Left, whole.Bounds.Top + 1, 1, Math.Max(0, whole.Bounds.Height - 2));
-        }
+        RibbonCommandRenderer.DrawSplitChrome(this, primary, dropDown, whole, check, open, vertical: false, quickAccess: true, menu);
         DrawQuickAccessContent(primary, entry, menu);
         var color = enabled ? primary.Theme.Foreground : primary.Theme.DisabledColor;
         if (menu) DrawSubmenuArrow(dropDown, color); else DrawDropDownArrow(dropDown, color);
         if (primary.Focused) DrawFocus(primary);
         if (dropDown.Focused) DrawFocus(dropDown);
 
-        void Half(RibbonPaintContext part, bool marked, bool expanded)
-        {
-            var saved = whole.Graphics.Save();
-            try
-            {
-                whole.Graphics.SetClip(part.Bounds, CombineMode.Intersect);
-                var fill = part.Pressed || expanded ? whole.Theme.Pressed : part.Hot ? whole.Theme.Hover : marked ? whole.Theme.Checked : new(whole.Theme.Surface);
-                bool active = part.Pressed || expanded || part.Hot || marked;
-                DrawChrome(whole, !active && whole.CompositedText && !menu ? new(Color.Transparent)
-                    : QuickAccessFill(whole, fill, menu, pressed: part.Pressed || expanded, marked: marked && !part.Hot), Color.Transparent);
-            }
-            finally { whole.Graphics.Restore(saved); }
-        }
     }
-    private static RibbonFill QuickAccessFill(RibbonPaintContext context, RibbonFill fill, bool menu, bool pressed = false, bool marked = false)
+    internal static RibbonFill QuickAccessFill(RibbonPaintContext context, RibbonFill fill, bool menu, bool pressed = false, bool marked = false)
     {
         if (!context.CompositedText || menu) return fill;
         fill = marked && !pressed && !context.Pressed ? context.Theme.BackdropPressed ?? new(Tint(context.Theme.Accent, 40)) : BackdropStateFill(context, pressed || context.Pressed);
@@ -220,7 +202,7 @@ public partial class RibbonRenderer : IDisposable
     /// <summary>Paints the measured overflow opener. Keyboard and pointer activation open the same owned popup.</summary>
     public virtual void DrawQuickAccessOverflow(RibbonPaintContext context)
     {
-        if (context.Hot || context.Pressed) DrawChrome(context, QuickAccessFill(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, false), Color.Transparent);
+        if (context.Hot || context.Pressed) PaintCommandState(context, QuickAccessFill(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, false), Color.Transparent);
         DrawDropDownArrow(context, context.Theme.Foreground);
         if (context.Focused) DrawFocus(context);
     }
@@ -428,7 +410,7 @@ public partial class RibbonRenderer : IDisposable
         {
             bool expanded = enabled && combo.IsDropDownOpen;
             if (expanded || context.Hot || context.Pressed)
-                DrawChrome(context, expanded || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
+                PaintCommandState(context, expanded || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
             int arrowWidth = RibbonLayoutEngine.Scale(12, context.DeviceDpi), side = RibbonLayoutEngine.Scale(16, context.DeviceDpi);
             var content = context with { Bounds = context.Bounds with { Width = Math.Max(0, context.Bounds.Width - arrowWidth) } };
             var color = enabled ? context.Theme.Foreground : context.Theme.DisabledColor;
@@ -446,7 +428,7 @@ public partial class RibbonRenderer : IDisposable
         if (item is RibbonCheckBoxItem or RibbonRadioButtonItem)
         {
             if (context.Hot || context.Pressed)
-                DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
+                PaintCommandState(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
             var content = RibbonContentLayout.Calculate(context.Bounds, RibbonItemSize.Medium, menu, true, context.DeviceDpi, context.Font, context.Density, theme: menu ? null : context.Theme);
             if (menu) content = RibbonMenuLayout.Content(content, item, context.Bounds, context.Font, context.DeviceDpi, context.Density, context.Theme);
             if (item is RibbonCheckBoxItem box) DrawCheckBoxIndicator(context with { Bounds = content.Icon }, box);
@@ -459,7 +441,7 @@ public partial class RibbonRenderer : IDisposable
         bool check = item is RibbonToggleItem { Checked: true };
         bool open = enabled && item is RibbonDropDownItem { IsDropDownOpen: true };
         if (open || check || context.Hot || context.Pressed)
-            DrawChrome(context, open || context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, Color.Transparent);
+            PaintCommandState(context, open || context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, Color.Transparent);
         DrawItemContent(context, item, size, menu);
         if (context.Focused)
             DrawFocus(context);
@@ -475,7 +457,7 @@ public partial class RibbonRenderer : IDisposable
     {
         bool selected = item is RibbonToggleItem { Checked: true } or RibbonRadioButtonItem { Checked: true } or RibbonCheckBoxItem { Checked: true };
         if (selected || context.Hot || context.Pressed)
-            DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, Color.Transparent);
+            PaintCommandState(context, context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, Color.Transparent);
         var content = RibbonMenuLayout.IllustratedContent(context.Bounds, context.Font, context.DeviceDpi, RibbonMenuLayout.HasDescription(item), context.Theme);
         if (content.Icon.Width > 0 && content.Icon.Height > 0)
         {
@@ -546,20 +528,8 @@ public partial class RibbonRenderer : IDisposable
         dropDown = EnabledContext(dropDown, item.EffectiveEnabled);
         var whole = primary with { Bounds = Rectangle.Union(primary.Bounds, dropDown.Bounds), Hot = false, Pressed = false, Focused = false };
         bool open = item.EffectiveEnabled && item.IsDropDownOpen;
-        bool active = item.Checked || open || primary.Hot || dropDown.Hot || primary.Pressed || dropDown.Pressed;
         bool vertical = RibbonSplitLayout.IsVertical(item, size, menu);
-        if (active)
-        {
-            // Each half clips the same outer contour. Insets and rounding belong
-            // to the perimeter, leaving the shared edge square and gap-free.
-            DrawHalf(primary, item.Checked, false);
-            DrawHalf(dropDown, false, open);
-            using var separator = new SolidBrush(whole.Theme.Border);
-            var seam = vertical
-                ? new Rectangle(whole.Bounds.Left + 1, dropDown.Bounds.Top, Math.Max(0, whole.Bounds.Width - 2), 1)
-                : new Rectangle(dropDown.Bounds.Left, whole.Bounds.Top + 1, 1, Math.Max(0, whole.Bounds.Height - 2));
-            whole.Graphics.FillRectangle(separator, seam);
-        }
+        RibbonCommandRenderer.DrawSplitChrome(this, primary, dropDown, whole, item.Checked, open, vertical, quickAccess: false, menu);
         DrawItemContent(vertical ? whole : primary, item, size, menu, vertical, vertical);
         if (!vertical)
         {
@@ -573,17 +543,6 @@ public partial class RibbonRenderer : IDisposable
         if (dropDown.Focused)
             DrawFocus(dropDown);
 
-        void DrawHalf(RibbonPaintContext half, bool check, bool expanded)
-        {
-            var state = whole.Graphics.Save();
-            try
-            {
-                whole.Graphics.SetClip(half.Bounds, CombineMode.Intersect);
-                var fill = expanded || half.Pressed ? half.Theme.Pressed : half.Hot ? half.Theme.Hover : check ? half.Theme.Checked : new RibbonFill(Color.Transparent);
-                DrawChrome(whole, fill, whole.Theme.Border);
-            }
-            finally { whole.Graphics.Restore(state); }
-        }
     }
     private void DrawItemContent(RibbonPaintContext context, RibbonItem item, RibbonItemSize size, bool menu, bool appendArrow = true, bool arrowBelowSingle = false, string? textOverride = null, bool? enabledOverride = null)
     {
@@ -745,6 +704,7 @@ public partial class RibbonRenderer : IDisposable
     {
         if (TryPaintBackstageState(context, fill, border, 0)) return;
         if (TryPaintHeaderScroller(context, fill, border, 0)) return;
+        if (TryPaintCommandState(context, fill, border, 0)) return;
         PaintRounded(context with { Bounds = Rectangle.Inflate(context.Bounds, -1, -1) }, 0, fill, border, border.A == 0 ? 0 : 1);
     }
     /// <summary>Paints a fill and outline using mirrored corner coverage.</summary>
@@ -752,6 +712,7 @@ public partial class RibbonRenderer : IDisposable
     {
         if (TryPaintBackstageState(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
         if (TryPaintHeaderScroller(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
+        if (TryPaintCommandState(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
         _rounded.Draw(context.Graphics, Rectangle.Inflate(context.Bounds, -1, -1), context.Theme.CornerRadius * context.DeviceDpi / 96, fill, border, border.A == 0 ? 0 : 1);
     }
     internal void PaintRounded(RibbonPaintContext context, int radius, RibbonFill fill, Color border, int stroke = 1) =>

@@ -4,17 +4,19 @@ namespace RibbonKitDesignerConsumer;
 
 public partial class DesignerForm
 {
-    // Continue adding future review groups to this tab until the user says full.
+    // The user closed tabs 1/2 to new controls. Continue on tab 3 until told full.
+    private RibbonTab? _themeEffects2ReviewTab;
     private RibbonTab? _themeEffectsReviewTab;
-    private RibbonTab ThemeEffectsReviewTab => _themeEffectsReviewTab ??= AddReviewTab();
-    private RibbonTab AddReviewTab()
+    private RibbonTab ThemeEffects2ReviewTab => _themeEffects2ReviewTab ??= AddReviewTab("review-theme-effects-2", "Theme effects 2");
+    private RibbonTab ThemeEffectsReviewTab => _themeEffectsReviewTab ??= AddReviewTab("review-theme-effects-3", "Theme effects 3");
+    private RibbonTab AddReviewTab(string id, string text)
     {
-        var tab = new RibbonTab { Id = "review-theme-effects-2", Text = "Theme effects 2" };
+        var tab = new RibbonTab { Id = id, Text = text };
         ribbon.Tabs.Add(tab); return tab;
     }
     private void EnableSharedThemeEffectsDemo()
     {
-        var tab = ThemeEffectsReviewTab;
+        var tab = ThemeEffects2ReviewTab;
         if (tab.Groups.Any(group => group.Id == "review-header-details")) return;
         var header = new RibbonGroup { Id = "review-header-details", Text = "Header details" };
         Add(header, "Filled tab borders", () => { ribbon.Theme = ribbon.Theme with { HeaderPresentation = RibbonHeaderPresentation.Filled }; SetHeader((ribbon.Theme.HeaderAppearance ?? new()) with { FilledBorderColor = Color.DarkOrange, FilledBorderWidth = 2 }); });

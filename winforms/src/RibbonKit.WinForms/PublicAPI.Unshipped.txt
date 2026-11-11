@@ -1547,3 +1547,30 @@ static RibbonKit.WinForms.RibbonBodyAppearanceSettings.operator ==(RibbonKit.Win
 RibbonKit.WinForms.RibbonTheme.BodyAppearance.get -> RibbonKit.WinForms.RibbonBodyAppearanceSettings?
 RibbonKit.WinForms.RibbonTheme.BodyAppearance.init -> void
 virtual RibbonKit.WinForms.RibbonRenderer.DrawGroupSeparator(RibbonKit.WinForms.RibbonPaintContext context) -> void
+RibbonKit.WinForms.RibbonCommandAppearanceSettings
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.RibbonCommandAppearanceSettings() -> void
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.<Clone>$() -> RibbonKit.WinForms.RibbonCommandAppearanceSettings!
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.CornerRadius.get -> int?
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.CornerRadius.init -> void
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.BorderWidth.get -> int?
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.BorderWidth.init -> void
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.Inset.get -> int?
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.Inset.init -> void
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.SplitSeparatorWidth.get -> int?
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.SplitSeparatorWidth.init -> void
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.SplitSeparatorInset.get -> int?
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.SplitSeparatorInset.init -> void
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.BorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.BorderColor.init -> void
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.SplitSeparatorColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.SplitSeparatorColor.init -> void
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.SplitCompanionBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.SplitCompanionBackground.init -> void
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.Equals(RibbonKit.WinForms.RibbonCommandAppearanceSettings? other) -> bool
+override RibbonKit.WinForms.RibbonCommandAppearanceSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonCommandAppearanceSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonCommandAppearanceSettings.ToString() -> string!
+static RibbonKit.WinForms.RibbonCommandAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonCommandAppearanceSettings? left, RibbonKit.WinForms.RibbonCommandAppearanceSettings? right) -> bool
+static RibbonKit.WinForms.RibbonCommandAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonCommandAppearanceSettings? left, RibbonKit.WinForms.RibbonCommandAppearanceSettings? right) -> bool
+RibbonKit.WinForms.RibbonTheme.CommandAppearance.get -> RibbonKit.WinForms.RibbonCommandAppearanceSettings?
+RibbonKit.WinForms.RibbonTheme.CommandAppearance.init -> void

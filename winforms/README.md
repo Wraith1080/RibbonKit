@@ -400,8 +400,8 @@ ribbon.Theme = ribbon.Theme with
 All values validate before theme/selection mutation. These paint/motion overrides
 retain header/body targets and native editor identity. Scene capture retains its
 authored motion values; theme changes use the existing settle path.
-The optional `--office2019-theme-demo` now puts new review groups on **Theme
-effects 2**, leaving the existing Office 2019 tab's groups intact. File-highlight
+The optional `--office2019-theme-demo` keeps these earlier review groups on **Theme
+effects 2**; new command controls use **Theme effects 3**. File-highlight
 review includes a CommandMenu/Backstage toggle; appearance reset stays separate
 from presentation, routing and animation-level choices.
 
@@ -2620,6 +2620,43 @@ Backstage presentation does not choose a body structure. Neutral/Office renderer
 defaults and custom virtual drawing/measurement hooks remain distinct.
 The optional demo appends **Body and connected frames** to **Theme effects 2**,
 including a preview of the below-ribbon QAT/message stack and a group reset.
+
+`Theme.CommandAppearance` accepts an immutable
+`RibbonCommandAppearanceSettings` group for ordinary command-state and split
+chrome, including ordinary menu rows and Quick Access command projections:
+
+| Member | Default and behavior |
+| --- | --- |
+| `CornerRadius` | Active renderer's square neutral or existing Office corners. Authored values accept 0..64 logical pixels. |
+| `BorderColor`, `BorderWidth` | Empty ink retains each recipe's border: ordinary states/QAT may be borderless, ordinary splits retain their outline. Width accepts 0..32 logical pixels; null retains one device pixel when ink exists. Zero hides the outline; width alone does not invent border ink. |
+| `Inset` | One device pixel inside the unchanged target. Authored 0..1024 logical pixels clamp to available bounds; zero fills the target. |
+| `SplitSeparatorWidth`, `SplitSeparatorInset`, `SplitSeparatorColor` | One device pixel of thickness, end clearance following the command inset, and Border ink. Width/inset accept 0..32 / 0..1024 logical pixels. Zero width or Transparent ink hides the separator; Empty ink follows Border. Existing split orientation/action regions are unchanged. |
+| `SplitCompanionBackground` | Null retains the resting-half recipe while the other half is active, including transparent material QAT companions. Authored alpha/gradients precede material fallback. Hover, press, checked and open states retain their existing fill settings and precedence. |
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    CommandAppearance = new RibbonCommandAppearanceSettings
+    {
+        CornerRadius = 8, BorderColor = Color.DarkBlue, BorderWidth = 2,
+        Inset = 0, SplitSeparatorWidth = 3,
+        SplitSeparatorColor = Color.DarkOrange,
+        SplitCompanionBackground = new RibbonFill(Color.LightSkyBlue)
+    }
+};
+```
+
+Null members/Empty ink reset independently; `CommandAppearance = null` resets
+the group. Ranges validate before theme/BuiltInTheme mutation. Existing
+`Hover`/`Pressed`/`Checked`, QAT backdrop roles and opacity remain consumed.
+Authoring state chrome does not make an idle command permanently active.
+The real application renderer still receives public item/split/QAT/text/focus
+callbacks and its protected chrome hook; custom replacement drawing keeps
+precedence. Both halves clip the same perimeter so inner seams stay square.
+Command content, native editor frames, indicator glyphs, headers, body/group
+frames and Application Menu recipes retain their separate owners/settings.
+The optional demo adds **Try commands** and **Command state effects** on **Theme
+effects 3**, preserving the full Office 2019 and Theme effects 2 tabs.
 
 Derive from `RibbonRenderer` for a flat/custom presentation, or from
 `RibbonOffice2024Renderer` to retain Office styling while overriding selected

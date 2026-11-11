@@ -354,17 +354,17 @@ Backstage. Stop for this review before another theme.
 | Item | Status |
 | --- | --- |
 | Direction | **2026-11-10: user selected Office 2019 first and light themes before dark.** |
-| Planning | B1–B3, C1–C2 and audit corrections A00–A04/A06–A09/A11–A16 are implemented. D1 commands/editors is next proposed; caption/layout/tip candidates remain separate and later family order is provisional. |
+| Planning | B1–B3, C1–C2, D1a and audit corrections A00–A04/A06–A09/A11–A16 are implemented. D1b command content/indicators is next proposed; native editors and caption/layout/tip candidates remain separate. Later family order is provisional. |
 | Earlier-slice adjustability audit | **2026-11-11: A11–A16 header/shared effects implemented and verified.** Current evidence is in the [header/shared record](#header-and-shared-effect-overrides--2026-11-11). Earlier evidence remains below. The [audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) retains A05/A10/A17 as separate candidates. |
-| Runtime/API/rendering | C2 uses explicit neutral/Office frame defaults, resolved metrics and shared body/group-frame/QAT/message helpers without a new family selector. `BodyAppearance` adds independently resettable borders, dividers and joins; actual renderer measurements/painting and native ownership remain authoritative. Earlier settings are retained. |
-| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; the permanent sample is refreshed. **Body and connected frames** is appended to **Theme effects 2**; the Office 2019 tab retains its seven groups. Continue using the new tab until the user says it is full. Authored Forms/UserControls/resources remain intact; actual VS is separate. |
-| Focused Release verification | C2: **49 distinct relevant Release cases passed across retained runs**, including authored frame values/reset, group hooks/reduction, native joins/editor state, radius/shadow footprint, QAT/message seams, message motion, material frames and borrowed group popups. Earlier evidence remains below; no broad suite ran. |
-| Two-family default parity | C2: **80 PNG/geometry pairs match exactly**: 16 four-DPI neutral/Office frame/group sheets plus 64 native Solid/Mica Classic/Simplified Compact/Touch minimized/expanded wide/narrow states. Empty frame records also match null in the paint sheets. Earlier comparisons remain below. |
-| Composed native package verification | C2: **4/4 public-package scopes plus demo-tab checks passed** at actual 120 DPI for both light families in Solid/Mica. Each scope checks eight mode/density/minimized states with joins on/off, native border/divider hooks, reset, message motion and retained editor/QAT sources. Offscreen timer/print checks do not establish visible frame-pacing or physical-input acceptance; no full native matrix ran. |
+| Runtime/API/rendering | D1a shares ordinary/QAT split-state/perimeter painting over existing bounds. `CommandAppearance` adds independently resettable corners, borders, inset, split rules and companion fill. Actual renderer hooks, state/disabled precedence, content/layout, native editor identity and Application Menu ownership remain. Earlier settings are retained. |
+| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; the permanent sample is refreshed. New **Try commands / Command state effects** groups use **Theme effects 3**. Office 2019 and Theme effects 2 are full and retain seven/five groups. Keep using tab 3 until the user says full. Authored Forms/UserControls/resources remain intact; actual VS is separate. |
+| Focused Release verification | D1a: **38 distinct relevant Release cases passed across retained runs**, covering authored/default paint, split seams/alpha, range/reset, actual hooks, unchanged geometry/UIA/action regions, disabled state, popup/QAT routing and editor state. Earlier evidence remains below; no broad suite ran. |
+| Two-family default parity | D1a: **32 PNG/geometry pairs match exactly** across both light palettes, flat/Office rendering, ordinary/composited contexts and 96/120/144/192 DPI. Empty override records also match null. Existing split/content/QAT regression checks retain their prior defaults; no full native matrix ran. |
+| Composed native package verification | D1a: **4/4 public-package scopes plus new-tab checks passed** at actual 120 DPI for both light families in Solid/Mica. Each scope checks Classic/Simplified × Compact/Touch, actual root/QAT split callbacks, action geometry, primary/menu separation, projected KeyTip/source, reset and retained editor state. Offscreen checks do not establish physical-input/visible frame-pacing acceptance. |
 | Backstage review correction | **2026-11-11: navbar blank-frame and left rounded-corner black-bar fixes implemented and verified; user review pending.** Current focused/package evidence is in the [page-motion follow-up](BACKSTAGE-PAGE-MOTION.md#navbar-blank-frame-and-rounded-edge-follow-up--2026-11-11). |
 | Deferred title review issue | **2026-11-11: user reported title-text flicker while closing Backstage and allowed deferral to title theming work.** Their `20261111-0345-01.1714250.mp4` confirms the Office 2019 close at approximately **7.03–7.37 s**: the title moves left, its leading text becomes pale/white over the lightening caption, then dark ink returns. Native-rate frames and timestamps are retained under `artifacts/backstage-title-flicker/recording/`. Caption foreground contrast/clip handoff as the navigation fades is the source-inspection lead, not a verified root cause. Preserve opaque, legible title ink throughout closing when addressing it. No title runtime change or new build/test was made for this recording review; the page/corner correction does not address it. |
 | Broader Release suite | Initial implementation: 1,485 passed / 6 failed / 1,491 total (historical evidence above). Correction run **stopped at the user's request**, 1,089 passed / 3 failed / 1,092 executed; incomplete, no full-suite result claimed. Do not restart it. |
-| User appearance review | **2026-11-11: user confirmed everything works in the delivered A11–A16 header/shared-effects batch and authorized continuation with C2.** Earlier A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. C2 review is pending; actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
+| User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; new review controls use Theme effects 3. D1a review is pending; actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
 | Actual VS/physical input/mixed-monitor | Not run for themes; report separately. |
 
 Record later evidence and confirmation here once, with date/revision/scope,
@@ -1294,8 +1294,85 @@ Evidence under `artifacts/body-presentation-c2/`:
   The original Office 2019 tab retains seven groups. Shared review initialization
   now checks its own group identity so later groups can share the tab safely.
 
-C2 human appearance review is pending. Actual VS, physical input, visible flicker/
+Current appearance acceptance is tracked in the ledger. Actual VS, physical input, visible flicker/
 frame pacing, IME and mixed-monitor acceptance remain separate. No broad suite,
 full native matrix, WPF build/test, commit or push ran. D1 commands/editors is
 next proposed; A05 caption, A10 page-width preference, A17 badge placement and the
 known closing-title ink flicker remain separate.
+
+## Command-state and split chrome D1a — 2026-11-12
+
+The first bounded D slice extracts ordinary command-state backgrounds and split
+chrome; it does not claim native editors or all command content are rewritten.
+During this work the user committed C2 as `f83a0ef` (`C2 Done`). HEAD/worktree were
+rechecked and that commit preserved. This continuation does not commit, stage,
+push or replace authored Forms/UserControls/resources.
+
+`RibbonCommandAppearanceMetrics` resolves value-only device metrics from explicit
+shared defaults and immutable `RibbonTheme.CommandAppearance`. The active neutral/
+Office drawing primitive supplies its own default radius, so no palette/header
+selector or new command-family selector is inferred. Null retains one-device-pixel
+inset, outline and separator recipes with their existing ink. Explicit corner,
+border, inset, split separator width/clearance/ink and resting companion fill reset
+independently and validate before theme/BuiltInTheme mutation.
+
+`RibbonCommandRenderer` draws both ordinary and borrowed QAT split halves through
+the actual application's virtual chrome hook, clipping each half to the common
+perimeter. Checked/open/hover/press/disabled precedence and existing fill roles
+remain; explicit resting-half alpha/gradients precede material fallback while
+active QAT fills retain their established backdrop opacity. Ordinary item/menu
+state backgrounds, compact ComboBox openers, check/radio row backgrounds and QAT
+command/overflow states use the scoped command-chrome path. Native editor frames,
+indicator glyphs, header/body/group frames and Application Menu recipes retain
+their owners. Content/target measurement, split actions/KeyTips, commands, popup
+sources and native editor lifetime are unchanged.
+
+Public item/split/QAT entry points, protected chrome and text/focus/image hooks
+remain authoritative. A custom chrome override can replace the built-in drawing.
+Examples and ranges are in the native README; XML and additive Unshipped API
+entries leave the shipped baseline unchanged.
+
+Evidence under `artifacts/command-appearance-d1a/`:
+
+- Fresh `before/` / `after/` contain **32 exact PNG/geometry pairs** across both
+  light palettes, flat/Office renderers, ordinary/composited contexts and four
+  DPI levels. Sheets cover ordinary command/menu states, horizontal/vertical
+  splits and QAT checked/inactive recipes. `tests/empty-defaults-final.trx`
+  passes empty-record/null equivalence against those same baselines.
+- `tests/commands-focused.trx` passed 30/34; the four new authored QAT fixtures
+  initially used unowned references, then expected an opaque material hover
+  without its existing backdrop-opacity factor. Correcting the fixture to use
+  owned references and the established opacity required no runtime workaround.
+  `qat-alpha-and-routing.trx` passes **8/8**: all four authored seam/alpha cases
+  and four existing QAT action/menu/editor routing cases. Together these retained
+  runs establish **38 distinct passing relevant Release cases**, with repeats
+  counted once. Checks also cover native action/UIA geometry, source identity,
+  disabled behavior, custom hooks, reset, atomic validation and editor retention.
+  Release runtime/test builds pass with zero warnings/errors.
+- Normal Debug runtime/designer server/client/package/sample refresh passes
+  without warnings/errors. Current package is
+  `0.1.0-designer.local20261111T070450978Z`, recorded in `.local/last-refresh.json`.
+  The public-package `--verify-command-appearance <output>` check passes **4/4
+  scopes** at actual **120 DPI**, both light families in Solid/Mica with Mica
+  effective. Each checks four Classic/Simplified × Compact/Touch states through
+  actual root/QAT split callbacks, authored borders/seams, unchanged action
+  geometry, independent primary/menu opening, projected source/KeyTip, member/
+  group reset and retained editor HWND/parent/text/selection. Logs and PNGs are
+  under `package-final/`.
+- The package diagnostic uses public WinForms message filtering followed by
+  control preprocessing for projected KeyTips. F10 is handled by the library's
+  installed message filter, not `PreProcessMessage` alone; direct offscreen mouse
+  checks can also encounter normal ToolStrip dismissal. No runtime input change
+  was introduced to accommodate the diagnostic. Assertions are collected outside
+  paint callbacks and native exceptions are logged instead of showing JIT UI.
+- The same consumer checks **Theme effects 3** initialization, public review
+  buttons/reset and idempotence, while the two full tabs retain seven/five
+  groups. `ThemeEffectsReviewTab` now denotes tab 3; `ThemeEffects2ReviewTab`
+  pins earlier shared/body groups to tab 2. Continue adding review controls to
+  tab 3 until the user declares it full.
+
+D1a human appearance review is pending. Actual VS, physical input, visible frame
+pacing, IME and mixed-monitor acceptance remain separate. No broad suite, full
+native matrix or WPF build/test ran. D1b command content/indicators is next
+proposed; native editor recipes, A05/A10/A17 and the known title-ink flicker remain
+separate.

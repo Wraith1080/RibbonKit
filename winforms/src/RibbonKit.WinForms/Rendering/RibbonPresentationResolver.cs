@@ -17,6 +17,7 @@ internal sealed record RibbonHeaderPresentationRegistration(RibbonHeaderRenderer
 
 internal static class RibbonPresentationResolver
 {
+    internal static readonly RibbonCommandChromeDefaults CommandChrome = new(Inset: 1, BorderWidth: 1, SplitWidth: 1, SplitInset: 1);
     internal static readonly RibbonBodyFrameDefaults NeutralBody = new(PaintShadow: false, BorderFallback: false, AllowBottomBorderOnly: false, RadiusDivisor: 0);
     internal static readonly RibbonBodyFrameDefaults OfficeBody = new(PaintShadow: true, BorderFallback: true, AllowBottomBorderOnly: true, RadiusDivisor: 48);
     // Both styles currently share strip geometry. This is an explicit pairing,
