@@ -109,12 +109,7 @@ public partial class RibbonRenderer : IDisposable
         DrawQuickAccessContent(context, entry, menu);
         if (command is RibbonCheckBoxItem { CheckState: CheckState.Indeterminate })
         {
-            // Preserve the action icon; a small bar below it distinguishes mixed from checked.
-            int S(double value) => RibbonLayoutEngine.Scale(value, context.DeviceDpi);
-            int center = menu ? context.Bounds.Left + S(14) : context.Bounds.Left + context.Bounds.Width / 2;
-            int top = Math.Min(context.Bounds.Bottom - S(3), context.Bounds.Top + context.Bounds.Height / 2 + S(9));
-            using var mark = new SolidBrush(enabled ? context.Theme.Foreground : context.Theme.DisabledColor);
-            context.Graphics.FillRectangle(mark, center - S(3), top, S(6), S(2));
+            RibbonCommandContentRenderer.DrawQuickAccessMixedMark(context, enabled, menu);
         }
         if (context.Focused) DrawFocus(context);
     }
@@ -194,10 +189,7 @@ public partial class RibbonRenderer : IDisposable
         if (enabled == command.EffectiveEnabled) { DrawItemImage(context, command, RibbonItemSize.Small); return; }
         if (command.Icon is { } icon) icon.Draw(context.Graphics, context.Bounds, new(context.DeviceDpi, context.Theme.DisabledColor, false));
         else if ((command.Image ?? command.LargeImage) is { } image)
-        {
-            using var bitmap = new Bitmap(image, context.Bounds.Size);
-            ControlPaint.DrawImageDisabled(context.Graphics, bitmap, context.Bounds.X, context.Bounds.Y, context.Theme.Background);
-        }
+            RibbonCommandContentRenderer.DrawDisabledImage(context, image, independentQuickAccess: true);
     }
     /// <summary>Paints the measured overflow opener. Keyboard and pointer activation open the same owned popup.</summary>
     public virtual void DrawQuickAccessOverflow(RibbonPaintContext context)
@@ -223,7 +215,7 @@ public partial class RibbonRenderer : IDisposable
     }
     /// <summary>Paints a DPI-scaled dropdown indicator centered inside a measured slot.</summary>
     public virtual void DrawDropDownArrow(RibbonPaintContext context, Color color) =>
-        RibbonArrowPainter.DrawDown(context.Graphics, context.Bounds, context.DeviceDpi, color);
+        RibbonArrowPainter.DrawDown(context.Graphics, context.Bounds, context.DeviceDpi, color, context.Theme.CommandContent);
     /// <summary>Paints the right-pointing indicator for a nested command menu in its measured slot.</summary>
     public virtual void DrawSubmenuArrow(RibbonPaintContext context, Color color) =>
         RibbonArrowPainter.DrawHorizontal(context.Graphics, context.Bounds, context.DeviceDpi, color, false, context.Theme.Chevrons);
@@ -474,52 +466,10 @@ public partial class RibbonRenderer : IDisposable
     public virtual void DrawCheckBoxIndicator(RibbonPaintContext context, RibbonCheckBoxItem item) =>
         PaintCheckIndicator(EnabledContext(context, item.EffectiveEnabled), item.CheckState, item.EffectiveEnabled, 0);
     /// <summary>Paints a circular radio indicator in its measured compact slot.</summary>
-    public virtual void DrawRadioButtonIndicator(RibbonPaintContext context, RibbonRadioButtonItem item)
-    {
-        bool enabled = item.EffectiveEnabled;
-        context = EnabledContext(context, enabled);
-        var border = !enabled ? context.Theme.DisabledColor : context.Hot || context.Pressed || context.Focused || item.Checked ? context.Theme.Accent : context.Theme.SecondaryText;
-        PaintRounded(context, context.Bounds.Width / 2, context.Pressed ? context.Theme.Pressed : new(context.Theme.Surface), border);
-        if (item.Checked)
-        {
-            int inset = Layout.RibbonLayoutEngine.Scale(4, context.DeviceDpi);
-            var dot = Rectangle.Inflate(context.Bounds, -inset, -inset);
-            PaintRounded(context with { Bounds = dot }, dot.Width / 2, new(enabled ? context.Theme.Accent : context.Theme.DisabledColor), Color.Transparent, 0);
-        }
-    }
-    internal void PaintCheckIndicator(RibbonPaintContext context, CheckState check, bool enabled, int radius)
-    {
-        bool marked = check != CheckState.Unchecked;
-        var border = !enabled ? context.Theme.DisabledColor : marked || context.Hot || context.Pressed || context.Focused ? context.Theme.Accent : context.Theme.SecondaryText;
-        var fill = marked ? new RibbonFill(enabled ? context.Theme.Accent : context.Theme.DisabledColor)
-            : context.Pressed ? context.Theme.Pressed : new(context.Theme.Surface);
-        PaintRounded(context, radius, fill, border);
-        if (!marked) return;
-        var bounds = context.Bounds;
-        float centerX = bounds.Left + (bounds.Width - 1) / 2f;
-        float centerY = bounds.Top + (bounds.Height - 1) / 2f;
-        // The bend and long arm carry unequal ink. Centre that visual weight
-        // on the box's pixel centre, retaining the tick's shape and size.
-        float checkLeft = centerX - bounds.Width * .515f;
-        float checkTop = centerY - bounds.Height * .54f;
-        var saved = context.Graphics.Save();
-        try
-        {
-            context.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            using var pen = new Pen(context.Theme.Surface, Math.Max(1, 1.5f * context.DeviceDpi / 96))
-            { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round };
-            if (check == CheckState.Indeterminate)
-                context.Graphics.DrawLine(pen, centerX - bounds.Width * .25f, centerY,
-                    centerX + bounds.Width * .25f, centerY);
-            else context.Graphics.DrawLines(pen, new PointF[]
-            {
-                new(checkLeft + bounds.Width * .22f, checkTop + bounds.Height * .51f),
-                new(checkLeft + bounds.Width * .43f, checkTop + bounds.Height * .72f),
-                new(checkLeft + bounds.Width * .79f, checkTop + bounds.Height * .29f)
-            });
-        }
-        finally { context.Graphics.Restore(saved); }
-    }
+    public virtual void DrawRadioButtonIndicator(RibbonPaintContext context, RibbonRadioButtonItem item) =>
+        RibbonCommandContentRenderer.DrawRadio(this, EnabledContext(context, item.EffectiveEnabled), item.Checked, item.EffectiveEnabled);
+    internal void PaintCheckIndicator(RibbonPaintContext context, CheckState check, bool enabled, int radius) =>
+        RibbonCommandContentRenderer.DrawCheck(this, context, check, enabled, radius);
     /// <summary>Paints a split command from its independently measured primary and dropdown action contexts.</summary>
     public virtual void DrawSplitItem(RibbonPaintContext primary, RibbonPaintContext dropDown, RibbonSplitButtonItem item, RibbonItemSize size, bool menu)
     {
@@ -657,13 +607,7 @@ public partial class RibbonRenderer : IDisposable
                 context.Graphics.DrawImage(image, context.Bounds);
             else
             {
-                using var attributes = new System.Drawing.Imaging.ImageAttributes();
-                attributes.SetColorMatrix(new System.Drawing.Imaging.ColorMatrix(new float[][]
-                {
-                    [0.3f, 0.3f, 0.3f, 0, 0], [0.59f, 0.59f, 0.59f, 0, 0],
-                    [0.11f, 0.11f, 0.11f, 0, 0], [0, 0, 0, 0.55f, 0], [0, 0, 0, 0, 1]
-                }));
-                context.Graphics.DrawImage(image, context.Bounds, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, attributes);
+                RibbonCommandContentRenderer.DrawDisabledImage(context, image);
             }
         }
     }

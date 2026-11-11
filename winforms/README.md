@@ -2658,6 +2658,41 @@ frames and Application Menu recipes retain their separate owners/settings.
 The optional demo adds **Try commands** and **Command state effects** on **Theme
 effects 3**, preserving the full Office 2019 and Theme effects 2 tabs.
 
+`Theme.CommandContent` accepts immutable `RibbonCommandContentSettings` for
+shared command indicators and raster-image paint:
+
+| Member | Default and behavior |
+| --- | --- |
+| `IndicatorBorderWidth`, `IndicatorBorderColor` | One device pixel and existing state ink. Width 0..32 logical pixels clamps inside the slot; zero/Transparent hides the outline, Empty resets ink. |
+| `CheckMarkColor`, `CheckMarkStrokeWidth`, `CheckMarkScale` | Existing tick/mixed paint: Surface ink and 1.5-logical-pixel checkbox stroke with a device-pixel minimum; Foreground/DisabledColor and a 6 × 2 logical-pixel QAT mixed bar. Authored stroke 0..32 and scale 0..4; scale changes QAT bar width, stroke changes its height. Zero hides paint while retaining state. |
+| `RadioDotInset`, `RadioDotColor` | Four logical pixels; Accent/DisabledColor ink. Inset 0..1024; zero fills the circle and consuming the slot hides it. |
+| `DropDownGlyphWidth`, `DropDownGlyphHeight` | Filled triangle 8 × 6 logical pixels. Authored dimensions 0..64 clamp to its existing slot; zero hides it. `Chevrons` separately controls stroked arrows. |
+| `DisabledImageOpacity`, `DisabledImageGrayscaleAmount` | Null retains ordinary grayscale opacity 0.55 and the framework treatment for independently disabled QAT references. Authoring either finite 0..1 role selects the shared matrix for both paths, with independent null fallbacks 0.55 opacity / 1 grayscale. Grayscale zero retains source color; intermediate values partly desaturate. Enabled images and borrowed vector-icon treatment remain unchanged. |
+
+Colors retain authored alpha. Numeric members reset independently with null,
+colors with Empty; `CommandContent = null` resets this group. Values validate
+before theme/BuiltInTheme mutation. Existing state fills, checkbox radius,
+content padding, text layout, native editor frames and model/keyboard state
+remain with their current owners. Actual public indicator/arrow and protected
+image hooks keep precedence. Shared image/arrow callers inherit these settings;
+library options-button images retain their dialog owner's treatment.
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    CommandContent = new RibbonCommandContentSettings
+    {
+        IndicatorBorderWidth = 2, IndicatorBorderColor = Color.DarkBlue,
+        CheckMarkScale = .8, RadioDotInset = 3,
+        DropDownGlyphWidth = 12, DisabledImageOpacity = .35
+    }
+};
+```
+
+The optional demo adds **Try indicators / images** and **Command content effects**
+to **Theme effects 3**. Theme changes keep the existing menu-close lifecycle;
+the owned command/menu models and native editor state are retained.
+
 Derive from `RibbonRenderer` for a flat/custom presentation, or from
 `RibbonOffice2024Renderer` to retain Office styling while overriding selected
 drawing. Earlier preview subclasses that called base painting to obtain Office

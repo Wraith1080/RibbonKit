@@ -1574,3 +1574,36 @@ static RibbonKit.WinForms.RibbonCommandAppearanceSettings.operator !=(RibbonKit.
 static RibbonKit.WinForms.RibbonCommandAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonCommandAppearanceSettings? left, RibbonKit.WinForms.RibbonCommandAppearanceSettings? right) -> bool
 RibbonKit.WinForms.RibbonTheme.CommandAppearance.get -> RibbonKit.WinForms.RibbonCommandAppearanceSettings?
 RibbonKit.WinForms.RibbonTheme.CommandAppearance.init -> void
+RibbonKit.WinForms.RibbonCommandContentSettings
+RibbonKit.WinForms.RibbonCommandContentSettings.RibbonCommandContentSettings() -> void
+RibbonKit.WinForms.RibbonCommandContentSettings.<Clone>$() -> RibbonKit.WinForms.RibbonCommandContentSettings!
+RibbonKit.WinForms.RibbonCommandContentSettings.IndicatorBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonCommandContentSettings.IndicatorBorderWidth.init -> void
+RibbonKit.WinForms.RibbonCommandContentSettings.IndicatorBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonCommandContentSettings.IndicatorBorderColor.init -> void
+RibbonKit.WinForms.RibbonCommandContentSettings.CheckMarkColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonCommandContentSettings.CheckMarkColor.init -> void
+RibbonKit.WinForms.RibbonCommandContentSettings.CheckMarkStrokeWidth.get -> double?
+RibbonKit.WinForms.RibbonCommandContentSettings.CheckMarkStrokeWidth.init -> void
+RibbonKit.WinForms.RibbonCommandContentSettings.CheckMarkScale.get -> double?
+RibbonKit.WinForms.RibbonCommandContentSettings.CheckMarkScale.init -> void
+RibbonKit.WinForms.RibbonCommandContentSettings.RadioDotInset.get -> int?
+RibbonKit.WinForms.RibbonCommandContentSettings.RadioDotInset.init -> void
+RibbonKit.WinForms.RibbonCommandContentSettings.RadioDotColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonCommandContentSettings.RadioDotColor.init -> void
+RibbonKit.WinForms.RibbonCommandContentSettings.DropDownGlyphWidth.get -> int?
+RibbonKit.WinForms.RibbonCommandContentSettings.DropDownGlyphWidth.init -> void
+RibbonKit.WinForms.RibbonCommandContentSettings.DropDownGlyphHeight.get -> int?
+RibbonKit.WinForms.RibbonCommandContentSettings.DropDownGlyphHeight.init -> void
+RibbonKit.WinForms.RibbonCommandContentSettings.DisabledImageOpacity.get -> double?
+RibbonKit.WinForms.RibbonCommandContentSettings.DisabledImageOpacity.init -> void
+RibbonKit.WinForms.RibbonCommandContentSettings.Equals(RibbonKit.WinForms.RibbonCommandContentSettings? other) -> bool
+override RibbonKit.WinForms.RibbonCommandContentSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonCommandContentSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonCommandContentSettings.ToString() -> string!
+static RibbonKit.WinForms.RibbonCommandContentSettings.operator !=(RibbonKit.WinForms.RibbonCommandContentSettings? left, RibbonKit.WinForms.RibbonCommandContentSettings? right) -> bool
+static RibbonKit.WinForms.RibbonCommandContentSettings.operator ==(RibbonKit.WinForms.RibbonCommandContentSettings? left, RibbonKit.WinForms.RibbonCommandContentSettings? right) -> bool
+RibbonKit.WinForms.RibbonTheme.CommandContent.get -> RibbonKit.WinForms.RibbonCommandContentSettings?
+RibbonKit.WinForms.RibbonTheme.CommandContent.init -> void
+RibbonKit.WinForms.RibbonCommandContentSettings.DisabledImageGrayscaleAmount.get -> double?
+RibbonKit.WinForms.RibbonCommandContentSettings.DisabledImageGrayscaleAmount.init -> void

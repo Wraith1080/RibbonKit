@@ -77,6 +77,8 @@ public sealed record RibbonTheme
     public RibbonBodyAppearanceSettings? BodyAppearance { get; init; }
     /// <summary>Gets optional immutable ordinary command-state/split chrome overrides. Null retains actual renderer recipes, content geometry, native editor frames and popup ownership.</summary>
     public RibbonCommandAppearanceSettings? CommandAppearance { get; init; }
+    /// <summary>Gets optional immutable command indicator, filled dropdown glyph and shared disabled-raster overrides. Null retains existing paint and content geometry; native editor frames and vector-icon treatment remain with their owners.</summary>
+    public RibbonCommandContentSettings? CommandContent { get; init; }
     /// <summary>Gets the active collapsed Classic/Simplified group opener border. Empty uses Border; Transparent removes it without changing focus or hit targets.</summary>
     public Color CollapsedGroupBorder { get; init; } = Color.Empty;
     /// <summary>Gets whether active Application Menu split rows draw a divider between their unchanged action regions. Defaults to true.</summary>

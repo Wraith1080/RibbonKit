@@ -36,13 +36,14 @@ public partial class DesignerForm
         StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); ShowInTaskbar = false;
         EnableOffice2019ThemeDemo(); Show(); Application.DoEvents();
         var original = ribbon.Tabs.Single(tab => tab.Text == "Office 2019 Light"); var previous = ThemeEffects2ReviewTab; var review = ThemeEffectsReviewTab;
-        if (original.Groups.Count != 7 || previous.Groups.Count != 5 || review.Groups.Count != 2 || review.Text != "Theme effects 3") throw new InvalidOperationException("Command review controls changed a full tab.");
+        int count = review.Groups.Count;
+        if (original.Groups.Count != 7 || previous.Groups.Count != 5 || !review.Groups.Any(group => group.Id == "review-command-effects") || review.Text != "Theme effects 3") throw new InvalidOperationException("Command review controls changed a full tab.");
         ribbon.SelectedTab = review;
         void Click(string text) => review.Groups.SelectMany(group => group.Items).Single(item => item.Text == text).PerformClick();
         Click("Rounded command outlines"); Click("Inset command chrome"); Click("Colored split separators"); Click("Split companion fill");
         if (ribbon.Theme.CommandAppearance?.CornerRadius != 8 || ribbon.Theme.CommandAppearance.Inset != 4 || ribbon.Theme.CommandAppearance.SplitSeparatorWidth != 3 || ribbon.Theme.CommandAppearance.SplitCompanionBackground is null) throw new InvalidOperationException("Command controls did not use public theme settings.");
         Click("Default command effects"); if (ribbon.Theme.CommandAppearance is not null) throw new InvalidOperationException("Command group did not reset.");
-        EnableCommandAppearanceDemo(); if (review.Groups.Count != 2) throw new InvalidOperationException("Command groups were duplicated.");
+        EnableCommandAppearanceDemo(); if (review.Groups.Count != count) throw new InvalidOperationException("Command groups were duplicated.");
         Close();
     }
 }

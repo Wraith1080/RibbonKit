@@ -39,10 +39,10 @@ internal static class RibbonArrowPainter
         }
         finally { graphics.Restore(state); }
     }
-    internal static void DrawDown(Graphics graphics, Rectangle slot, int dpi, Color color)
+    internal static void DrawDown(Graphics graphics, Rectangle slot, int dpi, Color color, RibbonCommandContentSettings? settings = null)
     {
-        int width = Math.Min(slot.Width, RibbonLayoutEngine.Scale(8, dpi));
-        int height = Math.Min(slot.Height, RibbonLayoutEngine.Scale(6, dpi));
+        int width = Math.Min(slot.Width, RibbonLayoutEngine.Scale(settings?.DropDownGlyphWidth ?? 8, dpi));
+        int height = Math.Min(slot.Height, RibbonLayoutEngine.Scale(settings?.DropDownGlyphHeight ?? 6, dpi));
         if (width <= 0 || height <= 0)
             return;
         int left = slot.Left + (slot.Width - width) / 2, top = slot.Top + (slot.Height - height) / 2;

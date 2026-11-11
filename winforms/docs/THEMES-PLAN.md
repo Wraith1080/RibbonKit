@@ -354,17 +354,17 @@ Backstage. Stop for this review before another theme.
 | Item | Status |
 | --- | --- |
 | Direction | **2026-11-10: user selected Office 2019 first and light themes before dark.** |
-| Planning | B1–B3, C1–C2, D1a and audit corrections A00–A04/A06–A09/A11–A16 are implemented. D1b command content/indicators is next proposed; native editors and caption/layout/tip candidates remain separate. Later family order is provisional. |
+| Planning | B1–B3, C1–C2, D1a–D1b and audit corrections A00–A04/A06–A09/A11–A16 are implemented. D1c native editor appearance is next proposed; caption/layout/tip candidates remain separate. Later family order is provisional. |
 | Earlier-slice adjustability audit | **2026-11-11: A11–A16 header/shared effects implemented and verified.** Current evidence is in the [header/shared record](#header-and-shared-effect-overrides--2026-11-11). Earlier evidence remains below. The [audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) retains A05/A10/A17 as separate candidates. |
-| Runtime/API/rendering | D1a shares ordinary/QAT split-state/perimeter painting over existing bounds. `CommandAppearance` adds independently resettable corners, borders, inset, split rules and companion fill. Actual renderer hooks, state/disabled precedence, content/layout, native editor identity and Application Menu ownership remain. Earlier settings are retained. |
-| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; the permanent sample is refreshed. New **Try commands / Command state effects** groups use **Theme effects 3**. Office 2019 and Theme effects 2 are full and retain seven/five groups. Keep using tab 3 until the user says full. Authored Forms/UserControls/resources remain intact; actual VS is separate. |
-| Focused Release verification | D1a: **38 distinct relevant Release cases passed across retained runs**, covering authored/default paint, split seams/alpha, range/reset, actual hooks, unchanged geometry/UIA/action regions, disabled state, popup/QAT routing and editor state. Earlier evidence remains below; no broad suite ran. |
-| Two-family default parity | D1a: **32 PNG/geometry pairs match exactly** across both light palettes, flat/Office rendering, ordinary/composited contexts and 96/120/144/192 DPI. Empty override records also match null. Existing split/content/QAT regression checks retain their prior defaults; no full native matrix ran. |
-| Composed native package verification | D1a: **4/4 public-package scopes plus new-tab checks passed** at actual 120 DPI for both light families in Solid/Mica. Each scope checks Classic/Simplified × Compact/Touch, actual root/QAT split callbacks, action geometry, primary/menu separation, projected KeyTip/source, reset and retained editor state. Offscreen checks do not establish physical-input/visible frame-pacing acceptance. |
+| Runtime/API/rendering | D1b extracts shared check/radio/QAT-mixed/image paint and adds immutable `CommandContent` settings for indicator borders/marks/dots, filled dropdown glyph dimensions and disabled-raster opacity/desaturation. Actual renderer hooks, disabled state, existing content slots, native editor identity and popup lifecycle remain. D1a `CommandAppearance` and earlier settings are retained. |
+| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; the permanent sample is refreshed. New **Try indicators / images / Command content effects** groups join D1a controls on **Theme effects 3**. Office 2019 and Theme effects 2 are full and retain seven/five groups. Keep using tab 3 until the user says full. Authored Forms/UserControls/resources remain intact; actual VS is separate. |
+| Focused Release verification | D1b: **38 distinct relevant Release cases have passing latest results**, covering authored/default indicators, hide/alpha/clamps, disabled images, public hooks, validation/reset, state/binding, QAT and menu retention. Evidence is in the [D1b record](#command-indicators-and-raster-treatment-d1b--2026-11-12); D1a evidence remains below. No broad suite ran. |
+| Two-family default parity | D1b: **16 PNG/geometry pairs match exactly** across both light palettes, flat/Office renderers and 96/120/144/192 DPI; both null and empty settings match the saved defaults. QAT mixed-state defaults also retain their existing focused regressions. No full native matrix ran. |
+| Composed native package verification | D1b: **4/4 public-package scopes plus tab checks passed** at actual 120 DPI for both light families in Solid/Mica. Each checks Classic/Simplified × Compact/Touch, actual indicator/arrow/image/QAT callbacks, unchanged slots, editor HWND/parent/value/selection, models and the existing theme-close/menu-reopen lifecycle. Offscreen checks do not establish physical-input/visible frame-pacing acceptance. |
 | Backstage review correction | **2026-11-11: navbar blank-frame and left rounded-corner black-bar fixes implemented and verified; user review pending.** Current focused/package evidence is in the [page-motion follow-up](BACKSTAGE-PAGE-MOTION.md#navbar-blank-frame-and-rounded-edge-follow-up--2026-11-11). |
 | Deferred title review issue | **2026-11-11: user reported title-text flicker while closing Backstage and allowed deferral to title theming work.** Their `20261111-0345-01.1714250.mp4` confirms the Office 2019 close at approximately **7.03–7.37 s**: the title moves left, its leading text becomes pale/white over the lightening caption, then dark ink returns. Native-rate frames and timestamps are retained under `artifacts/backstage-title-flicker/recording/`. Caption foreground contrast/clip handoff as the navigation fades is the source-inspection lead, not a verified root cause. Preserve opaque, legible title ink throughout closing when addressing it. No title runtime change or new build/test was made for this recording review; the page/corner correction does not address it. |
 | Broader Release suite | Initial implementation: 1,485 passed / 6 failed / 1,491 total (historical evidence above). Correction run **stopped at the user's request**, 1,089 passed / 3 failed / 1,092 executed; incomplete, no full-suite result claimed. Do not restart it. |
-| User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; new review controls use Theme effects 3. D1a review is pending; actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
+| User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; new review controls use Theme effects 3. D1a–D1b appearance review is pending; the 2026-11-12 continuation authorized D1b without adding an appearance claim. Actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
 | Actual VS/physical input/mixed-monitor | Not run for themes; report separately. |
 
 Record later evidence and confirmation here once, with date/revision/scope,
@@ -1373,6 +1373,92 @@ Evidence under `artifacts/command-appearance-d1a/`:
 
 D1a human appearance review is pending. Actual VS, physical input, visible frame
 pacing, IME and mixed-monitor acceptance remain separate. No broad suite, full
-native matrix or WPF build/test ran. D1b command content/indicators is next
-proposed; native editor recipes, A05/A10/A17 and the known title-ink flicker remain
-separate.
+native matrix or WPF build/test ran. D1b was subsequently delivered below;
+native editor recipes, A05/A10/A17 and the known title-ink flicker remain separate.
+
+
+## Command indicators and raster treatment D1b — 2026-11-12
+
+The user authorized continuation on clean `codex/Ribbonkit-Winform` at `2581bb8`
+(their committed D1a). This bounded content slice extracts the shared check/radio,
+Quick Access mixed-bar and disabled-raster recipes into
+`RibbonCommandContentRenderer`. Filled triangles still use the shared
+`RibbonArrowPainter`; the public renderer entries and protected image hook remain
+on the actual renderer. The light families share these structures, so no family
+selector or parallel layout engine was added. Office checkbox radius still uses
+`CheckBoxCornerRadius`; canonical tick geometry and optical centering remain.
+
+`Theme.CommandContent` accepts immutable `RibbonCommandContentSettings`:
+
+- `IndicatorBorderWidth` / `IndicatorBorderColor`: null retains one device pixel;
+  Empty retains existing enabled/active/disabled ink. Width 0..32 logical pixels
+  clamps inside the measured slot; zero/Transparent hide the border.
+- `CheckMarkColor`, `CheckMarkStrokeWidth`, `CheckMarkScale`: authored ink/alpha,
+  stroke 0..32 and scale 0..4. Null retains existing checkbox tick/mixed-bar
+  recipes (1.5 logical pixels, minimum one device pixel) and QAT mixed bar
+  (6 × 2 logical pixels). QAT uses scale for bar width and stroke for bar height.
+  Empty ink keeps Surface for checkboxes, Foreground/DisabledColor for QAT.
+  Zero stroke/scale hides the mark without changing checked/mixed state.
+- `RadioDotInset` / `RadioDotColor`: null retains four logical pixels and
+  Accent/DisabledColor. Inset 0..1024; zero fills the circle, consuming the slot
+  hides the dot. Existing concentric slot arithmetic is retained.
+- `DropDownGlyphWidth` / `DropDownGlyphHeight`: null retains 8 × 6 logical pixels;
+  authored 0..64 dimensions clamp to the existing slot, zero hides the triangle.
+  Actual caller ink, public arrow hooks and separate `Chevrons` stay authoritative.
+- `DisabledImageOpacity` / `DisabledImageGrayscaleAmount`: null retains ordinary
+  grayscale opacity 0.55 and the framework recipe for independently disabled QAT
+  references. Authoring either finite 0..1 role selects the shared matrix for
+  both raster paths, with independent null fallbacks 0.55 opacity / 1 grayscale.
+  Grayscale zero retains source color; intermediate amounts partly desaturate.
+  Enabled images and vector-icon Draw contexts remain unchanged; borrowed images are never disposed or rewritten.
+
+All numeric overrides validate before Theme/BuiltInTheme mutation; doubles must
+be finite. Members reset independently with null/Empty; `CommandContent = null`
+resets only this group. Existing Accent/Surface/DisabledForeground/Pressed roles
+still supply state fills. There is no duplicate color policy or animation clock.
+Shared image/triangle hooks also serve their existing gallery, popup and
+Application Menu callers; this does not claim a rewrite of those surfaces.
+Library options-button image painting remains with its later dialog owner.
+Text wrapping, icon slots/padding, split targets, focus, native editor frames,
+caption content and Application Menu chrome keep their owners. Theme assignment
+retains its existing popup-close lifecycle and retained menu models can reopen.
+
+Relevant evidence is under `artifacts/command-content-d1b/`:
+
+- `tests/content-focused.trx`: **37 passed** (21 initial D1b cases and 16 existing
+  option/arrow/QAT/menu cases). Four simulated DPIs cover mark alpha/hide/clips,
+  concentric dots, triangle dimensions, mixed bars, ordinary/projected disabled
+  raster opacity and vector ownership. Validation checks every numeric role,
+  NaN/infinities and mutation ordering; public hook and Reset checks are included.
+- `before-defaults/` and `after-defaults/`: **16 exact PNG/geometry pairs** for
+  both light themes × flat/Office rendering × 96/120/144/192 DPI. Null and empty
+  groups both match. `tests/after-defaults.trx` initially verified extraction;
+  `tests/content-final.trx` retains final default parity. Its expanded hook
+  fixture initially counted an earlier empty image callback; the counter was
+  reset before the targeted call. `tests/hooks-final.trx` passes the corrected
+  hook scope without rerunning the already-passed batch.
+  `tests/raster-final.trx` passes all 13 affected default/raster/validation cases
+  after adding independent grayscale strength, including a new validation case.
+  **38 distinct relevant cases (22 new, 16 existing) have passing latest results.**
+- `package-raster-final/result.log`: **4/4 package-only scopes** at actual 120 DPI,
+  Office 2019/2024 Light × None/Mica, each Classic/Simplified × Compact/Touch.
+  Actual renderer callbacks replay authored check/radio/triangle/raster/QAT
+  effects; native slots and editor HWND/parent/value/selection remain unchanged.
+  Models, independently disabled reference/source state, independent/group Reset
+  and existing theme-close/menu-reopen behavior are checked. An initial probe
+  incorrectly required a popup to stay open during theme assignment; source
+  inspection confirmed the pre-existing close policy, and only the probe changed.
+  Native callback assertions are collected and logged without JIT dialogs.
+- Normal Release runtime/test and normal Debug runtime/designer server/client/
+  permanent sample builds passed with zero warnings/errors. The local sample
+  package is `0.1.0-designer.local20261111T175913865Z` (UTC version timestamp).
+  Its new **Try indicators / images** and **Command content effects** groups use
+  **Theme effects 3**; full tabs retain seven/five groups. Public buttons/reset,
+  idempotence and the rendered review tab were checked. Authored Form/UserControl/
+  resource/project files are retained. The earlier D1a probe now measures its own
+  groups and idempotence without treating all of tab 3 as exclusively D1a.
+
+D1a–D1b human appearance review is pending. Actual VS, physical input, visible
+frame pacing, IME and mixed-monitor checks remain separate. No full suite/native
+matrix or WPF build/test ran. D1c native editor appearance is next proposed;
+A05/A10/A17 and the known Backstage closing-title ink flicker remain separate.
