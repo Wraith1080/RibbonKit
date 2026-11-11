@@ -729,10 +729,17 @@ public partial class RibbonRenderer : IDisposable
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);
     }
     /// <summary>Paints common item chrome; the foundation uses square edges and theme-provided fills.</summary>
-    protected virtual void DrawChrome(RibbonPaintContext context, RibbonFill fill, Color border) =>
+    protected virtual void DrawChrome(RibbonPaintContext context, RibbonFill fill, Color border)
+    {
+        if (TryPaintBackstageState(context, fill, border, 0)) return;
         PaintRounded(context with { Bounds = Rectangle.Inflate(context.Bounds, -1, -1) }, 0, fill, border, border.A == 0 ? 0 : 1);
+    }
     /// <summary>Paints a fill and outline using mirrored corner coverage.</summary>
-    protected void DrawRounded(RibbonPaintContext context, RibbonFill fill, Color border) => _rounded.Draw(context.Graphics, Rectangle.Inflate(context.Bounds, -1, -1), context.Theme.CornerRadius * context.DeviceDpi / 96, fill, border, border.A == 0 ? 0 : 1);
+    protected void DrawRounded(RibbonPaintContext context, RibbonFill fill, Color border)
+    {
+        if (TryPaintBackstageState(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
+        _rounded.Draw(context.Graphics, Rectangle.Inflate(context.Bounds, -1, -1), context.Theme.CornerRadius * context.DeviceDpi / 96, fill, border, border.A == 0 ? 0 : 1);
+    }
     internal void PaintRounded(RibbonPaintContext context, int radius, RibbonFill fill, Color border, int stroke = 1) =>
         _rounded.Draw(context.Graphics, context.Bounds, radius, fill, border, stroke, context.IsTopEdgeConnected, context.IsBottomEdgeConnected);
     internal void PaintShadow(RibbonPaintContext context, int radius)

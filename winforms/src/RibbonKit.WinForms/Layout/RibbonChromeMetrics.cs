@@ -8,20 +8,10 @@ internal readonly record struct RibbonChromeMetrics(RibbonTheme Theme, RibbonDen
     internal int ColumnGap(bool simplified = false) => Theme.GroupColumnGap ?? (simplified ? RibbonDensityMetrics.For(Density).SimplifiedGap : RibbonDensityMetrics.For(Density).ColumnGap);
     internal int BodyInset(bool simplified = false) => Theme.BodyContentHorizontalPadding ?? (simplified ? 4 : 2);
     internal int SeparatorInset(bool simplified = false) => Theme.GroupSeparatorVerticalInset ?? (simplified ? 6 : 12);
-    internal int TabPadding => Theme.TabHorizontalPadding ?? 14;
-    internal int TabMinimum => Math.Max(Theme.TabMinimumWidth ?? 58, Density == RibbonDensity.Touch ? 44 : 1);
-    internal int IndicatorPadding => Theme.HeaderIndicatorPadding ?? 4;
     internal int QuickAccessPadding => Theme.QuickAccessHorizontalPadding ?? 2;
     internal int QuickAccessGap => Theme.QuickAccessItemGap ?? 0;
     internal int ActionGap => Theme.MessageActionGap ?? 10;
     internal int TitleGap => Theme.MessageTitleTextGap ?? 8;
-    internal int HeaderScrollWidth(int dpi, int tabHeight)
-    {
-        int legacy = RibbonLayoutEngine.Scale(RibbonDensityMetrics.For(Density).ScrollButton, dpi);
-        int desired = Theme.HeaderScrollButtonWidth is { } width ? RibbonLayoutEngine.Scale(width, dpi)
-            : Theme.HeaderScrollButtonsMatchTabHeight ? tabHeight : legacy;
-        return Density == RibbonDensity.Touch ? Math.Max(legacy, desired) : desired;
-    }
     internal static void Validate(RibbonTheme theme)
     {
         int?[] spacing = [theme.GroupHorizontalPadding, theme.GroupColumnGap, theme.BodyContentHorizontalPadding, theme.GroupSeparatorVerticalInset,

@@ -24,22 +24,23 @@ internal sealed class RibbonBackstagePageMotion : IDisposable
     internal byte Opacity { get; private set; } = 255;
     internal double Duration { get; }
 
-    private RibbonBackstagePageMotion(RibbonControl ribbon, RibbonBackstageSurface.PageSlot target, Control viewport, Form form)
+    private RibbonBackstagePageMotion(RibbonControl ribbon, RibbonBackstageSurface.PageSlot target, Control viewport, Form form, RibbonBackstageMotionPolicy policy)
     {
         _ribbon = ribbon; Target = target; _viewport = viewport; _form = form;
         _origin = target.Location; _size = target.Size; Style = ribbon.TabContentAnimation;
-        _policy = ribbon.BackstageMotionPolicy;
+        _policy = policy;
         _travel = RibbonLayoutEngine.Scale(_policy.PageTravel, ribbon.DeviceDpi);
         Duration = _policy.PageDuration;
         _timer.Tick += Tick;
     }
     internal static RibbonBackstagePageMotion? Prepare(RibbonControl ribbon, RibbonBackstageSurface.PageSlot target, Control viewport, RibbonBackstageSurface.PageSlot outgoing)
     {
+        var policy = ribbon.BackstageMotionPolicy;
         if (!ribbon.IsBackstageOpen || ribbon.AnimationLevel == RibbonAnimationLevel.None || !ribbon.CanAnimatePopupOpening || !ribbon.Motion.SystemEnabled ||
             !viewport.Visible || target.IsDisposed || target.Width < 1 || target.Height < 1 ||
             ribbon.FindForm() is not { Visible: true, IsDisposed: false } form || form.WindowState == FormWindowState.Minimized ||
-            form.Opacity != 1 || form.TransparencyKey != Color.Empty || target.HasApplicationOpacity) return null;
-        var motion = new RibbonBackstagePageMotion(ribbon, target, viewport, form);
+            form.Opacity != 1 || form.TransparencyKey != Color.Empty || policy.PageDuration == 0 || target.HasApplicationOpacity) return null;
+        var motion = new RibbonBackstagePageMotion(ribbon, target, viewport, form, policy);
         try
         {
             // The initial page has not participated in page motion yet. Retain

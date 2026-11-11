@@ -63,7 +63,8 @@ public partial class RibbonRenderer
             : selected ? context.Theme.BackstageSelectedForeground.IsEmpty ? context.Theme.Accent : context.Theme.BackstageSelectedForeground : context.Theme.BackstageNavigationInk;
         if (item is null)
         {
-            int diameter = Math.Max(0, Math.Min(context.Bounds.Width, context.Bounds.Height) - 2 * S(2));
+            var appearance = context.Theme.BackstageAppearance;
+            int diameter = Math.Max(0, Math.Min(context.Bounds.Width, context.Bounds.Height) - 2 * S(appearance?.BackVisualInset ?? 2));
             var circle = new Rectangle(context.Bounds.Left + (context.Bounds.Width - diameter) / 2,
                 context.Bounds.Top + (context.Bounds.Height - diameter) / 2, diameter, diameter);
             var fill = context.Pressed || context.Hot
@@ -71,19 +72,26 @@ public partial class RibbonRenderer
                     : context.WindowBackdrop || context.CompositedText ? BackdropStateFill(context, context.Pressed) : context.Pressed ? context.Theme.Pressed : context.Theme.Hover
                 : new RibbonFill(Color.Transparent);
             PaintRounded(context with { Bounds = circle }, RibbonFrameMetrics.Radius(context.Theme.BackstageBackButtonCornerRadius, diameter / 2, context.DeviceDpi), fill,
-                context.Focused && context.Theme.BackstageNavigationForeground.IsEmpty ? context.Theme.Accent : color, Math.Max(1, RibbonLayoutEngine.Scale(1.5, context.DeviceDpi)));
+                context.Focused && context.Theme.BackstageNavigationForeground.IsEmpty ? context.Theme.Accent : color,
+                appearance?.BackOutlineWidth is { } outline ? RibbonLayoutEngine.Scale(outline, context.DeviceDpi) : Math.Max(1, RibbonLayoutEngine.Scale(1.5, context.DeviceDpi)));
             var saved = context.Graphics.Save();
             try
             {
                 context.Graphics.SetClip(context.Bounds, CombineMode.Intersect);
                 context.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                using var pen = new Pen(color, Math.Max(1f, 1.5f * context.DeviceDpi / 96f)) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round };
-                float x = context.Bounds.Left + context.Bounds.Width / 2f, y = context.Bounds.Top + context.Bounds.Height / 2f;
-                using var arrow = new GraphicsPath();
-                arrow.AddLines(new PointF[] { new(x, y - S(5)), new(x - S(5), y), new(x, y + S(5)) });
-                arrow.StartFigure();
-                arrow.AddLine(x - S(5), y, x + S(6), y);
-                context.Graphics.DrawPath(pen, arrow);
+                float stroke = appearance?.BackGlyphStrokeWidth is { } authoredStroke ? (float)(authoredStroke * context.DeviceDpi / 96d) : Math.Max(1f, 1.5f * context.DeviceDpi / 96f);
+                double scale = appearance?.BackGlyphScale ?? 1;
+                if (stroke > 0 && scale > 0)
+                {
+                    using var pen = new Pen(color, stroke) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round };
+                    float x = context.Bounds.Left + context.Bounds.Width / 2f, y = context.Bounds.Top + context.Bounds.Height / 2f;
+                    int head = RibbonLayoutEngine.Scale(5 * scale, context.DeviceDpi), tail = RibbonLayoutEngine.Scale(6 * scale, context.DeviceDpi);
+                    using var arrow = new GraphicsPath();
+                    arrow.AddLines(new PointF[] { new(x, y - head), new(x - head, y), new(x, y + head) });
+                    arrow.StartFigure();
+                    arrow.AddLine(x - head, y, x + tail, y);
+                    context.Graphics.DrawPath(pen, arrow);
+                }
             }
             finally { context.Graphics.Restore(saved); }
         }
@@ -93,8 +101,17 @@ public partial class RibbonRenderer
             presentation.Renderer.DrawEntryState(this, context, selected);
             if (selected && context.Theme.BackstageSelectionIndicatorVisible)
             {
-                var marker = new Rectangle(context.Bounds.Left + S(2), context.Bounds.Top + S(10), S(3), Math.Max(1, context.Bounds.Height - S(20)));
-                PaintRounded(context with { Bounds = marker }, RibbonFrameMetrics.Radius(context.Theme.NavigationMarkerCornerRadius, marker.Width / 2, context.DeviceDpi), new(context.Theme.Accent), Color.Transparent, 0);
+                var appearance = context.Theme.BackstageAppearance;
+                var marker = new Rectangle(context.Bounds.Left + S(appearance?.MarkerLeftInset ?? 2), context.Bounds.Top + S(appearance?.MarkerTopInset ?? 10),
+                    S(appearance?.MarkerWidth ?? 3), Math.Max(1, context.Bounds.Height - S((appearance?.MarkerTopInset ?? 10) + (appearance?.MarkerBottomInset ?? 10))));
+                var saved = context.Graphics.Save();
+                try
+                {
+                    context.Graphics.SetClip(context.Bounds, CombineMode.Intersect);
+                    var ink = appearance is null || appearance.MarkerColor.IsEmpty ? context.Theme.Accent : appearance.MarkerColor;
+                    PaintRounded(context with { Bounds = marker }, RibbonFrameMetrics.Radius(context.Theme.NavigationMarkerCornerRadius, marker.Width / 2, context.DeviceDpi), new(ink), Color.Transparent, 0);
+                }
+                finally { context.Graphics.Restore(saved); }
             }
             var metrics = presentation.ResolveMetrics(context.Theme, context.Density);
             int iconInset = Math.Min(S(metrics.IconInset), context.Bounds.Width);

@@ -1,4 +1,35 @@
 #nullable enable
+RibbonKit.WinForms.RibbonBackstageEasing
+RibbonKit.WinForms.RibbonBackstageEasing.EaseOutCubic = 0 -> RibbonKit.WinForms.RibbonBackstageEasing
+RibbonKit.WinForms.RibbonBackstageEasing.SmoothStep = 1 -> RibbonKit.WinForms.RibbonBackstageEasing
+RibbonKit.WinForms.RibbonBackstageEasing.Linear = 2 -> RibbonKit.WinForms.RibbonBackstageEasing
+RibbonKit.WinForms.RibbonBackstageMotionSettings
+RibbonKit.WinForms.RibbonBackstageMotionSettings.RibbonBackstageMotionSettings() -> void
+RibbonKit.WinForms.RibbonBackstageMotionSettings.<Clone>$() -> RibbonKit.WinForms.RibbonBackstageMotionSettings!
+RibbonKit.WinForms.RibbonBackstageMotionSettings.PaneDuration.get -> int?
+RibbonKit.WinForms.RibbonBackstageMotionSettings.PaneDuration.init -> void
+RibbonKit.WinForms.RibbonBackstageMotionSettings.PageDuration.get -> int?
+RibbonKit.WinForms.RibbonBackstageMotionSettings.PageDuration.init -> void
+RibbonKit.WinForms.RibbonBackstageMotionSettings.PageSlideDistance.get -> int?
+RibbonKit.WinForms.RibbonBackstageMotionSettings.PageSlideDistance.init -> void
+RibbonKit.WinForms.RibbonBackstageMotionSettings.PaneEasing.get -> RibbonKit.WinForms.RibbonBackstageEasing?
+RibbonKit.WinForms.RibbonBackstageMotionSettings.PaneEasing.init -> void
+RibbonKit.WinForms.RibbonBackstageMotionSettings.PaneFadeEasing.get -> RibbonKit.WinForms.RibbonBackstageEasing?
+RibbonKit.WinForms.RibbonBackstageMotionSettings.PaneFadeEasing.init -> void
+RibbonKit.WinForms.RibbonBackstageMotionSettings.TitleEasing.get -> RibbonKit.WinForms.RibbonBackstageEasing?
+RibbonKit.WinForms.RibbonBackstageMotionSettings.TitleEasing.init -> void
+RibbonKit.WinForms.RibbonBackstageMotionSettings.PageEasing.get -> RibbonKit.WinForms.RibbonBackstageEasing?
+RibbonKit.WinForms.RibbonBackstageMotionSettings.PageEasing.init -> void
+RibbonKit.WinForms.RibbonBackstageMotionSettings.PaneFadeAmount.get -> double?
+RibbonKit.WinForms.RibbonBackstageMotionSettings.PaneFadeAmount.init -> void
+RibbonKit.WinForms.RibbonBackstageMotionSettings.Equals(RibbonKit.WinForms.RibbonBackstageMotionSettings? other) -> bool
+override RibbonKit.WinForms.RibbonBackstageMotionSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonBackstageMotionSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonBackstageMotionSettings.ToString() -> string!
+static RibbonKit.WinForms.RibbonBackstageMotionSettings.operator !=(RibbonKit.WinForms.RibbonBackstageMotionSettings? left, RibbonKit.WinForms.RibbonBackstageMotionSettings? right) -> bool
+static RibbonKit.WinForms.RibbonBackstageMotionSettings.operator ==(RibbonKit.WinForms.RibbonBackstageMotionSettings? left, RibbonKit.WinForms.RibbonBackstageMotionSettings? right) -> bool
+RibbonKit.WinForms.RibbonTheme.BackstageMotion.get -> RibbonKit.WinForms.RibbonBackstageMotionSettings?
+RibbonKit.WinForms.RibbonTheme.BackstageMotion.init -> void
 RibbonKit.WinForms.RibbonBackstageStyle
 RibbonKit.WinForms.RibbonBackstageStyle.Modern = 0 -> RibbonKit.WinForms.RibbonBackstageStyle
 RibbonKit.WinForms.RibbonBackstageStyle.Classic = 1 -> RibbonKit.WinForms.RibbonBackstageStyle
@@ -17,6 +48,18 @@ RibbonKit.WinForms.RibbonTheme.HeaderPressed.get -> RibbonKit.WinForms.RibbonFil
 RibbonKit.WinForms.RibbonTheme.HeaderPressed.init -> void
 RibbonKit.WinForms.RibbonTheme.HeaderForeground.get -> System.Drawing.Color
 RibbonKit.WinForms.RibbonTheme.HeaderForeground.init -> void
+RibbonKit.WinForms.RibbonTheme.HeaderSelectedBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonTheme.HeaderSelectedBackground.init -> void
+RibbonKit.WinForms.RibbonTheme.HeaderSelectedForeground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.HeaderSelectedForeground.init -> void
+RibbonKit.WinForms.RibbonTheme.HeaderFilledCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonTheme.HeaderFilledCornerRadius.init -> void
+RibbonKit.WinForms.RibbonTheme.HeaderIndicatorThickness.get -> int?
+RibbonKit.WinForms.RibbonTheme.HeaderIndicatorThickness.init -> void
+RibbonKit.WinForms.RibbonTheme.HeaderIndicatorBottomInset.get -> int?
+RibbonKit.WinForms.RibbonTheme.HeaderIndicatorBottomInset.init -> void
+RibbonKit.WinForms.RibbonTheme.HeaderIndicatorHoverColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonTheme.HeaderIndicatorHoverColor.init -> void
 RibbonKit.WinForms.RibbonTheme.ExtendTitleBarColorToHeader.get -> bool
 RibbonKit.WinForms.RibbonTheme.ExtendTitleBarColorToHeader.init -> void
 RibbonKit.WinForms.RibbonTheme.BodyBottomBorderOnly.get -> bool
@@ -1381,3 +1424,44 @@ RibbonKit.WinForms.RibbonTheme.BackstageMonochromeIcons.get -> bool
 RibbonKit.WinForms.RibbonTheme.BackstageMonochromeIcons.init -> void
 RibbonKit.WinForms.RibbonTheme.BackstageSlideDistanceRatio.get -> double?
 RibbonKit.WinForms.RibbonTheme.BackstageSlideDistanceRatio.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.RibbonBackstageAppearanceSettings() -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.<Clone>$() -> RibbonKit.WinForms.RibbonBackstageAppearanceSettings!
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.MarkerLeftInset.get -> int?
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.MarkerLeftInset.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.MarkerWidth.get -> int?
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.MarkerWidth.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.MarkerTopInset.get -> int?
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.MarkerTopInset.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.MarkerBottomInset.get -> int?
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.MarkerBottomInset.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.BackVisualInset.get -> int?
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.BackVisualInset.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.NavigationCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.NavigationCornerRadius.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.NavigationBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.NavigationBorderWidth.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.MarkerColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.MarkerColor.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.NavigationBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.NavigationBorderColor.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.BackOutlineWidth.get -> double?
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.BackOutlineWidth.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.BackGlyphScale.get -> double?
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.BackGlyphScale.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.BackGlyphStrokeWidth.get -> double?
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.BackGlyphStrokeWidth.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.Equals(RibbonKit.WinForms.RibbonBackstageAppearanceSettings? other) -> bool
+override RibbonKit.WinForms.RibbonBackstageAppearanceSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonBackstageAppearanceSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonBackstageAppearanceSettings.ToString() -> string!
+static RibbonKit.WinForms.RibbonBackstageAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonBackstageAppearanceSettings? left, RibbonKit.WinForms.RibbonBackstageAppearanceSettings? right) -> bool
+static RibbonKit.WinForms.RibbonBackstageAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonBackstageAppearanceSettings? left, RibbonKit.WinForms.RibbonBackstageAppearanceSettings? right) -> bool
+RibbonKit.WinForms.RibbonTheme.BackstageAppearance.get -> RibbonKit.WinForms.RibbonBackstageAppearanceSettings?
+RibbonKit.WinForms.RibbonTheme.BackstageAppearance.init -> void
+RibbonKit.WinForms.RibbonTheme.BackstageRowTextVerticalPadding.get -> int?
+RibbonKit.WinForms.RibbonTheme.BackstageRowTextVerticalPadding.init -> void
+RibbonKit.WinForms.RibbonTheme.BackstageSeparatorHeight.get -> int?
+RibbonKit.WinForms.RibbonTheme.BackstageSeparatorHeight.init -> void
+RibbonKit.WinForms.RibbonTheme.BackstageTrailingPadding.get -> int?
+RibbonKit.WinForms.RibbonTheme.BackstageTrailingPadding.init -> void

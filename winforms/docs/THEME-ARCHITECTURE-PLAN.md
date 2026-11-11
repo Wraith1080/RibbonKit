@@ -1,10 +1,15 @@
 # Native WinForms theme architecture
 
-**B1–B3 implemented; latest delivery 2026-11-11.** Backstage uses one registration
+**B1–B3 and C1 implemented; latest delivery 2026-11-11.** Backstage uses one registration
 for sibling layout/drawing helpers, explicit defaults, measured layout inputs and
-caption/motion profiles. C1 header presentation is the next proposed slice.
+caption/motion profiles. Headers register sibling Filled/Underline drawing with
+explicit geometry defaults and adjustable effects. C2 body/connected frames is
+the next proposed slice.
+The earlier-slice review found adjustability gaps. A00–A04 fill routing/motion
+and A06–A09 decoration/spacing overrides are implemented; follow the remaining
+[source audit and correction order](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) before C2.
 Current evidence and user review are recorded in the
-[themes plan](THEMES-PLAN.md#backstage-caption-and-motion-policy-b3--2026-11-11).
+[themes plan](THEMES-PLAN.md#backstage-decoration-and-spacing-overrides--2026-11-11).
 
 The [themes plan](THEMES-PLAN.md) retains appearance requirements and acceptance.
 This document proposes implementation boundaries and a migration sequence; it
@@ -34,6 +39,9 @@ parallel layout engines or repeat the closed geometry campaign.
 The pilot already had sibling inheritance. B1 unified composition, B2 made
 measurement/defaults explicit, and B3 separated caption/motion policy from the
 renderer and transition engines.
+C1 applies the same registration boundary to header drawing and resolves header
+geometry separately from the retained shared strip engine. Its implementation
+and adjustable-effect API are recorded in the themes plan.
 
 | Current owner | Retain | Remaining coupling |
 | --- | --- | --- |
@@ -136,7 +144,18 @@ Preserve these rules throughout:
    refresh it through existing theme, renderer, density and DPI invalidation.
    Open-surface switching uses the existing settle/refresh ordering, preserving
    native page identity and caption-foreground acquisition/release. Do not retain
-   stale resolved frame values after renderer reassignment.
+  stale resolved frame values after renderer reassignment.
+7. **User requirement, 2026-11-11:** while extracting a surface, replace remaining
+   fixed visual effects with independently adjustable theme settings, preserving
+   existing defaults and validation. Internal family profiles alone do not make
+   an effect application-adjustable. Reuse existing settings before adding roles;
+   keep native lifecycle, accessibility/safety clamps and timing execution shared.
+   C1 adds selected-tab fill/ink, filled-state radius and underline thickness/
+   bottom inset/hover ink. Apply this requirement to C2 and later slices too.
+   The [retroactive audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) records remaining
+   B1–B3/C1/shared-helper gaps. A00–A04 and A06–A09 are implemented; remaining corrections
+   are pending. Backstage motion overrides use one immutable settings group,
+   resolved with family defaults and captured by the existing engines.
 
 The family registration binds compatible default pieces. Deliberate application
 renderer overrides and independently authored settings remain supported escape
@@ -212,7 +231,7 @@ automated evidence or visual acceptance. Implement the following separately.
 | B1. Backstage registration — implemented | Register existing sibling pairs once and route current callers through it. Preserve existing algorithms, caption methods and motion. Risk: stale/mixed selection or bypassed application hooks. | Focused cases and the package-only comparison are recorded in the [themes plan](THEMES-PLAN.md#backstage-registration-b1--2026-11-10). The delivery criteria below remain the contract. |
 | B2. Explicit layout inputs/defaults — implemented | Family fallbacks are immutable values; shared layout consumes measured content, host reservation and renderer shadow clearance. Page content padding is retained in the snapshot. Risk: DPI rounding, Auto width, footer fallback or native page inset changes. | Selected width/footer/spacing/frame/preview/ownership checks and exact default paint/geometry comparison are recorded in the [themes plan](THEMES-PLAN.md#explicit-backstage-layout-inputs-b2--2026-11-11). |
 | B3. Caption and motion policy — implemented | Caption coverage/tint/title and pane/title/page visual motion resolve through registered profiles. Native services, clocks and lifecycle remain shared. Risk: the original 2024 caption regression, title fading, pane/caption drift, interruption or foreground leaks. | Focused caption/title/page/lifecycle regressions and two package-only Solid scopes with neutral/authored captions, open/close/reversal and resize are recorded in the [themes plan](THEMES-PLAN.md#backstage-caption-and-motion-policy-b3--2026-11-11). No full material matrix ran. |
-| C1. Headers | Apply the resolver/sibling pattern to Filled/Underline drawing and header-specific geometry policy; keep the shared strip engine. Risk: scrollers, colored caption extension, File/QAT reservations and text clipping. | Affected `Office2019ThemeTests`, header cases in `Office2019ReviewTests`, `TabHeaderClippingTests` and selected QAT/header geometry checks. Compare both light families at normal/narrow widths and applicable ordinary/material paths. |
+| C1. Headers — implemented | Register sibling Filled/Underline drawing with explicit geometry defaults; keep the shared strip engine. Six additional theme roles make fixed header effects adjustable. Public renderer hooks, colored caption extension, File/QAT reservations and text clipping remain intact. | Focused tests, exact two-family before/after comparison and four package-consumer scopes are recorded in the [themes plan](THEMES-PLAN.md#header-presentation-c1--2026-11-11). |
 | C2. Body and connected frames | Extract body/group/frame policy without changing reduction or ownership. Risk: inner padding, full-width 2019 body, QAT/message joins, seams and popup anchoring. | Selected `FrameGeometryTests`, body/group geometry and QAT/message join cases, two-family comparison in Classic/Simplified and Compact/Touch where affected. No new geometry audit. |
 | D. Remaining surfaces, one per slice | Commands/editors; ordinary popups and Application Menu; galleries; tips; library dialogs. Reuse helpers when only palette/metrics differ. Risk: public drawing hooks, command geometry, borrowed editors/presenters/icons and popup retention. | Select only the changed surface's geometry/paint/state/ownership checks and one unchanged-family comparison. For native content, include retained handle/value/validation evidence; for designer previews, use inert candidate-theme checks. Choose exact filters at each slice. |
 | E. Selected catalog growth | Add one later chosen light definition, reusing surface registrations or adding an actually needed sibling. Risk: selection/Reset/serialization/persistence and unsupported consumer dependencies. | Definition/selection tests, relevant designer/generated-code checks, and a focused independent-consumer visual/state scope. Wait for existing appearance review before another theme. |
@@ -262,7 +281,7 @@ Completion criteria:
   authored Forms/resources change. Review the diff and record focused results
   and remaining human appearance/input gates in the themes plan.
 
-B2/B3 were delivered as separate changes. C1 header presentation is next;
+B2/B3 and C1 were delivered as separate slices. C2 body/connected frames is next;
 body extraction remains a later slice and the consolidated geometry is retained.
 
 ## Verification and delivery budget
@@ -312,4 +331,5 @@ and no app, package refresh, build or test ran during that planning-only refresh
 The user then authorized B1 and asked whether geometry consolidation remained
 useful. Its retained role is stated above. B1/B2 implementation and current
 review/evidence are in the themes plan. B3 subsequently completed caption/motion
-policy extraction; C1 header presentation is the next proposed scope.
+policy extraction. C1 subsequently extracted header presentation and exposed its
+remaining fixed effects as theme settings; C2 body/connected frames is next.

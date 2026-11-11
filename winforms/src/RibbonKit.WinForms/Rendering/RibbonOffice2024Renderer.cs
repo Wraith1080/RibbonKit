@@ -106,73 +106,26 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     /// <inheritdoc />
     public override void DrawTab(RibbonPaintContext context, RibbonTab tab, bool selected)
     {
-        if (context.Theme.HeaderPresentation == RibbonHeaderPresentation.Filled)
-        {
-            bool available = tab.EffectiveEnabled;
-            if (selected || available && (context.Hot || context.Pressed))
-                PaintRounded(context, 0, selected ? new(context.Theme.Surface) : context.Pressed ? context.Theme.HeaderPressed ?? context.Theme.Pressed : context.Theme.HeaderHover ?? context.Theme.Hover, Color.Transparent, 0);
-            var ink = !available ? context.Theme.DisabledColor : selected ? context.Theme.Foreground : context.Theme.HeaderTextColor;
-            if (available && tab.IsContextual) ink = ContextualTabColor(context with { Theme = context.Theme with { Foreground = ink } }, tab, selected);
-            DrawText(context, tab.DisplayText, ink,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.PreserveGraphicsClipping);
-            if (available && context.Focused) DrawFocus(context);
-            return;
-        }
-        bool enabled = tab.EffectiveEnabled;
-        DrawText(context, tab.DisplayText, !enabled ? context.Theme.DisabledColor : tab.IsContextual ? ContextualTabColor(context, tab, selected) : selected ? context.Theme.Accent : context.Theme.HeaderTextColor,
-            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.PreserveGraphicsClipping);
-        if (enabled && !context.SuppressTabIndicators && (selected || context.Hot || context.Pressed || context.Focused))
-        {
-            DrawTabIndicator(context with { Bounds = GetTabIndicatorBounds(context, tab) }, tab, selected);
-        }
+        var header = RibbonPresentationResolver.Header(context.Theme);
+        header.Renderer.DrawTab(this, context, tab, selected, header.ResolveMetrics(context.Theme, context.Density));
     }
     /// <inheritdoc />
-    public override Rectangle GetTabIndicatorBounds(RibbonPaintContext context, RibbonTab tab) => context.Theme.HeaderPresentation == RibbonHeaderPresentation.Filled ? Rectangle.Empty : HeaderIndicatorBounds(context, tab.DisplayText);
-    private static Rectangle HeaderIndicatorBounds(RibbonPaintContext context, string text)
+    public override Rectangle GetTabIndicatorBounds(RibbonPaintContext context, RibbonTab tab)
     {
-        int S(int value) => Layout.RibbonLayoutEngine.Scale(value, context.DeviceDpi);
-        int labelWidth = Layout.RibbonCaptionLayout.TextWidth(text, context.Font);
-        int padding = S(new Layout.RibbonChromeMetrics(context.Theme, context.Density).IndicatorPadding);
-        int width = Math.Max(0, Math.Min(labelWidth + 2 * padding, context.Bounds.Width - 2 * padding));
-        int height = Math.Min(S(3), Math.Max(0, context.Bounds.Height - S(1)));
-        if (width == 0 || height == 0) return Rectangle.Empty;
-        return new(context.Bounds.Left + (context.Bounds.Width - width) / 2, context.Bounds.Bottom - height - S(1), width, height);
+        var header = RibbonPresentationResolver.Header(context.Theme);
+        return header.Renderer.GetTabIndicatorBounds(context, tab, header.ResolveMetrics(context.Theme, context.Density));
     }
     /// <inheritdoc />
     public override void DrawTabIndicator(RibbonPaintContext context, RibbonTab tab, bool selected)
     {
-        if (!tab.EffectiveEnabled || context.Bounds.IsEmpty || context.Theme.HeaderPresentation == RibbonHeaderPresentation.Filled) return;
-        var tint = selected ? tab.IsContextual ? ContextualTabColor(context, tab, true) : context.Theme.Accent : context.Theme.SecondaryText;
-        PaintHeaderIndicator(context, tint, selected);
-    }
-    private void PaintHeaderIndicator(RibbonPaintContext context, Color tint, bool selected)
-    {
-        if (!selected && (context.CompositedText || context.WindowBackdrop))
-            tint = Color.FromArgb((int)Math.Round(tint.A * context.Theme.BackdropTabHoverOpacity), tint);
-        PaintRounded(context, Layout.RibbonFrameMetrics.Radius(context.Theme.HeaderIndicatorCornerRadius, context.Bounds.Height / 2, context.DeviceDpi), new(tint), Color.Transparent, 0);
+        var header = RibbonPresentationResolver.Header(context.Theme);
+        header.Renderer.DrawTabIndicator(this, context, tab, selected, header.ResolveMetrics(context.Theme, context.Density));
     }
     /// <inheritdoc />
     public override void DrawFileButton(RibbonPaintContext context, RibbonDropDownItem menu)
     {
-        if (context.Theme.HeaderPresentation == RibbonHeaderPresentation.Filled)
-        {
-            bool available = menu.EffectiveEnabled, expanded = available && menu.IsDropDownOpen && !context.FileMenuClosing;
-            if (available && (expanded || context.Hot || context.Pressed))
-                PaintRounded(context, 0, expanded || context.Pressed ? context.Theme.HeaderPressed ?? context.Theme.Pressed : context.Theme.HeaderHover ?? context.Theme.Hover, Color.Transparent, 0);
-            DrawText(context, menu.Text, available ? context.Theme.HeaderTextColor : context.Theme.DisabledColor,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.PreserveGraphicsClipping);
-            if (available && context.Focused) DrawFocus(context);
-            return;
-        }
-        if (DrawApplicationFileButton(context, menu)) return;
-        bool enabled = menu.EffectiveEnabled, open = enabled && menu.IsDropDownOpen && !context.FileMenuClosing;
-        DrawText(context, menu.Text, !enabled ? context.Theme.DisabledColor : open ? context.Theme.Accent : context.Theme.HeaderTextColor,
-            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
-        if (enabled && !context.SuppressTabIndicators && (open || context.Hot || context.Pressed || context.Focused))
-        {
-            var bounds = HeaderIndicatorBounds(context, menu.Text);
-            if (!bounds.IsEmpty) PaintHeaderIndicator(context with { Bounds = bounds }, open ? context.Theme.Accent : context.Theme.SecondaryText, open);
-        }
+        var header = RibbonPresentationResolver.Header(context.Theme);
+        header.Renderer.DrawFileButton(this, context, menu, header.ResolveMetrics(context.Theme, context.Density));
     }
     /// <inheritdoc />
     public override void DrawGroup(RibbonPaintContext context, RibbonGroup group, bool collapsed)

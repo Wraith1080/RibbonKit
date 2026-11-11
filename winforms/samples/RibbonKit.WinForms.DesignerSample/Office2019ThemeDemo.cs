@@ -48,7 +48,34 @@ public partial class DesignerForm
         Add(settings, "Default inner padding", () => ribbon.Theme = ribbon.Theme with { BodyContentHorizontalPadding = null });
         Add(settings, "Wider popup shadow", () => ribbon.Theme = ribbon.Theme with { PopupShadowBlur = 12, PopupShadowVerticalOffset = 4 });
         Add(settings, "Default popup shadow", () => ribbon.Theme = ribbon.Theme with { PopupShadowBlur = null, PopupShadowVerticalOffset = null });
-        tab.Groups.AddRange(themes, caption, surfaces, settings); ribbon.Tabs.Add(tab); ribbon.SelectedTab = tab;
+        var headers = new RibbonGroup { Text = "Header effects" };
+        Add(headers, "Filled / Underlined tabs", () => ribbon.Theme = ribbon.Theme with { HeaderPresentation = ribbon.Theme.HeaderPresentation == RibbonHeaderPresentation.Filled ? RibbonHeaderPresentation.Underline : RibbonHeaderPresentation.Filled });
+        Add(headers, "Thicker underline", () => ribbon.Theme = ribbon.Theme with { HeaderIndicatorThickness = 6, HeaderIndicatorBottomInset = 4 });
+        Add(headers, "Rounded filled tabs", () => ribbon.Theme = ribbon.Theme with { HeaderFilledCornerRadius = 8 });
+        Add(headers, "Selected tab colors", () => ribbon.Theme = ribbon.Theme with { HeaderSelectedBackground = new(Color.LightBlue), HeaderSelectedForeground = Color.DarkBlue, HeaderIndicatorHoverColor = Color.Teal });
+        Add(headers, "Default header effects", () => ribbon.Theme = ribbon.Theme with { HeaderSelectedBackground = null, HeaderSelectedForeground = Color.Empty,
+            HeaderFilledCornerRadius = null, HeaderIndicatorThickness = null, HeaderIndicatorBottomInset = null, HeaderIndicatorHoverColor = Color.Empty });
+        var backstageMotion = new RibbonGroup { Text = "Backstage motion" };
+        Add(backstageMotion, "Fade / Slide only", () => SetMotion((ribbon.Theme.BackstageMotion ?? new()) with { PaneFadeAmount = ribbon.Theme.BackstageMotion?.PaneFadeAmount == 0 ? 1 : 0 }));
+        Add(backstageMotion, "Slower Backstage", () => SetMotion((ribbon.Theme.BackstageMotion ?? new()) with { PaneDuration = 500, PageDuration = 240 }));
+        Add(backstageMotion, "Short page slide", () => { ribbon.TabContentAnimation = RibbonTabContentAnimation.SlideDown; SetMotion((ribbon.Theme.BackstageMotion ?? new()) with { PageSlideDistance = 4 }); });
+        Add(backstageMotion, "Steady motion", () => SetMotion((ribbon.Theme.BackstageMotion ?? new()) with { PaneEasing = RibbonBackstageEasing.Linear, TitleEasing = RibbonBackstageEasing.Linear, PageEasing = RibbonBackstageEasing.Linear }));
+        Add(backstageMotion, "Default Backstage motion", () => ribbon.Theme = ribbon.Theme with { BackstageMotion = null });
+        void SetMotion(RibbonBackstageMotionSettings value)
+        {
+            if (ribbon.AnimationLevel == RibbonAnimationLevel.None) ribbon.AnimationLevel = RibbonAnimationLevel.Subtle;
+            ribbon.Theme = ribbon.Theme with { BackstageMotion = value };
+        }
+        var backstageAppearance = new RibbonGroup { Text = "Backstage appearance" };
+        Add(backstageAppearance, "Show / hide marker", () => ribbon.Theme = ribbon.Theme with { BackstageSelectionIndicatorVisible = !ribbon.Theme.BackstageSelectionIndicatorVisible });
+        Add(backstageAppearance, "Larger marker", () => ribbon.Theme = ribbon.Theme with {
+            BackstageAppearance = (ribbon.Theme.BackstageAppearance ?? new()) with { MarkerWidth = 6, MarkerLeftInset = 8, MarkerTopInset = 6, MarkerBottomInset = 6, MarkerColor = Color.Gold } });
+        Add(backstageAppearance, "Larger Back arrow", () => ribbon.Theme = ribbon.Theme with { BackstageAppearance = (ribbon.Theme.BackstageAppearance ?? new()) with { BackGlyphScale = 1.6, BackGlyphStrokeWidth = 2.5, BackVisualInset = 5 } });
+        Add(backstageAppearance, "Outlined navigation", () => ribbon.Theme = ribbon.Theme with { BackstageAppearance = (ribbon.Theme.BackstageAppearance ?? new()) with { NavigationCornerRadius = 8, NavigationBorderWidth = 2, NavigationBorderColor = Color.DarkOrange } });
+        Add(backstageAppearance, "Roomier navigation", () => ribbon.Theme = ribbon.Theme with { BackstageRowTextVerticalPadding = 34, BackstageSeparatorHeight = 16, BackstageTrailingPadding = 20 });
+        Add(backstageAppearance, "Default Backstage appearance", () => ribbon.Theme = ribbon.Theme with { BackstageAppearance = null,
+            BackstageRowTextVerticalPadding = null, BackstageSeparatorHeight = null, BackstageTrailingPadding = null });
+        tab.Groups.AddRange(themes, caption, surfaces, settings, headers, backstageMotion, backstageAppearance); ribbon.Tabs.Add(tab); ribbon.SelectedTab = tab;
         ribbon.BuiltInTheme = RibbonBuiltInTheme.Office2019Light;
         statusLabel.Text = "Office 2019 Light: compare neutral/blue headers, flat body, inner padding and square shadowed popups.";
 

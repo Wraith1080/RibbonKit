@@ -50,7 +50,7 @@ public partial class RibbonForm
     private void StartCaptionTitle(RibbonControl ribbon, Rectangle from, Rectangle target, bool allowMotion, RibbonBackstageMotionPolicy policy)
     {
         _captionTitleMotion?.Dispose(); _captionTitleMotion = null;
-        bool animate = allowMotion && from != target && ribbon.AnimationLevel != RibbonAnimationLevel.None && ribbon.Motion.SystemEnabled
+        bool animate = allowMotion && policy.PaneDuration > 0 && from != target && ribbon.AnimationLevel != RibbonAnimationLevel.None && ribbon.Motion.SystemEnabled
             && ribbon.CanAnimatePopupOpening && Visible && WindowState != FormWindowState.Minimized && !IsDisposed && !Disposing;
         _captionTitleOverride = animate || _captionTitleClosing ? from : null;
         if (animate) _captionTitleMotion = new(this, ribbon, from, target, policy);

@@ -138,13 +138,36 @@ Select `ribbon.BuiltInTheme = RibbonBuiltInTheme.Office2019Light;` for square,
 filled headers, a flat full-width white body with retained inner padding, fine
 dividers and square bordered/shadowed popups. With a supporting `RibbonForm`,
 active title-bar coloring extends across the tab band; reset restores grey.
-The selected tab stays white with dark text. Office 2024 remains the default.
+The selected tab stays white with dark text by default. Office 2024 remains the default.
 Custom values can start from `RibbonThemes.Office2019Light with { ... }`.
+
+`HeaderPresentation` selects Filled or Underline independently of colors, corner
+radius, caption extension and Backstage style. The default Office renderer keeps
+application text/focus/indicator overrides. Header effects are per-ribbon theme
+settings; null/Empty retains the established appearance:
+
+| Setting | Default and scope |
+| --- | --- |
+| `HeaderSelectedBackground` | Surface for selected filled tabs; accepts a fill, including a gradient. |
+| `HeaderSelectedForeground` | Existing foreground/accent/contextual ink. An explicit color changes selected-tab text and its underline, including contextual selections. |
+| `HeaderFilledCornerRadius` | Square filled tab/File states. Explicit 0..64 logical pixels changes their corners. |
+| `HeaderIndicatorThickness` | Three logical pixels for tab/File underlines; 0 hides them, up to 64 clamps within the header. |
+| `HeaderIndicatorBottomInset` | One logical pixel below the underline; 0..1024 clamps its available height. |
+| `HeaderIndicatorHoverColor` | SecondaryText for unselected tab/closed-File underlines; Transparent hides them. Material hover also applies `BackdropTabHoverOpacity`. |
+
+These settings keep measured targets, File/QAT reservations and overflow intact.
+Existing `HeaderHover`, `HeaderPressed`, `HeaderForeground`, indicator padding/
+radius, tab spacing and scroller settings stay independent. Clear the new values
+to restore the active style's defaults. Explicit flat/custom renderers retain
+their own drawing policy.
 
 The native Showcase offers **View > Theme** with Office 2019 Light, Office 2024
 Light and Application theme; the application saves that choice between sessions.
 The Designer Sample's `--office2019-theme-demo` starts with a neutral header and
 offers a working Toggle Backstage action that restores the original File routing.
+Its **Header effects** group demonstrates style, underline, corners and selected
+colors through the same public settings; **Default header effects** clears those
+overrides without changing the selected style.
 
 Shared per-ribbon settings also cover `CollapsedGroupBorder`,
 `ApplicationMenuSplitDividerVisible`, `OptionsButtonCornerRadius`,
@@ -246,7 +269,7 @@ real popup/editors immediately and fades/slides an inert drawing away over
 None, system policy and update batches retain immediate dismissal; a new request,
 resize, movement, deactivation or disposal releases the outgoing drawing.
 
-The real Backstage panes slide and fade as one surface, starting 15% left of their
+By default, the real Backstage panes slide and fade as one surface, starting 15% left of their
 settled location. `Theme.BackstageExtendsIntoTitleBar` chooses whether they extend
 behind the integrated caption's transparent foreground (Office 2019) or stay below
 the separate title bar (Office 2024). Their backgrounds are not duplicated by a
@@ -255,15 +278,98 @@ travel as a width fraction from 0 to 1: null uses 15%, zero explicitly requests
 fading without travel. Subtle uses 220 ms and Expressive 308 ms; None and reduced-
 motion policy remain immediate. When title centering is enabled, opening and
 closing place the title 75% toward its destination immediately, then slide the
-remaining 25% with the same duration and easing, without fading the title.
+remaining 25% with the same duration and default easing, without fading the title.
 `Theme.BackstageTitleSlideDistanceRatio` configures that animated fraction: null
 uses 25%, zero snaps, and one animates the entire distance. Resize, maximize and
 restore immediately remeasure and recenter the title without animation.
+
+`Theme.BackstageMotion` accepts an immutable `RibbonBackstageMotionSettings`
+group. Null members use the active family's Subtle/Expressive defaults:
+
+| Member | Default and behavior |
+| --- | --- |
+| `PaneDuration` | 220/308 ms, shared by pane and title. Accepts 0..60000 ms; zero snaps both. |
+| `PageDuration` | 130/182 ms. Accepts 0..60000 ms; zero switches pages immediately. |
+| `PageSlideDistance` | 8/12 logical pixels. Accepts 0..1024; zero removes slide travel while duration remains independent. Does not change page Fade. |
+| `PaneEasing`, `TitleEasing`, `PageEasing` | EaseOutCubic. Each can independently select `RibbonBackstageEasing.EaseOutCubic`, `SmoothStep` or `Linear`. |
+| `PaneFadeEasing` | SmoothStep; uses the same curve choices. |
+| `PaneFadeAmount` | 1, full pane fading. Accepts finite 0..1; zero keeps the pane opaque for slide-only motion. Title ink stays opaque and page Fade remains independent. |
+
+For example:
+
+```csharp
+ribbon.AnimationLevel = RibbonAnimationLevel.Subtle;
+ribbon.Theme = ribbon.Theme with
+{
+    BackstageMotion = new RibbonBackstageMotionSettings
+    {
+        PaneDuration = 320, PageDuration = 180, PageSlideDistance = 16,
+        PaneFadeAmount = 0, PaneEasing = RibbonBackstageEasing.SmoothStep
+    }
+};
+```
+
+Clear a member with `with { PageDuration = null }` to restore just its family
+default, or set `BackstageMotion = null` to reset the group. Existing slide ratios,
+animation level, reduced-motion policy and validation remain authoritative.
+Settings are captured when a transition starts; normal theme-change settling
+applies to an active transition. Native timer pacing and hit-testing opacity
+guards remain internal. The optional sample theme demo includes **Backstage
+motion** controls for fade/slide-only, duration, page distance and reset.
+
+Explicit `BackstageNavigationHover` and `BackstageNavigationSelected` fills also
+apply to inset material rows, with authored alpha retained. Null values preserve
+the established generic backdrop fallback in that path; full-width and Solid
+defaults are unchanged.
+
+`Theme.BackstageAppearance` accepts an immutable
+`RibbonBackstageAppearanceSettings` group for navigation decoration. Every
+nullable member resets independently; null retains the existing appearance:
+
+| Members | Default and behavior |
+| --- | --- |
+| `MarkerLeftInset`, `MarkerWidth`, `MarkerTopInset`, `MarkerBottomInset` | 2, 3, 10, 10 logical pixels, each 0..1024. Width zero hides the marker. Top/bottom clearances are summed before DPI rounding, preserving fractional-DPI defaults. Row bounds clip painting. |
+| `MarkerColor` | Empty follows Accent; supports alpha. Existing `BackstageSelectionIndicatorVisible` and `NavigationMarkerCornerRadius` remain independent. |
+| `BackVisualInset` | 2 logical pixels inside the Back click target; accepts 0..1024. Does not change target size or `BackstageBackButtonCornerRadius`. |
+| `BackOutlineWidth`, `BackGlyphStrokeWidth` | 1.5 logical pixels, accepting finite 0..32. Zero hides the outline or arrow respectively. Null preserves the existing outline rounding and one-device-pixel minima. |
+| `BackGlyphScale` | 1, accepting finite 0..8; zero hides the arrow. Scales the vector's 5/6-pixel extents with their original separate DPI rounding, independently of circle/target size. |
+| `NavigationCornerRadius` | Full-width rows are square; inset rows use the active renderer's chrome. An authored 0..64 logical pixels controls the state shape independently of width coverage. |
+| `NavigationBorderColor`, `NavigationBorderWidth` | Empty/transparent, with no border. Authored color supports alpha; width accepts 0..32 logical pixels. Null width uses one device pixel when ink is authored. Zero width or transparent ink hides the outline. |
+
+Spacing uses three nullable theme properties, each accepting 0..1024 logical
+pixels: `BackstageRowTextVerticalPadding` defaults to 16 total clearance added to
+font height, `BackstageSeparatorHeight` defaults to 9, and
+`BackstageTrailingPadding` defaults to 8. Font/Touch minima and available-space
+clamps remain authoritative. Trailing clearance feeds both Auto navigation width
+and text painting; separator height also feeds footer/scroll layout. Zero removes
+separator space. The existing `MenuSeparatorHeight` remains menu-only.
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    BackstageAppearance = new RibbonBackstageAppearanceSettings
+    {
+        MarkerWidth = 6, MarkerColor = Color.Gold,
+        BackGlyphScale = 1.5, BackGlyphStrokeWidth = 2,
+        NavigationCornerRadius = 8,
+        NavigationBorderColor = Color.DarkOrange, NavigationBorderWidth = 2
+    },
+    BackstageSeparatorHeight = 16, BackstageTrailingPadding = 20
+};
+```
+
+These settings retain selection, native page/editor identity and click targets.
+Inherited drawing consumes them through the actual application renderer; custom
+entry/chrome overrides keep precedence. Reset the group with
+`BackstageAppearance = null` and spacing properties individually to null.
+The optional sample theme demo includes **Backstage appearance**, with marker
+visibility separate from its decoration/reset controls.
+
 The title-bar QAT is hidden throughout Backstage opening, display and closing;
 its authored visibility, placement and commands return when Backstage closes.
 TabRow and BelowRibbon QAT presentation is retained, including a TitleBar
 preference that currently falls back to TabRow. Caption buttons
-stay in place above the real panes. Opening and closing also fade the surface to
+stay in place above the real panes. By default, opening and closing also fade the surface to
 soften their appearance/disappearance. Page changes use the shared
 `TabContentAnimation`: Fade fades in the incoming native page body; SlideDown
 slides it down 8/12 logical pixels for Subtle/Expressive. Navigation, page frame

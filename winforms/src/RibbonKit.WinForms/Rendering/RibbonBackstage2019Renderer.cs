@@ -11,8 +11,6 @@ internal sealed class RibbonBackstage2019Renderer : RibbonBackstageRenderer
     internal override void DrawEntryState(RibbonRenderer owner, RibbonPaintContext context, bool selected)
     {
         if (!context.Hot && !context.Pressed && !selected) return;
-        if (context.Theme.BackstageFullWidthNavigation)
-            owner.PaintRounded(context, 0, selected || context.Pressed ? context.Theme.BackstageSelectedFill : context.Theme.BackstageHoverFill, Color.Transparent, 0);
-        else PaintNavigationState(owner, context, selected);
+        PaintNavigationState(owner, context, selected);
     }
 }

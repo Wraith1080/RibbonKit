@@ -17,10 +17,10 @@ internal readonly record struct RibbonBackstageMetrics
         FooterBottomPadding = theme?.BackstageFooterBottomPadding ?? defaults.FooterBottomPadding ?? NavigationPadding;
         FooterUsesNavigationInset = theme?.BackstageFooterBottomPadding is null && defaults.FooterBottomPadding is null;
         PagePadding = theme?.BackstagePagePadding ?? defaults.PagePadding;
-        RowTextVerticalPadding = defaults.RowTextVerticalPadding;
-        SeparatorHeight = defaults.SeparatorHeight;
+        RowTextVerticalPadding = theme?.BackstageRowTextVerticalPadding ?? defaults.RowTextVerticalPadding;
+        SeparatorHeight = theme?.BackstageSeparatorHeight ?? defaults.SeparatorHeight;
         MinimumPageWidth = defaults.MinimumPageWidth;
-        TrailingPadding = defaults.TrailingPadding;
+        TrailingPadding = theme?.BackstageTrailingPadding ?? defaults.TrailingPadding;
         AutoWidthPadding = 2 * NavigationPadding + TextOffset + TrailingPadding + defaults.ScrollbarWidth;
     }
     internal int RowHeight { get; }
@@ -44,12 +44,14 @@ internal readonly record struct RibbonBackstageMetrics
     internal static void Validate(RibbonTheme theme)
     {
         if (!Enum.IsDefined(theme.BackstageStyle)) throw new ArgumentOutOfRangeException(nameof(theme));
+        RibbonBackstageMotionSettings.Validate(theme.BackstageMotion);
+        RibbonBackstageAppearanceSettings.Validate(theme.BackstageAppearance);
         if (theme.BackstageTitleSlideDistanceRatio is { } titleRatio && (!double.IsFinite(titleRatio) || titleRatio < 0 || titleRatio > 1))
             throw new ArgumentOutOfRangeException(nameof(theme), "Backstage title slide distance must be a finite fraction from 0 to 1, or null for the final 25 percent.");
         if (theme.BackstageSlideDistanceRatio is { } ratio && (!double.IsFinite(ratio) || ratio < 0 || ratio > 1))
             throw new ArgumentOutOfRangeException(nameof(theme), "Backstage slide distance must be a finite fraction from 0 to 1, or null for the default travel.");
         int?[] spacing = [theme.BackstageNavigationPadding, theme.BackstageBackButtonInset, theme.BackstageBackButtonBottomGap, theme.BackstageIconTextGap, theme.BackstagePagePadding,
-            theme.BackstageNavigationIconInset, theme.BackstageFooterBottomPadding];
+            theme.BackstageNavigationIconInset, theme.BackstageFooterBottomPadding, theme.BackstageRowTextVerticalPadding, theme.BackstageSeparatorHeight, theme.BackstageTrailingPadding];
         if (spacing.Any(n => n is < 0 or > 1024) || theme.BackstageMinimumRowHeight is < 1 or > 1024 || theme.BackstageBackButtonSize is < 1 or > 1024
             || theme.BackstageNavigationIconSize is < 1 or > 1024 || theme.BackstageAutoMinimumNavigationWidth is < 1 or > 1024 || theme.BackstagePageBorderWidth is < 0 or > 32)
             throw new ArgumentOutOfRangeException(nameof(theme), "Backstage spacing must be 0..1024, row/button sizes 1..1024, or null for existing geometry.");

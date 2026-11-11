@@ -354,16 +354,17 @@ Backstage. Stop for this review before another theme.
 | Item | Status |
 | --- | --- |
 | Direction | **2026-11-10: user selected Office 2019 first and light themes before dark.** |
-| Planning | B1–B3 are implemented under the user's continuation. [Architecture plan](THEME-ARCHITECTURE-PLAN.md) retains C1 header presentation as the next proposed slice. Later family order remains provisional. |
-| Runtime/API/rendering | B3 is internal-only; public APIs, geometry, timing curves, clocks and lifecycle are preserved. Affected Release runtime/tests and normal Debug runtime/designer/client/sample builds passed without warnings/errors. No full solution or broad suite was repeated. |
-| Designer/sample/package consumer | B3 normal Debug package/sample refreshed; both focused public-package scopes passed. Its public-API diagnostic adds authored-caption, resize and reversal checks. Authored Forms/resources remain intact; actual VS is separate. |
-| Focused Release verification | B3: **75 relevant Release cases passed**, including ten new observable caption/motion-policy cases. No broad suite ran; earlier B1/B2 evidence remains below. |
-| Office 2024 default parity | B2: **32 PNG/geometry pairs match the fresh before-change baseline exactly**, both renderers/densities, synthetic 96/120/144/192 DPI and two font sizes. Earlier header/body/options parity evidence remains below. |
-| Composed native package verification | B3: **2/2 package-only Solid scopes passed** at actual 120 DPI, opening/closing plus authored Form/theme caption precedence, resize and close reversal. Native state was retained; no full native matrix ran. |
+| Planning | B1–B3, C1 and audit corrections A00–A04/A06–A09 are implemented. Shared header-helper candidates precede the proposed C2 body work; later family order remains provisional. |
+| Earlier-slice adjustability audit | **2026-11-11: A06–A09 decoration/spacing implemented and verified.** Current evidence is in the [appearance record](#backstage-decoration-and-spacing-overrides--2026-11-11); earlier evidence remains in the [fill/motion record](#backstage-fill-routing-and-motion-overrides--2026-11-11). The [audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) retains A05 and A10–A17 as later candidates. |
+| Runtime/API/rendering | `RibbonTheme.BackstageAppearance` exposes validated immutable marker, Back circle/glyph and navigation-state shape/outline settings; three nullable spacing properties feed shared measurement/painting. Null/Empty defaults, actual renderer hooks, native content and targets are preserved. Earlier fill/motion and C1 roles remain. |
+| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; the permanent sample is refreshed. Its optional theme demo now includes Backstage appearance alongside Backstage motion and Header effects. Authored Forms/UserControls/resources remain intact; actual VS is separate. |
+| Focused Release verification | A06–A09: **71 distinct relevant Release cases passed across retained runs** for authored appearance/spacing, invalid assignment/reset, clipping, fill/alpha, footer/Auto width, typography and style isolation. Earlier slice evidence remains below; no broad suite ran. |
+| Two-family default parity | A06–A09: **32 fresh PNG/geometry pairs match exactly**, both families, flat/Office renderers, full-width/inset coverage at 96/120/144/192 DPI; layout captures include both densities. Empty appearance groups also match null exactly. Earlier C1/fill/motion comparisons remain below. |
+| Composed native package verification | A06–A09: **4/4 public-package scopes passed** at actual 120 DPI for both families in Solid/Mica, including full-width/inset native paint callbacks, marker/border/Back values, unchanged targets, row/separator layout, zero separators/reset and retained editor state. Offscreen timer/print checks do not establish visible frame-pacing or physical-input acceptance; no full native matrix ran. |
 | Backstage review correction | **2026-11-11: navbar blank-frame and left rounded-corner black-bar fixes implemented and verified; user review pending.** Current focused/package evidence is in the [page-motion follow-up](BACKSTAGE-PAGE-MOTION.md#navbar-blank-frame-and-rounded-edge-follow-up--2026-11-11). |
 | Deferred title review issue | **2026-11-11: user reported title-text flicker while closing Backstage and allowed deferral to title theming work.** Their `20261111-0345-01.1714250.mp4` confirms the Office 2019 close at approximately **7.03–7.37 s**: the title moves left, its leading text becomes pale/white over the lightening caption, then dark ink returns. Native-rate frames and timestamps are retained under `artifacts/backstage-title-flicker/recording/`. Caption foreground contrast/clip handoff as the navigation fades is the source-inspection lead, not a verified root cause. Preserve opaque, legible title ink throughout closing when addressing it. No title runtime change or new build/test was made for this recording review; the page/corner correction does not address it. |
 | Broader Release suite | Initial implementation: 1,485 passed / 6 failed / 1,491 total (historical evidence above). Correction run **stopped at the user's request**, 1,089 passed / 3 failed / 1,092 executed; incomplete, no full-suite result claimed. Do not restart it. |
-| User appearance review | **2026-11-10: user reviewed the delivered B1 result, reported that everything looks good and authorized continuation with B2.** This accepts the delivered B1 appearance at that review scope. B2/B3 appearance review is pending; actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
+| User appearance review | **2026-11-11: user checked the delivered A00–A04 fill/motion backfill, reported that everything seems fine and authorized continuation.** This accepts that delivered review scope; A06–A09 appearance review remains pending. Earlier B1 acceptance is retained at its recorded scope; actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
 | Actual VS/physical input/mixed-monitor | Not run for themes; report separately. |
 
 Record later evidence and confirmation here once, with date/revision/scope,
@@ -923,3 +924,225 @@ These results establish B3's focused automated/package scope. Human appearance,
 actual VS, physical input, mixed-monitor and all-material acceptance remain in
 the ledger. No full solution, full native matrix or WPF build/test ran. C1 header
 presentation is next; body work and further theme families remain separate.
+
+## Header presentation C1 — 2026-11-11
+
+C1 began with a clean tree on `codex/Ribbonkit-Winform` at `6162571`
+(`Backstage Rewrite fix`). The user's continuation authorized header extraction;
+their follow-up requires fixed visual effects to become adjustable theme settings
+during the rewrite. Existing appearance remains the default, and the closing-title
+issue stays deferred in the ledger.
+
+`RibbonPresentationResolver.Header` pairs sibling
+[Filled/2019](../src/RibbonKit.WinForms/Rendering/RibbonHeader2019Renderer.cs) and
+[Underline/2024](../src/RibbonKit.WinForms/Rendering/RibbonHeader2024Renderer.cs)
+drawing with explicit immutable geometry defaults. Selection uses only the
+candidate theme's `HeaderPresentation`, independent of palette, built-in identity,
+corner radius and caption extension. Neither sibling inherits the other; the
+base declares drawing contracts without a style recipe. The public
+`RibbonOffice2024Renderer` remains the compatible facade, including inherited
+application subclasses. Explicit flat renderers retain their existing behavior.
+
+Resolved [header metrics](../src/RibbonKit.WinForms/Layout/RibbonHeaderMetrics.cs)
+contain numeric values, not a theme, ribbon or window reference. The existing
+strip engine retains text measurement, tab/File target sizes, QAT reservations,
+Touch minima, narrow-host clamps, overflow and clipping. Both registered styles
+currently share their explicit strip defaults. Public owner text/focus/indicator
+hooks, contextual/disabled states, open File handling and candidate previews
+remain on the actual application renderer. Colored caption extension stays an
+independent existing setting; no caption/title or motion engine was rewritten.
+
+Six additive public `RibbonTheme` settings implement the user's effects request:
+`HeaderSelectedBackground`, `HeaderSelectedForeground`, `HeaderFilledCornerRadius`,
+`HeaderIndicatorThickness`, `HeaderIndicatorBottomInset` and
+`HeaderIndicatorHoverColor`. Their defaults, scope and interaction with existing
+roles are documented in the [native README](../README.md). Radius/thickness accept
+0..64 logical pixels; bottom inset accepts 0..1024. Null/Empty retains existing
+behavior, zero thickness removes the built-in underline, and values clamp inside
+measured header bounds. Explicit selected ink also applies to selected contextual
+tabs; disabled ink retains precedence. Existing hover/pressed fills, indicator
+padding/radius, material opacity and scroller settings remain independent.
+XML documentation, additive Unshipped API entries and assignment validation are
+included; the shipped API baseline is untouched.
+
+Verification is under `artifacts/theme-header-c1/`:
+
+- **47 distinct focused Release cases pass across retained runs.**
+  `tests/header-effects.trx` records 41 cases, including 13 new C1 cases covering
+  before/after drawing, owner hooks, mixed candidate settings, authored effects
+  and rejected assignments. Selected existing cases cover header clipping,
+  scrollers, QAT/overflow, contextual colors and inert theme previews.
+  `tests/header-motion.trx` adds six existing cases for bidirectional indicator
+  motion, exact settling and one interpolated indicator through QAT/density
+  changes. Passing scopes were not rerun for a combined log.
+- **48 PNG/geometry pairs match exactly** between fresh `before/` and `after/`:
+  32 state sheets cover both light themes and opposite-style clones at synthetic
+  96/120/144/192 DPI through ordinary/composited drawing; 16 native-strip sheets
+  cover both light themes, both densities, normal/narrow widths and colored/
+  neutral captions. Comparisons include indicator bounds, File, QAT, scrollers,
+  tab extent and viewport targets. New effect assertions independently verify
+  changed pixels/geometry and stable hit targets, rather than updating defaults.
+- Normal Release runtime/test and normal Debug runtime/designer server/client/
+  sample builds pass with zero warnings/errors. The permanent Designer Sample
+  was refreshed in place; its current local package is recorded in
+  `samples/RibbonKit.WinForms.DesignerSample/.local/last-refresh.json`.
+  Its optional `--office2019-theme-demo` now includes a **Header effects** group
+  with style, line, corner, color and reset actions. Only supplemental demo/check
+  code changed; authored Forms/UserControls, resources and project files were
+  preserved.
+- The public-package `--verify-header-presentation <output>` check passes **4/4
+  scopes** at actual **120 DPI**: both light families in Solid/Mica, with requested
+  Mica effective on this machine. Each covers normal/narrow headers, a native
+  scroll click and glyph clipping beside File/QAT/scrollers, open File, mixed
+  header effects and stable targets/models. Native editor handle, parent, text
+  and selection remain intact. Results and PNGs are in `package/`; representative
+  ordinary/material default/custom captures were inspected. The fixture references
+  only the public package, with no runtime internals or Showcase helpers/resources.
+
+This establishes the bounded automated/package scope. Offscreen Forms and
+composited snapshots do not establish visible material contrast, frame pacing,
+actual VS, physical input, IME or mixed-monitor acceptance. C1 human appearance
+review is pending; no full suite, full native matrix, WPF check, commit or push
+ran. C2 body/connected frames is next, retaining the adjustable-effects requirement
+and the geometry consolidation foundation.
+
+## Backstage fill routing and motion overrides — 2026-11-11
+
+The user authorized the first audit correction batch, A00–A04, after the source
+review. Entry retained the existing uncommitted C1/audit work on
+`codex/Ribbonkit-Winform` at `6162571`. This batch does not implement the remaining
+decoration/shared-helper candidates or the separately deferred closing-title
+ink defect.
+
+Inset Backstage material/composited rows now prefer explicit navigation
+hover/selected fills before generic backdrop fallback, preserving authored alpha.
+The surface adapter leaves un-authored inset material fills null instead of
+materializing derived accent colors as apparent overrides. This distinction
+retains existing default material colors while honoring actual application
+settings. Solid/full-width default drawing and actual public renderer hooks
+remain unchanged.
+
+`RibbonTheme.BackstageMotion` holds a nullable immutable
+`RibbonBackstageMotionSettings` record with duration, page-distance, four curve
+choices and pane-fade-strength overrides. `RibbonBackstageEasing` exposes the two
+existing curves plus Linear. Each null member resolves from the registered
+family profile. Pane/title timing remains coupled; title ink stays opaque.
+Zero pane duration skips both pane/title motion and unused opening-background
+capture. Zero page duration uses immediate selection; zero page travel removes
+movement while leaving its positive duration independent. Fade strength zero
+starts native opacity at 255 and retains it for slide-only pane motion; page
+Fade remains separately selected by `TabContentAnimation`.
+
+Preparation and progress use the same captured policy. Existing timers, native
+alpha-1 hit-testing safeguard, cancellation, reduced motion, page buffering and
+repaint/ownership remain shared. Duration/curve/strength/distance validation runs
+before theme or BuiltInTheme mutation. Defaults and reset behavior are documented
+with an example in the [native README](../README.md). XML and additive Unshipped
+API entries are included; the shipped API baseline is untouched.
+
+Evidence is under `artifacts/theme-effects-backfill/`:
+
+- `tests/fills-before.trx` reproduces four failures for explicit inset material
+  fills; full-width cases already honored them. `fills-and-default-policy.trx`
+  passes 19 cases after correction, including all eight fill-route/alpha cases,
+  the default comparison and ten prior B3 policy cases.
+- **16 PNG/geometry pairs match exactly** between fresh `before/` and `after/`,
+  both light families, both coverage styles, accent/neutral navigation and
+  Solid/Mica. The native fixture's effective material and geometry are retained
+  alongside each state sheet.
+- `tests/motion-settings-and-lifecycle.trx` passes 66 cases: 16 new authored
+  settings/validation/reset cases and 50 existing pane/title/page, native editor
+  repaint, handoff and exposed-region cases. After making fade strength an
+  explicit family fallback and extending member-reset assertions,
+  `tests/motion-profile-final.trx` passes the affected 26 policy/settings cases.
+  These retained runs establish **85 distinct cases**; repeated cases are not
+  counted again. Release runtime/test builds pass with zero warnings/errors.
+- Normal Debug runtime/designer server/client/sample builds pass without
+  warnings/errors. The permanent sample is refreshed in place; its local package
+  is recorded in `.local/last-refresh.json`. The optional Office 2019 demo has a
+  **Backstage motion** group using public settings. Authored Forms/UserControls,
+  resources and project files were preserved.
+- The new public-package `--verify-backstage-effects <output>` check passes
+  **4/4 scopes** for both light families in Solid/Mica at actual **120 DPI**,
+  with requested Mica effective. It observes real timer completion and native
+  opacity, custom page travel, independent page Fade, zero-duration open/page/
+  close, one close event, reset and retained native handle/parent/text/selection.
+  Selected-row callbacks replay their resolved public paint context to verify
+  fill/alpha; only the library-owned navigation button is explicitly printed
+  for offscreen material paint, with no application-page capture. Timer samples
+  are not compositor-frame evidence. Results and representative fill PNGs are
+  under `package-final/`.
+
+These are bounded automated/package results; human appearance, visible material
+contrast/frame pacing, actual VS, physical input, IME and mixed-monitor acceptance
+remain separate. No full suite/native matrix, WPF build/test, commit or push ran.
+The subsequent A06–A09 implementation is recorded below. A05's caption choices
+and the known title defect retain their separate title scope.
+
+## Backstage decoration and spacing overrides — 2026-11-11
+
+This continuation implements audit A06–A09 on the same branch/HEAD and preserves
+the prior uncommitted slices. `RibbonTheme.BackstageAppearance` is a nullable
+immutable `RibbonBackstageAppearanceSettings` record with independently resettable
+marker dimensions/insets/ink, Back circle inset/outline, arrow scale/stroke and
+navigation-state radius/border ink/width. Existing marker visibility, shared
+marker/Back radii, Back target size and full-width coverage remain independent.
+Zero widths/scale can hide decoration; Empty ink follows the documented fallback.
+Alpha is consumed in Solid/material painting. Validation precedes theme or
+BuiltInTheme mutation; XML/additive Unshipped entries leave shipped API untouched.
+
+The three direct spacing overrides are `BackstageRowTextVerticalPadding`,
+`BackstageSeparatorHeight` and `BackstageTrailingPadding`. They resolve through
+existing Backstage metrics into row/font minima, separators, footer/scroll layout,
+Auto navigation width and entry text bounds. `MenuSeparatorHeight` stays menu-only.
+Page-width preference, native lifecycle and geometry engines were not rewritten.
+
+Marker top/bottom clearances retain summed DPI rounding; Back vector extents retain
+their separate rounding. Inset state drawing still calls the actual renderer's
+virtual chrome hook, which can replace built-in drawing. Inherited flat/Office
+primitives consume authored appearance through a scoped internal context flag;
+other chrome is unaffected. Full-width defaults keep their square, borderless
+recipe. Clipping contains authored markers/arrows within their row/Back targets.
+
+Evidence is under `artifacts/backstage-appearance-settings/`:
+
+- Fresh `before/` and `after/` contain **32 exact PNG/geometry pairs**: two light
+  families, flat/Office renderers, full-width/inset rows, four DPI levels
+  (96/120/144/192), six visual states and both density layouts. The subsequent
+  `tests/empty-group-defaults.trx` also verifies empty-group/null pixel equivalence.
+- `tests/appearance-focused.trx` passed 67/71; four new spacing-fixture cases
+  initially requested an invalid minimum navigation width of 1. Correcting the
+  fixture to the existing minimum of 80 required no runtime change.
+  `tests/appearance-settings-final.trx` passes all 40 affected appearance/fill
+  cases, including the corrected four. Together these retained runs establish
+  **71 distinct passing relevant cases**, with no repeated-case inflation.
+  Coverage includes 31 appearance/default/spacing/reset/validation cases and
+  existing fill, typography, layout-input, navigation and family-isolation cases.
+  Normal Release runtime/test builds pass without warnings/errors.
+- Normal Debug runtime/designer server/client/package/sample refresh passes
+  without warnings/errors. The permanent package consumer adds
+  `--verify-backstage-appearance <output>`; its **4/4 scopes pass** for both
+  light families in Solid/Mica at actual **120 DPI**, with Mica effective.
+  It prints only library-owned navigation buttons and replays their public
+  renderer context, checking both width-coverage modes. Actual native targets,
+  row/separator bounds, zero-height separators, group/spacing reset, selection,
+  editor HWND/parent/text/selection and close/reopen are checked. Results/PNGs
+  are under `package-final/`; no application page is captured.
+- The initial package diagnostic exposed a JIT dialog reported by the user:
+  its Back assertion threw from a paint callback on a one-RGB-step translucent
+  DIB round trip. The diagnostic now records assertion failures outside callbacks,
+  captures unexpected UI-thread exceptions to the failure log and allows that
+  bounded premultiplication rounding. The corrected four-scope run completes
+  without the dialog. This was a consumer verification defect, not a change to
+  runtime alpha/default rendering.
+- The optional theme demo adds **Backstage appearance** controls for marker
+  visibility/size/color, Back arrow, navigation outlines/rounding, spacing and
+  reset. Visibility remains separate from the appearance group. Authored
+  Forms/UserControls/resources and project files are preserved; the current
+  local package identity remains recorded by `.local/last-refresh.json`.
+
+Human appearance review for this new batch is pending. Visible frame pacing,
+actual VS, physical input, IME and mixed-monitor acceptance remain separate.
+No full suite/native matrix, WPF checks, commit or push ran. Next proposed work
+is A11–A16 header/shared helper effects; A05 caption, A10 page-width preference,
+A17 shared badge placement and the closing-title ink defect remain separate.

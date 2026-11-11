@@ -8,6 +8,32 @@ internal static class Program
     private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
+        if (args.Length == 2 && args[0] == "--verify-backstage-appearance")
+        {
+            Exception? callbackFailure = null;
+            ThreadExceptionEventHandler failed = (_, error) => callbackFailure ??= error.Exception;
+            Application.ThreadException += failed;
+            try
+            {
+                BackstageAppearanceCheck.Verify(args[1]);
+                if (callbackFailure is not null) throw new InvalidOperationException("A native paint callback failed.", callbackFailure);
+            }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
+            finally { Application.ThreadException -= failed; }
+            return;
+        }
+        if (args.Length == 2 && args[0] == "--verify-backstage-effects")
+        {
+            try { BackstageEffectsCheck.Verify(args[1]); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
+        if (args.Length == 2 && args[0] == "--verify-header-presentation")
+        {
+            try { HeaderPresentationCheck.Verify(args[1]); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
         if (args.Length == 2 && args[0] == "--verify-large-command-geometry")
         {
             try { LargeCommandGeometryCheck.Verify(args[1]); }

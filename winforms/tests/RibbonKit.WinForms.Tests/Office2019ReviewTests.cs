@@ -103,8 +103,8 @@ public sealed class Office2019ReviewTests
     public void Header_width_override_scales_and_preserves_touch_minimum_and_body_scroll_chrome(int dpi) => FoundationTests.Sta(() =>
     {
         var theme = RibbonThemes.Office2019Light with { HeaderScrollButtonWidth = 18, HeaderScrollButtonBackground = new(Color.Lime), HeaderScrollButtonBorder = Color.Transparent };
-        Assert.Equal(RibbonLayoutEngine.Scale(18, dpi), new RibbonChromeMetrics(theme, RibbonDensity.Compact).HeaderScrollWidth(dpi, 100));
-        Assert.Equal(RibbonLayoutEngine.Scale(32, dpi), new RibbonChromeMetrics(theme, RibbonDensity.Touch).HeaderScrollWidth(dpi, 100));
+        Assert.Equal(RibbonLayoutEngine.Scale(18, dpi), RibbonPresentationResolver.Header(theme).ResolveMetrics(theme, RibbonDensity.Compact).HeaderScrollWidth(dpi, 100));
+        Assert.Equal(RibbonLayoutEngine.Scale(32, dpi), RibbonPresentationResolver.Header(theme).ResolveMetrics(theme, RibbonDensity.Touch).HeaderScrollWidth(dpi, 100));
         using var painter = new RibbonOffice2024Renderer(); using var image = new Bitmap(100, 100); using var g = Graphics.FromImage(image);
         var context = new RibbonPaintContext(g, new(10, 10, 60, 60), theme, Control.DefaultFont, dpi);
         painter.DrawScrollButton(context, true); Assert.Equal(Color.Lime.ToArgb(), image.GetPixel(10, 10).ToArgb());

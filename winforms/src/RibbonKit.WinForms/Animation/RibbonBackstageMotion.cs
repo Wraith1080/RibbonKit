@@ -28,26 +28,28 @@ internal sealed class RibbonBackstageMotion : IDisposable
     internal int VisibleWidth => Math.Clamp(_surface.Right - _origin.X, 0, _width);
     internal byte Opacity => _surface.MotionAlpha;
 
-    private RibbonBackstageMotion(RibbonControl ribbon, RibbonBackstageSurface surface, Form form, bool closing, Action? completed)
+    private RibbonBackstageMotion(RibbonControl ribbon, RibbonBackstageSurface surface, Form form, bool closing, Action? completed, RibbonBackstageMotionPolicy policy)
     {
         _ribbon = ribbon; _surface = surface; _form = form; IsClosing = closing; _completed = completed;
         _origin = surface.Location; _width = surface.Width;
-        _policy = ribbon.BackstageMotionPolicy;
+        _policy = policy;
         _travel = _policy.PaneTravel(_width);
         Bounds = surface.RectangleToScreen(surface.ClientRectangle);
         _timer.Tick += Tick;
     }
     internal static RibbonBackstageMotion? Prepare(RibbonControl ribbon, RibbonBackstageSurface surface, Form form, bool closing = false, Action? completed = null)
     {
+        var policy = ribbon.BackstageMotionPolicy;
         if (ribbon.AnimationLevel == RibbonAnimationLevel.None || !ribbon.CanAnimatePopupOpening || !ribbon.Motion.SystemEnabled ||
             form.WindowState == FormWindowState.Minimized || form.Opacity != 1 || form.TransparencyKey != Color.Empty ||
-            surface.Width < 1 || surface.Height < 1 || surface.HasApplicationOpacity) return null;
-        var motion = new RibbonBackstageMotion(ribbon, surface, form, closing, completed);
+            surface.Width < 1 || surface.Height < 1 || policy.PaneDuration == 0 || surface.HasApplicationOpacity) return null;
+        var motion = new RibbonBackstageMotion(ribbon, surface, form, closing, completed, policy);
         try
         {
-            surface.AcquireMotionOpacity(closing ? (byte)255 : (byte)1);
-            surface.SetMotionAlpha(closing ? (byte)255 : (byte)1);
-            // Move before showing, and seed native redirection at near-zero opacity.
+            byte alpha = policy.PaneOpacity(0, closing);
+            surface.AcquireMotionOpacity(alpha);
+            surface.SetMotionAlpha(alpha);
+            // Move before showing, and seed native redirection at the authored opacity.
             if (!closing) surface.MoveForMotion(new(motion._origin.X - motion._travel, motion._origin.Y));
             return motion;
         }

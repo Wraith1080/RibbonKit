@@ -40,14 +40,24 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     // at full rail opacity; changing the tint must not change redirection owners.
     private bool MaterialPaint => _ribbon.HasWindowBackdrop;
     internal bool TransparentNavigation => _ribbon.HasWindowBackdrop && _ribbon.Backstage.NavigationBackgroundOpacity < 1;
-    internal RibbonTheme PaintTheme => _ribbon.Theme with
+    internal RibbonTheme PaintTheme
     {
-        BackstageNavigationUsesAccent = false,
-        BackstageNavigationHover = _ribbon.Theme.BackstageNavigationUsesAccent ? _ribbon.Theme.BackstageHoverFill : _ribbon.Theme.BackstageNavigationHover,
-        BackstageNavigationSelected = _ribbon.Theme.BackstageNavigationUsesAccent ? _ribbon.Theme.BackstageSelectedFill : _ribbon.Theme.BackstageNavigationSelected,
-        BackstageNavigationBackground = Color.FromArgb(TransparentNavigation ? (int)Math.Round(255 * _ribbon.Backstage.NavigationBackgroundOpacity) : 255,
-            _ribbon.Theme.BackstageNavigationColor)
-    };
+        get
+        {
+            var theme = _ribbon.Theme;
+            // Inset material rows keep generic backdrop defaults when no fill
+            // was authored. Do not turn derived accent fills into overrides.
+            bool derive = theme.BackstageNavigationUsesAccent && (!MaterialPaint || theme.BackstageFullWidthNavigation);
+            return theme with
+            {
+                BackstageNavigationUsesAccent = false,
+                BackstageNavigationHover = derive ? theme.BackstageHoverFill : theme.BackstageNavigationHover,
+                BackstageNavigationSelected = derive ? theme.BackstageSelectedFill : theme.BackstageNavigationSelected,
+                BackstageNavigationBackground = Color.FromArgb(TransparentNavigation ? (int)Math.Round(255 * _ribbon.Backstage.NavigationBackgroundOpacity) : 255,
+                    theme.BackstageNavigationColor)
+            };
+        }
+    }
     private Control MotionTarget => MaterialPaint ? _pages : this;
     internal bool HasApplicationOpacity => _motionOpacity is null && RibbonDrawingHold.HasOpacity(MotionTarget.Handle);
     internal RibbonDrawingHold AcquireMotionOpacity(byte alpha)

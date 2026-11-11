@@ -43,8 +43,20 @@ public sealed record RibbonTheme
     public RibbonFill? HeaderHover { get; init; }
     /// <summary>Gets an optional header pressed/open fill. Null uses Pressed for filled headers.</summary>
     public RibbonFill? HeaderPressed { get; init; }
-    /// <summary>Gets inactive header text and glyph color. Empty uses Foreground. Selected filled tabs retain Foreground on Surface.</summary>
+    /// <summary>Gets inactive header text and glyph color. Empty uses Foreground. Selected tabs use their independent selected roles and legacy fallbacks.</summary>
     public Color HeaderForeground { get; init; } = Color.Empty;
+    /// <summary>Gets an optional selected filled-tab background. Null retains Surface. Hover, File and body fills remain independent.</summary>
+    public RibbonFill? HeaderSelectedBackground { get; init; }
+    /// <summary>Gets selected-tab text and underline ink. Empty retains existing foreground/accent/contextual colors. An explicit value also overrides selected contextual-tab ink.</summary>
+    public Color HeaderSelectedForeground { get; init; } = Color.Empty;
+    /// <summary>Gets an optional filled tab/File state corner radius in 96-DPI logical pixels, 0..64. Null retains square states. Does not change header bounds, body joins or underline corners.</summary>
+    public int? HeaderFilledCornerRadius { get; init; }
+    /// <summary>Gets an optional tab/File underline thickness in 96-DPI logical pixels, 0..64. Null retains 3; zero hides built-in underlines. Clamps within the header without changing targets or strip layout.</summary>
+    public int? HeaderIndicatorThickness { get; init; }
+    /// <summary>Gets an optional tab/File underline bottom clearance in 96-DPI logical pixels, 0..1024. Null retains 1. Clamps underline height within the header; filled states remain independent.</summary>
+    public int? HeaderIndicatorBottomInset { get; init; }
+    /// <summary>Gets unselected tab/closed-File underline ink. Empty retains SecondaryText; Transparent hides it. Material hover still applies BackdropTabHoverOpacity.</summary>
+    public Color HeaderIndicatorHoverColor { get; init; } = Color.Empty;
     /// <summary>Gets whether a supporting RibbonForm extends its active caption color into the tab band. Defaults to false. Does not change authored caption or theme values.</summary>
     public bool ExtendTitleBarColorToHeader { get; init; }
     /// <summary>Gets whether the default Office body draws only its bottom border. Defaults to false; popup borders and shadows are independent.</summary>
@@ -138,6 +150,10 @@ public sealed record RibbonTheme
     public double? BackstageTitleSlideDistanceRatio { get; init; }
     /// <summary>Gets optional Backstage slide travel as a fraction of its width, from 0 to 1. Null retains 15 percent travel. Zero disables travel while keeping the configured fade. Must be finite.</summary>
     public double? BackstageSlideDistanceRatio { get; init; }
+    /// <summary>Gets optional immutable Backstage duration, easing, fade and page-travel overrides. Null retains family defaults. Animation level, reduced motion and native lifecycle safeguards remain authoritative.</summary>
+    public RibbonBackstageMotionSettings? BackstageMotion { get; init; }
+    /// <summary>Gets optional immutable Backstage marker, Back glyph and navigation-state appearance overrides. Null retains existing renderer defaults; target geometry and native page ownership remain unchanged.</summary>
+    public RibbonBackstageAppearanceSettings? BackstageAppearance { get; init; }
     /// <summary>Gets navigation and integrated Backstage caption ink. Empty retains Foreground and existing caption behavior. Native application pages keep their own colors.</summary>
     public Color BackstageNavigationForeground { get; init; } = Color.Empty;
     /// <summary>Gets selected navigation ink. Empty retains Accent.</summary>
@@ -322,6 +338,12 @@ public sealed record RibbonTheme
     public int? BackstageIconTextGap { get; init; }
     /// <summary>Gets the optional padding inside the Backstage page frame; native content layout remains host-owned in 96-DPI logical pixels, from 0 to 1024. Null uses 0. Resets independently; available bounds clamp spacing.</summary>
     public int? BackstagePagePadding { get; init; }
+    /// <summary>Gets optional total vertical clearance added to navigation font height in logical pixels, 0..1024. Null uses 16; row and Touch minima remain authoritative.</summary>
+    public int? BackstageRowTextVerticalPadding { get; init; }
+    /// <summary>Gets optional Backstage separator row height in logical pixels, 0..1024. Null uses 9; zero removes separator space. MenuSeparatorHeight remains menu-only.</summary>
+    public int? BackstageSeparatorHeight { get; init; }
+    /// <summary>Gets optional trailing navigation text clearance in logical pixels, 0..1024. Null uses 8. Painting and Auto navigation width share this value; available-space clamps remain.</summary>
+    public int? BackstageTrailingPadding { get; init; }
     /// <summary>Gets the optional maximum passive ScreenTip outer width in 96-DPI logical pixels, from 1 to 1024. Null uses 320. Resets independently; available-space limits remain.</summary>
     public int? ScreenTipMaximumWidth { get; init; }
     /// <summary>Gets the optional padding on each side of passive ScreenTip content in 96-DPI logical pixels, from 0 to 1024. Null uses 12. Resets independently; available-space limits remain.</summary>
@@ -468,6 +490,7 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     /// <summary>Gets whether this Quick Access toolbar paint joins an expanded body. DrawBody receives the combined outer frame; this row paints only its internal separator. Minimized standalone rows are false.</summary>
     public bool IsQuickAccessToolbarJoined { get; init; }
     internal bool IsBodyScrollButton { get; init; }
+    internal bool IsBackstageNavigationState { get; init; }
     internal bool IsMenuHeading { get; init; }
     internal Layout.RibbonApplicationMenuPart ApplicationMenuPart { get; init; }
     internal int? ApplicationMenuDividerX { get; init; }

@@ -228,7 +228,8 @@ internal sealed partial class RibbonLayoutEngine
         var client = ribbon.ClientRectangle;
         var tabs = ribbon.GetPresentedTabs().Where(t => t.Visible || ReferenceEquals(t, ribbon.DesignPreviewTab)).ToArray();
         var chrome = new RibbonChromeMetrics(ribbon.Theme, ribbon.Density);
-        var widths = tabs.Select(t => Math.Max(S(chrome.TabMinimum), TextRenderer.MeasureText(t.DisplayText, ribbon.Font).Width + S(2 * chrome.TabPadding))).ToArray();
+        var headerMetrics = RibbonPresentationResolver.Header(ribbon.Theme).ResolveMetrics(ribbon.Theme, ribbon.Density);
+        var widths = tabs.Select(t => Math.Max(S(headerMetrics.TabMinimum), TextRenderer.MeasureText(t.DisplayText, ribbon.Font).Width + S(2 * headerMetrics.TabPadding))).ToArray();
         var action = ribbon.HeaderAction;
         var metrics = RibbonDensityMetrics.For(ribbon.Density);
         int actionWidth = action?.Element is { } command ? TextRenderer.MeasureText(command.Text, ribbon.Font).Width + S(metrics.Touch ? 44 : 36) : S(metrics.SmallWidth);
@@ -239,8 +240,8 @@ internal sealed partial class RibbonLayoutEngine
             int keepQuickAccess = ribbon.ShowQuickAccess && placement == RibbonQuickAccessPosition.TabRow ? S(metrics.QuickAccessButton + 2 * chrome.QuickAccessPadding) : 0;
             int available = Math.Max(0, client.Width - utilityWidth - S(24) - keepQuickAccess);
             int left = Math.Min(S(ribbon.LayoutTheme.BodyMargin.Left), available);
-            int width = Math.Min(Math.Max(S(50), TextRenderer.MeasureText(ribbon.FileMenu.Text, ribbon.Font, Size.Empty,
-                TextFormatFlags.SingleLine | TextFormatFlags.NoPadding).Width + S(2 * chrome.TabPadding)), Math.Max(0, available - left));
+            int width = Math.Min(Math.Max(S(headerMetrics.FileMinimum), TextRenderer.MeasureText(ribbon.FileMenu.Text, ribbon.Font, Size.Empty,
+                TextFormatFlags.SingleLine | TextFormatFlags.NoPadding).Width + S(2 * headerMetrics.TabPadding)), Math.Max(0, available - left));
             if (width > 0)
             {
                 var bounds = new Rectangle(left, tabTop, width, tabHeight);
@@ -264,7 +265,7 @@ internal sealed partial class RibbonLayoutEngine
         bool tabOverflow = tabTotal > tabsWidth;
         // Keep part of a tab reachable when the utility and two full-size
         // scrollers would otherwise consume the complete narrow tab strip.
-        int tabScrollWidth = tabOverflow ? Math.Min(chrome.HeaderScrollWidth(dpi, tabHeight), Math.Max(0, (tabsWidth - S(24)) / 2)) : 0;
+        int tabScrollWidth = tabOverflow ? Math.Min(headerMetrics.HeaderScrollWidth(dpi, tabHeight), Math.Max(0, (tabsWidth - S(24)) / 2)) : 0;
         var tabViewport = new Rectangle(tabsStart + tabScrollWidth, tabTop, Math.Max(0, tabsWidth - 2 * tabScrollWidth), tabHeight);
         result.TabExtent = tabTotal;
         result.TabViewport = tabViewport;
