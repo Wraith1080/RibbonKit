@@ -6,7 +6,7 @@ public partial class DesignerForm
 {
     private void EnableCommandAppearanceDemo()
     {
-        var tab = ThemeEffectsReviewTab;
+        var tab = ThemeEffects3ReviewTab;
         if (tab.Groups.Any(group => group.Id == "review-command-effects")) return;
         var commands = new RibbonGroup { Id = "review-command-preview", Text = "Try commands" };
         var button = new RibbonButtonItem { Text = "Push command", SimplifiedPlacement = RibbonSimplifiedPlacement.Inline };
@@ -35,7 +35,7 @@ public partial class DesignerForm
     {
         StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); ShowInTaskbar = false;
         EnableOffice2019ThemeDemo(); Show(); Application.DoEvents();
-        var original = ribbon.Tabs.Single(tab => tab.Text == "Office 2019 Light"); var previous = ThemeEffects2ReviewTab; var review = ThemeEffectsReviewTab;
+        var original = ribbon.Tabs.Single(tab => tab.Text == "Office 2019 Light"); var previous = ThemeEffects2ReviewTab; var review = ThemeEffects3ReviewTab;
         int count = review.Groups.Count;
         if (original.Groups.Count != 7 || previous.Groups.Count != 5 || !review.Groups.Any(group => group.Id == "review-command-effects") || review.Text != "Theme effects 3") throw new InvalidOperationException("Command review controls changed a full tab.");
         ribbon.SelectedTab = review;

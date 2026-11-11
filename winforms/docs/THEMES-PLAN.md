@@ -354,17 +354,17 @@ Backstage. Stop for this review before another theme.
 | Item | Status |
 | --- | --- |
 | Direction | **2026-11-10: user selected Office 2019 first and light themes before dark.** |
-| Planning | B1–B3, C1–C2, D1a–D1b and audit corrections A00–A04/A06–A09/A11–A16 are implemented. D1c native editor appearance is next proposed; caption/layout/tip candidates remain separate. Later family order is provisional. |
+| Planning | B1–B3, C1–C2, D1a–D1c and audit corrections A00–A04/A06–A09/A11–A16 are implemented. D2 ordinary popup-frame appearance is next proposed; caption/layout/tip candidates remain separate. Later family order is provisional. |
 | Earlier-slice adjustability audit | **2026-11-11: A11–A16 header/shared effects implemented and verified.** Current evidence is in the [header/shared record](#header-and-shared-effect-overrides--2026-11-11). Earlier evidence remains below. The [audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) retains A05/A10/A17 as separate candidates. |
-| Runtime/API/rendering | D1b extracts shared check/radio/QAT-mixed/image paint and adds immutable `CommandContent` settings for indicator borders/marks/dots, filled dropdown glyph dimensions and disabled-raster opacity/desaturation. Actual renderer hooks, disabled state, existing content slots, native editor identity and popup lifecycle remain. D1a `CommandAppearance` and earlier settings are retained. |
-| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; the permanent sample is refreshed. New **Try indicators / images / Command content effects** groups join D1a controls on **Theme effects 3**. Office 2019 and Theme effects 2 are full and retain seven/five groups. Keep using tab 3 until the user says full. Authored Forms/UserControls/resources remain intact; actual VS is separate. |
-| Focused Release verification | D1b: **38 distinct relevant Release cases have passing latest results**, covering authored/default indicators, hide/alpha/clamps, disabled images, public hooks, validation/reset, state/binding, QAT and menu retention. Evidence is in the [D1b record](#command-indicators-and-raster-treatment-d1b--2026-11-12); D1a evidence remains below. No broad suite ran. |
-| Two-family default parity | D1b: **16 PNG/geometry pairs match exactly** across both light palettes, flat/Office renderers and 96/120/144/192 DPI; both null and empty settings match the saved defaults. QAT mixed-state defaults also retain their existing focused regressions. No full native matrix ran. |
-| Composed native package verification | D1b: **4/4 public-package scopes plus tab checks passed** at actual 120 DPI for both light families in Solid/Mica. Each checks Classic/Simplified × Compact/Touch, actual indicator/arrow/image/QAT callbacks, unchanged slots, editor HWND/parent/value/selection, models and the existing theme-close/menu-reopen lifecycle. Offscreen checks do not establish physical-input/visible frame-pacing acceptance. |
+| Runtime/API/rendering | D1c extracts shared native-field and choice-row drawing through the actual renderer. Immutable `EditorAppearance` adds field border/corner/inset/active-ink and choice shape/text-padding settings. Existing editor colors, state fills, native geometry/lifecycle, command settings and public chrome/text/arrow hooks remain authoritative. |
+| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; the permanent sample is refreshed. The user requested a new tab: **Try text fields / Try choices / Editor appearance effects** use **Theme effects 4**. Earlier tabs retain seven/five/four groups. Keep new review controls on tab 4 until directed otherwise; authored Forms/UserControls/resources/project files remain intact. |
+| Focused Release verification | D1c: **53 distinct relevant Release cases passed**: 15 new appearance cases, 36 selected editor/choice/QAT/geometry/selection/validation cases, and two expanded default-comparison cases. Evidence is in the [D1c record](#native-editor-appearance-d1c--2026-11-12). Earlier evidence remains below; no broad suite ran. |
+| Two-family default parity | D1c: **64 PNG/geometry pairs match exactly** across both light palettes, flat/Office renderers, Compact/Touch, two font sizes and 96/120/144/192 DPI; both null and empty settings match saved defaults. No full native matrix ran. |
+| Composed native package verification | D1c: **4/4 public-package scopes plus new-tab checks passed** at actual 120 DPI for both light families in Solid/Mica, each Classic/Simplified x Compact/Touch. Actual field/choice callbacks, unchanged native slots/HWND/parent/bounds, value/selection/read-only/focus state, validation/commit and reset were checked. Eight of 16 samples established editor focus; all retained their baseline focus state. Offscreen checks do not establish physical-input/visible frame-pacing acceptance. |
 | Backstage review correction | **2026-11-11: navbar blank-frame and left rounded-corner black-bar fixes implemented and verified; user review pending.** Current focused/package evidence is in the [page-motion follow-up](BACKSTAGE-PAGE-MOTION.md#navbar-blank-frame-and-rounded-edge-follow-up--2026-11-11). |
 | Deferred title review issue | **2026-11-11: user reported title-text flicker while closing Backstage and allowed deferral to title theming work.** Their `20261111-0345-01.1714250.mp4` confirms the Office 2019 close at approximately **7.03–7.37 s**: the title moves left, its leading text becomes pale/white over the lightening caption, then dark ink returns. Native-rate frames and timestamps are retained under `artifacts/backstage-title-flicker/recording/`. Caption foreground contrast/clip handoff as the navigation fades is the source-inspection lead, not a verified root cause. Preserve opaque, legible title ink throughout closing when addressing it. No title runtime change or new build/test was made for this recording review; the page/corner correction does not address it. |
 | Broader Release suite | Initial implementation: 1,485 passed / 6 failed / 1,491 total (historical evidence above). Correction run **stopped at the user's request**, 1,089 passed / 3 failed / 1,092 executed; incomplete, no full-suite result claimed. Do not restart it. |
-| User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; new review controls use Theme effects 3. D1a–D1b appearance review is pending; the 2026-11-12 continuation authorized D1b without adding an appearance claim. Actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
+| User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; D1a/D1b review controls remain on Theme effects 3. **2026-11-12: user reported D1b looks good and authorized continuation to native editor appearance.** D1a review remains at its earlier recorded scope. The user requested a new review tab for D1c; use Theme effects 4 and preserve tabs 1–3. Actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
 | Actual VS/physical input/mixed-monitor | Not run for themes; report separately. |
 
 Record later evidence and confirmation here once, with date/revision/scope,
@@ -1462,3 +1462,86 @@ D1a–D1b human appearance review is pending. Actual VS, physical input, visible
 frame pacing, IME and mixed-monitor checks remain separate. No full suite/native
 matrix or WPF build/test ran. D1c native editor appearance is next proposed;
 A05/A10/A17 and the known Backstage closing-title ink flicker remain separate.
+
+
+## Native editor appearance D1c — 2026-11-12
+
+The user confirmed D1b looks good, authorized continuation and requested a new
+review tab. Work started clean on `codex/Ribbonkit-Winform` at their D1b commit
+`2a38995`. D1c extracts TextBox/ComboBox field chrome, clipped ComboBox button
+states and choice-row paint into shared `RibbonEditorRenderer`. Both light
+families share these recipes; no new family selector or layout engine was added.
+`RibbonEditorAppearanceMetrics` resolves explicit common defaults from
+`RibbonPresentationResolver.EditorChrome`, preserving the actual neutral/Office
+primitive's radius and all null device-pixel arithmetic.
+
+`Theme.EditorAppearance` accepts immutable `RibbonEditorAppearanceSettings`:
+
+- `CornerRadius`: optional 0..64 logical pixels for fields; null keeps square
+  neutral or the actual Office renderer's existing global radius.
+- `BorderWidth`: optional 0..32 logical pixels, clamped inside the painted field;
+  null keeps one device pixel when ink exists; zero hides it.
+- `Inset`: optional 0..1024 logical pixels, clamped inside the measured field;
+  null keeps one device pixel. This decorates the frame, preserving native input
+  bounds and opaque text/selection surfaces; it does not add input padding.
+- `ActiveBorderColor`: authored alpha/Transparent or Empty for Accent. Existing
+  TextBox focus and ComboBox hot/focus/press/open eligibility remain unchanged;
+  disabled masking and resting `EditorBorder` ink retain their existing rules.
+- `ChoiceCornerRadius` / `ChoiceInset`: independently resettable active-row shape;
+  0..64 / 0..1024 logical pixels. Null retains the renderer radius / one device
+  pixel inset; zero inset fills the unchanged choice target.
+- `ChoiceTextHorizontalPadding`: optional 0..1024 logical pixels on each side,
+  clamped to available width. Null retains six logical pixels. Native input text
+  insets, choice heights, field widths and hit targets retain their existing roles.
+
+Numeric roles validate before Theme/BuiltInTheme mutation. Null members/Empty
+ink reset independently; `EditorAppearance = null` resets only this group.
+`EditorBackground` / `EditorForeground` / `EditorBorder`, Hover/Pressed/Checked,
+D1b filled-arrow settings and existing editor/choice geometry roles are reused.
+The native editor manager, binding/validation, IME, selection and presenter/list
+ownership code is unchanged. Scoped internal chrome context reaches the actual
+protected `DrawChrome`; custom chrome replacement and public field/choice/text/
+arrow overrides retain precedence. Choice settings do not recolor or rearrange
+the native ComboBox selection area. Command/header/Backstage chrome is separate.
+
+Relevant evidence is under `artifacts/editor-appearance-d1c/`:
+
+- `tests/before-defaults.trx` / `tests/after-defaults.trx`: two existing default
+  cases expanded across both light themes; **64 exact PNG/geometry pairs** in
+  `before-defaults/` and `after-defaults/`. Flat/Office rendering, Compact/Touch,
+  9/14-point fonts and 96/120/144/192 DPI all match for null and empty records.
+- `tests/editors-focused.trx`: **51 passed**, including 15 new authored-appearance
+  cases (field outlines/alpha/hide/inset/clamps and four-corner symmetry, state
+  fills/disabled masks, independent choice shape/padding, atomic range validation,
+  immutable reset and actual renderer hooks). The 36 retained cases cover native
+  value/binding/validation/Escape, compact/QAT choices, editor/inline geometry,
+  menu alignment and first-paint selection in Solid/Mica/Acrylic. Together with
+  the two default cases, **53 distinct relevant cases passed**. No passed batch
+  was restarted to verify the later sample-only adjustments.
+- `package-final/result.log`: **4/4 package-only scopes**, Office 2019/2024 Light
+  x None/Mica, actual 120 DPI, each Classic/Simplified x Compact/Touch. Actual
+  TextBox/ComboBox/choice callbacks replay authored borders/radius/inset/padding;
+  native fields retain measured slots, HWND/parent/bounds, text/selection/read-only
+  state, choice owners, validation rejection/commit and member/group reset.
+  Eight of 16 samples had editor focus; all preserve the established focus state.
+  Initial probes assumed all samples were focused, including unfocused/parked
+  presentations. The probe now captures baseline focus and uses public command
+  activation; no runtime focus workaround was introduced. The package fixture
+  uses public Enabled values under enabled owners, not internal EffectiveEnabled.
+- Normal Release runtime/test and normal Debug runtime/designer server/client/
+  permanent sample builds pass without warnings/errors. Final local package:
+  `0.1.0-designer.local20261111T181632630Z`. The in-place refresh retains authored
+  Forms/UserControls/resources/project files. `demo-final/result.log` checks the
+  final review presets/reset/idempotence after the sample-only inset adjustment.
+  New **Theme effects 4** contains **Try text fields**, **Try choices** and
+  **Editor appearance effects**; prior tabs retain seven/five/four groups.
+  `ThemeEffectsReviewTab` now denotes tab 4; `ThemeEffects3ReviewTab` pins D1a/D1b
+  controls to tab 3. Rendered review/native captures were inspected. Native child
+  printing can overlay the library frame, so replay checks establish its paint
+  separately; live appearance of composed native fields remains human review.
+
+D1c appearance review is pending. Actual VS, physical input/IME, visible frame
+pacing and mixed-monitor checks remain separate. No full suite/native matrix or
+WPF build/test ran. D2 ordinary popup-frame appearance is next proposed;
+Application Menu and later surfaces remain separate. A05/A10/A17 and the known
+Backstage closing-title ink flicker retain their deferred scope.

@@ -241,43 +241,24 @@ public partial class RibbonRenderer : IDisposable
     public virtual void DrawTextBox(RibbonPaintContext context, RibbonTextBoxItem item, Rectangle editorBounds)
     {
         DrawEditorLabel(context, item, editorBounds);
-        DrawChrome(context with { Bounds = editorBounds }, new(context.Theme.EditorColor),
-            context.Focused && item.EffectiveEnabled ? context.Theme.Accent : context.Theme.EditorBorderColor);
+        RibbonEditorRenderer.DrawField(this, context, editorBounds, combo: false, open: false, item.EffectiveEnabled);
     }
+
     /// <summary>Paints a ComboBox label, frame and arrow. Text input remains in the native editor.</summary>
     public virtual void DrawComboBox(RibbonPaintContext context, RibbonComboBoxItem item, Rectangle editorBounds)
     {
         DrawEditorLabel(context, item, editorBounds);
         context = EnabledContext(context, item.EffectiveEnabled);
-        bool open = item.IsDropDownOpen && item.EffectiveEnabled;
-        var field = context with { Bounds = editorBounds };
-        var border = context.Hot || context.Focused || context.Pressed || open ? context.Theme.Accent : context.Theme.EditorBorderColor;
-        DrawChrome(field, new(context.Theme.EditorColor), border);
-        var button = RibbonEditorLayout.ComboButton(editorBounds, context.DeviceDpi, context.Density, context.Theme);
-        if (context.Hot || context.Pressed || open)
-        {
-            var saved = context.Graphics.Save();
-            try
-            {
-                context.Graphics.SetClip(button, CombineMode.Intersect);
-                DrawChrome(field, context.Pressed ? context.Theme.Pressed : open ? context.Theme.Checked : context.Theme.Hover, border);
-            }
-            finally { context.Graphics.Restore(saved); }
-        }
-        DrawDropDownArrow(context with { Bounds = button }, item.EffectiveEnabled ? context.Theme.EditorTextColor : context.Theme.DisabledColor);
+        RibbonEditorRenderer.DrawField(this, context, editorBounds, combo: true, item.IsDropDownOpen && item.EffectiveEnabled, item.EffectiveEnabled);
     }
+
     /// <summary>Paints a native choice row. Selected is the native selection or keyboard preview; Hot and Pressed describe pointer interaction separately.</summary>
     public virtual void DrawComboBoxItem(RibbonPaintContext context, RibbonComboBoxItem item, int index, bool selected)
     {
-        using var surface = new SolidBrush(context.Theme.PopupColor);
-        context.Graphics.FillRectangle(surface, context.Bounds);
         context = EnabledContext(context, item.EffectiveEnabled);
-        if (selected || context.Hot || context.Pressed)
-            DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, Color.Transparent);
-        DrawText(context with { Bounds = Rectangle.Inflate(context.Bounds, -RibbonLayoutEngine.Scale(6, context.DeviceDpi), 0) },
-            item.Items[index], item.EffectiveEnabled ? context.Theme.EditorTextColor : context.Theme.DisabledColor,
-            TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.EndEllipsis);
+        RibbonEditorRenderer.DrawChoice(this, context, item.Items[index], selected, item.EffectiveEnabled);
     }
+
     private void DrawEditorLabel(RibbonPaintContext context, RibbonItem item, Rectangle editorBounds)
     {
         if (item is RibbonComboBoxItem { ShowLabel: false }) return;
@@ -648,6 +629,7 @@ public partial class RibbonRenderer : IDisposable
     {
         if (TryPaintBackstageState(context, fill, border, 0)) return;
         if (TryPaintHeaderScroller(context, fill, border, 0)) return;
+        if (TryPaintEditorChrome(context, fill, border, 0)) return;
         if (TryPaintCommandState(context, fill, border, 0)) return;
         PaintRounded(context with { Bounds = Rectangle.Inflate(context.Bounds, -1, -1) }, 0, fill, border, border.A == 0 ? 0 : 1);
     }
@@ -656,6 +638,7 @@ public partial class RibbonRenderer : IDisposable
     {
         if (TryPaintBackstageState(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
         if (TryPaintHeaderScroller(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
+        if (TryPaintEditorChrome(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
         if (TryPaintCommandState(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
         _rounded.Draw(context.Graphics, Rectangle.Inflate(context.Bounds, -1, -1), context.Theme.CornerRadius * context.DeviceDpi / 96, fill, border, border.A == 0 ? 0 : 1);
     }

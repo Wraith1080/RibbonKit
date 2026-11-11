@@ -1607,3 +1607,28 @@ RibbonKit.WinForms.RibbonTheme.CommandContent.get -> RibbonKit.WinForms.RibbonCo
 RibbonKit.WinForms.RibbonTheme.CommandContent.init -> void
 RibbonKit.WinForms.RibbonCommandContentSettings.DisabledImageGrayscaleAmount.get -> double?
 RibbonKit.WinForms.RibbonCommandContentSettings.DisabledImageGrayscaleAmount.init -> void
+RibbonKit.WinForms.RibbonEditorAppearanceSettings
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.RibbonEditorAppearanceSettings() -> void
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.<Clone>$() -> RibbonKit.WinForms.RibbonEditorAppearanceSettings!
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.CornerRadius.get -> int?
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.CornerRadius.init -> void
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.BorderWidth.get -> int?
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.BorderWidth.init -> void
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.Inset.get -> int?
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.Inset.init -> void
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.ActiveBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.ActiveBorderColor.init -> void
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.ChoiceCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.ChoiceCornerRadius.init -> void
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.ChoiceInset.get -> int?
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.ChoiceInset.init -> void
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.ChoiceTextHorizontalPadding.get -> int?
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.ChoiceTextHorizontalPadding.init -> void
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.Equals(RibbonKit.WinForms.RibbonEditorAppearanceSettings? other) -> bool
+override RibbonKit.WinForms.RibbonEditorAppearanceSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonEditorAppearanceSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonEditorAppearanceSettings.ToString() -> string!
+static RibbonKit.WinForms.RibbonEditorAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonEditorAppearanceSettings? left, RibbonKit.WinForms.RibbonEditorAppearanceSettings? right) -> bool
+static RibbonKit.WinForms.RibbonEditorAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonEditorAppearanceSettings? left, RibbonKit.WinForms.RibbonEditorAppearanceSettings? right) -> bool
+RibbonKit.WinForms.RibbonTheme.EditorAppearance.get -> RibbonKit.WinForms.RibbonEditorAppearanceSettings?
+RibbonKit.WinForms.RibbonTheme.EditorAppearance.init -> void

@@ -6,7 +6,7 @@ public partial class DesignerForm
 {
     private void EnableCommandContentDemo()
     {
-        var tab = ThemeEffectsReviewTab;
+        var tab = ThemeEffects3ReviewTab;
         if (tab.Groups.Any(group => group.Id == "review-content-effects")) return;
         var preview = new RibbonGroup { Id = "review-content-preview", Text = "Try indicators / images" };
         preview.Items.AddRange(new RibbonCheckBoxItem { Text = "Checked mark", Checked = true },
@@ -41,7 +41,7 @@ public partial class DesignerForm
     {
         StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); ShowInTaskbar = false;
         EnableOffice2019ThemeDemo(); Show(); Application.DoEvents();
-        var review = ThemeEffectsReviewTab; int count = review.Groups.Count;
+        var review = ThemeEffects3ReviewTab; int count = review.Groups.Count;
         if (ribbon.Tabs.Single(tab => tab.Text == "Office 2019 Light").Groups.Count != 7 || ThemeEffects2ReviewTab.Groups.Count != 5 || review.Text != "Theme effects 3") throw new InvalidOperationException("Content review controls changed a full tab.");
         ribbon.SelectedTab = review;
         var effects = review.Groups.Single(group => group.Id == "review-content-effects");

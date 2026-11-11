@@ -4,11 +4,13 @@ namespace RibbonKitDesignerConsumer;
 
 public partial class DesignerForm
 {
-    // The user closed tabs 1/2 to new controls. Continue on tab 3 until told full.
+    // Keep earlier controls in place; the user requested a fresh tab for D1c.
     private RibbonTab? _themeEffects2ReviewTab;
+    private RibbonTab? _themeEffects3ReviewTab;
     private RibbonTab? _themeEffectsReviewTab;
     private RibbonTab ThemeEffects2ReviewTab => _themeEffects2ReviewTab ??= AddReviewTab("review-theme-effects-2", "Theme effects 2");
-    private RibbonTab ThemeEffectsReviewTab => _themeEffectsReviewTab ??= AddReviewTab("review-theme-effects-3", "Theme effects 3");
+    private RibbonTab ThemeEffects3ReviewTab => _themeEffects3ReviewTab ??= AddReviewTab("review-theme-effects-3", "Theme effects 3");
+    private RibbonTab ThemeEffectsReviewTab => _themeEffectsReviewTab ??= AddReviewTab("review-theme-effects-4", "Theme effects 4");
     private RibbonTab AddReviewTab(string id, string text)
     {
         var tab = new RibbonTab { Id = id, Text = text };

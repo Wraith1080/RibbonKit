@@ -20,6 +20,7 @@ internal readonly record struct RibbonEditorMetrics(RibbonDensity Density, Ribbo
 
     internal static void Validate(RibbonTheme theme)
     {
+        RibbonEditorAppearanceSettings.Validate(theme.EditorAppearance);
         if (theme.EditorLabelGap is < 0 or > 1024 || theme.EditorTextInset is < 0 or > 1024 ||
             theme.ComboBoxButtonWidth is < 1 or > 1024 || theme.ComboBoxMinimumChoiceHeight is < 1 or > 1024 ||
             theme.ComboBoxChoiceVerticalPadding is < 0 or > 1024 || theme.EditorMinimumHeight is < 1 or > 1024 ||

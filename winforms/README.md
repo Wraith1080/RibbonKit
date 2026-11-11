@@ -2693,6 +2693,35 @@ The optional demo adds **Try indicators / images** and **Command content effects
 to **Theme effects 3**. Theme changes keep the existing menu-close lifecycle;
 the owned command/menu models and native editor state are retained.
 
+`Theme.EditorAppearance` accepts immutable `RibbonEditorAppearanceSettings`
+for native TextBox/ComboBox frame and choice-row decoration:
+
+| Member | Default and behavior |
+| --- | --- |
+| `CornerRadius`, `BorderWidth`, `Inset` | Square neutral or existing Office corners, one-device-pixel border/inset. Authored logical ranges are 0..64 / 0..32 / 0..1024; widths/insets clamp inside the field. Zero width hides the outline. Native input bounds and opaque text/selection surfaces remain unchanged; frame inset is separate from `EditorTextInset`. |
+| `ActiveBorderColor` | Empty follows Accent; authored alpha/Transparent is retained. Existing TextBox focus and ComboBox hot/focus/press/open rules remain; `EditorBorder` supplies resting ink. |
+| `ChoiceCornerRadius`, `ChoiceInset` | Independent active-row shape, 0..64 / 0..1024 logical pixels. Null retains actual renderer corners / one device pixel inset. Targets and row heights are unchanged. |
+| `ChoiceTextHorizontalPadding` | Six logical pixels on each side. Authored 0..1024 clamps to available width; native input text keeps its existing inset. |
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    EditorAppearance = new RibbonEditorAppearanceSettings
+    {
+        CornerRadius = 8, BorderWidth = 2, ActiveBorderColor = Color.DarkOrange,
+        ChoiceCornerRadius = 6, ChoiceInset = 2, ChoiceTextHorizontalPadding = 12
+    }
+};
+```
+
+Null members/Empty ink reset independently; `EditorAppearance = null` resets
+only this group. Ranges validate before Theme/BuiltInTheme mutation. Existing
+editor colors, state fills, glyph settings and field/choice sizing remain in use.
+The actual field/choice/chrome/text/arrow hooks retain precedence. Native controls,
+validation, caret, selection, IME and popup ownership keep their existing paths.
+The optional demo adds **Try text fields**, **Try choices** and **Editor appearance
+effects** to the new **Theme effects 4** tab; earlier review tabs remain in place.
+
 Derive from `RibbonRenderer` for a flat/custom presentation, or from
 `RibbonOffice2024Renderer` to retain Office styling while overriding selected
 drawing. Earlier preview subclasses that called base painting to obtain Office

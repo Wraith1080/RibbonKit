@@ -238,6 +238,8 @@ public sealed record RibbonTheme
     public Color EditorForeground { get; init; } = Color.Empty;
     /// <summary>Gets the idle native editor frame color. Empty uses Border; active fields retain Accent.</summary>
     public Color EditorBorder { get; init; } = Color.Empty;
+    /// <summary>Gets optional immutable native-field border/corner/inset and choice-row decoration overrides. Null retains existing renderer recipes, shared geometry and native editor state.</summary>
+    public RibbonEditorAppearanceSettings? EditorAppearance { get; init; }
     /// <summary>Gets the optional native editor label-to-field gap in 96-DPI logical pixels, from 0 to 1024. Null uses 6. Hidden ComboBox labels reserve no gap.</summary>
     public int? EditorLabelGap { get; init; }
     /// <summary>Gets the optional horizontal native field text inset in 96-DPI logical pixels, from 0 to 1024. Null uses 4. Text is clipped to available field space; authored field widths and heights are retained.</summary>
@@ -511,6 +513,7 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     internal bool IsBackstageNavigationState { get; init; }
     internal bool IsHeaderScrollButton { get; init; }
     internal bool IsCommandState { get; init; }
+    internal RibbonEditorChromeKind EditorChrome { get; init; }
     internal bool IsMenuHeading { get; init; }
     internal Layout.RibbonApplicationMenuPart ApplicationMenuPart { get; init; }
     internal int? ApplicationMenuDividerX { get; init; }

@@ -18,8 +18,10 @@ public sealed class EditorGeometryTests
         foreach (int dpi in new[] { 96, 120, 144, 192 })
         foreach (int points in new[] { 9, 14 })
         foreach (var density in Enum.GetValues<RibbonDensity>())
+        foreach (bool classic in new[] { false, true })
+        foreach (bool empty in new[] { false, true })
         {
-            using var ribbon = new RibbonControl { Density = density };
+            using var ribbon = new RibbonControl { Density = density, Theme = (classic ? RibbonThemes.Office2019Light : RibbonThemes.Office2024Light) with { EditorAppearance = empty ? new() : null } };
             var tab = new RibbonTab(); var group = new RibbonGroup(); var menu = new RibbonDropDownItem();
             var input = new RibbonTextBoxItem { Text = "Name", Value = "Document", InputWidth = 120 };
             var combo = new RibbonComboBoxItem { Text = "Font family", InputWidth = 120 };
@@ -54,7 +56,7 @@ public sealed class EditorGeometryTests
                 painter.DrawComboBoxItem(new(graphics, new(S(4), y, S(650), choiceHeight), ribbon.Theme, font, dpi) { Density = density }, combo, i, i == 0);
                 y += choiceHeight;
             }
-            string name = $"editors-{office}-{density}-{points}-{dpi}";
+            string name = $"editors-{classic}-{office}-{density}-{points}-{dpi}";
             if (Environment.GetEnvironmentVariable("RIBBONKIT_EDITOR_GEOMETRY_CAPTURE") is { Length: > 0 } capture)
             {
                 Directory.CreateDirectory(capture); pixels.Save(Path.Combine(capture, name + ".png"));

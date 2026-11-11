@@ -1,23 +1,23 @@
-# Continue native WinForms themes after D1b indicators/raster treatment
+# Continue native WinForms themes after D1c editor appearance
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-12**. B1–B3, C1–C2, D1a–D1b and adjustability backfills
+Updated **2026-11-12**. B1–B3, C1–C2, D1a–D1c and adjustability backfills
 A00–A04/A06–A09/A11–A16 are implemented. Current evidence and exact user review
 scope live in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
-The latest implementation is [D1b](THEMES-PLAN.md#command-indicators-and-raster-treatment-d1b--2026-11-12).
-D1a–D1b appearance review remains pending; continuation alone does not add a
-visual acceptance claim. The user committed D1a at `2581bb8` before D1b.
+The latest implementation is [D1c](THEMES-PLAN.md#native-editor-appearance-d1c--2026-11-12).
+D1c appearance review remains pending; use the ledger for earlier review scope.
+The user committed D1b at `2a38995` before D1c.
 
 ## Next bounded implementation
 
 Start with `git status --short` and inspect live branch/HEAD; preserve later user
-commits and edits. Follow the current user request. For a continuation, D1c
-**native editor appearance** is next proposed: inspect the text/combo field
-frames, shared editor metrics, actual renderer hooks and native-control styling;
-choose a bounded extraction using existing roles before adding immutable public
-settings. Keep current defaults. Read the matching source map and rules in
+commits and edits. Follow the current user request. For a continuation, D2
+**ordinary popup-frame appearance** is next proposed: inspect existing popup
+frame/shadow/clip/measurement roles and actual renderer hooks; choose a bounded
+extraction using existing settings before adding immutable public settings.
+Application Menu recipes and other later surfaces remain separate. Keep current defaults. Read the matching source map and rules in
 [THEME-ARCHITECTURE-PLAN](THEME-ARCHITECTURE-PLAN.md). Planning-only requests do not
 need builds, tests or package refresh.
 
@@ -30,11 +30,12 @@ A new family selector needs an actual structural difference, not a palette name,
 header style or radius. Native editor HWND, parent, value, selection, focus,
 validation, IME and popup ownership remain with their existing shared owners.
 
-**Review tabs:** Office 2019 and Theme effects 2 are full. Add new review groups
-on **Theme effects 3** through `ThemeEffectsReviewTab` until the user says full.
-`ThemeEffects2ReviewTab` keeps earlier controls on tab 2. D1b adds **Try indicators /
-images** and **Command content effects**; tab 3 currently has four groups. Do not
-infer fullness from reduction or move old groups between tabs.
+**Review tabs:** the user requested a fresh tab for D1c. Put new controls on
+**Theme effects 4** through `ThemeEffectsReviewTab` until directed otherwise.
+`ThemeEffects2ReviewTab` / `ThemeEffects3ReviewTab` pin existing controls to their
+original tabs. Earlier tabs retain seven/five/four groups; tab 4 has **Try text
+fields**, **Try choices** and **Editor appearance effects**. Do not move old
+groups or infer fullness from reduction.
 
 ## Preserve delivered contracts
 
@@ -57,6 +58,13 @@ infer fullness from reduction or move old groups between tabs.
   Explicit opacity/grayscale settings cover independently disabled QAT references
   as well as disabled sources; enabled/vector images retain their owners. Actual
   public indicator/arrow and protected image hooks remain authoritative.
+- D1c retains `EditorAppearance`, shared field/choice drawing and resolved
+  chrome defaults. Existing editor colors, state fills, glyph/geometry roles and
+  actual field/choice/chrome/text/arrow hooks remain authoritative. Field and
+  choice corners/insets reset independently; native opaque input bounds, native
+  selected-value paint, editor manager, binding/validation and ownership remain
+  unchanged. Frame decoration does not add native input padding. Default paint
+  has 64 exact image/geometry pairs; do not repeat that passed batch for no change.
 - Existing Theme assignment closes ordinary menus through `ModelChanged`;
   retained models reopen normally. Do not change lifecycle to satisfy a probe.
 - A05 caption tint, A10 preferred page minimum, A17 tip placement and the reported
