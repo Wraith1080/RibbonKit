@@ -220,8 +220,18 @@ internal sealed class RibbonBackstageSurface : ContainerControl
                 }
             }
             PerformLayout();
-            if (animatePage && _ribbon.Backstage.SelectedPage is { } selected && _slots.TryGetValue(selected, out var arriving))
-                _pageMotion = RibbonBackstagePageMotion.Prepare(_ribbon, arriving, _pageContent);
+            if (animatePage && _shownPage is { } oldPage && _slots.TryGetValue(oldPage, out var departing) &&
+                _ribbon.Backstage.SelectedPage is { } selected && _slots.TryGetValue(selected, out var arriving))
+                _pageMotion = RibbonBackstagePageMotion.Prepare(_ribbon, arriving, _pageContent, departing);
+            if (changedPage && _ribbon.IsBackstageOpen && _ribbon.Backstage.SelectedPage is { } next && _slots.TryGetValue(next, out var nextSlot))
+            {
+                // Paint the arriving native subtree behind the outgoing page
+                // before exposing it. A cold layered page otherwise reveals an
+                // empty viewport while its child HWNDs realize their drawings.
+                nextSlot.Visible = true;
+                RibbonDrawingHold.UpdatePending(nextSlot.Handle);
+                nextSlot.BringToFront();
+            }
             foreach (var pair in _slots) pair.Value.Visible = ReferenceEquals(pair.Key, _ribbon.Backstage.SelectedPage);
             bool movedFocus = hadFocus && (!ContainsFocus || hadPageFocus && !ReferenceEquals(_shownPage, _ribbon.Backstage.SelectedPage));
             _shownPage = _ribbon.Backstage.SelectedPage;
@@ -501,9 +511,18 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         }
         private Region VisibleClientRegion()
         {
-            if (Parent is not { } viewport) return new Region(Rectangle.Empty);
-            var region = viewport.Region?.Clone() ?? new Region(viewport.ClientRectangle);
-            region.Translate(-Left, -Top); region.Intersect(ClientRectangle);
+            if (Parent is null) return new Region(Rectangle.Empty);
+            var region = new Region(ClientRectangle);
+            int x = -Left, y = -Top;
+            // The content viewport is rectangular; the page frame above it
+            // owns the rounded clip. Include both, in slot coordinates, so a
+            // slide repaints pixels newly exposed along that curved edge too.
+            for (Control? ancestor = Parent; ancestor is not null; ancestor = ancestor.Parent)
+            {
+                using var clip = ancestor.Region?.Clone() ?? new Region(ancestor.ClientRectangle);
+                clip.Translate(x, y); region.Intersect(clip);
+                x -= ancestor.Left; y -= ancestor.Top;
+            }
             return region;
         }
         protected override void WndProc(ref Message message)

@@ -9,12 +9,16 @@ motion profiles. Layout consumes measured inputs; existing engines execute
 resolved motion policy and retain their clocks/lifecycle. Current evidence and
 user review are recorded once in
 [THEMES-PLAN](THEMES-PLAN.md#backstage-caption-and-motion-policy-b3--2026-11-11).
+The subsequent navbar blank-frame/rounded-edge correction and the user's deferred
+closing-title issue are tracked in its
+[current review ledger](THEMES-PLAN.md#current-status-and-review-ledger).
 
 ## Establish scope from the user's current request
 
-- Start with `git status --short` and inspect live branch/HEAD. B3 began with a
-  clean tree on `codex/Ribbonkit-Winform` at `bf7b202` (`B2  Rewrite Done`);
-  B3 changes remain uncommitted. Preserve later user edits and committed fixes.
+- Start with `git status --short` and inspect live branch/HEAD. The Backstage
+  review follow-up began clean on `codex/Ribbonkit-Winform` at `bd9b4a9`
+  (`B3 Rewrite`); the follow-up changes remain uncommitted. Preserve later user
+  edits and committed fixes.
 - Read [THEME-ARCHITECTURE-PLAN](THEME-ARCHITECTURE-PLAN.md), especially C1 and
   the ownership/compatibility rules. **C1 header presentation** is next. Keep
   Backstage B1–B3 intact; body/connected-frame work belongs to C2 and further

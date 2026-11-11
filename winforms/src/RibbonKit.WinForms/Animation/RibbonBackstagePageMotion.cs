@@ -33,7 +33,7 @@ internal sealed class RibbonBackstagePageMotion : IDisposable
         Duration = _policy.PageDuration;
         _timer.Tick += Tick;
     }
-    internal static RibbonBackstagePageMotion? Prepare(RibbonControl ribbon, RibbonBackstageSurface.PageSlot target, Control viewport)
+    internal static RibbonBackstagePageMotion? Prepare(RibbonControl ribbon, RibbonBackstageSurface.PageSlot target, Control viewport, RibbonBackstageSurface.PageSlot outgoing)
     {
         if (!ribbon.IsBackstageOpen || ribbon.AnimationLevel == RibbonAnimationLevel.None || !ribbon.CanAnimatePopupOpening || !ribbon.Motion.SystemEnabled ||
             !viewport.Visible || target.IsDisposed || target.Width < 1 || target.Height < 1 ||
@@ -42,6 +42,14 @@ internal sealed class RibbonBackstagePageMotion : IDisposable
         var motion = new RibbonBackstagePageMotion(ribbon, target, viewport, form);
         try
         {
+            // The initial page has not participated in page motion yet. Retain
+            // its native drawing too, so exposing a cold layered arrival cannot
+            // replace the outgoing pixels with the empty viewport background.
+            if (!outgoing.HasApplicationOpacity)
+            {
+                outgoing.AcquirePageOpacity(255);
+                RibbonDrawingHold.UpdatePending(outgoing.Handle);
+            }
             // A stable native drawing is also useful for opaque sliding: move
             // its redirected pixels instead of repainting rich text each step.
             target.AcquirePageOpacity(motion.Style == RibbonTabContentAnimation.Fade ? (byte)1 : (byte)255);

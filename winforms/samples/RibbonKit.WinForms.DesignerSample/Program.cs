@@ -1,3 +1,5 @@
+using RibbonKit.WinForms;
+
 namespace RibbonKitDesignerConsumer;
 
 internal static class Program
@@ -251,6 +253,12 @@ internal static class Program
             return;
         }
         using var form = new DesignerForm();
+        if (args.Length is 2 or 3 && args[0] == "--verify-backstage-navbar-paint")
+        {
+            try { form.VerifyBackstageNavbarPaint(args[1], args.Length == 3 ? Enum.Parse<RibbonBuiltInTheme>(args[2]) : RibbonBuiltInTheme.Office2019Light); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
         if (args.Length == 2 && args[0] == "--verify-office2019-review-demo")
         {
             try { form.VerifyOffice2019ReviewDemo(args[1]); }

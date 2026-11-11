@@ -1,6 +1,8 @@
 # Native Backstage page content motion
 
-Status, **2026-11-01: implemented; Solid-mode exposed-area correction accepted**.
+Status, **2026-11-11: page-handoff and rounded-edge follow-up implemented;
+user review pending**. The earlier Solid-mode exposed-area correction was
+accepted on 2026-11-01.
 
 The user's subsequent TextBox/RichTextBox flicker report is addressed by the
 bounded repaint correction below. The user reported "looks good" after the
@@ -20,7 +22,8 @@ Backstage opening/closing motion and caption/QAT behavior remain unchanged.
 - Fade brings the incoming native page body from near-zero to full opacity;
   SlideDown brings it down from 8/12 logical pixels above its final location for
   Subtle/Expressive, without a fade. Both use the existing tab-content cubic
-  easing and 130/182 ms timing. The outgoing page is hidden immediately.
+  easing and 130/182 ms timing. The outgoing page is hidden after the incoming
+  native drawing is ready, before the page-motion timer starts.
 - Navigation, page frame and caption stay fixed during page changes. Selection
   commits once, with existing validation and focus routing. Opening/closing still
   moves/fades the entire Backstage surface using its accepted clock and travel.
@@ -186,3 +189,57 @@ Material child-paint probes did not establish equivalent visible correctness und
 nested native redirection; existing material state/editor regression checks pass,
 but visible Mica/Acrylic review remains pending. Human smoothness/flicker acceptance,
 IME and mixed-monitor DPI checks also remain pending.
+
+## Navbar blank-frame and rounded-edge follow-up — 2026-11-11
+
+The user's recording showed two consecutive blank content frames during the
+first Info-to-Print switch (approximately 67 ms at 30 fps); the navigation stayed
+painted. A visible public-package reproduction using the permanent Designer
+Sample's authored controls and normal animated opening captured one blank frame
+before correction. The initial page had not acquired a page-motion drawing layer,
+and the outgoing page was hidden before the arriving native subtree was painted.
+
+Motion preparation now retains the outgoing page's native drawing as well as the
+incoming page's drawing. Synchronization shows and paints the arrival behind the
+outgoing page, then brings it forward and hides the outgoing page. Native layer
+creation stays inside the existing motion eligibility/error handling. Immediate
+selection also paints the replacement before hiding the old page. Existing
+timing, easing, validation, native editor buffering and hidden-slot layer release
+are retained; runtime presentation uses no page screenshots or added delay.
+
+The user also reported a black bar around the content pane's left rounded corner.
+The visible reproduction captured black pixels in **19 of 45 sampled frames**,
+including after the slide completed. Four existing exposed-strip cases failed on
+the unchanged baseline. The page slot checked only its direct rectangular content
+viewport, missing the rounded page-frame ancestor. Its visible-region calculation
+now intersects ancestor clips in slot coordinates, so progress/completion/early
+settling repaint the actual newly exposed curve without erasing the page body.
+
+Evidence is under `artifacts/backstage-navbar-flicker/`:
+
+- **39 focused Release cases pass** in `tests/page-and-corner-final.trx`: four new
+  first-switch handoff cases for both light families with Expressive/None, the
+  four existing rounded exposed-strip cases, native editor repaint/state, page
+  motion/interruption/ownership, selection validation and opening interruption.
+  The earlier failing handoff and rounded-edge baseline results are retained.
+- Normal Debug runtime/designer server/client/sample builds pass with zero
+  warnings/errors. The permanent package-only Designer Sample is refreshed to
+  `0.1.0-designer.local20261111T033530237Z`; authored Forms/UserControls/resources
+  were preserved.
+- Six fresh visible Solid-mode sample launches at actual **120 DPI**, three per
+  light family, pass **36 Info/Print switches and 299 sampled compositor frames**
+  with **zero blank page frames and zero black-corner frames**. Results, frame
+  counts and representative PNGs are in `corrected-Office2019Light-{1,2,3}/` and
+  `corrected-Office2024Light-{1,2,3}/`. The corrected settled Print corner was also
+  inspected against `corner-before/switch-0-Print-04.png`. Native editor handle,
+  parents, text and selection remain intact. Captures that lost foreground
+  ownership fail explicitly and are excluded from passing evidence.
+
+The new `--verify-backstage-navbar-paint <output> [Office2019Light|Office2024Light]`
+sample diagnostic uses public package APIs and a separate screen-capture thread
+to observe synchronous native handoffs. It does not force page refreshes. Its
+black-pixel check covers the authored sample's blank top-left margin, while its
+blank-page check requires authored content ink throughout opaque SlideDown.
+These are sampled visible checks, not continuous frame-pacing or human acceptance.
+Visible material modes, other physical DPI/monitors, IME and actual VS remain
+separate. No full suite, full native matrix or WPF checks ran.
