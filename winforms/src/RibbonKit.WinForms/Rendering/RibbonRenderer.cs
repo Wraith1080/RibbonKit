@@ -32,13 +32,12 @@ public partial class RibbonRenderer : IDisposable
     }
     /// <summary>Paints the ribbon body panel. Shadows may extend into its surrounding margins; item clipping is handled separately.</summary>
     public virtual void DrawBody(RibbonPaintContext context)
+        => RibbonBodyRenderer.DrawBody(this, context, new RibbonBodyFrameMetrics(context.Theme, context.DeviceDpi, RibbonPresentationResolver.NeutralBody));
+    /// <summary>Paints a measured Classic/Simplified group-divider decoration. Bounds contain the resolved paint width and vertical clearance; command slots and reduction are unchanged. Empty BodyAppearance.GroupSeparatorColor follows Border.</summary>
+    public virtual void DrawGroupSeparator(RibbonPaintContext context)
     {
-        if (context.Theme.BodyBackground is not null || !context.Theme.BodyBorder.IsEmpty)
-        {
-            PaintRounded(context, 0, context.Theme.BodyFill, context.Theme.BodyBorder.IsEmpty ? Color.Transparent : context.Theme.BodyBorder, context.Theme.BodyBorder.IsEmpty ? 0 : 1);
-            return;
-        }
-        using var brush = new SolidBrush(context.Theme.Surface);
+        var appearance = context.Theme.BodyAppearance;
+        using var brush = new SolidBrush(appearance is null || appearance.GroupSeparatorColor.IsEmpty ? context.Theme.Border : appearance.GroupSeparatorColor);
         context.Graphics.FillRectangle(brush, context.Bounds);
     }
     /// <summary>Paints a measured horizontal tab-strip or command-body scroll button.</summary>

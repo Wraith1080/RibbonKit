@@ -78,6 +78,7 @@ public partial class DesignerForm
         tab.Groups.AddRange(themes, caption, surfaces, settings, headers, backstageMotion, backstageAppearance); ribbon.Tabs.Add(tab); ribbon.SelectedTab = tab;
         ribbon.BuiltInTheme = RibbonBuiltInTheme.Office2019Light;
         EnableSharedThemeEffectsDemo();
+        EnableBodyPresentationDemo();
         statusLabel.Text = "Office 2019 Light: compare neutral/blue headers, flat body, inner padding and square shadowed popups.";
 
         void Add(RibbonGroup group, string text, Action action)

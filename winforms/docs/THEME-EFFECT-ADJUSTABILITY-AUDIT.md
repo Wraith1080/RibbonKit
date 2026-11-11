@@ -9,8 +9,10 @@ The uncommitted C1 implementation is preserved. A05, A10 and A17 remain later wo
 Scope is B1 registration, B2 layout inputs/defaults, B3 caption/motion policy and
 C1 header presentation, including the shared paint/motion helpers those paths
 call. The committed baseline is `6162571` on `codex/Ribbonkit-Winform`, plus the
-uncommitted C1 changes. Other controls and future C2/D surfaces were not audited
-as complete theme surfaces. Sample demonstration values, preview placeholder
+uncommitted C1 changes at initial review. Other control surfaces were not audited
+as complete themes. C2 subsequently exposes its frame effects in its own
+[implementation record](THEMES-PLAN.md#body-and-connected-frames-c2--2026-11-11).
+Sample demonstration values, preview placeholder
 decoration and test constants are not runtime theming gaps.
 
 An effect counts as adjustable when an application can set its visual value

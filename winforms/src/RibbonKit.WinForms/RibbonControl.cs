@@ -626,7 +626,11 @@ public partial class RibbonControl : Control, ISupportInitialize
                         Pressed = slot.Group.EffectiveEnabled && ReferenceEquals(slot.Group, _pressed),
                         Focused = slot.Group.EffectiveEnabled && _keyboardFocusCues && Focused && ReferenceEquals(slot.Group, _focused)
                     }, slot.Group, slot.Collapsed);
-                foreach (var divider in _snapshot.SimplifiedDividers) { using var brush = new SolidBrush(Theme.Border); e.Graphics.FillRectangle(brush, divider); }
+                foreach (var divider in _snapshot.SimplifiedDividers)
+                {
+                    var bounds = RibbonBodyFrameMetrics.SeparatorBounds(context.Theme, DeviceDpi, divider);
+                    if (bounds.Width > 0 && bounds.Height > 0) Painter.DrawGroupSeparator(context with { Bounds = bounds });
+                }
             }
         }
         finally { e.Graphics.Restore(state); }

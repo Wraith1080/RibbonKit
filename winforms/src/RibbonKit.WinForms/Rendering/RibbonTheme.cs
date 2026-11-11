@@ -73,6 +73,8 @@ public sealed record RibbonTheme
     public bool ExtendTitleBarColorToHeader { get; init; }
     /// <summary>Gets whether the default Office body draws only its bottom border. Defaults to false; popup borders and shadows are independent.</summary>
     public bool BodyBottomBorderOnly { get; init; }
+    /// <summary>Gets optional immutable body/connected-frame border, divider and join overrides. Null retains existing renderer defaults and geometry contracts.</summary>
+    public RibbonBodyAppearanceSettings? BodyAppearance { get; init; }
     /// <summary>Gets the active collapsed Classic/Simplified group opener border. Empty uses Border; Transparent removes it without changing focus or hit targets.</summary>
     public Color CollapsedGroupBorder { get; init; } = Color.Empty;
     /// <summary>Gets whether active Application Menu split rows draw a divider between their unchanged action regions. Defaults to true.</summary>

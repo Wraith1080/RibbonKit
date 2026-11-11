@@ -17,6 +17,8 @@ internal sealed record RibbonHeaderPresentationRegistration(RibbonHeaderRenderer
 
 internal static class RibbonPresentationResolver
 {
+    internal static readonly RibbonBodyFrameDefaults NeutralBody = new(PaintShadow: false, BorderFallback: false, AllowBottomBorderOnly: false, RadiusDivisor: 0);
+    internal static readonly RibbonBodyFrameDefaults OfficeBody = new(PaintShadow: true, BorderFallback: true, AllowBottomBorderOnly: true, RadiusDivisor: 48);
     // Both styles currently share strip geometry. This is an explicit pairing,
     // independent of palette, radius, caption extension and built-in identity.
     private static readonly RibbonHeaderLayoutDefaults HeaderGeometry = new(TabPadding: 14, TabMinimum: 58, FileMinimum: 50,

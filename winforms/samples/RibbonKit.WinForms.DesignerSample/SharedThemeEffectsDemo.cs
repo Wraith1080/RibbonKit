@@ -15,8 +15,8 @@ public partial class DesignerForm
     private void EnableSharedThemeEffectsDemo()
     {
         var tab = ThemeEffectsReviewTab;
-        if (tab.Groups.Count > 0) return;
-        var header = new RibbonGroup { Text = "Header details" };
+        if (tab.Groups.Any(group => group.Id == "review-header-details")) return;
+        var header = new RibbonGroup { Id = "review-header-details", Text = "Header details" };
         Add(header, "Filled tab borders", () => { ribbon.Theme = ribbon.Theme with { HeaderPresentation = RibbonHeaderPresentation.Filled }; SetHeader((ribbon.Theme.HeaderAppearance ?? new()) with { FilledBorderColor = Color.DarkOrange, FilledBorderWidth = 2 }); });
         Add(header, "Rounded scrollers", () => { ribbon.Theme = ribbon.Theme with { HeaderScrollButtonBackground = new(Color.LightBlue), HeaderScrollButtonBorder = Color.DarkBlue }; SetHeader((ribbon.Theme.HeaderAppearance ?? new()) with { ScrollerCornerRadius = 8, ScrollerBorderWidth = 2 }); });
         Add(header, "Stronger contextual ink", () => SetHeader((ribbon.Theme.HeaderAppearance ?? new()) with { ContextualUnselectedOpacity = 1 }));
@@ -49,7 +49,7 @@ public partial class DesignerForm
         EnableOffice2019ThemeDemo(); Show(); Application.DoEvents();
         var original = ribbon.Tabs.Single(tab => tab.Text == "Office 2019 Light");
         var review = ribbon.Tabs.Single(tab => tab.Text == "Theme effects 2");
-        if (original.Groups.Count != 7 || review.Groups.Count != 4) throw new InvalidOperationException("Review groups were misplaced.");
+        if (original.Groups.Count != 7 || review.Groups.Count < 4) throw new InvalidOperationException("Review groups were misplaced.");
         ribbon.SelectedTab = review;
         void Click(string text) => review.Groups.SelectMany(group => group.Items).Single(item => item.Text == text).PerformClick();
         Click("Filled tab borders"); Click("Larger chevrons"); Click("Thicker focus outline"); Click("Longer slide"); Click("More indicator spring"); Click("Blue File highlight");
@@ -57,7 +57,7 @@ public partial class DesignerForm
             throw new InvalidOperationException("Review buttons did not use public settings.");
         Click("Default File highlight"); Click("Default header details"); Click("Default chevrons / focus"); Click("Default tab motion");
         if (ribbon.Theme.HeaderAppearance is not null || ribbon.Theme.Chevrons is not null || ribbon.Theme.FocusInset is not null || ribbon.Theme.TabContentSlideDistance is not null) throw new InvalidOperationException("Review reset did not clear the effects.");
-        EnableSharedThemeEffectsDemo(); if (review.Groups.Count != 4) throw new InvalidOperationException("Review tab duplicated groups.");
+        int groupCount = review.Groups.Count; EnableSharedThemeEffectsDemo(); if (review.Groups.Count != groupCount) throw new InvalidOperationException("Review tab duplicated groups.");
         Close();
     }
 }

@@ -2582,10 +2582,44 @@ cards. Popup chrome, gallery motion, temporary-ribbon dismissal and passive tip
 work-area inset share the renderer's popup clearance. Both null preserve legacy
 scaled-eight rounding; explicit roles use scaled blur plus absolute offset, at
 least one device pixel. Ordinary popup placement still clamps the opaque frame;
-external shadows can be trimmed at a display edge. Borders/insets remain one
-device pixel. Windows shadow policy, native frames, Backstage motion and
+external shadows can be trimmed at a display edge. Null frame-border overrides
+retain one-device-pixel borders/insets. Windows shadow policy, native frames, Backstage motion and
 opaque designer preview retain their existing behavior. See the
 [frame contract, evidence and review gate](docs/GEOMETRY-CONSOLIDATION-PLAN.md#seventeenth-session-frames-and-shadows-2026-11-05).
+
+`Theme.BodyAppearance` accepts an immutable `RibbonBodyAppearanceSettings` group
+for body and connected-frame decoration. Each null member preserves its existing
+default; assigning the group to null resets it independently:
+
+| Member | Default and behavior |
+| --- | --- |
+| `BorderWidth`, `MessageBorderWidth` | One device pixel. Authored widths accept 0..32 logical pixels; zero hides the body or message outer border. Existing body bottom-edge and message side-border choices remain independent. Message contents clip inside the authored outer border; row rules and command geometry keep their existing owners. |
+| `GroupSeparatorWidth`, `GroupSeparatorColor` | One device pixel and Border ink. Width accepts 0..32 logical pixels; zero hides the divider. Empty ink follows Border; alpha/Transparent are supported. Classic group frames and Simplified dividers share the public `DrawGroupSeparator` hook, with unchanged reduction, gaps and hit targets. |
+| `QuickAccessSeparatorWidth`, `QuickAccessSeparatorInset`, `QuickAccessSeparatorColor` | Joined below-ribbon separator uses one device pixel of thickness and body-border ink. Null inset retains zero for bottom-border-only bodies or one device pixel otherwise. Authored width/inset accept 0..32 / 0..1024 logical pixels; row bounds clamp painting. Zero width or Transparent ink hides it. |
+| `JoinBelowRibbonQuickAccess`, `JoinMessageBarToBody` | Null/true uses the active renderer's existing join capability; false requests separation through shared layout. A custom renderer that disables joining remains authoritative. The existing rule that messages cannot join through a separate below-ribbon QAT row is retained. |
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    BodyAppearance = new RibbonBodyAppearanceSettings
+    {
+        BorderWidth = 3, MessageBorderWidth = 3,
+        GroupSeparatorWidth = 3, GroupSeparatorColor = Color.Teal,
+        QuickAccessSeparatorWidth = 2, QuickAccessSeparatorInset = 8,
+        JoinBelowRibbonQuickAccess = false
+    }
+};
+```
+
+Borders/dividers are decoration over the consolidated snapshots. Join overrides
+use existing layout and refresh paths; commands, native editors, borrowed popup
+content and model ownership are retained. Radius, shadow, margins, inner padding,
+palette, header style and popup frames keep their existing independent settings.
+Both light themes compose the same body-frame structure; changing a header or
+Backstage presentation does not choose a body structure. Neutral/Office renderer
+defaults and custom virtual drawing/measurement hooks remain distinct.
+The optional demo appends **Body and connected frames** to **Theme effects 2**,
+including a preview of the below-ribbon QAT/message stack and a group reset.
 
 Derive from `RibbonRenderer` for a flat/custom presentation, or from
 `RibbonOffice2024Renderer` to retain Office styling while overriding selected
@@ -2593,7 +2627,7 @@ drawing. Earlier preview subclasses that called base painting to obtain Office
 styling should now derive from the named Office renderer. Instances assigned to
 `Renderer` remain borrowed and must outlive their ribbon/popups.
 
-The shared hooks are `DrawSurface`, `DrawBody`, `DrawPopupFrame`, `DrawPopupShadow`, `DrawScrollButton`, `DrawMinimizeButton`, `DrawText`,
+The shared hooks are `DrawSurface`, `DrawBody`, `DrawGroupSeparator`, `DrawPopupFrame`, `DrawPopupShadow`, `DrawScrollButton`, `DrawMinimizeButton`, `DrawText`,
 `DrawQuickAccessToolbar`, `DrawQuickAccessItem`, `DrawQuickAccessSplitItem`, `DrawQuickAccessOverflow`, `DrawOverflowScrollButton`,
 `DrawDropDownArrow`, `DrawSubmenuArrow`, `DrawMenuSeparator`, `DrawTextBox`, `DrawComboBox`, `DrawComboBoxItem`, `DrawScreenTip`, and protected
 `DrawItemImage`/`DrawChrome`, in addition to

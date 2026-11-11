@@ -8,7 +8,7 @@ public partial class RibbonControl
     /// <summary>Gets the stable owned repeatable message bar. Messages affect ribbon height; the application owns their content and action decisions.</summary>
     [Category("Data"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     public RibbonMessageBar MessageBar { get; }
-    internal bool JoinMessageBar => Painter.JoinMessageBarToBody && (QuickAccessPosition != RibbonQuickAccessPosition.BelowRibbon || !HasQuickAccess || JoinBelowRibbonQuickAccess);
+    internal bool JoinMessageBar => RibbonBodyFrameMetrics.JoinMessages(Theme, Painter) && (QuickAccessPosition != RibbonQuickAccessPosition.BelowRibbon || !HasQuickAccess || JoinBelowRibbonQuickAccess);
     internal int MessageWidth => Math.Max(0, ClientSize.Width - (JoinMessageBar ? RibbonLayoutEngine.Scale(LayoutTheme.BodyMargin.Left, DeviceDpi) + RibbonLayoutEngine.Scale(LayoutTheme.BodyMargin.Right, DeviceDpi) : 0));
     internal int MessageHeight => RibbonMessageLayout.Measure(this, MessageWidth, DeviceDpi).Height;
     private bool MessageTopConnected => JoinMessageBar && (!_snapshot.BodyBounds.IsEmpty || JoinBelowRibbonQuickAccess && !_snapshot.QuickAccessBounds.IsEmpty);

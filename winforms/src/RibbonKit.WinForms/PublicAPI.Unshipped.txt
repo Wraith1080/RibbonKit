@@ -1517,3 +1517,33 @@ RibbonKit.WinForms.RibbonTheme.FocusInset.get -> int?
 RibbonKit.WinForms.RibbonTheme.FocusInset.init -> void
 RibbonKit.WinForms.RibbonTheme.FocusStrokeWidth.get -> int?
 RibbonKit.WinForms.RibbonTheme.FocusStrokeWidth.init -> void
+RibbonKit.WinForms.RibbonBodyAppearanceSettings
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.RibbonBodyAppearanceSettings() -> void
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.<Clone>$() -> RibbonKit.WinForms.RibbonBodyAppearanceSettings!
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.BorderWidth.get -> int?
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.BorderWidth.init -> void
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.MessageBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.MessageBorderWidth.init -> void
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.GroupSeparatorWidth.get -> int?
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.GroupSeparatorWidth.init -> void
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.QuickAccessSeparatorWidth.get -> int?
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.QuickAccessSeparatorWidth.init -> void
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.QuickAccessSeparatorInset.get -> int?
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.QuickAccessSeparatorInset.init -> void
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.GroupSeparatorColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.GroupSeparatorColor.init -> void
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.QuickAccessSeparatorColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.QuickAccessSeparatorColor.init -> void
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.JoinBelowRibbonQuickAccess.get -> bool?
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.JoinBelowRibbonQuickAccess.init -> void
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.JoinMessageBarToBody.get -> bool?
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.JoinMessageBarToBody.init -> void
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.Equals(RibbonKit.WinForms.RibbonBodyAppearanceSettings? other) -> bool
+override RibbonKit.WinForms.RibbonBodyAppearanceSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonBodyAppearanceSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonBodyAppearanceSettings.ToString() -> string!
+static RibbonKit.WinForms.RibbonBodyAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonBodyAppearanceSettings? left, RibbonKit.WinForms.RibbonBodyAppearanceSettings? right) -> bool
+static RibbonKit.WinForms.RibbonBodyAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonBodyAppearanceSettings? left, RibbonKit.WinForms.RibbonBodyAppearanceSettings? right) -> bool
+RibbonKit.WinForms.RibbonTheme.BodyAppearance.get -> RibbonKit.WinForms.RibbonBodyAppearanceSettings?
+RibbonKit.WinForms.RibbonTheme.BodyAppearance.init -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawGroupSeparator(RibbonKit.WinForms.RibbonPaintContext context) -> void

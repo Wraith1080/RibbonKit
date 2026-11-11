@@ -12,11 +12,13 @@ public partial class RibbonRenderer
     public virtual void DrawMessageBar(RibbonPaintContext context) => PaintMessageFrame(context, 0);
     internal void PaintMessageFrame(RibbonPaintContext context, int radius)
     {
-        if (context.Theme.MessageSideBordersVisible) { PaintRounded(context, radius, context.Theme.MessageBackground, context.Theme.MessageBorder); return; }
+        int stroke = RibbonBodyFrameMetrics.MessageBorderWidth(context);
+        if (context.Theme.MessageSideBordersVisible) { PaintRounded(context, radius, context.Theme.MessageBackground, context.Theme.MessageBorder, stroke); return; }
         PaintRounded(context, radius, context.Theme.MessageBackground, Color.Transparent, 0);
         using var border = new SolidBrush(context.Theme.MessageBorder);
-        if (!context.IsTopEdgeConnected) context.Graphics.FillRectangle(border, context.Bounds.Left, context.Bounds.Top, context.Bounds.Width, 1);
-        if (!context.IsBottomEdgeConnected && context.Bounds.Height > 0) context.Graphics.FillRectangle(border, context.Bounds.Left, context.Bounds.Bottom - 1, context.Bounds.Width, 1);
+        stroke = Math.Min(stroke, Math.Max(0, context.Bounds.Height));
+        if (!context.IsTopEdgeConnected && stroke > 0) context.Graphics.FillRectangle(border, context.Bounds.Left, context.Bounds.Top, context.Bounds.Width, stroke);
+        if (!context.IsBottomEdgeConnected && stroke > 0) context.Graphics.FillRectangle(border, context.Bounds.Left, context.Bounds.Bottom - stroke, context.Bounds.Width, stroke);
     }
     /// <summary>Paints a message's library-measured title/body/icon slots and optional row separator. Action and close targets have separate callbacks.</summary>
     public virtual void DrawMessage(RibbonPaintContext context, RibbonMessage message, Rectangle titleBounds, Rectangle textBounds, Rectangle iconBounds, bool first)
@@ -24,8 +26,9 @@ public partial class RibbonRenderer
         var saved = context.Graphics.Save();
         try
         {
-            int inset = context.Theme.MessageSideBordersVisible ? 1 : 0;
-            context.Graphics.SetClip(new Rectangle(context.Bounds.Left + inset, context.Bounds.Top, Math.Max(0, context.Bounds.Width - 2 * inset), Math.Max(0, context.Bounds.Height - 1)), CombineMode.Intersect);
+            int stroke = RibbonBodyFrameMetrics.MessageBorderWidth(context);
+            int inset = context.Theme.MessageSideBordersVisible ? Math.Min(stroke, Math.Max(0, context.Bounds.Width / 2)) : 0;
+            context.Graphics.SetClip(new Rectangle(context.Bounds.Left + inset, context.Bounds.Top, Math.Max(0, context.Bounds.Width - 2 * inset), Math.Max(0, context.Bounds.Height - stroke)), CombineMode.Intersect);
             if (!first)
             {
                 using var border = new SolidBrush(context.Theme.MessageBorder);

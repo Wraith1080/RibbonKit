@@ -354,17 +354,17 @@ Backstage. Stop for this review before another theme.
 | Item | Status |
 | --- | --- |
 | Direction | **2026-11-10: user selected Office 2019 first and light themes before dark.** |
-| Planning | B1–B3, C1 and audit corrections A00–A04/A06–A09/A11–A16 are implemented. C2 body/connected frames is next proposed; caption/layout/tip candidates remain separate and later family order is provisional. |
+| Planning | B1–B3, C1–C2 and audit corrections A00–A04/A06–A09/A11–A16 are implemented. D1 commands/editors is next proposed; caption/layout/tip candidates remain separate and later family order is provisional. |
 | Earlier-slice adjustability audit | **2026-11-11: A11–A16 header/shared effects implemented and verified.** Current evidence is in the [header/shared record](#header-and-shared-effect-overrides--2026-11-11). Earlier evidence remains below. The [audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) retains A05/A10/A17 as separate candidates. |
-| Runtime/API/rendering | `HeaderAppearance` and shared `Chevrons` expose immutable state/scroller/ink/File and glyph overrides; focus inset/width, tab slide distance and indicator spring are independently configurable. Null/Empty defaults, actual renderer hooks, existing clocks/native identity and geometry remain. Earlier Backstage/C1 settings are retained. |
-| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; the permanent sample is refreshed. **Theme effects 2** contains the new groups; the Office 2019 tab retains its original seven groups. Continue using the new tab until the user says it is full. Authored Forms/UserControls/resources remain intact; actual VS is separate. |
-| Focused Release verification | A11–A16: **76 distinct relevant Release cases passed across retained runs**, including authored values/range/reset, header targets, chevrons/focus, File highlight and shared header/body/indicator motion. Earlier slice evidence remains below; no broad suite ran. |
-| Two-family default parity | A11–A16: **48 header PNG/geometry pairs and 32 shared-effect PNGs match exactly**, both light families and four DPI levels, plus flat/Office and ordinary/composited scopes as applicable. Empty effect groups also match null. Earlier comparisons remain below. |
-| Composed native package verification | A11–A16: **4/4 public-package scopes plus demo-tab checks passed** at actual 120 DPI for both families in Solid/Mica. Checks cover native selected/scroller/File callbacks, narrow headers, actual motion, independent reset and retained native editor state. Offscreen timer/print checks do not establish visible frame-pacing or physical-input acceptance; no full native matrix ran. |
+| Runtime/API/rendering | C2 uses explicit neutral/Office frame defaults, resolved metrics and shared body/group-frame/QAT/message helpers without a new family selector. `BodyAppearance` adds independently resettable borders, dividers and joins; actual renderer measurements/painting and native ownership remain authoritative. Earlier settings are retained. |
+| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; the permanent sample is refreshed. **Body and connected frames** is appended to **Theme effects 2**; the Office 2019 tab retains its seven groups. Continue using the new tab until the user says it is full. Authored Forms/UserControls/resources remain intact; actual VS is separate. |
+| Focused Release verification | C2: **49 distinct relevant Release cases passed across retained runs**, including authored frame values/reset, group hooks/reduction, native joins/editor state, radius/shadow footprint, QAT/message seams, message motion, material frames and borrowed group popups. Earlier evidence remains below; no broad suite ran. |
+| Two-family default parity | C2: **80 PNG/geometry pairs match exactly**: 16 four-DPI neutral/Office frame/group sheets plus 64 native Solid/Mica Classic/Simplified Compact/Touch minimized/expanded wide/narrow states. Empty frame records also match null in the paint sheets. Earlier comparisons remain below. |
+| Composed native package verification | C2: **4/4 public-package scopes plus demo-tab checks passed** at actual 120 DPI for both light families in Solid/Mica. Each scope checks eight mode/density/minimized states with joins on/off, native border/divider hooks, reset, message motion and retained editor/QAT sources. Offscreen timer/print checks do not establish visible frame-pacing or physical-input acceptance; no full native matrix ran. |
 | Backstage review correction | **2026-11-11: navbar blank-frame and left rounded-corner black-bar fixes implemented and verified; user review pending.** Current focused/package evidence is in the [page-motion follow-up](BACKSTAGE-PAGE-MOTION.md#navbar-blank-frame-and-rounded-edge-follow-up--2026-11-11). |
 | Deferred title review issue | **2026-11-11: user reported title-text flicker while closing Backstage and allowed deferral to title theming work.** Their `20261111-0345-01.1714250.mp4` confirms the Office 2019 close at approximately **7.03–7.37 s**: the title moves left, its leading text becomes pale/white over the lightening caption, then dark ink returns. Native-rate frames and timestamps are retained under `artifacts/backstage-title-flicker/recording/`. Caption foreground contrast/clip handoff as the navigation fades is the source-inspection lead, not a verified root cause. Preserve opaque, legible title ink throughout closing when addressing it. No title runtime change or new build/test was made for this recording review; the page/corner correction does not address it. |
 | Broader Release suite | Initial implementation: 1,485 passed / 6 failed / 1,491 total (historical evidence above). Correction run **stopped at the user's request**, 1,089 passed / 3 failed / 1,092 executed; incomplete, no full-suite result claimed. Do not restart it. |
-| User appearance review | **2026-11-11: user confirmed everything works in the delivered A06–A09 Backstage appearance group and authorized continuation.** Earlier A00–A04/B1 acceptance is retained at its recorded scope. A11–A16 review is pending; actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
+| User appearance review | **2026-11-11: user confirmed everything works in the delivered A11–A16 header/shared-effects batch and authorized continuation with C2.** Earlier A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. C2 review is pending; actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
 | Actual VS/physical input/mixed-monitor | Not run for themes; report separately. |
 
 Record later evidence and confirmation here once, with date/revision/scope,
@@ -1215,8 +1215,87 @@ Evidence under `artifacts/shared-theme-effects/`:
   group count, public setting buttons, reset and idempotent initialization.
   Future review groups should use that tab until the user declares it full.
 
-New-batch human appearance review is pending. Actual VS, physical input, visible
+Current appearance acceptance is tracked in the ledger. Actual VS, physical input, visible
 frame pacing, IME and mixed-monitor acceptance remain separate. No broad suite,
 native matrix, WPF validation, commit or push ran. C2 is next proposed; A05 caption,
 A10 page-width preference, A17 shared badge placement and the known closing-title
 ink defect retain their separate scope.
+
+## Body and connected frames C2 — 2026-11-11
+
+C2 entered on a clean `codex/Ribbonkit-Winform` at `bee7a08`, after the prior
+slices had been committed outside this continuation. It retains the consolidated
+layout engine and snapshots, reduction, content padding, native editors/presenters,
+popup anchoring and public renderer precedence. Both light definitions compose
+the same body structure; no public body selector or palette/radius inference was
+added. This continuation itself does not commit, stage or push.
+
+`RibbonPresentationResolver` supplies explicit neutral/Office
+`RibbonBodyFrameDefaults`. `RibbonBodyFrameMetrics` resolves value-only radius,
+shadow clearance, border policy and widths; `RibbonBodyRenderer` shares body,
+connected shadow, below-QAT separator, message-frame and Classic group-frame
+drawing. The public Office renderer is a forwarding facade, still calling actual
+virtual body radius/clearance and body/QAT/message/group hooks. Neutral drawing
+keeps its flat defaults and authored-fill/border behavior. Original null DPI
+rounding, 2019's edge-to-edge bottom-border body and joined square edges remain.
+
+`RibbonTheme.BodyAppearance` holds an immutable `RibbonBodyAppearanceSettings`
+record: body/message border widths, group-divider width/ink, joined QAT separator
+width/inset/ink and nullable QAT/message join preferences. Null/Empty resets
+independently, explicit zero hides decoration and colors retain alpha. Validation
+precedes theme/BuiltInTheme mutation. New joins use existing shared measurement
+and invalidation and are gated by actual renderer capabilities and placement
+constraints. Existing body border/radius/shadow/margin/inner-padding, message-side
+border and separator vertical-inset roles remain independent and consumed.
+
+Classic group frames and Simplified dividers use the additive public
+`DrawGroupSeparator` hook on the actual application renderer. Decoration widths
+do not rewrite reduction, target widths, column gaps or popup source anchors.
+Command/caption content arrangement and their remaining visual metrics remain in
+the shared command owners for the later D surfaces; C2 extracts frame decoration,
+not those control recipes. Message content clips respect the authored outer-frame
+stroke; row rules/actions retain their existing owners. XML/API declarations are
+additive in Unshipped; the shipped baseline is unchanged.
+
+Evidence under `artifacts/body-presentation-c2/`:
+
+- Fresh `before/` / `after/` contain **80 exact PNG/geometry pairs**. Sixteen sheets
+  cover both palettes, neutral/Office renderers at 96/120/144/192 DPI with body,
+  standalone/joined QAT/messages and group frames. Sixty-four native comparisons
+  cover both families, Solid/Mica, Classic/Simplified, Compact/Touch, expanded/
+  minimized and 1000/380-wide hosts, including body/frame/viewport/target geometry.
+  Empty override records also match null in the paint sheets.
+- `tests/c2-focused.trx` passed 32/33; the new Simplified editor fixture initially
+  queried an editor before its normal Classic realization. Correcting the fixture
+  to realize once, then switch modes, required no runtime workaround.
+  `joins-and-message-motion.trx` passes **14/14**, including the corrected case,
+  immutable/reset behavior and existing message-motion ownership/join checks.
+  `frame-hooks-and-borrowing.trx` passes **5/5** for actual radius/shadow hooks,
+  QAT seam ownership and borrowed group bodies. `frame-policy-final.trx` passes
+  **10/10** after checking empty/default equivalence, replacing divider drawing
+  through the public hook and moving the unchanged connected-shadow algorithm.
+  Together these establish **49 distinct passing relevant Release cases**,
+  counting repeats once. Existing material-frame, reduction/padding, QAT/message
+  and native editor checks are included. Builds pass with zero warnings/errors.
+- Normal Debug runtime/designer server/client/package/sample refresh passes
+  without warnings/errors, using normal outputs and preserving authored files.
+  Current package is `0.1.0-designer.local20261111T062849153Z`, recorded in the
+  sample's `.local/last-refresh.json`.
+- The public-package `--verify-body-presentation <output>` check passes **4/4
+  native scopes** at actual **120 DPI**, both light families in Solid/Mica with
+  Mica effective. Each scope checks eight mode/density/minimized states with
+  joined/separate geometry, actual body/group-divider/QAT/message callbacks,
+  authored border/divider widths, member/group reset, real message motion and
+  retained editor HWND/parent/text/selection and QAT declaration identity.
+  `package-final/` retains logs/PNGs; timer samples are not compositor frames.
+  Diagnostic assertions are recorded outside native paint callbacks.
+- The consumer also verifies that the new **Body and connected frames** group is
+  appended once to **Theme effects 2**, with preview, public settings and reset.
+  The original Office 2019 tab retains seven groups. Shared review initialization
+  now checks its own group identity so later groups can share the tab safely.
+
+C2 human appearance review is pending. Actual VS, physical input, visible flicker/
+frame pacing, IME and mixed-monitor acceptance remain separate. No broad suite,
+full native matrix, WPF build/test, commit or push ran. D1 commands/editors is
+next proposed; A05 caption, A10 page-width preference, A17 badge placement and the
+known closing-title ink flicker remain separate.
