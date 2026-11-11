@@ -55,15 +55,8 @@ public partial class RibbonRenderer : IDisposable
         RibbonArrowPainter.DrawHorizontal(context.Graphics, context.Bounds, context.DeviceDpi, context.Theme.Foreground, backward, context.Theme.Chevrons);
     }
     /// <summary>Paints an opaque vertical overflow-menu scroll band in device-pixel bounds, including its direction and endpoint availability.</summary>
-    public virtual void DrawOverflowScrollButton(RibbonPaintContext context, bool upward, bool enabled)
-    {
-        using (var background = new SolidBrush(Color.FromArgb(255, context.Theme.PopupColor)))
-            context.Graphics.FillRectangle(background, context.Bounds);
-        if (enabled && (context.Hot || context.Pressed))
-            DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
-        RibbonArrowPainter.DrawVertical(context.Graphics, context.Bounds, context.DeviceDpi,
-            enabled ? context.Theme.Foreground : context.Theme.DisabledColor, upward, context.Theme.Chevrons);
-    }
+    public virtual void DrawOverflowScrollButton(RibbonPaintContext context, bool upward, bool enabled) =>
+        RibbonMenuDecorationRenderer.DrawOverflow(this, context, upward, enabled);
     /// <summary>Paints the measured tab-row minimize/expand button. A minimized ribbon shows a downward chevron.</summary>
     public virtual void DrawMinimizeButton(RibbonPaintContext context, bool minimized)
     {
@@ -215,14 +208,8 @@ public partial class RibbonRenderer : IDisposable
     public virtual void DrawSubmenuArrow(RibbonPaintContext context, Color color) =>
         RibbonArrowPainter.DrawHorizontal(context.Graphics, context.Bounds, context.DeviceDpi, color, false, context.Theme.Chevrons);
     /// <summary>Paints a decorative command-menu separator within its measured row. It has no interaction state.</summary>
-    public virtual void DrawMenuSeparator(RibbonPaintContext context, RibbonMenuSeparatorItem item)
-    {
-        int inset = RibbonLayoutEngine.Scale(context.ApplicationMenuPart == RibbonApplicationMenuPart.None
-            ? RibbonMenuMetrics.For(context.Density, context.Theme).MenuSeparatorHorizontalPadding : 8, context.DeviceDpi);
-        if (context.Bounds.Width <= 2 * inset || context.Bounds.Height <= 0) return;
-        using var brush = new SolidBrush(context.Theme.Border);
-        context.Graphics.FillRectangle(brush, context.Bounds.Left + inset, context.Bounds.Top + (context.Bounds.Height - 1) / 2, context.Bounds.Width - 2 * inset, 1);
-    }
+    public virtual void DrawMenuSeparator(RibbonPaintContext context, RibbonMenuSeparatorItem item) =>
+        RibbonMenuDecorationRenderer.DrawSeparator(context);
     /// <summary>Paints a decorative vertical separator within its measured group slot, including full-group flyouts. It has no interaction state.</summary>
     public virtual void DrawGroupSeparator(RibbonPaintContext context, RibbonMenuSeparatorItem item)
     {
@@ -624,6 +611,7 @@ public partial class RibbonRenderer : IDisposable
     {
         if (TryPaintBackstageState(context, fill, border, 0)) return;
         if (TryPaintHeaderScroller(context, fill, border, 0)) return;
+        if (TryPaintMenuDecoration(context, fill, border, 0)) return;
         if (TryPaintEditorChrome(context, fill, border, 0)) return;
         if (TryPaintCommandState(context, fill, border, 0)) return;
         PaintRounded(context with { Bounds = Rectangle.Inflate(context.Bounds, -1, -1) }, 0, fill, border, border.A == 0 ? 0 : 1);
@@ -633,6 +621,7 @@ public partial class RibbonRenderer : IDisposable
     {
         if (TryPaintBackstageState(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
         if (TryPaintHeaderScroller(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
+        if (TryPaintMenuDecoration(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
         if (TryPaintEditorChrome(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
         if (TryPaintCommandState(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
         _rounded.Draw(context.Graphics, Rectangle.Inflate(context.Bounds, -1, -1), context.Theme.CornerRadius * context.DeviceDpi / 96, fill, border, border.A == 0 ? 0 : 1);

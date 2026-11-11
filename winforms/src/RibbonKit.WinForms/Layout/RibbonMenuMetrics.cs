@@ -45,6 +45,7 @@ internal readonly record struct RibbonMenuMetrics(RibbonDensity Density, RibbonT
 
     internal static void Validate(RibbonTheme theme)
     {
+        RibbonMenuAppearanceSettings.Validate(theme.MenuAppearance);
         if (theme.MenuMinimumRowHeight is < 1 or > 1024 || theme.MenuIconSize is < 1 or > 1024 ||
             theme.MenuLeadingPadding is < 0 or > 1024 || theme.MenuTrailingPadding is < 0 or > 1024 ||
             theme.MenuIconTextGap is < 0 or > 1024 || theme.MenuIconVerticalPadding is < 0 or > 1024 ||

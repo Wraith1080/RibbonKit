@@ -1,25 +1,26 @@
-# Continue native WinForms themes after D2 popup frames
+# Continue native WinForms themes after D3 menu decoration
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-12**. B1–B3, C1–C2, D1a–D1c, D2 and adjustability backfills
+Updated **2026-11-12**. B1–B3, C1–C2, D1a–D1c, D2–D3 and adjustability backfills
 A00–A04/A06–A09/A11–A16 are implemented. Current evidence and exact user review
 scope live in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
-The latest implementation is [D2](THEMES-PLAN.md#ordinary-popup-frame-appearance-d2--2026-11-12).
-D2 appearance review remains pending; use the ledger for earlier review scope.
-The user committed D1c at `41fd2aa` before D2.
+The latest implementation is [D3](THEMES-PLAN.md#ordinary-menu-decoration-d3--2026-11-12).
+D3 appearance review remains pending; use the ledger for earlier review scope.
+The user committed D2 at `2d23145` before D3.
 
 ## Next bounded implementation
 
 Start with `git status --short` and inspect live branch/HEAD; preserve later user
-commits and edits. Follow the current user request. For a continuation, D3
-**ordinary menu decoration** is next proposed: inspect menu headers, separators
-and overflow scroll bands plus their existing paint/geometry roles and actual
-renderer hooks. Choose a bounded extraction using existing settings before adding
-immutable public settings.
-Application Menu interiors and other later surfaces remain separate. Preserve
-current defaults. Read the matching source map and rules in
+commits and edits. Follow the current user request. For a continuation, D4
+**Application Menu interior presentation** is next proposed: inspect the existing
+background/navigation/pane/footer recipes, measured layout, current appearance
+roles, actual renderer hooks and inert designer previews. Select a bounded
+portion before implementation, reuse existing roles, and preserve the reviewed
+File/Backstage/native-content contract. D2 still owns the shared outer frame;
+ordinary menu decoration, galleries, tips and library dialogs retain their owners.
+Preserve current defaults. Read the matching source map and rules in
 [THEME-ARCHITECTURE-PLAN](THEME-ARCHITECTURE-PLAN.md). Planning-only requests do not
 need builds, tests or package refresh.
 
@@ -35,9 +36,11 @@ validation, IME and popup ownership remain with their existing shared owners.
 **Review tabs:** the user requested a fresh tab for D1c. Put new controls on
 **Theme effects 4** through `ThemeEffectsReviewTab` until directed otherwise.
 `ThemeEffects2ReviewTab` / `ThemeEffects3ReviewTab` pin existing controls to their
-original tabs. Earlier tabs retain seven/five/four groups; tab 4 has five groups
-(editor controls plus **Try popup frames** and **Popup frame effects**). Use its
-existing body scrollers when needed. Do not move old groups or infer fullness
+original tabs. Earlier tabs retain seven/five/four groups; tab 4 has seven groups
+(editor/popup controls plus **Try menu decoration** and **Menu decoration effects**).
+The optional overflow preview appends only sample-owned toolbar entries; Restore
+preview toolbar returns the original items/settings. Use the existing body
+scrollers when needed. Do not move old groups or infer fullness
 from reduction; the user has not declared tab 4 full.
 
 ## Preserve delivered contracts
@@ -79,6 +82,15 @@ from reduction; the user has not declared tab 4 full.
   Choice width also consumes D1c horizontal text padding. Shadow falloff is in
   the bounded shared painter cache key; body shadows retain their own default.
   No native activation/stack/ownership or animation-clock rewrite was performed.
+- D3 retains `MenuAppearance` and shared heading/separator/overflow-band drawing.
+  Header shape/weight, centered separator ink/thickness and opaque band backing/
+  active shape reset independently. Existing fills, spacing and Chevrons remain
+  in use. DrawMenuHeader still reaches the actual DrawGalleryHeading override;
+  chrome/text/separator/band hooks keep precedence. Real gallery headings,
+  Application Menu and scoped Backstage separators retain their old recipes.
+  New decoration does not change rows, bands, UIA or native owner state. Band
+  backing stops must stay opaque. The default comparison has 80 exact pairs;
+  reuse it unless the next change actually affects those owners.
 - Existing Theme assignment closes ordinary menus through `ModelChanged`;
   retained models reopen normally. Do not change lifecycle to satisfy a probe.
 - A05 caption tint, A10 preferred page minimum, A17 tip placement and the reported
@@ -96,5 +108,9 @@ select only the next surface's paint/geometry/native-state/ownership regressions
 an unchanged-default comparison and a public-package consumer scope where needed.
 Keep Classic/Simplified × Compact/Touch where affected. Do not restart the full
 suite/native matrix. Log native callback failures outside paint callbacks to
-avoid JIT dialogs. Separate offscreen/automated evidence from actual VS, visible
+avoid JIT dialogs. Package probes use the supported keyboard route for QAT
+overflow, escape prior KeyTip hints before F10/0, and close through library
+keyboard/model routes rather than ToolStrip.Close on its internal window. Ordinary
+popup MSAA GetChildCount may be -1; do not treat it as UIA child enumeration.
+Separate offscreen/automated evidence from actual VS, visible
 frame pacing, physical input/IME and mixed-monitor review.

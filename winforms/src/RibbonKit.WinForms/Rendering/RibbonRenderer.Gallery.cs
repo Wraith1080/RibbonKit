@@ -46,12 +46,11 @@ public partial class RibbonRenderer
     /// <summary>Paints a noninteractive heading above a consecutive group of gallery tiles.</summary>
     public virtual void DrawGalleryHeading(RibbonPaintContext context, string text)
     {
+        if (context.IsMenuHeading) { RibbonMenuDecorationRenderer.DrawHeading(this, context, text, galleryFallback: false); return; }
         context = context with { Hot = false, Pressed = false, Focused = false };
-        if (context.IsMenuHeading && context.Theme.MenuHeadingBackground is { } fill)
-            DrawChrome(context, fill, Color.Transparent);
         using var font = new Font(context.Font, context.Font.Style | FontStyle.Bold);
-        var foreground = context.IsMenuHeading && !context.Theme.MenuHeadingForeground.IsEmpty ? context.Theme.MenuHeadingForeground : context.Theme.SecondaryText;
-        var textBounds = context.IsMenuHeading ? Layout.RibbonMenuLayout.HeaderTextBounds(context.Bounds, context.DeviceDpi, context.Density, context.Theme) : new Layout.RibbonGalleryMetrics(context.Theme, context.Density).HeadingTextBounds(context.Bounds, context.DeviceDpi);
+        var foreground = context.Theme.SecondaryText;
+        var textBounds = new Layout.RibbonGalleryMetrics(context.Theme, context.Density).HeadingTextBounds(context.Bounds, context.DeviceDpi);
         DrawText(context with { Bounds = textBounds, Font = font }, text, foreground,
             TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
     }

@@ -39,11 +39,12 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     /// <inheritdoc />
     public override void DrawGalleryHeading(RibbonPaintContext context, string text)
     {
+        if (context.IsMenuHeading) { RibbonMenuDecorationRenderer.DrawHeading(this, context, text, galleryFallback: true); return; }
         context = context with { Hot = false, Pressed = false, Focused = false };
-        DrawChrome(context, context.IsMenuHeading ? context.Theme.MenuHeadingBackground ?? context.Theme.GalleryHeadingBackground : context.Theme.GalleryHeadingBackground, Color.Transparent);
+        DrawChrome(context, context.Theme.GalleryHeadingBackground, Color.Transparent);
         using var font = new Font(context.Font, context.Font.Style | FontStyle.Bold);
-        var foreground = context.IsMenuHeading && !context.Theme.MenuHeadingForeground.IsEmpty ? context.Theme.MenuHeadingForeground : context.Theme.GalleryHeadingForeground;
-        var textBounds = context.IsMenuHeading ? Layout.RibbonMenuLayout.HeaderTextBounds(context.Bounds, context.DeviceDpi, context.Density, context.Theme) : new Layout.RibbonGalleryMetrics(context.Theme, context.Density).HeadingTextBounds(context.Bounds, context.DeviceDpi);
+        var foreground = context.Theme.GalleryHeadingForeground;
+        var textBounds = new Layout.RibbonGalleryMetrics(context.Theme, context.Density).HeadingTextBounds(context.Bounds, context.DeviceDpi);
         DrawText(context with { Bounds = textBounds, Font = font }, text, foreground,
             TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
     }

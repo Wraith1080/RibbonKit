@@ -2754,6 +2754,41 @@ The optional demo adds **Try popup frames** and **Popup frame effects** on
 **Theme effects 4**. Use the existing body scrollers when a group is outside the
 current width.
 
+`Theme.MenuAppearance` accepts immutable `RibbonMenuAppearanceSettings` for
+ordinary menu headings, horizontal separators and overflow scroll bands:
+
+| Members | Defaults and behavior |
+| --- | --- |
+| `HeaderCornerRadius`, `HeaderInset`, `HeaderBorderWidth`, `HeaderBorderColor` | Actual renderer corners, one-device-pixel inset and borderless ink. Logical ranges 0..64 / 0..1024 / 0..32; authored ink retains alpha. Existing MenuHeadingBackground/Foreground remain independent; shape alone does not invent a neutral fill. |
+| `HeaderBold` | Null/true adds Bold to host styles. False removes Bold and retains other styles. Header bounds remain unchanged. |
+| `SeparatorThickness`, `SeparatorColor` | One device pixel and Border ink. Thickness 0..32 logical pixels clamps to the unchanged row and stays centered; zero/Transparent hides it. Existing row height and horizontal padding remain in use. |
+| `OverflowBackground` | Opaque PopupBackground/Surface. Authored solid/gradient stops must both be opaque to cover scrolled content. |
+| `OverflowCornerRadius`, `OverflowInset`, `OverflowBorderWidth`, `OverflowBorderColor` | Actual renderer active corners, one-device-pixel inset and transparent outline. Same logical ranges as headings. Hover/Pressed, foreground/disabled ink and Chevrons retain their existing roles; disabled/idle bands do not synthesize active chrome. |
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    MenuAppearance = new RibbonMenuAppearanceSettings
+    {
+        HeaderCornerRadius = 8, HeaderBorderWidth = 2,
+        HeaderBorderColor = Color.DarkBlue, HeaderBold = false,
+        SeparatorThickness = 3, SeparatorColor = Color.DarkMagenta,
+        OverflowBackground = new RibbonFill(Color.LightYellow, Color.LightSkyBlue)
+    }
+};
+```
+
+Null members/Empty ink reset independently; `MenuAppearance = null` resets this
+group. Ranges and opaque-band requirements validate before Theme/BuiltInTheme
+mutation. Ordinary menu settings preserve row/header/band targets, native state,
+keyboard/automation and scrolling behavior. Actual menu/gallery-heading/chrome/
+text/separator/band overrides retain precedence. Gallery headings, Application
+Menu and Backstage decoration retain their separate recipes.
+The optional **Menu decoration effects** group is on **Theme effects 4**. **Try
+scrolling overflow** temporarily adds sample-owned toolbar commands; **Restore
+preview toolbar** restores the original items and settings. Use the existing body
+scrollers to reach these groups when needed.
+
 Derive from `RibbonRenderer` for a flat/custom presentation, or from
 `RibbonOffice2024Renderer` to retain Office styling while overriding selected
 drawing. Earlier preview subclasses that called base painting to obtain Office

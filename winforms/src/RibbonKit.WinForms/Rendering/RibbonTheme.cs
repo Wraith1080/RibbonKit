@@ -258,6 +258,8 @@ public sealed record RibbonTheme
     public RibbonFill? MenuHeadingBackground { get; init; }
     /// <summary>Gets command-menu heading text color. Empty preserves the renderer's gallery-heading treatment.</summary>
     public Color MenuHeadingForeground { get; init; } = Color.Empty;
+    /// <summary>Gets optional immutable ordinary-menu heading, separator and overflow-band decoration. Null retains current paint, geometry and native ownership; Application Menu and Backstage recipes remain separate.</summary>
+    public RibbonMenuAppearanceSettings? MenuAppearance { get; init; }
     /// <summary>Gets the optional ordinary command-menu minimum row height in 96-DPI logical pixels, from 1 to 1024. Null uses Compact 28 or Touch 44. Font/icon minima still apply; Touch retains at least 44. Includes nested menus, Quick Access overflow and Simplified More Commands; excludes Application Menu-specific and illustrated rows and ComboBox choice lists.</summary>
     public int? MenuMinimumRowHeight { get; init; }
     /// <summary>Gets the optional ordinary command-menu icon slot side in 96-DPI logical pixels, from 1 to 1024. Null uses Compact 24 or Touch 32. Check/radio glyphs retain their density size, capped to the slot.</summary>
@@ -517,6 +519,8 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     internal bool IsCommandState { get; init; }
     internal RibbonEditorChromeKind EditorChrome { get; init; }
     internal bool IsMenuHeading { get; init; }
+    internal bool IsBackstageMenuSeparator { get; init; }
+    internal RibbonMenuDecorationKind MenuDecoration { get; init; }
     internal Layout.RibbonApplicationMenuPart ApplicationMenuPart { get; init; }
     internal int? ApplicationMenuDividerX { get; init; }
     internal bool ApplicationMenuDefaultPane { get; init; }

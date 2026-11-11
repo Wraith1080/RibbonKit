@@ -58,7 +58,7 @@ public partial class RibbonRenderer
         }
         finally { context.Graphics.CompositingMode = mode; }
         if (item is RibbonMenuSeparatorItem separator)
-        { DrawMenuSeparator(context with { Hot = false, Pressed = false, Focused = false }, separator); return; }
+        { DrawMenuSeparator(context with { Hot = false, Pressed = false, Focused = false, IsBackstageMenuSeparator = true }, separator); return; }
         var color = !enabled ? context.Theme.BackstageDisabledForeground.IsEmpty ? context.Theme.DisabledColor : context.Theme.BackstageDisabledForeground
             : selected ? context.Theme.BackstageSelectedForeground.IsEmpty ? context.Theme.Accent : context.Theme.BackstageSelectedForeground : context.Theme.BackstageNavigationInk;
         if (item is null)

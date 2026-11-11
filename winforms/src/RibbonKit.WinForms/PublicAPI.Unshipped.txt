@@ -1650,3 +1650,38 @@ static RibbonKit.WinForms.RibbonPopupAppearanceSettings.operator ==(RibbonKit.Wi
 RibbonKit.WinForms.RibbonTheme.PopupAppearance.get -> RibbonKit.WinForms.RibbonPopupAppearanceSettings?
 RibbonKit.WinForms.RibbonTheme.PopupAppearance.init -> void
 virtual RibbonKit.WinForms.RibbonRenderer.GetPopupBorderWidth(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int
+RibbonKit.WinForms.RibbonMenuAppearanceSettings
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.RibbonMenuAppearanceSettings() -> void
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.<Clone>$() -> RibbonKit.WinForms.RibbonMenuAppearanceSettings!
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.HeaderCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.HeaderCornerRadius.init -> void
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.HeaderInset.get -> int?
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.HeaderInset.init -> void
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.HeaderBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.HeaderBorderWidth.init -> void
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.HeaderBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.HeaderBorderColor.init -> void
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.HeaderBold.get -> bool?
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.HeaderBold.init -> void
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.SeparatorThickness.get -> int?
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.SeparatorThickness.init -> void
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.SeparatorColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.SeparatorColor.init -> void
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.OverflowBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.OverflowBackground.init -> void
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.OverflowCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.OverflowCornerRadius.init -> void
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.OverflowInset.get -> int?
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.OverflowInset.init -> void
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.OverflowBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.OverflowBorderWidth.init -> void
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.OverflowBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.OverflowBorderColor.init -> void
+RibbonKit.WinForms.RibbonMenuAppearanceSettings.Equals(RibbonKit.WinForms.RibbonMenuAppearanceSettings? other) -> bool
+override RibbonKit.WinForms.RibbonMenuAppearanceSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonMenuAppearanceSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonMenuAppearanceSettings.ToString() -> string!
+static RibbonKit.WinForms.RibbonMenuAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonMenuAppearanceSettings? left, RibbonKit.WinForms.RibbonMenuAppearanceSettings? right) -> bool
+static RibbonKit.WinForms.RibbonMenuAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonMenuAppearanceSettings? left, RibbonKit.WinForms.RibbonMenuAppearanceSettings? right) -> bool
+RibbonKit.WinForms.RibbonTheme.MenuAppearance.get -> RibbonKit.WinForms.RibbonMenuAppearanceSettings?
+RibbonKit.WinForms.RibbonTheme.MenuAppearance.init -> void

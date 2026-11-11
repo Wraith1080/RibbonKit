@@ -354,17 +354,17 @@ Backstage. Stop for this review before another theme.
 | Item | Status |
 | --- | --- |
 | Direction | **2026-11-10: user selected Office 2019 first and light themes before dark.** |
-| Planning | B1–B3, C1–C2, D1a–D1c, D2 and audit corrections A00–A04/A06–A09/A11–A16 are implemented. D3 ordinary menu decoration is next proposed; caption/layout/tip candidates remain separate. Later family order is provisional. |
+| Planning | B1–B3, C1–C2, D1a–D1c, D2–D3 and audit corrections A00–A04/A06–A09/A11–A16 are implemented. D4 Application Menu interior presentation is next proposed; caption/layout/tip candidates remain separate. Later family order is provisional. |
 | Earlier-slice adjustability audit | **2026-11-11: A11–A16 header/shared effects implemented and verified.** Current evidence is in the [header/shared record](#header-and-shared-effect-overrides--2026-11-11). Earlier evidence remains below. The [audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) retains A05/A10/A17 as separate candidates. |
-| Runtime/API/rendering | D2 extracts shared popup frame/shadow drawing with resolved defaults. Immutable `PopupAppearance` adds border width, horizontal shadow offset and Gaussian falloff. The actual renderer's additive `GetPopupBorderWidth` hook drives frame paint and hosted content clearance; existing radius/colors/shadow roles and native ownership remain authoritative. |
-| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; the permanent sample is refreshed. New **Try popup frames / Popup frame effects** groups join the editor controls on **Theme effects 4**. Earlier tabs retain seven/five/four groups; tab 4 now has five groups. Keep using tab 4 until the user directs otherwise; authored Forms/UserControls/resources/project files remain intact. |
-| Focused Release verification | D2: **34 distinct relevant Release cases passed**, including 15 new popup/default cases and 19 selected frame/creation/choice-focus/gallery-motion/tip cases. Evidence is in the [D2 record](#ordinary-popup-frame-appearance-d2--2026-11-12). Earlier evidence remains below; no broad suite ran. |
-| Two-family default parity | D2: **32 PNG/geometry pairs match exactly** across both light palettes, flat/Office renderers, even/odd bounds and 96/120/144/192 DPI; both null and empty settings match saved defaults. Default shadow clearance, native shell padding and menu/choice placement remain unchanged. No full native matrix ran. |
-| Composed native package verification | D2: **4/4 public-package scopes plus tab checks passed** at actual 120 DPI for both light families in Solid/Mica, each Classic/Simplified x Compact/Touch. Actual frame/shadow callbacks, authored border/content/nested geometry, retained editor HWND/parent/value/selection, borrowed body return and retained choice commit/reset were checked. Offscreen checks do not establish physical-input/visible frame-pacing acceptance. |
+| Runtime/API/rendering | D3 extracts ordinary heading/separator/overflow-band paint into shared helpers with immutable `MenuAppearance` overrides. Actual menu/gallery-heading/chrome/text/separator/band hooks remain authoritative. Existing geometry, state fills, chevrons, native ownership, gallery headings and separate Application Menu/Backstage recipes remain. |
+| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; the permanent sample is refreshed. **Try menu decoration / Menu decoration effects** join the existing controls on **Theme effects 4**. Earlier tabs retain seven/five/four groups; tab 4 has seven. Keep using tab 4 until the user directs otherwise. The optional overflow preview appends only sample-owned toolbar entries and restores the original items/settings. Authored Forms/UserControls/resources/project files remain intact. |
+| Focused Release verification | D3: **76 distinct relevant Release cases passed**, including 23 new menu-appearance cases, 52 existing menu/gallery/overflow/Application Menu cases and one expanded default-comparison case. Evidence is in the [D3 record](#ordinary-menu-decoration-d3--2026-11-12). Earlier evidence remains below; no broad suite ran. |
+| Two-family default parity | D3: **80 PNG/geometry pairs match exactly** across both light palettes, flat/Office renderers, Compact/Touch, 96/120/144/192 DPI and two font sizes, plus actual menu/overflow containers. Both null and empty settings match saved defaults. No full native matrix ran. |
+| Composed native package verification | D3: **4/4 public-package scopes plus tab checks passed** at actual 120 DPI for both light families in Solid/Mica, each Classic/Simplified x Compact/Touch. Actual heading/gallery/chrome/text/separator/band callbacks, unchanged measured/native geometry, retained editor HWND/parent/value/selection, nested menus, overflow Home/End endpoints without actions, reset and preview toolbar restoration were checked. Offscreen checks do not establish physical-input/visible frame-pacing acceptance. |
 | Backstage review correction | **2026-11-11: navbar blank-frame and left rounded-corner black-bar fixes implemented and verified; user review pending.** Current focused/package evidence is in the [page-motion follow-up](BACKSTAGE-PAGE-MOTION.md#navbar-blank-frame-and-rounded-edge-follow-up--2026-11-11). |
 | Deferred title review issue | **2026-11-11: user reported title-text flicker while closing Backstage and allowed deferral to title theming work.** Their `20261111-0345-01.1714250.mp4` confirms the Office 2019 close at approximately **7.03–7.37 s**: the title moves left, its leading text becomes pale/white over the lightening caption, then dark ink returns. Native-rate frames and timestamps are retained under `artifacts/backstage-title-flicker/recording/`. Caption foreground contrast/clip handoff as the navigation fades is the source-inspection lead, not a verified root cause. Preserve opaque, legible title ink throughout closing when addressing it. No title runtime change or new build/test was made for this recording review; the page/corner correction does not address it. |
 | Broader Release suite | Initial implementation: 1,485 passed / 6 failed / 1,491 total (historical evidence above). Correction run **stopped at the user's request**, 1,089 passed / 3 failed / 1,092 executed; incomplete, no full-suite result claimed. Do not restart it. |
-| User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; D1a/D1b review controls remain on Theme effects 3. **2026-11-12: user reported D1b looks good and authorized continuation to native editor appearance.** D1a review remains at its earlier recorded scope. The user requested a new review tab for D1c; use Theme effects 4 and preserve tabs 1–3. Actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
+| User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; D1a/D1b review controls remain on Theme effects 3. **2026-11-12: user reported D1b looks good and authorized continuation to native editor appearance.** D1a review remains at its earlier recorded scope. The user requested a new review tab for D1c; use Theme effects 4 and preserve tabs 1–3. **2026-11-12: user reported D2 works perfectly and authorized continuation to ordinary menu decoration.** Actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
 | Actual VS/physical input/mixed-monitor | Not run for themes; report separately. |
 
 Record later evidence and confirmation here once, with date/revision/scope,
@@ -1632,3 +1632,95 @@ checks remain separate. No full suite/native matrix or WPF build/test ran.
 D3 ordinary menu decoration (headers, separators and scroll bands) is next
 proposed; Application Menu interiors and later surfaces remain separate.
 A05/A10/A17 and the Backstage closing-title ink flicker retain their deferred scope.
+
+
+## Ordinary menu decoration D3 — 2026-11-12
+
+The user confirmed D2 works perfectly and authorized continuation. Work started
+clean on `codex/Ribbonkit-Winform` at their D2 commit `2d23145`. D3 extracts ordinary
+menu headings, horizontal separators and Quick Access/More scroll-band paint into
+`RibbonMenuDecorationRenderer`, with value-only `RibbonMenuAppearanceMetrics`
+and explicit common primitive defaults. The actual neutral/Office renderer still
+supplies its primitive radius and original heading palette fallbacks. Both light
+themes share these structures; no family selector or layout engine was added.
+
+`Theme.MenuAppearance` accepts immutable `RibbonMenuAppearanceSettings`:
+
+- `HeaderCornerRadius` / `HeaderInset` / `HeaderBorderWidth` / `HeaderBorderColor`:
+  independently authored heading shape and outline; ranges 0..64 / 0..1024 /
+  0..32 logical pixels. Null keeps actual renderer corners and one-device-pixel
+  inset/outline when ink exists. Empty border ink keeps the transparent outline;
+  authored alpha is supported. Shape alone does not invent a neutral fill.
+  Existing `MenuHeadingBackground` and `MenuHeadingForeground` remain in use.
+- `HeaderBold`: null/true keeps host styles plus Bold; false removes Bold while
+  preserving the other host styles. Existing header/text bounds remain unchanged.
+- `SeparatorThickness` / `SeparatorColor`: optional centered line 0..32 logical
+  pixels, clamped to its existing row; null retains one device pixel. Empty ink
+  follows Border, zero/Transparent hides paint. Existing separator row height and
+  horizontal padding retain their own roles.
+- `OverflowBackground`: optional opaque solid/gradient band backing. Null retains
+  opaque PopupBackground/Surface. Both stops must stay opaque so scrolling rows
+  cannot show through; invalid alpha is rejected before theme mutation.
+- `OverflowCornerRadius` / `OverflowInset` / `OverflowBorderWidth` /
+  `OverflowBorderColor`: active-state decoration, with the same radius/inset/width
+  ranges and null/Empty defaults as headings. Existing Hover/Pressed fills,
+  Foreground/DisabledForeground and Chevrons remain authoritative. Disabled/idle
+  bands keep their backing and glyph, without synthesizing active chrome.
+
+All numeric values validate before Theme/BuiltInTheme mutation. Members reset
+independently with null/Empty; `MenuAppearance = null` resets only this group.
+Radii, insets and strokes clamp to available paint bounds. Row/header/band targets,
+clipping, keyboard/automation, scrolling repeat and native ownership are unchanged.
+
+The `DrawMenuHeader` -> actual `DrawGalleryHeading` extension path is preserved.
+Built-in gallery-heading methods delegate only ordinary-menu contexts to the new
+helper; real gallery headings keep their existing font/color/background behavior.
+Scoped chrome still reaches actual protected DrawChrome and public DrawText hooks.
+Application Menu headings use their separate path. A scoped Backstage separator
+marker keeps the shared DrawMenuSeparator override while excluding new ordinary
+menu color/thickness settings. Application Menu and vertical group separators
+retain their previous recipes, including default device-pixel thickness.
+
+Relevant evidence is under `artifacts/menu-decoration-d3/`:
+
+- `tests/before-defaults.trx` / `tests/after-defaults.trx`: **80 exact PNG/geometry
+  pairs**, both light palettes, neutral/Office renderers, Compact/Touch, four
+  DPIs and 9/14-point fonts for paint, plus actual ordinary/overflow containers.
+  The existing capture was expanded with both families and separator ink. Null
+  and empty records match all saved defaults; no approvals/tolerances changed.
+- `tests/menu-focused.trx`: **75 passed**, including 23 new cases for heading
+  shape/ink/bold, separator center/alpha/hide/clamps and surface isolation,
+  opaque gradient backing, endpoint masking, atomic range/alpha validation,
+  immutable reset, actual renderer hooks and retained native rows/editor/UIA.
+  The 52 retained cases comprise 40 Application Menu appearance cases plus 12
+  menu/container/overflow/gallery cases. Together with the default case,
+  **76 distinct relevant cases passed**. Earlier passed slices were not rerun.
+- `package-final3/result.log`: **4/4 package-only scopes**, Office 2019/2024 Light
+  x None/Mica at actual 120 DPI, each Classic/Simplified x Compact/Touch.
+  Actual callbacks replay authored heading weight/outline, separator thickness/
+  ink and band backing/state outline. Measured rows, native control/band geometry,
+  editor HWND/parent/value/selection, nested owner state and Home/End endpoints
+  remain intact; navigation invokes no commands. Member/group reset passes.
+  The probe uses public keyboard/message routes (Escape, F10/0, Home/End), not
+  unsupported MSAA child enumeration or direct ToolStrip.Close on an internally
+  owned popup. Prior KeyTip hints are escaped before starting another session.
+  Library tests retain UIA assertions; package geometry uses actual paint hooks
+  and native bounds. No runtime keyboard/lifecycle workaround was introduced.
+  Callback assertions are collected/logged without JIT dialogs.
+- Normal Release runtime/test and normal Debug runtime/designer server/client/
+  permanent sample builds pass without warnings/errors. Refreshed package:
+  `0.1.0-designer.local20261111T233653771Z`. New **Try menu decoration** and
+  **Menu decoration effects** groups remain on **Theme effects 4** (seven groups);
+  earlier tabs retain seven/five/four groups. Public buttons/reset/idempotence,
+  temporary toolbar entries and exact restoration of original toolbar identities/
+  settings pass. The sample owns only its temporary entries and restores on Form
+  close. Rendered menus/bands/review controls were inspected; keyboard captures
+  include KeyTip hints. Use existing body scrollers for offscreen groups; the
+  user has not declared this tab full. Authored Forms/UserControls/resources/
+  project files remain intact.
+
+D3 human appearance review is pending. Actual VS, physical input/IME, visible frame
+pacing and mixed-monitor checks remain separate. No full suite/native matrix or
+WPF build/test ran. D4 Application Menu interior presentation is next proposed;
+galleries, tips and library dialogs retain later scopes. A05/A10/A17 and the
+Backstage closing-title ink flicker remain separately deferred.

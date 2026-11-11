@@ -1,6 +1,6 @@
 # Native WinForms theme architecture
 
-**B1–B3, C1–C2, D1a–D1c and D2 implemented; latest delivery 2026-11-12.** Backstage uses one registration
+**B1–B3, C1–C2, D1a–D1c and D2–D3 implemented; latest delivery 2026-11-12.** Backstage uses one registration
 for sibling layout/drawing helpers, explicit defaults, measured layout inputs and
 caption/motion profiles. Headers register sibling Filled/Underline drawing with
 explicit geometry defaults and adjustable effects. C2 resolves body/connected
@@ -10,13 +10,15 @@ raster treatment with independently adjustable settings. D1c extracts native
 field/choice paint with immutable appearance overrides, keeping the native editor
 manager unchanged. D2 extracts shared popup frames/shadows with adjustable
 borders, horizontal shadow offset/falloff and actual-renderer content clearance.
-Ordinary menu decoration is next proposed.
+D3 extracts ordinary menu heading/separator/scroll-band decoration with adjustable
+settings and preserved actual renderer hooks. Application Menu interiors are next
+proposed.
 The earlier-slice review found adjustability gaps. A00–A04 fill routing/motion
 and A06–A09 decoration/spacing plus A11–A16 header/shared overrides are implemented;
 track the separate caption/layout/tip candidates in the
 [source audit and correction order](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 Current evidence and user review are recorded in the
-[themes plan](THEMES-PLAN.md#ordinary-popup-frame-appearance-d2--2026-11-12).
+[themes plan](THEMES-PLAN.md#ordinary-menu-decoration-d3--2026-11-12).
 
 The [themes plan](THEMES-PLAN.md) retains appearance requirements and acceptance.
 This document proposes implementation boundaries and a migration sequence; it
@@ -255,7 +257,8 @@ automated evidence or visual acceptance. Implement the following separately.
 | D1b. Command indicators/raster treatment — implemented | Shared check/radio/QAT-mixed and disabled-raster recipes; adjustable borders, marks, dots, filled triangle dimensions and raster opacity/desaturation. Public hooks, native slots, model state and editor identity remain. No new family selector. | 38 focused Release cases, 16 exact default image/geometry pairs and four package scopes plus review-tab checks are recorded in the [D1b record](THEMES-PLAN.md#command-indicators-and-raster-treatment-d1b--2026-11-12). |
 | D1c. Native editor appearance — implemented | Shared field/choice drawing and resolved decoration, adjustable field/choice borders/corners/insets/active ink/text padding. Actual renderer hooks and native editor state/lifecycle remain. | 53 focused Release cases, 64 exact default image/geometry pairs and four package scopes plus new-tab checks are recorded in the [D1c record](THEMES-PLAN.md#native-editor-appearance-d1c--2026-11-12). |
 | D2. Ordinary popup-frame appearance — implemented | Shared frame/shadow metrics/drawing; adjustable border width, horizontal shadow offset and falloff. Actual renderer hooks, native body/choice/tip clearance and ownership remain. | 34 focused Release cases, 32 exact default paint/geometry pairs and four package scopes plus tab checks are recorded in the [D2 record](THEMES-PLAN.md#ordinary-popup-frame-appearance-d2--2026-11-12). |
-| D. Remaining surfaces, one per slice | Ordinary menu decoration and Application Menu; galleries; tips; library dialogs. Reuse helpers when only palette/metrics differ. Risk: public drawing hooks, command geometry, borrowed editors/presenters/icons and popup retention. | Select only the changed surface's geometry/paint/state/ownership checks and one unchanged-family comparison. For native content, include retained handle/value/validation evidence; for designer previews, use inert candidate-theme checks. Choose exact filters at each slice. |
+| D3. Ordinary menu decoration — implemented | Shared heading/separator/scroll-band recipes with independently adjustable shape, weight, ink and opaque backing. Existing menu targets, native state, actual renderer overrides and separate gallery/Application Menu/Backstage paint remain. | 76 focused Release cases, 80 exact default paint/geometry pairs and four package scopes plus review/toolbar-restoration checks are recorded in the [D3 record](THEMES-PLAN.md#ordinary-menu-decoration-d3--2026-11-12). |
+| D. Remaining surfaces, one per slice | Application Menu interiors; galleries; tips; library dialogs. Reuse helpers when only palette/metrics differ. Risk: public drawing hooks, command geometry, borrowed editors/presenters/icons and popup retention. | Select only the changed surface's geometry/paint/state/ownership checks and one unchanged-family comparison. For native content, include retained handle/value/validation evidence; for designer previews, use inert candidate-theme checks. Choose exact filters at each slice. |
 | E. Selected catalog growth | Add one later chosen light definition, reusing surface registrations or adding an actually needed sibling. Risk: selection/Reset/serialization/persistence and unsupported consumer dependencies. | Definition/selection tests, relevant designer/generated-code checks, and a focused independent-consumer visual/state scope. Wait for existing appearance review before another theme. |
 
 For each implementation slice, build affected native projects in their normal
@@ -303,8 +306,8 @@ Completion criteria:
   authored Forms/resources change. Review the diff and record focused results
   and remaining human appearance/input gates in the themes plan.
 
-B2/B3, C1–C2, D1a–D1c and D2 were delivered as separate slices. D3 ordinary
-menu decoration is next proposed;
+B2/B3, C1–C2, D1a–D1c and D2–D3 were delivered as separate slices. D4
+Application Menu interior presentation is next proposed;
 the consolidated geometry remains the foundation.
 
 ## Verification and delivery budget

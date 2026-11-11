@@ -145,24 +145,31 @@ public sealed class MenuContainerGeometryTests
         foreach (var density in Enum.GetValues<RibbonDensity>())
         foreach (bool office in new[] { false, true })
         foreach (int points in new[] { 9, 14 })
+        foreach (bool classic in new[] { false, true })
+        foreach (bool empty in new[] { false, true })
         {
             using var font = new Font("Segoe UI", points * dpi / 96f);
             using RibbonRenderer painter = office ? new RibbonOffice2024Renderer() : new RibbonRenderer();
             int S(int n) => RibbonLayoutEngine.Scale(n, dpi);
             int headerHeight = font.Height + S(density == RibbonDensity.Touch ? 16 : 12), bandHeight = S(density == RibbonDensity.Touch ? 28 : 16);
             using var bitmap = new Bitmap(S(360), headerHeight + 2 * bandHeight + S(36)); using var g = Graphics.FromImage(bitmap);
-            var context = new RibbonPaintContext(g, new(Point.Empty, bitmap.Size), RibbonThemes.Office2024Light, font, dpi) { Density = density };
+            var theme = (classic ? RibbonThemes.Office2019Light : RibbonThemes.Office2024Light) with { MenuAppearance = empty ? new() : null };
+            var context = new RibbonPaintContext(g, new(Point.Empty, bitmap.Size), theme, font, dpi) { Density = density };
             painter.DrawSurface(context, true); painter.DrawPopupFrame(context);
             painter.DrawMenuHeader(context with { Bounds = new(S(4), S(4), S(352), headerHeight) }, "Document options");
             painter.DrawOverflowScrollButton(context with { Bounds = new(S(4), headerHeight + S(8), S(352), bandHeight) }, true, false);
             painter.DrawOverflowScrollButton(context with { Bounds = new(S(4), headerHeight + bandHeight + S(16), S(352), bandHeight), Hot = true }, false, true);
-            CheckCapture($"paint-{office}-{density}-{dpi}-{points}", bitmap, $"header={headerHeight}; band={bandHeight}");
+            using var separator = new RibbonMenuSeparatorItem();
+            painter.DrawMenuSeparator(context with { Bounds = new(S(4), headerHeight + 2 * bandHeight + S(20), S(352), S(9)) }, separator);
+            CheckCapture($"paint-{classic}-{office}-{density}-{dpi}-{points}", bitmap, $"header={headerHeight}; band={bandHeight}");
         }
         foreach (var density in Enum.GetValues<RibbonDensity>())
         foreach (bool office in new[] { false, true })
+        foreach (bool classic in new[] { false, true })
+        foreach (bool empty in new[] { false, true })
         {
             using RibbonRenderer painter = office ? new RibbonOffice2024Renderer() : new RibbonRenderer();
-            using var ribbon = new RibbonControl { Density = density, Renderer = painter, QuickAccessMaxWidth = 28 };
+            using var ribbon = new RibbonControl { Density = density, Renderer = painter, QuickAccessMaxWidth = 28, Theme = (classic ? RibbonThemes.Office2019Light : RibbonThemes.Office2024Light) with { MenuAppearance = empty ? new() : null } };
             var tab = new RibbonTab(); var group = new RibbonGroup(); var menu = new RibbonDropDownItem { DropDownHeader = "Document options" };
             menu.Items.AddRange(new RibbonButtonItem { Text = "Open", MenuDescription = "Keep the document formatting." }, new RibbonTextBoxItem { Text = "Name", Value = "Retained", InputWidth = 50 });
             group.Items.Add(menu); tab.Groups.Add(group); ribbon.Tabs.Add(tab);
@@ -172,7 +179,7 @@ public sealed class MenuContainerGeometryTests
                 using var surface = new RibbonPopupSurface(ribbon, overflow ? ribbon.QuickAccessOverflow : menu, new(520, 300));
                 using var bitmap = new Bitmap(surface.Width, surface.Height); surface.DrawToBitmap(bitmap, surface.ClientRectangle);
                 string bounds = $"{surface.Size};{surface.MenuHeaderBounds};{surface.OverflowUpBounds};{surface.OverflowViewport}\n" + string.Join("\n", surface.Targets.Select(t => t.Bounds));
-                CheckCapture($"container-{office}-{density}-{overflow}", bitmap, bounds);
+                CheckCapture($"container-{classic}-{office}-{density}-{overflow}", bitmap, bounds);
             }
         }
     });
