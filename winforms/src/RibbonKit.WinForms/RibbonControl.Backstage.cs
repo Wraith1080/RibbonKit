@@ -19,7 +19,15 @@ public partial class RibbonControl
     private RibbonBackstageMotion? _backstageMotion;
     private RibbonMotionWindow? _backstageCaption;
     internal RibbonBackstageMotion? BackstageOpeningMotion => _backstageMotion;
-    internal bool HasFullHeightBackstage => HasWindowCaption && Theme.BackstageExtendsIntoTitleBar;
+    internal RibbonBackstageCaptionPolicy BackstageCaptionPolicy
+    {
+        get { var theme = Theme; return RibbonPresentationResolver.Backstage(theme).Caption.Resolve(theme); }
+    }
+    internal RibbonBackstageMotionPolicy BackstageMotionPolicy
+    {
+        get { var theme = Theme; return RibbonPresentationResolver.Backstage(theme).Motion.Resolve(theme, AnimationLevel); }
+    }
+    internal bool HasFullHeightBackstage => HasWindowCaption && BackstageCaptionPolicy.ExtendsIntoTitleBar;
     internal bool HasBackstageCaption => HasFullHeightBackstage && (IsBackstageOpen || WindowHost?.IsCaptionTitleAnimating == true);
     internal Bitmap? CaptureBackstageCaption() => _backstageCaption?.CaptureFrame();
     internal void UpdateBackstageCaption()

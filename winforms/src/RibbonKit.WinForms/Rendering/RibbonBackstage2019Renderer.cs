@@ -15,6 +15,4 @@ internal sealed class RibbonBackstage2019Renderer : RibbonBackstageRenderer
             owner.PaintRounded(context, 0, selected || context.Pressed ? context.Theme.BackstageSelectedFill : context.Theme.BackstageHoverFill, Color.Transparent, 0);
         else PaintNavigationState(owner, context, selected);
     }
-    // Classic's caption is supplied by the actual full-height panes. It never
-    // participates in Modern's independently animated neutral caption tint.
 }

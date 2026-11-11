@@ -14,6 +14,7 @@ internal sealed class RibbonBackstagePageMotion : IDisposable
     private readonly Point _origin;
     private readonly Size _size;
     private readonly int _travel;
+    private readonly RibbonBackstageMotionPolicy _policy;
     private readonly System.Windows.Forms.Timer _timer = new() { Interval = 16 };
     private long _start;
     private bool _disposed, _subscribed;
@@ -27,8 +28,9 @@ internal sealed class RibbonBackstagePageMotion : IDisposable
     {
         _ribbon = ribbon; Target = target; _viewport = viewport; _form = form;
         _origin = target.Location; _size = target.Size; Style = ribbon.TabContentAnimation;
-        _travel = RibbonLayoutEngine.Scale(ribbon.AnimationLevel == RibbonAnimationLevel.Expressive ? 12 : 8, ribbon.DeviceDpi);
-        Duration = ribbon.AnimationLevel == RibbonAnimationLevel.Expressive ? 182 : 130;
+        _policy = ribbon.BackstageMotionPolicy;
+        _travel = RibbonLayoutEngine.Scale(_policy.PageTravel, ribbon.DeviceDpi);
+        Duration = _policy.PageDuration;
         _timer.Tick += Tick;
     }
     internal static RibbonBackstagePageMotion? Prepare(RibbonControl ribbon, RibbonBackstageSurface.PageSlot target, Control viewport)
@@ -64,7 +66,7 @@ internal sealed class RibbonBackstagePageMotion : IDisposable
     internal void SetProgress(double progress)
     {
         if (_disposed) return;
-        double t = Math.Clamp(progress, 0, 1), p = 1 - Math.Pow(1 - t, 3);
+        double p = _policy.PageProgress(progress);
         if (Style == RibbonTabContentAnimation.Fade)
         {
             Opacity = (byte)Math.Clamp((int)Math.Round(255 * p), 1, 255);

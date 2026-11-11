@@ -103,7 +103,7 @@ public partial class RibbonForm : Form
     internal Rectangle CaptionTextBounds(RibbonControl? ribbon)
     {
         var geometry = Caption;
-        if (ribbon is { IsBackstageOpen: true, Theme.BackstageTitleCentered: true })
+        if (ribbon is { IsBackstageOpen: true } && ribbon.BackstageCaptionPolicy.CenterTitle)
         {
             return CenteredCaptionTextBounds();
         }

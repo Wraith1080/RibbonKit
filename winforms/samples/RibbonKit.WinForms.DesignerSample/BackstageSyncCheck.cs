@@ -26,6 +26,7 @@ internal static class BackstageSyncCheck
             ThreadExceptionEventHandler failed = (_, args) => threadFailure ??= args.Exception;
             Application.ThreadException += failed;
             var frames = new List<object>(); int measured = 0, maximumDelta = 0;
+            var policyFrames = new List<object>();
             bool fullHeight = ribbon.Theme.BackstageExtendsIntoTitleBar;
             form.Shown += async (_, _) =>
             {
@@ -104,7 +105,67 @@ internal static class BackstageSyncCheck
                         }
                     }
                     Require(measured >= 4, "Too few visible transition frames were measured.");
-                    results.Add(new { theme = theme.ToString(), fullHeight, dpi = ribbon.DeviceDpi, frames = frames.Count, measured, maximumDelta, passed = true });
+                    var retainedSurface = form.Controls.Cast<Control>().Single(c => c.AccessibleName == "Backstage");
+                    Bitmap CapturePolicy(string phase)
+                    {
+                        if (threadFailure is { } uiError) throw new InvalidOperationException("Native paint failed.", uiError);
+                        GetWindowThreadProcessId(GetForegroundWindow(), out uint foreground);
+                        Require(foreground == Environment.ProcessId, "Policy capture stopped because the fixture lost foreground ownership.");
+                        Require(field.Handle == handle && ReferenceEquals(field.Parent, parent) && field.Text == "Retained native value", "Native page state changed during policy checks.");
+                        form.Refresh(); DwmFlush();
+                        var image = new Bitmap(form.ClientSize.Width, Math.Min(form.ClientSize.Height, Math.Max(128, ribbon.Bottom + 64)));
+                        try
+                        {
+                            using (var graphics = Graphics.FromImage(image)) graphics.CopyFromScreen(form.PointToScreen(Point.Empty), Point.Empty, image.Size);
+                            image.Save(Path.Combine(output, $"{theme}-{phase}.png"));
+                            policyFrames.Add(new { phase, form.ClientSize.Width, form.ClientSize.Height, retainedSurface.Left, retainedSurface.Top, ribbon.IsAnimating, ribbon.IsBackstageOpen });
+                            return image;
+                        }
+                        catch { image.Dispose(); throw; }
+                    }
+                    void CheckPolicyCaption(Bitmap frame, Color authored, bool open)
+                    {
+                        Color navigation = ribbon.Theme.BackstageNavigationUsesAccent ? ribbon.Theme.Accent : ribbon.Theme.BackstageNavigationBackground;
+                        Require(frame.GetPixel(100, 8).ToArgb() == (open && fullHeight ? navigation : authored).ToArgb(), "Navigation-side authored caption policy changed.");
+                        Require(frame.GetPixel(frame.Width / 2, 8).ToArgb() == (open && fullHeight ? ribbon.Theme.Surface : authored).ToArgb(), "Page-side authored caption policy changed.");
+                        if (open) Require(retainedSurface.Left == 0 && (fullHeight ? retainedSurface.Top == 0 : retainedSurface.Top > 0) && retainedSurface.Bottom == form.ClientSize.Height,
+                            "Policy checks changed the settled pane/caption bounds.");
+                    }
+                    async Task FinishMotion()
+                    {
+                        var watch = Stopwatch.StartNew();
+                        while (ribbon.IsAnimating && watch.ElapsedMilliseconds < 800) await Task.Delay(16);
+                        Require(!ribbon.IsAnimating, "Policy transition did not finish within its bounded duration.");
+                    }
+                    foreach (bool formColor in new[] { true, false })
+                    {
+                        ribbon.AnimationLevel = RibbonAnimationLevel.None;
+                        ribbon.Theme = ribbon.Theme with { TitleBarBackground = Color.DarkGreen };
+                        form.TitleBarColor = formColor ? Color.Navy : Color.Empty;
+                        Color authored = formColor ? Color.Navy : Color.DarkGreen;
+                        string source = formColor ? "form" : "theme";
+                        ribbon.IsBackstageOpen = true;
+                        using (var open = CapturePolicy(source + "-caption-open")) CheckPolicyCaption(open, authored, true);
+                        form.ClientSize = formColor ? new(940, 540) : new(1120, 600);
+                        using (var resized = CapturePolicy(source + "-caption-resized")) CheckPolicyCaption(resized, authored, true);
+                        ribbon.IsBackstageOpen = false;
+                        using (var closed = CapturePolicy(source + "-caption-closed")) CheckPolicyCaption(closed, authored, false);
+                    }
+                    ribbon.AnimationLevel = RibbonAnimationLevel.Subtle;
+                    ribbon.IsBackstageOpen = true; await FinishMotion();
+                    int closeEvents = 0; ribbon.Backstage.Closed += (_, _) => closeEvents++;
+                    ribbon.IsBackstageOpen = false; await Task.Delay(16);
+                    Require(ribbon.IsAnimating && ribbon.IsBackstageOpen, "The reversal check did not observe a pending animated close.");
+                    using (var reversing = CapturePolicy("reversal-closing")) { }
+                    Require(ribbon.IsAnimating && ribbon.IsBackstageOpen, "The close completed before the reversal request.");
+                    ribbon.IsBackstageOpen = true; await FinishMotion();
+                    Require(ribbon.IsBackstageOpen && closeEvents == 0, "Reversing the close raised Closed or hid Backstage.");
+                    using (var reversed = CapturePolicy("reversal-open")) CheckPolicyCaption(reversed, Color.DarkGreen, true);
+                    ribbon.IsBackstageOpen = false; await FinishMotion();
+                    Require(!ribbon.IsBackstageOpen && closeEvents == 1, "The final close did not finish exactly once.");
+                    using (var final = CapturePolicy("reversal-closed")) CheckPolicyCaption(final, Color.DarkGreen, false);
+                    results.Add(new { theme = theme.ToString(), fullHeight, dpi = ribbon.DeviceDpi, frames = frames.Count, measured, maximumDelta,
+                        policyFrames = policyFrames.Count, authoredCaptions = true, resize = true, reversal = true, passed = true });
                 }
                 catch (Exception error) { failure = error; }
                 finally { form.Close(); }
@@ -114,11 +175,12 @@ internal static class BackstageSyncCheck
             {
                 Application.ThreadException -= failed;
                 File.WriteAllText(Path.Combine(output, theme + "-frames.json"), JsonSerializer.Serialize(frames, new JsonSerializerOptions { WriteIndented = true }));
+                File.WriteAllText(Path.Combine(output, theme + "-policy-frames.json"), JsonSerializer.Serialize(policyFrames, new JsonSerializerOptions { WriteIndented = true }));
             }
             if (failure is not null) throw new InvalidOperationException(theme + " actual-frame check failed.", failure);
             File.WriteAllText(Path.Combine(output, "results.json"), JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true }));
         }
-        File.WriteAllText(Path.Combine(output, "result.log"), "PASS: two package-only light-theme scopes; Office 2019 panes slide behind the transparent caption and Office 2024 stays below its separate title bar with animated neutral grey tint and close restoration. Actual opening/closing compositor frames retain native page handles/parent/text. See results.json for measured frames and maximum pixel delta.");
+        File.WriteAllText(Path.Combine(output, "result.log"), "PASS: two package-only light-theme scopes; Office 2019 panes slide behind the transparent caption and Office 2024 stays below its separate title bar with animated neutral grey tint and close restoration. Opening/closing frames, authored Form/theme caption precedence, resizing and close reversal retain native page handles/parent/text. See results.json and frame logs for measured scope.");
     }
 
     private static int? Edge(Bitmap image, int y, int expected)

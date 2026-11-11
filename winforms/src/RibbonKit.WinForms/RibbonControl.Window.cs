@@ -43,8 +43,20 @@ public partial class RibbonControl
         }
         return chrome ? _headerChromeTheme! : _headerTheme!;
     }
-    internal Color CaptionBackground(bool composited) => Painter.BackstageStyleRenderer(Theme).CaptionColor(this, composited);
-    internal Rectangle BackstageCaptionTintBounds => Painter.BackstageStyleRenderer(Theme).CaptionTintBounds(this);
+    private RibbonBackstageCaptionFrame BackstageCaptionFrame(bool composited)
+    {
+        var theme = Theme;
+        var policy = RibbonPresentationResolver.Backstage(theme).Caption.Resolve(theme);
+        var host = WindowHost;
+        var motion = BackstageOpeningMotion is { IsRunning: true } running ? running : null;
+        var normal = host?.CaptionColor(theme, composited) ?? (composited ? Color.Transparent : theme.Background);
+        var state = new RibbonBackstageCaptionState(IsBackstageOpen, HasWindowCaption,
+            host is not null && !host.TitleBarColor.IsEmpty || !theme.TitleBarBackground.IsEmpty, HasWindowBackdrop, normal,
+            motion?.VisibleWidth ?? host?.ClientSize.Width ?? Width, WindowCaptionHeight, motion?.Opacity ?? (byte)255, Backstage?.NavigationBackgroundOpacity ?? 1);
+        return policy.Resolve(state);
+    }
+    internal Color CaptionBackground(bool composited) => BackstageCaptionFrame(composited).CaptionColor;
+    internal Rectangle BackstageCaptionTintBounds => BackstageCaptionFrame(false).TintBounds;
     internal Rectangle CaptionOverlayBounds => HasFullHeightBackstage && IsBackstageOpen
         ? new(0, 0, _backstageMotion is { IsRunning: true } motion ? motion.VisibleWidth : WindowHost?.ClientSize.Width ?? Width, WindowCaptionHeight) : Rectangle.Empty;
     internal Rectangle CaptionPageBounds
@@ -62,7 +74,7 @@ public partial class RibbonControl
     internal Rectangle CaptionNavigationBounds => Rectangle.FromLTRB(CaptionOverlayBounds.Left, CaptionOverlayBounds.Top,
         IsBackstageOpen ? CaptionPageBounds.Left : 0, CaptionOverlayBounds.Bottom);
     internal void PaintCaptionBackground(Graphics graphics, Rectangle bounds, bool composited)
-        => Painter.BackstageStyleRenderer(Theme).PaintCaptionBackground(this, graphics, bounds, composited);
+        => BackstageCaptionFrame(composited).Paint(graphics, bounds);
     internal void InvalidateBackstageCaption()
     {
         if (!IsDisposed && HasWindowCaption)

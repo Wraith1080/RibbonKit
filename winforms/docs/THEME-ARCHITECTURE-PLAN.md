@@ -1,10 +1,10 @@
 # Native WinForms theme architecture
 
-**B1 and B2 implemented; latest delivery 2026-11-11.** Backstage uses one
-layout/drawing registration, explicit family defaults and measured layout inputs.
-B3 caption/motion policy and later extractions remain separate proposed slices.
+**B1–B3 implemented; latest delivery 2026-11-11.** Backstage uses one registration
+for sibling layout/drawing helpers, explicit defaults, measured layout inputs and
+caption/motion profiles. C1 header presentation is the next proposed slice.
 Current evidence and user review are recorded in the
-[themes plan](THEMES-PLAN.md#explicit-backstage-layout-inputs-b2--2026-11-11).
+[themes plan](THEMES-PLAN.md#backstage-caption-and-motion-policy-b3--2026-11-11).
 
 The [themes plan](THEMES-PLAN.md) retains appearance requirements and acceptance.
 This document proposes implementation boundaries and a migration sequence; it
@@ -31,16 +31,17 @@ parallel layout engines or repeat the closed geometry campaign.
 
 ## Source assessment and reusable pieces
 
-The pilot already had sibling inheritance. B1 unified composition; B2 made
-measurement/defaults explicit. The remaining caption/motion policy belongs to B3.
+The pilot already had sibling inheritance. B1 unified composition, B2 made
+measurement/defaults explicit, and B3 separated caption/motion policy from the
+renderer and transition engines.
 
 | Current owner | Retain | Remaining coupling |
 | --- | --- | --- |
-| [Backstage layout provider](../src/RibbonKit.WinForms/Layout/RibbonBackstageLayoutProvider.cs) and its 2019/2024 subclasses | One shared width, row, footer, narrow-host and DPI algorithm; sibling classes explicitly supply immutable defaults. | B2 removed live ribbon/model/font/renderer and Form access from `Build`; it consumes numeric inputs. Host bounds remain in the ribbon's window adapter. Caption policy extraction remains B3. |
+| [Backstage layout provider](../src/RibbonKit.WinForms/Layout/RibbonBackstageLayoutProvider.cs) and its 2019/2024 subclasses | One shared width, row, footer, narrow-host and DPI algorithm; sibling classes explicitly supply immutable defaults. | B2 removed live ribbon/model/font/renderer and Form access from `Build`; it consumes numeric inputs. Host bounds remain in the ribbon's window adapter and consume B3's resolved caption coverage. |
 | [Backstage metrics](../src/RibbonKit.WinForms/Layout/RibbonBackstageMetrics.cs) | Validated nullable overrides, density minima and shared text/Auto-width arithmetic, resolved through the selected registration. | B2 metrics contain values rather than a theme reference or family selector. The measurement adapter gathers model/text/frame inputs once; the snapshot also retains the device page padding used by native clipping and previews. |
-| [Backstage renderer base](../src/RibbonKit.WinForms/Rendering/RibbonBackstageRenderer.cs) and its 2019/2024 subclasses | Small sibling drawing strategies, borrowing the active public renderer's primitives. | B1 replaced the second selector with a resolver adapter. The base still contains a navigation-state recipe and reads window/runtime state for caption painting; these are more than a drawing contract. |
+| [Backstage renderer base](../src/RibbonKit.WinForms/Rendering/RibbonBackstageRenderer.cs) and its 2019/2024 subclasses | Small sibling drawing strategies, borrowing the active public renderer's primitives and explicitly using a shared navigation-state helper. | B1 replaced the second selector with a resolver adapter. B3 removed live window/caption methods from both the base and the 2024 renderer; caption profile/frame painting are separate. |
 | [Public Office renderer](../src/RibbonKit.WinForms/Rendering/RibbonOffice2024Renderer.cs) | Public virtual entry points and application subclass behavior. | It is also the default dispatcher for Office 2019. Its historical public name must not make it the base class for new family implementations. |
-| [Window integration](../src/RibbonKit.WinForms/RibbonControl.Window.cs), [title integration](../src/RibbonKit.WinForms/RibbonForm.Title.cs) and [pane motion](../src/RibbonKit.WinForms/Animation/RibbonBackstageMotion.cs) | Real panes, transparent caption foreground, current timing, interruption and ownership. | Coverage/centering read theme flags directly, 2024 tint lives in its renderer, and travel defaults live in motion/window code. There is no single resolved presentation policy. |
+| [Window integration](../src/RibbonKit.WinForms/RibbonControl.Window.cs), [title integration](../src/RibbonKit.WinForms/RibbonForm.Title.cs) and [pane motion](../src/RibbonKit.WinForms/Animation/RibbonBackstageMotion.cs) | Real panes, transparent caption foreground, existing clocks, interruption and native ownership. | B3 resolves caption coverage/centering/tint and pane/title/page visual motion through the registration. Window integration gathers live facts; policies contain no ribbon/Form references. No timer or lifecycle consolidation was performed. |
 
 Both existing entry-state implementations currently have the same recipe. Share
 that recipe through an explicit helper when useful; do not duplicate it merely
@@ -91,8 +92,11 @@ returns a small `RibbonBackstagePresentation` registration containing the layout
 provider and renderer. It resolves the selected layout's immutable defaults into
 value-only metrics. The [measurement adapter](../src/RibbonKit.WinForms/Layout/RibbonBackstageLayoutMeasurement.cs)
 gathers model/text/frame facts; shared layout consumes the resulting inputs.
-Add window/motion policy members when those responsibilities move in B3; no empty
-extension interfaces, reflection discovery or public plugin framework.
+B3 registers a [caption profile](../src/RibbonKit.WinForms/Rendering/RibbonBackstageCaptionPolicy.cs)
+and [motion profile](../src/RibbonKit.WinForms/Rendering/RibbonBackstageMotionPolicy.cs)
+beside each pair. Profiles resolve the existing theme flags, colors, overrides
+and animation level into policies. There are no empty extension interfaces,
+reflection discovery or public plugin framework.
 
 | Backstage selector | Registered layout | Registered drawing |
 | --- | --- | --- |
@@ -148,10 +152,10 @@ points, rather than mismatches to reject.
 | Navigation/page | Existing inset selections, indicator and page frame. | Flat accent rail, full-width state fills, white icon silhouettes and flush page. |
 | Other surfaces | Preserve established defaults. | Square theme-owned elements, circular Back exception, edge-to-edge body with retained inner padding, bordered/shadowed popups. |
 
-At the later policy extraction, represent caption coverage, tint eligibility,
-title alignment and travel as resolved values. Supply open/close state, actual
-pane bounds/alpha, caption geometry, material state and authored color presence
-as inputs. Preserve the current Form-color-then-theme-color precedence. The
+B3 represents caption coverage, tint eligibility, title alignment and travel as
+resolved values. Window integration supplies open/close state, actual pane
+bounds/alpha, caption geometry, material state and authored color presence as
+inputs. It preserves Form-color-then-theme-color precedence. The
 Modern neutral tint applies only when neither is authored and the panes are
 below the caption; it tracks the existing pane reveal/opacity and material rail
 opacity. Classic's full-height panes supply their own backgrounds.
@@ -166,7 +170,9 @@ shows it is necessary.
 Presentation policy supplies travel, opacity curves, easing and timing resolved
 from the existing animation settings; engines execute those choices with the
 shared lifecycle and motion-disable rules. Both families can reuse identical
-policy values. Preserve the current durations and curves during extraction.
+policy values. B3 also moved the existing native-page travel/duration/curve into
+the same profile; `TabContentAnimation` still selects Fade/SlideDown and its
+existing validation, clipping, ownership and cancellation remain unchanged.
 
 ## Adding themes after the migration
 
@@ -205,7 +211,7 @@ automated evidence or visual acceptance. Implement the following separately.
 | --- | --- | --- |
 | B1. Backstage registration — implemented | Register existing sibling pairs once and route current callers through it. Preserve existing algorithms, caption methods and motion. Risk: stale/mixed selection or bypassed application hooks. | Focused cases and the package-only comparison are recorded in the [themes plan](THEMES-PLAN.md#backstage-registration-b1--2026-11-10). The delivery criteria below remain the contract. |
 | B2. Explicit layout inputs/defaults — implemented | Family fallbacks are immutable values; shared layout consumes measured content, host reservation and renderer shadow clearance. Page content padding is retained in the snapshot. Risk: DPI rounding, Auto width, footer fallback or native page inset changes. | Selected width/footer/spacing/frame/preview/ownership checks and exact default paint/geometry comparison are recorded in the [themes plan](THEMES-PLAN.md#explicit-backstage-layout-inputs-b2--2026-11-11). |
-| B3. Caption and motion policy | Move tint/coverage/title/travel decisions behind the registration; window and motion code execute them. Keep native services and transition engines. Risk: the original 2024 caption regression, title fading, pane/caption drift, interruption or foreground leaks. | Relevant `BackstageStyleIsolationTests`, `CaptionTitleMotionTests`, `BackstageSynchronizationTests`, and selected page-motion cancellation/retention cases. Existing package-only Solid live-frame scopes for both families, neutral/authored captions, open/close/reversal and resize. No full material matrix. |
+| B3. Caption and motion policy — implemented | Caption coverage/tint/title and pane/title/page visual motion resolve through registered profiles. Native services, clocks and lifecycle remain shared. Risk: the original 2024 caption regression, title fading, pane/caption drift, interruption or foreground leaks. | Focused caption/title/page/lifecycle regressions and two package-only Solid scopes with neutral/authored captions, open/close/reversal and resize are recorded in the [themes plan](THEMES-PLAN.md#backstage-caption-and-motion-policy-b3--2026-11-11). No full material matrix ran. |
 | C1. Headers | Apply the resolver/sibling pattern to Filled/Underline drawing and header-specific geometry policy; keep the shared strip engine. Risk: scrollers, colored caption extension, File/QAT reservations and text clipping. | Affected `Office2019ThemeTests`, header cases in `Office2019ReviewTests`, `TabHeaderClippingTests` and selected QAT/header geometry checks. Compare both light families at normal/narrow widths and applicable ordinary/material paths. |
 | C2. Body and connected frames | Extract body/group/frame policy without changing reduction or ownership. Risk: inner padding, full-width 2019 body, QAT/message joins, seams and popup anchoring. | Selected `FrameGeometryTests`, body/group geometry and QAT/message join cases, two-family comparison in Classic/Simplified and Compact/Touch where affected. No new geometry audit. |
 | D. Remaining surfaces, one per slice | Commands/editors; ordinary popups and Application Menu; galleries; tips; library dialogs. Reuse helpers when only palette/metrics differ. Risk: public drawing hooks, command geometry, borrowed editors/presenters/icons and popup retention. | Select only the changed surface's geometry/paint/state/ownership checks and one unchanged-family comparison. For native content, include retained handle/value/validation evidence; for designer previews, use inert candidate-theme checks. Choose exact filters at each slice. |
@@ -256,8 +262,8 @@ Completion criteria:
   authored Forms/resources change. Review the diff and record focused results
   and remaining human appearance/input gates in the themes plan.
 
-B2 was delivered as a separate change. B3 caption/motion policy is next;
-header/body extraction remains outside these Backstage slices.
+B2/B3 were delivered as separate changes. C1 header presentation is next;
+body extraction remains a later slice and the consolidated geometry is retained.
 
 ## Verification and delivery budget
 
@@ -305,4 +311,5 @@ and no app, package refresh, build or test ran during that planning-only refresh
 
 The user then authorized B1 and asked whether geometry consolidation remained
 useful. Its retained role is stated above. B1/B2 implementation and current
-review/evidence are in the themes plan; caption/motion extraction is next in B3.
+review/evidence are in the themes plan. B3 subsequently completed caption/motion
+policy extraction; C1 header presentation is the next proposed scope.

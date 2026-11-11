@@ -11,20 +11,6 @@ internal sealed class RibbonBackstage2024Renderer : RibbonBackstageRenderer
             owner.PaintRounded(context, 0, selected || context.Pressed ? context.Theme.BackstageSelectedFill : context.Theme.BackstageHoverFill, Color.Transparent, 0);
         else PaintNavigationState(owner, context, selected);
     }
-    internal override Rectangle CaptionTintBounds(RibbonControl ribbon)
-    {
-        if (!ribbon.IsBackstageOpen || !ribbon.HasWindowCaption || ribbon.HasFullHeightBackstage ||
-            !ribbon.WindowHost!.TitleBarColor.IsEmpty || !ribbon.Theme.TitleBarBackground.IsEmpty) return Rectangle.Empty;
-        int width = ribbon.BackstageOpeningMotion is { IsRunning: true } motion ? motion.VisibleWidth : ribbon.WindowHost.ClientSize.Width;
-        return new(0, 0, width, ribbon.WindowCaptionHeight);
-    }
-    internal override Color CaptionColor(RibbonControl ribbon, bool composited)
-    {
-        if (CaptionTintBounds(ribbon).IsEmpty) return NormalCaptionColor(ribbon, composited);
-        int alpha = ribbon.BackstageOpeningMotion is { IsRunning: true } motion ? motion.Opacity : 255;
-        if (ribbon.HasWindowBackdrop) alpha = (int)Math.Round(alpha * ribbon.Backstage.NavigationBackgroundOpacity);
-        return Color.FromArgb(alpha, ribbon.Theme.BackstageNavigationColor);
-    }
     internal override int GetBackstagePageBorderWidth(RibbonTheme theme, int dpi) => theme.BackstagePageBorderWidth is { } width ? RibbonLayoutEngine.Scale(width, dpi) : 1;
     internal override int GetBackstagePageCornerRadius(RibbonTheme theme, int dpi) => RibbonLayoutEngine.Scale(theme.BackstagePageCornerRadius ?? 2d * theme.CornerRadius, dpi);
     internal override void DrawBackground(RibbonRenderer owner, RibbonPaintContext context, int navigationWidth)

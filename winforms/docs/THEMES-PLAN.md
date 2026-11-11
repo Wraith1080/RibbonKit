@@ -1,10 +1,11 @@
 # Native WinForms themes
 
-**Architecture B2 implemented, 2026-11-11:** Backstage layout now consumes explicit
-measured inputs and immutable family defaults, following B1's shared registration.
-The [theme architecture plan](THEME-ARCHITECTURE-PLAN.md) owns later boundaries
-and migration order; [B2 evidence](#explicit-backstage-layout-inputs-b2--2026-11-11)
-is below. Existing appearance requirements and review scope remain in the ledger.
+**Architecture B3 implemented, 2026-11-11:** Backstage caption and visual motion
+choices now resolve through the same registration as its sibling layout/drawing
+helpers. Existing clocks, lifecycle and measured geometry are preserved. The
+[architecture plan](THEME-ARCHITECTURE-PLAN.md) owns later boundaries and migration
+order; [B3 evidence](#backstage-caption-and-motion-policy-b3--2026-11-11) is below.
+Existing appearance requirements and review scope remain in the ledger.
 
 Status, **2026-11-10: Office 2019 review corrections, the demo Backstage toggle,
 native Showcase theme selector and WPF Classic-style Office 2019 Backstage are
@@ -353,14 +354,14 @@ Backstage. Stop for this review before another theme.
 | Item | Status |
 | --- | --- |
 | Direction | **2026-11-10: user selected Office 2019 first and light themes before dark.** |
-| Planning | B1/B2 are implemented under the user's continuation. [Architecture plan](THEME-ARCHITECTURE-PLAN.md) retains B3 caption/motion policy as the next proposed slice. Later family order remains provisional. |
-| Runtime/API/rendering | B2 is internal-only; shared geometry/rounding policies, public APIs and motion remain intact. Affected Release runtime/tests and normal Debug runtime/designer/client/sample builds passed without warnings/errors. No full solution or broad suite was repeated. |
-| Designer/sample/package consumer | B2 normal Debug package/sample refreshed; both focused public-package scopes passed. Earlier Release package and generated-code evidence remains below; actual VS is separate. |
-| Focused Release verification | B2: **54 distinct relevant cases have passing latest results** across focused runs. One old clip test was corrected to inspect the existing page-frame owner. The final page-padding follow-up overlaps earlier cases; see B2 below. No broad suite ran. |
+| Planning | B1–B3 are implemented under the user's continuation. [Architecture plan](THEME-ARCHITECTURE-PLAN.md) retains C1 header presentation as the next proposed slice. Later family order remains provisional. |
+| Runtime/API/rendering | B3 is internal-only; public APIs, geometry, timing curves, clocks and lifecycle are preserved. Affected Release runtime/tests and normal Debug runtime/designer/client/sample builds passed without warnings/errors. No full solution or broad suite was repeated. |
+| Designer/sample/package consumer | B3 normal Debug package/sample refreshed; both focused public-package scopes passed. Its public-API diagnostic adds authored-caption, resize and reversal checks. Authored Forms/resources remain intact; actual VS is separate. |
+| Focused Release verification | B3: **75 relevant Release cases passed**, including ten new observable caption/motion-policy cases. No broad suite ran; earlier B1/B2 evidence remains below. |
 | Office 2024 default parity | B2: **32 PNG/geometry pairs match the fresh before-change baseline exactly**, both renderers/densities, synthetic 96/120/144/192 DPI and two font sizes. Earlier header/body/options parity evidence remains below. |
-| Composed native package verification | B2: **2/2 package-only Solid scopes passed** at actual 120 DPI, opening/closing: full-height 2019 panes and 2024's separate caption with animated neutral tint and close restoration. Native state was retained; no full native matrix ran. |
+| Composed native package verification | B3: **2/2 package-only Solid scopes passed** at actual 120 DPI, opening/closing plus authored Form/theme caption precedence, resize and close reversal. Native state was retained; no full native matrix ran. |
 | Broader Release suite | Initial implementation: 1,485 passed / 6 failed / 1,491 total (historical evidence above). Correction run **stopped at the user's request**, 1,089 passed / 3 failed / 1,092 executed; incomplete, no full-suite result claimed. Do not restart it. |
-| User appearance review | **2026-11-10: user reviewed the delivered B1 result, reported that everything looks good and authorized continuation with B2.** This accepts the delivered B1 appearance at that review scope. B2 review is pending; actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
+| User appearance review | **2026-11-10: user reviewed the delivered B1 result, reported that everything looks good and authorized continuation with B2.** This accepts the delivered B1 appearance at that review scope. B2/B3 appearance review is pending; actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
 | Actual VS/physical input/mixed-monitor | Not run for themes; report separately. |
 
 Record later evidence and confirmation here once, with date/revision/scope,
@@ -863,5 +864,60 @@ Representative opening frames and the restored 2024 caption were inspected.
 Evidence is under `artifacts/theme-layout-inputs/native/`. This is bounded display
 evidence; current human review and remaining hardware/VS gates are in the ledger.
 
-B2 is complete at its focused automated/package scope. B3 caption/motion policy
-is next; headers/body and further theme families remain separate.
+B2's focused automated/package implementation record ends here. Caption/motion
+policy extraction is recorded below; the architecture plan owns the next slice.
+
+## Backstage caption and motion policy B3 — 2026-11-11
+
+B3 began with a clean tree on `codex/Ribbonkit-Winform` at `bf7b202`
+(`B2  Rewrite Done`). Each Backstage registration now includes immutable caption
+and motion profiles alongside its sibling layout/drawing helpers. Profiles
+resolve the existing theme flags, colors, ratios and animation level into
+policies; the window adapter supplies live caption/color/material/pane facts.
+Caption painting no longer lives in either the renderer base or the 2024 renderer,
+and the policies retain no ribbon, Form or native-control references.
+
+Modern alone supplies the neutral separate-caption tint. The authored Form color
+still precedes theme color; either suppresses that tint. Full-height panes supply
+their own background. Title coverage and centering remain independent theme flags,
+including custom settings opposite to a built-in's defaults. Ordinary Forms keep
+their caption-free fallback. Tint reveal/alpha still follow actual pane geometry
+and opacity, including material navigation coverage and close restoration.
+
+The three existing pane/title/page engines execute captured visual policies.
+The existing pane/title 220/308 ms durations, 15% pane travel, 25% title travel,
+cubic travel/title easing and smooth-step pane fade remain unchanged. Native-page
+transitions retain 130/182 ms, 8/12 logical-pixel travel and cubic easing.
+`TabContentAnimation`, reduced motion, validation, interruption/reversal,
+ownership/disposal, opaque title ink and immediate resize/maximize/restore
+centering are preserved. No clocks, native services, B2 geometry or public APIs
+were replaced.
+
+Verification stayed bounded:
+
+- **75 relevant Release cases passed** in
+  `artifacts/theme-caption-motion-policy/tests/backstage-caption-motion-policy.trx`.
+  They cover neutral/authored/material captions, title placement/opacity/reversal,
+  QAT state, ratio validation, page motion, cancellation and retained native state.
+  Ten new cases check observable quarter-progress pane/title curves in both
+  directions, mixed family/coverage settings, ordinary Forms and both families'
+  Subtle/Expressive page duration/travel/fade. No broad suite ran.
+- Normal Debug runtime/designer server/client/sample builds and the affected
+  Release runtime/test build passed with zero warnings/errors. The permanent
+  sample was refreshed to `0.1.0-designer.local20261110T232648658Z`. Only its
+  focused public-package diagnostic was extended; authored Forms/UserControls,
+  resources, project files and Showcase code were preserved.
+- The package-only diagnostic passed **2/2 Solid scopes at actual 120 DPI**.
+  Office 2019 captured seven opening/closing frames with seven measurable pane-edge
+  pairs, maximum caption/body delta **0 px**. Office 2024 captured nine transition
+  frames and verified its separate grey-caption reveal/open/close restoration.
+  Each scope additionally captured nine policy states: Form-over-theme and
+  theme-only caption colors, shrink/grow resize, pending-close reversal and a
+  final close raised exactly once. Native handles/parents/text were retained.
+  Files are under `artifacts/theme-caption-motion-policy/native/`; representative
+  authored-caption, resized and reversal/restoration captures were inspected.
+
+These results establish B3's focused automated/package scope. Human appearance,
+actual VS, physical input, mixed-monitor and all-material acceptance remain in
+the ledger. No full solution, full native matrix or WPF build/test ran. C1 header
+presentation is next; body work and further theme families remain separate.

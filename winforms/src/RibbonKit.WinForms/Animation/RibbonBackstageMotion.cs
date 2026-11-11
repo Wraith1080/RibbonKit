@@ -13,7 +13,7 @@ internal sealed class RibbonBackstageMotion : IDisposable
     private readonly Point _origin;
     private readonly int _width;
     private readonly int _travel;
-    private readonly double _duration;
+    private readonly RibbonBackstageMotionPolicy _policy;
     // Cap this large native scene near 60 updates/second; progress uses elapsed
     // time, so pacing does not extend its authored transition duration.
     private readonly System.Windows.Forms.Timer _timer = new() { Interval = 16 };
@@ -32,13 +32,11 @@ internal sealed class RibbonBackstageMotion : IDisposable
     {
         _ribbon = ribbon; _surface = surface; _form = form; IsClosing = closing; _completed = completed;
         _origin = surface.Location; _width = surface.Width;
-        double ratio = ribbon.Theme.BackstageSlideDistanceRatio ?? .15;
-        _travel = ratio == 0 ? 0 : Math.Max(1, (int)Math.Round(_width * ratio));
+        _policy = ribbon.BackstageMotionPolicy;
+        _travel = _policy.PaneTravel(_width);
         Bounds = surface.RectangleToScreen(surface.ClientRectangle);
-        _duration = DurationFor(ribbon.AnimationLevel);
         _timer.Tick += Tick;
     }
-    internal static double DurationFor(RibbonAnimationLevel level) => level == RibbonAnimationLevel.Expressive ? 308 : 220;
     internal static RibbonBackstageMotion? Prepare(RibbonControl ribbon, RibbonBackstageSurface surface, Form form, bool closing = false, Action? completed = null)
     {
         if (ribbon.AnimationLevel == RibbonAnimationLevel.None || !ribbon.CanAnimatePopupOpening || !ribbon.Motion.SystemEnabled ||
@@ -78,9 +76,8 @@ internal sealed class RibbonBackstageMotion : IDisposable
     internal void SetProgress(double progress)
     {
         if (_disposed) return;
-        double t = Math.Clamp(progress, 0, 1), p = 1 - Math.Pow(1 - t, 3);
-        double fade = t * t * (3 - 2 * t);
-        _surface.SetMotionAlpha((byte)Math.Clamp((int)Math.Round(255 * (IsClosing ? 1 - fade : fade)), 1, 255));
+        double p = _policy.PaneProgress(progress);
+        _surface.SetMotionAlpha(_policy.PaneOpacity(progress, IsClosing));
         int offset = (int)Math.Round(_travel * (IsClosing ? p : 1 - p));
         _surface.MoveForMotion(new(_origin.X - offset, _origin.Y));
         PaintFrame(retainPage: true);
@@ -94,7 +91,7 @@ internal sealed class RibbonBackstageMotion : IDisposable
     private void Tick(object? sender, EventArgs e)
     {
         if (!_ribbon.Motion.SystemEnabled || _ribbon.AnimationLevel == RibbonAnimationLevel.None) { Dispose(); return; }
-        double progress = Stopwatch.GetElapsedTime(_start).TotalMilliseconds / _duration;
+        double progress = Stopwatch.GetElapsedTime(_start).TotalMilliseconds / _policy.PaneDuration;
         try { SetProgress(progress); }
         catch { Dispose(); throw; }
         if (progress >= 1) Dispose();
