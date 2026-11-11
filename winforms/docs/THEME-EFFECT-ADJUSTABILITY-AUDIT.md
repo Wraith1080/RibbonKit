@@ -1,10 +1,10 @@
 # Earlier theme rewrite: effect adjustability audit
 
-**2026-11-11: A00–A04 and A06–A09 implemented and verified; later candidates remain pending.**
+**2026-11-11: A00–A04, A06–A09 and A11–A16 implemented and verified. A05/A10/A17 remain separate.**
 The initial source review changed documentation only. The user then authorized
 the first correction batch; its current evidence is in the
 [themes plan](THEMES-PLAN.md#backstage-fill-routing-and-motion-overrides--2026-11-11).
-The uncommitted C1 implementation is preserved. A05 and A10–A17 remain later work.
+The uncommitted C1 implementation is preserved. A05, A10 and A17 remain later work.
 
 Scope is B1 registration, B2 layout inputs/defaults, B3 caption/motion policy and
 C1 header presentation, including the shared paint/motion helpers those paths
@@ -60,6 +60,13 @@ and `BackstageTrailingPadding` for shared spacing. Explicit null/Empty fallbacks
 alpha, zero/hide, renderer hooks and available-space clamps are retained. Current
 evidence is in the [decoration/spacing record](THEMES-PLAN.md#backstage-decoration-and-spacing-overrides--2026-11-11).
 
+A11–A16 now use `HeaderAppearance`, shared `Chevrons`, `FocusInset`/
+`FocusStrokeWidth`, `TabContentSlideDistance` and `HeaderIndicatorSpringAmount`.
+The [header/shared-effects record](THEMES-PLAN.md#header-and-shared-effect-overrides--2026-11-11)
+retains exact default comparisons, authored-effect checks, API/range/reset
+contracts and native package evidence. A05 remains with caption/title ownership;
+A10 is a separate page-width preference and A17 belongs to shared badge placement.
+
 ## Existing controls that already satisfy the request
 
 - B1's style selectors, full-width navigation, accent/navigation palette,
@@ -111,8 +118,8 @@ their placeholder padding and sample colors remain consumer/tool presentation.
    native editor ownership and opaque title behavior.
 2. Backstage decoration/spacing A06–A09 is implemented. Treat A05's caption choices with
    the caption/title ownership rules, and A10 as a separate layout preference.
-3. Backfill C1/shared helper gaps A11–A16; keep arrow, focus and motion ownership
-   shared. A17 belongs with the shared tip-placement work, without duplicating
+3. C1/shared helper gaps A11–A16 are implemented; arrow, focus and motion ownership
+   remain shared. A17 belongs with the shared tip-placement work, without duplicating
    existing badge padding roles. Reuse state/metric groups when they avoid an
    excessive list of unrelated theme flags.
 4. Resume C2 after the selected backfill, or follow the user's chosen scope.
@@ -129,6 +136,6 @@ themes and ordinary/material paths. Do not repeat the full suite/native matrix.
 Verification for the initial audit was source/commit-scope inspection, existing public
 setting/call-path checks, documentation/link review and `git diff --check` only.
 No runtime/sample/test code changed during that initial review. The subsequent
-A00–A04/A06–A09 implementation and their builds/tests/package evidence are recorded
+A00–A04/A06–A09/A11–A16 implementation and their builds/tests/package evidence are recorded
 in the themes plan. Earlier C1 evidence still belongs to C1; remaining candidates
 are not established as implemented by these batches' checks.

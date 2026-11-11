@@ -115,6 +115,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             RibbonApplicationMenuMetrics.Validate(value);
             RibbonChromeMetrics.Validate(value);
             RibbonHeaderMetrics.Validate(value);
+            RibbonSharedEffectMetrics.Validate(value);
             RibbonGalleryMetrics.Validate(value);
             RibbonBackstageMetrics.Validate(value);
             RibbonTipMetrics.Validate(value);

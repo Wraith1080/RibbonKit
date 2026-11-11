@@ -57,6 +57,18 @@ public sealed record RibbonTheme
     public int? HeaderIndicatorBottomInset { get; init; }
     /// <summary>Gets unselected tab/closed-File underline ink. Empty retains SecondaryText; Transparent hides it. Material hover still applies BackdropTabHoverOpacity.</summary>
     public Color HeaderIndicatorHoverColor { get; init; } = Color.Empty;
+    /// <summary>Gets optional immutable Filled-state border, scroller, contextual ink and File-highlight overrides. Null retains existing presentation defaults.</summary>
+    public RibbonHeaderAppearanceSettings? HeaderAppearance { get; init; }
+    /// <summary>Gets optional shared horizontal/vertical stroked-chevron size and stroke overrides. Null retains existing glyphs and utility hit targets.</summary>
+    public RibbonChevronSettings? Chevrons { get; init; }
+    /// <summary>Gets optional shared tab-content/header-arrival SlideDown travel in logical pixels, 0..1024. Null retains Subtle 8/Expressive 12; zero removes travel. Backstage page travel and Fade remain independent.</summary>
+    public int? TabContentSlideDistance { get; init; }
+    /// <summary>Gets optional Expressive header-indicator spring amount, 0..1. Null uses 0.35; zero removes spring overshoot. Must be finite. Existing clocks, clips and animation policy remain authoritative.</summary>
+    public double? HeaderIndicatorSpringAmount { get; init; }
+    /// <summary>Gets optional shared focus-outline inset in logical pixels, 0..1024. Null retains 2 device pixels; authored insets clamp to keep a visible short-slot outline.</summary>
+    public int? FocusInset { get; init; }
+    /// <summary>Gets optional shared focus-outline width in logical pixels, 1..32. Null retains the native dotted/Office one-device-pixel outline. Authored widths keep keyboard focus visible and preserve renderer overrides.</summary>
+    public int? FocusStrokeWidth { get; init; }
     /// <summary>Gets whether a supporting RibbonForm extends its active caption color into the tab band. Defaults to false. Does not change authored caption or theme values.</summary>
     public bool ExtendTitleBarColorToHeader { get; init; }
     /// <summary>Gets whether the default Office body draws only its bottom border. Defaults to false; popup borders and shadows are independent.</summary>
@@ -491,6 +503,7 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     public bool IsQuickAccessToolbarJoined { get; init; }
     internal bool IsBodyScrollButton { get; init; }
     internal bool IsBackstageNavigationState { get; init; }
+    internal bool IsHeaderScrollButton { get; init; }
     internal bool IsMenuHeading { get; init; }
     internal Layout.RibbonApplicationMenuPart ApplicationMenuPart { get; init; }
     internal int? ApplicationMenuDividerX { get; init; }

@@ -1465,3 +1465,55 @@ RibbonKit.WinForms.RibbonTheme.BackstageSeparatorHeight.get -> int?
 RibbonKit.WinForms.RibbonTheme.BackstageSeparatorHeight.init -> void
 RibbonKit.WinForms.RibbonTheme.BackstageTrailingPadding.get -> int?
 RibbonKit.WinForms.RibbonTheme.BackstageTrailingPadding.init -> void
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.RibbonHeaderAppearanceSettings() -> void
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.<Clone>$() -> RibbonKit.WinForms.RibbonHeaderAppearanceSettings!
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.FilledBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.FilledBorderWidth.init -> void
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.ScrollerCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.ScrollerCornerRadius.init -> void
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.ScrollerBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.ScrollerBorderWidth.init -> void
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.FileHighlightInset.get -> int?
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.FileHighlightInset.init -> void
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.ContextualUnselectedOpacity.get -> double?
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.ContextualUnselectedOpacity.init -> void
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.FilledBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.FilledBorderColor.init -> void
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.FileHighlightForeground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.FileHighlightForeground.init -> void
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.FileHighlightBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.FileHighlightBackground.init -> void
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.Equals(RibbonKit.WinForms.RibbonHeaderAppearanceSettings? other) -> bool
+override RibbonKit.WinForms.RibbonHeaderAppearanceSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonHeaderAppearanceSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonHeaderAppearanceSettings.ToString() -> string!
+static RibbonKit.WinForms.RibbonHeaderAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonHeaderAppearanceSettings? left, RibbonKit.WinForms.RibbonHeaderAppearanceSettings? right) -> bool
+static RibbonKit.WinForms.RibbonHeaderAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonHeaderAppearanceSettings? left, RibbonKit.WinForms.RibbonHeaderAppearanceSettings? right) -> bool
+RibbonKit.WinForms.RibbonChevronSettings
+RibbonKit.WinForms.RibbonChevronSettings.RibbonChevronSettings() -> void
+RibbonKit.WinForms.RibbonChevronSettings.<Clone>$() -> RibbonKit.WinForms.RibbonChevronSettings!
+RibbonKit.WinForms.RibbonChevronSettings.Length.get -> int?
+RibbonKit.WinForms.RibbonChevronSettings.Length.init -> void
+RibbonKit.WinForms.RibbonChevronSettings.Depth.get -> int?
+RibbonKit.WinForms.RibbonChevronSettings.Depth.init -> void
+RibbonKit.WinForms.RibbonChevronSettings.StrokeWidth.get -> double?
+RibbonKit.WinForms.RibbonChevronSettings.StrokeWidth.init -> void
+RibbonKit.WinForms.RibbonChevronSettings.Equals(RibbonKit.WinForms.RibbonChevronSettings? other) -> bool
+override RibbonKit.WinForms.RibbonChevronSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonChevronSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonChevronSettings.ToString() -> string!
+static RibbonKit.WinForms.RibbonChevronSettings.operator !=(RibbonKit.WinForms.RibbonChevronSettings? left, RibbonKit.WinForms.RibbonChevronSettings? right) -> bool
+static RibbonKit.WinForms.RibbonChevronSettings.operator ==(RibbonKit.WinForms.RibbonChevronSettings? left, RibbonKit.WinForms.RibbonChevronSettings? right) -> bool
+RibbonKit.WinForms.RibbonTheme.HeaderAppearance.get -> RibbonKit.WinForms.RibbonHeaderAppearanceSettings?
+RibbonKit.WinForms.RibbonTheme.HeaderAppearance.init -> void
+RibbonKit.WinForms.RibbonTheme.Chevrons.get -> RibbonKit.WinForms.RibbonChevronSettings?
+RibbonKit.WinForms.RibbonTheme.Chevrons.init -> void
+RibbonKit.WinForms.RibbonTheme.TabContentSlideDistance.get -> int?
+RibbonKit.WinForms.RibbonTheme.TabContentSlideDistance.init -> void
+RibbonKit.WinForms.RibbonTheme.HeaderIndicatorSpringAmount.get -> double?
+RibbonKit.WinForms.RibbonTheme.HeaderIndicatorSpringAmount.init -> void
+RibbonKit.WinForms.RibbonTheme.FocusInset.get -> int?
+RibbonKit.WinForms.RibbonTheme.FocusInset.init -> void
+RibbonKit.WinForms.RibbonTheme.FocusStrokeWidth.get -> int?
+RibbonKit.WinForms.RibbonTheme.FocusStrokeWidth.init -> void

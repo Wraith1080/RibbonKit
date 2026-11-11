@@ -47,6 +47,7 @@ internal readonly record struct RibbonHeaderMetrics
     }
     internal static void Validate(RibbonTheme theme)
     {
+        RibbonHeaderAppearanceSettings.Validate(theme.HeaderAppearance);
         if (theme.HeaderIndicatorThickness is < 0 or > 64 || theme.HeaderFilledCornerRadius is < 0 or > 64 || theme.HeaderIndicatorBottomInset is < 0 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(theme), "Header thickness/radius must be 0..64, bottom inset 0..1024, or null for existing effects.");
     }

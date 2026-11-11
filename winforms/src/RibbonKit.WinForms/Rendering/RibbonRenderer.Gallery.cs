@@ -29,7 +29,7 @@ public partial class RibbonRenderer
             int height = Math.Min(glyph.Height, RibbonLayoutEngine.Scale(18, context.DeviceDpi));
             glyph = new(glyph.Left, glyph.Top + (glyph.Height - height) / 2, glyph.Width, height);
         }
-        RibbonArrowPainter.DrawVertical(context.Graphics, glyph, context.DeviceDpi, color, button == RibbonGalleryStripButton.Up);
+        RibbonArrowPainter.DrawVertical(context.Graphics, glyph, context.DeviceDpi, color, button == RibbonGalleryStripButton.Up, context.Theme.Chevrons);
         if (button == RibbonGalleryStripButton.Expand)
         {
             int inset = RibbonLayoutEngine.Scale(4, context.DeviceDpi);

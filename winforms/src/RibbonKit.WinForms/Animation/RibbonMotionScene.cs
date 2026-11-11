@@ -8,8 +8,7 @@ namespace RibbonKit.WinForms;
 // One capture per committed endpoint, including owned native editor HWNDs.
 internal sealed class RibbonMotionScene : IDisposable
 {
-    private const int SubtleTabSlide = 8, ExpressiveTabSlide = 12; // 96-DPI logical pixels; body drawing remains natural size.
-    private const double IndicatorSpring = .35; // Matches the WPF marker's gentle BackEase amplitude.
+    internal readonly RibbonContentMotionPolicy ContentMotion;
     internal readonly Bitmap Image;
     internal readonly Rectangle Bounds, Header, Body, Frame, Qat, Strip, Messages;
     internal readonly RibbonQuickAccessPosition Placement;
@@ -30,6 +29,7 @@ internal sealed class RibbonMotionScene : IDisposable
     internal RibbonMotionScene(RibbonControl ribbon)
     {
         var snapshot = ribbon.Snapshot; Dpi = ribbon.DeviceDpi; Bounds = ribbon.RectangleToScreen(ribbon.ClientRectangle);
+        ContentMotion = RibbonContentMotionPolicy.Resolve(ribbon.Theme);
         Header = new(0, ribbon.WindowCaptionHeight, ribbon.Width, RibbonLayoutEngine.Scale(ribbon.LayoutTheme.TabHeight, Dpi));
         Body = snapshot.BodyBounds; Frame = snapshot.BodyFrameBounds; Qat = snapshot.QuickAccessBounds; Messages = snapshot.MessageBounds;
         MessageRows = snapshot.Messages.ToDictionary(row => row.Message, row =>
@@ -234,7 +234,7 @@ internal sealed class RibbonMotionScene : IDisposable
         {
             int inset = RibbonLayoutEngine.Scale(4, to.Dpi); var crop = Rectangle.Inflate(to.Body, -inset, -inset);
             var clip = Interpolate(from.Body, to.Body); clip.Inflate(-inset, -inset); var position = clip;
-            int distance = RibbonLayoutEngine.Scale(ribbon.AnimationLevel == RibbonAnimationLevel.Expressive ? ExpressiveTabSlide : SubtleTabSlide, to.Dpi);
+            int distance = to.ContentMotion.DeviceSlideDistance(ribbon.AnimationLevel, to.Dpi);
             position.Y -= (int)Math.Round(distance * (1 - p)); var saved = graphics.Save();
             try
             {
@@ -252,7 +252,7 @@ internal sealed class RibbonMotionScene : IDisposable
                 if (clip.Width <= 0 || clip.Height <= 0) continue;
                 var position = slot.Location;
                 if (track.Arriving && ribbon.TabContentAnimation == RibbonTabContentAnimation.SlideDown)
-                    position.Y -= (int)Math.Round(RibbonLayoutEngine.Scale(ribbon.AnimationLevel == RibbonAnimationLevel.Expressive ? ExpressiveTabSlide : SubtleTabSlide, to.Dpi) * (1 - p));
+                    position.Y -= (int)Math.Round(to.ContentMotion.DeviceSlideDistance(ribbon.AnimationLevel, to.Dpi) * (1 - p));
                 var crop = Rectangle.Intersect(new(Point.Empty, to.Image.Size), track.Bounds);
                 if (crop.Width <= 0 || crop.Height <= 0) continue;
                 position.Offset(crop.Left - track.Bounds.Left, crop.Top - track.Bounds.Top);
@@ -269,7 +269,7 @@ internal sealed class RibbonMotionScene : IDisposable
             {
                 // Only the marker springs. Keep panel clips/opacity on their
                 // bounded curve and prevent a shrinking pill from inverting.
-                double spring = p + IndicatorSpring * remaining * Math.Sin(Math.PI * remaining);
+                double spring = p + to.ContentMotion.IndicatorSpringAmount * remaining * Math.Sin(Math.PI * remaining);
                 var sprung = Local(Between(At(from.Indicator, from.Bounds), At(to.Indicator, to.Bounds), spring));
                 indicator.X = sprung.X;
                 indicator.Width = Math.Clamp(sprung.Width, Math.Min(from.Indicator.Width, to.Indicator.Width), Math.Max(from.Indicator.Width, to.Indicator.Width));

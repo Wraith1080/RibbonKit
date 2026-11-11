@@ -144,7 +144,7 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     }
     /// <inheritdoc />
     public override void DrawFocus(RibbonPaintContext context) =>
-        PaintRounded(context with { Bounds = Rectangle.Inflate(context.Bounds, -2, -2) }, Layout.RibbonFrameMetrics.Radius(context.Theme.FocusCornerRadius, Math.Max(1, context.Theme.CornerRadius * context.DeviceDpi / 96), context.DeviceDpi), new(Color.Transparent), context.Theme.Accent);
+        PaintRounded(context with { Bounds = Layout.RibbonSharedEffectMetrics.FocusBounds(context) }, Layout.RibbonFrameMetrics.Radius(context.Theme.FocusCornerRadius, Math.Max(1, context.Theme.CornerRadius * context.DeviceDpi / 96), context.DeviceDpi), new(Color.Transparent), context.Theme.Accent, Layout.RibbonSharedEffectMetrics.FocusStroke(context));
     /// <inheritdoc />
     public override void DrawKeyTip(RibbonPaintContext context, string keys)
     {

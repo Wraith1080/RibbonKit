@@ -139,12 +139,15 @@ public partial class RibbonRenderer
     internal bool DrawApplicationFileButton(RibbonPaintContext context, RibbonDropDownItem menu)
     {
         if (!menu.EffectiveEnabled || !menu.IsDropDownOpen || context.FileMenuClosing || menu.Ribbon?.FileMenuMode != RibbonFileMenuMode.CommandMenu) return false;
-        int inset = RibbonLayoutEngine.Scale(3, context.DeviceDpi);
+        var appearance = context.Theme.HeaderAppearance;
+        int inset = appearance?.FileHighlightInset is { } authored ? Math.Min(RibbonLayoutEngine.Scale(authored, context.DeviceDpi), Math.Max(0, (Math.Min(context.Bounds.Width, context.Bounds.Height) - 1) / 2)) : RibbonLayoutEngine.Scale(3, context.DeviceDpi);
         var bounds = Rectangle.Inflate(context.Bounds, -inset, -inset);
-        PaintRounded(context with { Bounds = bounds }, RibbonFrameMetrics.Radius(context.Theme.ApplicationMenuFileButtonCornerRadius, inset, context.DeviceDpi), new(context.Theme.Accent), Color.Transparent, 0);
+        var fill = appearance?.FileHighlightBackground ?? new(context.Theme.Accent);
+        PaintRounded(context with { Bounds = bounds }, RibbonFrameMetrics.Radius(context.Theme.ApplicationMenuFileButtonCornerRadius, RibbonLayoutEngine.Scale(3, context.DeviceDpi), context.DeviceDpi), fill, Color.Transparent, 0);
         static double Channel(byte channel) { double v = channel / 255d; return v <= .04045 ? v / 12.92 : Math.Pow((v + .055) / 1.055, 2.4); }
-        var accent = context.Theme.Accent;
-        var foreground = .2126 * Channel(accent.R) + .7152 * Channel(accent.G) + .0722 * Channel(accent.B) > .179 ? Color.Black : Color.White;
+        var accent = fill.Start;
+        var foreground = appearance is not null && !appearance.FileHighlightForeground.IsEmpty ? appearance.FileHighlightForeground
+            : .2126 * Channel(accent.R) + .7152 * Channel(accent.G) + .0722 * Channel(accent.B) > .179 ? Color.Black : Color.White;
         DrawText(context with { Bounds = bounds }, menu.Text, foreground, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
         if (context.Focused) DrawFocus(context with { Bounds = bounds }); return true;
     }

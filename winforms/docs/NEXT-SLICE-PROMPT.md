@@ -1,4 +1,4 @@
-# Continue native WinForms theme architecture after Backstage appearance backfill
+# Continue native WinForms theme architecture after header/shared effect backfill
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
@@ -11,8 +11,9 @@ The user then requested a review of all earlier rewrite slices before C2.
 The [adjustability audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) is complete.
 [A00–A04 fill routing/motion backfill](THEMES-PLAN.md#backstage-fill-routing-and-motion-overrides--2026-11-11)
 is implemented and reviewed. [A06–A09 decoration/spacing](THEMES-PLAN.md#backstage-decoration-and-spacing-overrides--2026-11-11)
-is implemented and verified. The next proposed batch is A11–A16 header/shared
-helpers before C2; follow the user's selected scope. A05's caption choices,
+is implemented; [A11–A16 header/shared helpers](THEMES-PLAN.md#header-and-shared-effect-overrides--2026-11-11)
+are implemented and verified. C2 body/connected frames is next proposed; follow
+the user's selected scope. A05's caption choices,
 A10's page-width preference and A17's shared tip placement remain separate.
 
 ## Establish scope from the user's current request
@@ -21,8 +22,7 @@ A10's page-width preference and A17's shared tip placement remain separate.
   `codex/Ribbonkit-Winform` at `6162571` (`Backstage Rewrite fix`); its changes
   remain uncommitted. Preserve later user edits and committed fixes.
 - Read the audit findings first. On an implementation continuation, preserve
-  A00–A04/A06–A09 and follow its remaining bounded correction order: shared
-  header-helper effects.
+  A00–A04/A06–A09/A11–A16. Resume C2 or the user's selected remaining scope.
   Preserve current defaults and keep the separately deferred title-ink defect
   separate. The audit is a recommendation for follow-up, not a new approval gate
   if the user selects C2 or another scope.
@@ -38,6 +38,14 @@ A10's page-width preference and A17's shared tip placement remain separate.
   target geometry, row clipping and actual renderer entry/chrome/text/focus hooks.
   The three spacing overrides feed existing shared metrics; `MenuSeparatorHeight`
   stays menu-only. The permanent sample includes **Backstage appearance** controls.
+- Preserve the header/shared overrides: `HeaderAppearance`, `Chevrons`, focus
+  inset/width, shared tab-content/header-arrival slide distance and indicator
+  spring amount. Keep null/Empty defaults, actual renderer precedence, body/header
+  scroller separation, native focus visibility and scene-captured theme values.
+- **User instruction, 2026-11-11:** the existing Office 2019 review tab is full.
+  Add new demo groups/buttons to **Theme effects 2** and keep using that tab until
+  the user says it is full. Reuse the sample's `ThemeEffectsReviewTab`; do not add
+  more buttons to the Office 2019 tab or decide it is full from layout alone.
 - Read [THEME-ARCHITECTURE-PLAN](THEME-ARCHITECTURE-PLAN.md), especially C2 and
   ownership/compatibility rules. **C2 body/connected frames** follows the backfill. Inspect
   body/group/frame drawing, resolved margins/shadows/radii, below-ribbon QAT and

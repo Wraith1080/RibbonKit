@@ -6,10 +6,11 @@ caption/motion profiles. Headers register sibling Filled/Underline drawing with
 explicit geometry defaults and adjustable effects. C2 body/connected frames is
 the next proposed slice.
 The earlier-slice review found adjustability gaps. A00–A04 fill routing/motion
-and A06–A09 decoration/spacing overrides are implemented; follow the remaining
-[source audit and correction order](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) before C2.
+and A06–A09 decoration/spacing plus A11–A16 header/shared overrides are implemented;
+track the separate caption/layout/tip candidates in the
+[source audit and correction order](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 Current evidence and user review are recorded in the
-[themes plan](THEMES-PLAN.md#backstage-decoration-and-spacing-overrides--2026-11-11).
+[themes plan](THEMES-PLAN.md#header-and-shared-effect-overrides--2026-11-11).
 
 The [themes plan](THEMES-PLAN.md) retains appearance requirements and acceptance.
 This document proposes implementation boundaries and a migration sequence; it
@@ -153,8 +154,8 @@ Preserve these rules throughout:
    C1 adds selected-tab fill/ink, filled-state radius and underline thickness/
    bottom inset/hover ink. Apply this requirement to C2 and later slices too.
    The [retroactive audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) records remaining
-   B1–B3/C1/shared-helper gaps. A00–A04 and A06–A09 are implemented; remaining corrections
-   are pending. Backstage motion overrides use one immutable settings group,
+   B1–B3/C1/shared-helper gaps. A00–A04, A06–A09 and A11–A16 are implemented;
+   A05/A10/A17 retain separate scopes. Backstage motion overrides use one immutable settings group,
    resolved with family defaults and captured by the existing engines.
 
 The family registration binds compatible default pieces. Deliberate application

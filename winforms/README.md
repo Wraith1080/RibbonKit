@@ -365,6 +365,46 @@ entry/chrome overrides keep precedence. Reset the group with
 The optional sample theme demo includes **Backstage appearance**, with marker
 visibility separate from its decoration/reset controls.
 
+Header and shared effects also have independent overrides:
+
+| Setting | Default and behavior |
+| --- | --- |
+| `HeaderAppearance.FilledBorderColor`, `FilledBorderWidth` | Filled tab/File states remain borderless. Authored ink supports alpha; width accepts 0..32 logical pixels. Null uses one device pixel when ink is authored; zero hides the border. |
+| `HeaderAppearance.ScrollerCornerRadius`, `ScrollerBorderWidth` | Preserve existing configured square scrollers or ordinary renderer chrome, with a one-device-pixel border. Accept 0..64 and 0..32 logical pixels. Existing `HeaderScrollButtonBorder` supplies ink; body scroller shape remains independent. |
+| `HeaderAppearance.ContextualUnselectedOpacity` | 0.6, multiplied by authored contextual-color alpha before composition. Accepts finite 0..1; selected/disabled ink and explicit selected foreground remain independent. |
+| `HeaderAppearance.FileHighlightInset`, `FileHighlightBackground`, `FileHighlightForeground` | Open CommandMenu File highlight uses a 3-logical-pixel inset, Accent fill and automatic black/white ink. Inset accepts 0..1024 with available-space clamps; existing corner radius remains independent. Fill supports alpha/gradients; Empty ink uses contrast against the fill's first color. Explicit highlight settings also opt Filled headers into this common highlight; null retains their existing Filled recipe. |
+| `Chevrons.Length`, `Depth`, `StrokeWidth` | Shared horizontal/vertical stroked chevrons use 10/6 logical pixels and 1.5-pixel stroke, with a one-device-pixel default stroke minimum. Dimensions accept 0..64 and stroke finite 0..32; zero hides the glyph. Utility slots still clamp size. Applies to header/body scroll, overflow, minimize, submenu and gallery chevrons; filled dropdown triangles and the Back arrow retain their own settings. |
+| `FocusInset`, `FocusStrokeWidth` | Null retains 2 device pixels of inset and native dotted/Office one-device-pixel outlines. Authored inset accepts 0..1024 logical pixels and clamps inside short targets; width accepts 1..32. Explicit neutral widths use a dotted outline. Keyboard focus stays visible; custom focus hooks retain precedence. |
+| `TabContentSlideDistance` | Shared tab-content/header-arrival SlideDown travel is 8/12 logical pixels for Subtle/Expressive. Accepts 0..1024; zero removes travel. Backstage page motion remains separate. |
+| `HeaderIndicatorSpringAmount` | Expressive underline spring amount is 0.35. Accepts finite 0..1; zero removes overshoot. Existing motion clocks, reduced-motion policy, clips and width clamps remain effective. |
+
+`HeaderAppearance` and `Chevrons` are immutable
+`RibbonHeaderAppearanceSettings` / `RibbonChevronSettings` records. Null members
+retain defaults, and assigning either group to null resets just that group:
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    HeaderAppearance = new RibbonHeaderAppearanceSettings
+    {
+        FilledBorderColor = Color.DarkOrange, FilledBorderWidth = 2,
+        ScrollerCornerRadius = 8, ScrollerBorderWidth = 2,
+        ContextualUnselectedOpacity = .9
+    },
+    Chevrons = new RibbonChevronSettings { Length = 16, Depth = 9, StrokeWidth = 2 },
+    FocusInset = 4, FocusStrokeWidth = 2,
+    TabContentSlideDistance = 24, HeaderIndicatorSpringAmount = .7
+};
+```
+
+All values validate before theme/selection mutation. These paint/motion overrides
+retain header/body targets and native editor identity. Scene capture retains its
+authored motion values; theme changes use the existing settle path.
+The optional `--office2019-theme-demo` now puts new review groups on **Theme
+effects 2**, leaving the existing Office 2019 tab's groups intact. File-highlight
+review includes a CommandMenu/Backstage toggle; appearance reset stays separate
+from presentation, routing and animation-level choices.
+
 The title-bar QAT is hidden throughout Backstage opening, display and closing;
 its authored visibility, placement and commands return when Backstage closes.
 TabRow and BelowRibbon QAT presentation is retained, including a TitleBar

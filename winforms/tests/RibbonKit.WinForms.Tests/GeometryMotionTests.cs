@@ -49,10 +49,12 @@ public sealed class GeometryMotionTests
         context.Visible = false; f.Ribbon.IsMinimized = true; f.Ribbon.SettleMotion(); // Test header arrival after minimizing; overlapping requests intentionally snap.
         context.Visible = true; Assert.True(f.Ribbon.IsAnimating); f.Ribbon.SelectedTab = context; Assert.True(f.Ribbon.IsAnimating); f.Finish(); Assert.True(f.Ribbon.IsMinimized);
     });
-    [Theory] [InlineData(RibbonTabContentAnimation.Fade)] [InlineData(RibbonTabContentAnimation.SlideDown)]
-    public void Header_drawing_keeps_committed_slots_and_applies_the_shared_style_only_to_arrivals(RibbonTabContentAnimation style) => FoundationTests.Sta(() =>
+    [Theory] [InlineData(RibbonTabContentAnimation.Fade, null)] [InlineData(RibbonTabContentAnimation.SlideDown, null)]
+    [InlineData(RibbonTabContentAnimation.SlideDown, 0)] [InlineData(RibbonTabContentAnimation.SlideDown, 24)]
+    public void Header_drawing_keeps_committed_slots_and_applies_the_shared_style_only_to_arrivals(RibbonTabContentAnimation style, int? distance) => FoundationTests.Sta(() =>
     {
         using var f = new Fixture(); using var renderer = new HeaderBlocks(); f.Ribbon.Renderer = renderer; f.Ribbon.TabContentAnimation = style;
+        f.Ribbon.Theme = f.Ribbon.Theme with { TabContentSlideDistance = distance };
         using var from = new RibbonMotionScene(f.Ribbon); var arriving = new RibbonTab { Id = "arriving", Text = "Chart" }; f.Ribbon.Tabs.Insert(0, arriving); using var to = new RibbonMotionScene(f.Ribbon); f.Ribbon.AnimationLevel = RibbonAnimationLevel.Subtle;
         var target = to.Headers[arriving]; var newHome = to.Headers[f.Ribbon.Tabs[1]];
         foreach (double progress in new[] { .25, .5, .75, 1 })
@@ -61,6 +63,12 @@ public sealed class GeometryMotionTests
             int x = target.Left + target.Width / 2; int y = target.Top + target.Height / 2;
             var color = frame.GetPixel(x, y); Assert.Equal(255, color.G);
             if (style == RibbonTabContentAnimation.Fade && progress < 1) Assert.InRange(color.R, 1, 254); else Assert.Equal(0, color.R);
+            if (distance is { } travel)
+            {
+                int bottom = Enumerable.Range(target.Top, target.Height).Where(row => frame.GetPixel(x, row).ToArgb() == Color.Lime.ToArgb()).Last() + 1;
+                int offset = (int)Math.Round(RibbonLayoutEngine.Scale(travel, to.Dpi) * Math.Pow(1 - progress, 3));
+                Assert.Equal(target.Bottom - offset, bottom);
+            }
             Assert.Equal(Color.Red.ToArgb(), frame.GetPixel(newHome.Left + newHome.Width / 2, newHome.Top + newHome.Height / 2).ToArgb());
         }
     });
@@ -68,20 +76,25 @@ public sealed class GeometryMotionTests
     {
         public override void DrawTab(RibbonPaintContext c, RibbonTab tab, bool selected) { using var brush = new SolidBrush(tab.Id == "arriving" ? Color.Lime : Color.Red); c.Graphics.FillRectangle(brush, c.Bounds); }
     }
-    [Theory] [InlineData(RibbonAnimationLevel.Subtle)] [InlineData(RibbonAnimationLevel.Expressive)]
-    public void Slide_down_keeps_arriving_content_opaque_and_natural_size_without_departing_body(RibbonAnimationLevel level) => FoundationTests.Sta(() =>
+    [Theory] [InlineData(RibbonAnimationLevel.Subtle, null)] [InlineData(RibbonAnimationLevel.Expressive, null)]
+    [InlineData(RibbonAnimationLevel.Subtle, 0)] [InlineData(RibbonAnimationLevel.Expressive, 24)]
+    public void Slide_down_keeps_arriving_content_opaque_and_natural_size_without_departing_body(RibbonAnimationLevel level, int? distance) => FoundationTests.Sta(() =>
     {
         using var f = new Fixture(); var first = f.Ribbon.SelectedTab!; first.Groups[0].Items.Insert(0, new RibbonButtonItem { Text = "Old", Icon = new SolidIcon(Color.Magenta) });
         var next = new RibbonTab { Text = "Insert" }; var group = new RibbonGroup { Text = "New commands" }; group.Items.Add(new RibbonButtonItem { Text = "New", Icon = new SolidIcon(Color.Lime) }); next.Groups.Add(group); f.Ribbon.Tabs.Add(next);
         Assert.Equal(RibbonTabContentAnimation.Fade, f.Ribbon.TabContentAnimation); f.Ribbon.TabContentAnimation = RibbonTabContentAnimation.SlideDown;
+        f.Ribbon.Theme = f.Ribbon.Theme with { TabContentSlideDistance = distance };
         using var from = new RibbonMotionScene(f.Ribbon); f.Ribbon.SelectedTab = next; using var to = new RibbonMotionScene(f.Ribbon); f.Ribbon.AnimationLevel = level;
         var arrival = Ink(to.Image, Color.Lime, to.Body); Assert.False(arrival.IsEmpty); int previousTop = int.MinValue;
         foreach (double progress in new[] { 0, .25, .5, .75, 1 })
         {
             using var frame = new Bitmap(f.Ribbon.Width, f.Ribbon.Height, PixelFormat.Format32bppPArgb); using var g = Graphics.FromImage(frame); using var alpha = new ImageAttributes(); RibbonMotionScene.Render(g, to.Bounds, f.Ribbon, from, to, progress, alpha);
-            var ink = Ink(frame, Color.Lime, to.Body); Assert.Equal(arrival.Width, ink.Width); Assert.InRange(ink.Height, 1, arrival.Height); if (progress > 0) Assert.Equal(arrival.Height, ink.Height); Assert.True(ink.Top >= previousTop); Assert.True(ink.Top <= arrival.Top); previousTop = ink.Top;
+            var ink = Ink(frame, Color.Lime, to.Body); Assert.Equal(arrival.Width, ink.Width); Assert.InRange(ink.Height, 1, arrival.Height); if (distance is null && progress > 0) Assert.Equal(arrival.Height, ink.Height); Assert.True(ink.Top >= previousTop); Assert.True(ink.Top <= arrival.Top); previousTop = ink.Top;
             Assert.True(Ink(frame, Color.Magenta, to.Body).IsEmpty);
-            if (progress == 0) Assert.True(ink.Top < arrival.Top); if (progress == 1) Assert.Equal(arrival, ink);
+            if (distance is { } travel)
+                Assert.Equal(Math.Max(to.Body.Top + RibbonLayoutEngine.Scale(4, to.Dpi), arrival.Top - (int)Math.Round(RibbonLayoutEngine.Scale(travel, to.Dpi) * Math.Pow(1 - progress, 3))), ink.Top);
+            else if (progress == 0) Assert.True(ink.Top < arrival.Top);
+            if (progress == 1) Assert.Equal(arrival, ink);
         }
         Rectangle Ink(Bitmap image, Color color, Rectangle region)
         {
@@ -101,13 +114,15 @@ public sealed class GeometryMotionTests
     });
     private sealed class SolidIcon(Color color) : IRibbonIcon { public void Draw(Graphics graphics, Rectangle bounds, RibbonIconContext context) { using var brush = new SolidBrush(color); graphics.FillRectangle(brush, bounds); } }
     [Theory]
-    [InlineData(false, RibbonTabContentAnimation.Fade)] [InlineData(true, RibbonTabContentAnimation.Fade)]
-    [InlineData(false, RibbonTabContentAnimation.SlideDown)] [InlineData(true, RibbonTabContentAnimation.SlideDown)]
-    public void Expressive_indicator_springs_in_both_directions_and_settles_to_the_exact_pill(bool reverse, RibbonTabContentAnimation style) => FoundationTests.Sta(() =>
+    [InlineData(false, RibbonTabContentAnimation.Fade, null)] [InlineData(true, RibbonTabContentAnimation.Fade, null)]
+    [InlineData(false, RibbonTabContentAnimation.SlideDown, null)] [InlineData(true, RibbonTabContentAnimation.SlideDown, null)]
+    [InlineData(false, RibbonTabContentAnimation.SlideDown, 0d)] [InlineData(true, RibbonTabContentAnimation.Fade, .7)]
+    public void Expressive_indicator_springs_in_both_directions_and_settles_to_the_exact_pill(bool reverse, RibbonTabContentAnimation style, double? spring) => FoundationTests.Sta(() =>
     {
         using var f = new Fixture(); using var painter = new IndicatorRecorder(); f.Ribbon.Renderer = painter; f.Ribbon.TabContentAnimation = style;
         var home = f.Ribbon.SelectedTab!; var next = new RibbonTab { Text = "Illustrations and pictures" }; next.Groups.Add(new RibbonGroup()); f.Ribbon.Tabs.Add(next);
         if (reverse) f.Ribbon.SelectedTab = next;
+        f.Ribbon.Theme = f.Ribbon.Theme with { HeaderIndicatorSpringAmount = spring };
         using var from = new RibbonMotionScene(f.Ribbon); f.Ribbon.SelectedTab = reverse ? home : next; using var to = new RibbonMotionScene(f.Ribbon);
         var canvas = Rectangle.Union(from.Bounds, to.Bounds); var start = from.Indicator; var end = to.Indicator; int direction = Math.Sign(end.X - start.X);
         foreach (var level in new[] { RibbonAnimationLevel.Subtle, RibbonAnimationLevel.Expressive })
@@ -120,9 +135,11 @@ public sealed class GeometryMotionTests
                 Assert.InRange(indicator.Width, Math.Min(start.Width, end.Width), Math.Max(start.Width, end.Width)); Assert.Equal(end.Height, indicator.Height);
                 if (progress == 0) Assert.Equal(start, indicator);
                 if (progress == 1) Assert.Equal(end, indicator);
-                if (level == RibbonAnimationLevel.Subtle) Assert.InRange(indicator.X, Math.Min(start.X, end.X), Math.Max(start.X, end.X));
+                if (level == RibbonAnimationLevel.Subtle || spring == 0) Assert.InRange(indicator.X, Math.Min(start.X, end.X), Math.Max(start.X, end.X));
                 else if (progress == .6) { overshoot = direction * (indicator.X - end.X); Assert.True(overshoot > 0, $"Expressive should pass its destination before settling: {indicator} -> {end}"); }
                 else if (progress == .9) Assert.InRange(direction * (indicator.X - end.X), 0, overshoot - 1);
+                if (spring is { } amount && level == RibbonAnimationLevel.Expressive && progress == .6)
+                    Assert.Equal((int)Math.Round(start.X + (end.X - start.X) * (1 - Math.Pow(.4, 3) + amount * .4 * Math.Sin(Math.PI * .4))), indicator.X);
                 int pixels = 0;
                 for (int y = end.Top; y < end.Bottom; y++)
                 for (int x = 0; x < frame.Width; x++)

@@ -52,13 +52,13 @@ public partial class RibbonRenderer : IDisposable
             var fill = context.Pressed ? context.Theme.HeaderPressed ?? context.Theme.Pressed : context.Hot ? context.Theme.HeaderHover ?? context.Theme.Hover
                 : context.Theme.HeaderScrollButtonBackground ?? new(context.Theme.Surface);
             var border = context.Theme.HeaderScrollButtonBorder.IsEmpty ? context.Theme.PopupBorder : context.Theme.HeaderScrollButtonBorder;
-            PaintRounded(context, 0, fill, border, border.A == 0 ? 0 : 1);
-            RibbonArrowPainter.DrawHorizontal(context.Graphics, context.Bounds, context.DeviceDpi, context.Theme.Foreground, backward);
+            PaintHeaderScroller(context, fill, border, 0);
+            RibbonArrowPainter.DrawHorizontal(context.Graphics, context.Bounds, context.DeviceDpi, context.Theme.Foreground, backward, context.Theme.Chevrons);
             return;
         }
-        DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.BodyFill,
+        DrawChrome(context with { IsHeaderScrollButton = !context.IsBodyScrollButton }, context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.BodyFill,
             context.Hot || context.Pressed ? context.Theme.Accent : context.Theme.PopupBorder);
-        RibbonArrowPainter.DrawHorizontal(context.Graphics, context.Bounds, context.DeviceDpi, context.Theme.Foreground, backward);
+        RibbonArrowPainter.DrawHorizontal(context.Graphics, context.Bounds, context.DeviceDpi, context.Theme.Foreground, backward, context.Theme.Chevrons);
     }
     /// <summary>Paints an opaque vertical overflow-menu scroll band in device-pixel bounds, including its direction and endpoint availability.</summary>
     public virtual void DrawOverflowScrollButton(RibbonPaintContext context, bool upward, bool enabled)
@@ -68,7 +68,7 @@ public partial class RibbonRenderer : IDisposable
         if (enabled && (context.Hot || context.Pressed))
             DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
         RibbonArrowPainter.DrawVertical(context.Graphics, context.Bounds, context.DeviceDpi,
-            enabled ? context.Theme.Foreground : context.Theme.DisabledColor, upward);
+            enabled ? context.Theme.Foreground : context.Theme.DisabledColor, upward, context.Theme.Chevrons);
     }
     /// <summary>Paints the measured tab-row minimize/expand button. A minimized ribbon shows a downward chevron.</summary>
     public virtual void DrawMinimizeButton(RibbonPaintContext context, bool minimized)
@@ -83,7 +83,7 @@ public partial class RibbonRenderer : IDisposable
         {
             context.Graphics.SetClip(context.Bounds, System.Drawing.Drawing2D.CombineMode.Intersect);
             if (context.Hot || context.Pressed) DrawChrome(context, QuickAccessFill(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, false), Color.Transparent);
-            RibbonArrowPainter.DrawVertical(context.Graphics, context.Bounds, context.DeviceDpi, context.Theme.Foreground, !minimized);
+            RibbonArrowPainter.DrawVertical(context.Graphics, context.Bounds, context.DeviceDpi, context.Theme.Foreground, !minimized, context.Theme.Chevrons);
         }
         finally { context.Graphics.Restore(state); }
     }
@@ -245,7 +245,7 @@ public partial class RibbonRenderer : IDisposable
         RibbonArrowPainter.DrawDown(context.Graphics, context.Bounds, context.DeviceDpi, color);
     /// <summary>Paints the right-pointing indicator for a nested command menu in its measured slot.</summary>
     public virtual void DrawSubmenuArrow(RibbonPaintContext context, Color color) =>
-        RibbonArrowPainter.DrawHorizontal(context.Graphics, context.Bounds, context.DeviceDpi, color, false);
+        RibbonArrowPainter.DrawHorizontal(context.Graphics, context.Bounds, context.DeviceDpi, color, false, context.Theme.Chevrons);
     /// <summary>Paints a decorative command-menu separator within its measured row. It has no interaction state.</summary>
     public virtual void DrawMenuSeparator(RibbonPaintContext context, RibbonMenuSeparatorItem item)
     {
@@ -350,7 +350,7 @@ public partial class RibbonRenderer : IDisposable
     {
         var color = tab.ContextualColor.IsEmpty ? context.Theme.Accent : tab.ContextualColor;
         // WPF Office 2024 ContextualUnselectedOpacity: composite before GDI text drawing.
-        double opacity = color.A / 255d * (selected ? 1 : 0.6);
+        double opacity = color.A / 255d * (selected ? 1 : context.Theme.HeaderAppearance?.ContextualUnselectedOpacity ?? 0.6);
         var background = context.Theme.Background;
         int Mix(int foreground, int behind) => (int)Math.Round(foreground * opacity + behind * (1 - opacity));
         return Color.FromArgb(Mix(color.R, background.R), Mix(color.G, background.G), Mix(color.B, background.B));
@@ -712,8 +712,21 @@ public partial class RibbonRenderer : IDisposable
     /// <summary>Paints a visible keyboard focus outline.</summary>
     public virtual void DrawFocus(RibbonPaintContext context)
     {
-        var bounds = Rectangle.Inflate(context.Bounds, -2, -2);
-        if (context.CompositedText)
+        var bounds = RibbonSharedEffectMetrics.FocusBounds(context);
+        if (bounds.Width <= 0 || bounds.Height <= 0) return;
+        if (context.Theme.FocusStrokeWidth is not null)
+        {
+            int stroke = Math.Min(RibbonSharedEffectMetrics.FocusStroke(context), Math.Max(1, Math.Min(bounds.Width, bounds.Height) / 2));
+            var saved = context.Graphics.Save();
+            try
+            {
+                context.Graphics.SetClip(context.Bounds, CombineMode.Intersect);
+                using var pen = new Pen(context.Theme.Foreground, stroke) { DashStyle = DashStyle.Dot };
+                context.Graphics.DrawRectangle(pen, bounds.X + stroke / 2f, bounds.Y + stroke / 2f, Math.Max(0, bounds.Width - stroke), Math.Max(0, bounds.Height - stroke));
+            }
+            finally { context.Graphics.Restore(saved); }
+        }
+        else if (context.CompositedText)
         {
             using var pen = new Pen(context.Theme.Foreground) { DashStyle = DashStyle.Dot };
             context.Graphics.DrawRectangle(pen, bounds);
@@ -732,12 +745,14 @@ public partial class RibbonRenderer : IDisposable
     protected virtual void DrawChrome(RibbonPaintContext context, RibbonFill fill, Color border)
     {
         if (TryPaintBackstageState(context, fill, border, 0)) return;
+        if (TryPaintHeaderScroller(context, fill, border, 0)) return;
         PaintRounded(context with { Bounds = Rectangle.Inflate(context.Bounds, -1, -1) }, 0, fill, border, border.A == 0 ? 0 : 1);
     }
     /// <summary>Paints a fill and outline using mirrored corner coverage.</summary>
     protected void DrawRounded(RibbonPaintContext context, RibbonFill fill, Color border)
     {
         if (TryPaintBackstageState(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
+        if (TryPaintHeaderScroller(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
         _rounded.Draw(context.Graphics, Rectangle.Inflate(context.Bounds, -1, -1), context.Theme.CornerRadius * context.DeviceDpi / 96, fill, border, border.A == 0 ? 0 : 1);
     }
     internal void PaintRounded(RibbonPaintContext context, int radius, RibbonFill fill, Color border, int stroke = 1) =>
