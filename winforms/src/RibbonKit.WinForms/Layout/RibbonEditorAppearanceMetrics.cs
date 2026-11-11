@@ -5,6 +5,7 @@ internal sealed record RibbonEditorChromeDefaults(int Inset, int BorderWidth, in
 // Resolved paint values only; native geometry and lifecycle stay in their owners.
 internal readonly record struct RibbonEditorAppearanceMetrics(RibbonTheme Theme, int Dpi, RibbonEditorChromeDefaults Defaults)
 {
+    internal int ChoiceTextPadding => Theme.EditorAppearance?.ChoiceTextHorizontalPadding ?? Defaults.ChoiceTextPadding;
     internal Color ActiveBorder => Theme.EditorAppearance is { ActiveBorderColor.IsEmpty: false } settings ? settings.ActiveBorderColor : Theme.Accent;
     internal int Radius(int fallback, bool choice) => (choice ? Theme.EditorAppearance?.ChoiceCornerRadius : Theme.EditorAppearance?.CornerRadius) is { } radius
         ? RibbonLayoutEngine.Scale(radius, Dpi) : fallback;

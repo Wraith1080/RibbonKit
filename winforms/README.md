@@ -2722,6 +2722,38 @@ validation, caret, selection, IME and popup ownership keep their existing paths.
 The optional demo adds **Try text fields**, **Try choices** and **Editor appearance
 effects** to the new **Theme effects 4** tab; earlier review tabs remain in place.
 
+`Theme.PopupAppearance` accepts immutable `RibbonPopupAppearanceSettings` for
+the shared floating-popup frame and shadow:
+
+| Member | Default and behavior |
+| --- | --- |
+| `BorderWidth` | One device pixel. Authored 0..32 logical pixels; zero hides paint while keeping legacy content clearance. Wider borders reserve space around hosted content. |
+| `ShadowHorizontalOffset` | Zero. Authored -32..32 logical pixels; shared clearance includes both horizontal and existing vertical offsets. |
+| `ShadowFalloff` | Gaussian divisor 2.5. Authored finite 0.1..16; larger values concentrate the shadow near the frame, smaller values soften it within the existing blur footprint. |
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    PopupAppearance = new RibbonPopupAppearanceSettings
+    {
+        BorderWidth = 3, ShadowHorizontalOffset = 6, ShadowFalloff = 1.4
+    }
+};
+```
+
+Members reset independently with null; `PopupAppearance = null` resets this
+group. Values validate before Theme/BuiltInTheme mutation. Existing popup colors,
+radius, shadow enabled/color/blur/vertical offset and system policy remain in use.
+The actual renderer's additive `GetPopupBorderWidth` hook supplies device pixels
+to paint and native hosted-content clearance, bounded to 128 logical pixels and
+available space. Custom frame/shadow/radius/clearance overrides retain precedence.
+Menus, nested menus, choice lists, galleries and passive tips share the frame;
+content controls, editors, selection, activation and popup ownership stay with
+their existing owners. Body shadows retain their own falloff/defaults.
+The optional demo adds **Try popup frames** and **Popup frame effects** on
+**Theme effects 4**. Use the existing body scrollers when a group is outside the
+current width.
+
 Derive from `RibbonRenderer` for a flat/custom presentation, or from
 `RibbonOffice2024Renderer` to retain Office styling while overriding selected
 drawing. Earlier preview subclasses that called base painting to obtain Office

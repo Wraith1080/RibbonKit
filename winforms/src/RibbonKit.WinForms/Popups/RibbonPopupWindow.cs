@@ -1,3 +1,5 @@
+using RibbonKit.WinForms.Layout;
+
 namespace RibbonKit.WinForms;
 
 // Common opaque frame, rounded clipping and layered soft shadow for every ribbon popup.
@@ -27,7 +29,7 @@ internal sealed class RibbonPopupWindow : ToolStripDropDown
     internal RibbonPopupWindow(RibbonControl ribbon, Action activationChanged, bool nonActivating = false)
     {
         this.ribbon = ribbon; this.activationChanged = activationChanged; this.nonActivating = nonActivating;
-        AutoSize = false; Padding = new(1); Margin = Padding.Empty;
+        AutoSize = false; Padding = new(RibbonPopupFrameMetrics.ContentInset(ribbon.Painter, ribbon.Theme, ribbon.DeviceDpi)); Margin = Padding.Empty;
         // AutoClose changes native topmost state and creates the HWND. Configure
         // its class shadow first, avoiding a second HWND and native setup pass.
         DropShadowEnabled = false; CausesValidation = false;
@@ -46,15 +48,16 @@ internal sealed class RibbonPopupWindow : ToolStripDropDown
     private readonly PopupChromeWindow _chrome = new();
     private Size _shapeSize;
     private int _shapeRadius = -1;
+    private int _shapeInset = -1;
     private int UpdateShape()
     {
         int radius = Math.Clamp(ribbon.Painter.GetPopupCornerRadius(ribbon.Theme, ribbon.DeviceDpi), 0, Math.Min(Width, Height) / 2);
-        if (_shapeSize == Size && _shapeRadius == radius) return radius;
-        _shapeSize = Size; _shapeRadius = radius;
+        if (_shapeSize == Size && _shapeRadius == radius && _shapeInset == Padding.Left) return radius;
+        _shapeSize = Size; _shapeRadius = radius; _shapeInset = Padding.Left;
         // Control owns its assigned Region, including replacement/disposal.
         Region = radius > 0 ? RoundedPainter.CreateOpaqueRegion(Size, radius) : null;
         foreach (var host in Items.OfType<ToolStripControlHost>())
-            host.Control.Region = radius > 0 ? RoundedPainter.CreateOpaqueRegion(host.Control.Size, Math.Max(0, radius - 1)) : null;
+            host.Control.Region = radius > 0 ? RoundedPainter.CreateOpaqueRegion(host.Control.Size, Math.Max(0, radius - _shapeInset)) : null;
         return radius;
     }
     protected override void OnVisibleChanged(EventArgs e)

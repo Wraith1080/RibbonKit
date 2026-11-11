@@ -17,6 +17,7 @@ internal sealed record RibbonHeaderPresentationRegistration(RibbonHeaderRenderer
 
 internal static class RibbonPresentationResolver
 {
+    internal static readonly RibbonPopupFrameDefaults PopupFrame = new(BorderWidth: 1, Blur: 6, HorizontalOffset: 0, VerticalOffset: 2, Falloff: 2.5, LegacyPadding: 8);
     internal static readonly RibbonEditorChromeDefaults EditorChrome = new(Inset: 1, BorderWidth: 1, ChoiceInset: 1, ChoiceTextPadding: 6);
     internal static readonly RibbonCommandChromeDefaults CommandChrome = new(Inset: 1, BorderWidth: 1, SplitWidth: 1, SplitInset: 1);
     internal static readonly RibbonBodyFrameDefaults NeutralBody = new(PaintShadow: false, BorderFallback: false, AllowBottomBorderOnly: false, RadiusDivisor: 0);

@@ -1,23 +1,25 @@
-# Continue native WinForms themes after D1c editor appearance
+# Continue native WinForms themes after D2 popup frames
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-12**. B1–B3, C1–C2, D1a–D1c and adjustability backfills
+Updated **2026-11-12**. B1–B3, C1–C2, D1a–D1c, D2 and adjustability backfills
 A00–A04/A06–A09/A11–A16 are implemented. Current evidence and exact user review
 scope live in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
-The latest implementation is [D1c](THEMES-PLAN.md#native-editor-appearance-d1c--2026-11-12).
-D1c appearance review remains pending; use the ledger for earlier review scope.
-The user committed D1b at `2a38995` before D1c.
+The latest implementation is [D2](THEMES-PLAN.md#ordinary-popup-frame-appearance-d2--2026-11-12).
+D2 appearance review remains pending; use the ledger for earlier review scope.
+The user committed D1c at `41fd2aa` before D2.
 
 ## Next bounded implementation
 
 Start with `git status --short` and inspect live branch/HEAD; preserve later user
-commits and edits. Follow the current user request. For a continuation, D2
-**ordinary popup-frame appearance** is next proposed: inspect existing popup
-frame/shadow/clip/measurement roles and actual renderer hooks; choose a bounded
-extraction using existing settings before adding immutable public settings.
-Application Menu recipes and other later surfaces remain separate. Keep current defaults. Read the matching source map and rules in
+commits and edits. Follow the current user request. For a continuation, D3
+**ordinary menu decoration** is next proposed: inspect menu headers, separators
+and overflow scroll bands plus their existing paint/geometry roles and actual
+renderer hooks. Choose a bounded extraction using existing settings before adding
+immutable public settings.
+Application Menu interiors and other later surfaces remain separate. Preserve
+current defaults. Read the matching source map and rules in
 [THEME-ARCHITECTURE-PLAN](THEME-ARCHITECTURE-PLAN.md). Planning-only requests do not
 need builds, tests or package refresh.
 
@@ -33,9 +35,10 @@ validation, IME and popup ownership remain with their existing shared owners.
 **Review tabs:** the user requested a fresh tab for D1c. Put new controls on
 **Theme effects 4** through `ThemeEffectsReviewTab` until directed otherwise.
 `ThemeEffects2ReviewTab` / `ThemeEffects3ReviewTab` pin existing controls to their
-original tabs. Earlier tabs retain seven/five/four groups; tab 4 has **Try text
-fields**, **Try choices** and **Editor appearance effects**. Do not move old
-groups or infer fullness from reduction.
+original tabs. Earlier tabs retain seven/five/four groups; tab 4 has five groups
+(editor controls plus **Try popup frames** and **Popup frame effects**). Use its
+existing body scrollers when needed. Do not move old groups or infer fullness
+from reduction; the user has not declared tab 4 full.
 
 ## Preserve delivered contracts
 
@@ -65,6 +68,17 @@ groups or infer fullness from reduction.
   selected-value paint, editor manager, binding/validation and ownership remain
   unchanged. Frame decoration does not add native input padding. Default paint
   has 64 exact image/geometry pairs; do not repeat that passed batch for no change.
+- D2 retains shared popup frame/shadow defaults and `PopupAppearance` border
+  width, horizontal shadow offset and Gaussian falloff. Actual public frame/
+  shadow/radius/clearance hooks remain authoritative. `GetPopupBorderWidth`
+  supplies device pixels to frame paint, shell/host padding, hosted corner masks,
+  menu/custom-body sizing, choice fitting and passive tip clearance. Zero hides
+  border paint but keeps one-device-pixel content clearance; authored widths
+  reserve space and clamp to available work areas. Null keeps all old rounding.
+  Existing colors/radius/shadow enable/opacity/blur/vertical offset are reused.
+  Choice width also consumes D1c horizontal text padding. Shadow falloff is in
+  the bounded shared painter cache key; body shadows retain their own default.
+  No native activation/stack/ownership or animation-clock rewrite was performed.
 - Existing Theme assignment closes ordinary menus through `ModelChanged`;
   retained models reopen normally. Do not change lifecycle to satisfy a probe.
 - A05 caption tint, A10 preferred page minimum, A17 tip placement and the reported

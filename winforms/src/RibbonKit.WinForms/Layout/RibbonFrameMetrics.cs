@@ -4,8 +4,6 @@ internal readonly record struct RibbonFrameMetrics(RibbonTheme Theme)
 {
     internal int BodyBlur => Theme.BodyShadowBlur ?? 6;
     internal int BodyOffset => Theme.BodyShadowVerticalOffset ?? 2;
-    internal int PopupBlur => Theme.PopupShadowBlur ?? 6;
-    internal int PopupOffset => Theme.PopupShadowVerticalOffset ?? 2;
     internal bool HasBodyShadowOverride => Theme.BodyShadowBlur is not null || Theme.BodyShadowVerticalOffset is not null;
     internal static int Radius(int? logical, int legacyDevicePixels, int dpi) => logical is { } value ? RibbonLayoutEngine.Scale(value, dpi) : legacyDevicePixels;
     internal static int PopupPadding(RibbonRenderer renderer, RibbonTheme theme, int dpi) =>
@@ -21,6 +19,7 @@ internal readonly record struct RibbonFrameMetrics(RibbonTheme Theme)
     internal static void Validate(RibbonTheme theme)
     {
         RibbonBodyAppearanceSettings.Validate(theme.BodyAppearance);
+        RibbonPopupAppearanceSettings.Validate(theme.PopupAppearance);
         if (theme.BodyCornerRadius is < 0 or > 64 || theme.BackstagePageCornerRadius is < 0 or > 64 ||
             theme.OptionsButtonCornerRadius is < 0 or > 64 ||
             theme.FocusCornerRadius is < 0 or > 64 || theme.KeyTipCornerRadius is < 0 or > 64 ||

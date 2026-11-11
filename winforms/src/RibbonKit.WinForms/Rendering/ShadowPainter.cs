@@ -5,8 +5,8 @@ namespace RibbonKit.WinForms;
 // Nine slices keep the cached blur independent of the ribbon's changing width.
 internal sealed class ShadowPainter : IDisposable
 {
-    private readonly Dictionary<(int Radius, int Blur, Color Color), Bitmap> _cache = [];
-    internal void Draw(Graphics graphics, Rectangle bounds, int radius, int blur, Color color, bool squareTop = false, bool squareBottom = false)
+    private readonly Dictionary<(int Radius, int Blur, Color Color, double Falloff), Bitmap> _cache = [];
+    internal void Draw(Graphics graphics, Rectangle bounds, int radius, int blur, Color color, bool squareTop = false, bool squareBottom = false, double falloff = 2.5)
     {
         if (bounds.Width <= 0 || bounds.Height <= 0 || color.A == 0 || blur <= 0) return;
         if (squareTop || squareBottom)
@@ -19,18 +19,18 @@ internal sealed class ShadowPainter : IDisposable
                 {
                     graphics.SetClip(Rectangle.FromLTRB(bounds.Left - blur, top ? bounds.Top - blur : middle,
                         bounds.Right + blur, top ? middle : bounds.Bottom + blur), CombineMode.Intersect);
-                    Draw(graphics, bounds, top ? squareTop ? 0 : radius : squareBottom ? 0 : radius, blur, color);
+                    Draw(graphics, bounds, top ? squareTop ? 0 : radius : squareBottom ? 0 : radius, blur, color, falloff: falloff);
                 }
                 finally { graphics.Restore(saved); }
             }
             return;
         }
         radius = Math.Clamp(radius, 0, (Math.Min(bounds.Width, bounds.Height) - 1) / 2);
-        var key = (radius, blur, color);
+        var key = (radius, blur, color, falloff);
         if (!_cache.TryGetValue(key, out var mask))
         {
             if (_cache.Count >= 16) Dispose();
-            _cache[key] = mask = Create(radius, blur, color);
+            _cache[key] = mask = Create(radius, blur, color, falloff);
         }
         int edge = radius + blur;
         var outer = Rectangle.Inflate(bounds, blur, blur);
@@ -49,11 +49,11 @@ internal sealed class ShadowPainter : IDisposable
         }
         finally { graphics.Restore(state); }
     }
-    private static Bitmap Create(int radius, int blur, Color color)
+    private static Bitmap Create(int radius, int blur, Color color, double falloff)
     {
         int edge = radius + blur, size = 2 * edge + 1;
         var bitmap = new Bitmap(size, size);
-        double sigma = Math.Max(0.5, blur / 2.5), tail = Math.Exp(-0.5 * blur * blur / (sigma * sigma));
+        double sigma = Math.Max(0.5, blur / falloff), tail = Math.Exp(-0.5 * blur * blur / (sigma * sigma));
         for (int y = 0; y < size; y++)
             for (int x = 0; x < size; x++)
             {

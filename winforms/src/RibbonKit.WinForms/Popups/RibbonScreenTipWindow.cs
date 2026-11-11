@@ -9,12 +9,12 @@ internal sealed record RibbonScreenTipLayout(Size Size, Rectangle Title, Rectang
     internal const TextFormatFlags TextFlags = TextFormatFlags.WordBreak | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.TextBoxControl;
     internal static string TitleFor(RibbonItem item) => string.IsNullOrEmpty(item.ScreenTipTitle) ? item.Text : item.ScreenTipTitle;
 
-    internal static RibbonScreenTipLayout Measure(string title, string description, Font font, int dpi, Size available, RibbonTheme? theme = null)
+    internal static RibbonScreenTipLayout Measure(string title, string description, Font font, int dpi, Size available, RibbonTheme? theme = null, int frameInset = 1)
     {
         int S(int n) => RibbonLayoutEngine.Scale(n, dpi);
         var metrics = new RibbonTipMetrics(theme);
         int outerWidth = Math.Max(1, Math.Min(S(metrics.MaximumWidth), available.Width));
-        int padding = Math.Min(S(metrics.ContentPadding), Math.Max(0, (Math.Min(outerWidth, available.Height) - 2) / 2));
+        int padding = Math.Min(S(metrics.ContentPadding) + Math.Max(0, frameInset - 1), Math.Max(0, (Math.Min(outerWidth, available.Height) - 2) / 2));
         int width = Math.Max(1, outerWidth - 2 * padding);
         using var titleFont = new Font(font, font.Style | FontStyle.Bold);
         var titleSize = TextRenderer.MeasureText(title, titleFont, new(width, int.MaxValue), TextFlags);
@@ -53,7 +53,8 @@ internal sealed class RibbonScreenTipWindow : Form
         var work = Screen.FromRectangle(anchor).WorkingArea;
         int inset = RibbonFrameMetrics.PopupPadding(ribbon.Painter, ribbon.Theme, ribbon.DeviceDpi);
         if (work.Width > 2 * inset && work.Height > 2 * inset) work.Inflate(-inset, -inset);
-        _layout = RibbonScreenTipLayout.Measure(_title, _description, ribbon.Font, ribbon.DeviceDpi, work.Size, ribbon.Theme);
+        _layout = RibbonScreenTipLayout.Measure(_title, _description, ribbon.Font, ribbon.DeviceDpi, work.Size, ribbon.Theme,
+            RibbonPopupFrameMetrics.ContentInset(ribbon.Painter, ribbon.Theme, ribbon.DeviceDpi, work.Size));
         FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false; StartPosition = FormStartPosition.Manual;
         AutoScaleMode = AutoScaleMode.None; CausesValidation = false; TabStop = false;
         SetStyle(ControlStyles.Selectable, false);

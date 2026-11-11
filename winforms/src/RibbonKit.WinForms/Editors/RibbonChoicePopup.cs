@@ -39,15 +39,18 @@ internal sealed class RibbonChoicePopup : IDisposable
         _list.SelectedIndexChanged += (_, _) => { if (!_silent && !_disposed && _list.SelectedIndex >= 0) _preview(_list.SelectedIndex); };
         // A QAT anchor may be narrower than every choice. Measure on the
         // owning surface's DPI-aware DC, including both text insets and frame.
+        var work = Screen.FromRectangle(anchor).WorkingArea;
+        int frameInset = RibbonPopupFrameMetrics.ContentInset(ribbon.Painter, ribbon.Theme, ribbon.DeviceDpi, work.Size), frame = 2 * frameInset;
+        int textPadding = new RibbonEditorAppearanceMetrics(ribbon.Theme, ribbon.DeviceDpi, RibbonPresentationResolver.EditorChrome).ChoiceTextPadding;
         using var measure = ribbon.CreateGraphics();
         int width = Math.Max(anchor.Width, item.Items.Select(text => TextRenderer.MeasureText(measure, text, ribbon.Font,
             new(int.MaxValue, int.MaxValue), TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding).Width
-            + 2 * RibbonLayoutEngine.Scale(6, ribbon.DeviceDpi) + 2).DefaultIfEmpty(anchor.Width).Max());
+            + 2 * RibbonLayoutEngine.Scale(textPadding, ribbon.DeviceDpi) + frame).DefaultIfEmpty(anchor.Width).Max());
         if (item.Items.Count > 8) width += SystemInformation.GetVerticalScrollBarWidthForDpi(ribbon.DeviceDpi);
-        var bounds = CalculateBounds(anchor, Screen.FromRectangle(anchor).WorkingArea, width, _list.ItemHeight, item.Items.Count, ribbon.DeviceDpi, submenu);
-        _list.Size = new(bounds.Width - 2, bounds.Height - 2);
+        var bounds = CalculateBounds(anchor, work, width, _list.ItemHeight, item.Items.Count, ribbon.DeviceDpi, submenu, frameInset);
+        _list.Size = new(Math.Max(1, bounds.Width - frame), Math.Max(1, bounds.Height - frame));
         var host = new ToolStripControlHost(_list) { AutoSize = false, Size = _list.Size, Margin = Padding.Empty, Padding = Padding.Empty };
-        _window = new(ribbon, QueueActivationCheck, nonActivating: true) { Size = bounds.Size, Name = item.Id + ".popup" };
+        _window = new(ribbon, QueueActivationCheck, nonActivating: true) { Size = bounds.Size, Padding = new(frameInset), Name = item.Id + ".popup" };
         _window.Items.Add(host);
         _window.Closed += (_, _) => { if (!_disposed) _cancel(); };
         _form = ribbon.FindForm();
@@ -59,18 +62,19 @@ internal sealed class RibbonChoicePopup : IDisposable
         }
         _window.Show(bounds.Location);
     }
-    internal static Rectangle CalculateBounds(Rectangle anchor, Rectangle work, int width, int rowHeight, int count, int dpi, bool submenu = false)
+    internal static Rectangle CalculateBounds(Rectangle anchor, Rectangle work, int width, int rowHeight, int count, int dpi, bool submenu = false, int frameInset = 1)
     {
-        if (submenu) return RibbonPopupManager.CalculateBounds(anchor, work, new(width, Math.Max(1, Math.Min(count, 8)) * rowHeight + 2), true, dpi);
+        int frame = 2 * Math.Min(Math.Max(1, frameInset), Math.Max(1, (Math.Min(work.Width, work.Height) - 1) / 2));
+        if (submenu) return RibbonPopupManager.CalculateBounds(anchor, work, new(width, Math.Max(1, Math.Min(count, 8)) * rowHeight + frame), true, dpi);
         int inset = RibbonLayoutEngine.Scale(8, dpi);
-        if (work.Width > 2 * inset + 2 && work.Height > 2 * inset + rowHeight + 2) work.Inflate(-inset, -inset);
+        if (work.Width > 2 * inset + frame && work.Height > 2 * inset + rowHeight + frame) work.Inflate(-inset, -inset);
         int below = Math.Max(0, work.Bottom - anchor.Bottom), above = Math.Max(0, anchor.Top - work.Top);
-        int wanted = Math.Max(1, Math.Min(count, 8)) * rowHeight + 2;
+        int wanted = Math.Max(1, Math.Min(count, 8)) * rowHeight + frame;
         bool up = wanted > below && above > below;
         int available = Math.Max(0, up ? above : below);
-        int rows = Math.Max(1, (available - 2) / Math.Max(1, rowHeight));
-        int height = Math.Min(work.Height, Math.Min(wanted, rows * rowHeight + 2));
-        width = Math.Clamp(width, Math.Min(3, work.Width), work.Width);
+        int rows = Math.Max(1, (available - frame) / Math.Max(1, rowHeight));
+        int height = Math.Min(work.Height, Math.Min(wanted, rows * rowHeight + frame));
+        width = Math.Clamp(width, Math.Min(frame + 1, work.Width), work.Width);
         return new(Math.Clamp(anchor.Left, work.Left, work.Right - width),
             Math.Clamp(up ? anchor.Top - height : anchor.Bottom, work.Top, work.Bottom - height), width, height);
     }

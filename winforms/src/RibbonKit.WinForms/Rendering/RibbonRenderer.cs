@@ -13,17 +13,12 @@ public partial class RibbonRenderer : IDisposable
     private readonly RibbonCaptionLayout _captions = new();
     /// <summary>Gets the floating popup corner radius in device pixels. The flat renderer returns zero; frame, clipping and shadow share this value.</summary>
     public virtual int GetPopupCornerRadius(RibbonTheme theme, int deviceDpi) => 0;
-    /// <summary>Paints the outer frame of a floating ribbon popup. The hosted content is inset by one device pixel.</summary>
-    public virtual void DrawPopupFrame(RibbonPaintContext context) =>
-        PaintRounded(context, GetPopupCornerRadius(context.Theme, context.DeviceDpi), new(context.Theme.PopupColor), context.Theme.PopupBorder);
+    /// <summary>Gets floating-popup border width in device pixels. Null PopupAppearance.BorderWidth retains one device pixel; explicit logical widths scale with DPI. Frame paint and hosted content clearance use this hook, bounded to 128 logical pixels by native consumers.</summary>
+    public virtual int GetPopupBorderWidth(RibbonTheme theme, int deviceDpi) => new RibbonPopupFrameMetrics(theme, deviceDpi, RibbonPresentationResolver.PopupFrame).BorderWidth;
+    /// <summary>Paints the outer frame of a floating ribbon popup. Hosted content reserves at least one device pixel, or the actual renderer's wider border.</summary>
+    public virtual void DrawPopupFrame(RibbonPaintContext context) => RibbonPopupFrameRenderer.DrawFrame(this, context);
     /// <summary>Paints a floating popup's shadow onto a transparent surface. Bounds describe the popup; GetPopupShadowPadding reserves its complete shadow/frame clearance.</summary>
-    public virtual void DrawPopupShadow(RibbonPaintContext context)
-    {
-        var bounds = context.Bounds;
-        var metrics = new RibbonFrameMetrics(context.Theme);
-        bounds.Offset(0, RibbonLayoutEngine.Scale(metrics.PopupOffset, context.DeviceDpi));
-        _shadow.Draw(context.Graphics, bounds, GetPopupCornerRadius(context.Theme, context.DeviceDpi), RibbonLayoutEngine.Scale(metrics.PopupBlur, context.DeviceDpi), context.Theme.PopupShadowColor);
-    }
+    public virtual void DrawPopupShadow(RibbonPaintContext context) => RibbonPopupFrameRenderer.DrawShadow(this, context);
     /// <summary>Paints the ribbon or popup background.</summary>
     public virtual void DrawSurface(RibbonPaintContext context, bool popup)
     {

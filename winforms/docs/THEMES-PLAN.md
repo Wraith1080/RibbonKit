@@ -354,13 +354,13 @@ Backstage. Stop for this review before another theme.
 | Item | Status |
 | --- | --- |
 | Direction | **2026-11-10: user selected Office 2019 first and light themes before dark.** |
-| Planning | B1–B3, C1–C2, D1a–D1c and audit corrections A00–A04/A06–A09/A11–A16 are implemented. D2 ordinary popup-frame appearance is next proposed; caption/layout/tip candidates remain separate. Later family order is provisional. |
+| Planning | B1–B3, C1–C2, D1a–D1c, D2 and audit corrections A00–A04/A06–A09/A11–A16 are implemented. D3 ordinary menu decoration is next proposed; caption/layout/tip candidates remain separate. Later family order is provisional. |
 | Earlier-slice adjustability audit | **2026-11-11: A11–A16 header/shared effects implemented and verified.** Current evidence is in the [header/shared record](#header-and-shared-effect-overrides--2026-11-11). Earlier evidence remains below. The [audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) retains A05/A10/A17 as separate candidates. |
-| Runtime/API/rendering | D1c extracts shared native-field and choice-row drawing through the actual renderer. Immutable `EditorAppearance` adds field border/corner/inset/active-ink and choice shape/text-padding settings. Existing editor colors, state fills, native geometry/lifecycle, command settings and public chrome/text/arrow hooks remain authoritative. |
-| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; the permanent sample is refreshed. The user requested a new tab: **Try text fields / Try choices / Editor appearance effects** use **Theme effects 4**. Earlier tabs retain seven/five/four groups. Keep new review controls on tab 4 until directed otherwise; authored Forms/UserControls/resources/project files remain intact. |
-| Focused Release verification | D1c: **53 distinct relevant Release cases passed**: 15 new appearance cases, 36 selected editor/choice/QAT/geometry/selection/validation cases, and two expanded default-comparison cases. Evidence is in the [D1c record](#native-editor-appearance-d1c--2026-11-12). Earlier evidence remains below; no broad suite ran. |
-| Two-family default parity | D1c: **64 PNG/geometry pairs match exactly** across both light palettes, flat/Office renderers, Compact/Touch, two font sizes and 96/120/144/192 DPI; both null and empty settings match saved defaults. No full native matrix ran. |
-| Composed native package verification | D1c: **4/4 public-package scopes plus new-tab checks passed** at actual 120 DPI for both light families in Solid/Mica, each Classic/Simplified x Compact/Touch. Actual field/choice callbacks, unchanged native slots/HWND/parent/bounds, value/selection/read-only/focus state, validation/commit and reset were checked. Eight of 16 samples established editor focus; all retained their baseline focus state. Offscreen checks do not establish physical-input/visible frame-pacing acceptance. |
+| Runtime/API/rendering | D2 extracts shared popup frame/shadow drawing with resolved defaults. Immutable `PopupAppearance` adds border width, horizontal shadow offset and Gaussian falloff. The actual renderer's additive `GetPopupBorderWidth` hook drives frame paint and hosted content clearance; existing radius/colors/shadow roles and native ownership remain authoritative. |
+| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; the permanent sample is refreshed. New **Try popup frames / Popup frame effects** groups join the editor controls on **Theme effects 4**. Earlier tabs retain seven/five/four groups; tab 4 now has five groups. Keep using tab 4 until the user directs otherwise; authored Forms/UserControls/resources/project files remain intact. |
+| Focused Release verification | D2: **34 distinct relevant Release cases passed**, including 15 new popup/default cases and 19 selected frame/creation/choice-focus/gallery-motion/tip cases. Evidence is in the [D2 record](#ordinary-popup-frame-appearance-d2--2026-11-12). Earlier evidence remains below; no broad suite ran. |
+| Two-family default parity | D2: **32 PNG/geometry pairs match exactly** across both light palettes, flat/Office renderers, even/odd bounds and 96/120/144/192 DPI; both null and empty settings match saved defaults. Default shadow clearance, native shell padding and menu/choice placement remain unchanged. No full native matrix ran. |
+| Composed native package verification | D2: **4/4 public-package scopes plus tab checks passed** at actual 120 DPI for both light families in Solid/Mica, each Classic/Simplified x Compact/Touch. Actual frame/shadow callbacks, authored border/content/nested geometry, retained editor HWND/parent/value/selection, borrowed body return and retained choice commit/reset were checked. Offscreen checks do not establish physical-input/visible frame-pacing acceptance. |
 | Backstage review correction | **2026-11-11: navbar blank-frame and left rounded-corner black-bar fixes implemented and verified; user review pending.** Current focused/package evidence is in the [page-motion follow-up](BACKSTAGE-PAGE-MOTION.md#navbar-blank-frame-and-rounded-edge-follow-up--2026-11-11). |
 | Deferred title review issue | **2026-11-11: user reported title-text flicker while closing Backstage and allowed deferral to title theming work.** Their `20261111-0345-01.1714250.mp4` confirms the Office 2019 close at approximately **7.03–7.37 s**: the title moves left, its leading text becomes pale/white over the lightening caption, then dark ink returns. Native-rate frames and timestamps are retained under `artifacts/backstage-title-flicker/recording/`. Caption foreground contrast/clip handoff as the navigation fades is the source-inspection lead, not a verified root cause. Preserve opaque, legible title ink throughout closing when addressing it. No title runtime change or new build/test was made for this recording review; the page/corner correction does not address it. |
 | Broader Release suite | Initial implementation: 1,485 passed / 6 failed / 1,491 total (historical evidence above). Correction run **stopped at the user's request**, 1,089 passed / 3 failed / 1,092 executed; incomplete, no full-suite result claimed. Do not restart it. |
@@ -1545,3 +1545,90 @@ pacing and mixed-monitor checks remain separate. No full suite/native matrix or
 WPF build/test ran. D2 ordinary popup-frame appearance is next proposed;
 Application Menu and later surfaces remain separate. A05/A10/A17 and the known
 Backstage closing-title ink flicker retain their deferred scope.
+
+
+## Ordinary popup-frame appearance D2 — 2026-11-12
+
+The user authorized continuation from their clean D1c commit `41fd2aa` on
+`codex/Ribbonkit-Winform`. This bounded slice extracts shared floating-popup
+frame/shadow recipes into `RibbonPopupFrameRenderer`, with value-only
+`RibbonPopupFrameMetrics` and explicit `RibbonPresentationResolver.PopupFrame`
+defaults. Neutral and Office reuse this structure through the actual renderer's
+radius hooks; no family selector or replacement layout engine was added.
+
+`Theme.PopupAppearance` accepts immutable `RibbonPopupAppearanceSettings`:
+
+- `BorderWidth`: optional 0..32 logical pixels; null keeps one device pixel.
+  Zero hides paint while keeping the legacy one-device-pixel content clearance.
+  Wider borders reserve space around the existing content, subject to work-area
+  clamps, rather than drawing underneath native editors or choice rows.
+- `ShadowHorizontalOffset`: optional -32..32 logical pixels; null keeps zero.
+  Existing `PopupShadowVerticalOffset` and `PopupShadowBlur` remain independent.
+  Authored offset/blur clearance uses scaled blur plus the larger absolute offset.
+  All-null offsets/blur retain legacy summed eight-logical-pixel rounding.
+- `ShadowFalloff`: optional finite 0.1..16; null keeps 2.5. Higher values
+  concentrate the Gaussian shadow near the frame; lower values soften it within
+  the same blur footprint. The shared painter's half-device-pixel safety floor
+  remains. Its bounded cache now keys by falloff; body shadows retain 2.5.
+
+Numeric settings validate before Theme/BuiltInTheme mutation. Members reset
+independently with null; `PopupAppearance = null` resets only this group. Existing
+`PopupBackground`, `PopupBorder`, `PopupCornerRadius`, `PopupShadowEnabled`,
+`PopupShadowColor`, blur/vertical offset and system shadow policy are reused.
+The native opaque popup body and layered shadow/frame still have their existing
+owners. Public frame/shadow/radius/clearance overrides retain precedence.
+
+The additive public `GetPopupBorderWidth(theme, dpi)` virtual hook supplies device
+pixels to both paint and content reservation. Consumers bound it to 128 logical
+pixels, retain at least one device pixel of content clearance, and clamp that
+clearance for narrow work areas. Popup shell padding, hosted size budgets and
+hosted corner masks consume this value together. Menu/custom-body sizing retains
+its existing algorithms and native ownership. Choice-list height/width fitting
+uses the same border and now also consumes D1c's authored horizontal text padding
+instead of a second fixed six-pixel measurement. Passive tip measurement adds
+only clearance above its legacy one-pixel frame to existing tip padding.
+The shared outer frame also serves galleries, tips and Application Menu callers;
+this does not claim their interior recipes are rewritten. Activation, stack,
+placement, clocks and borrowed content ownership are unchanged.
+
+Relevant evidence is under `artifacts/popup-appearance-d2/`:
+
+- `tests/before-defaults.trx` / `tests/after-defaults.trx`: **32 exact PNG/geometry
+  pairs** in `before-defaults/` and `after-defaults/`, both light themes x flat/
+  Office x 96/120/144/192 DPI x even/odd dimensions. Null and empty records match
+  saved frame/shadow pixels, radius/clearance, native shell padding and placement.
+- `tests/popup-focused.trx`: **33 passed**. Fourteen new authored cases cover
+  border width/alpha/hide/four-corner symmetry, horizontal offset/footprint,
+  falloff/cache, unchanged body shadow, actual custom border hooks, native menu/
+  choice/tip clearance, retained editor state, work-area clamps, atomic validation,
+  immutable reset and frame/shadow replacement hooks. Nineteen existing cases
+  cover popup HWND creation, choice mouse/keyboard focus, frame/clearance geometry,
+  passive tips and gallery/menu motion. With the default case, **34 distinct
+  relevant cases passed**; no broad suite was rerun.
+- `package-final2/result.log`: **4/4 public-package scopes**, Office 2019/2024 Light
+  x None/Mica, actual 120 DPI, each Classic/Simplified x Compact/Touch. Actual
+  frame/shadow callbacks replay the selected effects. Authored outer border space
+  preserves content size where it fits, nested close preserves its parent, native
+  text HWND/parent/value/selection persist, an application-owned body returns
+  unparented without disposal, and native choice selection commits through the
+  retained ComboBox. Member/group reset and public review controls/idempotence
+  pass. Native shadow policy was enabled in these scopes.
+  Package fixtures respect the existing unparented Content contract and test
+  pixels outside the allocated shadow rectangle, not its final allowed pixel.
+  No runtime workaround was introduced for either fixture correction; callback
+  assertions are collected/logged outside paint callbacks to avoid JIT dialogs.
+- Normal Release runtime/test and normal Debug runtime/designer server/client/
+  permanent sample builds pass with zero warnings/errors. The in-place local
+  package is `0.1.0-designer.local20261111T230703038Z`. New **Try popup frames**
+  and **Popup frame effects** groups use **Theme effects 4**; earlier tabs retain
+  seven/five/four groups and tab 4 has five. Rendered frames/review controls were
+  inspected; groups outside the current width use the existing body scrollers.
+  The user has not declared tab 4 full. Authored Forms/UserControls/resources/
+  project files are retained.
+
+D2 human appearance review is pending; earlier review scope remains in the
+ledger. Actual VS, physical input/IME, visible frame pacing and mixed-monitor
+checks remain separate. No full suite/native matrix or WPF build/test ran.
+D3 ordinary menu decoration (headers, separators and scroll bands) is next
+proposed; Application Menu interiors and later surfaces remain separate.
+A05/A10/A17 and the Backstage closing-title ink flicker retain their deferred scope.

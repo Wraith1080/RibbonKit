@@ -146,7 +146,9 @@ internal sealed class RibbonPopupManager : IDisposable
         // anchor, keeping overflow in the menu instead of covering the header.
         int availableHeight = ReferenceEquals(owner, _ribbon.FileMenu) && menuSource?.Content is null
             ? Math.Max(work.Bottom - placementAnchor.Bottom, placementAnchor.Top - work.Top) : work.Height;
-        var surface = new RibbonPopupSurface(_ribbon, owner, new(Math.Max(1, work.Width - 2), Math.Max(1, availableHeight - 2)), menuSource, groupSource, quickAccess);
+        int frameInset = RibbonPopupFrameMetrics.ContentInset(_ribbon.Painter, _ribbon.Theme, _ribbon.DeviceDpi, new(work.Width, availableHeight));
+        int frame = 2 * frameInset;
+        var surface = new RibbonPopupSurface(_ribbon, owner, new(Math.Max(1, work.Width - frame), Math.Max(1, availableHeight - frame)), menuSource, groupSource, quickAccess);
         if (opener.IsDisposed || !opener.Visible || owner.IsDisposed || !owner.Visible || !owner.EffectiveEnabled || _ribbon.IsDisposed
             || menuSource is not null && !ReferenceEquals(menuSource.Ribbon, _ribbon) || !CurrentProjection(owner, menuSource, groupSource)
             || surface.HasGalleryPresenter && quickAccess && menuSource is RibbonGalleryItem { UseDropDownPresenterInQuickAccess: false })
@@ -154,8 +156,8 @@ internal sealed class RibbonPopupManager : IDisposable
         var host = new ToolStripControlHost(surface) { AutoSize = false, Size = surface.Size, Margin = Padding.Empty, Padding = Padding.Empty };
         var window = new RibbonPopupWindow(_ribbon, QueueActivationCheck)
         {
-            AutoSize = false, AutoClose = false, Padding = new(1), Margin = Padding.Empty,
-            Size = new(surface.Width + 2, surface.Height + 2), DropShadowEnabled = false,
+            AutoSize = false, AutoClose = false, Padding = new(frameInset), Margin = Padding.Empty,
+            Size = new(surface.Width + frame, surface.Height + frame), DropShadowEnabled = false,
             AccessibleName = (owner is RibbonQuickAccessDropDownReference or RibbonQuickAccessGroupReference ? RibbonQuickAccess.Caption(owner) : owner.Text) + " commands"
         };
         window.Items.Add(host);
@@ -163,7 +165,7 @@ internal sealed class RibbonPopupManager : IDisposable
         {
             if (!surface.HasCustomContent || window.IsDisposed) return;
             host.Size = surface.Size;
-            var next = CalculateBounds(placementAnchor, work, new(surface.Width + 2, surface.Height + 2),
+            var next = CalculateBounds(placementAnchor, work, new(surface.Width + frame, surface.Height + frame),
                 contextPoint is null && opener is RibbonPopupSurface, _ribbon.DeviceDpi, surface.IsApplicationMenu ? _ribbon.Theme.ApplicationMenuWorkAreaInset : null);
             window.Bounds = next;
         };
@@ -176,7 +178,7 @@ internal sealed class RibbonPopupManager : IDisposable
         if (bounds.Size != window.Size)
         {
             window.Size = bounds.Size;
-            surface.Size = new(Math.Max(1, bounds.Width - 2), Math.Max(1, bounds.Height - 2));
+            surface.Size = new(Math.Max(1, bounds.Width - frame), Math.Max(1, bounds.Height - frame));
             host.Size = surface.Size;
         }
         bool accessibilityPublished = false;

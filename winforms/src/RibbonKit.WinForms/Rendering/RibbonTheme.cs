@@ -406,6 +406,8 @@ public sealed record RibbonTheme
     public Color Border { get; init; } = Color.FromArgb(224, 224, 224);
     /// <summary>Gets the outline color of floating ribbon popup windows.</summary>
     public Color PopupBorder { get; init; } = Color.FromArgb(191, 191, 191);
+    /// <summary>Gets optional immutable shared floating-popup border and shadow overrides. Null retains existing popup paint, content clearance and native ownership.</summary>
+    public RibbonPopupAppearanceSettings? PopupAppearance { get; init; }
     /// <summary>Gets the Office popup corner radius in 96-DPI logical pixels; zero gives square corners.</summary>
     public int PopupCornerRadius { get; init; } = 6;
     /// <summary>Gets whether floating popups use the renderer's soft shadow, subject to the Windows shadow preference.</summary>

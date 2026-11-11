@@ -1632,3 +1632,21 @@ static RibbonKit.WinForms.RibbonEditorAppearanceSettings.operator !=(RibbonKit.W
 static RibbonKit.WinForms.RibbonEditorAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonEditorAppearanceSettings? left, RibbonKit.WinForms.RibbonEditorAppearanceSettings? right) -> bool
 RibbonKit.WinForms.RibbonTheme.EditorAppearance.get -> RibbonKit.WinForms.RibbonEditorAppearanceSettings?
 RibbonKit.WinForms.RibbonTheme.EditorAppearance.init -> void
+RibbonKit.WinForms.RibbonPopupAppearanceSettings
+RibbonKit.WinForms.RibbonPopupAppearanceSettings.RibbonPopupAppearanceSettings() -> void
+RibbonKit.WinForms.RibbonPopupAppearanceSettings.<Clone>$() -> RibbonKit.WinForms.RibbonPopupAppearanceSettings!
+RibbonKit.WinForms.RibbonPopupAppearanceSettings.BorderWidth.get -> int?
+RibbonKit.WinForms.RibbonPopupAppearanceSettings.BorderWidth.init -> void
+RibbonKit.WinForms.RibbonPopupAppearanceSettings.ShadowHorizontalOffset.get -> int?
+RibbonKit.WinForms.RibbonPopupAppearanceSettings.ShadowHorizontalOffset.init -> void
+RibbonKit.WinForms.RibbonPopupAppearanceSettings.ShadowFalloff.get -> double?
+RibbonKit.WinForms.RibbonPopupAppearanceSettings.ShadowFalloff.init -> void
+RibbonKit.WinForms.RibbonPopupAppearanceSettings.Equals(RibbonKit.WinForms.RibbonPopupAppearanceSettings? other) -> bool
+override RibbonKit.WinForms.RibbonPopupAppearanceSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonPopupAppearanceSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonPopupAppearanceSettings.ToString() -> string!
+static RibbonKit.WinForms.RibbonPopupAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonPopupAppearanceSettings? left, RibbonKit.WinForms.RibbonPopupAppearanceSettings? right) -> bool
+static RibbonKit.WinForms.RibbonPopupAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonPopupAppearanceSettings? left, RibbonKit.WinForms.RibbonPopupAppearanceSettings? right) -> bool
+RibbonKit.WinForms.RibbonTheme.PopupAppearance.get -> RibbonKit.WinForms.RibbonPopupAppearanceSettings?
+RibbonKit.WinForms.RibbonTheme.PopupAppearance.init -> void
+virtual RibbonKit.WinForms.RibbonRenderer.GetPopupBorderWidth(RibbonKit.WinForms.RibbonTheme! theme, int deviceDpi) -> int
