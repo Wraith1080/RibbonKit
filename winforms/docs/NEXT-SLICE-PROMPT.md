@@ -1,25 +1,26 @@
-# Continue native WinForms themes after D4c Application Menu content
+# Continue native WinForms themes after D5a gallery tile-state/headings
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-12**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c and adjustability backfills
+Updated **2026-11-12**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a and adjustability backfills
 A00–A04/A06–A09/A11–A16 are implemented. Current evidence and exact user review
 scope live in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
-The latest implementation is [D4c](THEMES-PLAN.md#application-menu-content-presentation-d4c--2026-11-12).
+The latest implementation is [D5a](THEMES-PLAN.md#gallery-tile-state-and-headings-d5a--2026-11-12).
 Use the ledger for the exact user appearance review scope and remaining gates.
-The user committed D4b at `d30d11c` before D4c. Do not overwrite later user commits.
+The user committed D4c at `8d1151e` before D5a. Do not overwrite later user commits.
 
 ## Next bounded implementation
 
 Start with `git status --short` and inspect live branch/HEAD; preserve later user
-commits and edits. Follow the current user request. For a continuation, D5
-**gallery presentation** is next proposed: inspect built-in tile states/headings/
-inline chrome, current appearance roles and actual presenter hooks, then choose
-one bounded portion before implementation. Reuse D1 command/content helpers and
-D2/D3 frame/menu roles where structurally appropriate. Preserve gallery selection,
-preview/cancel, scrolling, QAT/inline source identity and application presenter/
-native ownership; authoring cards remain ordinary editable UserControls.
+commits and edits. Follow the current user request. For a continuation, D5b
+**gallery artwork/label presentation and inline frame/utility decoration** is next
+proposed. Inspect remaining label line cap/artwork padding and expand-glyph
+dimensions plus frame/utility chrome. Reuse existing gallery spacing, image/frame
+and Chevron roles, actual renderer hooks and shared layout. Preserve gallery
+selection, preview/cancel, scrolling, QAT/inline source identity and application
+presenter/native ownership; authoring cards remain ordinary editable UserControls.
+D5a owns tile-state/headings; preserve its decoration unless a concrete regression appears.
 D4a owns Application Menu state chrome; D4b owns surfaces/headings/clips; D4c owns
 content/measurement; D2 owns the outer frame. Tips and library dialogs retain later scopes.
 Preserve current defaults. Read the matching source map and rules in
@@ -35,13 +36,12 @@ A new family selector needs an actual structural difference, not a palette name,
 header style or radius. Native editor HWND, parent, value, selection, focus,
 validation, IME and popup ownership remain with their existing shared owners.
 
-**Review tabs:** the user requested a fresh tab for D4a. Put new controls on
-**Theme effects 5** through `ThemeEffectsReviewTab` until directed otherwise.
-`ThemeEffects2ReviewTab` / `ThemeEffects3ReviewTab` / `ThemeEffects4ReviewTab` pin
-existing groups to their original tabs. Earlier tabs retain seven/five/four/seven
-groups; tab 5 has six: **Try Application Menu / Application Menu state effects /
-Application Menu surfaces / Application Menu headings / Application Menu content /
-Application Menu descriptions**.
+**Review tabs:** the user requested a fresh tab for gallery work. Put new controls
+on **Theme effects 6** through `ThemeEffectsReviewTab` until directed otherwise.
+`ThemeEffects2ReviewTab` / `ThemeEffects3ReviewTab` / `ThemeEffects4ReviewTab` /
+`ThemeEffects5ReviewTab` pin existing groups to their original tabs. Earlier tabs
+retain seven/five/four/seven/six groups; tab 6 starts with **Try built-in galleries /
+Gallery tile states / Gallery headings**. Keep existing gallery previews on tab 6.
 The File preview uses existing authored models and restores the prior File mode.
 Its divider-visibility button uses the existing independent flag (2019 defaults
 false); group Reset clears only the new settings. The earlier optional overflow
@@ -130,6 +130,17 @@ when needed. Do not move old groups or infer fullness from reduction.
   unless affected. Description member Reset keeps icon/arrow roles; whole content
   Reset preserves Appearance. Native body bounds are compared after actual
   autoscaling, and borrowed raster assets must outlive the ribbon.
+- D5a retains `GalleryAppearance`, shared built-in tile-state/heading decoration
+  and actual protected DrawChrome precedence. Null keeps actual primitive radii,
+  device-pixel inset/stroke when ink exists, selected Accent/otherwise transparent
+  tile ink, neutral no-fill/SecondaryText headings and Office GalleryHeadingBackground/
+  Foreground headings. HeaderBold null adds Bold; false removes it while preserving
+  other styles. Explicit fill/ink retains alpha; zero/hide, clamps and independent/
+  group Reset remain. State fills/eligibility, content/focus/target geometry and
+  custom/native presenter ownership remain shared. Ordinary menu heading forwarding
+  stays separate. Reuse 64 exact default pairs and 26 relevant passing cases unless
+  affected. Package checks retain the same custom presenter/editor and exercise
+  active preview/cancel/commit sequences without claiming physical input.
 - Existing Theme assignment closes ordinary menus through `ModelChanged`;
   retained models reopen normally. Do not change lifecycle to satisfy a probe.
 - A05 caption tint, A10 preferred page minimum, A17 tip placement and the reported

@@ -6,7 +6,7 @@ public partial class DesignerForm
 {
     private void EnableApplicationMenuChromeDemo()
     {
-        var tab = ThemeEffectsReviewTab;
+        var tab = ThemeEffects5ReviewTab;
         if (tab.Groups.Any(group => group.Id == "review-application-chrome")) return;
         var preview = new RibbonGroup { Id = "review-application-preview", Text = "Try Application Menu" };
         bool previewing = false; RibbonFileMenuMode priorMode = default;
@@ -45,7 +45,7 @@ public partial class DesignerForm
     internal void VerifyApplicationMenuChromeDemo(string output)
     {
         StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); ShowInTaskbar = false;
-        EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffectsReviewTab;
+        EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffects5ReviewTab;
         if (tab.Text != "Theme effects 5" || ribbon.Tabs.Single(item => item.Text == "Office 2019 Light").Groups.Count != 7 || ThemeEffects2ReviewTab.Groups.Count != 5 || ThemeEffects3ReviewTab.Groups.Count != 4 || ThemeEffects4ReviewTab.Groups.Count != 7) throw new InvalidOperationException("Application Menu controls displaced an earlier tab.");
         ribbon.SelectedTab = tab; var effects = tab.Groups.Single(group => group.Id == "review-application-chrome");
         foreach (var item in effects.Items.Take(5)) item.PerformClick(); var settings = ribbon.Theme.ApplicationMenuAppearance;

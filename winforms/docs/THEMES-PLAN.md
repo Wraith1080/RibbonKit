@@ -354,17 +354,17 @@ Backstage. Stop for this review before another theme.
 | Item | Status |
 | --- | --- |
 | Direction | **2026-11-10: user selected Office 2019 first and light themes before dark.** |
-| Planning | B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c and audit corrections A00–A04/A06–A09/A11–A16 are implemented. D5 gallery presentation is next proposed; caption/layout/tip candidates remain separate. Later family order is provisional. |
+| Planning | B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a and audit corrections A00–A04/A06–A09/A11–A16 are implemented. D5b gallery content/inline frame/utilities is next proposed; caption/layout/tip candidates remain separate. Later family order is provisional. |
 | Earlier-slice adjustability audit | **2026-11-11: A11–A16 header/shared effects implemented and verified.** Current evidence is in the [header/shared record](#header-and-shared-effect-overrides--2026-11-11). Earlier evidence remains below. The [audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) retains A05/A10/A17 as separate candidates. |
-| Runtime/API/rendering | D4c extracts Application Menu content drawing and shared content metrics, with immutable `ApplicationMenuContent`. Icon/text/description/arrow/footer/separator overrides feed measurement and actual renderer hooks. Live separators now receive their Application Menu context. D4a/D4b state/surface presentation, D2 outer frames and native editor/content owners remain. |
-| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass; final sample build has no warnings/errors. **Application Menu content / Application Menu descriptions** join the earlier controls on **Theme effects 5** (six groups). Earlier tabs retain seven/five/four/seven groups. Keep using tab 5 until directed otherwise; group reduction does not establish fullness. File previews use authored models and restore the prior mode. Authored Forms/UserControls/resources/project files remain intact. |
-| Focused Release verification | D4c: **39 distinct relevant cases have passing latest results**: 29 new content cases, nine retained appearance/ownership/designer cases and one default comparison. Only the affected authored-icon and preview cases were repeated after follow-ups. Evidence is in the [D4c record](#application-menu-content-presentation-d4c--2026-11-12). No broad suite ran. |
-| Two-family default parity | D4c: **64 PNG/content-slot/measurement pairs match exactly**, both light palettes, flat/Office renderers, Compact/Touch, 96/120/144/192 DPI and 9/14-point fonts. Null and empty settings both match saved defaults for navigation/pane/footer, rich/plain descriptions, disabled raster, indicators and split content. No full native matrix ran. |
-| Composed native package verification | D4c: **4/4 public-package scopes plus tab checks passed** at actual 120 DPI for both light families in Solid/Mica, each Classic/Simplified x Compact/Touch. Actual content/separator callbacks consume authored settings; Reset restores measured geometry. Accessible primary action/dismissal, native field HWND/parent/height/value/selection, borrowed body HWND/parent/bounds/value/selection and return, independent reset and File-mode restoration pass. These are synchronous offscreen checks; external UIA and physical-input/visible frame-pacing acceptance remain separate. |
+| Runtime/API/rendering | D5a extracts built-in gallery tile-state and heading decoration into shared helpers with immutable `GalleryAppearance`. Actual tile/heading/protected chrome/text/image/focus hooks remain authoritative. Content/target geometry, state fills, native/custom presenter ownership and inline frame/utilities retain their owners. |
+| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; the permanent sample is refreshed. The requested new **Theme effects 6** has **Try built-in galleries / Gallery tile states / Gallery headings**. Earlier tabs retain seven/five/four/seven/six groups. Application Menu controls remain pinned to tab 5. Keep using tab 6 until directed otherwise; reduction does not establish fullness. Authored Forms/UserControls/resources/project files remain intact. |
+| Focused Release verification | D5a: **26 distinct relevant cases passed**: 16 new gallery cases, nine retained gallery/presenter/designer cases and one default comparison. The two designer-class cases also pass with authored gallery settings; other passed scopes were retained. Evidence is in the [D5a record](#gallery-tile-state-and-headings-d5a--2026-11-12). No broad suite ran. |
+| Two-family default parity | D5a: **64 PNG/content-slot/layout pairs match exactly**, both light palettes, flat/Office renderers, Compact/Touch, 96/120/144/192 DPI and 9/14-point fonts. Null and empty settings match saved tile states, disabled/selected content, heading and ordinary-menu defaults. No full native matrix ran. |
+| Composed native package verification | D5a: **4/4 public-package scopes plus new-tab checks passed** at actual 120 DPI for both light families in Solid/Mica, each Classic/Simplified x Compact/Touch. Actual tile/heading/chrome/text callbacks, authored paint, unchanged popup/inline geometry and source selection, retained custom presenter/editor HWND/parent/value/selection, two active presenter preview/cancel/commit sequences per scope and independent/group Reset pass. These are synchronous offscreen checks; external UIA and physical-input/visible frame-pacing acceptance remain separate. |
 | Backstage review correction | **2026-11-11: navbar blank-frame and left rounded-corner black-bar fixes implemented and verified; user review pending.** Current focused/package evidence is in the [page-motion follow-up](BACKSTAGE-PAGE-MOTION.md#navbar-blank-frame-and-rounded-edge-follow-up--2026-11-11). |
 | Deferred title review issue | **2026-11-11: user reported title-text flicker while closing Backstage and allowed deferral to title theming work.** Their `20261111-0345-01.1714250.mp4` confirms the Office 2019 close at approximately **7.03–7.37 s**: the title moves left, its leading text becomes pale/white over the lightening caption, then dark ink returns. Native-rate frames and timestamps are retained under `artifacts/backstage-title-flicker/recording/`. Caption foreground contrast/clip handoff as the navigation fades is the source-inspection lead, not a verified root cause. Preserve opaque, legible title ink throughout closing when addressing it. No title runtime change or new build/test was made for this recording review; the page/corner correction does not address it. |
 | Broader Release suite | Initial implementation: 1,485 passed / 6 failed / 1,491 total (historical evidence above). Correction run **stopped at the user's request**, 1,089 passed / 3 failed / 1,092 executed; incomplete, no full-suite result claimed. Do not restart it. |
-| User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; D1a/D1b review controls remain on Theme effects 3. **2026-11-12: user reported D1b looks good and authorized continuation to native editor appearance.** D1a review remains at its earlier recorded scope. The user requested a new review tab for D1c; use Theme effects 4 and preserve tabs 1–3. **2026-11-12: user reported D2 works perfectly and authorized continuation to ordinary menu decoration.** **2026-11-12: user reported D3 looks good and authorized Application Menu continuation, with new review controls on Theme effects 5.** **2026-11-12: user reported D4a Application Menu state effects look good on Theme effects 5.** **2026-11-12: user confirmed every D4b surface/heading option works and authorized continuation.** Actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
+| User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; D1a/D1b review controls remain on Theme effects 3. **2026-11-12: user reported D1b looks good and authorized continuation to native editor appearance.** D1a review remains at its earlier recorded scope. The user requested a new review tab for D1c; use Theme effects 4 and preserve tabs 1–3. **2026-11-12: user reported D2 works perfectly and authorized continuation to ordinary menu decoration.** **2026-11-12: user reported D3 looks good and authorized Application Menu continuation, with new review controls on Theme effects 5.** **2026-11-12: user reported D4a Application Menu state effects look good on Theme effects 5.** **2026-11-12: user confirmed every D4b surface/heading option works and authorized continuation.** **2026-11-12: user reported D4c looks good and everything works, authorized gallery continuation and requested its controls on a new Theme effects 6 tab.** Actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
 | Actual VS/physical input/mixed-monitor | Not run for themes; report separately. |
 
 Record later evidence and confirmation here once, with date/revision/scope,
@@ -1992,10 +1992,97 @@ Evidence under `artifacts/application-content-d4c/`:
   were inspected; group reduction remains in use and does not establish fullness.
   Authored Forms/UserControls/resources/project files remain intact.
 
-D4c human appearance review is pending. External UIA, actual VS, physical input/
+D4c user appearance review scope is recorded in the current ledger. External UIA, actual VS, physical input/
 IME, visible frame pacing and mixed-monitor gates remain separate. No full suite,
-native matrix or WPF build/test ran. D5 gallery presentation is next proposed:
-inspect built-in tiles/headings/inline chrome and actual presenter hooks, choose
-one bounded portion, reuse existing content/frame roles and retain application
-presenter/native ownership. Tips, library dialogs, A05/A10/A17 and the Backstage
+native matrix or WPF build/test ran. D5a followed below. Tips, library dialogs,
+A05/A10/A17 and the Backstage
 closing-title ink flicker remain separate.
+
+## Gallery tile state and headings D5a — 2026-11-12
+
+Work started clean on `codex/Ribbonkit-Winform` at the user's D4c commit `8d1151e`.
+D5a bounds gallery work to built-in tile-state chrome and noninteractive gallery
+headings. `RibbonGalleryRenderer` shares those recipes, with resolved paint
+metrics and explicit primitive defaults. The neutral/Office entry points retain
+their existing primitive radius, heading-fill and text-color fallbacks. Both
+light themes use these existing structures; no family selector was added.
+
+`Theme.GalleryAppearance` accepts immutable `RibbonGalleryAppearanceSettings`:
+
+- `TileCornerRadius` / `TileInset` / `TileBorderWidth` / `TileBorderColor`: active
+  tile-state decoration. Radius/inset/stroke ranges are 0..64 / 0..1024 / 0..32
+  logical pixels. Null retains actual renderer corners, a one-device-pixel inset
+  and a one-device-pixel outline when ink exists. Empty ink retains Accent on
+  selected tiles and transparent ink otherwise. Explicit alpha is retained;
+  zero/Transparent hides the outline. Idle tiles are not activated by shape or
+  border settings. Pressed > Hover > Checked and disabled-state eligibility remain.
+- `HeaderCornerRadius` / `HeaderInset` / `HeaderBorderWidth` / `HeaderBorderColor`:
+  the same ranges and primitive fallback rules for headings. Empty ink retains a
+  transparent outline; explicit ink can add a neutral heading outline without
+  inventing a fill. Shape alone does not create neutral heading chrome.
+- `HeaderBackground`: optional alpha/gradient fill for either renderer. Null
+  retains no neutral fill and existing GalleryHeadingBackground for Office.
+  Neutral SecondaryText and Office GalleryHeadingForeground remain the ink roles.
+- `HeaderBold`: null/true adds Bold to host styles; false removes Bold while
+  preserving other styles. Existing heading text padding and measured height are
+  unchanged; heading Hot/Pressed/Focused flags are cleared as before.
+
+Validation precedes Theme/BuiltInTheme mutation. Members reset with null/Empty;
+`GalleryAppearance = null` resets only this group. Paint insets, strokes and
+corners clamp inside existing bounds. Both tile and heading decoration enter the
+actual protected DrawChrome override; inherited primitives consume the scoped
+settings only when authored. A replacing override can veto built-in decoration.
+Actual public tile/heading/text/focus and protected image hooks remain in use.
+Empty records retain the old primitive path and exact rounding.
+
+Tile artwork/label placement, aspect fitting, existing state fills, minimum rows,
+gallery layout/targets, inline frame/utility drawing, selection/preview/commit,
+scrolling and presenter/native ownership stay with their existing owners. The
+ordinary menu heading path still reaches actual DrawGalleryHeading and then its
+separate D3 helper. D5a settings do not leak into ordinary menus or strip chrome.
+Application-owned presenter visuals remain application-owned and may explicitly
+call shared public renderer hooks. Existing editable gallery cards are retained.
+
+Evidence under `artifacts/gallery-appearance-d5a/`:
+
+- `tests/before-defaults.trx`, `tests/after-defaults.trx`, `tests/after-empty.trx`:
+  **64 exact PNG/content-slot/layout pairs**, both families, flat/Office renderers,
+  both densities, four DPIs and two font sizes. Nine tile states include selected,
+  hot, pressed, disabled and focus combinations with raster artwork; real headings
+  and ordinary-menu fallback are captured. Logs retain text/image/focus slots and
+  grouped-grid targets/headings. Null and empty records match saved defaults;
+  no approvals/tolerances changed.
+- `tests/gallery-focused.trx`: **25 passed**, 16 new shape/state/alpha/hide/clamp/
+  four-corner/content-slot/heading-weight/isolation/validation/reset/actual-override
+  cases plus nine retained heading/artwork/preview/inline/QAT/presenter/designer
+  cases. `tests/authored-preview-final.trx`: the two affected designer discovery/
+  preview cases pass with authored gallery settings, without constructing user
+  controls. Including the default-comparison case, **26 distinct cases passed**.
+  Passed unrelated scopes were not repeated.
+- `package/result.log`: **4/4 package-only scopes**, both families x None/Mica at
+  actual 120 DPI, each Classic/Simplified x Compact/Touch. Actual tile/heading/
+  protected-chrome/text callbacks replay authored outline/fill/weight. Popup and
+  inline measured slots and source selection remain unchanged. The same custom
+  inline presenter and editor HWND/parent/value/selection survive theme/reset/mode
+  changes; two active presenter preview/cancel/commit sequences per scope reach
+  original source events once. Member/group Reset passes. These are synchronous
+  offscreen checks before normal queued foreground-loss dismissal, with no
+  activation/lifecycle workaround or external UIA claim.
+- Release runtime/test and normal Debug runtime/designer server/client/sample
+  builds passed without warnings/errors. Refreshed package:
+  `0.1.0-designer.local20261112T031657546Z`. New **Try built-in galleries / Gallery
+  tile states / Gallery headings** groups are on **Theme effects 6**. The existing
+  Application Menu controls/verifiers are pinned through ThemeEffects5ReviewTab;
+  earlier tabs retain seven/five/four/seven/six groups. Built-in popup/inline
+  previews, public presets/hide/independent resets, source selection and
+  idempotence pass. Captured menus and review controls were inspected. Use existing
+  tab/body/group scrolling and reduction when needed; tab 6 has not been declared
+  full. Authored Forms/UserControls/resources/project files remain intact.
+
+D5a human appearance review is pending. External UIA, actual VS, physical input/
+IME, visible frame pacing and mixed-monitor acceptance remain separate. No full
+suite/native matrix or WPF build/test ran. D5b gallery artwork/label presentation
+and inline frame/utility decoration is next proposed. Reuse existing gallery
+spacing, image, frame and Chevron roles; preserve geometry, presenter/native
+ownership and actual renderer hooks. Tips, library dialogs, A05/A10/A17 and the
+Backstage closing-title ink flicker remain separate.

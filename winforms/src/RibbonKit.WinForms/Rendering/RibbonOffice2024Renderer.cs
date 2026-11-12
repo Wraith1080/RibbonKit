@@ -40,13 +40,7 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     public override void DrawGalleryHeading(RibbonPaintContext context, string text)
     {
         if (context.IsMenuHeading) { RibbonMenuDecorationRenderer.DrawHeading(this, context, text, galleryFallback: true); return; }
-        context = context with { Hot = false, Pressed = false, Focused = false };
-        DrawChrome(context, context.Theme.GalleryHeadingBackground, Color.Transparent);
-        using var font = new Font(context.Font, context.Font.Style | FontStyle.Bold);
-        var foreground = context.Theme.GalleryHeadingForeground;
-        var textBounds = new Layout.RibbonGalleryMetrics(context.Theme, context.Density).HeadingTextBounds(context.Bounds, context.DeviceDpi);
-        DrawText(context with { Bounds = textBounds, Font = font }, text, foreground,
-            TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
+        RibbonGalleryRenderer.DrawHeading(this, context, text, office: true);
     }
     /// <inheritdoc />
     public override int GetPopupCornerRadius(RibbonTheme theme, int deviceDpi) => Layout.RibbonLayoutEngine.Scale(theme.PopupCornerRadius, deviceDpi);

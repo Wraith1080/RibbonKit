@@ -47,21 +47,14 @@ public partial class RibbonRenderer
     public virtual void DrawGalleryHeading(RibbonPaintContext context, string text)
     {
         if (context.IsMenuHeading) { RibbonMenuDecorationRenderer.DrawHeading(this, context, text, galleryFallback: false); return; }
-        context = context with { Hot = false, Pressed = false, Focused = false };
-        using var font = new Font(context.Font, context.Font.Style | FontStyle.Bold);
-        var foreground = context.Theme.SecondaryText;
-        var textBounds = new Layout.RibbonGalleryMetrics(context.Theme, context.Density).HeadingTextBounds(context.Bounds, context.DeviceDpi);
-        DrawText(context with { Bounds = textBounds, Font = font }, text, foreground,
-            TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
+        RibbonGalleryRenderer.DrawHeading(this, context, text, office: false);
     }
     /// <summary>Paints an owned gallery tile using its borrowed artwork, selection and independent preview/focus state. Bounds are measured device pixels.</summary>
     public virtual void DrawGalleryTile(RibbonPaintContext context, RibbonGalleryTile tile, bool selected)
     {
         bool enabled = tile.EffectiveEnabled;
         context = EnabledContext(context, enabled);
-        if (selected || context.Hot || context.Pressed)
-            DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked,
-                selected ? context.Theme.Accent : Color.Transparent);
+        RibbonGalleryRenderer.DrawTileState(this, context, selected);
         int S(int value) => RibbonLayoutEngine.Scale(value, context.DeviceDpi);
         var bounds = context.Bounds;
         int padding = new RibbonGalleryMetrics(context.Theme, context.Density).TilePadding;

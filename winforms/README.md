@@ -2905,6 +2905,43 @@ previews. The descriptions reset retains icon/arrow settings; **Default all menu
 content** clears this whole settings group. Existing group reduction and tab/body
 scrolling remain available.
 
+`Theme.GalleryAppearance` accepts immutable `RibbonGalleryAppearanceSettings` for
+built-in tile-state and noninteractive gallery-heading decoration:
+
+| Members | Null defaults and behavior |
+| --- | --- |
+| `TileCornerRadius`, `TileInset`, `TileBorderWidth`, `TileBorderColor` | Actual renderer corners, one-device-pixel inset, and one-device-pixel stroke when ink exists. Empty ink keeps Accent for selected tiles and transparent ink otherwise. Radius/inset/stroke ranges are 0..64 / 0..1024 / 0..32 logical pixels. Alpha is retained; zero/Transparent hides the outline. Settings do not activate idle tiles or alter content/focus/target slots. |
+| `HeaderCornerRadius`, `HeaderInset`, `HeaderBorderWidth`, `HeaderBorderColor` | Same ranges and actual-primitive fallbacks for headings. Empty ink keeps the transparent outline. Shape alone does not add a neutral heading fill; explicit ink can add only an outline. Existing heading text padding remains independent. |
+| `HeaderBackground` | Optional alpha/gradient fill for both renderers. Null keeps no neutral fill and existing GalleryHeadingBackground for Office. Neutral SecondaryText and Office GalleryHeadingForeground retain their roles. |
+| `HeaderBold` | Null/true adds Bold to host styles; false removes Bold and preserves other styles. Measured heading height and text bounds remain unchanged. |
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    GalleryAppearance = new RibbonGalleryAppearanceSettings
+    {
+        TileCornerRadius = 10, TileInset = 3,
+        TileBorderWidth = 2, TileBorderColor = Color.DarkBlue,
+        HeaderBackground = new RibbonFill(Color.LightYellow, Color.LightSkyBlue),
+        HeaderCornerRadius = 8, HeaderBold = false
+    }
+};
+```
+
+Values validate before Theme/BuiltInTheme mutation. Members reset independently
+with null/Empty; `GalleryAppearance = null` resets only this group. Paint dimensions
+clamp inside existing bounds. Actual tile/heading/protected chrome/text/image/
+focus overrides retain precedence. Existing Hover/Pressed/Checked fills,
+artwork/label geometry, inline frame/utilities, source selection/preview/commit
+and presenter/native ownership retain their owners. Ordinary-menu headings keep
+their separate decoration. Application presenter visuals remain application-owned
+and can explicitly use shared public renderer hooks.
+The optional **Try built-in galleries / Gallery tile states / Gallery headings**
+groups are on the requested new **Theme effects 6** tab. Tile and heading member
+resets retain the other roles; **Default all gallery effects** clears the group.
+Earlier controls remain on their original tabs. Use group reduction and tab/body
+scrolling as needed.
+
 Derive from `RibbonRenderer` for a flat/custom presentation, or from
 `RibbonOffice2024Renderer` to retain Office styling while overriding selected
 drawing. Earlier preview subclasses that called base painting to obtain Office

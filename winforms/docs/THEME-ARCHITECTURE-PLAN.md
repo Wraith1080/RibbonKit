@@ -1,6 +1,6 @@
 # Native WinForms theme architecture
 
-**B1–B3, C1–C2, D1a–D1c, D2–D3 and D4a–D4c implemented; latest delivery 2026-11-12.** Backstage uses one registration
+**B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c and D5a implemented; latest delivery 2026-11-12.** Backstage uses one registration
 for sibling layout/drawing helpers, explicit defaults, measured layout inputs and
 caption/motion profiles. Headers register sibling Filled/Underline drawing with
 explicit geometry defaults and adjustable effects. C2 resolves body/connected
@@ -16,14 +16,15 @@ footer/split state chrome with independently adjustable shape, outline, divider
 and selected-primary fill/tint. D4b extracts backing/pane/frame/divider and heading
 paint with shared clipping and independently adjustable settings. D4c extracts
 content drawing and shared content measurement with immutable overrides, keeping
-actual image/text/indicator/arrow/focus/separator hooks and native owners. Gallery
-presentation is next proposed as D5.
+actual image/text/indicator/arrow/focus/separator hooks and native owners. D5a
+extracts built-in gallery tile-state/headings with immutable appearance overrides
+and actual protected chrome precedence. D5b content/inline frame/utilities is next.
 The earlier-slice review found adjustability gaps. A00–A04 fill routing/motion
 and A06–A09 decoration/spacing plus A11–A16 header/shared overrides are implemented;
 track the separate caption/layout/tip candidates in the
 [source audit and correction order](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 Current evidence and user review are recorded in the
-[themes plan](THEMES-PLAN.md#application-menu-content-presentation-d4c--2026-11-12).
+[themes plan](THEMES-PLAN.md#gallery-tile-state-and-headings-d5a--2026-11-12).
 
 The [themes plan](THEMES-PLAN.md) retains appearance requirements and acceptance.
 This document proposes implementation boundaries and a migration sequence; it
@@ -266,7 +267,8 @@ automated evidence or visual acceptance. Implement the following separately.
 | D4a. Application Menu command state/split chrome — implemented | Shared row/footer perimeter and clipped split-half recipes; immutable shape/outline/divider/selected-primary settings. Existing fills, footer radius, explicit divider visibility, public item/content hooks and native geometry/state retain their owners. | 41 distinct passing latest Release cases, 32 exact default paint/target pairs and four package scopes plus new-tab checks are recorded in the [D4a record](THEMES-PLAN.md#application-menu-command-state-and-split-chrome-d4a--2026-11-12). |
 | D4b. Application Menu backgrounds/inner frame/headings — implemented | Shared backing/pane/frame/divider and heading paint; resolved radius/stroke clipping shared with live/preview rows. Immutable settings reuse existing fill/ink/outer-frame roles; geometry and native owners remain. | 37 focused Release cases, 32 exact default PNGs and four synchronous offscreen package scopes plus review-tab checks are recorded in the [D4b record](THEMES-PLAN.md#application-menu-backgrounds-inner-frame-and-headings-d4b--2026-11-12). |
 | D4c. Application Menu content — implemented | Shared content drawing/measurement with immutable icon/text/description/footer/arrow/separator overrides. Null/Empty preserves legacy rounding/allowances; authored metrics feed actual targets. Native fields/content and actual renderer hooks retain their owners. Live separators carry Application Menu context. | 39 distinct relevant passing latest cases, 64 exact default PNG/slot/measurement pairs and four package scopes plus review-tab checks are recorded in the [D4c record](THEMES-PLAN.md#application-menu-content-presentation-d4c--2026-11-12). |
-| D. Remaining surfaces, one per slice | D5 galleries, then tips and library dialogs. Reuse helpers when only palette/metrics differ. Risk: public drawing hooks, command geometry, borrowed editors/presenters/icons and popup retention. | Inspect tiles/headings/inline chrome and presenter hooks before selecting a bounded gallery portion. Select only the changed surface's geometry/paint/state/ownership checks and one unchanged-family comparison. For native content, include retained handle/value/validation evidence; for designer previews, use inert candidate-theme checks. Choose exact filters at each slice. |
+| D5a. Gallery tile-state/headings — implemented | Shared built-in state/heading decoration over existing bounds with immutable GalleryAppearance settings. Actual primitive fallbacks, chrome/text/image/focus hooks, state eligibility, content/layout and presenter/native owners remain. | 26 distinct relevant cases, 64 exact default PNG/slot/layout pairs and four package scopes plus new-tab checks are recorded in the [D5a record](THEMES-PLAN.md#gallery-tile-state-and-headings-d5a--2026-11-12). |
+| D. Remaining surfaces, one per slice | D5b gallery artwork/label presentation and inline frame/utility decoration, then tips and library dialogs. Reuse helpers when only palette/metrics differ. Risk: public drawing hooks, command geometry, borrowed editors/presenters/icons and popup retention. | Reuse gallery spacing/image/frame/Chevron roles, retain shared geometry and application presenter ownership. Select only the changed surface's geometry/paint/state/ownership checks and one unchanged-family comparison. For native content, include retained handle/value/validation evidence; for designer previews, use inert candidate-theme checks. Choose exact filters at each slice. |
 | E. Selected catalog growth | Add one later chosen light definition, reusing surface registrations or adding an actually needed sibling. Risk: selection/Reset/serialization/persistence and unsupported consumer dependencies. | Definition/selection tests, relevant designer/generated-code checks, and a focused independent-consumer visual/state scope. Wait for existing appearance review before another theme. |
 
 For each implementation slice, build affected native projects in their normal
@@ -314,8 +316,8 @@ Completion criteria:
   authored Forms/resources change. Review the diff and record focused results
   and remaining human appearance/input gates in the themes plan.
 
-B2/B3, C1–C2, D1a–D1c, D2–D3 and D4a–D4c were delivered as separate slices. D5
-gallery presentation is next proposed;
+B2/B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c and D5a were delivered as separate slices.
+D5b gallery content/inline frame/utilities is next proposed;
 the consolidated geometry remains the foundation.
 
 ## Verification and delivery budget

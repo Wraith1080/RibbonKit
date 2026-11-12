@@ -6,7 +6,7 @@ public partial class DesignerForm
 {
     private void EnableApplicationMenuSurfaceDemo()
     {
-        var tab = ThemeEffectsReviewTab;
+        var tab = ThemeEffects5ReviewTab;
         if (tab.Groups.Any(group => group.Id == "review-application-surface")) return;
         var surfaces = new RibbonGroup { Id = "review-application-surface", Text = "Application Menu surfaces" };
         Add(surfaces, "Colored menu surfaces", () => Set((ribbon.Theme.ApplicationMenuAppearance ?? new()) with { SurroundBackground = new(Color.LightYellow), NavigationBackground = new(Color.AliceBlue), DefaultPaneBackground = new(Color.Honeydew), ActivePaneBackground = new(Color.MistyRose) }));
@@ -34,7 +34,7 @@ public partial class DesignerForm
     internal void VerifyApplicationMenuSurfaceDemo(string output)
     {
         StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); ShowInTaskbar = false;
-        EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffectsReviewTab; ribbon.SelectedTab = tab;
+        EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffects5ReviewTab; ribbon.SelectedTab = tab;
         if (tab.Text != "Theme effects 5" || ThemeEffects4ReviewTab.Groups.Count != 7 || ThemeEffects3ReviewTab.Groups.Count != 4 || ThemeEffects2ReviewTab.Groups.Count != 5 || ribbon.Tabs.Single(t => t.Text == "Office 2019 Light").Groups.Count != 7) throw new InvalidOperationException("Application Menu surface controls displaced earlier groups.");
         var surfaces = tab.Groups.Single(g => g.Id == "review-application-surface"); var headers = tab.Groups.Single(g => g.Id == "review-application-heading");
         ribbon.Theme = ribbon.Theme with { ApplicationMenuAppearance = new() { RowInset = 4, SplitDividerWidth = 2 } };

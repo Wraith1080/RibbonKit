@@ -612,6 +612,7 @@ public partial class RibbonRenderer : IDisposable
         if (TryPaintBackstageState(context, fill, border, 0)) return;
         if (TryPaintHeaderScroller(context, fill, border, 0)) return;
         if (TryPaintMenuDecoration(context, fill, border, 0)) return;
+        if (TryPaintGalleryChrome(context, fill, border, 0)) return;
         if (TryPaintEditorChrome(context, fill, border, 0)) return;
         if (TryPaintCommandState(context, fill, border, 0)) return;
         PaintRounded(context with { Bounds = Rectangle.Inflate(context.Bounds, -1, -1) }, 0, fill, border, border.A == 0 ? 0 : 1);
@@ -622,6 +623,7 @@ public partial class RibbonRenderer : IDisposable
         if (TryPaintBackstageState(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
         if (TryPaintHeaderScroller(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
         if (TryPaintMenuDecoration(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
+        if (TryPaintGalleryChrome(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
         if (TryPaintEditorChrome(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
         if (TryPaintCommandState(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
         _rounded.Draw(context.Graphics, Rectangle.Inflate(context.Bounds, -1, -1), context.Theme.CornerRadius * context.DeviceDpi / 96, fill, border, border.A == 0 ? 0 : 1);

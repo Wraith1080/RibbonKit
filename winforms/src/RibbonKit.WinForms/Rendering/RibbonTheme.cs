@@ -220,6 +220,8 @@ public sealed record RibbonTheme
     public RibbonFill GalleryHeadingBackground { get; init; } = new(Color.FromArgb(240, 240, 240));
     /// <summary>Gets the Office 2024 text color paired with GalleryHeadingBackground.</summary>
     public Color GalleryHeadingForeground { get; init; } = Color.FromArgb(32, 31, 30);
+    /// <summary>Gets optional immutable built-in gallery tile-state and heading decoration. Null retains existing paint, content/target geometry and application presenter ownership.</summary>
+    public RibbonGalleryAppearanceSettings? GalleryAppearance { get; init; }
     /// <summary>Gets an optional keyboard-badge fill. Null preserves the renderer's default: pale yellow for Office 2024, or Surface for the neutral renderer.</summary>
     public RibbonFill? KeyTipBackground { get; init; }
     /// <summary>Gets the keyboard-badge text color. Empty preserves the renderer's default: black for Office 2024, or Foreground for the neutral renderer.</summary>
@@ -525,6 +527,7 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     internal bool IsMenuHeading { get; init; }
     internal bool IsBackstageMenuSeparator { get; init; }
     internal RibbonMenuDecorationKind MenuDecoration { get; init; }
+    internal RibbonGalleryChromeKind GalleryChrome { get; init; }
     internal Layout.RibbonApplicationMenuPart ApplicationMenuPart { get; init; }
     internal int? ApplicationMenuDividerX { get; init; }
     internal bool ApplicationMenuDefaultPane { get; init; }

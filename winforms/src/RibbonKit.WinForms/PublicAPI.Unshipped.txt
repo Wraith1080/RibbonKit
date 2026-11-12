@@ -1805,3 +1805,34 @@ static RibbonKit.WinForms.RibbonApplicationMenuContentSettings.operator !=(Ribbo
 static RibbonKit.WinForms.RibbonApplicationMenuContentSettings.operator ==(RibbonKit.WinForms.RibbonApplicationMenuContentSettings? left, RibbonKit.WinForms.RibbonApplicationMenuContentSettings? right) -> bool
 RibbonKit.WinForms.RibbonTheme.ApplicationMenuContent.get -> RibbonKit.WinForms.RibbonApplicationMenuContentSettings?
 RibbonKit.WinForms.RibbonTheme.ApplicationMenuContent.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.RibbonGalleryAppearanceSettings() -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.<Clone>$() -> RibbonKit.WinForms.RibbonGalleryAppearanceSettings!
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.TileCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.TileCornerRadius.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.TileInset.get -> int?
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.TileInset.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.TileBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.TileBorderWidth.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.HeaderCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.HeaderCornerRadius.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.HeaderInset.get -> int?
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.HeaderInset.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.HeaderBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.HeaderBorderWidth.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.TileBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.TileBorderColor.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.HeaderBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.HeaderBorderColor.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.HeaderBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.HeaderBackground.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.HeaderBold.get -> bool?
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.HeaderBold.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.Equals(RibbonKit.WinForms.RibbonGalleryAppearanceSettings? other) -> bool
+override RibbonKit.WinForms.RibbonGalleryAppearanceSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonGalleryAppearanceSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonGalleryAppearanceSettings.ToString() -> string!
+static RibbonKit.WinForms.RibbonGalleryAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonGalleryAppearanceSettings? left, RibbonKit.WinForms.RibbonGalleryAppearanceSettings? right) -> bool
+static RibbonKit.WinForms.RibbonGalleryAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonGalleryAppearanceSettings? left, RibbonKit.WinForms.RibbonGalleryAppearanceSettings? right) -> bool
+RibbonKit.WinForms.RibbonTheme.GalleryAppearance.get -> RibbonKit.WinForms.RibbonGalleryAppearanceSettings?
+RibbonKit.WinForms.RibbonTheme.GalleryAppearance.init -> void

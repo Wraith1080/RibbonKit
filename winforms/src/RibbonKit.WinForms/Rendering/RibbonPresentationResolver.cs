@@ -17,6 +17,7 @@ internal sealed record RibbonHeaderPresentationRegistration(RibbonHeaderRenderer
 
 internal static class RibbonPresentationResolver
 {
+    internal static readonly RibbonGalleryChromeDefaults GalleryChrome = new(Inset: 1, BorderWidth: 1);
     internal static readonly RibbonApplicationMenuContentDefaults ApplicationMenuContent = new(LargeIcon: 32, SmallIcon: 16, LargeIconInset: 8, SmallIconInset: 6, Gap: 8, LargeTextInset: 52, TextInset: 6,
         PaintTrailing: 6, MeasureTrailing: 8, RowPadding: 10, IconPadding: 8, DescriptionGap: 2, DescriptionInset: 4, DescriptionLines: 2, FooterPadding: 6, FooterIconPreferred: 46, FooterPlainPreferred: 24,
         CompactArrow: 26, TouchArrow: 44, SeparatorHeight: 9, SeparatorInset: 8, SeparatorStroke: 1);

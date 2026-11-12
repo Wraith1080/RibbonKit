@@ -6,7 +6,7 @@ public partial class DesignerForm
 {
     private void EnableApplicationMenuContentDemo()
     {
-        var tab = ThemeEffectsReviewTab;
+        var tab = ThemeEffects5ReviewTab;
         if (tab.Groups.Any(group => group.Id == "review-application-content")) return;
         var content = new RibbonGroup { Id = "review-application-content", Text = "Application Menu content" };
         Add(content, "Larger menu icons", () => Set((ribbon.Theme.ApplicationMenuContent ?? new()) with { LargeIconSize = 40, SmallIconSize = 24 }));
@@ -34,7 +34,7 @@ public partial class DesignerForm
     internal void VerifyApplicationMenuContentDemo(string output)
     {
         StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); ShowInTaskbar = false;
-        EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffectsReviewTab; ribbon.SelectedTab = tab;
+        EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffects5ReviewTab; ribbon.SelectedTab = tab;
         if (tab.Text != "Theme effects 5" || ThemeEffects4ReviewTab.Groups.Count != 7 || ThemeEffects3ReviewTab.Groups.Count != 4 || ThemeEffects2ReviewTab.Groups.Count != 5 || ribbon.Tabs.Single(t => t.Text == "Office 2019 Light").Groups.Count != 7) throw new InvalidOperationException("Content controls displaced earlier tabs.");
         var content = tab.Groups.Single(g => g.Id == "review-application-content"); var descriptions = tab.Groups.Single(g => g.Id == "review-application-description");
         ribbon.Theme = ribbon.Theme with { ApplicationMenuAppearance = new() { RowInset = 4 } };
