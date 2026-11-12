@@ -1,28 +1,29 @@
-# Continue native WinForms themes after D5a gallery tile-state/headings
+# Continue native WinForms themes after D5b gallery content/inline frame/utilities
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-12**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a and adjustability backfills
+Updated **2026-11-12**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b and adjustability backfills
 A00–A04/A06–A09/A11–A16 are implemented. Current evidence and exact user review
 scope live in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
-The latest implementation is [D5a](THEMES-PLAN.md#gallery-tile-state-and-headings-d5a--2026-11-12).
+The latest implementation is [D5b](THEMES-PLAN.md#gallery-content-and-inline-frame-utilities-d5b--2026-11-12).
 Use the ledger for the exact user appearance review scope and remaining gates.
-The user committed D4c at `8d1151e` before D5a. Do not overwrite later user commits.
+The user committed D5a at `9b45f12` before D5b. Do not overwrite later user commits.
 
 ## Next bounded implementation
 
 Start with `git status --short` and inspect live branch/HEAD; preserve later user
-commits and edits. Follow the current user request. For a continuation, D5b
-**gallery artwork/label presentation and inline frame/utility decoration** is next
-proposed. Inspect remaining label line cap/artwork padding and expand-glyph
-dimensions plus frame/utility chrome. Reuse existing gallery spacing, image/frame
-and Chevron roles, actual renderer hooks and shared layout. Preserve gallery
-selection, preview/cancel, scrolling, QAT/inline source identity and application
-presenter/native ownership; authoring cards remain ordinary editable UserControls.
-D5a owns tile-state/headings; preserve its decoration unless a concrete regression appears.
+commits and edits. Follow the current user request. For a continuation, D6
+**ScreenTip/KeyTip presentation** is next proposed. Inspect actual tip paint,
+measurement and placement, including the separate A17 offset candidate. Choose a
+bounded slice from that source map before editing; reuse existing tip fill/ink,
+popup-frame, spacing and renderer hooks. Preserve keyboard/accessibility routing,
+delay/lifetime, native popup ownership and candidate-theme designer safety.
+D5a owns gallery tile-state/headings and D5b content/inline frame/utilities;
+preserve gallery source identity, preview/cancel/commit and native/custom presenter
+ownership. Authoring cards remain ordinary editable UserControls.
 D4a owns Application Menu state chrome; D4b owns surfaces/headings/clips; D4c owns
-content/measurement; D2 owns the outer frame. Tips and library dialogs retain later scopes.
+content/measurement; D2 owns the outer frame. Library dialogs retain a later scope.
 Preserve current defaults. Read the matching source map and rules in
 [THEME-ARCHITECTURE-PLAN](THEME-ARCHITECTURE-PLAN.md). Planning-only requests do not
 need builds, tests or package refresh.
@@ -36,12 +37,13 @@ A new family selector needs an actual structural difference, not a palette name,
 header style or radius. Native editor HWND, parent, value, selection, focus,
 validation, IME and popup ownership remain with their existing shared owners.
 
-**Review tabs:** the user requested a fresh tab for gallery work. Put new controls
-on **Theme effects 6** through `ThemeEffectsReviewTab` until directed otherwise.
+**Review tabs:** the user declared tab 6 full and requested a fresh tab for D5b.
+Put new controls on **Theme effects 7** through `ThemeEffectsReviewTab` until directed otherwise.
 `ThemeEffects2ReviewTab` / `ThemeEffects3ReviewTab` / `ThemeEffects4ReviewTab` /
-`ThemeEffects5ReviewTab` pin existing groups to their original tabs. Earlier tabs
-retain seven/five/four/seven/six groups; tab 6 starts with **Try built-in galleries /
-Gallery tile states / Gallery headings**. Keep existing gallery previews on tab 6.
+`ThemeEffects5ReviewTab` / `ThemeEffects6ReviewTab` pin existing groups to their original tabs.
+Earlier tabs retain seven/five/four/seven/six/three groups. Tab 6 retains **Try built-in
+galleries / Gallery tile states / Gallery headings**. Tab 7 has **Try gallery content /
+Gallery artwork and labels / Gallery inline frames / Gallery utility glyphs**.
 The File preview uses existing authored models and restores the prior File mode.
 Its divider-visibility button uses the existing independent flag (2019 defaults
 false); group Reset clears only the new settings. The earlier optional overflow
@@ -141,6 +143,16 @@ when needed. Do not move old groups or infer fullness from reduction.
   stays separate. Reuse 64 exact default pairs and 26 relevant passing cases unless
   affected. Package checks retain the same custom presenter/editor and exercise
   active preview/cancel/commit sequences without claiming physical input.
+- D5b retains `GalleryContent`, shared built-in artwork/label/glyph paint and popup
+  minimum-height inputs. Null retains two MiddleCenter label lines, legacy 12 paint /
+  24 measure reserve plus triple TilePadding, horizontal/top TilePadding + 4 / + 2,
+  expand slot/bar/inset/stroke 18/10/4/rounded 2. Explicit lines/alignment/reserve/
+  insets and glyph dimensions/ink support alpha/zero/hide/clamps and independent
+  reset. GalleryAppearance strip/utility roles retain actual primitive defaults
+  and native bounds; frame reset preserves tile/headings. Actual hooks and D1b
+  raster policy remain shared. Reuse 32 exact default pairs and 45 relevant latest
+  passing cases unless affected. Package checks retain the same native editor and
+  source selection, restored popup geometry and unchanged inline targets.
 - Existing Theme assignment closes ordinary menus through `ModelChanged`;
   retained models reopen normally. Do not change lifecycle to satisfy a probe.
 - A05 caption tint, A10 preferred page minimum, A17 tip placement and the reported

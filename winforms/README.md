@@ -2906,7 +2906,7 @@ content** clears this whole settings group. Existing group reduction and tab/bod
 scrolling remain available.
 
 `Theme.GalleryAppearance` accepts immutable `RibbonGalleryAppearanceSettings` for
-built-in tile-state and noninteractive gallery-heading decoration:
+built-in tile-state, noninteractive gallery-heading and inline frame/utility decoration:
 
 | Members | Null defaults and behavior |
 | --- | --- |
@@ -2914,6 +2914,8 @@ built-in tile-state and noninteractive gallery-heading decoration:
 | `HeaderCornerRadius`, `HeaderInset`, `HeaderBorderWidth`, `HeaderBorderColor` | Same ranges and actual-primitive fallbacks for headings. Empty ink keeps the transparent outline. Shape alone does not add a neutral heading fill; explicit ink can add only an outline. Existing heading text padding remains independent. |
 | `HeaderBackground` | Optional alpha/gradient fill for both renderers. Null keeps no neutral fill and existing GalleryHeadingBackground for Office. Neutral SecondaryText and Office GalleryHeadingForeground retain their roles. |
 | `HeaderBold` | Null/true adds Bold to host styles; false removes Bold and preserves other styles. Measured heading height and text bounds remain unchanged. |
+| `StripCornerRadius`, `StripInset`, `StripBorderWidth`, `StripBorderColor`, `StripBackground` | Same dimension ranges and primitive defaults as tile chrome. Empty ink follows PopupBorder; null fill follows Surface. Alpha/gradient fills and zero/Transparent outlines are supported. Decoration does not change native content padding, presenter bounds or utility targets. |
+| `UtilityCornerRadius`, `UtilityInset`, `UtilityBorderWidth`, `UtilityBorderColor` | Independently decorate existing enabled Hover/Pressed buttons, with the same ranges and primitive defaults. Empty ink keeps a transparent outline. Shape/ink does not activate idle or disabled buttons. |
 
 ```csharp
 ribbon.Theme = ribbon.Theme with
@@ -2932,15 +2934,50 @@ Values validate before Theme/BuiltInTheme mutation. Members reset independently
 with null/Empty; `GalleryAppearance = null` resets only this group. Paint dimensions
 clamp inside existing bounds. Actual tile/heading/protected chrome/text/image/
 focus overrides retain precedence. Existing Hover/Pressed/Checked fills,
-artwork/label geometry, inline frame/utilities, source selection/preview/commit
-and presenter/native ownership retain their owners. Ordinary-menu headings keep
-their separate decoration. Application presenter visuals remain application-owned
+source selection/preview/commit and presenter/native ownership retain their owners.
+Artwork/label geometry uses the separate GalleryContent settings below.
+Ordinary-menu headings keep their separate decoration. Application presenter visuals remain application-owned
 and can explicitly use shared public renderer hooks.
 The optional **Try built-in galleries / Gallery tile states / Gallery headings**
 groups are on the requested new **Theme effects 6** tab. Tile and heading member
 resets retain the other roles; **Default all gallery effects** clears the group.
 Earlier controls remain on their original tabs. Use group reduction and tab/body
 scrolling as needed.
+
+`Theme.GalleryContent` accepts immutable `RibbonGalleryContentSettings` for built-in
+artwork/labels and inline utility glyphs:
+
+| Members | Null defaults and behavior |
+| --- | --- |
+| `LabelMaxLines`, `LabelAlignment` | Two lines, MiddleCenter. Line count is 0..32; zero hides labels and removes their measured line allowance. Any defined ContentAlignment is accepted. Wrapping/ellipsis remain; inline labels clamp to the existing viewport. |
+| `ArtworkHeightReserve` | 0..1024 logical pixels, added to triple existing GalleryTilePadding. Null preserves legacy paint 12 / popup-measure 24; an explicit value unifies those allowances. |
+| `ArtworkHorizontalInset`, `ArtworkTopInset` | 0..1024, null GalleryTilePadding + 4 / + 2. Explicit top inset also adjusts popup minimum-height measurement. Artwork slots clamp to the tile and preserve raster aspect fitting. |
+| `ExpandGlyphHeight`, `ExpandBarWidth`, `ExpandBarInset`, `ExpandBarStrokeWidth` | Null 18 / 10 / 4 / DPI-rounded 2 with a one-device-pixel stroke minimum. Height/width ranges are 0..64, inset 0..1024, finite stroke 0..32. Zero height hides both expand marks; zero bar width/stroke hides the bar. A consuming inset hides the bar. Authored bar geometry clips to its existing action target. |
+| `UtilityGlyphColor` | Empty retains enabled Foreground / DisabledColor; alpha is supported and Transparent hides glyphs. Existing Chevrons still controls chevron length/depth/stroke. Up/Down slots and utility action targets remain unchanged. |
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    GalleryContent = new RibbonGalleryContentSettings
+    {
+        LabelMaxLines = 3, LabelAlignment = ContentAlignment.BottomRight,
+        ArtworkHorizontalInset = 14, ArtworkTopInset = 10,
+        ExpandBarWidth = 14, ExpandBarStrokeWidth = 3,
+        UtilityGlyphColor = Color.DarkMagenta
+    }
+};
+```
+
+Values validate before Theme/BuiltInTheme mutation. Null/Empty resets a member;
+`GalleryContent = null` preserves GalleryAppearance. Actual image/text/focus and
+frame/utility/chrome hooks remain in use, as does shared disabled-raster treatment.
+Custom presenter card internals remain application-owned.
+The new **Theme effects 7** tab contains **Try gallery content / Gallery artwork
+and labels / Gallery inline frames / Gallery utility glyphs**. Label, frame and
+glyph resets retain the other roles; frame reset also retains tile/heading settings.
+**Default all gallery content** clears only GalleryContent. Existing D5a controls
+remain on Theme effects 6, which the user declared full. Keep new controls on tab 7
+until directed otherwise.
 
 Derive from `RibbonRenderer` for a flat/custom presentation, or from
 `RibbonOffice2024Renderer` to retain Office styling while overriding selected

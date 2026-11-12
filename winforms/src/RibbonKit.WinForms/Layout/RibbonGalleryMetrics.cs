@@ -11,6 +11,7 @@ internal readonly record struct RibbonGalleryMetrics(RibbonTheme? Theme, RibbonD
     internal static void Validate(RibbonTheme theme)
     {
         RibbonGalleryAppearanceSettings.Validate(theme.GalleryAppearance);
+        RibbonGalleryContentSettings.Validate(theme.GalleryContent);
         int?[] spacing = [theme.GalleryContentPadding, theme.GalleryTilePadding, theme.GalleryHeadingHorizontalPadding, theme.GalleryHeadingVerticalPadding];
         if (spacing.Any(n => n is < 0 or > 1024) || theme.GalleryUtilityWidth is < 1 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(theme), "Gallery spacing must be 0..1024, utility width 1..1024, or null for existing geometry.");

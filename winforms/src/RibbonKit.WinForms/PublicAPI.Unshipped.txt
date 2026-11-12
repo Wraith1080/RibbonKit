@@ -1836,3 +1836,52 @@ static RibbonKit.WinForms.RibbonGalleryAppearanceSettings.operator !=(RibbonKit.
 static RibbonKit.WinForms.RibbonGalleryAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonGalleryAppearanceSettings? left, RibbonKit.WinForms.RibbonGalleryAppearanceSettings? right) -> bool
 RibbonKit.WinForms.RibbonTheme.GalleryAppearance.get -> RibbonKit.WinForms.RibbonGalleryAppearanceSettings?
 RibbonKit.WinForms.RibbonTheme.GalleryAppearance.init -> void
+RibbonKit.WinForms.RibbonGalleryContentSettings
+RibbonKit.WinForms.RibbonGalleryContentSettings.RibbonGalleryContentSettings() -> void
+RibbonKit.WinForms.RibbonGalleryContentSettings.<Clone>$() -> RibbonKit.WinForms.RibbonGalleryContentSettings!
+RibbonKit.WinForms.RibbonGalleryContentSettings.LabelMaxLines.get -> int?
+RibbonKit.WinForms.RibbonGalleryContentSettings.LabelMaxLines.init -> void
+RibbonKit.WinForms.RibbonGalleryContentSettings.ArtworkHeightReserve.get -> int?
+RibbonKit.WinForms.RibbonGalleryContentSettings.ArtworkHeightReserve.init -> void
+RibbonKit.WinForms.RibbonGalleryContentSettings.ArtworkHorizontalInset.get -> int?
+RibbonKit.WinForms.RibbonGalleryContentSettings.ArtworkHorizontalInset.init -> void
+RibbonKit.WinForms.RibbonGalleryContentSettings.ArtworkTopInset.get -> int?
+RibbonKit.WinForms.RibbonGalleryContentSettings.ArtworkTopInset.init -> void
+RibbonKit.WinForms.RibbonGalleryContentSettings.ExpandGlyphHeight.get -> int?
+RibbonKit.WinForms.RibbonGalleryContentSettings.ExpandGlyphHeight.init -> void
+RibbonKit.WinForms.RibbonGalleryContentSettings.ExpandBarWidth.get -> int?
+RibbonKit.WinForms.RibbonGalleryContentSettings.ExpandBarWidth.init -> void
+RibbonKit.WinForms.RibbonGalleryContentSettings.ExpandBarInset.get -> int?
+RibbonKit.WinForms.RibbonGalleryContentSettings.ExpandBarInset.init -> void
+RibbonKit.WinForms.RibbonGalleryContentSettings.LabelAlignment.get -> System.Drawing.ContentAlignment?
+RibbonKit.WinForms.RibbonGalleryContentSettings.LabelAlignment.init -> void
+RibbonKit.WinForms.RibbonGalleryContentSettings.ExpandBarStrokeWidth.get -> double?
+RibbonKit.WinForms.RibbonGalleryContentSettings.ExpandBarStrokeWidth.init -> void
+RibbonKit.WinForms.RibbonGalleryContentSettings.UtilityGlyphColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonGalleryContentSettings.UtilityGlyphColor.init -> void
+RibbonKit.WinForms.RibbonGalleryContentSettings.Equals(RibbonKit.WinForms.RibbonGalleryContentSettings? other) -> bool
+override RibbonKit.WinForms.RibbonGalleryContentSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonGalleryContentSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonGalleryContentSettings.ToString() -> string!
+static RibbonKit.WinForms.RibbonGalleryContentSettings.operator !=(RibbonKit.WinForms.RibbonGalleryContentSettings? left, RibbonKit.WinForms.RibbonGalleryContentSettings? right) -> bool
+static RibbonKit.WinForms.RibbonGalleryContentSettings.operator ==(RibbonKit.WinForms.RibbonGalleryContentSettings? left, RibbonKit.WinForms.RibbonGalleryContentSettings? right) -> bool
+RibbonKit.WinForms.RibbonTheme.GalleryContent.get -> RibbonKit.WinForms.RibbonGalleryContentSettings?
+RibbonKit.WinForms.RibbonTheme.GalleryContent.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.StripCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.StripCornerRadius.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.StripInset.get -> int?
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.StripInset.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.StripBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.StripBorderWidth.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.UtilityCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.UtilityCornerRadius.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.UtilityInset.get -> int?
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.UtilityInset.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.UtilityBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.UtilityBorderWidth.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.StripBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.StripBorderColor.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.UtilityBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.UtilityBorderColor.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.StripBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.StripBackground.init -> void

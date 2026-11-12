@@ -61,7 +61,11 @@ public sealed class GalleryPresenterTypeTests
     {
         Presenter.Constructions = 0;
         using var host = new DesignerAuthoringTests.Host { TypeDiscovery = new Discovery() }; using var ribbon = DesignerAuthoringTests.MakeRibbon(host);
-        ribbon.Theme = ribbon.Theme with { GalleryAppearance = new() { TileCornerRadius = 10, TileBorderWidth = 2, TileBorderColor = Color.Navy, HeaderBold = false, HeaderBackground = new(Color.LightYellow) } };
+        ribbon.Theme = ribbon.Theme with
+        {
+            GalleryAppearance = new() { TileCornerRadius = 10, TileBorderWidth = 2, TileBorderColor = Color.Navy, HeaderBold = false, HeaderBackground = new(Color.LightYellow), StripInset = 2, StripBorderWidth = 2, StripBorderColor = Color.DarkBlue, UtilityCornerRadius = 4 },
+            GalleryContent = new() { LabelMaxLines = 3, LabelAlignment = ContentAlignment.BottomRight, ArtworkTopInset = 10, ExpandBarStrokeWidth = 3 }
+        };
         var gallery = ribbon.Tabs[0].Groups[0].Items.OfType<RibbonGalleryItem>().Single(); var selected = gallery.SelectedItem;
         gallery.IsInRibbon = true;
         Assert.True(TypeDescriptor.GetProperties(gallery)[propertyName]!.IsBrowsable);

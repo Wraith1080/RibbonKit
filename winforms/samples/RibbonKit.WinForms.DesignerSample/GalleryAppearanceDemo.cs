@@ -6,7 +6,7 @@ public partial class DesignerForm
 {
     private void EnableGalleryAppearanceDemo()
     {
-        var tab = ThemeEffectsReviewTab;
+        var tab = ThemeEffects6ReviewTab;
         if (tab.Groups.Any(group => group.Id == "review-gallery-preview")) return;
         var preview = new RibbonGroup { Id = "review-gallery-preview", Text = "Try built-in galleries", CanResize = false };
         var popup = Make(false); popup.Text = "Grouped gallery"; popup.SizePolicy = RibbonSizePolicy.Fixed(RibbonItemSize.Medium);
@@ -39,7 +39,7 @@ public partial class DesignerForm
     internal void VerifyGalleryAppearanceDemo(string output)
     {
         StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); ShowInTaskbar = false; EnableOffice2019ThemeDemo(); Show(); Application.DoEvents();
-        var tab = ThemeEffectsReviewTab; ribbon.SelectedTab = tab;
+        var tab = ThemeEffects6ReviewTab; ribbon.SelectedTab = tab;
         if (tab.Text != "Theme effects 6" || ThemeEffects5ReviewTab.Groups.Count != 6 || ThemeEffects4ReviewTab.Groups.Count != 7 || ThemeEffects3ReviewTab.Groups.Count != 4 || ThemeEffects2ReviewTab.Groups.Count != 5 || ribbon.Tabs.Single(t => t.Text == "Office 2019 Light").Groups.Count != 7) throw new InvalidOperationException("Gallery controls displaced earlier tabs.");
         var tiles = tab.Groups.Single(g => g.Id == "review-gallery-tiles"); var headings = tab.Groups.Single(g => g.Id == "review-gallery-headings");
         tiles.Items[0].PerformClick(); tiles.Items[1].PerformClick(); foreach (var item in headings.Items.Take(3)) item.PerformClick(); var a = ribbon.Theme.GalleryAppearance!;

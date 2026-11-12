@@ -13,7 +13,7 @@ internal sealed record RibbonGalleryLayout(Size Extent, int ViewportHeight, int 
         var metrics = RibbonDensityMetrics.For(gallery.Ribbon?.Density ?? RibbonDensity.Compact);
         int tileWidth = Math.Min(S(Math.Max(gallery.TileWidth, metrics.GalleryWidth)), Math.Max(1, maxWidth - 2 * padding - scroll));
         int columns = Math.Clamp((maxWidth - 2 * padding - scroll) / Math.Max(1, tileWidth), 1, gallery.ColumnCount);
-        int tileHeight = Math.Max(S(Math.Max(gallery.TileHeight, metrics.GalleryHeight)), 2 * font.Height + S(24 + 3 * spacing.TilePadding));
+        int tileHeight = Math.Max(S(Math.Max(gallery.TileHeight, metrics.GalleryHeight)), new RibbonGalleryContentMetrics(gallery.Ribbon?.Theme, dpi, gallery.Ribbon?.Density ?? RibbonDensity.Compact).MinimumTileHeight(font));
         int headingHeight = font.Height + S(2 * spacing.HeadingVerticalPadding), y = padding, column = 0;
         string? group = null;
         var targets = new List<RibbonTarget>(); var headings = new List<RibbonGalleryHeading>();
