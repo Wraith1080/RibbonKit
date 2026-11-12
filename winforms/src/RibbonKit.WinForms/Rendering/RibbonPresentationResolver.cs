@@ -17,6 +17,9 @@ internal sealed record RibbonHeaderPresentationRegistration(RibbonHeaderRenderer
 
 internal static class RibbonPresentationResolver
 {
+    internal static readonly RibbonApplicationMenuContentDefaults ApplicationMenuContent = new(LargeIcon: 32, SmallIcon: 16, LargeIconInset: 8, SmallIconInset: 6, Gap: 8, LargeTextInset: 52, TextInset: 6,
+        PaintTrailing: 6, MeasureTrailing: 8, RowPadding: 10, IconPadding: 8, DescriptionGap: 2, DescriptionInset: 4, DescriptionLines: 2, FooterPadding: 6, FooterIconPreferred: 46, FooterPlainPreferred: 24,
+        CompactArrow: 26, TouchArrow: 44, SeparatorHeight: 9, SeparatorInset: 8, SeparatorStroke: 1);
     internal static readonly RibbonApplicationMenuSurfaceDefaults ApplicationMenuSurface = new(Stroke: 1, DividerInset: 1, HeaderRadius: 0, DefaultHeaderInset: 2, ActiveHeaderInset: 10, PaneTint: .125);
     internal static readonly RibbonApplicationMenuChromeDefaults ApplicationMenuChrome = new(RowRadius: 0, Inset: 1, RowBorderWidth: 0, FooterBorderWidth: 1, SplitWidth: 1, SplitInset: 1, PrimaryTint: .25);
     internal static readonly RibbonMenuDecorationDefaults MenuDecoration = new(Inset: 1, BorderWidth: 1, SeparatorThickness: 1);

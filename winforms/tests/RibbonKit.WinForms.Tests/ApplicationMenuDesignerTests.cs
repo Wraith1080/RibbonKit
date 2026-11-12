@@ -117,7 +117,10 @@ public sealed class ApplicationMenuDesignerTests
         using var f = new Fixture(); var draft = f.Read(); draft.SelectionKey = draft.Entries[0].Children[0].Key;
         var before = f.Read().Revision; var original = RibbonDesignCommitter.PreviewApplicationMenu(f.Ribbon, f.Host, draft);
         f.Ribbon.Theme = f.Ribbon.Theme with { ApplicationMenuAppearance = new() { SurroundBackground = new(Color.LightYellow), ActivePaneBackground = new(Color.LightBlue), InnerFrameCornerRadius = 12, InnerFrameBorderWidth = 3, HeaderBold = false, HeaderRuleThickness = 3 } };
+        var surface = RibbonDesignCommitter.PreviewApplicationMenu(f.Ribbon, f.Host, draft);
+        f.Ribbon.Theme = f.Ribbon.Theme with { ApplicationMenuContent = new() { LargeTextInset = 80, SmallIconSize = 24, ArrowColumnWidth = 38, RichTitleBold = false } };
         var frame = RibbonDesignCommitter.PreviewApplicationMenu(f.Ribbon, f.Host, draft); Assert.NotEqual(original.Png, frame.Png);
+        Assert.NotEqual(surface.Png, frame.Png);
         Assert.NotEmpty(frame.Png); Assert.Contains(frame.Regions, r => r.Key == draft.SelectionKey); Assert.Null(f.Body.Parent); Assert.Equal(0, f.Body.Paints);
         Assert.Equal(before, f.Read().Revision); Assert.Equal(0, f.Host.Transactions); Assert.False(f.Ribbon.FileMenu.IsDropDownOpen);
     });

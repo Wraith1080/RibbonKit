@@ -85,6 +85,8 @@ public sealed record RibbonTheme
     public bool ApplicationMenuSplitDividerVisible { get; init; } = true;
     /// <summary>Gets optional immutable Application Menu surface, heading and command-state overrides. Null retains existing recipes, layout, native state and the shared outer frame.</summary>
     public RibbonApplicationMenuAppearanceSettings? ApplicationMenuAppearance { get; init; }
+    /// <summary>Gets optional immutable Application Menu content settings shared by measurement and paint. Null preserves existing icon/text/description/arrow/separator recipes and rounding. Native editor frames retain their shared owners.</summary>
+    public RibbonApplicationMenuContentSettings? ApplicationMenuContent { get; init; }
     /// <summary>Gets an optional library options-button radius in 96-DPI logical pixels, 0..64. Null preserves system painting for ordinary buttons and existing accent-button chrome; explicit values use shared theme painting with native Button semantics.</summary>
     public int? OptionsButtonCornerRadius { get; init; }
     /// <summary>Gets whether message frames include side borders. Defaults to true. False keeps horizontal rules and existing connected-edge ownership.</summary>

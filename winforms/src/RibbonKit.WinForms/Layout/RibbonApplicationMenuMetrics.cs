@@ -12,8 +12,9 @@ internal static class RibbonApplicationMenuMetrics
     internal static int FooterRowHeight(IEnumerable<RibbonItem> items, Font font, int dpi, RibbonDensity density, RibbonTheme theme)
     {
         int S(int n) => RibbonLayoutEngine.Scale(n, dpi);
-        int height = Math.Max(S(Math.Max(theme.ApplicationMenuFooterMinimumRowHeight ?? (density == RibbonDensity.Touch ? 44 : 30), density == RibbonDensity.Touch ? 44 : 1)), font.Height + S(10));
-        if (items.Any(i => HasIcon(i) || i is RibbonCheckBoxItem or RibbonRadioButtonItem)) height = Math.Max(height, S(24));
+        var content = new RibbonApplicationMenuContentMetrics(theme, dpi, density);
+        int height = Math.Max(S(Math.Max(theme.ApplicationMenuFooterMinimumRowHeight ?? (density == RibbonDensity.Touch ? 44 : 30), density == RibbonDensity.Touch ? 44 : 1)), font.Height + content.RowPadding);
+        if (items.Any(i => HasIcon(i) || i is RibbonCheckBoxItem or RibbonRadioButtonItem)) height = Math.Max(height, content.ArtworkHeight(false));
         if (items.Any(i => i is IRibbonEditorItem) && RibbonEditorMetrics.HasHeightOverride(theme))
             height = Math.Max(height, RibbonEditorLayout.Height(font, dpi, density, theme: theme) + S(2));
         return height;
@@ -21,12 +22,13 @@ internal static class RibbonApplicationMenuMetrics
     internal static bool HasIcon(RibbonItem item) => item.Icon is not null || item.Image is not null || item.LargeImage is not null;
     internal static bool Illustrated(RibbonItem item) => item is not (RibbonDropDownItem or IRibbonEditorItem or RibbonMenuSeparatorItem)
         && item.Parent is RibbonDropDownItem { MenuPresentation: RibbonMenuPresentation.IllustratedChoices };
-    internal static int ArrowWidth(int dpi, RibbonDensity density) => RibbonLayoutEngine.Scale(density == RibbonDensity.Touch ? 44 : 26, dpi);
+    internal static int ArrowWidth(int dpi, RibbonDensity density, RibbonTheme? theme = null) => new RibbonApplicationMenuContentMetrics(theme, dpi, density).Arrow;
     internal static int RowHeight(RibbonItem item, int width, Font font, int dpi, RibbonDensity density, bool navigation, RibbonTheme? theme = null)
     {
         int S(int n) => RibbonLayoutEngine.Scale(n, dpi);
-        if (item is RibbonMenuSeparatorItem) return S(9);
         theme ??= item.Ribbon?.Theme;
+        var content = new RibbonApplicationMenuContentMetrics(theme, dpi, density);
+        if (item is RibbonMenuSeparatorItem) return content.SeparatorHeight;
         int minimum = S(navigation ? NavigationMinimum(density, theme) : PaneMinimum(density, theme));
         if (item is IRibbonEditorItem)
         {
@@ -36,23 +38,24 @@ internal static class RibbonApplicationMenuMetrics
                 ? Math.Max(height, RibbonEditorLayout.Height(font, dpi, density, theme: theme ?? item.Ribbon?.Theme) + S(2)) : height;
         }
         bool rich = !navigation && Illustrated(item);
-        int textInset = navigation || rich ? S(52) : HasIcon(item) ? S(30) : S(6);
-        int arrow = item is RibbonDropDownItem ? ArrowWidth(dpi, density) : 0;
-        int description = item.MenuDescription.Length == 0 ? 0 : Math.Min(2 * font.Height,
-            TextRenderer.MeasureText(item.MenuDescription, font, new(Math.Max(1, width - textInset - S(8) - arrow), int.MaxValue), RibbonMenuLayout.DescriptionFlags).Height);
-        int artwork = navigation || rich ? S(40) : HasIcon(item) || item is RibbonCheckBoxItem or RibbonRadioButtonItem ? S(24) : 0;
-        return Math.Max(minimum, Math.Max(artwork, font.Height + (description == 0 ? 0 : S(2) + description) + S(10)));
+        bool hasIcon = HasIcon(item) || content.CustomIconGeometry && (item is RibbonCheckBoxItem or RibbonRadioButtonItem);
+        int textInset = content.TextLeading(navigation || rich, hasIcon, measure: true);
+        int arrow = item is RibbonDropDownItem ? content.Arrow : 0;
+        int description = content.DescriptionHeight(item.MenuDescription, font, width - textInset - content.Trailing(measure: true) - arrow);
+        int artwork = navigation || rich ? content.ArtworkHeight(true) : HasIcon(item) || item is RibbonCheckBoxItem or RibbonRadioButtonItem ? content.ArtworkHeight(false) : 0;
+        return Math.Max(minimum, Math.Max(artwork, font.Height + (description == 0 ? 0 : content.DescriptionGap + description) + content.TextPadding(description > 0)));
     }
-    internal static IEnumerable<RibbonTarget> Expand(RibbonTarget target, int dpi, RibbonDensity density)
+    internal static IEnumerable<RibbonTarget> Expand(RibbonTarget target, int dpi, RibbonDensity density, RibbonTheme? theme = null)
     {
         if (target.Element is not RibbonSplitButtonItem) return [target];
-        int span = Math.Min(ArrowWidth(dpi, density), Math.Max(1, target.Bounds.Width / 2));
+        int span = Math.Min(ArrowWidth(dpi, density, theme), Math.Max(1, target.Bounds.Width / 2));
         var primary = target.Bounds with { Width = target.Bounds.Width - span };
         return [target with { Bounds = primary }, target with { Bounds = new(primary.Right, primary.Top, span, primary.Height), DropDownPart = true }];
     }
     internal static void Validate(RibbonTheme theme)
     {
         RibbonApplicationMenuAppearanceSettings.Validate(theme.ApplicationMenuAppearance);
+        RibbonApplicationMenuContentSettings.Validate(theme.ApplicationMenuContent);
         if (theme.ApplicationMenuNavigationMinimumRowHeight is < 1 or > 1024 || theme.ApplicationMenuPaneMinimumRowHeight is < 1 or > 1024 ||
             theme.ApplicationMenuFooterMinimumRowHeight is < 1 or > 1024 || theme.ApplicationMenuPaneHorizontalPadding is < 0 or > 1024 ||
             theme.ApplicationMenuFooterItemGap is < 0 or > 1024)

@@ -605,7 +605,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
                     else _ribbon.Painter.DrawQuickAccessItem(primary, target.Element!, true);
                 }
                 else if (target.Element is RibbonMenuSeparatorItem separator)
-                    _ribbon.Painter.DrawItem(context with { Bounds = target.Bounds }, separator, target.Size, MenuSource is not null || OwnerElement is RibbonQuickAccessOverflow);
+                    _ribbon.Painter.DrawItem(context with { Bounds = target.Bounds, ApplicationMenuPart = ApplicationPart(target) }, separator, target.Size, MenuSource is not null || OwnerElement is RibbonQuickAccessOverflow);
                 else if (target.Element is RibbonItem item && !RibbonEditorLayout.IsField(item, target.Size))
                 {
                     var primary = context with

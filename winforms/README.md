@@ -2861,6 +2861,50 @@ independent. **Application Menu surfaces / Application Menu headings** are on
 Reset, preserving the other surface and D4a command-state settings. Use existing
 group/tab/body scrolling and reduction as needed.
 
+`Theme.ApplicationMenuContent` accepts immutable
+`RibbonApplicationMenuContentSettings` shared by Application Menu measurement and
+painting:
+
+| Members | Null defaults and authored behavior |
+| --- | --- |
+| `LargeIconSize`, `SmallIconSize` | 32 navigation/illustrated and 16 ordinary-pane/footer logical pixels. Zero hides artwork; authored slots clamp inside commands. Native fields keep their frame metrics. |
+| `LargeIconInset`, `SmallIconInset`, `IconTextGap` | 8/6/8 logical pixels. Footer artwork/label packs remain centered. |
+| `LargeTextInset`, `TextInset`, `TextTrailingPadding` | 52 for navigation/illustrated labels; 6 for icon-free ordinary labels. Trailing allowance remains 6 for paint/8 for description measurement at null; an explicit value unifies them. Authored labels reserve at least artwork plus gap. |
+| `RowTextVerticalPadding`, `IconVerticalPadding` | Total 10/8 logical pixels. Shared row measurement consumes authored values, retaining existing minimum rows and Touch rules. |
+| `DescriptionGap`, `DescriptionVerticalInset`, `DescriptionMaxLines` | 2-pixel gap, 4-pixel top/bottom inset and two lines. Authored inset is also reserved in measurement. Zero lines hides descriptions and removes their height/gap. |
+| `RichTitleBold` | Null/true adds Bold to described illustrated titles; false removes Bold while preserving other host styles. Existing title/secondary/disabled colors remain in use. |
+| `FooterHorizontalPadding` | Existing centered paint/preferred-width recipes at null. Authored values reserve symmetric padding around label plus artwork, including check/radio indicators. |
+| `ArrowColumnWidth` | 26 Compact/44 Touch logical pixels. Authored widths keep the 44-pixel Touch minimum; split action targets clamp to half the row. D1b glyph/Chevrons settings remain independent. |
+| `SeparatorHeight`, `SeparatorHorizontalPadding`, `SeparatorThickness`, `SeparatorColor` | 9/8 logical pixels, one device pixel and Border ink. Zero height removes row space (footer separator width); zero thickness/Transparent hides ink. Stroke/inset clamp to the slot; authored alpha is supported. |
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    ApplicationMenuContent = new RibbonApplicationMenuContentSettings
+    {
+        LargeIconSize = 40, SmallIconSize = 24,
+        LargeTextInset = 72, IconTextGap = 12,
+        DescriptionMaxLines = 3, DescriptionGap = 6,
+        RichTitleBold = false, ArrowColumnWidth = 38
+    }
+};
+```
+
+Dimensions accept 0..1024 logical pixels, arrow width 1..1024, line cap and
+separator stroke 0..32. Values validate before Theme/BuiltInTheme mutation.
+Null/Empty members reset independently; `ApplicationMenuContent = null` resets
+only content, preserving `ApplicationMenuAppearance`. Null and empty records
+retain legacy rounding and allowances. Authored metrics intentionally affect
+command measurement and hit targets; native editor frames, bindings and borrowed
+Controls remain with their existing owners. Actual item/image/indicator/text/
+arrow/focus/separator hooks remain authoritative. Ordinary menus and Backstage
+retain separate settings.
+**Application Menu content / Application Menu descriptions** are on **Theme
+effects 5**. Apply presets, then use the existing File/default/selected-pane
+previews. The descriptions reset retains icon/arrow settings; **Default all menu
+content** clears this whole settings group. Existing group reduction and tab/body
+scrolling remain available.
+
 Derive from `RibbonRenderer` for a flat/custom presentation, or from
 `RibbonOffice2024Renderer` to retain Office styling while overriding selected
 drawing. Earlier preview subclasses that called base painting to obtain Office

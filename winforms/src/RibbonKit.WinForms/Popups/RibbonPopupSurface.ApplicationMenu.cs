@@ -56,7 +56,7 @@ internal sealed partial class RibbonPopupSurface
         AttachApplicationContent();
         Invalidate();
     }
-    private IEnumerable<RibbonTarget> RawApplicationTargets() => _targets.SelectMany(t => RibbonApplicationMenuMetrics.Expand(t, _ribbon.DeviceDpi, _ribbon.Density));
+    private IEnumerable<RibbonTarget> RawApplicationTargets() => _targets.SelectMany(t => RibbonApplicationMenuMetrics.Expand(t, _ribbon.DeviceDpi, _ribbon.Density, _ribbon.Theme));
     internal IReadOnlyList<RibbonTarget> ApplicationTargets() => RawApplicationTargets().Select(t =>
     {
         int offset = _applicationScrollers.TryGetValue(t.Clip, out var bar) ? bar.Value : 0;

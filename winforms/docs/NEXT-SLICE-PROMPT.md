@@ -1,27 +1,27 @@
-# Continue native WinForms themes after D4b Application Menu surfaces
+# Continue native WinForms themes after D4c Application Menu content
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-12**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4b and adjustability backfills
+Updated **2026-11-12**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c and adjustability backfills
 A00–A04/A06–A09/A11–A16 are implemented. Current evidence and exact user review
 scope live in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
-The latest implementation is [D4b](THEMES-PLAN.md#application-menu-backgrounds-inner-frame-and-headings-d4b--2026-11-12).
+The latest implementation is [D4c](THEMES-PLAN.md#application-menu-content-presentation-d4c--2026-11-12).
 Use the ledger for the exact user appearance review scope and remaining gates.
-The user committed D4a at `49329fe` before D4b. Do not overwrite later user commits.
+The user committed D4b at `d30d11c` before D4c. Do not overwrite later user commits.
 
 ## Next bounded implementation
 
 Start with `git status --short` and inspect live branch/HEAD; preserve later user
-commits and edits. Follow the current user request. For a continuation, D4c
-**Application Menu content presentation** is next proposed: inspect fixed icon/
-text/description metrics and rich-title weight in DrawApplicationMenuItem and
-matching RowHeight/Footer measurement. Reuse existing row/pane spacing, D1b
-image/indicator/arrow roles, actual renderer hooks and inert designer previews.
-Preserve defaults, native bounds and the reviewed File/Backstage contract; use one
-resolved metric owner for measurement and paint where these values are shared.
-D4a owns command state chrome; D4b owns surface/headings/clips; D2 owns the outer frame;
-ordinary menu decoration, galleries, tips and library dialogs retain their owners.
+commits and edits. Follow the current user request. For a continuation, D5
+**gallery presentation** is next proposed: inspect built-in tile states/headings/
+inline chrome, current appearance roles and actual presenter hooks, then choose
+one bounded portion before implementation. Reuse D1 command/content helpers and
+D2/D3 frame/menu roles where structurally appropriate. Preserve gallery selection,
+preview/cancel, scrolling, QAT/inline source identity and application presenter/
+native ownership; authoring cards remain ordinary editable UserControls.
+D4a owns Application Menu state chrome; D4b owns surfaces/headings/clips; D4c owns
+content/measurement; D2 owns the outer frame. Tips and library dialogs retain later scopes.
 Preserve current defaults. Read the matching source map and rules in
 [THEME-ARCHITECTURE-PLAN](THEME-ARCHITECTURE-PLAN.md). Planning-only requests do not
 need builds, tests or package refresh.
@@ -39,8 +39,9 @@ validation, IME and popup ownership remain with their existing shared owners.
 **Theme effects 5** through `ThemeEffectsReviewTab` until directed otherwise.
 `ThemeEffects2ReviewTab` / `ThemeEffects3ReviewTab` / `ThemeEffects4ReviewTab` pin
 existing groups to their original tabs. Earlier tabs retain seven/five/four/seven
-groups; tab 5 has four: **Try Application Menu / Application Menu state effects /
-Application Menu surfaces / Application Menu headings**.
+groups; tab 5 has six: **Try Application Menu / Application Menu state effects /
+Application Menu surfaces / Application Menu headings / Application Menu content /
+Application Menu descriptions**.
 The File preview uses existing authored models and restores the prior File mode.
 Its divider-visibility button uses the existing independent flag (2019 defaults
 false); group Reset clears only the new settings. The earlier optional overflow
@@ -115,6 +116,20 @@ when needed. Do not move old groups or infer fullness from reduction.
   Actual background/header/text/radius hooks remain. Reuse 32 exact PNGs and 37
   relevant passing cases unless affected. New surface/heading sample resets keep
   the other group and D4a roles; whole-group Reset still clears the entire record.
+- D4c retains `ApplicationMenuContent` and shared content measurement/drawing.
+  Null keeps 32/16 icons, 8/6 icon insets, 8 gap, 52 large-text/6 plain-text inset,
+  6-pixel paint/8-pixel measurement trailing allowances, total row/icon padding
+  10/8, description gap/inset/lines 2/4/2, old centered footer widths, Bold rich
+  titles, 26/44 arrow columns and 9/8 separator row/inset with a device-pixel line.
+  Authored metrics feed row/footer/nav measurement, split targets and paint;
+  preserve Touch minima, clamps, null rounding and native field frame owners.
+  Actual image/indicator/text/arrow/focus/separator hooks remain authoritative.
+  Live separator DrawItem calls must carry ApplicationMenuPart; ordinary-menu
+  context bypasses component settings. D1b glyph/raster policies remain shared.
+  Reuse 64 exact default pairs and 39 distinct passing latest relevant cases
+  unless affected. Description member Reset keeps icon/arrow roles; whole content
+  Reset preserves Appearance. Native body bounds are compared after actual
+  autoscaling, and borrowed raster assets must outlive the ribbon.
 - Existing Theme assignment closes ordinary menus through `ModelChanged`;
   retained models reopen normally. Do not change lifecycle to satisfy a probe.
 - A05 caption tint, A10 preferred page minimum, A17 tip placement and the reported

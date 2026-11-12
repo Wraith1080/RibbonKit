@@ -22,10 +22,11 @@ internal sealed class RibbonApplicationMenuLayout
         var font = ribbon.Font; var density = ribbon.Density; bool touch = density == RibbonDensity.Touch;
         int pad = S(5), inset = S(RibbonApplicationMenuMetrics.PanePadding(ribbon.Theme)), bar = SystemInformation.GetVerticalScrollBarWidthForDpi(dpi);
         var left = ribbon.FileMenu.Items.Where(i => i.Visible).ToArray();
+        var contentMetrics = new RibbonApplicationMenuContentMetrics(ribbon.Theme, dpi, density);
         var right = pane.Items.Where(i => i.Visible).ToArray();
         var footer = ribbon.ApplicationMenu.FooterItems.Where(i => i.Visible).ToArray();
         int navWidth = Math.Clamp(left.Where(i => i is not RibbonMenuSeparatorItem)
-            .Select(i => TextRenderer.MeasureText(i.Text, font).Width + S(60) + (i is RibbonDropDownItem ? RibbonApplicationMenuMetrics.ArrowWidth(dpi, density) : 0))
+            .Select(i => TextRenderer.MeasureText(i.Text, font).Width + contentMetrics.NavigationWidthPadding + (i is RibbonDropDownItem ? contentMetrics.Arrow : 0))
             .DefaultIfEmpty(S(150)).Max(), S(150), S(260));
         if (left.Length * S(RibbonApplicationMenuMetrics.NavigationMinimum(density, ribbon.Theme)) > maximum.Height - S(48)) navWidth = Math.Min(S(260), navWidth + bar);
         int extraInset = Math.Max(0, inset - S(10));
@@ -46,8 +47,9 @@ internal sealed class RibbonApplicationMenuLayout
         int footerAvailable = Math.Max(1, width - 2 * pad - bar);
         foreach (var item in footer)
         {
-            int fw = item is RibbonMenuSeparatorItem ? S(9) : Math.Max(S(touch ? 94 : 88), TextRenderer.MeasureText(item.Text, font).Width + S(RibbonApplicationMenuMetrics.HasIcon(item) ? 46 : 24)
-                + (item is RibbonDropDownItem ? RibbonApplicationMenuMetrics.ArrowWidth(dpi, density) : 0));
+            bool hasIcon = RibbonApplicationMenuMetrics.HasIcon(item) || contentMetrics.CustomFooterGeometry && (item is RibbonCheckBoxItem or RibbonRadioButtonItem);
+            int fw = item is RibbonMenuSeparatorItem ? contentMetrics.SeparatorHeight : Math.Max(S(touch ? 94 : 88), TextRenderer.MeasureText(item.Text, font).Width + contentMetrics.FooterPreferredPadding(hasIcon)
+                + (item is RibbonDropDownItem ? contentMetrics.Arrow : 0));
             fw = Math.Min(fw, footerAvailable);
             if (fx > 0 && fx + fw > footerAvailable) { fx = 0; fy += footerRow + footerGap; }
             footerRects.Add(new(fx, fy, fw, footerRow)); fx += fw + footerGap;

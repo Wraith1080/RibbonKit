@@ -1754,3 +1754,54 @@ RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.HeaderRuleThickness.g
 RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.HeaderRuleThickness.init -> void
 RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.HeaderRuleColor.get -> System.Drawing.Color
 RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.HeaderRuleColor.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.RibbonApplicationMenuContentSettings() -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.<Clone>$() -> RibbonKit.WinForms.RibbonApplicationMenuContentSettings!
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.LargeIconSize.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.LargeIconSize.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.SmallIconSize.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.SmallIconSize.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.LargeIconInset.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.LargeIconInset.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.SmallIconInset.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.SmallIconInset.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.IconTextGap.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.IconTextGap.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.LargeTextInset.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.LargeTextInset.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.TextInset.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.TextInset.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.TextTrailingPadding.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.TextTrailingPadding.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.RowTextVerticalPadding.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.RowTextVerticalPadding.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.IconVerticalPadding.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.IconVerticalPadding.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.DescriptionGap.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.DescriptionGap.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.DescriptionVerticalInset.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.DescriptionVerticalInset.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.DescriptionMaxLines.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.DescriptionMaxLines.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.FooterHorizontalPadding.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.FooterHorizontalPadding.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.ArrowColumnWidth.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.ArrowColumnWidth.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.SeparatorHeight.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.SeparatorHeight.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.SeparatorHorizontalPadding.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.SeparatorHorizontalPadding.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.SeparatorThickness.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.SeparatorThickness.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.RichTitleBold.get -> bool?
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.RichTitleBold.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.SeparatorColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.SeparatorColor.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuContentSettings.Equals(RibbonKit.WinForms.RibbonApplicationMenuContentSettings? other) -> bool
+override RibbonKit.WinForms.RibbonApplicationMenuContentSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonApplicationMenuContentSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonApplicationMenuContentSettings.ToString() -> string!
+static RibbonKit.WinForms.RibbonApplicationMenuContentSettings.operator !=(RibbonKit.WinForms.RibbonApplicationMenuContentSettings? left, RibbonKit.WinForms.RibbonApplicationMenuContentSettings? right) -> bool
+static RibbonKit.WinForms.RibbonApplicationMenuContentSettings.operator ==(RibbonKit.WinForms.RibbonApplicationMenuContentSettings? left, RibbonKit.WinForms.RibbonApplicationMenuContentSettings? right) -> bool
+RibbonKit.WinForms.RibbonTheme.ApplicationMenuContent.get -> RibbonKit.WinForms.RibbonApplicationMenuContentSettings?
+RibbonKit.WinForms.RibbonTheme.ApplicationMenuContent.init -> void

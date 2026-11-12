@@ -13,52 +13,15 @@ public partial class RibbonRenderer
         => RibbonApplicationMenuSurfaceRenderer.DrawHeader(this, context, text);
     private void DrawApplicationMenuItem(RibbonPaintContext context, RibbonItem item, bool arrow = true, bool paintChrome = true)
     {
-        int S(int n) => RibbonLayoutEngine.Scale(n, context.DeviceDpi);
         bool enabled = item.EffectiveEnabled; context = EnabledContext(context, enabled);
         var bounds = context.Bounds; bool footer = context.ApplicationMenuPart == RibbonApplicationMenuPart.Footer;
         if (item is RibbonMenuSeparatorItem separator) { DrawMenuSeparator(context, separator); return; }
         bool check = item is RibbonToggleItem { Checked: true } or RibbonCheckBoxItem { Checked: true } or RibbonRadioButtonItem { Checked: true } or RibbonSplitButtonItem { Checked: true };
         bool open = enabled && item is RibbonDropDownItem { IsDropDownOpen: true };
         if (paintChrome) RibbonApplicationMenuChromeRenderer.DrawItemState(this, context, footer, check, open);
-        bool navigation = context.ApplicationMenuPart == RibbonApplicationMenuPart.Navigation;
-        bool rich = context.ApplicationMenuPart == RibbonApplicationMenuPart.Pane && RibbonApplicationMenuMetrics.Illustrated(item);
-        bool hasIcon = RibbonApplicationMenuMetrics.HasIcon(item) || item is RibbonCheckBoxItem or RibbonRadioButtonItem;
-        int iconSide = navigation || rich ? S(32) : S(16);
-        int iconInset = footer ? S(10) : navigation || rich ? S(8) : S(6);
-        int textInset = navigation || rich ? S(52) : hasIcon ? iconInset + iconSide + S(8) : S(6);
-        var color = enabled ? context.Theme.Foreground : context.Theme.DisabledColor;
-        int arrowWidth = item is RibbonDropDownItem && (arrow || item is RibbonSplitButtonItem) ? RibbonApplicationMenuMetrics.ArrowWidth(context.DeviceDpi, context.Density) : 0;
-        var text = new Rectangle(bounds.Left + textInset, bounds.Top, Math.Max(0, bounds.Width - textInset - S(6) - arrowWidth), bounds.Height);
-        var image = new Rectangle(bounds.Left + iconInset, bounds.Top + (bounds.Height - iconSide) / 2, iconSide, iconSide);
-        if (footer)
-        {
-            int labelWidth = TextRenderer.MeasureText(item.Text, context.Font, Size.Empty, TextFormatFlags.NoPadding | TextFormatFlags.SingleLine).Width;
-            int contentWidth = Math.Min(bounds.Width - S(12) - arrowWidth, labelWidth + (hasIcon ? S(24) : 0));
-            int left = bounds.Left + Math.Max(S(6), (bounds.Width - arrowWidth - contentWidth) / 2);
-            image.X = left; text.X = left + (hasIcon ? S(24) : 0); text.Width = Math.Max(0, bounds.Right - S(6) - arrowWidth - text.Left);
-        }
-        if (hasIcon)
-        {
-            if (item is RibbonCheckBoxItem box) DrawCheckBoxIndicator(context with { Bounds = image }, box);
-            else if (item is RibbonRadioButtonItem radio) DrawRadioButtonIndicator(context with { Bounds = image }, radio);
-            else DrawItemImage(context with { Bounds = image }, item, navigation || rich ? RibbonItemSize.Large : RibbonItemSize.Small);
-        }
-        bool described = !footer && item.MenuDescription.Length > 0;
-        if (described)
-        {
-            int descriptionHeight = Math.Min(2 * context.Font.Height, TextRenderer.MeasureText(item.MenuDescription, context.Font, new(Math.Max(1, text.Width), int.MaxValue), RibbonMenuLayout.DescriptionFlags).Height);
-            int top = bounds.Top + Math.Max(S(4), (bounds.Height - context.Font.Height - S(2) - descriptionHeight) / 2);
-            text.Y = top; text.Height = context.Font.Height;
-            using var title = rich ? new Font(context.Font, context.Font.Style | FontStyle.Bold) : null;
-            DrawText(context with { Bounds = text, Font = title ?? context.Font }, item.Text, rich && enabled ? context.Theme.SecondaryText : color,
-                TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding);
-            var description = new Rectangle(text.Left, text.Bottom + S(2), text.Width, Math.Max(0, Math.Min(descriptionHeight, bounds.Bottom - S(4) - text.Bottom - S(2))));
-            DrawText(context with { Bounds = description }, item.MenuDescription, color, RibbonMenuLayout.DescriptionFlags);
-        }
-        else DrawText(context with { Bounds = text }, item.Text, color, TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding);
-        if (arrow && arrowWidth > 0) DrawSubmenuArrow(context with { Bounds = new(bounds.Right - arrowWidth, bounds.Top, arrowWidth, bounds.Height) }, enabled ? context.Theme.SecondaryText : color);
-        if (context.Focused) DrawFocus(context);
+        RibbonApplicationMenuContentRenderer.Draw(this, context, item, arrow);
     }
+    internal void PaintApplicationMenuImage(RibbonPaintContext context, RibbonItem item, RibbonItemSize size) => DrawItemImage(context, item, size);
     private void DrawApplicationMenuSplit(RibbonPaintContext primary, RibbonPaintContext dropDown, RibbonSplitButtonItem item)
     {
         primary = EnabledContext(primary, item.EffectiveEnabled); dropDown = EnabledContext(dropDown, item.EffectiveEnabled);

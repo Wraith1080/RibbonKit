@@ -8,6 +8,16 @@ internal static class Program
     private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
+        if (args.Length == 2 && args[0] == "--verify-application-content")
+        {
+            Exception? callbackFailure = null;
+            ThreadExceptionEventHandler failed = (_, error) => callbackFailure ??= error.Exception;
+            Application.ThreadException += failed;
+            try { ApplicationMenuContentCheck.Verify(args[1]); if (callbackFailure is not null) throw new InvalidOperationException("A native callback failed.", callbackFailure); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "failure.log"), (callbackFailure is null ? error : new AggregateException(error, callbackFailure)).ToString()); Environment.ExitCode = 1; }
+            finally { Application.ThreadException -= failed; }
+            return;
+        }
         if (args.Length == 2 && args[0] == "--verify-application-surface")
         {
             Exception? callbackFailure = null;

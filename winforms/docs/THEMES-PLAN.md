@@ -354,17 +354,17 @@ Backstage. Stop for this review before another theme.
 | Item | Status |
 | --- | --- |
 | Direction | **2026-11-10: user selected Office 2019 first and light themes before dark.** |
-| Planning | B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4b and audit corrections A00–A04/A06–A09/A11–A16 are implemented. D4c Application Menu content presentation is next proposed; caption/layout/tip candidates remain separate. Later family order is provisional. |
+| Planning | B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c and audit corrections A00–A04/A06–A09/A11–A16 are implemented. D5 gallery presentation is next proposed; caption/layout/tip candidates remain separate. Later family order is provisional. |
 | Earlier-slice adjustability audit | **2026-11-11: A11–A16 header/shared effects implemented and verified.** Current evidence is in the [header/shared record](#header-and-shared-effect-overrides--2026-11-11). Earlier evidence remains below. The [audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) retains A05/A10/A17 as separate candidates. |
-| Runtime/API/rendering | D4b extracts Application Menu backing/pane/frame/divider and heading drawing into shared helpers, extending immutable `ApplicationMenuAppearance`. Inner-frame paint and command clipping share resolved radius/stroke values. Actual background/header/text/radius hooks remain authoritative; D4a command states, content layout/native ownership and D2 outer frames retain their owners. |
-| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; the permanent sample is refreshed. **Application Menu surfaces / Application Menu headings** join the existing preview/state controls on **Theme effects 5** (four groups). Earlier tabs retain seven/five/four/seven groups. Keep using tab 5 until directed otherwise; group reduction does not establish fullness. File previews use authored models and restore the prior File mode. Authored Forms/UserControls/resources/project files remain intact. |
-| Focused Release verification | D4b: **37 distinct relevant cases passed**, including 17 new surface/heading cases, 19 retained appearance/native-state/designer cases and one default-comparison case. Inert preview coverage now applies authored surface settings while preserving application-content isolation. Evidence is in the [D4b record](#application-menu-backgrounds-inner-frame-and-headings-d4b--2026-11-12). No broad suite ran. |
-| Two-family default parity | D4b: **32 PNGs match exactly** across both light palettes, flat/Office renderers, 96/120/144/192 DPI and 9/14-point fonts. Each covers default and selected panes, inner frame/divider, surrounding/footer backing and headings. Null and empty settings both match saved defaults. No full native matrix ran. |
-| Composed native package verification | D4b: **4/4 public-package scopes plus tab checks passed** at actual 120 DPI for both light families in Solid/Mica, each Classic/Simplified x Compact/Touch. Actual background/header/text callbacks, authored paint, unchanged measured slots/sizes, native pane HWND/parent/value/selection/source, borrowed-content return, member/group reset and File-mode restoration were checked synchronously before queued foreground-loss dismissal. These are offscreen paint/geometry/state checks; external UIA and physical-input/visible frame-pacing acceptance remain separate. |
+| Runtime/API/rendering | D4c extracts Application Menu content drawing and shared content metrics, with immutable `ApplicationMenuContent`. Icon/text/description/arrow/footer/separator overrides feed measurement and actual renderer hooks. Live separators now receive their Application Menu context. D4a/D4b state/surface presentation, D2 outer frames and native editor/content owners remain. |
+| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass; final sample build has no warnings/errors. **Application Menu content / Application Menu descriptions** join the earlier controls on **Theme effects 5** (six groups). Earlier tabs retain seven/five/four/seven groups. Keep using tab 5 until directed otherwise; group reduction does not establish fullness. File previews use authored models and restore the prior mode. Authored Forms/UserControls/resources/project files remain intact. |
+| Focused Release verification | D4c: **39 distinct relevant cases have passing latest results**: 29 new content cases, nine retained appearance/ownership/designer cases and one default comparison. Only the affected authored-icon and preview cases were repeated after follow-ups. Evidence is in the [D4c record](#application-menu-content-presentation-d4c--2026-11-12). No broad suite ran. |
+| Two-family default parity | D4c: **64 PNG/content-slot/measurement pairs match exactly**, both light palettes, flat/Office renderers, Compact/Touch, 96/120/144/192 DPI and 9/14-point fonts. Null and empty settings both match saved defaults for navigation/pane/footer, rich/plain descriptions, disabled raster, indicators and split content. No full native matrix ran. |
+| Composed native package verification | D4c: **4/4 public-package scopes plus tab checks passed** at actual 120 DPI for both light families in Solid/Mica, each Classic/Simplified x Compact/Touch. Actual content/separator callbacks consume authored settings; Reset restores measured geometry. Accessible primary action/dismissal, native field HWND/parent/height/value/selection, borrowed body HWND/parent/bounds/value/selection and return, independent reset and File-mode restoration pass. These are synchronous offscreen checks; external UIA and physical-input/visible frame-pacing acceptance remain separate. |
 | Backstage review correction | **2026-11-11: navbar blank-frame and left rounded-corner black-bar fixes implemented and verified; user review pending.** Current focused/package evidence is in the [page-motion follow-up](BACKSTAGE-PAGE-MOTION.md#navbar-blank-frame-and-rounded-edge-follow-up--2026-11-11). |
 | Deferred title review issue | **2026-11-11: user reported title-text flicker while closing Backstage and allowed deferral to title theming work.** Their `20261111-0345-01.1714250.mp4` confirms the Office 2019 close at approximately **7.03–7.37 s**: the title moves left, its leading text becomes pale/white over the lightening caption, then dark ink returns. Native-rate frames and timestamps are retained under `artifacts/backstage-title-flicker/recording/`. Caption foreground contrast/clip handoff as the navigation fades is the source-inspection lead, not a verified root cause. Preserve opaque, legible title ink throughout closing when addressing it. No title runtime change or new build/test was made for this recording review; the page/corner correction does not address it. |
 | Broader Release suite | Initial implementation: 1,485 passed / 6 failed / 1,491 total (historical evidence above). Correction run **stopped at the user's request**, 1,089 passed / 3 failed / 1,092 executed; incomplete, no full-suite result claimed. Do not restart it. |
-| User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; D1a/D1b review controls remain on Theme effects 3. **2026-11-12: user reported D1b looks good and authorized continuation to native editor appearance.** D1a review remains at its earlier recorded scope. The user requested a new review tab for D1c; use Theme effects 4 and preserve tabs 1–3. **2026-11-12: user reported D2 works perfectly and authorized continuation to ordinary menu decoration.** **2026-11-12: user reported D3 looks good and authorized Application Menu continuation, with new review controls on Theme effects 5.** **2026-11-12: user reported D4a Application Menu state effects look good on Theme effects 5.** Actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
+| User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; D1a/D1b review controls remain on Theme effects 3. **2026-11-12: user reported D1b looks good and authorized continuation to native editor appearance.** D1a review remains at its earlier recorded scope. The user requested a new review tab for D1c; use Theme effects 4 and preserve tabs 1–3. **2026-11-12: user reported D2 works perfectly and authorized continuation to ordinary menu decoration.** **2026-11-12: user reported D3 looks good and authorized Application Menu continuation, with new review controls on Theme effects 5.** **2026-11-12: user reported D4a Application Menu state effects look good on Theme effects 5.** **2026-11-12: user confirmed every D4b surface/heading option works and authorized continuation.** Actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
 | Actual VS/physical input/mixed-monitor | Not run for themes; report separately. |
 
 Record later evidence and confirmation here once, with date/revision/scope,
@@ -1892,10 +1892,110 @@ Evidence under `artifacts/application-surface-d4b/`:
   use; the user has not declared this tab full. Authored Forms/UserControls/
   resources/project files remain intact.
 
-D4b human appearance review is pending. External UIA, actual VS, physical input/
+D4b user appearance review scope is recorded in the current ledger. External UIA, actual VS, physical input/
 IME, visible frame pacing and mixed-monitor checks remain separate. No full suite,
-native matrix or WPF build/test ran. D4c Application Menu content presentation is
-next proposed: inspect icon/text/description metrics and rich-title weight,
-reuse existing row/pane/indicator/image roles and preserve measured native bounds.
+native matrix or WPF build/test ran. D4c followed below.
 Galleries, tips, library dialogs, A05/A10/A17 and closing-title ink flicker remain
 separate.
+
+## Application Menu content presentation D4c — 2026-11-12
+
+Work started clean on `codex/Ribbonkit-Winform` at the user's D4b commit
+`d30d11c`. D4c extracts content drawing into `RibbonApplicationMenuContentRenderer`
+and component-scoped metrics with explicit defaults. Row/footer measurement,
+navigation preferred width, split expansion and painting consume the same resolved
+settings. Legacy summed rounding and differing null allowances remain compatible;
+no layout engine, family selector, native editor manager or popup lifecycle changed.
+
+`Theme.ApplicationMenuContent` accepts immutable `RibbonApplicationMenuContentSettings`:
+
+- `LargeIconSize` / `SmallIconSize`: navigation/illustrated 32 and ordinary-pane/
+  footer 16 logical pixels at null. Zero hides artwork; authored slots clamp inside
+  the command. `LargeIconInset` / `SmallIconInset` default to 8/6. `IconTextGap`
+  defaults to 8. `LargeTextInset` defaults to 52; authored content reserves artwork
+  plus gap where present. `TextInset` defaults to 6 for icon-free ordinary rows.
+  `TextTrailingPadding` preserves 6-pixel paint/8-pixel description-measurement
+  allowances at null; explicit values unify them.
+- `RowTextVerticalPadding` / `IconVerticalPadding`: total padding, defaults 10/8.
+  Existing row minima remain authoritative; native fields retain their shared
+  frame metrics. Authored icon/indicator sizes are included in measured rows and
+  footer preferred width. `FooterHorizontalPadding` defaults to the old centered
+  paint/preferred-width recipes; explicit values reserve symmetric padding around
+  the measured label/artwork pack. Null keeps all old rounding/allowances.
+- `DescriptionGap` / `DescriptionVerticalInset`: defaults 2/4. Explicit vertical
+  inset is also reserved by row measurement. `DescriptionMaxLines` defaults to 2;
+  zero hides descriptions and removes their measured height/gap. `RichTitleBold`
+  null/true adds Bold for described illustrated choices; false removes Bold and
+  preserves other host styles. Existing foreground/secondary/disabled ink and
+  public text hooks retain their roles.
+- `ArrowColumnWidth`: null keeps 26 Compact/44 Touch logical pixels. Authored
+  values retain the 44-logical-pixel Touch minimum; split targets clamp to half
+  the row. Actual source/action regions and arrow painting use the same width.
+  Existing D1b filled-arrow/Chevrons settings still own the glyph itself.
+- `SeparatorHeight` / `SeparatorHorizontalPadding` / `SeparatorThickness` /
+  `SeparatorColor`: defaults 9/8 logical pixels, one device pixel, and Border ink.
+  Zero height removes row space (or the footer separator's width); zero thickness/
+  Transparent hides ink. Authored alpha is retained; inset/stroke clamp inside the
+  existing slot. Ordinary menus and Backstage keep their own settings and recipes.
+
+Dimensions are 0..1024 logical pixels, arrow width 1..1024, line cap/stroke 0..32.
+Validation precedes Theme/BuiltInTheme mutation. Members reset independently with
+null/Empty; `ApplicationMenuContent = null` resets only content, preserving D4a/D4b
+appearance. Shared image/indicator/focus/arrow helpers remain actual renderer
+hooks, including D1b disabled-raster treatment. An internal bridge retains the
+protected DrawItemImage extension path; it does not add public interception APIs.
+
+Package inspection exposed one missing context: the native popup separator branch
+had sent ordinary-menu context even inside Application Menu. It now supplies the
+measured ApplicationMenuPart, preserving actual DrawItem/DrawMenuSeparator hooks
+and consuming the correct component settings. A live-surface regression checks
+navigation, pane and footer markers plus actual authored ink. Empty/default
+Application Menu separator paint remains the same centered device-pixel recipe.
+
+Evidence under `artifacts/application-content-d4c/`:
+
+- `tests/before-defaults.trx`, `tests/after-defaults.trx`, `tests/after-empty.trx`:
+  **64 exact PNG/content-slot/measurement pairs**, both families, flat/Office
+  renderers, both densities, four DPIs and two font sizes. Cases include rich/plain
+  labels/descriptions, navigation/pane/footer, vector/enabled/disabled raster,
+  check/radio, split/arrow/focus slots and separator paint. Saved logs also retain
+  row/footer measurements and actual layout output. Null and empty records match;
+  no tolerances/approvals changed. Later follow-ups preserve those null branches.
+- `tests/content-focused.trx`: **36 passed**, initially 27 new and nine existing
+  content/appearance/ownership/preview cases. `tests/content-preview-final.trx`
+  passes the enhanced authored-content inert-preview case. `tests/live-separators-final.trx`
+  adds one passing actual-surface case. `tests/footer-geometry-final.trx`: five
+  passed, one new footer-indicator/Touch-minimum case plus four affected authored
+  icon cases. `tests/footer-clamp-final.trx` passes the four authored-icon cases
+  with an additional extreme footer-padding/artwork clamp check. Latest results
+  cover **39 distinct passing cases** including the
+  default comparison: 29 new + nine retained + default. Passed unrelated scopes
+  were not repeated.
+- `package-final3/result.log`: **4/4 package-only scopes**, both families x None/
+  Mica at actual 120 DPI, each Classic/Simplified x Compact/Touch. Actual callbacks
+  confirm authored icons, gutters, description gap, title weight, arrow targets
+  and live separator ink/thickness. Reset restores original measured rows/sizes.
+  AccessibleObject primary invocation preserves source action/dismissal; this is
+  not an external UIA client run. Native field HWND/parent/frame height/value/
+  selection and borrowed body HWND/parent/actual autoscaled bounds/value/selection
+  survive switches/reset; closing returns borrowed content undisposed. Diagnostic
+  borrowed images outlive the ribbon. Checks stay synchronous before the normal
+  queued foreground-loss dismissal; runtime activation/lifecycle is unchanged.
+- Release runtime/test and normal Debug runtime/designer server/client/sample
+  builds passed. One refresh encountered a transient MSB3101 assembly-reference
+  cache lock; the targeted final sample build passed with zero warnings/errors.
+  Refreshed package: `0.1.0-designer.local20261112T022626671Z`. New **Application
+  Menu content / Application Menu descriptions** groups make six on **Theme effects
+  5**; earlier tabs remain seven/five/four/seven. Public presets, zero-description
+  hide, member/group Reset preserving appearance, existing File/illustrated
+  previews, prior-mode restore and idempotence pass. Final menus/review controls
+  were inspected; group reduction remains in use and does not establish fullness.
+  Authored Forms/UserControls/resources/project files remain intact.
+
+D4c human appearance review is pending. External UIA, actual VS, physical input/
+IME, visible frame pacing and mixed-monitor gates remain separate. No full suite,
+native matrix or WPF build/test ran. D5 gallery presentation is next proposed:
+inspect built-in tiles/headings/inline chrome and actual presenter hooks, choose
+one bounded portion, reuse existing content/frame roles and retain application
+presenter/native ownership. Tips, library dialogs, A05/A10/A17 and the Backstage
+closing-title ink flicker remain separate.
