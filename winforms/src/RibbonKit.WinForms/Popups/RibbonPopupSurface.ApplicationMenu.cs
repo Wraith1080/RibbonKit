@@ -38,9 +38,8 @@ internal sealed partial class RibbonPopupSurface
         _applicationLayout = RibbonApplicationMenuLayout.Build(_ribbon, _applicationPane!, _applicationMaximum);
         _targets.Clear(); _targets.AddRange(_applicationLayout.Targets);
         _applicationItemClip?.Dispose();
-        var innerFrame = Rectangle.Inflate(_applicationLayout.Frame, -1, -1);
-        _applicationItemClip = RoundedPainter.CreateOpaqueRegion(innerFrame.Size, Math.Max(0, _ribbon.Painter.GetPopupCornerRadius(_ribbon.Theme, _ribbon.DeviceDpi) - 2));
-        _applicationItemClip.Translate(innerFrame.Left, innerFrame.Top);
+        _applicationItemClip = new RibbonApplicationMenuSurfaceMetrics(_ribbon.Theme, _ribbon.DeviceDpi, RibbonPresentationResolver.ApplicationMenuSurface)
+            .ItemClip(_applicationLayout.Frame, _ribbon.Painter.GetPopupCornerRadius(_ribbon.Theme, _ribbon.DeviceDpi));
         Size = _applicationLayout.Size;
         void Scroller(Rectangle viewport, int extent, string name)
         {

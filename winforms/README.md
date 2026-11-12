@@ -2825,6 +2825,42 @@ colors in Office 2019. The preview uses existing File models; **Restore File mod
 returns the prior mode. Earlier tabs remain in place; use tab/body scrollers when
 needed.
 
+The same `ApplicationMenuAppearance` group also controls Application Menu
+backgrounds, inner frame and headings:
+
+| Members | Defaults and behavior |
+| --- | --- |
+| `SurroundBackground`, `NavigationBackground`, `DefaultPaneBackground`, `ActivePaneBackground` | Independent solid/gradient fills. Null keeps the old surrounding/default tint and PopupBackground/Surface navigation/selected pane. Authored alpha composites over the established opaque backing and existing layers; application-owned Controls retain their own styling. |
+| `DefaultPaneTintStrength` | Finite 0..1 Border contribution to the opaque default-pane/surround fallback; null keeps 0.125. An explicit pane fill takes precedence for that pane; surrounding fill remains independent. |
+| `InnerFrameCornerRadius`, `InnerFrameBorderWidth`, `InnerFrameBorderColor` | Logical ranges 0..64 / 0..32. Null follows actual GetPopupCornerRadius minus one device pixel and a one-device-pixel Border stroke. Empty ink follows Border; zero/Transparent hides it. Shared paint clipping protects the border, preserving at least the existing device-pixel inset. |
+| `NavigationDividerWidth`, `NavigationDividerInset`, `NavigationDividerColor` | One-device-pixel width/end clearances and Border ink at null/Empty. Logical ranges 0..32 / 0..1024, clamped inside the unchanged inner frame. Zero/Transparent hides paint; the measured divider position remains unchanged. |
+| `HeaderCornerRadius`, `HeaderBold` | Square heading fill and host styles plus Bold at null. False removes Bold while preserving other host styles; radius range 0..64 logical pixels. Existing MenuHeadingBackground/Foreground and selected-pane GalleryHeadingBackground remain in use. |
+| `DefaultHeaderTextInset`, `ActiveHeaderTextInset` | 2/10 logical pixels at null. Authored values 0..1024 clamp within the unchanged header. |
+| `HeaderRuleThickness`, `HeaderRuleColor` | One-device-pixel bottom rule with Border ink at null/Empty. Authored thickness 0..32 logical pixels clamps within the header. Alpha is retained; zero/Transparent hides paint. |
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    ApplicationMenuAppearance = (ribbon.Theme.ApplicationMenuAppearance ?? new()) with
+    {
+        DefaultPaneTintStrength = .4,
+        InnerFrameCornerRadius = 12, InnerFrameBorderWidth = 3,
+        NavigationDividerColor = Color.DarkMagenta,
+        HeaderBold = false, ActiveHeaderTextInset = 18,
+        HeaderRuleThickness = 3, HeaderRuleColor = Color.DarkGreen
+    }
+};
+```
+
+These members follow the same atomic validation and independent null/Empty/group
+Reset contract. They preserve measured columns, header height, command targets
+and native content bounds. Public background/header/text/radius hooks remain
+authoritative; ordinary menu decoration and the outer popup frame remain
+independent. **Application Menu surfaces / Application Menu headings** are on
+**Theme effects 5** beside the earlier File previews. Each new group has its own
+Reset, preserving the other surface and D4a command-state settings. Use existing
+group/tab/body scrolling and reduction as needed.
+
 Derive from `RibbonRenderer` for a flat/custom presentation, or from
 `RibbonOffice2024Renderer` to retain Office styling while overriding selected
 drawing. Earlier preview subclasses that called base painting to obtain Office

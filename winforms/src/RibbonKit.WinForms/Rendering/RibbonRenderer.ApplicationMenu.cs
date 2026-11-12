@@ -1,4 +1,3 @@
-using System.Drawing.Drawing2D;
 using RibbonKit.WinForms.Layout;
 
 namespace RibbonKit.WinForms;
@@ -7,44 +6,11 @@ public partial class RibbonRenderer
 {
     /// <summary>Paints the Application Menu's measured columns and fixed footer using shared menu surface and border roles. Native application content keeps its own styling.</summary>
     public virtual void DrawApplicationMenuBackground(RibbonPaintContext context, Rectangle navigation, Rectangle pane, Rectangle footer)
-    {
-        int S(int n) => RibbonLayoutEngine.Scale(n, context.DeviceDpi);
-        using (var outer = new SolidBrush(ApplicationPaneColor(context with { ApplicationMenuDefaultPane = true }))) context.Graphics.FillRectangle(outer, context.Bounds);
-        var frame = ApplicationFrame(context.Bounds, navigation);
-        int radius = Math.Max(0, GetPopupCornerRadius(context.Theme, context.DeviceDpi) - 1);
-        PaintRounded(context with { Bounds = frame }, radius, new(context.Theme.PopupColor), context.Theme.Border);
-        int divider = context.ApplicationMenuDividerX ?? pane.Left - S(RibbonApplicationMenuMetrics.PanePadding(context.Theme)) - 1;
-        var state = context.Graphics.Save();
-        try
-        {
-            var inner = Rectangle.Inflate(frame, -1, -1);
-            using var clip = RoundedPainter.CreateOpaqueRegion(inner.Size, Math.Max(0, radius - 1)); clip.Translate(inner.Left, inner.Top);
-            context.Graphics.SetClip(clip, CombineMode.Intersect);
-            var right = new Rectangle(divider + 1, frame.Top + 1, Math.Max(0, frame.Right - divider - 2), Math.Max(0, frame.Height - 2));
-            using var fill = new SolidBrush(ApplicationPaneColor(context)); context.Graphics.FillRectangle(fill, right);
-            using var border = new Pen(context.Theme.Border); context.Graphics.DrawLine(border, divider, frame.Top + 1, divider, frame.Bottom - 2);
-        }
-        finally { context.Graphics.Restore(state); }
-    }
+        => RibbonApplicationMenuSurfaceRenderer.DrawBackground(this, context, navigation, pane);
     internal static Rectangle ApplicationFrame(Rectangle bounds, Rectangle navigation) => new(navigation.Left - 1, navigation.Top - 1,
         Math.Max(1, bounds.Width - 2 * (navigation.Left - 1)), navigation.Height + 2);
-    private static Color ApplicationPaneColor(RibbonPaintContext context)
-    {
-        var background = context.Theme.PopupColor; var border = context.Theme.Border;
-        return !context.ApplicationMenuDefaultPane ? background : Color.FromArgb(255,
-            (7 * background.R + border.R) / 8, (7 * background.G + border.G) / 8, (7 * background.B + border.B) / 8);
-    }
     private void DrawApplicationMenuHeader(RibbonPaintContext context, string text)
-    {
-        var bounds = context.Bounds; int inset = RibbonLayoutEngine.Scale(context.ApplicationMenuDefaultPane ? 2 : 10, context.DeviceDpi);
-        var background = context.Theme.MenuHeadingBackground ?? (context.ApplicationMenuDefaultPane ? (RibbonFill?)null : context.Theme.GalleryHeadingBackground);
-        if (background is { } fill) PaintRounded(context, 0, fill, Color.Transparent, 0);
-        using var font = new Font(context.Font, context.Font.Style | FontStyle.Bold);
-        DrawText(context with { Bounds = Rectangle.Inflate(bounds, -inset, 0), Font = font }, text,
-            context.Theme.MenuHeadingForeground.IsEmpty ? context.Theme.Accent : context.Theme.MenuHeadingForeground,
-            TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
-        using var rule = new Pen(context.Theme.Border); context.Graphics.DrawLine(rule, bounds.Left, bounds.Bottom - 1, bounds.Right - 1, bounds.Bottom - 1);
-    }
+        => RibbonApplicationMenuSurfaceRenderer.DrawHeader(this, context, text);
     private void DrawApplicationMenuItem(RibbonPaintContext context, RibbonItem item, bool arrow = true, bool paintChrome = true)
     {
         int S(int n) => RibbonLayoutEngine.Scale(n, context.DeviceDpi);

@@ -17,6 +17,7 @@ internal sealed record RibbonHeaderPresentationRegistration(RibbonHeaderRenderer
 
 internal static class RibbonPresentationResolver
 {
+    internal static readonly RibbonApplicationMenuSurfaceDefaults ApplicationMenuSurface = new(Stroke: 1, DividerInset: 1, HeaderRadius: 0, DefaultHeaderInset: 2, ActiveHeaderInset: 10, PaneTint: .125);
     internal static readonly RibbonApplicationMenuChromeDefaults ApplicationMenuChrome = new(RowRadius: 0, Inset: 1, RowBorderWidth: 0, FooterBorderWidth: 1, SplitWidth: 1, SplitInset: 1, PrimaryTint: .25);
     internal static readonly RibbonMenuDecorationDefaults MenuDecoration = new(Inset: 1, BorderWidth: 1, SeparatorThickness: 1);
     internal static readonly RibbonPopupFrameDefaults PopupFrame = new(BorderWidth: 1, Blur: 6, HorizontalOffset: 0, VerticalOffset: 2, Falloff: 2.5, LegacyPadding: 8);
