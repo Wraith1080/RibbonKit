@@ -3003,6 +3003,30 @@ Close Backstage and choose **Restore File mode** to restore the prior mode.
 Placement Reset retains title/outline overrides; **Default tip presentation**
 clears only TipAppearance. Existing tab/body scrollers and group reduction remain available.
 
+`Theme.OptionsAppearance` accepts immutable `RibbonOptionsAppearanceSettings` for
+the library Options navigation rail and rail/footer dividers:
+
+| Members | Null defaults and behavior |
+| --- | --- |
+| `NavigationCornerRadius`, `NavigationSelectionInset` | Radius 0..64 / per-edge vertical inset 0..1024 logical pixels. Null uses the actual renderer's GetPopupCornerRadius and the existing 2-pixel selection inset. Authored inset clamps inside the unchanged native row. |
+| `NavigationTextPadding`, `NavigationFocusInset` | Horizontal text padding 0..1024, null 12 logical pixels; native focus inset 0..1024, null one device pixel. Authored values clamp inside the row without changing its hit target. Native focus style remains. |
+| `NavigationSelectedBackground` | Optional alpha/gradient fill, null Checked. Rail backing remains BackstageNavigationBackground; text remains selected Accent / ordinary Foreground. |
+| `NavigationMarkerWidth`, `NavigationMarkerInset`, `NavigationMarkerFill` | Width 0..64, null 3; per-edge vertical inset 0..1024, null legacy 7 top / summed 14 height deduction; fill null Accent. Existing NavigationMarkerCornerRadius remains in use. Zero width, Transparent fill or a consuming inset hides marker paint. Explicit inset uses equal ends. |
+| `DividerWidth`, `DividerColor` | Width 0..32, null one device pixel; ink Empty follows Border. Zero/Transparent hides the rules; alpha is honored. Authored stripes clamp inside existing rail/footer panels. |
+
+Options keeps its existing ceiling-based DPI scaling and legacy summed marker
+rounding. Values validate before Theme/BuiltInTheme mutation. Null/Empty resets
+each member; `OptionsAppearance = null` preserves button corners, tip/gallery
+settings and the existing palette. Dialog sizes, heading typography, buttons,
+native fields/lists/choices, application page styling and draft Apply/Cancel retain
+their existing owners. The actual popup-radius hook remains in use; Options' native
+text still uses its direct text painter, without introducing command-chrome/text interception.
+
+**Try Options dialogs / Options navigation** are on **Theme effects 7**. Choose a
+preset, then open **Options preview** or **ribbon/QAT options**. Marker Reset keeps
+selection/divider settings; **Default Options decoration** clears only this group.
+Earlier groups remain in place; existing tab/body scrollers and reduction remain available.
+
 Derive from `RibbonRenderer` for a flat/custom presentation, or from
 `RibbonOffice2024Renderer` to retain Office styling while overriding selected
 drawing. Earlier preview subclasses that called base painting to obtain Office

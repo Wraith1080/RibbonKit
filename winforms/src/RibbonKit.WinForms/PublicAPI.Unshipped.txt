@@ -1908,3 +1908,34 @@ static RibbonKit.WinForms.RibbonTipAppearanceSettings.operator !=(RibbonKit.WinF
 static RibbonKit.WinForms.RibbonTipAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonTipAppearanceSettings? left, RibbonKit.WinForms.RibbonTipAppearanceSettings? right) -> bool
 RibbonKit.WinForms.RibbonTheme.TipAppearance.get -> RibbonKit.WinForms.RibbonTipAppearanceSettings?
 RibbonKit.WinForms.RibbonTheme.TipAppearance.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.RibbonOptionsAppearanceSettings() -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.<Clone>$() -> RibbonKit.WinForms.RibbonOptionsAppearanceSettings!
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.NavigationCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.NavigationCornerRadius.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.NavigationSelectionInset.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.NavigationSelectionInset.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.NavigationTextPadding.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.NavigationTextPadding.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.NavigationSelectedBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.NavigationSelectedBackground.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.NavigationMarkerWidth.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.NavigationMarkerWidth.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.NavigationMarkerInset.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.NavigationMarkerInset.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.NavigationMarkerFill.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.NavigationMarkerFill.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.NavigationFocusInset.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.NavigationFocusInset.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.DividerWidth.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.DividerWidth.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.DividerColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.DividerColor.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.Equals(RibbonKit.WinForms.RibbonOptionsAppearanceSettings? other) -> bool
+override RibbonKit.WinForms.RibbonOptionsAppearanceSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonOptionsAppearanceSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonOptionsAppearanceSettings.ToString() -> string!
+static RibbonKit.WinForms.RibbonOptionsAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonOptionsAppearanceSettings? left, RibbonKit.WinForms.RibbonOptionsAppearanceSettings? right) -> bool
+static RibbonKit.WinForms.RibbonOptionsAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonOptionsAppearanceSettings? left, RibbonKit.WinForms.RibbonOptionsAppearanceSettings? right) -> bool
+RibbonKit.WinForms.RibbonTheme.OptionsAppearance.get -> RibbonKit.WinForms.RibbonOptionsAppearanceSettings?
+RibbonKit.WinForms.RibbonTheme.OptionsAppearance.init -> void

@@ -30,7 +30,7 @@ public class RibbonOptionsDialog : Form
         _rail.BackColor = _navigation.BackColor = ribbon.Theme.BackstageNavigationBackground;
         _navigation.SelectedIndexChanged += (_, _) => ShowSelectedPage(); _navigation.DrawItem += DrawNavigation;
         _rail.Controls.Add(_navigation);
-        _rail.Paint += (_, e) => { using var pen = new Pen(ribbon.Theme.Border); e.Graphics.DrawLine(pen, _rail.Width - 1, 0, _rail.Width - 1, _rail.Height); };
+        _rail.Paint += (_, e) => RibbonOptionsRenderer.DrawDivider(e.Graphics, _rail.ClientRectangle, ribbon.Theme, DeviceDpi, vertical: true);
         var cancel = Button("CancelCustomization", "Cancel", () => { DialogResult = DialogResult.Cancel; Close(); });
         cancel.CausesValidation = false;
         var ok = new RibbonOptionsAccentButton(ribbon) { Name = "AcceptCustomization", Text = "OK", AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
@@ -40,7 +40,7 @@ public class RibbonOptionsDialog : Form
         _body.Controls.Add(_viewport); _body.Controls.Add(_heading);
         var middle = new Panel { Dock = DockStyle.Fill }; middle.Controls.Add(_body); middle.Controls.Add(_rail);
         Controls.Add(middle); Controls.Add(_footer);
-        _footer.Paint += (_, e) => { using var pen = new Pen(ribbon.Theme.Border); e.Graphics.DrawLine(pen, 0, 0, _footer.Width, 0); };
+        _footer.Paint += (_, e) => RibbonOptionsRenderer.DrawDivider(e.Graphics, _footer.ClientRectangle, ribbon.Theme, DeviceDpi, vertical: false);
         _viewport.Resize += (_, _) => LayoutPage(); _viewport.Layout += (_, _) => LayoutPage(); UpdateMetrics(false);
     }
     /// <summary>Gets the owned pages. Removing a page detaches it without disposal. A page can belong to only one dialog.</summary>
@@ -111,17 +111,9 @@ public class RibbonOptionsDialog : Form
     private void DrawNavigation(object? sender, DrawItemEventArgs e)
     {
         if (e.Index < 0 || _navigation.Items[e.Index] is not RibbonOptionsPage page) return;
-        var theme = _ribbon.Theme; using var background = new SolidBrush(theme.BackstageNavigationBackground); e.Graphics.FillRectangle(background, e.Bounds);
-        bool selected = e.State.HasFlag(DrawItemState.Selected); var bounds = Rectangle.Inflate(e.Bounds, 0, -ScaleLogical(2));
-        if (selected)
-        {
-            _rounded.Draw(e.Graphics, bounds, _ribbon.Painter.GetPopupCornerRadius(theme, DeviceDpi), theme.Checked, Color.Transparent, 0);
-            var marker = new Rectangle(bounds.Left, bounds.Top + ScaleLogical(7), ScaleLogical(3), Math.Max(0, bounds.Height - ScaleLogical(14)));
-            _rounded.Draw(e.Graphics, marker, RibbonKit.WinForms.Layout.RibbonFrameMetrics.Radius(theme.NavigationMarkerCornerRadius, marker.Width / 2, DeviceDpi), new(theme.Accent), Color.Transparent, 0);
-        }
-        bounds.Inflate(-ScaleLogical(12), 0);
-        TextRenderer.DrawText(e.Graphics, page.Text, Font, bounds, selected ? theme.Accent : theme.Foreground, TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
-        if (selected && _navigation.Focused) ControlPaint.DrawFocusRectangle(e.Graphics, Rectangle.Inflate(e.Bounds, -1, -1), theme.Accent, theme.BackstageNavigationBackground);
+        RibbonOptionsRenderer.DrawNavigation(_ribbon.Painter, _rounded,
+            new(e.Graphics, e.Bounds, _ribbon.Theme, Font, DeviceDpi) { Density = _ribbon.Density }, page.Text,
+            e.State.HasFlag(DrawItemState.Selected), _navigation.Focused);
     }
     /// <inheritdoc />
     protected override void OnLoad(EventArgs e) { base.OnLoad(e); RefreshPages(); UpdateMetrics(true); }

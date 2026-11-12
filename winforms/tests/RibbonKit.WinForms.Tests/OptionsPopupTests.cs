@@ -33,8 +33,8 @@ public sealed class OptionsPopupTests
     [Fact]
     public void Options_choice_uses_ribbon_list_and_stages_selection_until_accept() => FoundationTests.Sta(() =>
     {
-        using var ribbon = new RibbonControl(); using var form = new Form(); using var combo = new RibbonOptionsComboBox(ribbon) { Name = "tabs", DropDownStyle = ComboBoxStyle.DropDownList, DrawMode = DrawMode.OwnerDrawFixed };
-        combo.Items.AddRange(["Home", "Insert", "Review"]); combo.SelectedIndex = 0; form.Controls.Add(combo); form.Show(); combo.Focus(); int changed = 0; combo.SelectedIndexChanged += (_, _) => changed++;
+        using var ribbon = new RibbonControl(); using var form = new Form { StartPosition = FormStartPosition.Manual, Location = new(-16000, -16000), ShowInTaskbar = false }; using var combo = new RibbonOptionsComboBox(ribbon) { Name = "tabs", DropDownStyle = ComboBoxStyle.DropDownList, DrawMode = DrawMode.OwnerDrawFixed };
+        combo.Items.AddRange(["Home", "Insert", "Review"]); combo.SelectedIndex = 0; form.Controls.Add(combo); form.Show(); Application.DoEvents(); form.Activate(); Assert.True(combo.Focus()); int changed = 0; combo.SelectedIndexChanged += (_, _) => changed++;
         combo.OpenChoice(); Assert.True(combo.ChoiceOpen);
         var down = Message.Create(combo.Handle, 0x100, (nint)Keys.Down, 0); Assert.True(combo.PreFilterMessage(ref down)); Assert.Equal(0, combo.SelectedIndex);
         combo.CloseChoice(false, true); Assert.Equal(0, combo.SelectedIndex); Assert.Equal(0, changed);

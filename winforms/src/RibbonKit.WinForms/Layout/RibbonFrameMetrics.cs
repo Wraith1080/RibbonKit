@@ -20,6 +20,7 @@ internal readonly record struct RibbonFrameMetrics(RibbonTheme Theme)
     {
         RibbonBodyAppearanceSettings.Validate(theme.BodyAppearance);
         RibbonPopupAppearanceSettings.Validate(theme.PopupAppearance);
+        RibbonOptionsAppearanceSettings.Validate(theme.OptionsAppearance);
         if (theme.BodyCornerRadius is < 0 or > 64 || theme.BackstagePageCornerRadius is < 0 or > 64 ||
             theme.OptionsButtonCornerRadius is < 0 or > 64 ||
             theme.FocusCornerRadius is < 0 or > 64 || theme.KeyTipCornerRadius is < 0 or > 64 ||
