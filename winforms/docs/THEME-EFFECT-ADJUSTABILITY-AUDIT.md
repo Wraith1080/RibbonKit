@@ -1,10 +1,12 @@
 # Earlier theme rewrite: effect adjustability audit
 
-**2026-11-11: A00–A04, A06–A09 and A11–A16 implemented and verified. A05/A10/A17 remain separate.**
+**2026-11-12: A00–A04, A06–A09 and A11–A17 implemented and verified. A05/A10 remain separate.**
 The initial source review changed documentation only. The user then authorized
 the first correction batch; its current evidence is in the
 [themes plan](THEMES-PLAN.md#backstage-fill-routing-and-motion-overrides--2026-11-11).
-The uncommitted C1 implementation is preserved. A05, A10 and A17 remain later work.
+The C1 implementation was preserved. A17 followed in the
+[D6 tip record](THEMES-PLAN.md#tip-presentation-and-backstage-badge-placement-d6--2026-11-12);
+A05 and A10 remain later work.
 
 Scope is B1 registration, B2 layout inputs/defaults, B3 caption/motion policy and
 C1 header presentation, including the shared paint/motion helpers those paths
@@ -67,7 +69,10 @@ A11–A16 now use `HeaderAppearance`, shared `Chevrons`, `FocusInset`/
 The [header/shared-effects record](THEMES-PLAN.md#header-and-shared-effect-overrides--2026-11-11)
 retains exact default comparisons, authored-effect checks, API/range/reset
 contracts and native package evidence. A05 remains with caption/title ownership;
-A10 is a separate page-width preference and A17 belongs to shared badge placement.
+A10 is a separate page-width preference. A17 is implemented by TipAppearance's
+independent Backstage right/width/height clearance values through shared badge
+metrics; existing padding is retained. D6 records default/short-slot/override/
+reset and native/package evidence.
 
 ## Existing controls that already satisfy the request
 
@@ -121,7 +126,7 @@ their placeholder padding and sample colors remain consumer/tool presentation.
 2. Backstage decoration/spacing A06–A09 is implemented. Treat A05's caption choices with
    the caption/title ownership rules, and A10 as a separate layout preference.
 3. C1/shared helper gaps A11–A16 are implemented; arrow, focus and motion ownership
-   remain shared. A17 belongs with the shared tip-placement work, without duplicating
+   remain shared. A17 is implemented with shared tip-placement work, without duplicating
    existing badge padding roles. Reuse state/metric groups when they avoid an
    excessive list of unrelated theme flags.
 4. Resume C2 after the selected backfill, or follow the user's chosen scope.

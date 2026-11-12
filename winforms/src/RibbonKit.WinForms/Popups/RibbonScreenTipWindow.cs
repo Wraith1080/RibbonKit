@@ -16,7 +16,7 @@ internal sealed record RibbonScreenTipLayout(Size Size, Rectangle Title, Rectang
         int outerWidth = Math.Max(1, Math.Min(S(metrics.MaximumWidth), available.Width));
         int padding = Math.Min(S(metrics.ContentPadding) + Math.Max(0, frameInset - 1), Math.Max(0, (Math.Min(outerWidth, available.Height) - 2) / 2));
         int width = Math.Max(1, outerWidth - 2 * padding);
-        using var titleFont = new Font(font, font.Style | FontStyle.Bold);
+        using var titleFont = new Font(font, metrics.TitleStyle(font));
         var titleSize = TextRenderer.MeasureText(title, titleFont, new(width, int.MaxValue), TextFlags);
         var descriptionSize = string.IsNullOrEmpty(description) ? Size.Empty : TextRenderer.MeasureText(description, font, new(width, int.MaxValue), TextFlags);
         int gap = descriptionSize.IsEmpty || title.Length == 0 ? 0 : S(metrics.TitleGap);

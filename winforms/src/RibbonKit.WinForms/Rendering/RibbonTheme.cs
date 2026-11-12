@@ -224,6 +224,8 @@ public sealed record RibbonTheme
     public RibbonGalleryAppearanceSettings? GalleryAppearance { get; init; }
     /// <summary>Gets optional immutable gallery artwork/label and utility-glyph overrides. Null retains existing content recipes. Application presenter internals and native controls keep their own styling and ownership.</summary>
     public RibbonGalleryContentSettings? GalleryContent { get; init; }
+    /// <summary>Gets optional immutable ScreenTip title, KeyTip outline and Backstage badge-placement overrides. Null retains existing presentation; colors, corners, padding and native/keyboard lifetime remain independent.</summary>
+    public RibbonTipAppearanceSettings? TipAppearance { get; init; }
     /// <summary>Gets an optional keyboard-badge fill. Null preserves the renderer's default: pale yellow for Office 2024, or Surface for the neutral renderer.</summary>
     public RibbonFill? KeyTipBackground { get; init; }
     /// <summary>Gets the keyboard-badge text color. Empty preserves the renderer's default: black for Office 2024, or Foreground for the neutral renderer.</summary>

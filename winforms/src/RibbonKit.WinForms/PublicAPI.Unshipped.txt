@@ -1885,3 +1885,26 @@ RibbonKit.WinForms.RibbonGalleryAppearanceSettings.UtilityBorderColor.get -> Sys
 RibbonKit.WinForms.RibbonGalleryAppearanceSettings.UtilityBorderColor.init -> void
 RibbonKit.WinForms.RibbonGalleryAppearanceSettings.StripBackground.get -> RibbonKit.WinForms.RibbonFill?
 RibbonKit.WinForms.RibbonGalleryAppearanceSettings.StripBackground.init -> void
+RibbonKit.WinForms.RibbonTipAppearanceSettings
+RibbonKit.WinForms.RibbonTipAppearanceSettings.RibbonTipAppearanceSettings() -> void
+RibbonKit.WinForms.RibbonTipAppearanceSettings.<Clone>$() -> RibbonKit.WinForms.RibbonTipAppearanceSettings!
+RibbonKit.WinForms.RibbonTipAppearanceSettings.ScreenTipTitleBold.get -> bool?
+RibbonKit.WinForms.RibbonTipAppearanceSettings.ScreenTipTitleBold.init -> void
+RibbonKit.WinForms.RibbonTipAppearanceSettings.KeyTipInset.get -> int?
+RibbonKit.WinForms.RibbonTipAppearanceSettings.KeyTipInset.init -> void
+RibbonKit.WinForms.RibbonTipAppearanceSettings.KeyTipBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonTipAppearanceSettings.KeyTipBorderWidth.init -> void
+RibbonKit.WinForms.RibbonTipAppearanceSettings.BackstageKeyTipRightClearance.get -> int?
+RibbonKit.WinForms.RibbonTipAppearanceSettings.BackstageKeyTipRightClearance.init -> void
+RibbonKit.WinForms.RibbonTipAppearanceSettings.BackstageKeyTipHorizontalClearance.get -> int?
+RibbonKit.WinForms.RibbonTipAppearanceSettings.BackstageKeyTipHorizontalClearance.init -> void
+RibbonKit.WinForms.RibbonTipAppearanceSettings.BackstageKeyTipVerticalClearance.get -> int?
+RibbonKit.WinForms.RibbonTipAppearanceSettings.BackstageKeyTipVerticalClearance.init -> void
+RibbonKit.WinForms.RibbonTipAppearanceSettings.Equals(RibbonKit.WinForms.RibbonTipAppearanceSettings? other) -> bool
+override RibbonKit.WinForms.RibbonTipAppearanceSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonTipAppearanceSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonTipAppearanceSettings.ToString() -> string!
+static RibbonKit.WinForms.RibbonTipAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonTipAppearanceSettings? left, RibbonKit.WinForms.RibbonTipAppearanceSettings? right) -> bool
+static RibbonKit.WinForms.RibbonTipAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonTipAppearanceSettings? left, RibbonKit.WinForms.RibbonTipAppearanceSettings? right) -> bool
+RibbonKit.WinForms.RibbonTheme.TipAppearance.get -> RibbonKit.WinForms.RibbonTipAppearanceSettings?
+RibbonKit.WinForms.RibbonTheme.TipAppearance.init -> void

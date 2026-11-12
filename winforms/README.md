@@ -1853,7 +1853,7 @@ remain above library menus without activating them. Very large descriptions are
 clipped to the available working area; this first version has no scrolling.
 
 `RibbonRenderer.DrawScreenTip` receives the full title/description and measured
-content rectangles. It draws a bold title and optional wrapped description using
+content rectangles. By default it draws a bold title and optional wrapped description using
 the ribbon font and theme foreground. Existing `DrawPopupFrame`,
 `GetPopupCornerRadius` and `DrawPopupShadow` hooks supply the shared frame:
 rounded Office or square neutral. Another Form can use these public APIs without
@@ -2978,6 +2978,30 @@ glyph resets retain the other roles; frame reset also retains tile/heading setti
 **Default all gallery content** clears only GalleryContent. Existing D5a controls
 remain on Theme effects 6, which the user declared full. Keep new controls on tab 7
 until directed otherwise.
+
+`Theme.TipAppearance` accepts immutable `RibbonTipAppearanceSettings` for shared
+ScreenTip title, keyboard-badge outline and Backstage badge placement:
+
+| Members | Null defaults and behavior |
+| --- | --- |
+| `ScreenTipTitleBold` | Null/true adds Bold to host styles; false removes Bold and preserves other styles. Shared ScreenTip measurement and actual text painting use the same weight. Foreground and existing width/padding/gap/frame settings remain in use. |
+| `KeyTipInset`, `KeyTipBorderWidth` | Paint inset 0..1024 / outline width 0..32 logical pixels. Null retains zero inset / one-device-pixel outline. Zero stroke hides it; authored alpha follows existing KeyTipBorder. Paint dimensions clamp inside the badge; text/command targets do not move. |
+| `BackstageKeyTipRightClearance` | 0..1024, null 4 logical pixels. Badge placement clamps inside the existing entry target. |
+| `BackstageKeyTipHorizontalClearance`, `BackstageKeyTipVerticalClearance` | Total deductions from the entry's available badge width/height, 0..1024, null 8 / 4 logical pixels. Zero permits the full dimension; consuming a dimension hides the badge. Existing KeyTipHorizontalPadding / KeyTipVerticalPadding retain independent text-sizing and legacy summed fractional-DPI rounding. |
+
+Existing KeyTipBackground/Foreground/Border and Office KeyTipCornerRadius keep
+their roles; neutral badges remain square. Members reset with null;
+`TipAppearance = null` retains existing colors, corners, padding and unrelated
+gallery settings. Values validate before Theme/BuiltInTheme mutation. Actual
+DrawScreenTip/DrawKeyTip/DrawText overrides remain authoritative. Passive-window
+delay/lifetime, keyboard routing and native page/editor ownership remain shared.
+
+**Try tips and badges / Tip presentation** are on **Theme effects 7**. Hover over
+the preview commands for ScreenTips, or press Alt/F10 for badges. **Inset Backstage
+badges** opens the authored Backstage; press Alt/F10 there to show its badges.
+Close Backstage and choose **Restore File mode** to restore the prior mode.
+Placement Reset retains title/outline overrides; **Default tip presentation**
+clears only TipAppearance. Existing tab/body scrollers and group reduction remain available.
 
 Derive from `RibbonRenderer` for a flat/custom presentation, or from
 `RibbonOffice2024Renderer` to retain Office styling while overriding selected

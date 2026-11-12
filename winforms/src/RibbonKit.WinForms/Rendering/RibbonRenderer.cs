@@ -195,12 +195,7 @@ public partial class RibbonRenderer : IDisposable
     }
     /// <summary>Paints passive ScreenTip content in library-measured title and description slots. The popup frame and shadow use the existing popup hooks.</summary>
     public virtual void DrawScreenTip(RibbonPaintContext context, string title, string description, Rectangle titleBounds, Rectangle descriptionBounds)
-    {
-        using var titleFont = new Font(context.Font, context.Font.Style | FontStyle.Bold);
-        DrawText(context with { Bounds = titleBounds, Font = titleFont }, title, context.Theme.Foreground, RibbonScreenTipLayout.TextFlags);
-        if (!descriptionBounds.IsEmpty)
-            DrawText(context with { Bounds = descriptionBounds }, description, context.Theme.Foreground, RibbonScreenTipLayout.TextFlags);
-    }
+        => RibbonTipRenderer.DrawScreenTip(this, context, title, description, titleBounds, descriptionBounds);
     /// <summary>Paints a DPI-scaled dropdown indicator centered inside a measured slot.</summary>
     public virtual void DrawDropDownArrow(RibbonPaintContext context, Color color) =>
         RibbonArrowPainter.DrawDown(context.Graphics, context.Bounds, context.DeviceDpi, color, context.Theme.CommandContent);
@@ -600,12 +595,7 @@ public partial class RibbonRenderer : IDisposable
     }
     /// <summary>Paints a resolved keyboard badge.</summary>
     public virtual void DrawKeyTip(RibbonPaintContext context, string keys)
-    {
-        PaintRounded(context, 0, context.Theme.KeyTipBackground ?? new(context.Theme.Surface),
-            context.Theme.KeyTipBorder.IsEmpty ? context.Theme.Border : context.Theme.KeyTipBorder);
-        DrawText(context, keys, context.Theme.KeyTipForeground.IsEmpty ? context.Theme.Foreground : context.Theme.KeyTipForeground,
-            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);
-    }
+        => RibbonTipRenderer.DrawKeyTip(this, context, keys, office: false);
     /// <summary>Paints common item chrome; the foundation uses square edges and theme-provided fills.</summary>
     protected virtual void DrawChrome(RibbonPaintContext context, RibbonFill fill, Color border)
     {

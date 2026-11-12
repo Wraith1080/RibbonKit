@@ -1,6 +1,6 @@
 # Native WinForms theme architecture
 
-**B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c and D5a–D5b implemented; latest delivery 2026-11-12.** Backstage uses one registration
+**B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b and D6 implemented; latest delivery 2026-11-12.** Backstage uses one registration
 for sibling layout/drawing helpers, explicit defaults, measured layout inputs and
 caption/motion profiles. Headers register sibling Filled/Underline drawing with
 explicit geometry defaults and adjustable effects. C2 resolves body/connected
@@ -20,13 +20,14 @@ actual image/text/indicator/arrow/focus/separator hooks and native owners. D5a
 extracts built-in gallery tile-state/headings with immutable appearance overrides
 and actual protected chrome precedence. D5b shares gallery content/glyph drawing,
 popup minimum-height inputs and inline frame/utility chrome, with independently
-adjustable settings and existing targets/presenter ownership. D6 tips is next proposed.
+adjustable settings and existing targets/presenter ownership. D6 shares tip drawing,
+title weight and badge metrics with adjustable outlines and A17 Backstage placement.
 The earlier-slice review found adjustability gaps. A00–A04 fill routing/motion
-and A06–A09 decoration/spacing plus A11–A16 header/shared overrides are implemented;
-track the separate caption/layout/tip candidates in the
+and A06–A09 decoration/spacing plus A11–A17 header/shared/tip overrides are implemented;
+track the separate caption/layout candidates in the
 [source audit and correction order](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 Current evidence and user review are recorded in the
-[themes plan](THEMES-PLAN.md#gallery-content-and-inline-frame-utilities-d5b--2026-11-12).
+[themes plan](THEMES-PLAN.md#tip-presentation-and-backstage-badge-placement-d6--2026-11-12).
 
 The [themes plan](THEMES-PLAN.md) retains appearance requirements and acceptance.
 This document proposes implementation boundaries and a migration sequence; it
@@ -171,7 +172,7 @@ Preserve these rules throughout:
    bottom inset/hover ink. Apply this requirement to C2 and later slices too.
    The [retroactive audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) records remaining
    B1–B3/C1/shared-helper gaps. A00–A04, A06–A09 and A11–A16 are implemented;
-   A05/A10/A17 retain separate scopes. Backstage motion overrides use one immutable settings group,
+   A05/A10 retain separate scopes; A17 is implemented in D6. Backstage motion overrides use one immutable settings group,
    resolved with family defaults and captured by the existing engines.
 
 The family registration binds compatible default pieces. Deliberate application
@@ -271,7 +272,8 @@ automated evidence or visual acceptance. Implement the following separately.
 | D4c. Application Menu content — implemented | Shared content drawing/measurement with immutable icon/text/description/footer/arrow/separator overrides. Null/Empty preserves legacy rounding/allowances; authored metrics feed actual targets. Native fields/content and actual renderer hooks retain their owners. Live separators carry Application Menu context. | 39 distinct relevant passing latest cases, 64 exact default PNG/slot/measurement pairs and four package scopes plus review-tab checks are recorded in the [D4c record](THEMES-PLAN.md#application-menu-content-presentation-d4c--2026-11-12). |
 | D5a. Gallery tile-state/headings — implemented | Shared built-in state/heading decoration over existing bounds with immutable GalleryAppearance settings. Actual primitive fallbacks, chrome/text/image/focus hooks, state eligibility, content/layout and presenter/native owners remain. | 26 distinct relevant cases, 64 exact default PNG/slot/layout pairs and four package scopes plus new-tab checks are recorded in the [D5a record](THEMES-PLAN.md#gallery-tile-state-and-headings-d5a--2026-11-12). |
 | D5b. Gallery content/inline frame/utilities — implemented | Shared built-in content/glyph paint and popup minimum-height inputs with GalleryContent plus GalleryAppearance strip/utility settings. Preserve actual image/text/focus/chrome hooks, inline targets, state policy and native/custom presenters. | 45 distinct relevant latest passing cases, 32 exact default PNG/slot/layout pairs and four package scopes plus new-tab checks are recorded in the [D5b record](THEMES-PLAN.md#gallery-content-and-inline-frame-utilities-d5b--2026-11-12). |
-| D. Remaining surfaces, one per slice | D6 tips, including the separate A17 placement candidate, then library dialogs. Reuse helpers when only palette/metrics differ. Risk: public drawing hooks, command geometry, borrowed editors/presenters/icons and popup retention. | Inspect actual tip paint/measurement/placement and renderer override boundaries first. Select only the changed surface's geometry/paint/state/ownership checks and one unchanged-family comparison. For native content, include retained handle/value/validation evidence; for designer previews, use inert candidate-theme checks. Choose exact filters at each slice. |
+| D6. Tips and Backstage badge placement — implemented | Shared tip drawing, title measurement weight and badge metrics; immutable TipAppearance outlines/insets and A17 clearances. Existing palette/corners/padding, actual renderer hooks, keyboard routes and passive/native lifetime remain. | 31 distinct relevant passing cases, 32 exact default PNG/slot/measurement pairs and four package scopes plus review-tab checks are recorded in the [D6 record](THEMES-PLAN.md#tip-presentation-and-backstage-badge-placement-d6--2026-11-12). |
+| D. Remaining surfaces, one per slice | D7 library dialogs. Reuse helpers when only palette/metrics differ. Risk: public drawing hooks, command geometry, borrowed editors/icons, native validation and dialog lifetime. | Inspect actual library-owned dialog paint/measurement and native control/renderer boundaries first. Select only the changed surface's geometry/paint/state/ownership checks and one unchanged-family comparison. Include retained handle/value/validation evidence and inert candidate-theme checks where affected. Choose exact filters at each slice. |
 | E. Selected catalog growth | Add one later chosen light definition, reusing surface registrations or adding an actually needed sibling. Risk: selection/Reset/serialization/persistence and unsupported consumer dependencies. | Definition/selection tests, relevant designer/generated-code checks, and a focused independent-consumer visual/state scope. Wait for existing appearance review before another theme. |
 
 For each implementation slice, build affected native projects in their normal
@@ -319,8 +321,8 @@ Completion criteria:
   authored Forms/resources change. Review the diff and record focused results
   and remaining human appearance/input gates in the themes plan.
 
-B2/B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c and D5a–D5b were delivered as separate slices.
-D6 tips is next proposed;
+B2/B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b and D6 were delivered as separate slices.
+D7 library dialogs is next proposed;
 the consolidated geometry remains the foundation.
 
 ## Verification and delivery budget

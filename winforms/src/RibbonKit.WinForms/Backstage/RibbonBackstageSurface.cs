@@ -626,10 +626,8 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             if (Tip.Length > 0)
             {
                 var text = TextRenderer.MeasureText(graphics, Tip, Font, Size.Empty, TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
-                int S(int n) => RibbonLayoutEngine.Scale(n, DeviceDpi);
-                var desired = new RibbonTipMetrics(ribbon.Theme).BadgeSize(text, DeviceDpi, backstage: true);
-                var size = new Size(Math.Min(Math.Max(0, Width - S(8)), desired.Width), Math.Min(Math.Max(0, Height - S(4)), desired.Height));
-                ribbon.Painter.DrawKeyTip(context with { Bounds = new(bounds.Left + Math.Max(0, Width - S(4) - size.Width), bounds.Top + (Height - size.Height) / 2, size.Width, size.Height) }, Tip);
+                var badge = new RibbonTipMetrics(ribbon.Theme).BackstageBadgeBounds(bounds, text, DeviceDpi);
+                ribbon.Painter.DrawKeyTip(context with { Bounds = badge }, Tip);
             }
         }
         protected override void Dispose(bool disposing) { if (disposing) _buffer?.Dispose(); base.Dispose(disposing); }

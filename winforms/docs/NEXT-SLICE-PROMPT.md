@@ -1,29 +1,30 @@
-# Continue native WinForms themes after D5b gallery content/inline frame/utilities
+# Continue native WinForms themes after D6 tips and badge placement
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-12**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b and adjustability backfills
-A00–A04/A06–A09/A11–A16 are implemented. Current evidence and exact user review
+Updated **2026-11-12**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6 and adjustability backfills
+A00–A04/A06–A09/A11–A17 are implemented. Current evidence and exact user review
 scope live in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
-The latest implementation is [D5b](THEMES-PLAN.md#gallery-content-and-inline-frame-utilities-d5b--2026-11-12).
+The latest implementation is [D6](THEMES-PLAN.md#tip-presentation-and-backstage-badge-placement-d6--2026-11-12).
 Use the ledger for the exact user appearance review scope and remaining gates.
-The user committed D5a at `9b45f12` before D5b. Do not overwrite later user commits.
+The user committed D5b at `3bc3680` before D6. Do not overwrite later user commits.
 
 ## Next bounded implementation
 
 Start with `git status --short` and inspect live branch/HEAD; preserve later user
-commits and edits. Follow the current user request. For a continuation, D6
-**ScreenTip/KeyTip presentation** is next proposed. Inspect actual tip paint,
-measurement and placement, including the separate A17 offset candidate. Choose a
-bounded slice from that source map before editing; reuse existing tip fill/ink,
-popup-frame, spacing and renderer hooks. Preserve keyboard/accessibility routing,
-delay/lifetime, native popup ownership and candidate-theme designer safety.
+commits and edits. Follow the current user request. For a continuation, D7
+**library-owned dialogs** is next proposed. Inspect actual dialog paint,
+measurement, native control styling and renderer boundaries. Choose a bounded
+surface before editing; reuse existing dialog fill/ink/frame/spacing roles.
+Preserve native editors, validation, keyboard/focus, draft Apply/Cancel, dialog
+lifetime and inert candidate-theme preview safety. Application dialog content
+stays application-owned. D6 owns shared ScreenTip/KeyTip paint and A17 placement.
 D5a owns gallery tile-state/headings and D5b content/inline frame/utilities;
 preserve gallery source identity, preview/cancel/commit and native/custom presenter
 ownership. Authoring cards remain ordinary editable UserControls.
 D4a owns Application Menu state chrome; D4b owns surfaces/headings/clips; D4c owns
-content/measurement; D2 owns the outer frame. Library dialogs retain a later scope.
+content/measurement; D2 owns the outer frame.
 Preserve current defaults. Read the matching source map and rules in
 [THEME-ARCHITECTURE-PLAN](THEME-ARCHITECTURE-PLAN.md). Planning-only requests do not
 need builds, tests or package refresh.
@@ -44,6 +45,7 @@ Put new controls on **Theme effects 7** through `ThemeEffectsReviewTab` until di
 Earlier tabs retain seven/five/four/seven/six/three groups. Tab 6 retains **Try built-in
 galleries / Gallery tile states / Gallery headings**. Tab 7 has **Try gallery content /
 Gallery artwork and labels / Gallery inline frames / Gallery utility glyphs**.
+Tab 7 now also has **Try tips and badges / Tip presentation** (six total groups).
 The File preview uses existing authored models and restores the prior File mode.
 Its divider-visibility button uses the existing independent flag (2019 defaults
 false); group Reset clears only the new settings. The earlier optional overflow
@@ -153,9 +155,20 @@ when needed. Do not move old groups or infer fullness from reduction.
   raster policy remain shared. Reuse 32 exact default pairs and 45 relevant latest
   passing cases unless affected. Package checks retain the same native editor and
   source selection, restored popup geometry and unchanged inline targets.
+- D6 retains `TipAppearance`, shared ScreenTip/KeyTip recipes and resolved tip
+  defaults. TitleBold null adds Bold; false removes it for both measurement and
+  paint, preserving other styles. Badge inset/stroke null is 0/one device pixel;
+  existing palette/Office corners/padding remain independent. A17 right/width/
+  height clearances null retain 4/8/4 logical pixels and legacy fractional rounding.
+  Alpha/zero/hide/clamps and independent/group Reset remain. Public tip/text hooks,
+  native ownership and keyboard routes stay authoritative; no protected chrome
+  hook was introduced where the original badge path used a direct primitive.
+  Reuse 32 exact defaults, 31 relevant passing cases and four offscreen package
+  scopes unless affected. Real passive window focus/ownership was checked in STA;
+  the package fixture calls public ScreenTip rendering, without a physical-hover claim.
 - Existing Theme assignment closes ordinary menus through `ModelChanged`;
   retained models reopen normally. Do not change lifecycle to satisfy a probe.
-- A05 caption tint, A10 preferred page minimum, A17 tip placement and the reported
+- A05 caption tint, A10 preferred page minimum and the reported
   Backstage closing-title ink flicker remain separate. The latter is deferred to
   title work, with recording/timestamps in the ledger. No new theme family now;
   later light-theme order is unscheduled and dark themes stay deferred.

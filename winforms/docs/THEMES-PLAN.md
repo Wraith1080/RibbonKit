@@ -354,17 +354,17 @@ Backstage. Stop for this review before another theme.
 | Item | Status |
 | --- | --- |
 | Direction | **2026-11-10: user selected Office 2019 first and light themes before dark.** |
-| Planning | B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b and audit corrections A00–A04/A06–A09/A11–A16 are implemented. D6 tips, including the separate A17 placement candidate, is next proposed; caption/layout and library dialogs retain separate scopes. Later family order is provisional. |
-| Earlier-slice adjustability audit | **2026-11-11: A11–A16 header/shared effects implemented and verified.** Current evidence is in the [header/shared record](#header-and-shared-effect-overrides--2026-11-11). Earlier evidence remains below. The [audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) retains A05/A10/A17 as separate candidates. |
-| Runtime/API/rendering | D5b shares built-in gallery content/glyph paint and resolved popup minimum-height inputs, with immutable `GalleryContent` plus inline strip/utility extensions to `GalleryAppearance`. Actual tile/heading/protected chrome/text/image/focus hooks remain authoritative. Inline targets, state eligibility and custom/native presenter ownership retain their owners. |
-| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds succeed; the permanent sample is refreshed. D5b's **Try gallery content / Gallery artwork and labels / Gallery inline frames / Gallery utility glyphs** are on the requested new **Theme effects 7**. Earlier tabs retain seven/five/four/seven/six/three groups. Application Menu and D5a controls remain pinned to tabs 5 and 6. Tab 6 is full; keep using tab 7 until directed otherwise. Authored Forms/UserControls/resources/project files remain intact. |
-| Focused Release verification | D5b: **45 distinct relevant latest cases passed**: 27 new authored cases, 17 retained gallery/presenter/designer cases and one default comparison. The two affected designer-class cases also pass with authored content/frame settings. Evidence and the corrected new glyph-test assertion are in the [D5b record](#gallery-content-and-inline-frame-utilities-d5b--2026-11-12). No broad suite ran. |
-| Two-family default parity | D5b: **32 PNG/content-slot/layout pairs match exactly**, both light palettes, flat/Office renderers, Compact/Touch and 96/120/144/192 DPI, with 9/14-point content in each image. Null and empty groups match saved content/frame/utility defaults. D5a's earlier 64-pair evidence remains recorded below. No full native matrix ran. |
-| Composed native package verification | D5b: **4/4 public-package scopes plus new-tab checks passed** at actual 120 DPI for both light families in Solid/Mica, each Classic/Simplified x Compact/Touch. Actual content/image/text/frame/utility/chrome callbacks, authored alignment/artwork/aspect fitting, restored popup geometry and unchanged inline targets, retained custom presenter/editor HWND/parent/value/selection and source selection, two active preview/cancel/commit sequences per scope and independent/group Reset pass. These are synchronous offscreen checks; external UIA and physical-input/visible frame-pacing acceptance remain separate. |
+| Planning | B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6 and audit corrections A00–A04/A06–A09/A11–A17 are implemented. D7 library dialogs is next proposed; caption/title and page-layout preferences retain separate scopes. Later family order is provisional. |
+| Earlier-slice adjustability audit | **2026-11-11: A11–A16 header/shared effects implemented and verified.** Evidence is in the [header/shared record](#header-and-shared-effect-overrides--2026-11-11). **2026-11-12: A17 badge placement followed in D6.** The [audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) retains A05/A10 as separate candidates. |
+| Runtime/API/rendering | D6 shares ScreenTip/KeyTip drawing and explicit tip defaults, with immutable `TipAppearance` title weight, badge inset/stroke and A17 Backstage clearances. Measurement and title paint use the same weight. Actual tip/text hooks, palette/corners/padding, command targets, native state and passive-window/keyboard lifetime retain their owners. |
+| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; the permanent sample is refreshed. **Try tips and badges / Tip presentation** join D5b's four groups on **Theme effects 7** (six total). Earlier tabs retain seven/five/four/seven/six/three groups; Application Menu and D5a controls remain pinned to tabs 5 and 6. Tab 6 is full; keep using tab 7 until directed otherwise. Authored Forms/UserControls/resources/project files remain intact. |
+| Focused Release verification | D6: **31 distinct relevant cases passed**: 20 new authored cases, eight retained tip/geometry/native-lifetime cases, two candidate-theme preview cases with authored settings and one default comparison. Evidence is in the [D6 record](#tip-presentation-and-backstage-badge-placement-d6--2026-11-12). No broad suite ran. |
+| Two-family default parity | D6: **32 PNG/text-slot/measurement pairs match exactly**, both light palettes, flat/Office renderers, Compact/Touch and 96/120/144/192 DPI, with 9/14-point content in each image. Null and empty groups match saved tip defaults. Legacy Backstage 4/8/4 placement rounding also matches at all four DPIs. Earlier gallery evidence remains below. No full native matrix ran. |
+| Composed native package verification | D6: **4/4 public-package scopes plus review-tab checks passed** at actual 120 DPI for both light families in Solid/Mica, each Classic/Simplified x Compact/Touch. Actual root/Backstage KeyTip/text hooks, authored outline/right clearance, unchanged command/root-badge/page bounds, retained editor HWND/parent/value/selection and selected page, exact placement reset and independent/group Reset pass. The package calls public ScreenTip rendering; actual passive-window focus/ownership is covered by STA tests. These are synchronous offscreen checks, separate from physical hover/input, visible pacing and external UIA. |
 | Backstage review correction | **2026-11-11: navbar blank-frame and left rounded-corner black-bar fixes implemented and verified; user review pending.** Current focused/package evidence is in the [page-motion follow-up](BACKSTAGE-PAGE-MOTION.md#navbar-blank-frame-and-rounded-edge-follow-up--2026-11-11). |
 | Deferred title review issue | **2026-11-11: user reported title-text flicker while closing Backstage and allowed deferral to title theming work.** Their `20261111-0345-01.1714250.mp4` confirms the Office 2019 close at approximately **7.03–7.37 s**: the title moves left, its leading text becomes pale/white over the lightening caption, then dark ink returns. Native-rate frames and timestamps are retained under `artifacts/backstage-title-flicker/recording/`. Caption foreground contrast/clip handoff as the navigation fades is the source-inspection lead, not a verified root cause. Preserve opaque, legible title ink throughout closing when addressing it. No title runtime change or new build/test was made for this recording review; the page/corner correction does not address it. |
 | Broader Release suite | Initial implementation: 1,485 passed / 6 failed / 1,491 total (historical evidence above). Correction run **stopped at the user's request**, 1,089 passed / 3 failed / 1,092 executed; incomplete, no full-suite result claimed. Do not restart it. |
-| User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; D1a/D1b review controls remain on Theme effects 3. **2026-11-12: user reported D1b looks good and authorized continuation to native editor appearance.** D1a review remains at its earlier recorded scope. The user requested a new review tab for D1c; use Theme effects 4 and preserve tabs 1–3. **2026-11-12: user reported D2 works perfectly and authorized continuation to ordinary menu decoration.** **2026-11-12: user reported D3 looks good and authorized Application Menu continuation, with new review controls on Theme effects 5.** **2026-11-12: user reported D4a Application Menu state effects look good on Theme effects 5.** **2026-11-12: user confirmed every D4b surface/heading option works and authorized continuation.** **2026-11-12: user reported D4c looks good and everything works, authorized gallery continuation and requested its controls on a new Theme effects 6 tab.** **2026-11-12: user reported everything works for D5a and authorized continuation; then declared tab 6 full and requested D5b controls on a new tab. D5b is delivered on Theme effects 7, with human appearance review pending.** Actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
+| User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; D1a/D1b review controls remain on Theme effects 3. **2026-11-12: user reported D1b looks good and authorized continuation to native editor appearance.** D1a review remains at its earlier recorded scope. The user requested a new review tab for D1c; use Theme effects 4 and preserve tabs 1–3. **2026-11-12: user reported D2 works perfectly and authorized continuation to ordinary menu decoration.** **2026-11-12: user reported D3 looks good and authorized Application Menu continuation, with new review controls on Theme effects 5.** **2026-11-12: user reported D4a Application Menu state effects look good on Theme effects 5.** **2026-11-12: user confirmed every D4b surface/heading option works and authorized continuation.** **2026-11-12: user reported D4c looks good and everything works, authorized gallery continuation and requested its controls on a new Theme effects 6 tab.** **2026-11-12: user reported everything works for D5a and authorized continuation; then declared tab 6 full and requested D5b controls on a new tab. D5b controls remain on Theme effects 7.** **2026-11-12: user reported everything checks out for D5b and authorized continuation to D6. D6 human appearance review is pending.** Actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
 | Actual VS/physical input/mixed-monitor | Not run for themes; report separately. |
 
 Record later evidence and confirmation here once, with date/revision/scope,
@@ -2164,8 +2164,80 @@ Evidence under `artifacts/gallery-content-d5b/`:
   inline and review-tab captures were inspected. Authored Forms/UserControls/
   resources/project files remain intact.
 
-D5b human appearance review remains pending in the ledger. Actual VS, physical
+D5b user review is recorded in the ledger. Actual VS, physical
 input/IME, visible frame pacing, mixed-monitor and external UIA gates are separate.
-No full suite/native matrix or WPF build/test ran. D6 tips, including A17 placement,
-is next proposed; library dialogs, A05/A10 and Backstage closing-title ink remain
-separate. Keep new controls on tab 7 until the user directs otherwise.
+No full suite/native matrix or WPF build/test ran. D6 followed below; library
+dialogs, A05/A10 and Backstage closing-title ink remain separate.
+
+## Tip presentation and Backstage badge placement D6 — 2026-11-12
+
+Work started clean at the user's D5b commit `3bc3680`. `RibbonTipRenderer` shares
+ScreenTip/KeyTip recipes over the actual public renderer; `RibbonTipMetrics`
+consumes explicit resolver defaults and supplies title weight, paint bounds,
+outline stroke and Backstage placement. Both light families use these structures;
+no family selector or native manager/keyboard rewrite was added.
+
+`Theme.TipAppearance` accepts immutable `RibbonTipAppearanceSettings`:
+
+- `ScreenTipTitleBold`: null/true adds Bold to host styles; false removes it while
+  preserving other styles. The same resolved style measures and paints the title.
+- `KeyTipInset`: 0..1024 logical pixels, null zero. `KeyTipBorderWidth`: 0..32,
+  null one device pixel; zero hides the outline. Paint dimensions clamp inside
+  the badge without moving text/command targets. Existing alpha/gradient palette
+  roles and Office KeyTipCornerRadius remain; neutral badges retain square corners.
+- A17 `BackstageKeyTipRightClearance` / `BackstageKeyTipHorizontalClearance` /
+  `BackstageKeyTipVerticalClearance`: 0..1024, null 4/8/4 logical pixels. Horizontal/
+  vertical values are total available-width/height deductions, independently of
+  existing badge text padding. Zero permits the full dimension; consuming it hides
+  the badge. Legacy summed fractional-DPI rounding and short-slot clamps remain.
+
+Validation precedes Theme/BuiltInTheme mutation. Null resets each member;
+`TipAppearance = null` preserves existing tip colors/corners/padding and unrelated
+gallery settings. Actual DrawScreenTip/DrawKeyTip/DrawText overrides remain
+authoritative. Badges retain the direct rounded primitive path; no new protected
+DrawChrome interception was introduced. ScreenTip frame/shadow/clearance uses D2's
+existing public hooks. Passive delay/lifetime, keyboard/accessibility routes,
+native page/editor ownership and source metadata remain shared.
+
+Evidence under `artifacts/tip-appearance-d6/`:
+
+- `tests/before-defaults.trx`, `after-defaults.trx`, `empty-and-preview.trx`:
+  **32 exact default PNG/text-slot/measurement pairs**, both families, flat/Office,
+  both densities and four DPIs, each image with 9/14-point content. Null and empty
+  settings match saved defaults without changing approvals/tolerances.
+- `tests/tip-focused.trx`: **28 passed**, including 20 new authored title/font/
+  measurement, outline/alpha/hide/clamp/four-corner/actual-hook, A17 legacy-rounding/
+  short-target, atomic-validation/Reset and actual Backstage/passive-window native
+  ownership cases; eight retained tip/geometry/native-lifetime cases also pass.
+  `empty-and-preview.trx` adds two candidate-theme preview cases with authored tip
+  settings and no application page paint, commands or ownership changes. Including the default case,
+  **31 distinct cases passed**. Final review added an explicit empty-badge paint
+  guard so a consuming clearance hides both outline and text. `zero-slot-final.trx`
+  passes the four affected badge/DPI cases and the unchanged-default comparison;
+  other passing scopes were retained. Release builds pass without warnings/errors.
+- `package-current/result.log`: **4/4 public-package scopes**, both families
+  x None/Mica, actual 120 DPI, each Classic/Simplified x Compact/Touch. Actual root/
+  Backstage badge/text callbacks verify authored outlines/right clearance; command,
+  root-badge and page bounds stay unchanged. The same native editor HWND/parent/
+  value/selection and selected page survive settings/reset. Reset restores exact
+  placement. The fixture establishes native focus before the public F10/key route;
+  an initial fixture failure without that focus was corrected in the fixture only.
+  Public ScreenTip rendering is checked here; real passive-window focus/ownership
+  is covered by STA, with no physical-hover claim. Callback failures are reported
+  outside paint. Captures render the Backstage control itself rather than relying
+  on whole-Form DrawToBitmap child composition. Mica offscreen capture is not live
+  material/frame-pacing evidence.
+- Normal Debug runtime/designer server/client/sample builds pass without warnings/
+  errors. A sample-only override-signature compile error was corrected; passing
+  runtime/designer builds were retained. Refreshed package:
+  `0.1.0-designer.local20261112T054412038Z`. **Try tips and badges / Tip presentation**
+  are on **Theme effects 7**, now six groups; all earlier tabs retain their groups.
+  Presets/hide/placement and whole-group Reset, File preview/restore and idempotence
+  pass. Representative badge/content/review captures were inspected. Authored
+  Forms/UserControls/resources/project files remain intact.
+
+D6 appearance review remains pending in the ledger. Physical hover/input/IME,
+actual VS, mixed-monitor, visible frame pacing and external UIA are separate.
+No broad suite/native matrix or WPF build/test ran. D7 library dialogs is next
+proposed; A05 caption/title tint, A10 page minimum preference and the deferred
+Backstage closing-title ink flicker remain separate. Use tab 7 until directed otherwise.

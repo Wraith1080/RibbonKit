@@ -114,7 +114,8 @@ public sealed class DesignerThemeTests
         using var body = new PaintCounter(); var page = new RibbonBackstagePageItem { Text = "Info", Content = body };
         ribbon.Backstage.Items.Add(page); ribbon.Backstage.FooterItems.Add(new RibbonMenuSeparatorItem());
         ribbon.Backstage.FooterItems.Add(new RibbonButtonItem { Text = "Exit" });
-        ribbon.Theme = ribbon.Theme with { Background = Color.Beige, BackstageNavigationBackground = Color.Pink };
+        ribbon.Theme = ribbon.Theme with { Background = Color.Beige, BackstageNavigationBackground = Color.Pink,
+            TipAppearance = new() { ScreenTipTitleBold = false, KeyTipInset = 2, KeyTipBorderWidth = 3, BackstageKeyTipRightClearance = 20 } };
         var renderer = new PaletteRecorder(); ribbon.Renderer = renderer;
         var expected = builtIn ? RibbonThemes.Office2024Light : ribbon.Theme;
         int clicks = 0, selections = 0; ((RibbonButtonItem)ribbon.Tabs[0].Groups[0].Items[0]).Click += (_, _) => clicks++;

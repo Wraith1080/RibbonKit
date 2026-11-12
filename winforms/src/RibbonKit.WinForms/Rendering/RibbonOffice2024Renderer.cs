@@ -91,10 +91,5 @@ public class RibbonOffice2024Renderer : RibbonRenderer
         PaintRounded(context with { Bounds = Layout.RibbonSharedEffectMetrics.FocusBounds(context) }, Layout.RibbonFrameMetrics.Radius(context.Theme.FocusCornerRadius, Math.Max(1, context.Theme.CornerRadius * context.DeviceDpi / 96), context.DeviceDpi), new(Color.Transparent), context.Theme.Accent, Layout.RibbonSharedEffectMetrics.FocusStroke(context));
     /// <inheritdoc />
     public override void DrawKeyTip(RibbonPaintContext context, string keys)
-    {
-        PaintRounded(context, Layout.RibbonFrameMetrics.Radius(context.Theme.KeyTipCornerRadius, 2, context.DeviceDpi), context.Theme.KeyTipBackground ?? new(Color.FromArgb(255, 255, 225)),
-            context.Theme.KeyTipBorder.IsEmpty ? context.Theme.Border : context.Theme.KeyTipBorder);
-        DrawText(context, keys, context.Theme.KeyTipForeground.IsEmpty ? Color.Black : context.Theme.KeyTipForeground,
-            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);
-    }
+        => RibbonTipRenderer.DrawKeyTip(this, context, keys, office: true);
 }
