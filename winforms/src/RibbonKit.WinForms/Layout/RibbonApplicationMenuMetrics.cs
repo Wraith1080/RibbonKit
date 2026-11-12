@@ -52,6 +52,7 @@ internal static class RibbonApplicationMenuMetrics
     }
     internal static void Validate(RibbonTheme theme)
     {
+        RibbonApplicationMenuAppearanceSettings.Validate(theme.ApplicationMenuAppearance);
         if (theme.ApplicationMenuNavigationMinimumRowHeight is < 1 or > 1024 || theme.ApplicationMenuPaneMinimumRowHeight is < 1 or > 1024 ||
             theme.ApplicationMenuFooterMinimumRowHeight is < 1 or > 1024 || theme.ApplicationMenuPaneHorizontalPadding is < 0 or > 1024 ||
             theme.ApplicationMenuFooterItemGap is < 0 or > 1024)

@@ -53,11 +53,7 @@ public partial class RibbonRenderer
         if (item is RibbonMenuSeparatorItem separator) { DrawMenuSeparator(context, separator); return; }
         bool check = item is RibbonToggleItem { Checked: true } or RibbonCheckBoxItem { Checked: true } or RibbonRadioButtonItem { Checked: true } or RibbonSplitButtonItem { Checked: true };
         bool open = enabled && item is RibbonDropDownItem { IsDropDownOpen: true };
-        if (paintChrome && (footer || context.Hot || context.Pressed || check || open))
-        {
-            var fill = context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : open ? context.Theme.Pressed : check ? context.Theme.Checked : new RibbonFill(context.Theme.PopupColor);
-            PaintRounded(context with { Bounds = Rectangle.Inflate(bounds, -1, -1) }, footer ? RibbonFrameMetrics.Radius(context.Theme.ApplicationMenuFooterCornerRadius, S(3), context.DeviceDpi) : 0, fill, footer ? context.Theme.PopupBorder : Color.Transparent, footer ? 1 : 0);
-        }
+        if (paintChrome) RibbonApplicationMenuChromeRenderer.DrawItemState(this, context, footer, check, open);
         bool navigation = context.ApplicationMenuPart == RibbonApplicationMenuPart.Navigation;
         bool rich = context.ApplicationMenuPart == RibbonApplicationMenuPart.Pane && RibbonApplicationMenuMetrics.Illustrated(item);
         bool hasIcon = RibbonApplicationMenuMetrics.HasIcon(item) || item is RibbonCheckBoxItem or RibbonRadioButtonItem;
@@ -103,38 +99,10 @@ public partial class RibbonRenderer
         var whole = primary with { Bounds = Rectangle.Union(primary.Bounds, dropDown.Bounds), Hot = false, Pressed = false, Focused = false };
         bool footer = primary.ApplicationMenuPart == RibbonApplicationMenuPart.Footer;
         bool open = item.EffectiveEnabled && item.IsDropDownOpen;
-        bool rowHot = primary.Hot || dropDown.Hot;
-        bool active = open || item.Checked || primary.Hot || dropDown.Hot || primary.Pressed || dropDown.Pressed;
-        if (footer || active)
-        {
-            Half(primary, item.Checked, false, selected: open); Half(dropDown, false, open, selected: false);
-            if (active && primary.Theme.ApplicationMenuSplitDividerVisible)
-            {
-                using var pen = new Pen(primary.Theme.Border);
-                primary.Graphics.DrawLine(pen, dropDown.Bounds.Left, whole.Bounds.Top + 1, dropDown.Bounds.Left, whole.Bounds.Bottom - 2);
-            }
-        }
+        RibbonApplicationMenuChromeRenderer.DrawSplitState(this, primary, dropDown, item.Checked, open, footer);
         DrawApplicationMenuItem(whole, item, false, paintChrome: false);
         DrawSubmenuArrow(dropDown, item.EffectiveEnabled ? primary.Theme.SecondaryText : primary.Theme.DisabledColor);
         if (primary.Focused) DrawFocus(primary); if (dropDown.Focused) DrawFocus(dropDown);
-        static Color SelectedPrimary(Color background, Color pressed) => Color.FromArgb(255,
-            (3 * background.R + pressed.R) / 4, (3 * background.G + pressed.G) / 4, (3 * background.B + pressed.B) / 4);
-        void Half(RibbonPaintContext half, bool check, bool expanded, bool selected)
-        {
-            var state = whole.Graphics.Save();
-            try
-            {
-                // Both action regions clip the same inset perimeter. The seam
-                // stays square, and the arrow never grows past the primary.
-                whole.Graphics.SetClip(half.Bounds, CombineMode.Intersect);
-                var fill = half.Pressed ? half.Theme.Pressed : rowHot ? half.Theme.Hover : expanded ? half.Theme.Pressed
-                    : selected ? new RibbonFill(SelectedPrimary(half.Theme.PopupColor, half.Theme.Pressed.Start), SelectedPrimary(half.Theme.PopupColor, half.Theme.Pressed.End))
-                    : check ? half.Theme.Checked : new RibbonFill(half.Theme.PopupColor);
-                PaintRounded(whole with { Bounds = Rectangle.Inflate(whole.Bounds, -1, -1) }, footer ? RibbonFrameMetrics.Radius(whole.Theme.ApplicationMenuFooterCornerRadius, RibbonLayoutEngine.Scale(3, whole.DeviceDpi), whole.DeviceDpi) : 0,
-                    fill, footer ? whole.Theme.PopupBorder : Color.Transparent, footer ? 1 : 0);
-            }
-            finally { whole.Graphics.Restore(state); }
-        }
     }
     internal bool DrawApplicationFileButton(RibbonPaintContext context, RibbonDropDownItem menu)
     {

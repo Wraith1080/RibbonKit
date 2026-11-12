@@ -6,7 +6,7 @@ public partial class DesignerForm
 {
     private void EnablePopupAppearanceDemo()
     {
-        var tab = ThemeEffectsReviewTab;
+        var tab = ThemeEffects4ReviewTab;
         if (tab.Groups.Any(group => group.Id == "review-popup-effects")) return;
         var preview = new RibbonGroup { Id = "review-popup-preview", Text = "Try popup frames" };
         var menu = new RibbonDropDownItem { Text = "Menu / submenu", ScreenTipTitle = "Shared popup frame", ScreenTipDescription = "Hover to compare the passive tip, then open the menu and its nested submenu." };
@@ -31,7 +31,7 @@ public partial class DesignerForm
     internal void VerifyPopupAppearanceDemo(string output)
     {
         StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); ShowInTaskbar = false;
-        EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var review = ThemeEffectsReviewTab;
+        EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var review = ThemeEffects4ReviewTab;
         if (ribbon.Tabs.Single(tab => tab.Text == "Office 2019 Light").Groups.Count != 7 || ThemeEffects2ReviewTab.Groups.Count != 5 || ThemeEffects3ReviewTab.Groups.Count != 4 || review.Text != "Theme effects 4" || !review.Groups.Any(group => group.Id == "review-editor-effects")) throw new InvalidOperationException("Popup review controls changed earlier groups.");
         ribbon.SelectedTab = review; var effects = review.Groups.Single(group => group.Id == "review-popup-effects");
         foreach (var item in effects.Items.Take(3)) item.PerformClick();

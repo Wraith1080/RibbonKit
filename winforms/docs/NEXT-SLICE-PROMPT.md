@@ -1,24 +1,25 @@
-# Continue native WinForms themes after D3 menu decoration
+# Continue native WinForms themes after D4a Application Menu chrome
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-12**. B1–B3, C1–C2, D1a–D1c, D2–D3 and adjustability backfills
+Updated **2026-11-12**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a and adjustability backfills
 A00–A04/A06–A09/A11–A16 are implemented. Current evidence and exact user review
 scope live in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
-The latest implementation is [D3](THEMES-PLAN.md#ordinary-menu-decoration-d3--2026-11-12).
-D3 appearance review remains pending; use the ledger for earlier review scope.
-The user committed D2 at `2d23145` before D3.
+The latest implementation is [D4a](THEMES-PLAN.md#application-menu-command-state-and-split-chrome-d4a--2026-11-12).
+D4a appearance review remains pending; use the ledger for earlier review scope.
+The user committed D3 at `b737db4` before D4a. Do not overwrite later user commits.
 
 ## Next bounded implementation
 
 Start with `git status --short` and inspect live branch/HEAD; preserve later user
-commits and edits. Follow the current user request. For a continuation, D4
-**Application Menu interior presentation** is next proposed: inspect the existing
-background/navigation/pane/footer recipes, measured layout, current appearance
-roles, actual renderer hooks and inert designer previews. Select a bounded
-portion before implementation, reuse existing roles, and preserve the reviewed
-File/Backstage/native-content contract. D2 still owns the shared outer frame;
+commits and edits. Follow the current user request. For a continuation, D4b
+**Application Menu backgrounds/inner frame and headings** is next proposed:
+inspect those recipes, current appearance roles, actual renderer hooks and inert
+designer previews. Reuse existing roles, preserve defaults and the reviewed
+File/Backstage/native-content contract. Leave content-layout changes for a bounded
+assessment rather than widening this slice. D4a owns command state chrome;
+D2 still owns the shared outer frame;
 ordinary menu decoration, galleries, tips and library dialogs retain their owners.
 Preserve current defaults. Read the matching source map and rules in
 [THEME-ARCHITECTURE-PLAN](THEME-ARCHITECTURE-PLAN.md). Planning-only requests do not
@@ -33,15 +34,16 @@ A new family selector needs an actual structural difference, not a palette name,
 header style or radius. Native editor HWND, parent, value, selection, focus,
 validation, IME and popup ownership remain with their existing shared owners.
 
-**Review tabs:** the user requested a fresh tab for D1c. Put new controls on
-**Theme effects 4** through `ThemeEffectsReviewTab` until directed otherwise.
-`ThemeEffects2ReviewTab` / `ThemeEffects3ReviewTab` pin existing controls to their
-original tabs. Earlier tabs retain seven/five/four groups; tab 4 has seven groups
-(editor/popup controls plus **Try menu decoration** and **Menu decoration effects**).
-The optional overflow preview appends only sample-owned toolbar entries; Restore
-preview toolbar returns the original items/settings. Use the existing body
-scrollers when needed. Do not move old groups or infer fullness
-from reduction; the user has not declared tab 4 full.
+**Review tabs:** the user requested a fresh tab for D4a. Put new controls on
+**Theme effects 5** through `ThemeEffectsReviewTab` until directed otherwise.
+`ThemeEffects2ReviewTab` / `ThemeEffects3ReviewTab` / `ThemeEffects4ReviewTab` pin
+existing groups to their original tabs. Earlier tabs retain seven/five/four/seven
+groups; tab 5 starts with **Try Application Menu / Application Menu state effects**.
+The File preview uses existing authored models and restores the prior File mode.
+Its divider-visibility button uses the existing independent flag (2019 defaults
+false); group Reset clears only the new settings. The earlier optional overflow
+preview still restores its original toolbar items/settings. Use tab/body scrollers
+when needed. Do not move old groups or infer fullness from reduction.
 
 ## Preserve delivered contracts
 
@@ -91,6 +93,16 @@ from reduction; the user has not declared tab 4 full.
   New decoration does not change rows, bands, UIA or native owner state. Band
   backing stops must stay opaque. The default comparison has 80 exact pairs;
   reuse it unless the next change actually affects those owners.
+- D4a retains `ApplicationMenuAppearance`, shared row/footer perimeter and clipped
+  split-half recipes. Null keeps square rows, device-pixel insets, zero row border,
+  the one-device-pixel footer rim (even for transparent ink), legacy Pen divider
+  and 0.25 selected-primary mix. Existing state fills, footer radius and divider
+  visibility remain authoritative. Explicit primary fill takes precedence over
+  tint; alpha/zero/hide, clamps and independent/group Reset remain supported.
+  Actual item/split/text/image/arrow/focus hooks remain; the pre-existing direct
+  primitive path does not introduce protected DrawChrome interception. Native
+  ownership/layout/input/validation stay shared. Reuse the 32 exact default pairs
+  and 41 distinct passing latest relevant cases unless a change affects them.
 - Existing Theme assignment closes ordinary menus through `ModelChanged`;
   retained models reopen normally. Do not change lifecycle to satisfy a probe.
 - A05 caption tint, A10 preferred page minimum, A17 tip placement and the reported
@@ -112,5 +124,8 @@ avoid JIT dialogs. Package probes use the supported keyboard route for QAT
 overflow, escape prior KeyTip hints before F10/0, and close through library
 keyboard/model routes rather than ToolStrip.Close on its internal window. Ordinary
 popup MSAA GetChildCount may be -1; do not treat it as UIA child enumeration.
+The Application Menu accessible root supports its own command children; the D4a
+package probe exercises primary/footer actions there. Its offscreen host is
+activated before opening, and state-paint assertions respect idle eligibility.
 Separate offscreen/automated evidence from actual VS, visible
 frame pacing, physical input/IME and mixed-monitor review.

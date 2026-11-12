@@ -1685,3 +1685,38 @@ static RibbonKit.WinForms.RibbonMenuAppearanceSettings.operator !=(RibbonKit.Win
 static RibbonKit.WinForms.RibbonMenuAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonMenuAppearanceSettings? left, RibbonKit.WinForms.RibbonMenuAppearanceSettings? right) -> bool
 RibbonKit.WinForms.RibbonTheme.MenuAppearance.get -> RibbonKit.WinForms.RibbonMenuAppearanceSettings?
 RibbonKit.WinForms.RibbonTheme.MenuAppearance.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.RibbonApplicationMenuAppearanceSettings() -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.<Clone>$() -> RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings!
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.RowCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.RowCornerRadius.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.RowInset.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.RowInset.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.RowBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.RowBorderWidth.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.RowBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.RowBorderColor.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.FooterInset.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.FooterInset.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.FooterBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.FooterBorderWidth.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.FooterBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.FooterBorderColor.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SplitDividerWidth.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SplitDividerWidth.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SplitDividerInset.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SplitDividerInset.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SplitDividerColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SplitDividerColor.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SelectedPrimaryBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SelectedPrimaryBackground.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SelectedPrimaryTintStrength.get -> double?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SelectedPrimaryTintStrength.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.Equals(RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings? other) -> bool
+override RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.ToString() -> string!
+static RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings? left, RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings? right) -> bool
+static RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings? left, RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings? right) -> bool
+RibbonKit.WinForms.RibbonTheme.ApplicationMenuAppearance.get -> RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings?
+RibbonKit.WinForms.RibbonTheme.ApplicationMenuAppearance.init -> void

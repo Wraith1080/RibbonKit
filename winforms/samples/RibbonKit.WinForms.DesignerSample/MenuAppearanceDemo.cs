@@ -6,7 +6,7 @@ public partial class DesignerForm
 {
     private void EnableMenuAppearanceDemo()
     {
-        var tab = ThemeEffectsReviewTab;
+        var tab = ThemeEffects4ReviewTab;
         if (tab.Groups.Any(group => group.Id == "review-menu-effects")) return;
         var preview = new RibbonGroup { Id = "review-menu-preview", Text = "Try menu decoration" };
         var menu = new RibbonDropDownItem { Text = "Headings / separators", DropDownHeader = "Menu heading" };
@@ -56,7 +56,7 @@ public partial class DesignerForm
     internal void VerifyMenuAppearanceDemo(string output)
     {
         StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); ShowInTaskbar = false;
-        EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffectsReviewTab;
+        EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffects4ReviewTab;
         if (tab.Text != "Theme effects 4" || ribbon.Tabs.Single(item => item.Text == "Office 2019 Light").Groups.Count != 7 || ThemeEffects2ReviewTab.Groups.Count != 5 || ThemeEffects3ReviewTab.Groups.Count != 4 || !tab.Groups.Any(group => group.Id == "review-popup-effects")) throw new InvalidOperationException("Menu controls displaced earlier review groups.");
         ribbon.SelectedTab = tab; var effects = tab.Groups.Single(group => group.Id == "review-menu-effects");
         foreach (var item in effects.Items.Take(5)) item.PerformClick(); var value = ribbon.Theme.MenuAppearance;

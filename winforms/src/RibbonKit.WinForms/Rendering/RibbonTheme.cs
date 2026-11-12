@@ -83,6 +83,8 @@ public sealed record RibbonTheme
     public Color CollapsedGroupBorder { get; init; } = Color.Empty;
     /// <summary>Gets whether active Application Menu split rows draw a divider between their unchanged action regions. Defaults to true.</summary>
     public bool ApplicationMenuSplitDividerVisible { get; init; } = true;
+    /// <summary>Gets optional immutable Application Menu command-state, split-perimeter and footer-outline overrides. Null retains existing recipes, layout, native state and the shared outer frame.</summary>
+    public RibbonApplicationMenuAppearanceSettings? ApplicationMenuAppearance { get; init; }
     /// <summary>Gets an optional library options-button radius in 96-DPI logical pixels, 0..64. Null preserves system painting for ordinary buttons and existing accent-button chrome; explicit values use shared theme painting with native Button semantics.</summary>
     public int? OptionsButtonCornerRadius { get; init; }
     /// <summary>Gets whether message frames include side borders. Defaults to true. False keeps horizontal rules and existing connected-edge ownership.</summary>

@@ -4,13 +4,15 @@ namespace RibbonKitDesignerConsumer;
 
 public partial class DesignerForm
 {
-    // Keep earlier controls in place; the user requested a fresh tab for D1c.
+    // Keep earlier controls in place; the user requested a fresh tab for D4a.
     private RibbonTab? _themeEffects2ReviewTab;
     private RibbonTab? _themeEffects3ReviewTab;
+    private RibbonTab? _themeEffects4ReviewTab;
     private RibbonTab? _themeEffectsReviewTab;
     private RibbonTab ThemeEffects2ReviewTab => _themeEffects2ReviewTab ??= AddReviewTab("review-theme-effects-2", "Theme effects 2");
     private RibbonTab ThemeEffects3ReviewTab => _themeEffects3ReviewTab ??= AddReviewTab("review-theme-effects-3", "Theme effects 3");
-    private RibbonTab ThemeEffectsReviewTab => _themeEffectsReviewTab ??= AddReviewTab("review-theme-effects-4", "Theme effects 4");
+    private RibbonTab ThemeEffects4ReviewTab => _themeEffects4ReviewTab ??= AddReviewTab("review-theme-effects-4", "Theme effects 4");
+    private RibbonTab ThemeEffectsReviewTab => _themeEffectsReviewTab ??= AddReviewTab("review-theme-effects-5", "Theme effects 5");
     private RibbonTab AddReviewTab(string id, string text)
     {
         var tab = new RibbonTab { Id = id, Text = text };

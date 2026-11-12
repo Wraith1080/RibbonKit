@@ -6,7 +6,7 @@ public partial class DesignerForm
 {
     private void EnableEditorAppearanceDemo()
     {
-        var tab = ThemeEffectsReviewTab;
+        var tab = ThemeEffects4ReviewTab;
         if (tab.Groups.Any(group => group.Id == "review-editor-effects")) return;
         var fields = new RibbonGroup { Id = "review-editor-fields", Text = "Try text fields", CanResize = false };
         fields.Items.AddRange(new RibbonTextBoxItem { Text = "Name", Value = "Edit me", InputWidth = 140 },
@@ -38,7 +38,7 @@ public partial class DesignerForm
     internal void VerifyEditorAppearanceDemo(string output)
     {
         StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); ShowInTaskbar = false;
-        EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var review = ThemeEffectsReviewTab;
+        EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var review = ThemeEffects4ReviewTab;
         if (ribbon.Tabs.Single(tab => tab.Text == "Office 2019 Light").Groups.Count != 7 || ThemeEffects2ReviewTab.Groups.Count != 5 || ThemeEffects3ReviewTab.Groups.Count != 4 || review.Text != "Theme effects 4") throw new InvalidOperationException("Editor review groups changed an earlier tab.");
         ribbon.SelectedTab = review;
         var effects = review.Groups.Single(group => group.Id == "review-editor-effects");

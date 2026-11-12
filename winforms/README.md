@@ -2789,6 +2789,42 @@ scrolling overflow** temporarily adds sample-owned toolbar commands; **Restore
 preview toolbar** restores the original items and settings. Use the existing body
 scrollers to reach these groups when needed.
 
+`Theme.ApplicationMenuAppearance` accepts immutable
+`RibbonApplicationMenuAppearanceSettings` for Application Menu command states:
+
+| Members | Defaults and behavior |
+| --- | --- |
+| `RowCornerRadius`, `RowInset`, `RowBorderWidth`, `RowBorderColor` | Active navigation/pane rows: square, one-device-pixel inset, zero-width transparent outline. Logical ranges 0..64 / 0..1024 / 0..32. Set both width and ink to add an outline; alpha is supported. Idle rows retain their existing eligibility. |
+| `FooterInset`, `FooterBorderWidth`, `FooterBorderColor` | One-device-pixel inset and stroke with PopupBorder ink, including the legacy transparent-border rim. Logical ranges 0..1024 / 0..32. Zero removes the stroke. Existing ApplicationMenuFooterCornerRadius remains independent. |
+| `SplitDividerWidth`, `SplitDividerInset`, `SplitDividerColor` | Active seam: one device pixel with one-device-pixel end clearances and Border ink. Logical ranges 0..32 / 0..1024, clamped inside the unchanged row. Zero/Transparent hides paint. ApplicationMenuSplitDividerVisible remains authoritative, including Office 2019's false default. |
+| `SelectedPrimaryTintStrength`, `SelectedPrimaryBackground` | Unhovered open split primary: 0.25 opaque PopupBackground/Pressed mix. Strength is finite 0..1. An explicit alpha/gradient fill takes precedence. Hover/press/checked and expanded-arrow rules retain their existing order. |
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    ApplicationMenuSplitDividerVisible = true,
+    ApplicationMenuAppearance = new RibbonApplicationMenuAppearanceSettings
+    {
+        RowCornerRadius = 8, RowBorderWidth = 2, RowBorderColor = Color.DarkBlue,
+        FooterBorderWidth = 2, FooterBorderColor = Color.DarkOrange,
+        SplitDividerWidth = 3, SplitDividerInset = 6,
+        SplitDividerColor = Color.DarkMagenta, SelectedPrimaryTintStrength = .55
+    }
+};
+```
+
+Null members/Empty ink reset independently; `ApplicationMenuAppearance = null`
+resets this group. Divider visibility remains an independent setting. Ranges
+validate before Theme/BuiltInTheme mutation. Split halves share one perimeter;
+decoration does not change command targets, content/focus bounds or native state.
+Actual item/split/text/image/arrow/focus hooks retain precedence. Backgrounds,
+headings, content layout and the shared outer popup frame retain their owners.
+The optional **Try Application Menu / Application Menu state effects** groups
+are on **Theme effects 5**. Use **Show / hide split dividers** when trying divider
+colors in Office 2019. The preview uses existing File models; **Restore File mode**
+returns the prior mode. Earlier tabs remain in place; use tab/body scrollers when
+needed.
+
 Derive from `RibbonRenderer` for a flat/custom presentation, or from
 `RibbonOffice2024Renderer` to retain Office styling while overriding selected
 drawing. Earlier preview subclasses that called base painting to obtain Office
