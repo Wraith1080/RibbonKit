@@ -196,6 +196,8 @@ public sealed record RibbonTheme
     public int? BackstageNavigationIconSize { get; init; }
     /// <summary>Gets the optional Auto navigation width starting minimum in logical pixels, 1..1024. Null retains 200. Captions, authored width constraints and available page space still apply.</summary>
     public int? BackstageAutoMinimumNavigationWidth { get; init; }
+    /// <summary>Gets optional preferred Backstage page minimum width in 96-DPI logical pixels, 0..1024. Null retains the active family's 240-pixel preference; zero reserves no preferred page space. Width negotiation still allows up to half the host for navigation in narrow windows and clamps authored/Auto navigation widths to available space. This is a preference, not a guaranteed content minimum; it never rewrites RibbonBackstage width settings.</summary>
+    public int? BackstagePreferredMinimumPageWidth { get; init; }
     /// <summary>Gets the optional logical footer bottom clearance, 0..1024. Null uses BackstageNavigationPadding. Short hosts still use inline scrolling.</summary>
     public int? BackstageFooterBottomPadding { get; init; }
     /// <summary>Gets the optional logical top/left page border width, 0..32. Null retains each renderer's existing border. Zero keeps page content flush; layout and painting share it.</summary>

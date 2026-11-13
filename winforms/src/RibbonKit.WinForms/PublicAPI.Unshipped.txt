@@ -2042,3 +2042,5 @@ override RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.Equals(object?
 RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.Equals(RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings? other) -> bool
 static RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings? left, RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings? right) -> bool
 static RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings? left, RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings? right) -> bool
+RibbonKit.WinForms.RibbonTheme.BackstagePreferredMinimumPageWidth.get -> int?
+RibbonKit.WinForms.RibbonTheme.BackstagePreferredMinimumPageWidth.init -> void

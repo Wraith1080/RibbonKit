@@ -10,7 +10,7 @@ public partial class DesignerForm
             Font = Font, TitleBarColor = TitleBarColor, TitleBarTintOpacity = TitleBarTintOpacity };
         var model = new RibbonControl { Theme = ribbon.Theme, FileMenuMode = RibbonFileMenuMode.Backstage, AnimationLevel = ribbon.AnimationLevel };
         model.FileMenu.Visible = true; model.Tabs.Add(new RibbonTab { Text = "Preview" });
-        var page = new TextBox { Multiline = true, Text = "Native preview page. Use Back or Escape to close Backstage." };
+        var page = new TextBox { Multiline = true, BorderStyle = BorderStyle.None, Text = "Native preview page. Use Back or Escape to close Backstage." };
         model.Backstage.Items.Add(new RibbonBackstagePageItem { Text = "Info", Content = page });
         form.Disposed += (_, _) => page.Dispose();
         form.Controls.Add(model); form.Ribbon = model;
@@ -54,7 +54,7 @@ public partial class DesignerForm
     {
         Directory.CreateDirectory(output); StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); Width = 1900; ShowInTaskbar = false;
         EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffectsReviewTab; ribbon.SelectedTab = tab;
-        if (tab.Text != "Theme effects 11" || tab.Groups.Count != 4 || ThemeEffects10ReviewTab.Groups.Count != 5 || ThemeEffects9ReviewTab.Groups.Count != 6 || ThemeEffects8ReviewTab.Groups.Count != 5 || ThemeEffects7ReviewTab.Groups.Count != 8 || ThemeEffects6ReviewTab.Groups.Count != 3 || ThemeEffects5ReviewTab.Groups.Count != 6 || ThemeEffects4ReviewTab.Groups.Count != 7 || ThemeEffects3ReviewTab.Groups.Count != 4 || ThemeEffects2ReviewTab.Groups.Count != 5 || ribbon.Tabs.Single(t => t.Text == "Office 2019 Light").Groups.Count != 7) throw new InvalidOperationException("Caption-button controls displaced accepted tabs.");
+        if (tab.Text != "Theme effects 11" || tab.Groups.Count != 5 || ThemeEffects10ReviewTab.Groups.Count != 5 || ThemeEffects9ReviewTab.Groups.Count != 6 || ThemeEffects8ReviewTab.Groups.Count != 5 || ThemeEffects7ReviewTab.Groups.Count != 8 || ThemeEffects6ReviewTab.Groups.Count != 3 || ThemeEffects5ReviewTab.Groups.Count != 6 || ThemeEffects4ReviewTab.Groups.Count != 7 || ThemeEffects3ReviewTab.Groups.Count != 4 || ThemeEffects2ReviewTab.Groups.Count != 5 || ribbon.Tabs.Single(t => t.Text == "Office 2019 Light").Groups.Count != 7) throw new InvalidOperationException("Caption-button controls displaced accepted tabs.");
         var states = tab.Groups.Single(g => g.Id == "review-caption-buttons"); var shape = tab.Groups.Single(g => g.Id == "review-caption-button-shape"); var glyphs = tab.Groups.Single(g => g.Id == "review-caption-button-glyphs");
         states.Items[0].PerformClick(); states.Items[1].PerformClick(); shape.Items[0].PerformClick(); foreach (int i in new[] { 0, 1, 2, 3 }) glyphs.Items[i].PerformClick();
         if (ribbon.Theme.CaptionButtonAppearance is not { StateInset: 4, CornerRadius: 8, GlyphSize: 18, GlyphStrokeWidth: 2, RestoreOffset: 6 }) throw new InvalidOperationException("Caption-button presets bypassed public settings.");
@@ -64,7 +64,7 @@ public partial class DesignerForm
         states.Items[3].PerformClick(); glyphs.Items[4].PerformClick(); if (ribbon.Theme.CaptionButtonAppearance is not { GlyphSize: 0 } || ribbon.Theme.CaptionButtonAppearance.HoverBackground?.Start.A != 0) throw new InvalidOperationException("Caption hide presets failed.");
         states.Items[4].PerformClick(); if (ribbon.Theme.CaptionButtonAppearance.GlyphSize != 0 || ribbon.Theme.CaptionButtonAppearance.CornerRadius != 8) throw new InvalidOperationException("State Reset cleared shape/glyphs.");
         shape.Items[2].PerformClick(); glyphs.Items[5].PerformClick(); glyphs.Items[6].PerformClick(); if (ribbon.Theme.CaptionButtonAppearance is not null || !sources.SequenceEqual(ribbon.Tabs) || ribbon.LayoutMode != mode) throw new InvalidOperationException("Caption Reset/preview changed live models.");
-        EnableCaptionButtonDemo(); if (tab.Groups.Count != 4) throw new InvalidOperationException("Caption review duplicated groups.");
+        EnableCaptionButtonDemo(); if (tab.Groups.Count != 5) throw new InvalidOperationException("Caption review duplicated groups.");
         using var image = new Bitmap(ribbon.Width, ribbon.Height); ribbon.DrawToBitmap(image, ribbon.ClientRectangle); image.Save(Path.Combine(output, "review-tab.png")); Close();
     }
 }

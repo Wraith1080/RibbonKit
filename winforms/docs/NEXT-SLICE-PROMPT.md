@@ -1,35 +1,38 @@
-# Continue native WinForms themes after D8b caption-button decoration
+# Continue native WinForms themes after A10 page preference
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-13**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7f, D8a–D8b and adjustability backfills
-A00–A09/A11–A17 are implemented. Current evidence and exact user review
+Updated **2026-11-13**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7f, D8a–D8b and all identified adjustability backfills
+A00–A17 are implemented. Current evidence and exact user review
 scope live in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
-The latest implementation is [D8b](THEMES-PLAN.md#caption-button-decoration-d8b--2026-11-13).
+The latest implementation is [A10](THEMES-PLAN.md#backstage-preferred-page-width-a10--2026-11-13).
 Preserve D8a's [closing handoff follow-up](THEMES-PLAN.md#closing-caption-handoff-follow-up--2026-11-13), which
 unifies temporary/settled title glyph rendering and paints the normal caption
 before foreground HWND retirement. Check its current review status in the ledger.
 Use the ledger for the exact user appearance review scope and remaining gates.
 D7f's square geometry is retained; current review scope is recorded in the ledger.
-The user committed D8a and its closing correction at `ae34108` before D8b.
+The user committed D8b at `6708ac5` before A10.
 Do not overwrite later user commits.
 
 ## Next bounded implementation
 
 Start with `git status --short` and inspect live branch/HEAD; preserve later user
-commits and edits. Follow the current user request. For a continuation, **A10
-preferred Backstage page minimum** is next proposed for source review. Inspect
-the fixed 240-logical-pixel preference in Backstage metrics and the layout provider's
-navigation-width negotiation. Define one optional theme preference before editing;
-null retains 240. Preserve explicit/minimum/maximum/Auto navigation-width behavior,
-available-space and half-host safety clamps, short/narrow hosts and native pages.
-Select relevant width/layout/DPI/reset/native-retention checks after reviewing the
-contract. This is a bounded layout preference, not a new geometry campaign.
+commits and edits. Follow the current user request. The earlier A00–A17 audit
+corrections are complete; after A10 review, the next bounded step is **E1: plan
+the next selected light family**. Office 2013 Light is the proposed candidate in
+the existing sequence, not a finally selected or implemented definition. Follow
+any explicit user choice. Draft a concrete contract first: compare existing native
+2019/2024 pieces with the selected family's reference, separate palette/default
+settings from actual structural differences, and identify shared helpers or a
+necessary sibling. Include caption/header/body/popups/Backstage/native editors,
+material/alpha behavior, selection/Reset, stable enum identities, designer/generated
+code and independent-consumer evidence. Keep the next planning slice documentation
+only; do not silently begin a new family or broad authoring/runtime API campaign.
 Keep D8a's frame-matched readable opaque title ink, Office 2024 moving neutral tint,
 full-height Office 2019 panes, clipping and captured pane/title clocks intact.
-Preserve D8b's caption-button appearance contract and targets. No new theme family
-or broad window/animation rewrite. Current user review belongs only in the ledger.
+Preserve D8b's caption-button contract and A10's preference/width negotiation.
+Current user review belongs only in the ledger. No broad geometry/window rewrite.
 D7f owns group icon-picker tile drawing/metrics. Keep native ListView items,
 handles, selection, cell spacing, scrolling, borrowed artwork, validation and draft
 OK/Cancel with their existing owners.
@@ -80,7 +83,7 @@ Command row content / Command row selection / Try customization tree / Tree glyp
 Tree selection and focus**, six total groups. Tab 10 has **Try group icon picker /
 Icon picker selection / Icon picker content / Backstage caption tint / Try caption and title**,
 five total groups. Tab 11 has **Try caption buttons / Caption button fills /
-Caption button shape / Caption button glyphs**, four total groups. Keep tab 7/8/9/10's
+Caption button shape / Caption button glyphs / Backstage page space**, five total groups. Keep tab 7/8/9/10's
 accepted groups in place; do not infer fullness from reduction.
 The File preview uses existing authored models and restores the prior File mode.
 Its divider-visibility button uses the existing independent flag (2019 defaults
@@ -306,7 +309,15 @@ when needed. Do not move old groups or infer fullness from reduction.
   may flatten alpha: exact coverage is established by runtime DIB checks. Keep
   the older CaptionButtonCheck/--verify-caption-buttons intact; D8b diagnostics
   are CaptionButtonAppearanceCheck/--verify-caption-button-appearance.
-- A10 preferred page minimum is proposed next. No new theme family now;
+- A10 exposes BackstagePreferredMinimumPageWidth (null or 0..1024 logical pixels).
+  Null resolves family 240; zero reserves no page space. The existing provider
+  algorithm and component navigation-width properties are unchanged. Preserve
+  min/max/Auto precedence, available-space/half-host clamps, value-only input
+  snapshots and independent Reset. Reuse 15 passing Release cases, 288 exact
+  default layout/slot/clip records and four package scopes (224 live layouts)
+  unless affected. Native values/selection/focus/pending validation retain owners.
+  Review previews use isolated fixed/Auto models and do not rewrite main settings.
+- Next is E1's bounded light-family contract. No new theme family is implemented now;
   later light-theme order is unscheduled and dark themes stay deferred.
 
 Use one agent under `winforms/`; WPF stays read-only. Normal Debug/Release outputs

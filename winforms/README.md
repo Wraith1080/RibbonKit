@@ -1108,10 +1108,24 @@ Form can temporarily display less than the preferred minimum to preserve page
 space. Neither resizing the Form nor a DPI change rewrites the authored value.
 No runtime drag handle or width-setting UI is added.
 
+`Theme.BackstagePreferredMinimumPageWidth` optionally adjusts the preferred page
+space used by the same navigation-width negotiation. It accepts 0..1024 logical
+pixels; null retains each current light family's 240-pixel preference. Zero
+reserves no preferred page space and can let wide navigation occupy the host.
+This is a preference, not a guaranteed content minimum: very narrow hosts still
+allow navigation up to half the available width. Auto and explicit navigation
+widths retain their existing minimum/maximum rules and available-space clamps.
+Resizing never rewrites those authored properties. Reset this theme member to
+null independently of page padding, caption-button appearance and other settings.
+The optional **Theme effects 11 → Backstage page space** group includes presets
+and separate fixed/Auto navigation previews; the main sample's navigation-width
+properties remain unchanged.
+
 ```csharp
 ribbon.Backstage.NavigationWidth = 224; // Or null for Auto.
 ribbon.Backstage.MinimumNavigationWidth = 160;
 ribbon.Backstage.MaximumNavigationWidth = 320;
+ribbon.Theme = ribbon.Theme with { BackstagePreferredMinimumPageWidth = 360 };
 ```
 
 When binding the nullable width, use `formattingEnabled: true` and

@@ -67,7 +67,7 @@ internal static class CaptionButtonAppearanceCheck
             evidence.Add($"PASS {scope}: effective={effective}, dpi={dpi}; {profiles} Classic/Simplified x Compact/Touch profiles; native hover/pressed/close fill callbacks, authored alpha, glyph/restore captures, unchanged WM_NCHITTEST targets, atomic validation, independent/group Reset and retained HWND/parent/value/selection.");
         }
         using (var demo = new DesignerForm()) demo.VerifyCaptionButtonDemo(output);
-        evidence.Add("PASS new Theme effects 11: four caption-button review groups; tab 10 retains five and earlier tabs retain seven/five/four/seven/six/three/eight/five/six groups. Presets, alpha/hide/independent/all Reset, isolated preview model and idempotence pass.");
+        evidence.Add("PASS Theme effects 11: four caption-button review groups plus page-space controls; tab 10 retains five and earlier tabs retain seven/five/four/seven/six/three/eight/five/six groups. Presets, alpha/hide/independent/all Reset, isolated preview model and idempotence pass.");
         evidence.Add("Public-package native/direct-print checks at actual device DPI. Synthetic nonclient state messages do not claim physical window actions, desktop material pixels, visible pacing, actual VS, IME or mixed-monitor acceptance.");
         File.WriteAllLines(Path.Combine(output, "result.log"), evidence);
     }

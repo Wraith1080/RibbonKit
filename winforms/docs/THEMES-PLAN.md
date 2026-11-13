@@ -354,20 +354,21 @@ Backstage. Stop for this review before another theme.
 | Item | Status |
 | --- | --- |
 | Direction | **2026-11-10: user selected Office 2019 first and light themes before dark.** |
-| Planning | B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7f and D8a–D8b are implemented, including audit corrections A00–A09/A11–A17. D8a covers A05 caption tint and the deferred title-ink issue. Next proposed is A10 preferred Backstage page minimum; later theme-family selection remains separate. Later family order is provisional. |
-| Earlier-slice adjustability audit | A00–A09/A11–A17 are implemented; A05 followed in [D8a](#caption-tint-and-title-ink-d8a--2026-11-13). The [audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) retains A10 as a separate page-layout preference. |
-| Runtime/API/rendering | D8a adds separate-caption tint settings and frame-matched opaque title contrast. Its closing follow-up uses identical grayscale glyph coverage in temporary/settled captions and paints the normal caption before retiring the foreground HWND. Clipping, title geometry and pane/title clocks remain. D8b extracts caption-button state/vector recipes through independently adjustable appearance settings. |
-| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; package `0.1.0-designer.local20261113T073657842Z` refreshes the permanent sample. New Theme effects 11 has four caption-button review groups. Tab 10 retains five; tabs 1–9 retain seven/five/four/seven/six/three/eight/five/six. Authored Forms/UserControls/resources/project files remain intact. |
-| Focused Release verification | D8b: **41 distinct latest relevant cases pass** across caption-button defaults/overrides/alpha/clipping/restore/validation/Reset plus D8a title raster, ordered handback, title motion and caption underlay regressions. Earlier D8a evidence is retained separately; no broad suite ran. |
-| Two-family paint/geometry | D8b's **72 native default PNG pairs are byte-exact**, both light families x solid/composited x maximize/restore x three caption targets x idle/hover/pressed. Default/empty settings also match. Authored corners/alpha/glyph/restore/clamp checks cover 96/120/144/192 DPI; package scopes report actual 120 DPI. Native hit targets, title geometry and accepted D8a glyph coverage/handback remain. |
-| Composed native package verification | D8b: **4/4 public-package scopes plus new-tab checks pass**, both light families with None/Mica owners at actual 120 DPI, each Classic/Simplified x Compact/Touch. Synthetic nonclient state messages exercise actual caption painting; fills/alpha response, glyph/restore capture, unchanged WM_NCHITTEST targets, validation/Reset and HWND/parent/value/selection retention pass. Exact alpha is established by runtime DIB checks; direct native print does not establish desktop material composition or physical window actions. |
+| Planning | B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7f, D8a–D8b and all identified A00–A17 corrections are implemented. A10 completes the earlier adjustability audit. Next is planning the next selected light family; Office 2013 is the proposed candidate, not an implemented or finally selected definition. Later family order remains provisional. |
+| Earlier-slice adjustability audit | All identified A00–A17 corrections are implemented; A10's [page preference](#backstage-preferred-page-width-a10--2026-11-13) completes the [audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md). This closes those identified gaps, not the entire future theme catalog. |
+| Runtime/API/rendering | A10 adds nullable BackstagePreferredMinimumPageWidth (0..1024 logical pixels, null family 240, zero no reservation). It projects through existing measured metrics; navigation-width negotiation, safety clamps, native ownership and accepted caption/title rendering remain. |
+| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; package `0.1.0-designer.local20261113T081436576Z` refreshes the permanent sample. Theme effects 11 has five groups: four retained caption-button groups plus Backstage page space. Tab 10 retains five; tabs 1–9 retain seven/five/four/seven/six/three/eight/five/six. Authored Forms/UserControls/resources/project files remain intact. |
+| Focused Release verification | A10: **15 relevant Release cases pass**, covering four-DPI page preference/Auto/fixed constraints, zero/large/narrow/short hosts, retained value-only snapshots, atomic validation/reset and live native field focus/selection/validation. Existing width binding and renderer-shadow/short-rail gates also pass. Earlier appearance evidence is retained separately; no broad suite ran. |
+| Two-family paint/geometry | A10's **288 default layout records are byte-exact**: both light families, Compact/Touch, 96/120/144/192 DPI, three widths, short/tall hosts and Auto/fixed navigation. Explicit 240 matches null. Authored geometry uses existing clips/clamps; package checks report actual 120 DPI. No paint recipe or accepted title behavior changed. |
+| Composed native package verification | A10: **4/4 public-package scopes plus review-tab checks pass**, both light families with None/Mica owners at actual 120 DPI, each Classic/Simplified x Compact/Touch. **224 live Auto/fixed layouts** cover default/0/160/360/600/1024, narrow/short/resized hosts, retained native state, no spurious validation, authored constraints, atomic validation and independent Reset. These are offscreen/direct-print checks; physical/DWM/visible-pacing acceptance remains separate. |
 | Backstage review correction | **2026-11-11: navbar blank-frame and left rounded-corner black-bar fixes implemented and verified; user review pending.** Current focused/package evidence is in the [page-motion follow-up](BACKSTAGE-PAGE-MOTION.md#navbar-blank-frame-and-rounded-edge-follow-up--2026-11-11). |
 | Title review issue | **2026-11-13: user reported residual flicker at the end of the second close in `20261113-0700-27.3562520.mp4`.** Native frames show a grayscale-to-ClearType text-rendering switch around 2.17–2.20 s. The follow-up unifies title rendering and publishes normal caption paint before layer retirement. The earlier pale-navigation contrast correction remains. Current review is recorded in the D8a live-review row. |
 | Broader Release suite | Initial implementation: 1,485 passed / 6 failed / 1,491 total (historical evidence above). Correction run **stopped at the user's request**, 1,089 passed / 3 failed / 1,092 executed; incomplete, no full-suite result claimed. Do not restart it. |
 | User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; D1a/D1b review controls remain on Theme effects 3. **2026-11-12: user reported D1b looks good and authorized continuation to native editor appearance.** D1a review remains at its earlier recorded scope. The user requested a new review tab for D1c; use Theme effects 4 and preserve tabs 1–3. **2026-11-12: user reported D2 works perfectly and authorized continuation to ordinary menu decoration.** **2026-11-12: user reported D3 looks good and authorized Application Menu continuation, with new review controls on Theme effects 5.** **2026-11-12: user reported D4a Application Menu state effects look good on Theme effects 5.** **2026-11-12: user confirmed every D4b surface/heading option works and authorized continuation.** **2026-11-12: user reported D4c looks good and everything works, authorized gallery continuation and requested its controls on a new Theme effects 6 tab.** **2026-11-12: user reported everything works for D5a and authorized continuation; then declared tab 6 full and requested D5b controls on a new tab. D5b controls remain on Theme effects 7.** **2026-11-12: user reported everything checks out for D5b and authorized continuation to D6. D6 controls remain on Theme effects 7.** **2026-11-12: user reported everything works well for D6 and authorized continuation. D7a controls remain on Theme effects 7.** **2026-11-12: user confirmed all D7a options work, including combined use, authorized continuation and requested D7b on a new tab.** **2026-11-13: user reported D7b works perfectly and authorized continuation.** **2026-11-13: user confirmed everything works for D7c, authorized continuation and requested the next controls on a new Theme effects 9 tab.** **2026-11-13: user confirmed everything works for D7d and authorized continuation.** **2026-11-13: user confirmed everything works for D7e, authorized continuation and requested the next controls on a new Theme effects 10 tab.** **2026-11-13: user reported mismatched None/artwork selection shapes and requested shared square geometry that follows inset/size changes. 2026-11-13: user confirmed the shared square/None adaptation looks good and authorized continuation to D8.** Actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
 | Actual VS/physical input/mixed-monitor | Not run for themes; report separately. |
 | D8a live review | **2026-11-13: user confirmed the closing-title handoff looks good and authorized D8b continuation, with its controls on a new Theme effects 11 tab.** This accepts the reported visible closing-title correction; actual VS, physical input/IME, mixed-monitor and broader pacing/material gates remain separate. |
-| D8b live review | Awaiting user review of caption-button fills, shape, glyphs and independent/group Reset on Theme effects 11. Use the separate caption preview to try window actions without closing the main sample. |
+| D8b live review | **2026-11-13: user confirmed everything looks good for the caption-button slice and authorized A10 continuation.** D8b controls remain on Theme effects 11; physical caption actions/input, actual VS, desktop material-pixel and mixed-monitor gates remain separate. |
+| A10 live review | Awaiting user review of Backstage page-space presets/reset and fixed/Auto previews on Theme effects 11. Choose a preset, open a preview and resize it; the main sample's authored navigation-width properties remain unchanged. |
 
 Record later evidence and confirmation here once, with date/revision/scope,
 artifact locations and limits. Keep [NEXT-SLICE-PROMPT](NEXT-SLICE-PROMPT.md) a
@@ -3008,6 +3009,74 @@ Evidence under `artifacts/d8b-caption-buttons/`:
 
 No WPF, broad suite, actual VS, physical caption actions/input/IME, mixed-monitor,
 desktop material-pixel or new visible pacing gates ran. Current user review is
-recorded only in the ledger above. Next proposed is A10's preferred Backstage page
-minimum, bounded to width negotiation and existing safety clamps; new theme
-families and a general geometry/window rewrite remain separate.
+recorded only in the ledger above. A10's separate page preference follows below;
+new theme families and a general geometry/window rewrite remain separate.
+
+## Backstage preferred page width (A10) — 2026-11-13
+
+Baseline `6708ac5` contains the user's D8b commit. A10 exposes the last identified
+earlier-slice adjustability gap without changing the width-negotiation algorithm.
+`RibbonTheme.BackstagePreferredMinimumPageWidth` accepts null or 0..1024 logical
+pixels. Null retains each current family's 240 default, zero reserves no preferred
+page space, and authored values project through `RibbonBackstageMetrics` into the
+existing value-only layout input. Auto/fixed navigation widths retain their
+minimum/maximum precedence, available-space clamp and narrow-host half-width
+fallback. This is a preference, not guaranteed content space; zero can let a wide
+navigation request occupy the host. No authored component width is rewritten.
+
+Validation happens before Theme/BuiltInTheme mutation; per-ribbon defaults and
+independent Reset retain page padding, caption-button appearance and other roles.
+XML docs and the unshipped API baseline cover the two additive accessors. Family
+defaults, layout providers, native page ownership, painting, caption/title policies
+and clocks remain unchanged.
+
+Evidence under `artifacts/a10-page-preference/`:
+
+- `before/default-layouts.txt`, `after/default-layouts.txt`,
+  `default-comparison.txt`: **288 byte-exact default layout/slot/clip records**,
+  both light families x Compact/Touch x four DPI values x three widths x two
+  heights x Auto/320/1000 navigation. Explicit 240 additionally matches null.
+- `tests/a10-focused.trx`: **15/15 relevant Release cases pass**. New four-DPI
+  scopes exercise Auto/explicit/extreme requests, 0/160/240/360/600/1024, existing
+  min-over-max precedence, tiny/odd-width/narrow hosts and retained measured inputs
+  after theme changes and model/font disposal. Atomic validation rejects -1/1025/
+  integer extremes without changing Theme/BuiltInTheme. Live native scopes for
+  both families retain selected page, HWND/parent/text/selection/focus and pending
+  validation through preference changes/reset/resize. Existing binding/width,
+  short-rail clearance and actual renderer shadow-hook gates also pass.
+- `package/result.log`: **four public-package scopes**, both light families with
+  None/Mica owners at actual 120 DPI, each Classic/Simplified x Compact/Touch.
+  **224 live Auto/fixed layouts** verify actual native page bounds at default,
+  160/360/600/1024/0/reset plus short/narrow/resized hosts. Native HWND/parent/value/
+  selection/selected page and authored navigation settings remain, with no
+  spurious validation. Invalid values and independent Reset pass. Representative
+  page-space and review-tab direct prints were inspected; these do not establish
+  desktop material pixels or visible pacing.
+- Normal Debug runtime/designer server/client/sample and Release runtime/tests
+  build with zero warnings/errors. The permanent sample is refreshed with package
+  `0.1.0-designer.local20261113T081436576Z`; authored Forms/UserControls/resources/
+  project files remain. Theme effects 11 now has five groups, adding **Backstage
+  page space** to its four caption-button groups. Earlier tab counts remain.
+  Presets, zero, independent Reset, isolated fixed/Auto preview models and
+  idempotence pass; the preview owns its page control and never rewrites the main
+  model's navigation settings. Human-readable long Auto captions demonstrate
+  constrained width. Older caption diagnostics retain their routes; only their
+  expected tab count changes. No repeated caption matrix or broad suite ran.
+
+This completes the identified A00–A17 audit corrections. Current review belongs
+only in the ledger. Next is a bounded contract for the next selected light family;
+Office 2013 is the proposed candidate in the existing sequence. No new theme,
+WPF change, actual VS, physical input/IME, mixed-monitor or new visible pacing/
+desktop-composition gate is included in A10.
+
+## Preview content border correction — 2026-11-13
+
+The reported border in the caption-button preview came from its application-owned
+multiline TextBox's default Fixed3D border. Office 2019's theme and Classic page
+renderer already resolve the Backstage page border to zero. CaptionButtonDemo and
+BackstagePagePreferenceDemo now create their preview TextBoxes with
+`BorderStyle.None`, retaining editable text and existing lifetime/ownership.
+The library does not override arbitrary application page controls. No runtime,
+theme default, native window frame or authored Forms/resources change was needed.
+The normal Debug sample build passes with zero warnings/errors. This bounded
+consumer-style correction did not rerun the library or package matrix.

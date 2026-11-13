@@ -1,12 +1,13 @@
 # Earlier theme rewrite: effect adjustability audit
 
-**2026-11-13: A00–A09 and A11–A17 implemented and verified. A10 remains separate.**
+**2026-11-13: All identified A00–A17 corrections are implemented and verified.**
 The initial source review changed documentation only. The user then authorized
 the first correction batch; its current evidence is in the
 [themes plan](THEMES-PLAN.md#backstage-fill-routing-and-motion-overrides--2026-11-11).
 The C1 implementation was preserved. A17 followed in the
 [D6 tip record](THEMES-PLAN.md#tip-presentation-and-backstage-badge-placement-d6--2026-11-12);
-A05 followed in [D8a caption tint/title ink](THEMES-PLAN.md#caption-tint-and-title-ink-d8a--2026-11-13). A10 remains later work.
+A05 followed in [D8a caption tint/title ink](THEMES-PLAN.md#caption-tint-and-title-ink-d8a--2026-11-13).
+A10 followed in the [page-preference record](THEMES-PLAN.md#backstage-preferred-page-width-a10--2026-11-13).
 
 Scope is B1 registration, B2 layout inputs/defaults, B3 caption/motion policy and
 C1 header presentation, including the shared paint/motion helpers those paths
@@ -43,7 +44,7 @@ and resolve through the existing registration/measurement paths.
 | A07 | Back circle has fixed 2-logical-pixel inner clearance and 1.5-logical-pixel outline. Arrow coordinates use fixed 5/6-pixel extents and a 1.5-pixel stroke. Changing the Back target size does not scale the arrow. | Back visual inset, circle/arrow stroke and glyph size/scale. Keep target size separate; parameterize glyph dimensions rather than exposing every vector point. | [Back button drawing](../src/RibbonKit.WinForms/Rendering/RibbonRenderer.Backstage.cs). |
 | A08 | Full-width navigation-state fills force radius/border to zero/transparent; inset states use the active renderer's generic chrome. | Independent navigation-state corner/border appearance, with current full-width square/borderless and inset defaults. Width coverage and paint shape should remain separate choices. | [2019 sibling](../src/RibbonKit.WinForms/Rendering/RibbonBackstage2019Renderer.cs), [2024 sibling](../src/RibbonKit.WinForms/Rendering/RibbonBackstage2024Renderer.cs), [shared state helper](../src/RibbonKit.WinForms/Rendering/RibbonBackstageRenderer.cs). |
 | A09 | B2 resolves row text clearance 16, separator row height 9 and trailing text clearance 8 directly from internal defaults, without theme overrides. | Nullable Backstage spacing overrides. Existing `MenuSeparatorHeight` affects menu metrics, not Backstage separator rows; avoid silently changing an existing menu-only setting's scope. Separator horizontal padding already has a consumed setting. | [Defaults](../src/RibbonKit.WinForms/Layout/RibbonBackstageLayoutDefaults.cs), [resolved metrics](../src/RibbonKit.WinForms/Layout/RibbonBackstageMetrics.cs), [shared layout](../src/RibbonKit.WinForms/Layout/RibbonBackstageLayoutProvider.cs). |
-| A10 | Preferred minimum page space is fixed at 240 logical pixels. This is a design preference inside the width-negotiation policy. | Consider an authored preferred page minimum while retaining safe available-space clamps and narrow-host behavior. This is a layout choice, lower priority than decorative effects; it is not permission to reopen geometry consolidation. | [Layout provider](../src/RibbonKit.WinForms/Layout/RibbonBackstageLayoutProvider.cs). |
+| A10 — implemented | Preferred page space resolves through Backstage metrics and the existing width-negotiation policy. | `BackstagePreferredMinimumPageWidth` accepts 0..1024 logical pixels; null retains family 240, zero removes the preference. Existing Auto/fixed navigation constraints, narrow/available-space clamps and native owners remain. Reset is independent; no geometry campaign was reopened. | [A10 evidence](THEMES-PLAN.md#backstage-preferred-page-width-a10--2026-11-13), [layout provider](../src/RibbonKit.WinForms/Layout/RibbonBackstageLayoutProvider.cs). |
 | A11 | C1 filled tab/File state chrome has configurable fills/corners, but a border is always transparent with zero width. | Optional state border color/thickness if a theme needs it; retain borderless defaults and unchanged hit targets/body joins. Reuse a small state-appearance contract where appropriate rather than multiplying unrelated flags. | [Filled header sibling](../src/RibbonKit.WinForms/Rendering/RibbonHeader2019Renderer.cs). |
 | A12 | Configured header scrollers force square corners and a one-device-pixel border. The shared horizontal arrow uses fixed 6-by-10 logical dimensions and 1.5-pixel stroke. | Scroller corner/border thickness and shared arrow size/stroke controls. Existing width, fill and border-color settings are already present; arrow work should reuse the shared primitive rather than duplicate a header-only glyph implementation. | [Scroller drawing](../src/RibbonKit.WinForms/Rendering/RibbonRenderer.cs), [arrow primitive](../src/RibbonKit.WinForms/Rendering/RibbonArrowPainter.cs). |
 | A13 | Unselected contextual tab ink applies a fixed 0.6 multiplier to authored color alpha. | Contextual unselected-opacity override, default 0.6. Keep selected contextual colors and C1's explicit selected ink precedence. This is distinct from material underline hover opacity. | [Contextual ink helper](../src/RibbonKit.WinForms/Rendering/RibbonRenderer.cs). |
@@ -69,7 +70,7 @@ A11–A16 now use `HeaderAppearance`, shared `Chevrons`, `FocusInset`/
 The [header/shared-effects record](THEMES-PLAN.md#header-and-shared-effect-overrides--2026-11-11)
 retains exact default comparisons, authored-effect checks, API/range/reset
 contracts and native package evidence. A05 is implemented with caption/title ownership in D8a;
-A10 is a separate page-width preference. A17 is implemented by TipAppearance's
+A10 is implemented as a separate page-width preference. A17 is implemented by TipAppearance's
 independent Backstage right/width/height clearance values through shared badge
 metrics; existing padding is retained. D6 records default/short-slot/override/
 reset and native/package evidence.
@@ -124,7 +125,7 @@ their placeholder padding and sample colors remain consumer/tool presentation.
    Validate ranges/curves and preserve interruption, zero/snap, reduced-motion,
    native editor ownership and opaque title behavior.
 2. Backstage decoration/spacing A06–A09 and caption choices A05 are implemented.
-   Keep A10 as a separate layout preference.
+   A10's separate layout preference is also implemented; preserve its default and safety clamps.
 3. C1/shared helper gaps A11–A16 are implemented; arrow, focus and motion ownership
    remain shared. A17 is implemented with shared tip-placement work, without duplicating
    existing badge padding roles. Reuse state/metric groups when they avoid an

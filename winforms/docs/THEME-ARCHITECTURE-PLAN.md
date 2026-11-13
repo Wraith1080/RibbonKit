@@ -1,6 +1,6 @@
 # Native WinForms theme architecture
 
-**B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7f and D8a–D8b implemented; latest delivery 2026-11-13.** Backstage uses one registration
+**B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7f, D8a–D8b and A10 implemented; latest delivery 2026-11-13.** Backstage uses one registration
 for sibling layout/drawing helpers, explicit defaults, measured layout inputs and
 caption/motion profiles. Headers register sibling Filled/Underline drawing with
 explicit geometry defaults and adjustable effects. C2 resolves body/connected
@@ -47,9 +47,11 @@ retaining opaque ink, clipping, title geometry and clocks.
 D8b shares caption-button state/vector drawing and decoration metrics with an
 immutable settings group. Native targets, window actions and D8a title ownership
 remain separate; null retains the legacy first-stop fills and device restore offset.
+A10 projects the optional preferred page width into existing measured layout
+inputs; width negotiation and safety clamps remain unchanged.
 The earlier-slice review found adjustability gaps. A00–A04 fill routing/motion
-and A05 caption tint, A06–A09 decoration/spacing plus A11–A17 header/shared/tip overrides are implemented;
-track the separate A10 layout candidate in the
+and A05 caption tint, A06–A09 decoration/spacing, A10 page preference plus A11–A17 header/shared/tip overrides are implemented;
+the identified gaps are recorded in the
 [source audit and correction order](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 Current evidence and user review are recorded in the
 [themes plan](THEMES-PLAN.md#group-icon-picker-tiles-d7f--2026-11-13).
@@ -196,8 +198,8 @@ Preserve these rules throughout:
    C1 adds selected-tab fill/ink, filled-state radius and underline thickness/
    bottom inset/hover ink. Apply this requirement to C2 and later slices too.
    The [retroactive audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) records remaining
-   B1–B3/C1/shared-helper gaps. A00–A09 and A11–A17 are implemented;
-   A10 retains a separate scope. Backstage motion overrides use one immutable settings group,
+   B1–B3/C1/shared-helper gaps. All identified A00–A17 corrections are implemented.
+   Backstage motion overrides use one immutable settings group,
    resolved with family defaults and captured by the existing engines.
 
 The family registration binds compatible default pieces. Deliberate application
@@ -306,8 +308,8 @@ automated evidence or visual acceptance. Implement the following separately.
 | D7f. Group icon-picker tiles — implemented | Shared tile drawing/metrics and adjustable selection/content. Follow-up square cells replace label-dependent rectangles; artwork size resizes None/artwork together and inset/outline clearance constrains both. Native items/handles/selection/scrolling, borrowed artwork, selected-only radius fallback, direct text/focus style and group validation/OK/Cancel retain their owners. | 20 distinct latest relevant passing cases, square native hit/scroll/name evidence and four refreshed package scopes are in the [square correction](THEMES-PLAN.md#group-icon-picker-square-geometry-follow-up--2026-11-13). The original D7f comparison is historical; corrected default geometry intentionally changes pixels. |
 | D8a. Caption tint/title ink — implemented | A05 tint choices and frame-matched opaque contrast. Closing follow-up unifies temporary/settled title rasterization and publishes owner paint before foreground HWND retirement. Ordinary/separate/full-height structure, explicit caption-color precedence, clips, geometry and clocks retain their owners. | The [closing follow-up](THEMES-PLAN.md#closing-caption-handoff-follow-up--2026-11-13) records 50 latest relevant passing cases, exact active/inactive glyph comparisons, ordered/repeated native handbacks and four package scopes. Original stationary byte comparisons are historical for intentionally changed solid title smoothing. Visible frame-pacing acceptance remains separate. |
 | D8b. Caption-button decoration — implemented | Shared state/vector drawing and immutable CaptionButtonAppearance fills, inset/radius, glyph size/stroke/ink and restore offset. Native targets, window actions, title rendering and integration retain their owners; existing caption palette precedence and restore underlay callback remain. | 41 relevant passing cases, 72 exact native default pairs, four-DPI shape/alpha/clamp/restore checks and four package scopes plus new-tab controls are in the [D8b record](THEMES-PLAN.md#caption-button-decoration-d8b--2026-11-13). Physical/native visible acceptance remains separate. |
-| A10. Backstage preferred page minimum — next proposed for source review | Inspect the fixed 240-logical-pixel preference in width negotiation. Define one optional authored preference while retaining available-space clamps, narrow hosts and native page ownership. | Focused Auto/fixed navigation-width, short/narrow/resized/DPI layout and native page retention checks selected after source review. No geometry campaign, window/animation rewrite or new family. |
-| E. Selected catalog growth | Add one later chosen light definition, reusing surface registrations or adding an actually needed sibling. Risk: selection/Reset/serialization/persistence and unsupported consumer dependencies. | Definition/selection tests, relevant designer/generated-code checks, and a focused independent-consumer visual/state scope. Wait for existing appearance review before another theme. |
+| A10. Backstage preferred page minimum — implemented | BackstagePreferredMinimumPageWidth projects a nullable 0..1024 logical-pixel preference through existing measured inputs. Null retains family 240; zero removes reservation. Auto/fixed navigation constraints, available-space/half-host clamps, native pages and unrelated settings retain their owners. | 15 focused Release cases, 288 exact default layout records and four public-package scopes with 224 live preference layouts plus review controls are recorded in [A10](THEMES-PLAN.md#backstage-preferred-page-width-a10--2026-11-13). |
+| E. Selected catalog growth — contract first | Plan the next selected light definition, reusing shared pieces or identifying a necessary structural sibling. Office 2013 is the proposed candidate in the existing sequence. Define a bounded contract before implementation; selection/Reset/serialization/persistence and unsupported consumer dependencies need explicit coverage. | First review the documentation-only E1 contract and proposed evidence; later implementation needs definition/selection, relevant designer/generated-code and independent-consumer scopes. Wait for current appearance review before another theme. |
 
 For each implementation slice, build affected native projects in their normal
 outputs and select tests by actual dependency impact. Test classes above are
@@ -355,7 +357,7 @@ Completion criteria:
   and remaining human appearance/input gates in the themes plan.
 
 B2/B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6 and D7a–D7f were delivered as separate slices.
-D8a–D8b deliver caption tint/title ink and caption-button decoration. A10's preferred page minimum is next proposed for source review;
+D8a–D8b deliver caption tint/title ink and caption-button decoration; A10 delivers preferred page width. Next is planning the selected light family, with Office 2013 proposed in the theme sequence;
 the consolidated geometry remains the foundation.
 
 ## Verification and delivery budget
