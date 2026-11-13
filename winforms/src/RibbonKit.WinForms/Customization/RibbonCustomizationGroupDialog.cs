@@ -48,6 +48,8 @@ internal sealed class RibbonCustomizationGroupDialog : Form
         private readonly RoundedPainter _painter = new();
         private readonly Bitmap _blank;
         private readonly Dictionary<string, IRibbonIcon> _artwork = [];
+        private bool _updatingMetrics;
+        private int _cellSide, _nativeImageMargin = -1;
         internal IconPicker(RibbonControl ribbon)
         {
             _ribbon = ribbon; View = View.LargeIcon; OwnerDraw = true; MultiSelect = false; HideSelection = false; BorderStyle = BorderStyle.None; ShowItemToolTips = true;
@@ -66,17 +68,44 @@ internal sealed class RibbonCustomizationGroupDialog : Form
         }
         protected override void OnHandleCreated(EventArgs e)
         {
-            base.OnHandleCreated(e); SendMessage(Handle, 0x1036, 0x10000, 0x10000); // LVS_EX_DOUBLEBUFFER
-            int cell = Math.Max(S(_ribbon.Density == RibbonDensity.Touch ? 56 : 44), Font.Height + S(24)); SendMessage(Handle, 0x1035, 0, (nint)((cell << 16) | cell));
+            base.OnHandleCreated(e);
+            // Hide native label layout while retaining item names/tooltips. Long
+            // labels must not enlarge the owner-drawn selection or hit rectangles.
+            SendMessage(Handle, 0x1036, 0x30000, 0x30000); // LVS_EX_DOUBLEBUFFER | LVS_EX_HIDELABELS
+            _cellSide = 0; _nativeImageMargin = -1; RefreshMetrics();
+        }
+        private Layout.RibbonOptionsIconPickerMetrics Metrics => new(_ribbon.Theme, DeviceDpi, _ribbon.Density);
+        private void RefreshMetrics()
+        {
+            if (_ribbon is null || _placeholder is null || _updatingMetrics || !IsHandleCreated || Items.Count == 0) return;
+            _updatingMetrics = true;
+            try
+            {
+                if (_nativeImageMargin < 0) _nativeImageMargin = Math.Max(0, Items[0].GetBounds(ItemBoundsPortion.Icon).Height - _placeholder.ImageSize.Height);
+                int side = Metrics.CellSide(Font.Height);
+                if (_cellSide == side) return;
+                var selected = SelectedItems.Cast<ListViewItem>().FirstOrDefault();
+                int imageSide = Math.Clamp(side - _nativeImageMargin, 1, 256);
+                _placeholder.ImageSize = new(imageSide, imageSide);
+                SendMessage(Handle, 0x1035, 0, (nint)((side << 16) | side));
+                _cellSide = side; ArrangeIcons(ListViewAlignment.SnapToGrid); selected?.EnsureVisible(); Invalidate();
+            }
+            finally { _updatingMetrics = false; }
+        }
+        protected override void OnLayout(LayoutEventArgs e) { base.OnLayout(e); RefreshMetrics(); }
+        protected override void OnFontChanged(EventArgs e) { base.OnFontChanged(e); _cellSide = 0; _nativeImageMargin = -1; RefreshMetrics(); }
+        protected override void OnDpiChangedAfterParent(EventArgs e) { base.OnDpiChangedAfterParent(e); _cellSide = 0; _nativeImageMargin = -1; RefreshMetrics(); }
+        protected override void WndProc(ref Message m)
+        {
+            if (m.Msg is 0xF or 0x317 or 0x318) RefreshMetrics(); // Prepare layout before native paint/print, never inside DrawItem.
+            base.WndProc(ref m);
         }
         protected override void OnDrawItem(DrawListViewItemEventArgs e)
         {
-            var bounds = e.Bounds; using var brush = new SolidBrush(_ribbon.Theme.Surface); e.Graphics.FillRectangle(brush, bounds);
-            if (e.Item.Selected) RibbonOptionsChrome.Surface(_painter, e.Graphics, Rectangle.Inflate(bounds, -1, -1), _ribbon, DeviceDpi, _ribbon.Theme.Checked, _ribbon.Theme.Border);
-            if (e.Item.Tag is string id && _artwork.TryGetValue(id, out var icon))
-            { int side = S(_ribbon.Density == RibbonDensity.Touch ? 32 : 24); icon.Draw(e.Graphics, new(bounds.Left + (bounds.Width - side) / 2, bounds.Top + (bounds.Height - side) / 2, side, side), new(DeviceDpi, _ribbon.Theme.Foreground, true)); }
-            else TextRenderer.DrawText(e.Graphics, "None", Font, bounds, _ribbon.Theme.Foreground, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
-            if (Focused && e.Item.Selected) e.DrawFocusRectangle();
+            var tile = Metrics.TileBounds(e.Item.GetBounds(ItemBoundsPortion.Icon), _cellSide);
+            IRibbonIcon? icon = e.Item.Tag is string id ? _artwork.GetValueOrDefault(id) : null;
+            RibbonOptionsIconPickerRenderer.Draw(_painter, new(e.Graphics, tile, _ribbon.Theme, Font, DeviceDpi) { Density = _ribbon.Density }, icon, e.Item.Selected, e.Item.Selected ? RibbonOptionsChrome.Radius(_ribbon, DeviceDpi) : 0);
+            if (Focused && e.Item.Selected) new DrawListViewItemEventArgs(e.Graphics, e.Item, tile, e.ItemIndex, e.State).DrawFocusRectangle();
         }
         protected override void Dispose(bool disposing) { if (disposing) { LargeImageList = null; _placeholder.Dispose(); _blank.Dispose(); _painter.Dispose(); } base.Dispose(disposing); }
         [DllImport("user32.dll")] private static extern nint SendMessage(nint window, uint message, nint wParam, nint lParam);

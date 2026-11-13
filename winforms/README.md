@@ -3023,6 +3023,9 @@ library Options navigation, dividers, buttons, headings, frames and command-list
 | `TreeCornerRadius`, `TreeSelectedBackground` | Customization-tree selection radius 0..64, null 0; optional alpha/gradient fill, null solid Checked.Start. Authored selection composites over Surface; Transparent hides it. List-row selection remains independent. |
 | `TreeCheckSize`, `TreeIconSize`, `TreeIconTextGap` | Check size 0..64, icon size 0..256 and icon-to-text paint gap 0..1024 logical pixels. Null retains Compact/Touch checks 18/24, icon 16 and gap 2. Authored values fit existing check/icon reservations and row height. Zero hides the corresponding glyph; native click targets, indentation, text bounds and scrolling stay unchanged. The gap positions artwork to the left of existing native text. Visible checks keep the actual DrawCheckBoxIndicator hook. |
 | `TreeFocusInset` | Native tree focus-rectangle inset 0..1024 logical pixels; null one device pixel. Authored inset clamps inside the row. Focus style and cue eligibility remain native. |
+| `IconPickerCornerRadius`, `IconPickerInset` | Group icon-picker selection radius 0..64 / paint inset 0..1024 logical pixels. Null retains the actual popup/command-radius minimum and one-device-pixel inset. None and artwork use the same square cell; inset and outline clearance constrain both content types. |
+| `IconPickerBorderWidth`, `IconPickerBorderColor`, `IconPickerSelectedBackground` | Selection outline width 0..32, null one device pixel; Empty ink follows Border, null fill follows Checked. Alpha/gradient/Transparent and zero outline are supported. Transparent fill preserves an independently configured outline. |
+| `IconPickerIconSize`, `IconPickerTextInset` | Artwork size 0..256 / extra None-label inset 0..1024 logical pixels. Null retains Compact/Touch artwork 24/32 with ceiling rounding. Positive artwork size also resizes the common square cells, respecting font/density minima and the native 256-device-pixel cell limit. Zero hides artwork with the default cell footprint. None uses the shared selection/content clearance before its extra text inset; font/Foreground/centering remain. |
 
 Legacy navigation/heading/search arithmetic keeps its ceiling-based DPI scaling
 and summed rounding; new frame/choice overrides use the shared logical-pixel
@@ -3082,7 +3085,21 @@ legacy half-length depth and strokes 1.6/1.8 with a device-pixel minimum. Author
 geometry fits the existing expander slot. These settings also style the other
 shared ribbon chevrons; **Default shared chevrons** resets that group independently.
 Tree text keeps its direct native painter, existing Foreground and disabled
-SystemColors.GrayText policy. Icon-picker tiles remain separate.
+SystemColors.GrayText policy. Icon-picker selection remains independent.
+
+**Try group icon picker / Icon picker selection / Icon picker content** are on
+the requested new **Theme effects 10**, three groups. Choose presets, then
+**Open group icon preview**. It opens the shared group editor through a public
+customization form's New Group action, using isolated sample commands; the
+preview closes after that editor. Selection/content resets retain each other;
+**Default all picker effects** clears only the seven picker members and retains
+tree/list/frame settings. Accepted groups on tabs 1–9 remain in place.
+
+**Smaller picker tiles / Larger picker tiles** resize None and artwork together.
+Native labels are hidden from layout so long command names cannot stretch the
+highlight; names and tooltips remain available. Opening, layout/paint refresh,
+font and DPI changes resolve the common square cells. Item identities, native
+selection, scrolling and group validation remain with their existing owners.
 
 Derive from `RibbonRenderer` for a flat/custom presentation, or from
 `RibbonOffice2024Renderer` to retain Office styling while overriding selected

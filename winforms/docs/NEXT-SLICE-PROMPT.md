@@ -1,24 +1,35 @@
-# Continue native WinForms themes after D7e customization tree decoration
+# Continue native WinForms themes after D7f group icon-picker tiles
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-13**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7e and adjustability backfills
+Updated **2026-11-13**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7f and adjustability backfills
 A00–A04/A06–A09/A11–A17 are implemented. Current evidence and exact user review
 scope live in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
-The latest implementation is [D7e](THEMES-PLAN.md#customization-tree-decoration-d7e--2026-11-13).
+The latest implementation is [D7f](THEMES-PLAN.md#group-icon-picker-tiles-d7f--2026-11-13).
 Use the ledger for the exact user appearance review scope and remaining gates.
-The user committed D7d at `60654ff` before D7e. Do not overwrite later user commits.
+D7f has a square-geometry follow-up awaiting review: None and artwork now share
+square native icon cells and adapt together to artwork size and selection inset.
+Finish that requested correction before starting D8.
+The user committed D7e at `7f06db8` before D7f. Do not overwrite later user commits.
 
 ## Next bounded implementation
 
 Start with `git status --short` and inspect live branch/HEAD; preserve later user
-commits and edits. Follow the current user request. For a continuation, D7f
-**customization group icon-picker tiles** is next proposed for source review.
-Inspect tile selection/content, artwork sizing and the None label. Reuse existing
-fill/ink/image/radius/focus roles and select one bounded extraction before editing.
-Keep native ListView items, handles, selection, scrolling, borrowed artwork,
-group-name/layout validation and draft OK/Cancel with their existing owners.
+commits and edits. Follow the current user request. For a continuation, **D8
+caption/title appearance** is next proposed for source review. Inspect A05
+separate-caption tint eligibility/color/strength, current caption paint/contrast/
+clip handoff and the recorded Backstage closing-title ink flicker before choosing
+a bounded contract. Read the caption policy, window adapter and RibbonForm.Title
+owners plus the ledger's recording/timestamps. Preserve Office 2024's animated
+neutral tint, explicit Form/theme caption precedence, full-height Office 2019 panes,
+opaque title ink, captured motion profiles and existing pane/title clocks. Do not
+claim a root cause or live timing acceptance from static paint alone. Add adjustable
+effects with null defaults and independent resets; no new theme family or broad
+window/animation rewrite. A10 preferred page minimum remains separate.
+D7f owns group icon-picker tile drawing/metrics. Keep native ListView items,
+handles, selection, cell spacing, scrolling, borrowed artwork, validation and draft
+OK/Cancel with their existing owners.
 D7e owns tree state/content/glyph drawing and decoration metrics; preserve native
 expand/check/text targets, indentation/scrolling and actual checkbox hooks.
 D7d owns QAT/Classic/Simplified command-list rows; preserve
@@ -50,12 +61,12 @@ A new family selector needs an actual structural difference, not a palette name,
 header style or radius. Native editor HWND, parent, value, selection, focus,
 validation, IME and popup ownership remain with their existing shared owners.
 
-**Review tabs:** the user requested a fresh tab for D7d. Put new controls on
-**Theme effects 9** through `ThemeEffectsReviewTab` until directed otherwise.
+**Review tabs:** the user requested a fresh tab for D7f. Put new controls on
+**Theme effects 10** through `ThemeEffectsReviewTab` until directed otherwise.
 `ThemeEffects2ReviewTab` / `ThemeEffects3ReviewTab` / `ThemeEffects4ReviewTab` /
 `ThemeEffects5ReviewTab` / `ThemeEffects6ReviewTab` / `ThemeEffects7ReviewTab` /
-`ThemeEffects8ReviewTab` pin existing groups to their original tabs.
-Earlier tabs retain seven/five/four/seven/six/three/eight/five groups. Tab 6 retains **Try built-in
+`ThemeEffects8ReviewTab` / `ThemeEffects9ReviewTab` pin existing groups to their original tabs.
+Earlier tabs retain seven/five/four/seven/six/three/eight/five/six groups. Tab 6 retains **Try built-in
 galleries / Gallery tile states / Gallery headings**. Tab 7 has **Try gallery content /
 Gallery artwork and labels / Gallery inline frames / Gallery utility glyphs**.
 Tab 7 now also has **Try tips and badges / Tip presentation** (six total groups).
@@ -63,7 +74,8 @@ Tab 7 now also has **Try tips and badges / Tip presentation** (six total groups)
 has **Try Options shell / Options buttons / Options headings / Try frames and choices /
 Options frames and text**, five total groups. Tab 9 has **Try command rows /
 Command row content / Command row selection / Try customization tree / Tree glyphs /
-Tree selection and focus**, six total groups. Keep tab 7/8's
+Tree selection and focus**, six total groups. Tab 10 has **Try group icon picker /
+Icon picker selection / Icon picker content**, three total groups. Keep tab 7/8/9's
 accepted groups in place; do not infer fullness from reduction.
 The File preview uses existing authored models and restores the prior File mode.
 Its divider-visibility button uses the existing independent flag (2019 defaults
@@ -249,11 +261,24 @@ when needed. Do not move old groups or infer fullness from reduction.
   the separately passing native buffer case are recorded in D7e; do not describe
   that evidence as a clean initial aggregate. Initialize native visual-style
   fixtures before creating controls; do not change runtime behavior to satisfy probes.
+- D7f square follow-up retains seven appearance members but intentionally revises
+  fixed-cell/content-independent-inset behavior. Native hidden-label style and
+  measured icon margins give None/artwork shared square icon hit/paint/focus cells.
+  Positive artwork size resizes the cells with font/density minima and a native
+  256-device-pixel cap; zero hides artwork with the default footprint. Selection
+  inset/outline clearance constrains both artwork and None; extra text inset is
+  applied inside that region. Native names/tooltips/items/handles/selection,
+  scrolling, group validation and draft OK/Cancel remain. Use the current square
+  follow-up's 20 latest passing cases and four package scopes; the original 16
+  byte comparisons are historical because the intended default geometry changed.
+  Use native icon rectangles for geometry/hit tests, not full label metadata
+  rectangles. Queue native mouse down/up together; synchronous down can block in
+  native drag detection. Do not change runtime input behavior to satisfy probes.
 - Existing Theme assignment closes ordinary menus through `ModelChanged`;
   retained models reopen normally. Do not change lifecycle to satisfy a probe.
-- A05 caption tint, A10 preferred page minimum and the reported
-  Backstage closing-title ink flicker remain separate. The latter is deferred to
-  title work, with recording/timestamps in the ledger. No new theme family now;
+- A05 caption tint and the Backstage closing-title ink flicker are proposed for
+  D8 source review, with recording/timestamps in the ledger. A10 preferred page
+  minimum remains separate. No new theme family now;
   later light-theme order is unscheduled and dark themes stay deferred.
 
 Use one agent under `winforms/`; WPF stays read-only. Normal Debug/Release outputs

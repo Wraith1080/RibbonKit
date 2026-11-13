@@ -1,6 +1,6 @@
 namespace RibbonKit.WinForms;
 
-/// <summary>Immutable library Options navigation, divider, button, heading, frame and command-list row presentation. Native controls, application pages and draft lifetime remain independent.</summary>
+/// <summary>Immutable library Options navigation, divider, button, heading, frame, list/tree and group icon-picker presentation. Native controls, application pages and draft lifetime remain independent.</summary>
 public sealed record RibbonOptionsAppearanceSettings
 {
     /// <summary>Initializes overrides retaining existing Options presentation.</summary>
@@ -75,12 +75,28 @@ public sealed record RibbonOptionsAppearanceSettings
     public int? TreeIconTextGap { get; init; }
     /// <summary>Gets optional customization-tree native focus-rectangle inset in logical pixels, 0..1024. Null retains one device pixel. Authored values clamp inside the existing row. Focus style and cue eligibility remain native.</summary>
     public int? TreeFocusInset { get; init; }
+    /// <summary>Gets optional group icon-picker selection corner radius in logical pixels, 0..64. Null retains the actual popup/command-radius minimum. None and artwork share the same square cell and selection bounds.</summary>
+    public int? IconPickerCornerRadius { get; init; }
+    /// <summary>Gets optional group icon-picker selection paint inset in logical pixels, 0..1024. Null retains one device pixel. Authored inset clamps inside the existing cell; zero removes it. The same inset and outline clearance constrain artwork and None text.</summary>
+    public int? IconPickerInset { get; init; }
+    /// <summary>Gets optional group icon-picker selection outline width in logical pixels, 0..32. Null retains one device pixel. Zero hides the outline; authored widths clamp inside the selection paint bounds.</summary>
+    public int? IconPickerBorderWidth { get; init; }
+    /// <summary>Gets optional group icon-picker selection outline ink, including alpha. Empty retains Border; Transparent hides the outline.</summary>
+    public Color IconPickerBorderColor { get; init; } = Color.Empty;
+    /// <summary>Gets optional group icon-picker selected fill, including alpha/gradients. Null retains Checked. Surface and Foreground keep their existing roles; a Transparent fill preserves an independently configured outline.</summary>
+    public RibbonFill? IconPickerSelectedBackground { get; init; }
+    /// <summary>Gets optional group icon-picker artwork size in logical pixels, 0..256. Null retains Compact 24 / Touch 32 with legacy ceiling rounding. Positive authored sizes resize the common square cells for artwork and None, respecting font/density minima and the native 256-device-pixel cell limit. Zero hides artwork and retains the default cell footprint; item identity and selection remain.</summary>
+    public int? IconPickerIconSize { get; init; }
+    /// <summary>Gets optional group icon-picker None-label paint inset in logical pixels, 0..1024. Null retains zero. Authored inset applies inside the shared selection/content clearance, so None follows tile size and selection inset. Font, ink, centering and focus policy retain their owners.</summary>
+    public int? IconPickerTextInset { get; init; }
 
     internal bool HasButtonOverrides(bool accent) => ButtonInset is not null || ButtonBorderWidth is not null || !ButtonBorderColor.IsEmpty || ButtonFocusInset is not null || (accent ? AccentButtonBackground is not null : ButtonBackground is not null);
 
     internal static void Validate(RibbonOptionsAppearanceSettings? a)
     {
         if (a is null) return;
+        if (a.IconPickerCornerRadius is < 0 or > 64 || a.IconPickerInset is < 0 or > 1024 || a.IconPickerBorderWidth is < 0 or > 32 || a.IconPickerIconSize is < 0 or > 256 || a.IconPickerTextInset is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(a), "Options icon-picker radius must be 0..64, paint/text insets 0..1024, border width 0..32 and artwork size 0..256 logical pixels, or null for existing presentation.");
         if (a.TreeCornerRadius is < 0 or > 64 || a.TreeCheckSize is < 0 or > 64 || a.TreeIconSize is < 0 or > 256 || a.TreeIconTextGap is < 0 or > 1024 || a.TreeFocusInset is < 0 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(a), "Options tree corners/check size must be 0..64, icon size 0..256 and icon gap/focus inset 0..1024 logical pixels, or null for existing presentation.");
         if (a.RowTextPadding is < 0 or > 1024 || a.RowIconTextGap is < 0 or > 1024 || a.RowIconSize is < 0 or > 256 || a.RowCornerRadius is < 0 or > 64)

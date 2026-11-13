@@ -6,7 +6,7 @@ public partial class DesignerForm
 {
     private void EnableOptionsTreeDemo()
     {
-        var tab = ThemeEffectsReviewTab; if (tab.Groups.Any(g => g.Id == "review-options-tree")) return;
+        var tab = ThemeEffects9ReviewTab; if (tab.Groups.Any(g => g.Id == "review-options-tree")) return;
         var preview = new RibbonGroup { Id = "review-options-tree-preview", Text = "Try customization tree" };
         Add(preview, "Open tree preview", () => { using var model = CreateOptionsRowPreviewModel(RibbonLayoutMode.Classic); using var dialog = CreateTreePreview(model); dialog.ShowDialog(this); });
         var glyphs = new RibbonGroup { Id = "review-options-tree", Text = "Tree glyphs" };
@@ -33,7 +33,7 @@ public partial class DesignerForm
     { var dialog = CreateOptionsRowPreview(model, false); dialog.Text = "Customization tree preview"; return dialog; }
     internal void VerifyOptionsTreeDemo(string output)
     {
-        StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); Width = 1900; ShowInTaskbar = false; EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffectsReviewTab; ribbon.SelectedTab = tab;
+        StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); Width = 1900; ShowInTaskbar = false; EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffects9ReviewTab; ribbon.SelectedTab = tab;
         if (tab.Text != "Theme effects 9" || tab.Groups.Count != 6 || ThemeEffects8ReviewTab.Groups.Count != 5 || ThemeEffects7ReviewTab.Groups.Count != 8 || ThemeEffects6ReviewTab.Groups.Count != 3 || ThemeEffects5ReviewTab.Groups.Count != 6 || ThemeEffects4ReviewTab.Groups.Count != 7 || ThemeEffects3ReviewTab.Groups.Count != 4 || ThemeEffects2ReviewTab.Groups.Count != 5 || ribbon.Tabs.Single(t => t.Text == "Office 2019 Light").Groups.Count != 7) throw new InvalidOperationException("Tree groups displaced accepted tabs.");
         var glyphs = tab.Groups.Single(g => g.Id == "review-options-tree"); var state = tab.Groups.Single(g => g.Id == "review-options-tree-state"); ribbon.Theme = ribbon.Theme with { OptionsAppearance = new() { RowIconSize = 16, RowCornerRadius = 6, FrameBorderWidth = 3, NavigationCornerRadius = 12 } }; var sources = ribbon.Tabs.ToArray(); var mode = ribbon.LayoutMode;
         foreach (int i in new[] { 0, 2, 4 }) glyphs.Items[i].PerformClick(); state.Items[0].PerformClick(); state.Items[2].PerformClick(); if (ribbon.Theme.OptionsAppearance is not { TreeCheckSize: 12, TreeIconSize: 10, TreeIconTextGap: 4, TreeCornerRadius: 9, TreeFocusInset: 5 } || ribbon.Theme.Chevrons?.Length != 20) throw new InvalidOperationException("Tree presets bypassed public roles.");

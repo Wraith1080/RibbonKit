@@ -354,17 +354,17 @@ Backstage. Stop for this review before another theme.
 | Item | Status |
 | --- | --- |
 | Direction | **2026-11-10: user selected Office 2019 first and light themes before dark.** |
-| Planning | B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7e and audit corrections A00–A04/A06–A09/A11–A17 are implemented. Next proposed is a bounded source review of customization group icon-picker tiles (D7f); caption/title and page-layout preferences retain separate scopes. Later family order is provisional. |
+| Planning | B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7f and audit corrections A00–A04/A06–A09/A11–A17 are implemented. Next proposed is D8 caption/title appearance: source-review A05 tint settings and the deferred Backstage closing-title ink/clip issue. A10 page-layout preference remains separate. Later family order is provisional. |
 | Earlier-slice adjustability audit | **2026-11-11: A11–A16 header/shared effects implemented and verified.** Evidence is in the [header/shared record](#header-and-shared-effect-overrides--2026-11-11). **2026-11-12: A17 badge placement followed in D6.** The [audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) retains A05/A10 as separate candidates. |
-| Runtime/API/rendering | D7e shares customization-tree drawing and pure decoration slots. `OptionsAppearance` adds tree selection corners/fill, check/icon sizes, icon gap and focus inset; expanders reuse shared Chevrons. Native expand/check/text targets, indentation/scrolling, actual checkbox hooks, direct native text/focus style, node handles and drafts retain their owners. Icon-picker tiles remain separate. |
-| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; package `0.1.0-designer.local20261113T024240443Z` refreshes the permanent sample, including final public XML docs. **Try customization tree / Tree glyphs / Tree selection and focus** join the earlier three row groups on **Theme effects 9**, six total. Tabs 1–8 retain seven/five/four/seven/six/three/eight/five groups. Keep new controls on tab 9 until directed otherwise. Authored Forms/UserControls/resources/project files remain intact. |
-| Focused Release verification | D7e: **28 distinct latest relevant cases pass**: 20 new authored cases, seven retained tree/Options/validation/list cases and one default comparison. The initial batch had 21 pass / seven failures; corrected fixture assertions, an independently passing buffer check and affected retries are recorded in the [D7e record](#customization-tree-decoration-d7e--2026-11-13). This is not a clean aggregate run. No broad suite ran. |
-| Two-family default parity | D7e: **16 native tree PNG/control-geometry/indicator-hook pairs match exactly**, both light families, flat/Office renderers, Compact/Touch and 9/14-point italic fonts at actual 120 DPI. Native expanded/collapsed, enabled/disabled and selected focus states plus borrowed icon/actual indicator contexts match at null/empty settings. Authored shape/alpha/hide/focus, chevrons and tiny-slot geometry pass at 96/120/144/192 DPI. No full native DPI matrix ran. |
-| Composed native package verification | D7e: **4/4 public-package scopes plus tab checks passed**, both light families with None/Mica owner windows at actual 120 DPI, each Compact/Touch. Actual tree/check/icon paint, zero/Transparent hide, hidden check/expander targets, native Space and root-specific single-collapse behavior pass. HWND/parent/nodes/text bounds/indent/row height/drafts and live sources survive appearance/reset; Cancel discards pending visibility edits. These are synchronous offscreen checks, separate from physical input/IME, visible pacing, external UIA and actual VS. |
+| Runtime/API/rendering | D7f square follow-up fixes label-dependent icon-picker highlights. None and artwork now use one square native icon cell, selection/focus rectangle and content clearance. Artwork size resizes both cells; inset constrains both. Existing items/handles/selection/names/tooltips/scrolling and group validation/OK/Cancel remain. D8 caption/title is next after review. |
+| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; package `0.1.0-designer.local20261113T034156273Z` refreshes the permanent sample. Theme effects 10 retains its three picker groups; Smaller/Larger picker tiles now demonstrates the shared sizing. Tabs 1–9 retain seven/five/four/seven/six/three/eight/five/six groups. Authored Forms/UserControls/resources/project files remain intact. |
+| Focused Release verification | Square follow-up: **20 distinct latest relevant cases pass**, combining the initial 14 passing cases with six corrected native cases. Coverage includes shared None/artwork pixels, size/inset/extreme clamps, four-DPI paint/metrics, 9/14-point native grids, wrapping/scrolling/queued clicks, in-process accessible names, handles/items/selection and group OK/Cancel. Fixture corrections and the interrupted synchronous-click probe are in the [follow-up](#group-icon-picker-square-geometry-follow-up--2026-11-13). No broad suite ran. |
+| Two-family paint/geometry | The square correction intentionally changes D7f default geometry; its original 16 byte comparisons remain historical. Emulated paint/metrics cover 96/120/144/192 DPI; native font/grid/hit/name tests run at 96 DPI and package scopes at actual 120 DPI. Matched None/artwork captures at small/large sizes and multiple insets were inspected in both light themes. No physical mixed-monitor matrix ran. |
+| Composed native package verification | Square follow-up: **4/4 public-package scopes plus review-tab checks pass**, both light families with None/Mica owners at actual 120 DPI, each Classic/Simplified x Compact/Touch. Actual None/artwork selections remain square and adapt at sizes 16/48 and insets 0/4; native targets, metadata, deduplication, ownership, reset independence, validation and draft OK/Cancel pass. These are offscreen checks; live/native acceptance remains separate. |
 | Backstage review correction | **2026-11-11: navbar blank-frame and left rounded-corner black-bar fixes implemented and verified; user review pending.** Current focused/package evidence is in the [page-motion follow-up](BACKSTAGE-PAGE-MOTION.md#navbar-blank-frame-and-rounded-edge-follow-up--2026-11-11). |
 | Deferred title review issue | **2026-11-11: user reported title-text flicker while closing Backstage and allowed deferral to title theming work.** Their `20261111-0345-01.1714250.mp4` confirms the Office 2019 close at approximately **7.03–7.37 s**: the title moves left, its leading text becomes pale/white over the lightening caption, then dark ink returns. Native-rate frames and timestamps are retained under `artifacts/backstage-title-flicker/recording/`. Caption foreground contrast/clip handoff as the navigation fades is the source-inspection lead, not a verified root cause. Preserve opaque, legible title ink throughout closing when addressing it. No title runtime change or new build/test was made for this recording review; the page/corner correction does not address it. |
 | Broader Release suite | Initial implementation: 1,485 passed / 6 failed / 1,491 total (historical evidence above). Correction run **stopped at the user's request**, 1,089 passed / 3 failed / 1,092 executed; incomplete, no full-suite result claimed. Do not restart it. |
-| User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; D1a/D1b review controls remain on Theme effects 3. **2026-11-12: user reported D1b looks good and authorized continuation to native editor appearance.** D1a review remains at its earlier recorded scope. The user requested a new review tab for D1c; use Theme effects 4 and preserve tabs 1–3. **2026-11-12: user reported D2 works perfectly and authorized continuation to ordinary menu decoration.** **2026-11-12: user reported D3 looks good and authorized Application Menu continuation, with new review controls on Theme effects 5.** **2026-11-12: user reported D4a Application Menu state effects look good on Theme effects 5.** **2026-11-12: user confirmed every D4b surface/heading option works and authorized continuation.** **2026-11-12: user reported D4c looks good and everything works, authorized gallery continuation and requested its controls on a new Theme effects 6 tab.** **2026-11-12: user reported everything works for D5a and authorized continuation; then declared tab 6 full and requested D5b controls on a new tab. D5b controls remain on Theme effects 7.** **2026-11-12: user reported everything checks out for D5b and authorized continuation to D6. D6 controls remain on Theme effects 7.** **2026-11-12: user reported everything works well for D6 and authorized continuation. D7a controls remain on Theme effects 7.** **2026-11-12: user confirmed all D7a options work, including combined use, authorized continuation and requested D7b on a new tab.** **2026-11-13: user reported D7b works perfectly and authorized continuation.** **2026-11-13: user confirmed everything works for D7c, authorized continuation and requested the next controls on a new Theme effects 9 tab.** **2026-11-13: user confirmed everything works for D7d and authorized continuation.** **D7e appearance review is pending on Theme effects 9.** Actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
+| User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; D1a/D1b review controls remain on Theme effects 3. **2026-11-12: user reported D1b looks good and authorized continuation to native editor appearance.** D1a review remains at its earlier recorded scope. The user requested a new review tab for D1c; use Theme effects 4 and preserve tabs 1–3. **2026-11-12: user reported D2 works perfectly and authorized continuation to ordinary menu decoration.** **2026-11-12: user reported D3 looks good and authorized Application Menu continuation, with new review controls on Theme effects 5.** **2026-11-12: user reported D4a Application Menu state effects look good on Theme effects 5.** **2026-11-12: user confirmed every D4b surface/heading option works and authorized continuation.** **2026-11-12: user reported D4c looks good and everything works, authorized gallery continuation and requested its controls on a new Theme effects 6 tab.** **2026-11-12: user reported everything works for D5a and authorized continuation; then declared tab 6 full and requested D5b controls on a new tab. D5b controls remain on Theme effects 7.** **2026-11-12: user reported everything checks out for D5b and authorized continuation to D6. D6 controls remain on Theme effects 7.** **2026-11-12: user reported everything works well for D6 and authorized continuation. D7a controls remain on Theme effects 7.** **2026-11-12: user confirmed all D7a options work, including combined use, authorized continuation and requested D7b on a new tab.** **2026-11-13: user reported D7b works perfectly and authorized continuation.** **2026-11-13: user confirmed everything works for D7c, authorized continuation and requested the next controls on a new Theme effects 9 tab.** **2026-11-13: user confirmed everything works for D7d and authorized continuation.** **2026-11-13: user confirmed everything works for D7e, authorized continuation and requested the next controls on a new Theme effects 10 tab.** **2026-11-13: user reported mismatched None/artwork selection shapes and requested shared square geometry that follows inset/size changes. The correction is implemented and awaits review on Theme effects 10.** Actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
 | Actual VS/physical input/mixed-monitor | Not run for themes; report separately. |
 
 Record later evidence and confirmation here once, with date/revision/scope,
@@ -2638,9 +2638,157 @@ Evidence under `artifacts/options-tree-d7e/`:
   tree/preview/tab captures were inspected. Authored Forms/UserControls/resources/
   project files remain intact.
 
-D7e appearance review is pending in the ledger. Physical input/IME, actual VS,
+D7e user appearance review is recorded in the ledger. Physical input/IME, actual VS,
 external UIA, mixed-monitor and visible pacing remain separate. No broad suite,
-native matrix or WPF build/test ran. Next proposed is D7f: source-review group
-icon-picker tile selection/content, artwork sizing and the None label, then select
-one bounded extraction with independently adjustable effects. A05/A10 and Backstage
-closing-title ink remain separate; no new family is selected. Keep tab 9 until directed otherwise.
+native matrix or WPF build/test ran. D7f followed below. A05/A10 and Backstage
+closing-title ink remain separate; no new family is selected.
+
+## Group icon-picker tiles D7f — 2026-11-13
+
+Work started clean at the user's D7e commit `7f06db8`. Shared
+`RibbonOptionsIconPickerRenderer` and value-only `RibbonOptionsIconPickerMetrics`
+extract the group dialog's native tile selection/content recipe. The existing
+ListView still owns cells, item identity, selection, focus, scrolling and disposal.
+No new family selector, public dialog API, input owner or layout coordinator was added.
+
+`OptionsAppearance` adds seven independently resettable members:
+
+- `IconPickerCornerRadius` / `IconPickerInset`: 0..64 / 0..1024 logical pixels.
+  Null keeps the actual popup/command-radius minimum and one-device-pixel selection
+  inset. Authored inset clamps inside the existing cell; zero removes it. Selection
+  inset does not move artwork, None text or native cells.
+- `IconPickerBorderWidth` / `IconPickerBorderColor`: width 0..32, null one device
+  pixel; Empty ink follows Border. Alpha/Transparent and zero/hide are supported;
+  widths clamp inside the selection paint bounds.
+- `IconPickerSelectedBackground`: optional alpha/gradient fill, null Checked.
+  Existing Surface backing remains. A transparent fill retains an independently
+  configured outline; zero outline and transparent fill hide both decorations.
+- `IconPickerIconSize`: 0..256, null Compact 24 / Touch 32 with legacy ceiling
+  rounding. Authored artwork fits the existing native cell; zero hides it without
+  substituting a None label or changing item identity/spacing.
+- `IconPickerTextInset`: 0..1024, null zero, for the None label's paint bounds.
+  Font/Foreground/centering retain their owners. Native focus painting remains
+  direct, with its existing selected/focused eligibility and full-cell target.
+
+Validation precedes Theme/BuiltInTheme mutation. Actual radius fallback is queried
+only for selected tiles, retaining the previous hook lifetime; direct native text
+is not rerouted through DrawText. Selection/content/all-picker resets retain each
+other and earlier tree/list/frame settings. Whole OptionsAppearance Reset retains
+unrelated theme roles. Native item population, selected shared-artwork deduplication,
+borrowed vector/raster ownership, group-name/layout validation, normalization and
+draft OK/Cancel remain unchanged. No authored Forms/resources/project files were replaced.
+
+Evidence under `artifacts/options-picker-d7f/`:
+
+- `tests/before-defaults.trx`, `after-defaults.trx` and
+  `tests/empty-defaults-isolated.trx`: **16 exact native PNG/control-geometry/icon-
+  slot/cell-spacing pairs**, both light families, flat/Office renderers,
+  Compact/Touch and 9/14-point italic fonts at actual 120 DPI. Actual tile callbacks
+  use native item bounds, selection/focus/enabled state and borrowed artwork;
+  selected shared-artwork identity and deduplication remain. Null and empty groups
+  match saved results without approval/tolerance changes.
+- `tests/picker-focused.trx`: **19 passed / five failed** initially. Four new
+  content fixtures assumed pure-black text instead of the theme's existing ink;
+  their hidden-artwork/None checks now compare against the white backing and pass
+  **4/4** in `picker-content-final.trx`. The empty/default comparison failed in the
+  mixed batch but passes all 16 pairs in a fresh process via
+  `empty-defaults-isolated.trx`; no runtime paint workaround or approval change was
+  added for that run-order variance. Prior passing scopes were retained.
+  **24 distinct latest cases pass**, 16 new authored, seven retained and one default;
+  this is not a clean initial aggregate run.
+- New authored cases cover matching four-corner selection paint, gradient/alpha/
+  transparent/zero outline, tiny clamps, independent content/None bounds, zero-artwork
+  semantics, atomic ranges, actual selected-only radius and direct text hooks,
+  member/group/built-in Reset, retained native cells/spacing/items/HWND/parent/
+  selection, empty-name validation, accepted metadata/size normalization and Cancel.
+  Authored paint/metrics cover 96/120/144/192 DPI. Release builds pass without warnings/errors.
+- `package-final/result.log`: **4/4 public-package scopes**, both light families
+  with None/Mica owner windows at actual 120 DPI, each Classic/Simplified x Compact/Touch.
+  Public RibbonCustomizationEditor/New Group routing opens the actual modal group
+  dialog; actual picker paint/radius/direct text, authored sizes/zero hide, native
+  deduplication/cells/spacing/items/HWND/parent/selection, reset independence,
+  invalid-name rejection, OK/Cancel draft metadata and live source/artwork ownership
+  pass. The inspection timer closes only an unfinished dialog; its initial cleanup
+  incorrectly replaced a pending OK result with Cancel and was corrected in the
+  diagnostic. No runtime modal/input workaround was added.
+- Normal Debug runtime/designer server/client/sample builds pass without warnings/
+  errors. A sample-only reference to internal model Parent was replaced by a public
+  collection/reference check, retaining passing runtime/designer builds. Package
+  `0.1.0-designer.local20261113T031321233Z` refreshes the permanent sample.
+  Requested new **Theme effects 10** contains **Try group icon picker / Icon picker
+  selection / Icon picker content**, three groups. D7d/D7e builders/verifiers are
+  pinned through ThemeEffects9ReviewTab; its six groups and earlier tabs remain.
+  Presets/hide/independent/all-picker resets, isolated public-model group preview,
+  real ribbon mode/sources and idempotence pass. The preview uses the public
+  customization form's New Group action and closes its parent afterward.
+  Representative picker/dialog/tab captures were inspected.
+
+D7f appearance review is pending in the ledger. Physical input/IME, actual VS,
+external UIA, mixed-monitor and visible pacing remain separate. No broad suite,
+native matrix or WPF build/test ran. Next proposed is **D8 caption/title appearance**:
+inspect A05 tint eligibility/color/strength and the recorded closing-title ink/clip
+handoff before choosing a bounded contract. Preserve Office 2024's animated neutral
+tint, authored Form/theme caption precedence, full-height Office 2019 panes and
+existing pane/title clocks. A10 preferred page minimum and new families remain
+separate. Keep tab 10 until directed otherwise.
+
+## Group icon-picker square geometry follow-up — 2026-11-13
+
+The user reported unequal None/artwork selection shapes and requested that None
+also follow inset/size changes. The original D7f remains uncommitted on baseline
+`7f06db8`; this correction preserves that work. Native measurement reproduced the
+cause: with 44-pixel icon spacing, native label-dependent item bounds were 44×50
+for None and 44×65 for a wrapped command name. Focus could enlarge those metadata
+bounds further. Using them directly for tile paint/focus caused the mismatch.
+
+The picker now uses [LVS_EX_HIDELABELS](https://learn.microsoft.com/en-us/windows/win32/controls/extended-list-view-styles)
+with its existing native double buffering. Item text/tooltips remain intact, but
+native label layout no longer determines the tile. The control measures the
+native icon margin, sizes its owned placeholder image list and sets matching
+horizontal/vertical spacing. Paint and focus use one canonical square anchored to
+the native icon rectangle, including for None. No native ListView or item is replaced.
+
+Positive IconPickerIconSize resizes the common cells for None/artwork with existing
+density/font minima, capped at 256 device pixels for the native image list. Zero
+hides artwork with the default safe footprint. Selection inset and outline now
+reserve shared content clearance; None's optional extra text inset applies inside
+that region. Cell metrics refresh before native paint/print and through existing
+layout/font/DPI paths, guarded against reentry. Selected items remain visible and
+retain native ownership. No new public setting or global coordinator was added.
+
+This intentionally revises D7f's original fixed-cell/content-independent-inset
+contract and changes its default geometry. The original 16 before/after pairs are
+historical evidence for the extraction, not approval of the corrected shape;
+their native records show 96 DPI, distinct from the 120-DPI package captures.
+
+Evidence under `artifacts/options-picker-square/`:
+
+- `tests/square-focused.trx`: 14 passed / six failed initially. The failures compared
+  native full item/label metadata rectangles with the new icon tile. Corrected
+  checks use the native icon rectangles that actually define paint/hit cells.
+  A synchronous synthetic mouse-down then stalled in the native drag loop; its
+  test host was stopped and `square-native-final.trx` is an aborted run, not a pass.
+  Queuing matching down/up messages through the native pump fixes that fixture;
+  `square-native-queued.trx` passes **6/6**. Earlier passing scopes were retained:
+  **20 distinct latest relevant cases pass**. No runtime input workaround was added.
+- New cases verify shared None/artwork selection pixels, monotonically adaptive
+  square sizes, zero/default footprint, inset/outline clearance and safe extreme
+  clamps at 96/120/144/192 DPI. Native Compact/Touch, 9/14-point tests at actual
+  96 DPI cover 25 items with long names, multiple rows, scrolling, square icon hit
+  rectangles, queued clicks, font changes, stable HWND/parent/items/selection and
+  retained in-process accessible names. Existing four-corner/alpha/content and
+  group validation/OK/Cancel cases also pass. Release builds have no warnings/errors.
+- `package/result.log`: **4/4 public-package scopes**, both light families with
+  None/Mica owners at actual 120 DPI, each Classic/Simplified x Compact/Touch.
+  Native None/artwork selection captures at sizes 16/48 and insets 0/4 match the
+  common square layout and native targets. Metadata/deduplication, item/handle/parent/
+  selection retention, member/group Reset, validation, draft OK/Cancel and borrowed
+  artwork remain. Representative paired None/artwork and dialog captures were inspected.
+- Normal Debug runtime/designer server/client/sample builds pass without warnings/
+  errors. Package `0.1.0-designer.local20261113T034156273Z` refreshes the permanent
+  sample. Theme effects 10 retains three groups with Smaller/Larger picker tiles;
+  tab 9 and earlier accepted groups remain. No WPF, full suite or physical DPI/
+  IME/external-UIA/actual-VS gates ran. No authored Forms/resources/project files changed.
+
+User review of the requested square/None adaptation correction is pending. Finish
+that review before proceeding to the proposed D8 caption/title work.

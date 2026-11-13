@@ -6,7 +6,7 @@ public partial class DesignerForm
 {
     private void EnableOptionsRowDemo()
     {
-        var tab = ThemeEffectsReviewTab; if (tab.Groups.Any(g => g.Id == "review-options-rows")) return;
+        var tab = ThemeEffects9ReviewTab; if (tab.Groups.Any(g => g.Id == "review-options-rows")) return;
         var preview = new RibbonGroup { Id = "review-options-row-preview", Text = "Try command rows" };
         Add(preview, "Open QAT row preview", () => Open(RibbonLayoutMode.Classic, true));
         Add(preview, "Open Classic row preview", () => Open(RibbonLayoutMode.Classic, false));
@@ -40,7 +40,7 @@ public partial class DesignerForm
     { var dialog = new RibbonQuickAccessCustomizationForm(model, "RibbonKit.Rows.Preview") { Text = "Customization command row preview" }; dialog.SelectedPage = qat ? dialog.Pages.First(p => p.Name == "QuickAccessOptionsPage") : dialog.Pages.First(p => p.Name != "QuickAccessOptionsPage"); return dialog; }
     internal void VerifyOptionsRowDemo(string output)
     {
-        StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); Width = 1800; ShowInTaskbar = false; EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffectsReviewTab; ribbon.SelectedTab = tab;
+        StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); Width = 1800; ShowInTaskbar = false; EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffects9ReviewTab; ribbon.SelectedTab = tab;
         if (tab.Text != "Theme effects 9" || tab.Groups.Count != 6 || ThemeEffects8ReviewTab.Groups.Count != 5 || ThemeEffects7ReviewTab.Groups.Count != 8 || ThemeEffects6ReviewTab.Groups.Count != 3 || ThemeEffects5ReviewTab.Groups.Count != 6 || ThemeEffects4ReviewTab.Groups.Count != 7 || ThemeEffects3ReviewTab.Groups.Count != 4 || ThemeEffects2ReviewTab.Groups.Count != 5 || ribbon.Tabs.Single(t => t.Text == "Office 2019 Light").Groups.Count != 7) throw new InvalidOperationException("Row groups displaced accepted tabs.");
         var content = tab.Groups.Single(g => g.Id == "review-options-rows"); var selection = tab.Groups.Single(g => g.Id == "review-options-row-selection"); ribbon.Theme = ribbon.Theme with { OptionsAppearance = new() { FrameBorderWidth = 3, ButtonBorderWidth = 2, NavigationCornerRadius = 12 } }; var sources = ribbon.Tabs.ToArray(); var mode = ribbon.LayoutMode;
         foreach (int i in new[] { 0, 1, 4 }) content.Items[i].PerformClick(); selection.Items[0].PerformClick(); if (ribbon.Theme.OptionsAppearance is not { RowTextPadding: 14, RowIconSize: 28, RowIconTextGap: 12, RowHeadingBold: false, RowCornerRadius: 9 }) throw new InvalidOperationException("Row presets bypassed public settings.");

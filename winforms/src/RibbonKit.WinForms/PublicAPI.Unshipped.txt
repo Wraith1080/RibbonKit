@@ -1989,3 +1989,17 @@ RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeIconTextGap.get -> int?
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeIconTextGap.init -> void
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeFocusInset.get -> int?
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeFocusInset.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.IconPickerCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.IconPickerCornerRadius.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.IconPickerInset.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.IconPickerInset.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.IconPickerBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.IconPickerBorderWidth.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.IconPickerBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.IconPickerBorderColor.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.IconPickerSelectedBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.IconPickerSelectedBackground.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.IconPickerIconSize.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.IconPickerIconSize.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.IconPickerTextInset.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.IconPickerTextInset.init -> void
