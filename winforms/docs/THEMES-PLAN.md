@@ -34,7 +34,9 @@ geometry consolidation.
 | --- | --- | --- |
 | Existing baseline | Office 2024 Light, including accepted geometry and clipping behavior. | Preserve. |
 | First new theme | **Office 2019 Light**: neutral grey or title-bar-colored header band, white filled selected tab/body, zero corner radius on every theme-owned element, minimal resting borders and bordered/shadowed floating popups. | Selected by the user on 2026-11-10; both header treatments are in scope. |
-| Further light families | Office 2013, Office 2010 Blue and Office 2007 Blue are candidates. A reasonable progression is 2013, then 2010, then 2007 as presentation becomes more involved. | Proposed order only; select each bounded family after review of the preceding work. |
+| Next light family | **Office 2013 Light**: accent-based command states, an always-accent File button, connected gray ribbon/tab outline and a white tab strip beneath an optional colored caption. | Selected for planning on 2026-11-13; [E1 contract and E2–E5 sequence](OFFICE2013-LIGHT-PLAN.md). No 2013 runtime implementation yet. |
+| Native window corners | Adjustable square top-level form corners for Office 2019 and Office 2013; preserve Office 2024's system default. | Requested on 2026-11-13; next proposed implementation is E2 in the new plan. |
+| Further light families | Office 2010 Blue and Office 2007 Blue remain candidates. | Proposed order only; select each bounded family after review of the preceding work. |
 | Other light designs | Office 2024 Flat and Crystal Light can be considered separately. Crystal needs its own material/presentation contract. | Unscheduled; no commitment to port the whole WPF catalog. |
 | Dark/Black variants | Revisit after the light-theme phase, including native material mode, disabled EDIT text and built-in dialog controls. | Explicitly deferred by the user. |
 
@@ -351,13 +353,16 @@ Backstage. Stop for this review before another theme.
 
 ## Current status and review ledger
 
+Interactive diagnostic/geometry tabs are retired. Earlier review-tab locations
+below describe their delivery history, not current startup instructions.
+
 | Item | Status |
 | --- | --- |
 | Direction | **2026-11-10: user selected Office 2019 first and light themes before dark.** |
-| Planning | B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7f, D8a–D8b and all identified A00–A17 corrections are implemented. A10 completes the earlier adjustability audit. Next is planning the next selected light family; Office 2013 is the proposed candidate, not an implemented or finally selected definition. Later family order remains provisional. |
+| Planning | B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7f, D8a–D8b and all identified A00–A17 corrections are implemented. E1 now records the selected [Office 2013 Light and square-window contract](OFFICE2013-LIGHT-PLAN.md); it is planning only. Next proposed implementation is E2's adjustable native window-corner preference, followed by E3 palette/File, E4 connected outline and E5 composed review. |
 | Earlier-slice adjustability audit | All identified A00–A17 corrections are implemented; A10's [page preference](#backstage-preferred-page-width-a10--2026-11-13) completes the [audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md). This closes those identified gaps, not the entire future theme catalog. |
 | Runtime/API/rendering | A10 adds nullable BackstagePreferredMinimumPageWidth (0..1024 logical pixels, null family 240, zero no reservation). It projects through existing measured metrics; navigation-width negotiation, safety clamps, native ownership and accepted caption/title rendering remain. |
-| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; package `0.1.0-designer.local20261113T081436576Z` refreshes the permanent sample. Theme effects 11 has five groups: four retained caption-button groups plus Backstage page space. Tab 10 retains five; tabs 1–9 retain seven/five/four/seven/six/three/eight/five/six. Authored Forms/UserControls/resources/project files remain intact. |
+| Designer/sample/package consumer | A10's normal Debug runtime/designer/client/sample builds and package `0.1.0-designer.local20261113T081436576Z` remain its delivery evidence. The subsequent tab-retirement change builds the normal Debug sample with zero warnings/errors and passes three scoped launch checks. Current interactive startup contains only Home/Edit/Gallery; 2019 selection and legacy switches add no diagnostic tabs. Authored Forms/UserControls/resources/project files remain intact. [Retirement evidence](OFFICE2013-LIGHT-PLAN.md#diagnostic-tab-retirement-evidence). |
 | Focused Release verification | A10: **15 relevant Release cases pass**, covering four-DPI page preference/Auto/fixed constraints, zero/large/narrow/short hosts, retained value-only snapshots, atomic validation/reset and live native field focus/selection/validation. Existing width binding and renderer-shadow/short-rail gates also pass. Earlier appearance evidence is retained separately; no broad suite ran. |
 | Two-family paint/geometry | A10's **288 default layout records are byte-exact**: both light families, Compact/Touch, 96/120/144/192 DPI, three widths, short/tall hosts and Auto/fixed navigation. Explicit 240 matches null. Authored geometry uses existing clips/clamps; package checks report actual 120 DPI. No paint recipe or accepted title behavior changed. |
 | Composed native package verification | A10: **4/4 public-package scopes plus review-tab checks pass**, both light families with None/Mica owners at actual 120 DPI, each Classic/Simplified x Compact/Touch. **224 live Auto/fixed layouts** cover default/0/160/360/600/1024, narrow/short/resized hosts, retained native state, no spurious validation, authored constraints, atomic validation and independent Reset. These are offscreen/direct-print checks; physical/DWM/visible-pacing acceptance remains separate. |
@@ -368,7 +373,7 @@ Backstage. Stop for this review before another theme.
 | Actual VS/physical input/mixed-monitor | Not run for themes; report separately. |
 | D8a live review | **2026-11-13: user confirmed the closing-title handoff looks good and authorized D8b continuation, with its controls on a new Theme effects 11 tab.** This accepts the reported visible closing-title correction; actual VS, physical input/IME, mixed-monitor and broader pacing/material gates remain separate. |
 | D8b live review | **2026-11-13: user confirmed everything looks good for the caption-button slice and authorized A10 continuation.** D8b controls remain on Theme effects 11; physical caption actions/input, actual VS, desktop material-pixel and mixed-monitor gates remain separate. |
-| A10 live review | Awaiting user review of Backstage page-space presets/reset and fixed/Auto previews on Theme effects 11. Choose a preset, open a preview and resize it; the main sample's authored navigation-width properties remain unchanged. |
+| A10 live review | **2026-11-13: user reported A10 is good after a small manual test and requested retirement of all diagnostic tabs, including geometry demos.** Record this limited user review without claiming exhaustive presets, physical input, actual VS, material or mixed-monitor acceptance. |
 
 Record later evidence and confirmation here once, with date/revision/scope,
 artifact locations and limits. Keep [NEXT-SLICE-PROMPT](NEXT-SLICE-PROMPT.md) a
@@ -3064,8 +3069,8 @@ Evidence under `artifacts/a10-page-preference/`:
   expected tab count changes. No repeated caption matrix or broad suite ran.
 
 This completes the identified A00–A17 audit corrections. Current review belongs
-only in the ledger. Next is a bounded contract for the next selected light family;
-Office 2013 is the proposed candidate in the existing sequence. No new theme,
+only in the ledger. The next selected family and implementation sequence are now
+defined in the [Office 2013 Light plan](OFFICE2013-LIGHT-PLAN.md). No new theme,
 WPF change, actual VS, physical input/IME, mixed-monitor or new visible pacing/
 desktop-composition gate is included in A10.
 

@@ -54,11 +54,13 @@ and A05 caption tint, A06–A09 decoration/spacing, A10 page preference plus A11
 the identified gaps are recorded in the
 [source audit and correction order](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 Current evidence and user review are recorded in the
-[themes plan](THEMES-PLAN.md#group-icon-picker-tiles-d7f--2026-11-13).
+[themes plan](THEMES-PLAN.md#current-status-and-review-ledger).
 
 The [themes plan](THEMES-PLAN.md) retains appearance requirements and acceptance.
-This document proposes implementation boundaries and a migration sequence; it
-does not accept the current visuals or schedule another theme family.
+This document records implementation boundaries and the migration sequence.
+The selected next family and proposed E2–E5 work are defined in the
+[Office 2013 Light plan](OFFICE2013-LIGHT-PLAN.md); new theme/window behavior is
+still planning only.
 
 ## Problem and intended result
 
@@ -309,7 +311,7 @@ automated evidence or visual acceptance. Implement the following separately.
 | D8a. Caption tint/title ink — implemented | A05 tint choices and frame-matched opaque contrast. Closing follow-up unifies temporary/settled title rasterization and publishes owner paint before foreground HWND retirement. Ordinary/separate/full-height structure, explicit caption-color precedence, clips, geometry and clocks retain their owners. | The [closing follow-up](THEMES-PLAN.md#closing-caption-handoff-follow-up--2026-11-13) records 50 latest relevant passing cases, exact active/inactive glyph comparisons, ordered/repeated native handbacks and four package scopes. Original stationary byte comparisons are historical for intentionally changed solid title smoothing. Visible frame-pacing acceptance remains separate. |
 | D8b. Caption-button decoration — implemented | Shared state/vector drawing and immutable CaptionButtonAppearance fills, inset/radius, glyph size/stroke/ink and restore offset. Native targets, window actions, title rendering and integration retain their owners; existing caption palette precedence and restore underlay callback remain. | 41 relevant passing cases, 72 exact native default pairs, four-DPI shape/alpha/clamp/restore checks and four package scopes plus new-tab controls are in the [D8b record](THEMES-PLAN.md#caption-button-decoration-d8b--2026-11-13). Physical/native visible acceptance remains separate. |
 | A10. Backstage preferred page minimum — implemented | BackstagePreferredMinimumPageWidth projects a nullable 0..1024 logical-pixel preference through existing measured inputs. Null retains family 240; zero removes reservation. Auto/fixed navigation constraints, available-space/half-host clamps, native pages and unrelated settings retain their owners. | 15 focused Release cases, 288 exact default layout records and four public-package scopes with 224 live preference layouts plus review controls are recorded in [A10](THEMES-PLAN.md#backstage-preferred-page-width-a10--2026-11-13). |
-| E. Selected catalog growth — contract first | Plan the next selected light definition, reusing shared pieces or identifying a necessary structural sibling. Office 2013 is the proposed candidate in the existing sequence. Define a bounded contract before implementation; selection/Reset/serialization/persistence and unsupported consumer dependencies need explicit coverage. | First review the documentation-only E1 contract and proposed evidence; later implementation needs definition/selection, relevant designer/generated-code and independent-consumer scopes. Wait for current appearance review before another theme. |
+| E. Office 2013 Light — E1 planned | The user selected accent-derived command states, an always-accent File block, connected ribbon/tab outline and square native windows for 2019/2013. Reuse shared recipes; add only measured structural differences and independently adjustable settings. | [E1 contract](OFFICE2013-LIGHT-PLAN.md): E2 window preference, E3 palette/File, E4 connected outline, E5 composed/native/public-consumer review. No new theme or window-corner runtime changes are implemented by E1. Stable identities, Reset, designer/generated code and existing 2019/2024 contracts remain gates. |
 
 For each implementation slice, build affected native projects in their normal
 outputs and select tests by actual dependency impact. Test classes above are
@@ -357,8 +359,9 @@ Completion criteria:
   and remaining human appearance/input gates in the themes plan.
 
 B2/B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6 and D7a–D7f were delivered as separate slices.
-D8a–D8b deliver caption tint/title ink and caption-button decoration; A10 delivers preferred page width. Next is planning the selected light family, with Office 2013 proposed in the theme sequence;
-the consolidated geometry remains the foundation.
+D8a–D8b deliver caption tint/title ink and caption-button decoration; A10 delivers
+preferred page width. The selected Office 2013 contract and next E2 window-corner
+slice are linked above; the consolidated geometry remains the foundation.
 
 ## Verification and delivery budget
 

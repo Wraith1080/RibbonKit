@@ -1,6 +1,19 @@
 # RibbonKit WinForms Designer Sample
 
-Launch the normal Debug sample with `--office2019-theme-demo` for the light-theme
+**2026-11-13: interactive diagnostic tabs retired after the accepted geometry,
+theme rewrite and A10 review.** Normal launch now contains only the authored
+Home, Edit and Gallery tabs. `--office2019-light` selects Office 2019 without
+adding tabs. The older `--office2019-theme-demo` switch is a selection-only alias;
+`--menu-geometry-demo` no longer adds geometry tabs. Focused `--verify-*` checks
+remain available. The review-tab instructions below are historical references,
+not current launch behavior. No authored Forms/UserControls/resources were removed.
+
+Next theme work is defined in the
+[Office 2013 Light plan](../../docs/OFFICE2013-LIGHT-PLAN.md).
+
+## Historical rewrite review surfaces
+
+Before retirement, launching the normal Debug sample with `--office2019-theme-demo` provided the light-theme
 comparison. **Office 2019 Light** provides 2019/2024/Application/custom choices,
 blue/neutral title bars, Mouse/Touch, Classic/Simplified, inner-padding and popup-
 shadow examples, a nested popup and existing Backstage pages. The demo starts

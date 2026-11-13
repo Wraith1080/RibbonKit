@@ -1,344 +1,104 @@
-# Continue native WinForms themes after A10 page preference
+# Continue native WinForms themes after diagnostic-tab retirement
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-13**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7f, D8a–D8b and all identified adjustability backfills
-A00–A17 are implemented. Current evidence and exact user review
-scope live in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
-The latest implementation is [A10](THEMES-PLAN.md#backstage-preferred-page-width-a10--2026-11-13).
-Preserve D8a's [closing handoff follow-up](THEMES-PLAN.md#closing-caption-handoff-follow-up--2026-11-13), which
-unifies temporary/settled title glyph rendering and paints the normal caption
-before foreground HWND retirement. Check its current review status in the ledger.
-Use the ledger for the exact user appearance review scope and remaining gates.
-D7f's square geometry is retained; current review scope is recorded in the ledger.
-The user committed D8b at `6708ac5` before A10.
-Do not overwrite later user commits.
+Updated **2026-11-13**. Entry baseline was `94c4788` on
+`codex/Ribbonkit-Winform`, clean at entry. Recheck `git status --short`, live
+branch and HEAD; preserve subsequent user commits and unrelated edits. Do not
+commit, stage, push, publish or change branches unless requested.
 
-## Next bounded implementation
+## Current state and scope
 
-Start with `git status --short` and inspect live branch/HEAD; preserve later user
-commits and edits. Follow the current user request. The earlier A00–A17 audit
-corrections are complete; after A10 review, the next bounded step is **E1: plan
-the next selected light family**. Office 2013 Light is the proposed candidate in
-the existing sequence, not a finally selected or implemented definition. Follow
-any explicit user choice. Draft a concrete contract first: compare existing native
-2019/2024 pieces with the selected family's reference, separate palette/default
-settings from actual structural differences, and identify shared helpers or a
-necessary sibling. Include caption/header/body/popups/Backstage/native editors,
-material/alpha behavior, selection/Reset, stable enum identities, designer/generated
-code and independent-consumer evidence. Keep the next planning slice documentation
-only; do not silently begin a new family or broad authoring/runtime API campaign.
-Keep D8a's frame-matched readable opaque title ink, Office 2024 moving neutral tint,
-full-height Office 2019 panes, clipping and captured pane/title clocks intact.
-Preserve D8b's caption-button contract and A10's preference/width negotiation.
-Current user review belongs only in the ledger. No broad geometry/window rewrite.
-D7f owns group icon-picker tile drawing/metrics. Keep native ListView items,
-handles, selection, cell spacing, scrolling, borrowed artwork, validation and draft
-OK/Cancel with their existing owners.
-D7e owns tree state/content/glyph drawing and decoration metrics; preserve native
-expand/check/text targets, indentation/scrolling and actual checkbox hooks.
-D7d owns QAT/Classic/Simplified command-list rows; preserve
-its direct native text/focus contracts and shared content slots. Extract fixed
-effects into independently adjustable settings with matching measurement.
-D7c owns field/list wrapper paint and native clearance plus
-search/closed-choice text slots. Do not cover native children with wider paint.
-Preserve native editors, validation, keyboard/focus, draft Apply/Cancel, dialog
-lifetime and inert candidate-theme preview safety. Application dialog content
-stays application-owned. D7b owns Options buttons and heading typography. D7a
-owns Options navigation and rail/footer dividers;
-preserve its direct native text path and actual popup-radius hook. D6 owns shared
-ScreenTip/KeyTip paint and A17 placement.
-D5a owns gallery tile-state/headings and D5b content/inline frame/utilities;
-preserve gallery source identity, preview/cancel/commit and native/custom presenter
-ownership. Authoring cards remain ordinary editable UserControls.
-D4a owns Application Menu state chrome; D4b owns surfaces/headings/clips; D4c owns
-content/measurement; D2 owns the outer frame.
-Preserve current defaults. Read the matching source map and rules in
-[THEME-ARCHITECTURE-PLAN](THEME-ARCHITECTURE-PLAN.md). Planning-only requests do not
-need builds, tests or package refresh.
+B1–D8b and all identified A00–A17 adjustability corrections are implemented.
+Current automated evidence, exact user review and remaining gates live only in
+the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
 
-**User requirement:** replace fixed visual effects in each extracted surface
-with independently adjustable theme settings. Internal constants alone do not
-satisfy this. Reuse existing colors/fills/radii/spacing first, preserve null/Empty
-and independent/group Reset, validate before Theme/BuiltInTheme mutation, honor
-authored alpha/zero/hide and retain actual application renderer precedence.
-A new family selector needs an actual structural difference, not a palette name,
-header style or radius. Native editor HWND, parent, value, selection, focus,
-validation, IME and popup ownership remain with their existing shared owners.
+Interactive diagnostic/theme-effect/geometry tabs have been retired. The
+permanent Designer Sample now starts with authored **Home/Edit/Gallery** only.
+`--office2019-light` selects 2019 without review tabs;
+`--office2019-theme-demo` is a selection-only compatibility alias and
+`--menu-geometry-demo` no longer creates tabs. Explicit `--verify-*` fixtures
+and their builders remain available. Do not automatically resurrect diagnostic
+tabs or remove regression fixtures. Preserve authored Forms/UserControls,
+resources, project files and normal Debug/Release output locations.
 
-**Review tabs:** the user requested a fresh tab for D8b. Put new controls on
-**Theme effects 11** through `ThemeEffectsReviewTab` until directed otherwise.
-`ThemeEffects2ReviewTab` / `ThemeEffects3ReviewTab` / `ThemeEffects4ReviewTab` /
-`ThemeEffects5ReviewTab` / `ThemeEffects6ReviewTab` / `ThemeEffects7ReviewTab` /
-`ThemeEffects8ReviewTab` / `ThemeEffects9ReviewTab` / `ThemeEffects10ReviewTab` pin existing groups to their original tabs.
-Earlier tabs retain seven/five/four/seven/six/three/eight/five/six groups. Tab 6 retains **Try built-in
-galleries / Gallery tile states / Gallery headings**. Tab 7 has **Try gallery content /
-Gallery artwork and labels / Gallery inline frames / Gallery utility glyphs**.
-Tab 7 now also has **Try tips and badges / Tip presentation** (six total groups).
-**Try Options dialogs / Options navigation** brings tab 7 to eight groups. Tab 8
-has **Try Options shell / Options buttons / Options headings / Try frames and choices /
-Options frames and text**, five total groups. Tab 9 has **Try command rows /
-Command row content / Command row selection / Try customization tree / Tree glyphs /
-Tree selection and focus**, six total groups. Tab 10 has **Try group icon picker /
-Icon picker selection / Icon picker content / Backstage caption tint / Try caption and title**,
-five total groups. Tab 11 has **Try caption buttons / Caption button fills /
-Caption button shape / Caption button glyphs / Backstage page space**, five total groups. Keep tab 7/8/9/10's
-accepted groups in place; do not infer fullness from reduction.
-The File preview uses existing authored models and restores the prior File mode.
-Its divider-visibility button uses the existing independent flag (2019 defaults
-false); group Reset clears only the new settings. The earlier optional overflow
-preview still restores its original toolbar items/settings. Use tab/body scrollers
-when needed. Do not move old groups or infer fullness from reduction.
+The user selected **Office 2013 Light** and square native form corners for
+2019/2013. Read the bounded
+[E1 contract and E2–E5 sequence](OFFICE2013-LIGHT-PLAN.md). Its screenshots are
+WPF visual references, not native acceptance evidence. This completed slice
+removed tabs and planned the work; it did not implement 2013 or window corners.
+For the current planning request, finish with a summary. On a later authorized
+continuation, start E2 below rather than reopening the completed rewrite.
+
+Native `winforms/` projects only. Keep parent WPF runtime, builds, tests and CI
+read-only. Use one agent and no computer-use tools; actual VS review remains
+with the user. Read matching repository instructions, source map and bounded
+records before edits. Reuse the
+[architecture map](THEME-ARCHITECTURE-PLAN.md) and
+[adjustability audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
+
+## Next bounded implementation: E2 window-corner preference
+
+Finalize the additive public names and implement the shared policy from the E1
+plan: SystemDefault/Square/Rounded/SmallRounded, theme default plus nullable
+RibbonForm override and independent Reset. Office 2019 defaults to Square;
+Office 2024 retains SystemDefault. Future Office 2013 will use Square. Validate
+before mutation, preserve explicit overrides and retain requested values on an
+unsupported OS. Do not embed a theme-name condition in native painting.
+
+Use DWM attribute 33 on supported, eligible top-level runtime handles. Cover
+initial creation, recreation, effective theme/override changes and restoration
+of SystemDefault. Keep designer/child handles inert. Preserve native resizing,
+caption actions, maximize/restore/snap, backdrop eligibility and title/pane
+clocks. Do not assign Form.Region, remove the native resizable frame, or reset
+DWM appearance during the last closing frame. Successful API calls/readback
+do not establish physical corner appearance.
+
+Use relevant focused validation for default/override/reset/invalid/unsupported,
+theme switching, lifecycle and native coexistence, plus an independent public
+consumer. Check the actual supported Windows silhouette separately and report
+what was observed. Do not rerun the full geometry, caption, appearance or native
+matrix for an isolated setting. No new diagnostic tabs are part of E2.
+
+## Later bounded work
+
+- **E3:** Office 2013 palette and File states. Resolve accent-derived defaults
+  versus explicit fill overrides first, then append a stable built-in identity.
+  Commands use accent washes; File stays accent-filled at rest and darkens on
+  hover/press/open. Cover both CommandMenu and Backstage. Preserve application
+  theme Reset, persistence and designer/generated-code contracts.
+- **E4:** Connected gray selected-tab/ribbon outline and white tab strip beneath
+  an optional colored caption. Measure existing Filled/header/body paint before
+  adding a seam policy or structural sibling. Preserve targets, clipping,
+  QAT placement, scrolling/contextual tabs and Classic/Simplified geometry.
+- **E5:** Composed light-family/native-editor and independent-consumer review.
+  Review this family before selecting another light family or dark variant.
 
 ## Preserve delivered contracts
 
-- Geometry consolidation remains the foundation: shared metrics, snapshots,
-  DPI/rounding, clips, targets, native content bounds and closed geometry results.
-  Do not replace layout engines or reopen the geometry campaign.
-- B1–B3 retain sibling Backstage registration, measured inputs and captured
-  caption/motion profiles. Keep opaque native ownership, whole-pane motion,
-  coupled pane/title durations, independent page Fade/SlideDown, authored fill
-  precedence and zero-duration/reduced-motion behavior.
-- C1 retains sibling header presentation, existing content/strip reservations,
-  actual text/focus/indicator hooks and adjustable header/shared effects.
-- C2 retains resolved body frames, group separators, joins, full-width 2019 body,
-  existing margins/shadows, native identities and popup anchors.
-- D1a retains `CommandAppearance`, shared split perimeters/half fills/separators,
-  active-half and material fallback precedence and actual chrome hooks.
-- D1b retains `CommandContent`, shared check/radio/QAT-mixed/raster drawing and
-  filled-triangle dimensions. Null is one-device-pixel indicator borders,
-  canonical centered marks/dots, 8 × 6 triangles and established raster recipes.
-  Explicit opacity/grayscale settings cover independently disabled QAT references
-  as well as disabled sources; enabled/vector images retain their owners. Actual
-  public indicator/arrow and protected image hooks remain authoritative.
-- D1c retains `EditorAppearance`, shared field/choice drawing and resolved
-  chrome defaults. Existing editor colors, state fills, glyph/geometry roles and
-  actual field/choice/chrome/text/arrow hooks remain authoritative. Field and
-  choice corners/insets reset independently; native opaque input bounds, native
-  selected-value paint, editor manager, binding/validation and ownership remain
-  unchanged. Frame decoration does not add native input padding. Default paint
-  has 64 exact image/geometry pairs; do not repeat that passed batch for no change.
-- D2 retains shared popup frame/shadow defaults and `PopupAppearance` border
-  width, horizontal shadow offset and Gaussian falloff. Actual public frame/
-  shadow/radius/clearance hooks remain authoritative. `GetPopupBorderWidth`
-  supplies device pixels to frame paint, shell/host padding, hosted corner masks,
-  menu/custom-body sizing, choice fitting and passive tip clearance. Zero hides
-  border paint but keeps one-device-pixel content clearance; authored widths
-  reserve space and clamp to available work areas. Null keeps all old rounding.
-  Existing colors/radius/shadow enable/opacity/blur/vertical offset are reused.
-  Choice width also consumes D1c horizontal text padding. Shadow falloff is in
-  the bounded shared painter cache key; body shadows retain their own default.
-  No native activation/stack/ownership or animation-clock rewrite was performed.
-- D3 retains `MenuAppearance` and shared heading/separator/overflow-band drawing.
-  Header shape/weight, centered separator ink/thickness and opaque band backing/
-  active shape reset independently. Existing fills, spacing and Chevrons remain
-  in use. DrawMenuHeader still reaches the actual DrawGalleryHeading override;
-  chrome/text/separator/band hooks keep precedence. Real gallery headings,
-  Application Menu and scoped Backstage separators retain their old recipes.
-  New decoration does not change rows, bands, UIA or native owner state. Band
-  backing stops must stay opaque. The default comparison has 80 exact pairs;
-  reuse it unless the next change actually affects those owners.
-- D4a retains `ApplicationMenuAppearance`, shared row/footer perimeter and clipped
-  split-half recipes. Null keeps square rows, device-pixel insets, zero row border,
-  the one-device-pixel footer rim (even for transparent ink), legacy Pen divider
-  and 0.25 selected-primary mix. Existing state fills, footer radius and divider
-  visibility remain authoritative. Explicit primary fill takes precedence over
-  tint; alpha/zero/hide, clamps and independent/group Reset remain supported.
-  Actual item/split/text/image/arrow/focus hooks remain; the pre-existing direct
-  primitive path does not introduce protected DrawChrome interception. Native
-  ownership/layout/input/validation stay shared. Reuse the 32 exact default pairs
-  and 41 distinct passing latest relevant cases unless a change affects them.
-- D4b retains shared background/frame/divider/heading paint and resolved inner
-  clips. Null preserves the 0.125 opaque pane/surround mix, actual popup radius
-  minus one device pixel, one-device-pixel frame/divider/rule, square heading fill,
-  host styles plus Bold and 2/10 logical-pixel header text insets. Existing heading
-  fills/ink remain authoritative. Authored alpha composites over opaque native
-  backing; explicit zero/hide, clamps and independent/group resets remain.
-  Border/radius settings affect paint clips, not targets or native content bounds.
-  Actual background/header/text/radius hooks remain. Reuse 32 exact PNGs and 37
-  relevant passing cases unless affected. New surface/heading sample resets keep
-  the other group and D4a roles; whole-group Reset still clears the entire record.
-- D4c retains `ApplicationMenuContent` and shared content measurement/drawing.
-  Null keeps 32/16 icons, 8/6 icon insets, 8 gap, 52 large-text/6 plain-text inset,
-  6-pixel paint/8-pixel measurement trailing allowances, total row/icon padding
-  10/8, description gap/inset/lines 2/4/2, old centered footer widths, Bold rich
-  titles, 26/44 arrow columns and 9/8 separator row/inset with a device-pixel line.
-  Authored metrics feed row/footer/nav measurement, split targets and paint;
-  preserve Touch minima, clamps, null rounding and native field frame owners.
-  Actual image/indicator/text/arrow/focus/separator hooks remain authoritative.
-  Live separator DrawItem calls must carry ApplicationMenuPart; ordinary-menu
-  context bypasses component settings. D1b glyph/raster policies remain shared.
-  Reuse 64 exact default pairs and 39 distinct passing latest relevant cases
-  unless affected. Description member Reset keeps icon/arrow roles; whole content
-  Reset preserves Appearance. Native body bounds are compared after actual
-  autoscaling, and borrowed raster assets must outlive the ribbon.
-- D5a retains `GalleryAppearance`, shared built-in tile-state/heading decoration
-  and actual protected DrawChrome precedence. Null keeps actual primitive radii,
-  device-pixel inset/stroke when ink exists, selected Accent/otherwise transparent
-  tile ink, neutral no-fill/SecondaryText headings and Office GalleryHeadingBackground/
-  Foreground headings. HeaderBold null adds Bold; false removes it while preserving
-  other styles. Explicit fill/ink retains alpha; zero/hide, clamps and independent/
-  group Reset remain. State fills/eligibility, content/focus/target geometry and
-  custom/native presenter ownership remain shared. Ordinary menu heading forwarding
-  stays separate. Reuse 64 exact default pairs and 26 relevant passing cases unless
-  affected. Package checks retain the same custom presenter/editor and exercise
-  active preview/cancel/commit sequences without claiming physical input.
-- D5b retains `GalleryContent`, shared built-in artwork/label/glyph paint and popup
-  minimum-height inputs. Null retains two MiddleCenter label lines, legacy 12 paint /
-  24 measure reserve plus triple TilePadding, horizontal/top TilePadding + 4 / + 2,
-  expand slot/bar/inset/stroke 18/10/4/rounded 2. Explicit lines/alignment/reserve/
-  insets and glyph dimensions/ink support alpha/zero/hide/clamps and independent
-  reset. GalleryAppearance strip/utility roles retain actual primitive defaults
-  and native bounds; frame reset preserves tile/headings. Actual hooks and D1b
-  raster policy remain shared. Reuse 32 exact default pairs and 45 relevant latest
-  passing cases unless affected. Package checks retain the same native editor and
-  source selection, restored popup geometry and unchanged inline targets.
-- D6 retains `TipAppearance`, shared ScreenTip/KeyTip recipes and resolved tip
-  defaults. TitleBold null adds Bold; false removes it for both measurement and
-  paint, preserving other styles. Badge inset/stroke null is 0/one device pixel;
-  existing palette/Office corners/padding remain independent. A17 right/width/
-  height clearances null retain 4/8/4 logical pixels and legacy fractional rounding.
-  Alpha/zero/hide/clamps and independent/group Reset remain. Public tip/text hooks,
-  native ownership and keyboard routes stay authoritative; no protected chrome
-  hook was introduced where the original badge path used a direct primitive.
-  Reuse 32 exact defaults, 31 relevant passing cases and four offscreen package
-  scopes unless affected. Real passive window focus/ownership was checked in STA;
-  the package fixture calls public ScreenTip rendering, without a physical-hover claim.
-- D7a retains `OptionsAppearance`, shared navigation/divider recipes and resolved
-  Options metrics. Null preserves actual popup-radius fallback, ceiling-scaled
-  selection/text/marker values 2/12/3/7 with summed 14 height deduction, device-pixel
-  focus inset/divider line, Checked selection, Accent marker/text and Border rules.
-  Authored shape/fill/insets/marker/divider values support alpha/zero/hide/clamps
-  and independent/group Reset. Native direct text painting and existing marker
-  corners/palette stay in use; no new command/text interception was introduced.
-  Reuse 16 exact native default PNG/geometry pairs at actual 120 DPI, authored and
-  legacy-rounding checks at 96/120/144/192 DPI, 32 distinct latest passing cases and
-  four package scopes unless affected. The retained choice fixture failed in the
-  initial batch and isolated retry; it now pumps initial owner work and establishes
-  focus before opening, and passes in its final isolated scope. No popup runtime
-  change was made; do not represent this as a clean initial aggregate run.
-- D7b retains shared native button painting and heading font/padding metrics in
-  OptionsAppearance. Null keeps button inset 0, ordinary rim one device pixel,
-  accent rim 0 and focus inset four device pixels. Existing button corners,
-  state palettes and direct native image/text/focus paths remain. Only scoped
-  ordinary-button overrides opt a null-corner ordinary button into shared paint;
-  accent-only fill/navigation/heading values retain its native fallback.
-  Heading increment/minimum/gap null retain 5/14 points and 12 logical pixels;
-  null style is legacy Bold-only, explicit weight preserves other host styles.
-  Headings resolve during existing construction/load/font/DPI layout; choose
-  settings before opening. No live theme coordinator or button/input rewrite.
-  Partial button/heading resets retain navigation and each other. Reuse 16 exact
-  native default PNG/geometry pairs at actual 120 DPI, four-DPI authored paint,
-  23 distinct passing cases and four package scopes unless affected.
-- D7c retains OptionsAppearance FrameCornerRadius/FrameBorderWidth/FrameBorderColor
-  and shared native search/closed-choice metrics. Null uses the actual popup/command
-  radius minimum, one-device-pixel frame stroke, legacy search rounding and six-logical-
-  pixel choice inset. Authored strokes reserve real native padding and search/name
-  height; zero hides paint with minimum one-device-pixel clearance. Alpha/Transparent
-  retain space. Reset restores scaled native padding. Search/choice text reuses
-  EditorTextInset/EditorForeground; closed-choice value clearance also uses existing
-  EditorAppearance field inset/stroke. Native handles/parent/value/selection/drafts,
-  actual field/text/arrow hooks, disabled native ink and staged choice lifecycle remain.
-  Choose presets before opening; existing layout/font/DPI refresh applies geometry.
-  Reuse 32 exact native default PNG/geometry/region/text-slot pairs, 28 distinct latest
-  relevant cases and four package scopes unless affected. Its four-case native theory
-  supersedes the two older mode-only display names; do not double-count those results.
-- D7d retains shared command-list row drawing/slots and six OptionsAppearance row
-  members. Null keeps QAT/Classic padding/gap 6, Simplified 8, icon 20 with ceiling
-  rounding, square solid Checked.Start selection and Bold-only Simplified headings.
-  Authored content clamps inside unchanged native rows; zero icon size reclaims
-  its slot/gap. Alpha/gradient/Transparent selection composites over Surface; native
-  Foreground/focus and renderer-independent direct text retain their contracts.
-  Explicit row heading weight preserves other host styles through existing owned
-  construction/font/DPI fonts; choose before opening. Content/selection/all-row
-  resets preserve earlier frames/buttons/navigation and each other. Tree/icon-picker
-  targets/slots/decorations are separate. Reuse 16 exact native default row PNG/
-  geometry/icon-slot pairs, 24 passing relevant cases and four package scopes unless affected.
-- D7e retains shared tree painting and pure decoration slots. Six OptionsAppearance
-  tree members control selection corners/fill, check/icon sizes, icon gap and native
-  focus inset; shared Chevrons controls expander length/depth/stroke. Null keeps
-  square solid Checked.Start selection, checks 18/24, icon 16/gap 2, one-device-pixel
-  focus inset and expander lengths 12/16 with legacy half-depth/strokes 1.6/1.8.
-  Authored paint fits existing slots; zero hides check/icon/chevron paint while
-  native targets/Space/expansion/scrolling remain. Visible checks use the actual
-  indicator hook/context; native text/disabled ink and focus cue policy remain.
-  Tree glyph/selection/shared-chevron resets retain each other and earlier roles.
-  Reuse 16 exact native default PNG/geometry/hook pairs, 28 distinct latest passing
-  cases and four package scopes unless affected. Initial fixture corrections and
-  the separately passing native buffer case are recorded in D7e; do not describe
-  that evidence as a clean initial aggregate. Initialize native visual-style
-  fixtures before creating controls; do not change runtime behavior to satisfy probes.
-- D7f square follow-up retains seven appearance members but intentionally revises
-  fixed-cell/content-independent-inset behavior. Native hidden-label style and
-  measured icon margins give None/artwork shared square icon hit/paint/focus cells.
-  Positive artwork size resizes the cells with font/density minima and a native
-  256-device-pixel cap; zero hides artwork with the default footprint. Selection
-  inset/outline clearance constrains both artwork and None; extra text inset is
-  applied inside that region. Native names/tooltips/items/handles/selection,
-  scrolling, group validation and draft OK/Cancel remain. Use the current square
-  follow-up's 20 latest passing cases and four package scopes; the original 16
-  byte comparisons are historical because the intended default geometry changed.
-  Use native icon rectangles for geometry/hit tests, not full label metadata
-  rectangles. Queue native mouse down/up together; synchronous down can block in
-  native drag detection. Do not change runtime input behavior to satisfy probes.
-- Existing Theme assignment closes ordinary menus through `ModelChanged`;
-  retained models reopen normally. Do not change lifecycle to satisfy a probe.
-- D8a implements A05 `CaptionTintEnabled`/`CaptionTintColor`/`CaptionTintOpacity`
-  in BackstageAppearance. Preserve Form/theme caption-color precedence and
-  full-height pane ownership; alpha/zero/Transparent and independent Reset remain.
-  Closing ink uses the same frame's fade coverage without fading glyphs or
-  changing clips/clocks. Reuse the handoff follow-up's 50 latest passing focused
-  cases, exact active/inactive title coverage, ordered/repeated handback checks
-  and four package scopes unless affected. Original stationary byte comparisons
-  are historical for solid title smoothing, which intentionally matches the plane
-  now. Keep native owners painted before layer disposal and detach its slot before
-  synchronous repaint for safe reentry. The record distinguishes fixture failures from
-  latest passing scopes, actual transparent-plane frames from estimated underlays,
-  and native timer/owner-paint checks from visible/DWM/physical acceptance.
-  Reject screen captures unless the owner is confirmed foreground; all 16 screen
-  samples were skipped in the latest guarded run. Do not infer visible acceptance.
-- D8b uses CaptionButtonAppearance's 11 nullable/Empty members for fill/shape/
-  glyph decoration. Preserve solid first-stop palette fallbacks, material close
-  alpha 210/235, default 10-logical-pixel vectors and the legacy three-device-pixel
-  restore offset. Authored metrics scale/clamp within native targets. Restore
-  cutouts use the owner background callback and refill the same gradient origin
-  once. Glyph zero/stroke zero/Transparent and independent/group Reset remain.
-  Reuse 41 relevant passing cases, 72 byte-exact native default pairs, four-DPI
-  authored checks and four package scopes unless affected. Material DrawToBitmap
-  may flatten alpha: exact coverage is established by runtime DIB checks. Keep
-  the older CaptionButtonCheck/--verify-caption-buttons intact; D8b diagnostics
-  are CaptionButtonAppearanceCheck/--verify-caption-button-appearance.
-- A10 exposes BackstagePreferredMinimumPageWidth (null or 0..1024 logical pixels).
-  Null resolves family 240; zero reserves no page space. The existing provider
-  algorithm and component navigation-width properties are unchanged. Preserve
-  min/max/Auto precedence, available-space/half-host clamps, value-only input
-  snapshots and independent Reset. Reuse 15 passing Release cases, 288 exact
-  default layout/slot/clip records and four package scopes (224 live layouts)
-  unless affected. Native values/selection/focus/pending validation retain owners.
-  Review previews use isolated fixed/Auto models and do not rewrite main settings.
-- Next is E1's bounded light-family contract. No new theme family is implemented now;
-  later light-theme order is unscheduled and dark themes stay deferred.
+- Geometry consolidation remains the shared foundation: metrics, snapshots,
+  DPI/rounding, clips, hit targets, content bounds and popup anchors. This work
+  reuses it; do not replace layout engines or reopen the geometry campaign.
+- Keep accepted Backstage registration, whole-pane motion, native control
+  handles/parents/values/selection/focus/validation and popup ownership. Preserve
+  2019's full-height panes, 2024's separate caption, opaque title contrast,
+  temporary/settled glyph parity and normal caption paint before layer retirement.
+  Preserve D8b caption-button contracts and A10 page preference/width negotiation.
+- Retain existing command/split, editor, menu, gallery, tip and dialog drawing
+  boundaries and actual application renderer hooks. Keep gallery source identity,
+  preview/cancel/commit, borrowed artwork, draft Apply/Cancel and inert designer
+  candidate previews. Native text/input remains with its existing owner.
+- Keep the corrected shared square icon-picker cell: artwork size and inset
+  adapt None/artwork together, with native item/selection/hit/scroll ownership.
+- Every newly exposed visual effect must be independently adjustable. Reuse
+  existing colors/fills/radii/spacing first; preserve null/Empty/alpha/zero/hide,
+  independent/group Reset and validation before Theme/BuiltInTheme mutation.
+  No new family selector for a palette name alone, Showcase-only recoloring,
+  broad authoring coordinator or application-content restyling.
 
-Use one agent under `winforms/`; WPF stays read-only. Normal Debug/Release outputs
-and the permanent Designer Sample only; preserve authored Forms/UserControls/
-resources/project files. Refresh in place using `eng/Update-DesignerSample.ps1`.
-No computer-use tools, commits, pushes, publication, branch switches or cleanup.
-
-The user requested **relevant tests only**. Reuse previous passing evidence;
-select only the next surface's paint/geometry/native-state/ownership regressions,
-an unchanged-default comparison and a public-package consumer scope where needed.
-Keep Classic/Simplified × Compact/Touch where affected. Do not restart the full
-suite/native matrix. Log native callback failures outside paint callbacks to
-avoid JIT dialogs. Package probes use the supported keyboard route for QAT
-overflow, escape prior KeyTip hints before F10/0, and close through library
-keyboard/model routes rather than ToolStrip.Close on its internal window. Ordinary
-popup MSAA GetChildCount may be -1; do not treat it as UIA child enumeration.
-The Application Menu accessible root supports its own command children; the D4a
-package probe exercises primary/footer actions there. Its offscreen host is
-activated before opening, and state-paint assertions respect idle eligibility.
-The D4b package probe pumps pending host work before opening, then checks
-synchronous model/paint/native state before normal queued foreground-loss
-dismissal; it claims no foreground-input acceptance and changes no runtime lifecycle.
-Separate offscreen/automated evidence from actual VS, visible
-frame pacing, physical input/IME and mixed-monitor review.
+Run only checks required by changed dependencies and explicit task gates, using
+normal native outputs. Reuse passed evidence; broaden only for new failures or
+unresolved risk. Keep focused tests, package consumers, direct-print/native API
+checks, continuous visible motion, physical input/IME, actual VS and mixed-DPI
+acceptance distinct. Inspect actual/diff output before changing approvals.

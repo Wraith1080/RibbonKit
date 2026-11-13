@@ -508,6 +508,35 @@ internal static class Program
             return;
         }
         using var form = new DesignerForm();
+        if (args.Length >= 1 && args[0] == "--verify-clean-sample")
+        {
+            var output = args.Length >= 2 ? args[1] : Path.Combine(AppContext.BaseDirectory, "clean-sample-check");
+            try
+            {
+                Directory.CreateDirectory(output);
+                var ribbon = form.Ribbon!;
+                var originalTabs = ribbon.Tabs.ToArray();
+                var originalGroups = originalTabs.SelectMany(tab => tab.Groups).ToArray();
+                var originalItems = originalGroups.SelectMany(group => group.Items).ToArray();
+                var originalQat = ribbon.QuickAccessItems.ToArray();
+                var originalPages = ribbon.Backstage.Items.ToArray();
+                var originalControls = form.Controls.Cast<Control>().ToArray();
+                var fileMode = ribbon.FileMenuMode; var layoutMode = ribbon.LayoutMode; var density = ribbon.Density;
+                ConfigureSampleLaunch(form, args.Skip(2).ToArray());
+                var tabs = ribbon.Tabs.Select(tab => tab.Text).ToArray();
+                if (!tabs.SequenceEqual(new[] { "Home", "Edit", "Gallery" })) throw new InvalidOperationException("A diagnostic tab survived the normal launch: " + string.Join(", ", tabs));
+                if (!originalTabs.SequenceEqual(ribbon.Tabs) || !originalGroups.SequenceEqual(ribbon.Tabs.SelectMany(tab => tab.Groups)) ||
+                    !originalItems.SequenceEqual(ribbon.Tabs.SelectMany(tab => tab.Groups).SelectMany(group => group.Items)) || !originalQat.SequenceEqual(ribbon.QuickAccessItems) ||
+                    !originalPages.SequenceEqual(ribbon.Backstage.Items) || !originalControls.SequenceEqual(form.Controls.Cast<Control>()) ||
+                    fileMode != ribbon.FileMenuMode || layoutMode != ribbon.LayoutMode || density != ribbon.Density)
+                    throw new InvalidOperationException("Launch cleanup changed authored models or controls.");
+                bool office2019 = args.Contains("--office2019-light") || args.Contains("--office2019-theme-demo");
+                if (office2019 && (ribbon.BuiltInTheme != RibbonBuiltInTheme.Office2019Light || !form.TitleBarColor.IsEmpty)) throw new InvalidOperationException("Tab-free Office 2019 launch did not retain its theme/neutral caption.");
+                File.WriteAllText(Path.Combine(output, "result.log"), "PASS: only authored Home/Edit/Gallery tabs; current tab/group/command/QAT/page/control identities and ordering, File mode, layout and density retained. Legacy review switches add no tabs. Theme=" + ribbon.BuiltInTheme);
+            }
+            catch (Exception error) { Directory.CreateDirectory(output); File.WriteAllText(Path.Combine(output, "failure.log"), error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
         if (args.Length is 2 or 3 && args[0] == "--verify-backstage-navbar-paint")
         {
             try { form.VerifyBackstageNavbarPaint(args[1], args.Length == 3 ? Enum.Parse<RibbonBuiltInTheme>(args[2]) : RibbonBuiltInTheme.Office2019Light); }
@@ -552,8 +581,17 @@ internal static class Program
             catch (Exception error) { File.WriteAllText(Path.Combine(args[1], "result.log"), "FAIL: " + error); Environment.ExitCode = 1; }
             return;
         }
-        if (args.Contains("--menu-geometry-demo")) { form.EnableMenuGeometryDemo(); form.EnableIllustratedGeometryDemo(); form.EnableCommandSplitGeometryDemo(); form.EnablePairedGeometryDemo(); form.EnableChromeGeometryDemo(); form.EnableGalleryBackstageGeometryDemo(); form.EnableTipCaptionGeometryDemo(); form.EnableFrameGeometryDemo(); }
-        if (args.Contains("--office2019-theme-demo")) form.EnableOffice2019ThemeDemo();
+        ConfigureSampleLaunch(form, args);
         Application.Run(form);
+    }
+    private static void ConfigureSampleLaunch(DesignerForm form, string[] args)
+    {
+        // Interactive rewrite/geometry review tabs are retired. Their explicit
+        // --verify-* fixtures remain available for focused regression checks.
+        if (args.Contains("--office2019-light") || args.Contains("--office2019-theme-demo"))
+        {
+            form.TitleBarColor = Color.Empty;
+            form.Ribbon!.BuiltInTheme = RibbonBuiltInTheme.Office2019Light;
+        }
     }
 }
