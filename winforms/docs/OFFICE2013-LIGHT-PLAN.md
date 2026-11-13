@@ -1,8 +1,9 @@
 # Native Office 2013 Light and square-window plan
 
-**2026-11-13 — selected by the user; planning only.** Diagnostic-tab retirement is
-implemented. Office 2013 and native square-window support are not implemented by
-this planning slice. Baseline at entry: `94c4788` on `codex/Ribbonkit-Winform`.
+**2026-11-13 — E1 approved; E2 window-corner preference implemented.** Diagnostic-tab
+retirement remains in place. Office 2013 runtime work starts with E3; no new
+built-in identity or palette is added by E2. E2 entry was clean at user commit
+`fd356b1` on `codex/Ribbonkit-Winform`.
 Current acceptance remains in [THEMES-PLAN](THEMES-PLAN.md#current-status-and-review-ledger).
 
 ## User reference and intended appearance
@@ -77,15 +78,22 @@ removing the resizable frame or assigning Form.Region:
 - [DWM corner preference](https://learn.microsoft.com/en-us/windows/win32/api/dwmapi/ne-dwmapi-dwm_window_corner_preference).
 - [DWM attribute and application guidance](https://learn.microsoft.com/en-us/windows/apps/desktop/modernize/ui/apply-rounded-corners).
 
-Proposed additive API, to finalize before implementation:
+Additive E2 API:
 
-- Shared enum with SystemDefault, Square, Rounded and SmallRounded choices.
-- Theme default corner preference: SystemDefault for existing 2024, Square for
-  2019 and the new 2013 definition.
-- Optional nullable RibbonForm override; null follows the associated theme,
+- `RibbonWindowCornerPreference` with SystemDefault=0, Square=1, Rounded=2 and
+  SmallRounded=3, matching the supported DWM values.
+- `RibbonTheme.WindowCornerPreference`: SystemDefault for existing 2024, Square
+  for 2019. The future 2013 definition must explicitly use Square.
+- Nullable `RibbonForm.WindowCornerPreference`; null follows the associated theme,
   explicit values win, and Reset restores theme ownership. Validate enum values
   before mutation. This remains an adjustable setting, not a theme-name check
   buried in native paint code.
+- `RibbonForm.EffectiveWindowCornerPreference` reports the resolved request,
+  including before handle creation and on unsupported systems. It does not
+  report native API success or physical appearance. Without an associated
+  ribbon, null resolves to SystemDefault. `WindowCornerPreferenceChanged` reports
+  override changes; theme changes retain the override. Property-grid Reset uses
+  the nullable default, and the effective property is hidden from serialization.
 
 Apply through DwmSetWindowAttribute on eligible top-level runtime handles and
 reapply after handle recreation or an effective theme/override change. Skip
@@ -99,10 +107,9 @@ from a successful API call/readback.
 
 ## Implementation order and review boundaries
 
-1. **E2 — window-corner preference.** Add the shared adjustable policy and Form
-   override, enable Square for 2019, preserve 2024's system default, and verify
-   theme switching/Reset/handle recreation/material/maximize/restore behavior.
-2. **E3 — 2013 palette and File states.** Finalize accent/default/override rules,
+1. **E2 — window-corner preference, implemented.** Native API/lifecycle evidence
+   is recorded below; actual visible corner acceptance remains separate.
+2. **E3 — 2013 accent palette and File states, next slice.** Finalize accent/default/override rules,
    append a stable Office2013Light built-in identity, and implement accent-driven
    button states plus the always-colored File block. Keep existing identities,
    application-theme Reset, persistence and designer/generated code compatible.
@@ -121,6 +128,66 @@ densities, representative DPI and native page retention. Keep automated paint,
 native DWM observation, continuous motion, actual VS and physical/mixed-monitor
 acceptance distinct. No new diagnostic tabs are authorized by this plan; use
 focused fixtures and ordinary sample/Showcase theme selection when implemented.
+
+## E2 implementation and verification — 2026-11-13
+
+`RibbonForm.Corners.cs` owns the policy-to-DWM adapter, using attribute 33 only
+on supported top-level runtime handles. Form association/release, effective
+Theme/BuiltInTheme changes, explicit override/Reset, handle creation/recreation
+and native settings/theme/composition/style notifications reapply the resolved
+request. Enum validation happens before state mutation. No form handle is
+created just to store a preference. Unsupported calls leave requested settings
+intact; designer and child windows skip application. No theme-name branch,
+Region, frame removal, backdrop reset, title/pane clock or paint change is added.
+Native handle destruction owns attribute cleanup, including final close frames.
+
+Evidence is under `artifacts/window-corners/`:
+
+- **25/25 focused Release cases pass**, zero skips, in `e2-focused-final.trx`:
+  15 new corner cases plus 10 existing caption-handoff cases. Covers defaults,
+  all choices, explicit override/Reset, application-theme restoration, invalid
+  atomic assignments, metadata, inert designer/child HWNDs, supported DWM
+  readback, association/release, resize/caption hit targets, maximize/restore,
+  recreation, material coexistence, canceled close and WM_DESTROY readback.
+  A dedicated change-during-close case retains both title/pane clocks and the
+  native page handle/parent/value/selection. The initial run's new motion fixture
+  omitted File visibility; enabling its intended Backstage route and deterministic
+  test motion policy corrected the setup. Initial `e2-focused.trx` is retained.
+- Normal **Debug runtime, designer server/client and persistent Designer Sample
+  builds pass with zero warnings/errors**. The sample now uses local package
+  `0.1.0-designer.local20261113T091119035Z`; authored source/resources/project files
+  and Home/Edit/Gallery startup remain untouched. No diagnostic tabs were added.
+- **6/6 independent public-package scopes pass** in
+  `public-final/native/result.log`, Windows `10.0.26300.0`, actual **120 DPI**:
+  Office 2019/2024 x None/Mica/Acrylic, Classic/Compact only. Each covers all
+  four requests, theme changes and Reset, atomic validation, reassociation,
+  recreation, retained live native page handles/parent/text/focus/selection with
+  no spurious validation on corner changes, native resizing, HTMAXBUTTON,
+  standard system maximize/restore/minimize/close, canceled close and final
+  WM_DESTROY. Both requested materials applied on this machine.
+  `eng/Test-WindowCorners.ps1` creates a fresh public-only package consumer/cache
+  with local build-import barriers and normal bin/Debug output; no project
+  reference, Showcase resource/helper or friend access is used. The first broad
+  consumer compile encountered pre-existing internal Parent/IsDisposed references
+  in unrelated fixtures; the scoped runner compiles only the E2 fixture and its
+  entry point, leaving those unrelated fixtures unchanged.
+
+Reproduce from the repository root after `eng/Update-DesignerSample.ps1` refreshes
+the normal Debug package:
+
+```powershell
+dotnet test winforms/tests/RibbonKit.WinForms.Tests -c Release --filter "FullyQualifiedName~WindowCornerPreferenceTests|FullyQualifiedName~BackstageCaptionHandoffTests"
+& winforms/eng/Test-WindowCorners.ps1
+```
+
+These are native API/offscreen lifecycle and package checks, **not visual corner
+acceptance**. No physical silhouette capture, all-four-corner/DPI symmetry review,
+desktop Snap gesture, actual VS session, physical input/IME or mixed-monitor
+acceptance ran. Unsupported-OS policy is deterministically exercised, but an
+actual pre-build-22000 machine was not available. The accepted title handoff is
+protected by focused regression checks; no new visible-motion acceptance is
+claimed. No broad geometry/appearance/native matrix, full suite or WPF check ran.
+Stop E2 here. Next implementation: **E3 Office 2013 accent palette and File states**.
 
 ## Diagnostic-tab retirement evidence
 

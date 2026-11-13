@@ -1673,6 +1673,27 @@ and caption colors are opaque; material caption coverage uses the separate opaci
 setting. [Color roles, fallbacks and review scope](docs/APPEARANCE-COLOR-ROLES.md).
 Theme roles do not recursively recolor application-owned UserControls.
 
+### Native window-corner preference
+
+`RibbonTheme.WindowCornerPreference` selects `SystemDefault`, `Square`, `Rounded`
+or `SmallRounded`. Office 2019 uses Square; Office 2024 uses SystemDefault.
+`RibbonForm.WindowCornerPreference` is a nullable override: an explicit value wins,
+and null/property-grid Reset follows the associated ribbon theme (SystemDefault
+without a ribbon). `EffectiveWindowCornerPreference` reports that resolved request,
+not native success or visible appearance.
+
+```csharp
+window.WindowCornerPreference = RibbonWindowCornerPreference.SmallRounded;
+window.WindowCornerPreference = null; // Reset to theme ownership.
+ribbon.Theme = ribbon.Theme with { WindowCornerPreference = RibbonWindowCornerPreference.Square };
+```
+
+The supported DWM preference is applied on Windows 11 build 22000 or later,
+including handle recreation and theme/override changes. Unsupported systems keep
+the request; designer and child handles remain inert. Windows owns the final
+silhouette. Native resizing, caption actions, backdrops and control/popup radii
+remain independent. [E2 evidence and visual-review limits](docs/OFFICE2013-LIGHT-PLAN.md#e2-implementation-and-verification--2026-11-13).
+
 ### Optional native window backdrops
 
 **Experimental.** [Current evidence, user review and remaining platform checks](docs/M6C-BACKDROPS.md#first-show-material-alpha-and-windows-opening-motion--2026-10-30).

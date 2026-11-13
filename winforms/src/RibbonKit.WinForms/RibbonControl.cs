@@ -107,6 +107,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             VerifyAccess();
             ArgumentNullException.ThrowIfNull(value);
             if (!Enum.IsDefined(value.HeaderPresentation)) throw new ArgumentOutOfRangeException(nameof(value));
+            if (!Enum.IsDefined(value.WindowCornerPreference)) throw new ArgumentOutOfRangeException(nameof(value));
             RibbonMenuMetrics.Validate(value);
             RibbonEditorMetrics.Validate(value);
             RibbonIllustratedMenuMetrics.Validate(value);
@@ -139,6 +140,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             if (Equals(_theme, value))
                 return;
             _theme = value;
+            WindowHost?.RefreshWindowCornerPreference();
             ModelChanged();
         }
     }
@@ -161,6 +163,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             _builtInTheme = value;
             if (Equals(_theme, next)) return;
             _theme = next;
+            WindowHost?.RefreshWindowCornerPreference();
             ModelChanged();
         }
     }

@@ -508,6 +508,12 @@ internal static class Program
             return;
         }
         using var form = new DesignerForm();
+        if (args.Length == 2 && args[0] == "--verify-theme-gallery")
+        {
+            try { form.VerifyThemeGallery(args[1]); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
         if (args.Length >= 1 && args[0] == "--verify-clean-sample")
         {
             var output = args.Length >= 2 ? args[1] : Path.Combine(AppContext.BaseDirectory, "clean-sample-check");
@@ -524,7 +530,7 @@ internal static class Program
                 var fileMode = ribbon.FileMenuMode; var layoutMode = ribbon.LayoutMode; var density = ribbon.Density;
                 ConfigureSampleLaunch(form, args.Skip(2).ToArray());
                 var tabs = ribbon.Tabs.Select(tab => tab.Text).ToArray();
-                if (!tabs.SequenceEqual(new[] { "Home", "Edit", "Gallery" })) throw new InvalidOperationException("A diagnostic tab survived the normal launch: " + string.Join(", ", tabs));
+                if (!tabs.SequenceEqual(new[] { "Home", "Edit", "Gallery", "View" })) throw new InvalidOperationException("The authored tabs changed or a diagnostic tab survived the normal launch: " + string.Join(", ", tabs));
                 if (!originalTabs.SequenceEqual(ribbon.Tabs) || !originalGroups.SequenceEqual(ribbon.Tabs.SelectMany(tab => tab.Groups)) ||
                     !originalItems.SequenceEqual(ribbon.Tabs.SelectMany(tab => tab.Groups).SelectMany(group => group.Items)) || !originalQat.SequenceEqual(ribbon.QuickAccessItems) ||
                     !originalPages.SequenceEqual(ribbon.Backstage.Items) || !originalControls.SequenceEqual(form.Controls.Cast<Control>()) ||
@@ -532,7 +538,7 @@ internal static class Program
                     throw new InvalidOperationException("Launch cleanup changed authored models or controls.");
                 bool office2019 = args.Contains("--office2019-light") || args.Contains("--office2019-theme-demo");
                 if (office2019 && (ribbon.BuiltInTheme != RibbonBuiltInTheme.Office2019Light || !form.TitleBarColor.IsEmpty)) throw new InvalidOperationException("Tab-free Office 2019 launch did not retain its theme/neutral caption.");
-                File.WriteAllText(Path.Combine(output, "result.log"), "PASS: only authored Home/Edit/Gallery tabs; current tab/group/command/QAT/page/control identities and ordering, File mode, layout and density retained. Legacy review switches add no tabs. Theme=" + ribbon.BuiltInTheme);
+                File.WriteAllText(Path.Combine(output, "result.log"), "PASS: only authored Home/Edit/Gallery/View tabs; current tab/group/command/QAT/page/control identities and ordering, File mode, layout and density retained. Legacy review switches add no tabs. Theme=" + ribbon.BuiltInTheme);
             }
             catch (Exception error) { Directory.CreateDirectory(output); File.WriteAllText(Path.Combine(output, "failure.log"), error.ToString()); Environment.ExitCode = 1; }
             return;
@@ -593,5 +599,6 @@ internal static class Program
             form.TitleBarColor = Color.Empty;
             form.Ribbon!.BuiltInTheme = RibbonBuiltInTheme.Office2019Light;
         }
+        form.SynchronizeThemeGallery();
     }
 }

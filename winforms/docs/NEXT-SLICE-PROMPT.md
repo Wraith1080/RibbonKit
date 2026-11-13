@@ -1,21 +1,23 @@
-# Continue native WinForms themes after diagnostic-tab retirement
+# Continue native WinForms themes after E2 window corners
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-13**. Entry baseline was `94c4788` on
-`codex/Ribbonkit-Winform`, clean at entry. Recheck `git status --short`, live
-branch and HEAD; preserve subsequent user commits and unrelated edits. Do not
+Updated **2026-11-13**. E2 entry baseline was user commit `fd356b1` on
+`codex/Ribbonkit-Winform`, clean at entry; E2 changes are uncommitted. Recheck
+`git status --short`, live branch and HEAD; preserve user commits and edits. Do not
 commit, stage, push, publish or change branches unless requested.
 
 ## Current state and scope
 
-B1–D8b and all identified A00–A17 adjustability corrections are implemented.
+B1–D8b, all identified A00–A17 corrections and E2 window corners are implemented.
 Current automated evidence, exact user review and remaining gates live only in
 the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
 
 Interactive diagnostic/theme-effect/geometry tabs have been retired. The
-permanent Designer Sample now starts with authored **Home/Edit/Gallery** only.
+permanent Designer Sample now starts with authored **Home/Edit/Gallery/View**.
+The user subsequently requested View's permanent theme gallery; it offers the
+two delivered light themes plus Application theme Reset through public APIs.
 `--office2019-light` selects 2019 without review tabs;
 `--office2019-theme-demo` is a selection-only compatibility alias and
 `--menu-geometry-demo` no longer creates tabs. Explicit `--verify-*` fixtures
@@ -23,13 +25,18 @@ and their builders remain available. Do not automatically resurrect diagnostic
 tabs or remove regression fixtures. Preserve authored Forms/UserControls,
 resources, project files and normal Debug/Release output locations.
 
-The user selected **Office 2013 Light** and square native form corners for
+The user approved **Office 2013 Light** and square native form corners for
 2019/2013. Read the bounded
 [E1 contract and E2–E5 sequence](OFFICE2013-LIGHT-PLAN.md). Its screenshots are
-WPF visual references, not native acceptance evidence. This completed slice
-removed tabs and planned the work; it did not implement 2013 or window corners.
-For the current planning request, finish with a summary. On a later authorized
-continuation, start E2 below rather than reopening the completed rewrite.
+WPF visual references, not native acceptance evidence. E2 adds the shared
+SystemDefault/Square/Rounded/SmallRounded policy, theme default and nullable
+RibbonForm override/Reset. Office 2019 uses Square; Office 2024 keeps SystemDefault.
+Future Office 2013 must use Square. EffectiveWindowCornerPreference reports the
+resolved request, not native success or physical appearance. See the bounded
+[E2 implementation/evidence](OFFICE2013-LIGHT-PLAN.md#e2-implementation-and-verification--2026-11-13).
+E2 is complete as an implementation slice; visible native corner review is still
+pending. Stop after E2 in this task. On an authorized continuation, start E3;
+do not reopen the rewrite or implement E4/E5 together with E3.
 
 Native `winforms/` projects only. Keep parent WPF runtime, builds, tests and CI
 read-only. Use one agent and no computer-use tools; actual VS review remains
@@ -38,36 +45,27 @@ records before edits. Reuse the
 [architecture map](THEME-ARCHITECTURE-PLAN.md) and
 [adjustability audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 
-## Next bounded implementation: E2 window-corner preference
+## Next bounded implementation: E3 Office 2013 accent palette and File states
 
-Finalize the additive public names and implement the shared policy from the E1
-plan: SystemDefault/Square/Rounded/SmallRounded, theme default plus nullable
-RibbonForm override and independent Reset. Office 2019 defaults to Square;
-Office 2024 retains SystemDefault. Future Office 2013 will use Square. Validate
-before mutation, preserve explicit overrides and retain requested values on an
-unsupported OS. Do not embed a theme-name condition in native painting.
+Resolve accent-derived defaults versus explicit authored fill overrides first,
+then append the stable Office2013Light built-in identity. Commands use adjustable
+accent washes; File stays accent-filled at rest with white ink and darkens on
+hover/press/open. Cover CommandMenu and Backstage, disabled/focus states and
+close/reopen. Preserve application-theme Reset, existing identity values,
+persistence, designer/generated-code contracts and independent setting Reset.
 
-Use DWM attribute 33 on supported, eligible top-level runtime handles. Cover
-initial creation, recreation, effective theme/override changes and restoration
-of SystemDefault. Keep designer/child handles inert. Preserve native resizing,
-caption actions, maximize/restore/snap, backdrop eligibility and title/pane
-clocks. Do not assign Form.Region, remove the native resizable frame, or reset
-DWM appearance during the last closing frame. Successful API calls/readback
-do not establish physical corner appearance.
+Use shared recipes and public settings; no Showcase-only recoloring callback or
+family selector merely for a palette. Accent changes must update default state
+colors without losing explicit alpha/gradient/Transparent fills. Keep native
+EDIT, disabled/inactive colors and backdrop contrast with their existing owners.
+Set the 2013 theme's WindowCornerPreference to Square through the delivered E2 API.
 
-Use relevant focused validation for default/override/reset/invalid/unsupported,
-theme switching, lifecycle and native coexistence, plus an independent public
-consumer. Check the actual supported Windows silhouette separately and report
-what was observed. Do not rerun the full geometry, caption, appearance or native
-matrix for an isolated setting. No new diagnostic tabs are part of E2.
+Keep the connected outline/white tab-strip structural work in E4. Validate the
+affected E3 states and accent/override/reset paths with focused checks and an
+independent public consumer. No diagnostic tabs or full unrelated matrices.
 
 ## Later bounded work
 
-- **E3:** Office 2013 palette and File states. Resolve accent-derived defaults
-  versus explicit fill overrides first, then append a stable built-in identity.
-  Commands use accent washes; File stays accent-filled at rest and darkens on
-  hover/press/open. Cover both CommandMenu and Backstage. Preserve application
-  theme Reset, persistence and designer/generated-code contracts.
 - **E4:** Connected gray selected-tab/ribbon outline and white tab strip beneath
   an optional colored caption. Measure existing Filled/header/body paint before
   adding a seam policy or structural sibling. Preserve targets, clipping,
@@ -77,6 +75,10 @@ matrix for an isolated setting. No new diagnostic tabs are part of E2.
 
 ## Preserve delivered contracts
 
+- Keep E2's eligible DWM attribute 33 application, override precedence and Reset,
+  recreation/theme updates, unsupported retention and inert designer/child HWNDs.
+  Never assign Form.Region, remove the native resizable frame or reset DWM
+  attributes during native destruction. API readback is not visual acceptance.
 - Geometry consolidation remains the shared foundation: metrics, snapshots,
   DPI/rounding, clips, hit targets, content bounds and popup anchors. This work
   reuses it; do not replace layout engines or reopen the geometry campaign.

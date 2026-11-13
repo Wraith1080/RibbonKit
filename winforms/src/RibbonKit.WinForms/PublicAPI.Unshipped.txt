@@ -1,4 +1,15 @@
 #nullable enable
+RibbonKit.WinForms.RibbonWindowCornerPreference
+RibbonKit.WinForms.RibbonWindowCornerPreference.SystemDefault = 0 -> RibbonKit.WinForms.RibbonWindowCornerPreference
+RibbonKit.WinForms.RibbonWindowCornerPreference.Square = 1 -> RibbonKit.WinForms.RibbonWindowCornerPreference
+RibbonKit.WinForms.RibbonWindowCornerPreference.Rounded = 2 -> RibbonKit.WinForms.RibbonWindowCornerPreference
+RibbonKit.WinForms.RibbonWindowCornerPreference.SmallRounded = 3 -> RibbonKit.WinForms.RibbonWindowCornerPreference
+RibbonKit.WinForms.RibbonTheme.WindowCornerPreference.get -> RibbonKit.WinForms.RibbonWindowCornerPreference
+RibbonKit.WinForms.RibbonTheme.WindowCornerPreference.init -> void
+RibbonKit.WinForms.RibbonForm.WindowCornerPreference.get -> RibbonKit.WinForms.RibbonWindowCornerPreference?
+RibbonKit.WinForms.RibbonForm.WindowCornerPreference.set -> void
+RibbonKit.WinForms.RibbonForm.WindowCornerPreferenceChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonForm.EffectiveWindowCornerPreference.get -> RibbonKit.WinForms.RibbonWindowCornerPreference
 RibbonKit.WinForms.RibbonBackstageEasing
 RibbonKit.WinForms.RibbonBackstageEasing.EaseOutCubic = 0 -> RibbonKit.WinForms.RibbonBackstageEasing
 RibbonKit.WinForms.RibbonBackstageEasing.SmoothStep = 1 -> RibbonKit.WinForms.RibbonBackstageEasing

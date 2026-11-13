@@ -81,6 +81,7 @@ public partial class RibbonForm : Form
                 value.WindowHost = this;
                 value.ParentChanged += RibbonChanged; value.DockChanged += RibbonChanged; value.VisibleChanged += RibbonChanged; value.Disposed += RibbonDisposed;
             }
+            RefreshWindowCornerPreference();
             if (old is { IsDisposed: false, Disposing: false }) old.ModelChanged();
             RefreshRibbon();
         }
@@ -148,6 +149,7 @@ public partial class RibbonForm : Form
     protected override void OnHandleCreated(EventArgs e)
     {
         base.OnHandleCreated(e);
+        RefreshWindowCornerPreference();
         FrameChanged();
         RefreshBackdrop();
     }
@@ -311,7 +313,7 @@ public partial class RibbonForm : Form
             return;
         }
         if (m.Msg is 0x1A or 0x31A or 0x31E or 0x7D) // settings, theme, DWM composition, styles
-        { base.WndProc(ref m); RefreshBackdrop(force: m.Msg == 0x31E); return; }
+        { base.WndProc(ref m); RefreshBackdrop(force: m.Msg == 0x31E); RefreshWindowCornerPreference(); return; }
         if (CustomCaption)
         {
             // Keyboard focus belongs to an owned popup while it is open. The

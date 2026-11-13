@@ -37,6 +37,8 @@ public readonly record struct RibbonFill(Color Start, Color End)
 /// <summary>Immutable named appearance and 96-DPI metrics for one ribbon.</summary>
 public sealed record RibbonTheme
 {
+    /// <summary>Gets the native corner preference followed by an associated RibbonForm without an explicit override. Defaults to SystemDefault; Office 2019 uses Square. Unsupported systems retain the request. Control and popup radii are independent.</summary>
+    public RibbonWindowCornerPreference WindowCornerPreference { get; init; }
     /// <summary>Gets the default Office renderer's header presentation. Defaults to Underline. Explicit custom renderers retain their drawing policy.</summary>
     public RibbonHeaderPresentation HeaderPresentation { get; init; }
     /// <summary>Gets an optional header hover fill. Null uses Hover for filled headers and preserves the legacy underline presentation.</summary>
@@ -482,6 +484,7 @@ public static class RibbonThemes
     /// <summary>Gets the flat Office 2019 light theme with filled headers, square chrome, full-width body and bordered, shadowed popups.</summary>
     public static RibbonTheme Office2019Light { get; } = new()
     {
+        WindowCornerPreference = RibbonWindowCornerPreference.Square,
         HeaderPresentation = RibbonHeaderPresentation.Filled, ExtendTitleBarColorToHeader = true,
         BodyBottomBorderOnly = true, Background = Color.FromArgb(230, 230, 230),
         CollapsedGroupBorder = Color.Transparent, ApplicationMenuSplitDividerVisible = false, OptionsButtonCornerRadius = 0,

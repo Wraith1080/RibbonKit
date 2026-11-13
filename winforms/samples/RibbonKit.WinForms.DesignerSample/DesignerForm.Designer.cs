@@ -76,6 +76,12 @@ partial class DesignerForm
         bindingValueLabel = new ToolStripStatusLabel();
         fontField = new RibbonKit.WinForms.RibbonComboBoxItem();
         galleryTab = new RibbonKit.WinForms.RibbonTab();
+        viewTab = new RibbonKit.WinForms.RibbonTab();
+        themesGroup = new RibbonKit.WinForms.RibbonGroup();
+        themeGallery = new RibbonKit.WinForms.RibbonGalleryItem();
+        applicationThemeTile = new RibbonKit.WinForms.RibbonGalleryTile();
+        office2019ThemeTile = new RibbonKit.WinForms.RibbonGalleryTile();
+        office2024ThemeTile = new RibbonKit.WinForms.RibbonGalleryTile();
         galleryGroup = new RibbonKit.WinForms.RibbonGroup();
         documentStylesGallery = new RibbonKit.WinForms.RibbonGalleryItem();
         documentStyle1 = new RibbonKit.WinForms.RibbonGalleryTile();
@@ -622,6 +628,60 @@ partial class DesignerForm
         fontField.Text = "Font";
         fontField.Value = "Segoe UI";
         // 
+        // viewTab
+        //
+        viewTab.Groups.AddRange(new RibbonKit.WinForms.RibbonGroup[] { themesGroup });
+        viewTab.Id = "view";
+        viewTab.KeyTip = "V";
+        viewTab.Text = "View";
+        //
+        // themesGroup
+        //
+        themesGroup.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:desktop-edit", true);
+        themesGroup.Id = "view.themes";
+        themesGroup.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { themeGallery });
+        themesGroup.Text = "Themes";
+        //
+        // themeGallery
+        //
+        themeGallery.ColumnCount = 3;
+        themeGallery.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:desktop-edit", true);
+        themeGallery.Id = "view.themeGallery";
+        themeGallery.InRibbonColumnCount = 3;
+        themeGallery.IsInRibbon = true;
+        themeGallery.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationThemeTile, office2019ThemeTile, office2024ThemeTile });
+        themeGallery.KeyTip = "T";
+        themeGallery.MaxVisibleRows = 1;
+        themeGallery.ScreenTipDescription = "Choose the ribbon theme. Application theme restores the application's settings.";
+        themeGallery.SelectedItem = office2024ThemeTile;
+        themeGallery.SimplifiedPlacement = RibbonKit.WinForms.RibbonSimplifiedPlacement.Inline;
+        themeGallery.Text = "Themes";
+        themeGallery.TileHeight = 78;
+        themeGallery.TileWidth = 140;
+        themeGallery.SelectionCommitted += ThemeGallery_SelectionCommitted;
+        themeGallery.DropDownOpening += ThemeGallery_DropDownOpening;
+        //
+        // applicationThemeTile
+        //
+        applicationThemeTile.Icon = new RibbonKit.WinForms.RibbonSvgIcon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 64'><title>Application theme</title><rect x='1' y='1' width='158' height='62' rx='4' fill='#ffffff' stroke='#8a8886'/><path d='M2 17h156' stroke='#c8c6c4'/><path d='M65 29a15 15 0 1 1-1 19M65 29v12H53' fill='none' stroke='#605e5c' stroke-width='4'/><path d='M10 9h26m102 0h12' stroke='#8a8886' stroke-width='3'/></svg>");
+        applicationThemeTile.Id = "view.theme.application";
+        applicationThemeTile.ScreenTipDescription = "Reset to the application's theme, retaining its authored settings.";
+        applicationThemeTile.Text = "Application theme";
+        //
+        // office2019ThemeTile
+        //
+        office2019ThemeTile.Icon = new RibbonKit.WinForms.RibbonSvgIcon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 64'><title>Office 2019 Light</title><rect x='1' y='1' width='158' height='62' fill='#ffffff' stroke='#8a8886'/><path d='M2 2h156v28H2z' fill='#e6e6e6'/><path d='M29 18h35v13H29z' fill='#ffffff'/><path d='M8 10h35m94 0h14' stroke='#605e5c' stroke-width='3'/><path d='M8 24h13m16 0h18m19 0h16' stroke='#605e5c' stroke-width='2'/><path d='M2 57h156M50 35v16m50-16v16' stroke='#c8c6c4'/><path d='M10 37h17v15H10zM59 37h17v15H59zM109 37h17v15h-17z' fill='#dae5f2'/></svg>");
+        office2019ThemeTile.Id = "view.theme.office2019";
+        office2019ThemeTile.ScreenTipDescription = "Flat light ribbon with filled tabs and square native window preference.";
+        office2019ThemeTile.Text = "Office 2019 Light";
+        //
+        // office2024ThemeTile
+        //
+        office2024ThemeTile.Icon = new RibbonKit.WinForms.RibbonSvgIcon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 64'><title>Office 2024 Light</title><rect x='1' y='1' width='158' height='62' rx='5' fill='#f3f3f3' stroke='#8a8886'/><path d='M8 10h35m94 0h14' stroke='#605e5c' stroke-width='3'/><path d='M8 23h13m16 0h18m19 0h16' stroke='#605e5c' stroke-width='2'/><path d='M34 28h24' stroke='#2b579a' stroke-width='3'/><rect x='5' y='33' width='150' height='25' rx='5' fill='#ffffff' stroke='#dddddd'/><path d='M13 38h17v14H13zM62 38h17v14H62zM111 38h17v14h-17z' fill='#dae5f2'/><path d='M51 38v14m49-14v14' stroke='#e6e6e6'/></svg>");
+        office2024ThemeTile.Id = "view.theme.office2024";
+        office2024ThemeTile.ScreenTipDescription = "Light ribbon with underlined tabs and system-default native window corners.";
+        office2024ThemeTile.Text = "Office 2024 Light";
+        //
         // galleryTab
         // 
         galleryTab.Groups.AddRange(new RibbonKit.WinForms.RibbonGroup[] { galleryGroup });
@@ -834,8 +894,9 @@ partial class DesignerForm
         ribbon.Size = new Size(1029, 287);
         ribbon.TabContentAnimation = RibbonKit.WinForms.RibbonTabContentAnimation.SlideDown;
         ribbon.TabIndex = 0;
-        ribbon.Tabs.AddRange(new RibbonKit.WinForms.RibbonTab[] { homeTab, editTab, galleryTab });
+        ribbon.Tabs.AddRange(new RibbonKit.WinForms.RibbonTab[] { homeTab, editTab, galleryTab, viewTab });
         ribbon.DensityChanged += Ribbon_DensityChanged;
+        ribbon.SelectedTabChanged += Ribbon_ThemeGallerySelectedTabChanged;
         // 
         // backstageCommand1
         // 
@@ -910,7 +971,6 @@ partial class DesignerForm
         Name = "DesignerForm";
         Ribbon = ribbon;
         Text = "RibbonKit independent designer consumer";
-        TitleBarColor = Color.White;
         ((System.ComponentModel.ISupportInitialize)ribbon).EndInit();
         statusStrip.ResumeLayout(false);
         statusStrip.PerformLayout();
@@ -922,6 +982,12 @@ partial class DesignerForm
     private RibbonKit.WinForms.RibbonTab homeTab = null!;
     private RibbonKit.WinForms.RibbonTab editTab = null!;
     private RibbonKit.WinForms.RibbonTab galleryTab = null!;
+    private RibbonKit.WinForms.RibbonTab viewTab = null!;
+    private RibbonKit.WinForms.RibbonGroup themesGroup = null!;
+    private RibbonKit.WinForms.RibbonGalleryItem themeGallery = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile applicationThemeTile = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile office2019ThemeTile = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile office2024ThemeTile = null!;
     private RibbonKit.WinForms.RibbonGroup galleryGroup = null!;
     private RibbonKit.WinForms.RibbonGalleryItem documentStylesGallery = null!;
     private RibbonKit.WinForms.RibbonGalleryTile documentStyle1 = null!;

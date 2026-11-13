@@ -1,8 +1,15 @@
 # RibbonKit WinForms Designer Sample
 
-**2026-11-13: interactive diagnostic tabs retired after the accepted geometry,
-theme rewrite and A10 review.** Normal launch now contains only the authored
-Home, Edit and Gallery tabs. `--office2019-light` selects Office 2019 without
+**2026-11-13: View → Themes added at the user's request.** Normal launch contains
+the authored Home, Edit, Gallery and View tabs. The new View tab has a built-in
+theme gallery with vector thumbnails for Office 2019 Light, Office 2024 Light
+and Application theme (Reset to the application's authored settings). Classic
+shows the inline tiles; Simplified provides the Themes launcher. Choosing a tile
+uses the public BuiltInTheme API; hover does not apply a theme. Selection follows
+startup switches and refreshes on entering View or opening the gallery.
+
+Interactive diagnostic tabs remain retired after the accepted geometry,
+theme rewrite and A10 review. `--office2019-light` selects Office 2019 without
 adding tabs. The older `--office2019-theme-demo` switch is a selection-only alias;
 `--menu-geometry-demo` no longer adds geometry tabs. Focused `--verify-*` checks
 remain available. The review-tab instructions below are historical references,
@@ -10,6 +17,20 @@ not current launch behavior. No authored Forms/UserControls/resources were remov
 
 Next theme work is defined in the
 [Office 2013 Light plan](../../docs/OFFICE2013-LIGHT-PLAN.md).
+
+The normal Debug sample builds with zero warnings/errors. The package-only
+`--verify-theme-gallery <output>` check passes six theme/layout commit cases,
+Application Reset, View-entry selection sync, explicit Form corner override/Reset,
+native page/field state and the Classic expanded gallery. It uses the real
+authored gallery and public APIs. Evidence/direct-paint captures are in
+`../../artifacts/designer-theme-gallery/expand-check/`; representative Classic
+and Simplified captures were inspected. The expanded popup is checked before
+pumping activation messages because the offscreen owner can lose activation;
+this is not a physical popup-input acceptance claim. Actual VS and physical
+mouse/keyboard review remain separate. Three clean-start checks in
+`../../artifacts/designer-theme-gallery/launch/` cover default startup, the 2019
+switch and combined legacy switches, with exactly Home/Edit/Gallery/View and no
+diagnostic tabs. No runtime/library or WPF change was needed for this addition.
 
 ## Historical rewrite review surfaces
 

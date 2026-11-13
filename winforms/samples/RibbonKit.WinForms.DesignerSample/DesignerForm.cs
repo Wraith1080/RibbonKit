@@ -8,6 +8,7 @@ public partial class DesignerForm : RibbonForm
     {
         InitializeComponent();
         SynchronizeInputMode();
+        SynchronizeThemeGallery();
         ConfigurePopup(selectDropdown, "Select options");
         ConfigurePopup(pasteSplitButton, "Paste options");
         ConfigurePopup(applicationOpen, "Open options");

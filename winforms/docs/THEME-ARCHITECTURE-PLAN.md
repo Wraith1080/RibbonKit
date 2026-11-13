@@ -58,9 +58,10 @@ Current evidence and user review are recorded in the
 
 The [themes plan](THEMES-PLAN.md) retains appearance requirements and acceptance.
 This document records implementation boundaries and the migration sequence.
-The selected next family and proposed E2–E5 work are defined in the
-[Office 2013 Light plan](OFFICE2013-LIGHT-PLAN.md); new theme/window behavior is
-still planning only.
+The approved next family and E2–E5 sequence are defined in the
+[Office 2013 Light plan](OFFICE2013-LIGHT-PLAN.md). E2 adds a shared theme corner
+preference and nullable Form override, applied by the native window adapter;
+E3 palette/File work is next. New Office 2013 rendering is not implemented yet.
 
 ## Problem and intended result
 

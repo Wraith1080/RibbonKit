@@ -17,6 +17,7 @@
     <PackageReference Include="RibbonKit.WinForms" Version="$(RibbonKitDesignerSamplePackageVersion)" />
     <Compile Update="DesignerForm.cs"><SubType>Form</SubType></Compile>
     <Compile Update="DesignerForm.InputMode.cs"><DependentUpon>DesignerForm.cs</DependentUpon></Compile>
+    <Compile Update="DesignerForm.Themes.cs"><DependentUpon>DesignerForm.cs</DependentUpon></Compile>
     <Compile Update="GalleryStylesControl.cs"><SubType>UserControl</SubType></Compile>
     <Compile Update="GalleryStylesControl.Designer.cs"><DependentUpon>GalleryStylesControl.cs</DependentUpon></Compile>
     <Compile Update="GalleryStylesStripControl.cs"><SubType>UserControl</SubType></Compile>
