@@ -1939,3 +1939,23 @@ static RibbonKit.WinForms.RibbonOptionsAppearanceSettings.operator !=(RibbonKit.
 static RibbonKit.WinForms.RibbonOptionsAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonOptionsAppearanceSettings? left, RibbonKit.WinForms.RibbonOptionsAppearanceSettings? right) -> bool
 RibbonKit.WinForms.RibbonTheme.OptionsAppearance.get -> RibbonKit.WinForms.RibbonOptionsAppearanceSettings?
 RibbonKit.WinForms.RibbonTheme.OptionsAppearance.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.ButtonInset.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.ButtonInset.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.ButtonBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.ButtonBorderWidth.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.ButtonBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.ButtonBorderColor.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.ButtonFocusInset.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.ButtonFocusInset.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.ButtonBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.ButtonBackground.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.AccentButtonBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.AccentButtonBackground.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.HeadingFontSizeIncrement.get -> float?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.HeadingFontSizeIncrement.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.HeadingMinimumFontSize.get -> float?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.HeadingMinimumFontSize.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.HeadingBold.get -> bool?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.HeadingBold.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.HeadingBottomPadding.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.HeadingBottomPadding.init -> void

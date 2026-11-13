@@ -6,7 +6,7 @@ public partial class DesignerForm
 {
     private void EnableOptionsAppearanceDemo()
     {
-        var tab = ThemeEffectsReviewTab; if (tab.Groups.Any(g => g.Id == "review-options-appearance")) return;
+        var tab = ThemeEffects7ReviewTab; if (tab.Groups.Any(g => g.Id == "review-options-appearance")) return;
         var preview = new RibbonGroup { Id = "review-options-preview", Text = "Try Options dialogs" };
         Add(preview, "Open Options preview", () => { using var dialog = CreateOptionsAppearancePreview(); dialog.ShowDialog(this); });
         Add(preview, "Open ribbon/QAT options", () => { using var dialog = new RibbonQuickAccessCustomizationForm(ribbon, "RibbonKitDesignerConsumer"); dialog.ShowDialog(this); });
@@ -29,7 +29,7 @@ public partial class DesignerForm
     }
     internal void VerifyOptionsAppearanceDemo(string output)
     {
-        StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); Width = 1900; ShowInTaskbar = false; EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffectsReviewTab; ribbon.SelectedTab = tab;
+        StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); Width = 1900; ShowInTaskbar = false; EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffects7ReviewTab; ribbon.SelectedTab = tab;
         if (tab.Text != "Theme effects 7" || tab.Groups.Count != 8 || ThemeEffects6ReviewTab.Groups.Count != 3 || ThemeEffects5ReviewTab.Groups.Count != 6 || ThemeEffects4ReviewTab.Groups.Count != 7 || ThemeEffects3ReviewTab.Groups.Count != 4 || ThemeEffects2ReviewTab.Groups.Count != 5 || ribbon.Tabs.Single(t => t.Text == "Office 2019 Light").Groups.Count != 7) throw new InvalidOperationException("Options controls displaced earlier review groups.");
         var effects = tab.Groups.Single(g => g.Id == "review-options-appearance"); ribbon.Theme = ribbon.Theme with { OptionsButtonCornerRadius = 4, TipAppearance = new() { KeyTipBorderWidth = 3 }, GalleryContent = new() { LabelMaxLines = 3 } };
         effects.Items[0].PerformClick(); effects.Items[1].PerformClick(); effects.Items[3].PerformClick();

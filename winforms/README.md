@@ -3004,7 +3004,7 @@ Placement Reset retains title/outline overrides; **Default tip presentation**
 clears only TipAppearance. Existing tab/body scrollers and group reduction remain available.
 
 `Theme.OptionsAppearance` accepts immutable `RibbonOptionsAppearanceSettings` for
-the library Options navigation rail and rail/footer dividers:
+library Options navigation, rail/footer dividers, buttons and heading typography:
 
 | Members | Null defaults and behavior |
 | --- | --- |
@@ -3013,12 +3013,15 @@ the library Options navigation rail and rail/footer dividers:
 | `NavigationSelectedBackground` | Optional alpha/gradient fill, null Checked. Rail backing remains BackstageNavigationBackground; text remains selected Accent / ordinary Foreground. |
 | `NavigationMarkerWidth`, `NavigationMarkerInset`, `NavigationMarkerFill` | Width 0..64, null 3; per-edge vertical inset 0..1024, null legacy 7 top / summed 14 height deduction; fill null Accent. Existing NavigationMarkerCornerRadius remains in use. Zero width, Transparent fill or a consuming inset hides marker paint. Explicit inset uses equal ends. |
 | `DividerWidth`, `DividerColor` | Width 0..32, null one device pixel; ink Empty follows Border. Zero/Transparent hides the rules; alpha is honored. Authored stripes clamp inside existing rail/footer panels. |
+| `ButtonInset`, `ButtonBorderWidth`, `ButtonBorderColor`, `ButtonFocusInset` | Paint inset 0..1024 / border width 0..32 / focus inset 0..1024 logical pixels. Null retains zero paint inset, ordinary one-device-pixel border when ink exists, accent border zero, and four-device-pixel focus inset. Empty ink follows PopupBorder / accent fill's first color. Zero/Transparent hides the outline; alpha/clamps are supported. Button content, native targets and IButtonControl/default/cancel behavior remain. Existing OptionsButtonCornerRadius is reused. |
+| `ButtonBackground`, `AccentButtonBackground` | Optional enabled idle fills, including alpha/gradients; null Surface / Accent. Existing Hover/Pressed/disabled state recipes and foreground roles remain. Ordinary buttons with null corners retain native painting until an ordinary-button override is authored. Accent-only fill and heading/navigation settings do not opt ordinary buttons into shared painting. |
+| `HeadingFontSizeIncrement`, `HeadingMinimumFontSize`, `HeadingBold`, `HeadingBottomPadding` | Finite point-size increment 0..64 / minimum 1..128, null 5 / 14; bottom padding 0..1024 logical pixels, null 12, zero removes the gap. Null weight retains legacy Bold-only style; explicit true adds Bold to host styles, false removes it and preserves other styles. The resulting font and padding feed existing native heading/page layout. |
 
 Options keeps its existing ceiling-based DPI scaling and legacy summed marker
 rounding. Values validate before Theme/BuiltInTheme mutation. Null/Empty resets
 each member; `OptionsAppearance = null` preserves button corners, tip/gallery
-settings and the existing palette. Dialog sizes, heading typography, buttons,
-native fields/lists/choices, application page styling and draft Apply/Cancel retain
+settings and the existing palette. Dialog sizes, native button/image/text/focus
+behavior, field/list frames, choices, application page styling and draft Apply/Cancel retain
 their existing owners. The actual popup-radius hook remains in use; Options' native
 text still uses its direct text painter, without introducing command-chrome/text interception.
 
@@ -3026,6 +3029,13 @@ text still uses its direct text painter, without introducing command-chrome/text
 preset, then open **Options preview** or **ribbon/QAT options**. Marker Reset keeps
 selection/divider settings; **Default Options decoration** clears only this group.
 Earlier groups remain in place; existing tab/body scrollers and reduction remain available.
+
+**Try Options shell / Options buttons / Options headings** are on the requested
+new **Theme effects 8**. Choose presets before opening the preview; headings
+resolve through the existing construction/load/font/DPI layout, without a live
+theme coordinator. Button Reset retains headings/navigation; Heading Reset
+retains buttons/navigation. Both retain existing button corners and unrelated
+tip/gallery settings. The accepted tab 7 groups remain pinned in place.
 
 Derive from `RibbonRenderer` for a flat/custom presentation, or from
 `RibbonOffice2024Renderer` to retain Office styling while overriding selected

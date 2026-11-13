@@ -6,7 +6,7 @@ public partial class DesignerForm
 {
     private void EnableTipAppearanceDemo()
     {
-        var tab = ThemeEffectsReviewTab; if (tab.Groups.Any(g => g.Id == "review-tip-appearance")) return;
+        var tab = ThemeEffects7ReviewTab; if (tab.Groups.Any(g => g.Id == "review-tip-appearance")) return;
         var preview = new RibbonGroup { Id = "review-tip-preview", Text = "Try tips and badges" };
         RibbonFileMenuMode? priorMode = null;
         preview.Items.AddRange(new RibbonButtonItem { Text = "Hover for description", KeyTip = "TP", ScreenTipTitle = "Search the current document", ScreenTipDescription = "Hover here to review title weight and shared popup styling. Press Alt or F10 to review keyboard badges.", SizePolicy = RibbonSizePolicy.Fixed(RibbonItemSize.Medium), SimplifiedPlacement = RibbonSimplifiedPlacement.Inline },
@@ -25,7 +25,7 @@ public partial class DesignerForm
     }
     internal void VerifyTipAppearanceDemo(string output)
     {
-        StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); Width = 1800; ShowInTaskbar = false; EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffectsReviewTab; ribbon.SelectedTab = tab;
+        StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); Width = 1800; ShowInTaskbar = false; EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffects7ReviewTab; ribbon.SelectedTab = tab;
         if (tab.Text != "Theme effects 7" || tab.Groups.Count != 6 || ThemeEffects6ReviewTab.Groups.Count != 3 || ThemeEffects5ReviewTab.Groups.Count != 6 || ThemeEffects4ReviewTab.Groups.Count != 7 || ThemeEffects3ReviewTab.Groups.Count != 4 || ThemeEffects2ReviewTab.Groups.Count != 5 || ribbon.Tabs.Single(t => t.Text == "Office 2019 Light").Groups.Count != 7) throw new InvalidOperationException("Tip controls displaced earlier review groups.");
         var group = tab.Groups.Single(g => g.Id == "review-tip-appearance"); ribbon.Theme = ribbon.Theme with { KeyTipBorder = Color.Navy, KeyTipHorizontalPadding = 6, ScreenTipContentPadding = 18, GalleryContent = new() { LabelMaxLines = 3 } };
         group.Items[0].PerformClick(); group.Items[1].PerformClick(); var mode = ribbon.FileMenuMode; group.Items[3].PerformClick();

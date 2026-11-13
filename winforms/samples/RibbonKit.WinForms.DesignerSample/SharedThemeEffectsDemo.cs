@@ -4,19 +4,21 @@ namespace RibbonKitDesignerConsumer;
 
 public partial class DesignerForm
 {
-    // Keep earlier controls in place; the user declared tab 6 full for D5b.
+    // Keep accepted controls in place; D7b uses the requested new tab 8.
     private RibbonTab? _themeEffects2ReviewTab;
     private RibbonTab? _themeEffects3ReviewTab;
     private RibbonTab? _themeEffects4ReviewTab;
     private RibbonTab? _themeEffects5ReviewTab;
     private RibbonTab? _themeEffects6ReviewTab;
+    private RibbonTab? _themeEffects7ReviewTab;
     private RibbonTab? _themeEffectsReviewTab;
     private RibbonTab ThemeEffects2ReviewTab => _themeEffects2ReviewTab ??= AddReviewTab("review-theme-effects-2", "Theme effects 2");
     private RibbonTab ThemeEffects3ReviewTab => _themeEffects3ReviewTab ??= AddReviewTab("review-theme-effects-3", "Theme effects 3");
     private RibbonTab ThemeEffects4ReviewTab => _themeEffects4ReviewTab ??= AddReviewTab("review-theme-effects-4", "Theme effects 4");
     private RibbonTab ThemeEffects5ReviewTab => _themeEffects5ReviewTab ??= AddReviewTab("review-theme-effects-5", "Theme effects 5");
     private RibbonTab ThemeEffects6ReviewTab => _themeEffects6ReviewTab ??= AddReviewTab("review-theme-effects-6", "Theme effects 6");
-    private RibbonTab ThemeEffectsReviewTab => _themeEffectsReviewTab ??= AddReviewTab("review-theme-effects-7", "Theme effects 7");
+    private RibbonTab ThemeEffects7ReviewTab => _themeEffects7ReviewTab ??= AddReviewTab("review-theme-effects-7", "Theme effects 7");
+    private RibbonTab ThemeEffectsReviewTab => _themeEffectsReviewTab ??= AddReviewTab("review-theme-effects-8", "Theme effects 8");
     private RibbonTab AddReviewTab(string id, string text)
     {
         var tab = new RibbonTab { Id = id, Text = text };

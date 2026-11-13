@@ -17,6 +17,7 @@ internal sealed record RibbonHeaderPresentationRegistration(RibbonHeaderRenderer
 
 internal static class RibbonPresentationResolver
 {
+    internal static readonly RibbonOptionsShellDefaults OptionsShell = new(ButtonInset: 0, ButtonFocusInset: 4, ButtonBorder: 1, AccentBorder: 0, HeadingIncrement: 5, HeadingMinimum: 14, HeadingBottomPadding: 12);
     internal static readonly RibbonOptionsNavigationDefaults OptionsNavigation = new(SelectionInset: 2, TextPadding: 12, MarkerWidth: 3, MarkerInset: 7, MarkerDeduction: 14, FocusInset: 1, DividerWidth: 1);
     internal static readonly RibbonTipDefaults Tips = new(MaximumWidth: 320, ContentPadding: 12, TitleGap: 6, PlacementGap: 8, BackstageHorizontalAllowance: 8, BackstageVerticalAllowance: 4, BackstageRightClearance: 4, KeyTipStroke: 1, OfficeKeyTipRadius: 2);
     internal static readonly RibbonGalleryContentDefaults GalleryContent = new(LabelLines: 2, PaintReserve: 12, MeasureReserve: 24, ArtworkHorizontalExtra: 4, ArtworkTopExtra: 2, ExpandHeight: 18, BarWidth: 10, BarInset: 4, BarStroke: 2);

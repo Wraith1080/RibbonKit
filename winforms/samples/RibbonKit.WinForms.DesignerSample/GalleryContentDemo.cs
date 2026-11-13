@@ -6,7 +6,7 @@ public partial class DesignerForm
 {
     private void EnableGalleryContentDemo()
     {
-        var tab = ThemeEffectsReviewTab; if (tab.Groups.Any(g => g.Id == "review-gallery-content")) return;
+        var tab = ThemeEffects7ReviewTab; if (tab.Groups.Any(g => g.Id == "review-gallery-content")) return;
         var preview = new RibbonGroup { Id = "review-gallery-content-preview", Text = "Try gallery content", CanResize = false };
         var popup = Make(false); popup.Text = "Grouped content"; popup.SizePolicy = RibbonSizePolicy.Fixed(RibbonItemSize.Medium); var inline = Make(true); inline.Text = "Inline content"; preview.Items.AddRange(popup, inline);
         var content = new RibbonGroup { Id = "review-gallery-content", Text = "Gallery artwork and labels" };
@@ -39,7 +39,7 @@ public partial class DesignerForm
     }
     internal void VerifyGalleryContentDemo(string output)
     {
-        StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); ShowInTaskbar = false; EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffectsReviewTab; ribbon.SelectedTab = tab;
+        StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); ShowInTaskbar = false; EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffects7ReviewTab; ribbon.SelectedTab = tab;
         if (tab.Text != "Theme effects 7" || ThemeEffects6ReviewTab.Groups.Count != 3 || ThemeEffects5ReviewTab.Groups.Count != 6 || ThemeEffects4ReviewTab.Groups.Count != 7 || ThemeEffects3ReviewTab.Groups.Count != 4 || ThemeEffects2ReviewTab.Groups.Count != 5 || ribbon.Tabs.Single(t => t.Text == "Office 2019 Light").Groups.Count != 7) throw new InvalidOperationException("Gallery content displaced an earlier tab.");
         var content = tab.Groups.Single(g => g.Id == "review-gallery-content"); var frames = tab.Groups.Single(g => g.Id == "review-gallery-frames"); var glyphs = tab.Groups.Single(g => g.Id == "review-gallery-glyphs");
         ribbon.Theme = ribbon.Theme with { GalleryAppearance = new() { HeaderBold = false, TileCornerRadius = 10 } };

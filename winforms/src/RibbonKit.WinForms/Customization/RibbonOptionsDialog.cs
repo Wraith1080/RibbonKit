@@ -95,8 +95,9 @@ public class RibbonOptionsDialog : Form
         _navigation.ItemHeight = RibbonQuickAccessEditorMetrics.ButtonHeight(DeviceDpi, Font.Height, _ribbon.Density) + ScaleLogical(8);
         // WinForms can still measure a previous heading font during a parent
         // DPI autoscale pass. Retain these owned fonts until child disposal.
-        _headingFont = new(Font.FontFamily, Math.Max(Font.SizeInPoints + 5, 14), FontStyle.Bold); _headingFonts.Add(_headingFont);
-        _heading.Font = _headingFont; _heading.Padding = new(0, 0, 0, ScaleLogical(12));
+        var shell = new Layout.RibbonOptionsShellMetrics(_ribbon.Theme, DeviceDpi);
+        _headingFont = new(Font.FontFamily, shell.HeadingPoints(Font), shell.HeadingStyle(Font)); _headingFonts.Add(_headingFont);
+        _heading.Font = _headingFont; _heading.Padding = new(0, 0, 0, shell.HeadingPadding);
         _footer.Padding = new(gap);
         foreach (var button in _footer.Controls.Cast<Button>())
         { button.MinimumSize = new(ScaleLogical(88), RibbonQuickAccessEditorMetrics.ButtonHeight(DeviceDpi, Font.Height, _ribbon.Density)); button.Margin = new(gap / 2); }

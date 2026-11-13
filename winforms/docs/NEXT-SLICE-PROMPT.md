@@ -1,25 +1,28 @@
-# Continue native WinForms themes after D7a Options navigation/dividers
+# Continue native WinForms themes after D7b Options buttons/headings
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-12**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a and adjustability backfills
+Updated **2026-11-13**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7b and adjustability backfills
 A00–A04/A06–A09/A11–A17 are implemented. Current evidence and exact user review
 scope live in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
-The latest implementation is [D7a](THEMES-PLAN.md#options-navigation-and-dividers-d7a--2026-11-12).
+The latest implementation is [D7b](THEMES-PLAN.md#options-buttons-and-heading-typography-d7b--2026-11-13).
 Use the ledger for the exact user appearance review scope and remaining gates.
-The user committed D6 at `5e5f36d` before D7a. Do not overwrite later user commits.
+The user committed D7a at `1779dcf` before D7b. Do not overwrite later user commits.
 
 ## Next bounded implementation
 
 Start with `git status --short` and inspect live branch/HEAD; preserve later user
-commits and edits. Follow the current user request. For a continuation, D7b
-**remaining library dialog chrome** is next proposed. Inspect heading typography,
-buttons, native field/list frames and choice presentation. Select one bounded
-surface before editing; reuse existing editor/fill/ink/frame/focus/arrow roles.
+commits and edits. Follow the current user request. For a continuation, D7c
+**Options field/list frames and choice presentation** is next proposed. Inspect
+actual native content clearance, rounded child regions, field/list frame paint
+and choice content. Reuse existing editor/fill/ink/frame/focus/arrow roles and
+select a bounded extraction before editing. Do not add wider frame paint that
+native children cover, or move native text/input bounds without shared measurement.
 Preserve native editors, validation, keyboard/focus, draft Apply/Cancel, dialog
 lifetime and inert candidate-theme preview safety. Application dialog content
-stays application-owned. D7a owns Options navigation and rail/footer dividers;
+stays application-owned. D7b owns Options buttons and heading typography. D7a
+owns Options navigation and rail/footer dividers;
 preserve its direct native text path and actual popup-radius hook. D6 owns shared
 ScreenTip/KeyTip paint and A17 placement.
 D5a owns gallery tile-state/headings and D5b content/inline frame/utilities;
@@ -40,16 +43,17 @@ A new family selector needs an actual structural difference, not a palette name,
 header style or radius. Native editor HWND, parent, value, selection, focus,
 validation, IME and popup ownership remain with their existing shared owners.
 
-**Review tabs:** the user declared tab 6 full and requested a fresh tab for D5b.
-Put new controls on **Theme effects 7** through `ThemeEffectsReviewTab` until directed otherwise.
+**Review tabs:** the user requested a fresh tab for D7b. Put new controls on
+**Theme effects 8** through `ThemeEffectsReviewTab` until directed otherwise.
 `ThemeEffects2ReviewTab` / `ThemeEffects3ReviewTab` / `ThemeEffects4ReviewTab` /
-`ThemeEffects5ReviewTab` / `ThemeEffects6ReviewTab` pin existing groups to their original tabs.
-Earlier tabs retain seven/five/four/seven/six/three groups. Tab 6 retains **Try built-in
+`ThemeEffects5ReviewTab` / `ThemeEffects6ReviewTab` / `ThemeEffects7ReviewTab` pin existing groups to their original tabs.
+Earlier tabs retain seven/five/four/seven/six/three/eight groups. Tab 6 retains **Try built-in
 galleries / Gallery tile states / Gallery headings**. Tab 7 has **Try gallery content /
 Gallery artwork and labels / Gallery inline frames / Gallery utility glyphs**.
 Tab 7 now also has **Try tips and badges / Tip presentation** (six total groups).
-**Try Options dialogs / Options navigation** brings tab 7 to eight groups. Keep
-using tab 7 until directed otherwise; do not infer fullness from reduction.
+**Try Options dialogs / Options navigation** brings tab 7 to eight groups. Tab 8
+has **Try Options shell / Options buttons / Options headings**. Keep tab 7's
+accepted groups in place; do not infer fullness from reduction.
 The File preview uses existing authored models and restores the prior File mode.
 Its divider-visibility button uses the existing independent flag (2019 defaults
 false); group Reset clears only the new settings. The earlier optional overflow
@@ -183,6 +187,19 @@ when needed. Do not move old groups or infer fullness from reduction.
   initial batch and isolated retry; it now pumps initial owner work and establishes
   focus before opening, and passes in its final isolated scope. No popup runtime
   change was made; do not represent this as a clean initial aggregate run.
+- D7b retains shared native button painting and heading font/padding metrics in
+  OptionsAppearance. Null keeps button inset 0, ordinary rim one device pixel,
+  accent rim 0 and focus inset four device pixels. Existing button corners,
+  state palettes and direct native image/text/focus paths remain. Only scoped
+  ordinary-button overrides opt a null-corner ordinary button into shared paint;
+  accent-only fill/navigation/heading values retain its native fallback.
+  Heading increment/minimum/gap null retain 5/14 points and 12 logical pixels;
+  null style is legacy Bold-only, explicit weight preserves other host styles.
+  Headings resolve during existing construction/load/font/DPI layout; choose
+  settings before opening. No live theme coordinator or button/input rewrite.
+  Partial button/heading resets retain navigation and each other. Reuse 16 exact
+  native default PNG/geometry pairs at actual 120 DPI, four-DPI authored paint,
+  23 distinct passing cases and four package scopes unless affected.
 - Existing Theme assignment closes ordinary menus through `ModelChanged`;
   retained models reopen normally. Do not change lifecycle to satisfy a probe.
 - A05 caption tint, A10 preferred page minimum and the reported
