@@ -3020,6 +3020,9 @@ library Options navigation, dividers, buttons, headings, frames and command-list
 | `RowTextPadding`, `RowIconSize`, `RowIconTextGap` | QAT/Classic/Simplified command-list content padding and icon gap 0..1024 / icon size 0..256 logical pixels. Null retains padding/gap 6 for QAT/Classic, 8 for Simplified and icon size 20, with legacy ceiling rounding. Authored content clamps inside the existing row; zero icon size hides borrowed artwork and reclaims its slot/gap. Native row height and targets stay unchanged. |
 | `RowCornerRadius`, `RowSelectedBackground` | Selection corner radius 0..64, null 0; optional alpha/gradient fill, null solid Checked.Start. Authored paint composites over Surface; Transparent hides it. Foreground, unselected Surface and native focus rectangles retain their existing roles. Tree and icon-picker selection are separate. |
 | `RowHeadingBold` | Simplified command-list header weight. Null retains legacy Bold-only style; true adds Bold to host styles, false removes it and preserves other styles. Choose before opening; existing construction/font/DPI paths own the font. Dialog title headings are independent. |
+| `TreeCornerRadius`, `TreeSelectedBackground` | Customization-tree selection radius 0..64, null 0; optional alpha/gradient fill, null solid Checked.Start. Authored selection composites over Surface; Transparent hides it. List-row selection remains independent. |
+| `TreeCheckSize`, `TreeIconSize`, `TreeIconTextGap` | Check size 0..64, icon size 0..256 and icon-to-text paint gap 0..1024 logical pixels. Null retains Compact/Touch checks 18/24, icon 16 and gap 2. Authored values fit existing check/icon reservations and row height. Zero hides the corresponding glyph; native click targets, indentation, text bounds and scrolling stay unchanged. The gap positions artwork to the left of existing native text. Visible checks keep the actual DrawCheckBoxIndicator hook. |
+| `TreeFocusInset` | Native tree focus-rectangle inset 0..1024 logical pixels; null one device pixel. Authored inset clamps inside the row. Focus style and cue eligibility remain native. |
 
 Legacy navigation/heading/search arithmetic keeps its ceiling-based DPI scaling
 and summed rounding; new frame/choice overrides use the shared logical-pixel
@@ -3066,6 +3069,20 @@ ribbon's mode and sources. **Default row content** retains selection settings;
 **Default row selection** retains content settings. **Default all row effects**
 clears only the six row members, preserving frame/button/navigation effects.
 The accepted five groups on tab 8 remain in place.
+
+**Try customization tree / Tree glyphs / Tree selection and focus** also use
+**Theme effects 9**, now six groups. Choose presets, then **Open tree preview**.
+The preview uses isolated sample commands. Glyph/selection resets retain each
+other; **Default all tree effects** clears only the six tree members. Native
+checkbox/expander targets remain active when paint is hidden.
+
+Tree expanders reuse `Theme.Chevrons.Length`, `Depth` and `StrokeWidth`, including
+zero/hide. Their null defaults retain Compact/Touch long-axis sizes 12/16, the
+legacy half-length depth and strokes 1.6/1.8 with a device-pixel minimum. Authored
+geometry fits the existing expander slot. These settings also style the other
+shared ribbon chevrons; **Default shared chevrons** resets that group independently.
+Tree text keeps its direct native painter, existing Foreground and disabled
+SystemColors.GrayText policy. Icon-picker tiles remain separate.
 
 Derive from `RibbonRenderer` for a flat/custom presentation, or from
 `RibbonOffice2024Renderer` to retain Office styling while overriding selected

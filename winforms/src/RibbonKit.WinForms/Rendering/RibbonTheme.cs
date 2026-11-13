@@ -59,7 +59,7 @@ public sealed record RibbonTheme
     public Color HeaderIndicatorHoverColor { get; init; } = Color.Empty;
     /// <summary>Gets optional immutable Filled-state border, scroller, contextual ink and File-highlight overrides. Null retains existing presentation defaults.</summary>
     public RibbonHeaderAppearanceSettings? HeaderAppearance { get; init; }
-    /// <summary>Gets optional shared horizontal/vertical stroked-chevron size and stroke overrides. Null retains existing glyphs and utility hit targets.</summary>
+    /// <summary>Gets optional shared horizontal/vertical utility and customization-tree stroked-chevron size/stroke overrides. Null retains each surface's glyph defaults and native hit targets.</summary>
     public RibbonChevronSettings? Chevrons { get; init; }
     /// <summary>Gets optional shared tab-content/header-arrival SlideDown travel in logical pixels, 0..1024. Null retains Subtle 8/Expressive 12; zero removes travel. Backstage page travel and Fade remain independent.</summary>
     public int? TabContentSlideDistance { get; init; }

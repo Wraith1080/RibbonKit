@@ -1977,3 +1977,15 @@ RibbonKit.WinForms.RibbonOptionsAppearanceSettings.RowSelectedBackground.get -> 
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.RowSelectedBackground.init -> void
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.RowHeadingBold.get -> bool?
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.RowHeadingBold.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeCornerRadius.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeSelectedBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeSelectedBackground.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeCheckSize.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeCheckSize.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeIconSize.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeIconSize.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeIconTextGap.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeIconTextGap.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeFocusInset.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeFocusInset.init -> void

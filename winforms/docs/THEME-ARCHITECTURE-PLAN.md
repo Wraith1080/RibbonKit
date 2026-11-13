@@ -1,6 +1,6 @@
 # Native WinForms theme architecture
 
-**B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6 and D7a–D7d implemented; latest delivery 2026-11-13.** Backstage uses one registration
+**B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6 and D7a–D7e implemented; latest delivery 2026-11-13.** Backstage uses one registration
 for sibling layout/drawing helpers, explicit defaults, measured layout inputs and
 caption/motion profiles. Headers register sibling Filled/Underline drawing with
 explicit geometry defaults and adjustable effects. C2 resolves body/connected
@@ -32,12 +32,15 @@ actual renderer hooks, handles/parent, draft and choice staging retain their own
 D7d shares command-list row paint and icon/text metrics with adjustable content,
 selection and Simplified heading weight. Native row geometry, direct text/focus,
 borrowed artwork and draft ownership remain; tree/icon-picker decoration stays separate.
+D7e shares tree state/content/glyph paint and resolved decoration slots. Tree
+appearance members and existing shared Chevrons expose fixed effects while native
+targets/text/indent/scrolling, actual checkbox hooks and node/draft ownership remain.
 The earlier-slice review found adjustability gaps. A00–A04 fill routing/motion
 and A06–A09 decoration/spacing plus A11–A17 header/shared/tip overrides are implemented;
 track the separate caption/layout candidates in the
 [source audit and correction order](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 Current evidence and user review are recorded in the
-[themes plan](THEMES-PLAN.md#customization-command-list-rows-d7d--2026-11-13).
+[themes plan](THEMES-PLAN.md#customization-tree-decoration-d7e--2026-11-13).
 
 The [themes plan](THEMES-PLAN.md) retains appearance requirements and acceptance.
 This document proposes implementation boundaries and a migration sequence; it
@@ -287,7 +290,8 @@ automated evidence or visual acceptance. Implement the following separately.
 | D7b. Options buttons and heading typography — implemented | Shared native button recipe and heading font/padding metrics; OptionsAppearance extensions reuse corners/state palettes and preserve scoped native fallback, direct image/text/focus, native button/default-cancel ownership and existing heading layout lifecycle. | 23 distinct relevant passing cases, 16 exact native default PNG/geometry pairs and four package scopes plus new-tab checks are recorded in the [D7b record](THEMES-PLAN.md#options-buttons-and-heading-typography-d7b--2026-11-13). |
 | D7c. Options frames and choice presentation — implemented | Shared frame drawing and native search/closed-choice text metrics. OptionsAppearance adds radius/stroke/ink; real native clearance and search/name height consume authored outlines. Existing editor text/field/choice roles, actual renderer hooks and native controls/drafts retain their owners. | 28 distinct latest relevant passing cases, 32 exact native default PNG/geometry/region/text-slot pairs and four package scopes plus tab checks are recorded in the [D7c record](THEMES-PLAN.md#options-frames-and-choice-presentation-d7c--2026-11-13). |
 | D7d. Customization command-list rows — implemented | Shared QAT/Classic/Simplified list drawing and icon/text metrics; adjustable row content, selection fill/corners and Simplified header weight. Direct native text/focus, borrowed artwork, native row targets/height and isolated drafts retain their owners. | 24 relevant passing cases, 16 exact native default PNG/geometry/icon-slot pairs and four package scopes plus new-tab checks are recorded in the [D7d record](THEMES-PLAN.md#customization-command-list-rows-d7d--2026-11-13). |
-| D. Remaining surfaces, one per slice | D7e: source-review customization tree state/content/glyph decoration and shared measurements, then select one bounded extraction. Icon-picker tiles retain a separate scope. Reuse existing fills/ink/image/indicator/chevron/focus roles before adding adjustable effects. | Preserve actual renderer/direct-native hooks, native targets/scrolling/expansion/check state, handles, selection, validation and dialog drafts. Select only changed paint/geometry/state/ownership checks and an unchanged-default comparison; inert candidate-theme checks only when affected. Choose exact filters after source review. |
+| D7e. Customization tree decoration — implemented | Shared tree drawing and pure decoration slots; adjustable tree selection/check/icon/gap/focus and existing shared Chevrons. Native expand/check/text targets, indentation/scrolling, direct native text/focus style, actual checkbox hooks, nodes and drafts retain their owners. | 28 distinct latest relevant passing cases, 16 exact native default PNG/geometry/hook pairs and four package scopes plus tab checks are recorded in the [D7e record](THEMES-PLAN.md#customization-tree-decoration-d7e--2026-11-13). Initial fixture/buffer retry evidence is separate from a clean aggregate. |
+| D. Remaining surfaces, one per slice | D7f: source-review group icon-picker tile selection/content, artwork sizing and None-label presentation, then select one bounded extraction. Reuse existing fills/ink/image/radius/focus roles before adding adjustable effects. | Preserve borrowed artwork, native ListView items/handles/selection/scrolling, group-name/layout validation and draft OK/Cancel. Select only changed paint/geometry/state/ownership checks and an unchanged-default comparison; inert candidate-theme checks only when affected. Choose exact filters after source review. |
 | E. Selected catalog growth | Add one later chosen light definition, reusing surface registrations or adding an actually needed sibling. Risk: selection/Reset/serialization/persistence and unsupported consumer dependencies. | Definition/selection tests, relevant designer/generated-code checks, and a focused independent-consumer visual/state scope. Wait for existing appearance review before another theme. |
 
 For each implementation slice, build affected native projects in their normal
@@ -335,8 +339,8 @@ Completion criteria:
   authored Forms/resources change. Review the diff and record focused results
   and remaining human appearance/input gates in the themes plan.
 
-B2/B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6 and D7a–D7d were delivered as separate slices.
-D7e customization tree decoration is next proposed for source review;
+B2/B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6 and D7a–D7e were delivered as separate slices.
+D7f group icon-picker tiles are next proposed for source review;
 the consolidated geometry remains the foundation.
 
 ## Verification and delivery budget

@@ -63,12 +63,26 @@ public sealed record RibbonOptionsAppearanceSettings
     public RibbonFill? RowSelectedBackground { get; init; }
     /// <summary>Gets optional Simplified command-list heading weight. Null retains legacy Bold-only style; true adds Bold to host styles, false removes it while preserving other styles. Choose before opening; existing construction/font/DPI layout owns the font.</summary>
     public bool? RowHeadingBold { get; init; }
+    /// <summary>Gets optional customization-tree selection corner radius in logical pixels, 0..64. Null retains square selection. Native row/check/expand targets and scrolling remain unchanged.</summary>
+    public int? TreeCornerRadius { get; init; }
+    /// <summary>Gets optional customization-tree selected fill, including alpha/gradients. Null retains solid Checked.Start. Authored selection paint composites over Surface; Transparent hides it. Command-list selection remains independent.</summary>
+    public RibbonFill? TreeSelectedBackground { get; init; }
+    /// <summary>Gets optional customization-tree checkbox size in logical pixels, 0..64. Null retains Compact 18 / Touch 24 and existing slot clearance. Authored sizes clamp within the existing native check slot and row; zero hides paint while retaining the check target and actual indicator renderer hook.</summary>
+    public int? TreeCheckSize { get; init; }
+    /// <summary>Gets optional customization-tree icon size in logical pixels, 0..256. Null retains 16. Authored size/gap fits within the existing icon reservation and row without moving native text or hit targets; zero hides borrowed artwork.</summary>
+    public int? TreeIconSize { get; init; }
+    /// <summary>Gets optional customization-tree icon-to-text paint gap in logical pixels, 0..1024. Null retains 2. Authored size/gap clamps within the existing reservation to the left of native text; zero removes the gap. Native text bounds, indentation and keyboard targets do not move.</summary>
+    public int? TreeIconTextGap { get; init; }
+    /// <summary>Gets optional customization-tree native focus-rectangle inset in logical pixels, 0..1024. Null retains one device pixel. Authored values clamp inside the existing row. Focus style and cue eligibility remain native.</summary>
+    public int? TreeFocusInset { get; init; }
 
     internal bool HasButtonOverrides(bool accent) => ButtonInset is not null || ButtonBorderWidth is not null || !ButtonBorderColor.IsEmpty || ButtonFocusInset is not null || (accent ? AccentButtonBackground is not null : ButtonBackground is not null);
 
     internal static void Validate(RibbonOptionsAppearanceSettings? a)
     {
         if (a is null) return;
+        if (a.TreeCornerRadius is < 0 or > 64 || a.TreeCheckSize is < 0 or > 64 || a.TreeIconSize is < 0 or > 256 || a.TreeIconTextGap is < 0 or > 1024 || a.TreeFocusInset is < 0 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(a), "Options tree corners/check size must be 0..64, icon size 0..256 and icon gap/focus inset 0..1024 logical pixels, or null for existing presentation.");
         if (a.RowTextPadding is < 0 or > 1024 || a.RowIconTextGap is < 0 or > 1024 || a.RowIconSize is < 0 or > 256 || a.RowCornerRadius is < 0 or > 64)
             throw new ArgumentOutOfRangeException(nameof(a), "Options row padding/gap must be 0..1024, icon size 0..256 and corners 0..64 logical pixels, or null for existing presentation.");
         if (a.FrameCornerRadius is < 0 or > 64 || a.FrameBorderWidth is < 0 or > 32)

@@ -17,6 +17,7 @@ internal sealed record RibbonHeaderPresentationRegistration(RibbonHeaderRenderer
 
 internal static class RibbonPresentationResolver
 {
+    internal static readonly RibbonOptionsTreeDefaults OptionsTree = new(CompactIndent: 24, TouchIndent: 32, CompactCheckOffset: 22, TouchCheckOffset: 28, IconOffset: 20, IconSize: 16, IconGap: 2, CompactCheck: 18, TouchCheck: 24, CompactChevron: 12, TouchChevron: 16, CompactStroke: 1.6f, TouchStroke: 1.8f, FocusInset: 1);
     internal static readonly RibbonOptionsRowDefaults OptionsRows = new(CommandPadding: 6, SimplifiedPadding: 8, IconSize: 20, SelectionRadius: 0);
     internal static readonly RibbonOptionsFieldDefaults OptionsFields = new(FrameBorder: 1, NativeClearance: 1, SearchInset: 4, SearchDeduction: 8, ChoiceInset: 6);
     internal static readonly RibbonOptionsShellDefaults OptionsShell = new(ButtonInset: 0, ButtonFocusInset: 4, ButtonBorder: 1, AccentBorder: 0, HeadingIncrement: 5, HeadingMinimum: 14, HeadingBottomPadding: 12);

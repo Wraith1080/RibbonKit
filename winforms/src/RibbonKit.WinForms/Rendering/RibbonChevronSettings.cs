@@ -1,15 +1,15 @@
 namespace RibbonKit.WinForms;
 
-/// <summary>Immutable size/stroke overrides for shared stroked horizontal and vertical chevrons. Filled dropdown triangles and the Back arrow remain separate.</summary>
+/// <summary>Immutable size/stroke overrides for shared stroked horizontal/vertical utility and customization-tree chevrons. Filled dropdown triangles and the Back arrow remain separate.</summary>
 public sealed record RibbonChevronSettings
 {
     /// <summary>Initializes overrides that retain existing chevrons.</summary>
     public RibbonChevronSettings() { }
-    /// <summary>Gets optional long-axis size in logical pixels, 0..64. Null uses 10; zero hides the chevron. Existing utility slots still clamp size.</summary>
+    /// <summary>Gets optional long-axis size in logical pixels, 0..64. Null retains ordinary utilities' 10 and tree Compact 12 / Touch 16. Zero hides paint; existing slots and click targets remain.</summary>
     public int? Length { get; init; }
-    /// <summary>Gets optional short-axis size in logical pixels, 0..64. Null uses 6; zero hides the chevron. Click targets remain unchanged.</summary>
+    /// <summary>Gets optional short-axis size in logical pixels, 0..64. Null retains ordinary utilities' 6 and the tree's half-length legacy recipe. Zero hides paint; click targets remain unchanged.</summary>
     public int? Depth { get; init; }
-    /// <summary>Gets optional stroke width in logical pixels, 0..32. Null retains 1.5 with a one-device-pixel minimum; zero hides the chevron. Must be finite.</summary>
+    /// <summary>Gets optional stroke width in logical pixels, 0..32. Null retains ordinary utilities' 1.5 and tree Compact 1.6 / Touch 1.8, with a one-device-pixel minimum. Zero hides paint. Must be finite.</summary>
     public double? StrokeWidth { get; init; }
     internal static void Validate(RibbonChevronSettings? settings)
     {

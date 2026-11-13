@@ -1,24 +1,27 @@
-# Continue native WinForms themes after D7d customization command-list rows
+# Continue native WinForms themes after D7e customization tree decoration
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-13**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7d and adjustability backfills
+Updated **2026-11-13**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7e and adjustability backfills
 A00–A04/A06–A09/A11–A17 are implemented. Current evidence and exact user review
 scope live in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
-The latest implementation is [D7d](THEMES-PLAN.md#customization-command-list-rows-d7d--2026-11-13).
+The latest implementation is [D7e](THEMES-PLAN.md#customization-tree-decoration-d7e--2026-11-13).
 Use the ledger for the exact user appearance review scope and remaining gates.
-The user committed D7c at `1505210` before D7d. Do not overwrite later user commits.
+The user committed D7d at `60654ff` before D7e. Do not overwrite later user commits.
 
 ## Next bounded implementation
 
 Start with `git status --short` and inspect live branch/HEAD; preserve later user
-commits and edits. Follow the current user request. For a continuation, D7e
-**customization tree decoration** is next proposed for source review. Inspect
-state/content/glyph paint and shared geometry; preserve native expansion, scrolling,
-check/selection and keyboard targets. Reuse existing fill/ink/image/indicator/chevron/
-focus roles and select one bounded extraction before editing. Icon-picker tiles
-retain a separate scope. D7d owns QAT/Classic/Simplified command-list rows; preserve
+commits and edits. Follow the current user request. For a continuation, D7f
+**customization group icon-picker tiles** is next proposed for source review.
+Inspect tile selection/content, artwork sizing and the None label. Reuse existing
+fill/ink/image/radius/focus roles and select one bounded extraction before editing.
+Keep native ListView items, handles, selection, scrolling, borrowed artwork,
+group-name/layout validation and draft OK/Cancel with their existing owners.
+D7e owns tree state/content/glyph drawing and decoration metrics; preserve native
+expand/check/text targets, indentation/scrolling and actual checkbox hooks.
+D7d owns QAT/Classic/Simplified command-list rows; preserve
 its direct native text/focus contracts and shared content slots. Extract fixed
 effects into independently adjustable settings with matching measurement.
 D7c owns field/list wrapper paint and native clearance plus
@@ -59,7 +62,8 @@ Tab 7 now also has **Try tips and badges / Tip presentation** (six total groups)
 **Try Options dialogs / Options navigation** brings tab 7 to eight groups. Tab 8
 has **Try Options shell / Options buttons / Options headings / Try frames and choices /
 Options frames and text**, five total groups. Tab 9 has **Try command rows /
-Command row content / Command row selection**, three total groups. Keep tab 7/8's
+Command row content / Command row selection / Try customization tree / Tree glyphs /
+Tree selection and focus**, six total groups. Keep tab 7/8's
 accepted groups in place; do not infer fullness from reduction.
 The File preview uses existing authored models and restores the prior File mode.
 Its divider-visibility button uses the existing independent flag (2019 defaults
@@ -231,6 +235,20 @@ when needed. Do not move old groups or infer fullness from reduction.
   resets preserve earlier frames/buttons/navigation and each other. Tree/icon-picker
   targets/slots/decorations are separate. Reuse 16 exact native default row PNG/
   geometry/icon-slot pairs, 24 passing relevant cases and four package scopes unless affected.
+- D7e retains shared tree painting and pure decoration slots. Six OptionsAppearance
+  tree members control selection corners/fill, check/icon sizes, icon gap and native
+  focus inset; shared Chevrons controls expander length/depth/stroke. Null keeps
+  square solid Checked.Start selection, checks 18/24, icon 16/gap 2, one-device-pixel
+  focus inset and expander lengths 12/16 with legacy half-depth/strokes 1.6/1.8.
+  Authored paint fits existing slots; zero hides check/icon/chevron paint while
+  native targets/Space/expansion/scrolling remain. Visible checks use the actual
+  indicator hook/context; native text/disabled ink and focus cue policy remain.
+  Tree glyph/selection/shared-chevron resets retain each other and earlier roles.
+  Reuse 16 exact native default PNG/geometry/hook pairs, 28 distinct latest passing
+  cases and four package scopes unless affected. Initial fixture corrections and
+  the separately passing native buffer case are recorded in D7e; do not describe
+  that evidence as a clean initial aggregate. Initialize native visual-style
+  fixtures before creating controls; do not change runtime behavior to satisfy probes.
 - Existing Theme assignment closes ordinary menus through `ModelChanged`;
   retained models reopen normally. Do not change lifecycle to satisfy a probe.
 - A05 caption tint, A10 preferred page minimum and the reported
