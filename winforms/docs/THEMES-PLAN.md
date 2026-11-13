@@ -354,18 +354,19 @@ Backstage. Stop for this review before another theme.
 | Item | Status |
 | --- | --- |
 | Direction | **2026-11-10: user selected Office 2019 first and light themes before dark.** |
-| Planning | B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7f and audit corrections A00–A04/A06–A09/A11–A17 are implemented. Next proposed is D8 caption/title appearance: source-review A05 tint settings and the deferred Backstage closing-title ink/clip issue. A10 page-layout preference remains separate. Later family order is provisional. |
-| Earlier-slice adjustability audit | **2026-11-11: A11–A16 header/shared effects implemented and verified.** Evidence is in the [header/shared record](#header-and-shared-effect-overrides--2026-11-11). **2026-11-12: A17 badge placement followed in D6.** The [audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) retains A05/A10 as separate candidates. |
-| Runtime/API/rendering | D7f square follow-up fixes label-dependent icon-picker highlights. None and artwork now use one square native icon cell, selection/focus rectangle and content clearance. Artwork size resizes both cells; inset constrains both. Existing items/handles/selection/names/tooltips/scrolling and group validation/OK/Cancel remain. D8 caption/title is next after review. |
-| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; package `0.1.0-designer.local20261113T034156273Z` refreshes the permanent sample. Theme effects 10 retains its three picker groups; Smaller/Larger picker tiles now demonstrates the shared sizing. Tabs 1–9 retain seven/five/four/seven/six/three/eight/five/six groups. Authored Forms/UserControls/resources/project files remain intact. |
-| Focused Release verification | Square follow-up: **20 distinct latest relevant cases pass**, combining the initial 14 passing cases with six corrected native cases. Coverage includes shared None/artwork pixels, size/inset/extreme clamps, four-DPI paint/metrics, 9/14-point native grids, wrapping/scrolling/queued clicks, in-process accessible names, handles/items/selection and group OK/Cancel. Fixture corrections and the interrupted synchronous-click probe are in the [follow-up](#group-icon-picker-square-geometry-follow-up--2026-11-13). No broad suite ran. |
-| Two-family paint/geometry | The square correction intentionally changes D7f default geometry; its original 16 byte comparisons remain historical. Emulated paint/metrics cover 96/120/144/192 DPI; native font/grid/hit/name tests run at 96 DPI and package scopes at actual 120 DPI. Matched None/artwork captures at small/large sizes and multiple insets were inspected in both light themes. No physical mixed-monitor matrix ran. |
-| Composed native package verification | Square follow-up: **4/4 public-package scopes plus review-tab checks pass**, both light families with None/Mica owners at actual 120 DPI, each Classic/Simplified x Compact/Touch. Actual None/artwork selections remain square and adapt at sizes 16/48 and insets 0/4; native targets, metadata, deduplication, ownership, reset independence, validation and draft OK/Cancel pass. These are offscreen checks; live/native acceptance remains separate. |
+| Planning | B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7f and D8a are implemented, including audit corrections A00–A09/A11–A17. D8a covers A05 caption tint and the deferred title-ink issue. Next proposed is D8b caption-button decoration; A10 page-layout preference remains separate. Later family order is provisional. |
+| Earlier-slice adjustability audit | A00–A09/A11–A17 are implemented; A05 followed in [D8a](#caption-tint-and-title-ink-d8a--2026-11-13). The [audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) retains A10 as a separate page-layout preference. |
+| Runtime/API/rendering | D8a adds separate-caption tint settings and frame-matched opaque title contrast. Its closing follow-up uses identical grayscale glyph coverage in temporary/settled captions and paints the normal caption before retiring the foreground HWND. Clipping, title geometry and pane/title clocks remain. Caption-button recipes remain for D8b source review. |
+| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; the current local package is recorded in the D8a evidence below. Theme effects 10 has five groups: three retained picker groups plus Backstage caption tint and Try caption and title. Tabs 1–9 retain seven/five/four/seven/six/three/eight/five/six groups. Authored Forms/UserControls/resources/project files remain intact. |
+| Focused Release verification | Closing follow-up: **50 distinct latest relevant cases pass** across title raster, ordered native handback, repeated closes, title QAT, tint/contrast/clip and caption-button/appearance/motion regression scopes. The record separates raster reproduction and the corrected offscreen WM_PAINT fixture from current passing evidence. Earlier D8a evidence is retained; no broad suite ran. |
+| Two-family paint/geometry | D8a's initial 16 stationary pairs were exact before the closing follow-up. The follow-up intentionally changes solid caption-title smoothing to match its temporary plane; old title pixels are historical. Active/inactive temporary-versus-settled glyph comparisons are now pixel-exact at 96 DPI; default/empty settings still match across 16 states. Geometry and palette retain existing values. Public-package checks run at actual 120 DPI. |
+| Composed native package verification | Closing follow-up: **4/4 public-package scopes plus review-tab checks pass**, both light families with None/Mica owners at actual 120 DPI, each Classic/Simplified x Compact/Touch. Eight full-height handbacks observe owner paint before native layer destruction; opening/close/reversal retain native state. Foreground screen captures require an owner-foreground check; rejected or skipped captures do not establish visible flicker acceptance. |
 | Backstage review correction | **2026-11-11: navbar blank-frame and left rounded-corner black-bar fixes implemented and verified; user review pending.** Current focused/package evidence is in the [page-motion follow-up](BACKSTAGE-PAGE-MOTION.md#navbar-blank-frame-and-rounded-edge-follow-up--2026-11-11). |
-| Deferred title review issue | **2026-11-11: user reported title-text flicker while closing Backstage and allowed deferral to title theming work.** Their `20261111-0345-01.1714250.mp4` confirms the Office 2019 close at approximately **7.03–7.37 s**: the title moves left, its leading text becomes pale/white over the lightening caption, then dark ink returns. Native-rate frames and timestamps are retained under `artifacts/backstage-title-flicker/recording/`. Caption foreground contrast/clip handoff as the navigation fades is the source-inspection lead, not a verified root cause. Preserve opaque, legible title ink throughout closing when addressing it. No title runtime change or new build/test was made for this recording review; the page/corner correction does not address it. |
+| Title review issue | **2026-11-13: user reported residual flicker at the end of the second close in `20261113-0700-27.3562520.mp4`.** Native frames show a grayscale-to-ClearType text-rendering switch around 2.17–2.20 s. The follow-up unifies title rendering and publishes normal caption paint before layer retirement. The earlier pale-navigation contrast correction remains. Current visible flicker/frame-pacing acceptance is pending user review. |
 | Broader Release suite | Initial implementation: 1,485 passed / 6 failed / 1,491 total (historical evidence above). Correction run **stopped at the user's request**, 1,089 passed / 3 failed / 1,092 executed; incomplete, no full-suite result claimed. Do not restart it. |
-| User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; D1a/D1b review controls remain on Theme effects 3. **2026-11-12: user reported D1b looks good and authorized continuation to native editor appearance.** D1a review remains at its earlier recorded scope. The user requested a new review tab for D1c; use Theme effects 4 and preserve tabs 1–3. **2026-11-12: user reported D2 works perfectly and authorized continuation to ordinary menu decoration.** **2026-11-12: user reported D3 looks good and authorized Application Menu continuation, with new review controls on Theme effects 5.** **2026-11-12: user reported D4a Application Menu state effects look good on Theme effects 5.** **2026-11-12: user confirmed every D4b surface/heading option works and authorized continuation.** **2026-11-12: user reported D4c looks good and everything works, authorized gallery continuation and requested its controls on a new Theme effects 6 tab.** **2026-11-12: user reported everything works for D5a and authorized continuation; then declared tab 6 full and requested D5b controls on a new tab. D5b controls remain on Theme effects 7.** **2026-11-12: user reported everything checks out for D5b and authorized continuation to D6. D6 controls remain on Theme effects 7.** **2026-11-12: user reported everything works well for D6 and authorized continuation. D7a controls remain on Theme effects 7.** **2026-11-12: user confirmed all D7a options work, including combined use, authorized continuation and requested D7b on a new tab.** **2026-11-13: user reported D7b works perfectly and authorized continuation.** **2026-11-13: user confirmed everything works for D7c, authorized continuation and requested the next controls on a new Theme effects 9 tab.** **2026-11-13: user confirmed everything works for D7d and authorized continuation.** **2026-11-13: user confirmed everything works for D7e, authorized continuation and requested the next controls on a new Theme effects 10 tab.** **2026-11-13: user reported mismatched None/artwork selection shapes and requested shared square geometry that follows inset/size changes. The correction is implemented and awaits review on Theme effects 10.** Actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
+| User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; D1a/D1b review controls remain on Theme effects 3. **2026-11-12: user reported D1b looks good and authorized continuation to native editor appearance.** D1a review remains at its earlier recorded scope. The user requested a new review tab for D1c; use Theme effects 4 and preserve tabs 1–3. **2026-11-12: user reported D2 works perfectly and authorized continuation to ordinary menu decoration.** **2026-11-12: user reported D3 looks good and authorized Application Menu continuation, with new review controls on Theme effects 5.** **2026-11-12: user reported D4a Application Menu state effects look good on Theme effects 5.** **2026-11-12: user confirmed every D4b surface/heading option works and authorized continuation.** **2026-11-12: user reported D4c looks good and everything works, authorized gallery continuation and requested its controls on a new Theme effects 6 tab.** **2026-11-12: user reported everything works for D5a and authorized continuation; then declared tab 6 full and requested D5b controls on a new tab. D5b controls remain on Theme effects 7.** **2026-11-12: user reported everything checks out for D5b and authorized continuation to D6. D6 controls remain on Theme effects 7.** **2026-11-12: user reported everything works well for D6 and authorized continuation. D7a controls remain on Theme effects 7.** **2026-11-12: user confirmed all D7a options work, including combined use, authorized continuation and requested D7b on a new tab.** **2026-11-13: user reported D7b works perfectly and authorized continuation.** **2026-11-13: user confirmed everything works for D7c, authorized continuation and requested the next controls on a new Theme effects 9 tab.** **2026-11-13: user confirmed everything works for D7d and authorized continuation.** **2026-11-13: user confirmed everything works for D7e, authorized continuation and requested the next controls on a new Theme effects 10 tab.** **2026-11-13: user reported mismatched None/artwork selection shapes and requested shared square geometry that follows inset/size changes. 2026-11-13: user confirmed the shared square/None adaptation looks good and authorized continuation to D8.** Actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
 | Actual VS/physical input/mixed-monitor | Not run for themes; report separately. |
+| D8a live review | Awaiting user review of the closing handoff follow-up, tint presets/Reset and title readability on Theme effects 10. Automated glyph/clip/handback checks are separate from visible flicker and pacing acceptance. |
 
 Record later evidence and confirmation here once, with date/revision/scope,
 artifact locations and limits. Keep [NEXT-SLICE-PROMPT](NEXT-SLICE-PROMPT.md) a
@@ -1603,7 +1604,7 @@ Relevant evidence is under `artifacts/popup-appearance-d2/`:
   choice/tip clearance, retained editor state, work-area clamps, atomic validation,
   immutable reset and frame/shadow replacement hooks. Nineteen existing cases
   cover popup HWND creation, choice mouse/keyboard focus, frame/clearance geometry,
-  passive tips and gallery/menu motion. With the default case, **34 distinct
+  passive tips and gallery/menu motion. With the default case, **47 distinct
   relevant cases passed**; no broad suite was rerun.
 - `package-final2/result.log`: **4/4 public-package scopes**, Office 2019/2024 Light
   x None/Mica, actual 120 DPI, each Classic/Simplified x Compact/Touch. Actual
@@ -2790,5 +2791,148 @@ Evidence under `artifacts/options-picker-square/`:
   tab 9 and earlier accepted groups remain. No WPF, full suite or physical DPI/
   IME/external-UIA/actual-VS gates ran. No authored Forms/resources/project files changed.
 
-User review of the requested square/None adaptation correction is pending. Finish
-that review before proceeding to the proposed D8 caption/title work.
+The current review scope is recorded once in the review ledger above.
+
+## Caption tint and title ink (D8a) — 2026-11-13
+
+Baseline `513a755` contains the user's D7f commit and square-picker correction.
+Source review bounded D8's first slice to A05 tint and the deferred title ink
+handoff. Caption-button fill/glyph recipes remain a separate proposed D8b;
+A10 page-width preference and new theme families remain outside this change.
+
+`RibbonBackstageAppearanceSettings` adds nullable `CaptionTintEnabled`,
+`CaptionTintColor` (Empty/alpha/Transparent) and finite 0..1
+`CaptionTintOpacity`. Family registration still supplies eligibility; Empty
+follows navigation color, null strength uses 1. Existing pane/material coverage
+is rounded as before, then multiplied by authored color alpha and strength.
+False/zero/Transparent suppress paint without changing pane geometry or clocks.
+Full-height pane ownership and authored Form/theme caption colors retain
+precedence. These members reset independently of navigation decoration and
+`RibbonForm.TitleBarTintOpacity`; validation occurs before Theme/BuiltInTheme
+mutation. XML docs and the unshipped API baseline include all additions.
+
+The recorded Office 2019 close was reproduced in the actual transparent caption
+plane: at late closing progress its leading title glyphs remained opaque white
+over the lightened navigation. `RibbonForm` now compares navigation and normal
+caption inks against the same frame's pane/navigation coverage, retaining the
+preferred ink while readable and using the existing alternate when it has better
+contrast. Separate-caption custom tint also selects readable ink, with
+`TitleBarForeground` retaining authored precedence. Material contrast estimates
+use the theme backing, as the existing ordinary colored-caption path does;
+desktop pixels are not sampled. Glyph alpha, region clipping, title bounds,
+caption plane lifetime, pane/title clocks, title travel and native page owners
+are unchanged. This reproduces a paint cause; it does not establish that every
+visible timing symptom in the recording has been eliminated.
+
+Evidence under `artifacts/d8-caption/` and the focused test project's TestResults:
+
+- `before/`, `after/`, `stable-comparison.txt`: **16 pixel-exact stationary
+  before/after pairs**, both light families x solid/composited buffer x
+  neutral/authored Form color x closed/open. Null versus empty settings also
+  compares exact pixels. No baseline approval or tolerance was changed.
+- `d8-before.trx` reproduces white ink over the pale closing navigation.
+  `d8-ink.trx`, `d8-settings.trx`, `d8-ownership.trx`, `d8-frames.trx` and
+  `d8-caption-regressions.trx` combine
+  to **47 distinct latest passing cases**; `latest-passing-scopes.txt` lists
+  them. The original single closing fact was replaced by six active/inactive
+  solid/Mica/Acrylic cases. Retained caption motion/tint/precedence and native
+  ownership cases were reused, including caption-button material/restore and
+  authored caption color/contrast regression checks. The first post-fix assertion assumed active
+  ink in an inactive host; the corrected assertion uses its actual inactive
+  palette. Two reset assertions initially ignored retained material navigation
+  opacity; only their fixture expectations changed. These are combined focused
+  results, not a clean initial aggregate or a full suite.
+- `frames/`: five actual transparent title-plane close frames at 96 DPI assert
+  each opaque glyph segment uses its own clipped region's ink and leaves no
+  white page-side residue. Estimated-underlay images are diagnostics, not screen
+  captures. Representative early/late closing frames were inspected.
+- `package/result.log`: **4/4 public-package scopes**, both light families with
+  None/Mica owners at actual 120 DPI, each Classic/Simplified x Compact/Touch.
+  Real timer opening, closing and reversal retain HWND/parent/value/selection.
+  Public tint alpha/strength/disable painting, authored Form precedence, atomic
+  validation and independent Reset pass. Direct solid print checks pixels;
+  offscreen material print does not establish DWM composition or transparent
+  caption-plane presentation. No internal runtime diagnostic API was added.
+- Normal Debug runtime/designer server/client/sample builds finish with zero
+  warnings/errors; Release runtime/tests build cleanly. The package fixture's
+  initial build incorrectly assumed separate public title duration/caption-height
+  accessors; it now uses the existing coupled PaneDuration and public native
+  surface geometry. Package `0.1.0-designer.local20261113T065408429Z` refreshes
+  the permanent sample in place. Runtime payload matches the package exercised
+  by the passing probe; no repeated package matrix was required.
+- Theme effects 10 has five groups: its three picker groups plus **Backstage
+  caption tint / Try caption and title**. Presets support eligibility, opaque/
+  alpha color, strength, hide, independent Reset, structure/ink and opening the
+  existing Backstage. The latter restores File mode after close/cancellation.
+  Review controls/idempotence and earlier group counts pass. Representative tab
+  and custom-tint prints were inspected. Authored Forms/UserControls/resources/
+  project files remain intact.
+
+No WPF, broad suite, actual VS, physical input/IME, mixed-monitor, desktop material
+pixel or visible pacing gates ran. Next proposed is source review of D8b's
+remaining caption-button state fills and glyph metrics/stroke; preserve window
+targets, hit testing, activation, resize/maximize and existing native integration.
+
+## Closing caption handoff follow-up — 2026-11-13
+
+The user's `20261113-0700-27.3562520.mp4` is 8.40 s at 30 fps, 1030x706.
+Native title crops under `artifacts/d8-caption/close-handoff/recording/` retain
+the second closing endpoint: frames 066/067 (about 2.17/2.20 s) change from
+grayscale to colored subpixel text. Full-resolution inspection shows the title
+remains present. The reduced contact sheet initially suggested a blank title;
+that interpretation was corrected after checking individual frames and ink counts.
+
+Two bounded corrections retain the existing motion policies/durations, title
+rectangles, clipping, native pages and public settings:
+
+- Solid caption titles now use the same alpha-preserving grayscale DIB text
+  recipe as the temporary caption plane. A reusable title-sized buffer is
+  disposed with RibbonForm. The stationary title's smoothing intentionally
+  changes; D8a's original stationary byte comparisons are historical for these
+  pixels. Active/inactive temporary-versus-settled title pixels now match exactly.
+- Caption retirement detaches its managed slot, synchronously paints the
+  ordinary caption while the old native foreground HWND still exists, and then
+  disposes that HWND in finally. The closed surface is hidden before handback
+  so it cannot occlude the replacement. Detaching before paint accommodates
+  reentrant repaint/teardown without clearing a replacement plane. No timer,
+  post-close delay, new public API or change to pane/title clock ownership was added.
+
+Evidence under `artifacts/d8-caption/close-handoff/`:
+
+- `tests/d8-title-raster-before.trx` reproduces both active/inactive pixel
+  mismatches; `d8-title-raster-fixed.trx` passes **2/2** exact glyph comparisons.
+- `tests/d8-handoff-visible.trx` and the final focused run pass **8/8** ordered
+  handback cases: either clock finishing first, TitleBar/BelowRibbon QAT and
+  solid/Mica. Each repeats three closes, retaining page HWND/parent/value and
+  authored QAT placement. Native IsWindow observation confirms owner paint
+  occurs before retirement, without pumping pending paint after destruction.
+  Initial offscreen fixtures failed because Windows does not guarantee ordinary
+  WM_PAINT for an offscreen window; their results are retained as fixture failures.
+  The fixture was moved to an ordinary on-screen location, without changing
+  runtime timing to satisfy the probe.
+- `tests/d8-handoff-final-regressions.trx` passes **41/41** selected cases.
+  Combined with the two exact-raster cases and seven unchanged motion/background
+  cases from `d8-handoff-regressions.trx`, **50 distinct latest relevant cases
+  pass**; `latest-passing-scopes.txt` lists them. Default/empty settings still
+  match across 16 stationary states, and contrast/clip/tint, caption-color,
+  material/restore-button and title movement cases pass. No full suite ran.
+- `package-guarded/result.log` passes **four public-package scopes** at actual
+  120 DPI: both light families, None/Mica owners and Classic/Simplified x
+  Compact/Touch. Real timer opening/closing/reversal retain native state; eight
+  full-height handbacks observe ordinary owner paint before foreground HWND
+  destruction. Review controls retain their existing five groups on tab 10.
+  Representative native direct-print output was inspected.
+- The first package probe's screen images showed another foreground application
+  and are explicitly rejected in `package/SCREEN-CAPTURES-REJECTED.txt`.
+  The corrected fixture captures the desktop only when its owner is foreground;
+  all **16 screen captures were skipped** in the guarded run. Native owner-paint
+  observations pass, but they do not establish continuous visible flicker/pacing
+  acceptance. No foreground takeover or runtime activation workaround was added.
+- Normal Debug runtime/designer server/client/sample and Release runtime/tests
+  build without warnings/errors. The permanent sample is refreshed with package
+  `0.1.0-designer.local20261113T071430954Z`. Authored Forms/UserControls/resources/
+  project files and earlier review tabs remain intact. No WPF, actual VS, physical
+  input/IME or mixed-monitor gates ran.
+
+Current user review is recorded only in the ledger above. Keep this correction
+as D8a follow-up; D8b caption-button decoration remains the next proposed slice.

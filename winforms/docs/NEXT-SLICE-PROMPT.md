@@ -1,32 +1,35 @@
-# Continue native WinForms themes after D7f group icon-picker tiles
+# Continue native WinForms themes after D8a caption tint/title ink
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-13**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7f and adjustability backfills
-A00–A04/A06–A09/A11–A17 are implemented. Current evidence and exact user review
+Updated **2026-11-13**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7f, D8a and adjustability backfills
+A00–A09/A11–A17 are implemented. Current evidence and exact user review
 scope live in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
-The latest implementation is [D7f](THEMES-PLAN.md#group-icon-picker-tiles-d7f--2026-11-13).
+The latest implementation is [D8a](THEMES-PLAN.md#caption-tint-and-title-ink-d8a--2026-11-13).
+Its [closing handoff follow-up](THEMES-PLAN.md#closing-caption-handoff-follow-up--2026-11-13)
+unifies temporary/settled title glyph rendering and paints the normal caption
+before foreground HWND retirement. Check its current review status in the ledger.
 Use the ledger for the exact user appearance review scope and remaining gates.
-D7f has a square-geometry follow-up awaiting review: None and artwork now share
-square native icon cells and adapt together to artwork size and selection inset.
-Finish that requested correction before starting D8.
-The user committed D7e at `7f06db8` before D7f. Do not overwrite later user commits.
+D7f's square geometry is retained; current review scope is recorded in the ledger.
+The user committed D7f and its square correction at `513a755` before D8a.
+Do not overwrite later user commits.
 
 ## Next bounded implementation
 
 Start with `git status --short` and inspect live branch/HEAD; preserve later user
-commits and edits. Follow the current user request. For a continuation, **D8
-caption/title appearance** is next proposed for source review. Inspect A05
-separate-caption tint eligibility/color/strength, current caption paint/contrast/
-clip handoff and the recorded Backstage closing-title ink flicker before choosing
-a bounded contract. Read the caption policy, window adapter and RibbonForm.Title
-owners plus the ledger's recording/timestamps. Preserve Office 2024's animated
-neutral tint, explicit Form/theme caption precedence, full-height Office 2019 panes,
-opaque title ink, captured motion profiles and existing pane/title clocks. Do not
-claim a root cause or live timing acceptance from static paint alone. Add adjustable
-effects with null defaults and independent resets; no new theme family or broad
-window/animation rewrite. A10 preferred page minimum remains separate.
+commits and edits. Follow the current user request. For a continuation, **D8b
+caption-button decoration** is next proposed for source review. Inspect the fixed
+hover/pressed/close fill and vector size/stroke/restore-offset recipes in
+RibbonForm.PaintCaption and the existing caption-button solid/backdrop tests.
+Define the bounded immutable settings and shared drawing contract before editing.
+Reuse existing theme palette roles when sufficient; expose extracted fixed effects
+with nullable/Empty defaults and independent Reset. Preserve targets, hit testing,
+window actions, active/inactive ink, caption-color precedence and native integration.
+Keep D8a's frame-matched readable opaque title ink, Office 2024 moving neutral tint,
+full-height Office 2019 panes, clipping and captured pane/title clocks intact.
+No new theme family or broad window/animation rewrite. A10 preferred page minimum
+remains separate. Visible title flicker/pacing acceptance is recorded only in the ledger.
 D7f owns group icon-picker tile drawing/metrics. Keep native ListView items,
 handles, selection, cell spacing, scrolling, borrowed artwork, validation and draft
 OK/Cancel with their existing owners.
@@ -75,7 +78,8 @@ has **Try Options shell / Options buttons / Options headings / Try frames and ch
 Options frames and text**, five total groups. Tab 9 has **Try command rows /
 Command row content / Command row selection / Try customization tree / Tree glyphs /
 Tree selection and focus**, six total groups. Tab 10 has **Try group icon picker /
-Icon picker selection / Icon picker content**, three total groups. Keep tab 7/8/9's
+Icon picker selection / Icon picker content / Backstage caption tint / Try caption and title**,
+five total groups. Keep tab 7/8/9's
 accepted groups in place; do not infer fullness from reduction.
 The File preview uses existing authored models and restores the prior File mode.
 Its divider-visibility button uses the existing independent flag (2019 defaults
@@ -276,8 +280,21 @@ when needed. Do not move old groups or infer fullness from reduction.
   native drag detection. Do not change runtime input behavior to satisfy probes.
 - Existing Theme assignment closes ordinary menus through `ModelChanged`;
   retained models reopen normally. Do not change lifecycle to satisfy a probe.
-- A05 caption tint and the Backstage closing-title ink flicker are proposed for
-  D8 source review, with recording/timestamps in the ledger. A10 preferred page
+- D8a implements A05 `CaptionTintEnabled`/`CaptionTintColor`/`CaptionTintOpacity`
+  in BackstageAppearance. Preserve Form/theme caption-color precedence and
+  full-height pane ownership; alpha/zero/Transparent and independent Reset remain.
+  Closing ink uses the same frame's fade coverage without fading glyphs or
+  changing clips/clocks. Reuse the handoff follow-up's 50 latest passing focused
+  cases, exact active/inactive title coverage, ordered/repeated handback checks
+  and four package scopes unless affected. Original stationary byte comparisons
+  are historical for solid title smoothing, which intentionally matches the plane
+  now. Keep native owners painted before layer disposal and detach its slot before
+  synchronous repaint for safe reentry. The record distinguishes fixture failures from
+  latest passing scopes, actual transparent-plane frames from estimated underlays,
+  and native timer/owner-paint checks from visible/DWM/physical acceptance.
+  Reject screen captures unless the owner is confirmed foreground; all 16 screen
+  samples were skipped in the latest guarded run. Do not infer visible acceptance.
+- D8b caption-button decoration is proposed next. A10 preferred page
   minimum remains separate. No new theme family now;
   later light-theme order is unscheduled and dark themes stay deferred.
 

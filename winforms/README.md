@@ -323,7 +323,7 @@ the established generic backdrop fallback in that path; full-width and Solid
 defaults are unchanged.
 
 `Theme.BackstageAppearance` accepts an immutable
-`RibbonBackstageAppearanceSettings` group for navigation decoration. Every
+`RibbonBackstageAppearanceSettings` group for navigation decoration and separate-caption tint. Every
 nullable member resets independently; null retains the existing appearance:
 
 | Members | Default and behavior |
@@ -335,6 +335,21 @@ nullable member resets independently; null retains the existing appearance:
 | `BackGlyphScale` | 1, accepting finite 0..8; zero hides the arrow. Scales the vector's 5/6-pixel extents with their original separate DPI rounding, independently of circle/target size. |
 | `NavigationCornerRadius` | Full-width rows are square; inset rows use the active renderer's chrome. An authored 0..64 logical pixels controls the state shape independently of width coverage. |
 | `NavigationBorderColor`, `NavigationBorderWidth` | Empty/transparent, with no border. Authored color supports alpha; width accepts 0..32 logical pixels. Null width uses one device pixel when ink is authored. Zero width or transparent ink hides the outline. |
+| `CaptionTintEnabled` | Null retains Modern's neutral separate-caption tint and Classic's opt-out. True/false independently enables/disables it. Full-height panes and authored Form/theme caption colors retain precedence. |
+| `CaptionTintColor` | Empty follows the navigation color with existing coverage. Authored alpha multiplies tint coverage; Transparent hides paint. Does not recolor full-height panes. |
+| `CaptionTintOpacity` | Null uses 1; finite 0..1 multiplies pane alpha, material navigation opacity and authored tint alpha. Zero hides paint. Independent of `RibbonForm.TitleBarTintOpacity`, which belongs to authored caption coloring. |
+
+Tint follows the existing moving edge and pane fade. Caption ink uses readable
+contrast over the tint; `TitleBarForeground` supplies an authored separate-caption
+ink. During full-height Backstage closing, the transparent title plane retains
+opaque ink and switches from navigation ink to normal caption ink when fading
+would otherwise leave light text over a light background. Material contrast uses
+the theme backing as an estimate, as ordinary authored caption colors do.
+Pane/title durations, title travel, native pages and window integration retain
+their existing owners. Temporary and settled captions use matching grayscale
+title glyph coverage, and closing paints the normal caption before retiring its
+temporary foreground layer. The optional demo's **Theme effects 10** has **Backstage
+caption tint** presets/reset and **Try caption and title** review controls.
 
 Spacing uses three nullable theme properties, each accepting 0..1024 logical
 pixels: `BackstageRowTextVerticalPadding` defaults to 16 total clearance added to

@@ -5,7 +5,10 @@ namespace RibbonKit.WinForms;
 internal sealed record RibbonBackstageCaptionProfile(bool TintNeutralSeparateCaption)
 {
     internal RibbonBackstageCaptionPolicy Resolve(RibbonTheme theme) => new(
-        theme.BackstageExtendsIntoTitleBar, theme.BackstageTitleCentered, TintNeutralSeparateCaption, theme.BackstageNavigationColor);
+        theme.BackstageExtendsIntoTitleBar, theme.BackstageTitleCentered,
+        theme.BackstageAppearance?.CaptionTintEnabled ?? TintNeutralSeparateCaption,
+        theme.BackstageAppearance is { CaptionTintColor.IsEmpty: false } a ? a.CaptionTintColor : Color.FromArgb(255, theme.BackstageNavigationColor),
+        theme.BackstageAppearance?.CaptionTintOpacity ?? 1);
 }
 
 // The window adapter supplies facts; policy never reads a live ribbon or Form.
@@ -14,14 +17,16 @@ internal readonly record struct RibbonBackstageCaptionState(
     Color NormalColor, int VisibleWidth, int CaptionHeight, byte PaneOpacity, float NavigationOpacity);
 
 internal readonly record struct RibbonBackstageCaptionPolicy(
-    bool ExtendsIntoTitleBar, bool CenterTitle, bool TintNeutralSeparateCaption, Color NavigationColor)
+    bool ExtendsIntoTitleBar, bool CenterTitle, bool TintNeutralSeparateCaption, Color TintColor, double TintOpacity)
 {
     internal RibbonBackstageCaptionFrame Resolve(in RibbonBackstageCaptionState state)
     {
         if (!TintNeutralSeparateCaption || !state.IsOpen || !state.HasWindowCaption || ExtendsIntoTitleBar || state.HasAuthoredCaptionColor)
             return new(state.NormalColor, state.NormalColor, Rectangle.Empty);
+        // Retain the original coverage rounding before applying authored strength.
         int alpha = state.HasBackdrop ? (int)Math.Round(state.PaneOpacity * state.NavigationOpacity) : state.PaneOpacity;
-        return new(state.NormalColor, Color.FromArgb(alpha, NavigationColor), new(0, 0, state.VisibleWidth, state.CaptionHeight));
+        alpha = (int)Math.Round(alpha * TintOpacity * TintColor.A / 255d);
+        return new(state.NormalColor, Color.FromArgb(alpha, TintColor), new(0, 0, state.VisibleWidth, state.CaptionHeight));
     }
 }
 

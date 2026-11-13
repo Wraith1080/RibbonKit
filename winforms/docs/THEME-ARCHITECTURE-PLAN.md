@@ -1,6 +1,6 @@
 # Native WinForms theme architecture
 
-**B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6 and D7a–D7f implemented; latest delivery 2026-11-13.** Backstage uses one registration
+**B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7f and D8a implemented; latest delivery 2026-11-13.** Backstage uses one registration
 for sibling layout/drawing helpers, explicit defaults, measured layout inputs and
 caption/motion profiles. Headers register sibling Filled/Underline drawing with
 explicit geometry defaults and adjustable effects. C2 resolves body/connected
@@ -40,9 +40,13 @@ adjustable shape/outline/fill/artwork/text inset. Its square-geometry follow-up
 resolves one shared cell for None/artwork, including native icon hit rectangles;
 size and inset changes affect both. Native items/selection, borrowed artwork,
 actual radius fallback and group validation/OK/Cancel retain their owners.
+D8a exposes separate-caption tint choices and corrects closing-title contrast
+against frame-matched pane coverage. Its handoff follow-up matches temporary/
+settled glyph rendering and paints the normal caption before layer retirement,
+retaining opaque ink, clipping, title geometry and clocks.
 The earlier-slice review found adjustability gaps. A00–A04 fill routing/motion
-and A06–A09 decoration/spacing plus A11–A17 header/shared/tip overrides are implemented;
-track the separate caption/layout candidates in the
+and A05 caption tint, A06–A09 decoration/spacing plus A11–A17 header/shared/tip overrides are implemented;
+track the separate A10 layout candidate in the
 [source audit and correction order](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 Current evidence and user review are recorded in the
 [themes plan](THEMES-PLAN.md#group-icon-picker-tiles-d7f--2026-11-13).
@@ -189,8 +193,8 @@ Preserve these rules throughout:
    C1 adds selected-tab fill/ink, filled-state radius and underline thickness/
    bottom inset/hover ink. Apply this requirement to C2 and later slices too.
    The [retroactive audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) records remaining
-   B1–B3/C1/shared-helper gaps. A00–A04, A06–A09 and A11–A16 are implemented;
-   A05/A10 retain separate scopes; A17 is implemented in D6. Backstage motion overrides use one immutable settings group,
+   B1–B3/C1/shared-helper gaps. A00–A09 and A11–A17 are implemented;
+   A10 retains a separate scope. Backstage motion overrides use one immutable settings group,
    resolved with family defaults and captured by the existing engines.
 
 The family registration binds compatible default pieces. Deliberate application
@@ -296,8 +300,9 @@ automated evidence or visual acceptance. Implement the following separately.
 | D7c. Options frames and choice presentation — implemented | Shared frame drawing and native search/closed-choice text metrics. OptionsAppearance adds radius/stroke/ink; real native clearance and search/name height consume authored outlines. Existing editor text/field/choice roles, actual renderer hooks and native controls/drafts retain their owners. | 28 distinct latest relevant passing cases, 32 exact native default PNG/geometry/region/text-slot pairs and four package scopes plus tab checks are recorded in the [D7c record](THEMES-PLAN.md#options-frames-and-choice-presentation-d7c--2026-11-13). |
 | D7d. Customization command-list rows — implemented | Shared QAT/Classic/Simplified list drawing and icon/text metrics; adjustable row content, selection fill/corners and Simplified header weight. Direct native text/focus, borrowed artwork, native row targets/height and isolated drafts retain their owners. | 24 relevant passing cases, 16 exact native default PNG/geometry/icon-slot pairs and four package scopes plus new-tab checks are recorded in the [D7d record](THEMES-PLAN.md#customization-command-list-rows-d7d--2026-11-13). |
 | D7e. Customization tree decoration — implemented | Shared tree drawing and pure decoration slots; adjustable tree selection/check/icon/gap/focus and existing shared Chevrons. Native expand/check/text targets, indentation/scrolling, direct native text/focus style, actual checkbox hooks, nodes and drafts retain their owners. | 28 distinct latest relevant passing cases, 16 exact native default PNG/geometry/hook pairs and four package scopes plus tab checks are recorded in the [D7e record](THEMES-PLAN.md#customization-tree-decoration-d7e--2026-11-13). Initial fixture/buffer retry evidence is separate from a clean aggregate. |
-| D7f. Group icon-picker tiles — implemented; square correction awaits review | Shared tile drawing/metrics and adjustable selection/content. Follow-up square cells replace label-dependent rectangles; artwork size resizes None/artwork together and inset/outline clearance constrains both. Native items/handles/selection/scrolling, borrowed artwork, selected-only radius fallback, direct text/focus style and group validation/OK/Cancel retain their owners. | 20 distinct latest relevant passing cases, square native hit/scroll/name evidence and four refreshed package scopes are in the [square correction](THEMES-PLAN.md#group-icon-picker-square-geometry-follow-up--2026-11-13). The original D7f comparison is historical; corrected default geometry intentionally changes pixels. |
-| D8. Caption/title appearance — next proposed for source review | Inspect A05 separate-caption tint eligibility/color/strength and the reported Backstage closing-title ink/clip handoff before choosing a bounded contract. Preserve ordinary/separate/full-height caption structure, explicit Form/theme caption precedence and existing pane/title clocks. | Focused caption/tint/contrast/clip/ownership and temporal close/reversal checks, unchanged stable-state comparisons and public-package scopes selected after source review. Preserve Office 2024 neutral animated tint and opaque title ink; physical frame-pacing review remains separate. A10 preferred page minimum and new families are outside this slice. |
+| D7f. Group icon-picker tiles — implemented | Shared tile drawing/metrics and adjustable selection/content. Follow-up square cells replace label-dependent rectangles; artwork size resizes None/artwork together and inset/outline clearance constrains both. Native items/handles/selection/scrolling, borrowed artwork, selected-only radius fallback, direct text/focus style and group validation/OK/Cancel retain their owners. | 20 distinct latest relevant passing cases, square native hit/scroll/name evidence and four refreshed package scopes are in the [square correction](THEMES-PLAN.md#group-icon-picker-square-geometry-follow-up--2026-11-13). The original D7f comparison is historical; corrected default geometry intentionally changes pixels. |
+| D8a. Caption tint/title ink — implemented | A05 tint choices and frame-matched opaque contrast. Closing follow-up unifies temporary/settled title rasterization and publishes owner paint before foreground HWND retirement. Ordinary/separate/full-height structure, explicit caption-color precedence, clips, geometry and clocks retain their owners. | The [closing follow-up](THEMES-PLAN.md#closing-caption-handoff-follow-up--2026-11-13) records 50 latest relevant passing cases, exact active/inactive glyph comparisons, ordered/repeated native handbacks and four package scopes. Original stationary byte comparisons are historical for intentionally changed solid title smoothing. Visible frame-pacing acceptance remains separate. |
+| D8b. Caption-button decoration — next proposed for source review | Inspect remaining fixed caption-button hover/pressed/close fills and vector glyph size/stroke/restore offsets. Define bounded independently adjustable appearance before extraction; preserve existing targets, title text, active/inactive policy, native integration and window actions. | Relevant caption-button solid/backdrop/hover/pressed/restore checks, unchanged default paint/target pairs and focused public-package scope selected after source review. No broad window/animation rewrite; A10 page preference and new families remain separate. |
 | E. Selected catalog growth | Add one later chosen light definition, reusing surface registrations or adding an actually needed sibling. Risk: selection/Reset/serialization/persistence and unsupported consumer dependencies. | Definition/selection tests, relevant designer/generated-code checks, and a focused independent-consumer visual/state scope. Wait for existing appearance review before another theme. |
 
 For each implementation slice, build affected native projects in their normal
@@ -346,7 +351,7 @@ Completion criteria:
   and remaining human appearance/input gates in the themes plan.
 
 B2/B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6 and D7a–D7f were delivered as separate slices.
-D8 caption/title appearance and the deferred closing-title ink issue are next proposed for source review;
+D8a delivers caption tint/title ink. D8b caption-button decoration is next proposed for source review;
 the consolidated geometry remains the foundation.
 
 ## Verification and delivery budget

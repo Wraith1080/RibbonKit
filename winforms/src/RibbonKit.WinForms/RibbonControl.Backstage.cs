@@ -33,7 +33,25 @@ public partial class RibbonControl
     internal void UpdateBackstageCaption()
     {
         if (!HasBackstageCaption || _disposing || IsDisposed || WindowHost is not { IsDisposed: false, Disposing: false } host)
-        { _backstageCaption?.Dispose(); _backstageCaption = null; return; }
+        {
+            var caption = _backstageCaption; _backstageCaption = null;
+            if (caption is null) return;
+            try
+            {
+                // The underlying caption was painting background only while
+                // this plane owned its ink. Publish the normal title before
+                // removing the plane, rather than waiting for queued WM_PAINT.
+                // Detach first so repaint callbacks can safely reenter/teardown.
+                if (!_disposing && !IsDisposed && IsHandleCreated && HasWindowCaption &&
+                    WindowHost is { IsDisposed: false, Disposing: false, IsHandleCreated: true } owner)
+                {
+                    Invalidate(new Rectangle(0, 0, Width, WindowCaptionHeight));
+                    Update(); owner.Update();
+                }
+            }
+            finally { caption.Dispose(); }
+            return;
+        }
         (_backstageCaption ??= new RibbonMotionWindow(host, clipToOwner: true)).RenderCaption(host, this);
     }
 
@@ -170,9 +188,10 @@ public partial class RibbonControl
         {
             _backstageClosing = false; _backstageMotion = null; _backstageOpen = false;
             _layoutDirty = true;
+            // Uncover the ordinary caption before its foreground handback.
+            if (_backstageSurface is { IsDisposed: false } surface) { surface.HideKeyTips(); surface.Visible = false; }
             WindowHost?.RetargetClosedTitle(this, animateTitle);
             UpdateBackstageCaption();
-            if (_backstageSurface is { IsDisposed: false } surface) { surface.HideKeyTips(); surface.Visible = false; }
             if (restoreFocus && !_disposing && hadFocus && FindForm() is { Disposing: false, IsDisposed: false, ContainsFocus: true })
             {
                 if (_backstagePriorFocus is { IsDisposed: false, CanFocus: true } previous) previous.Focus();

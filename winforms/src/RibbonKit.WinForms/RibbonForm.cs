@@ -14,6 +14,7 @@ public partial class RibbonForm : Form
     private bool _captionActive;
     private int _lastCaptionHeight;
     private bool _materialCaptionStyle;
+    private RibbonBackdropBuffer? _captionTextBuffer;
     /// <summary>Creates a resizable native ribbon window with standard system-menu and caption semantics.</summary>
     public RibbonForm()
     {
@@ -209,7 +210,6 @@ public partial class RibbonForm : Form
     {
         var geometry = Caption; var sourceTheme = ribbon?.Theme ?? RibbonThemes.Office2024Light;
         var captionTheme = CaptionTheme(sourceTheme, composited);
-        var backstageTheme = ribbon is { IsBackstageOpen: true } ? sourceTheme.BackstageCaptionTheme : sourceTheme;
         using var background = new SolidBrush(CaptionColor(sourceTheme, composited));
         var captionBounds = new Rectangle(0, 0, ClientSize.Width, CaptionHeight);
         if (!foregroundOnly)
@@ -220,13 +220,21 @@ public partial class RibbonForm : Form
         }
         if (ShowIcon && Icon is { } icon && !geometry.Icon.IsEmpty) graphics.DrawIcon(icon, geometry.Icon);
         var text = CaptionTextBounds(ribbon);
-        if (ribbon is { IsBackstageOpen: true })
+        if (ribbon is { IsBackstageOpen: true, HasFullHeightBackstage: true })
         {
             var state = graphics.Save();
             try { graphics.ExcludeClip(ribbon.CaptionOverlayBounds); PaintContents(captionTheme); }
             finally { graphics.Restore(state); }
-            PaintPart(ribbon.CaptionNavigationBounds, backstageTheme);
+            PaintPart(ribbon.CaptionNavigationBounds, BackstageNavigationCaptionTheme(ribbon, captionTheme, composited));
             PaintPart(ribbon.CaptionPageBounds, sourceTheme);
+        }
+        else if (ribbon is { IsBackstageOpen: true } && !ribbon.BackstageCaptionTintBounds.IsEmpty)
+        {
+            var tintBounds = ribbon.BackstageCaptionTintBounds;
+            var state = graphics.Save();
+            try { graphics.ExcludeClip(tintBounds); PaintContents(captionTheme); }
+            finally { graphics.Restore(state); }
+            PaintPart(tintBounds, BackstageTintCaptionTheme(ribbon, captionTheme, composited));
         }
         else PaintContents(captionTheme);
 
@@ -243,8 +251,20 @@ public partial class RibbonForm : Form
             var title = ribbon is null ? text : CaptionTitleDrawingBounds(ribbon);
             var textContext = new RibbonPaintContext(graphics, title, theme, Font, DeviceDpi);
             var flags = TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.PreserveGraphicsClipping;
-            if (composited) RibbonBackdropBuffer.DrawText(textContext, Text, _captionActive ? theme.Foreground : theme.SecondaryText, flags);
-            else TextRenderer.DrawText(graphics, Text, Font, title, _captionActive ? theme.Foreground : theme.SecondaryText, flags);
+            var ink = _captionActive ? theme.Foreground : theme.SecondaryText;
+            if (composited) RibbonBackdropBuffer.DrawText(textContext, Text, ink, flags);
+            else if (title.Width > 0 && title.Height > 0)
+            {
+                // Match the temporary caption plane's grayscale glyph coverage.
+                // Switching back to GDI ClearType at handback changes the title's
+                // weight/color for a frame even when position and ink agree.
+                var buffer = _captionTextBuffer ??= new();
+                buffer.Paint(graphics, title.Size, title.Height, Color.Transparent,
+                    canvas => RibbonBackdropBuffer.DrawText(textContext with { Graphics = canvas, Bounds = new(Point.Empty, title.Size) }, Text, ink, flags), copyToDestination: false);
+                var mode = graphics.CompositingMode;
+                try { graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceOver; graphics.DrawImageUnscaled(buffer.Image, title.Location); }
+                finally { graphics.CompositingMode = mode; }
+            }
             foreach (var (bounds, hit) in geometry.Targets)
             {
                 if (bounds.IsEmpty) continue;
@@ -405,7 +425,7 @@ public partial class RibbonForm : Form
         // native attribute cleanup; detach managed associations afterwards.
         if (disposing) { _disposingBackdrop = true; _captionTitleMotion?.Dispose(); _captionTitleMotion = null; }
         try { base.Dispose(disposing); }
-        finally { if (disposing) Ribbon = null; }
+        finally { if (disposing) { _captionTextBuffer?.Dispose(); _captionTextBuffer = null; Ribbon = null; } }
     }
     [StructLayout(LayoutKind.Sequential)] private struct NativeRect { public int Left, Top, Right, Bottom; }
     [StructLayout(LayoutKind.Sequential)] private struct TrackMouse { public int Size, Flags; public nint Window; public uint HoverTime; }

@@ -1,12 +1,12 @@
 # Earlier theme rewrite: effect adjustability audit
 
-**2026-11-12: A00–A04, A06–A09 and A11–A17 implemented and verified. A05/A10 remain separate.**
+**2026-11-13: A00–A09 and A11–A17 implemented and verified. A10 remains separate.**
 The initial source review changed documentation only. The user then authorized
 the first correction batch; its current evidence is in the
 [themes plan](THEMES-PLAN.md#backstage-fill-routing-and-motion-overrides--2026-11-11).
 The C1 implementation was preserved. A17 followed in the
 [D6 tip record](THEMES-PLAN.md#tip-presentation-and-backstage-badge-placement-d6--2026-11-12);
-A05 and A10 remain later work.
+A05 followed in [D8a caption tint/title ink](THEMES-PLAN.md#caption-tint-and-title-ink-d8a--2026-11-13). A10 remains later work.
 
 Scope is B1 registration, B2 layout inputs/defaults, B3 caption/motion policy and
 C1 header presentation, including the shared paint/motion helpers those paths
@@ -38,7 +38,7 @@ and resolve through the existing registration/measurement paths.
 | A02 | Pane travel, title and page easing use cubic easing; pane fade uses smooth-step. The curve enum/profile is internal. | Selectable validated visual curves using a bounded shared value type/profile. Keep clocks, interruption and reduced-motion execution shared. | [Motion policy](../src/RibbonKit.WinForms/Rendering/RibbonBackstageMotionPolicy.cs). |
 | A03 | Pane opening/closing always fades across the native opacity range while sliding. `AnimationLevel.None` disables both; travel ratio zero provides fade-only, but there is no slide-only choice. | Independent pane fade enable/amount. Preparation's starting opacity and progress/completion must consume the same policy. Keep the native minimum alpha guard; retain opaque title ink. | [Pane preparation/progress](../src/RibbonKit.WinForms/Animation/RibbonBackstageMotion.cs), [opacity policy](../src/RibbonKit.WinForms/Rendering/RibbonBackstageMotionPolicy.cs). |
 | A04 | Backstage page SlideDown travel is 8/12 logical pixels, selected only by animation level. | Authored page-slide distance with existing level-dependent defaults, separate from pane/title ratios. | [Registration and profile](../src/RibbonKit.WinForms/Rendering/RibbonPresentationResolver.cs), [page motion](../src/RibbonKit.WinForms/Animation/RibbonBackstagePageMotion.cs). |
-| A05 | Neutral separate-caption tint eligibility is a registration boolean. Its color follows navigation; strength follows pane alpha and, in material mode, navigation opacity. | Independent tint opt-in/out, optional tint color and strength if authored. Defaults must retain 2024 tint and full-height pane ownership, with Form/theme authored caption precedence. `TitleBarTintOpacity` is for authored caption coloring and does not expose these separate choices. | [Caption policy](../src/RibbonKit.WinForms/Rendering/RibbonBackstageCaptionPolicy.cs), [window adapter](../src/RibbonKit.WinForms/RibbonControl.Window.cs). |
+| A05 — implemented D8a | Separate-caption tint resolves through the existing family policy and nullable/Empty BackstageAppearance members. | `CaptionTintEnabled`, `CaptionTintColor` (alpha/Transparent), `CaptionTintOpacity` (finite 0..1) expose independent choices. Defaults retain 2024 tint/full-height pane ownership and Form/theme authored caption precedence. Independent Reset retains navigation decoration; `TitleBarTintOpacity` stays separate. | [D8a evidence](THEMES-PLAN.md#caption-tint-and-title-ink-d8a--2026-11-13), [caption policy](../src/RibbonKit.WinForms/Rendering/RibbonBackstageCaptionPolicy.cs). |
 | A06 | Backstage selected marker has fixed left inset 2, width 3, top inset 10 and total height deduction 20 logical pixels. Only visibility/radius and palette are adjustable. | Marker dimensions/insets and, if independent ink is needed, an explicit marker-color fallback. Keep the existing fractional-DPI rounding at null. | [Backstage entry drawing](../src/RibbonKit.WinForms/Rendering/RibbonRenderer.Backstage.cs). |
 | A07 | Back circle has fixed 2-logical-pixel inner clearance and 1.5-logical-pixel outline. Arrow coordinates use fixed 5/6-pixel extents and a 1.5-pixel stroke. Changing the Back target size does not scale the arrow. | Back visual inset, circle/arrow stroke and glyph size/scale. Keep target size separate; parameterize glyph dimensions rather than exposing every vector point. | [Back button drawing](../src/RibbonKit.WinForms/Rendering/RibbonRenderer.Backstage.cs). |
 | A08 | Full-width navigation-state fills force radius/border to zero/transparent; inset states use the active renderer's generic chrome. | Independent navigation-state corner/border appearance, with current full-width square/borderless and inset defaults. Width coverage and paint shape should remain separate choices. | [2019 sibling](../src/RibbonKit.WinForms/Rendering/RibbonBackstage2019Renderer.cs), [2024 sibling](../src/RibbonKit.WinForms/Rendering/RibbonBackstage2024Renderer.cs), [shared state helper](../src/RibbonKit.WinForms/Rendering/RibbonBackstageRenderer.cs). |
@@ -68,7 +68,7 @@ A11–A16 now use `HeaderAppearance`, shared `Chevrons`, `FocusInset`/
 `FocusStrokeWidth`, `TabContentSlideDistance` and `HeaderIndicatorSpringAmount`.
 The [header/shared-effects record](THEMES-PLAN.md#header-and-shared-effect-overrides--2026-11-11)
 retains exact default comparisons, authored-effect checks, API/range/reset
-contracts and native package evidence. A05 remains with caption/title ownership;
+contracts and native package evidence. A05 is implemented with caption/title ownership in D8a;
 A10 is a separate page-width preference. A17 is implemented by TipAppearance's
 independent Backstage right/width/height clearance values through shared badge
 metrics; existing padding is retained. D6 records default/short-slot/override/
@@ -123,8 +123,8 @@ their placeholder padding and sample colors remain consumer/tool presentation.
    Keep current family values at null and resolve policy once per transition.
    Validate ranges/curves and preserve interruption, zero/snap, reduced-motion,
    native editor ownership and opaque title behavior.
-2. Backstage decoration/spacing A06–A09 is implemented. Treat A05's caption choices with
-   the caption/title ownership rules, and A10 as a separate layout preference.
+2. Backstage decoration/spacing A06–A09 and caption choices A05 are implemented.
+   Keep A10 as a separate layout preference.
 3. C1/shared helper gaps A11–A16 are implemented; arrow, focus and motion ownership
    remain shared. A17 is implemented with shared tip-placement work, without duplicating
    existing badge padding roles. Reuse state/metric groups when they avoid an

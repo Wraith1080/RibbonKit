@@ -2003,3 +2003,9 @@ RibbonKit.WinForms.RibbonOptionsAppearanceSettings.IconPickerIconSize.get -> int
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.IconPickerIconSize.init -> void
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.IconPickerTextInset.get -> int?
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.IconPickerTextInset.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.CaptionTintEnabled.get -> bool?
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.CaptionTintEnabled.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.CaptionTintColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.CaptionTintColor.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.CaptionTintOpacity.get -> double?
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.CaptionTintOpacity.init -> void

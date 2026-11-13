@@ -174,7 +174,7 @@ public sealed record RibbonTheme
     public double? BackstageSlideDistanceRatio { get; init; }
     /// <summary>Gets optional immutable Backstage duration, easing, fade and page-travel overrides. Null retains family defaults. Animation level, reduced motion and native lifecycle safeguards remain authoritative.</summary>
     public RibbonBackstageMotionSettings? BackstageMotion { get; init; }
-    /// <summary>Gets optional immutable Backstage marker, Back glyph and navigation-state appearance overrides. Null retains existing renderer defaults; target geometry and native page ownership remain unchanged.</summary>
+    /// <summary>Gets optional immutable Backstage marker, Back glyph, navigation-state and separate-caption tint overrides. Null retains existing renderer defaults; target geometry and native page ownership remain unchanged.</summary>
     public RibbonBackstageAppearanceSettings? BackstageAppearance { get; init; }
     /// <summary>Gets navigation and integrated Backstage caption ink. Empty retains Foreground and existing caption behavior. Native application pages keep their own colors.</summary>
     public Color BackstageNavigationForeground { get; init; } = Color.Empty;
