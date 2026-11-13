@@ -1965,3 +1965,15 @@ RibbonKit.WinForms.RibbonOptionsAppearanceSettings.FrameBorderWidth.get -> int?
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.FrameBorderWidth.init -> void
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.FrameBorderColor.get -> System.Drawing.Color
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.FrameBorderColor.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.RowTextPadding.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.RowTextPadding.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.RowIconSize.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.RowIconSize.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.RowIconTextGap.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.RowIconTextGap.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.RowCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.RowCornerRadius.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.RowSelectedBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.RowSelectedBackground.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.RowHeadingBold.get -> bool?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.RowHeadingBold.init -> void

@@ -6,7 +6,7 @@ public partial class DesignerForm
 {
     private void EnableOptionsFieldDemo()
     {
-        var tab = ThemeEffectsReviewTab; if (tab.Groups.Any(g => g.Id == "review-options-fields")) return;
+        var tab = ThemeEffects8ReviewTab; if (tab.Groups.Any(g => g.Id == "review-options-fields")) return;
         var preview = new RibbonGroup { Id = "review-options-field-preview", Text = "Try frames and choices" };
         Add(preview, "Open frame/choice preview", () => { using var model = CreateOptionsFieldPreviewModel(); using var dialog = CreateOptionsFieldPreview(model); dialog.ShowDialog(this); });
         var effects = new RibbonGroup { Id = "review-options-fields", Text = "Options frames and text" };
@@ -31,7 +31,7 @@ public partial class DesignerForm
     { var dialog = new RibbonQuickAccessCustomizationForm(model, "RibbonKit.Fields.Preview") { Text = "Options frame and choice preview" }; dialog.SelectedPage = dialog.Pages.First(p => p.Name != "QuickAccessOptionsPage"); return dialog; }
     internal void VerifyOptionsFieldDemo(string output)
     {
-        StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); Width = 1800; ShowInTaskbar = false; EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffectsReviewTab; ribbon.SelectedTab = tab;
+        StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); Width = 1800; ShowInTaskbar = false; EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffects8ReviewTab; ribbon.SelectedTab = tab;
         if (tab.Text != "Theme effects 8" || tab.Groups.Count != 5 || ThemeEffects7ReviewTab.Groups.Count != 8 || ThemeEffects6ReviewTab.Groups.Count != 3 || ThemeEffects5ReviewTab.Groups.Count != 6 || ThemeEffects4ReviewTab.Groups.Count != 7 || ThemeEffects3ReviewTab.Groups.Count != 4 || ThemeEffects2ReviewTab.Groups.Count != 5 || ribbon.Tabs.Single(t => t.Text == "Office 2019 Light").Groups.Count != 7) throw new InvalidOperationException("Frame controls displaced accepted tabs.");
         var effects = tab.Groups.Single(g => g.Id == "review-options-fields"); var sources = ribbon.Tabs.ToArray(); var mode = ribbon.LayoutMode; ribbon.Theme = ribbon.Theme with { OptionsAppearance = new() { ButtonBorderWidth = 2, HeadingBold = false, NavigationCornerRadius = 12 } };
         foreach (int i in new[] { 0, 1, 3, 4 }) effects.Items[i].PerformClick(); if (ribbon.Theme.OptionsAppearance is not { FrameCornerRadius: 12, FrameBorderWidth: 3 } || ribbon.Theme.EditorTextInset != 12 || ribbon.Theme.EditorForeground != Color.DarkGreen || ribbon.Theme.EditorAppearance?.BorderWidth != 3) throw new InvalidOperationException("Frame presets bypassed public roles.");

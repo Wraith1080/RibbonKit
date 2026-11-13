@@ -7,6 +7,7 @@ namespace RibbonKit.WinForms;
 public sealed class RibbonCustomizationEditor : UserControl
 {
     private readonly RibbonControl _ribbon;
+    private readonly RoundedPainter _rowPainter = new();
     private readonly RibbonCustomizationColumns _panes;
     private readonly ListBox _available = new() { Name = "RibbonAvailableCommands", AccessibleName = "Available ribbon commands", DisplayMember = nameof(RibbonCommandCatalogEntry.Text), Dock = DockStyle.Fill, BorderStyle = BorderStyle.None, IntegralHeight = false, DrawMode = DrawMode.OwnerDrawFixed };
     private readonly RibbonCustomizationTree _tree;
@@ -234,13 +235,10 @@ public sealed class RibbonCustomizationEditor : UserControl
     private void DrawRow(object? sender, DrawItemEventArgs e)
     {
         if (e.Index < 0 || _available.Items[e.Index] is not RibbonCommandCatalogEntry entry) return;
-        var theme = _ribbon.Theme; using var brush = new SolidBrush(e.State.HasFlag(DrawItemState.Selected) ? theme.Checked.Start : theme.Surface); e.Graphics.FillRectangle(brush, e.Bounds);
-        int gap = ScaleLogical(6), icon = ScaleLogical(20); var bounds = Rectangle.Inflate(e.Bounds, -gap, 0);
-        DrawIcon(e.Graphics, entry.Source, new(bounds.Left, bounds.Top + (bounds.Height - icon) / 2, icon, icon)); bounds.X += icon + gap; bounds.Width = Math.Max(0, bounds.Width - icon - gap);
-        TextRenderer.DrawText(e.Graphics, entry.Category + " › " + entry.Text, Font, bounds, theme.Foreground, TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter); e.DrawFocusRectangle();
+        RibbonOptionsRowRenderer.Draw(_rowPainter, new(e.Graphics, e.Bounds, _ribbon.Theme, Font, DeviceDpi), entry.Source, entry.Category + " › " + entry.Text, e.State.HasFlag(DrawItemState.Selected)); e.DrawFocusRectangle();
     }
     private void DrawIcon(Graphics graphics, RibbonElement source, Rectangle bounds)
-    { if (source is RibbonGroup { Icon: { } groupIcon }) groupIcon.Draw(graphics, bounds, new(DeviceDpi, _ribbon.Theme.Foreground, true)); else if (source is RibbonItem { Icon: { } icon }) icon.Draw(graphics, bounds, new(DeviceDpi, _ribbon.Theme.Foreground, true)); else if (source is RibbonItem { Image: { } image }) graphics.DrawImage(image, bounds); }
+    { RibbonOptionsRowRenderer.DrawIcon(graphics, source, bounds, DeviceDpi, _ribbon.Theme.Foreground); }
     private void RefreshIcons()
     {
         _tree.ImageList = null; _tree.StateImageList = null; _icons.Images.Clear(); _checks.Images.Clear(); _imageIndices.Clear();
@@ -281,5 +279,5 @@ public sealed class RibbonCustomizationEditor : UserControl
     /// <inheritdoc />
     protected override void OnDpiChangedAfterParent(EventArgs e) { base.OnDpiChangedAfterParent(e); UpdateMetrics(); }
     /// <inheritdoc />
-    protected override void Dispose(bool disposing) { if (disposing) Session?.Dispose(); base.Dispose(disposing); if (disposing) { _icons.Dispose(); _checks.Dispose(); _importImage?.Dispose(); _exportImage?.Dispose(); foreach (var bitmap in _bitmaps) bitmap.Dispose(); } }
+    protected override void Dispose(bool disposing) { if (disposing) Session?.Dispose(); base.Dispose(disposing); if (disposing) { _rowPainter.Dispose(); _icons.Dispose(); _checks.Dispose(); _importImage?.Dispose(); _exportImage?.Dispose(); foreach (var bitmap in _bitmaps) bitmap.Dispose(); } }
 }

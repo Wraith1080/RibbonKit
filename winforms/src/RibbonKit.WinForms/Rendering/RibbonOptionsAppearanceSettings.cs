@@ -1,6 +1,6 @@
 namespace RibbonKit.WinForms;
 
-/// <summary>Immutable library Options navigation, divider, button and heading presentation. Native controls, application pages and draft lifetime remain independent.</summary>
+/// <summary>Immutable library Options navigation, divider, button, heading, frame and command-list row presentation. Native controls, application pages and draft lifetime remain independent.</summary>
 public sealed record RibbonOptionsAppearanceSettings
 {
     /// <summary>Initializes overrides retaining existing Options presentation.</summary>
@@ -51,12 +51,26 @@ public sealed record RibbonOptionsAppearanceSettings
     public int? FrameBorderWidth { get; init; }
     /// <summary>Gets optional native field/list wrapper outline ink, including alpha. Empty retains PopupBorder; Transparent hides paint without reclaiming its reserved native clearance. Surface and native child backgrounds retain their existing owners.</summary>
     public Color FrameBorderColor { get; init; } = Color.Empty;
+    /// <summary>Gets optional command-list row horizontal text/content padding in logical pixels, 0..1024. Null retains 6 for QAT/Classic and 8 for Simplified, with legacy ceiling rounding. Authored padding clamps inside the unchanged native row.</summary>
+    public int? RowTextPadding { get; init; }
+    /// <summary>Gets optional command-list icon size in logical pixels, 0..256. Null retains 20 with legacy ceiling rounding. Authored sizes clamp inside the row; zero hides the borrowed icon and reclaims its slot and gap. Native row height and tree/icon-picker slots do not change.</summary>
+    public int? RowIconSize { get; init; }
+    /// <summary>Gets optional command-list icon-to-text gap in logical pixels, 0..1024. Null retains 6 for QAT/Classic and 8 for Simplified, with legacy ceiling rounding. The gap clamps to remaining content space; zero removes it.</summary>
+    public int? RowIconTextGap { get; init; }
+    /// <summary>Gets optional command-list selection corner radius in logical pixels, 0..64. Null retains square selection. Native row targets and focus rectangles remain unchanged.</summary>
+    public int? RowCornerRadius { get; init; }
+    /// <summary>Gets optional command-list selected fill, including alpha/gradients. Null retains the solid Checked.Start recipe. Authored selection paint composites over Surface; Transparent hides it. Existing Foreground and unselected Surface roles remain authoritative.</summary>
+    public RibbonFill? RowSelectedBackground { get; init; }
+    /// <summary>Gets optional Simplified command-list heading weight. Null retains legacy Bold-only style; true adds Bold to host styles, false removes it while preserving other styles. Choose before opening; existing construction/font/DPI layout owns the font.</summary>
+    public bool? RowHeadingBold { get; init; }
 
     internal bool HasButtonOverrides(bool accent) => ButtonInset is not null || ButtonBorderWidth is not null || !ButtonBorderColor.IsEmpty || ButtonFocusInset is not null || (accent ? AccentButtonBackground is not null : ButtonBackground is not null);
 
     internal static void Validate(RibbonOptionsAppearanceSettings? a)
     {
         if (a is null) return;
+        if (a.RowTextPadding is < 0 or > 1024 || a.RowIconTextGap is < 0 or > 1024 || a.RowIconSize is < 0 or > 256 || a.RowCornerRadius is < 0 or > 64)
+            throw new ArgumentOutOfRangeException(nameof(a), "Options row padding/gap must be 0..1024, icon size 0..256 and corners 0..64 logical pixels, or null for existing presentation.");
         if (a.FrameCornerRadius is < 0 or > 64 || a.FrameBorderWidth is < 0 or > 32)
             throw new ArgumentOutOfRangeException(nameof(a), "Options frame radius must be 0..64 and outline width 0..32 logical pixels, or null for existing presentation.");
         if (a.NavigationCornerRadius is < 0 or > 64 || a.NavigationMarkerWidth is < 0 or > 64 || a.DividerWidth is < 0 or > 32

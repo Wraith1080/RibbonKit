@@ -3004,7 +3004,7 @@ Placement Reset retains title/outline overrides; **Default tip presentation**
 clears only TipAppearance. Existing tab/body scrollers and group reduction remain available.
 
 `Theme.OptionsAppearance` accepts immutable `RibbonOptionsAppearanceSettings` for
-library Options navigation, rail/footer dividers, buttons, headings and field/list frames:
+library Options navigation, dividers, buttons, headings, frames and command-list rows:
 
 | Members | Null defaults and behavior |
 | --- | --- |
@@ -3017,6 +3017,9 @@ library Options navigation, rail/footer dividers, buttons, headings and field/li
 | `ButtonBackground`, `AccentButtonBackground` | Optional enabled idle fills, including alpha/gradients; null Surface / Accent. Existing Hover/Pressed/disabled state recipes and foreground roles remain. Ordinary buttons with null corners retain native painting until an ordinary-button override is authored. Accent-only fill and heading/navigation settings do not opt ordinary buttons into shared painting. |
 | `HeadingFontSizeIncrement`, `HeadingMinimumFontSize`, `HeadingBold`, `HeadingBottomPadding` | Finite point-size increment 0..64 / minimum 1..128, null 5 / 14; bottom padding 0..1024 logical pixels, null 12, zero removes the gap. Null weight retains legacy Bold-only style; explicit true adds Bold to host styles, false removes it and preserves other styles. The resulting font and padding feed existing native heading/page layout. |
 | `FrameCornerRadius`, `FrameBorderWidth`, `FrameBorderColor` | Native field/list wrapper radius 0..64 / stroke 0..32 logical pixels; null retains the actual popup/command-radius minimum and one-device-pixel stroke. Empty ink follows PopupBorder; alpha/Transparent and zero/hide are supported. Wider outlines reserve native child padding and search/name-field height. Zero keeps minimum one-device-pixel clearance; Transparent retains reserved space. Child corner regions use the same resolved shape. Surface/native backgrounds retain their owners. |
+| `RowTextPadding`, `RowIconSize`, `RowIconTextGap` | QAT/Classic/Simplified command-list content padding and icon gap 0..1024 / icon size 0..256 logical pixels. Null retains padding/gap 6 for QAT/Classic, 8 for Simplified and icon size 20, with legacy ceiling rounding. Authored content clamps inside the existing row; zero icon size hides borrowed artwork and reclaims its slot/gap. Native row height and targets stay unchanged. |
+| `RowCornerRadius`, `RowSelectedBackground` | Selection corner radius 0..64, null 0; optional alpha/gradient fill, null solid Checked.Start. Authored paint composites over Surface; Transparent hides it. Foreground, unselected Surface and native focus rectangles retain their existing roles. Tree and icon-picker selection are separate. |
+| `RowHeadingBold` | Simplified command-list header weight. Null retains legacy Bold-only style; true adds Bold to host styles, false removes it and preserves other styles. Choose before opening; existing construction/font/DPI paths own the font. Dialog title headings are independent. |
 
 Legacy navigation/heading/search arithmetic keeps its ceiling-based DPI scaling
 and summed rounding; new frame/choice overrides use the shared logical-pixel
@@ -3055,6 +3058,14 @@ commands and an isolated public customization model, so preview edits stay there
 **Default Options frames**, **Default editor text** and **Default choice fields**
 reset their own members and preserve the other effects. Existing row/choice popup
 decoration remains independently adjustable.
+
+**Try command rows / Command row content / Command row selection** are on the
+requested new **Theme effects 9**. Choose presets before opening its QAT, Classic
+or Simplified preview. These use isolated sample commands and preserve the real
+ribbon's mode and sources. **Default row content** retains selection settings;
+**Default row selection** retains content settings. **Default all row effects**
+clears only the six row members, preserving frame/button/navigation effects.
+The accepted five groups on tab 8 remain in place.
 
 Derive from `RibbonRenderer` for a flat/custom presentation, or from
 `RibbonOffice2024Renderer` to retain Office styling while overriding selected

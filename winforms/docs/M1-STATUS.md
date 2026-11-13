@@ -8,6 +8,10 @@ input/window-activation and keyboard-focus-cue follow-ups are uncommitted. The a
 published or merged these changes.
 The WPF runtime/build/CI are unchanged.
 
+Current native theme evidence and remaining VS, physical input/IME, UIA,
+mixed-monitor and human appearance gates are tracked in the
+[themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
+
 Current Application Menu evidence and pending VS, hardware, accessibility and
 human review gates are tracked in the [Application Menu checkpoint](APPLICATION-MENU-PLAN.md#wpf-hover-parity-follow-up---2026-11-03).
 

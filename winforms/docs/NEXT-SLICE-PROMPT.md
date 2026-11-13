@@ -1,25 +1,27 @@
-# Continue native WinForms themes after D7c Options frames/choices
+# Continue native WinForms themes after D7d customization command-list rows
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-13**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7c and adjustability backfills
+Updated **2026-11-13**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7d and adjustability backfills
 A00–A04/A06–A09/A11–A17 are implemented. Current evidence and exact user review
 scope live in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
-The latest implementation is [D7c](THEMES-PLAN.md#options-frames-and-choice-presentation-d7c--2026-11-13).
+The latest implementation is [D7d](THEMES-PLAN.md#customization-command-list-rows-d7d--2026-11-13).
 Use the ledger for the exact user appearance review scope and remaining gates.
-The user committed D7b at `c97c30a` before D7c. Do not overwrite later user commits.
+The user committed D7c at `1505210` before D7d. Do not overwrite later user commits.
 
 ## Next bounded implementation
 
 Start with `git status --short` and inspect live branch/HEAD; preserve later user
-commits and edits. Follow the current user request. For a continuation, D7d
-**remaining customization row content/state paint** is next proposed for source
-review. Inspect QAT/Classic/Simplified row and icon-picker owners, reuse existing
-fill/ink/image/focus roles and select one bounded extraction before editing.
-Keep legacy row targets and direct native paint contracts. Extract fixed effects
-into independently adjustable settings, with shared measurement for any changed
-content bounds. D7c owns field/list wrapper paint and native clearance plus
+commits and edits. Follow the current user request. For a continuation, D7e
+**customization tree decoration** is next proposed for source review. Inspect
+state/content/glyph paint and shared geometry; preserve native expansion, scrolling,
+check/selection and keyboard targets. Reuse existing fill/ink/image/indicator/chevron/
+focus roles and select one bounded extraction before editing. Icon-picker tiles
+retain a separate scope. D7d owns QAT/Classic/Simplified command-list rows; preserve
+its direct native text/focus contracts and shared content slots. Extract fixed
+effects into independently adjustable settings with matching measurement.
+D7c owns field/list wrapper paint and native clearance plus
 search/closed-choice text slots. Do not cover native children with wider paint.
 Preserve native editors, validation, keyboard/focus, draft Apply/Cancel, dialog
 lifetime and inert candidate-theme preview safety. Application dialog content
@@ -45,17 +47,19 @@ A new family selector needs an actual structural difference, not a palette name,
 header style or radius. Native editor HWND, parent, value, selection, focus,
 validation, IME and popup ownership remain with their existing shared owners.
 
-**Review tabs:** the user requested a fresh tab for D7b. Put new controls on
-**Theme effects 8** through `ThemeEffectsReviewTab` until directed otherwise.
+**Review tabs:** the user requested a fresh tab for D7d. Put new controls on
+**Theme effects 9** through `ThemeEffectsReviewTab` until directed otherwise.
 `ThemeEffects2ReviewTab` / `ThemeEffects3ReviewTab` / `ThemeEffects4ReviewTab` /
-`ThemeEffects5ReviewTab` / `ThemeEffects6ReviewTab` / `ThemeEffects7ReviewTab` pin existing groups to their original tabs.
-Earlier tabs retain seven/five/four/seven/six/three/eight groups. Tab 6 retains **Try built-in
+`ThemeEffects5ReviewTab` / `ThemeEffects6ReviewTab` / `ThemeEffects7ReviewTab` /
+`ThemeEffects8ReviewTab` pin existing groups to their original tabs.
+Earlier tabs retain seven/five/four/seven/six/three/eight/five groups. Tab 6 retains **Try built-in
 galleries / Gallery tile states / Gallery headings**. Tab 7 has **Try gallery content /
 Gallery artwork and labels / Gallery inline frames / Gallery utility glyphs**.
 Tab 7 now also has **Try tips and badges / Tip presentation** (six total groups).
 **Try Options dialogs / Options navigation** brings tab 7 to eight groups. Tab 8
 has **Try Options shell / Options buttons / Options headings / Try frames and choices /
-Options frames and text**, five total groups. Keep tab 7's
+Options frames and text**, five total groups. Tab 9 has **Try command rows /
+Command row content / Command row selection**, three total groups. Keep tab 7/8's
 accepted groups in place; do not infer fullness from reduction.
 The File preview uses existing authored models and restores the prior File mode.
 Its divider-visibility button uses the existing independent flag (2019 defaults
@@ -216,6 +220,17 @@ when needed. Do not move old groups or infer fullness from reduction.
   Reuse 32 exact native default PNG/geometry/region/text-slot pairs, 28 distinct latest
   relevant cases and four package scopes unless affected. Its four-case native theory
   supersedes the two older mode-only display names; do not double-count those results.
+- D7d retains shared command-list row drawing/slots and six OptionsAppearance row
+  members. Null keeps QAT/Classic padding/gap 6, Simplified 8, icon 20 with ceiling
+  rounding, square solid Checked.Start selection and Bold-only Simplified headings.
+  Authored content clamps inside unchanged native rows; zero icon size reclaims
+  its slot/gap. Alpha/gradient/Transparent selection composites over Surface; native
+  Foreground/focus and renderer-independent direct text retain their contracts.
+  Explicit row heading weight preserves other host styles through existing owned
+  construction/font/DPI fonts; choose before opening. Content/selection/all-row
+  resets preserve earlier frames/buttons/navigation and each other. Tree/icon-picker
+  targets/slots/decorations are separate. Reuse 16 exact native default row PNG/
+  geometry/icon-slot pairs, 24 passing relevant cases and four package scopes unless affected.
 - Existing Theme assignment closes ordinary menus through `ModelChanged`;
   retained models reopen normally. Do not change lifecycle to satisfy a probe.
 - A05 caption tint, A10 preferred page minimum and the reported

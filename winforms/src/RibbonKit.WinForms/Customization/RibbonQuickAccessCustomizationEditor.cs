@@ -7,6 +7,7 @@ namespace RibbonKit.WinForms;
 public sealed class RibbonQuickAccessCustomizationEditor : UserControl
 {
     private readonly RibbonControl _ribbon;
+    private readonly RoundedPainter _rowPainter = new();
     private readonly RibbonCustomizationColumns _panes;
     private readonly TableLayoutPanel _layout = new() { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Margin = Padding.Empty };
     private readonly ListBox _available = List("AvailableCommands", "Available commands");
@@ -166,20 +167,8 @@ public sealed class RibbonQuickAccessCustomizationEditor : UserControl
     private void DrawRow(object? sender, DrawItemEventArgs e)
     {
         if (e.Index < 0 || sender is not ListBox list || list.Items[e.Index] is not Row row) return;
-        bool selected = e.State.HasFlag(DrawItemState.Selected);
-        var theme = _ribbon.Theme; var fill = selected ? theme.Checked.Start : theme.Surface;
-        using var background = new SolidBrush(fill); e.Graphics.FillRectangle(background, e.Bounds);
-        int gap = ScaleLogical(6), icon = ScaleLogical(20);
-        var bounds = Rectangle.Inflate(e.Bounds, -gap, 0);
-        if (row.Entry?.Source is RibbonGroup { Icon: { } groupIcon })
-            groupIcon.Draw(e.Graphics, new(bounds.Left, e.Bounds.Top + (e.Bounds.Height - icon) / 2, icon, icon), new(DeviceDpi, theme.Foreground, true));
-        else if (row.Entry?.Source is RibbonItem { Icon: { } image })
-            image.Draw(e.Graphics, new(bounds.Left, e.Bounds.Top + (e.Bounds.Height - icon) / 2, icon, icon), new(DeviceDpi, theme.Foreground, true));
-        else if (row.Entry?.Source is RibbonItem { Image: { } bitmap })
-            e.Graphics.DrawImage(bitmap, new Rectangle(bounds.Left, e.Bounds.Top + (e.Bounds.Height - icon) / 2, icon, icon));
-        bounds.X += icon + gap; bounds.Width = Math.Max(0, bounds.Width - icon - gap);
         var text = row.Entry is { } entry ? (ReferenceEquals(list, _available) ? entry.Category + " › " : "") + entry.Text : row.Fallback + " (unavailable)";
-        TextRenderer.DrawText(e.Graphics, text, Font, bounds, theme.Foreground, TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter);
+        RibbonOptionsRowRenderer.Draw(_rowPainter, new(e.Graphics, e.Bounds, _ribbon.Theme, Font, DeviceDpi), row.Entry?.Source, text, e.State.HasFlag(DrawItemState.Selected));
         e.DrawFocusRectangle();
     }
     internal int ScaleLogical(int value) => (int)Math.Ceiling(value * DeviceDpi / 96d);
@@ -225,7 +214,7 @@ public sealed class RibbonQuickAccessCustomizationEditor : UserControl
     /// <inheritdoc />
     protected override void OnDpiChangedAfterParent(EventArgs e) { base.OnDpiChangedAfterParent(e); UpdateMetrics(); }
     /// <inheritdoc />
-    protected override void Dispose(bool disposing) { if (disposing) Session?.Dispose(); base.Dispose(disposing); }
+    protected override void Dispose(bool disposing) { if (disposing) Session?.Dispose(); base.Dispose(disposing); if (disposing) _rowPainter.Dispose(); }
 }
 
 internal static class RibbonQuickAccessEditorMetrics

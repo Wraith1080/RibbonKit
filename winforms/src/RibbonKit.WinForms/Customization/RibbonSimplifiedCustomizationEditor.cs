@@ -7,6 +7,7 @@ namespace RibbonKit.WinForms;
 public sealed partial class RibbonSimplifiedCustomizationEditor : UserControl
 {
     private readonly RibbonControl _ribbon;
+    private readonly RoundedPainter _rowPainter = new();
     private readonly RibbonCustomizationColumns _panes;
     private readonly ComboBox _sourceTab, _targetTab;
     private readonly ListBox _available = List("SimplifiedAvailableCommands", "Available commands grouped by source"), _current = List("SimplifiedSelectedCommands", "Simplified commands grouped by source");
@@ -190,23 +191,15 @@ public sealed partial class RibbonSimplifiedCustomizationEditor : UserControl
     private int S(int value) => (int)Math.Ceiling(value * DeviceDpi / 96d);
     private void DrawRow(object? sender, DrawItemEventArgs e)
     {
-        if (sender is not ListBox list || e.Index < 0 || list.Items[e.Index] is not Row row) return; var theme = _ribbon.Theme;
-        using var brush = new SolidBrush(e.State.HasFlag(DrawItemState.Selected) ? theme.Checked.Start : theme.Surface); e.Graphics.FillRectangle(brush, e.Bounds);
-        var bounds = Rectangle.Inflate(e.Bounds, -S(8), 0);
-        if (!row.Header)
-        {
-            int side = S(20); var icon = new Rectangle(bounds.Left, bounds.Top + (bounds.Height - side) / 2, side, side);
-            if (row.Source?.Icon is { } vector) vector.Draw(e.Graphics, icon, new(DeviceDpi, theme.Foreground, true)); else if (row.Source?.Image is { } image) e.Graphics.DrawImage(image, icon);
-            bounds.X += side + S(8); bounds.Width = Math.Max(0, bounds.Width - side - S(8));
-        }
-        TextRenderer.DrawText(e.Graphics, row.Caption, row.Header ? _headerFont ?? Font : Font, bounds, theme.Foreground, TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix); e.DrawFocusRectangle();
+        if (sender is not ListBox list || e.Index < 0 || list.Items[e.Index] is not Row row) return;
+        RibbonOptionsRowRenderer.Draw(_rowPainter, new(e.Graphics, e.Bounds, _ribbon.Theme, row.Header ? _headerFont ?? Font : Font, DeviceDpi), row.Source, row.Caption, e.State.HasFlag(DrawItemState.Selected), simplified: true, heading: row.Header); e.DrawFocusRectangle();
     }
     internal Size PageMinimum => new(Math.Max(MinimumSize.Width, RibbonQuickAccessEditorMetrics.Minimum(DeviceDpi, Font.Height, _ribbon.Density).Width), RibbonQuickAccessEditorMetrics.Minimum(DeviceDpi, Font.Height, _ribbon.Density).Height + S(40));
     private void UpdateMetrics()
     {
         if (_ribbon is null || _edit is null) return; SuspendLayout(); int gap = S(8), height = RibbonQuickAccessEditorMetrics.ButtonHeight(DeviceDpi, Font.Height, _ribbon.Density);
         _panes.UpdateMetrics(DeviceDpi, Font, _ribbon.Density);
-        _headerFont = new(Font, FontStyle.Bold); _fonts.Add(_headerFont); MinimumSize = PageMinimum;
+        _headerFont = new(Font, new Layout.RibbonOptionsRowMetrics(_ribbon.Theme, DeviceDpi).HeadingStyle(Font.Style)); _fonts.Add(_headerFont); MinimumSize = PageMinimum;
         _available.ItemHeight = _current.ItemHeight = RibbonQuickAccessEditorMetrics.RowHeight(DeviceDpi, Font.Height, _ribbon.Density);
         foreach (var combo in new[] { _sourceTab, _targetTab }) { combo.ItemHeight = Math.Max(Font.Height + S(4), height - S(6)); combo.Margin = new(0, gap, 0, 0); combo.BackColor = _ribbon.Theme.Surface; combo.ForeColor = _ribbon.Theme.Foreground; }
         foreach (var frame in new[] { _leftSearch, _rightSearch }) { frame.Height = frame.RequiredTextHeight(height); frame.Margin = new(0, gap, 0, gap); }
@@ -226,5 +219,5 @@ public sealed partial class RibbonSimplifiedCustomizationEditor : UserControl
     /// <inheritdoc />
     protected override void OnVisibleChanged(EventArgs e) { base.OnVisibleChanged(e); if (!Visible) _menu?.Close(); }
     /// <inheritdoc />
-    protected override void Dispose(bool disposing) { if (disposing) { _menu?.Dispose(); Session?.Dispose(); } base.Dispose(disposing); if (disposing) { _importIcon?.Dispose(); _exportIcon?.Dispose(); foreach (var font in _fonts) font.Dispose(); } }
+    protected override void Dispose(bool disposing) { if (disposing) { _menu?.Dispose(); Session?.Dispose(); } base.Dispose(disposing); if (disposing) { _rowPainter.Dispose(); _importIcon?.Dispose(); _exportIcon?.Dispose(); foreach (var font in _fonts) font.Dispose(); } }
 }
