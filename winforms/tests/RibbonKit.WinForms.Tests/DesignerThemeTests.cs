@@ -31,6 +31,7 @@ public sealed class DesignerThemeTests
     [Theory]
     [InlineData(false, RibbonBuiltInTheme.Office2024Light)] [InlineData(true, RibbonBuiltInTheme.Office2024Light)]
     [InlineData(false, RibbonBuiltInTheme.Office2019Light)] [InlineData(true, RibbonBuiltInTheme.Office2019Light)]
+    [InlineData(false, RibbonBuiltInTheme.Office2013Light)] [InlineData(true, RibbonBuiltInTheme.Office2013Light)]
     public void Explicit_selection_serializes_as_an_enum_and_default_or_reset_omits_assignment(bool customApplicationTheme, RibbonBuiltInTheme selectedTheme) => FoundationTests.Sta(() =>
     {
         using var ribbon = new RibbonControl();
@@ -54,7 +55,7 @@ public sealed class DesignerThemeTests
         using var dialog = new RibbonEditorDialog(draft, value => { RibbonDesignCommitter.Apply(ribbon, host, value); return null; });
         var tree = (TreeView)dialog.Controls.Find("StructureTree", true).Single(); _ = tree.Handle;
         var choice = (ComboBox)dialog.Controls.Find("BuiltInTheme", true).Single();
-        Assert.Equal(3, choice.Items.Count); Assert.Equal(0, choice.SelectedIndex); Assert.Equal("Custom application theme", draft.ApplicationTheme);
+        Assert.Equal(Enum.GetValues<RibbonBuiltInTheme>().Length + 1, choice.Items.Count); Assert.Equal(0, choice.SelectedIndex); Assert.Equal("Custom application theme", draft.ApplicationTheme);
         choice.SelectedIndex = 1; Assert.Equal("Office2024Light", draft.BuiltInTheme);
         Assert.Null(ribbon.BuiltInTheme); Assert.Same(custom, ribbon.Theme); Assert.Equal(0, host.Transactions);
         if (acceptUnchanged) { choice.SelectedIndex = 0; dialog.AcceptDraft(); }

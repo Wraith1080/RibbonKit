@@ -1,4 +1,88 @@
 #nullable enable
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.AccentButtonHoverBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.AccentButtonHoverBackground.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.AccentButtonPressedBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.AccentButtonPressedBackground.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.AccentButtonHoverDarkening.get -> double?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.AccentButtonHoverDarkening.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.AccentButtonPressedDarkening.get -> double?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.AccentButtonPressedDarkening.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.AccentButtonForeground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.AccentButtonForeground.init -> void
+RibbonKit.WinForms.RibbonTheme.OptionsButtonAccentStates.get -> RibbonKit.WinForms.RibbonAccentStateSettings?
+RibbonKit.WinForms.RibbonTheme.OptionsButtonAccentStates.init -> void
+override RibbonKit.WinForms.RibbonAccentStateSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonAccentStateSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonAccentStateSettings.ToString() -> string!
+RibbonKit.WinForms.RibbonAccentStateSettings.Equals(RibbonKit.WinForms.RibbonAccentStateSettings? other) -> bool
+static RibbonKit.WinForms.RibbonAccentStateSettings.operator ==(RibbonKit.WinForms.RibbonAccentStateSettings? left, RibbonKit.WinForms.RibbonAccentStateSettings? right) -> bool
+static RibbonKit.WinForms.RibbonAccentStateSettings.operator !=(RibbonKit.WinForms.RibbonAccentStateSettings? left, RibbonKit.WinForms.RibbonAccentStateSettings? right) -> bool
+override RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.ToString() -> string!
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.Equals(RibbonKit.WinForms.RibbonFileButtonAppearanceSettings? other) -> bool
+static RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonFileButtonAppearanceSettings? left, RibbonKit.WinForms.RibbonFileButtonAppearanceSettings? right) -> bool
+static RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonFileButtonAppearanceSettings? left, RibbonKit.WinForms.RibbonFileButtonAppearanceSettings? right) -> bool
+RibbonKit.WinForms.RibbonBuiltInTheme.Office2013Light = 2 -> RibbonKit.WinForms.RibbonBuiltInTheme
+RibbonKit.WinForms.RibbonTheme.HeaderSelectedUsesAccent.get -> bool
+RibbonKit.WinForms.RibbonTheme.HeaderSelectedUsesAccent.init -> void
+RibbonKit.WinForms.RibbonTheme.AccentStates.get -> RibbonKit.WinForms.RibbonAccentStateSettings?
+RibbonKit.WinForms.RibbonTheme.AccentStates.init -> void
+RibbonKit.WinForms.RibbonTheme.HoverOverride.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonTheme.HoverOverride.init -> void
+RibbonKit.WinForms.RibbonTheme.PressedOverride.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonTheme.PressedOverride.init -> void
+RibbonKit.WinForms.RibbonTheme.CheckedOverride.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonTheme.CheckedOverride.init -> void
+RibbonKit.WinForms.RibbonTheme.CheckedHover.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonTheme.CheckedHover.init -> void
+RibbonKit.WinForms.RibbonTheme.FileButtonAppearance.get -> RibbonKit.WinForms.RibbonFileButtonAppearanceSettings?
+RibbonKit.WinForms.RibbonTheme.FileButtonAppearance.init -> void
+static RibbonKit.WinForms.RibbonThemes.Office2013Light.get -> RibbonKit.WinForms.RibbonTheme!
+RibbonKit.WinForms.RibbonAccentStateSettings
+RibbonKit.WinForms.RibbonAccentStateSettings.RibbonAccentStateSettings() -> void
+RibbonKit.WinForms.RibbonAccentStateSettings.<Clone>$() -> RibbonKit.WinForms.RibbonAccentStateSettings!
+RibbonKit.WinForms.RibbonAccentStateSettings.HoverBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonAccentStateSettings.HoverBackground.init -> void
+RibbonKit.WinForms.RibbonAccentStateSettings.PressedBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonAccentStateSettings.PressedBackground.init -> void
+RibbonKit.WinForms.RibbonAccentStateSettings.HoverOpacity.get -> double
+RibbonKit.WinForms.RibbonAccentStateSettings.HoverOpacity.init -> void
+RibbonKit.WinForms.RibbonAccentStateSettings.PressedOpacity.get -> double
+RibbonKit.WinForms.RibbonAccentStateSettings.PressedOpacity.init -> void
+RibbonKit.WinForms.RibbonAccentStateSettings.CheckedOpacity.get -> double
+RibbonKit.WinForms.RibbonAccentStateSettings.CheckedOpacity.init -> void
+RibbonKit.WinForms.RibbonAccentStateSettings.CheckedHoverOpacity.get -> double
+RibbonKit.WinForms.RibbonAccentStateSettings.CheckedHoverOpacity.init -> void
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.RibbonFileButtonAppearanceSettings() -> void
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.<Clone>$() -> RibbonKit.WinForms.RibbonFileButtonAppearanceSettings!
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.Background.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.Background.init -> void
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.HoverBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.HoverBackground.init -> void
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.PressedBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.PressedBackground.init -> void
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.OpenBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.OpenBackground.init -> void
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.DisabledBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.DisabledBackground.init -> void
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.Foreground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.Foreground.init -> void
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.HoverForeground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.HoverForeground.init -> void
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.PressedForeground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.PressedForeground.init -> void
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.OpenForeground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.OpenForeground.init -> void
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.DisabledForeground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.DisabledForeground.init -> void
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.HoverDarkening.get -> double
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.HoverDarkening.init -> void
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.PressedDarkening.get -> double
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.PressedDarkening.init -> void
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.OpenDarkening.get -> double
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.OpenDarkening.init -> void
 RibbonKit.WinForms.RibbonWindowCornerPreference
 RibbonKit.WinForms.RibbonWindowCornerPreference.SystemDefault = 0 -> RibbonKit.WinForms.RibbonWindowCornerPreference
 RibbonKit.WinForms.RibbonWindowCornerPreference.Square = 1 -> RibbonKit.WinForms.RibbonWindowCornerPreference

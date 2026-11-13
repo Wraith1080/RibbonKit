@@ -31,6 +31,7 @@ internal sealed class RibbonHeader2024Renderer : RibbonHeaderRenderer
     }
     internal override void DrawFileButton(RibbonRenderer owner, RibbonPaintContext context, RibbonDropDownItem menu, RibbonHeaderMetrics metrics)
     {
+        if (RibbonFileButtonRenderer.Draw(owner, context, menu)) return;
         if (owner.DrawApplicationFileButton(context, menu)) return;
         bool enabled = menu.EffectiveEnabled, open = enabled && menu.IsDropDownOpen && !context.FileMenuClosing;
         owner.DrawText(context, menu.Text, !enabled ? context.Theme.DisabledColor : open ? context.Theme.Accent : context.Theme.HeaderTextColor,

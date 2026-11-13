@@ -92,7 +92,7 @@ public partial class RibbonRenderer : IDisposable
         bool check = command is RibbonToggleItem { Checked: true } or RibbonCheckBoxItem { Checked: true } or RibbonRadioButtonItem { Checked: true } or RibbonSplitButtonItem { Checked: true };
         bool open = entry is RibbonQuickAccessComboBoxReference { IsDropDownOpen: true } or RibbonQuickAccessDropDownReference { IsDropDownOpen: true } or RibbonQuickAccessGroupReference { IsDropDownOpen: true };
         if (check || open || context.Hot || context.Pressed)
-            PaintCommandState(context, QuickAccessFill(context, open || context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, menu,
+            PaintCommandState(context, QuickAccessFill(context, context.Theme.CommandStateFill(context.Hot, open || context.Pressed, check), menu,
                 pressed: open || context.Pressed, marked: check && !context.Hot), Color.Transparent);
         DrawQuickAccessContent(context, entry, menu);
         if (command is RibbonCheckBoxItem { CheckState: CheckState.Indeterminate })
@@ -246,6 +246,7 @@ public partial class RibbonRenderer : IDisposable
     /// <summary>Paints the File menu header using library-measured bounds and its original open/availability state.</summary>
     public virtual void DrawFileButton(RibbonPaintContext context, RibbonDropDownItem menu)
     {
+        if (RibbonFileButtonRenderer.Draw(this, context, menu)) return;
         if (DrawApplicationFileButton(context, menu)) return;
         bool enabled = menu.EffectiveEnabled;
         context = EnabledContext(context, enabled);
@@ -391,7 +392,7 @@ public partial class RibbonRenderer : IDisposable
         bool check = item is RibbonToggleItem { Checked: true };
         bool open = enabled && item is RibbonDropDownItem { IsDropDownOpen: true };
         if (open || check || context.Hot || context.Pressed)
-            PaintCommandState(context, open || context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, Color.Transparent);
+            PaintCommandState(context, context.Theme.CommandStateFill(context.Hot, open || context.Pressed, check), Color.Transparent);
         DrawItemContent(context, item, size, menu);
         if (context.Focused)
             DrawFocus(context);
@@ -407,7 +408,7 @@ public partial class RibbonRenderer : IDisposable
     {
         bool selected = item is RibbonToggleItem { Checked: true } or RibbonRadioButtonItem { Checked: true } or RibbonCheckBoxItem { Checked: true };
         if (selected || context.Hot || context.Pressed)
-            PaintCommandState(context, context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : context.Theme.Checked, Color.Transparent);
+            PaintCommandState(context, context.Theme.CommandStateFill(context.Hot, context.Pressed, selected), Color.Transparent);
         var content = RibbonMenuLayout.IllustratedContent(context.Bounds, context.Font, context.DeviceDpi, RibbonMenuLayout.HasDescription(item), context.Theme);
         if (content.Icon.Width > 0 && content.Icon.Height > 0)
         {

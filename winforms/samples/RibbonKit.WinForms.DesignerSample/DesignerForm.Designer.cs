@@ -78,8 +78,19 @@ partial class DesignerForm
         galleryTab = new RibbonKit.WinForms.RibbonTab();
         viewTab = new RibbonKit.WinForms.RibbonTab();
         themesGroup = new RibbonKit.WinForms.RibbonGroup();
+        accentGroup = new RibbonKit.WinForms.RibbonGroup();
+        accentGallery = new RibbonKit.WinForms.RibbonGalleryItem();
+        colorTitleBarToggle = new RibbonKit.WinForms.RibbonToggleItem();
+        defaultAccentTile = new RibbonKit.WinForms.RibbonGalleryTile();
+        blueAccentTile = new RibbonKit.WinForms.RibbonGalleryTile();
+        tealAccentTile = new RibbonKit.WinForms.RibbonGalleryTile();
+        greenAccentTile = new RibbonKit.WinForms.RibbonGalleryTile();
+        purpleAccentTile = new RibbonKit.WinForms.RibbonGalleryTile();
+        redAccentTile = new RibbonKit.WinForms.RibbonGalleryTile();
+        orangeAccentTile = new RibbonKit.WinForms.RibbonGalleryTile();
         themeGallery = new RibbonKit.WinForms.RibbonGalleryItem();
         applicationThemeTile = new RibbonKit.WinForms.RibbonGalleryTile();
+        office2013ThemeTile = new RibbonKit.WinForms.RibbonGalleryTile();
         office2019ThemeTile = new RibbonKit.WinForms.RibbonGalleryTile();
         office2024ThemeTile = new RibbonKit.WinForms.RibbonGalleryTile();
         galleryGroup = new RibbonKit.WinForms.RibbonGroup();
@@ -630,7 +641,7 @@ partial class DesignerForm
         // 
         // viewTab
         //
-        viewTab.Groups.AddRange(new RibbonKit.WinForms.RibbonGroup[] { themesGroup });
+        viewTab.Groups.AddRange(new RibbonKit.WinForms.RibbonGroup[] { themesGroup, accentGroup });
         viewTab.Id = "view";
         viewTab.KeyTip = "V";
         viewTab.Text = "View";
@@ -644,12 +655,12 @@ partial class DesignerForm
         //
         // themeGallery
         //
-        themeGallery.ColumnCount = 3;
+        themeGallery.ColumnCount = 4;
         themeGallery.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:desktop-edit", true);
         themeGallery.Id = "view.themeGallery";
-        themeGallery.InRibbonColumnCount = 3;
+        themeGallery.InRibbonColumnCount = 4;
         themeGallery.IsInRibbon = true;
-        themeGallery.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationThemeTile, office2019ThemeTile, office2024ThemeTile });
+        themeGallery.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationThemeTile, office2013ThemeTile, office2019ThemeTile, office2024ThemeTile });
         themeGallery.KeyTip = "T";
         themeGallery.MaxVisibleRows = 1;
         themeGallery.ScreenTipDescription = "Choose the ribbon theme. Application theme restores the application's settings.";
@@ -657,30 +668,115 @@ partial class DesignerForm
         themeGallery.SimplifiedPlacement = RibbonKit.WinForms.RibbonSimplifiedPlacement.Inline;
         themeGallery.Text = "Themes";
         themeGallery.TileHeight = 78;
-        themeGallery.TileWidth = 140;
+        themeGallery.TileWidth = 120;
         themeGallery.SelectionCommitted += ThemeGallery_SelectionCommitted;
         themeGallery.DropDownOpening += ThemeGallery_DropDownOpening;
         //
         // applicationThemeTile
         //
-        applicationThemeTile.Icon = new RibbonKit.WinForms.RibbonSvgIcon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 64'><title>Application theme</title><rect x='1' y='1' width='158' height='62' rx='4' fill='#ffffff' stroke='#8a8886'/><path d='M2 17h156' stroke='#c8c6c4'/><path d='M65 29a15 15 0 1 1-1 19M65 29v12H53' fill='none' stroke='#605e5c' stroke-width='4'/><path d='M10 9h26m102 0h12' stroke='#8a8886' stroke-width='3'/></svg>");
+        applicationThemeTile.Icon = new RibbonKit.WinForms.RibbonSvgIcon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 64'><title>Application theme</title><rect x='1' y='1' width='158' height='62' rx='4' fill='#ffffff' stroke='#8a8886'/><path d='M2 17h156' stroke='#c8c6c4'/><path d='M65 29a15 15 0 1 1-1 19M65 29v12H53' fill='none' stroke='#605e5c' stroke-width='4'/><path d='M10 9h26m102 0h12' stroke='#8a8886' stroke-width='3'/></svg>", false);
         applicationThemeTile.Id = "view.theme.application";
         applicationThemeTile.ScreenTipDescription = "Reset to the application's theme, retaining its authored settings.";
         applicationThemeTile.Text = "Application theme";
         //
+        // office2013ThemeTile
+        //
+        office2013ThemeTile.Icon = new RibbonKit.WinForms.RibbonSvgIcon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 64'><title>Office 2013 Light</title><rect x='1' y='1' width='158' height='62' fill='#ffffff' stroke='#919191'/><path d='M8 10h35m94 0h14' stroke='#605e5c' stroke-width='3'/><path d='M2 17h23v14H2z' fill='#2b579a'/><path d='M7 24h12' stroke='#ffffff' stroke-width='2'/><path d='M36 24h18' stroke='#2b579a' stroke-width='2'/><path d='M70 24h18' stroke='#605e5c' stroke-width='2'/><path d='M2 57h156M50 35v16m50-16v16' stroke='#c8c6c4'/><path d='M10 37h17v15H10zM59 37h17v15H59zM109 37h17v15h-17z' fill='#dae5f2'/></svg>", false);
+        office2013ThemeTile.Id = "view.theme.office2013";
+        office2013ThemeTile.ScreenTipDescription = "Accent-based command states and a colored File button.";
+        office2013ThemeTile.Text = "Office 2013 Light";
+        //
         // office2019ThemeTile
         //
-        office2019ThemeTile.Icon = new RibbonKit.WinForms.RibbonSvgIcon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 64'><title>Office 2019 Light</title><rect x='1' y='1' width='158' height='62' fill='#ffffff' stroke='#8a8886'/><path d='M2 2h156v28H2z' fill='#e6e6e6'/><path d='M29 18h35v13H29z' fill='#ffffff'/><path d='M8 10h35m94 0h14' stroke='#605e5c' stroke-width='3'/><path d='M8 24h13m16 0h18m19 0h16' stroke='#605e5c' stroke-width='2'/><path d='M2 57h156M50 35v16m50-16v16' stroke='#c8c6c4'/><path d='M10 37h17v15H10zM59 37h17v15H59zM109 37h17v15h-17z' fill='#dae5f2'/></svg>");
+        office2019ThemeTile.Icon = new RibbonKit.WinForms.RibbonSvgIcon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 64'><title>Office 2019 Light</title><rect x='1' y='1' width='158' height='62' fill='#ffffff' stroke='#8a8886'/><path d='M2 2h156v28H2z' fill='#e6e6e6'/><path d='M29 18h35v13H29z' fill='#ffffff'/><path d='M8 10h35m94 0h14' stroke='#605e5c' stroke-width='3'/><path d='M8 24h13m16 0h18m19 0h16' stroke='#605e5c' stroke-width='2'/><path d='M2 57h156M50 35v16m50-16v16' stroke='#c8c6c4'/><path d='M10 37h17v15H10zM59 37h17v15H59zM109 37h17v15h-17z' fill='#dae5f2'/></svg>", false);
         office2019ThemeTile.Id = "view.theme.office2019";
         office2019ThemeTile.ScreenTipDescription = "Flat light ribbon with filled tabs and square native window preference.";
         office2019ThemeTile.Text = "Office 2019 Light";
         //
         // office2024ThemeTile
         //
-        office2024ThemeTile.Icon = new RibbonKit.WinForms.RibbonSvgIcon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 64'><title>Office 2024 Light</title><rect x='1' y='1' width='158' height='62' rx='5' fill='#f3f3f3' stroke='#8a8886'/><path d='M8 10h35m94 0h14' stroke='#605e5c' stroke-width='3'/><path d='M8 23h13m16 0h18m19 0h16' stroke='#605e5c' stroke-width='2'/><path d='M34 28h24' stroke='#2b579a' stroke-width='3'/><rect x='5' y='33' width='150' height='25' rx='5' fill='#ffffff' stroke='#dddddd'/><path d='M13 38h17v14H13zM62 38h17v14H62zM111 38h17v14h-17z' fill='#dae5f2'/><path d='M51 38v14m49-14v14' stroke='#e6e6e6'/></svg>");
+        office2024ThemeTile.Icon = new RibbonKit.WinForms.RibbonSvgIcon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 64'><title>Office 2024 Light</title><rect x='1' y='1' width='158' height='62' rx='5' fill='#f3f3f3' stroke='#8a8886'/><path d='M8 10h35m94 0h14' stroke='#605e5c' stroke-width='3'/><path d='M8 23h13m16 0h18m19 0h16' stroke='#605e5c' stroke-width='2'/><path d='M34 28h24' stroke='#2b579a' stroke-width='3'/><rect x='5' y='33' width='150' height='25' rx='5' fill='#ffffff' stroke='#dddddd'/><path d='M13 38h17v14H13zM62 38h17v14H62zM111 38h17v14h-17z' fill='#dae5f2'/><path d='M51 38v14m49-14v14' stroke='#e6e6e6'/></svg>", false);
         office2024ThemeTile.Id = "view.theme.office2024";
         office2024ThemeTile.ScreenTipDescription = "Light ribbon with underlined tabs and system-default native window corners.";
         office2024ThemeTile.Text = "Office 2024 Light";
+        //
+        // accentGroup
+        //
+        accentGroup.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:desktop-edit", true);
+        accentGroup.Id = "view.accent";
+        accentGroup.Text = "Colors";
+        accentGroup.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { accentGallery, colorTitleBarToggle });
+        //
+        // accentGallery
+        //
+        accentGallery.Id = "view.accentGallery";
+        accentGallery.Text = "Accent colors";
+        accentGallery.KeyTip = "A";
+        accentGallery.IsInRibbon = true;
+        accentGallery.InRibbonColumnCount = 2;
+        accentGallery.ColumnCount = 3;
+        accentGallery.MaxVisibleRows = 3;
+        accentGallery.TileWidth = 60;
+        accentGallery.TileHeight = 78;
+        accentGallery.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { defaultAccentTile, blueAccentTile, tealAccentTile, greenAccentTile, purpleAccentTile, redAccentTile, orangeAccentTile });
+        accentGallery.SelectedItem = defaultAccentTile;
+        accentGallery.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:desktop-edit", true);
+        accentGallery.SimplifiedPlacement = RibbonKit.WinForms.RibbonSimplifiedPlacement.Inline;
+        accentGallery.ScreenTipDescription = "Choose an accent, or restore the current theme's default accent.";
+        accentGallery.SelectionCommitted += AccentGallery_SelectionCommitted;
+        accentGallery.DropDownOpening += ThemeGallery_DropDownOpening;
+        //
+        // colorTitleBarToggle
+        //
+        colorTitleBarToggle.Id = "view.colorTitleBar";
+        colorTitleBarToggle.Text = "Color title bar";
+        colorTitleBarToggle.KeyTip = "C";
+        colorTitleBarToggle.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:desktop-edit", true);
+        colorTitleBarToggle.ScreenTipDescription = "Use the accent color for the title bar with white title text.";
+        colorTitleBarToggle.SimplifiedPlacement = RibbonKit.WinForms.RibbonSimplifiedPlacement.Inline;
+        colorTitleBarToggle.Click += ColorTitleBarToggle_Click;
+        //
+        // defaultAccentTile
+        //
+        defaultAccentTile.Id = "view.accent.default";
+        defaultAccentTile.Text = "Default";
+        defaultAccentTile.Icon = new RibbonKit.WinForms.RibbonSvgIcon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 28'><title>Default accent</title><path d='M2 2h22v12H2z' fill='#2b579a'/><path d='M24 2h22v12H24z' fill='#007070'/><path d='M2 14h22v12H2z' fill='#80397b'/><path d='M24 14h22v12H24z' fill='#217346'/></svg>", false);
+        //
+        // blueAccentTile
+        //
+        blueAccentTile.Id = "view.accent.blue";
+        blueAccentTile.Text = "Blue";
+        blueAccentTile.Icon = new RibbonKit.WinForms.RibbonSvgIcon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 28'><title>Blue accent</title><rect x='2' y='2' width='44' height='24' rx='2' fill='#2B579A'/></svg>", false);
+        //
+        // tealAccentTile
+        //
+        tealAccentTile.Id = "view.accent.teal";
+        tealAccentTile.Text = "Teal";
+        tealAccentTile.Icon = new RibbonKit.WinForms.RibbonSvgIcon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 28'><title>Teal accent</title><rect x='2' y='2' width='44' height='24' rx='2' fill='#007070'/></svg>", false);
+        //
+        // greenAccentTile
+        //
+        greenAccentTile.Id = "view.accent.green";
+        greenAccentTile.Text = "Green";
+        greenAccentTile.Icon = new RibbonKit.WinForms.RibbonSvgIcon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 28'><title>Green accent</title><rect x='2' y='2' width='44' height='24' rx='2' fill='#217346'/></svg>", false);
+        //
+        // purpleAccentTile
+        //
+        purpleAccentTile.Id = "view.accent.purple";
+        purpleAccentTile.Text = "Purple";
+        purpleAccentTile.Icon = new RibbonKit.WinForms.RibbonSvgIcon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 28'><title>Purple accent</title><rect x='2' y='2' width='44' height='24' rx='2' fill='#80397B'/></svg>", false);
+        //
+        // redAccentTile
+        //
+        redAccentTile.Id = "view.accent.red";
+        redAccentTile.Text = "Red";
+        redAccentTile.Icon = new RibbonKit.WinForms.RibbonSvgIcon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 28'><title>Red accent</title><rect x='2' y='2' width='44' height='24' rx='2' fill='#B42840'/></svg>", false);
+        //
+        // orangeAccentTile
+        //
+        orangeAccentTile.Id = "view.accent.orange";
+        orangeAccentTile.Text = "Orange";
+        orangeAccentTile.Icon = new RibbonKit.WinForms.RibbonSvgIcon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 28'><title>Orange accent</title><rect x='2' y='2' width='44' height='24' rx='2' fill='#A84B00'/></svg>", false);
         //
         // galleryTab
         // 
@@ -984,8 +1080,19 @@ partial class DesignerForm
     private RibbonKit.WinForms.RibbonTab galleryTab = null!;
     private RibbonKit.WinForms.RibbonTab viewTab = null!;
     private RibbonKit.WinForms.RibbonGroup themesGroup = null!;
+    private RibbonKit.WinForms.RibbonGroup accentGroup = null!;
+    private RibbonKit.WinForms.RibbonGalleryItem accentGallery = null!;
+    private RibbonKit.WinForms.RibbonToggleItem colorTitleBarToggle = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile defaultAccentTile = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile blueAccentTile = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile tealAccentTile = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile greenAccentTile = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile purpleAccentTile = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile redAccentTile = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile orangeAccentTile = null!;
     private RibbonKit.WinForms.RibbonGalleryItem themeGallery = null!;
     private RibbonKit.WinForms.RibbonGalleryTile applicationThemeTile = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile office2013ThemeTile = null!;
     private RibbonKit.WinForms.RibbonGalleryTile office2019ThemeTile = null!;
     private RibbonKit.WinForms.RibbonGalleryTile office2024ThemeTile = null!;
     private RibbonKit.WinForms.RibbonGroup galleryGroup = null!;

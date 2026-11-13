@@ -1,23 +1,29 @@
-# Continue native WinForms themes after E2 window corners
+# Continue native WinForms themes after E3 palette/File and appearance controls
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-13**. E2 entry baseline was user commit `fd356b1` on
-`codex/Ribbonkit-Winform`, clean at entry; E2 changes are uncommitted. Recheck
+Updated **2026-11-13**. Branch is `codex/Ribbonkit-Winform`; user baseline commit
+is `e6ced78`. E3/sample/button work was accepted and a local checkpoint commit
+was requested before E4. Inspect live HEAD for the checkpoint. The user's
+authored Backstage route and resx tray metadata were preserved. Recheck
 `git status --short`, live branch and HEAD; preserve user commits and edits. Do not
 commit, stage, push, publish or change branches unless requested.
 
 ## Current state and scope
 
-B1–D8b, all identified A00–A17 corrections and E2 window corners are implemented.
-Current automated evidence, exact user review and remaining gates live only in
+B1–D8b, all identified A00–A17 corrections, E2 corners and E3 palette/File states
+are implemented. Current review, evidence pointers and remaining gates live in
 the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
 
 Interactive diagnostic/theme-effect/geometry tabs have been retired. The
 permanent Designer Sample now starts with authored **Home/Edit/Gallery/View**.
-The user subsequently requested View's permanent theme gallery; it offers the
-two delivered light themes plus Application theme Reset through public APIs.
+Both apps now offer View's theme/accent galleries and Color title bar toggle.
+The three delivered light themes plus Application Reset use public APIs. Six
+accents plus Default update derived fills; colored captions use white title ink.
+The Designer Sample controls are authored fields/collections, not runtime-only
+review tabs. Its SVG constructors now explicitly supply both arguments; actual
+source load/save/resource reload checks protect the reported designer artwork loss.
 `--office2019-light` selects 2019 without review tabs;
 `--office2019-theme-demo` is a selection-only compatibility alias and
 `--menu-geometry-demo` no longer creates tabs. Explicit `--verify-*` fixtures
@@ -31,12 +37,24 @@ The user approved **Office 2013 Light** and square native form corners for
 WPF visual references, not native acceptance evidence. E2 adds the shared
 SystemDefault/Square/Rounded/SmallRounded policy, theme default and nullable
 RibbonForm override/Reset. Office 2019 uses Square; Office 2024 keeps SystemDefault.
-Future Office 2013 must use Square. EffectiveWindowCornerPreference reports the
+Office 2013 also uses Square. EffectiveWindowCornerPreference reports the
 resolved request, not native success or physical appearance. See the bounded
 [E2 implementation/evidence](OFFICE2013-LIGHT-PLAN.md#e2-implementation-and-verification--2026-11-13).
-E2 is complete as an implementation slice; visible native corner review is still
-pending. Stop after E2 in this task. On an authorized continuation, start E3;
-do not reopen the rewrite or implement E4/E5 together with E3.
+E3 includes live AccentStates, explicit state override/reset aliases and a
+shared FileButtonAppearance helper. The user's accent follow-up keeps 2019/2024
+ordinary hover/press grey while deriving checked toggles, selected galleries and
+checked-hover from Accent. Command text/icons keep their ordinary foreground;
+accent text belongs to active sibling navigation, not ribbon buttons.
+OptionsButtonAccentStates keeps primary OK filled, darkening by 0.10 on hover
+and 0.20 on press with white text. OptionsAppearance exposes independent primary
+darkening, state-fill and foreground overrides. Other buttons stay white with
+light hover/darker pressed washes; pressed borders retain Accent.
+Existing explicit button/state/border overrides win. All three families' sample actions
+and persistence are checked; the persistent Designer Sample now uses package
+`0.1.0-designer.local20261113T140211698Z`.
+See [E3 evidence and scope](OFFICE2013-LIGHT-PLAN.md#e3-accent-palette-file-states-and-sample-appearance-controls--2026-11-13).
+Stop after E3 in this task. On an authorized continuation, start E4; native corner,
+physical input, actual VS and composed visual acceptance remain separate.
 
 Native `winforms/` projects only. Keep parent WPF runtime, builds, tests and CI
 read-only. Use one agent and no computer-use tools; actual VS review remains
@@ -45,31 +63,22 @@ records before edits. Reuse the
 [architecture map](THEME-ARCHITECTURE-PLAN.md) and
 [adjustability audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 
-## Next bounded implementation: E3 Office 2013 accent palette and File states
+## Next bounded implementation: E4 connected gray selected-tab/ribbon outline
 
-Resolve accent-derived defaults versus explicit authored fill overrides first,
-then append the stable Office2013Light built-in identity. Commands use adjustable
-accent washes; File stays accent-filled at rest with white ink and darkens on
-hover/press/open. Cover CommandMenu and Backstage, disabled/focus states and
-close/reopen. Preserve application-theme Reset, existing identity values,
-persistence, designer/generated-code contracts and independent setting Reset.
-
-Use shared recipes and public settings; no Showcase-only recoloring callback or
-family selector merely for a palette. Accent changes must update default state
-colors without losing explicit alpha/gradient/Transparent fills. Keep native
-EDIT, disabled/inactive colors and backdrop contrast with their existing owners.
-Set the 2013 theme's WindowCornerPreference to Square through the delivered E2 API.
-
-Keep the connected outline/white tab-strip structural work in E4. Validate the
-affected E3 states and accent/override/reset paths with focused checks and an
-independent public consumer. No diagnostic tabs or full unrelated matrices.
+Measure existing Filled/header/body paint order and bounds against the selected
+references before adding a seam policy or structural sibling. Reuse BodyBorder,
+BodyAppearance.BorderWidth and HeaderAppearance.FilledBorderColor/Width first.
+Connect selected-tab top/left/right edges to the body outline with an open bottom,
+without a double seam or accidental underline. Keep the white 2013 tab strip
+under an optional colored caption. Borders and seam policy must be adjustable.
+Preserve targets, clipping, QAT placement, scrolling/contextual tabs, collection/
+visibility changes, minimization, Classic/Simplified and Compact/Touch geometry.
+Keep E3 accent/explicit-fill Reset, permanent File states, window-corner policy,
+sample controls/designer round trips and accepted title handoff. Validate affected
+paint/joins and a public consumer only; no diagnostic tabs or unrelated matrices.
 
 ## Later bounded work
 
-- **E4:** Connected gray selected-tab/ribbon outline and white tab strip beneath
-  an optional colored caption. Measure existing Filled/header/body paint before
-  adding a seam policy or structural sibling. Preserve targets, clipping,
-  QAT placement, scrolling/contextual tabs and Classic/Simplified geometry.
 - **E5:** Composed light-family/native-editor and independent-consumer review.
   Review this family before selecting another light family or dark variant.
 

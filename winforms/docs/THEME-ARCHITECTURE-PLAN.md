@@ -61,7 +61,11 @@ This document records implementation boundaries and the migration sequence.
 The approved next family and E2–E5 sequence are defined in the
 [Office 2013 Light plan](OFFICE2013-LIGHT-PLAN.md). E2 adds a shared theme corner
 preference and nullable Form override, applied by the native window adapter;
-E3 palette/File work is next. New Office 2013 rendering is not implemented yet.
+E3 adds an accent-state value recipe and shared opt-in File helper; existing
+Filled/Classic registrations remain. Nonnullable state fills retain explicit
+ownership through nullable reset aliases. No new family selector/layout engine
+was added. E4 connected outline work is next; evidence and visual-review limits
+remain in the Office 2013 plan.
 
 ## Problem and intended result
 

@@ -11,6 +11,8 @@ internal sealed record ShowcasePreferences
     public RibbonLayoutMode LayoutMode { get; init; }
     public RibbonDensity Density { get; init; }
     public RibbonBuiltInTheme? BuiltInTheme { get; init; }
+    public int? AccentArgb { get; init; }
+    public bool ColorTitleBar { get; init; }
     public bool IsMinimized { get; init; }
     public RibbonAnimationLevel AnimationLevel { get; init; } = RibbonAnimationLevel.Subtle;
     public RibbonTabContentAnimation TabContentAnimation { get; init; }
@@ -34,7 +36,7 @@ internal sealed record ShowcasePreferences
         if (value.Format != new ShowcasePreferences().Format || value.Version != 1
             || !Enum.IsDefined(value.LayoutMode) || !Enum.IsDefined(value.Density)
             || !Enum.IsDefined(value.AnimationLevel) || !Enum.IsDefined(value.TabContentAnimation) || !Enum.IsDefined(value.Backdrop)
-            || value.BuiltInTheme is { } theme && !Enum.IsDefined(theme))
+            || value.BuiltInTheme is { } theme && !Enum.IsDefined(theme) || value.AccentArgb is { } accent && Color.FromArgb(accent).A != 255)
             throw new InvalidOperationException("The preferences format or version is unsupported.");
         value.Window?.Validate();
         return value;

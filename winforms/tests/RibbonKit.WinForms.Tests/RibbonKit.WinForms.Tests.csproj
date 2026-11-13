@@ -1,5 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <Compile Include="../../samples/Shared/SampleAppearance.cs" Link="Samples/SampleAppearance.cs" />
+    <None Include="../../samples/RibbonKit.WinForms.DesignerSample/DesignerForm.Designer.cs" Link="Fixtures/DesignerForm.Designer.cs" CopyToOutputDirectory="PreserveNewest" />
     <Compile Include="../../samples/RibbonKit.WinForms.Showcase/Persistence/*.cs" Link="ShowcasePersistence/%(Filename)%(Extension)" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="xunit" Version="2.9.2" />

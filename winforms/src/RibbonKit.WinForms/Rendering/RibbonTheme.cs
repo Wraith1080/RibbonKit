@@ -6,7 +6,9 @@ public enum RibbonBuiltInTheme
     /// <summary>The Office 2024 inspired light palette.</summary>
     Office2024Light,
     /// <summary>The flat Office 2019 inspired light palette.</summary>
-    Office2019Light
+    Office2019Light,
+    /// <summary>The accent-driven Office 2013 inspired light palette. Connected frame refinement is independent.</summary>
+    Office2013Light
 }
 
 /// <summary>Identifies the default Office renderer's tab and File presentation.</summary>
@@ -51,6 +53,8 @@ public sealed record RibbonTheme
     public RibbonFill? HeaderSelectedBackground { get; init; }
     /// <summary>Gets selected-tab text and underline ink. Empty retains existing foreground/accent/contextual colors. An explicit value also overrides selected contextual-tab ink.</summary>
     public Color HeaderSelectedForeground { get; init; } = Color.Empty;
+    /// <summary>Gets whether selected filled tabs use Accent when HeaderSelectedForeground is Empty. Defaults to false; explicit ink and contextual colors retain precedence.</summary>
+    public bool HeaderSelectedUsesAccent { get; init; }
     /// <summary>Gets an optional filled tab/File state corner radius in 96-DPI logical pixels, 0..64. Null retains square states. Does not change header bounds, body joins or underline corners.</summary>
     public int? HeaderFilledCornerRadius { get; init; }
     /// <summary>Gets an optional tab/File underline thickness in 96-DPI logical pixels, 0..64. Null retains 3; zero hides built-in underlines. Clamps within the header without changing targets or strip layout.</summary>
@@ -89,8 +93,10 @@ public sealed record RibbonTheme
     public RibbonApplicationMenuAppearanceSettings? ApplicationMenuAppearance { get; init; }
     /// <summary>Gets optional immutable Application Menu content settings shared by measurement and paint. Null preserves existing icon/text/description/arrow/separator recipes and rounding. Native editor frames retain their shared owners.</summary>
     public RibbonApplicationMenuContentSettings? ApplicationMenuContent { get; init; }
-    /// <summary>Gets an optional library options-button radius in 96-DPI logical pixels, 0..64. Null preserves system painting for ordinary buttons and existing accent-button chrome; explicit values use shared theme painting with native Button semantics.</summary>
+    /// <summary>Gets an optional library options-button radius in 96-DPI logical pixels, 0..64. Null retains the normal radius; native ordinary-button paint is restored when OptionsButtonAccentStates and other button overrides are also null. Native Button semantics remain.</summary>
     public int? OptionsButtonCornerRadius { get; init; }
+    /// <summary>Gets the independent interaction palette for library configuration buttons. Primary OK uses an accent fill, darker hover/press and Surface ink throughout; ordinary buttons use Surface with light hover/darker pressed washes. Pressed borders use Accent. Explicit button/state fills, ink and border overrides win. Null restores legacy ordinary/system and primary treatment.</summary>
+    public RibbonAccentStateSettings? OptionsButtonAccentStates { get; init; } = new();
     /// <summary>Gets whether message frames include side borders. Defaults to true. False keeps horizontal rules and existing connected-edge ownership.</summary>
     public bool MessageSideBordersVisible { get; init; } = true;
     /// <summary>Gets whether header scrollers use the effective tab height as their desired width when HeaderScrollButtonWidth is null. Defaults to false. Narrow-strip clamps still apply.</summary>
@@ -452,11 +458,29 @@ public sealed record RibbonTheme
     /// <summary>Gets the selected-tab and focus color.</summary>
     public Color Accent { get; init; } = Color.FromArgb(43, 87, 154);
     /// <summary>Gets the hover fill.</summary>
-    public RibbonFill Hover { get; init; } = new(Color.FromArgb(230, 230, 230));
+    public RibbonFill Hover { get => HoverOverride ?? (AccentStates is { } a ? a.HoverBackground ?? RibbonAccentStateSettings.Wash(Accent, Surface, a.HoverOpacity) : new(Color.FromArgb(230, 230, 230))); init => HoverOverride = value; }
     /// <summary>Gets the pressed fill.</summary>
-    public RibbonFill Pressed { get; init; } = new(Color.FromArgb(218, 218, 218));
+    public RibbonFill Pressed { get => PressedOverride ?? (AccentStates is { } a ? a.PressedBackground ?? RibbonAccentStateSettings.Wash(Accent, Surface, a.PressedOpacity) : new(Color.FromArgb(218, 218, 218))); init => PressedOverride = value; }
     /// <summary>Gets the checked-command fill.</summary>
-    public RibbonFill Checked { get; init; } = new(Color.FromArgb(217, 225, 237));
+    public RibbonFill Checked { get => CheckedOverride ?? (AccentStates is { } a ? RibbonAccentStateSettings.Wash(Accent, Surface, a.CheckedOpacity) : new(Color.FromArgb(217, 225, 237))); init => CheckedOverride = value; }
+    /// <summary>Gets optional command state defaults. Office 2024 uses neutral hover/press and live accent checked washes. Null retains the fixed fallback palette; explicit state overrides win.</summary>
+    public RibbonAccentStateSettings? AccentStates { get; init; } = new()
+    {
+        HoverBackground = new(Color.FromArgb(230, 230, 230)), PressedBackground = new(Color.FromArgb(218, 218, 218)),
+        CheckedOpacity = .18, CheckedHoverOpacity = .28
+    };
+    /// <summary>Gets the explicit Hover override, also set by Hover assignment. Null independently restores the accent-derived or fixed default.</summary>
+    public RibbonFill? HoverOverride { get; init; }
+    /// <summary>Gets the explicit Pressed override, also set by Pressed assignment. Null independently restores the default.</summary>
+    public RibbonFill? PressedOverride { get; init; }
+    /// <summary>Gets the explicit Checked override, also set by Checked assignment. Null independently restores the default.</summary>
+    public RibbonFill? CheckedOverride { get; init; }
+    /// <summary>Gets an optional checked-hover fill. Null uses the accent-derived checked-hover default when enabled, otherwise the existing Hover treatment. Explicit alpha and gradients are retained.</summary>
+    public RibbonFill? CheckedHover { get; init; }
+    /// <summary>Gets optional full-rectangle accent-filled File states for CommandMenu and Backstage. Null preserves legacy File rendering and its open-highlight settings.</summary>
+    public RibbonFileButtonAppearanceSettings? FileButtonAppearance { get; init; }
+    internal RibbonFill CommandStateFill(bool hot, bool pressed, bool check) => pressed ? Pressed : hot
+        ? check ? CheckedHover ?? (AccentStates is { } a ? RibbonAccentStateSettings.Wash(Accent, Surface, a.CheckedHoverOpacity) : Hover) : Hover : Checked;
     /// <summary>Gets QAT hover/pressed/checked and header utility hover/pressed background coverage over an active window backdrop, from 0 to 1. Solid and popup presentations keep their authored fills. Text and icons retain their opacity.</summary>
     public float QuickAccessBackdropOpacity { get; init; } = .6f;
     /// <summary>Gets an optional hover/selected-navigation fill over a window backdrop. Null uses Foreground at alpha 24. Applies to header Quick Access/utilities, minimize/maximize caption buttons and Backstage entries; Solid mode and opaque command panels retain Hover.</summary>
@@ -485,6 +509,11 @@ public static class RibbonThemes
     public static RibbonTheme Office2019Light { get; } = new()
     {
         WindowCornerPreference = RibbonWindowCornerPreference.Square,
+        AccentStates = new()
+        {
+            HoverBackground = new(Color.FromArgb(222, 220, 218)), PressedBackground = new(Color.FromArgb(207, 205, 203)),
+            CheckedOpacity = .18, CheckedHoverOpacity = .28
+        },
         HeaderPresentation = RibbonHeaderPresentation.Filled, ExtendTitleBarColorToHeader = true,
         BodyBottomBorderOnly = true, Background = Color.FromArgb(230, 230, 230),
         CollapsedGroupBorder = Color.Transparent, ApplicationMenuSplitDividerVisible = false, OptionsButtonCornerRadius = 0,
@@ -499,8 +528,6 @@ public static class RibbonThemes
         BackstageFooterBottomPadding = 14, BackstagePageBorderWidth = 0,
         Surface = Color.White, Foreground = Color.FromArgb(32, 31, 30), SecondaryText = Color.FromArgb(96, 94, 92),
         Border = Color.FromArgb(200, 198, 196), PopupBorder = Color.FromArgb(200, 198, 196),
-        Hover = new(Color.FromArgb(222, 220, 218)), Pressed = new(Color.FromArgb(207, 205, 203)),
-        Checked = new(Color.FromArgb(206, 220, 240)),
         HeaderHover = new(Color.FromArgb(237, 237, 237)), HeaderPressed = new(Color.FromArgb(216, 216, 216)),
         CornerRadius = 0, PopupCornerRadius = 0, BodyCornerRadius = 0, BackstagePageCornerRadius = 0,
         FocusCornerRadius = 0, KeyTipCornerRadius = 0, CheckBoxCornerRadius = 0,
@@ -508,6 +535,15 @@ public static class RibbonThemes
         HeaderIndicatorCornerRadius = 0,
         BodyMargin = Padding.Empty, BodyShadowColor = Color.Transparent,
         GalleryHeadingBackground = new(Color.FromArgb(243, 242, 241)), GalleryHeadingForeground = Color.FromArgb(32, 31, 30)
+    };
+    /// <summary>Gets the Office 2013 light accent palette, filled File states and Classic Backstage. Connected tab/body outline refinement is separate.</summary>
+    public static RibbonTheme Office2013Light { get; } = Office2019Light with
+    {
+        WindowCornerPreference = RibbonWindowCornerPreference.Square,
+        Background = Color.White, ExtendTitleBarColorToHeader = false,
+        AccentStates = new(), HoverOverride = null, PressedOverride = null, CheckedOverride = null,
+        HeaderHover = null, HeaderPressed = null, HeaderSelectedUsesAccent = true,
+        FileButtonAppearance = new() { DisabledForeground = Color.FromArgb(190, 210, 235) }
     };
 }
 

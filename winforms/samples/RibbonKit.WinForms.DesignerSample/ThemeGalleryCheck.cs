@@ -11,8 +11,8 @@ public partial class DesignerForm
         var commands = groups.SelectMany(g => g.Items).ToArray(); var qat = ribbon.QuickAccessItems.ToArray();
         var pages = ribbon.Backstage.Items.ToArray(); var fileMode = ribbon.FileMenuMode;
         Require(tabs.Select(t => t.Text).SequenceEqual(new[] { "Home", "Edit", "Gallery", "View" }), "Authored startup tabs");
-        Require(ReferenceEquals(viewTab.Groups.Single(), themesGroup) && ReferenceEquals(themesGroup.Items.Single(), themeGallery), "Authored View/Themes gallery");
-        Require(themeGallery.Items.SequenceEqual(new[] { applicationThemeTile, office2019ThemeTile, office2024ThemeTile }), "Only available themes plus Application Reset");
+        Require(viewTab.Groups.SequenceEqual(new[] { themesGroup, accentGroup }) && ReferenceEquals(themesGroup.Items.Single(), themeGallery), "Authored View theme and accent groups");
+        Require(themeGallery.Items.SequenceEqual(new[] { applicationThemeTile, office2013ThemeTile, office2019ThemeTile, office2024ThemeTile }), "Only available themes plus Application Reset");
         Require(ReferenceEquals(themeGallery.SelectedItem, office2024ThemeTile) && ribbon.BuiltInTheme == RibbonBuiltInTheme.Office2024Light, "Startup theme selection");
         Require(TitleBarColor.IsEmpty, "Authored sample follows the theme's caption/header colors");
         var nodes = Descendants(ribbon.Tabs).ToArray();
@@ -36,6 +36,7 @@ public partial class DesignerForm
             ribbon.LayoutMode = mode;
             foreach (var (tile, selected, theme, corner) in new[]
             {
+                (office2013ThemeTile, (RibbonBuiltInTheme?)RibbonBuiltInTheme.Office2013Light, RibbonThemes.Office2013Light, RibbonWindowCornerPreference.Square),
                 (office2019ThemeTile, (RibbonBuiltInTheme?)RibbonBuiltInTheme.Office2019Light, RibbonThemes.Office2019Light, RibbonWindowCornerPreference.Square),
                 (office2024ThemeTile, (RibbonBuiltInTheme?)RibbonBuiltInTheme.Office2024Light, RibbonThemes.Office2024Light, RibbonWindowCornerPreference.SystemDefault),
                 (applicationThemeTile, (RibbonBuiltInTheme?)null, application, RibbonWindowCornerPreference.SmallRounded)
@@ -80,6 +81,33 @@ public partial class DesignerForm
         Require(ReferenceEquals(application, ribbon.Theme), "Expanded gallery source restores authored application theme");
         AssertRetained();
         log.Add($"PASS: built-in expanded gallery; explicit Form override/Reset; actual DPI={DeviceDpi}; offscreen direct paint only, actual VS and physical input not run");
+        foreach (var mode in Enum.GetValues<RibbonLayoutMode>())
+        foreach (var themeTile in new[] { office2013ThemeTile, office2019ThemeTile, office2024ThemeTile })
+        {
+            ribbon.LayoutMode = mode; themeTile.PerformClick();
+            var selectedTheme = _sampleAppearance!.SelectedTheme; var baseAccent = ribbon.Theme.Accent;
+            foreach (var (tile, color) in AccentChoices)
+            {
+                tile.PerformClick();
+                Require(ribbon.Theme.Accent == color && ReferenceEquals(accentGallery.SelectedItem, tile) && ReferenceEquals(themeGallery.SelectedItem, themeTile), "Accent choice retains selected theme family and gallery selection");
+                colorTitleBarToggle.PerformClick();
+                Require(colorTitleBarToggle.Checked && TitleBarColor == color && ribbon.Theme.TitleBarForeground == Color.White, "Colored title follows accent with white ink");
+                AssertRetained();
+                colorTitleBarToggle.PerformClick();
+                Require(!colorTitleBarToggle.Checked && TitleBarColor.IsEmpty && ribbon.Theme.TitleBarForeground.IsEmpty && ribbon.Theme.Accent == color, "Title toggle restores previous roles without resetting the accent");
+            }
+            defaultAccentTile.PerformClick();
+            Require(ribbon.Theme.Accent == baseAccent && ribbon.BuiltInTheme == selectedTheme && ReferenceEquals(accentGallery.SelectedItem, defaultAccentTile), "Independent default accent restores theme ownership");
+            log.Add($"PASS: {mode}/{themeTile.Text}; all six accent actions, selected family retained, title toggle/white ink, independent default/off and native/model retention");
+        }
+        ribbon.LayoutMode = RibbonLayoutMode.Classic;
+        foreach (var (tile, captureName) in new[] { (office2013ThemeTile, "designer-accent-title"), (office2019ThemeTile, "designer-2019-accent-title"), (office2024ThemeTile, "designer-2024-accent-title") })
+        {
+            tile.PerformClick(); purpleAccentTile.PerformClick();
+            if (!colorTitleBarToggle.Checked) colorTitleBarToggle.PerformClick();
+            using var capture = new Bitmap(ribbon.Width, ribbon.Height);
+            ribbon.DrawToBitmap(capture, new(Point.Empty, capture.Size)); capture.Save(Path.Combine(directory, captureName + ".png"));
+        }
         File.WriteAllLines(Path.Combine(directory, "result.log"), log);
 
         void AssertRetained()

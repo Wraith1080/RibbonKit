@@ -34,7 +34,7 @@ internal static class WindowCornerPreferenceChecks
             page.Controls.Add(field); ribbon.Backstage.Items.Add(new RibbonBackstagePageItem { Text = "Info", Content = page });
             form.Controls.Add(ribbon); form.Ribbon = ribbon;
             Require(!form.IsHandleCreated, "Policy/association must not create the form handle");
-            var expected = theme == RibbonBuiltInTheme.Office2019Light ? RibbonWindowCornerPreference.Square : RibbonWindowCornerPreference.SystemDefault;
+            var expected = ribbon.Theme.WindowCornerPreference;
             Require(form.WindowCornerPreference is null && form.EffectiveWindowCornerPreference == expected, "Built-in default");
             form.Show(); WF.Application.DoEvents(); Verify(expected);
             log.Add($"{theme}/{backdrop}: actual DPI={form.DeviceDpi}; applied backdrop={form.EffectiveBackdrop}");

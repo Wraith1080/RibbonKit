@@ -23,7 +23,7 @@ internal static class RibbonCommandRenderer
                 whole.Graphics.SetClip(part.Bounds, CombineMode.Intersect);
                 bool active = expanded || part.Pressed || part.Hot || marked;
                 var theme = quickAccess ? whole.Theme : part.Theme;
-                var fill = expanded || part.Pressed ? theme.Pressed : part.Hot ? theme.Hover : marked ? theme.Checked : new RibbonFill(quickAccess ? theme.Surface : Color.Transparent);
+                var fill = active ? theme.CommandStateFill(part.Hot, expanded || part.Pressed, marked) : new RibbonFill(quickAccess ? theme.Surface : Color.Transparent);
                 if (!active && whole.Theme.CommandAppearance?.SplitCompanionBackground is { } authored) fill = authored;
                 else if (quickAccess) fill = !active && whole.CompositedText && !menu ? new(Color.Transparent)
                     : RibbonRenderer.QuickAccessFill(whole, fill, menu, pressed: part.Pressed || expanded, marked: marked && !part.Hot);

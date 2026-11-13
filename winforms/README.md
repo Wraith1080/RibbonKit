@@ -161,13 +161,47 @@ radius, tab spacing and scroller settings stay independent. Clear the new values
 to restore the active style's defaults. Explicit flat/custom renderers retain
 their own drawing policy.
 
-The native Showcase offers **View > Theme** with Office 2019 Light, Office 2024
-Light and Application theme; the application saves that choice between sessions.
-The Designer Sample's `--office2019-theme-demo` starts with a neutral header and
-offers a working Toggle Backstage action that restores the original File routing.
-Its **Header effects** group demonstrates style, underline, corners and selected
-colors through the same public settings; **Default header effects** clears those
-overrides without changing the selected style.
+Both native apps offer **View > Themes**, **Accent colors** and **Color title bar**.
+Choose Office 2013/2019/2024 Light or Application theme, six accents or Default.
+Color title bar follows the accent and uses white title text; off restores prior
+caption color/ink. Accent Default resets only the accent. Selecting a theme uses
+that theme's default accent and retains title-color mode. Showcase saves these
+choices between sessions. Designer Sample declares its galleries/tiles/toggle in
+the editable Form designer file; diagnostic tabs remain retired.
+
+Office 2013 Light adds live accent-derived hover/pressed/checked/checked-hover
+states and an always-accent File block for both CommandMenu and Backstage.
+The connected tab/body outline is the next slice; see the
+[Office 2013 scope and evidence](docs/OFFICE2013-LIGHT-PLAN.md#e3-accent-palette-file-states-and-sample-appearance-controls--2026-11-13).
+`AccentStates` controls wash strengths. Explicit Hover/Pressed/Checked assignments
+remain authoritative; null on HoverOverride/PressedOverride/CheckedOverride resets
+that state independently. `CheckedHover` is a separate nullable override.
+Office 2019/2024 keep neutral grey ordinary hover and press; checked toggles and
+selected gallery tiles use live accent washes (0.18 checked, 0.28 checked-hover),
+matching WPF's custom-accent recipe. `AccentStates.HoverBackground` and
+`PressedBackground` retain neutral fills independently of those washes; null on
+either derives its accent wash. Command text and icons retain their ordinary
+foreground, including hover, pressed and checked states. Accent text belongs to
+active sibling navigation, such as the 2024 selected tab, Backstage entry and
+Options page; classic navigation keeps its contrasting white text.
+Library configuration buttons (OK/Cancel/Apply included) have a separate
+`OptionsButtonAccentStates` palette: only primary OK has an accent idle fill;
+Cancel, Apply and other ordinary buttons use Surface (white by default), with a
+light hover wash and darker pressed wash. OK darkens its filled color by 0.10 on
+hover and 0.20 on press, keeping white text by default. In OptionsAppearance,
+AccentButtonHoverDarkening/PressedDarkening adjust those amounts (null restores
+defaults, zero keeps the idle fill); AccentButtonHoverBackground/PressedBackground
+and AccentButtonForeground supply explicit primary state fills and ink. Alpha
+and gradient stops of the idle fill are preserved while darkening.
+Pressed buttons keep their Accent border. Existing
+OptionsAppearance.ButtonBorderColor/Width override that border, including
+Transparent/zero. Explicit button/state fills win; null restores the
+legacy ordinary/system and primary-button treatment. Application-owned buttons
+keep their native ownership and appearance.
+`FileButtonAppearance` supplies resettable state fills/ink and accent darkening;
+null restores legacy File rendering. Gradients, alpha, Transparent and zero
+strengths are retained. Assigning Theme remains application ownership and clears
+BuiltInTheme; the samples keep their selected base identity in host preferences.
 
 Shared per-ribbon settings also cover `CollapsedGroupBorder`,
 `ApplicationMenuSplitDividerVisible`, `OptionsButtonCornerRadius`,

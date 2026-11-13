@@ -1,6 +1,11 @@
+using System.CodeDom;
 using System.ComponentModel;
+using System.ComponentModel.Design;
 using System.ComponentModel.Design.Serialization;
+using System.Globalization;
 using System.Resources;
+using System.Reflection;
+using System.Text.RegularExpressions;
 using RibbonKit.WinForms.Design;
 using RibbonKit.WinForms.Design.Client;
 using RibbonKit.WinForms.Design.Protocol;
@@ -99,6 +104,68 @@ public sealed class SvgIconTests
         Assert.False(property.ShouldSerializeValue(item)); item.Icon = RibbonStockIcons.Create("copy"); Assert.True(property.ShouldSerializeValue(item));
         item.Icon = null; Assert.False(property.ShouldSerializeValue(item)); Assert.Same(image, item.Image); Assert.False(custom.Disposed);
     });
+
+    [Fact]
+    public void Authored_theme_thumbnails_load_and_save_through_framework_code_expressions() => FoundationTests.Sta(() =>
+    {
+        var source = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "DesignerForm.Designer.cs"));
+        foreach (string name in new[] { "applicationThemeTile", "office2013ThemeTile", "office2019ThemeTile", "office2024ThemeTile", "defaultAccentTile", "blueAccentTile", "tealAccentTile", "greenAccentTile", "purpleAccentTile", "redAccentTile", "orangeAccentTile" })
+        {
+            var match = Regex.Match(source, $@"{name}\.Icon = new RibbonKit\.WinForms\.RibbonSvgIcon\(""([^""]*)""(, (?:true|false))?\);");
+            Assert.True(match.Success, "Expected an authored SVG constructor for " + name);
+            var arguments = new List<CodeExpression> { new CodePrimitiveExpression(match.Groups[1].Value) };
+            if (match.Groups[2].Success) arguments.Add(new CodePrimitiveExpression(bool.Parse(match.Groups[2].Value.Trim(',', ' '))));
+            using var services = new IconTypeServices();
+            var serialization = new DesignerSerializationManager(services); using var session = serialization.CreateSession();
+            var manager = (IDesignerSerializationManager)serialization;
+            var icon = Assert.IsType<RibbonSvgIcon>(new ExpressionReader().Read(manager, new CodeObjectCreateExpression(typeof(RibbonSvgIcon), arguments.ToArray())));
+            using var tile = new RibbonGalleryTile { Icon = icon }; manager.SetName(tile, name);
+            var serializer = (CodeDomSerializer)manager.GetSerializer(tile.GetType(), typeof(CodeDomSerializer))!;
+            var saved = Assert.Single(serializer.SerializeMember(manager, tile, TypeDescriptor.GetProperties(tile)[nameof(tile.Icon)]!).OfType<CodeAssignStatement>());
+            manager.SetName(services.ReloadResources(), "resources");
+            var reloaded = Assert.IsType<RibbonSvgIcon>(new ExpressionReader().Read(manager, saved.Right));
+            Assert.Equal(icon.Source, reloaded.Source); Assert.Equal(icon.UseForegroundColor, reloaded.UseForegroundColor);
+            Assert.Empty(serialization.Errors.Cast<object>());
+        }
+    });
+
+    private sealed class ExpressionReader : CodeDomSerializer
+    {
+        internal object? Read(IDesignerSerializationManager manager, CodeExpression expression) => DeserializeExpression(manager, null, expression);
+    }
+
+    private sealed class IconTypeServices : IServiceProvider, ITypeResolutionService, IResourceService, IDisposable
+    {
+        private readonly StringWriter _resources = new();
+        private ResXResourceWriter? _writer;
+        public object? GetService(Type serviceType) => serviceType == typeof(ITypeResolutionService) || serviceType == typeof(IResourceService) ? this : null;
+        public Assembly? GetAssembly(AssemblyName name) => GetAssembly(name, false);
+        public Assembly? GetAssembly(AssemblyName name, bool throwOnError) => Assembly.Load(name);
+        public string? GetPathOfAssembly(AssemblyName name) => GetAssembly(name)?.Location;
+        public Type? GetType(string name) => GetType(name, false, false);
+        public Type? GetType(string name, bool throwOnError) => GetType(name, throwOnError, false);
+        public Type? GetType(string name, bool throwOnError, bool ignoreCase) => Type.GetType(name, false, ignoreCase)
+            ?? typeof(RibbonSvgIcon).Assembly.GetType(name, throwOnError, ignoreCase);
+        public void ReferenceAssembly(AssemblyName name) { }
+        public IResourceWriter GetResourceWriter(CultureInfo info) => _writer ??= new ResXResourceWriter(_resources);
+        public IResourceReader GetResourceReader(CultureInfo info) => new ResXResourceReader(new StringReader(_resources.ToString()));
+        internal ComponentResourceManager ReloadResources()
+        {
+            if (_writer is null) return new IconResources([]); // Short sources can stay inline in generated code.
+            _writer?.Generate();
+            using var reader = GetResourceReader(CultureInfo.InvariantCulture);
+            var values = reader.Cast<System.Collections.DictionaryEntry>().ToDictionary(e => (string)e.Key, e => e.Value);
+            return new IconResources(values);
+        }
+        public void Dispose() { _writer?.Dispose(); _resources.Dispose(); }
+    }
+    private sealed class IconResources(Dictionary<string, object?> values) : ComponentResourceManager
+    {
+        public override object? GetObject(string name) => values.GetValueOrDefault(name);
+        public override object? GetObject(string name, CultureInfo? culture) => values.GetValueOrDefault(name);
+        public override string? GetString(string name) => values.GetValueOrDefault(name) as string;
+        public override string? GetString(string name, CultureInfo? culture) => values.GetValueOrDefault(name) as string;
+    }
 
     [Fact]
     public void Designer_icon_selection_is_detached_commits_once_and_preserves_unchanged_instances() => FoundationTests.Sta(() =>

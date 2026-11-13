@@ -108,6 +108,9 @@ public partial class RibbonControl : Control, ISupportInitialize
             ArgumentNullException.ThrowIfNull(value);
             if (!Enum.IsDefined(value.HeaderPresentation)) throw new ArgumentOutOfRangeException(nameof(value));
             if (!Enum.IsDefined(value.WindowCornerPreference)) throw new ArgumentOutOfRangeException(nameof(value));
+            RibbonAccentStateSettings.Validate(value.AccentStates);
+            RibbonAccentStateSettings.Validate(value.OptionsButtonAccentStates);
+            RibbonFileButtonAppearanceSettings.Validate(value.FileButtonAppearance);
             RibbonMenuMetrics.Validate(value);
             RibbonEditorMetrics.Validate(value);
             RibbonIllustratedMenuMetrics.Validate(value);
@@ -157,6 +160,7 @@ public partial class RibbonControl : Control, ISupportInitialize
                 null => _applicationTheme,
                 RibbonBuiltInTheme.Office2024Light => RibbonThemes.Office2024Light,
                 RibbonBuiltInTheme.Office2019Light => RibbonThemes.Office2019Light,
+                RibbonBuiltInTheme.Office2013Light => RibbonThemes.Office2013Light,
                 _ => throw new ArgumentOutOfRangeException(nameof(value))
             };
             if (_builtInTheme == value) return;

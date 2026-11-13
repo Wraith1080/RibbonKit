@@ -1,12 +1,15 @@
 # RibbonKit WinForms Designer Sample
 
-**2026-11-13: View → Themes added at the user's request.** Normal launch contains
-the authored Home, Edit, Gallery and View tabs. The new View tab has a built-in
-theme gallery with vector thumbnails for Office 2019 Light, Office 2024 Light
-and Application theme (Reset to the application's authored settings). Classic
-shows the inline tiles; Simplified provides the Themes launcher. Choosing a tile
-uses the public BuiltInTheme API; hover does not apply a theme. Selection follows
-startup switches and refreshes on entering View or opening the gallery.
+**2026-11-13: View theme/accent galleries and Color title bar are implemented.**
+Normal launch contains authored Home, Edit, Gallery and View tabs. View offers
+Office 2013/2019/2024 Light and Application theme, six accent colors plus Default,
+and a Color title bar toggle with white title text. Classic shows inline tiles;
+Simplified provides gallery launchers. Hover does not apply settings. Default
+resets only the accent; off restores the previous caption color/ink while keeping
+the accent. Selecting a theme resets its accent and keeps title-color mode.
+Selection follows startup switches and refreshes on entering View/opening a gallery.
+Office 2019 defaults to a neutral #E6E6E6 title/header band with a white body; the
+form no longer pins TitleBarColor to white.
 
 Interactive diagnostic tabs remain retired after the accepted geometry,
 theme rewrite and A10 review. `--office2019-light` selects Office 2019 without
@@ -19,18 +22,39 @@ Next theme work is defined in the
 [Office 2013 Light plan](../../docs/OFFICE2013-LIGHT-PLAN.md).
 
 The normal Debug sample builds with zero warnings/errors. The package-only
-`--verify-theme-gallery <output>` check passes six theme/layout commit cases,
-Application Reset, View-entry selection sync, explicit Form corner override/Reset,
-native page/field state and the Classic expanded gallery. It uses the real
-authored gallery and public APIs. Evidence/direct-paint captures are in
-`../../artifacts/designer-theme-gallery/expand-check/`; representative Classic
-and Simplified captures were inspected. The expanded popup is checked before
+`--verify-theme-gallery <output>` check covers all four theme choices in both
+layouts and all six accents across all three light themes in both layouts,
+colored-title/white-ink and independent Reset/off, selected family, native/model
+retention and the Classic expanded source. It uses the actual authored controls
+and public APIs; captures were inspected. Current evidence is in
+`../../artifacts/office2013/appearance-final/designer/`. The expanded popup is checked before
 pumping activation messages because the offscreen owner can lose activation;
 this is not a physical popup-input acceptance claim. Actual VS and physical
 mouse/keyboard review remain separate. Three clean-start checks in
 `../../artifacts/designer-theme-gallery/launch/` cover default startup, the 2019
 switch and combined legacy switches, with exactly Home/Edit/Gallery/View and no
-diagnostic tabs. No runtime/library or WPF change was needed for this addition.
+diagnostic tabs. E3 palette/File library work and the independent public consumer
+are recorded in the Office 2013 plan; no WPF change was made.
+
+## Theme thumbnail designer round-trip correction — 2026-11-13
+
+The user reported thumbnails disappearing after a Visual Studio save. The three
+new SVG expressions omitted the optional color-mode argument. The framework's
+CodeDOM loader does not bind optional constructor arguments: it requests a
+one-string constructor that does not exist, even though compiled C# runs.
+All three expressions now explicitly pass `false`, preserving original SVG colors.
+A regression reads the actual authored expressions, loads them through the
+framework code-expression reader, serializes the Icon member into code/resources,
+reloads the resource values and verifies source/color-mode retention. The current
+regression includes all 11 theme/accent SVGs, including inline and resource-backed
+generated expressions. Galleries, tiles and the title toggle are standard authored
+fields/collections in DesignerForm.Designer.cs, so their preview does not depend
+on runtime tab builders. The event handlers use a small shared sample preference
+adapter over existing public theme/caption settings.
+The focused SVG Release set passes 21/21; evidence is under
+`../../artifacts/theme-gallery-serialization/verified.trx`. The normal Debug sample
+and public-package gallery check pass. Actual VS save/reopen still needs user
+review. The user's FileMenuMode and resx metadata changes are preserved.
 
 ## Historical rewrite review surfaces
 

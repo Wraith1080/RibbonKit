@@ -27,16 +27,26 @@ public sealed record RibbonOptionsAppearanceSettings
     public Color DividerColor { get; init; } = Color.Empty;
     /// <summary>Gets optional button paint inset in logical pixels, 0..1024. Null retains zero. Authored values clamp inside the unchanged native button; content and hit targets do not move.</summary>
     public int? ButtonInset { get; init; }
-    /// <summary>Gets optional button outline width in logical pixels, 0..32. Null retains ordinary one-device-pixel outlines when ink exists and zero for accent buttons. Zero hides the outline. Authoring ordinary-button paint values opts those buttons into shared painting when their corner setting is null.</summary>
+    /// <summary>Gets optional button outline width in logical pixels, 0..32. Null retains ordinary one-device-pixel outlines when ink exists and zero for accent buttons, except the accent-palette pressed state uses one device pixel. Zero hides the outline. Authoring ordinary-button paint values opts those buttons into shared painting when their corner setting is null.</summary>
     public int? ButtonBorderWidth { get; init; }
-    /// <summary>Gets optional button outline ink, including alpha. Empty retains PopupBorder for ordinary buttons or the current fill's first color for accent buttons. Transparent hides the outline.</summary>
+    /// <summary>Gets optional button outline ink, including alpha. Empty retains PopupBorder for ordinary buttons or the current fill's first color for accent buttons; an enabled pressed button uses Accent when OptionsButtonAccentStates is enabled. Transparent hides the outline.</summary>
     public Color ButtonBorderColor { get; init; } = Color.Empty;
     /// <summary>Gets optional native button focus-rectangle inset in logical pixels, 0..1024. Null retains four device pixels. Authored values clamp inside the unchanged button.</summary>
     public int? ButtonFocusInset { get; init; }
     /// <summary>Gets an optional enabled idle ordinary-button fill, including alpha/gradients. Null retains Surface. Existing Hover/Pressed/disabled recipes remain. Authoring an ordinary-button override opts that button into shared painting when its corner setting is null.</summary>
     public RibbonFill? ButtonBackground { get; init; }
-    /// <summary>Gets an optional enabled idle accent-button fill, including alpha/gradients. Null retains Accent. Existing Hover/Pressed/disabled recipes and foreground roles remain.</summary>
+    /// <summary>Gets an optional enabled idle accent-button fill, including alpha/gradients. Null retains Accent. Default hover/press darken this fill without changing alpha or gradient stops.</summary>
     public RibbonFill? AccentButtonBackground { get; init; }
+    /// <summary>Gets an optional primary-button hover fill, including alpha/gradients. Null uses an explicit Checked override or darkens the idle fill when OptionsButtonAccentStates is enabled.</summary>
+    public RibbonFill? AccentButtonHoverBackground { get; init; }
+    /// <summary>Gets an optional primary-button pressed fill, including alpha/gradients. Null uses an explicit Pressed override or darkens the idle fill when OptionsButtonAccentStates is enabled.</summary>
+    public RibbonFill? AccentButtonPressedBackground { get; init; }
+    /// <summary>Gets primary-button hover darkening, a finite fraction 0..1. Null uses 0.10; zero retains the idle fill. Independent of ordinary-button accent washes.</summary>
+    public double? AccentButtonHoverDarkening { get; init; }
+    /// <summary>Gets primary-button pressed darkening, a finite fraction 0..1. Null uses 0.20; zero retains the idle fill. Explicit state fills take precedence.</summary>
+    public double? AccentButtonPressedDarkening { get; init; }
+    /// <summary>Gets enabled primary-button ink in all states, including alpha. Empty retains Surface ink for the accent palette (white by default) or the legacy state foreground when that palette is null. Disabled ink remains independent.</summary>
+    public Color AccentButtonForeground { get; init; } = Color.Empty;
     /// <summary>Gets an optional heading font-size increment in points, finite 0..64. Null retains 5. The resulting size also respects HeadingMinimumFontSize. Existing construction/load/font/DPI layout resolves heading settings; choose them before opening a dialog.</summary>
     public float? HeadingFontSizeIncrement { get; init; }
     /// <summary>Gets an optional minimum heading font size in points, finite 1..128. Null retains 14. The host font and increment may produce a larger size.</summary>
@@ -90,11 +100,16 @@ public sealed record RibbonOptionsAppearanceSettings
     /// <summary>Gets optional group icon-picker None-label paint inset in logical pixels, 0..1024. Null retains zero. Authored inset applies inside the shared selection/content clearance, so None follows tile size and selection inset. Font, ink, centering and focus policy retain their owners.</summary>
     public int? IconPickerTextInset { get; init; }
 
-    internal bool HasButtonOverrides(bool accent) => ButtonInset is not null || ButtonBorderWidth is not null || !ButtonBorderColor.IsEmpty || ButtonFocusInset is not null || (accent ? AccentButtonBackground is not null : ButtonBackground is not null);
+    internal bool HasButtonOverrides(bool accent) => ButtonInset is not null || ButtonBorderWidth is not null || !ButtonBorderColor.IsEmpty || ButtonFocusInset is not null || (accent
+        ? AccentButtonBackground is not null || AccentButtonHoverBackground is not null || AccentButtonPressedBackground is not null || AccentButtonHoverDarkening is not null || AccentButtonPressedDarkening is not null || !AccentButtonForeground.IsEmpty
+        : ButtonBackground is not null);
 
     internal static void Validate(RibbonOptionsAppearanceSettings? a)
     {
         if (a is null) return;
+        if (a.AccentButtonHoverDarkening is { } hover && (!double.IsFinite(hover) || hover < 0 || hover > 1)
+            || a.AccentButtonPressedDarkening is { } press && (!double.IsFinite(press) || press < 0 || press > 1))
+            throw new ArgumentOutOfRangeException(nameof(a), "Primary button darkening must be a finite fraction from 0 to 1, or null for the default.");
         if (a.IconPickerCornerRadius is < 0 or > 64 || a.IconPickerInset is < 0 or > 1024 || a.IconPickerBorderWidth is < 0 or > 32 || a.IconPickerIconSize is < 0 or > 256 || a.IconPickerTextInset is < 0 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(a), "Options icon-picker radius must be 0..64, paint/text insets 0..1024, border width 0..32 and artwork size 0..256 logical pixels, or null for existing presentation.");
         if (a.TreeCornerRadius is < 0 or > 64 || a.TreeCheckSize is < 0 or > 64 || a.TreeIconSize is < 0 or > 256 || a.TreeIconTextGap is < 0 or > 1024 || a.TreeFocusInset is < 0 or > 1024)

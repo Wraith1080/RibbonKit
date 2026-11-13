@@ -11,7 +11,7 @@ internal static class RibbonGalleryRenderer
     {
         if (!selected && !c.Hot && !c.Pressed) return;
         var border = new RibbonGalleryAppearanceMetrics(c.Theme, c.DeviceDpi).Border(selected ? c.Theme.Accent : Color.Transparent, RibbonGalleryChromeKind.Tile);
-        owner.PaintGalleryChrome(c, c.Pressed ? c.Theme.Pressed : c.Hot ? c.Theme.Hover : c.Theme.Checked, border, RibbonGalleryChromeKind.Tile);
+        owner.PaintGalleryChrome(c, c.Theme.CommandStateFill(c.Hot, c.Pressed, selected), border, RibbonGalleryChromeKind.Tile);
     }
     internal static void DrawHeading(RibbonRenderer owner, RibbonPaintContext c, string text, bool office)
     {

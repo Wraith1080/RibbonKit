@@ -7,6 +7,7 @@ public partial class DesignerForm : RibbonForm
     public DesignerForm()
     {
         InitializeComponent();
+        _sampleAppearance = new(ribbon, this);
         SynchronizeInputMode();
         SynchronizeThemeGallery();
         ConfigurePopup(selectDropdown, "Select options");

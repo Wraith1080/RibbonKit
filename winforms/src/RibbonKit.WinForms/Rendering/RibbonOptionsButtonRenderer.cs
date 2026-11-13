@@ -10,10 +10,11 @@ internal static class RibbonOptionsButtonRenderer
     {
         var theme = c.Theme; var m = new RibbonOptionsShellMetrics(theme, c.DeviceDpi); var bounds = c.Bounds;
         var fill = m.ButtonFill(accent, button.Enabled, hot, pressed);
-        var color = accent ? !button.Enabled ? SystemColors.GrayText : hot || pressed ? theme.Foreground : theme.Surface : button.Enabled ? theme.Foreground : theme.DisabledColor;
+        var color = m.ButtonForeground(accent, button.Enabled, hot, pressed);
         if (!accent) { using var background = new SolidBrush(parentBackground.A == 255 ? parentBackground : theme.Surface); c.Graphics.FillRectangle(background, bounds); }
-        var paint = m.ButtonBounds(bounds); var border = m.ButtonBorder(accent ? fill.Start : theme.PopupBorder);
-        painter.Draw(c.Graphics, paint, RibbonFrameMetrics.Radius(theme.OptionsButtonCornerRadius, fallbackRadius, c.DeviceDpi), fill, border, m.ButtonStroke(paint, border, accent));
+        bool accentPress = button.Enabled && pressed && theme.OptionsButtonAccentStates is not null;
+        var paint = m.ButtonBounds(bounds); var border = m.ButtonBorder(accentPress ? theme.Accent : accent ? fill.Start : theme.PopupBorder);
+        painter.Draw(c.Graphics, paint, RibbonFrameMetrics.Radius(theme.OptionsButtonCornerRadius, fallbackRadius, c.DeviceDpi), fill, border, m.ButtonStroke(paint, border, accent && !accentPress));
         var padding = button.Padding; var label = Rectangle.FromLTRB(bounds.Left + padding.Left, bounds.Top + padding.Top, Math.Max(bounds.Left + padding.Left, bounds.Right - padding.Right), Math.Max(bounds.Top + padding.Top, bounds.Bottom - padding.Bottom));
         if (button.Image is { } image)
         {

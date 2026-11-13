@@ -11,7 +11,7 @@ internal static class RibbonApplicationMenuChromeRenderer
     internal static void DrawItemState(RibbonRenderer owner, RibbonPaintContext context, bool footer, bool marked, bool open)
     {
         if (!footer && !context.Hot && !context.Pressed && !marked && !open) return;
-        var fill = context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.Hover : open ? context.Theme.Pressed : marked ? context.Theme.Checked : new RibbonFill(context.Theme.PopupColor);
+        var fill = context.Pressed ? context.Theme.Pressed : context.Hot ? context.Theme.CommandStateFill(true, false, marked) : open ? context.Theme.Pressed : marked ? context.Theme.Checked : new RibbonFill(context.Theme.PopupColor);
         Paint(owner, context, fill, footer);
     }
     private static void Paint(RibbonRenderer owner, RibbonPaintContext context, RibbonFill fill, bool footer)
@@ -44,7 +44,7 @@ internal static class RibbonApplicationMenuChromeRenderer
             try
             {
                 whole.Graphics.SetClip(half.Bounds, CombineMode.Intersect);
-                var fill = half.Pressed ? half.Theme.Pressed : rowHot ? half.Theme.Hover : expanded ? half.Theme.Pressed
+                var fill = half.Pressed ? half.Theme.Pressed : rowHot ? half.Theme.CommandStateFill(true, false, check) : expanded ? half.Theme.Pressed
                     : selected ? metrics.SelectedPrimary : check ? half.Theme.Checked : new RibbonFill(half.Theme.PopupColor);
                 Paint(owner, whole, fill, footer);
             }

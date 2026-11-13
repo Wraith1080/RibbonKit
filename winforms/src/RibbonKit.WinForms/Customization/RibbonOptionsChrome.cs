@@ -107,7 +107,7 @@ internal class RibbonOptionsButton : Button
     protected override void OnPaint(PaintEventArgs e)
     {
         var theme = _ribbon.Theme;
-        if (!_accent && theme.OptionsButtonCornerRadius is null && theme.OptionsAppearance?.HasButtonOverrides(accent: false) != true) { base.OnPaint(e); return; }
+        if (!_accent && theme.OptionsButtonAccentStates is null && theme.OptionsButtonCornerRadius is null && theme.OptionsAppearance?.HasButtonOverrides(accent: false) != true) { base.OnPaint(e); return; }
         RibbonOptionsButtonRenderer.Draw(_painter, new(e.Graphics, ClientRectangle, theme, Font, DeviceDpi) { Density = _ribbon.Density }, this,
             _accent, _hot, _pressed, ShowKeyboardCues, Focused && ShowFocusCues, RibbonOptionsChrome.Radius(_ribbon, DeviceDpi), Parent?.BackColor ?? theme.Surface);
     }

@@ -1,9 +1,10 @@
 # Native Office 2013 Light and square-window plan
 
-**2026-11-13 — E1 approved; E2 window-corner preference implemented.** Diagnostic-tab
-retirement remains in place. Office 2013 runtime work starts with E3; no new
-built-in identity or palette is added by E2. E2 entry was clean at user commit
-`fd356b1` on `codex/Ribbonkit-Winform`.
+**2026-11-13 — E1 approved; E2 corners and E3 accent palette/File states implemented.**
+Diagnostic tabs remain retired. Both apps now include the requested theme/accent
+galleries and colored-title toggle. E4 connected outline work is next; this is
+not composed Office 2013 visual acceptance. E2 entered at `fd356b1`; the later user
+commit `e6ced78` and authored Backstage/resx edits are preserved on the same branch.
 Current acceptance remains in [THEMES-PLAN](THEMES-PLAN.md#current-status-and-review-ledger).
 
 ## User reference and intended appearance
@@ -83,7 +84,7 @@ Additive E2 API:
 - `RibbonWindowCornerPreference` with SystemDefault=0, Square=1, Rounded=2 and
   SmallRounded=3, matching the supported DWM values.
 - `RibbonTheme.WindowCornerPreference`: SystemDefault for existing 2024, Square
-  for 2019. The future 2013 definition must explicitly use Square.
+  for 2019 and the 2013 definition added by E3.
 - Nullable `RibbonForm.WindowCornerPreference`; null follows the associated theme,
   explicit values win, and Reset restores theme ownership. Validate enum values
   before mutation. This remains an adjustable setting, not a theme-name check
@@ -109,11 +110,11 @@ from a successful API call/readback.
 
 1. **E2 — window-corner preference, implemented.** Native API/lifecycle evidence
    is recorded below; actual visible corner acceptance remains separate.
-2. **E3 — 2013 accent palette and File states, next slice.** Finalize accent/default/override rules,
+2. **E3 — 2013 accent palette and File states, implemented.** Finalize accent/default/override rules,
    append a stable Office2013Light built-in identity, and implement accent-driven
    button states plus the always-colored File block. Keep existing identities,
    application-theme Reset, persistence and designer/generated code compatible.
-3. **E4 — connected ribbon/tab outline.** Implement only the measured structural
+3. **E4 — connected ribbon/tab outline, next slice.** Implement only the measured structural
    difference required for the reference outline and white tab strip, with
    configurable borders and no geometry regressions.
 4. **E5 — composed light-family review.** Check remaining shared surfaces/native
@@ -187,7 +188,231 @@ acceptance ran. Unsupported-OS policy is deterministically exercised, but an
 actual pre-build-22000 machine was not available. The accepted title handoff is
 protected by focused regression checks; no new visible-motion acceptance is
 claimed. No broad geometry/appearance/native matrix, full suite or WPF check ran.
-Stop E2 here. Next implementation: **E3 Office 2013 accent palette and File states**.
+E2's implementation boundary is retained; E3 followed on the user's continuation.
+
+## E3 accent palette, File states and sample appearance controls — 2026-11-13
+
+`Office2013Light = 2` appends to the built-in identity without renumbering 2024/2019.
+It reuses Filled headers and Classic Backstage with white surfaces and Square
+window preference. No new renderer family/selector or layout algorithm was added.
+The connected gray outline/seam remains E4. `HeaderSelectedUsesAccent` supplies
+live selected-tab accent ink; explicit selected ink, contextual and disabled roles
+retain precedence. The optional colored caption keeps a separate white tab strip.
+
+`AccentStates` supplies adjustable live hover/pressed/checked/checked-hover washes,
+initially 0.10/0.20/0.16/0.25 over Surface. All strengths validate finite 0..1 before
+Theme mutation. Existing nonnullable Hover/Pressed/Checked signatures remain:
+assignment sets the explicit HoverOverride/PressedOverride/CheckedOverride value;
+null on an override resets only that state. CheckedHover is separately nullable.
+Explicit alpha, gradients and Transparent survive accent changes. Office 2019/2024
+ordinary hover/press remain neutral; the user's follow-up below makes their
+checked/selected states accent-derived too. Record equality retains authored
+override ownership even when it happens to equal a derived default.
+
+`FileButtonAppearance` opts into one shared accent-filled rectangle for either
+File route; null retains legacy rendering and open-highlight settings. Idle/hover/
+pressed/open/disabled fills and ink reset independently. Null fills derive from
+Accent or the idle fill; hover/pressed/open darkening starts at 0.10/0.20/0.20 and
+supports zero. Foreground defaults to White. Existing filled-header radius/border
+overrides, actual text/focus hooks, targets, routing and closing flags remain.
+Captured closing and closed File return to the accent idle fill. Commands/splits,
+QAT/menu projections and galleries share checked-hover selection; null preserves
+the earlier palettes' fallback behavior.
+
+Both **Showcase and Designer Sample** provide View theme/accent galleries and
+**Color title bar**. Six opaque accents plus Default are supplied. Title coloring
+uses the effective accent and white caption ink; off restores previous caption
+color/ink while retaining the accent. Default resets only the accent. Selecting a
+theme resets its accent and retains title-color mode. A small shared sample
+preference adapter composes existing public settings and retains base identity/
+application-theme ownership; it owns no controls/renderers. Showcase persists
+base theme, optional accent ARGB and title mode in backward-compatible version-one
+preferences. Designer Sample declares ordinary galleries, tiles and toggle in
+InitializeComponent. No diagnostic tabs were restored. The sample no longer pins
+TitleBarColor to White: Office 2019 follows its existing #E6E6E6 caption/header.
+
+The reported SVG loss was reproduced with framework CodeDOM loading: omitted
+optional constructor arguments are not bound by the designer. All authored SVGs
+now explicitly supply the Boolean color-mode argument. The regression loads the
+actual source expressions, saves Icon members through framework code/resources,
+and reloads all **11** theme/accent SVG sources and color modes. Actual VS
+save/reopen remains a separate review; no library serialization workaround.
+
+Evidence under `artifacts/office2013/`:
+
+- `e3-focused-final.trx`: **78/78 Release cases** for palette/overrides/zero/atomic
+  validation, four-DPI command/toggle/split/QAT/menu/File paint, File routes and
+  closing/reopen/disabled/focus hooks, designer enum/protocol, preference identity,
+  2019 fallbacks and SVG framework round trips.
+- `e3-dependencies.trx`: **84/84 relevant existing Release cases**, covering command,
+  Application Menu and gallery appearance plus the accepted caption handoff.
+- `appearance-controls-final.trx`: **47/47 Release cases** for sample appearance
+  ownership/Reset/white caption ink, SVG load/save/reload and preference compatibility.
+  SVG cases overlap the set above; do not sum these as unique tests.
+- Normal Debug runtime/designer server/client, Designer Sample and Showcase builds
+  pass with zero warnings/errors. The persistent sample uses local package
+  `0.1.0-designer.local20261113T125147350Z`; the user's Backstage routing and resx
+  tray metadata remain intact.
+- `e3-final-alpha-designer.trx`: **13/13 focused Release cases** verify final
+  transparent-surface accent composition and all 11 authored SVG expressions
+  through framework load/save/reload. Other passed dependency sets were not repeated.
+- **8 public-package paint scopes** pass in `paint-final/native/result.log`: Office/
+  neutral renderers x 96/120/144/192 DPI, each with three accents, command/QAT states,
+  File idle/hover/pressed, alpha/gradient/Transparent and Reset. **8 native scopes**
+  pass in `native-final/native/result.log`: Classic/Simplified x Compact/Touch x
+  CommandMenu/Backstage, actual 120 DPI. Each checks three accents, File open/close/
+  reopen, permanent accent fill, application Reset, separate colored caption/tab
+  band and retained native editable-choice/page handles/text/selection. The fixture
+  uses the supported Simplified editable ComboBox path, configured before assigning
+  free text; no runtime timing workaround was added.
+- `appearance-final/designer/result.log`: four theme choices in both layouts,
+  six accents for each light family in both layouts, title toggle/white ink,
+  independent Default/off, selected family and native/model retention. The Classic
+  expanded source is checked before activation pumping. The Showcase counterpart
+  in `appearance-final/showcase-layout/result.log` covers real gallery/toggle
+  actions, all six accents and isolated saved-preference restart restoration.
+  Both apps' direct-paint layouts and the independent state grid were inspected.
+
+`eng/Test-Office2013.ps1` builds a fresh public-only package consumer/cache with
+normal Debug output and no Showcase/shared sample helper. `-NativeOnly` and
+`-PaintOnly` select scopes without repeating unrelated passed checks. No full suite, WPF checks or
+unrelated geometry/material matrix ran. Offscreen/native API and direct-paint
+checks do not establish physical corners, continuous motion, actual VS, physical
+input/IME or mixed-monitor acceptance. Stop after E3. Next: **E4 connected gray
+selected-tab/ribbon outline**.
+
+### E3 follow-up: 2019/2024 accent selection and dialog buttons — 2026-11-13
+
+The user's WPF comparison clarified the policy: **both 2019 and 2024 retain grey
+ordinary hover/press and use the current accent for toggles and selected gallery
+tiles**, including stronger checked-hover. Read-only WPF ThemeManager evidence
+uses 0.18/0.28 custom-accent coverage over White; native presets use those strengths
+over Surface. Office 2019 keeps #DEDCDA/#CFCDCB ordinary states and its neutral
+header; 2024 keeps #E6E6E6/#DADADA ordinary states. 2013 retains all four accent
+washes. No WPF source/build/test changed.
+
+`AccentStates.HoverBackground`/`PressedBackground` hold independently adjustable
+neutral defaults without materializing them as explicit theme overrides. Null on
+either restores its wash; explicit Hover/Pressed/Checked and CheckedHover still
+win and reset independently. All routes use the shared checked-hover recipe,
+including illustrated choices, splits, QAT, Application Menu and galleries.
+The user subsequently clarified that accent text belongs to active sibling
+navigation (selected tab, Backstage entry and Options page), not ribbon commands.
+Command/gallery text, vectors and arrows retain ordinary foreground in every
+state. The overbroad unshipped CommandForegroundUsesAccent/CommandStateForeground
+properties and passive content-context helper were removed. Existing navigation
+roles retain their accent/contrasting white text; actual renderer hooks, borrowed
+artwork and disabled/native editor roles remain authoritative.
+
+`OptionsButtonAccentStates` supplies a separate default palette for library
+configuration buttons: **only primary OK has a solid accent idle fill**; Cancel,
+Apply, Reset, Reload and other ordinary buttons use Surface (white by default)
+with ordinary text. Ordinary hover/press use 0.10/0.20 accent washes; primary OK
+darkens its idle fill by 0.10/0.20 with Surface ink (white by default) throughout.
+Pressed buttons retain an Accent border. Existing ButtonBorderColor/Width override
+that pressed border, including alpha/Transparent/zero; a primary pressed border
+uses the ordinary one-device-pixel default. Explicit options-button and state
+fills win. Null restores legacy ordinary/system and primary treatment;
+native click/default/cancel actions, bounds and handle ownership remain intact.
+
+#### Filled OK feedback refinement — 2026-11-13
+
+The user requested that OK keep its filled appearance instead of switching to a
+pale wash. The shared Options recipe now darkens each idle-fill gradient stop
+by 0.10 on hover and 0.20 on press, preserving alpha. Secondary-button fills,
+navigation ink, border overrides, disabled roles and native actions remain.
+OptionsAppearance adds nullable AccentButtonHoverDarkening/PressedDarkening,
+explicit AccentButtonHoverBackground/PressedBackground and AccentButtonForeground.
+Zero darkening retains the exact idle fill; null restores defaults independently.
+Explicit primary state fills win, followed by existing theme state overrides and
+the explicit options pressed fill. Invalid strengths fail before Theme mutation.
+OptionsButtonAccentStates null retains legacy behavior, subject to explicit
+primary overrides.
+
+Evidence under `artifacts/accent-adaptation/`:
+
+- `primary-darken-before.trx` reproduces the pale hover. `primary-darken-focused.trx`
+  passes **23/23 Release cases**: all three primary presets/three accents,
+  progressively darker feedback, white native text, four-DPI button/border paint,
+  alpha/gradients, zero/reset, explicit fills/ink, validation and existing Options
+  shell native action/ownership checks. `primary-darken-overrides-final.trx`
+  passes **2/2** targeted cases after preserving the explicit options pressed fill.
+- `primary-darken-final/native/result.log`: **2 independent package-only native
+  dialog scopes** pass (2019/2024, each three accents, actual 120 DPI). Targeted
+  native mouse-move/Space messages verify hover/press pixels, white OK text,
+  unchanged secondary washes, borders and native button/field state. Idle/hover/
+  pressed captures were inspected. `eng/Test-AccentAdaptation.ps1 -NativeOnly`
+  skips unrelated command/gallery scopes.
+- Normal Debug runtime/designer/client and both sample builds pass with zero
+  warnings/errors. Persistent Designer Sample is refreshed in place to package
+  `0.1.0-designer.local20261113T140211698Z`. No authored sample resources changed.
+
+No unrelated theme matrix or full suite was repeated. Programmatic native
+messages/offscreen paint do not establish physical pointer/keyboard, actual VS,
+mixed-monitor or user visual acceptance. E4 remains next.
+
+Navigation/text and primary-idle correction evidence below predates this filled
+OK feedback refinement; retained under `artifacts/accent-adaptation/`:
+
+- `navigation-button-correction-before.trx` reproduces **10 failures** in ordinary
+  command ink, secondary-button idle fill and pressed border before the correction.
+- `navigation-button-correction-final.trx`: **58/58 Release cases** pass for
+  ordinary command/gallery text/vector hooks, accent selected fills, active
+  tab/Backstage/Options navigation ink, native OK/Cancel/Apply hover/key-press
+  callbacks, darker washes/accent borders at four DPI values, authored border
+  overrides/hiding and retained native actions/handles/selection. Existing
+  affected Options/content checks also pass. `navigation-ink-final.trx` reruns
+  the one navigation case after removing analyzer warnings; clean compile.
+- `navigation-only-public/native/result.log`: **8 independent public-package
+  paint scopes** (both renderers x four DPI values, both themes/three accents),
+  plus **2 native dialog scopes** at actual 120 DPI, pass. Public native Space
+  messages verify the actual held-key wash/border; losing focus cancels the key
+  without activating buttons. Field/button handles, bounds, text/selection and
+  AcceptButton/CancelButton remain unchanged. Current captures follow in
+  `navigation-only-review/native/`, including idle/pressed native buttons.
+- Normal Debug runtime/designer/client, Designer Sample and Showcase builds
+  pass with zero warnings/errors. The persistent Designer Sample uses package
+  `0.1.0-designer.local20261113T135021022Z` after the final XML documentation
+  refresh; its behavior matches the sample action checks. Current public-package
+  evidence and captures are in `navigation-only-review/native/`.
+  Sample action/persistence checks in `navigation-only-samples/` pass;
+  both apps' 2024 selected tiles/toggle keep ordinary text/icon colors. Their
+  navigation/header and independent dialog/state captures were inspected.
+
+Earlier evidence below predates the user's navigation-only text and primary-only
+button correction. It is retained as history, not acceptance of the corrected
+foreground/idle-button policy:
+
+- `neutral-hover-accent-selection.trx`: **52/52 Release cases** for both themes'
+  final hover/selection policy, four-DPI actual root/menu/QAT/split/gallery content
+  hooks and fills, explicit overrides/reset, dialog palette and native button/
+  field retention, plus affected 2013/command/options appearance dependencies.
+- `content-designer-final.trx`: **94/94 Release cases**, including the final
+  illustrated-choice recipe, neutral recipe gradients/Transparent/reset,
+  affected content/disabled paint, inert designer previews and authored SVG
+  framework load/save/resource reload. Some cases overlap the set above.
+- `public-final/native/result.log`: **8 public-only package paint scopes**
+  (neutral/Office renderers at 96/120/144/192 DPI, each with both themes and three
+  accents) plus **2 native options-dialog scopes** at actual 120 DPI. They check
+  actual toggle/gallery pixels and text/vector hooks, explicit fills/Reset,
+  accent OK/Cancel/Apply fills and retained native field/button state. The fixture
+  is isolated from project references and all sample helpers by
+  `eng/Test-AccentAdaptation.ps1`; review captures use sufficient gallery height
+  for full labels in `public-review/native/`.
+- Normal Debug runtime/designer server/client and both apps build with zero
+  warnings/errors. Designer Sample was refreshed in place to local package
+  `0.1.0-designer.local20261113T132626889Z`; authored routing/resources are preserved.
+- `samples-final/designer/result.log` and `samples-final/showcase/result.log`
+  pass actual gallery/toggle actions for all three themes and six accents,
+  independent Default/off, white title ink and native/model retention. Showcase
+  also checks isolated saved-preference startup restoration for each family.
+  Both apps' 2019/2024 purple selection/title captures and independent state/
+  dialog captures were inspected.
+
+No full suite, unrelated geometry/material matrix or computer-use tools ran.
+Synthetic-DPI direct paint and offscreen native checks do not establish actual
+VS save/reopen, physical input/IME, mixed-monitor, native corner silhouette or
+user visual acceptance. E4 remains the next slice; no connected-outline work here.
 
 ## Diagnostic-tab retirement evidence
 

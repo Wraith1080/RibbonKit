@@ -38,6 +38,12 @@ authoring, RTL and broad dialog styling are outside this increment.
   Constructor expressions and string-backed .resx resources are both supported.
   No BinaryFormatter payload is used. Imported artwork survives removal of the
   original SVG file because its content is embedded in saved project data.
+  In authored `.Designer.cs`, always supply both constructor arguments, such as
+  `new RibbonSvgIcon(svgSource, false)`: the framework CodeDOM loader does not
+  bind the optional Boolean argument. A one-argument C# call compiles but fails
+  designer expression loading and can lose artwork on save. The native converter
+  already emits both arguments; the theme-gallery regression covers the actual
+  authored expressions through framework load, resource save and reload.
 - Item/group Icon metadata now permits SVG serialization. ShouldSerializeIcon
   excludes opaque custom providers and null; their code-authored boundary is
   retained. Existing image properties and icon-over-image precedence are unchanged.
