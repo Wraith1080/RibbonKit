@@ -45,12 +45,20 @@ public sealed record RibbonOptionsAppearanceSettings
     public bool? HeadingBold { get; init; }
     /// <summary>Gets optional spacing below the heading in logical pixels, 0..1024. Null retains 12. Existing native heading/page layout consumes the padding at construction, load, font and DPI refresh.</summary>
     public int? HeadingBottomPadding { get; init; }
+    /// <summary>Gets optional native field/list wrapper corner radius in logical pixels, 0..64. Null retains the actual popup-radius/command-radius minimum. Native list child regions use the same resolved radius and content clearance.</summary>
+    public int? FrameCornerRadius { get; init; }
+    /// <summary>Gets optional native field/list wrapper outline width in logical pixels, 0..32. Null retains one device pixel. Zero hides paint while keeping one-device-pixel native clearance. Wider outlines reserve native content space and search-field height through existing layout paths; choose settings before opening.</summary>
+    public int? FrameBorderWidth { get; init; }
+    /// <summary>Gets optional native field/list wrapper outline ink, including alpha. Empty retains PopupBorder; Transparent hides paint without reclaiming its reserved native clearance. Surface and native child backgrounds retain their existing owners.</summary>
+    public Color FrameBorderColor { get; init; } = Color.Empty;
 
     internal bool HasButtonOverrides(bool accent) => ButtonInset is not null || ButtonBorderWidth is not null || !ButtonBorderColor.IsEmpty || ButtonFocusInset is not null || (accent ? AccentButtonBackground is not null : ButtonBackground is not null);
 
     internal static void Validate(RibbonOptionsAppearanceSettings? a)
     {
         if (a is null) return;
+        if (a.FrameCornerRadius is < 0 or > 64 || a.FrameBorderWidth is < 0 or > 32)
+            throw new ArgumentOutOfRangeException(nameof(a), "Options frame radius must be 0..64 and outline width 0..32 logical pixels, or null for existing presentation.");
         if (a.NavigationCornerRadius is < 0 or > 64 || a.NavigationMarkerWidth is < 0 or > 64 || a.DividerWidth is < 0 or > 32
             || a.NavigationSelectionInset is < 0 or > 1024 || a.NavigationTextPadding is < 0 or > 1024 || a.NavigationMarkerInset is < 0 or > 1024 || a.NavigationFocusInset is < 0 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(a), "Options corners/marker width must be 0..64, divider width 0..32 and insets/padding 0..1024 logical pixels, or null for existing presentation.");

@@ -182,7 +182,7 @@ public sealed partial class RibbonSimplifiedCustomizationEditor : UserControl
     private static ComboBox Choice(RibbonControl ribbon, string name, string label) => new RibbonOptionsComboBox(ribbon) { Name = name, AccessibleName = label, AutoSize = true, Dock = DockStyle.Top, DropDownStyle = ComboBoxStyle.DropDownList, DrawMode = DrawMode.OwnerDrawFixed, IntegralHeight = true };
     private static ListBox List(string name, string label) => new() { Name = name, AccessibleName = label, Dock = DockStyle.Fill, BorderStyle = BorderStyle.None, DrawMode = DrawMode.OwnerDrawFixed, IntegralHeight = false, Margin = Padding.Empty };
     private static TextBox Search(string name, string placeholder) => new() { Name = name, AccessibleName = placeholder, PlaceholderText = placeholder, BorderStyle = BorderStyle.None };
-    private RibbonOptionsFrame Frame(Control child, DockStyle dock) { var frame = new RibbonOptionsFrame(_ribbon) { Dock = dock, Margin = Padding.Empty }; frame.Controls.Add(child); return frame; }
+    private RibbonOptionsFrame Frame(Control child, DockStyle dock) { var frame = new RibbonOptionsFrame(_ribbon, summedTextPadding: true) { Dock = dock, Margin = Padding.Empty }; frame.Controls.Add(child); return frame; }
     private Button Button(string name, string text, Action click) { var button = new RibbonOptionsButton(_ribbon) { Name = name, Text = text, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, UseVisualStyleBackColor = true }; button.Click += (_, _) => click(); return button; }
     private static FlowLayoutPanel Flow(bool vertical, params Control[] controls) { var flow = new FlowLayoutPanel { AutoSize = true, Anchor = AnchorStyles.None, FlowDirection = vertical ? FlowDirection.TopDown : FlowDirection.LeftToRight, WrapContents = false, Margin = Padding.Empty }; flow.Controls.AddRange(controls); return flow; }
     private static void SelectTab(ComboBox list, string? id) => list.SelectedIndex = Enumerable.Range(0, list.Items.Count).FirstOrDefault(i => ((TabChoice)list.Items[i]!).Id == id, list.Items.Count > 0 ? 0 : -1);
@@ -209,7 +209,7 @@ public sealed partial class RibbonSimplifiedCustomizationEditor : UserControl
         _headerFont = new(Font, FontStyle.Bold); _fonts.Add(_headerFont); MinimumSize = PageMinimum;
         _available.ItemHeight = _current.ItemHeight = RibbonQuickAccessEditorMetrics.RowHeight(DeviceDpi, Font.Height, _ribbon.Density);
         foreach (var combo in new[] { _sourceTab, _targetTab }) { combo.ItemHeight = Math.Max(Font.Height + S(4), height - S(6)); combo.Margin = new(0, gap, 0, 0); combo.BackColor = _ribbon.Theme.Surface; combo.ForeColor = _ribbon.Theme.Foreground; }
-        foreach (var frame in new[] { _leftSearch, _rightSearch }) { frame.Height = height; frame.Margin = new(0, gap, 0, gap); }
+        foreach (var frame in new[] { _leftSearch, _rightSearch }) { frame.Height = frame.RequiredTextHeight(height); frame.Margin = new(0, gap, 0, gap); }
         foreach (var search in new[] { _search, _currentSearch }) { search.BackColor = _ribbon.Theme.Surface; search.ForeColor = _ribbon.Theme.Foreground; } LayoutSearch();
         foreach (var button in new[] { _add, _remove, _up, _down, _reset, _import, _export, _new, _edit }) { button.MinimumSize = new(S(button == _up || button == _down ? 40 : button == _import || button == _export ? 28 : 86), height); button.Margin = new(gap / 2); }
         foreach (var button in new[] { _reset, _import, _export, _new, _edit }) button.Margin = new(0, gap, gap, 0);
@@ -218,7 +218,7 @@ public sealed partial class RibbonSimplifiedCustomizationEditor : UserControl
         _available.BackColor = _current.BackColor = _ribbon.Theme.Surface; _available.ForeColor = _current.ForeColor = _ribbon.Theme.Foreground;
         foreach (var frame in new[] { _left, _right, _leftSearch, _rightSearch }) frame.RefreshAppearance(); ResumeLayout(true);
     }
-    private void LayoutSearch() { if (_rightSearch is null) return; foreach (var (search, frame) in new[] { (_search, _leftSearch), (_currentSearch, _rightSearch) }) search.SetBounds(S(4), Math.Max(0, (frame.Height - search.Height) / 2), Math.Max(1, frame.Width - S(8)), search.Height); }
+    private void LayoutSearch() { if (_rightSearch is null) return; foreach (var (search, frame) in new[] { (_search, _leftSearch), (_currentSearch, _rightSearch) }) search.Bounds = frame.TextBounds(search.Height); }
     /// <inheritdoc />
     protected override void OnFontChanged(EventArgs e) { base.OnFontChanged(e); UpdateMetrics(); }
     /// <inheritdoc />

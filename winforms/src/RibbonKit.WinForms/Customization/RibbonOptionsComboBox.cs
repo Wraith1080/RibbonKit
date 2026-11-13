@@ -23,14 +23,9 @@ internal sealed class RibbonOptionsComboBox : ComboBox, IMessageFilter
     protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); Parent?.PerformLayout(); }
     protected override void OnPaint(PaintEventArgs e)
     {
-        using var brush = new SolidBrush(_appearance.Theme.Surface); e.Graphics.FillRectangle(brush, ClientRectangle);
         _model.Enabled = Enabled;
         var context = new RibbonPaintContext(e.Graphics, ClientRectangle, _appearance.Theme, Font, DeviceDpi, Hot: _hot, Pressed: ChoiceOpen, Focused: Focused) { Density = _appearance.Density };
-        _appearance.Painter.DrawComboBox(context, _model, ClientRectangle);
-        int inset = RibbonLayoutEngine.Scale(6, DeviceDpi); var arrow = RibbonEditorLayout.ComboButton(ClientRectangle, DeviceDpi, _appearance.Density, _appearance.Theme);
-        var text = new Rectangle(inset, 0, Math.Max(0, arrow.Left - inset), Height);
-        _appearance.Painter.DrawText(context with { Bounds = text }, GetItemText(SelectedItem) ?? "", Enabled ? _appearance.Theme.Foreground : SystemColors.GrayText,
-            TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
+        RibbonOptionsFieldRenderer.DrawChoice(_appearance.Painter, context, _model, GetItemText(SelectedItem) ?? "", Enabled);
         base.OnPaint(e);
     }
     internal void OpenChoice()

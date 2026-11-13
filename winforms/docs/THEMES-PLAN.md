@@ -354,17 +354,17 @@ Backstage. Stop for this review before another theme.
 | Item | Status |
 | --- | --- |
 | Direction | **2026-11-10: user selected Office 2019 first and light themes before dark.** |
-| Planning | B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7b and audit corrections A00–A04/A06–A09/A11–A17 are implemented. D7c Options field/list frames and choice presentation is next proposed; caption/title and page-layout preferences retain separate scopes. Later family order is provisional. |
+| Planning | B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7c and audit corrections A00–A04/A06–A09/A11–A17 are implemented. Next proposed is a bounded source review of remaining library-owned customization row content/state paint (D7d); caption/title and page-layout preferences retain separate scopes. Later family order is provisional. |
 | Earlier-slice adjustability audit | **2026-11-11: A11–A16 header/shared effects implemented and verified.** Evidence is in the [header/shared record](#header-and-shared-effect-overrides--2026-11-11). **2026-11-12: A17 badge placement followed in D6.** The [audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md) retains A05/A10 as separate candidates. |
-| Runtime/API/rendering | D7b shares native Options button drawing and heading font/padding metrics through `OptionsAppearance`. Existing corners/state palettes, direct native image/text/focus, scoped native ordinary-button fallback, button targets/default-cancel ownership and dialog drafts remain. Headings use existing construction/load/font/DPI layout; choose presets before opening. Field/list frames and choice presentation retain separate scopes. |
-| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; the permanent sample is refreshed. **Try Options shell / Options buttons / Options headings** are on the requested new **Theme effects 8**. Accepted groups are pinned to tabs 1–7, retaining seven/five/four/seven/six/three/eight groups. Keep new controls on tab 8 until directed otherwise. Authored Forms/UserControls/resources/project files remain intact. |
-| Focused Release verification | D7b: **23 distinct relevant cases passed**: 13 new authored cases, nine retained Options geometry/navigation/draft cases and one default comparison. The focused batch passed 22/22; null and empty default comparisons also pass. Evidence is in the [D7b record](#options-buttons-and-heading-typography-d7b--2026-11-13). Prior D7a retry evidence remains in its record. No broad suite ran. |
-| Two-family default parity | D7b: **16 native PNG/control-geometry pairs match exactly**, both light families, flat/Office renderers, Compact/Touch and 9-point regular / 14-point italic host fonts at actual 120 DPI. Each image covers ordinary/accent idle/hot/pressed/disabled button states, borrowed images and actual heading fonts/layout. Authored button shape/alpha/hide/clamps/focus also passes at 96/120/144/192 DPI. No full native DPI matrix ran. Earlier navigation/tip/gallery evidence remains below. |
-| Composed native package verification | D7b: **4/4 public-package scopes plus new-tab checks passed**, both light families with Solid/Mica owner windows at actual 120 DPI, each Classic/Simplified x Compact/Touch. Actual ordinary/accent outline/fill and heading size/weight/gap, button reset with unchanged native targets/handles/parent/value/selection/default-cancel owners, invalid Apply/OK and valid Apply/Cancel checkpoints pass. Heading defaults restore on reopening; accepted navigation and built-in pending Undo draft/Save source/native controls remain. These are synchronous offscreen checks, separate from physical input/IME, visible pacing, external UIA and actual VS. |
+| Runtime/API/rendering | D7c shares native field/list wrapper drawing and search/closed-choice text metrics. `OptionsAppearance` adds frame radius/stroke/ink; wider outlines reserve real native content space and search height. Existing editor text/field/choice roles and actual renderer hooks are reused. Native controls, parent/handles, draft and popup lifetime retain their owners. Choose geometry presets before opening; existing layout/font/DPI refresh applies them. |
+| Designer/sample/package consumer | Normal Debug runtime/designer/client/sample builds pass without warnings/errors; package `0.1.0-designer.local20261113T015240299Z` refreshes the permanent sample. **Try frames and choices / Options frames and text** join the three D7b groups on **Theme effects 8**, five total. Tabs 1–7 retain seven/five/four/seven/six/three/eight groups. Keep new controls on tab 8 until directed otherwise. Authored Forms/UserControls/resources/project files remain intact. |
+| Focused Release verification | D7c: **28 distinct latest relevant cases passed**: 17 new authored cases, ten retained Options/editor/choice cases and one default comparison. Passing affected batches and superseded theory names are explained in the [D7c record](#options-frames-and-choice-presentation-d7c--2026-11-13). Earlier evidence remains in its own records. No broad suite ran. |
+| Two-family default parity | D7c: **32 native PNG/control-geometry/region/text-slot pairs match exactly**, both light families, flat/Office renderers, Classic/Simplified, Compact/Touch and 9/14-point host fonts at actual 120 DPI. Null and empty settings match. Authored paint/choice metrics pass at 96/120/144/192 DPI; search rounding also covers 110/125 DPI. No full native DPI matrix ran. |
+| Composed native package verification | D7c: **4/4 public-package scopes plus tab checks passed**, both light families with None/Mica owner windows at actual 120 DPI, each Classic/Simplified x Compact/Touch. Native outline/child clearance/regions, editor text/field roles, retained HWND/parent/draft/live sources, Cancel and independent/group Reset pass. Eight active choice preview/Escape/Enter sequences commit once per accepted choice. These are synchronous offscreen checks, separate from physical input/IME, visible pacing, external UIA and actual VS. |
 | Backstage review correction | **2026-11-11: navbar blank-frame and left rounded-corner black-bar fixes implemented and verified; user review pending.** Current focused/package evidence is in the [page-motion follow-up](BACKSTAGE-PAGE-MOTION.md#navbar-blank-frame-and-rounded-edge-follow-up--2026-11-11). |
 | Deferred title review issue | **2026-11-11: user reported title-text flicker while closing Backstage and allowed deferral to title theming work.** Their `20261111-0345-01.1714250.mp4` confirms the Office 2019 close at approximately **7.03–7.37 s**: the title moves left, its leading text becomes pale/white over the lightening caption, then dark ink returns. Native-rate frames and timestamps are retained under `artifacts/backstage-title-flicker/recording/`. Caption foreground contrast/clip handoff as the navigation fades is the source-inspection lead, not a verified root cause. Preserve opaque, legible title ink throughout closing when addressing it. No title runtime change or new build/test was made for this recording review; the page/corner correction does not address it. |
 | Broader Release suite | Initial implementation: 1,485 passed / 6 failed / 1,491 total (historical evidence above). Correction run **stopped at the user's request**, 1,089 passed / 3 failed / 1,092 executed; incomplete, no full-suite result claimed. Do not restart it. |
-| User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; D1a/D1b review controls remain on Theme effects 3. **2026-11-12: user reported D1b looks good and authorized continuation to native editor appearance.** D1a review remains at its earlier recorded scope. The user requested a new review tab for D1c; use Theme effects 4 and preserve tabs 1–3. **2026-11-12: user reported D2 works perfectly and authorized continuation to ordinary menu decoration.** **2026-11-12: user reported D3 looks good and authorized Application Menu continuation, with new review controls on Theme effects 5.** **2026-11-12: user reported D4a Application Menu state effects look good on Theme effects 5.** **2026-11-12: user confirmed every D4b surface/heading option works and authorized continuation.** **2026-11-12: user reported D4c looks good and everything works, authorized gallery continuation and requested its controls on a new Theme effects 6 tab.** **2026-11-12: user reported everything works for D5a and authorized continuation; then declared tab 6 full and requested D5b controls on a new tab. D5b controls remain on Theme effects 7.** **2026-11-12: user reported everything checks out for D5b and authorized continuation to D6. D6 controls remain on Theme effects 7.** **2026-11-12: user reported everything works well for D6 and authorized continuation. D7a controls remain on Theme effects 7.** **2026-11-12: user confirmed all D7a options work, including combined use, authorized continuation and requested D7b on a new tab.** **D7b appearance review is pending on Theme effects 8.** Actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
+| User appearance review | **2026-11-11: user reported the delivered C2 body/connected frames look good and authorized continuation.** Earlier A11–A16/A06–A09/A00–A04/B1 acceptance is retained at its recorded scope. The user declared Theme effects 2 full; D1a/D1b review controls remain on Theme effects 3. **2026-11-12: user reported D1b looks good and authorized continuation to native editor appearance.** D1a review remains at its earlier recorded scope. The user requested a new review tab for D1c; use Theme effects 4 and preserve tabs 1–3. **2026-11-12: user reported D2 works perfectly and authorized continuation to ordinary menu decoration.** **2026-11-12: user reported D3 looks good and authorized Application Menu continuation, with new review controls on Theme effects 5.** **2026-11-12: user reported D4a Application Menu state effects look good on Theme effects 5.** **2026-11-12: user confirmed every D4b surface/heading option works and authorized continuation.** **2026-11-12: user reported D4c looks good and everything works, authorized gallery continuation and requested its controls on a new Theme effects 6 tab.** **2026-11-12: user reported everything works for D5a and authorized continuation; then declared tab 6 full and requested D5b controls on a new tab. D5b controls remain on Theme effects 7.** **2026-11-12: user reported everything checks out for D5b and authorized continuation to D6. D6 controls remain on Theme effects 7.** **2026-11-12: user reported everything works well for D6 and authorized continuation. D7a controls remain on Theme effects 7.** **2026-11-12: user confirmed all D7a options work, including combined use, authorized continuation and requested D7b on a new tab.** **2026-11-13: user reported D7b works perfectly and authorized continuation.** **D7c appearance review is pending on Theme effects 8.** Actual VS, physical input, mixed-monitor and all-material gates remain separate. Geometry acceptance stays in its own plan. |
 | Actual VS/physical input/mixed-monitor | Not run for themes; report separately. |
 
 Record later evidence and confirmation here once, with date/revision/scope,
@@ -2392,9 +2392,87 @@ Evidence under `artifacts/options-shell-d7b/`:
   pass; representative dialog/customization/new-tab captures were inspected.
   Authored Forms/UserControls/resources/project files remain intact.
 
-D7b appearance review remains pending in the ledger. Physical input/IME, actual
+D7b user appearance review is recorded in the ledger. Physical input/IME, actual
 VS, external UIA, mixed-monitor and visible pacing remain separate. No broad
-suite/native matrix or WPF build/test ran. D7c Options field/list frames and choice
-presentation is next proposed; inspect native clearance/clips and existing roles
-before choosing settings. A05/A10 and Backstage closing-title ink remain separate.
-Use tab 8 until directed otherwise.
+suite/native matrix or WPF build/test ran. D7c followed below. A05/A10 and Backstage
+closing-title ink remain separate. Use tab 8 until directed otherwise.
+
+## Options frames and choice presentation D7c — 2026-11-13
+
+Work started clean at the user's D7b commit `c97c30a`. Shared
+`RibbonOptionsFieldRenderer` and value-only `RibbonOptionsFieldMetrics` resolve
+the existing field/list wrapper and closed-choice presentation. There is no new
+family selector, native editor replacement or dialog/theme coordinator.
+
+`OptionsAppearance` adds three independently resettable members:
+
+- `FrameCornerRadius`: 0..64 logical pixels. Null retains the actual popup-radius /
+  command-radius minimum. Native list/tree/icon-list child regions consume the
+  same resolved corner and content clearance.
+- `FrameBorderWidth`: 0..32 logical pixels. Null retains one device pixel; zero
+  hides the stroke but retains minimum one-device-pixel native clearance. Authored
+  wider outlines reserve real wrapper Padding and enough search/name-field height
+  for the native TextBox. Width clamps to the available wrapper. Reset restores
+  the prior native padding, including scaling performed while an override was active.
+- `FrameBorderColor`: Empty follows PopupBorder. Alpha and Transparent are
+  supported; hidden ink retains its reserved content clearance. Existing Surface
+  and native child background owners remain.
+
+Existing `EditorTextInset` / `EditorForeground` now style search/name text and
+closed-choice values. Search null keeps four logical pixels with each owner's
+legacy ceiling/summed rounding; closed-choice null keeps six logical pixels.
+Enabled choice ink follows EditorTextColor; disabled ink retains SystemColors.GrayText.
+Existing EditorAppearance field inset/stroke also clear the closed-choice value;
+no duplicate Options choice API was introduced. Actual DrawComboBox / DrawText,
+arrow/button geometry and D1c popup-row roles remain authoritative. Zero-size text
+slots skip painting. Icon-picker selected-tile chrome remains a separate owner.
+
+Validation precedes Theme/BuiltInTheme mutation. Native handles/parent, value,
+selection, validation, draft and Apply/Cancel, staged preview/Escape/Enter and
+popup lifetime retain their owners. Choose geometry settings before opening;
+existing layout/font/DPI refresh consumes them. This does not introduce live
+remeasurement of every open dialog or application-owned page styling.
+
+Evidence under `artifacts/options-fields-d7c/`:
+
+- `tests/before-defaults.trx`, `after-defaults.trx` and
+  `empty-and-wide-native.trx`: **32 exact native PNG/control-geometry/region/text-slot
+  pairs**, both light families, flat/Office renderers, Classic/Simplified,
+  Compact/Touch and 9/14-point fonts at actual 120 DPI. Null and empty groups match
+  saved frame/choice paint and geometry without approval/tolerance changes.
+- `tests/fields-focused.trx` **24/24**, `empty-and-wide-native.trx` **5/5** and
+  `scaled-padding-final.trx` **2/2** pass. Together, **28 distinct latest cases**
+  pass: 17 new authored cases, ten retained Options/editor/choice cases and one
+  default comparison. The expanded four-case native theory supersedes its two
+  earlier mode-only display names; those old results are not additional cases.
+  Coverage includes frame shape/alpha/hide/four corners, tiny clamps, legacy search
+  rounding, actual choice hooks/editor roles/field clearance, atomic range checks,
+  native reset/regions/handles and scaled padding. Real customization and group-name
+  inputs fit both 8-pixel/9-point and maximum 32-pixel/14-point profiles. Authored
+  paint/metrics cover 96/120/144/192 DPI; search rounding also covers 110/125 DPI.
+  Release builds pass without warnings/errors.
+- `package/result.log`: **4/4 public-package scopes**, both light families with
+  None/Mica owner windows at actual 120 DPI, each Classic/Simplified x Compact/Touch.
+  Actual native outline/child clearance/regions, editor ink/value slots, retained
+  HWND/parent/draft/live QAT sources, Cancel and independent/group Reset pass.
+  Eight native choice preview/Escape/Enter sequences retain staging and emit one
+  commit event each. The offscreen fixture establishes focus and checks synchronous
+  state before ordinary queued foreground-loss dismissal; no runtime activation or
+  choice-lifetime workaround was added.
+- Normal Debug runtime/designer server/client builds pass without warnings/errors.
+  A sample diagnostic's source-type compile error was corrected; the passing
+  builds were retained and only package/sample refresh was repeated. Package
+  `0.1.0-designer.local20261113T015240299Z` and the sample Debug build pass without
+  warnings/errors. **Try frames and choices / Options frames and text** are on
+  **Theme effects 8**, now five groups. The preview uses isolated application-owned
+  sample models and the public customization dialog, preserving the real ribbon's
+  mode and sources. Presets/hide/independent resets and idempotence pass. Earlier
+  tabs retain their groups. Representative preview/page/choice/row/tab captures
+  were inspected; authored Forms/UserControls/resources/project files remain intact.
+
+D7c appearance review is pending in the ledger. Physical input/IME, actual VS,
+external UIA, mixed-monitor and visible pacing remain separate. No broad suite,
+native matrix or WPF build/test ran. Next proposed is D7d: review remaining
+library-owned customization row content/state paint, then select one bounded
+extraction with independently adjustable effects. A05/A10 and Backstage closing-title
+ink remain separate; no new theme family is selected. Keep tab 8 until directed otherwise.

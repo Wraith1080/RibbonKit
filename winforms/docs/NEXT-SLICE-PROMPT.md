@@ -1,24 +1,26 @@
-# Continue native WinForms themes after D7b Options buttons/headings
+# Continue native WinForms themes after D7c Options frames/choices
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-13**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7b and adjustability backfills
+Updated **2026-11-13**. B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6, D7a–D7c and adjustability backfills
 A00–A04/A06–A09/A11–A17 are implemented. Current evidence and exact user review
 scope live in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
-The latest implementation is [D7b](THEMES-PLAN.md#options-buttons-and-heading-typography-d7b--2026-11-13).
+The latest implementation is [D7c](THEMES-PLAN.md#options-frames-and-choice-presentation-d7c--2026-11-13).
 Use the ledger for the exact user appearance review scope and remaining gates.
-The user committed D7a at `1779dcf` before D7b. Do not overwrite later user commits.
+The user committed D7b at `c97c30a` before D7c. Do not overwrite later user commits.
 
 ## Next bounded implementation
 
 Start with `git status --short` and inspect live branch/HEAD; preserve later user
-commits and edits. Follow the current user request. For a continuation, D7c
-**Options field/list frames and choice presentation** is next proposed. Inspect
-actual native content clearance, rounded child regions, field/list frame paint
-and choice content. Reuse existing editor/fill/ink/frame/focus/arrow roles and
-select a bounded extraction before editing. Do not add wider frame paint that
-native children cover, or move native text/input bounds without shared measurement.
+commits and edits. Follow the current user request. For a continuation, D7d
+**remaining customization row content/state paint** is next proposed for source
+review. Inspect QAT/Classic/Simplified row and icon-picker owners, reuse existing
+fill/ink/image/focus roles and select one bounded extraction before editing.
+Keep legacy row targets and direct native paint contracts. Extract fixed effects
+into independently adjustable settings, with shared measurement for any changed
+content bounds. D7c owns field/list wrapper paint and native clearance plus
+search/closed-choice text slots. Do not cover native children with wider paint.
 Preserve native editors, validation, keyboard/focus, draft Apply/Cancel, dialog
 lifetime and inert candidate-theme preview safety. Application dialog content
 stays application-owned. D7b owns Options buttons and heading typography. D7a
@@ -52,7 +54,8 @@ galleries / Gallery tile states / Gallery headings**. Tab 7 has **Try gallery co
 Gallery artwork and labels / Gallery inline frames / Gallery utility glyphs**.
 Tab 7 now also has **Try tips and badges / Tip presentation** (six total groups).
 **Try Options dialogs / Options navigation** brings tab 7 to eight groups. Tab 8
-has **Try Options shell / Options buttons / Options headings**. Keep tab 7's
+has **Try Options shell / Options buttons / Options headings / Try frames and choices /
+Options frames and text**, five total groups. Keep tab 7's
 accepted groups in place; do not infer fullness from reduction.
 The File preview uses existing authored models and restores the prior File mode.
 Its divider-visibility button uses the existing independent flag (2019 defaults
@@ -200,6 +203,19 @@ when needed. Do not move old groups or infer fullness from reduction.
   Partial button/heading resets retain navigation and each other. Reuse 16 exact
   native default PNG/geometry pairs at actual 120 DPI, four-DPI authored paint,
   23 distinct passing cases and four package scopes unless affected.
+- D7c retains OptionsAppearance FrameCornerRadius/FrameBorderWidth/FrameBorderColor
+  and shared native search/closed-choice metrics. Null uses the actual popup/command
+  radius minimum, one-device-pixel frame stroke, legacy search rounding and six-logical-
+  pixel choice inset. Authored strokes reserve real native padding and search/name
+  height; zero hides paint with minimum one-device-pixel clearance. Alpha/Transparent
+  retain space. Reset restores scaled native padding. Search/choice text reuses
+  EditorTextInset/EditorForeground; closed-choice value clearance also uses existing
+  EditorAppearance field inset/stroke. Native handles/parent/value/selection/drafts,
+  actual field/text/arrow hooks, disabled native ink and staged choice lifecycle remain.
+  Choose presets before opening; existing layout/font/DPI refresh applies geometry.
+  Reuse 32 exact native default PNG/geometry/region/text-slot pairs, 28 distinct latest
+  relevant cases and four package scopes unless affected. Its four-case native theory
+  supersedes the two older mode-only display names; do not double-count those results.
 - Existing Theme assignment closes ordinary menus through `ModelChanged`;
   retained models reopen normally. Do not change lifecycle to satisfy a probe.
 - A05 caption tint, A10 preferred page minimum and the reported

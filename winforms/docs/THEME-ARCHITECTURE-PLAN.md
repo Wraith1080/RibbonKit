@@ -1,6 +1,6 @@
 # Native WinForms theme architecture
 
-**B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6 and D7a–D7b implemented; latest delivery 2026-11-13.** Backstage uses one registration
+**B1–B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6 and D7a–D7c implemented; latest delivery 2026-11-13.** Backstage uses one registration
 for sibling layout/drawing helpers, explicit defaults, measured layout inputs and
 caption/motion profiles. Headers register sibling Filled/Underline drawing with
 explicit geometry defaults and adjustable effects. C2 resolves body/connected
@@ -26,12 +26,15 @@ D7a shares Options navigation/divider drawing and resolved decoration metrics.
 D7b shares native button painting and heading font/padding inputs with adjustable
 settings and scoped ordinary-button opt-in. Native controls and draft lifecycle
 retain their owners; headings keep existing construction/load/font/DPI layout.
+D7c shares field/list wrapper drawing and native search/closed-choice text metrics.
+Adjustable frame strokes reserve real child clearance; existing editor roles,
+actual renderer hooks, handles/parent, draft and choice staging retain their owners.
 The earlier-slice review found adjustability gaps. A00–A04 fill routing/motion
 and A06–A09 decoration/spacing plus A11–A17 header/shared/tip overrides are implemented;
 track the separate caption/layout candidates in the
 [source audit and correction order](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 Current evidence and user review are recorded in the
-[themes plan](THEMES-PLAN.md#options-buttons-and-heading-typography-d7b--2026-11-13).
+[themes plan](THEMES-PLAN.md#options-frames-and-choice-presentation-d7c--2026-11-13).
 
 The [themes plan](THEMES-PLAN.md) retains appearance requirements and acceptance.
 This document proposes implementation boundaries and a migration sequence; it
@@ -279,7 +282,8 @@ automated evidence or visual acceptance. Implement the following separately.
 | D6. Tips and Backstage badge placement — implemented | Shared tip drawing, title measurement weight and badge metrics; immutable TipAppearance outlines/insets and A17 clearances. Existing palette/corners/padding, actual renderer hooks, keyboard routes and passive/native lifetime remain. | 31 distinct relevant passing cases, 32 exact default PNG/slot/measurement pairs and four package scopes plus review-tab checks are recorded in the [D6 record](THEMES-PLAN.md#tip-presentation-and-backstage-badge-placement-d6--2026-11-12). |
 | D7a. Options navigation and dividers — implemented | Shared native navigation state/marker/text/focus and rail/footer divider recipes with immutable OptionsAppearance. Preserve actual popup-radius hook, direct native text painting, layout/control identities and draft lifetime. | 32 distinct latest relevant passing cases, 16 exact native default PNG/geometry pairs and four package scopes plus review controls are recorded in the [D7a record](THEMES-PLAN.md#options-navigation-and-dividers-d7a--2026-11-12). |
 | D7b. Options buttons and heading typography — implemented | Shared native button recipe and heading font/padding metrics; OptionsAppearance extensions reuse corners/state palettes and preserve scoped native fallback, direct image/text/focus, native button/default-cancel ownership and existing heading layout lifecycle. | 23 distinct relevant passing cases, 16 exact native default PNG/geometry pairs and four package scopes plus new-tab checks are recorded in the [D7b record](THEMES-PLAN.md#options-buttons-and-heading-typography-d7b--2026-11-13). |
-| D. Remaining surfaces, one per slice | D7c Options field/list frames and choice presentation. Inspect real native content clearance/clips and existing editor/frame/focus/arrow roles before proposing settings. | Preserve actual frame/radius/editor/text hooks and native input/list handles, selection, validation, popup lifetime and dialog drafts. Select only changed paint/geometry/state/ownership checks and an unchanged-default comparison; inert candidate-theme checks only when affected. Choose exact filters after source review. |
+| D7c. Options frames and choice presentation — implemented | Shared frame drawing and native search/closed-choice text metrics. OptionsAppearance adds radius/stroke/ink; real native clearance and search/name height consume authored outlines. Existing editor text/field/choice roles, actual renderer hooks and native controls/drafts retain their owners. | 28 distinct latest relevant passing cases, 32 exact native default PNG/geometry/region/text-slot pairs and four package scopes plus tab checks are recorded in the [D7c record](THEMES-PLAN.md#options-frames-and-choice-presentation-d7c--2026-11-13). |
+| D. Remaining surfaces, one per slice | D7d: source-review remaining library-owned customization row content/state paint (QAT/Classic/Simplified/icon picker), then select one bounded extraction. Reuse existing fills/ink/image/focus roles before adding independently adjustable effects. | Preserve actual renderer/direct-native hooks, row targets and input/list handles, selection, validation, popup lifetime and dialog drafts. Select only changed paint/geometry/state/ownership checks and an unchanged-default comparison; inert candidate-theme checks only when affected. Choose exact filters after source review. |
 | E. Selected catalog growth | Add one later chosen light definition, reusing surface registrations or adding an actually needed sibling. Risk: selection/Reset/serialization/persistence and unsupported consumer dependencies. | Definition/selection tests, relevant designer/generated-code checks, and a focused independent-consumer visual/state scope. Wait for existing appearance review before another theme. |
 
 For each implementation slice, build affected native projects in their normal
@@ -327,8 +331,8 @@ Completion criteria:
   authored Forms/resources change. Review the diff and record focused results
   and remaining human appearance/input gates in the themes plan.
 
-B2/B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6 and D7a–D7b were delivered as separate slices.
-D7c Options field/list frames and choice presentation is next proposed;
+B2/B3, C1–C2, D1a–D1c, D2–D3, D4a–D4c, D5a–D5b, D6 and D7a–D7c were delivered as separate slices.
+D7d remaining customization row content/state paint is next proposed for source review;
 the consolidated geometry remains the foundation.
 
 ## Verification and delivery budget

@@ -3004,7 +3004,7 @@ Placement Reset retains title/outline overrides; **Default tip presentation**
 clears only TipAppearance. Existing tab/body scrollers and group reduction remain available.
 
 `Theme.OptionsAppearance` accepts immutable `RibbonOptionsAppearanceSettings` for
-library Options navigation, rail/footer dividers, buttons and heading typography:
+library Options navigation, rail/footer dividers, buttons, headings and field/list frames:
 
 | Members | Null defaults and behavior |
 | --- | --- |
@@ -3016,14 +3016,26 @@ library Options navigation, rail/footer dividers, buttons and heading typography
 | `ButtonInset`, `ButtonBorderWidth`, `ButtonBorderColor`, `ButtonFocusInset` | Paint inset 0..1024 / border width 0..32 / focus inset 0..1024 logical pixels. Null retains zero paint inset, ordinary one-device-pixel border when ink exists, accent border zero, and four-device-pixel focus inset. Empty ink follows PopupBorder / accent fill's first color. Zero/Transparent hides the outline; alpha/clamps are supported. Button content, native targets and IButtonControl/default/cancel behavior remain. Existing OptionsButtonCornerRadius is reused. |
 | `ButtonBackground`, `AccentButtonBackground` | Optional enabled idle fills, including alpha/gradients; null Surface / Accent. Existing Hover/Pressed/disabled state recipes and foreground roles remain. Ordinary buttons with null corners retain native painting until an ordinary-button override is authored. Accent-only fill and heading/navigation settings do not opt ordinary buttons into shared painting. |
 | `HeadingFontSizeIncrement`, `HeadingMinimumFontSize`, `HeadingBold`, `HeadingBottomPadding` | Finite point-size increment 0..64 / minimum 1..128, null 5 / 14; bottom padding 0..1024 logical pixels, null 12, zero removes the gap. Null weight retains legacy Bold-only style; explicit true adds Bold to host styles, false removes it and preserves other styles. The resulting font and padding feed existing native heading/page layout. |
+| `FrameCornerRadius`, `FrameBorderWidth`, `FrameBorderColor` | Native field/list wrapper radius 0..64 / stroke 0..32 logical pixels; null retains the actual popup/command-radius minimum and one-device-pixel stroke. Empty ink follows PopupBorder; alpha/Transparent and zero/hide are supported. Wider outlines reserve native child padding and search/name-field height. Zero keeps minimum one-device-pixel clearance; Transparent retains reserved space. Child corner regions use the same resolved shape. Surface/native backgrounds retain their owners. |
 
-Options keeps its existing ceiling-based DPI scaling and legacy summed marker
-rounding. Values validate before Theme/BuiltInTheme mutation. Null/Empty resets
+Legacy navigation/heading/search arithmetic keeps its ceiling-based DPI scaling
+and summed rounding; new frame/choice overrides use the shared logical-pixel
+scaling. Values validate before Theme/BuiltInTheme mutation. Null/Empty resets
 each member; `OptionsAppearance = null` preserves button corners, tip/gallery
 settings and the existing palette. Dialog sizes, native button/image/text/focus
-behavior, field/list frames, choices, application page styling and draft Apply/Cancel retain
-their existing owners. The actual popup-radius hook remains in use; Options' native
-text still uses its direct text painter, without introducing command-chrome/text interception.
+behavior, application page styling and draft Apply/Cancel retain their existing
+owners. The actual popup-radius hook remains in use; navigation/button text keeps
+its direct native painter.
+
+Search/name text and closed-choice values reuse `EditorTextInset` and
+`EditorForeground`. Null preserves four-logical-pixel search padding (including
+legacy summed rounding) and six-logical-pixel choice padding. Closed choices
+also reserve existing `EditorAppearance` field inset/stroke around the value;
+their actual DrawComboBox/DrawText and popup choice roles remain authoritative.
+Disabled choice ink retains the native SystemColors.GrayText policy. Native
+editors, handles, parents, values, selection and choice staging retain their owners.
+Choose geometry presets before opening; existing layout/font/DPI refresh applies
+the settings. A frame reset restores the native padding, including prior scaling.
 
 **Try Options dialogs / Options navigation** are on **Theme effects 7**. Choose a
 preset, then open **Options preview** or **ribbon/QAT options**. Marker Reset keeps
@@ -3036,6 +3048,13 @@ resolve through the existing construction/load/font/DPI layout, without a live
 theme coordinator. Button Reset retains headings/navigation; Heading Reset
 retains buttons/navigation. Both retain existing button corners and unrelated
 tip/gallery settings. The accepted tab 7 groups remain pinned in place.
+
+**Try frames and choices / Options frames and text** also use **Theme effects 8**,
+now five groups. Choose presets, then **Open frame/choice preview**. It uses sample
+commands and an isolated public customization model, so preview edits stay there.
+**Default Options frames**, **Default editor text** and **Default choice fields**
+reset their own members and preserve the other effects. Existing row/choice popup
+decoration remains independently adjustable.
 
 Derive from `RibbonRenderer` for a flat/custom presentation, or from
 `RibbonOffice2024Renderer` to retain Office styling while overriding selected

@@ -262,7 +262,7 @@ public sealed class RibbonCustomizationEditor : UserControl
         _panes.UpdateMetrics(DeviceDpi, Font, _ribbon.Density);
         var minimum = RibbonQuickAccessEditorMetrics.Minimum(DeviceDpi, Font.Height, _ribbon.Density); MinimumSize = new(Math.Max(MinimumSize.Width, minimum.Width), minimum.Height);
         _available.ItemHeight = _tree.ItemHeight = RibbonQuickAccessEditorMetrics.RowHeight(DeviceDpi, Font.Height, _ribbon.Density); _tree.UpdateMetrics();
-        foreach (var frame in new[] { _searchFrame, _treeSearchFrame }) { frame.Height = height; frame.Margin = new(0, gap, 0, gap); }
+        foreach (var frame in new[] { _searchFrame, _treeSearchFrame }) { frame.Height = frame.RequiredTextHeight(height); frame.Margin = new(0, gap, 0, gap); }
         foreach (var search in new[] { _search, _treeSearch }) { search.BackColor = _ribbon.Theme.Surface; search.ForeColor = _ribbon.Theme.Foreground; } LayoutSearch();
         foreach (var button in new[] { _add, _remove, _up, _down, _reset, _reload, _import, _export, _newTab, _newGroup, _edit })
         { button.MinimumSize = new(ScaleLogical(button == _up || button == _down ? 40 : button == _import || button == _export ? 28 : button == _add || button == _remove ? 86 : 70), height); button.Margin = new(gap / 2); }
@@ -275,7 +275,7 @@ public sealed class RibbonCustomizationEditor : UserControl
         foreach (var frame in new[] { _availableFrame, _treeFrame, _searchFrame, _treeSearchFrame }) frame.RefreshAppearance();
         RefreshIcons(); ResumeLayout(true); Invalidate(true);
     }
-    private void LayoutSearch() { if (_treeSearchFrame is null) return; int inset = ScaleLogical(4); foreach (var (search, frame) in new[] { (_search, _searchFrame), (_treeSearch, _treeSearchFrame) }) search.SetBounds(inset, Math.Max(0, (frame.Height - search.Height) / 2), Math.Max(1, frame.Width - 2 * inset), search.Height); }
+    private void LayoutSearch() { if (_treeSearchFrame is null) return; foreach (var (search, frame) in new[] { (_search, _searchFrame), (_treeSearch, _treeSearchFrame) }) search.Bounds = frame.TextBounds(search.Height); }
     /// <inheritdoc />
     protected override void OnFontChanged(EventArgs e) { base.OnFontChanged(e); UpdateMetrics(); }
     /// <inheritdoc />

@@ -32,27 +32,57 @@ internal sealed class RibbonOptionsFrame : Panel
     private readonly RoundedPainter _painter = new();
     private Size _childSize;
     private int _childRadius = -1;
-    internal RibbonOptionsFrame(RibbonControl ribbon)
+    private Control? _shapedChild;
+    private readonly bool _summedTextPadding;
+    private bool _layingOut;
+    private bool _authoredPadding;
+    private Padding _nativePadding;
+    internal RibbonOptionsFrame(RibbonControl ribbon, bool summedTextPadding = false)
     {
-        _ribbon = ribbon;
+        _ribbon = ribbon; _summedTextPadding = summedTextPadding;
         SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
         BackColor = Color.Transparent; Padding = new(1);
     }
-    internal void RefreshAppearance() { ShapeChild(); Invalidate(); }
-    protected override void OnLayout(LayoutEventArgs e) { base.OnLayout(e); ShapeChild(); }
+    private Layout.RibbonOptionsFieldMetrics Metrics => new(_ribbon.Theme, DeviceDpi);
+    internal int RequiredTextHeight(int desired) => Metrics.TextFrameHeight(desired, Controls.OfType<TextBox>().FirstOrDefault()?.PreferredHeight ?? 0);
+    internal Rectangle TextBounds(int textHeight) => Metrics.SearchTextBounds(ClientRectangle, textHeight, _summedTextPadding);
+    internal void RefreshAppearance() { PerformLayout(); Invalidate(); }
+    protected override void OnLayout(LayoutEventArgs e)
+    {
+        if (_ribbon is null || _layingOut) { base.OnLayout(e); return; }
+        _layingOut = true;
+        try
+        {
+            if (_ribbon.Theme.OptionsAppearance?.FrameBorderWidth is not null)
+            {
+                if (!_authoredPadding) { _nativePadding = Padding; _authoredPadding = true; }
+                var padding = new Padding(Metrics.Clearance(ClientSize)); if (Padding != padding) Padding = padding;
+            }
+            else if (_authoredPadding) { Padding = _nativePadding; _authoredPadding = false; }
+            base.OnLayout(e);
+            if (Controls.OfType<TextBox>().FirstOrDefault() is { } text) { text.Bounds = TextBounds(text.Height); text.ForeColor = _ribbon.Theme.EditorTextColor; }
+            ShapeChild();
+        }
+        finally { _layingOut = false; }
+    }
     private void ShapeChild()
     {
         if (_ribbon is null || Controls.Cast<Control>().FirstOrDefault(c => c is ListBox or TreeView or ListView) is not { } child) return;
-        int radius = Math.Max(0, RibbonOptionsChrome.Radius(_ribbon, DeviceDpi) - 1);
-        if (_childSize == child.Size && _childRadius == radius) return;
-        _childSize = child.Size; _childRadius = radius;
+        int radius = Metrics.ChildRadius(ClientSize, RibbonOptionsChrome.Radius(_ribbon, DeviceDpi));
+        if (ReferenceEquals(_shapedChild, child) && _childSize == child.Size && _childRadius == radius) return;
+        _shapedChild = child; _childSize = child.Size; _childRadius = radius;
         child.Region = radius > 0 && child.Width > 0 && child.Height > 0 ? RoundedPainter.CreateOpaqueRegion(child.Size, radius) : null;
     }
     protected override void OnDpiChangedAfterParent(EventArgs e) { base.OnDpiChangedAfterParent(e); RefreshAppearance(); }
+    protected override void ScaleControl(SizeF factor, BoundsSpecified specified)
+    {
+        if (_authoredPadding) _nativePadding = new((int)Math.Round(_nativePadding.Left * factor.Width), (int)Math.Round(_nativePadding.Top * factor.Height), (int)Math.Round(_nativePadding.Right * factor.Width), (int)Math.Round(_nativePadding.Bottom * factor.Height));
+        base.ScaleControl(factor, specified);
+    }
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
-        RibbonOptionsChrome.Surface(_painter, e.Graphics, ClientRectangle, _ribbon, DeviceDpi, new(_ribbon.Theme.Surface), _ribbon.Theme.PopupBorder);
+        RibbonOptionsFieldRenderer.DrawFrame(_painter, new(e.Graphics, ClientRectangle, _ribbon.Theme, Font, DeviceDpi), RibbonOptionsChrome.Radius(_ribbon, DeviceDpi));
     }
     protected override void Dispose(bool disposing) { base.Dispose(disposing); if (disposing) _painter.Dispose(); }
 }

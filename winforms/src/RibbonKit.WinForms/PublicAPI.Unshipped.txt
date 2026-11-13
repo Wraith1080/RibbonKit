@@ -1959,3 +1959,9 @@ RibbonKit.WinForms.RibbonOptionsAppearanceSettings.HeadingBold.get -> bool?
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.HeadingBold.init -> void
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.HeadingBottomPadding.get -> int?
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.HeadingBottomPadding.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.FrameCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.FrameCornerRadius.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.FrameBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.FrameBorderWidth.init -> void
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.FrameBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.FrameBorderColor.init -> void

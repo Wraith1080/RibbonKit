@@ -201,7 +201,7 @@ public sealed class RibbonQuickAccessCustomizationEditor : UserControl
         Padding = Padding.Empty; _available.ItemHeight = height; _current.ItemHeight = height;
         _panes.UpdateMetrics(DeviceDpi, Font, _ribbon.Density);
         foreach (var frame in new[] { _searchFrame, _currentSearchFrame })
-        { frame.Height = RibbonQuickAccessEditorMetrics.ButtonHeight(DeviceDpi, Font.Height, _ribbon.Density); frame.Margin = new(0, gap, 0, gap); }
+        { frame.Height = frame.RequiredTextHeight(RibbonQuickAccessEditorMetrics.ButtonHeight(DeviceDpi, Font.Height, _ribbon.Density)); frame.Margin = new(0, gap, 0, gap); }
         foreach (var search in new[] { _search, _currentSearch }) { search.BackColor = _ribbon.Theme.Surface; search.ForeColor = _ribbon.Theme.Foreground; }
         LayoutSearch();
         foreach (var button in new[] { _add, _remove, _up, _down, _reset, _reload })
@@ -216,10 +216,9 @@ public sealed class RibbonQuickAccessCustomizationEditor : UserControl
     }
     private void LayoutSearch()
     {
-        int inset = ScaleLogical(4);
         if (_currentSearchFrame is null) return;
         foreach (var (search, frame) in new[] { (_search, _searchFrame), (_currentSearch, _currentSearchFrame) })
-            search.SetBounds(inset, Math.Max(0, (frame.ClientSize.Height - search.Height) / 2), Math.Max(1, frame.ClientSize.Width - 2 * inset), search.Height);
+            search.Bounds = frame.TextBounds(search.Height);
     }
     /// <inheritdoc />
     protected override void OnFontChanged(EventArgs e) { base.OnFontChanged(e); UpdateMetrics(); }

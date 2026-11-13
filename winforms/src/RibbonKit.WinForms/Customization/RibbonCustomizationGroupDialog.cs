@@ -19,8 +19,8 @@ internal sealed class RibbonCustomizationGroupDialog : Form
         int gap = S(8), height = RibbonQuickAccessEditorMetrics.ButtonHeight(owner.DeviceDpi, Font.Height, ribbon.Density);
         ClientSize = new(S(ribbon.Density == RibbonDensity.Touch ? 540 : 460), S(ribbon.Density == RibbonDensity.Touch ? 440 : 370));
         _name = new() { Name = "RibbonGroupName", AccessibleName = "Group name", Text = displayName, MaxLength = 512, BorderStyle = BorderStyle.None };
-        var nameFrame = new RibbonOptionsFrame(ribbon) { Height = height, Dock = DockStyle.Top, Margin = new(0, 0, 0, gap) };
-        nameFrame.Controls.Add(_name); nameFrame.Layout += (_, _) => _name.SetBounds(S(4), Math.Max(0, (nameFrame.Height - _name.PreferredHeight) / 2), Math.Max(1, nameFrame.Width - S(8)), _name.PreferredHeight);
+        var nameFrame = new RibbonOptionsFrame(ribbon, summedTextPadding: true) { Height = height, Dock = DockStyle.Top, Margin = new(0, 0, 0, gap) };
+        nameFrame.Controls.Add(_name); nameFrame.Height = nameFrame.RequiredTextHeight(height); nameFrame.Layout += (_, _) => _name.Bounds = nameFrame.TextBounds(_name.PreferredHeight);
         _icons = new(ribbon) { Name = "RibbonGroupIcons", AccessibleName = "Group icon from ribbon commands", Dock = DockStyle.Fill };
         _icons.Populate(group.IconCommandId); var iconFrame = new RibbonOptionsFrame(ribbon) { Dock = DockStyle.Fill, Margin = new(0, 0, 0, gap) }; iconFrame.Controls.Add(_icons);
         _layout = new(ribbon) { Name = "RibbonGroupLayout", AccessibleName = "Group layout", Dock = DockStyle.Top, AutoSize = true, DropDownStyle = ComboBoxStyle.DropDownList, DrawMode = DrawMode.OwnerDrawFixed, ItemHeight = Math.Max(Font.Height + S(4), height - S(6)), Margin = Padding.Empty };
