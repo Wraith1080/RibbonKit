@@ -348,6 +348,8 @@ public sealed record RibbonTheme
     public Color TitleBarBackground { get; init; } = Color.Empty;
     /// <summary>Gets optional caption and TitleBar Quick Access foreground. Empty chooses contrast for a colored caption, or preserves Foreground for an unset caption.</summary>
     public Color TitleBarForeground { get; init; } = Color.Empty;
+    /// <summary>Gets optional immutable caption-button state-fill and vector glyph overrides. Null preserves existing appearance. Hit targets, title text, native window actions and caption motion remain independent.</summary>
+    public RibbonCaptionButtonAppearanceSettings? CaptionButtonAppearance { get; init; }
     /// <summary>Gets the optional container and inline viewport/utility gap in 96-DPI logical pixels, from 0 to 1024. Null uses 4. Resets independently; available bounds clamp spacing.</summary>
     public int? GalleryContentPadding { get; init; }
     /// <summary>Gets the optional inline utility width in 96-DPI logical pixels, from 1 to 1024. Null uses Compact 18 / Touch 32; Touch retains 32. Resets independently; available bounds clamp spacing.</summary>

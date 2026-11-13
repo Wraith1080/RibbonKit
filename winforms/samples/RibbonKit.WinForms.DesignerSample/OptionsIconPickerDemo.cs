@@ -6,7 +6,7 @@ public partial class DesignerForm
 {
     private void EnableOptionsIconPickerDemo()
     {
-        var tab = ThemeEffectsReviewTab; if (tab.Groups.Any(g => g.Id == "review-options-picker")) return;
+        var tab = ThemeEffects10ReviewTab; if (tab.Groups.Any(g => g.Id == "review-options-picker")) return;
         var preview = new RibbonGroup { Id = "review-options-picker-preview", Text = "Try group icon picker" };
         Add(preview, "Open group icon preview", () =>
         {
@@ -35,7 +35,7 @@ public partial class DesignerForm
     }
     internal void VerifyOptionsIconPickerDemo(string output)
     {
-        StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); Width = 1900; ShowInTaskbar = false; EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffectsReviewTab; ribbon.SelectedTab = tab;
+        StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); Width = 1900; ShowInTaskbar = false; EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffects10ReviewTab; ribbon.SelectedTab = tab;
         if (tab.Text != "Theme effects 10" || tab.Groups.Count != 5 || ThemeEffects9ReviewTab.Groups.Count != 6 || ThemeEffects8ReviewTab.Groups.Count != 5 || ThemeEffects7ReviewTab.Groups.Count != 8 || ThemeEffects6ReviewTab.Groups.Count != 3 || ThemeEffects5ReviewTab.Groups.Count != 6 || ThemeEffects4ReviewTab.Groups.Count != 7 || ThemeEffects3ReviewTab.Groups.Count != 4 || ThemeEffects2ReviewTab.Groups.Count != 5 || ribbon.Tabs.Single(t => t.Text == "Office 2019 Light").Groups.Count != 7) throw new InvalidOperationException("Picker groups displaced accepted tabs.");
         var selection = tab.Groups.Single(g => g.Id == "review-options-picker"); var content = tab.Groups.Single(g => g.Id == "review-options-picker-content"); ribbon.Theme = ribbon.Theme with { OptionsAppearance = new() { TreeCheckSize = 12, RowIconSize = 16, FrameBorderWidth = 3 } }; var sources = ribbon.Tabs.ToArray(); var mode = ribbon.LayoutMode;
         foreach (int i in new[] { 0, 1, 2 }) selection.Items[i].PerformClick(); content.Items[0].PerformClick(); content.Items[3].PerformClick(); if (ribbon.Theme.OptionsAppearance is not { IconPickerCornerRadius: 9, IconPickerInset: 4, IconPickerBorderWidth: 3, IconPickerIconSize: 16, IconPickerTextInset: 8 }) throw new InvalidOperationException("Picker presets bypassed public settings.");

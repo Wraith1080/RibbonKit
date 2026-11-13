@@ -2009,3 +2009,36 @@ RibbonKit.WinForms.RibbonBackstageAppearanceSettings.CaptionTintColor.get -> Sys
 RibbonKit.WinForms.RibbonBackstageAppearanceSettings.CaptionTintColor.init -> void
 RibbonKit.WinForms.RibbonBackstageAppearanceSettings.CaptionTintOpacity.get -> double?
 RibbonKit.WinForms.RibbonBackstageAppearanceSettings.CaptionTintOpacity.init -> void
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.RibbonCaptionButtonAppearanceSettings() -> void
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.<Clone>$() -> RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings!
+RibbonKit.WinForms.RibbonTheme.CaptionButtonAppearance.get -> RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings?
+RibbonKit.WinForms.RibbonTheme.CaptionButtonAppearance.init -> void
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.StateInset.get -> int?
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.StateInset.init -> void
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.CornerRadius.get -> int?
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.CornerRadius.init -> void
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.HoverBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.HoverBackground.init -> void
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.PressedBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.PressedBackground.init -> void
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.CloseHoverBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.CloseHoverBackground.init -> void
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.ClosePressedBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.ClosePressedBackground.init -> void
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.GlyphSize.get -> int?
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.GlyphSize.init -> void
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.GlyphStrokeWidth.get -> double?
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.GlyphStrokeWidth.init -> void
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.GlyphColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.GlyphColor.init -> void
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.CloseHotGlyphColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.CloseHotGlyphColor.init -> void
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.RestoreOffset.get -> int?
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.RestoreOffset.init -> void
+override RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.ToString() -> string!
+override RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.Equals(object? obj) -> bool
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.Equals(RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings? other) -> bool
+static RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings? left, RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings? right) -> bool
+static RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings? left, RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings? right) -> bool

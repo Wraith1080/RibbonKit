@@ -15,6 +15,7 @@ public partial class RibbonForm : Form
     private int _lastCaptionHeight;
     private bool _materialCaptionStyle;
     private RibbonBackdropBuffer? _captionTextBuffer;
+    private readonly RoundedPainter _captionButtonPainter = new();
     /// <summary>Creates a resizable native ribbon window with standard system-menu and caption semantics.</summary>
     public RibbonForm()
     {
@@ -269,36 +270,14 @@ public partial class RibbonForm : Form
             {
                 if (bounds.IsEmpty) continue;
                 bool hot = _hotCaption == hit, pressed = hot && _pressedCaption == hit;
-                Color fill;
-                if (hit == 20) fill = Color.FromArgb(composited ? pressed ? 235 : 210 : 255, 232, 17, 35);
-                else if (!composited) fill = pressed ? theme.Pressed.Start : theme.Hover.Start;
-                else fill = pressed ? theme.BackdropPressed?.Start ?? Color.FromArgb(40, theme.Foreground)
-                    : theme.BackdropHover?.Start ?? Color.FromArgb(24, theme.Foreground);
-                using var hover = new SolidBrush(fill);
-                if (hot) graphics.FillRectangle(hover, bounds);
-                using var pen = new Pen(_hotCaption == 20 && hit == 20 ? Color.White : theme.Foreground, Math.Max(1, DeviceDpi / 96f));
-                int size = RibbonLayoutEngine.Scale(10, DeviceDpi), x = bounds.Left + (bounds.Width - size) / 2, y = bounds.Top + (bounds.Height - size) / 2;
-                if (hit == 8) graphics.DrawLine(pen, x, y + size / 2, x + size, y + size / 2);
-                else if (hit == 9)
+                RibbonCaptionButtonRenderer.Draw(_captionButtonPainter,
+                    new(graphics, bounds, theme, Font, DeviceDpi, hot, pressed) { CompositedText = composited },
+                    hit, WindowState == FormWindowState.Maximized, foregroundOnly, restoreBounds =>
                 {
-                    if (WindowState == FormWindowState.Maximized)
-                    {
-                        graphics.DrawRectangle(pen, x + 3, y, size - 3, size - 3);
-                        var mode = graphics.CompositingMode;
-                        if (composited || foregroundOnly) graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
-                        var restoreBounds = new Rectangle(x, y + 3, size - 3, size - 3);
-                        if (foregroundOnly) { using var clear = new SolidBrush(Color.Transparent); graphics.FillRectangle(clear, restoreBounds); }
-                        else if (ribbon is not null) ribbon.PaintCaptionBackground(graphics, restoreBounds, composited);
-                        else graphics.FillRectangle(background, restoreBounds);
-                        graphics.CompositingMode = mode;
-                        // Erasing the rear restore outline must retain the same
-                        // translucent state fill inside the front window outline.
-                        if (hot) graphics.FillRectangle(hover, restoreBounds);
-                        graphics.DrawRectangle(pen, x, y + 3, size - 3, size - 3);
-                    }
-                    else graphics.DrawRectangle(pen, x, y, size, size);
-                }
-                else { graphics.DrawLine(pen, x, y, x + size, y + size); graphics.DrawLine(pen, x + size, y, x, y + size); }
+                    if (foregroundOnly) { using var clear = new SolidBrush(Color.Transparent); graphics.FillRectangle(clear, restoreBounds); }
+                    else if (ribbon is not null) ribbon.PaintCaptionBackground(graphics, restoreBounds, composited);
+                    else graphics.FillRectangle(background, restoreBounds);
+                });
             }
         }
     }
@@ -425,7 +404,7 @@ public partial class RibbonForm : Form
         // native attribute cleanup; detach managed associations afterwards.
         if (disposing) { _disposingBackdrop = true; _captionTitleMotion?.Dispose(); _captionTitleMotion = null; }
         try { base.Dispose(disposing); }
-        finally { if (disposing) { _captionTextBuffer?.Dispose(); _captionTextBuffer = null; Ribbon = null; } }
+        finally { if (disposing) { _captionTextBuffer?.Dispose(); _captionTextBuffer = null; _captionButtonPainter.Dispose(); Ribbon = null; } }
     }
     [StructLayout(LayoutKind.Sequential)] private struct NativeRect { public int Left, Top, Right, Bottom; }
     [StructLayout(LayoutKind.Sequential)] private struct TrackMouse { public int Size, Flags; public nint Window; public uint HoverTime; }

@@ -351,6 +351,24 @@ title glyph coverage, and closing paints the normal caption before retiring its
 temporary foreground layer. The optional demo's **Theme effects 10** has **Backstage
 caption tint** presets/reset and **Try caption and title** review controls.
 
+`Theme.CaptionButtonAppearance` accepts immutable
+`RibbonCaptionButtonAppearanceSettings` for caption-button decoration:
+
+| Members | Default and behavior |
+| --- | --- |
+| `HoverBackground`, `PressedBackground` | Null retains the resolved caption palette's first color stop and material fallback coverage. Authored fills support alpha, vertical gradients and Transparent. |
+| `CloseHoverBackground`, `ClosePressedBackground` | Null retains red (232,17,35), opaque in solid captions and alpha 210/235 over material or the temporary foreground plane. Authored fills are independent. |
+| `StateInset`, `CornerRadius` | Null retains full-target square state fills. Accept 0..1024 and 0..64 logical pixels; paint clamps inside the existing native target. |
+| `GlyphSize`, `GlyphStrokeWidth` | Null retains a 10-logical-pixel vector and max(1 device pixel, DPI/96) stroke. Accept 0..256 and finite 0..32 logical pixels. Zero hides glyphs; authored geometry clamps within the target. |
+| `GlyphColor`, `CloseHotGlyphColor` | Empty follows resolved caption Foreground or close hover/pressed White respectively. Alpha and Transparent are supported independently. |
+| `RestoreOffset` | Null retains the legacy three **device** pixels between restore outlines. An authored 0..256 logical pixels scales with DPI and clamps inside the glyph; zero overlaps the outlines. |
+
+Reset members independently, or assign `CaptionButtonAppearance = null` for the
+group. Other caption/tint settings remain. Button hit areas, window actions,
+title rendering and animation retain their existing owners. The optional demo's
+**Theme effects 11** contains fill/shape/glyph presets and an isolated caption
+preview; closing that preview leaves the main sample open.
+
 Spacing uses three nullable theme properties, each accepting 0..1024 logical
 pixels: `BackstageRowTextVerticalPadding` defaults to 16 total clearance added to
 font height, `BackstageSeparatorHeight` defaults to 9, and

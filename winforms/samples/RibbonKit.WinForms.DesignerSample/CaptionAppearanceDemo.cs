@@ -6,7 +6,7 @@ public partial class DesignerForm
 {
     private void EnableCaptionAppearanceDemo()
     {
-        var tab = ThemeEffectsReviewTab;
+        var tab = ThemeEffects10ReviewTab;
         if (tab.Groups.Any(g => g.Id == "review-caption-tint")) return;
         var tint = new RibbonGroup { Id = "review-caption-tint", Text = "Backstage caption tint" };
         Add(tint, "Enable / disable caption tint", () => Set(Current() with { CaptionTintEnabled = !(Current().CaptionTintEnabled ?? ribbon.Theme.BackstageStyle == RibbonBackstageStyle.Modern) }));
@@ -41,7 +41,7 @@ public partial class DesignerForm
     internal void VerifyCaptionAppearanceDemo(string output)
     {
         Directory.CreateDirectory(output); StartPosition = FormStartPosition.Manual; Location = new(-16000, -16000); Width = 1900; ShowInTaskbar = false;
-        EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffectsReviewTab; ribbon.SelectedTab = tab;
+        EnableOffice2019ThemeDemo(); Show(); Application.DoEvents(); var tab = ThemeEffects10ReviewTab; ribbon.SelectedTab = tab;
         if (tab.Groups.Count != 5 || ThemeEffects9ReviewTab.Groups.Count != 6 || ThemeEffects8ReviewTab.Groups.Count != 5 || ThemeEffects7ReviewTab.Groups.Count != 8 || ThemeEffects6ReviewTab.Groups.Count != 3 || ThemeEffects5ReviewTab.Groups.Count != 6 || ThemeEffects4ReviewTab.Groups.Count != 7 || ThemeEffects3ReviewTab.Groups.Count != 4 || ThemeEffects2ReviewTab.Groups.Count != 5 || ribbon.Tabs.Single(t => t.Text == "Office 2019 Light").Groups.Count != 7) throw new InvalidOperationException("Caption controls displaced earlier review groups.");
         ribbon.Theme = ribbon.Theme with { BackstageAppearance = new() { MarkerWidth = 8 } };
         var group = tab.Groups.Single(g => g.Id == "review-caption-tint"); var preview = tab.Groups.Single(g => g.Id == "review-caption-preview");

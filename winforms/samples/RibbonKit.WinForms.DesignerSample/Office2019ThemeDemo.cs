@@ -97,6 +97,7 @@ public partial class DesignerForm
         EnableOptionsTreeDemo();
         EnableOptionsIconPickerDemo();
         EnableCaptionAppearanceDemo();
+        EnableCaptionButtonDemo();
         statusLabel.Text = "Office 2019 Light: compare neutral/blue headers, flat body, inner padding and square shadowed popups.";
 
         void Add(RibbonGroup group, string text, Action action)
