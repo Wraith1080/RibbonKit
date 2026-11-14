@@ -149,7 +149,7 @@ internal sealed class RibbonChoicePopup : IDisposable
             // Keep every row at the buffer's local origin, including rows > 0.
             buffer.Graphics.ResetTransform();
             ribbon.Painter.DrawComboBoxItem(new(buffer.Graphics, new(Point.Empty, e.Bounds.Size), ribbon.Theme, Font, ribbon.DeviceDpi,
-                Hot: e.Index == _hot, Pressed: e.Index == _pressed && Capture) { Density = ribbon.Density },
+                Hot: e.Index == _hot, Pressed: e.Index == _pressed && Capture) { Density = ribbon.Density, BackgroundBounds = new(0, -e.Bounds.Y, ClientSize.Width, ClientSize.Height) },
                 owner._item, e.Index, (e.State & DrawItemState.Selected) != 0);
             buffer.Render(e.Graphics);
         }

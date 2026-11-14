@@ -18,7 +18,7 @@ public partial class RibbonControl
     {
         var source = composited ? WindowPaintTheme : Theme;
         bool colored = Theme.ExtendTitleBarColorToHeader && HasWindowCaption &&
-            (!WindowHost!.TitleBarColor.IsEmpty || !Theme.TitleBarBackground.IsEmpty);
+            (!WindowHost!.TitleBarColor.IsEmpty || !Theme.TitleBarBackground.IsEmpty || Theme.TitleBarBackgroundFill is not null);
         if (!colored && source.HeaderHover is null && source.HeaderPressed is null && source.HeaderForeground.IsEmpty) return source;
         var caption = colored ? WindowHost!.CaptionTheme(Theme, composited) : null;
         if (!ReferenceEquals(source, _headerThemeSource) || !ReferenceEquals(caption, _headerCaptionTheme) || composited != _headerComposited)
@@ -26,7 +26,7 @@ public partial class RibbonControl
             _headerThemeSource = source; _headerCaptionTheme = caption; _headerComposited = composited;
             _headerTheme = caption is null ? source : source with
             {
-                Background = WindowHost!.CaptionColor(Theme, composited), HeaderForeground = caption.Foreground,
+                Background = WindowHost!.CaptionColor(Theme, composited), BackgroundFill = WindowHost.CaptionFill(Theme, composited), HeaderForeground = caption.Foreground,
                 HeaderHover = source.ColoredHeaderHover ?? caption.Hover, HeaderPressed = source.ColoredHeaderPressed ?? caption.Pressed, DisabledForeground = caption.DisabledForeground,
                 BackdropHover = source.ColoredHeaderHover ?? caption.BackdropHover, BackdropPressed = source.ColoredHeaderPressed ?? caption.BackdropPressed
             };
@@ -51,7 +51,7 @@ public partial class RibbonControl
         var motion = BackstageOpeningMotion is { IsRunning: true } running ? running : null;
         var normal = host?.CaptionColor(theme, composited) ?? (composited ? Color.Transparent : theme.Background);
         var state = new RibbonBackstageCaptionState(IsBackstageOpen, HasWindowCaption,
-            host is not null && !host.TitleBarColor.IsEmpty || !theme.TitleBarBackground.IsEmpty, HasWindowBackdrop, normal,
+            host is not null && !host.TitleBarColor.IsEmpty || !theme.TitleBarBackground.IsEmpty || theme.TitleBarBackgroundFill is not null, HasWindowBackdrop, normal,
             motion?.VisibleWidth ?? host?.ClientSize.Width ?? Width, WindowCaptionHeight, motion?.Opacity ?? (byte)255, Backstage?.NavigationBackgroundOpacity ?? 1);
         return policy.Resolve(state);
     }
@@ -74,7 +74,18 @@ public partial class RibbonControl
     internal Rectangle CaptionNavigationBounds => Rectangle.FromLTRB(CaptionOverlayBounds.Left, CaptionOverlayBounds.Top,
         IsBackstageOpen ? CaptionPageBounds.Left : 0, CaptionOverlayBounds.Bottom);
     internal void PaintCaptionBackground(Graphics graphics, Rectangle bounds, bool composited)
-        => BackstageCaptionFrame(composited).Paint(graphics, bounds);
+    {
+        var state = graphics.Save();
+        try
+        {
+            graphics.SetClip(bounds, System.Drawing.Drawing2D.CombineMode.Intersect);
+            var canvas = new Rectangle(0, 0, WindowHost?.ClientSize.Width ?? Width, WindowCaptionHeight);
+            var fill = WindowHost?.CaptionFill(Theme, composited);
+            BackstageCaptionFrame(composited).Paint(graphics, canvas, fill is { } authored
+                ? () => Painter.PaintFill(new(graphics, canvas, Theme, Font, DeviceDpi), authored) : null);
+        }
+        finally { graphics.Restore(state); }
+    }
     internal void InvalidateBackstageCaption()
     {
         if (!IsDisposed && HasWindowCaption)
@@ -92,7 +103,7 @@ public partial class RibbonControl
             if (!ReferenceEquals(Theme, _backdropThemeSource))
             {
                 _backdropThemeSource = Theme;
-                _backdropTheme = Theme with { Background = Color.Transparent };
+                _backdropTheme = Theme with { Background = Color.Transparent, BackgroundFill = Theme.BackgroundFill, QuickAccessBackgroundFill = Theme.QuickAccessBackgroundFill };
             }
             return _backdropTheme!;
         }

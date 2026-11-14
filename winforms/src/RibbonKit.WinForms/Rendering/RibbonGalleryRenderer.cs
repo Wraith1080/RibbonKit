@@ -11,7 +11,7 @@ internal static class RibbonGalleryRenderer
     {
         if (!selected && !c.Hot && !c.Pressed) return;
         var border = new RibbonGalleryAppearanceMetrics(c.Theme, c.DeviceDpi).Border(selected ? c.Theme.Accent : Color.Transparent, RibbonGalleryChromeKind.Tile);
-        owner.PaintGalleryChrome(c, c.Theme.CommandStateFill(c.Hot, c.Pressed, selected), border, RibbonGalleryChromeKind.Tile);
+        owner.PaintGalleryChrome(c with { StateChecked = selected }, c.Theme.CommandStateFill(c.Hot, c.Pressed, selected), border, RibbonGalleryChromeKind.Tile);
     }
     internal static void DrawHeading(RibbonRenderer owner, RibbonPaintContext c, string text, bool office)
     {
@@ -43,8 +43,9 @@ public partial class RibbonRenderer
         bool authored = context.GalleryChrome switch { RibbonGalleryChromeKind.Header => a?.HasHeaderChrome == true, RibbonGalleryChromeKind.Tile => a?.HasTileChrome == true, RibbonGalleryChromeKind.Strip => a?.HasStripChrome == true, RibbonGalleryChromeKind.Utility => a?.HasUtilityChrome == true, _ => false };
         if (!authored) return false;
         var m = new RibbonGalleryAppearanceMetrics(context.Theme, context.DeviceDpi); var bounds = m.Bounds(context.Bounds, context.GalleryChrome);
-        border = m.Border(border, context.GalleryChrome);
-        PaintRounded(context with { Bounds = bounds }, m.Radius(actualRadius, context.GalleryChrome), fill, border, m.BorderWidth(bounds, border, context.GalleryChrome));
+        var chrome = context.GalleryChrome == RibbonGalleryChromeKind.Tile ? a?.StateChrome : null;
+        border = m.Border(chrome?.Border(context, border) ?? border, context.GalleryChrome);
+        PaintStateChrome(context with { Bounds = bounds }, m.Radius(actualRadius, context.GalleryChrome), fill, border, m.BorderWidth(bounds, border, context.GalleryChrome), chrome);
         return true;
     }
 }

@@ -50,7 +50,7 @@ internal static class RibbonApplicationMenuSurfaceRenderer
     private static void Fill(RibbonRenderer owner, RibbonPaintContext c, RibbonFill fill)
     {
         if (c.Bounds.Width <= 0 || c.Bounds.Height <= 0) return;
-        if (fill.Start == fill.End) { using var brush = new SolidBrush(fill.Start); c.Graphics.FillRectangle(brush, c.Bounds); }
+        if (RibbonFillColors.IsSolid(fill)) { using var brush = new SolidBrush(fill.Start); c.Graphics.FillRectangle(brush, c.Bounds); }
         else owner.PaintRounded(c, 0, fill, Color.Transparent, 0);
     }
 }

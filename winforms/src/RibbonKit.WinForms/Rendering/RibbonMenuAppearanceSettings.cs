@@ -38,7 +38,7 @@ public sealed record RibbonMenuAppearanceSettings
         if (settings.HeaderCornerRadius is < 0 or > 64 || settings.OverflowCornerRadius is < 0 or > 64 || settings.HeaderInset is < 0 or > 1024 || settings.OverflowInset is < 0 or > 1024
             || settings.HeaderBorderWidth is < 0 or > 32 || settings.OverflowBorderWidth is < 0 or > 32 || settings.SeparatorThickness is < 0 or > 32)
             throw new ArgumentOutOfRangeException(nameof(settings), "Menu radii must be 0..64, outline/separator widths 0..32 and insets 0..1024 logical pixels, or null for existing paint.");
-        if (settings.OverflowBackground is { } fill && (fill.Start.A != 255 || fill.End.A != 255))
+        if (settings.OverflowBackground is { } fill && !RibbonFillColors.IsOpaque(fill))
             throw new ArgumentException("Both overflow backing fill stops must be opaque.", nameof(settings));
     }
 }

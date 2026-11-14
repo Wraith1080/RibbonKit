@@ -141,6 +141,51 @@ active title-bar coloring extends across the tab band; reset restores grey.
 The selected tab stays white with dark text by default. Office 2024 remains the default.
 Custom values can start from `RibbonThemes.Office2019Light with { ... }`.
 
+`RibbonFill` supports immutable intermediate stops without changing its existing
+solid/two-color constructors, Start/End, deconstruction or endpoint `with` edits:
+
+```csharp
+var gold = new RibbonFill(Color.FromArgb(255, 247, 206), Color.FromArgb(255, 255, 251))
+{
+    IntermediateStops = new RibbonGradientStops(new[]
+    {
+        new RibbonGradientStop(.5, Color.FromArgb(255, 220, 140)),
+        new RibbonGradientStop(.9, Color.FromArgb(255, 239, 182))
+    })
+};
+ribbon.Theme = ribbon.Theme with
+{
+    Hover = gold,
+    CommandAppearance = (ribbon.Theme.CommandAppearance ?? new()) with
+    {
+        StateChrome = new RibbonStateChromeSettings
+        {
+            HoverBorderColor = Color.Goldenrod,
+            InnerBorderColor = Color.FromArgb(136, Color.White),
+            InnerBorderWidth = 1
+        }
+    }
+};
+```
+
+Offsets must increase strictly inside (0,1); the collection copies its input and
+compares by value. Null/empty stops use the old ramp. Nullable `Direction` is
+Vertical by default, with Horizontal also available. Opacity and darkening preserve
+every stop. `BackgroundFill`, `TitleBarBackgroundFill`, `PopupBackgroundFill`,
+`QuickAccessBackgroundFill` (lower QAT) and `BackstageNavigationBackgroundFill`
+are optional opaque surface fills; null restores the previous Color fallback.
+Assigning the matching Color clears its fill, and Background also clears the
+lower-QAT fill. Form.TitleBarColor retains priority. Every stop in opaque roles,
+including BodyBackground, must be opaque.
+
+`StateChrome` is also available on FileButtonAppearance, GalleryAppearance (tiles),
+EditorAppearance (choices) and OptionsAppearance (buttons). Hover/pressed/checked/
+checked-hover border inks and inner-rim ink/width/inset are independent of fills.
+Existing border overrides win; null/Empty preserves defaults, Transparent hides
+ink and zero hides width. Empty groups add no effect. ChoiceBorderWidth controls
+choice-state outlines separately from editor fields. These are shared foundations;
+the [Office 2010 preset and review](docs/OFFICE2010-BLUE-PLAN.md) are later slices.
+
 `HeaderPresentation` selects Filled or Underline independently of colors, corner
 radius, caption extension and Backstage style. The default Office renderer keeps
 application text/focus/indicator overrides. Header effects are per-ribbon theme

@@ -22,8 +22,7 @@ public partial class RibbonRenderer : IDisposable
     /// <summary>Paints the ribbon or popup background.</summary>
     public virtual void DrawSurface(RibbonPaintContext context, bool popup)
     {
-        using var brush = new SolidBrush(popup ? context.Theme.PopupColor : context.Theme.Background);
-        context.Graphics.FillRectangle(brush, context.Bounds);
+        PaintFill(context, popup ? context.Theme.PopupFill : context.Theme.SurroundFill);
     }
     /// <summary>Paints the ribbon body panel. Shadows may extend into its surrounding margins; item clipping is handled separately.</summary>
     public virtual void DrawBody(RibbonPaintContext context)
@@ -77,8 +76,7 @@ public partial class RibbonRenderer : IDisposable
     /// <summary>Paints the measured Quick Access strip using the shared palette.</summary>
     public virtual void DrawQuickAccessToolbar(RibbonPaintContext context, RibbonQuickAccessPosition position)
     {
-        using var brush = new SolidBrush(context.Theme.Background);
-        context.Graphics.FillRectangle(brush, context.Bounds);
+        PaintFill(context, position == RibbonQuickAccessPosition.BelowRibbon ? context.Theme.QuickAccessBackgroundFill ?? context.Theme.SurroundFill : context.Theme.SurroundFill);
         using var border = new SolidBrush(context.Theme.Border);
         if (position == RibbonQuickAccessPosition.TabRow)
             context.Graphics.FillRectangle(border, context.Bounds.Right - 1, context.Bounds.Top + 6, 1, Math.Max(0, context.Bounds.Height - 12));
@@ -92,7 +90,7 @@ public partial class RibbonRenderer : IDisposable
         bool check = command is RibbonToggleItem { Checked: true } or RibbonCheckBoxItem { Checked: true } or RibbonRadioButtonItem { Checked: true } or RibbonSplitButtonItem { Checked: true };
         bool open = entry is RibbonQuickAccessComboBoxReference { IsDropDownOpen: true } or RibbonQuickAccessDropDownReference { IsDropDownOpen: true } or RibbonQuickAccessGroupReference { IsDropDownOpen: true };
         if (check || open || context.Hot || context.Pressed)
-            PaintCommandState(context, QuickAccessFill(context, context.Theme.CommandStateFill(context.Hot, open || context.Pressed, check), menu,
+            PaintCommandState(context with { StateChecked = check, StatePressed = open }, QuickAccessFill(context, context.Theme.CommandStateFill(context.Hot, open || context.Pressed, check), menu,
                 pressed: open || context.Pressed, marked: check && !context.Hot), Color.Transparent);
         DrawQuickAccessContent(context, entry, menu);
         if (command is RibbonCheckBoxItem { CheckState: CheckState.Indeterminate })
@@ -122,7 +120,7 @@ public partial class RibbonRenderer : IDisposable
         if (!context.CompositedText || menu) return fill;
         fill = marked && !pressed && !context.Pressed ? context.Theme.BackdropPressed ?? new(Tint(context.Theme.Accent, 40)) : BackdropStateFill(context, pressed || context.Pressed);
         Color Alpha(Color color) => Color.FromArgb((int)Math.Round(color.A * context.Theme.QuickAccessBackdropOpacity), color);
-        return new(Alpha(fill.Start), Alpha(fill.End));
+        return RibbonFillColors.Map(fill, Alpha);
     }
     private static Color Tint(Color color, int alpha) => Color.FromArgb((int)Math.Round(color.A * alpha / 255d), color);
     private static RibbonFill BackdropStateFill(RibbonPaintContext context, bool pressed) => pressed
@@ -296,7 +294,7 @@ public partial class RibbonRenderer : IDisposable
         if (context.IsSimplifiedGroup)
         {
             bool open = group.Ribbon?.Popups.BorrowsGroup(group) == true;
-            if (open || context.Hot || context.Pressed) DrawChrome(context, open || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, context.Theme.CollapsedGroupBorder.IsEmpty ? context.Theme.Border : context.Theme.CollapsedGroupBorder);
+            if (open || context.Hot || context.Pressed) DrawChrome(context with { IsCommandState = context.Theme.CommandAppearance?.StateChrome?.HasOverrides == true, StatePressed = open }, open || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, context.Theme.CollapsedGroupBorder.IsEmpty ? context.Theme.Border : context.Theme.CollapsedGroupBorder);
             int S(int n) => RibbonLayoutEngine.Scale(n, context.DeviceDpi);
             var color = group.EffectiveEnabled ? context.Theme.Foreground : context.Theme.DisabledColor;
             int groupInset = Math.Min(S(new RibbonChromeMetrics(context.Theme, context.Density).GroupPadding()), context.Bounds.Width / 2);
@@ -314,7 +312,7 @@ public partial class RibbonRenderer : IDisposable
         {
             bool open = group.EffectiveEnabled && group.Ribbon?.Popups.IsExpanded(group) == true;
             if (open || context.Hot || context.Pressed)
-                DrawChrome(context, open || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, context.Theme.CollapsedGroupBorder.IsEmpty ? context.Theme.Border : context.Theme.CollapsedGroupBorder);
+                DrawChrome(context with { IsCommandState = context.Theme.CommandAppearance?.StateChrome?.HasOverrides == true, StatePressed = open }, open || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, context.Theme.CollapsedGroupBorder.IsEmpty ? context.Theme.Border : context.Theme.CollapsedGroupBorder);
             int inset = RibbonLayoutEngine.Scale(RibbonLayoutEngine.CollapsedGroupCaptionInset, context.DeviceDpi);
             var bounds = Rectangle.Inflate(context.Bounds, -inset, -inset);
             var flags = TextFormatFlags.HorizontalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding;
@@ -394,7 +392,7 @@ public partial class RibbonRenderer : IDisposable
         bool check = item is RibbonToggleItem { Checked: true };
         bool open = enabled && item is RibbonDropDownItem { IsDropDownOpen: true };
         if (open || check || context.Hot || context.Pressed)
-            PaintCommandState(context, context.Theme.CommandStateFill(context.Hot, open || context.Pressed, check), Color.Transparent);
+            PaintCommandState(context with { StateChecked = check, StatePressed = open }, context.Theme.CommandStateFill(context.Hot, open || context.Pressed, check), Color.Transparent);
         DrawItemContent(context, item, size, menu);
         if (context.Focused)
             DrawFocus(context);
@@ -410,7 +408,7 @@ public partial class RibbonRenderer : IDisposable
     {
         bool selected = item is RibbonToggleItem { Checked: true } or RibbonRadioButtonItem { Checked: true } or RibbonCheckBoxItem { Checked: true };
         if (selected || context.Hot || context.Pressed)
-            PaintCommandState(context, context.Theme.CommandStateFill(context.Hot, context.Pressed, selected), Color.Transparent);
+            PaintCommandState(context with { StateChecked = selected }, context.Theme.CommandStateFill(context.Hot, context.Pressed, selected), Color.Transparent);
         var content = RibbonMenuLayout.IllustratedContent(context.Bounds, context.Font, context.DeviceDpi, RibbonMenuLayout.HasDescription(item), context.Theme);
         if (content.Icon.Width > 0 && content.Icon.Height > 0)
         {
@@ -623,6 +621,34 @@ public partial class RibbonRenderer : IDisposable
     }
     internal void PaintRounded(RibbonPaintContext context, int radius, RibbonFill fill, Color border, int stroke = 1) =>
         _rounded.Draw(context.Graphics, context.Bounds, radius, fill, border, stroke, context.IsTopEdgeConnected, context.IsBottomEdgeConnected);
+    internal void PaintFill(RibbonPaintContext context, RibbonFill fill)
+    {
+        if (RibbonFillColors.IsSolid(fill)) { using var brush = new SolidBrush(fill.Start); context.Graphics.FillRectangle(brush, context.Bounds); return; }
+        var state = context.Graphics.Save();
+        try
+        {
+            context.Graphics.SetClip(context.Bounds, System.Drawing.Drawing2D.CombineMode.Intersect);
+            var canvas = context.BackgroundBounds.IsEmpty ? context.Bounds : context.BackgroundBounds;
+            if (canvas.Width <= 0 || canvas.Height <= 0) return;
+            bool horizontal = fill.Direction == RibbonGradientDirection.Horizontal;
+            canvas = horizontal ? Rectangle.FromLTRB(canvas.Left, Math.Min(canvas.Top, context.Bounds.Top), canvas.Right, Math.Max(canvas.Bottom, context.Bounds.Bottom))
+                : Rectangle.FromLTRB(Math.Min(canvas.Left, context.Bounds.Left), canvas.Top, Math.Max(canvas.Right, context.Bounds.Right), canvas.Bottom);
+            if (!canvas.Contains(context.Bounds))
+            {
+                var leading = horizontal
+                    ? Rectangle.FromLTRB(context.Bounds.Left, context.Bounds.Top, Math.Min(canvas.Left, context.Bounds.Right), context.Bounds.Bottom)
+                    : Rectangle.FromLTRB(context.Bounds.Left, context.Bounds.Top, context.Bounds.Right, Math.Min(canvas.Top, context.Bounds.Bottom));
+                var trailing = horizontal
+                    ? Rectangle.FromLTRB(Math.Max(canvas.Right, context.Bounds.Left), context.Bounds.Top, context.Bounds.Right, context.Bounds.Bottom)
+                    : Rectangle.FromLTRB(context.Bounds.Left, Math.Max(canvas.Bottom, context.Bounds.Top), context.Bounds.Right, context.Bounds.Bottom);
+                using var start = new SolidBrush(fill.Start); using var end = new SolidBrush(fill.End);
+                if (leading.Width > 0 && leading.Height > 0) context.Graphics.FillRectangle(start, leading);
+                if (trailing.Width > 0 && trailing.Height > 0) context.Graphics.FillRectangle(end, trailing);
+            }
+            _rounded.Draw(context.Graphics, canvas, 0, fill, Color.Transparent, 0);
+        }
+        finally { context.Graphics.Restore(state); }
+    }
     internal void PaintShadow(RibbonPaintContext context, int radius)
     {
         if (context.SuppressShadow) return;

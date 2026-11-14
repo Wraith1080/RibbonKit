@@ -3,6 +3,8 @@ namespace RibbonKit.WinForms;
 /// <summary>Immutable ordinary command-state and split-perimeter overrides for ribbon/menu commands and Quick Access projections. Native editor frames, indicators, headers and Application Menu recipes remain separate.</summary>
 public sealed record RibbonCommandAppearanceSettings
 {
+    /// <summary>Gets optional per-state outer ink and inner rim. Explicit BorderColor/BorderWidth remain authoritative.</summary>
+    public RibbonStateChromeSettings? StateChrome { get; init; }
     /// <summary>Initializes overrides that retain existing command appearance.</summary>
     public RibbonCommandAppearanceSettings() { }
     /// <summary>Gets optional state corner radius in logical pixels, 0..64. Null retains square neutral chrome or the active Office radius. Hit targets and split layout are unchanged.</summary>
@@ -21,7 +23,7 @@ public sealed record RibbonCommandAppearanceSettings
     public Color SplitSeparatorColor { get; init; } = Color.Empty;
     /// <summary>Gets optional resting-half fill while the other split half is active. Null retains each ordinary/Quick Access recipe, including material transparency. Authored fills retain alpha and precede material fallback. Hover, press and checked fills keep their existing settings.</summary>
     public RibbonFill? SplitCompanionBackground { get; init; }
-    internal bool HasChromeOverrides => CornerRadius is not null || BorderWidth is not null || !BorderColor.IsEmpty || Inset is not null;
+    internal bool HasChromeOverrides => StateChrome?.HasOverrides == true || CornerRadius is not null || BorderWidth is not null || !BorderColor.IsEmpty || Inset is not null;
     internal static void Validate(RibbonCommandAppearanceSettings? settings)
     {
         if (settings is null) return;

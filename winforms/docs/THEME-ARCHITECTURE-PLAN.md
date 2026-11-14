@@ -80,6 +80,16 @@ extend the neutral fill/paint helpers and paired Backstage registration rather
 than inheriting another family's behavior. Rounded control chrome and the shared
 native corner preference are independent of the deferred Aero-frame experiment.
 
+F2 now supplies immutable stop data/evaluation in
+[`RibbonGradientStops.cs`](../src/RibbonKit.WinForms/Rendering/RibbonGradientStops.cs),
+cached linear painting in `RoundedPainter`, and opt-in outlines/rims in
+[`RibbonStateChromeSettings.cs`](../src/RibbonKit.WinForms/Rendering/RibbonStateChromeSettings.cs).
+Five nullable theme fill companions retain Color setter/Reset authority; passive
+`BackgroundBounds` keeps clipped child/caption paint in full-surface coordinates.
+Existing renderer hooks, layout/targets, state ownership and native clocks remain.
+The [F2 record](OFFICE2010-BLUE-PLAN.md#f2-implementation-and-verification--2026-11-14)
+owns evidence and limits. F3 composes the shell; F4 still owns the new Backstage sibling.
+
 ## Problem and intended result
 
 Office 2019's Backstage changes altered Office 2024's caption coverage and removed

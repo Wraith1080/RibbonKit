@@ -3,6 +3,8 @@ namespace RibbonKit.WinForms;
 /// <summary>Immutable opt-in full-rectangle File states for CommandMenu and Backstage. Null on RibbonTheme retains legacy File rendering. Null fills follow Accent with the configured darkening; explicit alpha, gradients and Transparent remain authoritative.</summary>
 public sealed record RibbonFileButtonAppearanceSettings
 {
+    /// <summary>Gets optional per-state outer ink and inner rim. Existing explicit header outline settings remain authoritative.</summary>
+    public RibbonStateChromeSettings? StateChrome { get; init; }
     /// <summary>Initializes accent-filled File states with white ink.</summary>
     public RibbonFileButtonAppearanceSettings() { }
     /// <summary>Gets the optional idle fill. Null uses Accent.</summary>

@@ -18,8 +18,7 @@ public partial class RibbonRenderer
     {
         int width = Math.Clamp(navigationWidth, 0, context.Bounds.Width);
         int shadow = context.WindowBackdrop || context.CompositedText ? RibbonBackstageLayout.PageShadowInset(this, context.Theme, context.DeviceDpi, context.Bounds.Size) : 0;
-        using var rail = new SolidBrush(context.Theme.BackstageNavigationColor);
-        context.Graphics.FillRectangle(rail, context.Bounds);
+        PaintFill(context, context.Theme.BackstageNavigationFill);
         var bounds = new Rectangle(context.Bounds.X + width, context.Bounds.Y + shadow, context.Bounds.Width - width, Math.Max(0, context.Bounds.Height - shadow));
         if (shadow > 0 && bounds.Width > 0 && bounds.Height > 0)
         {
@@ -53,8 +52,7 @@ public partial class RibbonRenderer
         try
         {
             if (context.CompositedText) context.Graphics.CompositingMode = CompositingMode.SourceCopy;
-            using var rail = new SolidBrush(context.Theme.BackstageNavigationColor);
-            context.Graphics.FillRectangle(rail, context.Bounds);
+            PaintFill(context, context.Theme.BackstageNavigationFill);
         }
         finally { context.Graphics.CompositingMode = mode; }
         if (item is RibbonMenuSeparatorItem separator)

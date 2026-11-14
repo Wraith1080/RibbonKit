@@ -3,6 +3,8 @@ namespace RibbonKit.WinForms;
 /// <summary>Immutable built-in gallery tile, heading and inline frame/utility decoration. Content settings and application presenter visuals retain their existing owners.</summary>
 public sealed record RibbonGalleryAppearanceSettings
 {
+    /// <summary>Gets optional selected/hover tile outlines and inner rims. Explicit tile border settings win; headings/strip chrome are independent.</summary>
+    public RibbonStateChromeSettings? StateChrome { get; init; }
     /// <summary>Initializes overrides retaining existing gallery paint.</summary>
     public RibbonGalleryAppearanceSettings() { }
     /// <summary>Gets optional active tile-state corner radius in logical pixels, 0..64. Null keeps the actual renderer's neutral/Office primitive radius.</summary>
@@ -44,7 +46,7 @@ public sealed record RibbonGalleryAppearanceSettings
     /// <summary>Gets optional active utility-button ink, including alpha. Empty retains transparent ink. This does not activate idle or disabled buttons.</summary>
     public Color UtilityBorderColor { get; init; } = Color.Empty;
 
-    internal bool HasTileChrome => TileCornerRadius is not null || TileInset is not null || TileBorderWidth is not null || !TileBorderColor.IsEmpty;
+    internal bool HasTileChrome => StateChrome?.HasOverrides == true || TileCornerRadius is not null || TileInset is not null || TileBorderWidth is not null || !TileBorderColor.IsEmpty;
     internal bool HasHeaderChrome => HeaderCornerRadius is not null || HeaderInset is not null || HeaderBorderWidth is not null || !HeaderBorderColor.IsEmpty;
     internal bool HasStripChrome => StripCornerRadius is not null || StripInset is not null || StripBorderWidth is not null || !StripBorderColor.IsEmpty;
     internal bool HasUtilityChrome => UtilityCornerRadius is not null || UtilityInset is not null || UtilityBorderWidth is not null || !UtilityBorderColor.IsEmpty;

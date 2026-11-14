@@ -172,11 +172,11 @@ internal sealed class RibbonMotionScene : IDisposable
         var body = minimize ? Interpolate(from.Body.IsEmpty ? expandedBody with { Height = 0 } : from.Body, to.Body.IsEmpty ? expandedBody with { Height = 0 } : to.Body) : Rectangle.Empty;
         var occupied = Local(Between(from.Bounds, to.Bounds, p));
         var messageFrame = messages ? Interpolate(from.Messages.IsEmpty ? to.Messages with { Height = 0 } : from.Messages, to.Messages.IsEmpty ? from.Messages with { Height = 0 } : to.Messages) : Rectangle.Empty;
-        using (var background = new SolidBrush(ribbon.WindowPaintTheme.Background)) graphics.FillRectangle(background, occupied);
+        ribbon.Painter.PaintFill(new(graphics, occupied, ribbon.WindowPaintTheme, ribbon.Font, to.Dpi), ribbon.WindowPaintTheme.SurroundFill);
         if (ribbon.Theme.ExtendTitleBarColorToHeader && !ribbon.HasWindowBackdrop)
         {
-            using var header = new SolidBrush(ribbon.HeaderPaintTheme(false).Background);
-            graphics.FillRectangle(header, Interpolate(from.Header, to.Header));
+            var header = ribbon.HeaderPaintTheme(false);
+            ribbon.Painter.PaintFill(new(graphics, Interpolate(from.Header, to.Header), header, ribbon.Font, to.Dpi), header.SurroundFill);
         }
         var belowFrom = from.Placement == RibbonQuickAccessPosition.BelowRibbon && !from.Qat.IsEmpty;
         var belowTo = to.Placement == RibbonQuickAccessPosition.BelowRibbon && !to.Qat.IsEmpty;

@@ -1,6 +1,6 @@
 # Native Office 2010 Blue — normal theme first
 
-**2026-11-14 — F1 appearance/API contract recorded; no Office 2010 runtime implementation yet.**
+**2026-11-14 — F2 shared gradient/state-chrome foundations implemented; next is F3 ribbon/File shell and both sample galleries.**
 The user selected Office 2010 after the Office 2013 review and supplied eight
 WPF references, including an additional ordinary-button hover example. They
 explicitly confirmed rounded corners for this non-flat theme. Deliver the normal
@@ -11,11 +11,12 @@ caption constitute Aero support.
 Current acceptance belongs in the
 [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger). F1 is a contract
 and source assessment, not a build, native implementation or visual acceptance.
-The first implementation slice is **F2 shared gradient/state-chrome foundations**.
+F2 delivers reusable paint support; the Office 2010 preset itself begins in F3.
 
 Before F2, the user requested Designer Sample cleanup. Checks now live in the
 [dedicated test host](../tests/RibbonKit.WinForms.DesignerSample.Tests/README.md);
-retired rewrite/consolidation demo builders are removed. This does not implement F2.
+retired rewrite/consolidation demo builders are removed. That cleanup is committed
+at `c7794b6` and remains separate from F2.
 
 ## Baseline and scope
 
@@ -219,5 +220,86 @@ pixels and mixed-monitor movement. DWM preference readback is not corner accepta
 
 F1 verification is limited to source/contract review, unchanged reference copies,
 link targets and `git diff --check`. No build, runtime test, native capture or app
-launch is needed for this documentation-only slice. **Next: F2 only.** Aero remains
+launch was needed for that documentation-only slice. **Next: F3 only.** Aero remains
 deferred until normal Office 2010 has been implemented and reviewed.
+
+## F2 implementation and verification — 2026-11-14
+
+Entered on `codex/Ribbonkit-Winform` at `c7794b6` (`Tidy up testing and demos`)
+with a clean worktree. F2 changes remain uncommitted, entirely within `winforms/`.
+No Office 2010 identity, palette, gallery tile or Backstage sibling is exposed yet.
+
+### Delivered contract
+
+- `RibbonGradientStop` and immutable `RibbonGradientStops` copy their input,
+  validate finite strictly increasing intermediate offsets inside (0,1), and
+  compare/hash structurally. `RibbonFill.IntermediateStops` canonicalizes an
+  empty collection to null. Existing constructors, Start/End, deconstruction and
+  endpoint `with` edits remain available. Nullable `Direction` supports Vertical
+  and Horizontal; null paints vertically, while an explicit Vertical is retained.
+- `RibbonFillColors` evaluates/maps every stop. `RoundedPainter` caches the full
+  value and uses the existing analytic corner coverage. Equal endpoints with a
+  different middle are not treated as a solid. Alpha conversion, primary-button
+  darkening and motion backgrounds retain positions, colors and direction.
+- Nullable `BackgroundFill`, `TitleBarBackgroundFill`, `PopupBackgroundFill`,
+  `QuickAccessBackgroundFill` and `BackstageNavigationBackgroundFill` own the five
+  previously Color-only surfaces. Their Color setters clear the matching fill;
+  Background also clears the lower-QAT fill. Null restores the previous fallback.
+  Every stop must be opaque in these roles and BodyBackground. Invalid nested
+  values fail before Theme/BuiltInTheme changes. Form.TitleBarColor still wins.
+- Passive `RibbonPaintContext.BackgroundBounds` carries full-surface coordinates
+  into clipped popup/Backstage rows and partial caption restoration. State fills
+  keep their own coordinates. The caption and tab surround remain independent;
+  native caption tint scales every alpha stop without changing title ownership.
+- `RibbonStateChromeSettings` is optional on CommandAppearance,
+  FileButtonAppearance, GalleryAppearance (tiles), EditorAppearance (choices) and
+  OptionsAppearance (buttons). It supplies hover/pressed/checked/checked-hover
+  outline ink plus inner-rim ink, width and inset. Existing explicit border ink/
+  width wins. `EditorAppearance.ChoiceBorderWidth` independently controls choice
+  state outlines. Transparent/zero hides; Empty/null falls back. Empty groups do
+  not opt native buttons into custom paint. Rims composite without clearing the
+  interior, clamp to tiny bounds and preserve joined edges and all hit targets.
+- Existing first-stop fallback recipes, such as default caption-button fills and
+  Options row/tree selections, stay unchanged. Explicit authored fills support
+  the richer data. No layout engines, clocks, native frame/corner/backdrop policy,
+  editor/popup owners or sample-authored model/resource files changed.
+
+### Evidence and limits
+
+- Normal Debug runtime, designer server, net472 client, Designer Sample and
+  Showcase builds pass with zero warnings/errors. API analyzers pass; 76 additive
+  accessor/type declarations are in Unshipped and Shipped is unchanged. Designer
+  Sample is refreshed to package `0.1.0-designer.local20261114T112449399Z`.
+- Final focused Release run: **85/85**, including **22 F2 cases** and affected
+  command/editor/gallery/Options appearance checks. It covers copied values,
+  equality, endpoint edits, bad offsets/enum/opaque middle stops, atomic failure,
+  independent Reset/precedence, all-stop alpha/darkening, horizontal/clipped
+  backgrounds, actual paint hooks at 96/120/144/192 DPI, SourceCopy rim safety,
+  split/state outlines and native partial-caption restoration.
+- An earlier affected-scope run passed 266/270, including unchanged connected-tab,
+  title handoff, motion and 2024 pill cases. Its four gallery cases had a stale
+  fixture: Hover was authored while CheckedHover was left to the independent live
+  accent recipe. The fixture now explicitly authors its expected CheckedHover;
+  the final focused run passes. No runtime state recipe or pixel approval changed.
+  These overlapping runs are not a clean full-suite result or additive totals.
+- [Independent public-package runner](../eng/Test-GradientFoundation.ps1) builds a
+  consumer with its own model, isolated imports/cache and no internal/sample
+  helpers. Against retained pre-F2 package `0.1.0-designer.local20261114T044002490Z`,
+  **24 default/legacy two-stop image pairs match byte-for-byte**: all three existing
+  themes, neutral/Office painters and 96/144 paint DPI, each exercising twelve
+  public hooks. New public checks pass for immutable gradients, five surface roles,
+  state ink, caption override/reset, application-theme Reset, atomic rejection and
+  native editor handle/parent/value retention. Diagnostic captures were inspected;
+  caption/header pixel comparison verifies that an override changes only its role.
+- Retained evidence: `artifacts/gradient-foundation/gradient-complete.trx`,
+  `gradient-focused.trx`, `public-complete/`, and the earlier baseline captures in
+  `public-first/baseline/evidence/`. The existing separated sample-isolation check
+  also passed during F2; verification code remains outside the normal sample.
+- This is direct paint, offscreen native lifecycle and package/API evidence. It
+  does not establish actual Office 2010 appearance, continuous visible motion,
+  physical mouse/keyboard/IME, actual Visual Studio save/reopen, native four-corner
+  silhouette, desktop material pixels or mixed-monitor acceptance. No unrelated
+  E2–E5 matrix was repeated. Aero remains deferred.
+
+Stop at F2. Next: **F3 Office 2010 ribbon/File shell and both sample galleries**;
+below-tabs Backstage remains F4 and composed normal-theme review remains F5.

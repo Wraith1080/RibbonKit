@@ -47,7 +47,7 @@ internal readonly record struct RibbonOptionsShellMetrics(RibbonTheme Theme, int
     {
         if (amount == 0) return fill;
         Color Stop(Color c) => Color.FromArgb(c.A, (int)Math.Round(c.R * (1 - amount)), (int)Math.Round(c.G * (1 - amount)), (int)Math.Round(c.B * (1 - amount)));
-        return new(Stop(fill.Start), Stop(fill.End));
+        return RibbonFillColors.Map(fill, Stop);
     }
     internal float HeadingPoints(Font font) => Math.Max(font.SizeInPoints + (A?.HeadingFontSizeIncrement ?? D.HeadingIncrement), A?.HeadingMinimumFontSize ?? D.HeadingMinimum);
     internal FontStyle HeadingStyle(Font font) => A?.HeadingBold is { } bold ? bold ? font.Style | FontStyle.Bold : font.Style & ~FontStyle.Bold : FontStyle.Bold;

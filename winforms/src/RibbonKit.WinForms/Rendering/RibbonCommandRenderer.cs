@@ -27,7 +27,7 @@ internal static class RibbonCommandRenderer
                 if (!active && whole.Theme.CommandAppearance?.SplitCompanionBackground is { } authored) fill = authored;
                 else if (quickAccess) fill = !active && whole.CompositedText && !menu ? new(Color.Transparent)
                     : RibbonRenderer.QuickAccessFill(whole, fill, menu, pressed: part.Pressed || expanded, marked: marked && !part.Hot);
-                owner.PaintCommandState(whole, fill, quickAccess ? Color.Transparent : whole.Theme.Border);
+                owner.PaintCommandState(whole with { StateChecked = check, StatePressed = primary.Pressed || dropDown.Pressed || open, StateHot = primary.Hot || dropDown.Hot }, fill, quickAccess ? Color.Transparent : whole.Theme.Border);
             }
             finally { whole.Graphics.Restore(saved); }
         }
@@ -41,8 +41,10 @@ public partial class RibbonRenderer
     private bool TryPaintCommandState(RibbonPaintContext context, RibbonFill fill, Color border, int defaultRadius)
     {
         if (!context.IsCommandState || context.Theme.CommandAppearance is not { HasChromeOverrides: true }) return false;
+        var settings = context.Theme.CommandAppearance;
+        border = settings.StateChrome?.Border(context, border) ?? border;
         var metrics = new RibbonCommandAppearanceMetrics(context.Theme, context.DeviceDpi, defaultRadius, border, RibbonPresentationResolver.CommandChrome);
-        PaintRounded(context with { Bounds = metrics.StateBounds(context.Bounds) }, metrics.Radius, fill, metrics.Border, metrics.BorderWidth);
+        PaintStateChrome(context with { Bounds = metrics.StateBounds(context.Bounds) }, metrics.Radius, fill, metrics.Border, metrics.BorderWidth, settings.StateChrome);
         return true;
     }
 }

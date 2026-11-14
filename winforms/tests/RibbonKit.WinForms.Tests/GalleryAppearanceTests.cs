@@ -15,7 +15,9 @@ public sealed class GalleryAppearanceTests
             var capture = new Capture(); using RibbonRenderer painter = office ? new Office([], capture) : new Flat([], capture);
             using var tile = new RibbonGalleryTile { Text = "Tile", Icon = RibbonStockIcons.Create("save") }; using var image = new Bitmap(S(250), S(150)); using var g = Graphics.FromImage(image);
             var a = new RibbonGalleryAppearanceSettings { TileCornerRadius = 12, TileInset = 3, TileBorderWidth = 2, TileBorderColor = Color.Navy };
-            var theme = RibbonThemes.Office2024Light with { GalleryAppearance = a, Hover = new(Color.LightBlue), Pressed = new(Color.Magenta), Checked = new(Color.LightGreen) };
+            // This static-palette fixture authors checked-hover too; the built-in
+            // live-accent recipe now derives that state independently of Hover.
+            var theme = RibbonThemes.Office2024Light with { GalleryAppearance = a, Hover = new(Color.LightBlue), Pressed = new(Color.Magenta), Checked = new(Color.LightGreen), CheckedHover = new(Color.LightBlue) };
             var bounds = new Rectangle(S(4), S(4), S(230), S(140)); var c = new RibbonPaintContext(g, bounds, theme, Control.DefaultFont, dpi);
             painter.DrawGalleryTile(c with { Theme = theme with { GalleryAppearance = null } }, tile, true); var text = capture.Text; var art = capture.Artwork;
             g.Clear(Color.White); painter.DrawGalleryTile(c, tile, true); Assert.Equal(text, capture.Text); Assert.Equal(art, capture.Artwork);

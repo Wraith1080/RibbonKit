@@ -4,11 +4,12 @@ namespace RibbonKit.WinForms;
 
 public partial class RibbonRenderer
 {
-    internal void PaintFilledHeaderState(RibbonPaintContext context, int radius, RibbonFill fill)
+    internal void PaintFilledHeaderState(RibbonPaintContext context, int radius, RibbonFill fill, RibbonStateChromeSettings? chrome = null)
     {
         var appearance = context.Theme.HeaderAppearance;
         var border = appearance is null || appearance.FilledBorderColor.IsEmpty ? Color.Transparent : appearance.FilledBorderColor;
-        PaintRounded(context, radius, fill, border, border.A == 0 ? 0 : appearance?.FilledBorderWidth is { } width ? RibbonLayoutEngine.Scale(width, context.DeviceDpi) : 1);
+        if (appearance is null || appearance.FilledBorderColor.IsEmpty) border = chrome?.Border(context, border) ?? border;
+        PaintStateChrome(context, radius, fill, border, border.A == 0 ? 0 : appearance?.FilledBorderWidth is { } width ? RibbonLayoutEngine.Scale(width, context.DeviceDpi) : 1, chrome);
     }
     private bool TryPaintHeaderScroller(RibbonPaintContext context, RibbonFill fill, Color border, int defaultRadius)
     {

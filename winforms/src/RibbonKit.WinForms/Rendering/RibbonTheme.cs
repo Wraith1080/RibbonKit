@@ -29,16 +29,38 @@ public enum RibbonBackstageStyle
     Classic
 }
 
-/// <summary>A solid or vertical two-stop gradient fill; contains no disposable resources.</summary>
+/// <summary>A solid or linear gradient fill; contains no disposable resources. Start/End remain the endpoints when intermediate stops are supplied.</summary>
 public readonly record struct RibbonFill(Color Start, Color End)
 {
+    private readonly RibbonGradientStops? _intermediateStops;
+    private readonly RibbonGradientDirection? _direction;
     /// <summary>Initializes a RibbonFill instance.</summary>
     public RibbonFill(Color color) : this(color, color) { }
+    /// <summary>Gets optional immutable intermediate stops. Null/empty retains the existing two-stop ramp; endpoint edits remain authoritative.</summary>
+    public RibbonGradientStops? IntermediateStops { get => _intermediateStops; init => _intermediateStops = value is { Count: > 0 } ? value : null; }
+    /// <summary>Gets the optional axis. Null/Vertical runs top to bottom; Horizontal runs left to right. Invalid enum values are rejected.</summary>
+    public RibbonGradientDirection? Direction
+    {
+        get => _direction;
+        init { if (value is not null && !Enum.IsDefined(value.Value)) throw new ArgumentOutOfRangeException(nameof(value)); _direction = value; }
+    }
 }
 
 /// <summary>Immutable named appearance and 96-DPI metrics for one ribbon.</summary>
 public sealed record RibbonTheme
 {
+    private Color _background = Color.White, _popupBackground = Color.Empty, _titleBarBackground = Color.Empty;
+    private Color _backstageNavigationBackground = Color.FromArgb(245, 244, 243);
+    /// <summary>Gets an optional opaque ribbon/header surround fill. Null follows Background; assigning Background clears this override.</summary>
+    public RibbonFill? BackgroundFill { get; init; }
+    /// <summary>Gets an optional opaque popup fill. Null follows PopupBackground/Surface; assigning PopupBackground clears it.</summary>
+    public RibbonFill? PopupBackgroundFill { get; init; }
+    /// <summary>Gets an optional opaque lower Quick Access fill. Null retains its existing recipe; assigning Background clears it.</summary>
+    public RibbonFill? QuickAccessBackgroundFill { get; init; }
+    /// <summary>Gets an optional opaque caption fill. Form.TitleBarColor wins. Null follows existing caption colors; assigning TitleBarBackground clears it.</summary>
+    public RibbonFill? TitleBarBackgroundFill { get; init; }
+    /// <summary>Gets an optional opaque Backstage navigation fill, preceding accent derivation. Assigning BackstageNavigationBackground clears it.</summary>
+    public RibbonFill? BackstageNavigationBackgroundFill { get; init; }
     /// <summary>Gets the native corner preference followed by an associated RibbonForm without an explicit override. Defaults to SystemDefault; Office 2019 uses Square. Unsupported systems retain the request. Control and popup radii are independent.</summary>
     public RibbonWindowCornerPreference WindowCornerPreference { get; init; }
     /// <summary>Gets the default Office renderer's header presentation. Defaults to Underline. Explicit custom renderers retain their drawing policy.</summary>
@@ -165,7 +187,7 @@ public sealed record RibbonTheme
     /// <summary>Gets notification content padding in logical pixels. Sides must be nonnegative.</summary>
     public Padding MessageContentPadding { get; init; } = new(12, 4, 8, 4);
     /// <summary>Gets the Office 2024 Backstage navigation rail color. Backstage.NavigationBackgroundOpacity can expose an active window backdrop behind it.</summary>
-    public Color BackstageNavigationBackground { get; init; } = Color.FromArgb(245, 244, 243);
+    public Color BackstageNavigationBackground { get => _backstageNavigationBackground; init { _backstageNavigationBackground = value; BackstageNavigationBackgroundFill = null; } }
     /// <summary>Gets the Backstage layout and renderer family. Defaults to Modern; Office 2019 selects Classic. Individual appearance and caption settings remain independently configurable.</summary>
     public RibbonBackstageStyle BackstageStyle { get; init; }
     /// <summary>Gets whether Backstage navigation and its caption tint follow Accent. False preserves BackstageNavigationBackground. Options dialogs retain their neutral navigation background.</summary>
@@ -210,7 +232,8 @@ public sealed record RibbonTheme
     public int? BackstageFooterBottomPadding { get; init; }
     /// <summary>Gets the optional logical top/left page border width, 0..32. Null retains each renderer's existing border. Zero keeps page content flush; layout and painting share it.</summary>
     public int? BackstagePageBorderWidth { get; init; }
-    internal Color BackstageNavigationColor => BackstageNavigationUsesAccent ? Accent : BackstageNavigationBackground;
+    internal RibbonFill BackstageNavigationFill => BackstageNavigationBackgroundFill ?? new(BackstageNavigationUsesAccent ? Accent : BackstageNavigationBackground);
+    internal Color BackstageNavigationColor => BackstageNavigationBackgroundFill is { } fill ? RibbonFillColors.At(fill, .5) : BackstageNavigationUsesAccent ? Accent : BackstageNavigationBackground;
     internal Color BackstageNavigationInk => BackstageNavigationForeground.IsEmpty ? Foreground : BackstageNavigationForeground;
     internal RibbonTheme BackstageCaptionTheme => BackstageNavigationForeground.IsEmpty ? this : this with
     {
@@ -245,15 +268,15 @@ public sealed record RibbonTheme
     /// <summary>Gets the keyboard-badge outline color. Empty uses Border; Transparent suppresses the outline.</summary>
     public Color KeyTipBorder { get; init; } = Color.Empty;
     /// <summary>Gets the ribbon background color.</summary>
-    public Color Background { get; init; } = Color.White;
+    public Color Background { get => _background; init { _background = value; BackgroundFill = null; QuickAccessBackgroundFill = null; } }
     /// <summary>Gets the command and popup surface color.</summary>
     public Color Surface { get; init; } = Color.White;
-    /// <summary>Gets the optional opaque ribbon body fill. Null uses Surface. Both explicit stops must be opaque. Does not recolor application-owned controls.</summary>
+    /// <summary>Gets the optional opaque ribbon body fill. Null uses Surface. Every stop must be opaque. Does not recolor application-owned controls.</summary>
     public RibbonFill? BodyBackground { get; init; }
     /// <summary>Gets the body frame color. Empty uses Border.</summary>
     public Color BodyBorder { get; init; } = Color.Empty;
     /// <summary>Gets the opaque floating popup background. Empty uses Surface; explicit values must be opaque.</summary>
-    public Color PopupBackground { get; init; } = Color.Empty;
+    public Color PopupBackground { get => _popupBackground; init { _popupBackground = value; PopupBackgroundFill = null; } }
     /// <summary>Gets the opaque native editor field background. Empty uses Surface; explicit values must be opaque.</summary>
     public Color EditorBackground { get; init; } = Color.Empty;
     /// <summary>Gets enabled native editor text, label and arrow color. Empty uses Foreground.</summary>
@@ -355,7 +378,7 @@ public sealed record RibbonTheme
     /// <summary>Gets the optional illustrated-choice title-to-description gap in 96-DPI logical pixels, from 0 to 1024. Null uses 2 in both densities. Measurement and painting retain the existing two-line description and font sizing.</summary>
     public int? IllustratedMenuDescriptionGap { get; init; }
     /// <summary>Gets the optional RibbonForm caption color, overridden by RibbonForm.TitleBarColor. Empty retains Background in solid mode and a clear caption over a backdrop. Explicit values must be opaque.</summary>
-    public Color TitleBarBackground { get; init; } = Color.Empty;
+    public Color TitleBarBackground { get => _titleBarBackground; init { _titleBarBackground = value; TitleBarBackgroundFill = null; } }
     /// <summary>Gets optional caption and TitleBar Quick Access foreground. Empty chooses contrast for a colored caption, or preserves Foreground for an unset caption.</summary>
     public Color TitleBarForeground { get; init; } = Color.Empty;
     /// <summary>Gets optional immutable caption-button state-fill and vector glyph overrides. Null preserves existing appearance. Hit targets, title text, native window actions and caption motion remain independent.</summary>
@@ -423,6 +446,8 @@ public sealed record RibbonTheme
     /// <summary>Gets the optional floating-popup shadow vertical offset in 96-DPI logical pixels, from -32 to 32. Null uses 2; positive moves downward. Resets independently; existing renderer and native space limits remain.</summary>
     public int? PopupShadowVerticalOffset { get; init; }
     internal RibbonFill BodyFill => BodyBackground ?? new(Surface);
+    internal RibbonFill SurroundFill => BackgroundFill ?? new(Background);
+    internal RibbonFill PopupFill => PopupBackgroundFill ?? new(PopupColor);
     internal Color BodyBorderColor => BodyBorder.IsEmpty ? Border : BodyBorder;
     internal Color PopupColor => PopupBackground.IsEmpty ? Surface : PopupBackground;
     internal Color EditorColor => EditorBackground.IsEmpty ? Surface : EditorBackground;
@@ -560,6 +585,8 @@ public readonly record struct RibbonIconContext(int DeviceDpi, Color Foreground,
 /// <summary>Describes device-pixel geometry, palette, font and interaction state for painting.</summary>
 public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bounds, RibbonTheme Theme, Font Font, int DeviceDpi, bool Hot = false, bool Pressed = false, bool Focused = false, bool ReserveIcon = false)
 {
+    /// <summary>Gets optional full surface bounds for a clipped background gradient. Empty uses Bounds. Content/state fills keep their own target coordinates.</summary>
+    public Rectangle BackgroundBounds { get; init; }
     /// <summary>Gets the measured device-pixel opening under the visible selected Filled tab. Its top aligns with the body frame; height reports available body depth. Empty means no connection. RibbonControl supplies this value to body and selected-tab hooks; standalone painters may supply it explicitly. It does not alter target bounds.</summary>
     public Rectangle HeaderBodyConnectionBounds { get; init; }
     /// <summary>Gets whether this frame's top edge adjoins the preceding ribbon/QAT surface and uses square top corners.</summary>
@@ -576,6 +603,9 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     internal bool IsBackstageNavigationState { get; init; }
     internal bool IsHeaderScrollButton { get; init; }
     internal bool IsCommandState { get; init; }
+    internal bool StateChecked { get; init; }
+    internal bool StateHot { get; init; }
+    internal bool StatePressed { get; init; }
     internal RibbonEditorChromeKind EditorChrome { get; init; }
     internal bool IsMenuHeading { get; init; }
     internal bool IsBackstageMenuSeparator { get; init; }

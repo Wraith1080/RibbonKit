@@ -54,9 +54,16 @@ internal sealed class RibbonBackstageSurface : ContainerControl
                 BackstageNavigationHover = derive ? theme.BackstageHoverFill : theme.BackstageNavigationHover,
                 BackstageNavigationSelected = derive ? theme.BackstageSelectedFill : theme.BackstageNavigationSelected,
                 BackstageNavigationBackground = Color.FromArgb(TransparentNavigation ? (int)Math.Round(255 * _ribbon.Backstage.NavigationBackgroundOpacity) : 255,
-                    theme.BackstageNavigationColor)
+                    theme.BackstageNavigationColor),
+                BackstageNavigationBackgroundFill = theme.BackstageNavigationBackgroundFill is { } fill
+                    ? RibbonFillColors.Map(fill, color => Color.FromArgb(TransparentNavigation ? (int)Math.Round(color.A * _ribbon.Backstage.NavigationBackgroundOpacity) : color.A, color)) : null
             };
         }
+    }
+    private Rectangle GradientBounds(Control child, Rectangle bounds)
+    {
+        var origin = child.PointToClient(PointToScreen(Point.Empty)); origin.Offset(bounds.Location);
+        return new(origin, Size);
     }
     private Control MotionTarget => MaterialPaint ? _pages : this;
     internal bool HasApplicationOpacity => _motionOpacity is null && RibbonDrawingHold.HasOpacity(MotionTarget.Handle);
@@ -580,7 +587,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         protected override void OnPaint(PaintEventArgs e)
         {
             void Paint(Graphics graphics) => _surface._ribbon.Painter.DrawBackstageEntry(new(graphics, ClientRectangle, _surface.PaintTheme, Font, DeviceDpi)
-                { Density = _surface._ribbon.Density, CompositedText = _surface.MaterialPaint, WindowBackdrop = _surface._ribbon.HasWindowBackdrop }, _item, false);
+                { BackgroundBounds = _surface.GradientBounds(this, ClientRectangle), Density = _surface._ribbon.Density, CompositedText = _surface.MaterialPaint, WindowBackdrop = _surface._ribbon.HasWindowBackdrop }, _item, false);
             if (_surface.MaterialPaint) (_buffer ??= new()).Paint(e.Graphics, Size, Height, Color.Transparent, Paint, opacity: _surface.MotionAlpha);
             else { _buffer?.Dispose(); _buffer = null; Paint(e.Graphics); }
         }
@@ -621,7 +628,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         private void PaintEntry(Graphics graphics, Rectangle bounds)
         {
             var ribbon = _surface._ribbon;
-            var context = new RibbonPaintContext(graphics, bounds, _surface.PaintTheme, Font, DeviceDpi, _hot, _pressed, Focused && ribbon.KeyboardFocusCues) { Density = ribbon.Density, CompositedText = _surface.MaterialPaint, WindowBackdrop = ribbon.HasWindowBackdrop };
+            var context = new RibbonPaintContext(graphics, bounds, _surface.PaintTheme, Font, DeviceDpi, _hot, _pressed, Focused && ribbon.KeyboardFocusCues) { BackgroundBounds = _surface.GradientBounds(this, bounds), Density = ribbon.Density, CompositedText = _surface.MaterialPaint, WindowBackdrop = ribbon.HasWindowBackdrop };
             ribbon.Painter.DrawBackstageEntry(context, Item, ReferenceEquals(Item, ribbon.Backstage.SelectedPage) && Item is not null);
             if (Tip.Length > 0)
             {

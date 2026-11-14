@@ -33,10 +33,10 @@ internal readonly record struct RibbonBackstageCaptionPolicy(
 internal readonly record struct RibbonBackstageCaptionFrame(Color NormalColor, Color TintColor, Rectangle TintBounds)
 {
     internal Color CaptionColor => TintBounds.IsEmpty ? NormalColor : TintColor;
-    internal void Paint(Graphics graphics, Rectangle bounds)
+    internal void Paint(Graphics graphics, Rectangle bounds, Action? paintNormal = null)
     {
-        using var normal = new SolidBrush(NormalColor);
-        graphics.FillRectangle(normal, bounds);
+        if (paintNormal is not null) paintNormal();
+        else { using var normal = new SolidBrush(NormalColor); graphics.FillRectangle(normal, bounds); }
         var tint = Rectangle.Intersect(bounds, TintBounds);
         if (tint.Width <= 0 || tint.Height <= 0) return;
         using var brush = new SolidBrush(TintColor);

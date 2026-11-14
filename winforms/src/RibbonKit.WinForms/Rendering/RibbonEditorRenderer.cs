@@ -32,10 +32,9 @@ internal static class RibbonEditorRenderer
     }
     internal static void DrawChoice(RibbonRenderer owner, RibbonPaintContext c, string text, bool selected, bool enabled)
     {
-        using var surface = new SolidBrush(c.Theme.PopupColor);
-        c.Graphics.FillRectangle(surface, c.Bounds);
+        owner.PaintFill(c, c.Theme.PopupFill);
         if (selected || c.Hot || c.Pressed)
-            owner.PaintEditorChrome(c, c.Pressed ? c.Theme.Pressed : c.Hot ? c.Theme.Hover : c.Theme.Checked, Color.Transparent, choice: true);
+            owner.PaintEditorChrome(c with { StateChecked = selected }, c.Pressed ? c.Theme.Pressed : c.Hot ? c.Theme.Hover : c.Theme.Checked, Color.Transparent, choice: true);
         var metrics = new RibbonEditorAppearanceMetrics(c.Theme, c.DeviceDpi, RibbonPresentationResolver.EditorChrome);
         owner.DrawText(c with { Bounds = metrics.ChoiceTextBounds(c.Bounds) }, text, enabled ? c.Theme.EditorTextColor : c.Theme.DisabledColor,
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.EndEllipsis);
@@ -53,7 +52,9 @@ public partial class RibbonRenderer
         if (settings is null || (choice ? !settings.HasChoiceChrome : c.EditorChrome != RibbonEditorChromeKind.Field || !settings.HasFieldChrome)) return false;
         var metrics = new RibbonEditorAppearanceMetrics(c.Theme, c.DeviceDpi, RibbonPresentationResolver.EditorChrome);
         var bounds = metrics.PaintBounds(c.Bounds, choice);
-        PaintRounded(c with { Bounds = bounds }, metrics.Radius(defaultRadius, choice), fill, border, choice ? 0 : metrics.BorderWidth(bounds, border));
+        var chrome = choice ? settings.StateChrome : null;
+        border = chrome?.Border(c, border) ?? border;
+        PaintStateChrome(c with { Bounds = bounds }, metrics.Radius(defaultRadius, choice), fill, border, choice ? border.A == 0 ? 0 : RibbonLayoutEngine.Scale(settings.ChoiceBorderWidth ?? 1, c.DeviceDpi) : metrics.BorderWidth(bounds, border), chrome);
         return true;
     }
 }

@@ -1,12 +1,13 @@
-# Continue normal native Office 2010 Blue after F1
+# Continue normal native Office 2010 Blue after F2
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
 Updated **2026-11-14**. Last verified branch is `codex/Ribbonkit-Winform`, HEAD
-`1802dad` (`office 2010 planning`), after E5 checkpoint `14aba66`. The requested
-Designer Sample test/demo cleanup entered with a clean worktree and remains
-uncommitted. Preserve authored Backstage settings and other Form/resource edits. Recheck
+`c7794b6` (`Tidy up testing and demos`), after F1 checkpoint `1802dad` and E5
+checkpoint `14aba66`. F2 entered with a clean worktree; its implementation and
+verification changes remain uncommitted. Preserve authored Backstage settings
+and other Form/resource edits. Recheck
 `git status --short`, live branch and HEAD; preserve user commits and edits. Do not
 commit, stage, push, publish or change branches unless requested.
 
@@ -29,7 +30,16 @@ removed, with control regressions retained. Debug/Release and focused relocated
 checks pass. See [scope/evidence/limits](../tests/RibbonKit.WinForms.DesignerSample.Tests/README.md).
 Do not move checks or test-only partial members back into the sample. Existing
 foreground/VS/physical gates and historical fixture limitations remain separate;
-no startup latency gain is claimed. **F2 has not started.**
+no startup latency gain is claimed. This cleanup was committed before F2.
+
+**F2 shared gradient/state-chrome foundations are implemented.** Read the
+[delivered contract and evidence](OFFICE2010-BLUE-PLAN.md#f2-implementation-and-verification--2026-11-14).
+Final focused Release checks pass 85/85, including 22 F2 cases. Independent
+public-package feature/native lifecycle checks pass and all 24 retained
+default/two-stop paint image pairs match byte-for-byte. Normal Debug runtime,
+designer server/net472 client and both samples build with zero warnings/errors.
+No Office 2010 preset or gallery tile exists yet. Direct paint/offscreen native
+evidence does not establish actual 2010 visual acceptance or actual VS review.
 
 B1–D8b, all identified A00–A17 corrections and E2–E4 are implemented. E5 automated
 composed checks are delivered. Current review, evidence pointers and remaining gates live in
@@ -46,7 +56,8 @@ source load/save/resource reload checks protect the reported designer artwork lo
 `--office2019-light` selects 2019 without review tabs;
 `--office2019-theme-demo` is a selection-only compatibility alias and
 `--menu-geometry-demo` no longer creates tabs. Explicit `--verify-*` fixtures
-and their builders remain available. Do not automatically resurrect diagnostic
+and their retained builders are available through the dedicated test host.
+Do not automatically resurrect diagnostic
 tabs or remove regression fixtures. Preserve authored Forms/UserControls,
 resources, project files and normal Debug/Release output locations.
 
@@ -70,7 +81,7 @@ darkening, state-fill and foreground overrides. Other buttons stay white with
 light hover/darker pressed washes; pressed borders retain Accent.
 Existing explicit button/state/border overrides win. All three families' sample actions
 and persistence are checked; the persistent Designer Sample now uses package
-`0.1.0-designer.local20261114T044002490Z`.
+`0.1.0-designer.local20261114T112449399Z` after F2's refresh.
 See [E3 evidence and scope](OFFICE2013-LIGHT-PLAN.md#e3-accent-palette-file-states-and-sample-appearance-controls--2026-11-13).
 E4 adds the #919191 body perimeter, selected-tab top/side outline and visible-tab
 opening through HeaderAppearance.ConnectSelectedTabToBody. Existing body/header
@@ -100,37 +111,47 @@ records before edits. Reuse the
 [architecture map](THEME-ARCHITECTURE-PLAN.md) and
 [adjustability audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 
-## Next bounded implementation: F2 shared gradient/state-chrome foundations only
+## Next bounded implementation: F3 ribbon/File shell and both sample galleries only
 
-Follow F2 in the [2010 plan](OFFICE2010-BLUE-PLAN.md#f2-fill-and-state-chrome-foundations).
-Keep existing RibbonFill constructors, Start/End, deconstruction, endpoint `with`
-edits and default two-stop behavior. New stop data is immutable, copied defensively,
-validated atomically and equal by value. Preserve intermediate stops through
-opacity, clipping, motion and actual renderer hooks. Equal endpoints with different
-intermediate colors must not take the old solid fast path.
+Follow F3 in the [2010 plan](OFFICE2010-BLUE-PLAN.md#f3-built-in-shell-file-and-both-sample-galleries).
+Append Office2010Blue = 3 without renumbering existing built-ins. Compose the
+reference palette through existing Filled/connected-header helpers, F2 gradients,
+rounded chrome, gold command states and blue File. Keep selected blue-grey header
+outlines independent from hover/pressed outlines. Request native Rounded through
+the existing corner policy; keep OS frame and unsupported retention intact.
 
-Use nullable fill companions only where Color-only roles block the reference.
-Preserve old Color setter authority, Form.TitleBarColor precedence, opacity
-validation across every stop, and null/Empty/alpha/Transparent/zero/Reset. Native
-editor wells stay solid; host application controls retain their own appearance.
-State outlines/inner rims are independently adjustable, opt-in and target-neutral;
-retain existing explicit border overrides and 2013/2019/2024 defaults.
+Add one immutable adjustable blue identity-surface accent recipe, preserving
+reference stops/depth and explicit role overrides. Gold command states remain
+gold by default; ordinary command text/icons remain ordinary. Preserve primary
+OK/secondary-button roles, independent accent/theme/caption Reset and title toggle.
+Do not substitute a solid accent for File's multi-stop reference ramps.
 
-Run focused public API/value/paint checks and an independent public-package
-consumer with normal outputs. Include stop retention/equality, alpha, equal
-endpoints, short bounds and atomic failure. Build affected native runtime/designer
-paths and refresh the persistent Designer Sample only when its package needs
-updating. Retain evidence and normal Debug/Release output folders. Reuse passed
-E2–E5 evidence instead of unrelated palette/border/corner/material matrix reruns.
+Update designer built-in parsing/validation, candidate previews and Undo/Redo
+consistently. Add an authored tile to each existing View gallery using public
+APIs and serializable two-argument SVG constructors. Keep normal startup choice,
+sample test separation, authored Forms/resources and persistence.
 
-Stop after F2 with outcome, verification limits and next slice **F3 Office 2010
-ribbon/File shell and both sample galleries**. Do not add a partial 2010 identity,
-gallery tile, below-tabs Backstage or Aero implementation during F2. F4 is the
-below-tabs Backstage sibling; F5 is composed normal-theme review. Add no diagnostic
-tabs and do not start another family or dark variant implicitly.
+Run affected palette/state/split/header/caption/designer serialization checks and
+independent public-package verification. Refresh the ordinary Designer Sample in
+place and keep normal Debug/Release outputs. Retain F2 evidence instead of
+repeating unrelated passed E2–E5 matrices. Compare actual paint with the supplied
+references; explain how the user can review both ordinary samples.
+
+Stop after F3 with outcome, verification limits and next slice **F4 below-tabs
+Backstage sibling**. The complete 2010 family is not accepted at F3. F5 is
+composed normal-theme review. No Aero, diagnostic tabs, another family or dark
+variant. Do not implement below-tabs placement as a temporary sample workaround.
 
 ## Preserve delivered contracts
 
+- Keep F2's immutable copied/structurally equal stop data, existing RibbonFill
+  constructors/endpoints/deconstruction, nullable direction/reset and all-stop
+  alpha/darkening. Five fill companions keep old Color setter authority and
+  Form.TitleBarColor precedence. Validate every stop in opaque roles atomically.
+  BackgroundBounds carries full-surface coordinates for clipping/restoration;
+  native editor wells stay solid. Opt-in StateChrome retains existing explicit
+  borders, inert empty groups, joined corners and unchanged targets. Public APIs
+  are in Unshipped; preserve the shipped baseline.
 - Keep E2's eligible DWM attribute 33 application, override precedence and Reset,
   recreation/theme updates, unsupported retention and inert designer/child HWNDs.
   Never assign Form.Region, remove the native resizable frame or reset DWM

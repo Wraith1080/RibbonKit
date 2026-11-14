@@ -58,7 +58,7 @@ internal static class RibbonCaptionButtonRenderer
             var bounds = metrics.StateBounds(c.Bounds);
             if (bounds.Width <= 0 || bounds.Height <= 0) return;
             int radius = metrics.Radius(bounds);
-            if (radius == 0 && fill.Start == fill.End) { using var brush = new SolidBrush(fill.Start); c.Graphics.FillRectangle(brush, bounds); }
+            if (radius == 0 && RibbonFillColors.IsSolid(fill)) { using var brush = new SolidBrush(fill.Start); c.Graphics.FillRectangle(brush, bounds); }
             else painter.Draw(c.Graphics, bounds, radius, fill, Color.Transparent, stroke: 0);
         }
     }

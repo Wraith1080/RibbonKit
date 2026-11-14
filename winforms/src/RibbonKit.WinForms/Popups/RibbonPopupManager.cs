@@ -548,7 +548,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
-        var context = new RibbonPaintContext(e.Graphics, ClientRectangle, _ribbon.Theme, Font, DeviceDpi) { Density = _ribbon.Density };
+        var context = new RibbonPaintContext(e.Graphics, ClientRectangle, _ribbon.Theme, Font, DeviceDpi) { Density = _ribbon.Density, BackgroundBounds = ClientRectangle };
         _ribbon.Painter.DrawSurface(context, true);
         PaintApplicationMenu(context);
         PaintGalleryHeadings(e.Graphics);

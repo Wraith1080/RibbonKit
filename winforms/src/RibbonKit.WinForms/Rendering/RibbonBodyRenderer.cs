@@ -46,8 +46,17 @@ internal static class RibbonBodyRenderer
     }
     internal static void DrawJoinedQuickAccess(RibbonRenderer owner, RibbonPaintContext context)
     {
-        if (!context.IsQuickAccessToolbarJoined) { owner.DrawBody(context); return; }
+        if (!context.IsQuickAccessToolbarJoined)
+        {
+            owner.DrawBody(context.Theme.QuickAccessBackgroundFill is { } standalone ? context with { Theme = context.Theme with { BodyBackground = standalone } } : context);
+            return;
+        }
         if (context.Bounds.Width <= 2) return;
+        if (context.Theme.QuickAccessBackgroundFill is { } fill)
+        {
+            int frame = context.Theme.BodyBottomBorderOnly ? 0 : RibbonBodyFrameMetrics.Width(context.Theme.BodyAppearance?.BorderWidth, context.DeviceDpi);
+            owner.PaintFill(context with { Bounds = Rectangle.Inflate(context.Bounds, -frame, -frame), BackgroundBounds = context.Bounds }, fill);
+        }
         var appearance = context.Theme.BodyAppearance;
         int inset = appearance?.QuickAccessSeparatorInset is { } logical ? Math.Min(RibbonLayoutEngine.Scale(logical, context.DeviceDpi), context.Bounds.Width / 2) : context.Theme.BodyBottomBorderOnly ? 0 : 1;
         int width = Math.Min(context.Bounds.Height, RibbonBodyFrameMetrics.Width(appearance?.QuickAccessSeparatorWidth, context.DeviceDpi));

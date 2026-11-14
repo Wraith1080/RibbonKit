@@ -129,8 +129,11 @@ public partial class RibbonControl : Control, ISupportInitialize
                 (!value.EditorBackground.IsEmpty && value.EditorBackground.A != 255) ||
                 (!value.TitleBarBackground.IsEmpty && value.TitleBarBackground.A != 255))
                 throw new ArgumentException("Popup, native editor and title-bar colors must be opaque or Empty.", nameof(value));
-            if (value.BodyBackground is { } body && (body.Start.A != 255 || body.End.A != 255))
-                throw new ArgumentException("Both body fill stops must be opaque.", nameof(value));
+            foreach (var fill in new[] { value.BodyBackground, value.BackgroundFill, value.PopupBackgroundFill, value.QuickAccessBackgroundFill, value.TitleBarBackgroundFill, value.BackstageNavigationBackgroundFill })
+                if (fill is { } opaque && !RibbonFillColors.IsOpaque(opaque)) throw new ArgumentException("Every stop in opaque surface fills must be opaque.", nameof(value));
+            foreach (var chrome in new[] { value.CommandAppearance?.StateChrome, value.FileButtonAppearance?.StateChrome, value.GalleryAppearance?.StateChrome, value.EditorAppearance?.StateChrome, value.OptionsAppearance?.StateChrome })
+                RibbonStateChromeSettings.Validate(chrome);
+            if (value.EditorAppearance?.ChoiceBorderWidth is < 0 or > 32) throw new ArgumentOutOfRangeException(nameof(value), "Choice outline width must be 0..32 logical pixels, or null.");
             if (value.TabHeight <= 0 || value.BodyHeight <= 0 || value.BodyScrollButtonVerticalInset < 0 || value.HeaderButtonInset < 0 || value.LargeButtonMaxWidth < 60 || value.CollapsedGroupMaxWidth < 80 || value.CornerRadius < 0 || value.PopupCornerRadius < 0 ||
                 !float.IsFinite(value.BackstageNavigationFontSize) || value.BackstageNavigationFontSize <= 0 || value.MessageMinimumHeight <= 0 ||
                 !float.IsFinite(value.QuickAccessBackdropOpacity) || value.QuickAccessBackdropOpacity < 0 || value.QuickAccessBackdropOpacity > 1 ||
@@ -586,7 +589,11 @@ public partial class RibbonControl : Control, ISupportInitialize
         EnsureLayout();
         var context = new RibbonPaintContext(e.Graphics, ClientRectangle, composited ? WindowPaintTheme : Theme, Font, DeviceDpi) { Density = Density, SuppressTabIndicators = CapturingMotionIndicators, CompositedText = composited };
         bool maskContent = composited && _backdropBodyMasked && KeepsBackdropFrame && !CapturingBackdropScene;
-        Painter.DrawSurface(context, false);
+        Painter.DrawSurface(context with
+        {
+            Bounds = context.Theme.BackgroundFill is not null && HasWindowCaption ? new(0, WindowCaptionHeight, Width, Math.Max(0, Height - WindowCaptionHeight)) : context.Bounds,
+            BackgroundBounds = new(0, WindowCaptionHeight, Width, RibbonLayoutEngine.Scale(LayoutTheme.TabHeight, DeviceDpi))
+        }, false);
         var headerTheme = HeaderPaintTheme(composited);
         var headerChromeTheme = HeaderPaintTheme(composited, chrome: true);
         if (RibbonHeaderBodyConnectionMetrics.Enabled(context.Theme) && _snapshot.Targets.FirstOrDefault(t => t.Kind == TargetKind.Tab && ReferenceEquals(t.Element, DisplaySelectedTab)) is { } selectedHeader)
@@ -597,8 +604,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             try
             {
                 if (composited) e.Graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
-                using var headerBrush = new SolidBrush(headerTheme.Background);
-                e.Graphics.FillRectangle(headerBrush, 0, WindowCaptionHeight, Width, RibbonLayoutEngine.Scale(LayoutTheme.TabHeight, DeviceDpi));
+                Painter.PaintFill(context with { Theme = headerTheme, Bounds = new(0, WindowCaptionHeight, Width, RibbonLayoutEngine.Scale(LayoutTheme.TabHeight, DeviceDpi)) }, headerTheme.SurroundFill);
             }
             finally { e.Graphics.Restore(headerState); }
         }

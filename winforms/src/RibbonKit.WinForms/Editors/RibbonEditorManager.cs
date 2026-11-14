@@ -809,7 +809,7 @@ internal sealed class RibbonEditorManager(RibbonControl ribbon) : IDisposable
             {
                 var ribbon = presenter._ribbon;
                 var item = (RibbonComboBoxItem)presenter._item;
-                var context = new RibbonPaintContext(e.Graphics, e.Bounds, ribbon.Theme, Font, ribbon.DeviceDpi) { Density = ribbon.Density };
+                var context = new RibbonPaintContext(e.Graphics, e.Bounds, ribbon.Theme, Font, ribbon.DeviceDpi) { Density = ribbon.Density, BackgroundBounds = ClientRectangle };
                 if (e.State.HasFlag(DrawItemState.ComboBoxEdit))
                 {
                     using var fill = new SolidBrush(ribbon.Theme.EditorColor);

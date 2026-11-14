@@ -3,6 +3,8 @@ namespace RibbonKit.WinForms;
 /// <summary>Immutable library Options navigation, divider, button, heading, frame, list/tree and group icon-picker presentation. Native controls, application pages and draft lifetime remain independent.</summary>
 public sealed record RibbonOptionsAppearanceSettings
 {
+    /// <summary>Gets optional enabled button hover/pressed outlines and inner rims. Explicit ButtonBorderColor/Width remain authoritative.</summary>
+    public RibbonStateChromeSettings? StateChrome { get; init; }
     /// <summary>Initializes overrides retaining existing Options presentation.</summary>
     public RibbonOptionsAppearanceSettings() { }
     /// <summary>Gets optional selected navigation corner radius in logical pixels, 0..64. Null uses the actual renderer's GetPopupCornerRadius hook.</summary>
@@ -100,7 +102,7 @@ public sealed record RibbonOptionsAppearanceSettings
     /// <summary>Gets optional group icon-picker None-label paint inset in logical pixels, 0..1024. Null retains zero. Authored inset applies inside the shared selection/content clearance, so None follows tile size and selection inset. Font, ink, centering and focus policy retain their owners.</summary>
     public int? IconPickerTextInset { get; init; }
 
-    internal bool HasButtonOverrides(bool accent) => ButtonInset is not null || ButtonBorderWidth is not null || !ButtonBorderColor.IsEmpty || ButtonFocusInset is not null || (accent
+    internal bool HasButtonOverrides(bool accent) => StateChrome?.HasOverrides == true || ButtonInset is not null || ButtonBorderWidth is not null || !ButtonBorderColor.IsEmpty || ButtonFocusInset is not null || (accent
         ? AccentButtonBackground is not null || AccentButtonHoverBackground is not null || AccentButtonPressedBackground is not null || AccentButtonHoverDarkening is not null || AccentButtonPressedDarkening is not null || !AccentButtonForeground.IsEmpty
         : ButtonBackground is not null);
 

@@ -7,7 +7,7 @@ namespace RibbonKit.WinForms;
 internal static class RibbonPopupFrameRenderer
 {
     internal static void DrawFrame(RibbonRenderer owner, RibbonPaintContext context) =>
-        owner.PaintRounded(context, owner.GetPopupCornerRadius(context.Theme, context.DeviceDpi), new(context.Theme.PopupColor), context.Theme.PopupBorder,
+        owner.PaintRounded(context, owner.GetPopupCornerRadius(context.Theme, context.DeviceDpi), context.Theme.PopupFill, context.Theme.PopupBorder,
             RibbonPopupFrameMetrics.PaintedBorder(owner, context.Theme, context.DeviceDpi));
     internal static void DrawShadow(RibbonRenderer owner, RibbonPaintContext context)
     {

@@ -47,6 +47,7 @@ public partial class RibbonForm
 
     internal Color CaptionColor(RibbonTheme theme, bool composited)
     {
+        if (CaptionFill(theme, composited) is { } fill) return RibbonFillColors.At(fill, .5);
         var color = TitleBarColor.IsEmpty ? theme.TitleBarBackground : TitleBarColor;
         return color.IsEmpty ? composited ? Color.Transparent : theme.Background
             : composited ? Color.FromArgb((int)Math.Round(255 * TitleBarTintOpacity), color) : color;
@@ -54,6 +55,7 @@ public partial class RibbonForm
     internal RibbonTheme CaptionTheme(RibbonTheme theme, bool composited)
     {
         var color = TitleBarColor.IsEmpty ? theme.TitleBarBackground : TitleBarColor;
+        if (TitleBarColor.IsEmpty && theme.TitleBarBackgroundFill is { } fill) color = RibbonFillColors.At(fill, .5);
         if (color.IsEmpty && theme.TitleBarForeground.IsEmpty) return theme;
         if (ReferenceEquals(theme, _captionThemeSource) && color == _captionThemeColor &&
             _captionThemeOpacity == TitleBarTintOpacity && _captionThemeComposited == composited) return _captionTheme!;
@@ -69,6 +71,12 @@ public partial class RibbonForm
             Hover = new(Color.FromArgb(24, foreground)), Pressed = new(Color.FromArgb(40, foreground)), Checked = new(Color.FromArgb(50, foreground)),
             BackdropHover = new(Color.FromArgb(24, foreground)), BackdropPressed = new(Color.FromArgb(40, foreground))
         };
+    }
+    internal RibbonFill? CaptionFill(RibbonTheme theme, bool composited)
+    {
+        if (!TitleBarColor.IsEmpty) return null;
+        var fill = theme.TitleBarBackgroundFill ?? (!composited && theme.TitleBarBackground.IsEmpty ? theme.BackgroundFill : null);
+        return fill is { } value && composited ? RibbonFillColors.Map(value, color => Color.FromArgb((int)Math.Round(color.A * TitleBarTintOpacity), color)) : fill;
     }
     internal RibbonTheme BackstageNavigationCaptionTheme(RibbonControl ribbon, RibbonTheme normal, bool composited)
     {

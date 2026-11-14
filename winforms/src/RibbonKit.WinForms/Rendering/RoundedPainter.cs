@@ -39,16 +39,21 @@ internal sealed class RoundedPainter : IDisposable
         for (int y = 0; y < key.Height; y++)
         {
             double t = key.Height == 1 ? 0 : (double)y / (key.Height - 1);
-            var fill = Color.FromArgb(Lerp(key.Fill.Start.A, key.Fill.End.A, t), Lerp(key.Fill.Start.R, key.Fill.End.R, t), Lerp(key.Fill.Start.G, key.Fill.End.G, t), Lerp(key.Fill.Start.B, key.Fill.End.B, t));
+            var rowFill = RibbonFillColors.At(key.Fill, t);
             // The central band has full coverage, including the top/bottom
             // stroke. Only the narrow edge bands need per-pixel coverage math.
             int edge = Math.Max(key.Radius, key.Stroke);
+            var fill = rowFill;
             var solid = y >= key.Stroke && y < key.Height - key.Stroke ? fill : key.Border;
-            byte blue = (byte)Math.Round(solid.B * solid.A / 255d);
-            byte green = (byte)Math.Round(solid.G * solid.A / 255d);
-            byte red = (byte)Math.Round(solid.R * solid.A / 255d);
+            byte blue = (byte)Math.Round(solid.B * solid.A / 255d), green = (byte)Math.Round(solid.G * solid.A / 255d), red = (byte)Math.Round(solid.R * solid.A / 255d);
             for (int x = 0; x < key.Width; x++)
             {
+                if (key.Fill.Direction == RibbonGradientDirection.Horizontal)
+                {
+                    fill = RibbonFillColors.At(key.Fill, key.Width == 1 ? 0 : (double)x / (key.Width - 1));
+                    solid = y >= key.Stroke && y < key.Height - key.Stroke ? fill : key.Border;
+                    blue = (byte)Math.Round(solid.B * solid.A / 255d); green = (byte)Math.Round(solid.G * solid.A / 255d); red = (byte)Math.Round(solid.R * solid.A / 255d);
+                }
                 int offset = (y * key.Width + x) * 4;
                 if (x >= edge && x < key.Width - edge)
                 {
@@ -77,7 +82,6 @@ internal sealed class RoundedPainter : IDisposable
         finally { bitmap.UnlockBits(data); }
         return bitmap;
     }
-    private static int Lerp(int start, int end, double t) => (int)Math.Round(start + (end - start) * t);
     // Opaque HWNDs occupy only fully covered pixels. The layered frame behind
     // them supplies partial edge coverage without blending it against fake white.
     internal static Region CreateOpaqueRegion(Size size, int radius)

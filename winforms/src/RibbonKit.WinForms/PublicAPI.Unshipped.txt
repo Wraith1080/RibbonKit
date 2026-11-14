@@ -2143,3 +2143,79 @@ static RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.operator !=(Ribb
 static RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings? left, RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings? right) -> bool
 RibbonKit.WinForms.RibbonTheme.BackstagePreferredMinimumPageWidth.get -> int?
 RibbonKit.WinForms.RibbonTheme.BackstagePreferredMinimumPageWidth.init -> void
+~override RibbonKit.WinForms.RibbonGradientStop.Equals(object obj) -> bool
+~override RibbonKit.WinForms.RibbonGradientStop.ToString() -> string
+override RibbonKit.WinForms.RibbonGradientStop.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonGradientStops.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonGradientStops.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonStateChromeSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonStateChromeSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonStateChromeSettings.ToString() -> string!
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.StateChrome.get -> RibbonKit.WinForms.RibbonStateChromeSettings?
+RibbonKit.WinForms.RibbonCommandAppearanceSettings.StateChrome.init -> void
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.StateChrome.get -> RibbonKit.WinForms.RibbonStateChromeSettings?
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.StateChrome.init -> void
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.StateChrome.get -> RibbonKit.WinForms.RibbonStateChromeSettings?
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.StateChrome.init -> void
+RibbonKit.WinForms.RibbonFill.Direction.get -> RibbonKit.WinForms.RibbonGradientDirection?
+RibbonKit.WinForms.RibbonFill.Direction.init -> void
+RibbonKit.WinForms.RibbonFill.IntermediateStops.get -> RibbonKit.WinForms.RibbonGradientStops?
+RibbonKit.WinForms.RibbonFill.IntermediateStops.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.StateChrome.get -> RibbonKit.WinForms.RibbonStateChromeSettings?
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.StateChrome.init -> void
+RibbonKit.WinForms.RibbonGradientDirection
+RibbonKit.WinForms.RibbonGradientDirection.Horizontal = 1 -> RibbonKit.WinForms.RibbonGradientDirection
+RibbonKit.WinForms.RibbonGradientDirection.Vertical = 0 -> RibbonKit.WinForms.RibbonGradientDirection
+RibbonKit.WinForms.RibbonGradientStop
+RibbonKit.WinForms.RibbonGradientStop.Color.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonGradientStop.Color.init -> void
+RibbonKit.WinForms.RibbonGradientStop.Deconstruct(out double Offset, out System.Drawing.Color Color) -> void
+RibbonKit.WinForms.RibbonGradientStop.Equals(RibbonKit.WinForms.RibbonGradientStop other) -> bool
+RibbonKit.WinForms.RibbonGradientStop.Offset.get -> double
+RibbonKit.WinForms.RibbonGradientStop.Offset.init -> void
+RibbonKit.WinForms.RibbonGradientStop.RibbonGradientStop() -> void
+RibbonKit.WinForms.RibbonGradientStop.RibbonGradientStop(double Offset, System.Drawing.Color Color) -> void
+RibbonKit.WinForms.RibbonGradientStops
+RibbonKit.WinForms.RibbonGradientStops.Count.get -> int
+RibbonKit.WinForms.RibbonGradientStops.Equals(RibbonKit.WinForms.RibbonGradientStops? other) -> bool
+RibbonKit.WinForms.RibbonGradientStops.GetEnumerator() -> System.Collections.Generic.IEnumerator<RibbonKit.WinForms.RibbonGradientStop>!
+RibbonKit.WinForms.RibbonGradientStops.RibbonGradientStops(System.Collections.Generic.IEnumerable<RibbonKit.WinForms.RibbonGradientStop>! stops) -> void
+RibbonKit.WinForms.RibbonGradientStops.this[int index].get -> RibbonKit.WinForms.RibbonGradientStop
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.StateChrome.get -> RibbonKit.WinForms.RibbonStateChromeSettings?
+RibbonKit.WinForms.RibbonOptionsAppearanceSettings.StateChrome.init -> void
+RibbonKit.WinForms.RibbonPaintContext.BackgroundBounds.get -> System.Drawing.Rectangle
+RibbonKit.WinForms.RibbonPaintContext.BackgroundBounds.init -> void
+RibbonKit.WinForms.RibbonStateChromeSettings
+RibbonKit.WinForms.RibbonStateChromeSettings.<Clone>$() -> RibbonKit.WinForms.RibbonStateChromeSettings!
+RibbonKit.WinForms.RibbonStateChromeSettings.CheckedBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonStateChromeSettings.CheckedBorderColor.init -> void
+RibbonKit.WinForms.RibbonStateChromeSettings.CheckedHoverBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonStateChromeSettings.CheckedHoverBorderColor.init -> void
+RibbonKit.WinForms.RibbonStateChromeSettings.Equals(RibbonKit.WinForms.RibbonStateChromeSettings? other) -> bool
+RibbonKit.WinForms.RibbonStateChromeSettings.HoverBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonStateChromeSettings.HoverBorderColor.init -> void
+RibbonKit.WinForms.RibbonStateChromeSettings.InnerBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonStateChromeSettings.InnerBorderColor.init -> void
+RibbonKit.WinForms.RibbonStateChromeSettings.InnerBorderInset.get -> int?
+RibbonKit.WinForms.RibbonStateChromeSettings.InnerBorderInset.init -> void
+RibbonKit.WinForms.RibbonStateChromeSettings.InnerBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonStateChromeSettings.InnerBorderWidth.init -> void
+RibbonKit.WinForms.RibbonStateChromeSettings.PressedBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonStateChromeSettings.PressedBorderColor.init -> void
+RibbonKit.WinForms.RibbonStateChromeSettings.RibbonStateChromeSettings() -> void
+RibbonKit.WinForms.RibbonTheme.BackgroundFill.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonTheme.BackgroundFill.init -> void
+RibbonKit.WinForms.RibbonTheme.BackstageNavigationBackgroundFill.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonTheme.BackstageNavigationBackgroundFill.init -> void
+RibbonKit.WinForms.RibbonTheme.PopupBackgroundFill.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonTheme.PopupBackgroundFill.init -> void
+RibbonKit.WinForms.RibbonTheme.QuickAccessBackgroundFill.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonTheme.QuickAccessBackgroundFill.init -> void
+RibbonKit.WinForms.RibbonTheme.TitleBarBackgroundFill.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonTheme.TitleBarBackgroundFill.init -> void
+static RibbonKit.WinForms.RibbonGradientStop.operator !=(RibbonKit.WinForms.RibbonGradientStop left, RibbonKit.WinForms.RibbonGradientStop right) -> bool
+static RibbonKit.WinForms.RibbonGradientStop.operator ==(RibbonKit.WinForms.RibbonGradientStop left, RibbonKit.WinForms.RibbonGradientStop right) -> bool
+static RibbonKit.WinForms.RibbonStateChromeSettings.operator !=(RibbonKit.WinForms.RibbonStateChromeSettings? left, RibbonKit.WinForms.RibbonStateChromeSettings? right) -> bool
+static RibbonKit.WinForms.RibbonStateChromeSettings.operator ==(RibbonKit.WinForms.RibbonStateChromeSettings? left, RibbonKit.WinForms.RibbonStateChromeSettings? right) -> bool
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.ChoiceBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonEditorAppearanceSettings.ChoiceBorderWidth.init -> void
