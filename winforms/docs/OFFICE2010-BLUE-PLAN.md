@@ -1,18 +1,20 @@
 # Native Office 2010 Blue — normal theme first
 
-**2026-11-15 — Selected Backstage hue/lower-band correction delivered, pending recheck. Current user review is in the themes ledger. Next: F5 composed normal-theme review. The full Aero frame remains deferred.**
+**2026-11-15 — Backstage review is recorded in the themes ledger. Revised remaining sequence: F5 Application Menu theming, F6 Options dialog theming, F7 composed normal-theme review, F8 required Aero-inspired frame experiment. Next: F5 only.**
 The user selected Office 2010 after the Office 2013 review and supplied eight
 WPF references, including an additional ordinary-button hover example. They
 explicitly confirmed rounded corners for this non-flat theme. Deliver the normal
-opaque Office 2010 Blue theme first. An Aero-inspired frame is a separate later
-experiment, after normal-theme review; neither these gradients nor a colored
-caption constitute Aero support.
+opaque Office 2010 Blue theme first. The user subsequently added dedicated
+Application Menu and Options dialog slices and made the later Aero-inspired
+frame experiment required. F8 follows normal-theme review; neither the existing
+gradients nor a colored caption constitute full Aero-frame support.
 
 Current acceptance belongs in the
 [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger). F1 is a contract
 and source assessment, not a build, native implementation or visual acceptance.
 F2 delivers reusable paint support; F3 now supplies the Office 2010 ribbon/File
-preset. The complete family is not accepted before F4/F5.
+preset. Normal-theme review closes at F7; the required frame work is reviewed
+separately in F8.
 
 Before F2, the user requested Designer Sample cleanup. Checks now live in the
 [dedicated test host](../tests/RibbonKit.WinForms.DesignerSample.Tests/README.md);
@@ -34,8 +36,10 @@ at `c7794b6` and remains separate from F2.
 - Application document content, Backstage page controls, command handlers and
   icons remain host-owned. The WPF document cards, greetings, warning text and
   sample-only commands are not a request to copy that application into WinForms.
-- Dark/Black/Silver variants, Office 2007, Aero/glass reflections, custom OS frame
-  replacement and any new material compositor are outside the normal-theme scope.
+- Dark/Black/Silver variants and Office 2007 remain outside this plan. F1–F7 cover
+  the normal opaque theme; F8 separately owns the required Aero-inspired frame.
+  Preserve the native resizable frame. A new material compositor or replacement
+  window manager is not implicitly authorized by adding the frame slice.
 
 ## Supplied references
 
@@ -192,12 +196,78 @@ not expose a partially implemented 2010 theme, add a gallery tile or alter Backs
 - Reuse the accepted clocks and safe native handoff. 2010 leaves the caption
   separate and does not acquire 2019's centered/moving full-height-pane title.
 
-### F5: composed normal-theme review
+### F5: Application Menu theming
+
+Added by the user on **2026-11-15**, before the final normal-theme review.
+
+- Assess the existing Application Menu surface, row/content and footer roles
+  against the WPF 2010 reference before changing them. Deliver the Office 2010
+  palette, dimensional states, rounded frame and appropriate borders/separators
+  through shared theme settings and actual renderer hooks. Retain explicit
+  overrides, independent Reset and other families' accepted defaults.
+- Cover the two-pane File menu, headings, command/split rows, checked/disabled/
+  hover/pressed feedback, right pane and footer buttons. Application content and
+  icons stay host-owned; the custom presenter viewport frame remains independent.
+- Preserve File's CommandMenu/Backstage routes, source events, popup geometry,
+  keyboard/focus/validation, native child ownership and dismissal behavior.
+- Verify in both ordinary samples and an independent public-package consumer.
+  Use focused state/paint, clipping, native lifecycle and designer checks for the
+  changed roles; retain unrelated passed evidence. Stop after F5 for review.
+
+### F6: Options dialog theming
+
+Added by the user on **2026-11-15**, following Application Menu review.
+
+- Assess the library-owned Ribbon/QAT customization dialogs and their secondary
+  dialogs against the Office 2010 reference. Apply shared theme roles to the
+  shell, navigation, headings/dividers, fields, lists/tree states, icon picker and
+  action buttons. Keep native controls, readable text and host font/DPI behavior.
+- Preserve the accepted primary OK versus secondary-button distinction. Define
+  the 2010 fills/rims/borders for each role without turning every action into an
+  accent-filled primary button. Explicit state overrides and independent Reset
+  remain authoritative; ordinary application dialogs retain their own styling.
+- Preserve drafts, source identity, selection, validation, Apply/OK/Cancel/Reset
+  semantics and native handle/parent/focus ownership. Do not restyle Backstage
+  application page controls or OS-owned common dialogs as part of this slice.
+- Verify both samples' real dialogs and an independent public-package consumer,
+  including default/alternate accents, overrides, DPI, button feedback and draft
+  handoffs. Add only missing adjustable roles. Stop after F6 for review.
+
+### F7: composed normal-theme review
+
+This is the former F5, moved after the two new theming slices on **2026-11-15**.
 
 Verify all delivered surfaces in both ordinary samples and a public-package
 consumer with its own model and no sample resources/helpers/internal access.
-Review before another family or any Aero work. The user owns final live visual
-acceptance; automated print/native API evidence is reported separately.
+Include the F5 Application Menu and F6 Options work, existing ribbon/gallery/
+popup states, layout/density modes, resizing and motion. Reuse passed evidence;
+complete only missing composed scopes or concrete regressions. Preserve the
+recorded Backstage approval unless integration exposes a specific regression.
+The user owns final live visual acceptance; automated print/native API evidence,
+actual VS and physical input remain separate. Close normal-theme review before F8.
+
+### F8: required Aero-inspired frame experiment
+
+The user made this a **required planned stage on 2026-11-15**. It follows F7;
+its implementation and review are part of the remaining Office 2010 work.
+
+- Start with a bounded native host/theme contract and WPF frame reference
+  assessment. Define the selectable frame appearance, title/tab-band continuity,
+  tint/accent/reflection roles, supported material integration and opaque fallback
+  before implementation. Reuse existing native window/backdrop owners and expose
+  reusable behavior through public settings, attainable by independent consumers.
+- Keep the normal opaque 2010 treatment available. Retain native resizing,
+  caption actions, maximize/restore/snap, native corner preference and unsupported
+  setting retention. Do not use Form.Region or remove the resizable frame.
+- Keep document content and native editors application-owned. Preserve title/QAT
+  ownership, accepted Backstage placement/closing handoff, popup input, reduced
+  motion and theme/appearance Reset. A host sample may demonstrate integration;
+  reusable frame behavior must not live only in that sample.
+- Verify both samples and an independent public-package host. Separate native API
+  evidence, opaque fallback and actual desktop material/frame acceptance, including
+  active/inactive windows, resize/maximize/restore, DPI and unsupported systems.
+  Record platform/visual limits; the already delivered caption-button reflection
+  alone does not complete this slice. Stop after F8 for its dedicated review.
 
 ## Verification and stop boundaries
 
@@ -304,7 +374,8 @@ Backstage sibling.
   E2–E5 matrix was repeated. Aero remains deferred.
 
 F2 stopped before the shell. Its successor F3 is recorded below; below-tabs
-Backstage remains F4 and composed normal-theme review remains F5.
+Backstage remains F4. The revised sequence above now places Application Menu and
+Options theming at F5/F6, composed review at F7 and the required frame at F8.
 
 ## F3 implementation and verification — 2026-11-14
 
@@ -434,8 +505,8 @@ User appearance/continuous-motion acceptance is pending. Actual VS, physical
 mouse/keyboard/IME, native four-corner silhouette/DPI symmetry, desktop materials
 and mixed-monitor movement are separate gates. Existing 2024 pill and closing
 handoff implementations are untouched; no unrelated accepted matrix was rerun.
-Stop after F3. Next: **F4 below-tabs Backstage sibling**; F5 composed normal-theme
-review and any Aero experiment remain later work.
+Stop after F3. Next: **F4 below-tabs Backstage sibling**. The revised remaining
+sequence is F5/F6 theming, F7 composed review and required F8 frame work.
 
 ### F3 header review corrections and shared File minimum — 2026-11-14
 
@@ -582,7 +653,8 @@ row uses reference linear ramps; a separate radial reflection is not claimed.
    preview Backstage, return with File/a tab, save/reopen and confirm the authored
    page controls and SVG gallery artwork remain intact.
 
-Stop after F4. Next: **F5 composed normal-theme review**; no Aero or new family.
+Stop after F4. Next: **F5 Application Menu theming**. The required frame remains
+separate in F8 after normal-theme review; no new family is part of this plan.
 
 ## F4 visual review corrections — 2026-11-15
 
@@ -591,7 +663,7 @@ that the complete custom-card viewport needs its own border and subsequently
 included the cards' flat selected/hover appearance too. This is a bounded review
 follow-up over the retained uncommitted F4 work at `9f38496`, entirely in
 `winforms/`. The caption-button glass request authorizes those buttons; the full
-Aero frame remains a separate deferred experiment. No card artwork, commands,
+Aero frame is now required later F8 work, separate from these corrections. No card artwork, commands,
 native targets or diagnostic tabs were replaced.
 
 | Requested correction | Delivered result |

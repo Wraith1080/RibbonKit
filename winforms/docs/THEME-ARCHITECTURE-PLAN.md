@@ -78,7 +78,11 @@ Its F1 contract identifies multi-stop fills, opt-in state rims and a genuine
 below-tabs Backstage sibling. Reuse the existing Filled/connected-header path;
 extend the neutral fill/paint helpers and paired Backstage registration rather
 than inheriting another family's behavior. Rounded control chrome and the shared
-native corner preference are independent of the deferred Aero-frame experiment.
+native corner preference are independent of the required later F8 Aero-frame
+experiment. The revised 2010 sequence adds F5 Application Menu and F6 Options
+theming, then F7 composed normal-theme review before F8. Each retains the existing
+shared rendering/native ownership boundaries; F8 begins with its own host/theme
+contract. See the [current slice definitions](OFFICE2010-BLUE-PLAN.md#f5-application-menu-theming).
 
 F2 now supplies immutable stop data/evaluation in
 [`RibbonGradientStops.cs`](../src/RibbonKit.WinForms/Rendering/RibbonGradientStops.cs),

@@ -17,8 +17,9 @@ The user selected **normal Office 2010 Blue** and supplied eight WPF references,
 including Add Message hover, then explicitly confirmed rounded corners for the
 non-flat theme. Read the [F1 appearance/API contract](OFFICE2010-BLUE-PLAN.md).
 F1 changed only documentation and unchanged reference copies; F3 now exposes the
-2010 ribbon/File preset. Aero-inspired frame work is a separate deferred experiment
-after normal-theme implementation and review. WPF remains read-only reference.
+2010 ribbon/File preset. On 2026-11-15 the user added dedicated Application Menu
+and Options theming slices and made the Aero-inspired frame a required later
+stage, after normal-theme review. WPF remains read-only reference.
 
 The user then requested moving all Designer Sample checks into tests and deleting
 retired rewrite/consolidation demo files. That cleanup is implemented: normal
@@ -88,8 +89,8 @@ are separate; no Aero or final normal-theme acceptance is claimed.
 eight concrete corrections plus clarification that both the whole card viewport
 border and dimensional custom-card states are wanted. Read the
 [requested-fix checklist and exact limits](OFFICE2010-BLUE-PLAN.md#f4-visual-review-corrections--2026-11-15)
-before proceeding. Caption-button glass is scoped to those buttons; full Aero
-frame work remains deferred. Shared role additions retain null/Empty/zero/reset
+before proceeding. Caption-button glass is scoped to those buttons; the required
+full frame follows in F8 after F7. Shared role additions retain null/Empty/zero/reset
 and existing public renderer hooks. Sample cards use DrawGalleryTileState while
 their editable artwork remains host-owned. Shared text paint honors the existing
 body viewport clip. Focused Release 155/155 plus two real narrow-body cases pass;
@@ -98,7 +99,8 @@ and 0 -> 286 gallery state-border pixels. Both sample review checks pass. Extra
 foreground inline-focus verification fails identically on old package/card sources;
 the foreground popup check loses activation. Preserve those limits and their logs.
 
-The subsequent selected-navigation correction is delivered, pending user recheck.
+The subsequent selected-navigation correction is delivered; current user review
+is recorded in the themes ledger's selected-navigation row.
 Read the [hue/lower-band record](OFFICE2010-BLUE-PLAN.md#selected-navigation-hue-and-lower-band-correction--2026-11-15).
 The old RGB channel transfer visibly shifted Red toward purple; the reference
 ramp also peaked near its bottom. Navigation now preserves accent hue while
@@ -181,19 +183,31 @@ records before edits. Reuse the
 [architecture map](THEME-ARCHITECTURE-PLAN.md) and
 [adjustability audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 
-## Next bounded slice: F5 composed normal-theme review only
+## Next bounded slice: F5 Application Menu theming only
 
-Follow [F5](OFFICE2010-BLUE-PLAN.md#f5-composed-normal-theme-review) after addressing
-any concrete F4 user feedback. Reuse passed F2/F3/F4 and E2–E5 evidence. Complete
-only missing composed scopes across delivered ribbon/popup/gallery/Backstage/
-Options surfaces in both ordinary samples and an independent package consumer
-with its own model and no sample helpers/internal access. Do not rerun unrelated
-passed matrices or count offscreen print/API evidence as visual acceptance.
+The user revised the remaining sequence on **2026-11-15**:
 
-Guide the user through the normal theme, including the F4 review steps. The user
-owns actual visual review; record exact scope and remaining VS/input/DPI/material
-limits. No diagnostic tabs, temporary review solution, Aero, new family or dark
-variant. Stop after composed normal-theme review and report remaining gates.
+1. [F5 Application Menu theming](OFFICE2010-BLUE-PLAN.md#f5-application-menu-theming).
+2. [F6 Options dialog theming](OFFICE2010-BLUE-PLAN.md#f6-options-dialog-theming).
+3. [F7 composed normal-theme review](OFFICE2010-BLUE-PLAN.md#f7-composed-normal-theme-review), moved from the former F5.
+4. [F8 required Aero-inspired frame experiment](OFFICE2010-BLUE-PLAN.md#f8-required-aero-inspired-frame-experiment).
+
+For F5, assess the existing shared Application Menu roles against the WPF 2010
+reference, then implement only that bounded menu treatment. Cover both panes,
+command/split states, headings/dividers, right content and footer while retaining
+File routing, native controls/input, authored assets, explicit overrides and Reset.
+Expose only missing adjustable roles through shared library settings/hooks.
+Verify both existing samples and an independent public-package consumer with
+focused checks. Reuse passed F2–F4 and E2–E5 evidence; preserve the recorded
+Backstage approval unless a concrete regression appears. Stop after F5 for review.
+
+F6 owns the library Options/customization dialogs and draft/button contracts.
+F7 closes normal-theme review before F8. The Aero-inspired frame is required
+planned work, with its own host/theme/material/fallback contract and review;
+caption-button glass alone does not complete it. Do not start those later slices
+during F5. No diagnostic tabs, temporary review solution, new family or dark
+variant. Keep native API/print evidence separate from actual VS, physical input,
+continuous motion, desktop material and mixed-monitor acceptance.
 
 ## Preserve delivered contracts
 
