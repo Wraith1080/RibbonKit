@@ -41,6 +41,13 @@ switch and combined legacy switches, with exactly Home/Edit/Gallery/View and no
 diagnostic tabs. E3 palette/File library work and the independent public consumer
 are recorded in the Office 2013 plan; no WPF change was made.
 
+`--verify-office2013-composed <output>` checks Office 2013 with the actual authored
+native editors, popup/gallery, Backstage pages and Options draft/Apply/Cancel
+handoffs. It adds no tabs and runs only when explicitly requested. Showcase
+supports the same switch; the independent model uses
+`eng/Test-Office2013.ps1 -ComposedOnly`. See the
+[E5 evidence and limits](../../docs/OFFICE2013-LIGHT-PLAN.md#e5-composed-light-familynative-editor-review--2026-11-14).
+
 ## Theme thumbnail designer round-trip correction — 2026-11-13
 
 The user reported thumbnails disappearing after a Visual Studio save. The three

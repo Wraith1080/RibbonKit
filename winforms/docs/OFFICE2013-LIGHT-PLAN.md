@@ -1,10 +1,11 @@
 # Native Office 2013 Light and square-window plan
 
-**2026-11-14 — E1 approved; E2 corners, E3 palette/File states and E4 connected outline implemented.**
+**2026-11-14 — E1 approved; E2–E4 implemented; E5 automated composed review delivered.**
 Diagnostic tabs remain retired. Both apps now include the requested theme/accent
-galleries and colored-title toggle. E4 is ready for review; E5 composed review is
-next. This is not composed Office 2013 visual acceptance. E2 entered at `fd356b1`; the later user
-commit `e6ced78` and authored Backstage/resx edits are preserved on the same branch.
+galleries and colored-title toggle. E5's sample/public-package checks pass;
+composed user visual review remains separate. E2 entered at `fd356b1`; later
+user commits `e6ced78` and `f14e856` and authored Form/resource edits are preserved
+on the same branch.
 Current acceptance remains in [THEMES-PLAN](THEMES-PLAN.md#current-status-and-review-ledger).
 
 ## User reference and intended appearance
@@ -116,10 +117,10 @@ from a successful API call/readback.
    application-theme Reset, persistence and designer/generated code compatible.
 3. **E4 — connected ribbon/tab outline, implemented.** Shared measured connection,
    adjustable borders and immediate selected-header feedback are recorded below;
-   user visual review remains pending.
-4. **E5 — composed light-family review.** Check remaining shared surfaces/native
-   editors and a public-package consumer independent of Showcase helpers, then
-   review the whole family before another theme or dark variant.
+   current user review is recorded in the themes ledger.
+4. **E5 — composed light-family review, automated checks delivered.** Remaining
+   native editor/surface handoffs pass in both samples and an independent public
+   consumer. Whole-family user visual review precedes another theme or dark variant.
 
 Use relevant focused checks; reuse passed rewrite/geometry evidence unless
 affected. Existing 2019/2024 defaults must remain unchanged except the explicitly
@@ -417,8 +418,8 @@ user visual acceptance. E4 remains the next slice; no connected-outline work her
 ## E4 connected selected-tab/body outline — 2026-11-14
 
 The accepted E3/sample/button work was committed locally at the user's request as
-`5a85343`; no push. E4 follows that checkpoint and remains uncommitted. The user's
-separate authored FileMenuMode setting remains outside that checkpoint.
+`5a85343`; the user subsequently committed E4 and the authored FileMenuMode setting
+at `f14e856`. E5 started from that clean checkpoint without changing commits.
 
 Office2013Light now uses BodyBorder `#919191`, a complete body perimeter and
 HeaderAppearance.ConnectSelectedTabToBody. The shared Filled renderer and neutral
@@ -522,13 +523,68 @@ Evidence under `artifacts/tab-switch-flash/`:
   to `0.1.0-designer.local20261114T044002490Z`; authored files remain intact.
 
 These checks establish the native lifecycle correction, not physical display
-acceptance of the intermittent flash. User visual confirmation remains pending.
+acceptance. The subsequent user review is recorded once in the themes ledger.
 
 No full suite or unrelated palette/material matrix ran. Offscreen native windows,
 direct paint and deterministic transient frames do not establish actual VS
 save/reopen, physical input/IME, desktop material pixels, native window-corner
-silhouette, mixed-monitor timing or user appearance acceptance. Stop after E4.
-Next: **E5 composed light-family/native-editor review**.
+silhouette, mixed-monitor timing or user appearance acceptance. E5 followed below
+on the user's authorized continuation.
+
+## E5 composed light-family/native-editor review — 2026-11-14
+
+No runtime or public API correction was needed in this bounded review.
+`Office2013CompositionChecks` uses public RibbonKit/WinForms APIs against an
+independently authored model and, through explicit command-line checks, the
+ordinary Showcase and Designer Sample models. It adds no diagnostic tabs and
+does not run during normal startup. Both samples link the same public-only
+fixture; the isolated package runner copies that fixture without any sample
+resources, helpers, project references or internal access.
+
+The checks cover an accent change while Backstage is open, native page switching
+and closing back to the ribbon; real native ribbon and popup editors; menu and
+gallery open/reopen with source, selection and borrowed artwork retained; caption
+color Reset; and actual Options navigation, accent OK/neutral Cancel idle fills,
+rejected validation, selected-page Apply and post-Apply Cancel. A staged QAT removal
+is refreshed in the real editor and retained across Options navigation without
+changing live commands. Custom draft controls retain their native handle and parent.
+Options Cancel leaves the authored tabs, groups, commands, QAT and pages intact.
+
+Evidence under `artifacts/office2013-composed/`:
+
+- `public-reviewed/native/result.log`: **4/4 new native scopes pass**,
+  Classic/Simplified x Compact/Touch, actual **120 DPI**, using package
+  `0.1.0-designer.local20261114T044002490Z` from a fresh isolated package cache.
+- `designer-reviewed/result.log` and `showcase-reviewed/result.log`: both ordinary
+  authored sample models pass at actual **120 DPI**, Classic/Compact. These are
+  separate sample checks, not four additional mode/density scopes per sample.
+- Both samples' normal **Debug builds pass with zero warnings/errors**. Existing
+  package/runtime outputs are retained; no runtime change required a new package.
+- Client-surface, popup, Backstage and Options captures were inspected, including
+  the refreshed pending-QAT view. Captures establish direct-print appearance only.
+
+The fixture initially assumed a split button's primary click opens its menu;
+it now uses the public ShowDropDown arrow route. Offscreen popup inspection is
+synchronous because pumping unrelated foreground deactivation correctly dismisses
+it. Full-form printing also gave misleading child order/native caption placeholders;
+ribbon and Backstage captures now target their actual client surfaces. Initial
+fixture runs remain in the evidence directory and are not counted as passing gates.
+
+Reproduce only this new scope from the repository root:
+
+```powershell
+& winforms/eng/Test-Office2013.ps1 -ComposedOnly
+dotnet run --project winforms/samples/RibbonKit.WinForms.DesignerSample -c Debug -- --verify-office2013-composed winforms/artifacts/office2013-composed/designer-review
+dotnet run --project winforms/samples/RibbonKit.WinForms.Showcase -c Debug -- --verify-office2013-composed winforms/artifacts/office2013-composed/showcase-review
+```
+
+Animation is disabled only inside these checks; E4's accepted tab motion/flash
+and 2024 pill evidence is reused. No unrelated palette/border/material matrix,
+Release/full test suite, WPF check or computer-use tool ran. Programmatic opening
+and direct print do not establish physical keyboard/mouse/IME, actual VS designer
+save/reopen, DWM corner silhouette, desktop material pixels, continuous motion or
+mixed-monitor acceptance. User composed visual review remains open. Stop at E5;
+no next family or dark variant is implicitly authorized.
 
 ## Diagnostic-tab retirement evidence
 

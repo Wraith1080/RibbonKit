@@ -2,6 +2,7 @@
   <PropertyGroup><OutputType>WinExe</OutputType><ApplicationManifest>app.manifest</ApplicationManifest></PropertyGroup>
   <ItemGroup>
     <Compile Include="../Shared/SampleAppearance.cs" Link="Appearance/SampleAppearance.cs" />
+    <Compile Include="../../tests/RibbonKit.WinForms.Consumer/Office2013CompositionChecks.cs" Link="Diagnostics/Office2013CompositionChecks.cs" />
     <EmbeddedResource Include="Assets/CommandIcons/*.svg" />
     <ProjectReference Include="../../src/RibbonKit.WinForms/RibbonKit.WinForms.csproj" />
     <ProjectReference Include="../../src/RibbonKit.WinForms.Design/RibbonKit.WinForms.Design.csproj" ReferenceOutputAssembly="false" />

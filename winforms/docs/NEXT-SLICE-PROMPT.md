@@ -1,19 +1,20 @@
-# Continue native WinForms themes after E4 connected outline
+# Continue native WinForms themes after E5 automated composed review
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
 Updated **2026-11-14**. Branch is `codex/Ribbonkit-Winform`. Accepted E3/sample/button
 work was committed locally at the user's request as `5a85343`, on top of user
-commit `e6ced78`; nothing was pushed. E4 changes remain uncommitted. Preserve the
-user's separate authored Backstage setting and other Form/resource edits. Recheck
+commit `e6ced78`. The user subsequently committed E4 at `f14e856`; this continuation
+started from a clean worktree there. E5's checks/docs remain uncommitted. Preserve
+the authored Backstage setting and other Form/resource edits. Recheck
 `git status --short`, live branch and HEAD; preserve user commits and edits. Do not
 commit, stage, push, publish or change branches unless requested.
 
 ## Current state and scope
 
-B1–D8b, all identified A00–A17 corrections, E2 corners, E3 palette/File states and E4 outline
-are implemented. Current review, evidence pointers and remaining gates live in
+B1–D8b, all identified A00–A17 corrections and E2–E4 are implemented. E5 automated
+composed checks are delivered. Current review, evidence pointers and remaining gates live in
 the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
 
 Interactive diagnostic/theme-effect/geometry tabs have been retired. The
@@ -63,11 +64,16 @@ continues Fade/SlideDown; this fixes the user's Designer Sample late-border repo
 The intermittent Office 2013 Designer Sample tab-switch flash has a native
 lifecycle correction: stable opaque tab changes retain the live ribbon HWND's
 style and finish native child repaints under the motion cover. Before/after
-traces and focused/package checks pass; the random flash itself was not captured,
-so user visual confirmation remains open.
+traces and focused/package checks pass. Current user review is in the ledger.
 See [E4 evidence and limits](OFFICE2013-LIGHT-PLAN.md#e4-connected-selected-tabbody-outline--2026-11-14).
-Stop after E4 in this task. On an authorized continuation, start E5; native corner,
-physical input, actual VS and composed visual acceptance remain separate.
+E5 adds only public-API verification: both ordinary samples and an independent
+consumer pass native editor/popup/gallery, live-accent Backstage/page and Options
+draft/validation/Apply/Cancel handoffs. Four package layout/density scopes pass;
+each sample separately covers its authored Classic/Compact model at actual 120 DPI.
+No runtime/API change or new package was needed. See
+[E5 evidence and limits](OFFICE2013-LIGHT-PLAN.md#e5-composed-light-familynative-editor-review--2026-11-14).
+Stop at composed user review; native corner, physical input, actual VS, desktop
+material and mixed-monitor acceptance remain separate.
 
 Native `winforms/` projects only. Keep parent WPF runtime, builds, tests and CI
 read-only. Use one agent and no computer-use tools; actual VS review remains
@@ -76,19 +82,21 @@ records before edits. Reuse the
 [architecture map](THEME-ARCHITECTURE-PLAN.md) and
 [adjustability audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 
-## Next bounded slice: E5 composed light-family review
+## Next boundary: composed user review, then select the next light family
 
-Review Office 2013 as a composed ribbon in ordinary Showcase/Designer Sample and
-an independent public-package consumer. Target unresolved shared-surface/native-
-editor combinations and any new review findings. Reuse E3/E4 evidence instead of
-repeating passed palette, geometry, corner or material matrices. Preserve selected
+Review Office 2013 as a composed ribbon in ordinary Showcase/Designer Sample.
+The new checks are `Test-Office2013.ps1 -ComposedOnly` and both samples'
+`--verify-office2013-composed <output>`; they add no tabs and do not run at normal
+startup. Reuse E3–E5 evidence instead of repeating passed palette, geometry,
+corner or material matrices. Address concrete user review findings. Preserve selected
 tab/body opening, active navigation ink, neutral command text/icons, grey 2019/2024
 hover, accent checked/gallery fills, primary OK darkening and secondary washes.
 Keep native handles/values/selection/validation, QAT placements, clipping, title
 handoff and designer serialization. Separate physical input/IME, actual VS,
 desktop material pixels, corner silhouette and mixed-monitor acceptance from
 offscreen/programmatic evidence. Review this family before another light family
-or dark variant. Do not add diagnostic tabs or begin another family implicitly.
+or dark variant. Do not add diagnostic tabs or begin another family implicitly;
+the next light family has not been selected.
 
 ## Preserve delivered contracts
 

@@ -5,10 +5,12 @@ param(
     [string]$Destination,
     [switch]$NativeOnly,
     [switch]$PaintOnly,
-    [switch]$OutlineOnly
+    [switch]$OutlineOnly,
+    [switch]$ComposedOnly
 )
 $ErrorActionPreference = 'Stop'
 if ($NativeOnly -and $PaintOnly) { throw 'Select one focused scope or neither.' }
+if ($ComposedOnly -and ($OutlineOnly -or $PaintOnly)) { throw 'ComposedOnly is a separate native scope.' }
 $nativeRoot = Split-Path $PSScriptRoot -Parent
 if (-not $PackageVersion -or -not $PackageFeed) {
     $state = Get-Content -LiteralPath (Join-Path $nativeRoot 'samples/RibbonKit.WinForms.DesignerSample/.local/last-refresh.json') | ConvertFrom-Json
@@ -24,7 +26,7 @@ if (Test-Path -LiteralPath $Destination) { throw "Preserve the existing evidence
 $appRoot = Join-Path $Destination 'App'
 New-Item -ItemType Directory -Path $appRoot | Out-Null
 $fixture = Join-Path $nativeRoot 'tests/RibbonKit.WinForms.Consumer'
-$checkClass = if ($OutlineOnly) { 'Office2013OutlineChecks' } else { 'Office2013PaletteChecks' }
+$checkClass = if ($ComposedOnly) { 'Office2013CompositionChecks' } elseif ($OutlineOnly) { 'Office2013OutlineChecks' } else { 'Office2013PaletteChecks' }
 Copy-Item -LiteralPath (Join-Path $fixture ($checkClass + '.cs')), (Join-Path $fixture 'app.manifest') -Destination $appRoot
 # A fresh package cache and local import barriers make this public consumer
 # independent of checkout build props, project references and other fixtures.

@@ -14,6 +14,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Shared/SampleAppearance.cs" Link="Appearance/SampleAppearance.cs" />
+    <Compile Include="../../tests/RibbonKit.WinForms.Consumer/Office2013CompositionChecks.cs" Link="Diagnostics/Office2013CompositionChecks.cs" />
     <Compile Include="../../tests/RibbonKit.WinForms.DesignerConsumer/Office2019ThemeCheck.cs" Link="Diagnostics/Office2019ThemeCheck.cs" />
     <PackageReference Include="RibbonKit.WinForms" Version="$(RibbonKitDesignerSamplePackageVersion)" />
     <Compile Update="DesignerForm.cs"><SubType>Form</SubType></Compile>

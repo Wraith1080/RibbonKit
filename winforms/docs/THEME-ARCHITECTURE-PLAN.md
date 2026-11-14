@@ -69,7 +69,9 @@ disjoint-clip frame helper over the existing Filled/body primitives. The same
 connection is supplied to transient geometry frames; ordinary connected-header
 selection commits immediately while content motion continues. Underline/pill
 motion remains independent. Evidence and visual-review limits remain in the
-Office 2013 plan; E5 composed review is next.
+Office 2013 plan. E5 adds public-only composed verification shared by the two
+ordinary sample models and an independent package model; no runtime/API change
+was required. Current user review remains in the themes ledger.
 
 ## Problem and intended result
 
