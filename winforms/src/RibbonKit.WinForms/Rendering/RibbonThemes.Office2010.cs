@@ -14,6 +14,7 @@ public static partial class RibbonThemes
             HoverBorderColor = C(0xE9C25E), PressedBorderColor = C(0xCB9A34), CheckedBorderColor = C(0xE0B24E), CheckedHoverBorderColor = C(0xD39E28),
             InnerBorderColor = Color.FromArgb(136, Color.White), InnerBorderWidth = 1
         };
+        var goldHover = Gold(0xFFF7CE, 0xFFDC8C, 0xFFEFB6, 0xFFFFFB);
         return new()
         {
             WindowCornerPreference = RibbonWindowCornerPreference.Rounded,
@@ -38,7 +39,7 @@ public static partial class RibbonThemes
             HeaderPressed = RibbonIdentityAccentSettings.Ramp(0xF3C258, 0xF8CC6A, 0xFCDA86),
             HeaderAppearance = new() { ConnectSelectedTabToBody = true, FilledTabBottomBorderVisible = false, FilledHoverBorderColor = C(0xD39E28), FilledPressedBorderColor = C(0xCB9A34),
                 UtilityHoverBackground = Gold(0xFFF7CE, 0xFFDC8C, 0xFFEFB6, 0xFFFFFB), UtilityPressedBackground = RibbonIdentityAccentSettings.Ramp(0xF3C258, 0xF8CC6A, 0xFCDA86), UtilityStateChrome = goldChrome },
-            Hover = Gold(0xFFF7CE, 0xFFDC8C, 0xFFEFB6, 0xFFFFFB),
+            Hover = goldHover,
             Pressed = RibbonIdentityAccentSettings.Ramp(0xF3C258, 0xF8CC6A, 0xFCDA86),
             Checked = Gold(0xFFEFB2, 0xFFD880, 0xFFE8A4, 0xFFF7D8), CheckedHover = Gold(0xFFEAA2, 0xFFD074, 0xFFE196, 0xFFF2C6),
             CommandAppearance = new() { StateChrome = goldChrome, SplitCompanionBackground = new(Color.Transparent), SplitSeparatorColor = C(0xE9C25E) },
@@ -50,8 +51,21 @@ public static partial class RibbonThemes
             CornerRadius = 3, PopupCornerRadius = 3, FocusCornerRadius = 2, CheckBoxCornerRadius = 2,
             OptionsButtonCornerRadius = 3, KeyTipCornerRadius = 2,
             PopupBackgroundFill = new(C(0xF6F9FC), C(0xDAE5F1)),
+            ApplicationMenuFooterCornerRadius = 3,
+            ApplicationMenuAppearance = new()
+            {
+                SurroundBackground = new(C(0xEDF3FA), C(0xD9E5F2)), FooterSurfaceBackground = new(C(0xE4EDF7), C(0xCBDAEC)),
+                SurroundRimColor = Color.White, SurroundRimWidth = 1, SurroundRimInset = 1,
+                NavigationBackground = new(C(0xFAFAFA)), DefaultPaneBackground = new(C(0xECEFF4)), ActivePaneBackground = new(Color.White),
+                InnerFrameCornerRadius = 0, NavigationDividerColor = C(0xC3CFDF),
+                DefaultHeaderBackground = new(Color.Transparent), ActiveHeaderBackground = new(C(0xDCE6F2)), HeaderRuleColor = C(0xC3CFDF),
+                RowCornerRadius = 3, RowBorderWidth = 1, RowStateChrome = goldChrome,
+                OpenBackground = goldHover, SelectedPrimaryBackground = RibbonFillColors.Map(goldHover, c => Color.FromArgb(89, c)),
+                SplitDividerWidth = 2, SplitDividerColor = C(0xE9C25E), SplitDividerHighlightColor = Color.FromArgb(136, Color.White), SplitDividerHighlightWidth = 1,
+                FooterBackground = new(C(0xF6FAFE), C(0xDCE9F8)), FooterStateChrome = goldChrome
+            },
             GalleryHeadingBackground = new(C(0xDBE7F3)), GalleryHeadingForeground = C(0x1E1E1E),
-            MenuHeadingBackground = new(C(0xDBE7F3)),
+            MenuHeadingBackground = new(C(0xDBE7F3)), MenuHeadingForeground = C(0x174F90),
             GalleryAppearance = new() { StateChrome = goldChrome, UtilityStateChrome = goldChrome, TileCornerRadius = 3, StripCornerRadius = 3, UtilityCornerRadius = 2 },
             CaptionButtonAppearance = new()
             {

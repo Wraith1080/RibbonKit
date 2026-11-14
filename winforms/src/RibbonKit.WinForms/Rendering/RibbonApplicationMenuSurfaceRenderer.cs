@@ -5,13 +5,15 @@ namespace RibbonKit.WinForms;
 
 internal static class RibbonApplicationMenuSurfaceRenderer
 {
-    internal static void DrawBackground(RibbonRenderer owner, RibbonPaintContext c, Rectangle navigation, Rectangle pane)
+    internal static void DrawBackground(RibbonRenderer owner, RibbonPaintContext c, Rectangle navigation, Rectangle pane, Rectangle footer)
     {
         var m = new RibbonApplicationMenuSurfaceMetrics(c.Theme, c.DeviceDpi, RibbonPresentationResolver.ApplicationMenuSurface);
         // Always establish an opaque native backing before optional authored alpha.
         using (var backing = new SolidBrush(m.DefaultTint)) c.Graphics.FillRectangle(backing, c.Bounds);
         if (c.Theme.ApplicationMenuAppearance?.SurroundBackground is { } surround) Fill(owner, c, surround);
         var frame = RibbonRenderer.ApplicationFrame(c.Bounds, navigation); int popupRadius = owner.GetPopupCornerRadius(c.Theme, c.DeviceDpi);
+        if (!footer.IsEmpty && c.Theme.ApplicationMenuAppearance?.FooterSurfaceBackground is { } footerFill)
+            Fill(owner, c with { Bounds = Rectangle.FromLTRB(c.Bounds.Left, Math.Clamp(frame.Bottom, c.Bounds.Top, c.Bounds.Bottom), c.Bounds.Right, c.Bounds.Bottom) }, footerFill);
         owner.PaintRounded(c with { Bounds = frame }, m.Radius(popupRadius), m.Navigation, m.Border, m.BorderWidth(frame));
         int divider = c.ApplicationMenuDividerX ?? pane.Left - RibbonLayoutEngine.Scale(RibbonApplicationMenuMetrics.PanePadding(c.Theme), c.DeviceDpi) - 1;
         var saved = c.Graphics.Save();
@@ -29,11 +31,21 @@ internal static class RibbonApplicationMenuSurfaceRenderer
             }
         }
         finally { c.Graphics.Restore(saved); }
+        var settings = c.Theme.ApplicationMenuAppearance;
+        if (settings is { SurroundRimColor.IsEmpty: false } && settings.SurroundRimColor.A > 0)
+        {
+            int inset = settings.SurroundRimInset is { } n ? RibbonLayoutEngine.Scale(n, c.DeviceDpi) : 1;
+            inset = Math.Clamp(inset, 0, Math.Max(0, (Math.Min(c.Bounds.Width, c.Bounds.Height) - 1) / 2));
+            int width = settings.SurroundRimWidth is { } w ? RibbonLayoutEngine.Scale(w, c.DeviceDpi) : 1;
+            if (width > 0) owner.PaintRounded(c with { Bounds = Rectangle.Inflate(c.Bounds, -inset, -inset) }, Math.Max(0, popupRadius - inset), new(Color.Transparent), settings.SurroundRimColor, width);
+        }
     }
     internal static void DrawHeader(RibbonRenderer owner, RibbonPaintContext c, string text)
     {
         var m = new RibbonApplicationMenuSurfaceMetrics(c.Theme, c.DeviceDpi, RibbonPresentationResolver.ApplicationMenuSurface);
-        var background = c.Theme.MenuHeadingBackground ?? (c.ApplicationMenuDefaultPane ? (RibbonFill?)null : c.Theme.GalleryHeadingBackground);
+        var a = c.Theme.ApplicationMenuAppearance;
+        var background = (c.ApplicationMenuDefaultPane ? a?.DefaultHeaderBackground : a?.ActiveHeaderBackground)
+            ?? c.Theme.MenuHeadingBackground ?? (c.ApplicationMenuDefaultPane ? (RibbonFill?)null : c.Theme.GalleryHeadingBackground);
         if (background is { } fill) owner.PaintRounded(c, m.HeaderRadius, fill, Color.Transparent, 0);
         using var font = new Font(c.Font, m.HeaderStyle(c.Font.Style));
         owner.DrawText(c with { Bounds = m.HeaderText(c.Bounds, c.ApplicationMenuDefaultPane), Font = font }, text,

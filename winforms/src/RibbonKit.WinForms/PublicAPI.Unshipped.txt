@@ -2306,3 +2306,27 @@ RibbonKit.WinForms.RibbonPopupAppearanceSettings.ContentBorderWidth.get -> int?
 RibbonKit.WinForms.RibbonPopupAppearanceSettings.ContentBorderWidth.init -> void
 virtual RibbonKit.WinForms.RibbonRenderer.DrawPopupContentFrame(RibbonKit.WinForms.RibbonPaintContext context) -> void
 virtual RibbonKit.WinForms.RibbonRenderer.DrawGalleryTileState(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonGalleryTile! tile, bool selected) -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.ActiveHeaderBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.ActiveHeaderBackground.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.DefaultHeaderBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.DefaultHeaderBackground.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.FooterBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.FooterBackground.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.FooterStateChrome.get -> RibbonKit.WinForms.RibbonStateChromeSettings?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.FooterStateChrome.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.FooterSurfaceBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.FooterSurfaceBackground.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.OpenBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.OpenBackground.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.RowStateChrome.get -> RibbonKit.WinForms.RibbonStateChromeSettings?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.RowStateChrome.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SplitDividerHighlightColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SplitDividerHighlightColor.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SplitDividerHighlightWidth.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SplitDividerHighlightWidth.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SurroundRimColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SurroundRimColor.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SurroundRimInset.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SurroundRimInset.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SurroundRimWidth.get -> int?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.SurroundRimWidth.init -> void

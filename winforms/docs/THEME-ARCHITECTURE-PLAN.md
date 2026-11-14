@@ -84,6 +84,13 @@ theming, then F7 composed normal-theme review before F8. Each retains the existi
 shared rendering/native ownership boundaries; F8 begins with its own host/theme
 contract. See the [current slice definitions](OFFICE2010-BLUE-PLAN.md#f5-application-menu-theming).
 
+F5 extends the existing D4a/D4b settings and paint paths with independent row/
+footer state rims, resting-footer/open-row fills, pane headings, footer band,
+surround rim and a split-divider highlight. Explicit border ink/width and base
+divider visibility retain precedence. Null roles retain legacy paint. Actual
+renderer hooks, geometry, native content and command ownership stay shared.
+See [F5 evidence and limits](OFFICE2010-BLUE-PLAN.md#f5-implementation-and-verification--2026-11-15).
+
 F2 now supplies immutable stop data/evaluation in
 [`RibbonGradientStops.cs`](../src/RibbonKit.WinForms/Rendering/RibbonGradientStops.cs),
 cached linear painting in `RoundedPainter`, and opt-in outlines/rims in

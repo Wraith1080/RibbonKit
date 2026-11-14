@@ -5,19 +5,43 @@ public sealed record RibbonApplicationMenuAppearanceSettings
 {
     /// <summary>Initializes overrides that retain existing Application Menu command paint.</summary>
     public RibbonApplicationMenuAppearanceSettings() { }
+    /// <summary>Gets optional row-state outlines and inner rims. Explicit RowBorderColor/RowBorderWidth win; null retains existing row paint.</summary>
+    public RibbonStateChromeSettings? RowStateChrome { get; init; }
+    /// <summary>Gets optional footer-state outlines and inner rims. Explicit FooterBorderColor/FooterBorderWidth win; null retains existing footer paint.</summary>
+    public RibbonStateChromeSettings? FooterStateChrome { get; init; }
+    /// <summary>Gets optional idle/disabled footer-button fill. Null follows PopupBackground/Surface. Existing Hover/Pressed/Checked state fills remain independent.</summary>
+    public RibbonFill? FooterBackground { get; init; }
+    /// <summary>Gets optional open row/arrow fill when not physically hovered or pressed. Null retains Pressed; selected split-primary fill remains independent.</summary>
+    public RibbonFill? OpenBackground { get; init; }
+    /// <summary>Gets optional default-pane heading fill. Null retains MenuHeadingBackground. Transparent reveals the already painted pane without a separate heading patch.</summary>
+    public RibbonFill? DefaultHeaderBackground { get; init; }
+    /// <summary>Gets optional active-pane heading fill. Null retains MenuHeadingBackground/GalleryHeadingBackground. Does not affect ordinary menu headings.</summary>
+    public RibbonFill? ActiveHeaderBackground { get; init; }
+    /// <summary>Gets optional footer-band fill, spanning the surface below the inner panel. Null retains SurroundBackground; button fills are independent.</summary>
+    public RibbonFill? FooterSurfaceBackground { get; init; }
+    /// <summary>Gets optional surrounding rim ink. Empty/Transparent draws no rim; the outer popup and inner panel borders remain independent.</summary>
+    public Color SurroundRimColor { get; init; } = Color.Empty;
+    /// <summary>Gets optional surrounding rim width in logical pixels, 0..32. Null uses one device pixel when ink exists; zero hides it.</summary>
+    public int? SurroundRimWidth { get; init; }
+    /// <summary>Gets optional surrounding rim inset in logical pixels, 0..1024. Null uses one device pixel; bounds clamp the rim.</summary>
+    public int? SurroundRimInset { get; init; }
+    /// <summary>Gets optional leading split-divider highlight ink. Empty/Transparent adds no highlight. Base divider visibility, width and ink remain authoritative.</summary>
+    public Color SplitDividerHighlightColor { get; init; } = Color.Empty;
+    /// <summary>Gets optional leading divider-highlight width in logical pixels, 0..32. Null uses one device pixel; zero hides it. Clamps inside the existing divider paint.</summary>
+    public int? SplitDividerHighlightWidth { get; init; }
     /// <summary>Gets optional active navigation/pane row corner radius in logical pixels, 0..64. Null retains square rows. Footer radius keeps ApplicationMenuFooterCornerRadius.</summary>
     public int? RowCornerRadius { get; init; }
     /// <summary>Gets optional navigation/pane state inset in logical pixels, 0..1024. Null retains one device pixel; authored values clamp inside unchanged command bounds.</summary>
     public int? RowInset { get; init; }
-    /// <summary>Gets optional navigation/pane outline width in logical pixels, 0..32. Null retains zero. Set both width and ink to add an outline; hit targets and focus slots remain unchanged.</summary>
+    /// <summary>Gets optional navigation/pane outline width in logical pixels, 0..32. Null retains zero, or a one-device-pixel state outline with RowStateChrome. Hit targets and focus slots remain unchanged.</summary>
     public int? RowBorderWidth { get; init; }
-    /// <summary>Gets optional navigation/pane outline ink, including alpha. Empty retains the transparent outline. This does not make idle rows active.</summary>
+    /// <summary>Gets optional navigation/pane outline ink, including alpha. Empty follows RowStateChrome, then the transparent outline. This does not make idle rows active.</summary>
     public Color RowBorderColor { get; init; } = Color.Empty;
     /// <summary>Gets optional footer state inset in logical pixels, 0..1024. Null retains one device pixel; authored values clamp inside unchanged footer targets.</summary>
     public int? FooterInset { get; init; }
     /// <summary>Gets optional footer outline width in logical pixels, 0..32. Null retains one device pixel, including the legacy transparent-border rim; zero removes the outline.</summary>
     public int? FooterBorderWidth { get; init; }
-    /// <summary>Gets optional footer outline ink, including alpha. Empty follows PopupBorder. Footer radius retains its existing independent setting.</summary>
+    /// <summary>Gets optional footer outline ink, including alpha. Empty follows FooterStateChrome, then PopupBorder. Footer radius retains its existing independent setting.</summary>
     public Color FooterBorderColor { get; init; } = Color.Empty;
     /// <summary>Gets optional active split-divider width in logical pixels, 0..32. Null retains one device pixel; zero hides it. ApplicationMenuSplitDividerVisible remains authoritative.</summary>
     public int? SplitDividerWidth { get; init; }
@@ -52,7 +76,7 @@ public sealed record RibbonApplicationMenuAppearanceSettings
     public int? NavigationDividerInset { get; init; }
     /// <summary>Gets optional navigation divider ink, including alpha. Empty follows Border; Transparent hides paint.</summary>
     public Color NavigationDividerColor { get; init; } = Color.Empty;
-    /// <summary>Gets optional heading-fill corner radius in logical pixels, 0..64. Null retains square corners. Existing MenuHeadingBackground and selected-pane GalleryHeadingBackground remain the fill owners.</summary>
+    /// <summary>Gets optional heading-fill corner radius in logical pixels, 0..64. Null retains square corners. Independent pane heading fills precede existing MenuHeadingBackground/selected-pane GalleryHeadingBackground.</summary>
     public int? HeaderCornerRadius { get; init; }
     /// <summary>Gets optional heading weight. Null/true adds Bold to host styles; false removes Bold while retaining other styles. The measured header height is unchanged.</summary>
     public bool? HeaderBold { get; init; }
@@ -68,6 +92,9 @@ public sealed record RibbonApplicationMenuAppearanceSettings
     internal static void Validate(RibbonApplicationMenuAppearanceSettings? settings)
     {
         if (settings is null) return;
+        RibbonStateChromeSettings.Validate(settings.RowStateChrome); RibbonStateChromeSettings.Validate(settings.FooterStateChrome);
+        if (settings.SurroundRimWidth is < 0 or > 32 || settings.SurroundRimInset is < 0 or > 1024 || settings.SplitDividerHighlightWidth is < 0 or > 32)
+            throw new ArgumentOutOfRangeException(nameof(settings), "Application Menu rim/highlight widths must be 0..32 and rim inset 0..1024 logical pixels, or null.");
         if (settings.RowCornerRadius is < 0 or > 64 || settings.RowInset is < 0 or > 1024 || settings.FooterInset is < 0 or > 1024 || settings.SplitDividerInset is < 0 or > 1024
             || settings.RowBorderWidth is < 0 or > 32 || settings.FooterBorderWidth is < 0 or > 32 || settings.SplitDividerWidth is < 0 or > 32
             || settings.SelectedPrimaryTintStrength is { } strength && (!double.IsFinite(strength) || strength < 0 || strength > 1))

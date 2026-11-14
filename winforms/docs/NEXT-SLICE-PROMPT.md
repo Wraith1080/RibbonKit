@@ -1,13 +1,12 @@
-# Continue normal native Office 2010 Blue after F4
+# Continue normal native Office 2010 Blue after F5 review
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
 Updated **2026-11-15**. Last verified branch is `codex/Ribbonkit-Winform`, HEAD
-`9f38496` (`2010 F3 Done`), after F2 checkpoint `ec78e11`, cleanup checkpoint
-`c7794b6`, F1 checkpoint `1802dad` and E5 checkpoint `14aba66`. F4 entered with a
-clean worktree; its implementation and verification changes remain uncommitted. Preserve authored Backstage settings
-and other Form/resource edits. Recheck
+`c3ae95f` (`Plan Update`). The user committed the prior F4 work; F5 entered with
+a clean worktree and its changes remain uncommitted. Preserve authored Backstage
+settings and other Form/resource edits. Recheck
 `git status --short`, live branch and HEAD; preserve user commits and edits. Do not
 commit, stage, push, publish or change branches unless requested.
 
@@ -85,7 +84,7 @@ samples and dedicated host build cleanly. Evidence is under
 Actual VS/physical/continuous visible motion/corner/material/mixed-monitor gates
 are separate; no Aero or final normal-theme acceptance is claimed.
 
-**F4 visual review follow-up is delivered, pending user recheck.** The user supplied
+**F4 visual review follow-up is delivered; current review is in the ledger.** The user supplied
 eight concrete corrections plus clarification that both the whole card viewport
 border and dimensional custom-card states are wanted. Read the
 [requested-fix checklist and exact limits](OFFICE2010-BLUE-PLAN.md#f4-visual-review-corrections--2026-11-15)
@@ -153,7 +152,7 @@ darkening, state-fill and foreground overrides. Other buttons stay white with
 light hover/darker pressed washes; pressed borders retain Accent.
 Existing explicit button/state/border overrides win. All three families' sample actions
 and persistence are checked; the persistent Designer Sample now uses package
-`0.1.0-designer.local20261114T225800298Z` after the selected-navigation correction.
+`0.1.0-designer.local20261114T233250034Z` after F5 Application Menu theming.
 See [E3 evidence and scope](OFFICE2013-LIGHT-PLAN.md#e3-accent-palette-file-states-and-sample-appearance-controls--2026-11-13).
 E4 adds the #919191 body perimeter, selected-tab top/side outline and visible-tab
 opening through HeaderAppearance.ConnectSelectedTabToBody. Existing body/header
@@ -183,7 +182,23 @@ records before edits. Reuse the
 [architecture map](THEME-ARCHITECTURE-PLAN.md) and
 [adjustability audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 
-## Next bounded slice: F5 Application Menu theming only
+## Current review boundary: F5 Application Menu; next F6 Options only
+
+F5 is delivered, pending user visual review. Read the
+[F5 implementation/evidence and review steps](OFFICE2010-BLUE-PLAN.md#f5-implementation-and-verification--2026-11-15).
+The default heading now matches its pane; blue surround/footer, resting footer
+fill, gold state outlines and two-tone split divider use shared adjustable roles.
+Footer hover/press interiors remain exact. Showcase Save As now uses a real split;
+Designer Sample already did. Both samples and independent public-package/native
+checks pass at 120 DPI; 125 distinct focused Release cases have passing latest
+results across the retained initial/repaired runs. No full suite or actual VS/
+physical-input/material acceptance is claimed. Final evidence is under
+`artifacts/office2010-f5/`; retain earlier attempts too.
+
+Stop for F5 visual review. Once the user authorizes continuation, implement only
+[F6 Options dialog theming](OFFICE2010-BLUE-PLAN.md#f6-options-dialog-theming).
+Preserve F5's explicit ink/width precedence, default/null/Empty/zero/reset,
+native controls/input/layout, command targets and actual renderer hooks.
 
 The user revised the remaining sequence on **2026-11-15**:
 
@@ -192,20 +207,14 @@ The user revised the remaining sequence on **2026-11-15**:
 3. [F7 composed normal-theme review](OFFICE2010-BLUE-PLAN.md#f7-composed-normal-theme-review), moved from the former F5.
 4. [F8 required Aero-inspired frame experiment](OFFICE2010-BLUE-PLAN.md#f8-required-aero-inspired-frame-experiment).
 
-For F5, assess the existing shared Application Menu roles against the WPF 2010
-reference, then implement only that bounded menu treatment. Cover both panes,
-command/split states, headings/dividers, right content and footer while retaining
-File routing, native controls/input, authored assets, explicit overrides and Reset.
-Expose only missing adjustable roles through shared library settings/hooks.
-Verify both existing samples and an independent public-package consumer with
-focused checks. Reuse passed F2–F4 and E2–E5 evidence; preserve the recorded
-Backstage approval unless a concrete regression appears. Stop after F5 for review.
+Reuse passed F2–F5 and E2–E5 evidence; preserve the recorded Backstage approval
+unless a concrete regression appears. Do not repeat unrelated passed matrices.
 
 F6 owns the library Options/customization dialogs and draft/button contracts.
 F7 closes normal-theme review before F8. The Aero-inspired frame is required
 planned work, with its own host/theme/material/fallback contract and review;
-caption-button glass alone does not complete it. Do not start those later slices
-during F5. No diagnostic tabs, temporary review solution, new family or dark
+caption-button glass alone does not complete it. Do not start F7 or F8 during
+F6. No diagnostic tabs, temporary review solution, new family or dark
 variant. Keep native API/print evidence separate from actual VS, physical input,
 continuous motion, desktop material and mixed-monitor acceptance.
 

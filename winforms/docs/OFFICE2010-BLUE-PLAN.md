@@ -1,6 +1,6 @@
 # Native Office 2010 Blue — normal theme first
 
-**2026-11-15 — Backstage review is recorded in the themes ledger. Revised remaining sequence: F5 Application Menu theming, F6 Options dialog theming, F7 composed normal-theme review, F8 required Aero-inspired frame experiment. Next: F5 only.**
+**2026-11-15 — F5 Application Menu theming is delivered, pending visual review. Backstage review remains recorded in the themes ledger. Next after F5 review: F6 Options dialog theming, then F7 composed normal-theme review and F8 required Aero-inspired frame experiment.**
 The user selected Office 2010 after the Office 2013 review and supplied eight
 WPF references, including an additional ordinary-button hover example. They
 explicitly confirmed rounded corners for this non-flat theme. Deliver the normal
@@ -213,6 +213,7 @@ Added by the user on **2026-11-15**, before the final normal-theme review.
 - Verify in both ordinary samples and an independent public-package consumer.
   Use focused state/paint, clipping, native lifecycle and designer checks for the
   changed roles; retain unrelated passed evidence. Stop after F5 for review.
+  [Implementation and current verification](#f5-implementation-and-verification--2026-11-15) are recorded below.
 
 ### F6: Options dialog theming
 
@@ -763,3 +764,90 @@ by this correction. Earlier unrelated passed matrices were retained.
 This is direct-paint/offscreen native evidence; user visual recheck and actual VS
 review remain separate. Reopen the refreshed sample solution before rechecking
 Red/Green/Orange and the area below the selected-row text. Stop here; next is F5.
+
+## F5 implementation and verification — 2026-11-15
+
+Delivered within `winforms/` on the user's `c3ae95f` baseline. Visual review is
+pending; accepted Backstage paint is preserved. F6/F7/F8 have not started.
+
+### Requested corrections
+
+- The shared Application Menu surround/footer has the reference blue depth,
+  white inner rim and blue frame. Navigation is `#FAFAFA`, the default page is
+  `#ECEFF4`, and selected pages remain white. The default heading reveals its
+  page instead of adding a blue patch; active headings keep a separate blue fill
+  and rule. Menu heading ink stays blue when identity Accent changes.
+- Navigation/right-pane command states gain rounded gold outlines and light
+  inner rims. A real open split uses a 35% hover wash in the unhovered primary,
+  full gold Hover in the arrow and a two-tone divider. Either physical hover
+  fills both halves; press retains its own half. Whole-row dropdowns retain
+  their single target and open fill.
+- Per the user's final footer clarification, **hover and pressed fill interiors
+  are unchanged**. Resting buttons gain a pale blue gradient/blue outline; hover
+  and press gain their appropriate gold state borders/rims.
+- Showcase's Save As was a whole-row dropdown. It now demonstrates a real split
+  command, with the existing host action handler on the primary and its existing
+  pane on the arrow. Designer Sample already authored a split Save As; no
+  authored DesignerForm, UserControl, artwork or resources were rewritten.
+
+These use additive roles on `RibbonApplicationMenuAppearanceSettings`, existing
+StateChrome and actual renderer hooks. Explicit row/footer inks and widths win;
+divider visibility/base width/Transparent ink suppress its highlight too. Fills
+support alpha/direction/stops; null/Empty/zero and independent/group Reset retain
+their documented meaning. Range validation precedes Theme/BuiltInTheme mutation.
+The outer frame, inner panel, content, native controls, popup layout and targets
+retain their existing owners. Public additions are in Unshipped; Shipped is intact.
+
+References retained unchanged under `reference/themes/`:
+[WPF default](reference/themes/office2010-appmenu-wpf-default.png),
+[native before](reference/themes/office2010-appmenu-native-before.png),
+[native state before](reference/themes/office2010-appmenu-native-state-before.png),
+[WPF split hover](reference/themes/office2010-appmenu-wpf-split-hot.png),
+[WPF selected split](reference/themes/office2010-appmenu-wpf-split-selected.png),
+[native selection before](reference/themes/office2010-appmenu-native-selected-before.png),
+[WPF footer hover](reference/themes/office2010-appmenu-wpf-footer-hover.png),
+[WPF footer press](reference/themes/office2010-appmenu-wpf-footer-pressed.png),
+[native footer hover before](reference/themes/office2010-appmenu-native-footer-hover-before.png),
+[native footer press before](reference/themes/office2010-appmenu-native-footer-pressed-before.png).
+
+### Verification and limits
+
+- Focused Release: **125 distinct cases have passing latest results** across
+  menu chrome/surface/content/hover/appearance and the new F5 tests. The initial
+  run passed 120/125; five failures were new test sampling errors (the white
+  surround rim at 144 DPI and the arrow-side divider position). After correcting
+  those assertions, the eight affected parameter cases pass. Retain
+  `artifacts/office2010-f5/f5-focused.trx`, `f5-repaired.trx` and their combined
+  `focused-latest-results.json`; this is no claim
+  of one clean full-suite run. New paint coverage uses 96/120/144/192 DPI.
+- `eng/Test-Office2010ApplicationMenu.ps1` compiles the same independent source
+  against retained package `0.1.0-designer.local20261114T225800298Z` and current
+  `0.1.0-designer.local20261114T233250034Z`. The final retained comparison is
+  `artifacts/office2010-f5/public-20261114T233438575Z/comparison.json`.
+  At actual 120 DPI, default heading mismatch becomes a match; footer hover/
+  pressed interior samples remain exact, while state-border pixels rise from
+  0 to 264 per footer state and 0 to 458–506 per split state. Geometry and three
+  2013/2019/2024 menu paint captures remain exact. Public native split/footer
+  actions invoke once/dismiss; editor HWND/parent/text/selection survive pane
+  switching. No Showcase resources, helpers, internal access or friend assembly.
+- Both real authored samples pass `--verify-office2010-application-menu` at
+  actual 120 DPI (`showcase-final` / `designer-final` artifacts). Designer Sample
+  verification stays in its dedicated test project. Normal Debug runtime,
+  designer/client, Showcase, persistent Designer Sample and its test host build.
+  The persistent sample was refreshed in place with the current package above.
+  Initial Showcase build was blocked by its running old process; it was closed
+  normally, and the subsequent build passed. All outputs/evidence are retained.
+- Default/selected native menu prints and footer/split state captures were
+  inspected. This is offscreen/native-print and public API evidence, **not**
+  physical pointer/keyboard/IME, actual Visual Studio save/reopen, continuous
+  visible motion, native corner silhouette, desktop Aero/material or mixed-
+  monitor acceptance. Unrelated accepted matrices were not rerun.
+
+For visual review, reopen the refreshed Designer Sample solution and Showcase,
+select Office 2010 Blue, and open File as Application Menu. Check the matching
+Recent Documents background and footer at rest; hover/hold Options and a right-
+pane command. Open Save As, move into its page, then hover/hold each split half:
+the primary should be subdued only while unhovered, with a visible divider and
+one shared perimeter. Check native page controls and ordinary File/Backstage
+routing. Stop after this review; next is **F6 Options dialog theming**. F8 remains
+required after F7.

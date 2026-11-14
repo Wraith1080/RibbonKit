@@ -3044,6 +3044,9 @@ scrollers to reach these groups when needed.
 | `FooterInset`, `FooterBorderWidth`, `FooterBorderColor` | One-device-pixel inset and stroke with PopupBorder ink, including the legacy transparent-border rim. Logical ranges 0..1024 / 0..32. Zero removes the stroke. Existing ApplicationMenuFooterCornerRadius remains independent. |
 | `SplitDividerWidth`, `SplitDividerInset`, `SplitDividerColor` | Active seam: one device pixel with one-device-pixel end clearances and Border ink. Logical ranges 0..32 / 0..1024, clamped inside the unchanged row. Zero/Transparent hides paint. ApplicationMenuSplitDividerVisible remains authoritative, including Office 2019's false default. |
 | `SelectedPrimaryTintStrength`, `SelectedPrimaryBackground` | Unhovered open split primary: 0.25 opaque PopupBackground/Pressed mix. Strength is finite 0..1. An explicit alpha/gradient fill takes precedence. Hover/press/checked and expanded-arrow rules retain their existing order. |
+| `RowStateChrome`, `FooterStateChrome` | Optional independent state outlines and inner rims. Explicit row/footer border ink and widths win; null retains legacy paint. A row state outline supplies a one-device-pixel stroke if its width is unspecified. |
+| `FooterBackground`, `OpenBackground` | Optional resting/disabled footer and open-row/arrow fills. Null retains PopupBackground/Surface and Pressed respectively. Hover/press/checked fills and selected split-primary fill remain independent. |
+| `SplitDividerHighlightColor`, `SplitDividerHighlightWidth` | Optional leading highlight inside the existing split divider. Empty/Transparent/zero hides it; null width uses one device pixel. Logical width range 0..32, clamped inside the divider. Base visibility/width/Transparent ink suppress both strokes. |
 
 ```csharp
 ribbon.Theme = ribbon.Theme with
@@ -3083,6 +3086,17 @@ backgrounds, inner frame and headings:
 | `HeaderCornerRadius`, `HeaderBold` | Square heading fill and host styles plus Bold at null. False removes Bold while preserving other host styles; radius range 0..64 logical pixels. Existing MenuHeadingBackground/Foreground and selected-pane GalleryHeadingBackground remain in use. |
 | `DefaultHeaderTextInset`, `ActiveHeaderTextInset` | 2/10 logical pixels at null. Authored values 0..1024 clamp within the unchanged header. |
 | `HeaderRuleThickness`, `HeaderRuleColor` | One-device-pixel bottom rule with Border ink at null/Empty. Authored thickness 0..32 logical pixels clamps within the header. Alpha is retained; zero/Transparent hides paint. |
+| `DefaultHeaderBackground`, `ActiveHeaderBackground` | Independent heading fills before MenuHeadingBackground and the selected-pane GalleryHeadingBackground fallback. Transparent reveals the already painted page, including its gradient; null restores fallback. |
+| `FooterSurfaceBackground` | Optional fill for the surface band below the inner panel; null retains SurroundBackground. Footer buttons keep separate fills. |
+| `SurroundRimColor`, `SurroundRimWidth`, `SurroundRimInset` | Optional surrounding inner rim. Empty/Transparent/zero hides it; null width/inset use one device pixel. Logical ranges 0..32 / 0..1024, clamped within the unchanged popup. Outer frame and inner panel borders stay independent. |
+
+Office 2010 authors these roles for a blue reflective surround/footer, pale blue
+resting footer buttons, gold state borders, a matching Recent Documents header
+and a blue active-page heading. Its unhovered selected split primary uses a 35%
+gold hover wash, while the arrow uses the full hover ramp. Hovering either half
+fills both; pressing still targets the pressed half. Footer hover/pressed fills
+retain the ordinary gold ramps. These settings do not restyle native application
+content or change popup layout, targets, validation or ownership.
 
 ```csharp
 ribbon.Theme = ribbon.Theme with

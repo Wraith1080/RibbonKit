@@ -6,7 +6,7 @@ public partial class RibbonRenderer
 {
     /// <summary>Paints the Application Menu's measured columns and fixed footer using shared menu surface and border roles. Native application content keeps its own styling.</summary>
     public virtual void DrawApplicationMenuBackground(RibbonPaintContext context, Rectangle navigation, Rectangle pane, Rectangle footer)
-        => RibbonApplicationMenuSurfaceRenderer.DrawBackground(this, context, navigation, pane);
+        => RibbonApplicationMenuSurfaceRenderer.DrawBackground(this, context, navigation, pane, footer);
     internal static Rectangle ApplicationFrame(Rectangle bounds, Rectangle navigation) => new(navigation.Left - 1, navigation.Top - 1,
         Math.Max(1, bounds.Width - 2 * (navigation.Left - 1)), navigation.Height + 2);
     private void DrawApplicationMenuHeader(RibbonPaintContext context, string text)

@@ -17,12 +17,14 @@ public partial class MainForm
         var sources = ribbon.FileMenu.Items.ToArray();
         var newDocument = sources.Single(i => i.Id == "file.new"); var open = sources.Single(i => i.Id == "file.open"); var save = sources.Single(i => i.Id == "file.save");
         foreach (var command in new[] { newDocument, open, save }) { if (command.ScreenTipDescription.Length == 0) command.ScreenTipDescription = command.MenuDescription; command.MenuDescription = ""; }
-        var saveAs = Pane("application.saveAs", "Save As", "save-copy", "Save a copy of the document",
+        var saveAs = new RibbonSplitButtonItem { Id = "application.saveAs", Text = "Save As", Icon = RibbonStockIcons.Create("save-copy"),
+            DropDownHeader = "Save a copy of the document", MenuPresentation = RibbonMenuPresentation.IllustratedChoices };
+        saveAs.Items.AddRange(
             Command("application.saveAs.word", "Word Document", "save", "Save the document in the default file format."),
             Command("application.saveAs.template", "Word Template", "new", "Save as a template that can be used to format future documents."),
             Command("application.saveAs.legacy", "Word 97-2003 Document", "save", "Save a copy that is compatible with Word 97-2003."),
             Command("application.saveAs.other", "Other Formats", "settings", "Open Save As to choose from all possible file types."));
-        saveAs.KeyTip = "A";
+        saveAs.KeyTip = "A"; saveAs.Click += ActionClick;
         var print = Pane("application.print", "Print", "print", "Print document",
             Command("application.print.options", "Print", "print", "Choose a printer, copies and other print options."),
             Command("application.print.quick", "Quick Print", "print", "Send the document to your default printer.")); print.KeyTip = "P";
