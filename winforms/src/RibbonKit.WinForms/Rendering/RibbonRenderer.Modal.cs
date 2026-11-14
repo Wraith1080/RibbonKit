@@ -14,7 +14,7 @@ public partial class RibbonRenderer
         try
         {
             context.Graphics.SetClip(context.Bounds, CombineMode.Intersect);
-            if (context.Hot || context.Pressed) DrawChrome(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
+            if (context.Hot || context.Pressed) DrawHeaderUtilityState(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover);
             int S(int value) => RibbonLayoutEngine.Scale(value, context.DeviceDpi);
             var glyph = new Rectangle(context.Bounds.Left + S(6), context.Bounds.Top + (context.Bounds.Height - S(8)) / 2, S(8), S(8));
             var state = context.Graphics.Save();

@@ -94,8 +94,8 @@ over the existing Filled/connected-header helpers. Its immutable
 [`RibbonIdentityAccentSettings`](../src/RibbonKit.WinForms/Rendering/RibbonIdentityAccentSettings.cs)
 rebases reference identity ramps while keeping explicit role fills and gold
 command states independent. Designer selection uses the existing string protocol
-and candidate/commit path. F4 still owns the new Backstage sibling; no placement
-workaround or Aero compositor was added.
+and candidate/commit path. The F4 sibling described below adds measured placement;
+no Aero compositor was added.
 
 The F3 header follow-up reuses the disjoint-clip frame helper for independently
 open hover/pressed tab feet. Header utility themes retain their fill companion;
@@ -104,6 +104,28 @@ Shared `RibbonHeaderMetrics` resolves `FileButtonMinimumWidth` for every family,
 layout and File route, keeping one measured paint/input/popup target. The
 [bounded correction record](OFFICE2010-BLUE-PLAN.md#f3-header-review-corrections-and-shared-file-minimum--2026-11-14)
 owns current evidence and recheck status.
+
+F4 registers `RibbonBackstage2010Layout`/`RibbonBackstage2010Renderer` under the
+neutral bases with explicit below-tabs placement, separate-caption and motion
+defaults. The native host transforms measured header geometry into Form-client
+bounds and ignores the pane's own motion Location updates when handling reflow.
+`RibbonBackstageFrameRenderer` owns shared seam/divider-shadow decoration and the
+rounded page primitive; sibling defaults and public renderer hooks retain their
+ownership. Child navigation painting projects the same full-surface fill/shadow
+coordinates. Back visibility, seam and divider-shadow roles are independent;
+IdentityAccent supplies the selected-row reference ramp/border. Passive designer
+hints change File/tab paint without changing runtime models or hosting native
+content. Current verification/review is in the
+[F4 record](OFFICE2010-BLUE-PLAN.md#f4-implementation-and-verification--2026-11-14).
+
+The F4 review follow-up retains those owners. Shared text drawing now preserves
+the caller's measured Graphics clip for ordinary/composited text. Header utility
+fills/rims, gallery utility rims, caption ordinary/close rims and Backstage hover
+edges have independent immutable roles. A shared public popup-content frame hook
+surrounds the native custom viewport, with clearance separate from outer chrome;
+custom cards can call the public tile-state hook while keeping editable content.
+Current requested-fix coverage and foreground fixture limits are in the
+[review correction record](OFFICE2010-BLUE-PLAN.md#f4-visual-review-corrections--2026-11-15).
 
 ## Problem and intended result
 

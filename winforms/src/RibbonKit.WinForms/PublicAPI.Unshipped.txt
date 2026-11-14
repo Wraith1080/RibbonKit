@@ -2264,3 +2264,45 @@ RibbonKit.WinForms.RibbonIdentityAccentSettings.FileBorderColor.init -> void
 static RibbonKit.WinForms.RibbonIdentityAccentSettings.operator !=(RibbonKit.WinForms.RibbonIdentityAccentSettings? left, RibbonKit.WinForms.RibbonIdentityAccentSettings? right) -> bool
 static RibbonKit.WinForms.RibbonIdentityAccentSettings.operator ==(RibbonKit.WinForms.RibbonIdentityAccentSettings? left, RibbonKit.WinForms.RibbonIdentityAccentSettings? right) -> bool
 static RibbonKit.WinForms.RibbonThemes.Office2010Blue.get -> RibbonKit.WinForms.RibbonTheme!
+override RibbonKit.WinForms.RibbonControl.OnLocationChanged(System.EventArgs! e) -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.BackButtonVisible.get -> bool?
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.BackButtonVisible.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.PageDividerShadowColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.PageDividerShadowColor.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.PageDividerShadowOpacity.get -> double?
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.PageDividerShadowOpacity.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.PageDividerShadowWidth.get -> int?
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.PageDividerShadowWidth.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.TopSeamBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.TopSeamBackground.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.TopSeamHeight.get -> int?
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.TopSeamHeight.init -> void
+RibbonKit.WinForms.RibbonBackstageStyle.Office2010 = 2 -> RibbonKit.WinForms.RibbonBackstageStyle
+RibbonKit.WinForms.RibbonIdentityAccentSettings.NavigationBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonIdentityAccentSettings.NavigationBorderColor.init -> void
+RibbonKit.WinForms.RibbonIdentityAccentSettings.NavigationSelectedBackground.get -> RibbonKit.WinForms.RibbonFill
+RibbonKit.WinForms.RibbonIdentityAccentSettings.NavigationSelectedBackground.init -> void
+RibbonKit.WinForms.RibbonIdentityAccentSettings.NavigationStrength.get -> double
+RibbonKit.WinForms.RibbonIdentityAccentSettings.NavigationStrength.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.NavigationHoverEdgeColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.NavigationHoverEdgeColor.init -> void
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.NavigationHoverEdgeWidth.get -> int?
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.NavigationHoverEdgeWidth.init -> void
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.CloseStateChrome.get -> RibbonKit.WinForms.RibbonStateChromeSettings?
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.CloseStateChrome.init -> void
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.StateChrome.get -> RibbonKit.WinForms.RibbonStateChromeSettings?
+RibbonKit.WinForms.RibbonCaptionButtonAppearanceSettings.StateChrome.init -> void
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.UtilityStateChrome.get -> RibbonKit.WinForms.RibbonStateChromeSettings?
+RibbonKit.WinForms.RibbonGalleryAppearanceSettings.UtilityStateChrome.init -> void
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.UtilityHoverBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.UtilityHoverBackground.init -> void
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.UtilityPressedBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.UtilityPressedBackground.init -> void
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.UtilityStateChrome.get -> RibbonKit.WinForms.RibbonStateChromeSettings?
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.UtilityStateChrome.init -> void
+RibbonKit.WinForms.RibbonPopupAppearanceSettings.ContentBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonPopupAppearanceSettings.ContentBorderColor.init -> void
+RibbonKit.WinForms.RibbonPopupAppearanceSettings.ContentBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonPopupAppearanceSettings.ContentBorderWidth.init -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawPopupContentFrame(RibbonKit.WinForms.RibbonPaintContext context) -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawGalleryTileState(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonGalleryTile! tile, bool selected) -> void

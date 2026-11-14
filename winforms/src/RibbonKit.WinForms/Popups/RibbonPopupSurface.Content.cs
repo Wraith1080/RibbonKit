@@ -12,6 +12,19 @@ internal sealed partial class RibbonPopupSurface
     private Point _savedContentLocation;
     private bool _savedContentVisible;
     internal bool HasCustomContent => _customContent is not null;
+    private int HostedContentPadding => Math.Max(_contentPadding, RibbonRenderer.PopupContentBorderWidth(_ribbon.Theme, _ribbon.DeviceDpi));
+    private Rectangle GradientBounds(Control child, Rectangle bounds)
+    {
+        var origin = child.PointToClient(PointToScreen(Point.Empty)); origin.Offset(bounds.Location); return new(origin, ClientSize);
+    }
+    private void PaintHostedContentFrame(RibbonPaintContext context)
+    {
+        var content = _galleryPresenterViewport ?? _customContent;
+        if (content is null) return;
+        int width = RibbonRenderer.PopupContentBorderWidth(_ribbon.Theme, _ribbon.DeviceDpi);
+        var bounds = Rectangle.Inflate(content.Bounds, width, width);
+        _ribbon.Painter.DrawPopupContentFrame(context with { Bounds = bounds });
+    }
 
     private Size InitializeContent(Control content, Size workArea)
     {
@@ -28,7 +41,7 @@ internal sealed partial class RibbonPopupSurface
             // host, otherwise Windows rejects its opening drawing hold.
             if (content.BindingContext is { } context) content.BindingContext = context;
             content.Dock = DockStyle.None; content.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-            Controls.Add(content); content.Location = new(_contentPadding, _contentPadding); content.Visible = true;
+            Controls.Add(content); content.Location = new(HostedContentPadding, HostedContentPadding); content.Visible = true;
             content.CreateControl();
             content.SizeChanged += ContentSizeChanged;
             return ContentSurfaceSize();
@@ -36,7 +49,7 @@ internal sealed partial class RibbonPopupSurface
         catch { DetachContent(); throw; }
     }
     private Size ContentSurfaceSize() => _customContent is { } body
-        ? new(Math.Clamp(body.Width + 2 * _contentPadding, 1, _contentMaximum.Width), Math.Clamp(body.Height + 2 * _contentPadding, 1, _contentMaximum.Height)) : Size;
+        ? new(Math.Clamp(body.Width + 2 * HostedContentPadding, 1, _contentMaximum.Width), Math.Clamp(body.Height + 2 * HostedContentPadding, 1, _contentMaximum.Height)) : Size;
     private void ContentSizeChanged(object? sender, EventArgs e) { if (!IsDisposed && HasCustomContent) Size = ContentSurfaceSize(); }
     internal bool OwnsContentInput(Control? origin) => _customContent is { } body && origin is not null && (ReferenceEquals(body, origin) || body.Contains(origin));
     internal bool HasContentComboList => _customContent is { } body && Descendants(body).OfType<ComboBox>().Any(combo => combo.DroppedDown);

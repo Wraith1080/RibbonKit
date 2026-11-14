@@ -124,7 +124,7 @@ Custom renderers override `DrawSplitItem` to receive both measured action contex
 The retained foundation bridge does not provide complete accessibility semantics
 for this new item; no split accessibility compatibility is claimed.
 
-Office 2024/2019/2013 Light plus the Office 2010 Blue ribbon/File shell,
+Office 2024/2019/2013 Light plus normal Office 2010 Blue,
 Compact/Touch density and LTR are the current appearance scope.
 The optional `RibbonForm` supplies the native caption and title-bar QAT described
 below. Optional native Mica/Acrylic form backgrounds are available through that host;
@@ -145,15 +145,24 @@ Custom values can start from `RibbonThemes.Office2019Light with { ... }`.
 `RibbonBuiltInTheme.Office2010Blue` selects the normal dimensional ribbon/File
 shell: pale blue caption/tab/body gradients, connected selected tabs, rounded
 controls, gold command/toggle/gallery states and distinct blue File ramps. Both
-sample View galleries expose it; normal startup remains unchanged. Its new
-below-tabs Backstage presentation is pending the next slice. Aero is deferred.
-See the [scope and visual-review guide](docs/OFFICE2010-BLUE-PLAN.md#f3-implementation-and-verification--2026-11-14).
+sample View galleries expose it; normal startup remains unchanged. Its Backstage
+begins at the measured tab-header bottom, keeping the real caption/tabs/QAT
+exposed. The pale-blue rail has square blue selected rows and a white page;
+File/current tab closes, and another tab closes/selects after validation. The
+round Back is hidden by default. Aero is deferred. See the
+[scope and visual-review guide](docs/OFFICE2010-BLUE-PLAN.md#f4-implementation-and-verification--2026-11-14).
 
 `Theme.IdentityAccent` supplies immutable reference ramps and independent
-FileStrength/CaptionStrength (finite 0..1). Accent updates rebase File fill/border
+FileStrength/CaptionStrength/NavigationStrength (finite 0..1). Accent updates rebase File fill/border
 colors while preserving ramp positions/depth; gold command states keep their own
 fills. Explicit File role fills win, then the identity recipe, then the existing
-solid-accent/darkening fallback. Set IdentityAccent to null for that fallback.
+solid-accent/darkening fallback. NavigationSelectedBackground/NavigationBorderColor
+provide the Backstage selected-row reference; explicit navigation state/border
+overrides win. At full NavigationStrength, navigation tone transfer preserves the
+chosen hue and relative reference lightness/saturation; it uses a smooth default
+selected ramp without a lower highlight peak. File/caption/general AdaptFill
+retain their separate RGB-depth recipe. Set IdentityAccent to null for the
+existing fallback.
 Applications can use the same public recipe for their colored-title preference:
 
 ```csharp
@@ -241,7 +250,7 @@ checked-hover border inks and inner-rim ink/width/inset are independent of fills
 Existing border overrides win; null/Empty preserves defaults, Transparent hides
 ink and zero hides width. Empty groups add no effect. ChoiceBorderWidth controls
 choice-state outlines separately from editor fields. These are shared foundations;
-the [Office 2010 preset and review](docs/OFFICE2010-BLUE-PLAN.md) are later slices.
+the [Office 2010 preset and review](docs/OFFICE2010-BLUE-PLAN.md) build on them.
 
 `HeaderPresentation` selects Filled or Underline independently of colors, corner
 radius, caption extension and Backstage style. The default Office renderer keeps
@@ -472,13 +481,17 @@ nullable member resets independently; null retains the existing appearance:
 
 | Members | Default and behavior |
 | --- | --- |
+| `BackButtonVisible` | Null hides Back for Office2010 and shows it for Modern/Classic. False removes its reserved space, keyboard target and KeyTip. |
+| `NavigationHoverEdgeColor`, `NavigationHoverEdgeWidth` | Empty/Transparent adds no edge; width accepts 0..32 logical pixels, null one device pixel when ink exists. The 2010 preset adds light top/bottom edges to its solid pale hover fill. Zero hides the edges independently. |
+| `TopSeamHeight`, `TopSeamBackground` | Null uses 3 logical pixels for Office2010, 0 otherwise; height accepts 0..32. Fill follows the effective open File ramp's bottom color. Zero removes seam space; Transparent hides ink while retaining height. |
+| `PageDividerShadowWidth`, `PageDividerShadowColor`, `PageDividerShadowOpacity` | Null/Empty uses 6 logical pixels for Office2010, 0 otherwise, Black and 0.18 opacity. Width accepts 0..64; opacity finite 0..1. Zero/Transparent hides the effect independently. Shadow stays left of the page divider below the seam and does not shrink row targets. |
 | `MarkerLeftInset`, `MarkerWidth`, `MarkerTopInset`, `MarkerBottomInset` | 2, 3, 10, 10 logical pixels, each 0..1024. Width zero hides the marker. Top/bottom clearances are summed before DPI rounding, preserving fractional-DPI defaults. Row bounds clip painting. |
 | `MarkerColor` | Empty follows Accent; supports alpha. Existing `BackstageSelectionIndicatorVisible` and `NavigationMarkerCornerRadius` remain independent. |
 | `BackVisualInset` | 2 logical pixels inside the Back click target; accepts 0..1024. Does not change target size or `BackstageBackButtonCornerRadius`. |
 | `BackOutlineWidth`, `BackGlyphStrokeWidth` | 1.5 logical pixels, accepting finite 0..32. Zero hides the outline or arrow respectively. Null preserves the existing outline rounding and one-device-pixel minima. |
 | `BackGlyphScale` | 1, accepting finite 0..8; zero hides the arrow. Scales the vector's 5/6-pixel extents with their original separate DPI rounding, independently of circle/target size. |
 | `NavigationCornerRadius` | Full-width rows are square; inset rows use the active renderer's chrome. An authored 0..64 logical pixels controls the state shape independently of width coverage. |
-| `NavigationBorderColor`, `NavigationBorderWidth` | Empty/transparent, with no border. Authored color supports alpha; width accepts 0..32 logical pixels. Null width uses one device pixel when ink is authored. Zero width or transparent ink hides the outline. |
+| `NavigationBorderColor`, `NavigationBorderWidth` | Empty follows the family (Office2010 derives its selected-row border from IdentityAccent; existing families remain transparent). Authored color supports alpha; width accepts 0..32 logical pixels. Null width uses one device pixel when ink is present. Zero width or transparent ink hides the outline. |
 | `CaptionTintEnabled` | Null retains Modern's neutral separate-caption tint and Classic's opt-out. True/false independently enables/disables it. Full-height panes and authored Form/theme caption colors retain precedence. |
 | `CaptionTintColor` | Empty follows the navigation color with existing coverage. Authored alpha multiplies tint coverage; Transparent hides paint. Does not recolor full-height panes. |
 | `CaptionTintOpacity` | Null uses 1; finite 0..1 multiplies pane alpha, material navigation opacity and authored tint alpha. Zero hides paint. Independent of `RibbonForm.TitleBarTintOpacity`, which belongs to authored caption coloring. |
@@ -497,6 +510,11 @@ caption tint** presets/reset and **Try caption and title** review controls.
 
 `Theme.CaptionButtonAppearance` accepts immutable
 `RibbonCaptionButtonAppearanceSettings` for caption-button decoration:
+
+`StateChrome` and `CloseStateChrome` optionally add independent ordinary/close
+state outlines and inner rims. Existing fills/glyphs/targets remain independent;
+null adds no outline/rim. Office 2010 opts into blue/red reflection ramps and
+white inner rims for hover/press; other presets retain their existing treatment.
 
 | Members | Default and behavior |
 | --- | --- |
@@ -548,6 +566,7 @@ Header and shared effects also have independent overrides:
 | --- | --- |
 | `HeaderAppearance.FilledBorderColor`, `FilledBorderWidth` | Filled tab/File states remain borderless. Authored ink supports alpha; width accepts 0..32 logical pixels. Null uses one device pixel when ink is authored; zero hides the border. |
 | `HeaderAppearance.ScrollerCornerRadius`, `ScrollerBorderWidth` | Preserve existing configured square scrollers or ordinary renderer chrome, with a one-device-pixel border. Accept 0..64 and 0..32 logical pixels. Existing `HeaderScrollButtonBorder` supplies ink; body scroller shape remains independent. |
+| `HeaderAppearance.UtilityHoverBackground`, `UtilityPressedBackground`, `UtilityStateChrome` | Optional minimize/modal-close fills and outlines/rims, independent of tabs and QAT. Null retains legacy utility paint. The 2010 preset supplies ordinary gold command-strength states. |
 | `HeaderAppearance.ContextualUnselectedOpacity` | 0.6, multiplied by authored contextual-color alpha before composition. Accepts finite 0..1; selected/disabled ink and explicit selected foreground remain independent. |
 | `HeaderAppearance.FileHighlightInset`, `FileHighlightBackground`, `FileHighlightForeground` | Open CommandMenu File highlight uses a 3-logical-pixel inset, Accent fill and automatic black/white ink. Inset accepts 0..1024 with available-space clamps; existing corner radius remains independent. Fill supports alpha/gradients; Empty ink uses contrast against the fill's first color. Explicit highlight settings also opt Filled headers into this common highlight; null retains their existing Filled recipe. |
 | `Chevrons.Length`, `Depth`, `StrokeWidth` | Shared horizontal/vertical stroked chevrons use 10/6 logical pixels and 1.5-pixel stroke, with a one-device-pixel default stroke minimum. Dimensions accept 0..64 and stroke finite 0..32; zero hides the glyph. Utility slots still clamp size. Applies to header/body scroll, overflow, minimize, submenu and gallery chevrons; filled dropdown triangles and the Back arrow retain their own settings. |
@@ -582,11 +601,13 @@ effects 2**; new command controls use **Theme effects 3**. File-highlight
 review includes a CommandMenu/Backstage toggle; appearance reset stays separate
 from presentation, routing and animation-level choices.
 
-The title-bar QAT is hidden throughout Backstage opening, display and closing;
+For Modern/Classic the title-bar QAT is hidden throughout Backstage opening, display and closing;
 its authored visibility, placement and commands return when Backstage closes.
 TabRow and BelowRibbon QAT presentation is retained, including a TitleBar
 preference that currently falls back to TabRow. Caption buttons
-stay in place above the real panes. By default, opening and closing also fade the surface to
+stay in place above the real panes. Office2010 retains exposed TitleBar/TabRow QAT
+paint/actions, covers BelowRibbon QAT, and cycles headers/navigation/page with F6
+or Shift+F6. By default, opening and closing also fade the surface to
 soften their appearance/disappearance. Page changes use the shared
 `TabContentAnimation`: Fade fades in the incoming native page body; SlideDown
 slides it down 8/12 logical pixels for Subtle/Expressive. Navigation, page frame
@@ -1071,6 +1092,19 @@ font, DPI and constrained viewport. Its Preview, FocusItem and Commit methods
 use the existing gallery behavior; programmatic selection remains distinct from
 accepted activation. The library owns the popup frame, scroll buttons and
 navigation route. Application visuals/data stay in the control.
+
+The complete custom-card viewport has its own theme border, separate from the
+outer popup and individual cards. `PopupAppearance.ContentBorderColor` follows
+the resolved EditorBorder/Border when Empty; `ContentBorderWidth` accepts 0..32
+logical pixels (null one device pixel). Zero/Transparent hides it. The same frame
+applies to custom popup UserControls, and `DrawPopupContentFrame` remains a public
+renderer hook. Its actual width is reserved outside the native viewport.
+
+Custom cards can call `context.Renderer.DrawGalleryTileState` from background
+painting to share built-in hover/pressed/selected fills, outlines and rims while
+keeping their own labels/artwork. The editable sample cards use this hook; their
+ordinary child artwork remains application-owned. Forward the existing context
+input methods rather than executing source commands independently.
 
 Each successful opening creates a fresh owned view; popup close disposes it and
 makes its context inert. The class and factory are mutually exclusive; clear one
@@ -3128,6 +3162,7 @@ built-in tile-state, noninteractive gallery-heading and inline frame/utility dec
 | `HeaderBold` | Null/true adds Bold to host styles; false removes Bold and preserves other styles. Measured heading height and text bounds remain unchanged. |
 | `StripCornerRadius`, `StripInset`, `StripBorderWidth`, `StripBorderColor`, `StripBackground` | Same dimension ranges and primitive defaults as tile chrome. Empty ink follows PopupBorder; null fill follows Surface. Alpha/gradient fills and zero/Transparent outlines are supported. Decoration does not change native content padding, presenter bounds or utility targets. |
 | `UtilityCornerRadius`, `UtilityInset`, `UtilityBorderWidth`, `UtilityBorderColor` | Independently decorate existing enabled Hover/Pressed buttons, with the same ranges and primitive defaults. Empty ink keeps a transparent outline. Shape/ink does not activate idle or disabled buttons. |
+| `UtilityStateChrome` | Optional gallery scroll/expand outlines and inner rims, independent of tile StateChrome. Explicit UtilityBorderColor/UtilityBorderWidth retain precedence. Null keeps existing utility decoration; Office 2010 opts into gold outlines/rims. |
 
 ```csharp
 ribbon.Theme = ribbon.Theme with

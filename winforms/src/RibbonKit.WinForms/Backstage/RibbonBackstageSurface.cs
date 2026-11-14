@@ -65,6 +65,19 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         var origin = child.PointToClient(PointToScreen(Point.Empty)); origin.Offset(bounds.Location);
         return new(origin, Size);
     }
+    private Rectangle DividerShadowBounds(Control child, Rectangle bounds)
+    {
+        int width = RibbonRenderer.BackstageDividerShadowWidth(_ribbon.Theme, DeviceDpi, _pageFrameBounds.Left);
+        int seam = RibbonRenderer.BackstageSeamHeight(_ribbon.Theme, DeviceDpi, Height);
+        var origin = child.PointToClient(PointToScreen(new(_pageFrameBounds.Left - width, seam))); origin.Offset(bounds.Location);
+        return new(origin, new Size(width, Math.Max(0, Height - seam)));
+    }
+    private void PaintNavigationPanel(Graphics graphics, Control child)
+    {
+        var c = new RibbonPaintContext(graphics, child.ClientRectangle, PaintTheme, child.Font, DeviceDpi)
+        { BackgroundBounds = GradientBounds(child, child.ClientRectangle), BackstageDividerShadowBounds = DividerShadowBounds(child, child.ClientRectangle), CompositedText = MaterialPaint };
+        _ribbon.Painter.PaintFill(c, c.Theme.BackstageNavigationFill); _ribbon.Painter.PaintBackstageDividerShadow(c);
+    }
     private Control MotionTarget => MaterialPaint ? _pages : this;
     internal bool HasApplicationOpacity => _motionOpacity is null && RibbonDrawingHold.HasOpacity(MotionTarget.Handle);
     internal RibbonDrawingHold AcquireMotionOpacity(byte alpha)
@@ -289,10 +302,11 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         _prefix = "";
         if (_ribbon.Backstage.SelectedPage is { } selected && _entries.TryGetValue(selected, out var entry) && entry.CanFocus) entry.Focus();
         else if (_entries.Values.FirstOrDefault(b => b.CanFocus) is { } first) first.Focus();
-        else _back.Focus();
+        else if (_back.CanFocus) _back.Focus();
+        else _pages.SelectNextControl(null, true, true, true, true);
         AssignTips();
     }
-    internal void ToggleKeyTips() { _tips = !_tips; _prefix = ""; AssignTips(); }
+    internal void ToggleKeyTips() { _tips = !_tips; _prefix = ""; if (_tips && _ribbon.BackstageKeepsHeaders) FocusInitial(true); else AssignTips(); }
     internal void HideKeyTips() { _tips = false; _prefix = ""; AssignTips(); }
     private void AssignTips()
     {
@@ -320,6 +334,15 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         if (keys is Keys.F6 or (Keys.F6 | Keys.Shift))
         {
             HideKeyTips();
+            if (_ribbon.BackstageKeepsHeaders)
+            {
+                int region = _ribbon.ContainsFocus ? 0 : _pages.ContainsFocus ? 2 : 1;
+                int next = (region + (keys.HasFlag(Keys.Shift) ? 2 : 1)) % 3;
+                if (next == 0) _ribbon.FocusElement(_ribbon.FileMenu, enterEditor: false);
+                else if (next == 1) FocusInitial(false);
+                else if (!_pages.SelectNextControl(null, true, true, true, true)) _ribbon.FocusElement(_ribbon.FileMenu, enterEditor: false);
+                return true;
+            }
             if (_pages.ContainsFocus || !_pages.SelectNextControl(null, true, true, true, true)) FocusInitial(false);
             return true;
         }
@@ -339,6 +362,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         {
             HideKeyTips();
             var buttons = NavigationButtons().ToArray();
+            if (buttons.Length == 0) return true;
             int index = Array.FindIndex(buttons, b => b.Focused);
             index = keys == Keys.Home ? 0 : keys == Keys.End ? buttons.Length - 1 : (index + (keys == Keys.Up ? -1 : 1) + buttons.Length) % buttons.Length;
             buttons[index].Focus();
@@ -369,6 +393,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         {
             var layout = RibbonBackstageLayout.Build(ClientSize, _navigation.Font, DeviceDpi, _ribbon.Backstage, captionHeight: CaptionHeight);
             _back.Bounds = layout.Back;
+            _back.Visible = !layout.Back.IsEmpty;
             _navigation.Bounds = layout.Navigation;
             _footer.Bounds = layout.Footer;
             _pageFrameBounds = layout.Page;
@@ -450,12 +475,18 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
         }
         private RibbonBackdropBuffer? _buffer;
-        protected override void OnPaintBackground(PaintEventArgs e) { if (!_surface.MaterialPaint) base.OnPaintBackground(e); }
+        protected override void OnPaintBackground(PaintEventArgs e)
+        { if (!_surface.MaterialPaint && _surface.PaintTheme.BackstageNavigationBackgroundFill is null && RibbonRenderer.BackstageDividerShadowWidth(_surface._ribbon.Theme, DeviceDpi, Width) == 0) base.OnPaintBackground(e); }
         protected override void OnPaint(PaintEventArgs e)
         {
-            if (!_surface.MaterialPaint) { _buffer?.Dispose(); _buffer = null; base.OnPaint(e); return; }
+            if (!_surface.MaterialPaint)
+            {
+                _buffer?.Dispose(); _buffer = null; base.OnPaint(e);
+                if (_surface.PaintTheme.BackstageNavigationBackgroundFill is not null || RibbonRenderer.BackstageDividerShadowWidth(_surface._ribbon.Theme, DeviceDpi, Width) > 0) _surface.PaintNavigationPanel(e.Graphics, this);
+                return;
+            }
             (_buffer ??= new()).Paint(e.Graphics, Size, Height, Color.Transparent, graphics =>
-            { using var fill = new SolidBrush(_surface.PaintTheme.BackstageNavigationBackground); graphics.FillRectangle(fill, ClientRectangle); }, opacity: _surface.MotionAlpha);
+            { _surface.PaintNavigationPanel(graphics, this); }, opacity: _surface.MotionAlpha);
         }
         protected override void Dispose(bool disposing) { if (disposing) _buffer?.Dispose(); base.Dispose(disposing); }
     }
@@ -587,7 +618,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         protected override void OnPaint(PaintEventArgs e)
         {
             void Paint(Graphics graphics) => _surface._ribbon.Painter.DrawBackstageEntry(new(graphics, ClientRectangle, _surface.PaintTheme, Font, DeviceDpi)
-                { BackgroundBounds = _surface.GradientBounds(this, ClientRectangle), Density = _surface._ribbon.Density, CompositedText = _surface.MaterialPaint, WindowBackdrop = _surface._ribbon.HasWindowBackdrop }, _item, false);
+                { BackgroundBounds = _surface.GradientBounds(this, ClientRectangle), BackstageDividerShadowBounds = _surface.DividerShadowBounds(this, ClientRectangle), Density = _surface._ribbon.Density, CompositedText = _surface.MaterialPaint, WindowBackdrop = _surface._ribbon.HasWindowBackdrop }, _item, false);
             if (_surface.MaterialPaint) (_buffer ??= new()).Paint(e.Graphics, Size, Height, Color.Transparent, Paint, opacity: _surface.MotionAlpha);
             else { _buffer?.Dispose(); _buffer = null; Paint(e.Graphics); }
         }
@@ -628,7 +659,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         private void PaintEntry(Graphics graphics, Rectangle bounds)
         {
             var ribbon = _surface._ribbon;
-            var context = new RibbonPaintContext(graphics, bounds, _surface.PaintTheme, Font, DeviceDpi, _hot, _pressed, Focused && ribbon.KeyboardFocusCues) { BackgroundBounds = _surface.GradientBounds(this, bounds), Density = ribbon.Density, CompositedText = _surface.MaterialPaint, WindowBackdrop = ribbon.HasWindowBackdrop };
+            var context = new RibbonPaintContext(graphics, bounds, _surface.PaintTheme, Font, DeviceDpi, _hot, _pressed, Focused && ribbon.KeyboardFocusCues) { BackgroundBounds = _surface.GradientBounds(this, bounds), BackstageDividerShadowBounds = _surface.DividerShadowBounds(this, bounds), Density = ribbon.Density, CompositedText = _surface.MaterialPaint, WindowBackdrop = ribbon.HasWindowBackdrop };
             ribbon.Painter.DrawBackstageEntry(context, Item, ReferenceEquals(Item, ribbon.Backstage.SelectedPage) && Item is not null);
             if (Tip.Length > 0)
             {

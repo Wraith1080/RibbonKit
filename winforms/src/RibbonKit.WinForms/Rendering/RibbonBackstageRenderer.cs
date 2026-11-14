@@ -29,10 +29,10 @@ public partial class RibbonRenderer
 {
     internal RibbonBackstageRenderer BackstageStyleRenderer(RibbonTheme theme) => RibbonPresentationResolver.Backstage(theme).Renderer;
     internal void PaintBackstageChrome(RibbonPaintContext context, RibbonFill fill) => DrawChrome(context with { IsBackstageNavigationState = true }, fill, Color.Transparent);
-    internal void PaintFullWidthBackstageState(RibbonPaintContext context, RibbonFill fill)
+    internal void PaintFullWidthBackstageState(RibbonPaintContext context, RibbonFill fill, Color fallbackBorder = default)
     {
         var settings = context.Theme.BackstageAppearance;
-        var border = settings is null || settings.NavigationBorderColor.IsEmpty ? Color.Transparent : settings.NavigationBorderColor;
+        var border = settings is null || settings.NavigationBorderColor.IsEmpty ? fallbackBorder.IsEmpty ? Color.Transparent : fallbackBorder : settings.NavigationBorderColor;
         PaintRounded(context, Layout.RibbonLayoutEngine.Scale(settings?.NavigationCornerRadius ?? 0, context.DeviceDpi), fill, border,
             border.A == 0 ? 0 : settings?.NavigationBorderWidth is { } width ? Layout.RibbonLayoutEngine.Scale(width, context.DeviceDpi) : 1);
     }

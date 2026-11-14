@@ -5,6 +5,12 @@ public sealed record RibbonHeaderAppearanceSettings
 {
     /// <summary>Initializes overrides that retain existing appearance.</summary>
     public RibbonHeaderAppearanceSettings() { }
+    /// <summary>Gets optional minimize/modal-close hover fill. Null retains the header utility's existing state recipe; tabs and QAT stay independent.</summary>
+    public RibbonFill? UtilityHoverBackground { get; init; }
+    /// <summary>Gets optional minimize/modal-close pressed fill. Null retains the header utility's existing state recipe.</summary>
+    public RibbonFill? UtilityPressedBackground { get; init; }
+    /// <summary>Gets optional minimize/modal-close outlines and inner rims. Null retains existing utility chrome.</summary>
+    public RibbonStateChromeSettings? UtilityStateChrome { get; init; }
     /// <summary>Gets Filled-presentation tab/File state outline ink, including alpha. Empty retains the transparent default, except a connected selected tab follows BodyBorder/Border. Transparent hides the outline.</summary>
     public Color FilledBorderColor { get; init; } = Color.Empty;
     /// <summary>Gets unselected Filled-tab hover outline ink. Empty follows FilledBorderColor; an explicit FilledBorderColor wins. Selected-tab and File outlines stay independent.</summary>
@@ -35,6 +41,7 @@ public sealed record RibbonHeaderAppearanceSettings
     internal static void Validate(RibbonHeaderAppearanceSettings? settings)
     {
         if (settings is null) return;
+        RibbonStateChromeSettings.Validate(settings.UtilityStateChrome);
         if (settings.FilledBorderWidth is < 0 or > 32 || settings.ScrollerBorderWidth is < 0 or > 32 || settings.ScrollerCornerRadius is < 0 or > 64 || settings.FileHighlightInset is < 0 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(settings), "Header outline widths must be 0..32, radius 0..64 and File inset 0..1024 logical pixels, or null for existing appearance.");
         if (settings.ContextualUnselectedOpacity is { } opacity && (!double.IsFinite(opacity) || opacity < 0 || opacity > 1))

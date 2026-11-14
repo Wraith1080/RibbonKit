@@ -56,7 +56,7 @@ public partial class GalleryStylesStripControl : UserControl, IRibbonGalleryPres
             // presenter bounds are applied, preserving the authored card layout.
             card.Visible = i / Columns == _row;
             card.Bounds = new(left + gap, (i / Columns - _row) * Context.Viewport.Height + gap, Math.Max(1, right - left - 2 * gap), Math.Max(1, Context.Viewport.Height - 2 * gap));
-            card.ShowItem(_items[i], Context, ReferenceEquals(_hot, _items[i]));
+            card.ShowItem(_items[i], Context, ReferenceEquals(_hot, _items[i]), ReferenceEquals(_pressed, _items[i]));
         }
         Invalidate();
     }
@@ -98,11 +98,12 @@ public partial class GalleryStylesStripControl : UserControl, IRibbonGalleryPres
         {
             _pressed = e.Button == MouseButtons.Left && (!control.CanSelect || control.ContainsFocus) ? item : null;
             if (_pressed is not null && _context?.FocusItem(item) != true) _pressed = null;
+            LayoutCards();
         };
-        control.MouseCaptureChanged += (_, _) => { if (!control.Capture) _pressed = null; };
+        control.MouseCaptureChanged += (_, _) => { if (!control.Capture) { _pressed = null; LayoutCards(); } };
         control.MouseUp += (_, e) =>
         {
-            var pressed = _pressed; _pressed = null; var point = PointToClient(control.PointToScreen(e.Location));
+            var pressed = _pressed; _pressed = null; LayoutCards(); var point = PointToClient(control.PointToScreen(e.Location));
             if (e.Button == MouseButtons.Left && ReferenceEquals(pressed, item) && ReferenceEquals(HitTest(point), item)) _context?.Commit(item);
         };
         foreach (Control child in control.Controls) ConnectPointer(child, item);

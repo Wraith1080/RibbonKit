@@ -101,7 +101,7 @@ public partial class GalleryStylesControl : UserControl, IRibbonGalleryPresenter
                     _views.Add(item, card);
                     if (card.Parent is null) Controls.Add(card);
                 }
-                card.ShowItem(item, Context, ReferenceEquals(_hotItem, item));
+                card.ShowItem(item, Context, ReferenceEquals(_hotItem, item), ReferenceEquals(_pressedItem, item));
                 // Complete first-show native autoscaling before applying bounds
                 // measured in the context's physical pixels.
                 card.Visible = true;
@@ -114,7 +114,7 @@ public partial class GalleryStylesControl : UserControl, IRibbonGalleryPresenter
     private void RefreshCardStates()
     {
         foreach (var pair in _views)
-            if (pair.Value.Visible) pair.Value.ShowItem(pair.Key, Context, ReferenceEquals(_hotItem, pair.Key));
+            if (pair.Value.Visible) pair.Value.ShowItem(pair.Key, Context, ReferenceEquals(_hotItem, pair.Key), ReferenceEquals(_pressedItem, pair.Key));
     }
 
     public Rectangle GetItemBounds(RibbonGalleryTile item)
@@ -191,11 +191,13 @@ public partial class GalleryStylesControl : UserControl, IRibbonGalleryPresenter
         {
             _pressedItem = e.Button == MouseButtons.Left ? item : null;
             if (_pressedItem is not null) _context?.FocusItem(item);
+            RefreshCardStates();
         };
         control.MouseUp += (_, e) =>
         {
             var pressed = _pressedItem;
             _pressedItem = null;
+            RefreshCardStates();
             var location = PointToClient(control.PointToScreen(e.Location));
             if (e.Button == MouseButtons.Left && ReferenceEquals(pressed, item) && ReferenceEquals(HitTest(location), item))
                 _context?.Commit(item);

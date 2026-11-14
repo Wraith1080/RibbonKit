@@ -1,6 +1,6 @@
 # Native Office 2010 Blue — normal theme first
 
-**2026-11-14 — F3 shell delivered; reported hover/minimize details and shared File-width follow-up corrected, awaiting user recheck. Next implementation is F4 below-tabs Backstage.**
+**2026-11-15 — Selected Backstage hue/lower-band correction delivered, pending recheck. Current user review is in the themes ledger. Next: F5 composed normal-theme review. The full Aero frame remains deferred.**
 The user selected Office 2010 after the Office 2013 review and supplied eight
 WPF references, including an additional ordinary-button hover example. They
 explicitly confirmed rounded corners for this non-flat theme. Deliver the normal
@@ -308,9 +308,10 @@ Backstage remains F4 and composed normal-theme review remains F5.
 
 ## F3 implementation and verification — 2026-11-14
 
-Entered with clean status at `ec78e11` on `codex/Ribbonkit-Winform`. F3 remains
-uncommitted and entirely within `winforms/`; normal outputs and retained evidence
-are preserved. No Aero or new Backstage style/placement was implemented.
+Entered with clean status at `ec78e11` on `codex/Ribbonkit-Winform`. F3 was later
+committed by the user at `9f38496`; its reviewed status is in the themes ledger.
+This shell record predates the F4 Backstage implementation below. Normal outputs
+and retained evidence are preserved; no Aero was implemented.
 
 ### Delivered shell and public contract
 
@@ -484,6 +485,209 @@ of the corrections before recheck and does not start F4.
   Current package is recorded in the continuation prompt. No unrelated accepted
   composed, corner, material or input matrix was repeated.
 
-Recheck the reported two header details and the wider File entry in both samples.
-The complete family and actual VS/physical/native-silhouette gates remain pending.
-Next is still F4 below-tabs Backstage; Aero remains deferred.
+The current review result is in the themes ledger. The complete family and actual
+VS/physical/native-silhouette gates remain separate. The successor F4 is below.
+
+## F4 implementation and verification — 2026-11-14
+
+Entered with a clean worktree at user commit `9f38496` (`2010 F3 Done`) on
+`codex/Ribbonkit-Winform`. F4 stays uncommitted within `winforms/`; normal outputs,
+authored sample content/resources and the shipped API baseline are retained.
+
+### Delivered behavior and independent settings
+
+- `RibbonBackstageStyle.Office2010 = 2` registers sibling layout/drawing helpers
+  under the neutral bases, plus explicit below-tabs placement, separate-caption
+  and existing whole-pane/page motion defaults. Palette and style remain independent.
+- The live tab/File viewport bottom is transformed into host-client coordinates.
+  Font, density, Classic/Simplified, QAT placement, nested ordinary Form and host
+  reflow use that measured anchor. The pane covers the ribbon body/lower QAT and
+  document, leaving the real caption/tab row and exposed QAT available.
+- File remains open; the redundant Back target and its reserved space are hidden
+  by default. File/current tab closes; another tab selects normally after page
+  validation accepts. Only painted tab selection/connection is suspended, including
+  contextual/merged tabs. Logical models and native input owners remain unchanged.
+  F6/Shift+F6 cycles exposed headers, navigation and native page content.
+- `BackstageAppearance` adds nullable `BackButtonVisible`, `TopSeamHeight` (0..32),
+  `TopSeamBackground`, `PageDividerShadowWidth` (0..64), shadow color and finite
+  opacity (0..1). Null follows the family; 2010 defaults are false/3/6/Black/0.18,
+  existing styles retain visible Back and zero seam/shadow. Zero/Transparent hides
+  the corresponding paint independently. Existing navigation/page/A10 roles win.
+- The rail uses its full-height pale-blue ramp, square full-width blue selected
+  rows and a white page. `IdentityAccent.NavigationStrength`, reference selected
+  fill and border adapt with Accent; explicit navigation fill/border overrides win.
+  The seam follows the effective open File ramp's bottom color. Divider shadow
+  stays on the navigation side below the seam, including native child rows.
+- Inert designer previews share placement/frame settings. Inline previews show
+  File open and clear painted tab selection without changing runtime open/selection
+  state or creating/painting/reparenting native page content. File/tab selection
+  exits the below-tabs preview. No test code moved into the normal Designer Sample.
+
+Host Layout must ignore the Backstage pane's own position updates: otherwise it
+resets each whole-pane motion frame to its settled anchor. A focused failing travel
+check reproduced this; the callback now distinguishes pane travel from host/ribbon
+reflow. Existing clocks and the accepted 2019/2024 caption handoff are unchanged.
+
+### Verification and limits
+
+- **210 distinct focused Release cases pass on their latest selected runs**, not
+  one full-suite run. `artifacts/office2010-f4/focused-latest-results.json` maps each
+  case to its TRX. The initial 146-case regression run passed 140; six fixture
+  assumptions were repaired and rerun. Additional layout, designer/input and new
+  page-motion scopes pass. The final motion correction passes 24/24 affected cases.
+  Coverage includes 96/120/144/192 paint DPI, null/zero/Transparent/reset, invalid
+  atomic assignment, nested/measured native placement, contextual/merged headers,
+  keyboard/validation, real travel/close/reversal and retained handles/parents/RTF/
+  selection through page switching. Existing style/caption/page handoffs pass.
+- The [public-package runner](../eng/Test-Office2010Backstage.ps1) uses an isolated
+  package-only app with its own model/native content and no sample resources,
+  helpers or internal access. The retained F3 package is
+  `0.1.0-designer.local20261114T121614945Z`. Twelve old-theme direct-paint images
+  (2013/2019/2024, neutral/Office renderer, 96/144 DPI) compare byte-for-byte.
+  Native F4 checks cover 12 layout/density/QAT scopes, measured anchoring/z-order,
+  exposed tab/File/QAT actions, validation, page switching, live accent, independent
+  Back/seam/shadow settings and application-theme Reset.
+- Both actual authored samples pass `--verify-office2010-backstage` through public
+  APIs; Designer Sample dispatch stays in its dedicated package-only test host.
+  The normal sample still contains no verification types or methods. Default and
+  alternate-accent pane/client print composites were inspected. WinForms child
+  printing does not preserve overlapping HWND z-order, so the saved Form composites
+  explicitly print the verified live front pane last; these are not desktop captures.
+- Debug runtime, designer server, net472 designer client, both normal samples and
+  the dedicated test host build with zero warnings/errors. The persistent Designer
+  Sample is refreshed in place; its exact current package is in the continuation
+  prompt and `.local/last-refresh.json`. Twenty additive API declarations are in
+  Unshipped; Shipped is unchanged. No unrelated accepted matrices were repeated.
+
+This is focused/direct-paint/offscreen native evidence. Actual VS designer
+load/save/reopen, continuous visible motion, physical input/IME, native corners,
+desktop material pixels and mixed-monitor/DPI acceptance remain unrun. The selected
+row uses reference linear ramps; a separate radial reflection is not claimed.
+
+### User visual review
+
+1. In both normal samples choose View > Office 2010 Blue. Designer Sample starts
+   in Backstage File mode. In Showcase use its existing File > Backstage action.
+2. Confirm the complete caption/tab row remains visible, File stays open, the
+   selected ordinary tab has no white connection, and the round Back is absent.
+   Inspect the blue seam, pale rail, square selected row and left-only page shadow.
+3. Click File/current tab to close, then another tab to close/select. Try navigation
+   pages, F6/Shift+F6, Escape and an exposed QAT action. Enter Notes, change page,
+   close/reopen and confirm text/caret selection remains. Try an alternate accent
+   and Color title bar on/off.
+4. With motion enabled, watch complete opening/closing and a quick reversal; resize
+   and maximize/restore, then inspect Simplified/Touch and the three QAT positions.
+   Report any flash, clipped target or late tab connection separately from static paint.
+5. Reopen the refreshed Designer Sample solution in VS. Choose Office2010Blue,
+   preview Backstage, return with File/a tab, save/reopen and confirm the authored
+   page controls and SVG gallery artwork remain intact.
+
+Stop after F4. Next: **F5 composed normal-theme review**; no Aero or new family.
+
+## F4 visual review corrections — 2026-11-15
+
+The user supplied six additional images and eight corrections, then clarified
+that the complete custom-card viewport needs its own border and subsequently
+included the cards' flat selected/hover appearance too. This is a bounded review
+follow-up over the retained uncommitted F4 work at `9f38496`, entirely in
+`winforms/`. The caption-button glass request authorizes those buttons; the full
+Aero frame remains a separate deferred experiment. No card artwork, commands,
+native targets or diagnostic tabs were replaced.
+
+| Requested correction | Delivered result |
+| --- | --- |
+| R1: selected Backstage row follows Accent | Retained F4's IdentityAccent selected-ramp/border derivation. Live native pixels change with Green/Purple/Red, and both actual samples' Accent gallery actions recolor the selected row while native editors retain handles/parents/text. The current F4 recipe already passes this check; no extra recoloring callback was added. Refresh/reopen the selected package before rechecking the reported old appearance. |
+| R2: flat Backstage hover with light horizontal edges | The 2010 preset uses a solid pale fill and lighter top/bottom edges. BackstageAppearance.NavigationHoverEdgeColor/NavigationHoverEdgeWidth are independent, supporting Empty/Transparent/zero/reset. Selected/pressed ramps remain dimensional. |
+| R3: dimensional caption buttons | The 2010 preset uses blue hover/pressed reflection ramps for minimize/maximize/restore, red close ramps, outlines and white inner rims. CaptionButtonAppearance.StateChrome and CloseStateChrome are independent of fills, glyphs and native targets. Existing families retain their defaults. |
+| R4: gallery/ribbon-minimize hover/press borders | GalleryAppearance.UtilityStateChrome routes the missing scroll/expand outlines and rims through shared gallery chrome. Header utilities have their own StateChrome. Explicit utility border color/width still wins; idle/disabled states stay inert. |
+| R5: stronger minimize/modal-close states | HeaderAppearance.UtilityHoverBackground/UtilityPressedBackground/UtilityStateChrome keep utility states separate from tab/QAT paint. The 2010 preset supplies the ordinary gold command fills and outlines instead of weak header washes. |
+| R6: custom-presenter utilities and cards | Popup presenter arrows now restore the actual full-popup gradient and use the themed gallery utility path. DrawGalleryTileState is a public renderer hook shared by built-in tiles and optional custom-card state paint. The Designer Sample calls it for selected/hover/pressed states; its paper artwork/labels stay ordinary designer-editable child controls. |
+| R7: border around the complete custom presenter area | Shared DrawPopupContentFrame surrounds the whole gallery viewport or hosted custom UserControl, independently of the outer popup. PopupAppearance.ContentBorderColor follows EditorBorder then Border when Empty; ContentBorderWidth accepts 0..32 logical pixels (null one device pixel). Zero/Transparent hides it. Actual border clearance is reserved outside the native viewport; individual card borders remain separate. |
+| R8: 2024 overflow text leaking through the body edge | Shared DrawText now preserves the caller's Graphics clip for ordinary and composited text. Actual narrow Classic/Simplified ribbon commands and group labels stay inside their measured BodyViewport; paint, icon clips and hit targets retain the existing geometry. |
+
+### Focused evidence and remaining gates
+
+- **155/155 focused Release cases pass**, plus **2/2** new whole-ribbon narrow-body
+  cases. The 19 new review cases cover solid/edge paint at 96/120/144/192 DPI,
+  native live accent/ownership, gold utility fill/borders, caption depth/reset,
+  opaque/composited clipping, four-theme viewport frame/reset and atomic invalid
+  assignments. Relevant existing gallery presenter, inline ownership, caption,
+  header/clipping and Backstage appearance checks pass. The initial frame check
+  exposed the Empty EditorBorder fallback; it is corrected to the resolved border.
+- [Independent package verification](../eng/Test-Office2010Review.ps1) compares
+  retained pre-review package `0.1.0-designer.local20261114T161446455Z` with refreshed
+  `0.1.0-designer.local20261114T221000305Z`. The old public DrawText path paints
+  **2,526 text pixels outside the clip**; current paints **zero**. The gallery
+  utility probe changes from **zero** matching state-border pixels to **286**.
+  Own-model native checks pass all four theme viewport frames and shared card-state
+  hooks with no sample helpers/resources/internal access.
+- Both actual sample checks pass `--verify-office2010-review`; the Designer Sample
+  check stays under tests. These use actual theme/accent actions, native row pixels,
+  retained editor HWNDs/parents/text and real authored custom gallery cards. Native
+  popup checks run serially to preserve activation ownership. The Showcase has
+  another document-color gallery containing a Purple tile; the accent test selects
+  the actual Accent gallery by identity instead of matching the label alone.
+- Default/alternate-accent Backstage, 2010/2024 framed card viewports, caption
+  hover/pressed reflection images and before/after/narrow-body captures were
+  inspected under `artifacts/office2010-review/`. Normal Debug runtime, designer
+  server/net472 client, both samples and the dedicated test host build cleanly.
+  Twenty-two additive API declarations are in Unshipped; Shipped is unchanged.
+- Extra foreground sample checks are **not passing acceptance**: inline presenter
+  verification stops at "Focus the browsed row without selecting". An isolated
+  host using pre-change card sources and the pre-review package reproduces the
+  same assertion (`inline-baseline/evidence/result.log`). The separate foreground
+  popup check loses its owner window and closes before capture (`popup-input`).
+  These do not replace the passing focused/offscreen checks or establish physical
+  input acceptance. They remain explicit live-review limits; no unrelated input
+  coordinator or fixture assertion was changed to hide them.
+
+Reopen the refreshed Designer Sample solution in VS. Recheck the eight items in
+both samples, including actual Accent selection, all gallery arrows, card
+hover/selection/press, the surrounding viewport border and a very narrow 2024
+window. Inspect caption hover/press/maximize/restore and minimize/modal-close gold
+feedback. Actual VS save/reopen, continuous motion, physical input/IME and mixed
+monitor/material review remain separate. Stop here for recheck; next remains F5.
+
+## Selected navigation hue and lower-band correction — 2026-11-15
+
+The user's red-accent comparison reproduced two defects in the selected row:
+independent RGB channel rebasing retained the reference blue channel's depth,
+turning red/purple/green/orange identities toward unrelated hues. The default
+selected ramp also peaked near 80% height and then darkened sharply, producing
+the reported bright lower band. A check that only asserts "the pixels changed"
+cannot establish accent fidelity.
+
+Navigation now transfers relative lightness/saturation onto the selected accent's
+hue. NavigationStrength still independently blends reference/full adaptation;
+zero and matching-reference RGB retain the authored reference. Default selected
+stops lighten smoothly through the whole row instead of creating a lower peak.
+The 2010 selected/pressed row and derived outline use this navigation-specific
+mapping. Explicit BackstageNavigationSelected and NavigationBorderColor retain
+precedence, as do authored reference ramps, direction/alpha and independent Reset.
+The public general AdaptFill recipe, File/caption fills, hover edges, utilities,
+gallery cards/frame, native input and window geometry remain unchanged. No API
+addition or new theme selector was needed.
+
+Focused Release checks pass **24/24**, including six hues, four paint DPI,
+selected/pressed native paint in both renderers, neutral accents, strength/reset,
+explicit overrides and alpha/direction. Selected-row lightness is measured across
+all paint scanlines away from text/borders, not only one endpoint.
+
+The [independent package runner](../eng/Test-Office2010Navigation.ps1) compares
+pre-correction `0.1.0-designer.local20261114T221000305Z` with refreshed
+`0.1.0-designer.local20261114T225800298Z`. Red's maximum painted hue error falls
+from **64.14 degrees to 0.53 degrees**; all six corrected ramps stay within two
+degrees and have no downward lightness step. The retained baseline reproduces
+the lower reversal. Before/after row sheets and live sample rows were inspected
+under `artifacts/office2010-navigation/`.
+
+Both actual sample `--verify-office2010-navigation` checks pass all six Accent
+gallery actions and native row measurements, retaining editor handles/parents,
+text/RTF/selection. The package consumer has its own model, no sample resources,
+helpers or internal access. Normal Debug runtime/server/net472 client, samples
+and the dedicated host build cleanly; Shipped/Unshipped API files are unchanged
+by this correction. Earlier unrelated passed matrices were retained.
+
+This is direct-paint/offscreen native evidence; user visual recheck and actual VS
+review remain separate. Reopen the refreshed sample solution before rechecking
+Red/Green/Orange and the area below the selected-row text. Stop here; next is F5.

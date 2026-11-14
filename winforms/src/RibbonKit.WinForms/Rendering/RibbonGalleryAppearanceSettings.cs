@@ -5,6 +5,8 @@ public sealed record RibbonGalleryAppearanceSettings
 {
     /// <summary>Gets optional selected/hover tile outlines and inner rims. Explicit tile border settings win; headings/strip chrome are independent.</summary>
     public RibbonStateChromeSettings? StateChrome { get; init; }
+    /// <summary>Gets optional gallery scroll/expand state outlines and rims. Tile StateChrome and explicit UtilityBorderColor remain independent.</summary>
+    public RibbonStateChromeSettings? UtilityStateChrome { get; init; }
     /// <summary>Initializes overrides retaining existing gallery paint.</summary>
     public RibbonGalleryAppearanceSettings() { }
     /// <summary>Gets optional active tile-state corner radius in logical pixels, 0..64. Null keeps the actual renderer's neutral/Office primitive radius.</summary>
@@ -49,10 +51,11 @@ public sealed record RibbonGalleryAppearanceSettings
     internal bool HasTileChrome => StateChrome?.HasOverrides == true || TileCornerRadius is not null || TileInset is not null || TileBorderWidth is not null || !TileBorderColor.IsEmpty;
     internal bool HasHeaderChrome => HeaderCornerRadius is not null || HeaderInset is not null || HeaderBorderWidth is not null || !HeaderBorderColor.IsEmpty;
     internal bool HasStripChrome => StripCornerRadius is not null || StripInset is not null || StripBorderWidth is not null || !StripBorderColor.IsEmpty;
-    internal bool HasUtilityChrome => UtilityCornerRadius is not null || UtilityInset is not null || UtilityBorderWidth is not null || !UtilityBorderColor.IsEmpty;
+    internal bool HasUtilityChrome => UtilityStateChrome?.HasOverrides == true || UtilityCornerRadius is not null || UtilityInset is not null || UtilityBorderWidth is not null || !UtilityBorderColor.IsEmpty;
     internal static void Validate(RibbonGalleryAppearanceSettings? a)
     {
         if (a is null) return;
+        RibbonStateChromeSettings.Validate(a.UtilityStateChrome);
         if (a.TileCornerRadius is < 0 or > 64 || a.HeaderCornerRadius is < 0 or > 64 || a.StripCornerRadius is < 0 or > 64 || a.UtilityCornerRadius is < 0 or > 64
             || a.TileInset is < 0 or > 1024 || a.HeaderInset is < 0 or > 1024 || a.StripInset is < 0 or > 1024 || a.UtilityInset is < 0 or > 1024
             || a.TileBorderWidth is < 0 or > 32 || a.HeaderBorderWidth is < 0 or > 32 || a.StripBorderWidth is < 0 or > 32 || a.UtilityBorderWidth is < 0 or > 32)

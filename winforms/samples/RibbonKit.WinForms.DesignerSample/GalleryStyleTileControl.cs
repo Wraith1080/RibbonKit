@@ -8,10 +8,14 @@ public partial class GalleryStyleTileControl : UserControl
 {
     private Color _borderColor = Color.LightGray;
     private int _borderWidth = 1;
+    private RibbonGalleryPresenterContext? _context;
+    private RibbonGalleryTile? _item;
+    private bool _hot, _pressed;
 
     public GalleryStyleTileControl()
     {
         InitializeComponent();
+        titleLabel.BackColor = Color.Transparent;
         DoubleBuffered = true;
     }
 
@@ -22,30 +26,38 @@ public partial class GalleryStyleTileControl : UserControl
         set => titleLabel.Text = value;
     }
 
-    internal void ShowItem(RibbonGalleryTile item, RibbonGalleryPresenterContext context, bool hot)
+    internal void ShowItem(RibbonGalleryTile item, RibbonGalleryPresenterContext context, bool hot, bool pressed = false)
     {
-        bool selected = ReferenceEquals(context.Gallery.SelectedItem, item);
-        bool focused = ReferenceEquals(context.FocusedItem, item);
+        _context = context; _item = item; _hot = hot; _pressed = pressed;
         Caption = item.Text;
         AccessibleName = item.Text;
         Enabled = item.Enabled;
-        BackColor = selected ? context.Theme.Checked.Start : hot ? context.Theme.Hover.Start : context.Theme.Surface;
+        BackColor = context.Theme.Surface;
         ForeColor = item.Enabled ? context.Theme.Foreground : SystemColors.GrayText;
 
-        var borderColor = selected || focused ? context.Theme.Accent : context.Theme.Border;
-        int borderWidth = selected ? 2 : 1;
-        if (_borderColor == borderColor && _borderWidth == borderWidth) return;
-        _borderColor = borderColor;
-        _borderWidth = borderWidth;
-        Invalidate();
+        _borderColor = context.Theme.Border;
+        Invalidate(true);
     }
 
-    // Only the selection outline needs painting. All card content is editable
-    // as ordinary panels/labels in GalleryStyleTileControl.Designer.cs.
+    protected override void OnPaintBackground(PaintEventArgs e)
+    {
+        base.OnPaintBackground(e);
+        if (_context is not { } c || _item is not { } item) return;
+        c.Renderer.DrawGalleryTileState(new(e.Graphics, ClientRectangle, c.Theme, Font, DeviceDpi, Hot: _hot, Pressed: _pressed) { Density = c.Density }, item, ReferenceEquals(c.Gallery.SelectedItem, item));
+    }
+
+    // Theme-owned state paint stays separate from the ordinary designer-editable
+    // paper artwork and labels in GalleryStyleTileControl.Designer.cs.
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
-        using var border = new Pen(_borderColor, _borderWidth);
-        e.Graphics.DrawRectangle(border, 1, 1, Math.Max(0, Width - 3), Math.Max(0, Height - 3));
+        bool selected = _context is { } c && ReferenceEquals(c.Gallery.SelectedItem, _item);
+        if (!selected && !_hot && !_pressed)
+        {
+            using var border = new Pen(_borderColor, _borderWidth);
+            e.Graphics.DrawRectangle(border, 1, 1, Math.Max(0, Width - 3), Math.Max(0, Height - 3));
+        }
+        if (_context is { } context && ReferenceEquals(context.FocusedItem, _item))
+            context.Renderer.DrawFocus(new(e.Graphics, ClientRectangle, context.Theme, Font, DeviceDpi) { Density = context.Density });
     }
 }

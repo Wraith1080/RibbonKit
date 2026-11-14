@@ -24,7 +24,7 @@ internal static class RibbonBackstagePreviewRenderer
         using var pixels = new Bitmap(width, height); using var graphics = Graphics.FromImage(pixels);
         var context = new RibbonPaintContext(graphics, new(Point.Empty, pixels.Size), theme, font, dpi) { Density = ribbon.Density };
         ribbon.Painter.DrawBackstageBackground(context, layout.Page.Left);
-        ribbon.Painter.DrawBackstageEntry(context with { Bounds = layout.Back }, null, false);
+        if (!layout.Back.IsEmpty) ribbon.Painter.DrawBackstageEntry(context with { Bounds = layout.Back }, null, false);
         var result = new RibbonBackstagePreview();
         foreach (var slot in layout.Arrange(probe.Backstage))
         {
@@ -34,7 +34,9 @@ internal static class RibbonBackstagePreviewRenderer
             try
             {
                 graphics.SetClip(slot.Clip, System.Drawing.Drawing2D.CombineMode.Intersect);
-                ribbon.Painter.DrawBackstageEntry(context with { Bounds = slot.Bounds, Hot = selected && slot.Item is not RibbonBackstagePageItem }, slot.Item, selected && slot.Item is RibbonBackstagePageItem);
+                int shadow = RibbonRenderer.BackstageDividerShadowWidth(theme, dpi, layout.Page.Left);
+                ribbon.Painter.DrawBackstageEntry(context with { Bounds = slot.Bounds, Hot = selected && slot.Item is not RibbonBackstagePageItem,
+                    BackgroundBounds = context.Bounds, BackstageDividerShadowBounds = new(layout.Page.Left - shadow, layout.Page.Top, shadow, Math.Max(0, height - layout.Page.Top)) }, slot.Item, selected && slot.Item is RibbonBackstagePageItem);
             }
             finally { graphics.Restore(state); }
             result.Regions.Add(new() { Key = node.Key, X = bounds.X, Y = bounds.Y, Width = bounds.Width, Height = bounds.Height });

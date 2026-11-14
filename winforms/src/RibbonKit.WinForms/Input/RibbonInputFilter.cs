@@ -114,7 +114,7 @@ internal sealed class RibbonInputFilter(RibbonControl ribbon) : IMessageFilter, 
             {
                 ribbon.SetKeyboardFocusCues(true);
                 if (key == Keys.F10 && Control.ModifierKeys == Keys.None) { ribbon.ToggleKeyTips(); return true; }
-                return ribbon.ProcessBackstageKey(key | Control.ModifierKeys);
+                return ribbon.BackstageKeepsHeaders && ribbon.ContainsFocus ? ribbon.ProcessRibbonKey(key | Control.ModifierKeys) : ribbon.ProcessBackstageKey(key | Control.ModifierKeys);
             }
             // Observe Tab before normal WinForms traversal transfers focus into
             // the ribbon; do not consume the host's navigation message.

@@ -55,7 +55,11 @@ internal sealed class RibbonDesignSelection : IDisposable
     internal bool CanSelectAt(Point point) => Backstage.CanOpenFromFile(point) || HitTest(point) is not null || ScrollTarget(point) is not null;
     internal bool SelectAt(Point point)
     {
-        if (Backstage.CanOpenFromFile(point)) { Backstage.Open(); return true; }
+        if (Backstage.CanOpenFromFile(point))
+        {
+            if (Backstage.IsOpen && _ribbon.BackstageKeepsHeaders) Backstage.Close(); else Backstage.Open();
+            return true;
+        }
         if (ScrollTarget(point) is { } scroll)
         {
             _ribbon.Scroll(scroll.Kind is TargetKind.TabBack or TargetKind.TabNext, scroll.Kind is TargetKind.TabBack or TargetKind.BodyBack ? -120 : 120);

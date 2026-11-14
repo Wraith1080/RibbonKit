@@ -26,9 +26,10 @@ internal abstract class RibbonBackstageLayoutProvider
         int rail = Math.Clamp(input.NavigationWidth is { } authored ? ToDevice(authored) : auto, minimum, maximum);
         int navigation = rail;
         inset = Math.Min(inset, Math.Max(0, (navigation - shadow) / 2));
-        int backTop = Math.Min(Math.Max(0, input.CaptionHeight) + S(metrics.BackInset), Math.Max(0, size.Height));
-        int back = Math.Min(S(metrics.BackSize), Math.Min(Math.Max(0, navigation - 2 * inset), Math.Max(0, size.Height - backTop)));
-        int top = Math.Min(size.Height, backTop + back + S(metrics.BackGap));
+        int seam = Math.Clamp(S(metrics.TopSeamHeight), 0, Math.Max(0, size.Height));
+        int backTop = Math.Min(Math.Max(0, input.CaptionHeight) + seam + S(metrics.BackInset), Math.Max(0, size.Height));
+        int back = metrics.BackButtonVisible ? Math.Min(S(metrics.BackSize), Math.Min(Math.Max(0, navigation - 2 * inset), Math.Max(0, size.Height - backTop))) : 0;
+        int top = metrics.BackButtonVisible ? Math.Min(size.Height, backTop + back + S(metrics.BackGap)) : Math.Min(size.Height, seam + Math.Max(0, input.CaptionHeight));
         int separator = S(metrics.SeparatorHeight);
         int mainHeight = checked(input.MainRows * row + input.MainSeparators * separator);
         int bottomHeight = checked(input.FooterRows * row + input.FooterSeparators * separator);
@@ -37,8 +38,8 @@ internal abstract class RibbonBackstageLayoutProvider
         bool inline = footerHeight > 0 && footerHeight + Math.Min(row, mainHeight) > availableHeight;
         if (inline) footerHeight = 0;
         var nav = new Rectangle(0, top, Math.Max(0, navigation - shadow), availableHeight - footerHeight);
-        return new(new(Math.Min(S(metrics.BackInset), Math.Max(0, navigation - back)), backTop, back, back), nav,
-            new(rail, shadow, width - rail, Math.Max(0, size.Height - shadow)), row, inset)
+        return new(back > 0 ? new(Math.Min(S(metrics.BackInset), Math.Max(0, navigation - back)), backTop, back, back) : Rectangle.Empty, nav,
+            new(rail, Math.Min(size.Height, seam + shadow), width - rail, Math.Max(0, size.Height - seam - shadow)), row, inset)
         {
             Footer = footerHeight > 0 ? new(0, size.Height - footerHeight, nav.Width, footerHeight) : Rectangle.Empty,
             FooterInline = inline, SeparatorHeight = separator, NavigationContentHeight = mainHeight + (inline ? bottomHeight : 0),

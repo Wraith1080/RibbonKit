@@ -7,4 +7,5 @@ internal sealed record RibbonBackstageLayoutDefaults(
     int CompactBackSize, int TouchBackSize, int BackInset, int BackGap,
     int IconTextGap, int IconInset, int IconSize, int AutoMinimumWidth,
     int? FooterBottomPadding, int PagePadding, int RowTextVerticalPadding,
-    int SeparatorHeight, int MinimumPageWidth, int TrailingPadding, int ScrollbarWidth);
+    int SeparatorHeight, int MinimumPageWidth, int TrailingPadding, int ScrollbarWidth,
+    bool BackButtonVisible = true, int TopSeamHeight = 0, int PageDividerShadowWidth = 0);

@@ -550,6 +550,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         base.OnPaint(e);
         var context = new RibbonPaintContext(e.Graphics, ClientRectangle, _ribbon.Theme, Font, DeviceDpi) { Density = _ribbon.Density, BackgroundBounds = ClientRectangle };
         _ribbon.Painter.DrawSurface(context, true);
+        PaintHostedContentFrame(context);
         PaintApplicationMenu(context);
         PaintGalleryHeadings(e.Graphics);
         if (!_menuHeader.IsEmpty && MenuSource is { } source)

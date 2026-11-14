@@ -2,10 +2,10 @@ using System.Drawing.Drawing2D;
 
 namespace RibbonKit.WinForms;
 
-internal sealed record RibbonBackstageCaptionProfile(bool TintNeutralSeparateCaption)
+internal sealed record RibbonBackstageCaptionProfile(bool TintNeutralSeparateCaption, bool AllowFullHeight = true)
 {
     internal RibbonBackstageCaptionPolicy Resolve(RibbonTheme theme) => new(
-        theme.BackstageExtendsIntoTitleBar, theme.BackstageTitleCentered,
+        AllowFullHeight && theme.BackstageExtendsIntoTitleBar, AllowFullHeight && theme.BackstageTitleCentered,
         theme.BackstageAppearance?.CaptionTintEnabled ?? TintNeutralSeparateCaption,
         theme.BackstageAppearance is { CaptionTintColor.IsEmpty: false } a ? a.CaptionTintColor : Color.FromArgb(255, theme.BackstageNavigationColor),
         theme.BackstageAppearance?.CaptionTintOpacity ?? 1);

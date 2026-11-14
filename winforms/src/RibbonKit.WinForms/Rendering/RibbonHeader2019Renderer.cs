@@ -22,7 +22,7 @@ internal sealed class RibbonHeader2019Renderer : RibbonHeaderRenderer
     {
         if (RibbonFileButtonRenderer.Draw(owner, context, menu)) return;
         if (context.Theme.HeaderAppearance is { HasFileHighlightOverrides: true } && owner.DrawApplicationFileButton(context, menu)) return;
-        bool available = menu.EffectiveEnabled, expanded = available && menu.IsDropDownOpen && !context.FileMenuClosing;
+        bool available = menu.EffectiveEnabled, expanded = available && (menu.IsDropDownOpen || context.FileMenuPreviewOpen) && !context.FileMenuClosing;
         if (available && (expanded || context.Hot || context.Pressed))
             owner.PaintFilledHeaderState(context, RibbonLayoutEngine.Scale(metrics.FilledCornerRadius, context.DeviceDpi), expanded || context.Pressed ? context.Theme.HeaderPressed ?? context.Theme.Pressed : context.Theme.HeaderHover ?? context.Theme.Hover);
         owner.DrawText(context, menu.Text, available ? context.Theme.HeaderTextColor : context.Theme.DisabledColor,

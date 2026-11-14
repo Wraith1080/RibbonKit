@@ -33,7 +33,7 @@ internal sealed class RibbonHeader2024Renderer : RibbonHeaderRenderer
     {
         if (RibbonFileButtonRenderer.Draw(owner, context, menu)) return;
         if (owner.DrawApplicationFileButton(context, menu)) return;
-        bool enabled = menu.EffectiveEnabled, open = enabled && menu.IsDropDownOpen && !context.FileMenuClosing;
+        bool enabled = menu.EffectiveEnabled, open = enabled && (menu.IsDropDownOpen || context.FileMenuPreviewOpen) && !context.FileMenuClosing;
         owner.DrawText(context, menu.Text, !enabled ? context.Theme.DisabledColor : open ? context.Theme.Accent : context.Theme.HeaderTextColor,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
         if (enabled && !context.SuppressTabIndicators && (open || context.Hot || context.Pressed || context.Focused))

@@ -7,5 +7,6 @@ internal sealed class RibbonBackstage2024Layout : RibbonBackstageLayoutProvider
         CompactBackSize: 36, TouchBackSize: 44, BackInset: 20, BackGap: 24,
         IconTextGap: 12, IconInset: 16, IconSize: 16, AutoMinimumWidth: 200,
         FooterBottomPadding: null, PagePadding: 0, RowTextVerticalPadding: 16,
-        SeparatorHeight: 9, MinimumPageWidth: 240, TrailingPadding: 8, ScrollbarWidth: 18);
+        SeparatorHeight: 9, MinimumPageWidth: 240, TrailingPadding: 8, ScrollbarWidth: 18,
+        BackButtonVisible: true, TopSeamHeight: 0, PageDividerShadowWidth: 0);
 }

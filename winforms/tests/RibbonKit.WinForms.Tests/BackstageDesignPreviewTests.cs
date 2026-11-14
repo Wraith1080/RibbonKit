@@ -10,6 +10,33 @@ namespace RibbonKit.WinForms.Tests;
 public sealed class BackstageDesignPreviewTests
 {
     [Fact]
+    public void Office2010_preview_keeps_measured_headers_open_File_and_inert_native_content() => FoundationTests.Sta(() =>
+    {
+        using var fixture = new Fixture(); fixture.Ribbon.BuiltInTheme = RibbonBuiltInTheme.Office2010Blue;
+        fixture.Surface.StartPosition = FormStartPosition.Manual; fixture.Surface.Location = new(-16000, -16000); fixture.Surface.ShowInTaskbar = false;
+        fixture.Surface.Show(); Application.DoEvents();
+        using var painter = new HeaderProbe(); fixture.Ribbon.Renderer = painter;
+        var preview = fixture.Selection.Backstage; var selected = fixture.Ribbon.SelectedTab;
+        preview.Open();
+        Assert.Equal(fixture.Surface.PointToClient(fixture.Ribbon.PointToScreen(new(0, fixture.Ribbon.Snapshot.TabViewport.Bottom))).Y, preview.Bounds.Top);
+        Assert.True(preview.BackBounds.IsEmpty); Assert.Equal(RibbonLayoutEngine.Scale(3, fixture.Ribbon.DeviceDpi), preview.Layout.Page.Top);
+        using var frame = preview.CreateFrame(96, 96); using var header = new Bitmap(fixture.Ribbon.Width, fixture.Ribbon.Height);
+        fixture.Ribbon.DrawToBitmap(header, new(Point.Empty, header.Size));
+        Assert.True(painter.Open); Assert.False(painter.Selected); Assert.False(fixture.Ribbon.IsBackstageOpen); Assert.False(fixture.Ribbon.FileMenu.IsDropDownOpen);
+        Assert.Same(selected, fixture.Ribbon.SelectedTab); Assert.False(fixture.Body.IsHandleCreated); Assert.Null(fixture.Body.Parent); Assert.Equal(0, fixture.Body.Paints);
+        fixture.Selection.SelectAt(Center(fixture.Ribbon.Snapshot.Targets.Single(t => t.Kind == TargetKind.FileMenu).VisibleBounds));
+        Assert.False(preview.IsOpen); fixture.Ribbon.DrawToBitmap(header, new(Point.Empty, header.Size)); Assert.False(painter.Open); Assert.True(painter.Selected);
+        preview.Open(); fixture.Selection.Select(fixture.Ribbon.Tabs[0]); Assert.False(preview.IsOpen); Assert.False(fixture.Ribbon.DesignPreviewBackstage);
+    });
+
+    private sealed class HeaderProbe : RibbonOffice2024Renderer
+    {
+        internal bool Open, Selected;
+        public override void DrawFileButton(RibbonPaintContext c, RibbonDropDownItem menu) { Open = c.FileMenuPreviewOpen; base.DrawFileButton(c, menu); }
+        public override void DrawTab(RibbonPaintContext c, RibbonTab tab, bool selected) { Selected = selected; Assert.True(c.HeaderBodyConnectionBounds.IsEmpty || selected); base.DrawTab(c, tab, selected); }
+    }
+
+    [Fact]
     public void Page_radius_override_keeps_the_retained_preview_opaque_without_creating_page_handles() => FoundationTests.Sta(() =>
     {
         using var fixture = new Fixture(); var preview = fixture.Selection.Backstage; preview.Open(); var original = fixture.Ribbon.Theme;

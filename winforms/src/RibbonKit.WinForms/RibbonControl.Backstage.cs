@@ -15,6 +15,9 @@ public partial class RibbonControl
     private Control? _backstagePriorFocus;
     private bool _backstageOpen, _backstageChanging, _backstageRefreshing;
     private bool _backstageClosing;
+    private bool _backstagePositioning;
+    internal bool BackstageKeepsHeaders => RibbonPresentationResolver.Backstage(Theme).Placement == RibbonBackstagePlacement.BelowTabs;
+    private bool BackstageHeadersUnselected => BackstageKeepsHeaders && (IsBackstageOpen || DesignPreviewBackstage);
     private bool _backstageContentInitialized, _initializingBackstageContent;
     private RibbonBackstageMotion? _backstageMotion;
     private RibbonMotionWindow? _backstageCaption;
@@ -88,6 +91,14 @@ public partial class RibbonControl
     internal RibbonBackstageSurface? BackstageSurface => _backstageSurface;
     private Rectangle BackstageHostBounds(Form form)
     {
+        if (BackstageKeepsHeaders)
+        {
+            EnsureLayout();
+            int measuredBottom = _snapshot.Targets.Where(t => t.Kind is TargetKind.Tab or TargetKind.FileMenu or TargetKind.TabBack or TargetKind.TabNext)
+                .Select(t => t.Bounds.Bottom).Append(_snapshot.TabViewport.Bottom).Max();
+            int top = Math.Clamp(form.PointToClient(PointToScreen(new(0, measuredBottom))).Y, 0, form.ClientSize.Height);
+            return new(0, top, form.ClientSize.Width, Math.Max(0, form.ClientSize.Height - top));
+        }
         int caption = !HasFullHeightBackstage && form is RibbonForm { CustomCaption: true } window ? window.CaptionHeight : 0;
         return new(0, caption, form.ClientSize.Width, Math.Max(0, form.ClientSize.Height - caption));
     }
@@ -124,6 +135,7 @@ public partial class RibbonControl
                 _backstageSurface = new(this) { Visible = false };
                 form.Controls.Add(_backstageSurface);
                 form.ClientSizeChanged += BackstageHostResized;
+                form.Layout += BackstageHostLayout;
             }
             Backstage.Reconcile();
             _backstageSurface.Synchronize();
@@ -151,8 +163,20 @@ public partial class RibbonControl
     }
     private void BackstageHostResized(object? sender, EventArgs e)
     {
-        if (_backstageSurface is { IsDisposed: false } surface && _backstageForm is { } form) surface.Bounds = BackstageHostBounds(form);
-        WindowHost?.SnapCaptionTitle();
+        if (_backstagePositioning) return;
+        _backstagePositioning = true;
+        try
+        {
+            if (_backstageSurface is { IsDisposed: false } surface && _backstageForm is { } form) surface.Bounds = BackstageHostBounds(form);
+            WindowHost?.SnapCaptionTitle();
+        }
+        finally { _backstagePositioning = false; }
+    }
+    private void BackstageHostLayout(object? sender, LayoutEventArgs e)
+    {
+        // A native motion frame changes the pane's own Location. Only host or
+        // ribbon reflow may recompute its settled anchor; do not undo travel.
+        if (BackstageKeepsHeaders && !ReferenceEquals(e.AffectedControl, _backstageSurface)) BackstageHostResized(sender, e);
     }
     internal bool ValidateBackstagePage() => !IsBackstageOpen || _backstageSurface?.ValidatePage() != false;
     private bool CloseBackstage(bool restoreFocus, bool force = false, bool animate = true)
@@ -234,7 +258,7 @@ public partial class RibbonControl
         CloseBackstage(false, true);
         WindowHost?.SnapCaptionTitle();
         _backstageCaption?.Dispose(); _backstageCaption = null;
-        if (_backstageForm is { } form) form.ClientSizeChanged -= BackstageHostResized;
+        if (_backstageForm is { } form) { form.ClientSizeChanged -= BackstageHostResized; form.Layout -= BackstageHostLayout; }
         _backstageForm = null;
         var surface = _backstageSurface;
         _backstageSurface = null;
@@ -244,7 +268,7 @@ public partial class RibbonControl
     {
         if (!ReferenceEquals(surface, _backstageSurface)) return;
         CloseBackstage(false, true);
-        if (_backstageForm is { } form) form.ClientSizeChanged -= BackstageHostResized;
+        if (_backstageForm is { } form) { form.ClientSizeChanged -= BackstageHostResized; form.Layout -= BackstageHostLayout; }
         _backstageForm = null;
         _backstageSurface = null;
     }
@@ -255,6 +279,16 @@ public partial class RibbonControl
         else if (CloseBackstage(true, animate: false)) item.PerformClick();
     }
     internal bool ProcessBackstageKey(Keys keys) => _backstageSurface?.ProcessSurfaceKey(keys) ?? false;
+    internal bool IsExposedBackstageTarget(RibbonTarget target) => BackstageKeepsHeaders && (target.Kind is TargetKind.Tab or TargetKind.FileMenu or TargetKind.TabBack or TargetKind.TabNext or TargetKind.Minimize
+        || target.Kind is TargetKind.QuickAccess or TargetKind.QuickAccessOverflow && EffectiveQuickAccessPosition != RibbonQuickAccessPosition.BelowRibbon);
+    private bool IsExposedBackstageElement(RibbonElement element) => BackstageKeepsHeaders && Snapshot.Targets.Any(t => ReferenceEquals(t.Element, element) && IsExposedBackstageTarget(t));
+    private bool BackstageHeaderHasKeyboardInput(Keys keys) => BackstageKeepsHeaders && ContainsFocus && keys is Keys.Left or Keys.Right or Keys.Up or Keys.Down or Keys.Home or Keys.End or Keys.Enter or Keys.Space or Keys.Tab or (Keys.Tab | Keys.Shift);
+    /// <inheritdoc />
+    protected override void OnLocationChanged(EventArgs e)
+    {
+        base.OnLocationChanged(e);
+        if (_backstageSurface is not null && BackstageKeepsHeaders) BackstageHostResized(this, e);
+    }
     internal static Control? FocusedControl(ContainerControl container)
     {
         Control? active = container.ActiveControl;

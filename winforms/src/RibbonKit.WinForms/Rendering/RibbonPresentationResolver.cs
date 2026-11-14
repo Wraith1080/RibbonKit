@@ -4,8 +4,9 @@ namespace RibbonKit.WinForms;
 
 // Stateless family helpers are paired here. Drawing caches and native state
 // remain with the active public renderer and the ribbon/window that own them.
+internal enum RibbonBackstagePlacement { CaptionPolicy, BelowTabs }
 internal sealed record RibbonBackstagePresentation(RibbonBackstageLayoutProvider Layout, RibbonBackstageRenderer Renderer,
-    RibbonBackstageCaptionProfile Caption, RibbonBackstageMotionProfile Motion)
+    RibbonBackstageCaptionProfile Caption, RibbonBackstageMotionProfile Motion, RibbonBackstagePlacement Placement = RibbonBackstagePlacement.CaptionPolicy)
 {
     internal RibbonBackstageMetrics ResolveMetrics(RibbonTheme? theme, RibbonDensity density) => new(theme, density, Layout.Defaults);
 }
@@ -63,11 +64,19 @@ internal static class RibbonPresentationResolver
             PaneEasing: RibbonBackstageEasing.EaseOutCubic, PaneOpacityEasing: RibbonBackstageEasing.SmoothStep,
             TitleEasing: RibbonBackstageEasing.EaseOutCubic, PageEasing: RibbonBackstageEasing.EaseOutCubic, PaneFadeAmount: 1));
 
+    private static readonly RibbonBackstagePresentation Office2010 = new(new RibbonBackstage2010Layout(), new RibbonBackstage2010Renderer(),
+        new(TintNeutralSeparateCaption: false, AllowFullHeight: false),
+        new(PaneTravelRatio: .15, TitleTravelRatio: .25, SubtlePaneDuration: 220, ExpressivePaneDuration: 308,
+            SubtlePageTravel: 8, ExpressivePageTravel: 12, SubtlePageDuration: 130, ExpressivePageDuration: 182,
+            PaneEasing: RibbonBackstageEasing.EaseOutCubic, PaneOpacityEasing: RibbonBackstageEasing.SmoothStep,
+            TitleEasing: RibbonBackstageEasing.EaseOutCubic, PageEasing: RibbonBackstageEasing.EaseOutCubic, PaneFadeAmount: 1), RibbonBackstagePlacement.BelowTabs);
+
     // Standalone measurement without an attached ribbon retains Modern defaults.
     internal static RibbonBackstagePresentation Backstage(RibbonTheme? theme) => (theme?.BackstageStyle ?? RibbonBackstageStyle.Modern) switch
     {
         RibbonBackstageStyle.Modern => Modern,
         RibbonBackstageStyle.Classic => Classic,
+        RibbonBackstageStyle.Office2010 => Office2010,
         _ => throw new ArgumentOutOfRangeException(nameof(theme))
     };
 }

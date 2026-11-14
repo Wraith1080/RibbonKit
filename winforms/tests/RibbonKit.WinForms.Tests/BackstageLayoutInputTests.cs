@@ -11,7 +11,8 @@ public sealed class BackstageLayoutInputTests
         foreach (var style in Enum.GetValues<RibbonBackstageStyle>())
         foreach (var density in Enum.GetValues<RibbonDensity>())
         {
-            using var ribbon = new RibbonControl { Density = density, Theme = RibbonThemes.Office2024Light with { BackstageStyle = style, BackstagePagePadding = 17 } };
+            using var ribbon = new RibbonControl { Density = density, Theme = RibbonThemes.Office2024Light with { BackstageStyle = style, BackstagePagePadding = 17,
+                BackstageAppearance = new() { BackButtonVisible = true, TopSeamHeight = 0 } } };
             ribbon.Backstage.MaximumNavigationWidth = 900;
             ribbon.Backstage.Items.AddRange(new RibbonBackstagePageItem { Text = "Info" }, new RibbonMenuSeparatorItem());
             var hidden = new RibbonBackstagePageItem { Text = new string('W', 35), Visible = false };
@@ -28,7 +29,7 @@ public sealed class BackstageLayoutInputTests
             Assert.False(measured.FooterInline);
             Assert.Equal(measured.Page.Left + 1 + RibbonLayoutEngine.Scale(17, dpi), measured.PageContentBounds(1).Left);
             Assert.Equal(measured.RowHeight + measured.SeparatorHeight +
-                (style == RibbonBackstageStyle.Classic ? RibbonLayoutEngine.Scale(14, dpi) : measured.Inset), measured.Footer.Height);
+                (style != RibbonBackstageStyle.Modern ? RibbonLayoutEngine.Scale(14, dpi) : measured.Inset), measured.Footer.Height);
             var shortSize = new Size(size.Width, measured.Navigation.Top + measured.RowHeight);
             var shortLayout = family.Layout.Build(shortSize, input);
             Assert.True(shortLayout.FooterInline);

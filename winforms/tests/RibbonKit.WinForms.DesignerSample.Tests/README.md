@@ -35,6 +35,9 @@ From the repository root, refresh the persistent sample's package once if its
 & winforms/eng/Test-DesignerSample.ps1 -Check --verify-clean-sample
 & winforms/eng/Test-DesignerSample.ps1 -Check --verify-theme-gallery
 & winforms/eng/Test-DesignerSample.ps1 -Check --verify-office2013-composed
+& winforms/eng/Test-DesignerSample.ps1 -Check --verify-office2010-backstage
+& winforms/eng/Test-DesignerSample.ps1 -Check --verify-office2010-review
+& winforms/eng/Test-DesignerSample.ps1 -Check --verify-office2010-navigation
 ```
 
 The runner builds the ordinary sample and host in normal Debug folders, launches

@@ -74,7 +74,7 @@ public partial class RibbonRenderer : IDisposable
         try
         {
             context.Graphics.SetClip(context.Bounds, System.Drawing.Drawing2D.CombineMode.Intersect);
-            if (context.Hot || context.Pressed) DrawChrome(context, QuickAccessFill(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, false), Color.Transparent);
+            if (context.Hot || context.Pressed) DrawHeaderUtilityState(context, QuickAccessFill(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, false));
             RibbonArrowPainter.DrawVertical(context.Graphics, context.Bounds, context.DeviceDpi, context.Theme.Foreground, !minimized, context.Theme.Chevrons);
         }
         finally { context.Graphics.Restore(state); }
@@ -193,7 +193,7 @@ public partial class RibbonRenderer : IDisposable
     /// <summary>Paints text inside a measured content slot, preserving its layout flags and glyph alpha on library material surfaces. Custom renderers can delegate here for composited text.</summary>
     public virtual void DrawText(RibbonPaintContext context, string text, Color color, TextFormatFlags flags)
     {
-        if (context.ApplicationMenuPart != RibbonApplicationMenuPart.None) flags |= TextFormatFlags.PreserveGraphicsClipping;
+        flags |= TextFormatFlags.PreserveGraphicsClipping;
         if (context.CompositedText) RibbonBackdropBuffer.DrawText(context, text, color, flags);
         else TextRenderer.DrawText(context.Graphics, text, context.Font, context.Bounds, color, flags);
     }
@@ -254,7 +254,7 @@ public partial class RibbonRenderer : IDisposable
         if (DrawApplicationFileButton(context, menu)) return;
         bool enabled = menu.EffectiveEnabled;
         context = EnabledContext(context, enabled);
-        bool open = enabled && menu.IsDropDownOpen && !context.FileMenuClosing;
+        bool open = enabled && (menu.IsDropDownOpen || context.FileMenuPreviewOpen) && !context.FileMenuClosing;
         if (open || context.Hot || context.Pressed)
             DrawChrome(context, open || context.Pressed ? context.Theme.Pressed : context.Theme.Hover, Color.Transparent);
         DrawText(context, menu.Text, !enabled ? context.Theme.DisabledColor : open ? context.Theme.Accent : context.Theme.HeaderTextColor,
@@ -606,6 +606,7 @@ public partial class RibbonRenderer : IDisposable
     /// <summary>Paints common item chrome; the foundation uses square edges and theme-provided fills.</summary>
     protected virtual void DrawChrome(RibbonPaintContext context, RibbonFill fill, Color border)
     {
+        if (TryPaintHeaderUtility(context, fill, border, 0)) return;
         if (TryPaintBackstageState(context, fill, border, 0)) return;
         if (TryPaintHeaderScroller(context, fill, border, 0)) return;
         if (TryPaintMenuDecoration(context, fill, border, 0)) return;
@@ -617,6 +618,7 @@ public partial class RibbonRenderer : IDisposable
     /// <summary>Paints a fill and outline using mirrored corner coverage.</summary>
     protected void DrawRounded(RibbonPaintContext context, RibbonFill fill, Color border)
     {
+        if (TryPaintHeaderUtility(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
         if (TryPaintBackstageState(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
         if (TryPaintHeaderScroller(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;
         if (TryPaintMenuDecoration(context, fill, border, context.Theme.CornerRadius * context.DeviceDpi / 96)) return;

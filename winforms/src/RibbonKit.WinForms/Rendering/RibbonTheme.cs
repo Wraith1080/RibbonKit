@@ -28,7 +28,9 @@ public enum RibbonBackstageStyle
     /// <summary>Office 2024's inset navigation, page frame and separate caption treatment.</summary>
     Modern,
     /// <summary>Office 2019's flat navigation and page treatment.</summary>
-    Classic
+    Classic,
+    /// <summary>Office 2010's below-tabs panes, leaving the real caption and tab row exposed.</summary>
+    Office2010 = 2
 }
 
 /// <summary>A solid or linear gradient fill; contains no disposable resources. Start/End remain the endpoints when intermediate stops are supplied.</summary>
@@ -246,7 +248,9 @@ public sealed record RibbonTheme
         BackdropHover = BackstageHoverFill, BackdropPressed = BackstageSelectedFill
     };
     internal RibbonFill BackstageHoverFill => BackstageNavigationHover ?? (BackstageNavigationUsesAccent ? new(MixBackstageAccent(Color.White, .22)) : Hover);
-    internal RibbonFill BackstageSelectedFill => BackstageNavigationSelected ?? (BackstageNavigationUsesAccent ? new(MixBackstageAccent(Color.Black, .28)) : Hover);
+    internal RibbonFill BackstageSelectedFill => BackstageNavigationSelected ?? (IdentityAccent is { } recipe
+        ? recipe.AdaptNavigationFill(recipe.NavigationSelectedBackground, Accent)
+        : BackstageNavigationUsesAccent ? new(MixBackstageAccent(Color.Black, .28)) : Hover);
     private Color MixBackstageAccent(Color target, double amount) => Color.FromArgb(
         (int)Math.Round(Accent.R * (1 - amount) + target.R * amount),
         (int)Math.Round(Accent.G * (1 - amount) + target.G * amount),
@@ -612,6 +616,7 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     internal bool StateChecked { get; init; }
     internal bool StateHot { get; init; }
     internal bool StatePressed { get; init; }
+    internal Rectangle BackstageDividerShadowBounds { get; init; }
     internal RibbonEditorChromeKind EditorChrome { get; init; }
     internal bool IsMenuHeading { get; init; }
     internal bool IsBackstageMenuSeparator { get; init; }
@@ -627,4 +632,6 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     internal bool SuppressShadow { get; init; }
     internal bool IsSimplifiedGroup { get; init; }
     internal bool FileMenuClosing { get; init; }
+    internal bool FileMenuPreviewOpen { get; init; }
+    internal bool IsHeaderUtilityState { get; init; }
 }

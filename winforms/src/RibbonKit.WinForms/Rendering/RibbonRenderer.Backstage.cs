@@ -13,7 +13,7 @@ public partial class RibbonRenderer
     public virtual int GetBackstagePageCornerRadius(RibbonTheme theme, int deviceDpi) => 0;
     /// <summary>Paints the native Backstage surface and its measured navigation rail.</summary>
     public virtual void DrawBackstageBackground(RibbonPaintContext context, int navigationWidth)
-        => DrawNeutralBackstageBackground(context, navigationWidth);
+        => PaintBackstageFrame(context, navigationWidth, content => DrawNeutralBackstageBackground(content, navigationWidth));
     internal void DrawNeutralBackstageBackground(RibbonPaintContext context, int navigationWidth)
     {
         int width = Math.Clamp(navigationWidth, 0, context.Bounds.Width);
@@ -56,7 +56,7 @@ public partial class RibbonRenderer
         }
         finally { context.Graphics.CompositingMode = mode; }
         if (item is RibbonMenuSeparatorItem separator)
-        { DrawMenuSeparator(context with { Hot = false, Pressed = false, Focused = false, IsBackstageMenuSeparator = true }, separator); return; }
+        { DrawMenuSeparator(context with { Hot = false, Pressed = false, Focused = false, IsBackstageMenuSeparator = true }, separator); PaintBackstageDividerShadow(context); return; }
         var color = !enabled ? context.Theme.BackstageDisabledForeground.IsEmpty ? context.Theme.DisabledColor : context.Theme.BackstageDisabledForeground
             : selected ? context.Theme.BackstageSelectedForeground.IsEmpty ? context.Theme.Accent : context.Theme.BackstageSelectedForeground : context.Theme.BackstageNavigationInk;
         if (item is null)
@@ -126,6 +126,7 @@ public partial class RibbonRenderer
         }
         if (context.Focused && item is not null) DrawFocus(context.Theme.BackstageNavigationForeground.IsEmpty ? context
             : context with { Theme = context.Theme with { Accent = context.Theme.BackstageNavigationInk } });
+        PaintBackstageDividerShadow(context);
     }
 
     private static void DrawBackstageSilhouette(RibbonPaintContext context, RibbonItem item, Rectangle bounds, Color color, bool enabled)

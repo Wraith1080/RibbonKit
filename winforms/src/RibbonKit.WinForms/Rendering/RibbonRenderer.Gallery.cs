@@ -34,8 +34,14 @@ public partial class RibbonRenderer
     {
         bool enabled = tile.EffectiveEnabled;
         context = EnabledContext(context, enabled);
-        RibbonGalleryRenderer.DrawTileState(this, context, selected);
+        DrawGalleryTileState(context, tile, selected);
         RibbonGalleryContentRenderer.DrawTile(this, context, tile);
+    }
+    /// <summary>Paints only an owned tile's theme state for a custom presenter with application-owned content. Uses the same fills, rims, outline precedence and enabled state as DrawGalleryTile; bounds are device pixels.</summary>
+    public virtual void DrawGalleryTileState(RibbonPaintContext context, RibbonGalleryTile tile, bool selected)
+    {
+        ArgumentNullException.ThrowIfNull(tile);
+        RibbonGalleryRenderer.DrawTileState(this, EnabledContext(context, tile.EffectiveEnabled), selected);
     }
     internal void PaintGalleryImage(RibbonPaintContext context, RibbonGalleryTile tile) => DrawItemImage(context, tile, RibbonItemSize.Large);
 }

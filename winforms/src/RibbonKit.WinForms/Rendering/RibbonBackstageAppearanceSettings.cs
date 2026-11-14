@@ -1,10 +1,26 @@
 namespace RibbonKit.WinForms;
 
-/// <summary>Immutable Backstage marker, Back glyph, navigation-state and separate-caption tint overrides. Null members retain the active renderer's defaults. Assign through RibbonTheme.BackstageAppearance.</summary>
+/// <summary>Immutable Backstage frame, marker, Back target/glyph, navigation-state and separate-caption tint overrides. Null members retain the active family's defaults. Assign through RibbonTheme.BackstageAppearance.</summary>
 public sealed record RibbonBackstageAppearanceSettings
 {
     /// <summary>Initializes overrides that retain existing appearance.</summary>
     public RibbonBackstageAppearanceSettings() { }
+    /// <summary>Gets optional Back target visibility. Null follows the family: hidden for Office2010, visible otherwise. Hiding also removes its layout space, keyboard target and KeyTip.</summary>
+    public bool? BackButtonVisible { get; init; }
+    /// <summary>Gets top/bottom hover edge ink, including alpha. Empty/Transparent adds no edge; full navigation outlines remain independent.</summary>
+    public Color NavigationHoverEdgeColor { get; init; } = Color.Empty;
+    /// <summary>Gets optional top/bottom hover edge width in logical pixels, 0..32. Null uses one device pixel when edge ink exists; zero hides it.</summary>
+    public int? NavigationHoverEdgeWidth { get; init; }
+    /// <summary>Gets optional full-width top seam height in logical pixels, 0..32. Null uses 3 for Office2010 and 0 otherwise. Zero removes its layout/paint space.</summary>
+    public int? TopSeamHeight { get; init; }
+    /// <summary>Gets an optional seam fill, including alpha/gradients. Null follows the effective open File fill's bottom color. Transparent hides ink while retaining height.</summary>
+    public RibbonFill? TopSeamBackground { get; init; }
+    /// <summary>Gets optional page-divider shadow width in logical pixels, 0..64. Null uses 6 for Office2010 and 0 otherwise. The shadow lies on the navigation side below the seam, without moving row targets.</summary>
+    public int? PageDividerShadowWidth { get; init; }
+    /// <summary>Gets page-divider shadow ink, including alpha. Empty uses Black; Transparent hides it.</summary>
+    public Color PageDividerShadowColor { get; init; } = Color.Empty;
+    /// <summary>Gets optional page-divider shadow strength, finite 0..1. Null uses 0.18; zero hides it independently of width and ink.</summary>
+    public double? PageDividerShadowOpacity { get; init; }
     /// <summary>Gets optional marker left clearance in logical pixels, 0..1024. Null uses 2; available row bounds still clip painting.</summary>
     public int? MarkerLeftInset { get; init; }
     /// <summary>Gets optional marker width in logical pixels, 0..1024. Null uses 3; zero hides the marker without changing selection or hit targets.</summary>
@@ -27,9 +43,9 @@ public sealed record RibbonBackstageAppearanceSettings
     public int? NavigationCornerRadius { get; init; }
     /// <summary>Gets optional navigation-state outline width in logical pixels, 0..32. Null retains the active primitive's one-device-pixel outline when a border color is authored; zero hides it. Coverage and click targets remain independent.</summary>
     public int? NavigationBorderWidth { get; init; }
-    /// <summary>Gets navigation-state outline ink, including alpha. Empty retains the transparent default; width alone does not invent an outline color.</summary>
+    /// <summary>Gets navigation-state outline ink, including alpha. Empty follows the family: Office2010 derives selected/pressed borders from IdentityAccent; existing families remain transparent. Transparent hides the outline.</summary>
     public Color NavigationBorderColor { get; init; } = Color.Empty;
-    /// <summary>Gets optional neutral separate-caption tint eligibility. Null retains the family default (Modern true, Classic false). False disables tint. Full-height panes and authored Form/theme caption colors retain precedence.</summary>
+    /// <summary>Gets optional neutral separate-caption tint eligibility. Null retains the family default (Modern true, Classic/Office2010 false). False disables tint. Full-height panes and authored Form/theme caption colors retain precedence.</summary>
     public bool? CaptionTintEnabled { get; init; }
     /// <summary>Gets optional separate-caption tint color, including alpha. Empty follows navigation color with its existing coverage; Transparent hides tint. Full-height pane paint is unaffected. TitleBarForeground can author caption ink.</summary>
     public Color CaptionTintColor { get; init; } = Color.Empty;
@@ -41,13 +57,14 @@ public sealed record RibbonBackstageAppearanceSettings
     {
         if (settings is null) return;
         int?[] spacing = [settings.MarkerLeftInset, settings.MarkerWidth, settings.MarkerTopInset, settings.MarkerBottomInset, settings.BackVisualInset];
-        if (spacing.Any(value => value is < 0 or > 1024) || settings.NavigationCornerRadius is < 0 or > 64 || settings.NavigationBorderWidth is < 0 or > 32)
-            throw new ArgumentOutOfRangeException(nameof(settings), "Backstage appearance spacing must be 0..1024, radius 0..64 and border width 0..32 logical pixels, or null for existing appearance.");
-        Check(settings.BackOutlineWidth, 32); Check(settings.BackGlyphStrokeWidth, 32); Check(settings.BackGlyphScale, 8); Check(settings.CaptionTintOpacity, 1);
+        if (spacing.Any(value => value is < 0 or > 1024) || settings.NavigationCornerRadius is < 0 or > 64 || settings.NavigationBorderWidth is < 0 or > 32
+            || settings.TopSeamHeight is < 0 or > 32 || settings.PageDividerShadowWidth is < 0 or > 64 || settings.NavigationHoverEdgeWidth is < 0 or > 32)
+            throw new ArgumentOutOfRangeException(nameof(settings), "Backstage spacing must be 0..1024, radius/shadow width 0..64 and border/seam width 0..32 logical pixels, or null for family defaults.");
+        Check(settings.BackOutlineWidth, 32); Check(settings.BackGlyphStrokeWidth, 32); Check(settings.BackGlyphScale, 8); Check(settings.CaptionTintOpacity, 1); Check(settings.PageDividerShadowOpacity, 1);
         static void Check(double? value, double maximum)
         {
             if (value is { } number && (!double.IsFinite(number) || number < 0 || number > maximum))
-                throw new ArgumentOutOfRangeException(nameof(settings), "Backstage outline/glyph/tint values must be finite and within their documented range, or null for existing appearance.");
+                throw new ArgumentOutOfRangeException(nameof(settings), "Backstage outline/glyph/tint/shadow values must be finite and within their documented range, or null for family defaults.");
         }
     }
 }

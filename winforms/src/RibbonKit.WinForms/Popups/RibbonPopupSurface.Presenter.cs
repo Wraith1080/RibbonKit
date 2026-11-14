@@ -28,25 +28,25 @@ internal sealed partial class RibbonPopupSurface : IRibbonGalleryPresenterHost
         try
         {
             int S(int n) => RibbonLayoutEngine.Scale(n, _ribbon.DeviceDpi);
-            int footer = S(24), padding = 2 * _contentPadding;
-            var limit = new Size(Math.Max(1, maximum.Width - S(24) - padding), Math.Max(1, maximum.Height - S(32) - footer - padding));
+            int footer = S(24), inset = HostedContentPadding, padding = 2 * inset;
+            var limit = new Size(Math.Max(1, maximum.Width - S(24) - padding), Math.Max(1, maximum.Height - S(32) - footer - padding - RibbonRenderer.PopupContentBorderWidth(_ribbon.Theme, _ribbon.DeviceDpi)));
             _galleryContext = new(this, gallery, _ribbon, isQuickAccess: IsQuickAccess) { Viewport = limit };
             control.Font = Font; control.BackColor = _ribbon.Theme.PopupColor;
             presenter.Synchronize(_galleryContext);
             var preferred = control.GetPreferredSize(limit);
             var viewport = new Size(Math.Clamp(preferred.Width, 1, limit.Width), Math.Clamp(preferred.Height, 1, limit.Height));
             _galleryContext.Viewport = viewport;
-            _galleryPresenterViewport = new Panel { Bounds = new(_contentPadding, _contentPadding, viewport.Width, viewport.Height), BackColor = _ribbon.Theme.PopupColor, TabStop = false };
+            _galleryPresenterViewport = new Panel { Bounds = new(inset, inset, viewport.Width, viewport.Height), BackColor = _ribbon.Theme.PopupColor, TabStop = false };
             Controls.Add(_galleryPresenterViewport);
             control.Dock = DockStyle.Fill; _galleryPresenterViewport.Controls.Add(control);
             control.MouseMove += PresenterMouseMove; control.MouseLeave += PresenterMouseLeave; control.MouseDown += PresenterMouseDown; control.MouseUp += PresenterMouseUp;
             int buttonWidth = Math.Max(1, Math.Min(S(24), viewport.Width / 2));
-            _presenterBack = new(this, false) { Bounds = new(_contentPadding + Math.Max(0, viewport.Width - 2 * buttonWidth), _contentPadding + viewport.Height, buttonWidth, footer) };
+            _presenterBack = new(this, false) { Bounds = new(inset + Math.Max(0, viewport.Width - 2 * buttonWidth), inset + viewport.Height + RibbonRenderer.PopupContentBorderWidth(_ribbon.Theme, _ribbon.DeviceDpi), buttonWidth, footer) };
             _presenterNext = new(this, true) { Bounds = new(_presenterBack.Right, _presenterBack.Top, buttonWidth, footer) };
             Controls.Add(_presenterBack); Controls.Add(_presenterNext);
             SynchronizePresenter();
             AutoScroll = false;
-            return new(viewport.Width + padding, viewport.Height + footer + padding);
+            return new(viewport.Width + padding, viewport.Height + footer + padding + RibbonRenderer.PopupContentBorderWidth(_ribbon.Theme, _ribbon.DeviceDpi));
         }
         catch
         {
@@ -195,7 +195,9 @@ internal sealed partial class RibbonPopupSurface : IRibbonGalleryPresenterHost
         }
         protected override void OnPaint(PaintEventArgs e)
         {
-            using var background = new SolidBrush(_surface._ribbon.Theme.PopupColor); e.Graphics.FillRectangle(background, ClientRectangle);
+            var c = new RibbonPaintContext(e.Graphics, ClientRectangle, _surface._ribbon.Theme, Font, _surface._ribbon.DeviceDpi)
+                { BackgroundBounds = _surface.GradientBounds(this, ClientRectangle) };
+            _surface._ribbon.Painter.DrawSurface(c, true);
             _surface._ribbon.Painter.DrawGalleryStripButton(
                 new(e.Graphics, ClientRectangle, _surface._ribbon.Theme, Font, _surface._ribbon.DeviceDpi, Hot: _hot, Pressed: _pressed) { Density = _surface._ribbon.Density },
                 _forward ? RibbonGalleryStripButton.Down : RibbonGalleryStripButton.Up, Enabled);

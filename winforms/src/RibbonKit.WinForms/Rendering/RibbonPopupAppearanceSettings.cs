@@ -5,6 +5,10 @@ public sealed record RibbonPopupAppearanceSettings
 {
     /// <summary>Initializes overrides that retain existing floating-popup appearance.</summary>
     public RibbonPopupAppearanceSettings() { }
+    /// <summary>Gets hosted UserControl/gallery-presenter viewport border ink. Empty follows the theme's EditorBorder; Transparent hides it. Outer popup chrome and application card paint remain independent.</summary>
+    public Color ContentBorderColor { get; init; } = Color.Empty;
+    /// <summary>Gets hosted-content border width in logical pixels, 0..32. Null uses one device pixel; zero hides it. Custom popup content reserves the actual border outside its native viewport.</summary>
+    public int? ContentBorderWidth { get; init; }
     /// <summary>Gets optional popup border width in logical pixels, 0..32. Null retains one device pixel; zero hides the border while retaining the legacy one-device-pixel content clearance. Wider borders reserve content space through the actual renderer's GetPopupBorderWidth hook.</summary>
     public int? BorderWidth { get; init; }
     /// <summary>Gets optional horizontal popup-shadow offset in logical pixels, -32..32. Null retains zero. Shared shadow clearance includes both offsets; the existing vertical offset setting stays authoritative.</summary>
@@ -15,7 +19,7 @@ public sealed record RibbonPopupAppearanceSettings
     internal static void Validate(RibbonPopupAppearanceSettings? settings)
     {
         if (settings is null) return;
-        if (settings.BorderWidth is < 0 or > 32 || settings.ShadowHorizontalOffset is < -32 or > 32
+        if (settings.BorderWidth is < 0 or > 32 || settings.ContentBorderWidth is < 0 or > 32 || settings.ShadowHorizontalOffset is < -32 or > 32
             || settings.ShadowFalloff is { } falloff && (!double.IsFinite(falloff) || falloff < .1 || falloff > 16))
             throw new ArgumentOutOfRangeException(nameof(settings), "Popup border width must be 0..32, horizontal shadow offset -32..32 logical pixels and shadow falloff finite 0.1..16, or null for existing appearance.");
     }

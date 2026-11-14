@@ -5,6 +5,9 @@ internal readonly record struct RibbonBackstageMetrics
     internal RibbonBackstageMetrics(RibbonTheme? theme, RibbonDensity density, RibbonBackstageLayoutDefaults defaults)
     {
         bool touch = density == RibbonDensity.Touch;
+        BackButtonVisible = theme?.BackstageAppearance?.BackButtonVisible ?? defaults.BackButtonVisible;
+        TopSeamHeight = theme?.BackstageAppearance?.TopSeamHeight ?? defaults.TopSeamHeight;
+        PageDividerShadowWidth = theme?.BackstageAppearance?.PageDividerShadowWidth ?? defaults.PageDividerShadowWidth;
         RowHeight = Math.Max(theme?.BackstageMinimumRowHeight ?? (touch ? defaults.TouchRowHeight : defaults.CompactRowHeight), touch ? defaults.TouchRowHeight : 1);
         NavigationPadding = theme?.BackstageNavigationPadding ?? defaults.NavigationPadding;
         BackSize = Math.Max(theme?.BackstageBackButtonSize ?? (touch ? defaults.TouchBackSize : defaults.CompactBackSize), touch ? defaults.TouchBackSize : 1);
@@ -24,6 +27,9 @@ internal readonly record struct RibbonBackstageMetrics
         AutoWidthPadding = 2 * NavigationPadding + TextOffset + TrailingPadding + defaults.ScrollbarWidth;
     }
     internal int RowHeight { get; }
+    internal bool BackButtonVisible { get; }
+    internal int TopSeamHeight { get; }
+    internal int PageDividerShadowWidth { get; }
     internal int NavigationPadding { get; }
     internal int BackSize { get; }
     internal int BackInset { get; }

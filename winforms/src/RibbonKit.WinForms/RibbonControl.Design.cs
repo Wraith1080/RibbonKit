@@ -7,6 +7,16 @@ public partial class RibbonControl
     // Design-server presentation only. Never assign model properties, select a
     // runtime startup tab, or raise application selection/command events here.
     private RibbonTab? _designPreviewTab;
+    private bool _designPreviewBackstage;
+    internal bool DesignPreviewBackstage => IsInDesignMode && _designPreviewBackstage;
+    internal void SetDesignPreviewBackstage(bool open)
+    {
+        VerifyAccess();
+        if (open && !IsInDesignMode) throw new InvalidOperationException("Backstage preview requires a designer session.");
+        if (_designPreviewBackstage == open) return;
+        _designPreviewBackstage = open;
+        Invalidate();
+    }
     internal RibbonTab? DesignPreviewTab => IsInDesignMode && _designPreviewTab is { IsDisposed: false } tab && Tabs.Contains(tab) ? tab : null;
     internal RibbonTab? DisplaySelectedTab => DesignPreviewTab ?? _selectedTab;
     internal void SetDesignPreviewTab(RibbonTab? tab)

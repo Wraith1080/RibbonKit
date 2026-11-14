@@ -1,12 +1,12 @@
-# Continue normal native Office 2010 Blue after F3
+# Continue normal native Office 2010 Blue after F4
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-14**. Last verified branch is `codex/Ribbonkit-Winform`, HEAD
-`ec78e11` (`Office 2010 F1,F2`), after cleanup checkpoint `c7794b6`, F1 checkpoint
-`1802dad` and E5 checkpoint `14aba66`. F3 entered with a clean worktree; its
-implementation and verification changes remain uncommitted. Preserve authored Backstage settings
+Updated **2026-11-15**. Last verified branch is `codex/Ribbonkit-Winform`, HEAD
+`9f38496` (`2010 F3 Done`), after F2 checkpoint `ec78e11`, cleanup checkpoint
+`c7794b6`, F1 checkpoint `1802dad` and E5 checkpoint `14aba66`. F4 entered with a
+clean worktree; its implementation and verification changes remain uncommitted. Preserve authored Backstage settings
 and other Form/resource edits. Recheck
 `git status --short`, live branch and HEAD; preserve user commits and edits. Do not
 commit, stage, push, publish or change branches unless requested.
@@ -41,8 +41,9 @@ designer server/net472 client and both samples build with zero warnings/errors.
 F2 was committed by the user at `ec78e11`. Direct paint/offscreen native evidence
 does not establish actual 2010 visual acceptance or actual VS review.
 
-**F3 ribbon/File shell and both View galleries are implemented; user review is
-pending.** Read the [contract, exact evidence and visual-review steps](OFFICE2010-BLUE-PLAN.md#f3-implementation-and-verification--2026-11-14).
+**F3 ribbon/File shell and both View galleries are implemented and committed.**
+Current user review is recorded once in the themes ledger. Read the
+[contract and exact evidence](OFFICE2010-BLUE-PLAN.md#f3-implementation-and-verification--2026-11-14).
 Office2010Blue = 3, immutable IdentityAccent reference ramps and existing
 Filled/connected-header helpers provide blue surfaces/File, gold command states,
 rounded controls and the existing Rounded native request. Both actual sample
@@ -51,11 +52,11 @@ both File routes and native content retention pass offscreen checks. Focused
 Release designer serialization/Undo/Redo/SVG/paint checks and the independent
 public-package consumer pass. Showcase startup persistence and sample isolation
 pass too. The normal Designer Sample still compiles zero test methods; all new
-checks stay under tests. No below-tabs Backstage or Aero was implemented. File
+checks stay under tests. This F3 record predates the F4 Backstage below; no Aero was implemented. File
 uses linear ramps/rims; a separate radial reflection is not claimed.
 
-F3 review follow-up: the user liked the shell but reported hover-tab bottom
-outlines and a solid patch around minimize. Both are corrected, awaiting recheck.
+F3 review follow-up corrected hover-tab bottom outlines and a solid patch around
+minimize. The reviewed result and authorization to continue are in the ledger.
 Office 2010 sets FilledTabBottomBorderVisible=false for hover/pressed states;
 selected connection/File remain independent. Minimize and TabRow QAT keep the
 full header fill coordinates, with alpha-safe restoration. The user also requested
@@ -63,7 +64,52 @@ general FileButtonMinimumWidth: 1..1024 logical pixels, null=legacy 50 fallback,
 Touch>=44, existing text/narrow clamps. Presets 2010/2013/2019 use 64; 2024 stays
 unchanged. Focused Release scopes pass 28/28 and 65/65; independent package
 `-HeaderOnly` checks pass. See the [bounded correction record](OFFICE2010-BLUE-PLAN.md#f3-header-review-corrections-and-shared-file-minimum--2026-11-14).
-Do not infer user acceptance or start F4 from this correction alone.
+F4 was subsequently authorized and is delivered below.
+
+**F4 below-tabs Backstage is implemented; user visual review is pending.** Read
+the [delivery, evidence and review guide](OFFICE2010-BLUE-PLAN.md#f4-implementation-and-verification--2026-11-14).
+Office2010 = 2 has sibling layout/drawing plus measured placement/caption/motion
+registration. The real caption/tab row/QAT stays exposed, File stays open, visual
+tab selection is suspended, and validated tab/File/QAT actions retain native
+ownership. Pale rail, square blue selected row, open-File seam, left divider
+shadow and independent Back/seam/shadow/identity roles are shared public behavior.
+Designer preview is inert and reflects open File/tab paint without runtime state.
+Host Layout ignores the pane's own motion Location updates; otherwise it cancels
+travel. The final correction passes 24/24 affected Release cases.
+Latest selected focused results pass 210 distinct cases (not a full-suite run).
+Independent package/native checks, 12 byte-exact old-theme Backstage paint pairs,
+and both actual sample checks pass. Normal Debug runtime/server/net472 client,
+samples and dedicated host build cleanly. Evidence is under
+`winforms/artifacts/office2010-f4/`; retain earlier failed/repair records too.
+Actual VS/physical/continuous visible motion/corner/material/mixed-monitor gates
+are separate; no Aero or final normal-theme acceptance is claimed.
+
+**F4 visual review follow-up is delivered, pending user recheck.** The user supplied
+eight concrete corrections plus clarification that both the whole card viewport
+border and dimensional custom-card states are wanted. Read the
+[requested-fix checklist and exact limits](OFFICE2010-BLUE-PLAN.md#f4-visual-review-corrections--2026-11-15)
+before proceeding. Caption-button glass is scoped to those buttons; full Aero
+frame work remains deferred. Shared role additions retain null/Empty/zero/reset
+and existing public renderer hooks. Sample cards use DrawGalleryTileState while
+their editable artwork remains host-owned. Shared text paint honors the existing
+body viewport clip. Focused Release 155/155 plus two real narrow-body cases pass;
+independent old/current-package checks reproduce 2,526 -> 0 leaked text pixels
+and 0 -> 286 gallery state-border pixels. Both sample review checks pass. Extra
+foreground inline-focus verification fails identically on old package/card sources;
+the foreground popup check loses activation. Preserve those limits and their logs.
+
+The subsequent selected-navigation correction is delivered, pending user recheck.
+Read the [hue/lower-band record](OFFICE2010-BLUE-PLAN.md#selected-navigation-hue-and-lower-band-correction--2026-11-15).
+The old RGB channel transfer visibly shifted Red toward purple; the reference
+ramp also peaked near its bottom. Navigation now preserves accent hue while
+transferring lightness/saturation, and its default ramp lightens smoothly.
+Selected/pressed rows and outlines share that mapping. Public general AdaptFill,
+File/caption recipes and all other reviewed surfaces stay unchanged. Explicit
+roles, strength/zero/Reset, alpha and direction retain precedence. Focused Release
+24/24, old/new public-package measurements and both samples' six Accent choices
+pass; red hue error improves 64.14 -> 0.53 degrees with no lower lightness reversal.
+Native editor handles/parents/text/RTF/selection remain. Do not repeat unrelated
+matrices or infer selected-row visual acceptance from these measurements.
 
 B1–D8b, all identified A00–A17 corrections and E2–E4 are implemented. E5 automated
 composed checks are delivered. Current review, evidence pointers and remaining gates live in
@@ -105,7 +151,7 @@ darkening, state-fill and foreground overrides. Other buttons stay white with
 light hover/darker pressed washes; pressed borders retain Accent.
 Existing explicit button/state/border overrides win. All three families' sample actions
 and persistence are checked; the persistent Designer Sample now uses package
-`0.1.0-designer.local20261114T121614945Z` after the F3 header/width review refresh.
+`0.1.0-designer.local20261114T225800298Z` after the selected-navigation correction.
 See [E3 evidence and scope](OFFICE2013-LIGHT-PLAN.md#e3-accent-palette-file-states-and-sample-appearance-controls--2026-11-13).
 E4 adds the #919191 body perimeter, selected-tab top/side outline and visible-tab
 opening through HeaderAppearance.ConnectSelectedTabToBody. Existing body/header
@@ -135,40 +181,19 @@ records before edits. Reuse the
 [architecture map](THEME-ARCHITECTURE-PLAN.md) and
 [adjustability audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 
-## Next bounded implementation: F4 below-tabs Backstage sibling only
+## Next bounded slice: F5 composed normal-theme review only
 
-Follow F4 in the [2010 plan](OFFICE2010-BLUE-PLAN.md#f4-below-tabs-backstage-sibling).
-Address concrete F3 visual feedback first if the user supplies any; do not claim
-user review from the offscreen captures. Append RibbonBackstageStyle.Office2010 = 2
-without renumbering existing styles. Use sibling layout/drawing helpers under the
-neutral bases and one registered placement/caption/motion profile; keep palette
-and style independently selectable. Do not derive from the 2019/2024 sibling.
+Follow [F5](OFFICE2010-BLUE-PLAN.md#f5-composed-normal-theme-review) after addressing
+any concrete F4 user feedback. Reuse passed F2/F3/F4 and E2–E5 evidence. Complete
+only missing composed scopes across delivered ribbon/popup/gallery/Backstage/
+Options surfaces in both ordinary samples and an independent package consumer
+with its own model and no sample helpers/internal access. Do not rerun unrelated
+passed matrices or count offscreen print/API evidence as visual acceptance.
 
-Anchor the pane to the live measured tab-header bottom transformed into host
-client coordinates, including caption/QAT/font/DPI/density/reflow. Cover body,
-lower QAT/messages and document while leaving the real caption and tab row
-visible. Clamp tiny/ordinary Form hosts safely; no fixed caption+tab constant.
-
-Retain real File open/selected. Hide the redundant round Back target by default.
-File/selected tab close Backstage; another tab also selects normally. Keep exposed
-caption/QAT input ownership. Suspend only the selected tab's visual connection
-while open, preserving logical selection and restoring it on close, including
-contextual/merged tabs. Add only the missing independently adjustable seam/back
-button/divider-shadow roles defined in F4, with null/zero/Transparent semantics.
-
-Use the pale blue rail, square full-width dimensional blue selected row and white
-page from the reference. Reuse IdentityAccent.AdaptFill for accent adaptation;
-retain explicit navigation/appearance overrides, A10 page width preference and
-host-owned native controls. Top seam follows File open ramp's bottom; page shadow
-stays on the divider's left side with no shadow crossing the top seam. Keep the
-caption separate and use the accepted whole-pane motion/closing/native handoff.
-
-Verify affected geometry/input/motion/native lifecycle/designer/public-package
-scopes and both existing samples. Refresh the persistent Designer Sample in place
-when its package changes; retain normal Debug/Release outputs. Reuse passed F2/F3
-and E2–E5 evidence where unchanged. No diagnostic tabs or temporary sample placement.
-Stop after F4 with outcome, limits and next slice **F5 composed normal-theme
-review**. No Aero, another family or dark variant.
+Guide the user through the normal theme, including the F4 review steps. The user
+owns actual visual review; record exact scope and remaining VS/input/DPI/material
+limits. No diagnostic tabs, temporary review solution, Aero, new family or dark
+variant. Stop after composed normal-theme review and report remaining gates.
 
 ## Preserve delivered contracts
 

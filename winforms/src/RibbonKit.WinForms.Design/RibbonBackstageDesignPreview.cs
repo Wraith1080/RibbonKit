@@ -19,13 +19,18 @@ internal sealed class RibbonBackstageDesignPreview(RibbonControl ribbon, ISelect
     {
         get
         {
+            if (ribbon.BackstageKeepsHeaders)
+            {
+                int headerBottom = Math.Clamp(surface.PointToClient(ribbon.PointToScreen(new(0, ribbon.Snapshot.TabViewport.Bottom))).Y, 0, surface.ClientSize.Height);
+                return new(0, headerBottom, surface.ClientSize.Width, Math.Max(0, surface.ClientSize.Height - headerBottom));
+            }
             int top = surface is RibbonForm { CustomCaption: true } form ? form.CaptionHeight : 0;
             return new(0, top, surface.ClientSize.Width, Math.Max(0, surface.ClientSize.Height - top));
         }
     }
     internal RibbonBackstagePageItem? Page => _page is { IsDisposed: false } page && ribbon.Backstage.Contains(page) ? page : null;
     internal RibbonBackstageLayout Layout => RibbonBackstageLayout.Build(Bounds.Size, ribbon.Font, ribbon.DeviceDpi, ribbon.Backstage, Page);
-    internal Rectangle BackBounds { get { var back = Layout.Back; back.Offset(Bounds.Location); return back; } }
+    internal Rectangle BackBounds { get { var back = Layout.Back; if (!back.IsEmpty) back.Offset(Bounds.Location); return back; } }
     internal bool CanOpenFromFile(Point point) => ribbon.FileMenuMode == RibbonFileMenuMode.Backstage
         && ribbon.Snapshot.Targets.Any(target => target.Kind == TargetKind.FileMenu && target.VisibleBounds.Contains(point));
     internal void Open()
@@ -33,6 +38,7 @@ internal sealed class RibbonBackstageDesignPreview(RibbonControl ribbon, ISelect
         if (!ribbon.IsInDesignMode) throw new InvalidOperationException("Backstage preview requires a designer session.");
         if (surface.IsDisposed || ribbon.IsDisposed) return;
         _open = true; _offset = 0;
+        ribbon.SetDesignPreviewBackstage(true);
         _page = selection?.PrimarySelection is RibbonBackstagePageItem selected && ribbon.Backstage.Contains(selected) ? selected
             : ribbon.Backstage.SelectedPage ?? ribbon.Backstage.NavigationItems.OfType<RibbonBackstagePageItem>().FirstOrDefault(page => page.Visible);
         SelectComponent(ribbon);
@@ -42,6 +48,7 @@ internal sealed class RibbonBackstageDesignPreview(RibbonControl ribbon, ISelect
     {
         if (!_open) return;
         _open = false; _page = null; _offset = 0;
+        ribbon.SetDesignPreviewBackstage(false);
         if (selectRibbon) SelectComponent(ribbon);
         Changed?.Invoke(this, EventArgs.Empty);
     }
@@ -92,7 +99,7 @@ internal sealed class RibbonBackstageDesignPreview(RibbonControl ribbon, ISelect
         try { selection?.SetSelectedComponents(new[] { component }, SelectionTypes.Replace); }
         finally { ChangingSelection = false; }
     }
-    internal const string PlaceholderText = "Backstage page content\r\n\r\nShared design preview — select a navigation entry to edit its properties.\r\nDesign each page body in its separate UserControl designer. Use Back to return to the ribbon.";
+    internal const string PlaceholderText = "Backstage page content\r\n\r\nShared design preview — select a navigation entry to edit its properties.\r\nDesign each page body in its separate UserControl designer. Close this preview to return to the ribbon.";
     private Rectangle PageTextBounds
     {
         get { var bounds = Layout.PageContentBounds(); bounds.Offset(Bounds.Location); bounds.Inflate(-RibbonLayoutEngine.Scale(16, ribbon.DeviceDpi), -RibbonLayoutEngine.Scale(16, ribbon.DeviceDpi)); return bounds; }
@@ -142,7 +149,7 @@ internal sealed class RibbonBackstageDesignPreview(RibbonControl ribbon, ISelect
             var layout = Layout;
             var context = new RibbonPaintContext(graphics, bounds, ribbon.Theme, ribbon.Font, ribbon.DeviceDpi) { Density = ribbon.Density };
             ribbon.Painter.DrawBackstageBackground(context, layout.Page.Left);
-            var back = BackBounds; back.Offset(origin); ribbon.Painter.DrawBackstageEntry(context with { Bounds = back }, null, false);
+            var back = BackBounds; back.Offset(origin); if (back.Width > 0 && back.Height > 0) ribbon.Painter.DrawBackstageEntry(context with { Bounds = back }, null, false);
             foreach (var row in Rows())
             {
                 var target = row.Bounds; target.Offset(origin); var clip = row.Clip; clip.Offset(origin);
@@ -150,7 +157,10 @@ internal sealed class RibbonBackstageDesignPreview(RibbonControl ribbon, ISelect
                 try
                 {
                     graphics.SetClip(clip, CombineMode.Intersect);
-                    ribbon.Painter.DrawBackstageEntry(context with { Bounds = target, Hot = ReferenceEquals(selection?.PrimarySelection, row.Item) && row.Item is not RibbonBackstagePageItem }, row.Item, ReferenceEquals(row.Item, Page));
+                    int shadow = RibbonRenderer.BackstageDividerShadowWidth(ribbon.Theme, ribbon.DeviceDpi, layout.Page.Left);
+                    ribbon.Painter.DrawBackstageEntry(context with { Bounds = target, BackgroundBounds = bounds,
+                        BackstageDividerShadowBounds = new(bounds.Left + layout.Page.Left - shadow, bounds.Top + layout.Page.Top, shadow, layout.Page.Height),
+                        Hot = ReferenceEquals(selection?.PrimarySelection, row.Item) && row.Item is not RibbonBackstagePageItem }, row.Item, ReferenceEquals(row.Item, Page));
                 }
                 finally { graphics.Restore(rowState); }
             }

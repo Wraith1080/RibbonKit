@@ -17,7 +17,7 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     public override int GetBackstagePageCornerRadius(RibbonTheme theme, int deviceDpi) => BackstageStyleRenderer(theme).GetBackstagePageCornerRadius(theme, deviceDpi);
     /// <inheritdoc />
     public override void DrawBackstageBackground(RibbonPaintContext context, int navigationWidth)
-        => BackstageStyleRenderer(context.Theme).DrawBackground(this, context, navigationWidth);
+        => PaintBackstageFrame(context, navigationWidth, content => BackstageStyleRenderer(context.Theme).DrawBackground(this, content, navigationWidth));
     /// <inheritdoc />
     public override bool JoinBelowRibbonQuickAccess => true;
     /// <inheritdoc />

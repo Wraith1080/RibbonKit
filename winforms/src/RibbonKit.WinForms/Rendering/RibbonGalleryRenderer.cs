@@ -43,7 +43,7 @@ public partial class RibbonRenderer
         bool authored = context.GalleryChrome switch { RibbonGalleryChromeKind.Header => a?.HasHeaderChrome == true, RibbonGalleryChromeKind.Tile => a?.HasTileChrome == true, RibbonGalleryChromeKind.Strip => a?.HasStripChrome == true, RibbonGalleryChromeKind.Utility => a?.HasUtilityChrome == true, _ => false };
         if (!authored) return false;
         var m = new RibbonGalleryAppearanceMetrics(context.Theme, context.DeviceDpi); var bounds = m.Bounds(context.Bounds, context.GalleryChrome);
-        var chrome = context.GalleryChrome == RibbonGalleryChromeKind.Tile ? a?.StateChrome : null;
+        var chrome = context.GalleryChrome == RibbonGalleryChromeKind.Tile ? a?.StateChrome : context.GalleryChrome == RibbonGalleryChromeKind.Utility ? a?.UtilityStateChrome : null;
         border = m.Border(chrome?.Border(context, border) ?? border, context.GalleryChrome);
         PaintStateChrome(context with { Bounds = bounds }, m.Radius(actualRadius, context.GalleryChrome), fill, border, m.BorderWidth(bounds, border, context.GalleryChrome), chrome);
         return true;

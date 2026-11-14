@@ -2,7 +2,7 @@ namespace RibbonKit.WinForms;
 
 public static partial class RibbonThemes
 {
-    /// <summary>Gets the normal Office 2010 Blue ribbon/File shell with dimensional gold states and Rounded native corner preference. The below-tabs Backstage presentation is a separate slice.</summary>
+    /// <summary>Gets normal Office 2010 Blue with dimensional gold states, below-tabs Backstage and Rounded native corner preference.</summary>
     public static RibbonTheme Office2010Blue { get; } = CreateOffice2010Blue();
     private static RibbonTheme CreateOffice2010Blue()
     {
@@ -17,6 +17,11 @@ public static partial class RibbonThemes
         return new()
         {
             WindowCornerPreference = RibbonWindowCornerPreference.Rounded,
+            BackstageStyle = RibbonBackstageStyle.Office2010, BackstageFullWidthNavigation = true,
+            BackstageNavigationBackgroundFill = new(C(0xE4EDF7), C(0xCBDAEC)), BackstageSelectedForeground = Color.White,
+            BackstageNavigationHover = new(C(0xE8F0F9)), BackstageSelectionIndicatorVisible = false,
+            BackstageAppearance = new() { NavigationHoverEdgeColor = C(0xF6FAFE), NavigationHoverEdgeWidth = 1 },
+            BackstagePageBorderWidth = 0, BackstagePageCornerRadius = 0,
             Accent = C(0x1E5A9C), IdentityAccent = new(), AccentStates = null,
             Background = C(0xCBDAEC), BackgroundFill = new(C(0xD8E5F3), C(0xCBDAEC)),
             TitleBarBackgroundFill = new(C(0xEAF1F9), C(0xD8E5F3)), ExtendTitleBarColorToHeader = false,
@@ -31,7 +36,8 @@ public static partial class RibbonThemes
             HeaderSelectedBackground = new(C(0xFCFDFF), C(0xF6F9FC)),
             HeaderHover = new(Color.FromArgb(168, C(0xFFF7DF)), Color.FromArgb(168, C(0xFBE9B0))),
             HeaderPressed = RibbonIdentityAccentSettings.Ramp(0xF3C258, 0xF8CC6A, 0xFCDA86),
-            HeaderAppearance = new() { ConnectSelectedTabToBody = true, FilledTabBottomBorderVisible = false, FilledHoverBorderColor = C(0xD39E28), FilledPressedBorderColor = C(0xCB9A34) },
+            HeaderAppearance = new() { ConnectSelectedTabToBody = true, FilledTabBottomBorderVisible = false, FilledHoverBorderColor = C(0xD39E28), FilledPressedBorderColor = C(0xCB9A34),
+                UtilityHoverBackground = Gold(0xFFF7CE, 0xFFDC8C, 0xFFEFB6, 0xFFFFFB), UtilityPressedBackground = RibbonIdentityAccentSettings.Ramp(0xF3C258, 0xF8CC6A, 0xFCDA86), UtilityStateChrome = goldChrome },
             Hover = Gold(0xFFF7CE, 0xFFDC8C, 0xFFEFB6, 0xFFFFFB),
             Pressed = RibbonIdentityAccentSettings.Ramp(0xF3C258, 0xF8CC6A, 0xFCDA86),
             Checked = Gold(0xFFEFB2, 0xFFD880, 0xFFE8A4, 0xFFF7D8), CheckedHover = Gold(0xFFEAA2, 0xFFD074, 0xFFE196, 0xFFF2C6),
@@ -46,7 +52,17 @@ public static partial class RibbonThemes
             PopupBackgroundFill = new(C(0xF6F9FC), C(0xDAE5F1)),
             GalleryHeadingBackground = new(C(0xDBE7F3)), GalleryHeadingForeground = C(0x1E1E1E),
             MenuHeadingBackground = new(C(0xDBE7F3)),
-            GalleryAppearance = new() { StateChrome = goldChrome, TileCornerRadius = 3, StripCornerRadius = 3, UtilityCornerRadius = 2 },
+            GalleryAppearance = new() { StateChrome = goldChrome, UtilityStateChrome = goldChrome, TileCornerRadius = 3, StripCornerRadius = 3, UtilityCornerRadius = 2 },
+            CaptionButtonAppearance = new()
+            {
+                StateInset = 2, CornerRadius = 3,
+                HoverBackground = Gold(0xEAF7FF, 0x92C5E8, 0xB3DCF5, 0xE8F8FF),
+                PressedBackground = RibbonIdentityAccentSettings.Ramp(0x6599C3, 0xA4D1EC, 0x82BBDD),
+                CloseHoverBackground = Gold(0xFFB5AE, 0xD94438, 0xED6654, 0xFFB6A8),
+                ClosePressedBackground = RibbonIdentityAccentSettings.Ramp(0xA62B22, 0xD85545, 0xB8372C),
+                StateChrome = new() { HoverBorderColor = C(0x6B98B9), PressedBorderColor = C(0x3C6C91), InnerBorderColor = Color.FromArgb(180, Color.White), InnerBorderWidth = 1 },
+                CloseStateChrome = new() { HoverBorderColor = C(0xA43128), PressedBorderColor = C(0x7D231C), InnerBorderColor = Color.FromArgb(160, Color.White), InnerBorderWidth = 1 }
+            },
             EditorAppearance = new() { StateChrome = goldChrome, CornerRadius = 3, ChoiceCornerRadius = 3 }
         };
     }

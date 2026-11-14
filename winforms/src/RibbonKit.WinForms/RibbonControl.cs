@@ -74,6 +74,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             VerifyAccess();
             if (value is not null && (!GetPresentedTabs().Contains(value) || !value.Visible || !value.EffectiveEnabled))
                 throw new ArgumentException("Select a visible, enabled tab belonging to this ribbon.", nameof(value));
+            if (IsBackstageOpen && BackstageKeepsHeaders && value is not null && !CloseBackstage(false, animate: false)) return;
             if (ReferenceEquals(_selectedTab, value))
                 return;
             if (AnimationLevel != RibbonAnimationLevel.None && _motion?.Changing != true && _updateDepth == 0 && (!IsMinimized || _motion?.CanCoalesceHeaderSelection == true) && value is not null && _selectedTab is not null)
@@ -373,6 +374,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         {
             UpdateHeight();
             SyncEditors();
+            if (IsBackstageOpen && BackstageKeepsHeaders) BackstageHostResized(this, EventArgs.Empty);
             Invalidate();
             _popups.InvalidateAll();
             AccessibilityChanged();
@@ -599,7 +601,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         }, false);
         var headerTheme = HeaderPaintTheme(composited);
         var headerChromeTheme = HeaderPaintTheme(composited, chrome: true);
-        if (RibbonHeaderBodyConnectionMetrics.Enabled(context.Theme) && _snapshot.Targets.FirstOrDefault(t => t.Kind == TargetKind.Tab && ReferenceEquals(t.Element, DisplaySelectedTab)) is { } selectedHeader)
+        if (!BackstageHeadersUnselected && RibbonHeaderBodyConnectionMetrics.Enabled(context.Theme) && _snapshot.Targets.FirstOrDefault(t => t.Kind == TargetKind.Tab && ReferenceEquals(t.Element, DisplaySelectedTab)) is { } selectedHeader)
             context = context with { HeaderBodyConnectionBounds = RibbonHeaderBodyConnectionMetrics.Resolve(context.Theme, DeviceDpi, _snapshot.BodyFrameBounds, selectedHeader.Bounds, selectedHeader.Clip) };
         if (!ReferenceEquals(headerTheme, context.Theme))
         {
@@ -691,9 +693,9 @@ public partial class RibbonControl : Control, ISupportInitialize
                 else if (target.Kind == TargetKind.FileMenu)
                     // Reveal the final header underneath the outgoing fade;
                     // its model stays open until Backstage actually closes.
-                    Painter.DrawFileButton(ctx with { FileMenuClosing = _backstageClosing }, FileMenu);
+                    Painter.DrawFileButton(ctx with { FileMenuClosing = _backstageClosing && !BackstageKeepsHeaders, FileMenuPreviewOpen = DesignPreviewBackstage }, FileMenu);
                 else if (target.Element is RibbonTab tab)
-                    Painter.DrawTab(ctx, tab, ReferenceEquals(tab, DisplaySelectedTab));
+                    Painter.DrawTab(ctx, tab, !BackstageHeadersUnselected && ReferenceEquals(tab, DisplaySelectedTab));
                 else if (target.Element is RibbonSplitButtonItem split && arrow is not null)
                     Painter.DrawSplitItem(ctx, ctx with
                     {
@@ -788,7 +790,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         _pressedScroll = hit.Element is null ? hit.Kind : null;
         _pressedDropDown = hit.DropDownPart;
         Capture = true;
-        if (hit?.Element is { } element)
+        if (!IsBackstageOpen && hit?.Element is { } element)
             FocusElement(element, hit.DropDownPart);
         Invalidate();
     }
@@ -828,7 +830,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     internal bool ProcessRibbonKey(Keys keys)
     {
         _screenTips.Cancel();
-        if (IsBackstageOpen) return ProcessBackstageKey(keys);
+        if (IsBackstageOpen && !BackstageHeaderHasKeyboardInput(keys)) return ProcessBackstageKey(keys);
         if (keys == (Keys.Control | Keys.F1)) { ToggleMinimizedByUser(); return true; }
         if (keys is Keys.Escape or Keys.Enter or Keys.Space or Keys.Tab or (Keys.Tab | Keys.Shift)
             or Keys.Left or Keys.Right or Keys.Up or Keys.Down or Keys.Home or Keys.End)
@@ -880,7 +882,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         }
         if (!Focused)
             return false;
-        var targets = Snapshot.Targets.Where(t => t.Element is not null && t.Enabled).ToArray();
+        var targets = Snapshot.Targets.Where(t => t.Element is not null && t.Enabled && (!IsBackstageOpen || IsExposedBackstageTarget(t))).ToArray();
         int current = Array.FindIndex(targets, t => ReferenceEquals(t.Element, _focused) && t.DropDownPart == _focusedDropDown);
         if (current >= 0 && targets[current] is { Element: RibbonComboBoxItem compact, Size: RibbonItemSize.Small } && keys is Keys.F4 or (Keys.Alt | Keys.Down))
         { compact.ShowDropDown(); return true; }
@@ -898,7 +900,8 @@ public partial class RibbonControl : Control, ISupportInitialize
             else
             {
                 ExitKeyTips(false);
-                FindForm()?.SelectNextControl(this, !keys.HasFlag(Keys.Shift), true, true, true);
+                if (IsBackstageOpen && BackstageKeepsHeaders) _backstageSurface?.FocusInitial(false);
+                else FindForm()?.SelectNextControl(this, !keys.HasFlag(Keys.Shift), true, true, true);
             }
             return true;
         }
@@ -940,7 +943,16 @@ public partial class RibbonControl : Control, ISupportInitialize
     internal void Activate(RibbonTarget target, Control? opener = null)
     {
         SettleMotion();
-        if (IsBackstageOpen) return;
+        bool closingSelectedTab = false;
+        if (IsBackstageOpen)
+        {
+            if (!target.Enabled || !IsExposedBackstageTarget(target)) return;
+            if (target.Kind == TargetKind.FileMenu) { CloseBackstage(true); return; }
+            if (target.Kind is TargetKind.TabBack or TargetKind.TabNext) { Scroll(true, target.Kind == TargetKind.TabBack ? -120 : 120); return; }
+            if (target.Kind == TargetKind.Minimize) { ToggleMinimizedByUser(); return; }
+            closingSelectedTab = target.Element is RibbonTab selected && ReferenceEquals(selected, SelectedTab);
+            if (!CloseBackstage(false, animate: false)) return;
+        }
         _screenTips.Cancel();
         if (!target.Enabled)
             return;
@@ -962,7 +974,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             case RibbonTab tab:
                 FocusElement(tab);
                 SelectedTab = tab;
-                if (IsMinimized) _popups.Toggle(tab, this, target.VisibleBounds);
+                if (IsMinimized && !closingSelectedTab) _popups.Toggle(tab, this, target.VisibleBounds);
                 break;
             case RibbonGroup group:
                 Control groupOpener = opener ?? (Control?)_popups.Surfaces.LastOrDefault(s => s.Targets.Any(t => ReferenceEquals(t.Element, group))) ?? this;
@@ -1044,7 +1056,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     internal void FocusElement(RibbonElement element, bool dropDownPart = false, bool enterEditor = true)
     {
         SettleMotion();
-        if (IsBackstageOpen) return;
+        if (IsBackstageOpen && (!IsExposedBackstageElement(element) || !ValidateBackstagePage())) return;
         if (!ReferenceEquals(element, _focused) && !_editors.CommitFocused()) return;
         _focused = element;
         _focusedDropDown = RibbonSplitLayout.IsSplit(element) && dropDownPart;

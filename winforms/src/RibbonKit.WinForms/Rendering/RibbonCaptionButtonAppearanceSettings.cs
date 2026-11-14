@@ -5,6 +5,10 @@ public sealed record RibbonCaptionButtonAppearanceSettings
 {
     /// <summary>Initializes overrides retaining existing caption-button appearance.</summary>
     public RibbonCaptionButtonAppearanceSettings() { }
+    /// <summary>Gets optional non-close state outlines and inner rims. Fill, native targets and glyphs remain independent.</summary>
+    public RibbonStateChromeSettings? StateChrome { get; init; }
+    /// <summary>Gets optional close state outlines and inner rims. Null retains no close outline/rim.</summary>
+    public RibbonStateChromeSettings? CloseStateChrome { get; init; }
     /// <summary>Gets optional symmetric state-fill inset in logical pixels, 0..1024. Null uses zero. Clamps inside the native target without moving its glyph or hit area.</summary>
     public int? StateInset { get; init; }
     /// <summary>Gets optional state-fill radius in logical pixels, 0..64. Null uses square corners; available paint bounds clamp the radius.</summary>
@@ -31,6 +35,7 @@ public sealed record RibbonCaptionButtonAppearanceSettings
     internal static void Validate(RibbonCaptionButtonAppearanceSettings? a)
     {
         if (a is null) return;
+        RibbonStateChromeSettings.Validate(a.StateChrome); RibbonStateChromeSettings.Validate(a.CloseStateChrome);
         if (a.StateInset is < 0 or > 1024 || a.CornerRadius is < 0 or > 64 || a.GlyphSize is < 0 or > 256 || a.RestoreOffset is < 0 or > 256 ||
             a.GlyphStrokeWidth is { } stroke && (!double.IsFinite(stroke) || stroke < 0 || stroke > 32))
             throw new ArgumentOutOfRangeException(nameof(a), "Caption button values must be within their documented ranges; stroke must be finite. Null retains existing appearance.");
