@@ -2219,3 +2219,48 @@ static RibbonKit.WinForms.RibbonStateChromeSettings.operator !=(RibbonKit.WinFor
 static RibbonKit.WinForms.RibbonStateChromeSettings.operator ==(RibbonKit.WinForms.RibbonStateChromeSettings? left, RibbonKit.WinForms.RibbonStateChromeSettings? right) -> bool
 RibbonKit.WinForms.RibbonEditorAppearanceSettings.ChoiceBorderWidth.get -> int?
 RibbonKit.WinForms.RibbonEditorAppearanceSettings.ChoiceBorderWidth.init -> void
+override RibbonKit.WinForms.RibbonIdentityAccentSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonIdentityAccentSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonIdentityAccentSettings.ToString() -> string!
+RibbonKit.WinForms.RibbonBuiltInTheme.Office2010Blue = 3 -> RibbonKit.WinForms.RibbonBuiltInTheme
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.BorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.BorderColor.init -> void
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.SquareBottomCorners.get -> bool
+RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.SquareBottomCorners.init -> void
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.FilledHoverBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.FilledHoverBorderColor.init -> void
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.FilledPressedBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.FilledPressedBorderColor.init -> void
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.FilledTabBottomBorderVisible.get -> bool
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.FilledTabBottomBorderVisible.init -> void
+RibbonKit.WinForms.RibbonIdentityAccentSettings
+RibbonKit.WinForms.RibbonIdentityAccentSettings.<Clone>$() -> RibbonKit.WinForms.RibbonIdentityAccentSettings!
+RibbonKit.WinForms.RibbonIdentityAccentSettings.AdaptFill(RibbonKit.WinForms.RibbonFill fill, System.Drawing.Color accent, double strength = 1) -> RibbonKit.WinForms.RibbonFill
+RibbonKit.WinForms.RibbonIdentityAccentSettings.CaptionBackground.get -> RibbonKit.WinForms.RibbonFill
+RibbonKit.WinForms.RibbonIdentityAccentSettings.CaptionBackground.init -> void
+RibbonKit.WinForms.RibbonIdentityAccentSettings.CaptionStrength.get -> double
+RibbonKit.WinForms.RibbonIdentityAccentSettings.CaptionStrength.init -> void
+RibbonKit.WinForms.RibbonIdentityAccentSettings.CreateCaptionFill(System.Drawing.Color accent) -> RibbonKit.WinForms.RibbonFill
+RibbonKit.WinForms.RibbonIdentityAccentSettings.Equals(RibbonKit.WinForms.RibbonIdentityAccentSettings? other) -> bool
+RibbonKit.WinForms.RibbonIdentityAccentSettings.FileBackground.get -> RibbonKit.WinForms.RibbonFill
+RibbonKit.WinForms.RibbonIdentityAccentSettings.FileBackground.init -> void
+RibbonKit.WinForms.RibbonIdentityAccentSettings.FileHoverBackground.get -> RibbonKit.WinForms.RibbonFill
+RibbonKit.WinForms.RibbonIdentityAccentSettings.FileHoverBackground.init -> void
+RibbonKit.WinForms.RibbonIdentityAccentSettings.FileOpenBackground.get -> RibbonKit.WinForms.RibbonFill
+RibbonKit.WinForms.RibbonIdentityAccentSettings.FileOpenBackground.init -> void
+RibbonKit.WinForms.RibbonIdentityAccentSettings.FilePressedBackground.get -> RibbonKit.WinForms.RibbonFill
+RibbonKit.WinForms.RibbonIdentityAccentSettings.FilePressedBackground.init -> void
+RibbonKit.WinForms.RibbonIdentityAccentSettings.FileStrength.get -> double
+RibbonKit.WinForms.RibbonIdentityAccentSettings.FileStrength.init -> void
+RibbonKit.WinForms.RibbonIdentityAccentSettings.ReferenceAccent.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonIdentityAccentSettings.ReferenceAccent.init -> void
+RibbonKit.WinForms.RibbonIdentityAccentSettings.RibbonIdentityAccentSettings() -> void
+RibbonKit.WinForms.RibbonTheme.IdentityAccent.get -> RibbonKit.WinForms.RibbonIdentityAccentSettings?
+RibbonKit.WinForms.RibbonTheme.IdentityAccent.init -> void
+RibbonKit.WinForms.RibbonTheme.FileButtonMinimumWidth.get -> int?
+RibbonKit.WinForms.RibbonTheme.FileButtonMinimumWidth.init -> void
+RibbonKit.WinForms.RibbonIdentityAccentSettings.FileBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonIdentityAccentSettings.FileBorderColor.init -> void
+static RibbonKit.WinForms.RibbonIdentityAccentSettings.operator !=(RibbonKit.WinForms.RibbonIdentityAccentSettings? left, RibbonKit.WinForms.RibbonIdentityAccentSettings? right) -> bool
+static RibbonKit.WinForms.RibbonIdentityAccentSettings.operator ==(RibbonKit.WinForms.RibbonIdentityAccentSettings? left, RibbonKit.WinForms.RibbonIdentityAccentSettings? right) -> bool
+static RibbonKit.WinForms.RibbonThemes.Office2010Blue.get -> RibbonKit.WinForms.RibbonTheme!

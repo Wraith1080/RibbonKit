@@ -11,7 +11,7 @@ internal readonly record struct RibbonHeaderMetrics
     {
         TabPadding = theme.TabHorizontalPadding ?? defaults.TabPadding;
         TabMinimum = Math.Max(theme.TabMinimumWidth ?? defaults.TabMinimum, density == RibbonDensity.Touch ? 44 : 1);
-        FileMinimum = defaults.FileMinimum;
+        FileMinimum = Math.Max(theme.FileButtonMinimumWidth ?? defaults.FileMinimum, density == RibbonDensity.Touch ? 44 : 1);
         IndicatorPadding = theme.HeaderIndicatorPadding ?? defaults.IndicatorPadding;
         IndicatorThickness = theme.HeaderIndicatorThickness ?? defaults.IndicatorThickness;
         IndicatorBottomInset = theme.HeaderIndicatorBottomInset ?? defaults.IndicatorBottomInset;

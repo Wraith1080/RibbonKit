@@ -8,7 +8,9 @@ public enum RibbonBuiltInTheme
     /// <summary>The flat Office 2019 inspired light palette.</summary>
     Office2019Light,
     /// <summary>The accent-driven Office 2013 inspired light palette. Connected frame refinement is independent.</summary>
-    Office2013Light
+    Office2013Light,
+    /// <summary>The dimensional Office 2010 Blue ribbon/File palette.</summary>
+    Office2010Blue = 3
 }
 
 /// <summary>Identifies the default Office renderer's tab and File presentation.</summary>
@@ -16,7 +18,7 @@ public enum RibbonHeaderPresentation
 {
     /// <summary>Text with the Office 2024 selection and interaction underline.</summary>
     Underline,
-    /// <summary>Square filled headers with a selected tab continuous with the body.</summary>
+    /// <summary>Filled headers with a selected tab continuous with the body; corner settings remain independent.</summary>
     Filled
 }
 
@@ -162,8 +164,10 @@ public sealed record RibbonTheme
     public int? GroupSeparatorVerticalInset { get; init; }
     /// <summary>Gets the optional horizontal padding on each side of tab and File labels in 96-DPI logical pixels, 0..1024. Null retains 14. Measurement, overflow and interaction targets share the resulting width.</summary>
     public int? TabHorizontalPadding { get; init; }
-    /// <summary>Gets the optional minimum tab width in 96-DPI logical pixels, 1..1024. Null retains 58. Text/padding requirements and Touch's 44-pixel minimum still apply; File retains its separate 50-pixel minimum.</summary>
+    /// <summary>Gets the optional minimum tab width in 96-DPI logical pixels, 1..1024. Null retains 58. Text/padding requirements and Touch's 44-pixel minimum still apply; File uses its independent FileButtonMinimumWidth.</summary>
     public int? TabMinimumWidth { get; init; }
+    /// <summary>Gets the optional minimum File button width in 96-DPI logical pixels, 1..1024. Null uses 50; Touch retains at least 44. Text/padding can require more, and narrow-strip safety clamps still apply. Shared by all header presentations, layouts and File routes.</summary>
+    public int? FileButtonMinimumWidth { get; init; }
     /// <summary>Gets the optional Office tab/File indicator label extension and edge clearance in 96-DPI logical pixels, 0..1024. Null retains 4. Bounds clamp within the header; neutral rendering and indicator thickness retain their policies.</summary>
     public int? HeaderIndicatorPadding { get; init; }
     /// <summary>Gets the optional horizontal Quick Access edge padding in 96-DPI logical pixels, 0..1024. Null retains 2. TabRow, BelowRibbon and TitleBar slots clamp available space; source identities and button/row sizes remain.</summary>
@@ -494,6 +498,8 @@ public sealed record RibbonTheme
         HoverBackground = new(Color.FromArgb(230, 230, 230)), PressedBackground = new(Color.FromArgb(218, 218, 218)),
         CheckedOpacity = .18, CheckedHoverOpacity = .28
     };
+    /// <summary>Gets optional dimensional identity-ramp defaults for File and a public colored-caption recipe. Null retains existing solid accent defaults; explicit role fills win. Command state fills stay independent.</summary>
+    public RibbonIdentityAccentSettings? IdentityAccent { get; init; }
     /// <summary>Gets the explicit Hover override, also set by Hover assignment. Null independently restores the accent-derived or fixed default.</summary>
     public RibbonFill? HoverOverride { get; init; }
     /// <summary>Gets the explicit Pressed override, also set by Pressed assignment. Null independently restores the default.</summary>
@@ -526,7 +532,7 @@ public sealed record RibbonTheme
     public int CornerRadius { get; init; } = 4;
 }
 /// <summary>Provides built-in native ribbon themes.</summary>
-public static class RibbonThemes
+public static partial class RibbonThemes
 {
     /// <summary>Gets the initial Office 2024 inspired light palette.</summary>
     public static RibbonTheme Office2024Light { get; } = new();
@@ -539,7 +545,7 @@ public static class RibbonThemes
             HoverBackground = new(Color.FromArgb(222, 220, 218)), PressedBackground = new(Color.FromArgb(207, 205, 203)),
             CheckedOpacity = .18, CheckedHoverOpacity = .28
         },
-        HeaderPresentation = RibbonHeaderPresentation.Filled, ExtendTitleBarColorToHeader = true,
+        HeaderPresentation = RibbonHeaderPresentation.Filled, ExtendTitleBarColorToHeader = true, FileButtonMinimumWidth = 64,
         BodyBottomBorderOnly = true, Background = Color.FromArgb(230, 230, 230),
         CollapsedGroupBorder = Color.Transparent, ApplicationMenuSplitDividerVisible = false, OptionsButtonCornerRadius = 0,
         MessageSideBordersVisible = false, HeaderScrollButtonsMatchTabHeight = true,

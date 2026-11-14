@@ -109,7 +109,7 @@ public sealed class SvgIconTests
     public void Authored_theme_thumbnails_load_and_save_through_framework_code_expressions() => FoundationTests.Sta(() =>
     {
         var source = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "DesignerForm.Designer.cs"));
-        foreach (string name in new[] { "applicationThemeTile", "office2013ThemeTile", "office2019ThemeTile", "office2024ThemeTile", "defaultAccentTile", "blueAccentTile", "tealAccentTile", "greenAccentTile", "purpleAccentTile", "redAccentTile", "orangeAccentTile" })
+        foreach (string name in new[] { "applicationThemeTile", "office2010ThemeTile", "office2013ThemeTile", "office2019ThemeTile", "office2024ThemeTile", "defaultAccentTile", "blueAccentTile", "tealAccentTile", "greenAccentTile", "purpleAccentTile", "redAccentTile", "orangeAccentTile" })
         {
             var match = Regex.Match(source, $@"{name}\.Icon = new RibbonKit\.WinForms\.RibbonSvgIcon\(""([^""]*)""(, (?:true|false))?\);");
             Assert.True(match.Success, "Expected an authored SVG constructor for " + name);

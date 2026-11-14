@@ -61,7 +61,13 @@ public partial class RibbonRenderer : IDisposable
     {
         // Like the tab scrollers, this utility owns its opaque tab-row slot.
         // GDI text from an overflowing tab must not show through beneath it.
-        using (var background = new SolidBrush(context.Theme.Background)) context.Graphics.FillRectangle(background, context.Bounds);
+        var backing = context.Graphics.Save();
+        try
+        {
+            if (context.CompositedText && context.Theme.BackgroundFill is not null) context.Graphics.CompositingMode = CompositingMode.SourceCopy;
+            PaintFill(context, context.Theme.SurroundFill);
+        }
+        finally { context.Graphics.Restore(backing); }
         context = context with { Bounds = RibbonHeaderButtonLayout.PaintBounds(context.Bounds, context.Theme, context.DeviceDpi, square: true) };
         if (context.Bounds.Width <= 0 || context.Bounds.Height <= 0) return;
         var state = context.Graphics.Save();

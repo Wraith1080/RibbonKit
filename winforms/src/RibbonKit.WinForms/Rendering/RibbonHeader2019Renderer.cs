@@ -10,7 +10,7 @@ internal sealed class RibbonHeader2019Renderer : RibbonHeaderRenderer
         if (selected && RibbonHeaderBodyConnectionMetrics.Enabled(context.Theme))
             RibbonHeaderBodyRenderer.DrawSelectedTab(owner, context, RibbonLayoutEngine.Scale(metrics.FilledCornerRadius, context.DeviceDpi), context.Theme.HeaderSelectedBackground ?? new(context.Theme.Surface));
         else if (selected || available && (context.Hot || context.Pressed))
-            owner.PaintFilledHeaderState(context, RibbonLayoutEngine.Scale(metrics.FilledCornerRadius, context.DeviceDpi), selected ? context.Theme.HeaderSelectedBackground ?? new(context.Theme.Surface) : context.Pressed ? context.Theme.HeaderPressed ?? context.Theme.Pressed : context.Theme.HeaderHover ?? context.Theme.Hover);
+            owner.PaintFilledHeaderState(context, RibbonLayoutEngine.Scale(metrics.FilledCornerRadius, context.DeviceDpi), selected ? context.Theme.HeaderSelectedBackground ?? new(context.Theme.Surface) : context.Pressed ? context.Theme.HeaderPressed ?? context.Theme.Pressed : context.Theme.HeaderHover ?? context.Theme.Hover, tabState: !selected);
         bool authoredInk = selected && !context.Theme.HeaderSelectedForeground.IsEmpty;
         var ink = !available ? context.Theme.DisabledColor : authoredInk ? context.Theme.HeaderSelectedForeground : selected ? context.Theme.HeaderSelectedUsesAccent ? context.Theme.Accent : context.Theme.Foreground : context.Theme.HeaderTextColor;
         if (available && tab.IsContextual && !authoredInk) ink = RibbonRenderer.ContextualTabColor(context with { Theme = context.Theme with { Foreground = ink } }, tab, selected);

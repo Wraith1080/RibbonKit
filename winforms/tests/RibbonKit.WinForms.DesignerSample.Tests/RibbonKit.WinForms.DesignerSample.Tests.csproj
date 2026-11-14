@@ -14,6 +14,7 @@
     <Compile Include="../../samples/RibbonKit.WinForms.DesignerSample/*.cs" Exclude="../../samples/RibbonKit.WinForms.DesignerSample/Program.cs" Link="Authored/%(Filename)%(Extension)" />
     <Compile Include="../../samples/Shared/SampleAppearance.cs" Link="Authored/SampleAppearance.cs" />
     <Compile Include="../RibbonKit.WinForms.Consumer/Office2013CompositionChecks.cs" Link="Checks/Office2013CompositionChecks.cs" />
+    <Compile Include="../RibbonKit.WinForms.Consumer/Office2010ShellChecks.cs" Link="Checks/Office2010ShellChecks.cs" />
     <Compile Include="../RibbonKit.WinForms.DesignerConsumer/Office2019ThemeCheck.cs" Link="Checks/Office2019ThemeCheck.cs" />
     <EmbeddedResource Include="../../samples/RibbonKit.WinForms.DesignerSample/*.resx" Link="Authored/%(Filename)%(Extension)" LogicalName="RibbonKitDesignerConsumer.%(Filename).resources" />
     <EmbeddedResource Update="Fixtures/*.resx" LogicalName="RibbonKitDesignerConsumer.%(Filename).resources" />

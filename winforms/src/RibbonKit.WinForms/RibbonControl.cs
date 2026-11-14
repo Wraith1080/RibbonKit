@@ -133,6 +133,7 @@ public partial class RibbonControl : Control, ISupportInitialize
                 if (fill is { } opaque && !RibbonFillColors.IsOpaque(opaque)) throw new ArgumentException("Every stop in opaque surface fills must be opaque.", nameof(value));
             foreach (var chrome in new[] { value.CommandAppearance?.StateChrome, value.FileButtonAppearance?.StateChrome, value.GalleryAppearance?.StateChrome, value.EditorAppearance?.StateChrome, value.OptionsAppearance?.StateChrome })
                 RibbonStateChromeSettings.Validate(chrome);
+            RibbonIdentityAccentSettings.Validate(value.IdentityAccent);
             if (value.EditorAppearance?.ChoiceBorderWidth is < 0 or > 32) throw new ArgumentOutOfRangeException(nameof(value), "Choice outline width must be 0..32 logical pixels, or null.");
             if (value.TabHeight <= 0 || value.BodyHeight <= 0 || value.BodyScrollButtonVerticalInset < 0 || value.HeaderButtonInset < 0 || value.LargeButtonMaxWidth < 60 || value.CollapsedGroupMaxWidth < 80 || value.CornerRadius < 0 || value.PopupCornerRadius < 0 ||
                 !float.IsFinite(value.BackstageNavigationFontSize) || value.BackstageNavigationFontSize <= 0 || value.MessageMinimumHeight <= 0 ||
@@ -164,6 +165,7 @@ public partial class RibbonControl : Control, ISupportInitialize
                 RibbonBuiltInTheme.Office2024Light => RibbonThemes.Office2024Light,
                 RibbonBuiltInTheme.Office2019Light => RibbonThemes.Office2019Light,
                 RibbonBuiltInTheme.Office2013Light => RibbonThemes.Office2013Light,
+                RibbonBuiltInTheme.Office2010Blue => RibbonThemes.Office2010Blue,
                 _ => throw new ArgumentOutOfRangeException(nameof(value))
             };
             if (_builtInTheme == value) return;
@@ -588,11 +590,12 @@ public partial class RibbonControl : Control, ISupportInitialize
         base.OnPaint(e);
         EnsureLayout();
         var context = new RibbonPaintContext(e.Graphics, ClientRectangle, composited ? WindowPaintTheme : Theme, Font, DeviceDpi) { Density = Density, SuppressTabIndicators = CapturingMotionIndicators, CompositedText = composited };
+        var headerBackgroundBounds = new Rectangle(0, WindowCaptionHeight, Width, RibbonLayoutEngine.Scale(LayoutTheme.TabHeight, DeviceDpi));
         bool maskContent = composited && _backdropBodyMasked && KeepsBackdropFrame && !CapturingBackdropScene;
         Painter.DrawSurface(context with
         {
             Bounds = context.Theme.BackgroundFill is not null && HasWindowCaption ? new(0, WindowCaptionHeight, Width, Math.Max(0, Height - WindowCaptionHeight)) : context.Bounds,
-            BackgroundBounds = new(0, WindowCaptionHeight, Width, RibbonLayoutEngine.Scale(LayoutTheme.TabHeight, DeviceDpi))
+            BackgroundBounds = headerBackgroundBounds
         }, false);
         var headerTheme = HeaderPaintTheme(composited);
         var headerChromeTheme = HeaderPaintTheme(composited, chrome: true);
@@ -604,7 +607,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             try
             {
                 if (composited) e.Graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
-                Painter.PaintFill(context with { Theme = headerTheme, Bounds = new(0, WindowCaptionHeight, Width, RibbonLayoutEngine.Scale(LayoutTheme.TabHeight, DeviceDpi)) }, headerTheme.SurroundFill);
+                Painter.PaintFill(context with { Theme = headerTheme, Bounds = headerBackgroundBounds }, headerTheme.SurroundFill);
             }
             finally { e.Graphics.Restore(headerState); }
         }
@@ -621,6 +624,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         if (ReferenceEquals(qatTheme, Theme)) qatTheme = context.Theme;
         if (!_snapshot.QuickAccessBounds.IsEmpty) Painter.DrawQuickAccessToolbar(context with
             { Bounds = _snapshot.QuickAccessBounds,
+            BackgroundBounds = EffectiveQuickAccessPosition == RibbonQuickAccessPosition.TabRow ? headerBackgroundBounds : context.BackgroundBounds,
             Theme = qatTheme,
             IsQuickAccessToolbarJoined = JoinBelowRibbonQuickAccess && !_snapshot.BodyBounds.IsEmpty,
             IsBottomEdgeConnected = MessageBar.HasOpenMessages && MessageTopConnected }, EffectiveQuickAccessPosition);
@@ -666,6 +670,7 @@ public partial class RibbonControl : Control, ISupportInitialize
                         : target.Kind is TargetKind.Tab or TargetKind.FileMenu or TargetKind.TabBack or TargetKind.TabNext ? headerTheme
                         : target.Kind is TargetKind.Minimize or TargetKind.ModalClose ? headerChromeTheme : context.Theme,
                     Bounds = target.Bounds,
+                    BackgroundBounds = target.Kind == TargetKind.Minimize ? headerBackgroundBounds : context.BackgroundBounds,
                     Hot = target.Enabled && !_hotDropDown && ReferenceEquals(target.Element, _hot),
                     Pressed = target.Enabled && !_pressedDropDown && ReferenceEquals(target.Element, _pressed),
                     Focused = target.Enabled && !_focusedDropDown && _keyboardFocusCues && Focused && target.Element is not null && ReferenceEquals(target.Element, _focused),

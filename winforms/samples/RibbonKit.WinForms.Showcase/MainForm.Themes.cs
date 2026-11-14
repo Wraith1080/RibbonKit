@@ -25,6 +25,7 @@ public partial class MainForm
             SimplifiedPlacement = RibbonSimplifiedPlacement.Inline, Icon = RibbonStockIcons.Create("desktop-edit") };
         var choices = new List<(RibbonBuiltInTheme? Theme, RibbonGalleryTile Tile)>();
         AddTheme(null, "Application theme", "application");
+        AddTheme(RibbonBuiltInTheme.Office2010Blue, "Office 2010 Blue", "Office2010Blue");
         AddTheme(RibbonBuiltInTheme.Office2013Light, "Office 2013 Light", "Office2013Light");
         AddTheme(RibbonBuiltInTheme.Office2019Light, "Office 2019 Light", "Office2019Light");
         AddTheme(RibbonBuiltInTheme.Office2024Light, "Office 2024 Light", "Office2024Light");
@@ -69,9 +70,9 @@ public partial class MainForm
         _syncThemeChoices = Sync; Sync();
         void AddTheme(RibbonBuiltInTheme? theme, string text, string id)
         {
-            string band = theme == RibbonBuiltInTheme.Office2019Light ? "#e6e6e6" : "#ffffff";
+            string band = theme == RibbonBuiltInTheme.Office2010Blue ? "#d8e5f3" : theme == RibbonBuiltInTheme.Office2019Light ? "#e6e6e6" : "#ffffff";
             string selection = theme == RibbonBuiltInTheme.Office2024Light ? "<path d='M36 28h25' stroke='#2b579a' stroke-width='3'/>" : "<rect x='30' y='17' width='36' height='15' fill='#ffffff'/>";
-            string file = theme == RibbonBuiltInTheme.Office2013Light ? "<rect x='2' y='17' width='23' height='15' fill='#2b579a'/>" : "";
+            string file = theme is RibbonBuiltInTheme.Office2013Light or RibbonBuiltInTheme.Office2010Blue ? "<rect x='2' y='17' width='23' height='15' fill='#2b579a'/>" : "";
             var tile = new RibbonGalleryTile { Id = "demo.theme." + id, Text = text,
                 Icon = new RibbonSvgIcon($"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 64'><rect x='1' y='1' width='158' height='62' fill='#ffffff' stroke='#919191'/><rect x='2' y='2' width='156' height='30' fill='{band}'/>{selection}{file}<path d='M8 10h36m92 0h15M10 24h12m16 0h18m19 0h17' stroke='#605e5c' stroke-width='2'/><path d='M11 39h17v14H11zM60 39h17v14H60zM110 39h17v14h-17z' fill='#dae5f2'/></svg>", false) };
             choices.Add((theme, tile)); _themeGallery.Items.Add(tile);

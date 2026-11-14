@@ -124,7 +124,8 @@ Custom renderers override `DrawSplitItem` to receive both measured action contex
 The retained foundation bridge does not provide complete accessibility semantics
 for this new item; no split accessibility compatibility is claimed.
 
-Office 2024 Light and Office 2019 Light, Compact/Touch density and LTR are the current appearance scope.
+Office 2024/2019/2013 Light plus the Office 2010 Blue ribbon/File shell,
+Compact/Touch density and LTR are the current appearance scope.
 The optional `RibbonForm` supplies the native caption and title-bar QAT described
 below. Optional native Mica/Acrylic form backgrounds are available through that host;
 full Glass/translucent command panels and further theme treatments remain later work.
@@ -140,6 +141,62 @@ dividers and square bordered/shadowed popups. With a supporting `RibbonForm`,
 active title-bar coloring extends across the tab band; reset restores grey.
 The selected tab stays white with dark text by default. Office 2024 remains the default.
 Custom values can start from `RibbonThemes.Office2019Light with { ... }`.
+
+`RibbonBuiltInTheme.Office2010Blue` selects the normal dimensional ribbon/File
+shell: pale blue caption/tab/body gradients, connected selected tabs, rounded
+controls, gold command/toggle/gallery states and distinct blue File ramps. Both
+sample View galleries expose it; normal startup remains unchanged. Its new
+below-tabs Backstage presentation is pending the next slice. Aero is deferred.
+See the [scope and visual-review guide](docs/OFFICE2010-BLUE-PLAN.md#f3-implementation-and-verification--2026-11-14).
+
+`Theme.IdentityAccent` supplies immutable reference ramps and independent
+FileStrength/CaptionStrength (finite 0..1). Accent updates rebase File fill/border
+colors while preserving ramp positions/depth; gold command states keep their own
+fills. Explicit File role fills win, then the identity recipe, then the existing
+solid-accent/darkening fallback. Set IdentityAccent to null for that fallback.
+Applications can use the same public recipe for their colored-title preference:
+
+```csharp
+var theme = RibbonThemes.Office2010Blue with { Accent = Color.Purple };
+ribbon.Theme = theme with
+{
+    TitleBarBackgroundFill = theme.IdentityAccent!.CreateCaptionFill(theme.Accent),
+    TitleBarForeground = Color.White
+};
+form.TitleBarColor = Color.Empty; // Follow the theme fill.
+```
+
+Reapply the public caption recipe when changing that host preference/accent;
+restore the base theme's caption fill/foreground when turning it off. An explicit
+Form.TitleBarColor still wins. Both samples' preference glue follows this contract.
+`IdentityAccent.AdaptFill` also rebases another authored reference ramp while
+retaining alpha, direction and all intermediate stops. Zero strength retains the
+reference. All colored-caption stops must remain opaque.
+
+`HeaderAppearance.FilledHoverBorderColor`/`FilledPressedBorderColor` independently
+style unselected Filled-tab outlines. Existing explicit FilledBorderColor wins;
+selected connected-tab borders retain their own role. FileButtonAppearance adds
+BorderColor (Empty follows identity/header defaults) and SquareBottomCorners.
+Existing widths/radii, Transparent/zero hiding and Reset remain independent.
+
+Office 2010 hover/pressed tabs have top/side outlines and an open square foot.
+`HeaderAppearance.FilledTabBottomBorderVisible = true` restores a closed outline;
+the default is true for other themes. Selected-tab connections and File stay
+independent. Header utilities repaint the full band gradient in its original
+coordinates, so the minimize/expand slot blends into its surrounding surface.
+
+`FileButtonMinimumWidth` is a shared theme setting for every presentation, both
+layouts and both File routes:
+
+```csharp
+ribbon.Theme = ribbon.Theme with { FileButtonMinimumWidth = 80 };
+```
+
+Values are 1..1024 logical pixels at 96 DPI. Text/padding may require more; Touch
+retains at least 44 and tiny windows keep existing safety clamps. Null restores
+the base 50-pixel fallback. Office 2010/2013/2019 presets use 64; Office 2024 retains
+its previous spacing. The same measured width owns paint, input and popup anchors
+in idle/hover/pressed/open states. TabMinimumWidth remains independent.
 
 `RibbonFill` supports immutable intermediate stops without changing its existing
 solid/two-color constructors, Start/End, deconstruction or endpoint `with` edits:

@@ -35,6 +35,7 @@ internal sealed class SampleAppearance(RibbonControl ribbon, RibbonForm form)
         BaseTheme = selected switch
         {
             RibbonBuiltInTheme.Office2013Light => RibbonThemes.Office2013Light,
+            RibbonBuiltInTheme.Office2010Blue => RibbonThemes.Office2010Blue,
             RibbonBuiltInTheme.Office2019Light => RibbonThemes.Office2019Light,
             RibbonBuiltInTheme.Office2024Light => RibbonThemes.Office2024Light,
             null => _applicationTheme,
@@ -69,10 +70,14 @@ internal sealed class SampleAppearance(RibbonControl ribbon, RibbonForm form)
             else
             {
                 var next = AccentOverride is { } accent ? BaseTheme with { Accent = accent } : BaseTheme;
-                if (ColorTitleBar) next = next with { TitleBarForeground = Color.White };
+                if (ColorTitleBar)
+                {
+                    next = next with { TitleBarForeground = Color.White };
+                    if (next.IdentityAccent is { } recipe) next = next with { TitleBarBackgroundFill = recipe.CreateCaptionFill(next.Accent) };
+                }
                 ribbon.Theme = next;
             }
-            form.TitleBarColor = ColorTitleBar ? EffectiveAccent : _uncoloredTitle;
+            form.TitleBarColor = ColorTitleBar ? BaseTheme.IdentityAccent is null ? EffectiveAccent : Color.Empty : _uncoloredTitle;
         }
         finally { ribbon.EndUpdate(); }
         _appliedTheme = ribbon.Theme; _appliedBuiltIn = ribbon.BuiltInTheme;

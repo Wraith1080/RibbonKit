@@ -2,6 +2,25 @@ namespace RibbonKit.WinForms.Showcase;
 
 public partial class MainForm
 {
+    internal static void CheckOffice2010Preferences(string output)
+    {
+        var settings = Path.Combine(output, "isolated-preferences");
+        using var writer = new MainForm(settings); _ = writer.Handle; writer.OnLoad(EventArgs.Empty);
+        writer._themeGallery.Items.Single(i => i.Id == "demo.theme.Office2010Blue").PerformClick();
+        writer._accentGallery.Items.Single(i => i.Id == "demo.accent.purple").PerformClick();
+        writer._titleColorToggle.PerformClick();
+        using var reader = new MainForm(settings);
+        if (reader._sampleAppearance.SelectedTheme != RibbonBuiltInTheme.Office2010Blue || !reader._titleColorToggle.Checked ||
+            reader.ribbon.Theme.Accent != writer.ribbon.Theme.Accent || reader.ribbon.Theme.TitleBarBackgroundFill != writer.ribbon.Theme.TitleBarBackgroundFill ||
+            !reader.TitleBarColor.IsEmpty || reader.ribbon.Theme.TitleBarForeground != Color.White)
+            throw new InvalidOperationException("Office 2010 theme/accent/dimensional caption startup restore disagreed.");
+        writer._titleColorToggle.PerformClick(); writer._accentGallery.Items.Single(i => i.Id == "demo.accent.default").PerformClick();
+        using var reset = new MainForm(settings);
+        if (reset.ribbon.BuiltInTheme != RibbonBuiltInTheme.Office2010Blue || reset._titleColorToggle.Checked || !ReferenceEquals(reset.ribbon.Theme, RibbonThemes.Office2010Blue))
+            throw new InvalidOperationException("Office 2010 independent title/accent Reset startup restore disagreed.");
+        File.AppendAllText(Path.Combine(output, "result.log"), "PASS: actual Showcase startup persistence for Office2010Blue, purple accent, gradient/white title, independent caption/accent Reset.\n");
+    }
+
     internal static void CheckThemeSelectorHidden(string output)
     {
         Directory.CreateDirectory(output);

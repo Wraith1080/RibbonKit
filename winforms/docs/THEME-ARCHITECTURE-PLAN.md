@@ -88,7 +88,22 @@ Five nullable theme fill companions retain Color setter/Reset authority; passive
 `BackgroundBounds` keeps clipped child/caption paint in full-surface coordinates.
 Existing renderer hooks, layout/targets, state ownership and native clocks remain.
 The [F2 record](OFFICE2010-BLUE-PLAN.md#f2-implementation-and-verification--2026-11-14)
-owns evidence and limits. F3 composes the shell; F4 still owns the new Backstage sibling.
+owns evidence and limits. F3 now composes the sibling palette in
+[`RibbonThemes.Office2010.cs`](../src/RibbonKit.WinForms/Rendering/RibbonThemes.Office2010.cs)
+over the existing Filled/connected-header helpers. Its immutable
+[`RibbonIdentityAccentSettings`](../src/RibbonKit.WinForms/Rendering/RibbonIdentityAccentSettings.cs)
+rebases reference identity ramps while keeping explicit role fills and gold
+command states independent. Designer selection uses the existing string protocol
+and candidate/commit path. F4 still owns the new Backstage sibling; no placement
+workaround or Aero compositor was added.
+
+The F3 header follow-up reuses the disjoint-clip frame helper for independently
+open hover/pressed tab feet. Header utility themes retain their fill companion;
+minimize and TabRow QAT receive full-band background coordinates for restoration.
+Shared `RibbonHeaderMetrics` resolves `FileButtonMinimumWidth` for every family,
+layout and File route, keeping one measured paint/input/popup target. The
+[bounded correction record](OFFICE2010-BLUE-PLAN.md#f3-header-review-corrections-and-shared-file-minimum--2026-11-14)
+owns current evidence and recheck status.
 
 ## Problem and intended result
 

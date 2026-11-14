@@ -7,6 +7,12 @@ public sealed record RibbonHeaderAppearanceSettings
     public RibbonHeaderAppearanceSettings() { }
     /// <summary>Gets Filled-presentation tab/File state outline ink, including alpha. Empty retains the transparent default, except a connected selected tab follows BodyBorder/Border. Transparent hides the outline.</summary>
     public Color FilledBorderColor { get; init; } = Color.Empty;
+    /// <summary>Gets unselected Filled-tab hover outline ink. Empty follows FilledBorderColor; an explicit FilledBorderColor wins. Selected-tab and File outlines stay independent.</summary>
+    public Color FilledHoverBorderColor { get; init; } = Color.Empty;
+    /// <summary>Gets unselected Filled-tab pressed outline ink. Empty follows FilledBorderColor; Transparent hides. Does not affect the selected connected tab.</summary>
+    public Color FilledPressedBorderColor { get; init; } = Color.Empty;
+    /// <summary>Gets whether unselected Filled-tab hover/pressed states have a bottom outline. Defaults to true; false keeps rounded top corners, square bottom corners and only top/side outlines. Selected-tab connections and File states remain independent.</summary>
+    public bool FilledTabBottomBorderVisible { get; init; } = true;
     /// <summary>Gets optional Filled-state outline width in logical pixels, 0..32. Null uses one device pixel, or BodyAppearance.BorderWidth for a connected selected tab; zero hides the border. Hit targets remain unchanged.</summary>
     public int? FilledBorderWidth { get; init; }
     /// <summary>Gets whether Filled selected tabs join an adjacent body frame with an open bottom and a visible-tab opening in its top edge. Defaults to false. Existing border ink/width settings remain independent; absent or separated bodies keep the selected tab closed. Does not change layout or hit targets.</summary>

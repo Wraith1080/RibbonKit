@@ -5,6 +5,12 @@ namespace RibbonKit.WinForms;
 
 internal static class RibbonHeaderBodyRenderer
 {
+    internal static void DrawOpenBottomTab(RibbonRenderer owner, RibbonPaintContext c, int radius, RibbonFill fill, Color border, int stroke)
+    {
+        stroke = Math.Clamp(stroke, 0, Math.Max(0, Math.Min(c.Bounds.Width, c.Bounds.Height) / 2));
+        var gap = new Rectangle(c.Bounds.Left + stroke, c.Bounds.Bottom - stroke, Math.Max(0, c.Bounds.Width - 2 * stroke), stroke);
+        DrawFrame(owner, c with { IsBottomEdgeConnected = true }, radius, fill, border, stroke, gap);
+    }
     internal static void DrawSelectedTab(RibbonRenderer owner, RibbonPaintContext c, int radius, RibbonFill fill)
     {
         int stroke = Math.Min(RibbonHeaderBodyConnectionMetrics.TabStroke(c.Theme, c.DeviceDpi), Math.Max(0, Math.Min(c.Bounds.Width, c.Bounds.Height) / 2));

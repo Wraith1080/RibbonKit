@@ -34,6 +34,7 @@ public partial class RibbonControl
             _headerChromeTheme = header with
             {
                 Background = composited ? Color.Transparent : header.Background,
+                BackgroundFill = header.BackgroundFill,
                 Surface = composited ? Color.Transparent : header.Background,
                 Foreground = header.HeaderTextColor, SecondaryText = caption?.SecondaryText ?? header.SecondaryText,
                 Accent = caption?.Accent ?? header.Accent, Border = caption?.Border ?? header.Border,

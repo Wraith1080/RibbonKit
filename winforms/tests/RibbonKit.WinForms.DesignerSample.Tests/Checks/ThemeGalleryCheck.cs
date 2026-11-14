@@ -12,7 +12,7 @@ public partial class DesignerForm
         var pages = ribbon.Backstage.Items.ToArray(); var fileMode = ribbon.FileMenuMode;
         Require(tabs.Select(t => t.Text).SequenceEqual(new[] { "Home", "Edit", "Gallery", "View" }), "Authored startup tabs");
         Require(viewTab.Groups.SequenceEqual(new[] { themesGroup, accentGroup }) && ReferenceEquals(themesGroup.Items.Single(), themeGallery), "Authored View theme and accent groups");
-        Require(themeGallery.Items.SequenceEqual(new[] { applicationThemeTile, office2013ThemeTile, office2019ThemeTile, office2024ThemeTile }), "Only available themes plus Application Reset");
+        Require(themeGallery.Items.SequenceEqual(new[] { applicationThemeTile, office2010ThemeTile, office2013ThemeTile, office2019ThemeTile, office2024ThemeTile }), "Only available themes plus Application Reset");
         Require(ReferenceEquals(themeGallery.SelectedItem, office2024ThemeTile) && ribbon.BuiltInTheme == RibbonBuiltInTheme.Office2024Light, "Startup theme selection");
         Require(TitleBarColor.IsEmpty, "Authored sample follows the theme's caption/header colors");
         var nodes = Descendants(ribbon.Tabs).ToArray();

@@ -16,7 +16,7 @@ internal readonly record struct RibbonChromeMetrics(RibbonTheme Theme, RibbonDen
     {
         int?[] spacing = [theme.GroupHorizontalPadding, theme.GroupColumnGap, theme.BodyContentHorizontalPadding, theme.GroupSeparatorVerticalInset,
             theme.TabHorizontalPadding, theme.HeaderIndicatorPadding, theme.QuickAccessHorizontalPadding, theme.QuickAccessItemGap, theme.MessageActionGap, theme.MessageTitleTextGap, theme.ApplicationMenuWorkAreaInset];
-        if (spacing.Any(n => n is < 0 or > 1024) || theme.TabMinimumWidth is < 1 or > 1024 || theme.HeaderScrollButtonWidth is < 1 or > 1024)
-            throw new ArgumentOutOfRangeException(nameof(theme), "Chrome spacing must be 0..1024, tab minimum 1..1024, or null for existing geometry.");
+        if (spacing.Any(n => n is < 0 or > 1024) || theme.TabMinimumWidth is < 1 or > 1024 || theme.FileButtonMinimumWidth is < 1 or > 1024 || theme.HeaderScrollButtonWidth is < 1 or > 1024)
+            throw new ArgumentOutOfRangeException(nameof(theme), "Chrome spacing must be 0..1024, tab/File/scroll minimum widths 1..1024, or null for existing geometry.");
     }
 }
