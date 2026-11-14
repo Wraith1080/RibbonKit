@@ -574,7 +574,7 @@ Reproduce only this new scope from the repository root:
 
 ```powershell
 & winforms/eng/Test-Office2013.ps1 -ComposedOnly
-dotnet run --project winforms/samples/RibbonKit.WinForms.DesignerSample -c Debug -- --verify-office2013-composed winforms/artifacts/office2013-composed/designer-review
+& winforms/eng/Test-DesignerSample.ps1 -Check --verify-office2013-composed -Output winforms/artifacts/office2013-composed/designer-review
 dotnet run --project winforms/samples/RibbonKit.WinForms.Showcase -c Debug -- --verify-office2013-composed winforms/artifacts/office2013-composed/showcase-review
 ```
 

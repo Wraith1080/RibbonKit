@@ -1,494 +1,68 @@
 # RibbonKit WinForms Designer Sample
 
-**2026-11-13: View theme/accent galleries and Color title bar are implemented.**
-Normal launch contains authored Home, Edit, Gallery and View tabs. View offers
-Office 2013/2019/2024 Light and Application theme, six accent colors plus Default,
-and a Color title bar toggle with white title text. Classic shows inline tiles;
-Simplified provides gallery launchers. Hover does not apply settings. Default
-resets only the accent; off restores the previous caption color/ink while keeping
-the accent. Selecting a theme resets its accent and keeps title-color mode.
-Selection follows startup switches and refreshes on entering View/opening a gallery.
-Office 2019 defaults to a neutral #E6E6E6 title/header band with a white body; the
-form no longer pins TitleBarColor to white.
+This is the persistent, editable Visual Studio sample. Normal startup contains
+the authored **Home, Edit, Gallery and View** tabs. Test code, profilers and retired
+rewrite/consolidation review tabs are excluded from this application.
 
-**2026-11-14:** Office 2013 includes the connected grey tab/body outline. Selected
-header and border state commit immediately with the sample's Expressive/SlideDown
-profile; content keeps its animation. Office 2024's sliding pill is unaffected.
-Use the ordinary View theme gallery; no diagnostic tabs are added.
-
-Interactive diagnostic tabs remain retired after the accepted geometry,
-theme rewrite and A10 review. `--office2019-light` selects Office 2019 without
-adding tabs. The older `--office2019-theme-demo` switch is a selection-only alias;
-`--menu-geometry-demo` no longer adds geometry tabs. Focused `--verify-*` checks
-remain available. The review-tab instructions below are historical references,
-not current launch behavior. No authored Forms/UserControls/resources were removed.
-
-Next theme work is defined in the
-[Office 2013 Light plan](../../docs/OFFICE2013-LIGHT-PLAN.md).
-
-The normal Debug sample builds with zero warnings/errors. The package-only
-`--verify-theme-gallery <output>` check covers all four theme choices in both
-layouts and all six accents across all three light themes in both layouts,
-colored-title/white-ink and independent Reset/off, selected family, native/model
-retention and the Classic expanded source. It uses the actual authored controls
-and public APIs; captures were inspected. Current evidence is in
-`../../artifacts/office2013/appearance-final/designer/`. The expanded popup is checked before
-pumping activation messages because the offscreen owner can lose activation;
-this is not a physical popup-input acceptance claim. Actual VS and physical
-mouse/keyboard review remain separate. Three clean-start checks in
-`../../artifacts/designer-theme-gallery/launch/` cover default startup, the 2019
-switch and combined legacy switches, with exactly Home/Edit/Gallery/View and no
-diagnostic tabs. E3 palette/File library work and the independent public consumer
-are recorded in the Office 2013 plan; no WPF change was made.
-
-`--verify-office2013-composed <output>` checks Office 2013 with the actual authored
-native editors, popup/gallery, Backstage pages and Options draft/Apply/Cancel
-handoffs. It adds no tabs and runs only when explicitly requested. Showcase
-supports the same switch; the independent model uses
-`eng/Test-Office2013.ps1 -ComposedOnly`. See the
-[E5 evidence and limits](../../docs/OFFICE2013-LIGHT-PLAN.md#e5-composed-light-familynative-editor-review--2026-11-14).
-
-## Theme thumbnail designer round-trip correction — 2026-11-13
-
-The user reported thumbnails disappearing after a Visual Studio save. The three
-new SVG expressions omitted the optional color-mode argument. The framework's
-CodeDOM loader does not bind optional constructor arguments: it requests a
-one-string constructor that does not exist, even though compiled C# runs.
-All three expressions now explicitly pass `false`, preserving original SVG colors.
-A regression reads the actual authored expressions, loads them through the
-framework code-expression reader, serializes the Icon member into code/resources,
-reloads the resource values and verifies source/color-mode retention. The current
-regression includes all 11 theme/accent SVGs, including inline and resource-backed
-generated expressions. Galleries, tiles and the title toggle are standard authored
-fields/collections in DesignerForm.Designer.cs, so their preview does not depend
-on runtime tab builders. The event handlers use a small shared sample preference
-adapter over existing public theme/caption settings.
-The focused SVG Release set passes 21/21; evidence is under
-`../../artifacts/theme-gallery-serialization/verified.trx`. The normal Debug sample
-and public-package gallery check pass. Actual VS save/reopen still needs user
-review. The user's FileMenuMode and resx metadata changes are preserved.
-
-## Historical rewrite review surfaces
-
-Before retirement, launching the normal Debug sample with `--office2019-theme-demo` provided the light-theme
-comparison. **Office 2019 Light** provides 2019/2024/Application/custom choices,
-blue/neutral title bars, Mouse/Touch, Classic/Simplified, inner-padding and popup-
-shadow examples, a nested popup and existing Backstage pages. The demo starts
-with a neutral header; Toggle Backstage temporarily selects Backstage routing
-and restores the original File mode after closing. Normal startup and
-authored Forms/resources remain intact. `--verify-office2019-theme <output>` runs
-the public-package native switching/ownership/composed-capture check. See the
-[themes plan](../../docs/THEMES-PLAN.md) for scope, evidence and remaining review.
-`--verify-office2019-review-demo <output>` checks neutral startup, the toggle,
-canceled opening/closing, restored File routing and retained page identity.
-`--verify-backstage-sync <output>` checks actual opening/closing screen frames for
-both light themes, 2019 caption/pane edge alignment, 2024's separate title bar and
-retained native pages. It uses isolated forms, guards foreground ownership and
-writes PNG/JSON evidence. Office 2019 slides full-height panes behind a transparent
-caption; Office 2024 stays below its own title bar. The probe requires actual travel.
-`Theme.BackstageExtendsIntoTitleBar` and `Theme.BackstageSlideDistanceRatio` configure
-the pane boundary and travel. The 2019 title moves 75% immediately, then slides the
-remaining 25% without fade; `BackstageTitleSlideDistanceRatio` configures that final
-fraction. Resize/maximize/restore centering is immediate.
-
-The focused tab-header clipping check is `--verify-tab-header-clipping <output>`.
-It uses public paint callbacks and local scroll-button messages across 24 native
-renderer/density/layout/File/QAT arrangements. For review, use the existing
-`--menu-geometry-demo`, scroll the tab strip beside File, then beside inline and
-overflow TabRow QAT. No authored Form/resource or startup changes are required.
-
-The latest `--menu-geometry-demo` launch adds **Frame geometry** and **Frame
-joins**, selecting Frame geometry after the earlier tabs. These remain
-opt-in public-API controls; authored Forms/resources and normal startup are preserved.
-
-- **Frame geometry:** compare **Rounder corners**, **Wider panel shadow** and
-  **Wider popup shadow**, resetting each independently. Corner reset restores
-  the popup radius authored before the demo. Open the native menu, nested menu
-  and gallery in Mouse/Touch and Classic/Simplified.
-- **Frame joins:** move the existing QAT below the ribbon, toggle the review
-  message/minimized state and check connected edges/outer shadow. Open the existing
-  authored Backstage pages; **Restore File mode** restores prior routing.
-- `--verify-frame-geometry <output>` checks eight renderer/density/layout cases
-  through public APIs: exact resets, effective panel margins/joins, native field/
-  popup/page handles, popup chrome footprint/styles, gallery selection and page
-  clip. `--capture-frame-surfaces <output>` captures four native renderer/density
-  popup/Backstage pairs after OS presentation settles. It stops on foreground
-  loss or an off-display surface; neither mode sends global input. VS and hardware
-  acceptance remain separate. See the [current contract/evidence/review checklist](../../docs/GEOMETRY-CONSOLIDATION-PLAN.md#seventeenth-session-frames-and-shadows-2026-11-05).
-- **Tips geometry:** compare **Roomier ScreenTips** / **Reset ScreenTips** by
-  hovering the example and menu rows. Compare **Roomier KeyTips** / **Reset
-  KeyTips** with F10 then TG. **Backstage KeyTips** opens existing authored pages
-  for F10 badge review; **Restore File mode** restores the prior routing choice.
-- **Caption geometry:** compare **Roomier caption** / **Reset caption**, enable
-  **Use caption QAT**, and resize to inspect QAT/title allocation and overflow.
-  Native caption height/system buttons and document controls retain their sizes.
-  Each preset resets only its own roles and keeps prior gallery/Backstage settings.
-- `--verify-tip-caption-geometry <output>` checks actual passive tips, native
-  editor selection/focus, caption/QAT hit targets, resets and F10/TG badges using
-  public APIs and owned native fixtures. Its window is positioned under the
-  stationary pointer; it stops if that pointer moves or foreground is lost.
-  `--capture-caption-geometry <output>` captures caption variants without hover/input.
-
-- **Gallery geometry:** compare **Roomier galleries** / **Reset galleries** for
-  built-in tiles/headings and native cards. Try Mouse/Touch, Classic/Simplified,
-  utility scrolling, expand/choose/cancel, and resize to collapse/open a group.
-  **Gallery in QAT** adds a direct native gallery and a borrowed built-in group;
-  disable it to remove only those references. Borrowed groups collapse their source
-  under the existing QAT ownership contract. Native card internals stay host-owned.
-  The two review galleries start pinned in Simplified. **Open built-in gallery**
-  now retains the popup opened by its Click callback. The source must currently
-  be presented; open a collapsed/overflow gallery through that presentation.
-  Expand bars are short, centered and thicker at every density and Roomier setting.
-- **Backstage geometry:** compare **Roomier navigation** / **Reset navigation**
-  independently of **Inset page content** / **Reset page inset**. **Open Backstage**
-  uses the existing authored Info/Print pages; **Restore File mode** restores the
-  prior routing choice. Check native fields/values, Back, footer/scrolling and
-  close/reopen. Default startup routing is unchanged.
-- `--verify-gallery-backstage-geometry <output>` runs four package-only automatic
-  shown renderer/density fixtures without global input: native handles/selection,
-  popup/page insets and exact default/reset pixels. It checks the demo's independent
-  resets too. Backstage captures target the native surface directly because Form
-  `DrawToBitmap` can paint the covered ribbon last. Actual VS/hardware/external UIA
-  and the two inherited related-suite failures remain separate; see the geometry plan.
-
-- **Body and groups:** compare **Roomier body and groups** / **Reset body and
-  groups** in Mouse/Touch and Classic/Simplified. Check side padding, column gaps,
-  body inset and divider clearance. Resize to collapse the example group, then
-  open it and check the retained Name field and split/check state.
-- **Header QAT messages:** compare **Roomier headers** / **Reset headers** for
-  tab/File widths and Office indicators. Compare **Roomier QAT and messages** /
-  **Reset QAT and messages**. **Move QAT** cycles TabRow, BelowRibbon and TitleBar
-  (the latter uses the host's existing caption support). Existing entries and
-  overflow should remain usable. **Review message** adds/reopens only its own
-  retained message; try its action and close button, and resize to see wrapping.
-- Combine with the earlier command/menu presets. Each reset clears only its own
-  4 / 3 / 4 theme roles. Layout, density, QAT placement, File mode, authored models,
-  native field values and earlier geometry remain. Existing message minimum and
-  outer padding APIs are not changed by these presets.
-
-`--verify-gallery-review-correction <output>` checks the actual review-button
-click in a fresh shown package consumer across both renderers/densities/layouts
-and normal/Roomier spacing. It verifies foreground ownership, message-loop popup
-retention, original selection and one explicit close. The wider test fixture keeps
-the source anchor visible and does not change the authored sample's default size.
-
-The public-package `--verify-chrome-geometry <output>` check observes actual
-automatic layout through public paint callbacks: both renderers/densities/layouts,
-TabRow/BelowRibbon, all presets, source identity and exact default/reset pixels.
-It also checks the permanent demo's independent resets and retained message/QAT
-behavior without shown windows, internals or global input. Native TitleBar/editor
-HWND, synthetic DPI/font and inert-preview evidence is separate library STA scope.
-The [geometry plan](../../docs/GEOMETRY-CONSOLIDATION-PLAN.md) owns the combined
-review and current verification limits.
-
-The paired **Command content** / **Application Menu geometry** review tabs are
-available with `--menu-geometry-demo`, alongside **Menu geometry**, **Illustrated
-menus** and **Command splits**. Application Menu geometry remains selectable;
-normal startup and authored Forms/resources remain unchanged.
-
-- **Command content:** compare **Roomier command content** / **Reset command
-  content** in Mouse/Touch and Classic/Simplified. Check centered Small icons,
-  Medium caption clearance, check/radio alignment and separate split actions.
-  The same tab now includes Large plain/dropdown/horizontal-split/vertical-split
-  examples, including a wrapped vertical caption. In Classic, Roomier centers a
-  common icon/two-caption-row/arrow reservation, keeping unused bands and aligned
-  icon/caption/vertical-arrow rows. Split boundaries follow the bands; Reset restores the
-  original placement. Simplified retains its Small/Medium presentations.
-  Apply sets horizontal padding 12 / vertical padding 16; reset clears only these.
-
-- **Application Menu geometry:** apply **Roomier Application Menu**, then **Open
-  Application Menu** to open the existing authored File example in CommandMenu
-  mode. Compare navigation/pane/footer row spacing, pane inset, wrapped footer
-  gaps and scroll reachability. Roomier navigation extends to the shared divider;
-  the active title starts beside it, with the content inset retained. Apply sets
-  64/72/52, inset 22 and gap 12. Reset
-  clears only these five roles; **Restore startup File mode** restores the
-  presentation captured when the demo was enabled.
-- Combine these with earlier geometry tabs, then reset independently. Existing
-  editor text, File/default/footer models, command state, handlers and QAT sources
-  should remain. These tabs use public, code-only Theme settings; they do not add
-  theme properties to the designer or replace the generated initializer.
-
-For a focused public-package check, `--verify-large-command-geometry <output>`
-verifies actual automatic Large layout in both renderers/densities, including
-short/wrapped/text-only alignment, vertical action regions and exact reset.
-
-Build/package evidence and the combined review gate are in the
-[geometry plan](../../docs/GEOMETRY-CONSOLIDATION-PLAN.md). The opt-in
-`--verify-paired-geometry <output>` check exercises actual public command layout/
-paint in both renderers/densities/layouts, combined settings, exact reset and
-sample ownership without shown windows or global input. Application Menu native
-layout/scroll/hover/validation/retained HWND and inert preview checks are separate
-library STA evidence. Actual VS and physical input/hardware review remains separate.
-
-The bottom-docked `statusStrip` replaces the floating binding textbox and status
-label. Its designer-authored labels show the latest status message and the
-current **Name:** value. Edit **Name** on the ribbon's Edit tab to see the bound
-value update; status messages from commands, galleries and Mouse/Touch changes
-use the left label. The value label is read-only in the UI and remains the
-source of the existing WinForms binding.
-
-The Showcase-style **Mouse/Touch** selector is available under **Home → Input mode**
-and as the **third Quick Access entry**, including while reviewing the geometry
-tab. It uses the illustrated choices, heading, descriptions and Mouse/Touch
-artwork. Choosing a mode updates ribbon density, the selected radio, caption and
-icon; rejected native-editor validation restores the effective selection.
-
-The group, dropdown, radio choices, QAT source reference and named event hookups
-are declared in `DesignerForm.Designer.cs`, so they remain editable through
-**Edit Ribbon…** and Properties. `DesignerForm.InputMode.cs` contains only the
-density event handlers/synchronization. `DesignerForm.resx` owns typed SVG icon
-resources, adapted from Showcase's vector artwork; there is no
-Showcase assembly/helper dependency or runtime-created selector.
-
-Verification, 2026-11-03: normal Debug sample build passed with zero warnings or
-errors. `--verify-input-mode` passed public-package native pointer/keyboard checks
-at actual 120 DPI, retained editor HWND/value, no-op/current choice, external
-density synchronization and validation veto. Menu metadata/QAT source CodeDOM
-serialization and SVG converter round-trips passed; Mouse/Touch captures were
-inspected in `artifacts/designer-input-mode/`. The reported line-836 designer
-error was corrected with standard typed-resource assignments for all three Icon
-properties. The post-fix Debug build and `--verify-input-mode` passed, now including
-those Icon serialization paths and compiled typed resources; evidence is in
-`artifacts/designer-input-mode/icon-designer-fix/`. **User confirmed the repaired
-designer works on 2026-11-03** ("everything works now"). Separate save/reopen/Undo
-cycles were not recorded. The older `--verify-roundtrip` helper stops at its pre-existing
-Command identity expectation: it expects Bold in Commands, while read-only HEAD
-already declares it in Formatting. That helper and the authored grouping are
-unchanged; evidence is in `artifacts/designer-input-mode/roundtrip/`.
-
-Touch correction, 2026-11-04: Small command icons center within their usable
-button area. After the user found the initial arrow-only width allowance too
-small, ComboBoxes and TextBoxes now scale their widths by the field-height
-increase, using the same current font/DPI rule. For example, 24 → 42 pixel height
-gives 1.75× width. The arrow allowance remains a floor for larger fonts.
-Increase either model's
-`InputWidth` in Layout properties for more width; the authored value is the Compact
-width and stays unchanged when switching density. The refreshed normal Debug
-package preserves the authored Form/resources. Review **Home → Formatting** in
-Mouse and Touch; live Visual Studio review remains user-owned.
-
-`--verify-group-layout <evidence-folder>` also checks centered Small Touch icons,
-proportional matching field widths and retained native handles through public package APIs on
-an offscreen Form. This bounded check passed at actual 120 DPI; its captures and
-result are in `artifacts/touch-width-proportional/package-group/`. It uses no
-Showcase resources, global input or computer-use automation.
-
-For the opt-in ordinary-menu geometry example, launch the normal Debug sample
-with `--menu-geometry-demo`. On its **Menu geometry** tab, use **Wider menu spacing**,
-open **Try this menu**, then use **Reset menu spacing** and reopen it. The example
-uses only public theme properties; ordinary startup and the authored File
-presentation stay unchanged. The [geometry plan](../../docs/GEOMETRY-CONSOLIDATION-PLAN.md)
-records the bounded scope and review gate.
-
-The same tab now includes **Vertical menu spacing**. Open **Try described menu**
-at defaults, close it, choose **More vertical spacing**, and reopen. Check the
-icon clearance, title/description gap, separator spacing and native Name field.
-The **Keep formatting** checkbox should toggle without closing the menu. Use
-**Reset vertical spacing** and reopen to compare; this resets only the four
-vertical roles and preserves any horizontal settings from the first group.
-
-The third group, **Menu size, heading and overflow**, batches the next six theme
-roles. Open **Try headed menu** at defaults; choose **Roomier menu containers**
-and reopen to compare width, heading padding and the gap before the first row.
-Turn **Overflow examples** on, then open Quick Access overflow and review the
-top/bottom scroll bands and row reveal in Mouse/Touch. Turn the toggle off to
-remove only those 28 temporary entries (24 commands and four references); authored
-QAT entries/order are retained.
-**Reset menu containers** resets only this batch's six properties, preserving
-the earlier horizontal/vertical settings and the accepted Touch field scaling.
-These opt-in controls are public-API demo code; the authored Form/resources and
-normal startup presentation are preserved.
-
-Menu-editor alignment follow-up: **Try this menu** also contains a labelled
-**Font family** ComboBox and an unlabelled chooser. With **Wider menu spacing**
-applied, **Name** and **Font family** labels align with neighboring command text,
-and their fields share a starting column. The unlabelled ComboBox starts directly
-at the command-text column. Compare Mouse/Touch and Reset; authored `InputWidth`
-and existing Touch scaling remain in effect. The same content geometry is used
-by native presenters and inert designer preview. No authored Form/resource file
-was changed for these opt-in examples.
-
-Menu fill-width follow-up: the opt-in demo's editor examples now explicitly use
-`FillMenuWidth=true`. **Fill menu fields** starts checked; turn it off to compare
-fixed `InputWidth` sizing, then back on to fill the available row in all three
-example menus. Combine **Wider menu spacing** with **Roomier menu containers**
-for a clear width comparison. Visible labels stay aligned; the unlabelled chooser
-fills from the command-text column, and heights stay unchanged in each density.
-The model property defaults to false outside these explicitly configured examples.
-It is available under Layout in the designer, with Boolean serialization/reset;
-actual Visual Studio review remains user-owned.
-
-The fourth group, **Menu arrows and separators**, has **Wider arrow areas**,
-**Reset arrow areas** and **Try arrow menu**. Compare the Export submenu indicator,
-the two Paste split areas and separator ends at defaults and with overrides.
-Paste's primary toggles its state; its arrow opens the choices. Check Mouse and
-Touch, then Reset; earlier spacing/container and fill-field settings are retained.
-
-Enable **Overflow examples** in the container group, open QAT overflow and scroll
-to its last four entries: Export, Paste, Font family and the ordinary-menu group
-reference. These demonstrate menu/split/ComboBox/group indicators using the same
-arrow roles. Turning the toggle off removes all temporary commands/references
-while retaining authored QAT identities/order. The public package check verifies
-the demo apply/reset and the separate submenu/chooser/split paint slots without
-showing a Form or using internal layout APIs. Runtime split hit/keyboard/UIA and
-inert preview hit rectangles are covered by the STA tests.
-
-Arrow alignment correction: ordinary dropdown, split and QAT/More chooser
-indicators now share the split arrow's trailing column, even with different
-submenu/split/chooser reservation values. Caption ends and trailing clearance
-are aligned too; larger submenu/chooser reservations can still add extra text
-space without moving the glyph. Split hit areas and actions are retained.
-Reopen the refreshed sample and compare Export/Paste/Font family/group arrows in
-**Try arrow menu** and the last four **Overflow examples** entries, in Mouse/Touch,
-at defaults and with **Wider arrow areas**. No extra setting is needed.
-
-The fifth group, **Native editor spacing**, has **Roomier editors**, **Reset
-editors** and **Try editor menu**. Compare taller fields, label gaps, field text
-insets, wider ComboBox buttons and choice-row spacing in Mouse/Touch. The menu contains a
-TextBox, labelled editable ComboBox and unlabelled selection-only ComboBox. Open
-both choice lists, retain a typed value, then reset. Combine with previous menu
-spacing and **Fill menu fields**, and compare the authored Formatting fields.
-The preset requests a 54-pixel field minimum and 10-pixel top/bottom text padding.
-TextBox/ComboBox fields and their containing rows grow together; text/labels stay
-vertically centered with the same font size. Existing Touch widths remain.
-Reset affects only the seven editor theme roles. No InitializeComponent or authored
-Form/resource changes are needed.
-
-The same `--menu-geometry-demo` launch also includes **Illustrated
-menus**; the earlier **Menu geometry** tab remains available. Use **Roomier
-illustrated menu**, **Reset illustrated menu** and **Try illustrated menu** to
-compare artwork size, row height, title/description gaps and desired width in
-Mouse/Touch. **Nested choices** opens a separate illustrated example. **Menu on
-QAT** adds a temporary reference to the direct menu's same source; turn it off
-to remove only that reference. Selected choices keep their state through theme
-reset. Earlier menu/editor overrides and the authored startup File mode remain.
-
-The same opt-in launch also includes **Command splits**. Compare **Roomier
-command splits** and **Reset command splits**, using the existing Mouse/Touch
-selector and the priority inline **Simplified layout** toggle. Small/Medium/Large
-horizontal examples use the same width roles. Primary clicks toggle once; arrows
-open their menus independently. **Vertical paste** is the unchanged Large vertical
-comparison in Classic; Simplified presents it horizontally at Medium. **Split on
-QAT** adds/removes only a temporary reference, retaining QAT's own geometry.
-Reset clears only the three split-width roles and preserves mode, state, earlier
-menu/editor geometry and authored File presentation.
-
-`--verify-command-split-geometry <evidence-folder>` checks automatic layout and
-painting of the actual public RibbonControl through DrawToBitmap, without showing
-windows or calling internal layout APIs. It verifies both renderers/densities and
-Classic/Simplified, full arrow slots, primary/caption budgets, tiled regions, exact
-default/reset pixels and public demo mode/state/QAT contracts. Its log records the
-control's reported native DPI. Separate library STA tests cover synthetic DPI,
-native hit/keyboard/UIA/action and editor-retention scopes; actual VS/input/hardware
-acceptance remains separate.
-
-`--verify-illustrated-geometry <evidence-folder>` checks the public package's
-seven illustrated roles/reset/validation and artwork/title/description paint in
-both renderers/densities at synthetic 96/120/144/192 DPI. It verifies the permanent
-demo's apply/reset, toggle state and retained File/QAT/source identities without
-showing windows, opening popups or using internals/Showcase helpers. Library STA
-checks separately cover measured menus, nested/QAT openers, preview, scroll/hit/
-UIA bounds and retained native mixed editors. Actual VS/input/hardware acceptance
-remains user-owned.
-
-`--verify-editor-geometry <evidence-folder>` checks the refreshed public package's
-new API/reset/validation, both renderers/densities and synthetic 96/120/144/192-DPI
-label/button paint. It also checks public Classic/Simplified ribbon height growth
-and reset in both densities, the permanent demo's seven-role apply/reset actions and
-retained File/QAT/fill behavior without showing windows, creating native editors,
-opening popups or using internals. Separate library STA tests cover native layout,
-text clipping, choice heights, UIA bounds and HWND retention. Actual VS/native
-input/hardware acceptance remains user-owned.
-
-`--verify-menu-container-geometry <evidence-folder>` verifies public package
-properties, validation/reset and heading/scroll paint with both renderers and
-Compact/Touch. It also invokes the permanent
-demo's apply/reset/toggle actions without showing a Form. It uses no Showcase
-helpers, global input or computer use. Runtime popup measurement/reveal and inert
-designer-preview/composited-paint coverage are separate STA tests; actual VS/live review remains
-user-owned.
-
-This is the permanent editable review project, migrated from the existing
-bottom-navigation review solution with its reviewed Forms, UserControls,
-resources and assets preserved. Keep making designer changes here.
-
-From the repository root, refresh the package and build this same project:
+Open `RibbonKit.WinForms.DesignerSample.sln` and run normally with F5, or from the
+repository root:
 
 ```powershell
-./winforms/eng/Update-DesignerSample.ps1
+dotnet run --project winforms/samples/RibbonKit.WinForms.DesignerSample -c Debug
 ```
 
-Then open `RibbonKit.WinForms.DesignerSample.sln` in this folder and open
-`DesignerForm` in the Visual Studio Form designer. Reopen the solution after a
-package refresh so Visual Studio reloads the design assemblies. F5 runs the sample.
+View offers Office 2013/2019/2024 Light and Application theme, six accents plus
+Default, and Color title bar with white title text. Classic has inline tiles;
+Simplified offers gallery launchers. Hover previews do not apply preferences.
+Default resets only the accent; title-color off restores its previous roles.
+Office 2019 has a neutral grey header and white body. Office 2013 uses the
+connected grey outline and immediate selected-header feedback while content
+continues animating. Office 2024 retains its independent sliding pill.
 
-For Application Menu review, select the ribbon and use **File opens → Application
-Menu**, then **Edit Application Menu…**. The generated example has an Open pane
-using `PopupOptionsControl`, large command icons, split Save As with illustrated
-format choices, Print/Prepare/Send/Publish panes, numbered recent documents and
-Options/Exit footer buttons. Its existing Backstage declaration/startup choice
-is preserved. `--verify-application-menu <evidence-folder>` runs the bounded
-package/generated-code and retained native content check in this same sample,
-and saves actual default/Print/native/Save As captures in that folder. Hover a
-left dropdown or either Save As half to show its pane; hover New/Save/Close to
-restore recent documents. Moving into the right pane retains the selected source.
+The galleries and title toggle are authored fields/collections in
+DesignerForm.Designer.cs. SVG constructors supply both source and color-mode
+arguments so designer serialization preserves the artwork. Gallery cards remain
+ordinary designer-editable UserControls. Backstage Info/Print and popup content
+also remain authored controls; their content and event handlers belong to this
+sample. Keep editing these files and resources in place.
 
-The refresh builds the native runtime/design server/client in normal Debug
-folders, creates a local package, restores and builds the existing sample.
-`-NoBuild` reuses already-built matching designer outputs; `-Configuration Release`
-is available when explicitly needed. It never recopies fixture files or replaces
-your authored C#, resx, assets or project settings. No tests run automatically.
+Right-click the ribbon for Simplified Ribbon and customization. The Mouse/Touch
+selector changes density independently. `--office2019-light` selects Office 2019;
+the old selection-only `--office2019-theme-demo` alias still works, and
+`--menu-geometry-demo` adds no tabs.
 
-The sample uses a **PackageReference**, including the packaged designer support.
-Its own solution is separate from the native source-build solution so package
-preparation can finish before the sample is restored. The private feed/cache lives
-under ignored `winforms/artifacts/designer-sample/`; the selected local package
-version lives in ignored `.local/DesignerPackage.props`. Each refresh uses a new
-local prerelease version to avoid stale package copies without clearing caches.
-Normal `bin/Debug` and `obj` folders are used. The project's source namespace is
-retained to preserve resource and generated designer relationships.
+## Refresh the local package
 
-The project includes `app.manifest` with Windows compatibility enabled. Native
-ribbon animations use layered child windows and need this host declaration,
-matching Showcase and the independent runtime consumer. Without it, an authored
-Subtle/Expressive value can load correctly while native window creation fails and
-the ribbon falls back to immediate changes. Windows' disabled-animation preference
-still takes precedence.
-
-In **Edit Ribbon → Ribbon → Ribbon settings**, **Animation** chooses
-None/Subtle/Expressive and **Tab content animation** chooses Fade/SlideDown.
-The latter also applies to arriving tab headers, group collapse/restore and
-Backstage page changes. Groups retain sideways travel. Backstage opening/closing
-keeps its accepted complete-surface motion; page changes move/fade only the live
-incoming body, with navigation/frame/caption fixed.
-
-With Subtle or Expressive selected, this focused public-API check runs the sample's
-compiled initializer and verifies tab motion, Backstage opening, both native page
-styles and closing, retaining native page owners and handles. In check mode only,
-it also adds real RichTextBox controls and verifies their handles, RTF and selection:
+From the repository root:
 
 ```powershell
-dotnet run --project winforms/samples/RibbonKit.WinForms.DesignerSample -c Debug -- --verify-animation TestResults/designer-sample-animation
+& winforms/eng/Update-DesignerSample.ps1 -Configuration Debug
 ```
 
-It uses an offscreen native Form and real UI timers. It does not force-enable
-system animations, edit the authored setting, or establish visual/frame-pacing
-acceptance. It reports a disabled Windows animation preference rather than
-overriding it. No tests are run by a normal launch or package refresh.
+The refresh preserves authored forms, UserControls, project files and resources.
+Reopen the solution in Visual Studio afterward. Normal builds, launch and refresh
+do not run checks. Keep the ordinary Debug/Release output folders.
 
-Backstage page changes buffer native children within the library-owned page
-container. Their drawing is retained through Fade/SlideDown without a forced
-completion erase. Text/RichTextBox controls remain live; no page capture or redraw
-freeze is used. Review visible smoothness in this sample after reopening the solution.
+## Verification lives under tests
 
-`eng/Prepare-DesignerConsumer.ps1` with no destination also refreshes this sample.
-An explicit `-Destination` still creates a separate package-only fixture when a
-specific independent verification requires one; it is not the normal user review
-workflow. The former temporary review remains a backup, not the active project.
+All former sample checks and profiles now live in
+[the dedicated test host](../../tests/RibbonKit.WinForms.DesignerSample.Tests/README.md).
+It compiles the real authored sample sources/resources against the same selected
+public package. The sample application does not compile or reference that host.
 
-The copied project also retains some older fixture-verification flags. Their
-assertions describe the original fixture and may no longer match an edited sample.
-In particular, `--verify-roundtrip` expects the Bold SVG icon that was already
-removed from the reviewed Form; it is not a passing acceptance check for this
-editable copy. Migration preserved that design and did not relax the assertion.
+```powershell
+& winforms/eng/Test-DesignerSample.ps1 -List
+& winforms/eng/Test-DesignerSample.ps1 -Check --verify-sample-isolation
+& winforms/eng/Test-DesignerSample.ps1 -Check --verify-theme-gallery
+& winforms/eng/Test-DesignerSample.ps1 -Check --verify-office2013-composed
+```
+
+The ordinary application rejects verification/profile/generator/trace commands
+with exit code 2. Use the runner so old automation cannot silently open the sample
+and report success. Retired review-tab builders and their UI-only smoke checks
+have been removed; focused control regressions remain in tests.
+
+Current theme scope and acceptance belong to the
+[themes ledger](../../docs/THEMES-PLAN.md#current-status-and-review-ledger).
+Generated-code and offscreen checks remain separate from actual Visual Studio
+save/reopen, physical input, desktop material pixels and mixed-monitor review.

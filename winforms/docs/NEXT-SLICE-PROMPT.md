@@ -4,10 +4,9 @@ Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
 Updated **2026-11-14**. Last verified branch is `codex/Ribbonkit-Winform`, HEAD
-`14aba66` (`2013 E5 Slice`), after E4 checkpoint `f14e856` and E3 checkpoint
-`5a85343`. F1 entered with uncommitted E5 acceptance documentation and an authored
-DesignerForm.Themes.cs edit; the source file may change independently during the
-session. Preserve the authored Backstage setting and other Form/resource edits. Recheck
+`1802dad` (`office 2010 planning`), after E5 checkpoint `14aba66`. The requested
+Designer Sample test/demo cleanup entered with a clean worktree and remains
+uncommitted. Preserve authored Backstage settings and other Form/resource edits. Recheck
 `git status --short`, live branch and HEAD; preserve user commits and edits. Do not
 commit, stage, push, publish or change branches unless requested.
 
@@ -19,6 +18,18 @@ non-flat theme. Read the [F1 appearance/API contract](OFFICE2010-BLUE-PLAN.md).
 F1 changed only documentation and unchanged reference copies; no 2010 runtime
 API/preset exists yet. Aero-inspired frame work is a separate deferred experiment
 after normal-theme implementation and review. WPF remains read-only reference.
+
+The user then requested moving all Designer Sample checks into tests and deleting
+retired rewrite/consolidation demo files. That cleanup is implemented: normal
+startup contains no verification dispatch or check types; use
+`eng/Test-DesignerSample.ps1 -List` and its `-Check`/`-Output` options. The dedicated
+package-only host links the actual authored sources/resources; no diagnostic tabs
+were restored. Thirty-one retired builders and their UI-only smoke assertions are
+removed, with control regressions retained. Debug/Release and focused relocated
+checks pass. See [scope/evidence/limits](../tests/RibbonKit.WinForms.DesignerSample.Tests/README.md).
+Do not move checks or test-only partial members back into the sample. Existing
+foreground/VS/physical gates and historical fixture limitations remain separate;
+no startup latency gain is claimed. **F2 has not started.**
 
 B1–D8b, all identified A00–A17 corrections and E2–E4 are implemented. E5 automated
 composed checks are delivered. Current review, evidence pointers and remaining gates live in

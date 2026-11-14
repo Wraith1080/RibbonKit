@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Compile the real authored sample sources against its selected package.
+       Verification partials and fixtures are never compiled into the sample. -->
+  <Import Project="../../samples/RibbonKit.WinForms.DesignerSample/.local/DesignerPackage.props" Condition="Exists('../../samples/RibbonKit.WinForms.DesignerSample/.local/DesignerPackage.props')" />
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ApplicationManifest>../../samples/RibbonKit.WinForms.DesignerSample/app.manifest</ApplicationManifest>
+    <RootNamespace>RibbonKitDesignerConsumer</RootNamespace>
+    <RestoreConfigFile>$(MSBuildThisFileDirectory)../../samples/RibbonKit.WinForms.DesignerSample/NuGet.Config</RestoreConfigFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="RibbonKit.WinForms" Version="$(RibbonKitDesignerSamplePackageVersion)" />
+    <Compile Include="../../samples/RibbonKit.WinForms.DesignerSample/*.cs" Exclude="../../samples/RibbonKit.WinForms.DesignerSample/Program.cs" Link="Authored/%(Filename)%(Extension)" />
+    <Compile Include="../../samples/Shared/SampleAppearance.cs" Link="Authored/SampleAppearance.cs" />
+    <Compile Include="../RibbonKit.WinForms.Consumer/Office2013CompositionChecks.cs" Link="Checks/Office2013CompositionChecks.cs" />
+    <Compile Include="../RibbonKit.WinForms.DesignerConsumer/Office2019ThemeCheck.cs" Link="Checks/Office2019ThemeCheck.cs" />
+    <EmbeddedResource Include="../../samples/RibbonKit.WinForms.DesignerSample/*.resx" Link="Authored/%(Filename)%(Extension)" LogicalName="RibbonKitDesignerConsumer.%(Filename).resources" />
+    <EmbeddedResource Update="Fixtures/*.resx" LogicalName="RibbonKitDesignerConsumer.%(Filename).resources" />
+  </ItemGroup>
+  <Target Name="RequireDesignerSamplePackage" BeforeTargets="CollectPackageReferences;PrepareForBuild" Condition="'$(RibbonKitDesignerSamplePackageVersion)' == ''">
+    <Error Text="Run winforms/eng/Update-DesignerSample.ps1 first; this test host uses the persistent sample's selected package." />
+  </Target>
+</Project>

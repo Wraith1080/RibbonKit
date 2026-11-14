@@ -13,6 +13,10 @@ Current acceptance belongs in the
 and source assessment, not a build, native implementation or visual acceptance.
 The first implementation slice is **F2 shared gradient/state-chrome foundations**.
 
+Before F2, the user requested Designer Sample cleanup. Checks now live in the
+[dedicated test host](../tests/RibbonKit.WinForms.DesignerSample.Tests/README.md);
+retired rewrite/consolidation demo builders are removed. This does not implement F2.
+
 ## Baseline and scope
 
 - Branch `codex/Ribbonkit-Winform`, HEAD `14aba66` (`2013 E5 Slice`). Entry status
