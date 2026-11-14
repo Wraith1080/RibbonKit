@@ -73,6 +73,13 @@ Office 2013 plan. E5 adds public-only composed verification shared by the two
 ordinary sample models and an independent package model; no runtime/API change
 was required. Current user review remains in the themes ledger.
 
+The next selected family is normal [Office 2010 Blue](OFFICE2010-BLUE-PLAN.md).
+Its F1 contract identifies multi-stop fills, opt-in state rims and a genuine
+below-tabs Backstage sibling. Reuse the existing Filled/connected-header path;
+extend the neutral fill/paint helpers and paired Backstage registration rather
+than inheriting another family's behavior. Rounded control chrome and the shared
+native corner preference are independent of the deferred Aero-frame experiment.
+
 ## Problem and intended result
 
 Office 2019's Backstage changes altered Office 2024's caption coverage and removed

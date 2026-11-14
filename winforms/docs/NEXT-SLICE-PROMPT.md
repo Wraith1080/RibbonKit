@@ -1,17 +1,24 @@
-# Continue native WinForms themes after E5 automated composed review
+# Continue normal native Office 2010 Blue after F1
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-14**. Branch is `codex/Ribbonkit-Winform`. Accepted E3/sample/button
-work was committed locally at the user's request as `5a85343`, on top of user
-commit `e6ced78`. The user subsequently committed E4 at `f14e856`; this continuation
-started from a clean worktree there. E5's checks/docs remain uncommitted. Preserve
-the authored Backstage setting and other Form/resource edits. Recheck
+Updated **2026-11-14**. Last verified branch is `codex/Ribbonkit-Winform`, HEAD
+`14aba66` (`2013 E5 Slice`), after E4 checkpoint `f14e856` and E3 checkpoint
+`5a85343`. F1 entered with uncommitted E5 acceptance documentation and an authored
+DesignerForm.Themes.cs edit; the source file may change independently during the
+session. Preserve the authored Backstage setting and other Form/resource edits. Recheck
 `git status --short`, live branch and HEAD; preserve user commits and edits. Do not
 commit, stage, push, publish or change branches unless requested.
 
 ## Current state and scope
+
+The user selected **normal Office 2010 Blue** and supplied eight WPF references,
+including Add Message hover, then explicitly confirmed rounded corners for the
+non-flat theme. Read the [F1 appearance/API contract](OFFICE2010-BLUE-PLAN.md).
+F1 changed only documentation and unchanged reference copies; no 2010 runtime
+API/preset exists yet. Aero-inspired frame work is a separate deferred experiment
+after normal-theme implementation and review. WPF remains read-only reference.
 
 B1–D8b, all identified A00–A17 corrections and E2–E4 are implemented. E5 automated
 composed checks are delivered. Current review, evidence pointers and remaining gates live in
@@ -72,8 +79,8 @@ draft/validation/Apply/Cancel handoffs. Four package layout/density scopes pass;
 each sample separately covers its authored Classic/Compact model at actual 120 DPI.
 No runtime/API change or new package was needed. See
 [E5 evidence and limits](OFFICE2013-LIGHT-PLAN.md#e5-composed-light-familynative-editor-review--2026-11-14).
-Stop at composed user review; native corner, physical input, actual VS, desktop
-material and mixed-monitor acceptance remain separate.
+The current ledger owns completed user review and the separate native corner,
+physical input, actual VS, desktop material and mixed-monitor limits.
 
 Native `winforms/` projects only. Keep parent WPF runtime, builds, tests and CI
 read-only. Use one agent and no computer-use tools; actual VS review remains
@@ -82,21 +89,34 @@ records before edits. Reuse the
 [architecture map](THEME-ARCHITECTURE-PLAN.md) and
 [adjustability audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 
-## Next boundary: composed user review, then select the next light family
+## Next bounded implementation: F2 shared gradient/state-chrome foundations only
 
-Review Office 2013 as a composed ribbon in ordinary Showcase/Designer Sample.
-The new checks are `Test-Office2013.ps1 -ComposedOnly` and both samples'
-`--verify-office2013-composed <output>`; they add no tabs and do not run at normal
-startup. Reuse E3–E5 evidence instead of repeating passed palette, geometry,
-corner or material matrices. Address concrete user review findings. Preserve selected
-tab/body opening, active navigation ink, neutral command text/icons, grey 2019/2024
-hover, accent checked/gallery fills, primary OK darkening and secondary washes.
-Keep native handles/values/selection/validation, QAT placements, clipping, title
-handoff and designer serialization. Separate physical input/IME, actual VS,
-desktop material pixels, corner silhouette and mixed-monitor acceptance from
-offscreen/programmatic evidence. Review this family before another light family
-or dark variant. Do not add diagnostic tabs or begin another family implicitly;
-the next light family has not been selected.
+Follow F2 in the [2010 plan](OFFICE2010-BLUE-PLAN.md#f2-fill-and-state-chrome-foundations).
+Keep existing RibbonFill constructors, Start/End, deconstruction, endpoint `with`
+edits and default two-stop behavior. New stop data is immutable, copied defensively,
+validated atomically and equal by value. Preserve intermediate stops through
+opacity, clipping, motion and actual renderer hooks. Equal endpoints with different
+intermediate colors must not take the old solid fast path.
+
+Use nullable fill companions only where Color-only roles block the reference.
+Preserve old Color setter authority, Form.TitleBarColor precedence, opacity
+validation across every stop, and null/Empty/alpha/Transparent/zero/Reset. Native
+editor wells stay solid; host application controls retain their own appearance.
+State outlines/inner rims are independently adjustable, opt-in and target-neutral;
+retain existing explicit border overrides and 2013/2019/2024 defaults.
+
+Run focused public API/value/paint checks and an independent public-package
+consumer with normal outputs. Include stop retention/equality, alpha, equal
+endpoints, short bounds and atomic failure. Build affected native runtime/designer
+paths and refresh the persistent Designer Sample only when its package needs
+updating. Retain evidence and normal Debug/Release output folders. Reuse passed
+E2–E5 evidence instead of unrelated palette/border/corner/material matrix reruns.
+
+Stop after F2 with outcome, verification limits and next slice **F3 Office 2010
+ribbon/File shell and both sample galleries**. Do not add a partial 2010 identity,
+gallery tile, below-tabs Backstage or Aero implementation during F2. F4 is the
+below-tabs Backstage sibling; F5 is composed normal-theme review. Add no diagnostic
+tabs and do not start another family or dark variant implicitly.
 
 ## Preserve delivered contracts
 
