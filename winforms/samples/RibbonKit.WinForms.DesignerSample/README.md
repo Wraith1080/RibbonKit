@@ -11,6 +11,11 @@ Selection follows startup switches and refreshes on entering View/opening a gall
 Office 2019 defaults to a neutral #E6E6E6 title/header band with a white body; the
 form no longer pins TitleBarColor to white.
 
+**2026-11-14:** Office 2013 includes the connected grey tab/body outline. Selected
+header and border state commit immediately with the sample's Expressive/SlideDown
+profile; content keeps its animation. Office 2024's sliding pill is unaffected.
+Use the ordinary View theme gallery; no diagnostic tabs are added.
+
 Interactive diagnostic tabs remain retired after the accepted geometry,
 theme rewrite and A10 review. `--office2019-light` selects Office 2019 without
 adding tabs. The older `--office2019-theme-demo` switch is a selection-only alias;

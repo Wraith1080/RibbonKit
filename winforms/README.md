@@ -171,8 +171,16 @@ the editable Form designer file; diagnostic tabs remain retired.
 
 Office 2013 Light adds live accent-derived hover/pressed/checked/checked-hover
 states and an always-accent File block for both CommandMenu and Backstage.
-The connected tab/body outline is the next slice; see the
-[Office 2013 scope and evidence](docs/OFFICE2013-LIGHT-PLAN.md#e3-accent-palette-file-states-and-sample-appearance-controls--2026-11-13).
+Its connected grey tab/body outline is enabled by
+`HeaderAppearance.ConnectSelectedTabToBody`. The selected tab opens into the
+adjacent body; scrolling clips the opening to the visible tab interior. BodyBorder
+and BodyAppearance.BorderWidth control the body; FilledBorderColor/Width override
+the selected border independently, including Transparent/zero. Missing/separated
+bodies close the tab outline. Ordinary selected-header state updates immediately
+while content animation continues; Office 2024 pill animation is unchanged. Custom
+paint hooks receive HeaderBodyConnectionBounds as passive device-pixel geometry.
+See the
+[Office 2013 scope and evidence](docs/OFFICE2013-LIGHT-PLAN.md#e4-connected-selected-tabbody-outline--2026-11-14).
 `AccentStates` controls wash strengths. Explicit Hover/Pressed/Checked assignments
 remain authoritative; null on HoverOverride/PressedOverride/CheckedOverride resets
 that state independently. `CheckedHover` is a separate nullable override.

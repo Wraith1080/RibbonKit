@@ -1,4 +1,8 @@
 #nullable enable
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.ConnectSelectedTabToBody.get -> bool
+RibbonKit.WinForms.RibbonHeaderAppearanceSettings.ConnectSelectedTabToBody.init -> void
+RibbonKit.WinForms.RibbonPaintContext.HeaderBodyConnectionBounds.get -> System.Drawing.Rectangle
+RibbonKit.WinForms.RibbonPaintContext.HeaderBodyConnectionBounds.init -> void
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.AccentButtonHoverBackground.get -> RibbonKit.WinForms.RibbonFill?
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.AccentButtonHoverBackground.init -> void
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.AccentButtonPressedBackground.get -> RibbonKit.WinForms.RibbonFill?

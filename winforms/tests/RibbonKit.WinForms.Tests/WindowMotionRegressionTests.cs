@@ -64,6 +64,9 @@ public sealed class WindowMotionRegressionTests
     public void Backstage_slides_and_immediate_page_switches_keep_one_opaque_layer_until_hidden() => FoundationTests.Sta(() =>
     {
         using var form = new RibbonForm { Width = 1000, Height = 650 }; var ribbon = new RibbonControl { FileMenuMode = RibbonFileMenuMode.Backstage };
+        // This regression owns whole-pane layering with immediate page changes;
+        // per-page animation is a separate, enabled-by-default feature.
+        ribbon.Theme = ribbon.Theme with { BackstageMotion = new() { PageDuration = 0 } };
         using var info = new Panel(); using var name = new TextBox { Text = "Document", Location = new(28, 143) }; using var notes = new TextBox { Multiline = true, Text = "Native notes", Location = new(28, 218), Size = new(440, 115) };
         info.Controls.AddRange([name, notes]); using var print = new Panel(); print.Controls.Add(new ComboBox());
         var a = new RibbonBackstagePageItem { Text = "Info", Content = info }; var b = new RibbonBackstagePageItem { Text = "Print", Content = print };

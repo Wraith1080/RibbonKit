@@ -61,7 +61,7 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
         Changing = true;
         try
         {
-            KeepsBodyFrame = tabContents && ribbon.HasWindowBackdrop && !ribbon.IsMinimized;
+            KeepsBodyFrame = tabContents && !ribbon.IsMinimized && (ribbon.HasWindowBackdrop || ribbon.WindowPaintTheme.Background.A == 255);
             _from = new(ribbon); _form = ribbon.FindForm()!;
             try
             {
@@ -71,10 +71,11 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
                 // material body or lowering native editor opacity. The mask
                 // repaints synchronously and can otherwise expose a bare frame.
                 if (ribbon.HasWindowBackdrop) ribbon.SetBackdropBodyMasked(true);
-                // Layering the real ribbon removes DWM material from its header.
-                // Keep that header live; the opaque body drawing covers the
-                // already-committed body without changing native window styles.
-                if (!ribbon.HasWindowBackdrop) _hold = RibbonDrawingHold.Create(ribbon.Handle);
+                // Stable tab-content frames already have an opaque drawing plane
+                // above the live ribbon. Keep its HWND style stable: toggling
+                // layered opacity here needlessly invalidates its compositor
+                // surface on every selection. Material headers also stay live.
+                if (!ribbon.HasWindowBackdrop && !KeepsBodyFrame) _hold = RibbonDrawingHold.Create(ribbon.Handle);
             }
             catch (Win32Exception error) { LastSkipReason = error.Message; Trace.WriteLine(LastSkipReason); Release(); }
             var before = (ribbon.LayoutMode, ribbon.Density, ribbon.QuickAccessPosition, ribbon.SelectedTab, ribbon.IsMinimized);
@@ -85,7 +86,8 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
             _to = new(ribbon);
             if (_to.Dpi != _from!.Dpi || _to.Bounds.Width != _from.Bounds.Width) { Release(); return; }
             // A host selection callback may change geometry as well. Commit
-            // that exceptional state immediately instead of moving a live frame.
+            // that exceptional state immediately instead of exposing a live
+            // frame outside the tab-content drawing plane.
             if (KeepsBodyFrame && (_from.Bounds != _to.Bounds || _from.Frame != _to.Frame || _from.Body != _to.Body || _from.Qat != _to.Qat || _from.Messages != _to.Messages)) { Release(); return; }
             _headerArrival = headers && arrivals;
             _messageChange = messages;
@@ -165,9 +167,9 @@ internal sealed class RibbonGeometryMotion(RibbonControl ribbon) : IDisposable
         ribbon.SetBackdropBodyMasked(false);
         bool held = _hold is not null;
         _hold?.Dispose(); _hold = null;
-        // A Solid hold repaints its subtree on disposal. Material mode keeps
-        // the HWND styles stable, so explicitly finish its native child paints
-        // while the motion window still covers the committed ribbon.
+        // A drawing hold repaints its subtree on disposal. Stable-frame tabs and
+        // material mode leave HWND styles alone, so finish their native child
+        // paints while the motion window still covers the committed ribbon.
         if (!held && _window is not null && !ribbon.IsDisposed && ribbon.IsHandleCreated)
             RibbonDrawingHold.Repaint(ribbon.Handle);
         _window?.Dispose(); _window = null; _from?.Dispose(); _from = null; _to?.Dispose(); _to = null;

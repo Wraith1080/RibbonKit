@@ -5,10 +5,12 @@ public sealed record RibbonHeaderAppearanceSettings
 {
     /// <summary>Initializes overrides that retain existing appearance.</summary>
     public RibbonHeaderAppearanceSettings() { }
-    /// <summary>Gets Filled-presentation tab/File state outline ink, including alpha. Empty retains the transparent default.</summary>
+    /// <summary>Gets Filled-presentation tab/File state outline ink, including alpha. Empty retains the transparent default, except a connected selected tab follows BodyBorder/Border. Transparent hides the outline.</summary>
     public Color FilledBorderColor { get; init; } = Color.Empty;
-    /// <summary>Gets optional Filled-state outline width in logical pixels, 0..32. Null uses one device pixel when ink is authored; zero hides the border. Hit targets and body joins are unchanged.</summary>
+    /// <summary>Gets optional Filled-state outline width in logical pixels, 0..32. Null uses one device pixel, or BodyAppearance.BorderWidth for a connected selected tab; zero hides the border. Hit targets remain unchanged.</summary>
     public int? FilledBorderWidth { get; init; }
+    /// <summary>Gets whether Filled selected tabs join an adjacent body frame with an open bottom and a visible-tab opening in its top edge. Defaults to false. Existing border ink/width settings remain independent; absent or separated bodies keep the selected tab closed. Does not change layout or hit targets.</summary>
+    public bool ConnectSelectedTabToBody { get; init; }
     /// <summary>Gets optional header-scroller corner radius in logical pixels, 0..64. Null preserves configured square scrollers or the active renderer's ordinary chrome. Body scrollers are unaffected.</summary>
     public int? ScrollerCornerRadius { get; init; }
     /// <summary>Gets optional header-scroller outline width in logical pixels, 0..32. Null retains one device pixel; zero hides it. Existing HeaderScrollButtonBorder supplies ink.</summary>

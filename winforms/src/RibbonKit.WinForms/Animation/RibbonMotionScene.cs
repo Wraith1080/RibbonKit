@@ -161,6 +161,11 @@ internal sealed class RibbonMotionScene : IDisposable
         var headerTracks = to.HeaderTracksFrom(from);
         var messageTracks = to.MessageTracksFrom(from); bool messages = messageTracks.Length > 0;
         bool minimize = from.Minimized != to.Minimized;
+        // A connected selected header is a committed selection marker. Keep
+        // ordinary selection changes immediate while retaining content motion
+        // and the separate animation policy for newly arriving headers.
+        bool instantHeaderSelection = RibbonHeaderBodyConnectionMetrics.Enabled(ribbon.Theme) && !minimize && headerTracks.Length == 0
+            && to.ActiveTab is not null && !ReferenceEquals(from.ActiveTab, to.ActiveTab);
         Rectangle Local(Rectangle screen) => new(screen.X - canvas.X, screen.Y - canvas.Y, screen.Width, screen.Height);
         Rectangle Interpolate(Rectangle old, Rectangle next) => Local(Between(At(old, from.Bounds), At(next, to.Bounds), p));
         var expandedBody = from.Minimized ? to.Body : from.Body;
@@ -178,6 +183,15 @@ internal sealed class RibbonMotionScene : IDisposable
         bool joined = minimize ? body.Height > 0 && (from.Joined || to.Joined) : to.Joined || from.Joined;
         bool connected = messages ? messageFrame.Height > 0 && (from.BottomConnected || to.BottomConnected) : minimize ? (from.BottomConnected || to.BottomConnected) && (body.Height > 0 || belowTo && ribbon.JoinBelowRibbonQuickAccess) : to.BottomConnected;
         var context = new RibbonPaintContext(graphics, occupied, ribbon.WindowPaintTheme, ribbon.Font, to.Dpi) { Density = ribbon.Density, IsBottomEdgeConnected = connected };
+        var bodyFrame = minimize ? body.Width > 0 && body.Height > 0 ? joined ? Rectangle.Union(body, Interpolate(from.Qat, to.Qat)) : body : Rectangle.Empty
+            : !from.Frame.IsEmpty && !to.Frame.IsEmpty ? Interpolate(from.Frame, to.Frame) : !to.Frame.IsEmpty ? Local(At(to.Frame, to.Bounds)) : Rectangle.Empty;
+        if (RibbonHeaderBodyConnectionMetrics.Enabled(context.Theme) && to.ActiveTab is { } selected && to.Headers.TryGetValue(selected, out var nextHeader))
+        {
+            var header = Interpolate(from.Headers.TryGetValue(selected, out var oldHeader) ? oldHeader : nextHeader, nextHeader);
+            // Shared boundaries must round once even when header height changes.
+            header.Height = Math.Max(0, bodyFrame.Top - header.Top);
+            context = context with { HeaderBodyConnectionBounds = RibbonHeaderBodyConnectionMetrics.Resolve(context.Theme, to.Dpi, bodyFrame, header, Interpolate(from.TabViewport, to.TabViewport)) };
+        }
         if (connected)
         {
             var panel = messages ? messageFrame : Interpolate(from.Messages, to.Messages);
@@ -189,13 +203,7 @@ internal sealed class RibbonMotionScene : IDisposable
             ribbon.Painter.DrawMessageBar(context with { Bounds = messageFrame, IsTopEdgeConnected = connected, IsBottomEdgeConnected = false });
         if (minimize && !from.Messages.IsEmpty && !to.Messages.IsEmpty)
             ribbon.Painter.DrawMessageBar(context with { Bounds = Interpolate(from.Messages, to.Messages), IsTopEdgeConnected = connected, IsBottomEdgeConnected = false });
-        if (minimize)
-        {
-            if (body.Width > 0 && body.Height > 0)
-                ribbon.Painter.DrawBody(context with { Bounds = joined ? Rectangle.Union(body, Interpolate(from.Qat, to.Qat)) : body });
-        }
-        else if (!from.Frame.IsEmpty && !to.Frame.IsEmpty) ribbon.Painter.DrawBody(context with { Bounds = Interpolate(from.Frame, to.Frame) });
-        else if (!to.Frame.IsEmpty) ribbon.Painter.DrawBody(context with { Bounds = Local(At(to.Frame, to.Bounds)) });
+        if (!bodyFrame.IsEmpty) ribbon.Painter.DrawBody(context with { Bounds = bodyFrame });
         if (belowFrom || belowTo)
         {
             var old = belowFrom ? At(from.Qat, from.Bounds) : new Rectangle(to.Bounds.Left + to.Qat.Left, from.Bounds.Top + (from.Frame.IsEmpty ? from.Header.Bottom : from.Frame.Bottom), to.Qat.Width, 0);
@@ -281,7 +289,7 @@ internal sealed class RibbonMotionScene : IDisposable
         }
         void Draw(RibbonMotionScene scene, RibbonMotionScene other, double opacity)
         {
-            if (opacity <= 0 && !(minimize && ReferenceEquals(scene, to))) return;
+            if (opacity <= 0 && !((minimize || instantHeaderSelection) && ReferenceEquals(scene, to))) return;
             var matrix = new ColorMatrix { Matrix33 = (float)opacity }; alpha.SetColorMatrix(matrix);
             var origin = Between(from.Bounds, to.Bounds, p).Location;
             void Segment(Rectangle crop, Rectangle destination, Rectangle? clip = null, Rectangle? exclude = null, bool headerBackdrop = false)
@@ -310,14 +318,14 @@ internal sealed class RibbonMotionScene : IDisposable
                 Segment(caption, destination, exclude: qat);
             }
             var header = Interpolate(from.Header, to.Header);
-            if (!ribbon.HasWindowBackdrop && (!minimize || ReferenceEquals(scene, to)))
+            if (!ribbon.HasWindowBackdrop && (!minimize || ReferenceEquals(scene, to)) && (!instantHeaderSelection || ReferenceEquals(scene, to)))
             {
                 // The utility chevron reflects committed state immediately;
                 // crossfading up/down glyphs would briefly produce an X.
-                if (minimize) alpha.SetColorMatrix(new ColorMatrix { Matrix33 = 1 });
+                if (minimize || instantHeaderSelection) alpha.SetColorMatrix(new ColorMatrix { Matrix33 = 1 });
                 Segment(scene.Header, new(origin.X + scene.Header.X - canvas.X, origin.Y + scene.Header.Y - canvas.Y, scene.Header.Width, scene.Header.Height), header,
                     scene.Placement == RibbonQuickAccessPosition.TabRow ? new Rectangle(origin.X + scene.Qat.X - canvas.X, origin.Y + scene.Qat.Y - canvas.Y, scene.Qat.Width, scene.Qat.Height) : null, headerBackdrop: true);
-                if (minimize) alpha.SetColorMatrix(matrix);
+                if (minimize || instantHeaderSelection) alpha.SetColorMatrix(matrix);
             }
             if (minimize && !scene.Body.IsEmpty)
             {

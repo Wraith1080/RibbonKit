@@ -7,7 +7,9 @@ internal sealed class RibbonHeader2019Renderer : RibbonHeaderRenderer
     internal override void DrawTab(RibbonRenderer owner, RibbonPaintContext context, RibbonTab tab, bool selected, RibbonHeaderMetrics metrics)
     {
         bool available = tab.EffectiveEnabled;
-        if (selected || available && (context.Hot || context.Pressed))
+        if (selected && RibbonHeaderBodyConnectionMetrics.Enabled(context.Theme))
+            RibbonHeaderBodyRenderer.DrawSelectedTab(owner, context, RibbonLayoutEngine.Scale(metrics.FilledCornerRadius, context.DeviceDpi), context.Theme.HeaderSelectedBackground ?? new(context.Theme.Surface));
+        else if (selected || available && (context.Hot || context.Pressed))
             owner.PaintFilledHeaderState(context, RibbonLayoutEngine.Scale(metrics.FilledCornerRadius, context.DeviceDpi), selected ? context.Theme.HeaderSelectedBackground ?? new(context.Theme.Surface) : context.Pressed ? context.Theme.HeaderPressed ?? context.Theme.Pressed : context.Theme.HeaderHover ?? context.Theme.Hover);
         bool authoredInk = selected && !context.Theme.HeaderSelectedForeground.IsEmpty;
         var ink = !available ? context.Theme.DisabledColor : authoredInk ? context.Theme.HeaderSelectedForeground : selected ? context.Theme.HeaderSelectedUsesAccent ? context.Theme.Accent : context.Theme.Foreground : context.Theme.HeaderTextColor;

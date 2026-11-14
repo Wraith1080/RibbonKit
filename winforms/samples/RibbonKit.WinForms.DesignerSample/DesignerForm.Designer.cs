@@ -978,6 +978,7 @@ partial class DesignerForm
         ribbon.FileMenu.Id = "rk:0d5299d1f5ec4fe98abb382d675c498f";
         ribbon.FileMenu.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationNew, applicationOpen, applicationSaveDocument, applicationSave, applicationMainSeparator, applicationPrint, applicationPrepare, applicationSend, applicationPublish, applicationCloseSeparator, applicationClose });
         ribbon.FileMenu.Visible = true;
+        ribbon.FileMenuMode = RibbonKit.WinForms.RibbonFileMenuMode.Backstage;
         ribbon.Location = new Point(0, 0);
         ribbon.Margin = new Padding(3, 4, 3, 4);
         // 

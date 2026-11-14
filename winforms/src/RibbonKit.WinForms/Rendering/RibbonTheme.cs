@@ -541,6 +541,8 @@ public static class RibbonThemes
     {
         WindowCornerPreference = RibbonWindowCornerPreference.Square,
         Background = Color.White, ExtendTitleBarColorToHeader = false,
+        BodyBorder = Color.FromArgb(145, 145, 145), BodyBottomBorderOnly = false,
+        HeaderAppearance = new() { ConnectSelectedTabToBody = true },
         AccentStates = new(), HoverOverride = null, PressedOverride = null, CheckedOverride = null,
         HeaderHover = null, HeaderPressed = null, HeaderSelectedUsesAccent = true,
         FileButtonAppearance = new() { DisabledForeground = Color.FromArgb(190, 210, 235) }
@@ -558,6 +560,8 @@ public readonly record struct RibbonIconContext(int DeviceDpi, Color Foreground,
 /// <summary>Describes device-pixel geometry, palette, font and interaction state for painting.</summary>
 public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bounds, RibbonTheme Theme, Font Font, int DeviceDpi, bool Hot = false, bool Pressed = false, bool Focused = false, bool ReserveIcon = false)
 {
+    /// <summary>Gets the measured device-pixel opening under the visible selected Filled tab. Its top aligns with the body frame; height reports available body depth. Empty means no connection. RibbonControl supplies this value to body and selected-tab hooks; standalone painters may supply it explicitly. It does not alter target bounds.</summary>
+    public Rectangle HeaderBodyConnectionBounds { get; init; }
     /// <summary>Gets whether this frame's top edge adjoins the preceding ribbon/QAT surface and uses square top corners.</summary>
     public bool IsTopEdgeConnected { get; init; }
     /// <summary>Gets whether this frame's bottom edge adjoins open messages and uses square bottom corners.</summary>

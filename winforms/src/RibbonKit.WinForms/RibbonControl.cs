@@ -589,6 +589,8 @@ public partial class RibbonControl : Control, ISupportInitialize
         Painter.DrawSurface(context, false);
         var headerTheme = HeaderPaintTheme(composited);
         var headerChromeTheme = HeaderPaintTheme(composited, chrome: true);
+        if (RibbonHeaderBodyConnectionMetrics.Enabled(context.Theme) && _snapshot.Targets.FirstOrDefault(t => t.Kind == TargetKind.Tab && ReferenceEquals(t.Element, DisplaySelectedTab)) is { } selectedHeader)
+            context = context with { HeaderBodyConnectionBounds = RibbonHeaderBodyConnectionMetrics.Resolve(context.Theme, DeviceDpi, _snapshot.BodyFrameBounds, selectedHeader.Bounds, selectedHeader.Clip) };
         if (!ReferenceEquals(headerTheme, context.Theme))
         {
             var headerState = e.Graphics.Save();

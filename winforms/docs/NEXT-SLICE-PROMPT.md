@@ -1,18 +1,18 @@
-# Continue native WinForms themes after E3 palette/File and appearance controls
+# Continue native WinForms themes after E4 connected outline
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-13**. Branch is `codex/Ribbonkit-Winform`; user baseline commit
-is `e6ced78`. E3/sample/button work was accepted and a local checkpoint commit
-was requested before E4. Inspect live HEAD for the checkpoint. The user's
-authored Backstage route and resx tray metadata were preserved. Recheck
+Updated **2026-11-14**. Branch is `codex/Ribbonkit-Winform`. Accepted E3/sample/button
+work was committed locally at the user's request as `5a85343`, on top of user
+commit `e6ced78`; nothing was pushed. E4 changes remain uncommitted. Preserve the
+user's separate authored Backstage setting and other Form/resource edits. Recheck
 `git status --short`, live branch and HEAD; preserve user commits and edits. Do not
 commit, stage, push, publish or change branches unless requested.
 
 ## Current state and scope
 
-B1–D8b, all identified A00–A17 corrections, E2 corners and E3 palette/File states
+B1–D8b, all identified A00–A17 corrections, E2 corners, E3 palette/File states and E4 outline
 are implemented. Current review, evidence pointers and remaining gates live in
 the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
 
@@ -51,9 +51,22 @@ darkening, state-fill and foreground overrides. Other buttons stay white with
 light hover/darker pressed washes; pressed borders retain Accent.
 Existing explicit button/state/border overrides win. All three families' sample actions
 and persistence are checked; the persistent Designer Sample now uses package
-`0.1.0-designer.local20261113T140211698Z`.
+`0.1.0-designer.local20261114T044002490Z`.
 See [E3 evidence and scope](OFFICE2013-LIGHT-PLAN.md#e3-accent-palette-file-states-and-sample-appearance-controls--2026-11-13).
-Stop after E3 in this task. On an authorized continuation, start E4; native corner,
+E4 adds the #919191 body perimeter, selected-tab top/side outline and visible-tab
+opening through HeaderAppearance.ConnectSelectedTabToBody. Existing body/header
+border settings remain independently adjustable. HeaderBodyConnectionBounds
+carries passive geometry to actual renderer hooks, including transient frames.
+Ordinary connected-header selection now commits on frame zero while content
+continues Fade/SlideDown; this fixes the user's Designer Sample late-border report.
+2024 Underline/pill motion stays on its original path; six existing pill cases pass.
+The intermittent Office 2013 Designer Sample tab-switch flash has a native
+lifecycle correction: stable opaque tab changes retain the live ribbon HWND's
+style and finish native child repaints under the motion cover. Before/after
+traces and focused/package checks pass; the random flash itself was not captured,
+so user visual confirmation remains open.
+See [E4 evidence and limits](OFFICE2013-LIGHT-PLAN.md#e4-connected-selected-tabbody-outline--2026-11-14).
+Stop after E4 in this task. On an authorized continuation, start E5; native corner,
 physical input, actual VS and composed visual acceptance remain separate.
 
 Native `winforms/` projects only. Keep parent WPF runtime, builds, tests and CI
@@ -63,24 +76,19 @@ records before edits. Reuse the
 [architecture map](THEME-ARCHITECTURE-PLAN.md) and
 [adjustability audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 
-## Next bounded implementation: E4 connected gray selected-tab/ribbon outline
+## Next bounded slice: E5 composed light-family review
 
-Measure existing Filled/header/body paint order and bounds against the selected
-references before adding a seam policy or structural sibling. Reuse BodyBorder,
-BodyAppearance.BorderWidth and HeaderAppearance.FilledBorderColor/Width first.
-Connect selected-tab top/left/right edges to the body outline with an open bottom,
-without a double seam or accidental underline. Keep the white 2013 tab strip
-under an optional colored caption. Borders and seam policy must be adjustable.
-Preserve targets, clipping, QAT placement, scrolling/contextual tabs, collection/
-visibility changes, minimization, Classic/Simplified and Compact/Touch geometry.
-Keep E3 accent/explicit-fill Reset, permanent File states, window-corner policy,
-sample controls/designer round trips and accepted title handoff. Validate affected
-paint/joins and a public consumer only; no diagnostic tabs or unrelated matrices.
-
-## Later bounded work
-
-- **E5:** Composed light-family/native-editor and independent-consumer review.
-  Review this family before selecting another light family or dark variant.
+Review Office 2013 as a composed ribbon in ordinary Showcase/Designer Sample and
+an independent public-package consumer. Target unresolved shared-surface/native-
+editor combinations and any new review findings. Reuse E3/E4 evidence instead of
+repeating passed palette, geometry, corner or material matrices. Preserve selected
+tab/body opening, active navigation ink, neutral command text/icons, grey 2019/2024
+hover, accent checked/gallery fills, primary OK darkening and secondary washes.
+Keep native handles/values/selection/validation, QAT placements, clipping, title
+handoff and designer serialization. Separate physical input/IME, actual VS,
+desktop material pixels, corner silhouette and mixed-monitor acceptance from
+offscreen/programmatic evidence. Review this family before another light family
+or dark variant. Do not add diagnostic tabs or begin another family implicitly.
 
 ## Preserve delivered contracts
 

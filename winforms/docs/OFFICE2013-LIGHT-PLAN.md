@@ -1,9 +1,9 @@
 # Native Office 2013 Light and square-window plan
 
-**2026-11-13 — E1 approved; E2 corners and E3 accent palette/File states implemented.**
+**2026-11-14 — E1 approved; E2 corners, E3 palette/File states and E4 connected outline implemented.**
 Diagnostic tabs remain retired. Both apps now include the requested theme/accent
-galleries and colored-title toggle. E4 connected outline work is next; this is
-not composed Office 2013 visual acceptance. E2 entered at `fd356b1`; the later user
+galleries and colored-title toggle. E4 is ready for review; E5 composed review is
+next. This is not composed Office 2013 visual acceptance. E2 entered at `fd356b1`; the later user
 commit `e6ced78` and authored Backstage/resx edits are preserved on the same branch.
 Current acceptance remains in [THEMES-PLAN](THEMES-PLAN.md#current-status-and-review-ledger).
 
@@ -114,9 +114,9 @@ from a successful API call/readback.
    append a stable Office2013Light built-in identity, and implement accent-driven
    button states plus the always-colored File block. Keep existing identities,
    application-theme Reset, persistence and designer/generated code compatible.
-3. **E4 — connected ribbon/tab outline, next slice.** Implement only the measured structural
-   difference required for the reference outline and white tab strip, with
-   configurable borders and no geometry regressions.
+3. **E4 — connected ribbon/tab outline, implemented.** Shared measured connection,
+   adjustable borders and immediate selected-header feedback are recorded below;
+   user visual review remains pending.
 4. **E5 — composed light-family review.** Check remaining shared surfaces/native
    editors and a public-package consumer independent of Showcase helpers, then
    review the whole family before another theme or dark variant.
@@ -413,6 +413,122 @@ No full suite, unrelated geometry/material matrix or computer-use tools ran.
 Synthetic-DPI direct paint and offscreen native checks do not establish actual
 VS save/reopen, physical input/IME, mixed-monitor, native corner silhouette or
 user visual acceptance. E4 remains the next slice; no connected-outline work here.
+
+## E4 connected selected-tab/body outline — 2026-11-14
+
+The accepted E3/sample/button work was committed locally at the user's request as
+`5a85343`; no push. E4 follows that checkpoint and remains uncommitted. The user's
+separate authored FileMenuMode setting remains outside that checkpoint.
+
+Office2013Light now uses BodyBorder `#919191`, a complete body perimeter and
+HeaderAppearance.ConnectSelectedTabToBody. The shared Filled renderer and neutral
+renderer use the same connected-frame helper. No family selector, layout engine,
+host coordinator, diagnostic tab, native window frame or Backstage clock changed.
+
+Connection geometry comes from the existing body frame, selected-tab bounds and
+header clip. Only the visible tab interior opens the body's top border; the tab
+keeps top/left/right outlines and an open bottom. Fully off-viewport selections
+leave the body border complete. Missing/separated bodies and minimized headers
+keep a closed tab frame. Body border ink/width and FilledBorderColor/Width remain
+independently adjustable, including Empty fallback, alpha, Transparent and zero.
+The selected outline inherits the body border when those header overrides are
+unset. ConnectSelectedTabToBody false disables the connection. Disjoint paint
+clips retain the original full-frame fill/gradient and avoid double alpha
+composition. Very thick strokes clamp consistently on short frames.
+
+RibbonPaintContext.HeaderBodyConnectionBounds carries passive measured geometry
+to actual body/tab renderer hooks; standalone public painters can supply it.
+Target bounds, layout snapshots, source ownership and native editor handles are
+unchanged by the connection option.
+
+The user reported that the border arrived late in Designer Sample. Its
+Expressive/SlideDown setting exposed the existing whole-header crossfade, and the
+transient body frame lacked the connection payload. Connected ordinary tab
+selection now commits the arrival header and opening from frame zero. Content
+still fades/slides, and newly arriving headers retain their separate policy.
+Office 2024 Underline/pill motion stays on its original path.
+
+Evidence under `artifacts/office2013-outline/`:
+
+- `outline-before.trx` reproduces the missing top outline. `outline-focused.trx`
+  passes **8/8 Release cases** for both renderers at four DPI values, visible/
+  clipped joins, overrides/Reset, alpha and live selection/scroll/visibility/
+  collection/minimize changes. `outline-final.trx` passes **28/28**, adding short-
+  frame stroke-clamp coverage and relevant body-presentation cases.
+- `outline-dependencies.trx`: **56/56 relevant Release cases** pass for existing
+  header/body/QAT/clipping and 2013 palette behavior. Sets overlap; do not sum them.
+- `public-final/native/result.log`: **8 public-only paint scopes** (neutral/Office
+  x 96/120/144/192 DPI) and **4 native scopes** (Classic/Simplified x Compact/Touch,
+  actual 120 DPI) pass. Three QAT positions, neutral/colored captions, contextual,
+  partial/off-viewport selection, connection off/Reset, minimize/restore and native
+  field handles/parent/text/selection are covered. Default and authored-border
+  captures were inspected. `eng/Test-Office2013.ps1 -OutlineOnly` isolates E4.
+- `outline-motion-before.trx` reproduces the late state in all four Fade/SlideDown
+  and Subtle/Expressive combinations. `outline-motion-final.trx` passes **83/84**
+  motion/outline cases; its old immediate-Backstage-page fixture assumed page
+  animation was disabled. That fixture now explicitly sets PageDuration=0 to
+  match its stated scope; no production Backstage change. The targeted rerun in
+  `outline-motion-targeted-final.trx` passes **5/5** including that fixture.
+- `outline-motion-frames-final.trx`: **4/4** exact-frame cases pass. Both old/new
+  tab headers match the final header pixels from progress zero through completion,
+  the body opening is already clear, and body pixels still move/change. Captures
+  in `motion-frames/` were inspected. `office2024-pill-final.trx` passes **6/6**
+  existing spring/settling cases after the user's explicit 2024-pill question.
+- `public-motion-before/native/result.log` reproduces the missing transient
+  connection in a package consumer. `public-motion-final/native/result.log` passes
+  all **4 native scopes**, including the first live Expressive/SlideDown frame
+  and animation completion. Public hooks are inspected before another root paint
+  can conceal the transient-layer bug. Only native scopes were repeated.
+- Normal Debug runtime/designer/client and both samples build with zero warnings/
+  errors. Designer Sample is refreshed in place to local package
+  `0.1.0-designer.local20261114T035724165Z`; authored Forms/resources are preserved.
+  Both ordinary sample action/persistence checks pass under `samples/`, and their
+  Office 2013 colored-caption/white-strip/connected-outline captures were inspected.
+  `outline-alpha-gradient-final.trx` separately verifies the final opening's full-
+  frame gradient endpoints and single alpha composition, plus border override/Reset.
+
+### Tab-switch flash follow-up — 2026-11-14
+
+The user reported intermittent form/ribbon flashes in Designer Sample using
+Office 2013. Instrumentation found that each solid tab animation added and removed
+WS_EX_LAYERED on the live ribbon, despite its opaque motion drawing already
+covering the committed state. That native style churn is a plausible compositor
+flash source; the reported random physical flash itself was not captured.
+
+Stable, non-minimized tab-content changes with an opaque background now retain
+the live ribbon's native style. Completion and interruption repaint native
+children while the opaque motion window still covers them, before retiring it.
+Host selection callbacks that also alter frame geometry commit immediately.
+Other geometry/minimize transitions and translucent solid backgrounds retain
+their drawing hold; the material path and 2024 pill policy are unchanged.
+
+Evidence under `artifacts/tab-switch-flash/`:
+
+- `handoff-before.trx` fails both Fade/Subtle and SlideDown/Expressive profiles.
+  Each trace records 12 animation starts (3 complete, 9 interrupted), 12 live
+  ribbon layer-style add/remove cycles and 12 host nonclient paints. After the
+  change the same counts are zero for style cycles and nonclient paints; motion
+  still starts and native editor handles, parent and value remain unchanged.
+- `handoff-focused.trx` passes **57/57 Release cases** across handoff, geometry
+  motion, material handoff and connected outline. `handoff-coverage-final.trx`
+  passes **4/4**, strengthening coverage of repaint under a visible opaque cover
+  and geometry-changing/throwing host callbacks. These scopes overlap.
+- `public-final/native/result.log` passes **4 independent public-package scopes**
+  (Classic/Simplified x Compact/Touch, actual 120 DPI). Each observes 4 completed
+  and 4 interrupted handoffs with zero live ribbon/form layer-style cycles;
+  animation and native editor handle/parent/text/selection retention are checked.
+- Normal Debug runtime/designer/client, Designer Sample and Showcase builds pass
+  with zero warnings/errors. The persistent Designer Sample is refreshed in place
+  to `0.1.0-designer.local20261114T044002490Z`; authored files remain intact.
+
+These checks establish the native lifecycle correction, not physical display
+acceptance of the intermittent flash. User visual confirmation remains pending.
+
+No full suite or unrelated palette/material matrix ran. Offscreen native windows,
+direct paint and deterministic transient frames do not establish actual VS
+save/reopen, physical input/IME, desktop material pixels, native window-corner
+silhouette, mixed-monitor timing or user appearance acceptance. Stop after E4.
+Next: **E5 composed light-family/native-editor review**.
 
 ## Diagnostic-tab retirement evidence
 

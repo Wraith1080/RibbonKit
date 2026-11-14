@@ -64,8 +64,12 @@ preference and nullable Form override, applied by the native window adapter;
 E3 adds an accent-state value recipe and shared opt-in File helper; existing
 Filled/Classic registrations remain. Nonnullable state fills retain explicit
 ownership through nullable reset aliases. No new family selector/layout engine
-was added. E4 connected outline work is next; evidence and visual-review limits
-remain in the Office 2013 plan.
+was added. E4 adds passive measured header/body connection data and a shared
+disjoint-clip frame helper over the existing Filled/body primitives. The same
+connection is supplied to transient geometry frames; ordinary connected-header
+selection commits immediately while content motion continues. Underline/pill
+motion remains independent. Evidence and visual-review limits remain in the
+Office 2013 plan; E5 composed review is next.
 
 ## Problem and intended result
 

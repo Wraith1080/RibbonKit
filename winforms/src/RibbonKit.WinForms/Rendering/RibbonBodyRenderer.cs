@@ -26,6 +26,8 @@ internal static class RibbonBodyRenderer
             using var brush = new SolidBrush(border);
             if (width > 0) context.Graphics.FillRectangle(brush, context.Bounds.Left, context.Bounds.Bottom - width, context.Bounds.Width, width);
         }
+        else if (RibbonHeaderBodyConnectionMetrics.Enabled(context.Theme))
+            RibbonHeaderBodyRenderer.DrawBody(owner, context, radius, context.Theme.BodyFill, border, !metrics.BorderFallback && context.Theme.BodyBorder.IsEmpty ? 0 : metrics.BorderWidth);
         else owner.PaintRounded(context, radius, context.Theme.BodyFill, border, !metrics.BorderFallback && context.Theme.BodyBorder.IsEmpty ? 0 : metrics.BorderWidth);
     }
     internal static void DrawMessageBar(RibbonRenderer owner, RibbonPaintContext context)
