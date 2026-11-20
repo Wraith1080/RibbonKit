@@ -156,7 +156,7 @@ public partial class RibbonControl
         var local = PointToClient(new(unchecked((short)(long)message.LParam), unchecked((short)((long)message.LParam >> 16))));
         if (local.Y >= WindowCaptionHeight) return false;
         // Keep disabled targets client-side too: they must never drag the window.
-        message.Result = Snapshot.QuickAccessBounds.Contains(local) ? 1 : -1; // HTCLIENT / HTTRANSPARENT to the parent Form.
+        message.Result = Snapshot.QuickAccessBounds.Contains(local) || ApplicationButtonContains(local) ? 1 : -1; // HTCLIENT / HTTRANSPARENT to the parent Form.
         return true;
     }
 }

@@ -7,6 +7,9 @@ internal sealed partial class RibbonPopupSurface
     private RibbonApplicationMenuLayout? _applicationLayout;
     private RibbonDropDownItem? _applicationPane;
     private Size _applicationMaximum;
+    private readonly int _applicationTopBand;
+    private readonly bool _pinApplicationHeight;
+    private int? _applicationFixedHeight;
     private readonly Dictionary<Rectangle, VScrollBar> _applicationScrollers = [];
     private Panel? _applicationContentHost;
     private Region? _applicationItemClip;
@@ -28,14 +31,14 @@ internal sealed partial class RibbonPopupSurface
         int S(int value) => RibbonLayoutEngine.Scale(value, _ribbon.DeviceDpi);
         _applicationMaximum = new(Math.Max(1, maximum.Width - S(24)), Math.Max(1, maximum.Height - S(32)));
         _applicationPane = _ribbon.ApplicationMenu.DefaultPane;
-        try { LayoutApplicationMenu(); }
+        try { LayoutApplicationMenu(); if (_pinApplicationHeight) _applicationFixedHeight = Height; }
         catch { DetachContent(); DisposeApplicationMenu(); throw; }
     }
     private void LayoutApplicationMenu()
     {
         foreach (var bar in _applicationScrollers.Values) { Controls.Remove(bar); bar.Dispose(); }
         _applicationScrollers.Clear();
-        _applicationLayout = RibbonApplicationMenuLayout.Build(_ribbon, _applicationPane!, _applicationMaximum);
+        _applicationLayout = RibbonApplicationMenuLayout.Build(_ribbon, _applicationPane!, _applicationMaximum, _applicationTopBand, _applicationFixedHeight);
         _targets.Clear(); _targets.AddRange(_applicationLayout.Targets);
         _applicationItemClip?.Dispose();
         _applicationItemClip = new RibbonApplicationMenuSurfaceMetrics(_ribbon.Theme, _ribbon.DeviceDpi, RibbonPresentationResolver.ApplicationMenuSurface)

@@ -1,12 +1,12 @@
 # Native Office 2007 Blue appearance contract
 
-**2026-11-20 - G2 shared paint foundations authorized and implemented; review pending.**
+**2026-11-21 - G2/G3 shared foundations implemented.**
 G1 remains the appearance reference. G2's additive APIs and focused evidence are
 [recorded below](#g2-shared-paint-foundations--2026-11-20). No Office 2007
 runtime preset or sample tile is delivered by G2.
 Current family acceptance belongs in the
 [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
-Stop for review before G3 Orb/menu composition or the family preset.
+The [G3 composition record](#g3-application-button-and-menu-composition--2026-11-21) follows G2. The normal Blue preset/ribbon is next in G4; no foundation visual-review stop is required.
 
 ## Reference and boundary
 
@@ -176,8 +176,8 @@ to supply a 2007 palette.
 | --- | --- | --- |
 | Fills / state chrome | Immutable multi-stop fills, opacity mapping, full-surface coordinates, rims and independent state roles; G2 adds exact repeated-offset stops through an opt-in factory. | The existing constructor still requires strictly increasing offsets. The later preset must opt into hard transitions explicitly. |
 | Ribbon / tabs / QAT | Connected filled tabs, body joins, reduction, density/DPI snapshots, public renderer hooks and three QAT placements; G2 adds optional framed group panels and label bands. | Compose the 2007 roles in G4. Existing themes retain their separators and captions. |
-| File | Shared File command, routes, state fills, accessibility and rectangular geometry. | Theme-owned shape with explicit override/Reset, sphere/glyph painting, overlap metrics, QAT/title reservation and matching native hit testing. |
-| Application Menu | Native two-pane model, rich state/frame roles, footer, scrolling, nested popups and native custom content. | Orb-above-menu composition/anchor and any missing independent band metrics, then the 2007 palette. Recoloring the existing popup alone cannot establish overlap parity. |
+| File | Shared File command/routes and rectangular paint; G3 adds theme-owned shape, explicit override/Reset, sphere/glyph/focus hooks, overlap reservations and circular input. | Supply the family palette/default in G4; preserve an explicit rectangular override and saved File route. |
+| Application Menu | Native two-pane model, state/frame roles, footer/scrolling/nested popups/custom content; G3 adds native Orb/caption cutouts, measured origin and top-band content clearance. | Apply the 2007 band/frame palette in G5. Native font/DPI clearances are not a claim of WPF pixel parity. |
 | Other surfaces | Shared menu/gallery/tip/editor and Options appearance pipelines; real native editors and dialog drafts. | Compose and review their own 2007 roles, especially creased fills and primary/secondary button feedback. |
 | Aero | Theme-owned palette/edge width and native frame/material owner; restored/maximized transitions. | A separately reviewed 2007 palette using that owner. Reflection/grain and a different material/tab split remain deferred. |
 | Consumers / designer | Permanent View galleries in both samples, persistence and independent package-only verification. | Add the preset and append its built-in identity without renumbering existing values; update theme serialization, inert designer preview and both galleries. No diagnostic tabs. |
@@ -192,8 +192,8 @@ this document does not introduce runtime APIs.
 | Slice | Deliverable and bounded gate |
 | --- | --- |
 | G1 - this document | Palette, Orb/menu behavior, support gaps and sequence recorded. The subsequent user request authorizes G2 shared foundations only. |
-| G2 - shared paint foundations | **Implemented; review pending.** Exact hard transitions and opt-in group-panel/label-band decoration. Focused painter/sampler, clip, DPI and old-default compatibility evidence below; no layout-engine replacement. |
-| G3 - application button and menu composition | Shared shape/override, Orb geometry/glyph, caption hit testing, QAT reservation and Orb/menu layering/anchor. Prove one command owner, keyboard/UIA and native-content retention in an independent consumer before a family tile. |
+| G2 - shared paint foundations | **Implemented.** Exact hard transitions and opt-in group-panel/label-band decoration. Focused painter/sampler, clip, DPI and old-default compatibility evidence below; no layout-engine replacement. |
+| G3 - application button and menu composition | **Implemented.** Shared shape/override, Orb geometry/glyph, caption hit testing, QAT reservation and native Orb/menu cutouts/anchor. Independent keyboard/UIA/native-content evidence below; no family tile yet. |
 | G4 - normal Blue preset and ribbon | Add family identity, opaque palette, connected tabs, groups, rectangular override and Orb states; expose both permanent View galleries. Review the normal ribbon before downstream surface work. |
 | G5 - Application Menu palette | Apply frame/top/footer bands and gold/split feedback on the G3 composition. Review opening, pane switching, nested menus, resizing and native content. |
 | G6 - Options and companion surfaces | Apply Options/customization, editor, gallery, menu and tip roles through existing pipelines. Check drafts, validation, Apply/OK/Cancel/Reset and ownership. |
@@ -329,4 +329,164 @@ existing themes ledger, separate from automated or sampled evidence.
 Direct paint/offscreen native checks do not establish actual VS designer,
 physical input/IME, mixed-monitor behavior or human appearance acceptance.
 No desktop capture, Backstage re-investigation, WPF build or unrelated matrix ran.
-**Stop for G2 review; G3 and the Office 2007 preset remain pending.**
+The current sequence and authorization are in the themes ledger. G3 follows below; the Office 2007 preset remains pending.
+
+## G3 application button and menu composition — 2026-11-21
+
+Entry: clean `codex/Ribbonkit-Winform` at user commit `df38b3f` (`G2 2007
+Theme`). The shared foundations are reusable library behavior. No Office 2007
+built-in identity, palette/tile, sample-only presentation or Aero activation is
+introduced. G4 remains the normal Blue preset/ribbon slice.
+
+### Shape, drawing and measured input
+
+- Additive `RibbonApplicationButtonShape` has `Rectangular = 0` and `Orb = 1`.
+  `RibbonTheme.ApplicationButtonShape` retains Rectangular for every existing
+  theme. Nullable `RibbonControl.ApplicationButtonShape` overrides that default;
+  WinForms property Reset resumes the application theme. It never rewrites
+  `FileMenuMode`, File models, commands, names, KeyTips or saved host preferences.
+  `EffectiveApplicationButtonShape` and `ApplicationButtonBounds` expose the
+  resolved shape and measured device-pixel bounds.
+- Optional immutable `RibbonApplicationButtonAppearanceSettings` provides
+  Compact/Touch diameter, caption overlap, leading/trailing clearance, menu
+  origin/minimum band, idle/hot/pressed/open/disabled fills, state rims, inner
+  highlight, glyph ink/size and shadow ink/blur. Null fills/Empty inks use the
+  documented shared fallback; zero widths/size/blur hide their decoration.
+  Explicit alpha, gradients and Transparent remain authoritative. All geometry
+  and enum validation runs before Theme/override mutation. Existing rectangular
+  File appearance and minimum-width settings remain independent.
+- Both renderers use shared mirrored circle paint, persistent open feedback for
+  either File route and a four-square vector fallback. Borrowed
+  `ApplicationButtonIcon` and virtual `DrawApplicationButtonGlyph` replace only
+  the glyph; the Form icon is never silently substituted. `DrawFileButton` and
+  `DrawFocus` remain replaceable hooks. Circular focus consumes the existing
+  FocusInset/FocusStrokeWidth/Accent roles; other command focus is unchanged.
+- One measured File target owns input and automation. The Orb's full footprint,
+  including visible shadow clearance, is reserved for tabs, caption text and
+  TitleBar/TabRow QAT. The File paint clip covers only the sphere/visible shadow, so unrelated body
+  invalidations skip both sphere and borrowed-glyph drawing. The host's ordinary
+  small caption icon yields to the Orb;
+  the Form retains ownership and native system-menu/window semantics. Caption
+  overlap is bounded by the existing native resize metrics. Ordinary Forms use
+  a tab-band circle. Very narrow integrated hosts also fall back into the tab
+  band to avoid caption buttons; crowded Touch headers retain the existing
+  available-width clamp, including omission when no File slot fits.
+- Circle containment is shared by pointer hit testing, caption HTCLIENT handling
+  (including disabled File) and UIA point lookup. Square corner pixels do not
+  become File input. Shape/theme changes cancel an armed File press and release
+  capture. The existing popup/capture/deactivation/disposal owners remain.
+  Orb automation publishes exactly one File child with the original model ID,
+  name and KeyTip. ExpandCollapse now also reports/closes the actual Backstage
+  route; repeated Expand does not reopen it.
+
+### Native Application Menu composition
+
+- The real Orb stays in RibbonControl. The two-pane popup HWND and its hosted
+  surface exclude its screen-space circle/visible-shadow footprint and the
+  retained caption strip. The layered popup frame/shadow excludes exactly the
+  same regions. This leaves the real File, title and QAT exposed without another
+  command owner, visual proxy, HWND input forwarding or editor reparenting.
+- Menu origin starts at Orb top-left plus the configurable logical offset
+  (default `0,8`). It clamps to the existing working-area policy and budgets
+  height below that origin. If that leaves no useful content area, the menu opens
+  above the caption/Orb; that fallback pins its initial measured height for the
+  session so large/small pane switches retain the same origin. Width/height
+  remain constrained by the working area. The minimum top band (default 18 logical
+  pixels) grows from measured Orb/caption clearance so targets/native editors do
+  not sit beneath the cutout. This is a native font/DPI adaptation, not a claim
+  of exact WPF menu-band dimensions.
+- The normal native navigation/panes, split actions, nested menus, scrolling,
+  validation, footer and borrowed content keep their owners. Native popup/child
+  Regions and layered masks refresh with popup geometry. The new overlapping
+  composition opens immediately: ordinary dropdown snapshot motion would cover
+  the live Orb/caption during entrance. Existing non-Orb popup motion is retained.
+- Root `FileMenu.Content` overrides keep their existing ordinary custom-popup
+  placement; the cutout composition applies to the two-pane Application Menu.
+  Native custom content within its panes is supported and verified. Top-band
+  color/frame recipes and the final normal Blue appearance belong to G4/G5.
+
+Example using library APIs, without a built-in 2007 preset:
+
+```csharp
+ribbon.Theme = ribbon.Theme with
+{
+    ApplicationButtonShape = RibbonApplicationButtonShape.Orb,
+    ApplicationButtonAppearance = new()
+    {
+        Background = new(Color.White, Color.LightGray),
+        HoverBackground = new(Color.LightYellow, Color.Gold),
+        PressedBackground = new(Color.Orange, Color.DarkOrange),
+        BorderColor = Color.Silver, GlyphColor = Color.SteelBlue
+    }
+};
+// An explicit rectangle wins until property Reset or assigning null.
+ribbon.ApplicationButtonShape = RibbonApplicationButtonShape.Rectangular;
+```
+
+### Focused evidence and remaining limits
+
+Evidence is under `winforms/artifacts/office2007-g3/`. Latest selected results
+are **164 distinct passes and one pre-existing failure** out of 165 cases, with
+no skipped cases. This is the union of the retained selections, not a full run.
+All **28 G3 cases pass**; the 137 affected existing cases have 136 passes and
+the separately reproduced old failure below. Earlier failure/repair logs remain.
+
+- Normal Debug runtime/public consumer and Release runtime/test builds use their
+  default outputs and finish with zero warnings/errors (`debug-edge-build.log`,
+  `release-edge-build.log`). Initial consumer restores emitted NU1900 because the
+  vulnerability endpoint was unreachable; cached-package restores with
+  `-p:NuGetAudit=false` and final matching builds are separate from an online
+  package audit. XML/API analyzers verify the documented additions in
+  `PublicAPI.Unshipped.txt`; the shipped baseline and built-in identities remain.
+- The focused in-process xUnit runner from G2 discovers and executes the actual
+  built test assembly without VSTest's denied test-host socket. Logs retain each
+  selection: `focused-initial.log`, `focused-final.log`, `focused-delivery.log`
+  and `focused-edge-final.log`; `focused-scope-summary.json` deduplicates their
+  latest case results. Final G3 plus Application Menu selection passes **40/40**
+  (28 G3 + 12 existing); the final G3/caption selection before the added edge case
+  passed **42/42**. Other affected initial checks cover File, native captions,
+  application content/joins, popup creation/layout/motion, designer File settings,
+  G2 paint/gradients and renderer boundaries. These are not full-suite or
+  successful VSTest/TRX evidence.
+- `consumer-debug/comparison.json` and `result.log` retain **32 byte-exact
+  rectangular File image pairs**: all four existing families, both renderers,
+  96/120/144/192 DPI and idle/hot/pressed/disabled/focused states. Baseline is the
+  pre-G2 package `0.1.0-designer.local20261120T135235944Z` identified in G2.
+  Its shared old-default paint remains unchanged.
+- The public-only `PaintConsumer` passes **12 native layout scopes at actual
+  120 DPI**: Classic/Simplified x Compact/Touch x three QAT placements, upper
+  Orb native hit testing and retained field HWND/parent/text/selection. It checks
+  one File declaration, persistent open state, split-pane primary suppression,
+  menu/native-content HWND/parent/text/selection, retained origin, shape
+  override/Reset and F10/F KeyTip input. A hidden second process uses native
+  UIAutomationCore COM to find one File, retain its runtime ID and exercise real
+  ExpandCollapse state. `consumer-edge-final/result.log` is the final current-code
+  native/UIA verification; earlier default-image pairs remain in `consumer-debug/`.
+  No WPF UIA assemblies or Showcase resources/helpers.
+- The old `PopupLayoutTests.Single_column_group_fits_commands_and_uses_the_right_edge_for_paint_and_input(18)`
+  hover-color assertion fails identically against current and retained old DLLs
+  (expected `-1644826`, actual `-3878685`). `popup-baseline-result.log` and the
+  isolated `popup-baseline/` fixture retain that reproduction. It assumes ordinary
+  hover ink for a checked toggle. No approval, paint tolerance or unrelated test
+  was changed to hide it.
+- Inspected consumer-generated Classic/Compact/TitleBar, Classic/Touch/TabRow and
+  Simplified/Compact/BelowRibbon images. Raster assertions cover four-corner
+  symmetry, clipping and separate state/glyph/focus roles at four DPI values;
+  hidden native popup/child Regions verify the Orb/caption cutouts. These are
+  direct-print/automated evidence, not desktop captures or visual acceptance.
+
+Run from `winforms/`:
+
+```powershell
+dotnet build tests/RibbonKit.WinForms.Tests/RibbonKit.WinForms.Tests.csproj -c Release --no-restore -m:1
+dotnet test tests/RibbonKit.WinForms.Tests/RibbonKit.WinForms.Tests.csproj -c Release --no-build --filter 'FullyQualifiedName~ApplicationButtonCompositionTests'
+./eng/Test-PaintFoundation.ps1 -BaselineAssembly './artifacts/designer-sample/packages/ribbonkit.winforms/0.1.0-designer.local20261120t135235944z/lib/net10.0-windows7.0/RibbonKit.WinForms.dll' -ApplicationButton -Configuration Debug
+```
+
+The Designer Sample is not refreshed for this API/geometry foundation: its
+authored resources/package and retired diagnostic tabs remain intact. G4 adds
+the preset and sample galleries, including the in-place package refresh when
+needed. Actual VS designer, physical input/IME, mixed-monitor DPI, material pixels
+and human normal-theme acceptance remain separate. No desktop capture or
+Backstage black-bar/performance re-investigation ran. No commit, push or branch
+change. **G3 completes the shared composition foundation; G4 is next.**

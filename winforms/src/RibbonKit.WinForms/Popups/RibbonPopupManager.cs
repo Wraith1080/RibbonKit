@@ -141,14 +141,36 @@ internal sealed class RibbonPopupManager : IDisposable
             ? opener.RectangleToScreen(new Rectangle(S(_ribbon.LayoutTheme.BodyMargin.Left), _ribbon.WindowCaptionHeight + S(_ribbon.LayoutTheme.TabHeight + _ribbon.LayoutTheme.BodyMargin.Top),
                 Math.Max(1, opener.ClientSize.Width - S(_ribbon.LayoutTheme.BodyMargin.Left) - S(_ribbon.LayoutTheme.BodyMargin.Right)), 0)) : screenAnchor;
         var work = Screen.FromRectangle(placementAnchor).WorkingArea;
+        bool orbMenu = ReferenceEquals(owner, _ribbon.FileMenu) && menuSource?.Content is null && _ribbon.EffectiveApplicationButtonShape == RibbonApplicationButtonShape.Orb;
+        var applicationComposition = default(RibbonApplicationMenuComposition);
+        Point applicationOrigin = default;
+        int applicationTopBand = 0;
+        bool applicationAbove = false;
+        var applicationWork = work;
+        if (orbMenu)
+        {
+            var appearance = _ribbon.Theme.ApplicationButtonAppearance ?? RibbonApplicationButtonAppearanceSettings.Default;
+            int workInset = Math.Clamp(S(_ribbon.Theme.ApplicationMenuWorkAreaInset ?? 8), 0, Math.Max(0, (Math.Min(work.Width, work.Height) - 1) / 2));
+            applicationWork.Inflate(-workInset, -workInset);
+            applicationOrigin = new(Math.Clamp(screenAnchor.Left + S(appearance.MenuOffset.X), applicationWork.Left, applicationWork.Right - 1), Math.Clamp(screenAnchor.Top + S(appearance.MenuOffset.Y), applicationWork.Top, applicationWork.Bottom - 1));
+            int shadow = RibbonApplicationButtonMetrics.ShadowPadding(appearance, _ribbon.DeviceDpi);
+            var visual = Rectangle.Inflate(screenAnchor, shadow, shadow);
+            applicationComposition = new(visual, _ribbon.HasWindowCaption ? _ribbon.RectangleToScreen(new(0, 0, _ribbon.Width, _ribbon.WindowCaptionHeight)) : Rectangle.Empty);
+            applicationTopBand = applicationComposition.TopClearance(applicationOrigin.Y, S(appearance.MenuTopBandHeight));
+            if (applicationComposition.OpensAbove(applicationOrigin, applicationWork, S(appearance.MenuTopBandHeight), Math.Max(S(96), _ribbon.Font.Height + S(48)), out int aboveBottom))
+            {
+                applicationAbove = true; applicationOrigin.Y = aboveBottom;
+                applicationTopBand = S(appearance.MenuTopBandHeight);
+            }
+        }
         bool quickAccess = _ribbon.QuickAccessItems.Contains(owner) || ReferenceEquals(owner, _ribbon.QuickAccessOverflow) || IsQuickAccessContext(opener);
         // File budgets its two panes against the larger usable side of its
         // anchor, keeping overflow in the menu instead of covering the header.
-        int availableHeight = ReferenceEquals(owner, _ribbon.FileMenu) && menuSource?.Content is null
+        int availableHeight = orbMenu ? Math.Max(1, applicationAbove ? applicationOrigin.Y - applicationWork.Top : applicationWork.Bottom - applicationOrigin.Y) : ReferenceEquals(owner, _ribbon.FileMenu) && menuSource?.Content is null
             ? Math.Max(work.Bottom - placementAnchor.Bottom, placementAnchor.Top - work.Top) : work.Height;
         int frameInset = RibbonPopupFrameMetrics.ContentInset(_ribbon.Painter, _ribbon.Theme, _ribbon.DeviceDpi, new(work.Width, availableHeight));
         int frame = 2 * frameInset;
-        var surface = new RibbonPopupSurface(_ribbon, owner, new(Math.Max(1, work.Width - frame), Math.Max(1, availableHeight - frame)), menuSource, groupSource, quickAccess);
+        var surface = new RibbonPopupSurface(_ribbon, owner, new(Math.Max(1, (orbMenu ? applicationWork.Width : work.Width) - frame), Math.Max(1, availableHeight - frame)), menuSource, groupSource, quickAccess, applicationTopBand, applicationAbove);
         if (opener.IsDisposed || !opener.Visible || owner.IsDisposed || !owner.Visible || !owner.EffectiveEnabled || _ribbon.IsDisposed
             || menuSource is not null && !ReferenceEquals(menuSource.Ribbon, _ribbon) || !CurrentProjection(owner, menuSource, groupSource)
             || surface.HasGalleryPresenter && quickAccess && menuSource is RibbonGalleryItem { UseDropDownPresenterInQuickAccess: false })
@@ -160,12 +182,13 @@ internal sealed class RibbonPopupManager : IDisposable
             Size = new(surface.Width + frame, surface.Height + frame), DropShadowEnabled = false,
             AccessibleName = (owner is RibbonQuickAccessDropDownReference or RibbonQuickAccessGroupReference ? RibbonQuickAccess.Caption(owner) : owner.Text) + " commands"
         };
+        window.ApplicationComposition = applicationComposition;
         window.Items.Add(host);
         surface.SizeChanged += (_, _) =>
         {
             if (!surface.HasCustomContent || window.IsDisposed) return;
             host.Size = surface.Size;
-            var next = CalculateBounds(placementAnchor, work, new(surface.Width + frame, surface.Height + frame),
+            var next = orbMenu ? CalculateOrbMenuBounds(applicationOrigin, applicationWork, new(surface.Width + frame, surface.Height + frame), applicationAbove) : CalculateBounds(placementAnchor, work, new(surface.Width + frame, surface.Height + frame),
                 contextPoint is null && opener is RibbonPopupSurface, _ribbon.DeviceDpi, surface.IsApplicationMenu ? _ribbon.Theme.ApplicationMenuWorkAreaInset : null);
             window.Bounds = next;
         };
@@ -174,7 +197,7 @@ internal sealed class RibbonPopupManager : IDisposable
         if (surface.GroupSource is not null) _ribbon.RefreshBorrowedGroupPresentation();
         window.Closed += (_, _) => { if (_sessions.Contains(session)) Close(owner, false); };
         bool submenu = contextPoint is null && opener is RibbonPopupSurface parentSurface && (parentSurface.MenuSource is not null || parentSurface.OwnerElement is RibbonQuickAccessOverflow);
-        var bounds = owner is RibbonTab ? CalculateTabBounds(placementAnchor, work, window.Size) : CalculateBounds(placementAnchor, work, window.Size, submenu, _ribbon.DeviceDpi, surface.IsApplicationMenu ? _ribbon.Theme.ApplicationMenuWorkAreaInset : null);
+        var bounds = orbMenu ? CalculateOrbMenuBounds(applicationOrigin, applicationWork, window.Size, applicationAbove) : owner is RibbonTab ? CalculateTabBounds(placementAnchor, work, window.Size) : CalculateBounds(placementAnchor, work, window.Size, submenu, _ribbon.DeviceDpi, surface.IsApplicationMenu ? _ribbon.Theme.ApplicationMenuWorkAreaInset : null);
         if (bounds.Size != window.Size)
         {
             window.Size = bounds.Size;
@@ -198,6 +221,12 @@ internal sealed class RibbonPopupManager : IDisposable
             catch { Close(owner, false); throw; }
         }
         if (!accessibilityPublished) _ribbon.AccessibilityChanged();
+    }
+    internal static Rectangle CalculateOrbMenuBounds(Point origin, Rectangle work, Size size, bool above = false)
+    {
+        int anchor = Math.Clamp(origin.Y, above ? work.Top + 1 : work.Top, above ? work.Bottom : work.Bottom - 1);
+        size = new(Math.Max(1, Math.Min(size.Width, work.Width)), Math.Max(1, Math.Min(size.Height, above ? anchor - work.Top : work.Bottom - anchor)));
+        return new(Math.Clamp(origin.X, work.Left, work.Right - size.Width), above ? anchor - size.Height : anchor, size.Width, size.Height);
     }
     private static bool CurrentProjection(RibbonElement owner, RibbonDropDownItem? menuSource, RibbonGroup? groupSource) => owner switch
     {
@@ -260,7 +289,8 @@ internal sealed class RibbonPopupManager : IDisposable
         }
         int inside = _sessions.FindLastIndex(s =>
             (s.Window.Bounds.Contains(point) && (s.Window.Region is null || s.Window.Region.IsVisible(s.Window.PointToClient(point))))
-            || s.Opener.RectangleToScreen(s.Anchor).Contains(point));
+            || (ReferenceEquals(s.Owner, _ribbon.FileMenu) && _ribbon.EffectiveApplicationButtonShape == RibbonApplicationButtonShape.Orb
+                ? _ribbon.ApplicationButtonContains(_ribbon.PointToClient(point)) : s.Opener.RectangleToScreen(s.Anchor).Contains(point)));
         if (inside < 0 && _sessions.All(s => s.Surface.ValidateApplicationContent()))
             CloseAll(false, animateTab: true);
         else if (inside >= 0)
@@ -430,9 +460,11 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
         Clip = OwnerElement is RibbonQuickAccessOverflow ? OverflowViewport : _bodyLayout is null ? ClientRectangle : Rectangle.Intersect(ClientRectangle,
             new(t.Clip.X + AutoScrollPosition.X, t.Clip.Y + AutoScrollPosition.Y, t.Clip.Width, t.Clip.Height))
     }).SelectMany(t => RibbonSplitLayout.Expand(t, _ribbon.DeviceDpi, MenuSource is not null || OwnerElement is RibbonQuickAccessOverflow)).ToArray();
-    internal RibbonPopupSurface(RibbonControl ribbon, RibbonElement owner, Size workArea, RibbonDropDownItem? menuSource = null, RibbonGroup? groupSource = null, bool quickAccess = false)
+    internal RibbonPopupSurface(RibbonControl ribbon, RibbonElement owner, Size workArea, RibbonDropDownItem? menuSource = null, RibbonGroup? groupSource = null, bool quickAccess = false, int applicationTopBand = 0, bool pinApplicationHeight = false)
     {
         _ribbon = ribbon;
+        _applicationTopBand = applicationTopBand;
+        _pinApplicationHeight = pinApplicationHeight;
         OwnerElement = owner;
         IsQuickAccess = quickAccess || ribbon.QuickAccessItems.Contains(owner) || ReferenceEquals(owner, ribbon.QuickAccessOverflow);
         MenuSource = menuSource ?? (owner as RibbonDropDownItem) ?? (owner as RibbonQuickAccessDropDownReference)?.Source;

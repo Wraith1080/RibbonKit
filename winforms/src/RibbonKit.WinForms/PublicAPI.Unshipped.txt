@@ -2452,3 +2452,78 @@ override RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.GetHashCode() -> 
 override RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.ToString() -> string!
 static RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings? left, RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings? right) -> bool
 static RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings? left, RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings? right) -> bool
+
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.RibbonApplicationButtonAppearanceSettings() -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.<Clone>$() -> RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings!
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.Diameter.get -> int
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.Diameter.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.TouchDiameter.get -> int
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.TouchDiameter.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.CaptionOverlap.get -> int
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.CaptionOverlap.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.LeftInset.get -> int
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.LeftInset.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.RightGap.get -> int
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.RightGap.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.MenuOffset.get -> System.Drawing.Point
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.MenuOffset.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.MenuTopBandHeight.get -> int
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.MenuTopBandHeight.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.Background.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.Background.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.HoverBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.HoverBackground.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.PressedBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.PressedBackground.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.OpenBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.OpenBackground.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.DisabledBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.DisabledBackground.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.BorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.BorderColor.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.HoverBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.HoverBorderColor.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.PressedBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.PressedBorderColor.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.OpenBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.OpenBorderColor.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.BorderWidth.get -> int
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.BorderWidth.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.InnerBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.InnerBorderColor.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.InnerBorderWidth.get -> int
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.InnerBorderWidth.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.GlyphColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.GlyphColor.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.GlyphSize.get -> int
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.GlyphSize.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.ShadowColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.ShadowColor.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.ShadowBlur.get -> int
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.ShadowBlur.init -> void
+RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.Equals(RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings? other) -> bool
+override RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.ToString() -> string!
+static RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings? left, RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings? right) -> bool
+static RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings? left, RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings? right) -> bool
+RibbonKit.WinForms.RibbonApplicationButtonShape
+RibbonKit.WinForms.RibbonApplicationButtonShape.Rectangular = 0 -> RibbonKit.WinForms.RibbonApplicationButtonShape
+RibbonKit.WinForms.RibbonApplicationButtonShape.Orb = 1 -> RibbonKit.WinForms.RibbonApplicationButtonShape
+RibbonKit.WinForms.RibbonTheme.ApplicationButtonShape.get -> RibbonKit.WinForms.RibbonApplicationButtonShape
+RibbonKit.WinForms.RibbonTheme.ApplicationButtonShape.init -> void
+RibbonKit.WinForms.RibbonTheme.ApplicationButtonAppearance.get -> RibbonKit.WinForms.RibbonApplicationButtonAppearanceSettings?
+RibbonKit.WinForms.RibbonTheme.ApplicationButtonAppearance.init -> void
+RibbonKit.WinForms.RibbonPaintContext.ApplicationButtonShape.get -> RibbonKit.WinForms.RibbonApplicationButtonShape?
+RibbonKit.WinForms.RibbonPaintContext.ApplicationButtonShape.init -> void
+RibbonKit.WinForms.RibbonPaintContext.ApplicationButtonIcon.get -> RibbonKit.WinForms.IRibbonIcon?
+RibbonKit.WinForms.RibbonPaintContext.ApplicationButtonIcon.init -> void
+RibbonKit.WinForms.RibbonControl.ApplicationButtonShape.get -> RibbonKit.WinForms.RibbonApplicationButtonShape?
+RibbonKit.WinForms.RibbonControl.ApplicationButtonShape.set -> void
+RibbonKit.WinForms.RibbonControl.ApplicationButtonIcon.get -> RibbonKit.WinForms.IRibbonIcon?
+RibbonKit.WinForms.RibbonControl.ApplicationButtonIcon.set -> void
+RibbonKit.WinForms.RibbonControl.EffectiveApplicationButtonShape.get -> RibbonKit.WinForms.RibbonApplicationButtonShape
+RibbonKit.WinForms.RibbonControl.ApplicationButtonBounds.get -> System.Drawing.Rectangle
+RibbonKit.WinForms.RibbonControl.ApplicationButtonShapeChanged -> System.EventHandler?
+virtual RibbonKit.WinForms.RibbonRenderer.DrawApplicationButtonGlyph(RibbonKit.WinForms.RibbonPaintContext context, bool enabled) -> void

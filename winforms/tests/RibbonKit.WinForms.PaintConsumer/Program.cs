@@ -8,13 +8,24 @@ internal static class Program
     {
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2); Application.EnableVisualStyles();
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
+        if (args.ElementAtOrDefault(0) == "--orb-uia-client") return OrbUiaClient.Run(args[1], args[2], args[3]);
         var directory = args[0]; Directory.CreateDirectory(directory);
         try
         {
-            if (args.ElementAtOrDefault(1) != "features-only") Defaults(directory);
+            if (args.ElementAtOrDefault(1) is "orb-only" or "orb-features-only")
+            {
+                if (args[1] == "orb-only") OrbCompositionChecks.Defaults(directory, Log);
 #if G2
-            Features(directory);
+                OrbCompositionChecks.Features(directory, Log);
 #endif
+            }
+            else
+            {
+                if (args.ElementAtOrDefault(1) != "features-only") Defaults(directory);
+#if G2
+                Features(directory);
+#endif
+            }
             Log.Add("LIMIT: direct paint/offscreen native evidence; live visual review, actual VS, physical input/IME and mixed-monitor behavior remain separate.");
             return 0;
         }

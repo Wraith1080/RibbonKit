@@ -1,12 +1,16 @@
 param(
     [Parameter(Mandatory)][string]$BaselineAssembly,
     [ValidateSet('Debug','Release')][string]$Configuration = 'Debug',
+    [switch]$ApplicationButton,
     [string]$Destination
 )
 $ErrorActionPreference = 'Stop'
 $nativeRoot = Split-Path $PSScriptRoot -Parent
 $BaselineAssembly = (Resolve-Path -LiteralPath $BaselineAssembly).Path
-if (-not $Destination) { $Destination = Join-Path $nativeRoot ('artifacts/office2007-g2/consumer-' + [DateTime]::UtcNow.ToString("yyyyMMdd'T'HHmmssfff'Z'")) }
+if (-not $Destination) {
+    $sliceDirectory = if ($ApplicationButton) { 'office2007-g3' } else { 'office2007-g2' }
+    $Destination = Join-Path $nativeRoot ('artifacts/' + $sliceDirectory + '/consumer-' + [DateTime]::UtcNow.ToString("yyyyMMdd'T'HHmmssfff'Z'"))
+}
 $Destination = [IO.Path]::GetFullPath($Destination)
 if (Test-Path -LiteralPath $Destination) { throw "Preserve existing evidence: $Destination" }
 New-Item -ItemType Directory -Path $Destination | Out-Null
@@ -18,7 +22,9 @@ foreach ($scope in @('baseline','current')) {
     if ($LASTEXITCODE) { throw "$scope consumer build failed." }
     $output = Join-Path $Destination $scope
     $app = Join-Path $nativeRoot "tests/RibbonKit.WinForms.PaintConsumer/bin/$Configuration/net10.0-windows/RibbonKit.WinForms.PaintConsumer.exe"
-    $process = Start-Process -FilePath $app -ArgumentList ('"' + $output + '"') -WindowStyle Hidden -Wait -PassThru
+    $arguments = '"' + $output + '"'
+    if ($ApplicationButton) { $arguments += ' orb-only' }
+    $process = Start-Process -FilePath $app -ArgumentList $arguments -WindowStyle Hidden -Wait -PassThru
     Get-Content -LiteralPath (Join-Path $output 'result.log')
     if ($process.ExitCode) { throw "$scope consumer failed." }
 }

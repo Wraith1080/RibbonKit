@@ -77,6 +77,7 @@ public class RibbonOffice2024Renderer : RibbonRenderer
     /// <inheritdoc />
     public override void DrawFileButton(RibbonPaintContext context, RibbonDropDownItem menu)
     {
+        if (DrawApplicationOrb(context, menu)) return;
         var header = RibbonPresentationResolver.Header(context.Theme);
         header.Renderer.DrawFileButton(this, context, menu, header.ResolveMetrics(context.Theme, context.Density));
     }
@@ -87,8 +88,11 @@ public class RibbonOffice2024Renderer : RibbonRenderer
         RibbonBodyRenderer.DrawGroupFrame(this, context);
     }
     /// <inheritdoc />
-    public override void DrawFocus(RibbonPaintContext context) =>
+    public override void DrawFocus(RibbonPaintContext context)
+    {
+        if (context.IsApplicationButtonFocus) { PaintApplicationButtonFocus(context); return; }
         PaintRounded(context with { Bounds = Layout.RibbonSharedEffectMetrics.FocusBounds(context) }, Layout.RibbonFrameMetrics.Radius(context.Theme.FocusCornerRadius, Math.Max(1, context.Theme.CornerRadius * context.DeviceDpi / 96), context.DeviceDpi), new(Color.Transparent), context.Theme.Accent, Layout.RibbonSharedEffectMetrics.FocusStroke(context));
+    }
     /// <inheritdoc />
     public override void DrawKeyTip(RibbonPaintContext context, string keys)
         => RibbonTipRenderer.DrawKeyTip(this, context, keys, office: true);

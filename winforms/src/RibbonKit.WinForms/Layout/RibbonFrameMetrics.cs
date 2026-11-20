@@ -18,6 +18,8 @@ internal readonly record struct RibbonFrameMetrics(RibbonTheme Theme)
     }
     internal static void Validate(RibbonTheme theme)
     {
+        if (!Enum.IsDefined(theme.ApplicationButtonShape)) throw new ArgumentOutOfRangeException(nameof(theme), "Unknown application button shape.");
+        RibbonApplicationButtonAppearanceSettings.Validate(theme.ApplicationButtonAppearance);
         RibbonBodyAppearanceSettings.Validate(theme.BodyAppearance);
         RibbonPopupAppearanceSettings.Validate(theme.PopupAppearance);
         RibbonOptionsAppearanceSettings.Validate(theme.OptionsAppearance);

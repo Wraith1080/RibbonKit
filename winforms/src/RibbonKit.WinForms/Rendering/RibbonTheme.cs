@@ -53,6 +53,10 @@ public readonly record struct RibbonFill(Color Start, Color End)
 /// <summary>Immutable named appearance and 96-DPI metrics for one ribbon.</summary>
 public sealed record RibbonTheme
 {
+    /// <summary>Gets the default File shape. Existing themes retain Rectangular; a RibbonControl override and its Reset remain independent of File routing.</summary>
+    public RibbonApplicationButtonShape ApplicationButtonShape { get; init; }
+    /// <summary>Gets optional shared Orb geometry, glyph ink, states, rims and shadow. Null retains neutral shared defaults; rectangular File uses FileButtonAppearance.</summary>
+    public RibbonApplicationButtonAppearanceSettings? ApplicationButtonAppearance { get; init; }
     private Color _background = Color.White, _popupBackground = Color.Empty, _titleBarBackground = Color.Empty;
     private Color _backstageNavigationBackground = Color.FromArgb(245, 244, 243);
     /// <summary>Gets an optional opaque ribbon/header surround fill. Null follows Background; assigning Background clears this override.</summary>
@@ -598,6 +602,10 @@ public readonly record struct RibbonIconContext(int DeviceDpi, Color Foreground,
 /// <summary>Describes device-pixel geometry, palette, font and interaction state for painting.</summary>
 public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bounds, RibbonTheme Theme, Font Font, int DeviceDpi, bool Hot = false, bool Pressed = false, bool Focused = false, bool ReserveIcon = false)
 {
+    /// <summary>Gets an optional effective File shape for a control override. Null uses the theme default for standalone drawing.</summary>
+    public RibbonApplicationButtonShape? ApplicationButtonShape { get; init; }
+    /// <summary>Gets a borrowed Orb glyph for shared File drawing. Null retains the shared vector fallback.</summary>
+    public IRibbonIcon? ApplicationButtonIcon { get; init; }
     /// <summary>Gets optional full surface bounds for a clipped background gradient. Empty uses Bounds. Content/state fills keep their own target coordinates.</summary>
     public Rectangle BackgroundBounds { get; init; }
     /// <summary>Gets the measured device-pixel opening under the visible selected Filled tab. Its top aligns with the body frame; height reports available body depth. Empty means no connection. RibbonControl supplies this value to body and selected-tab hooks; standalone painters may supply it explicitly. It does not alter target bounds.</summary>
@@ -620,6 +628,7 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     internal bool IsBackstageNavigationState { get; init; }
     internal bool IsHeaderScrollButton { get; init; }
     internal bool IsCommandState { get; init; }
+    internal bool IsApplicationButtonFocus { get; init; }
     internal bool StateChecked { get; init; }
     internal bool StateHot { get; init; }
     internal bool StatePressed { get; init; }

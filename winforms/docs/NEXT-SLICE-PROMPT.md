@@ -1,22 +1,23 @@
-# Review native Office 2007 G2 paint foundations
+# Continue native Office 2007 after G3 foundations
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-20**. The current checkout is `codex/Ribbonkit-Winform` at
-`f239e3e` (`Office 2007 Planning`), following `ed382ff` (`Fix backstage black bars`). Preserve authored Backstage
+Updated **2026-11-21**. The current checkout is `codex/Ribbonkit-Winform` at
+`df38b3f` (`G2 2007 Theme`), following `f239e3e` and `ed382ff`. Preserve authored Backstage
 settings and other Form/resource edits. Recheck
 `git status --short`, live branch and HEAD; preserve user commits and edits. Do not
 commit, stage, push, publish or change branches unless requested.
 
 ## Current state and scope
 
-The user authorized **G2 shared paint foundations** from the
+The user authorized **G2/G3 shared foundations** from the
 [Office 2007 Blue contract and slice order](OFFICE2007-BLUE-PLAN.md).
 G1 uses the existing WPF theme as a read-only reference. G2 adds exact hard
 transitions and optional measured group decoration; its implementation and
 focused evidence are in the [G2 record](OFFICE2007-BLUE-PLAN.md#g2-shared-paint-foundations--2026-11-20).
-Stop for review before G3 Orb/menu composition or the Office 2007 preset.
+**G3 application-button/menu composition is also implemented.** Read its
+[contract, exact evidence and limits](OFFICE2007-BLUE-PLAN.md#g3-application-button-and-menu-composition--2026-11-21). All 28 G3 cases, independent native/UIA checks and default File paint pairs pass; one affected old checked-hover assertion is reproduced against the retained DLL. Preserve the uncommitted G3 work. The next slice is G4 normal Blue palette/ribbon. No foundation visual-review stop is required; G4 has not been implemented in this slice.
 The [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger)
 owns the preceding family review. Preserve the delivered context below.
 

@@ -250,6 +250,7 @@ public partial class RibbonRenderer : IDisposable
     /// <summary>Paints the File menu header using library-measured bounds and its original open/availability state.</summary>
     public virtual void DrawFileButton(RibbonPaintContext context, RibbonDropDownItem menu)
     {
+        if (DrawApplicationOrb(context, menu)) return;
         if (RibbonFileButtonRenderer.Draw(this, context, menu)) return;
         if (DrawApplicationFileButton(context, menu)) return;
         bool enabled = menu.EffectiveEnabled;
@@ -595,6 +596,7 @@ public partial class RibbonRenderer : IDisposable
     /// <summary>Paints a visible keyboard focus outline.</summary>
     public virtual void DrawFocus(RibbonPaintContext context)
     {
+        if (context.IsApplicationButtonFocus) { PaintApplicationButtonFocus(context); return; }
         var bounds = RibbonSharedEffectMetrics.FocusBounds(context);
         if (bounds.Width <= 0 || bounds.Height <= 0) return;
         if (context.Theme.FocusStrokeWidth is not null)

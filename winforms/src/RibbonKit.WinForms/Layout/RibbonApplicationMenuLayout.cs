@@ -15,7 +15,7 @@ internal sealed class RibbonApplicationMenuLayout
     internal int PaneExtent { get; private init; }
     internal int FooterExtent { get; private init; }
     internal List<RibbonTarget> Targets { get; } = [];
-    internal static RibbonApplicationMenuLayout Build(RibbonControl ribbon, RibbonDropDownItem pane, Size maximum)
+    internal static RibbonApplicationMenuLayout Build(RibbonControl ribbon, RibbonDropDownItem pane, Size maximum, int topBand = 0, int? fixedHeight = null)
     {
         int dpi = ribbon.DeviceDpi;
         int S(int n) => RibbonLayoutEngine.Scale(n, dpi);
@@ -62,11 +62,14 @@ internal sealed class RibbonApplicationMenuLayout
         }
         int footerExtent = footer.Length == 0 ? 0 : fy + footerRow;
         int preferredPaneHeight = pane.Content is { } content ? Math.Max(S(240), content.Height) : rh.Sum() + header;
-        int height = Math.Max(1, Math.Min(maximum.Height, Math.Max(S(280), Math.Max(lh.Sum(), preferredPaneHeight)) + 2 * pad + 2 + (footer.Length == 0 ? 0 : Math.Min(footerExtent, 3 * (footerRow + footerGap)) + S(8))));
+        topBand = Math.Clamp(topBand, 0, Math.Max(0, maximum.Height - 2 * pad - 4));
+        int height = Math.Max(1, Math.Min(maximum.Height, topBand + Math.Max(S(280), Math.Max(lh.Sum(), preferredPaneHeight)) + 2 * pad + 2 + (footer.Length == 0 ? 0 : Math.Min(footerExtent, 3 * (footerRow + footerGap)) + S(8))));
+        if (fixedHeight is { } pinned) height = Math.Max(1, Math.Min(maximum.Height, pinned));
         int footerHeight = footer.Length == 0 ? 0 : Math.Min(footerExtent, Math.Max(1, Math.Min(height / 3, 3 * (footerRow + footerGap))));
         if (footerExtent <= footerHeight) for (int i = 0; i < footerRects.Count; i++) footerRects[i] = footerRects[i] with { X = footerRects[i].X + bar };
         int frameBottom = Math.Max(pad + 3, height - pad - footerHeight - (footer.Length == 0 ? 0 : S(8)));
-        var frame = new Rectangle(pad, pad, Math.Max(1, width - 2 * pad), Math.Max(1, frameBottom - pad));
+        int frameTop = Math.Min(pad + topBand, Math.Max(pad, frameBottom - 3));
+        var frame = new Rectangle(pad, frameTop, Math.Max(1, width - 2 * pad), Math.Max(1, frameBottom - frameTop));
         var nav = new Rectangle(frame.Left + 1, frame.Top + 1, Math.Max(1, navWidth), Math.Max(1, frame.Height - 2));
         int paneLeft = nav.Right + 1;
         int paneTop = Math.Min(frame.Bottom - 2, nav.Top + header + S(4));

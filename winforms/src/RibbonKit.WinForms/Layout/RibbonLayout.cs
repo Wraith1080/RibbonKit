@@ -4,9 +4,10 @@ internal enum TargetKind
 {
     Tab, Group, Item, TabBack, TabNext, BodyBack, BodyNext, Minimize, QuickAccess, QuickAccessOverflow, OverflowUp, OverflowDown, FileMenu, ModalClose, MessageAction, MessageClose
 }
-internal sealed record RibbonTarget(TargetKind Kind, RibbonElement? Element, Rectangle Bounds, Rectangle Clip, RibbonItemSize Size = RibbonItemSize.Large, bool ReserveIcon = false, bool DropDownPart = false, int LabelWidth = 0, string? AutomaticKeyTip = null, bool GalleryDropDown = false)
+internal sealed record RibbonTarget(TargetKind Kind, RibbonElement? Element, Rectangle Bounds, Rectangle Clip, RibbonItemSize Size = RibbonItemSize.Large, bool ReserveIcon = false, bool DropDownPart = false, int LabelWidth = 0, string? AutomaticKeyTip = null, bool GalleryDropDown = false, bool Circular = false)
 {
     internal Rectangle VisibleBounds => Rectangle.Intersect(Bounds, Clip);
+    internal bool Contains(Point point) => VisibleBounds.Contains(point) && (!Circular || RibbonApplicationButtonMetrics.Contains(Bounds, point));
     internal bool Enabled => Kind == TargetKind.QuickAccess ? Element is not null && RibbonQuickAccess.Available(Element) : Element is not RibbonMenuSeparatorItem && (Element?.EffectiveEnabled ?? true);
     internal string Identity => (Element?.Id ?? Kind.ToString()) + (DropDownPart ? ":dropdown" : "");
     internal string TipText => (Kind == TargetKind.QuickAccess && Element is not null ? RibbonQuickAccess.Caption(Element) : Element?.DisplayText ?? "") + (DropDownPart ? " options" : "");
@@ -237,16 +238,31 @@ internal sealed partial class RibbonLayoutEngine
         int tabsStart = 0;
         if (ribbon.HasFileMenu)
         {
-            int keepQuickAccess = ribbon.ShowQuickAccess && placement == RibbonQuickAccessPosition.TabRow ? S(metrics.QuickAccessButton + 2 * chrome.QuickAccessPadding) : 0;
-            int available = Math.Max(0, client.Width - utilityWidth - S(24) - keepQuickAccess);
-            int left = Math.Min(S(ribbon.LayoutTheme.BodyMargin.Left), available);
-            int width = Math.Min(Math.Max(S(headerMetrics.FileMinimum), TextRenderer.MeasureText(ribbon.FileMenu.Text, ribbon.Font, Size.Empty,
-                TextFormatFlags.SingleLine | TextFormatFlags.NoPadding).Width + S(2 * headerMetrics.TabPadding)), Math.Max(0, available - left));
-            if (width > 0)
+            if (ribbon.EffectiveApplicationButtonShape == RibbonApplicationButtonShape.Orb)
             {
-                var bounds = new Rectangle(left, tabTop, width, tabHeight);
-                result.Targets.Add(new(TargetKind.FileMenu, ribbon.FileMenu, bounds, bounds));
-                tabsStart = bounds.Right;
+                var bounds = RibbonApplicationButtonMetrics.Measure(ribbon);
+                if (!bounds.IsEmpty)
+                {
+                    var appearance = ribbon.Theme.ApplicationButtonAppearance ?? RibbonApplicationButtonAppearanceSettings.Default;
+                    int shadow = RibbonApplicationButtonMetrics.ShadowPadding(appearance, dpi);
+                    var clip = Rectangle.Intersect(client, Rectangle.Inflate(bounds, shadow, shadow));
+                    result.Targets.Add(new(TargetKind.FileMenu, ribbon.FileMenu, bounds, clip, Circular: true));
+                    tabsStart = Math.Min(client.Width, RibbonApplicationButtonMetrics.Reservation(ribbon));
+                }
+            }
+            else
+            {
+                int keepQuickAccess = ribbon.ShowQuickAccess && placement == RibbonQuickAccessPosition.TabRow ? S(metrics.QuickAccessButton + 2 * chrome.QuickAccessPadding) : 0;
+                int available = Math.Max(0, client.Width - utilityWidth - S(24) - keepQuickAccess);
+                int left = Math.Min(S(ribbon.LayoutTheme.BodyMargin.Left), available);
+                int width = Math.Min(Math.Max(S(headerMetrics.FileMinimum), TextRenderer.MeasureText(ribbon.FileMenu.Text, ribbon.Font, Size.Empty,
+                    TextFormatFlags.SingleLine | TextFormatFlags.NoPadding).Width + S(2 * headerMetrics.TabPadding)), Math.Max(0, available - left));
+                if (width > 0)
+                {
+                    var bounds = new Rectangle(left, tabTop, width, tabHeight);
+                    result.Targets.Add(new(TargetKind.FileMenu, ribbon.FileMenu, bounds, bounds));
+                    tabsStart = bounds.Right;
+                }
             }
         }
         if (ribbon.ShowQuickAccess)

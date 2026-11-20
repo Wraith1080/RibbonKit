@@ -10,9 +10,10 @@ internal sealed class RibbonPopupWindow : ToolStripDropDown
     private readonly bool nonActivating;
     internal RibbonPopupMotion? OpeningMotion { get; private set; }
     private bool _galleryAppearanceActive;
+    internal RibbonApplicationMenuComposition ApplicationComposition;
     internal void PrepareOpening(Control surface)
     {
-        SettleMotion(); OpeningMotion = RibbonPopupMotion.Prepare(ribbon, this, surface);
+        SettleMotion(); OpeningMotion = ApplicationComposition.IsEmpty ? RibbonPopupMotion.Prepare(ribbon, this, surface) : null;
         _galleryAppearanceActive = OpeningMotion?.FadesGallery == true;
     }
     internal void StartOpening() => OpeningMotion?.Start();
@@ -49,15 +50,24 @@ internal sealed class RibbonPopupWindow : ToolStripDropDown
     private Size _shapeSize;
     private int _shapeRadius = -1;
     private int _shapeInset = -1;
+    private Rectangle _compositionCanvas;
+    private RibbonApplicationMenuComposition _shapeComposition;
     private int UpdateShape()
     {
         int radius = Math.Clamp(ribbon.Painter.GetPopupCornerRadius(ribbon.Theme, ribbon.DeviceDpi), 0, Math.Min(Width, Height) / 2);
-        if (_shapeSize == Size && _shapeRadius == radius && _shapeInset == Padding.Left) return radius;
+        if (_shapeSize == Size && _shapeRadius == radius && _shapeInset == Padding.Left && _shapeComposition == ApplicationComposition && (ApplicationComposition.IsEmpty || _compositionCanvas == Bounds)) return radius;
         _shapeSize = Size; _shapeRadius = radius; _shapeInset = Padding.Left;
+        _compositionCanvas = Bounds; _shapeComposition = ApplicationComposition;
         // Control owns its assigned Region, including replacement/disposal.
-        Region = radius > 0 ? RoundedPainter.CreateOpaqueRegion(Size, radius) : null;
+        var region = radius > 0 ? RoundedPainter.CreateOpaqueRegion(Size, radius) : ApplicationComposition.IsEmpty ? null : new Region(ClientRectangle);
+        if (!ApplicationComposition.IsEmpty) { using var exclusion = ApplicationComposition.Exclusion(Bounds); region!.Exclude(exclusion); }
+        Region = region;
         foreach (var host in Items.OfType<ToolStripControlHost>())
-            host.Control.Region = radius > 0 ? RoundedPainter.CreateOpaqueRegion(host.Control.Size, Math.Max(0, radius - _shapeInset)) : null;
+        {
+            var childRegion = radius > 0 ? RoundedPainter.CreateOpaqueRegion(host.Control.Size, Math.Max(0, radius - _shapeInset)) : ApplicationComposition.IsEmpty ? null : new Region(host.Control.ClientRectangle);
+            if (!ApplicationComposition.IsEmpty) { using var exclusion = ApplicationComposition.Exclusion(host.Control.RectangleToScreen(host.Control.ClientRectangle)); childRegion!.Exclude(exclusion); }
+            host.Control.Region = childRegion;
+        }
         return radius;
     }
     protected override void OnVisibleChanged(EventArgs e)

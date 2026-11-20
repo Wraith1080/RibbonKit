@@ -108,7 +108,7 @@ internal class RibbonAutomationNode : IRawProvider, IFragmentProvider, IInvokePr
     public void Expand() => Root.Run(() =>
     {
         CheckEnabled();
-        if (Root.Ribbon.Popups.IsExpanded(Element!))
+        if (Root.Ribbon.Popups.IsExpanded(Element!) || ReferenceEquals(Element, Root.Ribbon.FileMenu) && Root.Ribbon.IsBackstageOpen)
             return;
         if (Element is RibbonDropDownItem drop)
             drop.ShowDropDown();
@@ -116,8 +116,8 @@ internal class RibbonAutomationNode : IRawProvider, IFragmentProvider, IInvokePr
         else if (Element is RibbonGroup && Root.Targets.FirstOrDefault(t => ReferenceEquals(t.Element, Element)) is { } target)
             Root.Ribbon.Activate(target);
     });
-    public void Collapse() => Root.Run(() => { if (Element is RibbonComboBoxItem combo) combo.CloseDropDown(); else if (Element is { } element) Root.Ribbon.Popups.Close(element, true); });
-    public int ExpandCollapseState => Root.Read(() => Element is RibbonComboBoxItem combo ? combo.IsDropDownOpen ? 1 : 0 : Element is not null && Root.Ribbon.Popups.IsExpanded(Element) ? 1 : 0);
+    public void Collapse() => Root.Run(() => { if (ReferenceEquals(Element, Root.Ribbon.FileMenu) && Root.Ribbon.IsBackstageOpen) Root.Ribbon.IsBackstageOpen = false; else if (Element is RibbonComboBoxItem combo) combo.CloseDropDown(); else if (Element is { } element) Root.Ribbon.Popups.Close(element, true); });
+    public int ExpandCollapseState => Root.Read(() => ReferenceEquals(Element, Root.Ribbon.FileMenu) && Root.Ribbon.IsBackstageOpen ? 1 : Element is RibbonComboBoxItem combo ? combo.IsDropDownOpen ? 1 : 0 : Element is not null && Root.Ribbon.Popups.IsExpanded(Element) ? 1 : 0);
     internal void RaiseChanges()
     {
         foreach (int property in new[] { 30005, 30010, 30070, 30079, 30086 })
@@ -162,7 +162,9 @@ internal sealed class RibbonAutomationRoot : RibbonAutomationNode, IFragmentRoot
         TabsNode = new(this, null, true);
     }
     internal override RibbonAutomationNode? Parent => null;
-    internal override IReadOnlyList<RibbonAutomationNode> Children => Read(() => Surface is null ? new[] { TabsNode } : Targets.Where(t => t.Element is not null and not RibbonMenuSeparatorItem).Select(t => t.Element!).Distinct().Select(e => Node(e)).ToArray());
+    internal override IReadOnlyList<RibbonAutomationNode> Children => Read(() => Surface is null
+        ? Ribbon.EffectiveApplicationButtonShape == RibbonApplicationButtonShape.Orb && Targets.Any(t => t.Kind == TargetKind.FileMenu) ? new[] { Node(Ribbon.FileMenu), TabsNode } : new[] { TabsNode }
+        : Targets.Where(t => t.Element is not null and not RibbonMenuSeparatorItem).Select(t => t.Element!).Distinct().Select(e => Node(e)).ToArray());
     internal override Rectangle ScreenBounds => Read(() => Control.Visible ? Control.RectangleToScreen(Control.ClientRectangle) : Rectangle.Empty);
     public override IRawProvider? HostRawElementProvider => Read(() => { UiaNative.UiaHostProviderFromHwnd(Control.Handle, out var host); return host; });
     public override object? GetPropertyValue(int propertyId) => Read<object?>(() => propertyId switch { 30003 => Surface is null ? 50033 : 50009, 30005 => Surface?.OwnerElement.Text ?? Ribbon.AccessibleName ?? "Ribbon", 30011 => Surface is null ? Ribbon.Name is { Length: > 0 } name ? name : "ribbon" : "popup:" + Surface.OwnerElement.Id, 30012 => "RibbonControl", _ => base.GetPropertyValue(propertyId) });
@@ -224,7 +226,7 @@ internal sealed class RibbonAutomationRoot : RibbonAutomationNode, IFragmentRoot
     public IFragmentProvider? ElementProviderFromPoint(double x, double y) => Read<IFragmentProvider?>(() =>
     {
         var point = Control.PointToClient(new((int)x, (int)y));
-        var target = Targets.LastOrDefault(t => t.VisibleBounds.Contains(point));
+        var target = Targets.LastOrDefault(t => t.Contains(point));
         return target?.Element is { } element and not RibbonMenuSeparatorItem ? Node(element) : this;
     });
     public IFragmentProvider? GetFocus() => Read<IFragmentProvider?>(() => Control.ContainsFocus && Ribbon.FocusedElement is { } item ? Node(item) : null);

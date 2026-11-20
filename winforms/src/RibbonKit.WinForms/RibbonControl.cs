@@ -148,7 +148,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             _builtInTheme = null;
             if (Equals(_theme, value))
                 return;
-            _theme = value;
+            CancelApplicationButtonPress(); _theme = value;
             WindowHost?.RefreshWindowCornerPreference();
             WindowHost?.RefreshAeroBorder();
             ModelChanged();
@@ -175,7 +175,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             if (_builtInTheme == value) return;
             _builtInTheme = value;
             if (Equals(_theme, next)) return;
-            _theme = next;
+            CancelApplicationButtonPress(); _theme = next;
             WindowHost?.RefreshWindowCornerPreference();
             WindowHost?.RefreshAeroBorder();
             ModelChanged();
@@ -713,6 +713,8 @@ public partial class RibbonControl : Control, ISupportInitialize
                     bool closing = _backstageClosing && !BackstageKeepsHeaders;
                     Painter.DrawFileButton(ctx with
                     {
+                        ApplicationButtonShape = EffectiveApplicationButtonShape,
+                        ApplicationButtonIcon = ApplicationButtonIcon,
                         Hot = ctx.Hot || closing && PointerOverBackstageFile(target),
                         FileMenuClosing = closing,
                         FileMenuPreviewOpen = DesignPreviewBackstage
@@ -766,7 +768,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         }
     }
     private IReadOnlyList<RibbonTarget> TipTargets() => _popups.Top?.Targets.Where(t => t.Element is not null && t.Enabled).ToArray() ?? Snapshot.Targets.Where(t => t.Element is not null && (_topTips ? t.Element is not RibbonSimplifiedMore && t.Kind is TargetKind.Tab or TargetKind.FileMenu or TargetKind.QuickAccess or TargetKind.QuickAccessOverflow or TargetKind.ModalClose or TargetKind.MessageAction or TargetKind.MessageClose : t.Element is RibbonSimplifiedMore || t.Kind is TargetKind.Item or TargetKind.Group or TargetKind.ModalClose)).ToArray();
-    private RibbonTarget? Hit(Point point) => Snapshot.Targets.LastOrDefault(t => t.Enabled && t.VisibleBounds.Contains(point));
+    private RibbonTarget? Hit(Point point) => Snapshot.Targets.LastOrDefault(t => t.Enabled && t.Contains(point));
     /// <inheritdoc />
     protected override void OnMouseMove(MouseEventArgs e)
     {

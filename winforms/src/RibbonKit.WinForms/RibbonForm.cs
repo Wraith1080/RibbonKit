@@ -92,16 +92,19 @@ public partial class RibbonForm : Form
         && FormBorderStyle is FormBorderStyle.Sizable or FormBorderStyle.FixedSingle or FormBorderStyle.Fixed3D;
     internal int CaptionHeight => RibbonLayoutEngine.Scale(Math.Max(36, Ribbon is { Density: RibbonDensity.Touch } ? 48 : 36), DeviceDpi);
     internal bool CustomCaption => FormBorderStyle is FormBorderStyle.Sizable or FormBorderStyle.FixedSingle or FormBorderStyle.Fixed3D;
+    internal int CaptionResizeInset => WindowState != FormWindowState.Maximized && FormBorderStyle == FormBorderStyle.Sizable
+        ? Math.Max(1, GetSystemMetricsForDpi(33, (uint)DeviceDpi) + GetSystemMetricsForDpi(92, (uint)DeviceDpi)) : 0;
     internal RibbonCaptionGeometry Caption => RibbonCaptionGeometry.Measure(CaptionHostBounds.Width, CaptionHeight, DeviceDpi, ControlBox, MinimizeBox, MaximizeBox, ShowIcon, _ribbon is { HasWindowCaption: true } ribbon ? ribbon.Theme : null);
     internal Rectangle QuickAccessSlot(RibbonControl ribbon)
     {
         var geometry = Caption;
-        int available = Math.Max(0, geometry.Buttons.Left - geometry.ContentLeft);
+        int contentLeft = Math.Max(geometry.ContentLeft, RibbonApplicationButtonMetrics.Reservation(ribbon));
+        int available = Math.Max(0, geometry.Buttons.Left - contentLeft);
         int cap = RibbonLayoutEngine.Scale(ribbon.QuickAccessMaxWidth, DeviceDpi);
         int minimum = RibbonLayoutEngine.Scale(RibbonDensityMetrics.For(ribbon.Density).QuickAccessButton + 2 * new RibbonChromeMetrics(ribbon.Theme, ribbon.Density).QuickAccessPadding, DeviceDpi);
         // At narrow widths preserve the overflow target before sacrificing the title.
         int width = Math.Min(available, Math.Min(cap, Math.Max(minimum, available - RibbonLayoutEngine.Scale(new RibbonCaptionMetrics(ribbon.Theme).TitleReservation, DeviceDpi))));
-        return new(geometry.ContentLeft, 0, Math.Max(0, width), CaptionHeight);
+        return new(contentLeft, 0, Math.Max(0, width), CaptionHeight);
     }
     internal Rectangle CaptionTextBounds(RibbonControl? ribbon)
     {
@@ -110,7 +113,7 @@ public partial class RibbonForm : Form
         {
             return CenteredCaptionTextBounds();
         }
-        int left = geometry.ContentLeft;
+        int left = Math.Max(geometry.ContentLeft, ribbon is null ? 0 : RibbonApplicationButtonMetrics.Reservation(ribbon));
         if (ribbon?.EffectiveQuickAccessPosition == RibbonQuickAccessPosition.TitleBar && ribbon.ShowQuickAccess)
             left = ribbon.Snapshot.QuickAccessBounds.Right + RibbonLayoutEngine.Scale(new RibbonCaptionMetrics(ribbon.Theme).QuickAccessGap, DeviceDpi);
         return Rectangle.FromLTRB(Math.Min(left, geometry.Buttons.Left), 0, geometry.Buttons.Left, CaptionHeight);
@@ -225,7 +228,7 @@ public partial class RibbonForm : Form
             else graphics.FillRectangle(background, captionBounds);
             if (ribbon is { HasBackstageCaption: true }) return; // The transparent foreground plane owns the chrome.
         }
-        if (ShowIcon && Icon is { } icon && !geometry.Icon.IsEmpty) graphics.DrawIcon(icon, geometry.Icon);
+        if (ShowIcon && Icon is { } icon && !geometry.Icon.IsEmpty && (ribbon is null || RibbonApplicationButtonMetrics.Reservation(ribbon) == 0)) graphics.DrawIcon(icon, geometry.Icon);
         var text = CaptionTextBounds(ribbon);
         if (ribbon is { IsBackstageOpen: true, HasFullHeightBackstage: true })
         {
@@ -292,7 +295,7 @@ public partial class RibbonForm : Form
         if (!CustomCaption) return 1;
         if (WindowState != FormWindowState.Maximized && FormBorderStyle == FormBorderStyle.Sizable)
         {
-            int edge = Math.Max(1, GetSystemMetricsForDpi(33, (uint)DeviceDpi) + GetSystemMetricsForDpi(92, (uint)DeviceDpi));
+            int edge = CaptionResizeInset;
             bool left = point.X < edge, right = point.X >= ClientSize.Width - edge;
             bool top = point.Y < edge, bottom = point.Y >= ClientSize.Height - edge;
             if (top) return left ? 13 : right ? 14 : 12;
@@ -304,7 +307,8 @@ public partial class RibbonForm : Form
         point.X -= CaptionHostBounds.Left;
         var geometry = Caption;
         foreach (var (bounds, hit) in geometry.Targets) if (bounds.Contains(point)) return hit;
-        if (geometry.Icon.Contains(point) && ControlBox) return 3;
+        if (_ribbon is { HasWindowCaption: true } orbRibbon && orbRibbon.ApplicationButtonContains(point)) return 1;
+        if (geometry.Icon.Contains(point) && ControlBox && (_ribbon is null || RibbonApplicationButtonMetrics.Reservation(_ribbon) == 0)) return 3;
         if (_ribbon is { HasWindowCaption: true } ribbon && ribbon.Snapshot.QuickAccessBounds.Contains(point)) return 1;
         return 2;
     }
