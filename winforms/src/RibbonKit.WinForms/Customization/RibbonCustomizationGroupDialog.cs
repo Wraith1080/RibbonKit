@@ -14,7 +14,7 @@ internal sealed class RibbonCustomizationGroupDialog : Form
         _group = group; Text = creating ? "Create Group" : "Edit Group"; Name = "RibbonGroupDialog";
         Font = owner.Font; AutoScaleMode = AutoScaleMode.Dpi; AutoScaleDimensions = new(owner.DeviceDpi, owner.DeviceDpi);
         StartPosition = FormStartPosition.CenterParent; FormBorderStyle = FormBorderStyle.FixedDialog; MinimizeBox = MaximizeBox = false;
-        BackColor = ribbon.Theme.Surface; ForeColor = ribbon.Theme.Foreground;
+        BackColor = RibbonOptionsRenderer.Background(ribbon.Theme); ForeColor = ribbon.Theme.Foreground;
         int S(int value) => (int)Math.Ceiling(value * owner.DeviceDpi / 96d);
         int gap = S(8), height = RibbonQuickAccessEditorMetrics.ButtonHeight(owner.DeviceDpi, Font.Height, ribbon.Density);
         ClientSize = new(S(ribbon.Density == RibbonDensity.Touch ? 540 : 460), S(ribbon.Density == RibbonDensity.Touch ? 440 : 370));
@@ -27,11 +27,11 @@ internal sealed class RibbonCustomizationGroupDialog : Form
         _layout.Items.AddRange(Enum.GetValues<RibbonCustomizationGroupLayout>().Cast<object>().ToArray()); _layout.SelectedItem = group.Layout;
         var body = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 6, Padding = new(S(12)), Margin = Padding.Empty };
         for (int i = 0; i < 6; i++) body.RowStyles.Add(new(i == 3 ? SizeType.Percent : SizeType.AutoSize, i == 3 ? 100 : 0));
-        Label Label(string text) => new() { Text = text, AutoSize = true, Margin = new(0, 0, 0, S(4)) };
+        Label Label(string text) => new() { Text = text, AutoSize = true, ForeColor = RibbonOptionsRenderer.LabelForeground(ribbon.Theme), Margin = new(0, 0, 0, S(4)) };
         body.Controls.Add(Label("Name:")); body.Controls.Add(nameFrame); body.Controls.Add(Label("Icon (from this ribbon's commands):")); body.Controls.Add(iconFrame); body.Controls.Add(Label("Group layout:")); body.Controls.Add(_layout);
         var ok = new RibbonOptionsAccentButton(ribbon) { Name = "AcceptGroup", Text = "OK", Size = new(S(86), height) };
         var cancel = new RibbonOptionsButton(ribbon) { Name = "CancelGroup", Text = "Cancel", Size = ok.Size, DialogResult = DialogResult.Cancel, CausesValidation = false };
-        var footer = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, FlowDirection = FlowDirection.RightToLeft, Padding = new(S(12)), WrapContents = false }; footer.Controls.Add(cancel); footer.Controls.Add(ok);
+        var footer = new RibbonOptionsFooter(ribbon) { Dock = DockStyle.Bottom, AutoSize = true, FlowDirection = FlowDirection.RightToLeft, Padding = new(S(12)), WrapContents = false }; footer.Controls.Add(cancel); footer.Controls.Add(ok);
         ok.Click += (_, _) =>
         {
             if (string.IsNullOrWhiteSpace(_name.Text)) { _name.Focus(); return; }
@@ -53,7 +53,7 @@ internal sealed class RibbonCustomizationGroupDialog : Form
         internal IconPicker(RibbonControl ribbon)
         {
             _ribbon = ribbon; View = View.LargeIcon; OwnerDraw = true; MultiSelect = false; HideSelection = false; BorderStyle = BorderStyle.None; ShowItemToolTips = true;
-            BackColor = ribbon.Theme.Surface; ForeColor = ribbon.Theme.Foreground;
+            BackColor = RibbonOptionsRenderer.ListBackground(ribbon.Theme); ForeColor = ribbon.Theme.Foreground;
             int side = S(28); _placeholder.ImageSize = new(side, side); _blank = new Bitmap(side, side); _placeholder.Images.Add(_blank); LargeImageList = _placeholder;
         }
         private int S(int value) => (int)Math.Ceiling(value * DeviceDpi / 96d);

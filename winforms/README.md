@@ -3267,6 +3267,31 @@ clears only TipAppearance. Existing tab/body scrollers and group reduction remai
 `Theme.OptionsAppearance` accepts immutable `RibbonOptionsAppearanceSettings` for
 library Options navigation, dividers, buttons, headings, frames and command-list rows:
 
+Office 2010 also authors the following independent roles. Ordinary buttons share
+the Application Menu footer's blue resting fill and gold feedback. Primary OK
+uses an accent gradient, darkening on hover/press with white text. Selection
+keeps its accent outline; hover uses gold. Default state/button outlines are one
+device pixel at every DPI. Authored wider widths remain logical pixels and win.
+
+| Members | Behavior |
+| --- | --- |
+| `BackgroundColor`, `NavigationBackgroundColor`, `ListBackgroundColor`, `LabelForeground` | Library shell/editor, rail, list/tree/icon well and field/list caption colors. Background colors must be opaque or Empty; Empty follows the existing Surface/navigation/Foreground roles. Application-owned pages retain their styling. Choose native background/label colors before opening. |
+| `FooterBackground` | Independent library footer fill, including gradient/alpha; null retains the parent background. Button corners composite over the footer's actual gradient. |
+| `NavigationHoverBackground`, `RowHoverBackground`, `TreeHoverBackground` | Independent hover fills. Null retains the rail/well; hover never changes native selection, checked state or draft data. |
+| `NavigationStateChrome`, `RowStateChrome`, `TreeStateChrome` and corresponding `Navigation/Row/TreeBorderColor`, `Navigation/Row/TreeBorderWidth` | Independent outline/rim settings. Explicit ink/width wins; Empty ink follows state chrome, then Accent for selected rows or Border for hover. Null width uses one device pixel with nonempty state chrome, otherwise zero; explicit widths are 0..32 logical pixels. Transparent/zero hides the outline. Native focus cues remain separate. Empty state groups are inert. |
+| `ButtonHoverBackground`, `ButtonPressedBackground`, `ButtonDisabledBackground`, `ButtonDisabledBorderColor` | Independent ordinary hover/press and shared disabled button roles. Explicit fills precede ordinary accent washes; null/Empty restores existing fallback. ButtonBorderColor remains authoritative over disabled ink. |
+| `ButtonIdleStateChrome`, `AccentButtonStateChrome` | Optional idle ordinary and primary button rims/outlines. Null retains previous behavior; explicit ButtonBorderColor/Width wins. Ordinary enabled hover/press still uses StateChrome. |
+| `AccentButtonGradientStrength` | Optional finite 0..1 identity-gradient depth. Null retains legacy primary paint; zero is solid Accent. At 1 the ramp blends Accent with 48% white, 18% black at midpoint and 25% white. Explicit primary fills win. In this opt-in mode ordinary command fills stay separate; existing primary hover/press darkening applies to every stop. |
+
+Office 2010 uses square blue list/field frames, pale native wells and gold list/
+tree selection. Its frame, icon-picker and divider defaults also retain device-
+pixel hairlines. Native scrollbar skin, nonclient caption, selection, scrolling,
+keyboard/accessibility and application page controls retain their existing owners.
+Opt-in name fields in secondary rename dialogs use the same shared frames.
+Set a member to null/Empty to restore fallback, or reset OptionsAppearance as a
+group; geometry and native colors resolve through existing construction/layout
+paths, so choose those settings before opening a dialog.
+
 | Members | Null defaults and behavior |
 | --- | --- |
 | `NavigationCornerRadius`, `NavigationSelectionInset` | Radius 0..64 / per-edge vertical inset 0..1024 logical pixels. Null uses the actual renderer's GetPopupCornerRadius and the existing 2-pixel selection inset. Authored inset clamps inside the unchanged native row. |

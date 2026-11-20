@@ -33,6 +33,12 @@ internal static class Program
         using var form = new MainForm(startupTrace ? MainForm.PrepareStartupTrace(args[1], args[2])
             : startupProbe ? MainForm.PrepareBackdropStartupSettings(args[1], Enum.Parse<RibbonWindowBackdrop>(args[2]))
             : persistenceProbe ? Path.GetFullPath(args[1]) : args.Length == 0 ? MainForm.DefaultSettingsDirectory : null);
+        if (args.Length == 2 && args[0] == "--verify-office2010-options")
+        {
+            try { IndependentConsumer.Office2010OptionsChecks.VerifySample(form, form.Ribbon!, args[1], "Showcase"); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
         if (args.Length == 2 && args[0] == "--verify-office2010-application-menu")
         {
             try { IndependentConsumer.Office2010ApplicationMenuChecks.VerifySample(form, form.Ribbon!, args[1], "Showcase"); }

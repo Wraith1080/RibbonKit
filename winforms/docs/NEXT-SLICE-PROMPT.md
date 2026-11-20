@@ -1,11 +1,11 @@
-# Continue normal native Office 2010 Blue after F5 review
+# Continue normal native Office 2010 Blue after F6 review
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
 Updated **2026-11-15**. Last verified branch is `codex/Ribbonkit-Winform`, HEAD
-`c3ae95f` (`Plan Update`). The user committed the prior F4 work; F5 entered with
-a clean worktree and its changes remain uncommitted. Preserve authored Backstage
+`9a70d65` (`2010 F5 Application Button`). The user committed F5; F6 entered
+with a clean worktree and its changes remain uncommitted. Preserve authored Backstage
 settings and other Form/resource edits. Recheck
 `git status --short`, live branch and HEAD; preserve user commits and edits. Do not
 commit, stage, push, publish or change branches unless requested.
@@ -152,7 +152,7 @@ darkening, state-fill and foreground overrides. Other buttons stay white with
 light hover/darker pressed washes; pressed borders retain Accent.
 Existing explicit button/state/border overrides win. All three families' sample actions
 and persistence are checked; the persistent Designer Sample now uses package
-`0.1.0-designer.local20261114T233250034Z` after F5 Application Menu theming.
+`0.1.0-designer.local20261120T014843042Z` after the F6 listbox repaint fix.
 See [E3 evidence and scope](OFFICE2013-LIGHT-PLAN.md#e3-accent-palette-file-states-and-sample-appearance-controls--2026-11-13).
 E4 adds the #919191 body perimeter, selected-tab top/side outline and visible-tab
 opening through HeaderAppearance.ConnectSelectedTabToBody. Existing body/header
@@ -182,23 +182,36 @@ records before edits. Reuse the
 [architecture map](THEME-ARCHITECTURE-PLAN.md) and
 [adjustability audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 
-## Current review boundary: F5 Application Menu; next F6 Options only
+## Current review boundary: F6 Options; next F7 composed review
 
-F5 is delivered, pending user visual review. Read the
-[F5 implementation/evidence and review steps](OFFICE2010-BLUE-PLAN.md#f5-implementation-and-verification--2026-11-15).
-The default heading now matches its pane; blue surround/footer, resting footer
-fill, gold state outlines and two-tone split divider use shared adjustable roles.
-Footer hover/press interiors remain exact. Showcase Save As now uses a real split;
-Designer Sample already did. Both samples and independent public-package/native
-checks pass at 120 DPI; 125 distinct focused Release cases have passing latest
-results across the retained initial/repaired runs. No full suite or actual VS/
-physical-input/material acceptance is claimed. Final evidence is under
-`artifacts/office2010-f5/`; retain earlier attempts too.
+F6 is delivered, pending user visual review. Current F5 acceptance is in the
+[themes ledger](THEMES-PLAN.md#current-status-and-review-ledger). Read the
+[F6 implementation/evidence and review steps](OFFICE2010-BLUE-PLAN.md#f6-implementation-and-verification--2026-11-15).
+Preserve the user's final clarification: selected rows keep their accent outline,
+but all default Options outlines are thin one-device-pixel lines. Explicit wider
+logical widths still win. Native focus cues and the separate navigation marker
+retain their owners. Ordinary buttons share the Application Menu footer palette;
+primary OK has an accent gradient with darker hover/press and white text.
+Native scrollbar skin remains Windows-owned; wells, frames and rows are themed.
 
-Stop for F5 visual review. Once the user authorizes continuation, implement only
-[F6 Options dialog theming](OFFICE2010-BLUE-PLAN.md#f6-options-dialog-theming).
-Preserve F5's explicit ink/width precedence, default/null/Empty/zero/reset,
-native controls/input/layout, command targets and actual renderer hooks.
+The [listbox repaint follow-up](OFFICE2010-BLUE-PLAN.md#f6-listbox-repaint-follow-up--2026-11-20)
+is in the refreshed package. Hover repaints just the changed rows without erasing.
+Each themed row draws into a buffer before display. Focused native checks and both
+samples pass. See the themes ledger for the live review result.
+
+Latest focused evidence records 161 passes and one unrelated popup-context
+failure reproduced on the retained pre-F6 runtime. Independent public-package
+and both actual sample checks pass at 120 DPI, including Blue/Red, three editors,
+native hover/scroll/selection/ownership, drafts, validation/Apply/OK/Cancel/Reset
+and real secondary group/rename dialogs. Current package is above; evidence is
+under `artifacts/office2010-f6/`. Keep intermediate attempts. No clean full suite,
+actual VS, physical-input/IME, mixed-monitor or final visual acceptance is claimed.
+
+Stop for F6 visual review. Once the user authorizes continuation, do only
+[F7 composed normal-theme review](OFFICE2010-BLUE-PLAN.md#f7-composed-normal-theme-review).
+Reuse passed focused evidence and preserve explicit overrides/reset, native
+controls/input/layout, source/draft identity and the accepted Backstage handoff.
+F8 remains a required separate frame contract/experiment after F7.
 
 The user revised the remaining sequence on **2026-11-15**:
 
@@ -207,14 +220,14 @@ The user revised the remaining sequence on **2026-11-15**:
 3. [F7 composed normal-theme review](OFFICE2010-BLUE-PLAN.md#f7-composed-normal-theme-review), moved from the former F5.
 4. [F8 required Aero-inspired frame experiment](OFFICE2010-BLUE-PLAN.md#f8-required-aero-inspired-frame-experiment).
 
-Reuse passed F2–F5 and E2–E5 evidence; preserve the recorded Backstage approval
+Reuse passed F2–F6 and E2–E5 evidence; preserve the recorded Backstage approval
 unless a concrete regression appears. Do not repeat unrelated passed matrices.
 
 F6 owns the library Options/customization dialogs and draft/button contracts.
 F7 closes normal-theme review before F8. The Aero-inspired frame is required
 planned work, with its own host/theme/material/fallback contract and review;
-caption-button glass alone does not complete it. Do not start F7 or F8 during
-F6. No diagnostic tabs, temporary review solution, new family or dark
+caption-button glass alone does not complete it. Do not start F8 during F7.
+No diagnostic tabs, temporary review solution, new family or dark
 variant. Keep native API/print evidence separate from actual VS, physical input,
 continuous motion, desktop material and mixed-monitor acceptance.
 

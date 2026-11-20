@@ -15,6 +15,11 @@ public static partial class RibbonThemes
             InnerBorderColor = Color.FromArgb(136, Color.White), InnerBorderWidth = 1
         };
         var goldHover = Gold(0xFFF7CE, 0xFFDC8C, 0xFFEFB6, 0xFFFFFB);
+        var goldPressed = RibbonIdentityAccentSettings.Ramp(0xF3C258, 0xF8CC6A, 0xFCDA86);
+        var footerButton = new RibbonFill(C(0xF6FAFE), C(0xDCE9F8));
+        var footerBand = new RibbonFill(C(0xE4EDF7), C(0xCBDAEC));
+        // Selected outlines follow Accent; native focus cues remain separate.
+        var navigationChrome = goldChrome with { CheckedBorderColor = Color.Empty, CheckedHoverBorderColor = Color.Empty };
         return new()
         {
             WindowCornerPreference = RibbonWindowCornerPreference.Rounded,
@@ -40,7 +45,7 @@ public static partial class RibbonThemes
             HeaderAppearance = new() { ConnectSelectedTabToBody = true, FilledTabBottomBorderVisible = false, FilledHoverBorderColor = C(0xD39E28), FilledPressedBorderColor = C(0xCB9A34),
                 UtilityHoverBackground = Gold(0xFFF7CE, 0xFFDC8C, 0xFFEFB6, 0xFFFFFB), UtilityPressedBackground = RibbonIdentityAccentSettings.Ramp(0xF3C258, 0xF8CC6A, 0xFCDA86), UtilityStateChrome = goldChrome },
             Hover = goldHover,
-            Pressed = RibbonIdentityAccentSettings.Ramp(0xF3C258, 0xF8CC6A, 0xFCDA86),
+            Pressed = goldPressed,
             Checked = Gold(0xFFEFB2, 0xFFD880, 0xFFE8A4, 0xFFF7D8), CheckedHover = Gold(0xFFEAA2, 0xFFD074, 0xFFE196, 0xFFF2C6),
             CommandAppearance = new() { StateChrome = goldChrome, SplitCompanionBackground = new(Color.Transparent), SplitSeparatorColor = C(0xE9C25E) },
             FileButtonAppearance = new()
@@ -54,7 +59,7 @@ public static partial class RibbonThemes
             ApplicationMenuFooterCornerRadius = 3,
             ApplicationMenuAppearance = new()
             {
-                SurroundBackground = new(C(0xEDF3FA), C(0xD9E5F2)), FooterSurfaceBackground = new(C(0xE4EDF7), C(0xCBDAEC)),
+                SurroundBackground = new(C(0xEDF3FA), C(0xD9E5F2)), FooterSurfaceBackground = footerBand,
                 SurroundRimColor = Color.White, SurroundRimWidth = 1, SurroundRimInset = 1,
                 NavigationBackground = new(C(0xFAFAFA)), DefaultPaneBackground = new(C(0xECEFF4)), ActivePaneBackground = new(Color.White),
                 InnerFrameCornerRadius = 0, NavigationDividerColor = C(0xC3CFDF),
@@ -62,7 +67,19 @@ public static partial class RibbonThemes
                 RowCornerRadius = 3, RowBorderWidth = 1, RowStateChrome = goldChrome,
                 OpenBackground = goldHover, SelectedPrimaryBackground = RibbonFillColors.Map(goldHover, c => Color.FromArgb(89, c)),
                 SplitDividerWidth = 2, SplitDividerColor = C(0xE9C25E), SplitDividerHighlightColor = Color.FromArgb(136, Color.White), SplitDividerHighlightWidth = 1,
-                FooterBackground = new(C(0xF6FAFE), C(0xDCE9F8)), FooterStateChrome = goldChrome
+                FooterBackground = footerButton, FooterStateChrome = goldChrome
+            },
+            OptionsAppearance = new()
+            {
+                BackgroundColor = C(0xF4F8FC), NavigationBackgroundColor = C(0xF4F4F4), ListBackgroundColor = C(0xEAF1F8), FooterBackground = footerBand, LabelForeground = C(0x5C6B7F),
+                NavigationSelectedBackground = goldHover, NavigationHoverBackground = goldHover, NavigationCornerRadius = 3, NavigationStateChrome = navigationChrome,
+                RowSelectedBackground = goldHover, RowHoverBackground = goldHover, RowCornerRadius = 0, RowStateChrome = navigationChrome,
+                TreeSelectedBackground = goldHover, TreeHoverBackground = goldHover, TreeCornerRadius = 0, TreeStateChrome = navigationChrome,
+                FrameCornerRadius = 0, IconPickerSelectedBackground = goldHover,
+                ButtonBackground = footerButton, ButtonHoverBackground = goldHover, ButtonPressedBackground = goldPressed,
+                StateChrome = goldChrome, ButtonIdleStateChrome = goldChrome, ButtonDisabledBackground = new(C(0xEDF3FA), C(0xDDE7F2)), ButtonDisabledBorderColor = C(0xBCCBDF),
+                AccentButtonGradientStrength = 1, AccentButtonForeground = Color.White,
+                AccentButtonStateChrome = new() { InnerBorderColor = Color.FromArgb(136, Color.White), InnerBorderWidth = 1 }, HeadingBold = false
             },
             GalleryHeadingBackground = new(C(0xDBE7F3)), GalleryHeadingForeground = C(0x1E1E1E),
             MenuHeadingBackground = new(C(0xDBE7F3)), MenuHeadingForeground = C(0x174F90),

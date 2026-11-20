@@ -2,6 +2,14 @@ namespace RibbonKit.WinForms;
 
 internal static class RibbonOptionsChrome
 {
+    internal static Control FrameTextField(TextBox text, RibbonControl ribbon, int height)
+    {
+        var a = ribbon.Theme.OptionsAppearance;
+        if (a?.FrameCornerRadius is null && a?.FrameBorderWidth is null && (a is null || a.FrameBorderColor.IsEmpty)) return text;
+        var frame = new RibbonOptionsFrame(ribbon) { Dock = text.Dock, Margin = text.Margin };
+        text.Dock = DockStyle.None; text.BorderStyle = BorderStyle.None; frame.Controls.Add(text); frame.Height = frame.RequiredTextHeight(height);
+        return frame;
+    }
     internal static int Radius(RibbonControl ribbon, int dpi) => Math.Min(
         ribbon.Painter.GetPopupCornerRadius(ribbon.Theme, dpi),
         (int)Math.Round(ribbon.Theme.CornerRadius * dpi / 96d));

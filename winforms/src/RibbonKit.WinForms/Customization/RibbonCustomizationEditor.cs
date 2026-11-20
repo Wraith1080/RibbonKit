@@ -9,7 +9,7 @@ public sealed class RibbonCustomizationEditor : UserControl
     private readonly RibbonControl _ribbon;
     private readonly RoundedPainter _rowPainter = new();
     private readonly RibbonCustomizationColumns _panes;
-    private readonly ListBox _available = new() { Name = "RibbonAvailableCommands", AccessibleName = "Available ribbon commands", DisplayMember = nameof(RibbonCommandCatalogEntry.Text), Dock = DockStyle.Fill, BorderStyle = BorderStyle.None, IntegralHeight = false, DrawMode = DrawMode.OwnerDrawFixed };
+    private readonly RibbonOptionsListBox _available = new() { Name = "RibbonAvailableCommands", AccessibleName = "Available ribbon commands", DisplayMember = nameof(RibbonCommandCatalogEntry.Text), Dock = DockStyle.Fill, BorderStyle = BorderStyle.None, IntegralHeight = false, DrawMode = DrawMode.OwnerDrawFixed };
     private readonly RibbonCustomizationTree _tree;
     private readonly TextBox _search = new() { Name = "RibbonCommandSearch", AccessibleName = "Search available ribbon commands", PlaceholderText = "Search commands", BorderStyle = BorderStyle.None };
     private readonly TextBox _treeSearch = new() { Name = "RibbonHierarchySearch", AccessibleName = "Search ribbon hierarchy", PlaceholderText = "Search ribbon", BorderStyle = BorderStyle.None };
@@ -28,7 +28,7 @@ public sealed class RibbonCustomizationEditor : UserControl
     /// <summary>Creates an editor for the supplied ribbon and stable application identity. The ribbon and its icons remain application-owned.</summary>
     public RibbonCustomizationEditor(RibbonControl ribbon, string applicationId)
     {
-        ArgumentNullException.ThrowIfNull(ribbon); ribbon.VerifyAccess(); _ribbon = ribbon;
+        ArgumentNullException.ThrowIfNull(ribbon); ribbon.VerifyAccess(); _ribbon = ribbon; _available.BindTheme(ribbon);
         _tree = new(ribbon) { Name = "RibbonHierarchy", AccessibleName = "Customize the ribbon", Dock = DockStyle.Fill, BorderStyle = BorderStyle.None, HideSelection = false };
         _tree.PaintIcon = (graphics, node, bounds) =>
         {
@@ -37,7 +37,7 @@ public sealed class RibbonCustomizationEditor : UserControl
         };
         Session = ribbon.CommandCatalog.BeginCustomization(applicationId, RibbonCustomizationTarget.Ribbon);
         AutoScaleMode = AutoScaleMode.Dpi; AutoScaleDimensions = new(96, 96); Font = ribbon.Font;
-        Name = "RibbonCustomizationEditor"; BackColor = ribbon.Theme.Surface; ForeColor = ribbon.Theme.Foreground;
+        Name = "RibbonCustomizationEditor"; BackColor = RibbonOptionsRenderer.Background(ribbon.Theme); ForeColor = ribbon.Theme.Foreground;
         _availableFrame = Frame("RibbonAvailableFrame", _available, DockStyle.Fill); _treeFrame = Frame("RibbonHierarchyFrame", _tree, DockStyle.Fill);
         _searchFrame = Frame("RibbonSearchFrame", _search, DockStyle.Top); _treeSearchFrame = Frame("RibbonHierarchySearchFrame", _treeSearch, DockStyle.Top);
         _searchFrame.Resize += (_, _) => LayoutSearch(); _treeSearchFrame.Resize += (_, _) => LayoutSearch();
@@ -52,8 +52,8 @@ public sealed class RibbonCustomizationEditor : UserControl
         _newTab = Button("NewRibbonTab", "New &Tab", NewTab); _newGroup = Button("NewRibbonGroup", "New &Group", NewGroup); _edit = Button("EditRibbonItem", "&Edit…", EditSelected);
         var panes = _panes = new RibbonCustomizationColumns { RowCount = 4 };
         panes.RowStyles.Add(new(SizeType.AutoSize)); panes.RowStyles.Add(new(SizeType.AutoSize)); panes.RowStyles.Add(new(SizeType.Percent, 100)); panes.RowStyles.Add(new(SizeType.AutoSize));
-        panes.Controls.Add(new Label { Text = "Choose commands from the ribbon:", AutoSize = true, Dock = DockStyle.Fill, Margin = Padding.Empty }, 0, 0);
-        panes.Controls.Add(new Label { Text = "Customize the ribbon:", AutoSize = true, Dock = DockStyle.Fill, Margin = Padding.Empty }, 2, 0);
+        panes.Controls.Add(new Label { Text = "Choose commands from the ribbon:", AutoSize = true, ForeColor = RibbonOptionsRenderer.LabelForeground(ribbon.Theme), Dock = DockStyle.Fill, Margin = Padding.Empty }, 0, 0);
+        panes.Controls.Add(new Label { Text = "Customize the ribbon:", AutoSize = true, ForeColor = RibbonOptionsRenderer.LabelForeground(ribbon.Theme), Dock = DockStyle.Fill, Margin = Padding.Empty }, 2, 0);
         panes.Controls.Add(_searchFrame, 0, 1); panes.Controls.Add(_treeSearchFrame, 2, 1);
         panes.Controls.Add(_availableFrame, 0, 2); panes.AddActions(1, 2, _add, _remove);
         panes.Controls.Add(_treeFrame, 2, 2); panes.AddActions(3, 2, _up, _down);
@@ -213,7 +213,7 @@ public sealed class RibbonCustomizationEditor : UserControl
             if (editor.ShowDialog(FindForm()) == DialogResult.OK) RefreshDraft(); return;
         }
         string label = selected.Data switch { RibbonCustomizationTab t => Label(t.Id, t.Label), RibbonCustomizationGroup g => Label(g.Id, g.Label), RibbonCustomizationCommand c => Label(c.CommandId, c.Label), _ => "" };
-        using var dialog = new Form { Text = "Edit ribbon item", Font = Font, AutoScaleMode = AutoScaleMode.Dpi, AutoScaleDimensions = new(DeviceDpi, DeviceDpi), FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, StartPosition = FormStartPosition.CenterParent, BackColor = _ribbon.Theme.Surface, ForeColor = _ribbon.Theme.Foreground };
+        using var dialog = new Form { Text = "Edit ribbon item", Font = Font, AutoScaleMode = AutoScaleMode.Dpi, AutoScaleDimensions = new(DeviceDpi, DeviceDpi), FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, StartPosition = FormStartPosition.CenterParent, BackColor = RibbonOptionsRenderer.Background(_ribbon.Theme), ForeColor = _ribbon.Theme.Foreground };
         var name = new TextBox { Name = "RibbonItemName", AccessibleName = "Display name", Text = label, Dock = DockStyle.Fill, MaxLength = 512 };
         using var size = new RibbonOptionsComboBox(_ribbon) { Name = "RibbonItemSize", AccessibleName = "Command size", Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
         var layout = selected.Group?.Layout ?? RibbonCustomizationGroupLayout.Stacked;
@@ -222,11 +222,11 @@ public sealed class RibbonCustomizationEditor : UserControl
         int gap = ScaleLogical(8), height = RibbonQuickAccessEditorMetrics.ButtonHeight(DeviceDpi, Font.Height, _ribbon.Density);
         dialog.ClientSize = new(Math.Max(ScaleLogical(330), Font.Height * 22), (selected.Data is RibbonCustomizationCommand ? Font.Height * 3 : Font.Height * 2) + height + gap * 8);
         var content = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new(gap), ColumnCount = 1, RowCount = 4 };
-        content.Controls.Add(new Label { Text = "Display name:", AutoSize = true }); content.Controls.Add(name);
+        content.Controls.Add(new Label { Text = "Display name:", AutoSize = true, ForeColor = RibbonOptionsRenderer.LabelForeground(_ribbon.Theme) }); content.Controls.Add(RibbonOptionsChrome.FrameTextField(name, _ribbon, height));
         if (selected.Data is RibbonCustomizationCommand) content.Controls.Add(size);
         var ok = new RibbonOptionsAccentButton(_ribbon) { Text = "OK", Width = ScaleLogical(82), Height = height };
         var cancel = new RibbonOptionsButton(_ribbon) { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = ScaleLogical(82), Height = height };
-        var footer = Flow(false, ok, cancel); footer.Dock = DockStyle.Bottom; footer.Padding = new(gap); dialog.Controls.Add(content); dialog.Controls.Add(footer); dialog.AcceptButton = ok; dialog.CancelButton = cancel;
+        var footer = new RibbonOptionsFooter(_ribbon) { AutoSize = true, WrapContents = false }; footer.Controls.AddRange([ok, cancel]); footer.Dock = DockStyle.Bottom; footer.Padding = new(gap); dialog.Controls.Add(content); dialog.Controls.Add(footer); dialog.AcceptButton = ok; dialog.CancelButton = cancel;
         ok.Click += (_, _) => { if (!string.IsNullOrWhiteSpace(name.Text)) dialog.DialogResult = DialogResult.OK; else name.Focus(); };
         if (dialog.ShowDialog(FindForm()) != DialogResult.OK) return;
         switch (selected.Data) { case RibbonCustomizationTab t: t.Label = name.Text.Trim(); break; case RibbonCustomizationGroup g: g.Label = name.Text.Trim(); break; case RibbonCustomizationCommand c: c.Label = name.Text.Trim(); c.Size = (RibbonItemSize)size.SelectedItem!; break; }
@@ -235,7 +235,7 @@ public sealed class RibbonCustomizationEditor : UserControl
     private void DrawRow(object? sender, DrawItemEventArgs e)
     {
         if (e.Index < 0 || _available.Items[e.Index] is not RibbonCommandCatalogEntry entry) return;
-        RibbonOptionsRowRenderer.Draw(_rowPainter, new(e.Graphics, e.Bounds, _ribbon.Theme, Font, DeviceDpi), entry.Source, entry.Category + " › " + entry.Text, e.State.HasFlag(DrawItemState.Selected)); e.DrawFocusRectangle();
+        RibbonOptionsRowRenderer.Draw(_rowPainter, new RibbonPaintContext(e.Graphics, e.Bounds, _ribbon.Theme, Font, DeviceDpi) { Hot = _available.HotIndex == e.Index }, entry.Source, entry.Category + " › " + entry.Text, e.State.HasFlag(DrawItemState.Selected)); e.DrawFocusRectangle();
     }
     private void DrawIcon(Graphics graphics, RibbonElement source, Rectangle bounds)
     { RibbonOptionsRowRenderer.DrawIcon(graphics, source, bounds, DeviceDpi, _ribbon.Theme.Foreground); }
@@ -269,7 +269,7 @@ public sealed class RibbonCustomizationEditor : UserControl
         int iconSide = ScaleLogical(_ribbon.Density == RibbonDensity.Touch ? 24 : 20);
         _import.Image = _importImage = RibbonOptionsTransferIcons.Image(_ribbon, iconSide, false);
         _export.Image = _exportImage = RibbonOptionsTransferIcons.Image(_ribbon, iconSide, true);
-        _available.BackColor = _tree.BackColor = _ribbon.Theme.Surface; _available.ForeColor = _tree.ForeColor = _ribbon.Theme.Foreground;
+        _available.BackColor = _tree.BackColor = RibbonOptionsRenderer.ListBackground(_ribbon.Theme); _available.ForeColor = _tree.ForeColor = _ribbon.Theme.Foreground;
         foreach (var frame in new[] { _availableFrame, _treeFrame, _searchFrame, _treeSearchFrame }) frame.RefreshAppearance();
         RefreshIcons(); ResumeLayout(true); Invalidate(true);
     }

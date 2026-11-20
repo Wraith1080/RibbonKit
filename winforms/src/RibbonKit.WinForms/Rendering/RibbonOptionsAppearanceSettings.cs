@@ -3,6 +3,54 @@ namespace RibbonKit.WinForms;
 /// <summary>Immutable library Options navigation, divider, button, heading, frame, list/tree and group icon-picker presentation. Native controls, application pages and draft lifetime remain independent.</summary>
 public sealed record RibbonOptionsAppearanceSettings
 {
+    /// <summary>Gets optional opaque library dialog/editor background. Empty follows Surface. Application-owned pages retain their styling.</summary>
+    public Color BackgroundColor { get; init; } = Color.Empty;
+    /// <summary>Gets optional opaque Options navigation rail background. Empty follows BackstageNavigationBackground without changing Backstage.</summary>
+    public Color NavigationBackgroundColor { get; init; } = Color.Empty;
+    /// <summary>Gets optional opaque library command-list/tree/icon-picker well background. Empty follows Surface. Native fields and scrollbars remain independent.</summary>
+    public Color ListBackgroundColor { get; init; } = Color.Empty;
+    /// <summary>Gets optional library field/list caption ink. Empty follows Foreground; main page heading and application labels remain independent.</summary>
+    public Color LabelForeground { get; init; } = Color.Empty;
+    /// <summary>Gets optional library dialog footer fill. Null retains its parent background; native button bounds/actions remain.</summary>
+    public RibbonFill? FooterBackground { get; init; }
+    /// <summary>Gets optional unselected navigation hover fill. Null retains the rail. Hover never selects a page.</summary>
+    public RibbonFill? NavigationHoverBackground { get; init; }
+    /// <summary>Gets optional navigation state outlines/rims. Explicit NavigationBorderColor/Width win. Selected fallback ink is Accent.</summary>
+    public RibbonStateChromeSettings? NavigationStateChrome { get; init; }
+    /// <summary>Gets optional navigation state outline width, 0..32 logical pixels. Null uses one device pixel with authored state chrome, otherwise zero; zero hides the outline.</summary>
+    public int? NavigationBorderWidth { get; init; }
+    /// <summary>Gets optional navigation state outline ink. Empty follows state chrome, then Accent for selection or Border for hover; Transparent hides ink.</summary>
+    public Color NavigationBorderColor { get; init; } = Color.Empty;
+    /// <summary>Gets optional unselected command-list hover fill. Null retains the list well. Native selection/scrolling remain.</summary>
+    public RibbonFill? RowHoverBackground { get; init; }
+    /// <summary>Gets optional command-list state outlines/rims. Explicit RowBorderColor/Width win. Selected fallback ink is Accent.</summary>
+    public RibbonStateChromeSettings? RowStateChrome { get; init; }
+    /// <summary>Gets optional command-list state outline width, 0..32 logical pixels. Null uses one device pixel with authored state chrome, otherwise zero; zero hides the outline.</summary>
+    public int? RowBorderWidth { get; init; }
+    /// <summary>Gets optional command-list state outline ink. Empty follows state chrome, then Accent for selection or Border for hover; Transparent hides ink.</summary>
+    public Color RowBorderColor { get; init; } = Color.Empty;
+    /// <summary>Gets optional unselected tree-row hover fill. Null retains the list well; native expand/check targets remain.</summary>
+    public RibbonFill? TreeHoverBackground { get; init; }
+    /// <summary>Gets optional tree-row state outlines/rims. Explicit TreeBorderColor/Width win. Selected fallback ink is Accent.</summary>
+    public RibbonStateChromeSettings? TreeStateChrome { get; init; }
+    /// <summary>Gets optional tree-row state outline width, 0..32 logical pixels. Null uses one device pixel with authored state chrome, otherwise zero; zero hides the outline.</summary>
+    public int? TreeBorderWidth { get; init; }
+    /// <summary>Gets optional tree-row state outline ink. Empty follows state chrome, then Accent for selection or Border for hover; Transparent hides ink.</summary>
+    public Color TreeBorderColor { get; init; } = Color.Empty;
+    /// <summary>Gets optional ordinary-button hover fill. Null retains the existing ordinary button palette.</summary>
+    public RibbonFill? ButtonHoverBackground { get; init; }
+    /// <summary>Gets optional ordinary-button pressed fill. Null retains the existing ordinary button palette.</summary>
+    public RibbonFill? ButtonPressedBackground { get; init; }
+    /// <summary>Gets optional disabled button fill. Null retains the existing disabled palette for ordinary/primary buttons.</summary>
+    public RibbonFill? ButtonDisabledBackground { get; init; }
+    /// <summary>Gets optional disabled button outline ink. Empty retains the existing border; explicit ButtonBorderColor still wins.</summary>
+    public Color ButtonDisabledBorderColor { get; init; } = Color.Empty;
+    /// <summary>Gets optional primary-button state outlines/rim, including idle. Null retains StateChrome's enabled hover/pressed behavior. Explicit ButtonBorderColor/Width win.</summary>
+    public RibbonStateChromeSettings? AccentButtonStateChrome { get; init; }
+    /// <summary>Gets optional enabled idle ordinary-button outline/rim. Null retains legacy idle decoration; explicit ButtonBorderColor/Width win.</summary>
+    public RibbonStateChromeSettings? ButtonIdleStateChrome { get; init; }
+    /// <summary>Gets optional primary-button gradient depth, finite 0..1. Null retains solid Accent; zero is solid. At full depth, stops mix Accent with 48% white, 18% black at midpoint and 25% white. Explicit primary fills win; hover/press darkening retains stops/alpha.</summary>
+    public double? AccentButtonGradientStrength { get; init; }
     /// <summary>Gets optional enabled button hover/pressed outlines and inner rims. Explicit ButtonBorderColor/Width remain authoritative.</summary>
     public RibbonStateChromeSettings? StateChrome { get; init; }
     /// <summary>Initializes overrides retaining existing Options presentation.</summary>
@@ -29,9 +77,9 @@ public sealed record RibbonOptionsAppearanceSettings
     public Color DividerColor { get; init; } = Color.Empty;
     /// <summary>Gets optional button paint inset in logical pixels, 0..1024. Null retains zero. Authored values clamp inside the unchanged native button; content and hit targets do not move.</summary>
     public int? ButtonInset { get; init; }
-    /// <summary>Gets optional button outline width in logical pixels, 0..32. Null retains ordinary one-device-pixel outlines when ink exists and zero for accent buttons, except the accent-palette pressed state uses one device pixel. Zero hides the outline. Authoring ordinary-button paint values opts those buttons into shared painting when their corner setting is null.</summary>
+    /// <summary>Gets optional button outline width in logical pixels, 0..32. Null retains ordinary one-device-pixel outlines and zero for legacy accent buttons; an authored primary gradient or state outline uses one device pixel. Zero hides the outline. Authoring ordinary-button paint values opts those buttons into shared painting when their corner setting is null.</summary>
     public int? ButtonBorderWidth { get; init; }
-    /// <summary>Gets optional button outline ink, including alpha. Empty retains PopupBorder for ordinary buttons or the current fill's first color for accent buttons; an enabled pressed button uses Accent when OptionsButtonAccentStates is enabled. Transparent hides the outline.</summary>
+    /// <summary>Gets optional button outline ink, including alpha. Empty follows state chrome, then PopupBorder for ordinary buttons or fill.Start for legacy accent buttons. An authored primary gradient or enabled accent-palette press follows Accent. Transparent hides the outline.</summary>
     public Color ButtonBorderColor { get; init; } = Color.Empty;
     /// <summary>Gets optional native button focus-rectangle inset in logical pixels, 0..1024. Null retains four device pixels. Authored values clamp inside the unchanged button.</summary>
     public int? ButtonFocusInset { get; init; }
@@ -102,13 +150,19 @@ public sealed record RibbonOptionsAppearanceSettings
     /// <summary>Gets optional group icon-picker None-label paint inset in logical pixels, 0..1024. Null retains zero. Authored inset applies inside the shared selection/content clearance, so None follows tile size and selection inset. Font, ink, centering and focus policy retain their owners.</summary>
     public int? IconPickerTextInset { get; init; }
 
-    internal bool HasButtonOverrides(bool accent) => StateChrome?.HasOverrides == true || ButtonInset is not null || ButtonBorderWidth is not null || !ButtonBorderColor.IsEmpty || ButtonFocusInset is not null || (accent
-        ? AccentButtonBackground is not null || AccentButtonHoverBackground is not null || AccentButtonPressedBackground is not null || AccentButtonHoverDarkening is not null || AccentButtonPressedDarkening is not null || !AccentButtonForeground.IsEmpty
-        : ButtonBackground is not null);
+    internal bool HasButtonOverrides(bool accent) => StateChrome?.HasOverrides == true || ButtonIdleStateChrome?.HasOverrides == true || ButtonInset is not null || ButtonBorderWidth is not null || !ButtonBorderColor.IsEmpty || ButtonFocusInset is not null || (accent
+        ? AccentButtonBackground is not null || AccentButtonStateChrome is not null || AccentButtonGradientStrength is not null || AccentButtonHoverBackground is not null || AccentButtonPressedBackground is not null || AccentButtonHoverDarkening is not null || AccentButtonPressedDarkening is not null || !AccentButtonForeground.IsEmpty
+        : ButtonBackground is not null || ButtonHoverBackground is not null || ButtonPressedBackground is not null || ButtonDisabledBackground is not null || !ButtonDisabledBorderColor.IsEmpty);
 
     internal static void Validate(RibbonOptionsAppearanceSettings? a)
     {
         if (a is null) return;
+        foreach (var color in new[] { a.BackgroundColor, a.NavigationBackgroundColor, a.ListBackgroundColor })
+            if (!color.IsEmpty && color.A != 255) throw new ArgumentException("Native Options background colors must be opaque or Empty.", nameof(a));
+        foreach (var chrome in new[] { a.StateChrome, a.ButtonIdleStateChrome, a.AccentButtonStateChrome, a.NavigationStateChrome, a.RowStateChrome, a.TreeStateChrome }) RibbonStateChromeSettings.Validate(chrome);
+        if (a.NavigationBorderWidth is < 0 or > 32 || a.RowBorderWidth is < 0 or > 32 || a.TreeBorderWidth is < 0 or > 32
+            || a.AccentButtonGradientStrength is { } gradient && (!double.IsFinite(gradient) || gradient < 0 || gradient > 1))
+            throw new ArgumentOutOfRangeException(nameof(a), "Options state outlines must be 0..32 logical pixels and gradient strength finite 0..1, or null.");
         if (a.AccentButtonHoverDarkening is { } hover && (!double.IsFinite(hover) || hover < 0 || hover > 1)
             || a.AccentButtonPressedDarkening is { } press && (!double.IsFinite(press) || press < 0 || press > 1))
             throw new ArgumentOutOfRangeException(nameof(a), "Primary button darkening must be a finite fraction from 0 to 1, or null for the default.");

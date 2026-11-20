@@ -11,14 +11,22 @@ internal static class RibbonOptionsButtonRenderer
         var theme = c.Theme; var m = new RibbonOptionsShellMetrics(theme, c.DeviceDpi); var bounds = c.Bounds;
         var fill = m.ButtonFill(accent, button.Enabled, hot, pressed);
         var color = m.ButtonForeground(accent, button.Enabled, hot, pressed);
-        if (!accent) { using var background = new SolidBrush(parentBackground.A == 255 ? parentBackground : theme.Surface); c.Graphics.FillRectangle(background, bounds); }
+        if (!accent)
+        {
+            using var background = new SolidBrush(parentBackground.A == 255 ? parentBackground : theme.Surface); c.Graphics.FillRectangle(background, bounds);
+            if (button.Parent is RibbonOptionsFooter footer) footer.DrawButtonBackground(c.Graphics, bounds, button.Location);
+        }
         bool accentPress = button.Enabled && pressed && theme.OptionsButtonAccentStates is not null;
-        var paint = m.ButtonBounds(bounds); var border = m.ButtonBorder(accentPress ? theme.Accent : accent ? fill.Start : theme.PopupBorder);
+        var paint = m.ButtonBounds(bounds); var fallbackBorder = !button.Enabled && theme.OptionsAppearance is { ButtonDisabledBorderColor.IsEmpty: false } a ? a.ButtonDisabledBorderColor
+            : accentPress || accent && theme.OptionsAppearance?.AccentButtonGradientStrength is not null ? theme.Accent : accent ? fill.Start : theme.PopupBorder;
+        var border = m.ButtonBorder(fallbackBorder);
         var state = c with { Bounds = paint, Hot = button.Enabled && hot, Pressed = button.Enabled && pressed };
-        var chrome = button.Enabled && (hot || pressed) ? theme.OptionsAppearance?.StateChrome : null;
+        var chrome = button.Enabled && accent && theme.OptionsAppearance?.AccentButtonStateChrome is { HasOverrides: true } primaryChrome ? primaryChrome
+            : button.Enabled && (hot || pressed) ? theme.OptionsAppearance?.StateChrome : button.Enabled && !accent ? theme.OptionsAppearance?.ButtonIdleStateChrome : null;
         if (theme.OptionsAppearance is null || theme.OptionsAppearance.ButtonBorderColor.IsEmpty) border = chrome?.Border(state, border) ?? border;
         int stroke = m.ButtonStroke(paint, border, accent && !accentPress);
-        if (chrome is not null && theme.OptionsAppearance?.ButtonBorderWidth is null && border.A != 0 && !chrome.Border(state, Color.Empty).IsEmpty) stroke = Math.Max(stroke, RibbonLayoutEngine.Scale(1, c.DeviceDpi));
+        if (theme.OptionsAppearance?.ButtonBorderWidth is null && border.A != 0
+            && (accent && theme.OptionsAppearance?.AccentButtonGradientStrength is not null || chrome?.HasOverrides == true && !chrome.Border(state, Color.Empty).IsEmpty)) stroke = Math.Max(stroke, 1);
         RibbonStateChromeRenderer.Paint(painter, state, RibbonFrameMetrics.Radius(theme.OptionsButtonCornerRadius, fallbackRadius, c.DeviceDpi), fill, border, stroke, chrome);
         var padding = button.Padding; var label = Rectangle.FromLTRB(bounds.Left + padding.Left, bounds.Top + padding.Top, Math.Max(bounds.Left + padding.Left, bounds.Right - padding.Right), Math.Max(bounds.Top + padding.Top, bounds.Bottom - padding.Bottom));
         if (button.Image is { } image)

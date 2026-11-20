@@ -10,8 +10,8 @@ public sealed class RibbonQuickAccessCustomizationEditor : UserControl
     private readonly RoundedPainter _rowPainter = new();
     private readonly RibbonCustomizationColumns _panes;
     private readonly TableLayoutPanel _layout = new() { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Margin = Padding.Empty };
-    private readonly ListBox _available = List("AvailableCommands", "Available commands");
-    private readonly ListBox _current = List("ToolbarCommands", "Commands on the Quick Access Toolbar");
+    private readonly RibbonOptionsListBox _available = List("AvailableCommands", "Available commands");
+    private readonly RibbonOptionsListBox _current = List("ToolbarCommands", "Commands on the Quick Access Toolbar");
     private readonly TextBox _search = new() { Name = "CommandSearch", AccessibleName = "Search available commands", BorderStyle = BorderStyle.None, PlaceholderText = "Search commands" };
     private readonly TextBox _currentSearch = new() { Name = "ToolbarSearch", AccessibleName = "Search current toolbar commands", BorderStyle = BorderStyle.None, PlaceholderText = "Search toolbar commands" };
     private readonly RibbonOptionsFrame _searchFrame, _currentSearchFrame, _availableFrame, _currentFrame;
@@ -29,9 +29,9 @@ public sealed class RibbonQuickAccessCustomizationEditor : UserControl
     public RibbonQuickAccessCustomizationEditor(RibbonControl ribbon, string applicationId)
     {
         ArgumentNullException.ThrowIfNull(ribbon); ribbon.VerifyAccess();
-        _ribbon = ribbon; Session = ribbon.CommandCatalog.BeginCustomization(applicationId, RibbonCustomizationTarget.QuickAccess);
+        _ribbon = ribbon; _available.BindTheme(ribbon); _current.BindTheme(ribbon); Session = ribbon.CommandCatalog.BeginCustomization(applicationId, RibbonCustomizationTarget.QuickAccess);
         AutoScaleMode = AutoScaleMode.Dpi; AutoScaleDimensions = new(96, 96);
-        Font = ribbon.Font; BackColor = ribbon.Theme.Surface; ForeColor = ribbon.Theme.Foreground;
+        Font = ribbon.Font; BackColor = RibbonOptionsRenderer.Background(ribbon.Theme); ForeColor = ribbon.Theme.Foreground;
         Name = "QuickAccessCustomizationEditor";
         _searchFrame = Frame("CommandSearchFrame", _search, DockStyle.Top);
         _currentSearchFrame = Frame("ToolbarSearchFrame", _currentSearch, DockStyle.Top);
@@ -48,8 +48,8 @@ public sealed class RibbonQuickAccessCustomizationEditor : UserControl
         _reload = Button("ReloadCustomization", "Re&load", () => { Session.Reload(); RefreshDraft(); });
         var panes = _panes = new RibbonCustomizationColumns { RowCount = 4 };
         panes.RowStyles.Add(new(SizeType.AutoSize)); panes.RowStyles.Add(new(SizeType.AutoSize)); panes.RowStyles.Add(new(SizeType.Percent, 100)); panes.RowStyles.Add(new(SizeType.AutoSize));
-        panes.Controls.Add(new Label { Name = "AvailableCommandsLabel", Text = "Choose commands from the ribbon:", AutoSize = true, Dock = DockStyle.Fill, Margin = Padding.Empty }, 0, 0);
-        panes.Controls.Add(new Label { Name = "ToolbarCommandsLabel", Text = "Current Quick Access Toolbar:", AutoSize = true, Dock = DockStyle.Fill, Margin = Padding.Empty }, 2, 0);
+        panes.Controls.Add(new Label { Name = "AvailableCommandsLabel", Text = "Choose commands from the ribbon:", AutoSize = true, ForeColor = RibbonOptionsRenderer.LabelForeground(ribbon.Theme), Dock = DockStyle.Fill, Margin = Padding.Empty }, 0, 0);
+        panes.Controls.Add(new Label { Name = "ToolbarCommandsLabel", Text = "Current Quick Access Toolbar:", AutoSize = true, ForeColor = RibbonOptionsRenderer.LabelForeground(ribbon.Theme), Dock = DockStyle.Fill, Margin = Padding.Empty }, 2, 0);
         panes.Controls.Add(_searchFrame, 0, 1); panes.Controls.Add(_currentSearchFrame, 2, 1);
         panes.Controls.Add(_availableFrame, 0, 2); panes.AddActions(1, 2, _add, _remove);
         panes.Controls.Add(_currentFrame, 2, 2); panes.AddActions(3, 2, _up, _down);
@@ -102,7 +102,7 @@ public sealed class RibbonQuickAccessCustomizationEditor : UserControl
         RefreshDraft();
     }
 
-    private static ListBox List(string name, string label) => new() { Name = name, AccessibleName = label, Dock = DockStyle.Fill, BorderStyle = BorderStyle.None, Margin = Padding.Empty, IntegralHeight = false, DrawMode = DrawMode.OwnerDrawFixed, HorizontalScrollbar = false };
+    private static RibbonOptionsListBox List(string name, string label) => new() { Name = name, AccessibleName = label, Dock = DockStyle.Fill, BorderStyle = BorderStyle.None, Margin = Padding.Empty, IntegralHeight = false, DrawMode = DrawMode.OwnerDrawFixed, HorizontalScrollbar = false };
     private RibbonOptionsFrame Frame(string name, Control child, DockStyle dock)
     {
         var frame = new RibbonOptionsFrame(_ribbon) { Name = name, Dock = dock, Margin = Padding.Empty };
@@ -168,7 +168,7 @@ public sealed class RibbonQuickAccessCustomizationEditor : UserControl
     {
         if (e.Index < 0 || sender is not ListBox list || list.Items[e.Index] is not Row row) return;
         var text = row.Entry is { } entry ? (ReferenceEquals(list, _available) ? entry.Category + " › " : "") + entry.Text : row.Fallback + " (unavailable)";
-        RibbonOptionsRowRenderer.Draw(_rowPainter, new(e.Graphics, e.Bounds, _ribbon.Theme, Font, DeviceDpi), row.Entry?.Source, text, e.State.HasFlag(DrawItemState.Selected));
+        RibbonOptionsRowRenderer.Draw(_rowPainter, new RibbonPaintContext(e.Graphics, e.Bounds, _ribbon.Theme, Font, DeviceDpi) { Hot = list is RibbonOptionsListBox state && state.HotIndex == e.Index }, row.Entry?.Source, text, e.State.HasFlag(DrawItemState.Selected));
         e.DrawFocusRectangle();
     }
     internal int ScaleLogical(int value) => (int)Math.Ceiling(value * DeviceDpi / 96d);
@@ -199,7 +199,7 @@ public sealed class RibbonQuickAccessCustomizationEditor : UserControl
             button.Padding = new(ScaleLogical(5), 0, ScaleLogical(5), 0); button.Margin = new(gap / 2);
         }
         _reset.Margin = _reload.Margin = new(0, gap, gap, 0);
-        _available.BackColor = _current.BackColor = _ribbon.Theme.Surface; _available.ForeColor = _current.ForeColor = _ribbon.Theme.Foreground;
+        _available.BackColor = _current.BackColor = RibbonOptionsRenderer.ListBackground(_ribbon.Theme); _available.ForeColor = _current.ForeColor = _ribbon.Theme.Foreground;
         foreach (var frame in new[] { _searchFrame, _currentSearchFrame, _availableFrame, _currentFrame }) frame.RefreshAppearance();
         ResumeLayout(true); Invalidate(true);
     }

@@ -12,6 +12,9 @@ internal sealed class RibbonCustomizationTree : TreeView
     private readonly RibbonCheckBoxItem _check = new();
     private readonly RoundedPainter _painter = new();
     private TreeNode? _hot, _pressed;
+    private TreeNode? _hotRow;
+    private Point _pointer;
+    private bool _inside;
     private bool _hotCheck, _pressedCheck;
     internal Action<Graphics, TreeNode, Rectangle>? PaintIcon;
     internal event Action<TreeNode>? CheckRequested;
@@ -42,7 +45,7 @@ internal sealed class RibbonCustomizationTree : TreeView
         var parts = Geometry(node); var row = new Rectangle(0, node.Bounds.Top, ClientSize.Width, ItemHeight);
         var context = new RibbonPaintContext(e.Graphics, row, _ribbon.Theme, Font, DeviceDpi,
             ReferenceEquals(node, _hot) && _hotCheck, ReferenceEquals(node, _pressed) && _pressedCheck,
-            Focused && node.IsSelected) { Density = _ribbon.Density };
+            Focused && node.IsSelected) { Density = _ribbon.Density, StateHot = ReferenceEquals(node, _hotRow) };
         RibbonOptionsTreeRenderer.Draw(_ribbon.Painter, _painter, context, new(parts.Expand, parts.Check, parts.Icon, parts.Text),
             node.Text, node.IsSelected, node.IsExpanded, node.Nodes.Count > 0, parts.Check.IsEmpty ? null : node.StateImageIndex,
             Enabled, ShowFocusCues, _check, (graphics, bounds) => PaintIcon?.Invoke(graphics, node, bounds));
@@ -77,16 +80,28 @@ internal sealed class RibbonCustomizationTree : TreeView
             }
         }
         base.WndProc(ref m);
+        if (m.Msg is 0x114 or 0x115 or 0x20A) UpdateHotRow();
     }
     protected override void OnMouseMove(MouseEventArgs e)
     {
-        base.OnMouseMove(e); var hit = Hit(e.Location);
+        base.OnMouseMove(e); _pointer = e.Location; _inside = true; UpdateHotRow(); var hit = Hit(e.Location);
         var hot = hit.Check ? hit.Node : null;
         if (!ReferenceEquals(hot, _hot)) { var previous = _hot; _hot = hot; _hotCheck = hit.Check; InvalidateNode(previous); InvalidateNode(hot); }
     }
     private void InvalidateNode(TreeNode? node) { if (node is not null) Invalidate(new Rectangle(0, node.Bounds.Top, ClientSize.Width, ItemHeight)); }
+    private void UpdateHotRow()
+    {
+        TreeNode? next = null;
+        if (Enabled && _inside && ClientRectangle.Contains(_pointer) && (_ribbon.Theme.OptionsAppearance?.TreeHoverBackground is not null || _ribbon.Theme.OptionsAppearance?.TreeStateChrome?.HasOverrides == true))
+            for (var node = TopNode; node is not null && node.Bounds.Top <= _pointer.Y; node = node.NextVisibleNode)
+                if (_pointer.Y < node.Bounds.Top + ItemHeight) { next = node; break; }
+        if (ReferenceEquals(next, _hotRow)) return;
+        var previous = _hotRow; _hotRow = next; InvalidateNode(previous); InvalidateNode(next);
+    }
     protected override void OnMouseUp(MouseEventArgs e) { base.OnMouseUp(e); var pressed = _pressed; _pressed = null; InvalidateNode(pressed); }
-    protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); var hot = _hot; var pressed = _pressed; _hot = _pressed = null; InvalidateNode(hot); InvalidateNode(pressed); }
+    protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); _inside = false; UpdateHotRow(); var hot = _hot; var pressed = _pressed; _hot = _pressed = null; InvalidateNode(hot); InvalidateNode(pressed); }
+    protected override void OnEnabledChanged(EventArgs e) { base.OnEnabledChanged(e); if (_ribbon is not null) UpdateHotRow(); }
+    protected override void OnHandleDestroyed(EventArgs e) { _inside = false; _hotRow = null; base.OnHandleDestroyed(e); }
     protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); var pressed = _pressed; _pressed = null; InvalidateNode(pressed); }
     protected override void OnDpiChangedAfterParent(EventArgs e) { base.OnDpiChangedAfterParent(e); UpdateMetrics(); }
     protected override void Dispose(bool disposing) { base.Dispose(disposing); if (disposing) { _check.Dispose(); _painter.Dispose(); } }

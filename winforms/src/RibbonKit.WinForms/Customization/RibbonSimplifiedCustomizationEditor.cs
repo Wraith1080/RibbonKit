@@ -10,7 +10,7 @@ public sealed partial class RibbonSimplifiedCustomizationEditor : UserControl
     private readonly RoundedPainter _rowPainter = new();
     private readonly RibbonCustomizationColumns _panes;
     private readonly ComboBox _sourceTab, _targetTab;
-    private readonly ListBox _available = List("SimplifiedAvailableCommands", "Available commands grouped by source"), _current = List("SimplifiedSelectedCommands", "Simplified commands grouped by source");
+    private readonly RibbonOptionsListBox _available = List("SimplifiedAvailableCommands", "Available commands grouped by source"), _current = List("SimplifiedSelectedCommands", "Simplified commands grouped by source");
     private readonly TextBox _search = Search("SimplifiedAvailableSearch", "Search commands"), _currentSearch = Search("SimplifiedSelectedSearch", "Search selected commands");
     private readonly Label _status = new() { Name = "SimplifiedCustomizationStatus", AutoSize = true, Dock = DockStyle.Fill };
     private readonly RibbonOptionsFrame _left, _right, _leftSearch, _rightSearch;
@@ -29,11 +29,11 @@ public sealed partial class RibbonSimplifiedCustomizationEditor : UserControl
     /// <summary>Creates a Simplified-scoped editor. It borrows the ribbon and artwork and owns its session and native child controls.</summary>
     public RibbonSimplifiedCustomizationEditor(RibbonControl ribbon, string applicationId)
     {
-        ArgumentNullException.ThrowIfNull(ribbon); ribbon.VerifyAccess(); _ribbon = ribbon;
+        ArgumentNullException.ThrowIfNull(ribbon); ribbon.VerifyAccess(); _ribbon = ribbon; _available.BindTheme(ribbon); _current.BindTheme(ribbon);
         _sourceTab = Choice(ribbon, "SimplifiedSourceTab", "Available command tab"); _targetTab = Choice(ribbon, "SimplifiedTargetTab", "Ribbon tab to customize");
         Session = ribbon.CommandCatalog.BeginCustomization(applicationId, RibbonCustomizationTarget.Simplified);
         Name = "SimplifiedCustomizationEditor"; AutoScaleMode = AutoScaleMode.Dpi; AutoScaleDimensions = new(96, 96); Font = ribbon.Font;
-        BackColor = ribbon.Theme.Surface; ForeColor = ribbon.Theme.Foreground;
+        BackColor = RibbonOptionsRenderer.Background(ribbon.Theme); ForeColor = ribbon.Theme.Foreground;
         _left = Frame(_available, DockStyle.Fill); _right = Frame(_current, DockStyle.Fill); _leftSearch = Frame(_search, DockStyle.Top); _rightSearch = Frame(_currentSearch, DockStyle.Top);
         _leftSearch.Resize += (_, _) => LayoutSearch(); _rightSearch.Resize += (_, _) => LayoutSearch();
         _add = Button("SimplifiedAdd", "Add »", Add); _remove = Button("SimplifiedRemove", "« Remove", Remove);
@@ -45,8 +45,8 @@ public sealed partial class RibbonSimplifiedCustomizationEditor : UserControl
         _export = Button("SimplifiedExport", "", () => ExportRequested?.Invoke(this, EventArgs.Empty)); _export.AccessibleName = "Export customization profile";
         var panes = _panes = new RibbonCustomizationColumns { RowCount = 5 };
         for (int i = 0; i < 5; i++) panes.RowStyles.Add(new(i == 3 ? SizeType.Percent : SizeType.AutoSize, i == 3 ? 100 : 0));
-        panes.Controls.Add(new Label { Text = "Choose commands from the ribbon:", AutoSize = true, Dock = DockStyle.Fill, Margin = Padding.Empty }, 0, 0);
-        panes.Controls.Add(new Label { Text = "Customize the ribbon:", AutoSize = true, Dock = DockStyle.Fill, Margin = Padding.Empty }, 2, 0);
+        panes.Controls.Add(new Label { Text = "Choose commands from the ribbon:", AutoSize = true, ForeColor = RibbonOptionsRenderer.LabelForeground(ribbon.Theme), Dock = DockStyle.Fill, Margin = Padding.Empty }, 0, 0);
+        panes.Controls.Add(new Label { Text = "Customize the ribbon:", AutoSize = true, ForeColor = RibbonOptionsRenderer.LabelForeground(ribbon.Theme), Dock = DockStyle.Fill, Margin = Padding.Empty }, 2, 0);
         panes.Controls.Add(_sourceTab, 0, 1); panes.Controls.Add(_targetTab, 2, 1); panes.Controls.Add(_leftSearch, 0, 2); panes.Controls.Add(_rightSearch, 2, 2);
         panes.Controls.Add(_left, 0, 3); panes.AddActions(1, 3, _add, _remove);
         panes.Controls.Add(_right, 2, 3); panes.AddActions(3, 3, _up, _down);
@@ -181,7 +181,7 @@ public sealed partial class RibbonSimplifiedCustomizationEditor : UserControl
         _up.Enabled = index > 0; _down.Enabled = index >= 0 && index < choices.Count - 1; _new.Enabled = _edit.Enabled = Tab is not null;
     }
     private static ComboBox Choice(RibbonControl ribbon, string name, string label) => new RibbonOptionsComboBox(ribbon) { Name = name, AccessibleName = label, AutoSize = true, Dock = DockStyle.Top, DropDownStyle = ComboBoxStyle.DropDownList, DrawMode = DrawMode.OwnerDrawFixed, IntegralHeight = true };
-    private static ListBox List(string name, string label) => new() { Name = name, AccessibleName = label, Dock = DockStyle.Fill, BorderStyle = BorderStyle.None, DrawMode = DrawMode.OwnerDrawFixed, IntegralHeight = false, Margin = Padding.Empty };
+    private static RibbonOptionsListBox List(string name, string label) => new() { Name = name, AccessibleName = label, Dock = DockStyle.Fill, BorderStyle = BorderStyle.None, DrawMode = DrawMode.OwnerDrawFixed, IntegralHeight = false, Margin = Padding.Empty };
     private static TextBox Search(string name, string placeholder) => new() { Name = name, AccessibleName = placeholder, PlaceholderText = placeholder, BorderStyle = BorderStyle.None };
     private RibbonOptionsFrame Frame(Control child, DockStyle dock) { var frame = new RibbonOptionsFrame(_ribbon, summedTextPadding: true) { Dock = dock, Margin = Padding.Empty }; frame.Controls.Add(child); return frame; }
     private Button Button(string name, string text, Action click) { var button = new RibbonOptionsButton(_ribbon) { Name = name, Text = text, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, UseVisualStyleBackColor = true }; button.Click += (_, _) => click(); return button; }
@@ -192,7 +192,7 @@ public sealed partial class RibbonSimplifiedCustomizationEditor : UserControl
     private void DrawRow(object? sender, DrawItemEventArgs e)
     {
         if (sender is not ListBox list || e.Index < 0 || list.Items[e.Index] is not Row row) return;
-        RibbonOptionsRowRenderer.Draw(_rowPainter, new(e.Graphics, e.Bounds, _ribbon.Theme, row.Header ? _headerFont ?? Font : Font, DeviceDpi), row.Source, row.Caption, e.State.HasFlag(DrawItemState.Selected), simplified: true, heading: row.Header); e.DrawFocusRectangle();
+        RibbonOptionsRowRenderer.Draw(_rowPainter, new RibbonPaintContext(e.Graphics, e.Bounds, _ribbon.Theme, row.Header ? _headerFont ?? Font : Font, DeviceDpi) { Hot = list is RibbonOptionsListBox state && state.HotIndex == e.Index }, row.Source, row.Caption, e.State.HasFlag(DrawItemState.Selected), simplified: true, heading: row.Header); e.DrawFocusRectangle();
     }
     internal Size PageMinimum => new(Math.Max(MinimumSize.Width, RibbonQuickAccessEditorMetrics.Minimum(DeviceDpi, Font.Height, _ribbon.Density).Width), RibbonQuickAccessEditorMetrics.Minimum(DeviceDpi, Font.Height, _ribbon.Density).Height + S(40));
     private void UpdateMetrics()
@@ -208,7 +208,7 @@ public sealed partial class RibbonSimplifiedCustomizationEditor : UserControl
         foreach (var button in new[] { _reset, _import, _export, _new, _edit }) button.Margin = new(0, gap, gap, 0);
         _import.Image = _export.Image = null; _importIcon?.Dispose(); _exportIcon?.Dispose();
         _import.Image = _importIcon = RibbonOptionsTransferIcons.Image(_ribbon, S(_ribbon.Density == RibbonDensity.Touch ? 24 : 20), false); _export.Image = _exportIcon = RibbonOptionsTransferIcons.Image(_ribbon, S(_ribbon.Density == RibbonDensity.Touch ? 24 : 20), true);
-        _available.BackColor = _current.BackColor = _ribbon.Theme.Surface; _available.ForeColor = _current.ForeColor = _ribbon.Theme.Foreground;
+        _available.BackColor = _current.BackColor = RibbonOptionsRenderer.ListBackground(_ribbon.Theme); _available.ForeColor = _current.ForeColor = _ribbon.Theme.Foreground;
         foreach (var frame in new[] { _left, _right, _leftSearch, _rightSearch }) frame.RefreshAppearance(); ResumeLayout(true);
     }
     private void LayoutSearch() { if (_rightSearch is null) return; foreach (var (search, frame) in new[] { (_search, _leftSearch), (_currentSearch, _rightSearch) }) search.Bounds = frame.TextBounds(search.Height); }

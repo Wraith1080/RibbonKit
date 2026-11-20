@@ -21,24 +21,47 @@ internal readonly record struct RibbonOptionsShellMetrics(RibbonTheme Theme, int
     internal int ButtonStroke(Rectangle bounds, Color ink, bool accent) => A?.ButtonBorderWidth is { } n ? Math.Min(S(n), Math.Max(0, Math.Min(bounds.Width, bounds.Height) / 2)) : accent ? D.AccentBorder : ink.A == 0 ? 0 : D.ButtonBorder;
     internal RibbonFill ButtonFill(bool accent, bool enabled, bool hot, bool pressed)
     {
+        if (!enabled && A?.ButtonDisabledBackground is { } disabled) return disabled;
+        if (!accent && enabled)
+        {
+            if (pressed && A?.ButtonPressedBackground is { } down) return down;
+            if (!pressed && hot && A?.ButtonHoverBackground is { } hover) return hover;
+        }
         if (accent && enabled)
         {
             if (pressed && A?.AccentButtonPressedBackground is { } down) return down;
             if (!pressed && hot && A?.AccentButtonHoverBackground is { } hover) return hover;
+            // An authored primary gradient is an independent identity surface;
+            // the ordinary command palette may deliberately be gold or gray.
+            if (A?.AccentButtonGradientStrength is not null)
+                return pressed ? Darken(PrimaryFill, A.AccentButtonPressedDarkening ?? .20) : hot ? Darken(PrimaryFill, A.AccentButtonHoverDarkening ?? .10) : PrimaryFill;
         }
         if (Theme.OptionsButtonAccentStates is not { } states)
-            return accent ? !enabled ? Theme.Hover : pressed ? Theme.Pressed : hot ? Theme.Checked : A?.AccentButtonBackground ?? new(Theme.Accent)
+            return accent ? !enabled ? Theme.Hover : pressed ? Theme.Pressed : hot ? Theme.Checked : PrimaryFill
                 : !enabled ? new(Theme.Surface) : pressed ? Theme.Pressed : hot ? Theme.Hover : A?.ButtonBackground ?? new(Theme.Surface);
         if (!enabled) return accent ? Theme.Hover : new(Theme.Surface);
         if (accent)
         {
-            var idle = A?.AccentButtonBackground ?? new(Theme.Accent);
+            var idle = PrimaryFill;
             return pressed ? Theme.PressedOverride ?? states.PressedBackground ?? Darken(idle, A?.AccentButtonPressedDarkening ?? .20)
                 : hot ? Theme.CheckedOverride ?? Darken(idle, A?.AccentButtonHoverDarkening ?? .10) : idle;
         }
         if (pressed) return Theme.PressedOverride ?? states.PressedBackground ?? RibbonAccentStateSettings.Wash(Theme.Accent, Theme.Surface, states.PressedOpacity);
         if (hot) return Theme.HoverOverride ?? states.HoverBackground ?? RibbonAccentStateSettings.Wash(Theme.Accent, Theme.Surface, states.HoverOpacity);
         return A?.ButtonBackground ?? new(Theme.Surface);
+    }
+    private RibbonFill PrimaryFill
+    {
+        get
+        {
+            if (A?.AccentButtonBackground is { } explicitFill) return explicitFill;
+            if (A?.AccentButtonGradientStrength is not { } strength || strength == 0) return new(Theme.Accent);
+            var accent = Theme.Accent;
+            Color Mix(double amount) => Color.FromArgb(accent.A,
+                Channel(accent.R, amount), Channel(accent.G, amount), Channel(accent.B, amount));
+            int Channel(byte value, double amount) => (int)Math.Round(value + (amount >= 0 ? 255 - value : value) * amount * strength);
+            return new(Mix(.48), Mix(.25)) { IntermediateStops = new(new[] { new RibbonGradientStop(.5, Mix(-.18)) }) };
+        }
     }
     internal Color ButtonForeground(bool accent, bool enabled, bool hot, bool pressed) => !enabled ? accent ? SystemColors.GrayText : Theme.DisabledColor
         : accent && A is { AccentButtonForeground.IsEmpty: false } ? A.AccentButtonForeground

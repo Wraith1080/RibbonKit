@@ -9,7 +9,12 @@ internal static class RibbonOptionsRowRenderer
     internal static void Draw(RoundedPainter painter, RibbonPaintContext c, RibbonElement? source, string text, bool selected, bool simplified = false, bool heading = false)
     {
         var a = c.Theme.OptionsAppearance; var metrics = new RibbonOptionsRowMetrics(c.Theme, c.DeviceDpi);
-        if (!selected || a?.RowSelectedBackground is null && a?.RowCornerRadius is null)
+        if (a?.RowHoverBackground is not null || a?.RowStateChrome?.HasOverrides == true || a?.RowBorderWidth is not null || a is { RowBorderColor.IsEmpty: false } || a is { ListBackgroundColor.IsEmpty: false })
+        {
+            using var background = new SolidBrush(RibbonOptionsRenderer.ListBackground(c.Theme)); c.Graphics.FillRectangle(background, c.Bounds);
+            if (selected || c.Hot) RibbonOptionsRenderer.DrawState(painter, c, selected ? a?.RowSelectedBackground ?? new(c.Theme.Checked.Start) : a?.RowHoverBackground ?? new(Color.Transparent), metrics.Radius, selected, a?.RowBorderWidth, a?.RowBorderColor ?? Color.Empty, a?.RowStateChrome);
+        }
+        else if (!selected || a?.RowSelectedBackground is null && a?.RowCornerRadius is null)
         {
             using var brush = new SolidBrush(selected ? c.Theme.Checked.Start : c.Theme.Surface); c.Graphics.FillRectangle(brush, c.Bounds);
         }

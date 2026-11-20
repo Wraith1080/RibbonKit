@@ -47,13 +47,13 @@ public sealed partial class RibbonSimplifiedCustomizationEditor
     private string? Prompt(string title, string current)
     {
         int gap = S(8), height = RibbonQuickAccessEditorMetrics.ButtonHeight(DeviceDpi, Font.Height, _ribbon.Density);
-        using var dialog = new Form { Text = title, Font = Font, AutoScaleMode = AutoScaleMode.Dpi, AutoScaleDimensions = new(DeviceDpi, DeviceDpi), StartPosition = FormStartPosition.CenterParent, FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, BackColor = _ribbon.Theme.Surface, ForeColor = _ribbon.Theme.Foreground, ClientSize = new(Math.Max(S(320), Font.Height * 22), Font.Height * 2 + height * 2 + gap * 4) };
+        using var dialog = new Form { Text = title, Font = Font, AutoScaleMode = AutoScaleMode.Dpi, AutoScaleDimensions = new(DeviceDpi, DeviceDpi), StartPosition = FormStartPosition.CenterParent, FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, BackColor = RibbonOptionsRenderer.Background(_ribbon.Theme), ForeColor = _ribbon.Theme.Foreground, ClientSize = new(Math.Max(S(320), Font.Height * 22), Font.Height * 2 + height * 2 + gap * 4) };
         var text = new TextBox { Name = "SimplifiedDisplayName", AccessibleName = "Display name", Text = current, MaxLength = 512, Dock = DockStyle.Top, Margin = new(gap) };
-        var label = new Label { Text = "Display name:", AutoSize = true, Dock = DockStyle.Top, Padding = new(0, 0, 0, gap) };
-        var body = new Panel { Dock = DockStyle.Fill, Padding = new(gap) }; body.Controls.Add(text); body.Controls.Add(label);
+        var label = new Label { Text = "Display name:", AutoSize = true, ForeColor = RibbonOptionsRenderer.LabelForeground(_ribbon.Theme), Dock = DockStyle.Top, Padding = new(0, 0, 0, gap) };
+        var body = new Panel { Dock = DockStyle.Fill, Padding = new(gap) }; body.Controls.Add(RibbonOptionsChrome.FrameTextField(text, _ribbon, height)); body.Controls.Add(label);
         var ok = new RibbonOptionsAccentButton(_ribbon) { Text = "OK", Size = new(S(86), height) }; var cancel = new RibbonOptionsButton(_ribbon) { Text = "Cancel", Size = new(S(86), height), DialogResult = DialogResult.Cancel, CausesValidation = false };
         ok.Click += (_, _) => { if (!string.IsNullOrWhiteSpace(text.Text)) dialog.DialogResult = DialogResult.OK; else text.Focus(); };
-        var footer = Flow(false, ok, cancel); footer.Dock = DockStyle.Bottom; footer.Padding = new(gap); dialog.Controls.Add(body); dialog.Controls.Add(footer); dialog.AcceptButton = ok; dialog.CancelButton = cancel;
+        var footer = new RibbonOptionsFooter(_ribbon) { AutoSize = true, WrapContents = false }; footer.Controls.AddRange([ok, cancel]); footer.Dock = DockStyle.Bottom; footer.Padding = new(gap); dialog.Controls.Add(body); dialog.Controls.Add(footer); dialog.AcceptButton = ok; dialog.CancelButton = cancel;
         return dialog.ShowDialog(FindForm()) == DialogResult.OK ? text.Text.Trim() : null;
     }
 }

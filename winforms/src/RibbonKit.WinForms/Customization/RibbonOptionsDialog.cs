@@ -7,11 +7,11 @@ namespace RibbonKit.WinForms;
 public class RibbonOptionsDialog : Form
 {
     private readonly RibbonControl _ribbon;
-    private readonly ListBox _navigation = new() { Name = "OptionsNavigation", AccessibleName = "Options pages", DisplayMember = nameof(Text), BorderStyle = BorderStyle.None, DrawMode = DrawMode.OwnerDrawFixed, IntegralHeight = false, Dock = DockStyle.Fill };
+    private readonly RibbonOptionsListBox _navigation = new() { Name = "OptionsNavigation", AccessibleName = "Options pages", DisplayMember = nameof(Text), BorderStyle = BorderStyle.None, DrawMode = DrawMode.OwnerDrawFixed, IntegralHeight = false, Dock = DockStyle.Fill };
     private readonly Panel _rail = new() { Dock = DockStyle.Left };
     private readonly Panel _viewport = new() { Dock = DockStyle.Fill, AutoScroll = true };
     private readonly Label _heading = new() { AutoSize = true, Dock = DockStyle.Top };
-    private readonly FlowLayoutPanel _footer = new() { AutoSize = true, Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft };
+    private readonly RibbonOptionsFooter _footer;
     private readonly Panel _body = new() { Dock = DockStyle.Fill };
     private readonly RoundedPainter _rounded = new();
     private Font? _headingFont;
@@ -22,12 +22,12 @@ public class RibbonOptionsDialog : Form
     /// <summary>Creates a shell borrowing the ribbon's palette, font and density. Applications add pages containing ordinary native controls.</summary>
     public RibbonOptionsDialog(RibbonControl ribbon)
     {
-        ArgumentNullException.ThrowIfNull(ribbon); ribbon.VerifyAccess(); _ribbon = ribbon; _pages = new(this);
+        ArgumentNullException.ThrowIfNull(ribbon); ribbon.VerifyAccess(); _ribbon = ribbon; _navigation.BindTheme(ribbon, navigation: true); _footer = new(ribbon, legacyDivider: true) { AutoSize = true, Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft }; _pages = new(this);
         AutoScaleMode = AutoScaleMode.Dpi; AutoScaleDimensions = new(96, 96); Font = ribbon.Font;
         Text = "Options"; Name = "RibbonOptionsDialog"; ShowInTaskbar = false; ShowIcon = false;
         MinimizeBox = false; MaximizeBox = false; StartPosition = FormStartPosition.CenterParent;
-        BackColor = ribbon.Theme.Surface; ForeColor = ribbon.Theme.Foreground;
-        _rail.BackColor = _navigation.BackColor = ribbon.Theme.BackstageNavigationBackground;
+        BackColor = RibbonOptionsRenderer.Background(ribbon.Theme); ForeColor = ribbon.Theme.Foreground;
+        _rail.BackColor = _navigation.BackColor = RibbonOptionsRenderer.NavigationBackground(ribbon.Theme);
         _navigation.SelectedIndexChanged += (_, _) => ShowSelectedPage(); _navigation.DrawItem += DrawNavigation;
         _rail.Controls.Add(_navigation);
         _rail.Paint += (_, e) => RibbonOptionsRenderer.DrawDivider(e.Graphics, _rail.ClientRectangle, ribbon.Theme, DeviceDpi, vertical: true);
@@ -40,7 +40,6 @@ public class RibbonOptionsDialog : Form
         _body.Controls.Add(_viewport); _body.Controls.Add(_heading);
         var middle = new Panel { Dock = DockStyle.Fill }; middle.Controls.Add(_body); middle.Controls.Add(_rail);
         Controls.Add(middle); Controls.Add(_footer);
-        _footer.Paint += (_, e) => RibbonOptionsRenderer.DrawDivider(e.Graphics, _footer.ClientRectangle, ribbon.Theme, DeviceDpi, vertical: false);
         _viewport.Resize += (_, _) => LayoutPage(); _viewport.Layout += (_, _) => LayoutPage(); UpdateMetrics(false);
     }
     /// <summary>Gets the owned pages. Removing a page detaches it without disposal. A page can belong to only one dialog.</summary>
@@ -113,7 +112,7 @@ public class RibbonOptionsDialog : Form
     {
         if (e.Index < 0 || _navigation.Items[e.Index] is not RibbonOptionsPage page) return;
         RibbonOptionsRenderer.DrawNavigation(_ribbon.Painter, _rounded,
-            new(e.Graphics, e.Bounds, _ribbon.Theme, Font, DeviceDpi) { Density = _ribbon.Density }, page.Text,
+            new(e.Graphics, e.Bounds, _ribbon.Theme, Font, DeviceDpi) { Density = _ribbon.Density, Hot = _navigation.HotIndex == e.Index }, page.Text,
             e.State.HasFlag(DrawItemState.Selected), _navigation.Focused);
     }
     /// <inheritdoc />

@@ -1,6 +1,6 @@
 # Native Office 2010 Blue — normal theme first
 
-**2026-11-15 — F5 Application Menu theming is delivered, pending visual review. Backstage review remains recorded in the themes ledger. Next after F5 review: F6 Options dialog theming, then F7 composed normal-theme review and F8 required Aero-inspired frame experiment.**
+**2026-11-15 — F6 Options dialog theming is delivered, pending visual review. Current F5/Backstage acceptance is in the themes ledger. Next after F6 review: F7 composed normal-theme review, then F8 required Aero-inspired frame experiment.**
 The user selected Office 2010 after the Office 2013 review and supplied eight
 WPF references, including an additional ordinary-button hover example. They
 explicitly confirmed rounded corners for this non-flat theme. Deliver the normal
@@ -851,3 +851,119 @@ the primary should be subdued only while unhovered, with a visible divider and
 one shared perimeter. Check native page controls and ordinary File/Backstage
 routing. Stop after this review; next is **F6 Options dialog theming**. F8 remains
 required after F7.
+
+## F6 implementation and verification — 2026-11-15
+
+Implemented within `winforms/`, entering from the clean user commit `9a70d65`.
+Current F5 review is in the themes ledger. F6 visual review remains pending;
+F7/F8 have not started. References:
+[default dialog](reference/themes/office2010-options-wpf-default.png) and
+[hover/selected states](reference/themes/office2010-options-wpf-states.png).
+
+### Delivered behavior
+
+- Library Options, Ribbon/QAT/Simplified editors and secondary group/rename
+  dialogs use a pale shell, separate neutral rail, blue footer and list wells,
+  blue field/list frames and readable captions. Host application pages keep
+  their own controls/styles. Native caption rendering stays Windows-owned.
+- Ordinary buttons share the Application Menu footer's resting/hover/pressed
+  fill values and state chrome. Disabled buttons have a muted blue treatment.
+  OK remains the sole accent primary: an adjustable hue-preserving gradient
+  darkens on hover/press with white text. Explicit fills, ink, widths and
+  darkening overrides retain precedence.
+- Native command lists and trees have gold hover/selection and inner rims;
+  selected navigation/list/tree outlines follow Accent. Per the user's final
+  clarification, **retain the selected red/accent outline and make it thin**.
+  Defaults now use one device pixel for every Options outline (including button,
+  rail/list/tree, field, icon picker and divider), avoiding the previous ceil
+  rounding of an authored one-logical-pixel border to two pixels at 120 DPI.
+  Explicit wider/zero widths remain independently adjustable logical values.
+  Native focus cues stay separate. The navigation marker keeps its own setting.
+- Hover never selects a page/row or changes a draft. Native row targets,
+  checkbox/expand targets, scrolling, HWNDs/parents, source identity and draft
+  Apply/OK/Cancel/Reset remain with their existing owners. Secondary name frames
+  are opt-in through existing field overrides; legacy native fields stay native.
+
+Shared roles are additive on OptionsAppearance; 48 accessor entries are in
+Unshipped and Shipped is unchanged. Background colors validate as opaque/Empty;
+gradient depth, widths and nested rims validate before Theme/BuiltInTheme mutation.
+Null/Empty/Transparent/zero, inert empty groups and independent/group Reset remain.
+Choose native background/label/geometry settings before opening, consistent with
+the existing construction/layout contract. Ordinary state paint remains live.
+
+Scrollbar feasibility was checked against Microsoft's
+[native scrollbar model](https://learn.microsoft.com/en-us/windows/win32/controls/about-scroll-bars)
+and [owner drawing support](https://learn.microsoft.com/en-us/dotnet/desktop/winforms/controls/controls-with-built-in-owner-drawing-support).
+The standard bars are nonclient UI, separate from item painting. This slice
+retains the Windows scrollbar skin and input/accessibility behavior; it does
+not introduce a replacement scrollbar or change system-wide colors. Wells,
+frames and row states are themed. Full WPF scrollbar visual parity is not claimed.
+
+### Verification and limits
+
+- Latest focused Release evidence has **161 passing cases and one baseline
+  failure**, combined in `artifacts/office2010-f6/focused-latest-results.json`.
+  New tests cover 96/120/144/192 DPI, six primary accent hues, darkening, explicit
+  override/zero/reset/validation, inert empty alpha compositing, native hover/
+  TopIndex without selection changes and opt-in rename fields. The final
+  `f6-thin-outlines.trx` passes all 12 affected/new parameter cases and verifies
+  one-device-pixel outlines across all Options roles; explicit wider strokes win.
+- The unrelated existing popup-context test
+  `Contexts_in_group_minimized_body_and_overflow_keep_source_identity_and_preserve_flyout`
+  fails with an empty target collection at line 140 on current and retained
+  pre-F6 runtime `0.1.0-designer.local20261114T233250034Z` in an isolated copy of
+  the same test host. Keep `f6-existing.trx`, `f6-new-and-retry.trx` and
+  `f6-baseline-context.trx`; do not report one clean full-suite run or repair
+  unrelated popup behavior within F6.
+- `eng/Test-Office2010Options.ps1` independently builds against public packages
+  without Showcase resources/helpers, internals or friend access. The final
+  current scope is `public-20261115T040423872Z`; retained baseline evidence is
+  `public-20261115T000621174Z/baseline/evidence`. Blue/Red, Classic/Simplified/QAT,
+  list/tree hover/selection/scroll, button states, native ownership, isolated
+  drafts, rejected validation, Apply/OK/Cancel, draft Reset and real secondary
+  group/icon-picker/rename dialogs pass at actual 120 DPI. Default native list/
+  button outlines measure one device pixel. Three ordinary-button resting PNGs
+  for 2013/2019/2024 remain byte-exact; this is not whole-dialog pixel parity.
+- Both actual samples pass `--verify-office2010-options`, including final thin
+  borders and secondary dialog checks (`showcase-verified`, `designer-verified`).
+  Normal Debug runtime/designer/client, Showcase, persistent Designer Sample and
+  dedicated Designer Sample test host build. The persistent sample is refreshed
+  in place to `0.1.0-designer.local20261115T040042852Z`; authored Forms/resources/
+  artwork were preserved. Its test host needed restore after package refresh;
+  the earlier no-restore build against the old package is retained as a failed
+  attempt. Intermediate packages, captures and checks are also retained.
+- Native-print captures were inspected. Early capture assertions were corrected
+  to snapshot synchronous hover before real offscreen mouse-leave notifications,
+  and to observe Cancel restoration before native TextBox disposal. The rename
+  check now selects the custom tab explicitly instead of rechecking its group.
+  These fixture repairs are distinct from runtime fixes. Actual Visual Studio
+  save/reopen, physical input/IME, visible motion, native caption/corner/material
+  and mixed-monitor acceptance remain separate. No unrelated passed matrix was
+  repeated as a completion gate.
+
+For review, reopen the refreshed sample solution and Showcase. Select Office
+2010 Blue, open Options, and compare ordinary buttons with the File-menu footer.
+Try Blue/Red; hover a different list/tree row while retaining the selected row.
+Check the thin accent selection outline, thin blue/gold borders, native focus
+cues and OK darkening. Review Ribbon, QAT and Simplified pages plus New Group/
+Edit, then try validation, Apply and Cancel. Stop after F6 review. Next:
+**F7 composed normal-theme review**, followed by required **F8 Aero frame**.
+
+### F6 listbox repaint follow-up — 2026-11-20
+
+The user reported a flash when hovering or clicking a command list. The themed
+Options listboxes now invalidate just the old and new hover rows without an
+erase. The owner-draw callback composes each row before copying it to the list.
+Row-local coordinates keep the text and focus rectangle aligned with the icon
+and fill. Native selection, input and scrolling still belong to ListBox.
+
+The retained pre-fix package produced one background erase on hover. The
+fixed native check saw zero on hover and click, and verified selection, keyboard
+navigation, scrolling and handle retention. Ten focused checks pass, including
+row placement at four scaled sizes and keeping a partial row offscreen if its
+paint fails. The independent package check and both sample Options checks pass
+at 120 DPI. The Blue and Red Classic dialog and hovered-list captures exactly
+match the pre-fix captures. Evidence is under `artifacts/options-list-repaint/`.
+The refreshed Designer Sample uses `0.1.0-designer.local20261120T014843042Z`.
+
+Current live review status is in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).

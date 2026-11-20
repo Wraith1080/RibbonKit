@@ -91,6 +91,14 @@ divider visibility retain precedence. Null roles retain legacy paint. Actual
 renderer hooks, geometry, native content and command ownership stay shared.
 See [F5 evidence and limits](OFFICE2010-BLUE-PLAN.md#f5-implementation-and-verification--2026-11-15).
 
+F6 extends the D7 Options roles for library-owned shell/rail/well colors, footer
+fill, hover and state outlines, secondary name frames and independent ordinary/
+primary button paint. Native lists track hover over existing rows; trees keep
+checkbox hover separate from row hover. No draft, target, accessibility or
+scrollbar owner changes. Null state widths retain device-pixel hairlines with
+authored chrome; explicit widths stay logical. See
+[F6 evidence and limits](OFFICE2010-BLUE-PLAN.md#f6-implementation-and-verification--2026-11-15).
+
 F2 now supplies immutable stop data/evaluation in
 [`RibbonGradientStops.cs`](../src/RibbonKit.WinForms/Rendering/RibbonGradientStops.cs),
 cached linear painting in `RoundedPainter`, and opt-in outlines/rims in
