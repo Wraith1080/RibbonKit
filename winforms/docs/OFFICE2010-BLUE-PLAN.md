@@ -1,6 +1,6 @@
 # Native Office 2010 Blue — normal theme first
 
-**2026-11-20 — The required F8 Aero-inspired frame experiment is next. See the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger) for current acceptance.**
+**2026-11-20 — The F8 Aero-inspired frame is available for its dedicated visual review. See the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger) for current acceptance.**
 The user selected Office 2010 after the Office 2013 review and supplied eight
 WPF references, including an additional ordinary-button hover example. They
 explicitly confirmed rounded corners for this non-flat theme. Deliver the normal
@@ -269,6 +269,32 @@ its implementation and review are part of the remaining Office 2010 work.
   active/inactive windows, resize/maximize/restore, DPI and unsupported systems.
   Record platform/visual limits; the already delivered caption-button reflection
   alone does not complete this slice. Stop after F8 for its dedicated review.
+
+#### Native frame contract
+
+The WPF reference uses a shared title and tab surface, a retained appearance
+preference, an independent Acrylic request and a restored outer frame. WinForms
+uses the same separation and keeps the native resizable perimeter. On Windows
+11, DWM draws that perimeter in the resolved active or inactive frame color.
+The band uses one measured gradient origin from the top of the caption through
+the bottom of the tab row. The command body, document and native editors retain
+their own backgrounds.
+
+`RibbonForm.FrameAppearance` defaults to `Standard`. `Office2010Aero` is
+effective for a top-level integrated ribbon whose theme supplies
+`AeroFrameAppearance`. The built-in Office 2010 preset supplies the palette.
+The form retains the preference when the theme changes, in the designer and
+in high contrast. `AeroFrameTint` overrides the palette tint, with a default
+strength of 16 percent through `AeroFrameTintIntensity`. The form retains its
+normal caption settings for Standard. In Aero, the frame settings own the
+upper band and choose readable caption and header ink for its tint.
+
+The existing Backdrop property independently requests material. The active
+band uses the same translucent tint across both rows when material is applied.
+Solid, unsupported and inactive windows use an opaque reflected palette.
+Windows owns visible material, corners, sizing and Snap. A rejected border
+attribute leaves the system perimeter in place. Both samples expose Aero in
+View and use public properties for accent tint and backdrop selection.
 
 ## Verification and stop boundaries
 
@@ -1063,3 +1089,43 @@ These steps cover visual motion, physical input and native caption behavior
 that the offscreen runs cannot judge. Actual Visual Studio and mixed-monitor
 review remain separate. Once F7 is accepted, continue with
 [F8](#f8-required-aero-inspired-frame-experiment).
+
+## F8 implementation and verification — 2026-11-20
+
+The frame is opt-in through `RibbonForm.FrameAppearance`. Office 2010 Blue
+supplies the reflected fallback and active and inactive perimeter colors.
+`AeroFrameAppearance` on a custom theme can supply a different palette. When
+the active band uses Acrylic or Mica, it applies one tint over the system
+material. Inactive windows use the opaque inactive palette. Color title bar
+in the samples uses the selected accent as the Aero tint while Aero is enabled.
+
+- Ten focused F8 cases passed, including gradient continuity at 96, 120, 144
+  and 192 paint DPI, all three QAT positions, material alpha, property Reset,
+  Backstage ownership and caption/resize hit targets. Related checks passed
+  94 of 96. The two failures in `WindowBackdropTests` reproduced on pre-F8
+  `41deadb` at lines 96 and 133.
+- Both samples and a separate app using public package
+  `0.1.0-designer.local20261120T025454196Z` passed at 120 DPI. Checks covered
+  active and inactive paint, accent tint, Acrylic selection, maximize/restore,
+  the rounded-corner preference, standard appearance Reset and retained
+  Backstage editor handles. Normal Debug outputs were rebuilt.
+- The desktop fixture captured the native opaque and Acrylic frames on Windows
+  11 build 26300 at 120 DPI. Acrylic blurred a patterned test window across
+  both upper rows. The document stayed opaque. Captured native perimeter pixels
+  matched the expected active tinted and inactive colors. The border-color
+  attribute returned no readback value. Evidence is under `artifacts/office2010-aero/`.
+
+### F8 visual walkthrough
+
+1. Choose **View → Office 2010 Blue → Aero frame**. Compare the regular frame
+   and the reflected opaque fallback. Try an Accent swatch with **Color title
+   bar** enabled to tint both upper rows.
+2. Choose **View → Window → Backdrop → Acrylic** in Showcase, or **View → Acrylic
+   backdrop** in Designer Sample. Move a window behind the ribbon, then switch
+   activation. Check that the title and tabs stay continuous and the document
+   remains opaque.
+3. Resize from an edge, maximize and restore, and try Snap Layouts. Open and
+   close Backstage, then turn Aero off and confirm the standard frame returns.
+
+Physical Snap hover, mixed-monitor behavior, actual Visual Studio designer
+and older Windows material behavior remain separate review gates.

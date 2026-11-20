@@ -1941,6 +1941,22 @@ fallback remains opaque. Showcase exposes **Transparent Backstage** in its Backd
 menu when material is active; this option uses a fully clear rail background.
 Neither setting changes application window opacity.
 
+For the Office 2010 Aero-inspired frame, choose the frame separately from the
+backdrop. First associate a top-docked ribbon with the form using `window.Ribbon`.
+
+```csharp
+ribbon.BuiltInTheme = RibbonBuiltInTheme.Office2010Blue;
+window.FrameAppearance = RibbonWindowFrameAppearance.Office2010Aero;
+window.AeroFrameTint = ribbon.Theme.Accent; // Optional. Empty follows the caption or palette tint.
+window.Backdrop = RibbonWindowBackdrop.Acrylic; // Optional. None uses the opaque reflected palette.
+```
+
+The caption and tab band share a tint. Inactive Aero windows use the opaque
+inactive palette, and Windows keeps ownership of the outer frame. `Standard`
+restores the normal caption and tabs. A theme without `AeroFrameAppearance`
+uses its normal frame while retaining the requested preference on the form.
+See the [Aero frame review](docs/OFFICE2010-BLUE-PLAN.md#f8-implementation-and-verification--2026-11-20).
+
 Solid and material Backstage share the full-surface slide/fade policy. Native
 material layers retain page fields throughout motion. Explicitly sliding pages
 discard clipped cached pixels to prevent a black edge strip. Reopening restores

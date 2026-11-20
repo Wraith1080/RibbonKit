@@ -30,7 +30,7 @@ public partial class RibbonForm
         int width = Math.Min(box.Width, TextRenderer.MeasureText(Text, Font, Size.Empty,
             TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix).Width);
         var target = opening && captionPolicy.CenterTitle
-            ? new Rectangle((ClientSize.Width - width) / 2, 0, width, CaptionHeight)
+            ? new Rectangle((CaptionHostBounds.Width - width) / 2, 0, width, CaptionHeight)
             : opening ? new Rectangle(Caption.ContentLeft, 0, width, CaptionHeight)
                 : _normalCaptionTitle ?? new Rectangle(Caption.ContentLeft, 0, width, CaptionHeight);
         int left = Math.Clamp(target.Left, Math.Min(Caption.ContentLeft, Caption.Buttons.Left), Caption.Buttons.Left);

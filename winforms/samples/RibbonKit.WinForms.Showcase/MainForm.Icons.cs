@@ -52,6 +52,7 @@ public partial class MainForm
     private static string IconName(RibbonItem item)
     {
         if (item.Id.StartsWith("demo.theme", StringComparison.Ordinal)) return "page-color";
+        if (item.Id == "demo.frame.aero") return "group-view";
         if (item.Id.StartsWith("demo.accent", StringComparison.Ordinal) || item.Id == "demo.colorTitleBar") return "page-color";
         if (item is RibbonTextBoxItem) return item.Text switch { "Name" => "name", "Read-only" => "read-only", "Unavailable" => "disabled-input", "Popup value" => "popup-value", "Copies" => "copies", "Series" => "series", _ => throw new InvalidOperationException("Missing field icon: " + item.Text) };
         if (item is RibbonComboBoxItem) return item.Text switch { "Font" => "font", "Zoom" => "zoom", "Unavailable" => "disabled-choice", "Choice" => "choice", "Type" => "chart-type", _ => throw new InvalidOperationException("Missing choice icon: " + item.Text) };

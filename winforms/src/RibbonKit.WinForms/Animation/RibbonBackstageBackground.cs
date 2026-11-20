@@ -17,7 +17,8 @@ internal sealed class RibbonBackstageBackground : IDisposable
     {
         if (!form.ContainsFocus || ribbon.HasWindowBackdrop || ribbon.AnimationLevel == RibbonAnimationLevel.None || ribbon.BackstageMotionPolicy.PaneDuration == 0 || !ribbon.CanAnimatePopupOpening || !ribbon.Motion.SystemEnabled ||
             form.Opacity != 1 || form.TransparencyKey != Color.Empty || form.WindowState == FormWindowState.Minimized) return null;
-        var client = form.RectangleToScreen(form.ClientRectangle);
+        var content = form is RibbonForm host ? host.AeroContentBounds : form.ClientRectangle;
+        var client = form.RectangleToScreen(content);
         int top = Math.Clamp(ribbon.PointToScreen(new(0, ribbon.Height)).Y, client.Top, client.Bottom);
         var bounds = Rectangle.FromLTRB(client.Left, top, client.Right, client.Bottom);
         if (bounds.Width < 1 || bounds.Height < 1 || (long)bounds.Width * bounds.Height > 4_194_304 || !SystemInformation.VirtualScreen.Contains(bounds)) return null;

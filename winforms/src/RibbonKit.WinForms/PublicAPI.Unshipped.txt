@@ -2378,3 +2378,35 @@ RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeHoverBackground.get -> Ri
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeHoverBackground.init -> void
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeStateChrome.get -> RibbonKit.WinForms.RibbonStateChromeSettings?
 RibbonKit.WinForms.RibbonOptionsAppearanceSettings.TreeStateChrome.init -> void
+override RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.ToString() -> string!
+RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings
+RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.<Clone>$() -> RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings!
+RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.ActiveBackground.get -> RibbonKit.WinForms.RibbonFill
+RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.ActiveBackground.init -> void
+RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.ActiveBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.ActiveBorderColor.init -> void
+RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.Equals(RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings? other) -> bool
+RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.InactiveBackground.get -> RibbonKit.WinForms.RibbonFill
+RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.InactiveBackground.init -> void
+RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.InactiveBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.InactiveBorderColor.init -> void
+RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.RibbonAeroFrameAppearanceSettings() -> void
+RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.TintColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.TintColor.init -> void
+RibbonKit.WinForms.RibbonForm.AeroFrameTint.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonForm.AeroFrameTint.set -> void
+RibbonKit.WinForms.RibbonForm.AeroFrameTintIntensity.get -> float
+RibbonKit.WinForms.RibbonForm.AeroFrameTintIntensity.set -> void
+RibbonKit.WinForms.RibbonForm.EffectiveFrameAppearance.get -> RibbonKit.WinForms.RibbonWindowFrameAppearance
+RibbonKit.WinForms.RibbonForm.FrameAppearance.get -> RibbonKit.WinForms.RibbonWindowFrameAppearance
+RibbonKit.WinForms.RibbonForm.FrameAppearance.set -> void
+RibbonKit.WinForms.RibbonForm.FrameAppearanceChanged -> System.EventHandler?
+RibbonKit.WinForms.RibbonTheme.AeroFrameAppearance.get -> RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings?
+RibbonKit.WinForms.RibbonTheme.AeroFrameAppearance.init -> void
+RibbonKit.WinForms.RibbonWindowFrameAppearance
+RibbonKit.WinForms.RibbonWindowFrameAppearance.Office2010Aero = 1 -> RibbonKit.WinForms.RibbonWindowFrameAppearance
+RibbonKit.WinForms.RibbonWindowFrameAppearance.Standard = 0 -> RibbonKit.WinForms.RibbonWindowFrameAppearance
+static RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings? left, RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings? right) -> bool
+static RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings? left, RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings? right) -> bool

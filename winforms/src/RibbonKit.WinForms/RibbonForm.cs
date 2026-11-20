@@ -92,7 +92,7 @@ public partial class RibbonForm : Form
         && FormBorderStyle is FormBorderStyle.Sizable or FormBorderStyle.FixedSingle or FormBorderStyle.Fixed3D;
     internal int CaptionHeight => RibbonLayoutEngine.Scale(Math.Max(36, Ribbon is { Density: RibbonDensity.Touch } ? 48 : 36), DeviceDpi);
     internal bool CustomCaption => FormBorderStyle is FormBorderStyle.Sizable or FormBorderStyle.FixedSingle or FormBorderStyle.Fixed3D;
-    internal RibbonCaptionGeometry Caption => RibbonCaptionGeometry.Measure(ClientSize.Width, CaptionHeight, DeviceDpi, ControlBox, MinimizeBox, MaximizeBox, ShowIcon, _ribbon is { HasWindowCaption: true } ribbon ? ribbon.Theme : null);
+    internal RibbonCaptionGeometry Caption => RibbonCaptionGeometry.Measure(CaptionHostBounds.Width, CaptionHeight, DeviceDpi, ControlBox, MinimizeBox, MaximizeBox, ShowIcon, _ribbon is { HasWindowCaption: true } ribbon ? ribbon.Theme : null);
     internal Rectangle QuickAccessSlot(RibbonControl ribbon)
     {
         var geometry = Caption;
@@ -118,8 +118,9 @@ public partial class RibbonForm : Form
     private Rectangle CenteredCaptionTextBounds()
     {
         var geometry = Caption;
-        int inset = Math.Min(ClientSize.Width / 2, Math.Max(geometry.ContentLeft, ClientSize.Width - geometry.Buttons.Left));
-        return Rectangle.FromLTRB(inset, 0, ClientSize.Width - inset, CaptionHeight);
+        int width = CaptionHostBounds.Width;
+        int inset = Math.Min(width / 2, Math.Max(geometry.ContentLeft, width - geometry.Buttons.Left));
+        return Rectangle.FromLTRB(inset, 0, width - inset, CaptionHeight);
     }
     private void RibbonDisposed(object? sender, EventArgs e) => Ribbon = null;
     private void RibbonChanged(object? sender, EventArgs e)
@@ -131,7 +132,7 @@ public partial class RibbonForm : Form
     {
         if (_updating || IsDisposed || Disposing) return;
         _updating = true;
-        try { _ribbon?.ModelChanged(); PerformLayout(); RefreshBackdrop(); Invalidate(); }
+        try { _ribbon?.ModelChanged(); PerformLayout(); RefreshBackdrop(); RefreshAeroBorder(); Invalidate(); }
         finally { _updating = false; }
     }
     /// <inheritdoc />
@@ -142,7 +143,7 @@ public partial class RibbonForm : Form
             var rectangle = base.DisplayRectangle;
             if (CustomCaption && (_ribbon is null || !SupportsRibbon(_ribbon)))
             { int height = Math.Min(CaptionHeight, rectangle.Height); rectangle.Y += height; rectangle.Height -= height; }
-            return rectangle;
+            return InsetAeroFrame(rectangle);
         }
     }
     /// <inheritdoc />
@@ -187,11 +188,14 @@ public partial class RibbonForm : Form
     protected override void OnDeactivate(EventArgs e) { base.OnDeactivate(e); _hotCaption = 0; InvalidateCaption(); }
     internal void InvalidateCaption()
     {
-        var bounds = new Rectangle(0, 0, ClientSize.Width, Math.Min(ClientSize.Height, CaptionHeight));
+        RefreshAeroBorder();
+        InvalidateAeroEdges();
+        var bounds = Rectangle.Intersect(CaptionHostBounds, ClientRectangle);
         if (bounds.Width > 0 && bounds.Height > 0) Invalidate(bounds);
         if (_ribbon is { HasWindowCaption: true, IsDisposed: false } ribbon)
         {
-            ribbon.Invalidate(new Rectangle(0, 0, ribbon.Width, ribbon.Theme.ExtendTitleBarColorToHeader ? ribbon.BackdropHeaderHeight : ribbon.WindowCaptionHeight));
+            ribbon.Invalidate(new Rectangle(0, 0, ribbon.Width, AeroFrameSettings is not null || ribbon.Theme.ExtendTitleBarColorToHeader
+                ? ribbon.BackdropHeaderHeight : ribbon.WindowCaptionHeight));
             ribbon.UpdateBackstageCaption();
         }
     }
@@ -214,7 +218,7 @@ public partial class RibbonForm : Form
         var geometry = Caption; var sourceTheme = ribbon?.Theme ?? RibbonThemes.Office2024Light;
         var captionTheme = CaptionTheme(sourceTheme, composited);
         using var background = new SolidBrush(CaptionColor(sourceTheme, composited));
-        var captionBounds = new Rectangle(0, 0, ClientSize.Width, CaptionHeight);
+        var captionBounds = new Rectangle(0, 0, CaptionHostBounds.Width, CaptionHeight);
         if (!foregroundOnly)
         {
             if (ribbon is not null) ribbon.PaintCaptionBackground(graphics, captionBounds, composited);
@@ -297,6 +301,7 @@ public partial class RibbonForm : Form
             if (right) return 11;
         }
         if (point.Y < 0 || point.Y >= CaptionHeight) return 1;
+        point.X -= CaptionHostBounds.Left;
         var geometry = Caption;
         foreach (var (bounds, hit) in geometry.Targets) if (bounds.Contains(point)) return hit;
         if (geometry.Icon.Contains(point) && ControlBox) return 3;
@@ -313,7 +318,18 @@ public partial class RibbonForm : Form
             return;
         }
         if (m.Msg is 0x1A or 0x31A or 0x31E or 0x7D) // settings, theme, DWM composition, styles
-        { base.WndProc(ref m); RefreshBackdrop(force: m.Msg == 0x31E); RefreshWindowCornerPreference(); return; }
+        {
+            base.WndProc(ref m);
+            RefreshBackdrop(force: m.Msg == 0x31E);
+            RefreshWindowCornerPreference();
+            if (FrameAppearance != RibbonWindowFrameAppearance.Standard)
+            {
+                if (m.Msg == 0x31E) RefreshAeroBorder(force: true);
+                PerformLayout();
+                InvalidateFrameAppearance();
+            }
+            return;
+        }
         if (CustomCaption)
         {
             // Keyboard focus belongs to an owned popup while it is open. The

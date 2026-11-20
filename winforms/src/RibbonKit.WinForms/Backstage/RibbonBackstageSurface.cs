@@ -124,14 +124,23 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         if (Visible && IsHandleCreated) RepaintBackdrop(retainPage: MaterialPaint);
         else ReleaseMotionOpacity();
     }
-    internal void MoveForMotion(Point location)
+    internal void MoveForMotion(Point location, bool clipFrame = true)
     {
         // Do not let WinForms copy clipped pixels from the previous position of
         // a redirected native page: the newly exposed strip can otherwise be black.
         bool repaintExposed = Visible && MaterialPaint && _pages.IsHandleCreated;
         var exposedBefore = repaintExposed ? VisiblePageBounds() : Rectangle.Empty;
         _movingForMotion = true;
-        try { Location = location; }
+        try
+        {
+            // The pane stays a direct child of the form. Clip the part of the
+            // live pane that would otherwise slide over the restored Aero rail.
+            int left = clipFrame && Parent is RibbonForm host ? host.AeroContentBounds.Left : 0;
+            int clip = left > 0 ? Math.Clamp(left - location.X, 0, Width) : 0;
+            if (clip > 0) Region = new Region(new Rectangle(clip, 0, Width - clip, Height));
+            else if (Region is not null) Region = null;
+            Location = location;
+        }
         finally { _movingForMotion = false; }
         if (repaintExposed)
         {
@@ -147,7 +156,8 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     private Rectangle VisiblePageBounds()
     {
         if (Parent is not { IsDisposed: false } parent) return Rectangle.Empty;
-        var clip = Rectangle.Intersect(parent.RectangleToScreen(parent.ClientRectangle), SystemInformation.VirtualScreen);
+        var client = parent is RibbonForm host ? host.AeroContentBounds : parent.ClientRectangle;
+        var clip = Rectangle.Intersect(parent.RectangleToScreen(client), SystemInformation.VirtualScreen);
         var visible = Rectangle.Intersect(_pages.RectangleToScreen(_pages.ClientRectangle), clip);
         return visible.Width > 0 && visible.Height > 0 ? _pages.RectangleToClient(visible) : Rectangle.Empty;
     }

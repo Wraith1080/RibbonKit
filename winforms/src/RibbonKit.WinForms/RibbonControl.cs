@@ -135,6 +135,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             foreach (var chrome in new[] { value.CommandAppearance?.StateChrome, value.FileButtonAppearance?.StateChrome, value.GalleryAppearance?.StateChrome, value.EditorAppearance?.StateChrome, value.OptionsAppearance?.StateChrome })
                 RibbonStateChromeSettings.Validate(chrome);
             RibbonIdentityAccentSettings.Validate(value.IdentityAccent);
+            value.AeroFrameAppearance?.Validate();
             if (value.EditorAppearance?.ChoiceBorderWidth is < 0 or > 32) throw new ArgumentOutOfRangeException(nameof(value), "Choice outline width must be 0..32 logical pixels, or null.");
             if (value.TabHeight <= 0 || value.BodyHeight <= 0 || value.BodyScrollButtonVerticalInset < 0 || value.HeaderButtonInset < 0 || value.LargeButtonMaxWidth < 60 || value.CollapsedGroupMaxWidth < 80 || value.CornerRadius < 0 || value.PopupCornerRadius < 0 ||
                 !float.IsFinite(value.BackstageNavigationFontSize) || value.BackstageNavigationFontSize <= 0 || value.MessageMinimumHeight <= 0 ||
@@ -149,7 +150,9 @@ public partial class RibbonControl : Control, ISupportInitialize
                 return;
             _theme = value;
             WindowHost?.RefreshWindowCornerPreference();
+            WindowHost?.RefreshAeroBorder();
             ModelChanged();
+            WindowHost?.RefreshAeroFrameLayout();
         }
     }
     /// <summary>Gets or selects an optional built-in override. Null (the default and Reset value) uses the last application-assigned Theme, initially Office2024Light. Assigning Theme clears this override. Application page controls retain their own styling.</summary>
@@ -174,7 +177,9 @@ public partial class RibbonControl : Control, ISupportInitialize
             if (Equals(_theme, next)) return;
             _theme = next;
             WindowHost?.RefreshWindowCornerPreference();
+            WindowHost?.RefreshAeroBorder();
             ModelChanged();
+            WindowHost?.RefreshAeroFrameLayout();
         }
     }
     internal RibbonTheme ApplicationTheme => _applicationTheme;
@@ -603,7 +608,9 @@ public partial class RibbonControl : Control, ISupportInitialize
         var headerChromeTheme = HeaderPaintTheme(composited, chrome: true);
         if (!BackstageHeadersUnselected && RibbonHeaderBodyConnectionMetrics.Enabled(context.Theme) && _snapshot.Targets.FirstOrDefault(t => t.Kind == TargetKind.Tab && ReferenceEquals(t.Element, DisplaySelectedTab)) is { } selectedHeader)
             context = context with { HeaderBodyConnectionBounds = RibbonHeaderBodyConnectionMetrics.Resolve(context.Theme, DeviceDpi, _snapshot.BodyFrameBounds, selectedHeader.Bounds, selectedHeader.Clip) };
-        if (!ReferenceEquals(headerTheme, context.Theme))
+        if (WindowHost?.AeroFrameSettings is { } frame)
+            WindowHost.PaintAeroFrameBand(context with { Bounds = headerBackgroundBounds }, new(0, 0, Width, BackdropHeaderHeight), frame);
+        else if (!ReferenceEquals(headerTheme, context.Theme))
         {
             var headerState = e.Graphics.Save();
             try

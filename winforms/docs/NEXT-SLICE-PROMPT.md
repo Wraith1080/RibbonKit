@@ -1,10 +1,10 @@
-# Continue native Office 2010 with F8
+# Review the native Office 2010 Aero frame
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-20**. Last verified branch is `codex/Ribbonkit-Winform`, HEAD
-`55e53bc` (`fix backstage flicker problem`). Preserve authored Backstage
+Updated **2026-11-20**. F8 was verified on `codex/Ribbonkit-Winform` over
+`41deadb` (`f8 start`). Preserve authored Backstage
 settings and other Form/resource edits. Recheck
 `git status --short`, live branch and HEAD; preserve user commits and edits. Do not
 commit, stage, push, publish or change branches unless requested.
@@ -150,7 +150,7 @@ and 0.20 on press with white text. OptionsAppearance exposes independent primary
 darkening, state-fill and foreground overrides. Other buttons stay white with
 light hover/darker pressed washes; pressed borders retain Accent.
 Existing explicit button/state/border overrides win. All three families' sample actions
-and persistence are checked; the persistent Designer Sample now uses package
+and persistence are checked; the persistent Designer Sample used package
 `0.1.0-designer.local20261120T014843042Z` after the F6 listbox repaint fix.
 See [E3 evidence and scope](OFFICE2013-LIGHT-PLAN.md#e3-accent-palette-file-states-and-sample-appearance-controls--2026-11-13).
 E4 adds the #919191 body perimeter, selected-tab top/side outline and visible-tab
@@ -181,7 +181,7 @@ records before edits. Reuse the
 [architecture map](THEME-ARCHITECTURE-PLAN.md) and
 [adjustability audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 
-## Next slice: F8 Aero-inspired frame experiment
+## Current review boundary: F8 Aero-inspired frame experiment
 
 F6 is delivered. Current F5 and F6 review results are in the
 [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger). Read the
@@ -208,7 +208,9 @@ actual VS, physical-input/IME, mixed-monitor or final visual acceptance is claim
 
 Use the [F7 evidence](OFFICE2010-BLUE-PLAN.md#f7-composed-review-evidence--2026-11-20)
 and the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger) as the
-normal-theme baseline for the bounded [F8 frame contract](OFFICE2010-BLUE-PLAN.md#f8-required-aero-inspired-frame-experiment).
+normal-theme baseline. Designer Sample uses `0.1.0-designer.local20261120T025454196Z`.
+Use the [F8 walkthrough](OFFICE2010-BLUE-PLAN.md#f8-visual-walkthrough) to review
+the reflected fallback, Acrylic and native window behavior.
 Preserve native input, source/draft ownership and the accepted Backstage handoff.
 
 The user revised the remaining sequence on **2026-11-15**:

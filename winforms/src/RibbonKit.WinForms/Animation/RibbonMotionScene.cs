@@ -173,7 +173,13 @@ internal sealed class RibbonMotionScene : IDisposable
         var occupied = Local(Between(from.Bounds, to.Bounds, p));
         var messageFrame = messages ? Interpolate(from.Messages.IsEmpty ? to.Messages with { Height = 0 } : from.Messages, to.Messages.IsEmpty ? from.Messages with { Height = 0 } : to.Messages) : Rectangle.Empty;
         ribbon.Painter.PaintFill(new(graphics, occupied, ribbon.WindowPaintTheme, ribbon.Font, to.Dpi), ribbon.WindowPaintTheme.SurroundFill);
-        if (ribbon.Theme.ExtendTitleBarColorToHeader && !ribbon.HasWindowBackdrop)
+        if (!ribbon.HasWindowBackdrop && ribbon.WindowHost is { AeroFrameSettings: { } frame } host)
+        {
+            var header = Interpolate(from.Header, to.Header);
+            var band = Rectangle.FromLTRB(header.Left, occupied.Top, header.Right, header.Bottom);
+            host.PaintAeroFrameBand(new(graphics, header, ribbon.Theme, ribbon.Font, to.Dpi), band, frame);
+        }
+        else if (ribbon.Theme.ExtendTitleBarColorToHeader && !ribbon.HasWindowBackdrop)
         {
             var header = ribbon.HeaderPaintTheme(false);
             ribbon.Painter.PaintFill(new(graphics, Interpolate(from.Header, to.Header), header, ribbon.Font, to.Dpi), header.SurroundFill);

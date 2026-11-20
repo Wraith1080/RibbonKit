@@ -42,6 +42,9 @@ public partial class DesignerForm
             accentGallery.SelectedItem = appearance.AccentOverride is { } accent ? AccentChoices.FirstOrDefault(c => c.Color.ToArgb() == accent.ToArgb()).Tile : defaultAccentTile;
             colorTitleBarToggle.Checked = appearance.ColorTitleBar;
         }
+        aeroFrameToggle.Enabled = ribbon.Theme.AeroFrameAppearance is not null;
+        aeroFrameToggle.Checked = FrameAppearance == RibbonWindowFrameAppearance.Office2010Aero;
+        acrylicBackdropToggle.Checked = Backdrop == RibbonWindowBackdrop.Acrylic;
     }
 
     private void Ribbon_ThemeGallerySelectedTabChanged(object? sender, EventArgs e)
@@ -60,6 +63,18 @@ public partial class DesignerForm
     private void ColorTitleBarToggle_Click(object? sender, EventArgs e)
     {
         _sampleAppearance?.SetColorTitleBar(colorTitleBarToggle.Checked);
+        SynchronizeThemeGallery();
+    }
+
+    private void AeroFrameToggle_Click(object? sender, EventArgs e)
+    {
+        _sampleAppearance?.SetAeroFrame(aeroFrameToggle.Checked);
+        SynchronizeThemeGallery();
+    }
+
+    private void AcrylicBackdropToggle_Click(object? sender, EventArgs e)
+    {
+        Backdrop = acrylicBackdropToggle.Checked ? RibbonWindowBackdrop.Acrylic : RibbonWindowBackdrop.None;
         SynchronizeThemeGallery();
     }
 }

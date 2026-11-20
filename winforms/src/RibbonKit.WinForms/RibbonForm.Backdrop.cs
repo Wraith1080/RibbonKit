@@ -120,6 +120,7 @@ public partial class RibbonForm
         SetMaterialCaptionStyle(false, updateFrame);
         _ribbon?.PrepareBackdropEditors(false);
         _captionBackdrop?.Dispose(); _captionBackdrop = null;
+        ReleaseAeroEdgeBuffers();
         if (repaint) { RibbonDrawingHold.Repaint(Handle); FlushBackdropDrawing(); }
     }
     internal void BackdropPaintFailed(Exception error)
@@ -130,11 +131,18 @@ public partial class RibbonForm
     /// <inheritdoc />
     protected override void OnPaintBackground(PaintEventArgs e)
     {
-        if (!HasWindowBackdrop) { base.OnPaintBackground(e); return; }
+        if (!HasWindowBackdrop) { base.OnPaintBackground(e); PaintAeroEdges(e, material: false); return; }
         // A zero-alpha black client background exposes the system material.
         nint dc = e.Graphics.GetHdc();
         try { PatBlt(dc, e.ClipRectangle.X, e.ClipRectangle.Y, e.ClipRectangle.Width, e.ClipRectangle.Height, 0x00000042); }
         finally { e.Graphics.ReleaseHdc(dc); }
+        try { PaintAeroEdges(e, material: true); }
+        catch (Exception error) when (error is Win32Exception or ExternalException)
+        {
+            BackdropPaintFailed(error);
+            base.OnPaintBackground(e);
+            PaintAeroEdges(e, material: false);
+        }
     }
     /// <inheritdoc />
     protected override void OnHandleDestroyed(EventArgs e)
@@ -144,8 +152,10 @@ public partial class RibbonForm
         // Recreated handles reapply the retained preference in OnHandleCreated.
         _backdropOwned = false; _effectiveBackdrop = RibbonWindowBackdrop.None; _backdropHeight = 0;
         _backdropBitmapAlpha = false; _backdropPaintFailed = false;
+        _aeroBorder = null;
         SetMaterialCaptionStyle(false, update: false);
         _captionBackdrop?.Dispose(); _captionBackdrop = null;
+        ReleaseAeroEdgeBuffers();
         base.OnHandleDestroyed(e);
     }
     [StructLayout(LayoutKind.Sequential)] private struct BackdropMargins { internal int Left, Right, Top, Bottom; }

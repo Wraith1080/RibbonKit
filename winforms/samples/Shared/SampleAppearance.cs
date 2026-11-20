@@ -57,6 +57,15 @@ internal sealed class SampleAppearance(RibbonControl ribbon, RibbonForm form)
         ColorTitleBar = enabled; Apply();
     }
 
+    internal void SetAeroFrame(bool enabled)
+    {
+        Synchronize();
+        UpdateAeroTint();
+        form.FrameAppearance = enabled ? RibbonWindowFrameAppearance.Office2010Aero : RibbonWindowFrameAppearance.Standard;
+    }
+
+    private void UpdateAeroTint() => form.AeroFrameTint = ColorTitleBar ? EffectiveAccent : Color.Empty;
+
     private void Apply()
     {
         ribbon.BeginUpdate();
@@ -78,6 +87,7 @@ internal sealed class SampleAppearance(RibbonControl ribbon, RibbonForm form)
                 ribbon.Theme = next;
             }
             form.TitleBarColor = ColorTitleBar ? BaseTheme.IdentityAccent is null ? EffectiveAccent : Color.Empty : _uncoloredTitle;
+            UpdateAeroTint();
         }
         finally { ribbon.EndUpdate(); }
         _appliedTheme = ribbon.Theme; _appliedBuiltIn = ribbon.BuiltInTheme;

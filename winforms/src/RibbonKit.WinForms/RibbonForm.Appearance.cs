@@ -9,7 +9,7 @@ public partial class RibbonForm
     private RibbonTheme? _captionThemeSource, _captionTheme;
     private Color _captionThemeColor;
     private float _captionThemeOpacity;
-    private bool _captionThemeComposited;
+    private bool _captionThemeComposited, _captionThemeAero;
 
     /// <summary>Gets or sets the caption color. Empty follows the ribbon theme. A selected color is solid without a backdrop and tints Mica/Acrylic using TitleBarTintOpacity. Themes opting into ExtendTitleBarColorToHeader also color the associated ribbon's tab band. Must be opaque or Empty. Application content is unaffected.</summary>
     [Category("Appearance"), DefaultValue(typeof(Color), ""), Description("Caption color. Reset follows the ribbon theme. Tints Mica/Acrylic without replacing the backdrop.")]
@@ -21,7 +21,7 @@ public partial class RibbonForm
             _ribbon?.VerifyAccess();
             if (!value.IsEmpty && value.A != 255) throw new ArgumentException("Choose an opaque caption color or reset to Empty.", nameof(value));
             if (_titleBarColor == value) return;
-            if (_ribbon?.Theme.ExtendTitleBarColorToHeader == true) _ribbon.SettleMotion();
+            if (AeroFrameSettings is not null || _ribbon?.Theme.ExtendTitleBarColorToHeader == true) _ribbon?.SettleMotion();
             _titleBarColor = value; InvalidateCaption(); TitleBarColorChanged?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -54,17 +54,20 @@ public partial class RibbonForm
     }
     internal RibbonTheme CaptionTheme(RibbonTheme theme, bool composited)
     {
-        var color = TitleBarColor.IsEmpty ? theme.TitleBarBackground : TitleBarColor;
-        if (TitleBarColor.IsEmpty && theme.TitleBarBackgroundFill is { } fill) color = RibbonFillColors.At(fill, .5);
+        var frame = AeroFrameSettings;
+        var color = frame is not null ? RibbonFillColors.At(AeroFrameFill(frame, false), .5)
+            : TitleBarColor.IsEmpty ? theme.TitleBarBackground : TitleBarColor;
+        if (frame is null && TitleBarColor.IsEmpty && theme.TitleBarBackgroundFill is { } fill) color = RibbonFillColors.At(fill, .5);
         if (color.IsEmpty && theme.TitleBarForeground.IsEmpty) return theme;
         if (ReferenceEquals(theme, _captionThemeSource) && color == _captionThemeColor &&
-            _captionThemeOpacity == TitleBarTintOpacity && _captionThemeComposited == composited) return _captionTheme!;
-        var background = color.IsEmpty ? theme.Background : composited ? Blend(color, theme.Background, TitleBarTintOpacity) : color;
-        var foreground = theme.TitleBarForeground.IsEmpty ? Contrast(background) : theme.TitleBarForeground;
+            _captionThemeOpacity == TitleBarTintOpacity && _captionThemeComposited == composited && _captionThemeAero == (frame is not null)) return _captionTheme!;
+        var background = color.IsEmpty ? theme.Background : composited && frame is null ? Blend(color, theme.Background, TitleBarTintOpacity) : color;
+        var foreground = frame is not null || theme.TitleBarForeground.IsEmpty ? Contrast(background) : theme.TitleBarForeground;
         _captionThemeSource = theme; _captionThemeColor = color; _captionThemeOpacity = TitleBarTintOpacity; _captionThemeComposited = composited;
+        _captionThemeAero = frame is not null;
         return _captionTheme = theme with
         {
-            Background = Color.Transparent, Surface = Color.Transparent,
+            Background = Color.Transparent, BackgroundFill = frame is null ? theme.BackgroundFill : null, Surface = Color.Transparent,
             Foreground = foreground, SecondaryText = Blend(foreground, background, .65f),
             DisabledForeground = Blend(foreground, background, .45f), Accent = foreground,
             Border = Color.FromArgb(40, foreground),

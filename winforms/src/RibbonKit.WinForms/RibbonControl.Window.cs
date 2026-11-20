@@ -17,18 +17,22 @@ public partial class RibbonControl
     internal RibbonTheme HeaderPaintTheme(bool composited, bool chrome = false)
     {
         var source = composited ? WindowPaintTheme : Theme;
+        bool aero = WindowHost?.AeroFrameSettings is not null;
         bool colored = Theme.ExtendTitleBarColorToHeader && HasWindowCaption &&
             (!WindowHost!.TitleBarColor.IsEmpty || !Theme.TitleBarBackground.IsEmpty || Theme.TitleBarBackgroundFill is not null);
-        if (!colored && source.HeaderHover is null && source.HeaderPressed is null && source.HeaderForeground.IsEmpty) return source;
-        var caption = colored ? WindowHost!.CaptionTheme(Theme, composited) : null;
+        if (!aero && !colored && source.HeaderHover is null && source.HeaderPressed is null && source.HeaderForeground.IsEmpty) return source;
+        var caption = colored || aero ? WindowHost!.CaptionTheme(Theme, composited) : null;
         if (!ReferenceEquals(source, _headerThemeSource) || !ReferenceEquals(caption, _headerCaptionTheme) || composited != _headerComposited)
         {
             _headerThemeSource = source; _headerCaptionTheme = caption; _headerComposited = composited;
             _headerTheme = caption is null ? source : source with
             {
-                Background = WindowHost!.CaptionColor(Theme, composited), BackgroundFill = WindowHost.CaptionFill(Theme, composited), HeaderForeground = caption.Foreground,
-                HeaderHover = source.ColoredHeaderHover ?? caption.Hover, HeaderPressed = source.ColoredHeaderPressed ?? caption.Pressed, DisabledForeground = caption.DisabledForeground,
-                BackdropHover = source.ColoredHeaderHover ?? caption.BackdropHover, BackdropPressed = source.ColoredHeaderPressed ?? caption.BackdropPressed
+                Background = aero ? Color.Transparent : WindowHost!.CaptionColor(Theme, composited),
+                BackgroundFill = aero ? null : WindowHost!.CaptionFill(Theme, composited), HeaderForeground = caption.Foreground,
+                HeaderHover = aero ? source.HeaderHover : source.ColoredHeaderHover ?? caption.Hover,
+                HeaderPressed = aero ? source.HeaderPressed : source.ColoredHeaderPressed ?? caption.Pressed, DisabledForeground = caption.DisabledForeground,
+                BackdropHover = aero ? source.BackdropHover : source.ColoredHeaderHover ?? caption.BackdropHover,
+                BackdropPressed = aero ? source.BackdropPressed : source.ColoredHeaderPressed ?? caption.BackdropPressed
             };
             var header = _headerTheme;
             _headerChromeTheme = header with
@@ -53,13 +57,13 @@ public partial class RibbonControl
         var normal = host?.CaptionColor(theme, composited) ?? (composited ? Color.Transparent : theme.Background);
         var state = new RibbonBackstageCaptionState(IsBackstageOpen, HasWindowCaption,
             host is not null && !host.TitleBarColor.IsEmpty || !theme.TitleBarBackground.IsEmpty || theme.TitleBarBackgroundFill is not null, HasWindowBackdrop, normal,
-            motion?.VisibleWidth ?? host?.ClientSize.Width ?? Width, WindowCaptionHeight, motion?.Opacity ?? (byte)255, Backstage?.NavigationBackgroundOpacity ?? 1);
+            motion?.VisibleWidth ?? host?.CaptionHostBounds.Width ?? Width, WindowCaptionHeight, motion?.Opacity ?? (byte)255, Backstage?.NavigationBackgroundOpacity ?? 1);
         return policy.Resolve(state);
     }
     internal Color CaptionBackground(bool composited) => BackstageCaptionFrame(composited).CaptionColor;
     internal Rectangle BackstageCaptionTintBounds => BackstageCaptionFrame(false).TintBounds;
     internal Rectangle CaptionOverlayBounds => HasFullHeightBackstage && IsBackstageOpen
-        ? new(0, 0, _backstageMotion is { IsRunning: true } motion ? motion.VisibleWidth : WindowHost?.ClientSize.Width ?? Width, WindowCaptionHeight) : Rectangle.Empty;
+        ? new(0, 0, _backstageMotion is { IsRunning: true } motion ? motion.VisibleWidth : WindowHost?.CaptionHostBounds.Width ?? Width, WindowCaptionHeight) : Rectangle.Empty;
     internal Rectangle CaptionPageBounds
     {
         get
@@ -68,7 +72,7 @@ public partial class RibbonControl
             if (overlay.IsEmpty || _backstageSurface is not { IsDisposed: false } surface) return Rectangle.Empty;
             // Use the live surface position: the caption split moves with the
             // navigation/page boundary throughout opening and closing.
-            int left = Math.Clamp(surface.Left + surface.NavigationBounds.Right, overlay.Left, overlay.Right);
+            int left = Math.Clamp(surface.Left - (WindowHost?.CaptionHostBounds.Left ?? 0) + surface.NavigationBounds.Right, overlay.Left, overlay.Right);
             return Rectangle.FromLTRB(left, overlay.Top, overlay.Right, overlay.Bottom);
         }
     }
@@ -80,9 +84,12 @@ public partial class RibbonControl
         try
         {
             graphics.SetClip(bounds, System.Drawing.Drawing2D.CombineMode.Intersect);
-            var canvas = new Rectangle(0, 0, WindowHost?.ClientSize.Width ?? Width, WindowCaptionHeight);
+            var canvas = new Rectangle(0, 0, WindowHost?.CaptionHostBounds.Width ?? Width, WindowCaptionHeight);
             var fill = WindowHost?.CaptionFill(Theme, composited);
-            BackstageCaptionFrame(composited).Paint(graphics, canvas, fill is { } authored
+            BackstageCaptionFrame(composited).Paint(graphics, canvas, WindowHost?.AeroFrameSettings is { } frame
+                ? () => WindowHost.PaintAeroFrameBand(new(graphics, bounds, Theme, Font, DeviceDpi) { CompositedText = composited },
+                    new(0, 0, canvas.Width, BackdropHeaderHeight), frame)
+                : fill is { } authored
                 ? () => Painter.PaintFill(new(graphics, canvas, Theme, Font, DeviceDpi), authored) : null);
         }
         finally { graphics.Restore(state); }

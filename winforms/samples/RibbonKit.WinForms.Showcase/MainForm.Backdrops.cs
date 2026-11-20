@@ -2,6 +2,8 @@ namespace RibbonKit.WinForms.Showcase;
 
 public partial class MainForm
 {
+    private Action? _syncBackdropFramePadding;
+
     private void InitializeBackdrops()
     {
         // Application-owned GDI content uses the library's opaque host. The
@@ -17,7 +19,11 @@ public partial class MainForm
             Controls.Remove(preview); opaque.Controls.Add(preview); opaque.Controls.SetChildIndex(preview, 0);
         }
         content.Controls.Add(opaque); Controls.Add(content); Controls.SetChildIndex(content, 0);
-        BackdropChanged += (_, _) => content.Padding = Backdrop == RibbonWindowBackdrop.None ? Padding.Empty : new Padding(12);
+        void SyncPadding() => content.Padding = Backdrop == RibbonWindowBackdrop.None || EffectiveFrameAppearance == RibbonWindowFrameAppearance.Office2010Aero
+            ? Padding.Empty : new Padding(12);
+        _syncBackdropFramePadding = SyncPadding;
+        BackdropChanged += (_, _) => SyncPadding();
+        FrameAppearanceChanged += (_, _) => SyncPadding();
         var group = new RibbonGroup { Id = "group.window", Text = "Window" };
         var menu = new RibbonDropDownItem { Id = "demo.window.backdrop", Text = "Backdrop", KeyTip = "B", DropDownHeader = "Window backdrop", SimplifiedPlacement = RibbonSimplifiedPlacement.Inline,
             ScreenTipDescription = "Choose Solid, Mica or Acrylic for the window and ribbon. Native fields and the document stay on opaque surfaces. Windows may use a solid fallback." };

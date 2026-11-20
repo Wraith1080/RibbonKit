@@ -81,6 +81,8 @@ partial class DesignerForm
         accentGroup = new RibbonKit.WinForms.RibbonGroup();
         accentGallery = new RibbonKit.WinForms.RibbonGalleryItem();
         colorTitleBarToggle = new RibbonKit.WinForms.RibbonToggleItem();
+        aeroFrameToggle = new RibbonKit.WinForms.RibbonToggleItem();
+        acrylicBackdropToggle = new RibbonKit.WinForms.RibbonToggleItem();
         defaultAccentTile = new RibbonKit.WinForms.RibbonGalleryTile();
         blueAccentTile = new RibbonKit.WinForms.RibbonGalleryTile();
         tealAccentTile = new RibbonKit.WinForms.RibbonGalleryTile();
@@ -128,6 +130,7 @@ partial class DesignerForm
         inputModeQatReference = new RibbonKit.WinForms.RibbonQuickAccessDropDownReference();
         documentStylesQatReference = new RibbonKit.WinForms.RibbonQuickAccessDropDownReference();
         statusStrip = new StatusStrip();
+        backdropContent = new RibbonKit.WinForms.RibbonBackdropPanel();
         statusLabel = new ToolStripStatusLabel();
         bindingCaptionLabel = new ToolStripStatusLabel();
         ((System.ComponentModel.ISupportInitialize)ribbon).BeginInit();
@@ -651,7 +654,7 @@ partial class DesignerForm
         //
         themesGroup.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:desktop-edit", true);
         themesGroup.Id = "view.themes";
-        themesGroup.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { themeGallery });
+        themesGroup.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { themeGallery, aeroFrameToggle, acrylicBackdropToggle });
         themesGroup.Text = "Themes";
         //
         // themeGallery
@@ -740,9 +743,29 @@ partial class DesignerForm
         colorTitleBarToggle.Text = "Color title bar";
         colorTitleBarToggle.KeyTip = "C";
         colorTitleBarToggle.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:desktop-edit", true);
-        colorTitleBarToggle.ScreenTipDescription = "Use the accent color for the title bar with white title text.";
+        colorTitleBarToggle.ScreenTipDescription = "Use the accent color for the title bar or tint the Aero frame.";
         colorTitleBarToggle.SimplifiedPlacement = RibbonKit.WinForms.RibbonSimplifiedPlacement.Inline;
         colorTitleBarToggle.Click += ColorTitleBarToggle_Click;
+        //
+        // aeroFrameToggle
+        //
+        aeroFrameToggle.Id = "view.frame.aero";
+        aeroFrameToggle.Text = "Aero frame";
+        aeroFrameToggle.KeyTip = "F";
+        aeroFrameToggle.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:desktop-edit", true);
+        aeroFrameToggle.ScreenTipDescription = "Use the Aero-inspired frame for Office 2010.";
+        aeroFrameToggle.SimplifiedPlacement = RibbonKit.WinForms.RibbonSimplifiedPlacement.Inline;
+        aeroFrameToggle.Click += AeroFrameToggle_Click;
+        //
+        // acrylicBackdropToggle
+        //
+        acrylicBackdropToggle.Id = "view.frame.acrylic";
+        acrylicBackdropToggle.Text = "Acrylic backdrop";
+        acrylicBackdropToggle.KeyTip = "B";
+        acrylicBackdropToggle.Icon = new RibbonKit.WinForms.RibbonSvgIcon("stock:desktop-edit", true);
+        acrylicBackdropToggle.ScreenTipDescription = "Request Acrylic from Windows.";
+        acrylicBackdropToggle.SimplifiedPlacement = RibbonKit.WinForms.RibbonSimplifiedPlacement.Inline;
+        acrylicBackdropToggle.Click += AcrylicBackdropToggle_Click;
         //
         // defaultAccentTile
         //
@@ -1064,13 +1087,21 @@ partial class DesignerForm
         bindingCaptionLabel.Name = "bindingCaptionLabel";
         bindingCaptionLabel.Text = "Name:";
         // 
+        // backdropContent
+        //
+        backdropContent.BackColor = Color.White;
+        backdropContent.Controls.Add(statusStrip);
+        backdropContent.Dock = DockStyle.Fill;
+        backdropContent.Name = "backdropContent";
+        backdropContent.TabIndex = 1;
+        //
         // DesignerForm
         // 
         AutoScaleDimensions = new SizeF(8F, 20F);
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.White;
         ClientSize = new Size(1029, 667);
-        Controls.Add(statusStrip);
+        Controls.Add(backdropContent);
         Controls.Add(ribbon);
         Margin = new Padding(3, 4, 3, 4);
         Name = "DesignerForm";
@@ -1092,6 +1123,8 @@ partial class DesignerForm
     private RibbonKit.WinForms.RibbonGroup accentGroup = null!;
     private RibbonKit.WinForms.RibbonGalleryItem accentGallery = null!;
     private RibbonKit.WinForms.RibbonToggleItem colorTitleBarToggle = null!;
+    private RibbonKit.WinForms.RibbonToggleItem aeroFrameToggle = null!;
+    private RibbonKit.WinForms.RibbonToggleItem acrylicBackdropToggle = null!;
     private RibbonKit.WinForms.RibbonGalleryTile defaultAccentTile = null!;
     private RibbonKit.WinForms.RibbonGalleryTile blueAccentTile = null!;
     private RibbonKit.WinForms.RibbonGalleryTile tealAccentTile = null!;
@@ -1138,6 +1171,7 @@ partial class DesignerForm
     private RibbonKit.WinForms.RibbonMenuSeparatorItem backstageFooterSeparator = null!;
     private RibbonKit.WinForms.RibbonButtonItem backstageOptionsCommand = null!;
     private StatusStrip statusStrip = null!;
+    private RibbonKit.WinForms.RibbonBackdropPanel backdropContent = null!;
     private ToolStripStatusLabel statusLabel = null!;
     private ToolStripStatusLabel bindingCaptionLabel = null!;
     private ToolStripStatusLabel bindingValueLabel = null!;

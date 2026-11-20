@@ -91,16 +91,18 @@ public partial class RibbonControl
     internal RibbonBackstageSurface? BackstageSurface => _backstageSurface;
     private Rectangle BackstageHostBounds(Form form)
     {
+        var client = form is RibbonForm windowHost && ReferenceEquals(windowHost, WindowHost)
+            ? windowHost.AeroContentBounds : form.ClientRectangle;
         if (BackstageKeepsHeaders)
         {
             EnsureLayout();
             int measuredBottom = _snapshot.Targets.Where(t => t.Kind is TargetKind.Tab or TargetKind.FileMenu or TargetKind.TabBack or TargetKind.TabNext)
                 .Select(t => t.Bounds.Bottom).Append(_snapshot.TabViewport.Bottom).Max();
-            int top = Math.Clamp(form.PointToClient(PointToScreen(new(0, measuredBottom))).Y, 0, form.ClientSize.Height);
-            return new(0, top, form.ClientSize.Width, Math.Max(0, form.ClientSize.Height - top));
+            int top = Math.Clamp(form.PointToClient(PointToScreen(new(0, measuredBottom))).Y, client.Top, client.Bottom);
+            return Rectangle.FromLTRB(client.Left, top, client.Right, client.Bottom);
         }
         int caption = !HasFullHeightBackstage && form is RibbonForm { CustomCaption: true } window ? window.CaptionHeight : 0;
-        return new(0, caption, form.ClientSize.Width, Math.Max(0, form.ClientSize.Height - caption));
+        return Rectangle.FromLTRB(client.Left, Math.Min(caption, client.Bottom), client.Right, client.Bottom);
     }
     private bool CanShowBackstage => !_disposing && !IsDisposed && !IsInDesignMode && !IsModal && Visible && Enabled
         && FileMenuMode == RibbonFileMenuMode.Backstage && HasFileMenu && FileMenu.EffectiveEnabled
@@ -176,7 +178,8 @@ public partial class RibbonControl
     {
         // A native motion frame changes the pane's own Location. Only host or
         // ribbon reflow may recompute its settled anchor; do not undo travel.
-        if (BackstageKeepsHeaders && !ReferenceEquals(e.AffectedControl, _backstageSurface)) BackstageHostResized(sender, e);
+        if ((BackstageKeepsHeaders || WindowHost is { FrameAppearance: RibbonWindowFrameAppearance.Office2010Aero })
+            && !ReferenceEquals(e.AffectedControl, _backstageSurface)) BackstageHostResized(sender, e);
     }
     internal bool ValidateBackstagePage() => !IsBackstageOpen || _backstageSurface?.ValidatePage() != false;
     private bool CloseBackstage(bool restoreFocus, bool force = false, bool animate = true)

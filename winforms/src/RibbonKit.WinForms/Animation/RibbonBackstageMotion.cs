@@ -131,7 +131,7 @@ internal sealed class RibbonBackstageMotion : IDisposable
         {
             if (!_surface.IsDisposed)
             {
-                _surface.MoveForMotion(_origin);
+            _surface.MoveForMotion(_origin, clipFrame: false);
                 _surface.RestoreMotionOpacity();
             }
             _background?.Dispose(); _background = null;

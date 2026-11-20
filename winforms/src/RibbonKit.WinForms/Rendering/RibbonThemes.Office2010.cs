@@ -23,6 +23,7 @@ public static partial class RibbonThemes
         return new()
         {
             WindowCornerPreference = RibbonWindowCornerPreference.Rounded,
+            AeroFrameAppearance = new(),
             BackstageStyle = RibbonBackstageStyle.Office2010, BackstageFullWidthNavigation = true,
             BackstageNavigationBackgroundFill = new(C(0xE4EDF7), C(0xCBDAEC)), BackstageSelectedForeground = Color.White,
             BackstageNavigationHover = new(C(0xE8F0F9)), BackstageSelectionIndicatorVisible = false, BackstageMonochromeIcons = true,

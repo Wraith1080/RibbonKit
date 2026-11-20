@@ -47,7 +47,7 @@ internal sealed class RibbonMotionWindow : NativeWindow, IDisposable
     }
     internal void RenderCaption(RibbonForm form, RibbonControl ribbon)
     {
-        Prepare(form.RectangleToScreen(new(0, 0, form.ClientSize.Width, form.CaptionHeight)));
+        Prepare(form.RectangleToScreen(form.CaptionHostBounds));
         _graphics!.Clear(Color.Transparent);
         // Composited theme text needs a real selected DIB/DC. A GDI+ image HDC
         // can substitute its stock font when drawing the transparent caption.
