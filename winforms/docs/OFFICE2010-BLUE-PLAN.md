@@ -1,6 +1,6 @@
 # Native Office 2010 Blue — normal theme first
 
-**2026-11-20 — F7 composed checks pass in both samples and a public-package consumer. Live normal-theme review is next, followed by the required F8 Aero-inspired frame experiment. Current acceptance is in the themes ledger.**
+**2026-11-20 — The required F8 Aero-inspired frame experiment is next. See the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger) for current acceptance.**
 The user selected Office 2010 after the Office 2013 review and supplied eight
 WPF references, including an additional ordinary-button hover example. They
 explicitly confirmed rounded corners for this non-flat theme. Deliver the normal

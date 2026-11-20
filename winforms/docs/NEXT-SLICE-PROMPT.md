@@ -1,11 +1,10 @@
-# Continue native Office 2010 after the F7 live review
+# Continue native Office 2010 with F8
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
 Updated **2026-11-20**. Last verified branch is `codex/Ribbonkit-Winform`, HEAD
-`f0cc1c7` (`fix option dialog flickering listbox`). F7 entered with a clean
-worktree and adds verification on top of that commit. Preserve authored Backstage
+`55e53bc` (`fix backstage flicker problem`). Preserve authored Backstage
 settings and other Form/resource edits. Recheck
 `git status --short`, live branch and HEAD; preserve user commits and edits. Do not
 commit, stage, push, publish or change branches unless requested.
@@ -182,7 +181,7 @@ records before edits. Reuse the
 [architecture map](THEME-ARCHITECTURE-PLAN.md) and
 [adjustability audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 
-## Current review boundary: F7 composed review; next F8 Aero frame
+## Next slice: F8 Aero-inspired frame experiment
 
 F6 is delivered. Current F5 and F6 review results are in the
 [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger). Read the
@@ -207,10 +206,9 @@ and real secondary group/rename dialogs. Current package is above; evidence is
 under `artifacts/office2010-f6/`. Keep intermediate attempts. No clean full suite,
 actual VS, physical-input/IME, mixed-monitor or final visual acceptance is claimed.
 
-F7 composed automated checks passed in both samples and the independent app
-at 120 DPI. Use the [F7 evidence and live walkthrough](OFFICE2010-BLUE-PLAN.md#f7-composed-review-evidence--2026-11-20)
-for final normal-theme visual review. After acceptance, start with the bounded
-[F8 frame contract](OFFICE2010-BLUE-PLAN.md#f8-required-aero-inspired-frame-experiment).
+Use the [F7 evidence](OFFICE2010-BLUE-PLAN.md#f7-composed-review-evidence--2026-11-20)
+and the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger) as the
+normal-theme baseline for the bounded [F8 frame contract](OFFICE2010-BLUE-PLAN.md#f8-required-aero-inspired-frame-experiment).
 Preserve native input, source/draft ownership and the accepted Backstage handoff.
 
 The user revised the remaining sequence on **2026-11-15**:
@@ -224,9 +222,8 @@ Reuse passed F2–F6 and E2–E5 evidence; preserve the recorded Backstage appro
 unless a concrete regression appears. Do not repeat unrelated passed matrices.
 
 F6 owns the library Options/customization dialogs and draft/button contracts.
-F7 closes normal-theme review before F8. The Aero-inspired frame is required
-planned work, with its own host/theme/material/fallback contract and review;
-caption-button glass alone does not complete it. Do not start F8 during F7.
+F8 covers the Aero-inspired frame and its host, theme, material and fallback
+contract. Use the existing caption-button glass as part of the frame review.
 No diagnostic tabs, temporary review solution, new family or dark
 variant. Keep native API/print evidence separate from actual VS, physical input,
 continuous motion, desktop material and mixed-monitor acceptance.
