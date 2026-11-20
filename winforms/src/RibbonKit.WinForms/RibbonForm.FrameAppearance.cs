@@ -13,8 +13,8 @@ public partial class RibbonForm
     private int? _aeroBorder;
     private int _priorAeroBorder;
     private RibbonBackdropBuffer? _aeroSideBuffer, _aeroBottomBuffer;
-    private int AeroFrameInset => WindowState == FormWindowState.Normal && AeroFrameSettings is not null
-        ? RibbonLayoutEngine.Scale(6, DeviceDpi) : 0;
+    private int AeroFrameInset => WindowState == FormWindowState.Normal && AeroFrameSettings is { } frame
+        ? RibbonLayoutEngine.Scale(frame.RestoredFrameThickness, DeviceDpi) : 0;
     internal Rectangle AeroContentBounds => InsetAeroFrame(ClientRectangle);
     internal Rectangle CaptionHostBounds => new(AeroContentBounds.Left, 0, AeroContentBounds.Width, CaptionHeight);
 
@@ -51,9 +51,9 @@ public partial class RibbonForm
     /// <summary>Gets the current frame presentation. Windows may use a solid backdrop or system border independently of this value.</summary>
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public RibbonWindowFrameAppearance EffectiveFrameAppearance => AeroFrameSettings is not null
-        ? RibbonWindowFrameAppearance.Office2010Aero : RibbonWindowFrameAppearance.Standard;
+        ? FrameAppearance : RibbonWindowFrameAppearance.Standard;
 
-    /// <summary>Gets or sets an opaque tint for the Aero caption, tab row and restored window edges. Empty follows the explicit TitleBarColor or the palette tint.</summary>
+    /// <summary>Gets or sets the tint of the Aero caption, tab row and restored window edges when native material is active. Empty follows the explicit TitleBarColor or the palette tint.</summary>
     [Category("Appearance"), DefaultValue(typeof(Color), "")]
     public Color AeroFrameTint
     {
@@ -70,7 +70,7 @@ public partial class RibbonForm
         }
     }
 
-    /// <summary>Gets or sets tint coverage in the active Aero frame, from zero to one. Defaults to .16. The inactive frame uses its neutral palette.</summary>
+    /// <summary>Gets or sets tint coverage over active Aero material, from zero to one. Defaults to .16. Solid and inactive frames use the neutral palette.</summary>
     [Category("Appearance"), DefaultValue(.16f)]
     public float AeroFrameTintIntensity
     {
@@ -88,19 +88,25 @@ public partial class RibbonForm
     }
 
     internal RibbonAeroFrameAppearanceSettings? AeroFrameSettings =>
-        FrameAppearance == RibbonWindowFrameAppearance.Office2010Aero && _ribbon is { HasWindowCaption: true } ribbon &&
+        FrameAppearance != RibbonWindowFrameAppearance.Standard && _ribbon is { HasWindowCaption: true } ribbon &&
         TopLevel && !DesignMode && LicenseManager.UsageMode != LicenseUsageMode.Designtime && !SystemInformation.HighContrast
         ? ribbon.Theme.AeroFrameAppearance : null;
 
     private Color AeroTint(RibbonAeroFrameAppearanceSettings frame) => !AeroFrameTint.IsEmpty ? AeroFrameTint
         : !TitleBarColor.IsEmpty ? TitleBarColor : frame.TintColor;
 
-    internal RibbonFill AeroFrameFill(RibbonAeroFrameAppearanceSettings frame, bool composited)
+    private RibbonFill AeroFrameFill(RibbonAeroFrameAppearanceSettings frame, bool composited)
     {
-        if (!_captionActive) return frame.InactiveBackground;
-        var tint = AeroTint(frame);
-        return composited ? new(Color.FromArgb((int)Math.Round(255 * AeroFrameTintIntensity), tint))
-            : RibbonFillColors.Map(frame.ActiveBackground, color => Blend(tint, color, AeroFrameTintIntensity));
+        if (!composited || !_captionActive) return frame.InactiveBackground;
+        return new(Color.FromArgb((int)Math.Round(255 * AeroFrameTintIntensity), AeroTint(frame)));
+    }
+
+    private Color AeroCaptionContrastColor(RibbonAeroFrameAppearanceSettings frame, bool composited)
+    {
+        var estimate = composited && _captionActive
+            ? RibbonFillColors.Map(frame.ActiveBackground, color => Blend(AeroTint(frame), color, AeroFrameTintIntensity))
+            : frame.InactiveBackground;
+        return RibbonFillColors.At(estimate, .5);
     }
 
     internal void PaintAeroFrameBand(RibbonPaintContext context, Rectangle band, RibbonAeroFrameAppearanceSettings frame)
@@ -126,7 +132,7 @@ public partial class RibbonForm
 
     internal void RefreshAeroFrameLayout()
     {
-        if (FrameAppearance != RibbonWindowFrameAppearance.Office2010Aero) return;
+        if (FrameAppearance == RibbonWindowFrameAppearance.Standard) return;
         PerformLayout();
         Invalidate();
     }
@@ -184,7 +190,8 @@ public partial class RibbonForm
             return;
         }
 
-        var color = _captionActive ? Blend(AeroTint(frame), frame.ActiveBorderColor, AeroFrameTintIntensity) : frame.InactiveBorderColor;
+        var color = HasWindowBackdrop && _captionActive
+            ? Blend(AeroTint(frame), frame.ActiveBorderColor, AeroFrameTintIntensity) : frame.InactiveBorderColor;
         int rgb = color.R | color.G << 8 | color.B << 16;
         if (!force && _aeroBorder == rgb) return;
         if (_aeroBorder is null && GetFrameBorderColor(Handle, borderColorAttribute, out _priorAeroBorder, sizeof(int)) < 0)

@@ -82,6 +82,35 @@ public sealed class AeroFrameTests
         Assert.Equal(2, events);
     });
 
+    [Fact]
+    public void A_custom_theme_can_supply_a_different_frame_width_without_requiring_the_2010_backstage() => FoundationTests.Sta(() =>
+    {
+        using var form = new RibbonForm { Bounds = new(-16000, -16000, 900, 640), FrameAppearance = RibbonWindowFrameAppearance.Office2010Aero };
+        using var ribbon = new RibbonControl { AnimationLevel = RibbonAnimationLevel.None };
+        ribbon.Tabs.Add(new RibbonTab { Text = "Home" });
+        form.Controls.Add(ribbon);
+        form.Ribbon = ribbon;
+        form.Show();
+        if (SystemInformation.HighContrast) return;
+        Assert.Equal(form.ClientRectangle, form.DisplayRectangle);
+
+        var palette = new RibbonAeroFrameAppearanceSettings { RestoredFrameThickness = 10, TintColor = Color.Teal };
+        var custom = RibbonThemes.Office2019Light with { AeroFrameAppearance = palette };
+        ribbon.Theme = custom;
+        Assert.Equal(RibbonLayoutEngine.Scale(10, form.DeviceDpi), ribbon.Left);
+        Assert.Equal(ribbon.Left, form.ClientSize.Height - form.DisplayRectangle.Bottom);
+        Assert.Equal(RibbonBackstageStyle.Classic, ribbon.Theme.BackstageStyle);
+        Assert.Throws<ArgumentOutOfRangeException>(() => ribbon.Theme = custom with { AeroFrameAppearance = palette with { RestoredFrameThickness = 65 } });
+        Assert.Same(custom, ribbon.Theme);
+
+        ribbon.Theme = custom with { AeroFrameAppearance = palette with { RestoredFrameThickness = 0 } };
+        Assert.Equal(form.ClientRectangle, form.DisplayRectangle);
+        Assert.Equal(RibbonWindowFrameAppearance.Office2010Aero, form.EffectiveFrameAppearance);
+        ribbon.Theme = RibbonThemes.Office2019Light;
+        Assert.Equal(RibbonWindowFrameAppearance.Standard, form.EffectiveFrameAppearance);
+        Assert.Equal(RibbonWindowFrameAppearance.Office2010Aero, form.FrameAppearance);
+    });
+
     [Theory]
     [InlineData(RibbonDensity.Compact, RibbonQuickAccessPosition.TitleBar)]
     [InlineData(RibbonDensity.Touch, RibbonQuickAccessPosition.TabRow)]
@@ -115,7 +144,8 @@ public sealed class AeroFrameTests
         Assert.True(Difference(above, below) <= 4, $"Frame joined with a seam at y={join}: {above} / {below}.");
         Assert.NotEqual(aero.GetPixel(x, 5), aero.GetPixel(x, ribbon.BackdropHeaderHeight - 2));
         Assert.Equal(255, above.A);
-        Assert.NotEqual(standard.GetPixel(x, join - 1), above);
+        for (int y = 5; y < ribbon.BackdropHeaderHeight - 2; y++)
+            Assert.True(Difference(standard.GetPixel(x, y), aero.GetPixel(x, y)) <= 12);
         Assert.Equal(standard.GetPixel(x, aero.Height - 2), aero.GetPixel(x, aero.Height - 2));
         int inset = RibbonLayoutEngine.Scale(6, form.DeviceDpi);
         var content = new Rectangle(inset, 0, form.ClientSize.Width - 2 * inset, form.ClientSize.Height - inset);
@@ -135,19 +165,31 @@ public sealed class AeroFrameTests
             Assert.Equal(1, form.CaptionHitTest(quickAccess));
         }
         Assert.Equal(10, form.CaptionHitTest(new(1, form.ClientSize.Height / 2)));
+        Assert.Equal(11, form.CaptionHitTest(new(form.ClientSize.Width - 2, form.ClientSize.Height / 2)));
+        Assert.Equal(15, form.CaptionHitTest(new(form.ClientSize.Width / 2, form.ClientSize.Height - 2)));
 
         form.AeroFrameTint = Color.Purple;
         form.AeroFrameTintIntensity = 1;
-        using (var tinted = Paint(ribbon)) Assert.Equal(Color.Purple.ToArgb(), tinted.GetPixel(x, join).ToArgb());
-        using (var framePaint = new Bitmap(form.ClientSize.Width, form.ClientSize.Height))
-        {
-            RibbonMotionScene.PrintClient(form, framePaint);
-            Assert.Equal(Color.Purple.ToArgb(), framePaint.GetPixel(inset / 2, form.ClientSize.Height / 2).ToArgb());
-            Assert.Equal(Color.Purple.ToArgb(), framePaint.GetPixel(form.ClientSize.Width - 1 - inset / 2, form.ClientSize.Height / 2).ToArgb());
-            Assert.Equal(Color.Purple.ToArgb(), framePaint.GetPixel(form.ClientSize.Width / 2, form.ClientSize.Height - 1 - inset / 2).ToArgb());
-        }
+        using var tinted = Paint(ribbon);
+        using var activeFrame = new Bitmap(form.ClientSize.Width, form.ClientSize.Height);
+        RibbonMotionScene.PrintClient(form, activeFrame);
         SendMessage(hwnd, 0x86, 0, 0);
-        using (var inactive = Paint(ribbon)) Assert.NotEqual(Color.Purple.ToArgb(), inactive.GetPixel(x, join).ToArgb());
+        using var inactive = Paint(ribbon);
+        using var inactiveFrame = new Bitmap(form.ClientSize.Width, form.ClientSize.Height);
+        RibbonMotionScene.PrintClient(form, inactiveFrame);
+        for (int y = 0; y < ribbon.BackdropHeaderHeight - 1; y++)
+        {
+            Assert.Equal(inactive.GetPixel(x, y), aero.GetPixel(x, y));
+            Assert.Equal(inactive.GetPixel(x, y), tinted.GetPixel(x, y));
+        }
+        int midY = form.ClientSize.Height / 2;
+        int bottomY = form.ClientSize.Height - 1 - inset / 2;
+        var edge = ribbon.Theme.AeroFrameAppearance!.InactiveBackground.End.ToArgb();
+        foreach (var point in new Point[] { new(inset / 2, midY), new(form.ClientSize.Width - 1 - inset / 2, midY), new(form.ClientSize.Width / 2, bottomY) })
+        {
+            Assert.Equal(edge, activeFrame.GetPixel(point.X, point.Y).ToArgb());
+            Assert.Equal(activeFrame.GetPixel(point.X, point.Y), inactiveFrame.GetPixel(point.X, point.Y));
+        }
         SendMessage(hwnd, 0x86, 1, 0);
 
         ribbon.IsBackstageOpen = true;
@@ -203,10 +245,19 @@ public sealed class AeroFrameTests
         Assert.InRange(material.GetPixel(x, y - 1).A, 63, 65);
         Assert.Equal(material.GetPixel(x, y - 1), material.GetPixel(x, y));
         Assert.Equal(255, material.GetPixel(x, material.Height - 2).A);
+        form.AeroFrameTint = Color.Purple;
+        ribbon.Refresh(); ribbon.CopyBackdropSnapshot(material);
+        Assert.InRange(material.GetPixel(x, y).A, 63, 65);
+        Assert.True(Difference(Color.Purple, material.GetPixel(x, y)) <= 2);
         SendMessage(form.Handle, 0x86, 0, 0);
         ribbon.Refresh(); ribbon.CopyBackdropSnapshot(material);
-        Assert.Equal(255, material.GetPixel(x, y).A);
+        var inactive = material.GetPixel(x, y);
+        Assert.Equal(255, inactive.A);
         Assert.Equal(backdrop, form.EffectiveBackdrop);
+        form.Backdrop = RibbonWindowBackdrop.None;
+        SendMessage(form.Handle, 0x86, 1, 0);
+        using (var solid = Paint(ribbon)) Assert.Equal(inactive, solid.GetPixel(x, y));
+        form.Backdrop = backdrop;
         form.FrameAppearance = RibbonWindowFrameAppearance.Standard;
         Assert.Equal(backdrop, form.Backdrop);
         Assert.Equal(backdrop, form.EffectiveBackdrop);

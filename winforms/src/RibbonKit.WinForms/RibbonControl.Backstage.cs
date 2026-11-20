@@ -178,7 +178,7 @@ public partial class RibbonControl
     {
         // A native motion frame changes the pane's own Location. Only host or
         // ribbon reflow may recompute its settled anchor; do not undo travel.
-        if ((BackstageKeepsHeaders || WindowHost is { FrameAppearance: RibbonWindowFrameAppearance.Office2010Aero })
+        if ((BackstageKeepsHeaders || WindowHost is { FrameAppearance: not RibbonWindowFrameAppearance.Standard })
             && !ReferenceEquals(e.AffectedControl, _backstageSurface)) BackstageHostResized(sender, e);
     }
     internal bool ValidateBackstagePage() => !IsBackstageOpen || _backstageSurface?.ValidatePage() != false;

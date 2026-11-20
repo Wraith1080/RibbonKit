@@ -3,8 +3,8 @@
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-20**. F8 was verified on `codex/Ribbonkit-Winform` over
-`41deadb` (`f8 start`). Preserve authored Backstage
+Updated **2026-11-20**. The F8 solid-frame follow-up was verified on
+`codex/Ribbonkit-Winform` over `91965fa` (`F8 Aero Start`). Preserve authored Backstage
 settings and other Form/resource edits. Recheck
 `git status --short`, live branch and HEAD; preserve user commits and edits. Do not
 commit, stage, push, publish or change branches unless requested.
@@ -208,9 +208,10 @@ actual VS, physical-input/IME, mixed-monitor or final visual acceptance is claim
 
 Use the [F7 evidence](OFFICE2010-BLUE-PLAN.md#f7-composed-review-evidence--2026-11-20)
 and the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger) as the
-normal-theme baseline. Designer Sample uses `0.1.0-designer.local20261120T025454196Z`.
+normal-theme baseline. Designer Sample uses `0.1.0-designer.local20261120T082429873Z`.
 Use the [F8 walkthrough](OFFICE2010-BLUE-PLAN.md#f8-visual-walkthrough) to review
-the reflected fallback, Acrylic and native window behavior.
+the neutral solid gradient, Acrylic and restored window edges. The shared frame
+palette and layout are ready for a future Office 2007 palette.
 Preserve native input, source/draft ownership and the accepted Backstage handoff.
 
 The user revised the remaining sequence on **2026-11-15**:

@@ -55,7 +55,7 @@ public partial class RibbonForm
     internal RibbonTheme CaptionTheme(RibbonTheme theme, bool composited)
     {
         var frame = AeroFrameSettings;
-        var color = frame is not null ? RibbonFillColors.At(AeroFrameFill(frame, false), .5)
+        var color = frame is not null ? AeroCaptionContrastColor(frame, composited)
             : TitleBarColor.IsEmpty ? theme.TitleBarBackground : TitleBarColor;
         if (frame is null && TitleBarColor.IsEmpty && theme.TitleBarBackgroundFill is { } fill) color = RibbonFillColors.At(fill, .5);
         if (color.IsEmpty && theme.TitleBarForeground.IsEmpty) return theme;

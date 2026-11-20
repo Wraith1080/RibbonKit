@@ -291,7 +291,7 @@ upper band and choose readable caption and header ink for its tint.
 
 The existing Backdrop property independently requests material. The active
 band uses the same translucent tint across both rows when material is applied.
-Solid, unsupported and inactive windows use an opaque reflected palette.
+Solid, unsupported and inactive windows use the same neutral blue-gray gradient.
 Windows owns visible material, corners, sizing and Snap. A rejected border
 attribute leaves the system perimeter in place. Both samples expose Aero in
 View and use public properties for accent tint and backdrop selection.
@@ -1115,17 +1115,53 @@ in the samples uses the selected accent as the Aero tint while Aero is enabled.
   matched the expected active tinted and inactive colors. The border-color
   attribute returned no readback value. Evidence is under `artifacts/office2010-aero/`.
 
+### F8 restored window edges — 2026-11-20
+
+The caption and tab treatment now continues down the left and right edges and
+across the bottom of a restored window. Office 2010 uses six logical pixels on
+each edge. The ribbon, docked content and Backstage fit inside that frame.
+Maximizing removes the inset, restoring brings it back, and Standard removes
+it. Windows still owns the outer resize frame and the caption actions.
+
+`RibbonAeroFrameAppearanceSettings.RestoredFrameThickness` lets a theme choose
+the width, including zero for just the upper band. The shared palette controls
+the opaque fallback, tint and perimeter colors. A future Office 2007 theme can
+supply its own palette and use the same frame layout and painting.
+
+- All 53 focused Aero, RibbonForm, Backstage and caption handoff checks passed.
+- Showcase, Designer Sample and an independent consumer using public package
+  `0.1.0-designer.local20261120T081333017Z` passed at 120 DPI. The independent
+  consumer also exercised a custom palette with a ten-logical-pixel frame.
+- Desktop captures at 120 DPI show the opaque and Acrylic treatments at the
+  left, right and bottom edges. Sampled pixels confirm the Acrylic treatment
+  reaches each edge and the document stays opaque. Evidence is under
+  `artifacts/office2010-aero-edges/desktop/`.
+
+### F8 neutral solid frame — 2026-11-20
+
+Solid Aero uses the inactive frame's blue-gray gradient and perimeter color
+regardless of activation. The frame tint takes effect over native material.
+The original Office 2010 Standard palette remains the reference for the solid
+toggle, with the neutral Aero ramp keeping the two treatments close.
+
+All 11 focused Aero checks passed. The packaged consumer, Showcase and
+Designer Sample passed at 120 DPI using `0.1.0-designer.local20261120T082429873Z`.
+At 120 DPI, desktop pixels matched across the solid active, solid inactive
+and Acrylic-to-solid states. Active Acrylic retained visible tint and material.
+Captures are in `artifacts/office2010-aero-solid/desktop/`.
+
 ### F8 visual walkthrough
 
-1. Choose **View → Office 2010 Blue → Aero frame**. Compare the regular frame
-   and the reflected opaque fallback. Try an Accent swatch with **Color title
-   bar** enabled to tint both upper rows.
+1. With a solid backdrop, choose **View → Office 2010 Blue → Aero frame**.
+   Toggle Aero and check the blue-gray gradient and the restored left, right
+   and bottom edges. Switch focus to check that the solid color holds.
 2. Choose **View → Window → Backdrop → Acrylic** in Showcase, or **View → Acrylic
-   backdrop** in Designer Sample. Move a window behind the ribbon, then switch
-   activation. Check that the title and tabs stay continuous and the document
-   remains opaque.
-3. Resize from an edge, maximize and restore, and try Snap Layouts. Open and
-   close Backstage, then turn Aero off and confirm the standard frame returns.
+   backdrop** in Designer Sample. Try an Accent swatch with **Color title bar**
+   enabled. Move a window behind the ribbon, then switch activation. Check that
+   the frame treatment continues along the edges and the document stays opaque.
+3. Resize from an edge and try Snap Layouts. Verify that maximizing hides the
+   edges and restoring brings them back. Open and close Backstage, then turn
+   Aero off and confirm the standard frame returns.
 
 Physical Snap hover, mixed-monitor behavior, actual Visual Studio designer
 and older Windows material behavior remain separate review gates.

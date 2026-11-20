@@ -70,7 +70,11 @@ public partial class RibbonForm
             Invalidate(true); _ribbon?.Invalidate(true);
             if (!RecreatingHandle) RefreshOpaquePanels(this);
         }
-        finally { _applyingBackdrop = false; }
+        finally
+        {
+            _applyingBackdrop = false;
+            RefreshAeroBorder();
+        }
     }
     private static void RefreshOpaquePanels(Control parent)
     {

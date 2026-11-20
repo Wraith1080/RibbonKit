@@ -1947,14 +1947,19 @@ backdrop. First associate a top-docked ribbon with the form using `window.Ribbon
 ```csharp
 ribbon.BuiltInTheme = RibbonBuiltInTheme.Office2010Blue;
 window.FrameAppearance = RibbonWindowFrameAppearance.Office2010Aero;
-window.AeroFrameTint = ribbon.Theme.Accent; // Optional. Empty follows the caption or palette tint.
-window.Backdrop = RibbonWindowBackdrop.Acrylic; // Optional. None uses the opaque reflected palette.
+window.AeroFrameTint = ribbon.Theme.Accent; // Optional tint for native material.
+window.Backdrop = RibbonWindowBackdrop.Acrylic; // Optional. None uses the neutral opaque palette.
 ```
 
-The caption and tab band share a tint. Inactive Aero windows use the opaque
-inactive palette, and Windows keeps ownership of the outer frame. `Standard`
-restores the normal caption and tabs. A theme without `AeroFrameAppearance`
-uses its normal frame while retaining the requested preference on the form.
+The caption, tab band and restored left, right and bottom edges share a fill.
+The edges default to six logical pixels. Themes can set
+`AeroFrameAppearance.RestoredFrameThickness` to a different width or zero for
+the upper band alone. Maximized windows have no inset. Solid and inactive Aero
+windows use the same opaque gradient. Active native material receives the
+Aero tint. Windows owns the outer resize frame.
+`Standard` restores the normal caption, tabs and content bounds. A theme
+without `AeroFrameAppearance` uses its normal frame while retaining the
+requested preference on the form.
 See the [Aero frame review](docs/OFFICE2010-BLUE-PLAN.md#f8-implementation-and-verification--2026-11-20).
 
 Solid and material Backstage share the full-surface slide/fade policy. Native

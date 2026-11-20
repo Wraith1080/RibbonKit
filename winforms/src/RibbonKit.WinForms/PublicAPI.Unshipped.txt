@@ -2393,6 +2393,8 @@ RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.InactiveBackground.init -> 
 RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.InactiveBorderColor.get -> System.Drawing.Color
 RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.InactiveBorderColor.init -> void
 RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.RibbonAeroFrameAppearanceSettings() -> void
+RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.RestoredFrameThickness.get -> int
+RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.RestoredFrameThickness.init -> void
 RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.TintColor.get -> System.Drawing.Color
 RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.TintColor.init -> void
 RibbonKit.WinForms.RibbonForm.AeroFrameTint.get -> System.Drawing.Color
