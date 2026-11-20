@@ -612,6 +612,10 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     public bool IsGalleryDropDown { get; init; }
     /// <summary>Gets whether this Quick Access toolbar paint joins an expanded body. DrawBody receives the combined outer frame; this row paints only its internal separator. Minimized standalone rows are false.</summary>
     public bool IsQuickAccessToolbarJoined { get; init; }
+    /// <summary>Gets the full measured group slot before collapsed-opener insets. Empty lets standalone group painting use Bounds. Decoration never changes this slot.</summary>
+    public Rectangle GroupFrameBounds { get; init; }
+    /// <summary>Gets the measured Classic expanded caption area. Empty lets standalone painting derive the existing font/DPI caption area; collapsed and Simplified groups have no label band.</summary>
+    public Rectangle GroupCaptionBounds { get; init; }
     internal bool IsBodyScrollButton { get; init; }
     internal bool IsBackstageNavigationState { get; init; }
     internal bool IsHeaderScrollButton { get; init; }
@@ -633,7 +637,8 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     internal Rectangle GroupSeparatorBounds { get; init; }
     internal bool SuppressTabIndicators { get; init; }
     internal bool SuppressShadow { get; init; }
-    internal bool IsSimplifiedGroup { get; init; }
+    /// <summary>Gets whether this group uses the compact Simplified presentation, without a separate caption band.</summary>
+    public bool IsSimplifiedGroup { get; init; }
     internal bool FileMenuClosing { get; init; }
     internal bool FileMenuPreviewOpen { get; init; }
     internal bool IsHeaderUtilityState { get; init; }

@@ -19,17 +19,20 @@ public sealed class RibbonGradientStops : IReadOnlyList<RibbonGradientStop>, IEq
 {
     private readonly RibbonGradientStop[] _stops;
     /// <summary>Copies stops whose finite offsets must increase strictly between zero and one. An empty sequence retains a two-stop fill.</summary>
-    public RibbonGradientStops(IEnumerable<RibbonGradientStop> stops)
+    public RibbonGradientStops(IEnumerable<RibbonGradientStop> stops) : this(stops, false) { }
+    private RibbonGradientStops(IEnumerable<RibbonGradientStop> stops, bool allowHardTransitions)
     {
         ArgumentNullException.ThrowIfNull(stops);
         _stops = stops.ToArray(); double previous = 0;
         foreach (var stop in _stops)
         {
-            if (!double.IsFinite(stop.Offset) || stop.Offset <= previous || stop.Offset >= 1)
+            if (!double.IsFinite(stop.Offset) || stop.Offset <= 0 || stop.Offset >= 1 || stop.Offset < previous || (!allowHardTransitions && stop.Offset == previous))
                 throw new ArgumentOutOfRangeException(nameof(stops), "Intermediate offsets must be finite, strictly increasing and between zero and one.");
             previous = stop.Offset;
         }
     }
+    /// <summary>Copies finite, nondecreasing intermediate offsets strictly between zero and one. At a repeated offset, the first color ends the preceding ramp and the last starts the following ramp. Sampling exactly at the offset uses the last color. No epsilon spacing is introduced.</summary>
+    public static RibbonGradientStops WithHardTransitions(IEnumerable<RibbonGradientStop> stops) => new(stops, true);
     /// <summary>Gets the number of intermediate stops.</summary>
     public int Count => _stops.Length;
     /// <summary>Gets an immutable stop by index.</summary>
@@ -52,7 +55,7 @@ internal static class RibbonFillColors
     internal static RibbonFill Map(RibbonFill fill, Func<Color, Color> map) => fill with
     {
         Start = map(fill.Start), End = map(fill.End),
-        IntermediateStops = fill.IntermediateStops is { } stops ? new(stops.Select(s => s with { Color = map(s.Color) })) : null
+        IntermediateStops = fill.IntermediateStops is { } stops ? RibbonGradientStops.WithHardTransitions(stops.Select(s => s with { Color = map(s.Color) })) : null
     };
     internal static Color At(RibbonFill fill, double position)
     {
@@ -60,7 +63,7 @@ internal static class RibbonFillColors
         if (fill.IntermediateStops is { } stops)
             foreach (var stop in stops)
             {
-                if (position <= stop.Offset) return Mix(start, stop.Color, (position - left) / (stop.Offset - left));
+                if (position < stop.Offset) return Mix(start, stop.Color, (position - left) / (stop.Offset - left));
                 left = stop.Offset; start = stop.Color;
             }
         return Mix(start, fill.End, (position - left) / (1 - left));

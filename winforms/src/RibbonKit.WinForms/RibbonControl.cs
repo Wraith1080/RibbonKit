@@ -650,12 +650,17 @@ public partial class RibbonControl : Control, ISupportInitialize
                     {
                         Bounds = slot.Bounds,
                         GroupSeparatorBounds = slot.Frame,
+                        GroupFrameBounds = slot.Frame,
+                        GroupCaptionBounds = slot.Collapsed || LayoutMode == RibbonLayoutMode.Simplified ? Rectangle.Empty : RibbonGroupPanelMetrics.CaptionBounds(slot.Bounds, Font, DeviceDpi),
                         IsSimplifiedGroup = LayoutMode == RibbonLayoutMode.Simplified,
                         Hot = slot.Group.EffectiveEnabled && ReferenceEquals(slot.Group, _hot),
                         Pressed = slot.Group.EffectiveEnabled && ReferenceEquals(slot.Group, _pressed),
                         Focused = slot.Group.EffectiveEnabled && _keyboardFocusCues && Focused && ReferenceEquals(slot.Group, _focused)
                     }, slot.Group, slot.Collapsed);
-                foreach (var divider in _snapshot.SimplifiedDividers)
+                if (LayoutMode == RibbonLayoutMode.Simplified && context.Theme.BodyAppearance?.GroupPanel is { HasOverrides: true })
+                    foreach (var panel in RibbonGroupPanelMetrics.CompactFrames(_snapshot))
+                        Painter.DrawGroupPanel(context with { Bounds = panel.Bounds, GroupFrameBounds = panel.Bounds, IsSimplifiedGroup = true }, panel.Group, false);
+                foreach (var divider in _snapshot.SimplifiedDividers.Where(_ => context.Theme.BodyAppearance?.GroupPanel is not { HasOverrides: true }))
                 {
                     var bounds = RibbonBodyFrameMetrics.SeparatorBounds(context.Theme, DeviceDpi, divider);
                     if (bounds.Width > 0 && bounds.Height > 0) Painter.DrawGroupSeparator(context with { Bounds = bounds });

@@ -66,7 +66,7 @@ internal static class RibbonBodyRenderer
     }
     internal static void DrawGroupFrame(RibbonRenderer owner, RibbonPaintContext context)
     {
-        if (context.IsSimplifiedGroup) return;
+        if (context.IsSimplifiedGroup || context.Theme.BodyAppearance?.GroupPanel is { HasOverrides: true }) return;
         var frame = context.GroupSeparatorBounds.IsEmpty ? context.Bounds : context.GroupSeparatorBounds;
         int inset = Math.Min(frame.Height / 2, RibbonLayoutEngine.Scale(new RibbonChromeMetrics(context.Theme, context.Density).SeparatorInset(), context.DeviceDpi));
         var bounds = RibbonBodyFrameMetrics.SeparatorBounds(context.Theme, context.DeviceDpi, new(frame.Right - 1, frame.Top + inset, 1, frame.Height - 2 * inset));

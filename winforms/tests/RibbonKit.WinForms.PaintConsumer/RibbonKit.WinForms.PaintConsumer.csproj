@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Public API only; no sample resources, linked helpers or friend-assembly access. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <ApplicationManifest>../RibbonKit.WinForms.Consumer/app.manifest</ApplicationManifest>
+    <DefineConstants Condition="'$(PaintBaselineAssembly)' == ''">$(DefineConstants);G2</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(PaintBaselineAssembly)' == ''">
+    <ProjectReference Include="../../src/RibbonKit.WinForms/RibbonKit.WinForms.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(PaintBaselineAssembly)' != ''">
+    <Reference Include="RibbonKit.WinForms"><HintPath>$(PaintBaselineAssembly)</HintPath></Reference>
+    <PackageReference Include="Svg" Version="3.4.8" />
+  </ItemGroup>
+</Project>

@@ -297,6 +297,7 @@ public partial class RibbonRenderer : IDisposable
     public virtual void DrawGroup(RibbonPaintContext context, RibbonGroup group, bool collapsed)
     {
         context = EnabledContext(context, group.EffectiveEnabled);
+        DrawGroupPanel(context, group, collapsed);
         if (context.IsSimplifiedGroup)
         {
             bool open = group.Ribbon?.Popups.BorrowsGroup(group) == true;
@@ -347,7 +348,22 @@ public partial class RibbonRenderer : IDisposable
         {
             int height = Math.Max(context.Font.Height + RibbonLayoutEngine.Scale(6, context.DeviceDpi), RibbonLayoutEngine.Scale(20, context.DeviceDpi));
             var caption = new Rectangle(context.Bounds.X + 4, context.Bounds.Bottom - height, Math.Max(0, context.Bounds.Width - 8), height);
-            DrawText(context with { Bounds = caption }, group.DisplayText, context.Theme.SecondaryText, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+            var ink = context.Theme.SecondaryText;
+            if (context.Theme.BodyAppearance?.GroupPanel is not { HasOverrides: true } panel)
+            {
+                DrawText(context with { Bounds = caption }, group.DisplayText, ink, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+                return;
+            }
+            var saved = context.Graphics.Save();
+            try
+            {
+                caption = Rectangle.Intersect(caption, RibbonGroupPanelMetrics.Resolve(context, false).Caption);
+                if (caption.Width <= 0 || caption.Height <= 0) return;
+                context.Graphics.SetClip(caption, CombineMode.Intersect);
+                ink = !group.EffectiveEnabled ? context.Theme.DisabledColor : panel.LabelForeground.IsEmpty ? ink : panel.LabelForeground;
+                DrawText(context with { Bounds = caption }, group.DisplayText, ink, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+            }
+            finally { context.Graphics.Restore(saved); }
         }
     }
     /// <summary>Paints a command using library-measured bounds and shared content alignment.</summary>

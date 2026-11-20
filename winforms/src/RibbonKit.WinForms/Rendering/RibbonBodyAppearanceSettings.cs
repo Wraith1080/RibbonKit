@@ -5,6 +5,8 @@ public sealed record RibbonBodyAppearanceSettings
 {
     /// <summary>Initializes overrides that retain existing frame appearance.</summary>
     public RibbonBodyAppearanceSettings() { }
+    /// <summary>Gets optional framed group decoration. Null or an empty record retains existing separators and captions. This changes paint only, never command slots or hit targets.</summary>
+    public RibbonGroupPanelAppearanceSettings? GroupPanel { get; init; }
     /// <summary>Gets optional body-frame border thickness in logical pixels, 0..32. Null retains one device pixel; zero hides it. Existing BodyBorder/BodyBottomBorderOnly supply ink and edge policy.</summary>
     public int? BorderWidth { get; init; }
     /// <summary>Gets optional message outer-frame thickness in logical pixels, 0..32. Null retains one device pixel; zero hides it. MessageSideBordersVisible and connected-edge ownership remain authoritative.</summary>
@@ -26,6 +28,7 @@ public sealed record RibbonBodyAppearanceSettings
     internal static void Validate(RibbonBodyAppearanceSettings? settings)
     {
         if (settings is null) return;
+        RibbonGroupPanelAppearanceSettings.Validate(settings.GroupPanel);
         int?[] widths = [settings.BorderWidth, settings.MessageBorderWidth, settings.GroupSeparatorWidth, settings.QuickAccessSeparatorWidth];
         if (widths.Any(value => value is < 0 or > 32) || settings.QuickAccessSeparatorInset is < 0 or > 1024)
             throw new ArgumentOutOfRangeException(nameof(settings), "Body/frame widths must be 0..32 and Quick Access separator inset 0..1024 logical pixels, or null for existing decoration.");

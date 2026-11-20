@@ -1,21 +1,23 @@
-# Review the native Office 2007 Blue design
+# Review native Office 2007 G2 paint foundations
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
 Updated **2026-11-20**. The current checkout is `codex/Ribbonkit-Winform` at
-`ed382ff` (`Fix backstage black bars`). Preserve authored Backstage
+`f239e3e` (`Office 2007 Planning`), following `ed382ff` (`Fix backstage black bars`). Preserve authored Backstage
 settings and other Form/resource edits. Recheck
 `git status --short`, live branch and HEAD; preserve user commits and edits. Do not
 commit, stage, push, publish or change branches unless requested.
 
 ## Current state and scope
 
-Review the documentation-only
+The user authorized **G2 shared paint foundations** from the
 [Office 2007 Blue contract and slice order](OFFICE2007-BLUE-PLAN.md).
-G1 uses the existing WPF theme as a read-only reference. No runtime/API or
-sample implementation is authorized by this proposal; stop for the user's
-design review. The [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger)
+G1 uses the existing WPF theme as a read-only reference. G2 adds exact hard
+transitions and optional measured group decoration; its implementation and
+focused evidence are in the [G2 record](OFFICE2007-BLUE-PLAN.md#g2-shared-paint-foundations--2026-11-20).
+Stop for review before G3 Orb/menu composition or the Office 2007 preset.
+The [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger)
 owns the preceding family review. Preserve the delivered context below.
 
 The user selected **normal Office 2010 Blue** and supplied eight WPF references,

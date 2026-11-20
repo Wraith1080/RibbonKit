@@ -10,14 +10,16 @@ internal sealed class RoundedPainter : IDisposable
 {
     private readonly Dictionary<Key, Bitmap> _cache = [];
     private readonly Queue<Key> _order = [];
-    private readonly record struct Key(int Width, int Height, int Radius, int Stroke, RibbonFill Fill, Color Border, bool SquareTop, bool SquareBottom);
-    internal void Draw(Graphics graphics, Rectangle bounds, int radius, RibbonFill fill, Color border, int stroke = 1, bool squareTop = false, bool squareBottom = false)
+    private readonly record struct Key(int Width, int Height, int Radius, int Stroke, RibbonFill Fill, Color Border, bool SquareTop, bool SquareBottom, Rectangle FillBounds);
+    internal void Draw(Graphics graphics, Rectangle bounds, int radius, RibbonFill fill, Color border, int stroke = 1, bool squareTop = false, bool squareBottom = false, Rectangle fillBounds = default)
     {
         if (bounds.Width <= 0 || bounds.Height <= 0)
             return;
         radius = Math.Clamp(radius, 0, Math.Min(bounds.Width, bounds.Height) / 2);
         stroke = Math.Clamp(stroke, 0, Math.Min(bounds.Width, bounds.Height) / 2);
-        var key = new Key(bounds.Width, bounds.Height, radius, stroke, fill, border, squareTop, squareBottom);
+        if (fillBounds.IsEmpty) fillBounds = bounds;
+        fillBounds.Offset(-bounds.X, -bounds.Y);
+        var key = new Key(bounds.Width, bounds.Height, radius, stroke, fill, border, squareTop, squareBottom, fillBounds);
         if (!_cache.TryGetValue(key, out var bitmap))
         {
             bitmap = Create(key);
@@ -38,7 +40,7 @@ internal sealed class RoundedPainter : IDisposable
         var bytes = new byte[key.Width * key.Height * 4];
         for (int y = 0; y < key.Height; y++)
         {
-            double t = key.Height == 1 ? 0 : (double)y / (key.Height - 1);
+            double t = key.FillBounds.Height <= 1 ? 0 : (double)(y - key.FillBounds.Top) / (key.FillBounds.Height - 1);
             var rowFill = RibbonFillColors.At(key.Fill, t);
             // The central band has full coverage, including the top/bottom
             // stroke. Only the narrow edge bands need per-pixel coverage math.
@@ -50,7 +52,7 @@ internal sealed class RoundedPainter : IDisposable
             {
                 if (key.Fill.Direction == RibbonGradientDirection.Horizontal)
                 {
-                    fill = RibbonFillColors.At(key.Fill, key.Width == 1 ? 0 : (double)x / (key.Width - 1));
+                    fill = RibbonFillColors.At(key.Fill, key.FillBounds.Width <= 1 ? 0 : (double)(x - key.FillBounds.Left) / (key.FillBounds.Width - 1));
                     solid = y >= key.Stroke && y < key.Height - key.Stroke ? fill : key.Border;
                     blue = (byte)Math.Round(solid.B * solid.A / 255d); green = (byte)Math.Round(solid.G * solid.A / 255d); red = (byte)Math.Round(solid.R * solid.A / 255d);
                 }

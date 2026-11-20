@@ -570,12 +570,19 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
                 {
                     var bounds = slot.Bounds; bounds.Offset(AutoScrollPosition);
                     var frame = slot.Frame; frame.Offset(AutoScrollPosition);
-                    _ribbon.Painter.DrawGroup(context with { Bounds = bounds, GroupSeparatorBounds = frame, IsSimplifiedGroup = _ribbon.LayoutMode == RibbonLayoutMode.Simplified,
+                    var caption = slot.Collapsed || _ribbon.LayoutMode == RibbonLayoutMode.Simplified ? Rectangle.Empty : RibbonGroupPanelMetrics.CaptionBounds(bounds, Font, DeviceDpi);
+                    _ribbon.Painter.DrawGroup(context with { Bounds = bounds, GroupSeparatorBounds = frame, GroupFrameBounds = frame, GroupCaptionBounds = caption, IsSimplifiedGroup = _ribbon.LayoutMode == RibbonLayoutMode.Simplified,
                         Hot = slot.Group.EffectiveEnabled && ReferenceEquals(_hot, slot.Group),
                         Pressed = slot.Group.EffectiveEnabled && ReferenceEquals(_pressed, slot.Group),
                         Focused = slot.Group.EffectiveEnabled && _ribbon.KeyboardFocusCues && Focused && ReferenceEquals(_focused, slot.Group) }, slot.Group, slot.Collapsed);
                 }
-                foreach (var divider in body.SimplifiedDividers) { var bounds = divider; bounds.Offset(AutoScrollPosition); using var brush = new SolidBrush(_ribbon.Theme.Border); e.Graphics.FillRectangle(brush, bounds); }
+                if (_ribbon.LayoutMode == RibbonLayoutMode.Simplified && context.Theme.BodyAppearance?.GroupPanel is { HasOverrides: true })
+                    foreach (var panel in RibbonGroupPanelMetrics.CompactFrames(body))
+                    {
+                        var bounds = panel.Bounds; bounds.Offset(AutoScrollPosition);
+                        _ribbon.Painter.DrawGroupPanel(context with { Bounds = bounds, GroupFrameBounds = bounds, IsSimplifiedGroup = true }, panel.Group, false);
+                    }
+                foreach (var divider in body.SimplifiedDividers.Where(_ => context.Theme.BodyAppearance?.GroupPanel is not { HasOverrides: true })) { var bounds = divider; bounds.Offset(AutoScrollPosition); using var brush = new SolidBrush(_ribbon.Theme.Border); e.Graphics.FillRectangle(brush, bounds); }
             }
             finally { e.Graphics.Restore(saved); }
         }

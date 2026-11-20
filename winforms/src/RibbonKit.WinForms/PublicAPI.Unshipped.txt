@@ -2412,3 +2412,43 @@ RibbonKit.WinForms.RibbonWindowFrameAppearance.Office2010Aero = 1 -> RibbonKit.W
 RibbonKit.WinForms.RibbonWindowFrameAppearance.Standard = 0 -> RibbonKit.WinForms.RibbonWindowFrameAppearance
 static RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings? left, RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings? right) -> bool
 static RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings? left, RibbonKit.WinForms.RibbonAeroFrameAppearanceSettings? right) -> bool
+
+static RibbonKit.WinForms.RibbonGradientStops.WithHardTransitions(System.Collections.Generic.IEnumerable<RibbonKit.WinForms.RibbonGradientStop>! stops) -> RibbonKit.WinForms.RibbonGradientStops!
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.GroupPanel.get -> RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings?
+RibbonKit.WinForms.RibbonBodyAppearanceSettings.GroupPanel.init -> void
+virtual RibbonKit.WinForms.RibbonRenderer.DrawGroupPanel(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonGroup! group, bool collapsed) -> void
+RibbonKit.WinForms.RibbonPaintContext.GroupFrameBounds.get -> System.Drawing.Rectangle
+RibbonKit.WinForms.RibbonPaintContext.GroupFrameBounds.init -> void
+RibbonKit.WinForms.RibbonPaintContext.GroupCaptionBounds.get -> System.Drawing.Rectangle
+RibbonKit.WinForms.RibbonPaintContext.GroupCaptionBounds.init -> void
+RibbonKit.WinForms.RibbonPaintContext.IsSimplifiedGroup.get -> bool
+RibbonKit.WinForms.RibbonPaintContext.IsSimplifiedGroup.init -> void
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.RibbonGroupPanelAppearanceSettings() -> void
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.<Clone>$() -> RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings!
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.Background.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.Background.init -> void
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.BorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.BorderColor.init -> void
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.BorderWidth.get -> int
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.BorderWidth.init -> void
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.CornerRadius.get -> int
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.CornerRadius.init -> void
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.Inset.get -> int
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.Inset.init -> void
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.InnerBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.InnerBorderColor.init -> void
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.InnerBorderWidth.get -> int
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.InnerBorderWidth.init -> void
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.InnerBorderInset.get -> int
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.InnerBorderInset.init -> void
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.LabelBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.LabelBackground.init -> void
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.LabelForeground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.LabelForeground.init -> void
+RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.Equals(RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings? other) -> bool
+override RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.ToString() -> string!
+static RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings? left, RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings? right) -> bool
+static RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings? left, RibbonKit.WinForms.RibbonGroupPanelAppearanceSettings? right) -> bool

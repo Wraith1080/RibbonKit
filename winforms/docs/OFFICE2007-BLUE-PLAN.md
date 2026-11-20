@@ -1,10 +1,12 @@
 # Native Office 2007 Blue appearance contract
 
-**2026-11-20 - G1 proposed for review; documentation only.** No Office 2007
-runtime preset, public API, sample tile or package is delivered by this slice.
+**2026-11-20 - G2 shared paint foundations authorized and implemented; review pending.**
+G1 remains the appearance reference. G2's additive APIs and focused evidence are
+[recorded below](#g2-shared-paint-foundations--2026-11-20). No Office 2007
+runtime preset or sample tile is delivered by G2.
 Current family acceptance belongs in the
 [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
-Review this contract and slice order before runtime changes.
+Stop for review before G3 Orb/menu composition or the family preset.
 
 ## Reference and boundary
 
@@ -172,8 +174,8 @@ to supply a 2007 palette.
 
 | Area | Already available | Later work |
 | --- | --- | --- |
-| Fills / state chrome | Immutable multi-stop fills, opacity mapping, full-surface coordinates, rims and independent state roles. | Exact hard transitions: `RibbonGradientStops` currently requires strictly increasing offsets. Design an additive representation and shared painter/sampler support; preserve old constructor validation and avoid epsilon-stop approximations. |
-| Ribbon / tabs / QAT | Connected filled tabs, body joins, reduction, density/DPI snapshots, public renderer hooks and three QAT placements. | Opt-in framed group panels and label bands. Current `DrawGroupFrame` paints a separator, and `RibbonBodyAppearanceSettings` has no group-panel fill contract. |
+| Fills / state chrome | Immutable multi-stop fills, opacity mapping, full-surface coordinates, rims and independent state roles; G2 adds exact repeated-offset stops through an opt-in factory. | The existing constructor still requires strictly increasing offsets. The later preset must opt into hard transitions explicitly. |
+| Ribbon / tabs / QAT | Connected filled tabs, body joins, reduction, density/DPI snapshots, public renderer hooks and three QAT placements; G2 adds optional framed group panels and label bands. | Compose the 2007 roles in G4. Existing themes retain their separators and captions. |
 | File | Shared File command, routes, state fills, accessibility and rectangular geometry. | Theme-owned shape with explicit override/Reset, sphere/glyph painting, overlap metrics, QAT/title reservation and matching native hit testing. |
 | Application Menu | Native two-pane model, rich state/frame roles, footer, scrolling, nested popups and native custom content. | Orb-above-menu composition/anchor and any missing independent band metrics, then the 2007 palette. Recoloring the existing popup alone cannot establish overlap parity. |
 | Other surfaces | Shared menu/gallery/tip/editor and Options appearance pipelines; real native editors and dialog drafts. | Compose and review their own 2007 roles, especially creased fills and primary/secondary button feedback. |
@@ -189,8 +191,8 @@ this document does not introduce runtime APIs.
 
 | Slice | Deliverable and bounded gate |
 | --- | --- |
-| G1 - this document | Review palette, Orb/menu behavior, support gaps and sequence. **Stop before runtime changes.** |
-| G2 - shared paint foundations | Exact hard transitions and opt-in group-panel/label-band decoration. Focused painter/sampler, clip, DPI and old-default compatibility checks; no layout-engine replacement. |
+| G1 - this document | Palette, Orb/menu behavior, support gaps and sequence recorded. The subsequent user request authorizes G2 shared foundations only. |
+| G2 - shared paint foundations | **Implemented; review pending.** Exact hard transitions and opt-in group-panel/label-band decoration. Focused painter/sampler, clip, DPI and old-default compatibility evidence below; no layout-engine replacement. |
 | G3 - application button and menu composition | Shared shape/override, Orb geometry/glyph, caption hit testing, QAT reservation and Orb/menu layering/anchor. Prove one command owner, keyboard/UIA and native-content retention in an independent consumer before a family tile. |
 | G4 - normal Blue preset and ribbon | Add family identity, opaque palette, connected tabs, groups, rectangular override and Orb states; expose both permanent View galleries. Review the normal ribbon before downstream surface work. |
 | G5 - Application Menu palette | Apply frame/top/footer bands and gold/split feedback on the G3 composition. Review opening, pane switching, nested menus, resizing and native content. |
@@ -205,7 +207,126 @@ and human acceptance evidence separate. Retain the existing clipped ribbon
 repaint and full Solid Backstage preparation rather than reopening the renderer
 or animation architecture without a concrete regression.
 
-G1 validation is source/reference review, changed-link inspection and
+G1 validation was source/reference review, changed-link inspection and
 `git diff --check`. No build, runtime test, app launch or desktop capture is
-needed for this documentation-only proposal. Await the user's design review
-before G2 or any other runtime implementation.
+needed for that documentation-only proposal. The user's subsequent G2 request
+authorizes only the shared paint foundations below.
+
+## G2 shared paint foundations — 2026-11-20
+
+Entry: clean `codex/Ribbonkit-Winform`, HEAD `f239e3e` (`Office 2007 Planning`),
+with `ed382ff` retained. Changes stay under `winforms/`; WPF resources are read-only
+references. No preset, Orb/menu composition, diagnostic tabs or new sample UI.
+
+### Public contract and implementation
+
+- `RibbonGradientStops.WithHardTransitions(stops)` snapshots nondecreasing,
+  finite intermediate offsets strictly between 0 and 1. Repeated offsets are
+  stored exactly in authored order. The first color ends the incoming ramp;
+  the last starts the outgoing ramp and wins at the exact offset. Multiple
+  coincident stops are supported. The original constructor still rejects
+  duplicates, unordered offsets and endpoints. There is no epsilon approximation.
+  Equality/hash codes remain structural, independent of construction path;
+  endpoints, deconstruction, axis, empty normalization and all-stop opacity/color
+  mapping retain their existing contracts. Both shared painters use the sampler.
+  `BackgroundBounds` still anchors partial surface repaint to the full gradient.
+- `RibbonBodyAppearanceSettings.GroupPanel` accepts an immutable
+  `RibbonGroupPanelAppearanceSettings`. Background/label fills allow alpha and
+  hard or smooth gradients. Independent outer/inner inks, widths, radius,
+  panel/inner insets and expanded label ink are adjustable. Null or an empty
+  record retains the old rendering; geometry-only edits on an otherwise empty
+  record are inert. Explicit Transparent fills/inks can opt into invisible
+  decoration; width zero hides its rim. Group/member `with` edits and clearing
+  the optional record provide independent Reset. Validation is atomic before
+  assigning the theme; no existing preset changes.
+- `RibbonRenderer.DrawGroupPanel` is a replaceable public decoration hook, called
+  before group content and command painting. Public context
+  `GroupFrameBounds`, `GroupCaptionBounds` and `IsSimplifiedGroup` expose the
+  measured input; standalone painting may omit bounds to use existing fallback
+  geometry. `DrawGroup`, text, command, separator and editor hooks remain.
+- Classic expanded/collapsed panels share the original full group frame,
+  inset consistently without moving opener targets. Only expanded Classic
+  groups have a label band. It spans the existing caption area inside the outer
+  rim and clips to the same rounded interior. Gradients use the band's own
+  coordinates. Expanded caption ink follows SecondaryText unless overridden;
+  disabled framed captions use DisabledColor. Existing unframed captions retain
+  their exact rendering. Inner highlights overlay both panel and label.
+- Simplified mode frames each contiguous measured inline group run and existing
+  borrowed-group opener, without adding a caption band. Existing group dividers
+  are suppressed only while panel decoration is enabled. Root and minimized-body
+  popup paths use the same derivation, translated by existing scroll offsets.
+  The layout engine, item/native editor bounds, clips, hit targets, density,
+  reduction and body scroll negotiation are unchanged. Large authored rims and
+  insets clamp to the measured panel; they do not reserve new content space.
+- The rounded raster cache includes local fill coordinates for label bands.
+  Ordinary callers keep their existing local coordinates/cache behavior. Caller
+  clips and graphics state are restored; transparent fills/rims compose without
+  clearing other content. Additions are documented in XML and
+  `PublicAPI.Unshipped.txt`; the shipped baseline remains untouched.
+
+Example using only library APIs (this is not a built-in Office 2007 preset):
+
+```csharp
+var crease = new RibbonFill(Color.White, Color.Black)
+{
+    IntermediateStops = RibbonGradientStops.WithHardTransitions(
+        [new(.5, Color.White), new(.5, Color.Black)])
+};
+ribbon.Theme = ribbon.Theme with
+{
+    Hover = crease,
+    BodyAppearance = (ribbon.Theme.BodyAppearance ?? new()) with
+    {
+        GroupPanel = new()
+        {
+            Background = new(Color.LightBlue), BorderColor = Color.SteelBlue,
+            InnerBorderColor = Color.White, LabelBackground = new(Color.AliceBlue),
+            LabelForeground = Color.Navy, CornerRadius = 3, Inset = 2
+        }
+    }
+};
+```
+
+### Focused evidence and remaining review
+
+The independent public-only consumer is
+`tests/RibbonKit.WinForms.PaintConsumer`; it references the native
+library and framework APIs, with no Showcase resources/helpers or friend access.
+`eng/Test-PaintFoundation.ps1` compares its default images with a retained pre-G2
+assembly and runs the current opt-in/native scopes. It uses normal Debug/Release
+outputs; its baseline reference does not change branches or rebuild old source.
+
+Evidence is under `winforms/artifacts/office2007-g2/`:
+
+| Scope | Result and limit |
+| --- | --- |
+| Builds/API | Normal Debug runtime/public consumer and Release runtime/test projects build with zero warnings/errors on the final checks. API/XML analyzers pass; only Unshipped receives additions. Initial consumer restores emitted NU1900 because the vulnerability endpoint was unreachable; the final Debug build used cached packages with `-p:NuGetAudit=false`, not a fresh online audit. |
+| Existing regression selection | **58/58 pass**: `GradientFoundationTests`, `BodyPresentationTests`, `CollapsedGroupSeparatorTests`, `RendererBoundaryTests`, `DensityTests`, `TabHeaderClippingTests`. `direct-results.log` retains this scope. |
+| G2 regressions | Latest **27/27 pass**, `PaintFoundationTests`, in `direct-paint-final.log`: strict/additive validation, immutable structural equality/hash, coincident-stop ordering/right-continuity, endpoint edits, opacity/axis mapping, exact vertical/horizontal paint and full-surface clips at 96/120/144/192 DPI; alpha commands, measured panel/rim/band paint, caller clip/state restoration, corner containment, band-local hard gradients, label/disabled ink, zero/extreme/tiny decoration, atomic assignment, unchanged snapshots/targets/reduction and native editor HWND/parent/value/selection. Classic/Simplified root and minimized-body popup hooks pass. |
+| Initial test fixture and latest totals | The first in-process selection passed 78 and failed one newly added fixture: starting directly in Simplified overflowed the field before a native handle existed. The fixture now establishes the native editor in Classic before switching, matching the retained-editor contract. Its final run and the six added corner/popup cases pass. Latest union is **85 distinct passing cases**, not 79 + 27. Initial failure evidence is retained; no runtime workaround was added for the fixture. |
+| VSTest transport | `tests/g2-paint.trx` records an aborted zero-case run. The diagnostic retry identifies test-host `SocketException (10013)` connecting to the runner; it was cancelled once diagnosed. `vstest-diagnostic*.log` retains the evidence. The same built test assembly was discovered/executed by `XunitFrontController` with in-process discovery/execution and parallelism disabled. Runner source and normal Release output are retained under `direct-runner/`. These are actual xUnit results, not a successful `dotnet test`/TRX run or full-suite evidence. |
+| Independent defaults | `consumer-debug/comparison.json` and `result.log`: **32 byte-exact PNG pairs**, four existing families x two renderers x four DPI values, covering expanded/collapsed groups and resting/hot/pressed/checked command paint. Current null/empty group settings also match. Baseline is the retained package `0.1.0-designer.local20261120T135235944Z`, DLL SHA-256 `E15EB57C86AF0B348EFCE645F891F4A1158892E2F8983B43207C64329CBAF829`. It is a pre-G2 binary comparison, not a rebuilt source checkout. |
+| Independent features/native retention | `consumer-debug/current/result.log`: exact public hard-stop paint on both axes under partial surface clips; **8/8** offscreen native scopes at actual **120 DPI** (Classic/Simplified x Compact/Touch x wide/reduced), public measured hooks, unchanged item bounds/height, Reset and retained editor HWND/parent/text/selection. `consumer-retention/result.log` reruns only G2 features with added native bounds/visibility assertions; **8/8 pass**. No Showcase resources/helpers or friend access. |
+| Image inspection | Inspected generated `panel-Classic-Compact-1100.png`, `panel-Simplified-Compact-1100.png` and `panel-Classic-Touch-500.png` under `consumer-debug/current/`: expanded label bands, collapsed frames, compact runs and viewport clipping. Four-DPI raster assertions inspect all four corner masks/label containment. These are consumer-generated images, not desktop captures or human theme acceptance. |
+
+Reproduction from `winforms/` uses normal outputs:
+
+```powershell
+dotnet build tests/RibbonKit.WinForms.Tests/RibbonKit.WinForms.Tests.csproj -c Release --no-restore -m:1
+dotnet test tests/RibbonKit.WinForms.Tests/RibbonKit.WinForms.Tests.csproj -c Release --no-build --filter 'FullyQualifiedName~PaintFoundationTests|FullyQualifiedName~GradientFoundationTests|FullyQualifiedName~BodyPresentationTests|FullyQualifiedName~CollapsedGroupSeparatorTests|FullyQualifiedName~RendererBoundaryTests|FullyQualifiedName~DensityTests|FullyQualifiedName~TabHeaderClippingTests'
+# This session's socket-free execution of that selection:
+dotnet artifacts/office2007-g2/direct-runner/bin/Release/net10.0-windows/DirectRunner.dll 'PaintFoundationTests,GradientFoundationTests,BodyPresentationTests,CollapsedGroupSeparatorTests,RendererBoundaryTests,DensityTests,TabHeaderClippingTests'
+./eng/Test-PaintFoundation.ps1 -BaselineAssembly './artifacts/designer-sample/packages/ribbonkit.winforms/0.1.0-designer.local20261120t135235944z/lib/net10.0-windows7.0/RibbonKit.WinForms.dll' -Configuration Debug
+```
+
+The Designer Sample needs no refresh for this foundation slice: it has no new
+theme selector, authored property or review UI to consume. Its existing package,
+Forms/resources and retired diagnostic tabs are preserved. Backstage, frame/File
+route persistence, repaint-pressure and title-alignment implementations are
+untouched. The user's Zoom-loaded black-bar confirmation remains solely in the
+existing themes ledger, separate from automated or sampled evidence.
+
+Direct paint/offscreen native checks do not establish actual VS designer,
+physical input/IME, mixed-monitor behavior or human appearance acceptance.
+No desktop capture, Backstage re-investigation, WPF build or unrelated matrix ran.
+**Stop for G2 review; G3 and the Office 2007 preset remain pending.**
