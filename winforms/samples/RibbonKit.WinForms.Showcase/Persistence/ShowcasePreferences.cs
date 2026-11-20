@@ -18,6 +18,8 @@ internal sealed record ShowcasePreferences
     public RibbonTabContentAnimation TabContentAnimation { get; init; }
     public bool WordWrap { get; init; } = true;
     public RibbonWindowBackdrop Backdrop { get; init; }
+    public RibbonWindowFrameAppearance FrameAppearance { get; init; }
+    public RibbonFileMenuMode FileMenuMode { get; init; }
     public bool TransparentBackstage { get; init; }
     public ShowcaseWindowPlacement? Window { get; init; }
 
@@ -36,6 +38,7 @@ internal sealed record ShowcasePreferences
         if (value.Format != new ShowcasePreferences().Format || value.Version != 1
             || !Enum.IsDefined(value.LayoutMode) || !Enum.IsDefined(value.Density)
             || !Enum.IsDefined(value.AnimationLevel) || !Enum.IsDefined(value.TabContentAnimation) || !Enum.IsDefined(value.Backdrop)
+            || !Enum.IsDefined(value.FrameAppearance) || !Enum.IsDefined(value.FileMenuMode)
             || value.BuiltInTheme is { } theme && !Enum.IsDefined(theme) || value.AccentArgb is { } accent && Color.FromArgb(accent).A != 255)
             throw new InvalidOperationException("The preferences format or version is unsupported.");
         value.Window?.Validate();

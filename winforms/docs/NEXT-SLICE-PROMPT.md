@@ -208,11 +208,23 @@ actual VS, physical-input/IME, mixed-monitor or final visual acceptance is claim
 
 Use the [F7 evidence](OFFICE2010-BLUE-PLAN.md#f7-composed-review-evidence--2026-11-20)
 and the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger) as the
-normal-theme baseline. Designer Sample uses `0.1.0-designer.local20261120T091838772Z`.
+normal-theme baseline. Designer Sample uses `0.1.0-designer.local20261120T135235944Z`.
 Use the [F8 walkthrough](OFFICE2010-BLUE-PLAN.md#f8-visual-walkthrough) to review
 the neutral solid gradient, Acrylic and restored window edges. The shared frame
 palette and layout are ready for a future Office 2007 palette.
 Preserve native input, source/draft ownership and the accepted Backstage handoff.
+
+The [repaint-pressure follow-up](BACKSTAGE-PAGE-MOTION.md#ribbon-repaint-pressure-and-motion-preparation)
+records the caption damage/clock correction, backdrop group-title alignment,
+focused checks and desktop samples. Showcase now persists the requested Aero
+frame and File route; see the
+[preference record](M5E-SHOWCASE-PERSISTENCE.md#frame-and-file-surface-preferences).
+The [full Solid-pane preparation](BACKSTAGE-PAGE-MOTION.md#full-solid-pane-preparation-under-zoom)
+records the Zoom-loaded strip reproduction and native first-drawing correction.
+The ledger owns the partial F8 review and the correction's pending live review.
+Keep Office 2007 documentation work paused until the user confirms that review
+passes; its first slice then remains documentation-only and stops for review
+before runtime changes.
 
 The user revised the remaining sequence on **2026-11-15**:
 

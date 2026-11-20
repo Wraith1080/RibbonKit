@@ -69,8 +69,13 @@ internal sealed class RibbonBackstagePageMotion : IDisposable
         Target.VisibleChanged += Visibility; Target.Disposed += Unsafe;
         _viewport.SizeChanged += Unsafe;
         _form.Deactivate += Unsafe; _form.LocationChanged += Unsafe; _form.HandleDestroyed += Unsafe;
-        _subscribed = true; _start = Stopwatch.GetTimestamp();
-        try { RibbonDrawingHold.UpdatePending(Target.Handle); _timer.Start(); }
+        _subscribed = true;
+        try
+        {
+            RibbonDrawingHold.UpdatePending(Target.Handle);
+            if (_disposed) return;
+            _start = Stopwatch.GetTimestamp(); _timer.Start();
+        }
         catch { Dispose(); throw; }
     }
     internal void SetProgress(double progress)

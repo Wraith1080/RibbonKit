@@ -18,11 +18,29 @@ public partial class MainForm
             if (saved.Backdrop != material || !saved.TransparentBackstage) throw new InvalidOperationException("Backdrop change did not automatically save requested appearance.");
         }
         writer.Backdrop = RibbonWindowBackdrop.Mica;
+        writer._sampleAppearance.SelectTheme(RibbonBuiltInTheme.Office2010Blue);
+        foreach (var frame in new[] { RibbonWindowFrameAppearance.Office2010Aero, RibbonWindowFrameAppearance.Standard, RibbonWindowFrameAppearance.Office2010Aero })
+        {
+            writer.FrameAppearance = frame;
+            if (Persistence.ShowcasePreferences.FromJson(File.ReadAllText(path)).FrameAppearance != frame)
+                throw new InvalidOperationException("Frame preference did not save immediately.");
+        }
+        foreach (var mode in new[] { RibbonFileMenuMode.Backstage, RibbonFileMenuMode.CommandMenu, RibbonFileMenuMode.Backstage })
+        {
+            writer.ribbon.FileMenuMode = mode;
+            if (Persistence.ShowcasePreferences.FromJson(File.ReadAllText(path)).FileMenuMode != mode)
+                throw new InvalidOperationException("File surface preference did not save immediately.");
+        }
         using var reader = new MainForm(settings);
         if (reader.Backdrop != RibbonWindowBackdrop.Mica || reader.ribbon.Backstage.NavigationBackgroundOpacity != 0)
             throw new InvalidOperationException("Actual Showcase startup did not restore backdrop/clear navigation preferences.");
+        if (reader.FrameAppearance != RibbonWindowFrameAppearance.Office2010Aero || reader.ribbon.FileMenuMode != RibbonFileMenuMode.Backstage)
+            throw new InvalidOperationException("Actual Showcase startup did not restore Aero/File surface preferences.");
+        reader._sampleAppearance.SelectTheme(RibbonBuiltInTheme.Office2024Light);
+        if (reader.FrameAppearance != RibbonWindowFrameAppearance.Office2010Aero)
+            throw new InvalidOperationException("Changing theme discarded the saved Aero preference.");
         if (writer.Visible || reader.Visible) throw new InvalidOperationException("Preference check unexpectedly showed a window.");
-        File.WriteAllText(Path.Combine(directory, "result.log"), "PASS: automatic Mica/Acrylic/Solid saves and actual Showcase startup restore; transparent navigation is zero-opacity; no visible windows/input");
+        File.WriteAllText(Path.Combine(directory, "result.log"), "PASS: automatic Mica/Acrylic/Solid, Aero/Standard and File surface saves and actual Showcase startup restore; retained Aero across theme change; transparent navigation is zero-opacity; no visible windows/input");
     }
     // Isolated, real-process acceptance path. Program only enables storage for
     // this diagnostic when an explicit settings directory is supplied.
@@ -73,6 +91,9 @@ public partial class MainForm
             var animation = ribbon.Tabs.Single(t => t.Id == "tab.merging").Groups.Single(g => g.Id == "group.ribbonAnimation");
             animation.Items.Single(i => i.Id == "demo.animation.Expressive").PerformClick();
             ((RibbonDropDownItem)animation.Items.Single(i => i.Id == "demo.animation.tabContent")).Items.Single(i => i.Id.EndsWith(".SlideDown", StringComparison.Ordinal)).PerformClick();
+            _sampleAppearance.SelectTheme(RibbonBuiltInTheme.Office2010Blue);
+            FrameAppearance = RibbonWindowFrameAppearance.Office2010Aero;
+            ribbon.FileMenuMode = RibbonFileMenuMode.Backstage;
             Bounds = new(70, 80, 1100, 740); WindowState = FormWindowState.Maximized;
             // Direct placement/visibility changes also persist outside a dialog.
             ribbon.QuickAccessPosition = RibbonQuickAccessPosition.TabRow; ribbon.QuickAccessVisible = false;
@@ -88,6 +109,8 @@ public partial class MainForm
             Require(!document.WordWrap && WindowState == FormWindowState.Maximized, "Editor/window preferences did not survive restart.");
             Require(ribbon.QuickAccessPosition == RibbonQuickAccessPosition.TabRow && !ribbon.QuickAccessVisible, "Direct QAT preferences did not survive restart.");
             Require(Backdrop == RibbonWindowBackdrop.Mica && ribbon.Backstage.NavigationBackgroundOpacity == 0, "Backdrop/transparent navigation preferences did not survive restart.");
+            Require(_sampleAppearance.SelectedTheme == RibbonBuiltInTheme.Office2010Blue && FrameAppearance == RibbonWindowFrameAppearance.Office2010Aero
+                && ribbon.FileMenuMode == RibbonFileMenuMode.Backstage, "Aero/theme/File surface choices did not survive restart.");
             using var live = ribbon.CommandCatalog.BeginCustomization(CustomizationApplicationId);
             Require(live.Draft.QuickAccess.Any(q => q.CommandId == "demo.qat.redo") && live.Draft.QuickAccess.Count == 4, "QAT Apply/Cancel checkpoint was lost.");
             Require(live.Draft.Ribbon!.Tabs.Single(t => t.Id == home.Id).Label == "Home saved", "Authored tab rename was lost.");
@@ -102,6 +125,7 @@ public partial class MainForm
             Require(ribbon.AnimationLevel == RibbonAnimationLevel.Subtle && ribbon.TabContentAnimation == RibbonTabContentAnimation.Fade && document.WordWrap, "Safe application defaults were not used.");
             Require(ribbon.QuickAccessItems.Count == 3 && ribbon.QuickAccessPosition == RibbonQuickAccessPosition.TitleBar && ribbon.QuickAccessVisible, "Safe customization defaults were not used.");
             Require(Backdrop == RibbonWindowBackdrop.None && ribbon.Backstage.NavigationBackgroundOpacity == 1, "Safe backdrop defaults were not used.");
+            Require(FrameAppearance == RibbonWindowFrameAppearance.Standard && ribbon.FileMenuMode == RibbonFileMenuMode.CommandMenu, "Safe frame/File surface defaults were not used.");
         }
         else throw new ArgumentException("Unknown persistence probe phase: " + phase);
         File.WriteAllText(resultPath, JsonSerializer.Serialize(new { Result = "PASS", Phase = phase, Preferences = CapturePreferences(), Warning = _persistenceWarning }, new JsonSerializerOptions { WriteIndented = true }));

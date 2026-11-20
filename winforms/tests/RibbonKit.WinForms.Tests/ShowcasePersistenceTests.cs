@@ -34,6 +34,10 @@ public sealed class ShowcasePersistenceTests : IDisposable
     [InlineData("{\"format\":\"RibbonKit.WinForms.Showcase.Preferences\",\"version\":1,\"density\":1}")]
     [InlineData("{\"format\":\"RibbonKit.WinForms.Showcase.Preferences\",\"version\":1,\"backdrop\":\"Future\"}")]
     [InlineData("{\"format\":\"RibbonKit.WinForms.Showcase.Preferences\",\"version\":1,\"backdrop\":2}")]
+    [InlineData("{\"format\":\"RibbonKit.WinForms.Showcase.Preferences\",\"version\":1,\"frameAppearance\":\"Future\"}")]
+    [InlineData("{\"format\":\"RibbonKit.WinForms.Showcase.Preferences\",\"version\":1,\"fileMenuMode\":\"Future\"}")]
+    [InlineData("{\"format\":\"RibbonKit.WinForms.Showcase.Preferences\",\"version\":1,\"frameAppearance\":1}")]
+    [InlineData("{\"format\":\"RibbonKit.WinForms.Showcase.Preferences\",\"version\":1,\"fileMenuMode\":1}")]
     [InlineData("{\"format\":\"RibbonKit.WinForms.Showcase.Preferences\",\"version\":1,\"builtInTheme\":\"Future\"}")]
     [InlineData("{\"format\":\"RibbonKit.WinForms.Showcase.Preferences\",\"version\":1,\"builtInTheme\":1}")]
     [InlineData("{\"format\":\"RibbonKit.WinForms.Showcase.Preferences\",\"version\":1,\"window\":{\"x\":0,\"y\":0,\"width\":0,\"height\":100,\"dpi\":96,\"maximized\":false}}")]
@@ -91,6 +95,23 @@ public sealed class ShowcasePersistenceTests : IDisposable
         Assert.Equal(RibbonWindowBackdrop.None, restored.Backdrop); Assert.False(restored.TransparentBackstage);
         Assert.Equal(RibbonDensity.Touch, restored.Density);
         Assert.Null(restored.BuiltInTheme);
+        Assert.Equal(RibbonWindowFrameAppearance.Standard, restored.FrameAppearance);
+        Assert.Equal(RibbonFileMenuMode.CommandMenu, restored.FileMenuMode);
+    }
+
+    [Theory]
+    [InlineData(RibbonWindowFrameAppearance.Standard, RibbonFileMenuMode.CommandMenu)]
+    [InlineData(RibbonWindowFrameAppearance.Standard, RibbonFileMenuMode.Backstage)]
+    [InlineData(RibbonWindowFrameAppearance.Office2010Aero, RibbonFileMenuMode.CommandMenu)]
+    [InlineData(RibbonWindowFrameAppearance.Office2010Aero, RibbonFileMenuMode.Backstage)]
+    public void Frame_and_file_surface_choices_survive_file_restart(RibbonWindowFrameAppearance frame, RibbonFileMenuMode file)
+    {
+        Assert.Null(new ShowcaseSettingsFile(SettingsPath).Save(new ShowcasePreferences
+        { BuiltInTheme = RibbonBuiltInTheme.Office2010Blue, FrameAppearance = frame, FileMenuMode = file }.ToJson()));
+        ShowcasePreferences? restored = null;
+        Assert.Null(new ShowcaseSettingsFile(SettingsPath).Load(json => restored = ShowcasePreferences.FromJson(json)));
+        Assert.Equal(frame, restored!.FrameAppearance);
+        Assert.Equal(file, restored.FileMenuMode);
     }
 
     [Theory] [InlineData(null)] [InlineData(RibbonBuiltInTheme.Office2019Light)] [InlineData(RibbonBuiltInTheme.Office2024Light)]

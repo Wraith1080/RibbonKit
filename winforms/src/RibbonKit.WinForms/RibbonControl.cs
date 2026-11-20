@@ -586,6 +586,7 @@ public partial class RibbonControl : Control, ISupportInitialize
         var state = e.Graphics.Save();
         try
         {
+            e.Graphics.SetClip(e.ClipRectangle, System.Drawing.Drawing2D.CombineMode.Intersect);
             if (composited && _backdropBodyMasked && !KeepsBackdropFrame && !CapturingBackdropScene)
                 e.Graphics.SetClip(new Rectangle(0, 0, Width, BackdropHeaderHeight), System.Drawing.Drawing2D.CombineMode.Intersect);
             PaintRibbonCore(e, composited);
@@ -641,8 +642,8 @@ public partial class RibbonControl : Control, ISupportInitialize
         var state = e.Graphics.Save();
         try
         {
-            e.Graphics.SetClip(_snapshot.BodyViewport);
-            if (!maskContent)
+            e.Graphics.SetClip(_snapshot.BodyViewport, System.Drawing.Drawing2D.CombineMode.Intersect);
+            if (!maskContent && _snapshot.BodyViewport.IntersectsWith(e.ClipRectangle))
             {
                 foreach (var slot in _snapshot.Groups)
                     Painter.DrawGroup(context with
@@ -664,6 +665,9 @@ public partial class RibbonControl : Control, ISupportInitialize
         finally { e.Graphics.Restore(state); }
         foreach (var target in _snapshot.Targets)
         {
+            // Caption/title animation must not rerender every command and SVG
+            // in the body. Keep the native invalidation and caller clip intact.
+            if (!target.Clip.IntersectsWith(e.ClipRectangle)) continue;
             if (maskContent && IsBodyContent(target) || target.DropDownPart || target.Element is RibbonItem field && RibbonEditorLayout.IsField(field, target.Size))
                 continue;
             var arrow = RibbonSplitLayout.IsSplit(target.Element) ? _snapshot.Targets.First(t => ReferenceEquals(t.Element, target.Element) && t.DropDownPart) : null;
@@ -672,7 +676,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             state = e.Graphics.Save();
             try
             {
-                e.Graphics.SetClip(target.Clip);
+                e.Graphics.SetClip(target.Clip, System.Drawing.Drawing2D.CombineMode.Intersect);
                 var ctx = context with
                 {
                     Theme = target.Kind is TargetKind.QuickAccess or TargetKind.QuickAccessOverflow ? qatTheme

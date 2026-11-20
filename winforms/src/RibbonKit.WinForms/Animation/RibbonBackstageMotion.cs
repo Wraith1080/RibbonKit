@@ -51,8 +51,9 @@ internal sealed class RibbonBackstageMotion : IDisposable
             // opening whose authored fade starts at full opacity.
             surface.AcquireMotionOpacity(closing ? alpha : (byte)1);
             surface.SetMotionAlpha(alpha);
-            // Move before showing, and seed native redirection at the authored opacity.
-            if (!closing) surface.MoveForMotion(new(motion._origin.X - motion._travel, motion._origin.Y));
+            // Material owns a separate page layer. Solid must seed its whole
+            // native drawing at the unclipped origin before the initial move.
+            if (!closing && ribbon.HasWindowBackdrop) surface.MoveForMotion(new(motion._origin.X - motion._travel, motion._origin.Y));
             return motion;
         }
         catch (Win32Exception error) { Trace.WriteLine("Backstage motion skipped: " + error.Message); motion.Cancel(); return null; }
@@ -64,8 +65,25 @@ internal sealed class RibbonBackstageMotion : IDisposable
         if (!_surface.Visible || !_ribbon.IsBackstageOpen) { Dispose(); return; }
         _surface.ClientSizeChanged += Unsafe; _surface.HandleDestroyed += Unsafe; _surface.VisibleChanged += Visibility; _surface.Disposed += Unsafe;
         _form.LocationChanged += Unsafe; _form.Deactivate += Unsafe; _form.HandleDestroyed += Unsafe;
-        _subscribed = true; _start = Stopwatch.GetTimestamp(); _timer.Start();
-        try { PaintFrame(); }
+        _subscribed = true;
+        try
+        {
+            if (!IsClosing && !_ribbon.HasWindowBackdrop)
+            {
+                // Alpha remains one while every native child draws at its
+                // final, unclipped position. Otherwise the cached pane starts
+                // with unpainted left pixels that travel can briefly reveal.
+                _surface.RepaintBackdrop(publishOpacity: false);
+                if (_disposed) return;
+                _surface.MoveForMotion(new(_origin.X - _travel, _origin.Y));
+                PaintFrame(retainPage: true);
+            }
+            else PaintFrame();
+            // Cold native drawing can outlast the transition itself. Start its
+            // clock only after frame zero is ready, including under CPU load.
+            if (_disposed) return;
+            _start = Stopwatch.GetTimestamp(); _timer.Start();
+        }
         catch (Win32Exception error) { Trace.WriteLine("Backstage presentation skipped: " + error.Message); Dispose(); }
         catch { Dispose(); throw; }
     }

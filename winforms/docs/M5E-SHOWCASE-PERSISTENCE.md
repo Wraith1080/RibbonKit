@@ -81,3 +81,27 @@ ordinary last-writer behavior.
 Physical monitor/DPI migration and human visual/restart acceptance remain pending.
 No WPF, full native suite, Release or package campaign ran. Backdrop flicker remains
 a separate M6C investigation, not established fixed by these persistence checks.
+
+## Frame and File surface preferences
+
+**2026-11-20.** Version-one preferences now also store the requested
+`frameAppearance` and `fileMenuMode`. Restore applies them after theme/accent/caption selection;
+`FrameAppearanceChanged` and `FileMenuModeChanged` save accepted changes
+immediately. A rejected mode change does not raise that event or save a new
+choice. The retained Aero request survives selecting a theme without an Aero
+palette. Open-menu/Backstage visibility remains transient.
+
+Older files without the fields keep Standard and CommandMenu defaults. Unknown
+or numeric enum input retains the existing rejected-file/no-overwrite behavior;
+there is no schema bump or rewrite of customization data.
+
+The focused storage cases cover all four frame/File combinations and invalid
+input. The normal Debug Showcase hidden preference check passes automatic
+Solid/Mica/Acrylic, Aero/Standard and File-route saves, real startup restore and
+retention across theme changes. Separate actual-process write/read probes pass
+Office 2010 Blue + Aero + Backstage restore, along with their existing Apply/Cancel
+checkpoint checks. All files are isolated under
+`artifacts/backstage-opening-followup/persistence/`; real user preferences were
+not changed. The combined focused runtime/storage evidence and remaining live
+review limits are in the
+[motion follow-up](BACKSTAGE-PAGE-MOTION.md#ribbon-repaint-pressure-and-motion-preparation).

@@ -40,6 +40,8 @@ public partial class MainForm
                 ribbon.TabContentAnimation = preferences.TabContentAnimation;
                 document.WordWrap = preferences.WordWrap;
                 Backdrop = preferences.Backdrop;
+                FrameAppearance = preferences.FrameAppearance;
+                ribbon.FileMenuMode = preferences.FileMenuMode;
                 ribbon.Backstage.NavigationBackgroundOpacity = preferences.TransparentBackstage ? 0 : 1;
                 _startupPlacement = preferences.Window;
                 level = preferences.AnimationLevel;
@@ -56,6 +58,8 @@ public partial class MainForm
         ribbon.LayoutModeChanged += (_, _) => SavePreferences();
         ribbon.IsMinimizedChanged += (_, _) => SavePreferences();
         BackdropChanged += (_, _) => SavePreferences();
+        FrameAppearanceChanged += (_, _) => SavePreferences();
+        ribbon.FileMenuModeChanged += (_, _) => SavePreferences();
         ribbon.Backstage.NavigationBackgroundOpacityChanged += (_, _) => SavePreferences();
         ribbon.QuickAccessPositionChanged += (_, _) => QueueCustomizationSave();
         ribbon.QuickAccessVisibleChanged += (_, _) => QueueCustomizationSave();
@@ -94,6 +98,7 @@ public partial class MainForm
         ColorTitleBar = _sampleAppearance.ColorTitleBar,
         AnimationLevel = ribbon.AnimationLevel, TabContentAnimation = ribbon.TabContentAnimation, WordWrap = document.WordWrap,
         Backdrop = Backdrop, TransparentBackstage = ribbon.Backstage.NavigationBackgroundOpacity < 1,
+        FrameAppearance = FrameAppearance, FileMenuMode = ribbon.FileMenuMode,
         Window = new(_normalWindowBounds.X, _normalWindowBounds.Y, _normalWindowBounds.Width, _normalWindowBounds.Height,
             _normalWindowDpi, _lastWindowState == FormWindowState.Maximized)
     };

@@ -1,7 +1,8 @@
 # Native Backstage page content motion
 
-Status, **2026-11-20: whole-pane buffering and first-page-frame follow-up
-implemented. Live review of the intermittent black strip is pending.**
+Status, **2026-11-20: full Solid-pane preparation now precedes native travel.
+Zoom-loaded before/after captures and focused checks pass; live review remains
+in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).**
 The earlier Solid-mode exposed-area correction was accepted on 2026-11-01.
 
 The user's subsequent TextBox/RichTextBox flicker report is addressed by the
@@ -289,3 +290,123 @@ zero blue File frames across 88 samples and retained the gray hover underline.
 Captures are under `artifacts/backstage-file-close-flicker/`. Showcase and
 Designer Sample rebuilt in Debug. The refreshed package is
 `0.1.0-designer.local20261120T091838772Z`.
+
+## Ribbon repaint pressure and motion preparation
+
+**2026-11-20.** Current live review is recorded once in the
+[themes ledger](THEMES-PLAN.md#current-status-and-review-ledger). This follow-up
+keeps the live Backstage child pane, native page handles and parents, existing
+travel/fades, input cancellation and reduced-motion policy. The Form itself
+does not move. A large pane still incurs native drawing/composition work.
+
+Caption-only invalidation previously invoked the command-body group and item
+drawing hooks. The body and target loops also replaced the caller's Graphics
+clip. Ribbon paint now intersects the damage/caller clip, skips the body for
+caption-only damage, and skips targets whose viewport does not intersect the
+damage. This avoids repeating command text/SVG work on caption animation ticks.
+Pane and page clocks now start after their initial native drawing finishes;
+slow preparation no longer spends the animation's time budget.
+
+The separate backdrop title shift came from a missing SingleLine flag on group
+captions: composited theme text did not vertically center that caption. The
+same single-line caption contract now applies to opaque and material drawing.
+Before the correction, raster comparisons put material text 3, 4, 5 and 6 pixels
+higher at 96, 120, 144 and 192 paint DPI respectively. The four cases now pass.
+
+Verification and limits:
+
+- The Release test assembly passes **166 selected cases** covering the new
+  caption clipping/alignment and slow-preparation checks, Backstage pane/page
+  motion, native editor repaint/retention, File/caption handoff, Aero, affected
+  text/header clipping and preference storage. Tests ran through the scoped
+  in-process runner under `artifacts/backstage-opening-followup/Runner`, with
+  the consumer's Windows compatibility manifest. Standard VSTest transport
+  timed out before connecting; no clean VSTest/full-suite run is claimed. The
+  earlier manifest-less diagnostic run was invalid for layered native children;
+  retain its failures alongside the corrected run.
+- Normal Debug runtime/designer server/net472 client, Showcase and Designer
+  Sample build successfully. The first refresh had a transient designer-cache
+  write warning; the subsequent normal sample build is clean. The refreshed
+  captured public package is `0.1.0-designer.local20261120T130551952Z`. The final
+  refresh after source line-ending normalization uses
+  `0.1.0-designer.local20261120T131504919Z`, with the same implementation and clean
+  normal Debug sample builds.
+- At actual 120 DPI, the public-package capture host loads the actual sample
+  forms with user storage disabled. Office 2024 maximized Showcase/Mica has
+  **2,158 -> 0** caption-triggered body group/item drawing calls across ten
+  openings and six Info/Print changes in each package. The before/after runs
+  sampled 134/137 compositor frames with no detected dark strips. Corrected
+  Designer Sample Solid/Acrylic runs each cover ten openings and six changes,
+  sampling 135/137 frames with no detected dark strips. Page editor handles,
+  parents, text and selection are checked separately from the drawing counts.
+- A final detector pass includes the exact Office 2024 pane top below the
+  45-device-pixel caption, with only a two-pixel outer safety margin at 120 DPI.
+  Ten openings and six changes each in Showcase/Mica and Designer Sample/Solid
+  sampled 136/140 frames with zero detected dark strips. This closes the earlier
+  detector's gap at the pane boundary; it still does not establish continuous
+  playback or reproduce the reported intermittent bar.
+- Detector captures, per-transition UI gaps and paint counts are under
+  `artifacts/backstage-opening-followup/`. Early foreground-interrupted runs
+  are incomplete and are not pass evidence. Capture work affects timing;
+  neither these counts nor sparse desktop samples establish continuous pacing,
+  behavior while Zoom is running, WPF performance parity, actual VS or
+  mixed-monitor acceptance. These runs did not reproduce the reported residual
+  black bar, so it is not marked fixed.
+
+Showcase's missing Aero and File-surface persistence is application-owned; see
+the [preference follow-up](M5E-SHOWCASE-PERSISTENCE.md#frame-and-file-surface-preferences).
+
+## Full Solid pane preparation under Zoom
+
+**2026-11-20.** A faster, unsynchronized capture of the actual Designer Sample,
+default renderer and View tab reproduced a vertical dark strip at the left edge
+of the moving Solid pane with Zoom running. Full-window synchronized readback
+was only sampling about 14 frames/second under this load. The upper-pane capture
+reaches about 30 frames/second and checks the affected left edge separately from
+legitimate black command artwork. Foreground plus window-at-point checks and
+keeping the fixture pointer away from the taskbar exclude preview overlays;
+the first Zoom run with taskbar previews is invalid evidence.
+
+Solid previously moved the hidden pane partly outside the visible client before
+its first native paint. Its new redirection cache could therefore start with
+unpainted pixels that later travel exposed. Opening now keeps native alpha at
+one while the full pane and its real children paint at their settled origin,
+then applies the authored initial travel and publishes the frame. Subsequent
+steps retain that drawing. No application-page bitmap, duplicate controls,
+reparenting, new opacity preference or rendering backend is introduced. Material
+keeps its existing separate page-layer path; closing and motion policies retain
+their existing owners. Cancellation during preparation returns before moving
+an already settled pane.
+
+Suppressing native copy-bits for Solid movement alone did not fix the captured
+strip; that trial was reverted. Preserve its captures as an investigation limit.
+
+- The matched before/after Designer Sample cases each cover ten openings, six
+  Info/Print changes and ten closes at actual 120 DPI with Zoom running. The
+  prior binary shows **3 left-strip frames in 410 samples**; the corrected
+  candidate shows **zero in 410**. Candidate Showcase/Office 2024 Solid and
+  Designer Sample/Office 2010 Aero Solid scopes show zero in 404/406 samples.
+  Captures and timings are under `artifacts/backstage-opening-followup/zoom-*`.
+- Two new native regression cases fail before the correction: their first
+  drawing starts at Left=-155. They now verify a full-origin first drawing at
+  alpha one, retained authored travel, and zero paint/erase messages for native
+  fields outside the exposed strip across four movement steps, with unchanged
+  handles, parents, text and selection. A third case covers cancellation from
+  the first paint. **98 selected Release cases pass** through the same
+  compatibility-manifest in-process runner as the prior record; no new full
+  suite or successful VSTest transport run is claimed.
+- Normal Debug runtime/designer server, Showcase and Designer Sample builds
+  pass with zero warnings/errors; the independent net472 client has no change
+  and retains its prior clean build. Designer Sample is refreshed in place to
+  `0.1.0-designer.local20261120T135235944Z`; authored source/resources and normal
+  output folders are preserved.
+- The refreshed public package also passes the three final 120-DPI Zoom-loaded
+  capture scopes: actual Designer Sample/Office 2024 Solid, actual Showcase/
+  Office 2010 Standard Solid, and an independent Office 2024 Solid model with
+  no sample resources or helpers. Each covers ten openings, six page changes
+  and ten closes; **424/424/426 samples show zero detected left-strip frames**.
+  These are the `zoom-package-*` records, with native editor retention checked.
+
+The captured strip is corrected in these sampled scopes. Continuous playback,
+other hardware/DPI/material combinations and the user's final live review remain
+separate; Office 2007 stays paused at the existing review boundary.
