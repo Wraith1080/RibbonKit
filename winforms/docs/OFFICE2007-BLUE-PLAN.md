@@ -1,12 +1,15 @@
 # Native Office 2007 Blue appearance contract
 
-**2026-11-21 - G2/G3 shared foundations implemented.**
+**2026-11-21 - G4 normal Blue ribbon implemented; live appearance review pending.**
 G1 remains the appearance reference. G2's additive APIs and focused evidence are
 [recorded below](#g2-shared-paint-foundations--2026-11-20). No Office 2007
 runtime preset or sample tile is delivered by G2.
 Current family acceptance belongs in the
 [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
-The [G3 composition record](#g3-application-button-and-menu-composition--2026-11-21) follows G2. The normal Blue preset/ribbon is next in G4; no foundation visual-review stop is required.
+The [G3 composition record](#g3-application-button-and-menu-composition--2026-11-21) follows G2.
+The [G4 delivery](#g4-normal-blue-preset-and-ribbon--2026-11-21) composes these foundations
+into the preset and both permanent View galleries. Foundation review was waived;
+normal-ribbon review remains the boundary before G5's dedicated menu palette.
 
 ## Reference and boundary
 
@@ -174,13 +177,13 @@ to supply a 2007 palette.
 
 | Area | Already available | Later work |
 | --- | --- | --- |
-| Fills / state chrome | Immutable multi-stop fills, opacity mapping, full-surface coordinates, rims and independent state roles; G2 adds exact repeated-offset stops through an opt-in factory. | The existing constructor still requires strictly increasing offsets. The later preset must opt into hard transitions explicitly. |
-| Ribbon / tabs / QAT | Connected filled tabs, body joins, reduction, density/DPI snapshots, public renderer hooks and three QAT placements; G2 adds optional framed group panels and label bands. | Compose the 2007 roles in G4. Existing themes retain their separators and captions. |
-| File | Shared File command/routes and rectangular paint; G3 adds theme-owned shape, explicit override/Reset, sphere/glyph/focus hooks, overlap reservations and circular input. | Supply the family palette/default in G4; preserve an explicit rectangular override and saved File route. |
+| Fills / state chrome | Immutable multi-stop fills, opacity mapping, full-surface coordinates, rims and independent state roles; G2 adds exact repeated-offset stops through an opt-in factory. | The existing constructor still requires strictly increasing offsets. G4 opts into hard transitions explicitly. |
+| Ribbon / tabs / QAT | Connected filled tabs, body joins, reduction, density/DPI snapshots, public renderer hooks and three QAT placements; G2 adds optional framed group panels and label bands. | G4 composes the 2007 roles; existing themes retain their separators and captions. |
+| File | Shared File command/routes and rectangular paint; G3 adds theme-owned shape, explicit override/Reset, sphere/glyph/focus hooks, overlap reservations and circular input. | G4 supplies the family palette/default and preserves an explicit rectangular override and saved File route. |
 | Application Menu | Native two-pane model, state/frame roles, footer/scrolling/nested popups/custom content; G3 adds native Orb/caption cutouts, measured origin and top-band content clearance. | Apply the 2007 band/frame palette in G5. Native font/DPI clearances are not a claim of WPF pixel parity. |
 | Other surfaces | Shared menu/gallery/tip/editor and Options appearance pipelines; real native editors and dialog drafts. | Compose and review their own 2007 roles, especially creased fills and primary/secondary button feedback. |
 | Aero | Theme-owned palette/edge width and native frame/material owner; restored/maximized transitions. | A separately reviewed 2007 palette using that owner. Reflection/grain and a different material/tab split remain deferred. |
-| Consumers / designer | Permanent View galleries in both samples, persistence and independent package-only verification. | Add the preset and append its built-in identity without renumbering existing values; update theme serialization, inert designer preview and both galleries. No diagnostic tabs. |
+| Consumers / designer | Permanent View galleries in both samples, persistence and independent package-only verification. | G4 appends identity 4 without renumbering existing values and updates serialization, inert preview and both galleries. No diagnostic tabs. |
 
 Keep new settings optional with existing defaults and explicit override/Reset
 precedence. Any public additions need XML documentation and an additive API
@@ -194,7 +197,7 @@ this document does not introduce runtime APIs.
 | G1 - this document | Palette, Orb/menu behavior, support gaps and sequence recorded. The subsequent user request authorizes G2 shared foundations only. |
 | G2 - shared paint foundations | **Implemented.** Exact hard transitions and opt-in group-panel/label-band decoration. Focused painter/sampler, clip, DPI and old-default compatibility evidence below; no layout-engine replacement. |
 | G3 - application button and menu composition | **Implemented.** Shared shape/override, Orb geometry/glyph, caption hit testing, QAT reservation and native Orb/menu cutouts/anchor. Independent keyboard/UIA/native-content evidence below; no family tile yet. |
-| G4 - normal Blue preset and ribbon | Add family identity, opaque palette, connected tabs, groups, rectangular override and Orb states; expose both permanent View galleries. Review the normal ribbon before downstream surface work. |
+| G4 - normal Blue preset and ribbon | **Implemented.** Family identity, opaque palette, connected tabs, groups, rectangular override and Orb states; exposed in both permanent View galleries. Normal-ribbon appearance review is pending before downstream surface work. |
 | G5 - Application Menu palette | Apply frame/top/footer bands and gold/split feedback on the G3 composition. Review opening, pane switching, nested menus, resizing and native content. |
 | G6 - Options and companion surfaces | Apply Options/customization, editor, gallery, menu and tip roles through existing pipelines. Check drafts, validation, Apply/OK/Cancel/Reset and ownership. |
 | G7 - composed normal-theme review | Refresh the existing Designer Sample in place and verify both samples plus a consumer without sample resources. Human review covers Classic/Simplified, density, state feedback, File routes and resize/maximize/restore. |
@@ -490,3 +493,75 @@ needed. Actual VS designer, physical input/IME, mixed-monitor DPI, material pixe
 and human normal-theme acceptance remain separate. No desktop capture or
 Backstage black-bar/performance re-investigation ran. No commit, push or branch
 change. **G3 completes the shared composition foundation; G4 is next.**
+
+## G4 normal Blue preset and ribbon — 2026-11-21
+
+Implemented on `codex/Ribbonkit-Winform`, starting from the user's clean
+`037ac25` (`G3 2007 Theme`). All source/document edits stay under `winforms/`.
+No commit, staging, branch change or WPF build. Current acceptance is recorded
+once in the themes ledger; this record describes implementation and evidence.
+
+- Added `RibbonThemes.Office2007Blue` and append-only
+  `RibbonBuiltInTheme.Office2007Blue = 4`; prior identities remain 0..3.
+  XML documentation and `PublicAPI.Unshipped.txt` cover both additions.
+- Composed G1's exact opaque caption/body/group valleys, flat `#BFDBFF` tab band,
+  selected-tab highlights/open foot, blue text and body outline through existing
+  shared appearance roles. G2 supplies the measured frames/label bands, 1-logical
+  rims and 3-logical corners; item slots/reduction/layout remain unchanged.
+- Hover, pressed, checked and checked-hover use exact duplicate offsets; no
+  near-adjacent substitutes. Gold feedback and the Orb do not follow accent
+  recoloring. Ordinary command ink/native white editor wells remain independent.
+  Split companions retain transparent fills and the shared perimeter/rim.
+- G3's default Orb now has the reference silver idle, gold hover, amber
+  pressed/open, rim and blue-gray shadow. Its measured Compact/Touch geometry,
+  glyph hook, borrowed icon, focus/input ownership and explicit shape Reset remain.
+  Rectangular File uses the independent exact blue creased identity ramps,
+  white text and solid blue open fill. The optional colored-title recipe uses
+  that blue identity ramp; switching it off restores the neutral caption valley.
+- Added both permanent View gallery tiles and designer choice parsing. The shared
+  sample helper uses the public preset; all drawing remains reusable library
+  behavior. Sample startup theme and saved File/frame/material choices remain.
+- A real Designer test-host run exposed a stack overflow when modern Backstage
+  queried a caption QAT slot: Orb measurement queried `ShowQuickAccess`, which
+  resolved the same caption slot. Measurement now queries QAT visibility only
+  when reserving a **tab-row** QAT. A focused regression opens/closes modern
+  Backstage with the default Orb and caption QAT twice and prints the ribbon.
+  The original crash stderr and failing sample output remain in the artifacts;
+  both final sample paths pass. This is a bounded composition correction, not a
+  reopening of the accepted black-bar/performance investigation.
+
+Focused evidence under `winforms/artifacts/office2007-g4/`:
+
+| Evidence | Observed result and scope |
+| --- | --- |
+| `focused.log`, `focused-joins.log`, `focused-qat-fix.log`, `focused-summary.json` | **145 distinct passes, zero failures/skips** using actual xUnit discovery/execution in the retained in-process runner. G4's 14 cases cover exact tokens, both painters/four DPIs, hard state sampling, split transparency, rectangular File, measured panel clipping/rims, selected-tab/body joins, family/shape/application Reset, preferences, inert preview and the caption-QAT regression. Affected G2/G3, renderer/header, Office2010, designer serialization/Undo/Redo and RibbonForm cases also pass. This is not a full-suite run. |
+| `release-build-qat-fix.log` and final Debug build logs | Release runtime/protocol/tests and in-process runner; Debug runtime, designer server/net472 client, Showcase, permanent Designer Sample and its dedicated check host all build with zero warnings/errors. Additive public API analyzer checks pass. |
+| `public-final/evidence/result.log` | Isolated **package-only** consumer, without Showcase resources/helpers: 12 native scopes at actual 120 DPI (Classic/Simplified × Compact/Touch × all three QAT positions), authored model identity, Orb/rectangular override/Reset and both File routes. Native ribbon editor HWND/parent/text/selection survive four preset changes. |
+| `showcase-final/`, `designer-final/` | Each actual authored sample path passes the same 12 scopes, real theme/accent/title gallery actions, family selection and independent Application/accent/caption Reset. Showcase also verifies fresh startup restore for family/accent/title and saved File/frame/material preferences using isolated settings. No diagnostic tabs or test methods were added to normal Designer Sample startup. |
+| `public-final/evidence/paint-*.png` | Eight direct-paint atlases: both public painters × 96/120/144/192 DPI. Inspected generated ribbon/panel/state/Orb images and actual sample prints; automated tests check exact pixels, clips, border widths and join openings. This is sampled/offscreen evidence, not desktop capture or human appearance acceptance. |
+| `default-compatibility/comparison.json` | **32 byte-exact pre-G2/current paint pairs** across four old families, both painters and four DPIs, plus eight existing public-only native group scopes. No old palette was edited. |
+| `designer-refresh-final.log` | Refreshed the existing Designer Sample in place using `eng/Update-DesignerSample.ps1 -Configuration Debug -NoBuild`, package `0.1.0-designer.local20261120T190545758Z`. Authored Forms/UserControls/resources remain; normal Debug output is ready. |
+
+The first independent restore retried blocked NuGet lookups before succeeding;
+the retained verifier now uses the existing restored package cache and final
+restore/build completes without warnings. VSTest's previously recorded test-host
+socket restriction was not retried; the in-process runner executes real xUnit
+cases. The known old checked-hover popup assertion from G3 is outside this
+selected run, unchanged and not relabeled as passing.
+
+Reproduce from `winforms/` with normal configurations/output folders:
+
+```powershell
+dotnet build tests/RibbonKit.WinForms.Tests/RibbonKit.WinForms.Tests.csproj -c Release -m:1 -p:NuGetAudit=false
+dotnet artifacts/office2007-g2/direct-runner/bin/Release/net10.0-windows/DirectRunner.dll 'Office2007ThemeTests,ApplicationButtonCompositionTests,RibbonFormTests'
+./eng/Test-Office2007Shell.ps1 -Configuration Debug
+./eng/Test-DesignerSample.ps1 -Configuration Debug -Check --verify-office2007-shell
+```
+
+Review through **View > Themes > Office 2007 Blue** in either existing sample.
+Normal ribbon appearance is pending live review before G5. Dedicated Application
+Menu bands/frame/footer palette, G6 Options/companion surfaces and the G8 Aero
+palette are not delivered here; those surfaces currently use shared fallback
+roles. No Aero/material is enabled by theme selection. Actual Visual Studio
+designer, physical input/IME, mixed-monitor DPI and material-pixel acceptance
+remain separate. No desktop capture, full matrix or unrelated WPF work ran.

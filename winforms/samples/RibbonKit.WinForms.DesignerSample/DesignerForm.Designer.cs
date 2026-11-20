@@ -91,6 +91,7 @@ partial class DesignerForm
         redAccentTile = new RibbonKit.WinForms.RibbonGalleryTile();
         orangeAccentTile = new RibbonKit.WinForms.RibbonGalleryTile();
         themeGallery = new RibbonKit.WinForms.RibbonGalleryItem();
+        office2007ThemeTile = new RibbonKit.WinForms.RibbonGalleryTile();
         office2010ThemeTile = new RibbonKit.WinForms.RibbonGalleryTile();
         applicationThemeTile = new RibbonKit.WinForms.RibbonGalleryTile();
         office2013ThemeTile = new RibbonKit.WinForms.RibbonGalleryTile();
@@ -664,7 +665,7 @@ partial class DesignerForm
         themeGallery.Id = "view.themeGallery";
         themeGallery.InRibbonColumnCount = 4;
         themeGallery.IsInRibbon = true;
-        themeGallery.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationThemeTile, office2010ThemeTile, office2013ThemeTile, office2019ThemeTile, office2024ThemeTile });
+        themeGallery.Items.AddRange(new RibbonKit.WinForms.RibbonItem[] { applicationThemeTile, office2007ThemeTile, office2010ThemeTile, office2013ThemeTile, office2019ThemeTile, office2024ThemeTile });
         themeGallery.KeyTip = "T";
         themeGallery.MaxVisibleRows = 1;
         themeGallery.ScreenTipDescription = "Choose the ribbon theme. Application theme restores the application's settings.";
@@ -682,6 +683,13 @@ partial class DesignerForm
         applicationThemeTile.Id = "view.theme.application";
         applicationThemeTile.ScreenTipDescription = "Reset to the application's theme, retaining its authored settings.";
         applicationThemeTile.Text = "Application theme";
+        //
+        // office2007ThemeTile
+        //
+        office2007ThemeTile.Icon = new RibbonKit.WinForms.RibbonSvgIcon("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 64'><title>Office 2007 Blue</title><rect x='1' y='1' width='158' height='62' fill='#d9e8f6' stroke='#8db2e3'/><path d='M2 2h156v29H2z' fill='#bfdbff'/><path d='M31 18h35v14H31z' fill='#dbE6f5' stroke='#8db2e3'/><circle cx='16' cy='18' r='13' fill='#dde4ec' stroke='#f0f4f9'/><path d='M10 12h5v5h-5zm7 0h5v5h-5zm-7 7h5v5h-5zm7 0h5v5h-5z' fill='#15428b'/><path d='M37 24h19m20 0h16' stroke='#15428b' stroke-width='2'/><path d='M5 35h46v25H5zm51 0h46v25H56zm51 0h46v25h-46z' fill='#dee8f5' stroke='#a8bfd4'/><path d='M6 54h44v5H6zm51 0h44v5H57zm51 0h44v5h-44z' fill='#c1d9f1'/><path d='M12 39h17v12H12z' fill='#ffd758'/></svg>", false);
+        office2007ThemeTile.Id = "view.theme.office2007";
+        office2007ThemeTile.ScreenTipDescription = "Opaque Blue valley surfaces, creased gold commands, framed groups and the application Orb.";
+        office2007ThemeTile.Text = "Office 2007 Blue";
         //
         // office2010ThemeTile
         //
@@ -1133,6 +1141,7 @@ partial class DesignerForm
     private RibbonKit.WinForms.RibbonGalleryTile redAccentTile = null!;
     private RibbonKit.WinForms.RibbonGalleryTile orangeAccentTile = null!;
     private RibbonKit.WinForms.RibbonGalleryItem themeGallery = null!;
+    private RibbonKit.WinForms.RibbonGalleryTile office2007ThemeTile = null!;
     private RibbonKit.WinForms.RibbonGalleryTile office2010ThemeTile = null!;
     private RibbonKit.WinForms.RibbonGalleryTile applicationThemeTile = null!;
     private RibbonKit.WinForms.RibbonGalleryTile office2013ThemeTile = null!;

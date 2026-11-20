@@ -36,6 +36,7 @@ internal sealed class SampleAppearance(RibbonControl ribbon, RibbonForm form)
         {
             RibbonBuiltInTheme.Office2013Light => RibbonThemes.Office2013Light,
             RibbonBuiltInTheme.Office2010Blue => RibbonThemes.Office2010Blue,
+            RibbonBuiltInTheme.Office2007Blue => RibbonThemes.Office2007Blue,
             RibbonBuiltInTheme.Office2019Light => RibbonThemes.Office2019Light,
             RibbonBuiltInTheme.Office2024Light => RibbonThemes.Office2024Light,
             null => _applicationTheme,

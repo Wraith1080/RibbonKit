@@ -11,7 +11,10 @@ internal static class RibbonApplicationButtonMetrics
         var action = ribbon.HeaderAction;
         int utility = action is null ? 0 : Math.Min(action.Value.Element is { } command ? TextRenderer.MeasureText(command.Text, ribbon.Font).Width + S(density.Touch ? 44 : 36) : S(density.SmallWidth), Math.Max(0, ribbon.ClientSize.Width - (action.Value.Element is null ? 0 : S(24))));
         bool tabQat = ribbon.QuickAccessPosition == RibbonQuickAccessPosition.TabRow || ribbon.QuickAccessPosition == RibbonQuickAccessPosition.TitleBar && !ribbon.HasWindowCaption;
-        int keepQat = ribbon.ShowQuickAccess && tabQat ? S(density.QuickAccessButton + 2 * new RibbonChromeMetrics(ribbon.Theme, ribbon.Density).QuickAccessPadding) : 0;
+        // A caption QAT asks this measurement for its left reservation. During
+        // modern Backstage, ShowQuickAccess itself resolves that caption slot.
+        // Only query its visibility when this measurement actually needs a tab QAT.
+        int keepQat = tabQat && ribbon.ShowQuickAccess ? S(density.QuickAccessButton + 2 * new RibbonChromeMetrics(ribbon.Theme, ribbon.Density).QuickAccessPadding) : 0;
         int available = Math.Max(0, ribbon.ClientSize.Width - utility - S(24) - keepQat);
         int top = ribbon.WindowCaptionHeight;
         int? resizeInset = ribbon.HasWindowCaption ? ribbon.WindowHost!.CaptionResizeInset : null;

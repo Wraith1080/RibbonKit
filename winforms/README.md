@@ -124,7 +124,7 @@ Custom renderers override `DrawSplitItem` to receive both measured action contex
 The retained foundation bridge does not provide complete accessibility semantics
 for this new item; no split accessibility compatibility is claimed.
 
-Office 2024/2019/2013 Light plus normal Office 2010 Blue,
+Office 2024/2019/2013 Light plus normal Office 2010/2007 Blue,
 Compact/Touch density and LTR are the current appearance scope.
 The optional `RibbonForm` supplies the native caption and title-bar QAT described
 below. Optional native Mica/Acrylic form backgrounds are available through that host;
@@ -151,6 +151,21 @@ exposed. The pale-blue rail has square blue selected rows and a white page;
 File/current tab closes, and another tab closes/selects after validation. The
 round Back is hidden by default. Aero is deferred. See the
 [scope and visual-review guide](docs/OFFICE2010-BLUE-PLAN.md#f4-implementation-and-verification--2026-11-14).
+
+`RibbonBuiltInTheme.Office2007Blue` (append-only identity 4) or
+`RibbonThemes.Office2007Blue` selects the opaque Blue ribbon: valley caption/body
+fills, a flat blue tab band, connected selected tabs, measured group frames and
+label bands, and gold/orange command feedback with exact repeated-offset creases.
+It composes the shared `BodyAppearance.GroupPanel` and
+`ApplicationButtonAppearance` roles. The default is a silver Orb with gold hover
+and amber pressed/open states; an explicit `ApplicationButtonShape.Rectangular`
+uses the separate blue File ramps. Resetting that override resumes the Orb.
+Both sample View galleries expose the preset. Accent recoloring preserves gold
+feedback and the Orb, while the optional colored caption and rectangular File
+use `IdentityAccent`. Theme selection preserves File routing and native
+material/frame choices. Dedicated Application Menu, Options/companion and Aero
+palettes are later slices; the normal ribbon still needs live appearance review.
+See the [G4 contract and evidence](docs/OFFICE2007-BLUE-PLAN.md#g4-normal-blue-preset-and-ribbon--2026-11-21).
 
 `Theme.IdentityAccent` supplies immutable reference ramps and independent
 FileStrength/CaptionStrength/NavigationStrength (finite 0..1). Accent updates rebase File fill/border

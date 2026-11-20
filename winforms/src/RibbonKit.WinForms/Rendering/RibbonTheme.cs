@@ -10,7 +10,9 @@ public enum RibbonBuiltInTheme
     /// <summary>The accent-driven Office 2013 inspired light palette. Connected frame refinement is independent.</summary>
     Office2013Light,
     /// <summary>The dimensional Office 2010 Blue ribbon/File palette.</summary>
-    Office2010Blue = 3
+    Office2010Blue = 3,
+    /// <summary>The opaque Office 2007 Blue ribbon palette with creased gold feedback, framed groups and an Orb.</summary>
+    Office2007Blue = 4
 }
 
 /// <summary>Identifies the default Office renderer's tab and File presentation.</summary>

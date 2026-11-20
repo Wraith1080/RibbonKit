@@ -170,6 +170,7 @@ public partial class RibbonControl : Control, ISupportInitialize
                 RibbonBuiltInTheme.Office2019Light => RibbonThemes.Office2019Light,
                 RibbonBuiltInTheme.Office2013Light => RibbonThemes.Office2013Light,
                 RibbonBuiltInTheme.Office2010Blue => RibbonThemes.Office2010Blue,
+                RibbonBuiltInTheme.Office2007Blue => RibbonThemes.Office2007Blue,
                 _ => throw new ArgumentOutOfRangeException(nameof(value))
             };
             if (_builtInTheme == value) return;

@@ -1,10 +1,10 @@
-# Continue native Office 2007 after G3 foundations
+# Continue native Office 2007 after G4 ribbon review
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
 Updated **2026-11-21**. The current checkout is `codex/Ribbonkit-Winform` at
-`df38b3f` (`G2 2007 Theme`), following `f239e3e` and `ed382ff`. Preserve authored Backstage
+`037ac25` (`G3 2007 Theme`), following `df38b3f`, `f239e3e` and `ed382ff`. Preserve authored Backstage
 settings and other Form/resource edits. Recheck
 `git status --short`, live branch and HEAD; preserve user commits and edits. Do not
 commit, stage, push, publish or change branches unless requested.
@@ -16,8 +16,16 @@ The user authorized **G2/G3 shared foundations** from the
 G1 uses the existing WPF theme as a read-only reference. G2 adds exact hard
 transitions and optional measured group decoration; its implementation and
 focused evidence are in the [G2 record](OFFICE2007-BLUE-PLAN.md#g2-shared-paint-foundations--2026-11-20).
-**G3 application-button/menu composition is also implemented.** Read its
-[contract, exact evidence and limits](OFFICE2007-BLUE-PLAN.md#g3-application-button-and-menu-composition--2026-11-21). All 28 G3 cases, independent native/UIA checks and default File paint pairs pass; one affected old checked-hover assertion is reproduced against the retained DLL. Preserve the uncommitted G3 work. The next slice is G4 normal Blue palette/ribbon. No foundation visual-review stop is required; G4 has not been implemented in this slice.
+**G3 application-button/menu composition is implemented and committed.** Read its
+[contract, exact evidence and limits](OFFICE2007-BLUE-PLAN.md#g3-application-button-and-menu-composition--2026-11-21). All 28 G3 cases, independent native/UIA checks and default File paint pairs pass; one affected old checked-hover assertion is reproduced against the retained DLL.
+**G4 normal Blue palette/ribbon is implemented and uncommitted.** Preserve its
+runtime preset, additive enum/API entries, designer mapping, both permanent View
+gallery tiles and focused checks. Read the [G4 implementation/evidence/limits](OFFICE2007-BLUE-PLAN.md#g4-normal-blue-preset-and-ribbon--2026-11-21).
+The Designer Sample is refreshed in place in normal Debug. Review the normal
+ribbon through **View > Themes > Office 2007 Blue** before G5's dedicated
+Application Menu palette. G6 Options/companions and G8 Aero remain later work.
+No G2/G3 foundation visual-review stop is required. Do not reopen accepted
+Backstage black-bar/performance investigations or restore diagnostic tabs.
 The [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger)
 owns the preceding family review. Preserve the delivered context below.
 

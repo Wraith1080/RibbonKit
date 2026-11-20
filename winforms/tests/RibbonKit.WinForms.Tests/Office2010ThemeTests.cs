@@ -11,7 +11,7 @@ public sealed class Office2010ThemeTests
     [Fact]
     public void Builtin_shell_keeps_stable_identities_application_reset_and_independent_window_policy() => FoundationTests.Sta(() =>
     {
-        Assert.Equal(new[] { 0, 1, 2, 3 }, Enum.GetValues<RibbonBuiltInTheme>().Select(v => (int)v));
+        Assert.Equal(new[] { 0, 1, 2, 3, 4 }, Enum.GetValues<RibbonBuiltInTheme>().Select(v => (int)v));
         var theme = RibbonThemes.Office2010Blue;
         Assert.Equal(RibbonHeaderPresentation.Filled, theme.HeaderPresentation); Assert.True(theme.HeaderAppearance!.ConnectSelectedTabToBody);
         Assert.Equal(RibbonWindowCornerPreference.Rounded, theme.WindowCornerPreference); Assert.Equal(3, theme.CornerRadius);

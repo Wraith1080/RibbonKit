@@ -2223,6 +2223,7 @@ override RibbonKit.WinForms.RibbonIdentityAccentSettings.Equals(object? obj) -> 
 override RibbonKit.WinForms.RibbonIdentityAccentSettings.GetHashCode() -> int
 override RibbonKit.WinForms.RibbonIdentityAccentSettings.ToString() -> string!
 RibbonKit.WinForms.RibbonBuiltInTheme.Office2010Blue = 3 -> RibbonKit.WinForms.RibbonBuiltInTheme
+RibbonKit.WinForms.RibbonBuiltInTheme.Office2007Blue = 4 -> RibbonKit.WinForms.RibbonBuiltInTheme
 RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.BorderColor.get -> System.Drawing.Color
 RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.BorderColor.init -> void
 RibbonKit.WinForms.RibbonFileButtonAppearanceSettings.SquareBottomCorners.get -> bool
@@ -2264,6 +2265,7 @@ RibbonKit.WinForms.RibbonIdentityAccentSettings.FileBorderColor.init -> void
 static RibbonKit.WinForms.RibbonIdentityAccentSettings.operator !=(RibbonKit.WinForms.RibbonIdentityAccentSettings? left, RibbonKit.WinForms.RibbonIdentityAccentSettings? right) -> bool
 static RibbonKit.WinForms.RibbonIdentityAccentSettings.operator ==(RibbonKit.WinForms.RibbonIdentityAccentSettings? left, RibbonKit.WinForms.RibbonIdentityAccentSettings? right) -> bool
 static RibbonKit.WinForms.RibbonThemes.Office2010Blue.get -> RibbonKit.WinForms.RibbonTheme!
+static RibbonKit.WinForms.RibbonThemes.Office2007Blue.get -> RibbonKit.WinForms.RibbonTheme!
 override RibbonKit.WinForms.RibbonControl.OnLocationChanged(System.EventArgs! e) -> void
 RibbonKit.WinForms.RibbonBackstageAppearanceSettings.BackButtonVisible.get -> bool?
 RibbonKit.WinForms.RibbonBackstageAppearanceSettings.BackButtonVisible.init -> void

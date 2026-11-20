@@ -15,7 +15,8 @@ public partial class DesignerForm
     {
         var selected = themeGallery.SelectedItem;
         if (_sampleAppearance is null) return;
-        if (ReferenceEquals(selected, office2010ThemeTile)) _sampleAppearance.SelectTheme(RibbonBuiltInTheme.Office2010Blue);
+        if (ReferenceEquals(selected, office2007ThemeTile)) _sampleAppearance.SelectTheme(RibbonBuiltInTheme.Office2007Blue);
+        else if (ReferenceEquals(selected, office2010ThemeTile)) _sampleAppearance.SelectTheme(RibbonBuiltInTheme.Office2010Blue);
         else if (ReferenceEquals(selected, office2013ThemeTile)) _sampleAppearance.SelectTheme(RibbonBuiltInTheme.Office2013Light);
         else if (ReferenceEquals(selected, office2019ThemeTile)) _sampleAppearance.SelectTheme(RibbonBuiltInTheme.Office2019Light);
         else if (ReferenceEquals(selected, office2024ThemeTile)) _sampleAppearance.SelectTheme(RibbonBuiltInTheme.Office2024Light);
@@ -32,6 +33,7 @@ public partial class DesignerForm
         themeGallery.SelectedItem = (_sampleAppearance?.SelectedTheme ?? ribbon.BuiltInTheme) switch
         {
             RibbonBuiltInTheme.Office2010Blue => office2010ThemeTile,
+            RibbonBuiltInTheme.Office2007Blue => office2007ThemeTile,
             RibbonBuiltInTheme.Office2013Light => office2013ThemeTile,
             RibbonBuiltInTheme.Office2019Light => office2019ThemeTile,
             RibbonBuiltInTheme.Office2024Light => office2024ThemeTile,

@@ -2,6 +2,25 @@ namespace RibbonKit.WinForms.Showcase;
 
 public partial class MainForm
 {
+    internal static void CheckOffice2007Preferences(string output)
+    {
+        var settings = Path.Combine(output, "isolated-2007-preferences");
+        using var writer = new MainForm(settings); _ = writer.Handle; writer.OnLoad(EventArgs.Empty);
+        var route = writer.ribbon.FileMenuMode; var frame = writer.FrameAppearance; var backdrop = writer.Backdrop;
+        writer._themeGallery.Items.Single(i => i.Id == "demo.theme.Office2007Blue").PerformClick();
+        writer._accentGallery.Items.Single(i => i.Id == "demo.accent.purple").PerformClick(); writer._titleColorToggle.PerformClick();
+        using var reader = new MainForm(settings);
+        if (reader._sampleAppearance.SelectedTheme != RibbonBuiltInTheme.Office2007Blue || !reader._titleColorToggle.Checked ||
+            reader.ribbon.Theme.TitleBarBackgroundFill != writer.ribbon.Theme.TitleBarBackgroundFill || reader.ribbon.Theme.Accent != writer.ribbon.Theme.Accent ||
+            reader.ribbon.FileMenuMode != route || reader.FrameAppearance != frame || reader.Backdrop != backdrop)
+            throw new InvalidOperationException("Office 2007 startup family/accent/caption/File/frame/material restore disagreed.");
+        writer._titleColorToggle.PerformClick(); writer._accentGallery.Items.Single(i => i.Id == "demo.accent.default").PerformClick();
+        using var reset = new MainForm(settings);
+        if (reset.ribbon.BuiltInTheme != RibbonBuiltInTheme.Office2007Blue || reset._titleColorToggle.Checked || !ReferenceEquals(reset.ribbon.Theme, RibbonThemes.Office2007Blue))
+            throw new InvalidOperationException("Office 2007 title/accent Reset startup restore disagreed.");
+        File.AppendAllText(Path.Combine(output, "result.log"), "PASS: actual Showcase startup persistence for Office2007Blue, purple accent/caption, independent Reset and saved File/frame/material choices.\n");
+    }
+
     internal static void CheckOffice2010Preferences(string output)
     {
         var settings = Path.Combine(output, "isolated-preferences");
