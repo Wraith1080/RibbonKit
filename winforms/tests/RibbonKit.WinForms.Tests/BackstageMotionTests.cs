@@ -33,6 +33,7 @@ public sealed class BackstageMotionTests
         }
     }
     private sealed class Icon : IRibbonIcon { public void Draw(Graphics graphics, Rectangle bounds, RibbonIconContext context) => graphics.FillRectangle(Brushes.Magenta, bounds); }
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongW")] private static extern int GetWindowLong(nint window, int index);
 
     [Theory] [InlineData(false, RibbonAnimationLevel.Subtle)] [InlineData(true, RibbonAnimationLevel.Subtle)]
     [InlineData(false, RibbonAnimationLevel.Expressive)] [InlineData(true, RibbonAnimationLevel.Expressive)]
@@ -43,6 +44,8 @@ public sealed class BackstageMotionTests
         var pageBounds = f.Page.Bounds; var parent = f.Page.Parent; nint handle = f.Field.Handle;
         Assert.True(f.Ribbon.IsAnimating); Assert.InRange(surface.Right / (double)surface.Width, .849, .851); int start = surface.Left;
         Assert.True(RibbonDrawingHold.HasOpacity(surface.Handle)); Assert.Equal(1, motion.Opacity); Assert.True(f.Page.Visible);
+        Assert.True((GetWindowLong(surface.Handle, -20) & 0x02000000) != 0,
+            "Native composition must buffer the navigation and page children together in Solid mode.");
         int previous = surface.Left;
         foreach (double progress in new[] { .1, .25, .5, 1 })
         {

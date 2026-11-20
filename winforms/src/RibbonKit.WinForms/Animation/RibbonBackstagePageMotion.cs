@@ -53,13 +53,14 @@ internal sealed class RibbonBackstagePageMotion : IDisposable
             }
             // A stable native drawing is also useful for opaque sliding: move
             // its redirected pixels instead of repainting rich text each step.
-            target.AcquirePageOpacity(motion.Style == RibbonTabContentAnimation.Fade ? (byte)1 : (byte)255);
+            target.AcquirePageOpacity(1);
             motion.SetProgress(0);
             return motion;
         }
         catch (Win32Exception error) { Trace.WriteLine("Backstage page motion skipped: " + error.Message); motion.Dispose(); return null; }
         catch { motion.Dispose(); throw; }
     }
+    internal void PublishInitialOpacity() { if (!_disposed) Target.SetPageOpacity(Opacity); }
     internal void Start()
     {
         if (_disposed) return;

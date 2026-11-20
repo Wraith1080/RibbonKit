@@ -25,15 +25,20 @@ public sealed class BackstagePageHandoffTests
         nint handle = field.Handle; var parent = outgoing.Parent;
         ribbon.AnimationLevel = level;
         bool painted = false, outgoingVisibleAtPaint = false, outgoingDrawingRetained = false;
+        byte? incomingOpacityAtPaint = null;
         incoming.FirstVisiblePaint = () =>
         {
             painted = true; outgoingVisibleAtPaint = outgoing.Visible;
             outgoingDrawingRetained = (GetWindowLong(parent!.Handle, -20) & 0x80000) != 0;
+            if (incoming.Parent is { } slot && GetLayeredWindowAttributes(slot.Handle, 0, out byte alpha, out _))
+                incomingOpacityAtPaint = alpha;
         };
         ribbon.Backstage.SelectedPage = second; Application.DoEvents();
         Assert.True(painted, "The visible incoming page must have a native drawing.");
         Assert.True(outgoingVisibleAtPaint, "Hiding the outgoing page before drawing its replacement exposes the empty page viewport.");
         Assert.Equal(level != RibbonAnimationLevel.None, outgoingDrawingRetained);
+        Assert.Equal(level == RibbonAnimationLevel.None ? (byte?)null : 1, incomingOpacityAtPaint);
+        Assert.Equal(255, ((RibbonBackstageSurface.PageSlot)incoming.Parent!).PageOpacity);
         Assert.False(outgoing.Visible); Assert.True(incoming.Visible); Assert.Same(second, ribbon.Backstage.SelectedPage);
         Assert.Equal(handle, field.Handle); Assert.Same(parent, outgoing.Parent); Assert.Equal("Retained outgoing field", field.Text);
         ribbon.SettleMotion(); Assert.False(ribbon.IsAnimating);
@@ -49,4 +54,5 @@ public sealed class BackstagePageHandoffTests
         }
     }
     [DllImport("user32.dll", EntryPoint = "GetWindowLongW")] private static extern int GetWindowLong(nint window, int index);
+    [DllImport("user32.dll")] private static extern bool GetLayeredWindowAttributes(nint window, nint key, out byte alpha, out uint flags);
 }

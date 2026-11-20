@@ -208,7 +208,7 @@ actual VS, physical-input/IME, mixed-monitor or final visual acceptance is claim
 
 Use the [F7 evidence](OFFICE2010-BLUE-PLAN.md#f7-composed-review-evidence--2026-11-20)
 and the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger) as the
-normal-theme baseline. Designer Sample uses `0.1.0-designer.local20261120T082429873Z`.
+normal-theme baseline. Designer Sample uses `0.1.0-designer.local20261120T091838772Z`.
 Use the [F8 walkthrough](OFFICE2010-BLUE-PLAN.md#f8-visual-walkthrough) to review
 the neutral solid gradient, Acrylic and restored window edges. The shared frame
 palette and layout are ready for a future Office 2007 palette.

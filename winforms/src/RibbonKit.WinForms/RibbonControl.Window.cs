@@ -96,12 +96,17 @@ public partial class RibbonControl
     }
     internal void InvalidateBackstageCaption()
     {
-        if (!IsDisposed && HasWindowCaption)
+        if (IsDisposed) return;
+        // Windows may clip the first invalidation while Backstage fully covers
+        // File. Keep its closed-state paint pending as the pane fades away.
+        if (_backstageClosing) InvalidateBackstageFileHeader();
+        if (HasWindowCaption)
         {
             WindowHost!.InvalidateCaption();
             // Paint in the same timer turn as the native surface move.
             Update(); WindowHost.Update();
         }
+        else if (_backstageClosing) Update();
     }
     internal RibbonTheme WindowPaintTheme
     {

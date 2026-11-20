@@ -47,7 +47,9 @@ internal sealed class RibbonBackstageMotion : IDisposable
         try
         {
             byte alpha = policy.PaneOpacity(0, closing);
-            surface.AcquireMotionOpacity(alpha);
+            // Let the first native drawing finish before exposing even an
+            // opening whose authored fade starts at full opacity.
+            surface.AcquireMotionOpacity(closing ? alpha : (byte)1);
             surface.SetMotionAlpha(alpha);
             // Move before showing, and seed native redirection at the authored opacity.
             if (!closing) surface.MoveForMotion(new(motion._origin.X - motion._travel, motion._origin.Y));

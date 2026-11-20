@@ -1,8 +1,8 @@
 # Native Backstage page content motion
 
-Status, **2026-11-11: page-handoff and rounded-edge follow-up implemented;
-user review pending**. The earlier Solid-mode exposed-area correction was
-accepted on 2026-11-01.
+Status, **2026-11-20: whole-pane buffering and first-page-frame follow-up
+implemented. Live review of the intermittent black strip is pending.**
+The earlier Solid-mode exposed-area correction was accepted on 2026-11-01.
 
 The user's subsequent TextBox/RichTextBox flicker report is addressed by the
 bounded repaint correction below. The user reported "looks good" after the
@@ -243,3 +243,49 @@ blank-page check requires authored content ink throughout opaque SlideDown.
 These are sampled visible checks, not continuous frame-pacing or human acceptance.
 Visible material modes, other physical DPI/monitors, IME and actual VS remain
 separate. No full suite, full native matrix or WPF checks ran.
+
+## Whole-pane buffering and first page frame — 2026-11-20
+
+Solid opening and closing use native descendant buffering for the whole moving
+pane, including the navigation rail and live page. Motion retains valid drawing
+and invalidates newly exposed strips. Material retains its alpha rail and
+separate native page layer. The opening seeds the native drawing at minimum
+opacity before applying the authored frame.
+
+An incoming animated page remains nearly transparent until it is raised and its
+pending native paint finishes. The prior page stays visible during preparation.
+SlideDown publishes the prepared opaque frame, and Fade starts its existing
+opacity transition. Application controls keep their original parents and handles.
+
+- Six regression assertions failed on the previous code and passed with the fix.
+  All 77 focused motion, handoff, Aero and native editor checks passed.
+- At 120 DPI, the independent public-package app sampled 294 compositor frames
+  across nine openings and 18 page changes. Office 2010 Aero Solid, Office 2024
+  Solid and Office 2019 Acrylic produced no black strips in the sampled interior.
+  Its native editor retained its parent, handle, text and selection.
+- The packaged Designer Sample check sampled 49 frames across six Office 2024
+  Info/Print clicks and found zero blank page or black corner frames. Showcase
+  and the persistent Designer Sample built in Debug with package
+  `0.1.0-designer.local20261120T090923674Z` used for the sample and package checks.
+
+Evidence is under `artifacts/backstage-animation-black/`. The supplied recording
+shows interrupted-looking transitions but does not contain a large black region
+in its sampled frames. The desktop checks sample the compositor at one DPI and
+do not establish continuous playback or mixed-monitor behavior.
+
+## File during the Office 2024 Backstage close — 2026-11-20
+
+The recording showed the blue open File underline returning under the outgoing
+pane before the gray hover underline appeared. Closing now invalidates the
+covered File bounds as the pane fades. The pointer determines its hover
+appearance while the pane still owns input, and the same hover state is handed
+back to the ribbon when Backstage closes. The exposed Office 2010 File button
+keeps its established closing behavior.
+
+All 49 focused checks passed. At 120 DPI, five closes in an independent
+public-package app showed 26 stale blue File frames across 86 samples on
+`0.1.0-designer.local20261120T090923674Z`. Five closes with the fix showed
+zero blue File frames across 88 samples and retained the gray hover underline.
+Captures are under `artifacts/backstage-file-close-flicker/`. Showcase and
+Designer Sample rebuilt in Debug. The refreshed package is
+`0.1.0-designer.local20261120T091838772Z`.

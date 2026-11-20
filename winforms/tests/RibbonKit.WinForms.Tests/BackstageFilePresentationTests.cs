@@ -14,6 +14,31 @@ public sealed class BackstageFilePresentationTests
         }
     }
 
+    [Fact]
+    public void Integrated_Office2024_paints_File_before_the_closing_pane_reveals_it() => FoundationTests.Sta(() =>
+    {
+        using var host = new RibbonForm { StartPosition = FormStartPosition.Manual, Bounds = new(-16000, -16000, 950, 650) };
+        using var ribbon = new HoverRibbon { BuiltInTheme = RibbonBuiltInTheme.Office2024Light,
+            FileMenuMode = RibbonFileMenuMode.Backstage, AnimationLevel = RibbonAnimationLevel.Expressive };
+        ribbon.FileMenu.Visible = true;
+        ribbon.Tabs.Add(new RibbonTab { Text = "Home" });
+        ribbon.Backstage.Items.Add(new RibbonBackstagePageItem { Text = "Info", Content = new Panel() });
+        host.Controls.Add(ribbon); host.Ribbon = ribbon; host.Show(); Application.DoEvents();
+        ribbon.Motion.SystemPolicyOverride = true;
+        ribbon.IsBackstageOpen = true; ribbon.SettleMotion(); ribbon.Refresh(); Application.DoEvents();
+        var file = ribbon.Snapshot.Targets.Single(t => t.Kind == TargetKind.FileMenu).VisibleBounds;
+        int fileInvalidations = 0;
+        ribbon.Invalidated += (_, e) => { if (e.InvalidRect.Contains(file)) fileInvalidations++; };
+        ribbon.IsBackstageOpen = false;
+        var closing = Assert.IsType<RibbonBackstageMotion>(ribbon.BackstageOpeningMotion);
+        Assert.True(closing.IsClosing);
+        Assert.True(fileInvalidations > 0, "The open File drawing was left under the outgoing pane.");
+        int initial = fileInvalidations;
+        closing.SetProgress(.5);
+        Assert.True(fileInvalidations > initial, "The covered File drawing must be invalidated again as the pane fades.");
+        Assert.True(ribbon.FileMenu.IsDropDownOpen);
+    });
+
     [Theory] [InlineData(false)] [InlineData(true)]
     public void Closing_reveals_the_final_File_hover_without_changing_its_open_lifecycle(bool office) => FoundationTests.Sta(() =>
     {

@@ -216,6 +216,7 @@ public sealed record RibbonTheme
     public Color BackstageNavigationForeground { get; init; } = Color.Empty;
     /// <summary>Gets selected navigation ink. Empty retains Accent.</summary>
     public Color BackstageSelectedForeground { get; init; } = Color.Empty;
+    internal Color BackstagePressedForeground { get; init; } = Color.Empty;
     /// <summary>Gets disabled navigation ink. Empty retains DisabledColor.</summary>
     public Color BackstageDisabledForeground { get; init; } = Color.Empty;
     /// <summary>Gets an optional navigation hover fill. Null retains Hover, or an Accent-to-white 22 percent mix when BackstageNavigationUsesAccent is true.</summary>

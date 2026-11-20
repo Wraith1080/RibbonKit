@@ -698,9 +698,17 @@ public partial class RibbonControl : Control, ISupportInitialize
                 else if (target.Kind == TargetKind.ModalClose)
                     Painter.DrawModalClose(ctx, _modalClose.Text);
                 else if (target.Kind == TargetKind.FileMenu)
+                {
                     // Reveal the final header underneath the outgoing fade;
                     // its model stays open until Backstage actually closes.
-                    Painter.DrawFileButton(ctx with { FileMenuClosing = _backstageClosing && !BackstageKeepsHeaders, FileMenuPreviewOpen = DesignPreviewBackstage }, FileMenu);
+                    bool closing = _backstageClosing && !BackstageKeepsHeaders;
+                    Painter.DrawFileButton(ctx with
+                    {
+                        Hot = ctx.Hot || closing && PointerOverBackstageFile(target),
+                        FileMenuClosing = closing,
+                        FileMenuPreviewOpen = DesignPreviewBackstage
+                    }, FileMenu);
+                }
                 else if (target.Element is RibbonTab tab)
                     Painter.DrawTab(ctx, tab, !BackstageHeadersUnselected && ReferenceEquals(tab, DisplaySelectedTab));
                 else if (target.Element is RibbonSplitButtonItem split && arrow is not null)

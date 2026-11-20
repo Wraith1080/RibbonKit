@@ -111,7 +111,10 @@ public partial class RibbonControl
     {
         if (_backstageClosing)
         {
-            _backstageClosing = false; var closing = _backstageMotion; _backstageMotion = null; closing?.Cancel();
+            _backstageClosing = false; var closing = _backstageMotion; _backstageMotion = null;
+            try { InvalidateBackstageFileHeader(); }
+            finally { closing?.Cancel(); }
+            Update();
             WindowHost?.BeginBackstageTitle(this, opening: true); UpdateBackstageCaption(); return;
         }
         if (_backstageOpen || _backstageChanging || !CanShowBackstage || FindForm() is not { Visible: true, IsDisposed: false } form) return;
@@ -200,19 +203,45 @@ public partial class RibbonControl
             if (!force && animate && _backstageSurface is { IsDisposed: false } closingSurface && _backstageForm is { } form)
             {
                 _backstageMotion = RibbonBackstageMotion.Prepare(this, closingSurface, form, true, () => FinishBackstageClose(restoreFocus, hadFocus));
-                if (_backstageMotion is not null) { _backstageClosing = true; _backstageMotion.Start(); return true; }
+                if (_backstageMotion is { } closing)
+                {
+                    _backstageClosing = true;
+                    closing.Start();
+                    return true;
+                }
             }
             FinishBackstageClose(restoreFocus, hadFocus, animateTitle: !force && animate);
             return true;
         }
         finally { _backstageChanging = changing; }
     }
+    private void InvalidateBackstageFileHeader()
+    {
+        if (BackstageKeepsHeaders || _disposing || !IsHandleCreated) return;
+        var file = Snapshot.Targets.FirstOrDefault(target => target.Kind == TargetKind.FileMenu);
+        if (file is not { VisibleBounds.IsEmpty: false }) return;
+        Invalidate(file.VisibleBounds);
+    }
+    private bool PointerOverBackstageFile(RibbonTarget file) => file.Enabled && _backstageForm is { ContainsFocus: true } &&
+        file.VisibleBounds.Contains(PointToClient(MousePosition));
+
     private void FinishBackstageClose(bool restoreFocus, bool hadFocus, bool animateTitle = true)
     {
         if (!_backstageOpen) return;
         bool changing = _backstageChanging; _backstageChanging = true;
         try
         {
+            if (_backstageClosing && !BackstageKeepsHeaders && !_disposing &&
+                Snapshot.Targets.FirstOrDefault(target => target.Kind == TargetKind.FileMenu) is { } file)
+            {
+                bool hot = PointerOverBackstageFile(file);
+                if (hot || ReferenceEquals(_hot, FileMenu))
+                {
+                    _hot = hot ? FileMenu : null;
+                    _hotDropDown = false;
+                    _hotScroll = null;
+                }
+            }
             _backstageClosing = false; _backstageMotion = null; _backstageOpen = false;
             _layoutDirty = true;
             // Uncover the ordinary caption before its foreground handback.

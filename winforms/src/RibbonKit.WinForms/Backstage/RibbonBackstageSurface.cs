@@ -85,8 +85,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         var target = MotionTarget;
         if (!ReferenceEquals(_motionTarget, target)) ReleaseMotionOpacity();
         _motionTarget = target;
-        _motionOpacity ??= RibbonDrawingHold.Create(target.Handle, alpha, compositeChildren: _ribbon.HasWindowBackdrop);
-        if (_ribbon.HasWindowBackdrop) _motionOpacity.CompositeChildren();
+        _motionOpacity ??= RibbonDrawingHold.Create(target.Handle, alpha, compositeChildren: true);
         _motionOpacity.SetOpacity(alpha);
         return _motionOpacity;
     }
@@ -108,6 +107,8 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             RibbonDrawingHold.UpdatePending(Handle);
             if (_motionTarget is { IsDisposed: false, IsHandleCreated: true } target) RibbonDrawingHold.UpdatePending(target.Handle);
         }
+        else if (retainPage)
+            RibbonDrawingHold.UpdatePending(Handle);
         else
         {
             RibbonDrawingHold.Repaint(Handle);
@@ -121,15 +122,16 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     internal void RestoreMotionOpacity()
     {
         SetMotionAlpha(255);
-        if (Visible && IsHandleCreated) RepaintBackdrop(retainPage: MaterialPaint);
+        if (Visible && IsHandleCreated) RepaintBackdrop(retainPage: true);
         else ReleaseMotionOpacity();
     }
     internal void MoveForMotion(Point location, bool clipFrame = true)
     {
-        // Do not let WinForms copy clipped pixels from the previous position of
-        // a redirected native page: the newly exposed strip can otherwise be black.
-        bool repaintExposed = Visible && MaterialPaint && _pages.IsHandleCreated;
-        var exposedBefore = repaintExposed ? VisiblePageBounds() : Rectangle.Empty;
+        // Solid motion retains the pane's composed pixels. Material already
+        // redraws its alpha rail and only needs the page's newly exposed pixels.
+        Control movingDrawing = MaterialPaint ? _pages : this;
+        bool repaintExposed = Visible && movingDrawing.IsHandleCreated;
+        var exposedBefore = repaintExposed ? VisibleMotionBounds(movingDrawing) : Rectangle.Empty;
         _movingForMotion = true;
         try
         {
@@ -142,29 +144,25 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             Location = location;
         }
         finally { _movingForMotion = false; }
-        if (repaintExposed)
-        {
-            var exposedAfter = VisiblePageBounds();
-            if (exposedAfter.IsEmpty) return;
-            if (exposedBefore.IsEmpty) _pages.Invalidate(exposedAfter, true);
-            else if (exposedAfter.Left < exposedBefore.Left)
-                _pages.Invalidate(Rectangle.FromLTRB(exposedAfter.Left, exposedAfter.Top, exposedBefore.Left, exposedAfter.Bottom), true);
-            if (!exposedBefore.IsEmpty && exposedAfter.Right > exposedBefore.Right)
-                _pages.Invalidate(Rectangle.FromLTRB(exposedBefore.Right, exposedAfter.Top, exposedAfter.Right, exposedAfter.Bottom), true);
-        }
+        if (!repaintExposed) return;
+        var exposedAfter = VisibleMotionBounds(movingDrawing);
+        if (exposedAfter.IsEmpty || exposedBefore.Contains(exposedAfter)) return;
+        using var exposed = new Region(exposedAfter);
+        exposed.Exclude(exposedBefore);
+        movingDrawing.Invalidate(exposed, true);
     }
-    private Rectangle VisiblePageBounds()
+    private Rectangle VisibleMotionBounds(Control drawing)
     {
         if (Parent is not { IsDisposed: false } parent) return Rectangle.Empty;
         var client = parent is RibbonForm host ? host.AeroContentBounds : parent.ClientRectangle;
         var clip = Rectangle.Intersect(parent.RectangleToScreen(client), SystemInformation.VirtualScreen);
-        var visible = Rectangle.Intersect(_pages.RectangleToScreen(_pages.ClientRectangle), clip);
-        return visible.Width > 0 && visible.Height > 0 ? _pages.RectangleToClient(visible) : Rectangle.Empty;
+        var visible = Rectangle.Intersect(drawing.RectangleToScreen(drawing.ClientRectangle), clip);
+        return visible.Width > 0 && visible.Height > 0 ? drawing.RectangleToClient(visible) : Rectangle.Empty;
     }
     protected override void WndProc(ref Message message)
     {
         if (IsCaptionHit(message)) { message.Result = -1; return; }
-        if (_movingForMotion && message.Msg == 0x46) // WINDOWPOSCHANGING
+        if (_movingForMotion && MaterialPaint && message.Msg == 0x46) // WINDOWPOSCHANGING
         {
             var position = Marshal.PtrToStructure<MotionWindowPosition>(message.LParam);
             position.Flags |= 0x0100; // SWP_NOCOPYBITS; retain WinForms' native bounds transaction.
@@ -265,12 +263,14 @@ internal sealed class RibbonBackstageSurface : ContainerControl
                 _pageMotion = RibbonBackstagePageMotion.Prepare(_ribbon, arriving, _pageContent, departing);
             if (changedPage && _ribbon.IsBackstageOpen && _ribbon.Backstage.SelectedPage is { } next && _slots.TryGetValue(next, out var nextSlot))
             {
-                // Paint the arriving native subtree behind the outgoing page
-                // before exposing it. A cold layered page otherwise reveals an
-                // empty viewport while its child HWNDs realize their drawings.
+                // Showing the arrival behind the outgoing page primes its native
+                // drawing. Raising it may expose clipped pixels. Finish that
+                // paint, then reveal the prepared SlideDown frame.
                 nextSlot.Visible = true;
                 RibbonDrawingHold.UpdatePending(nextSlot.Handle);
                 nextSlot.BringToFront();
+                RibbonDrawingHold.UpdatePending(nextSlot.Handle);
+                _pageMotion?.PublishInitialOpacity();
             }
             foreach (var pair in _slots) pair.Value.Visible = ReferenceEquals(pair.Key, _ribbon.Backstage.SelectedPage);
             bool movedFocus = hadFocus && (!ContainsFocus || hadPageFocus && !ReferenceEquals(_shownPage, _ribbon.Backstage.SelectedPage));

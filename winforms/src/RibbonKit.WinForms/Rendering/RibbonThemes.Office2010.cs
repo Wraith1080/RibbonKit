@@ -26,6 +26,7 @@ public static partial class RibbonThemes
             AeroFrameAppearance = new(),
             BackstageStyle = RibbonBackstageStyle.Office2010, BackstageFullWidthNavigation = true,
             BackstageNavigationBackgroundFill = new(C(0xE4EDF7), C(0xCBDAEC)), BackstageSelectedForeground = Color.White,
+            BackstagePressedForeground = Color.Gainsboro,
             BackstageNavigationHover = new(C(0xE8F0F9)), BackstageSelectionIndicatorVisible = false, BackstageMonochromeIcons = true,
             BackstageAppearance = new() { NavigationHoverEdgeColor = C(0xF6FAFE), NavigationHoverEdgeWidth = 1 },
             BackstagePageBorderWidth = 0, BackstagePageCornerRadius = 0,

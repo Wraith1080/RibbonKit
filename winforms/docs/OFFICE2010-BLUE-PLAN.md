@@ -1067,6 +1067,14 @@ Info and Print selection in Showcase and fixed-color artwork in a separate
 app using public package `0.1.0-designer.local20261120T023852144Z`. Both samples
 rebuilt in Debug.
 
+On 2026-11-20 the Office 2010 preset added light-gray (`#DCDCDC`) navigation
+text and icon silhouettes while a row is held. On release a selected row uses
+white and a cancelled press returns to the ordinary ink. The 28 focused
+checks passed. An independent consumer loaded the package in its own app
+and in both sample forms at 120 DPI. Mouse-message captures verified idle,
+held, cancelled and selected ink. The running Designer Sample held its
+Debug output open during the in-place refresh.
+
 ### F7 live walkthrough
 
 1. In **Showcase** and **Designer Sample**, choose **View → Office 2010 Blue**.

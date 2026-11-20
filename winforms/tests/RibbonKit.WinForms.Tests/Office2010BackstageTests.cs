@@ -8,7 +8,7 @@ public sealed class Office2010BackstageTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void Navigation_icons_follow_ink_even_when_artwork_supplies_its_own_color(bool vector) => FoundationTests.Sta(() =>
+    public void Navigation_label_and_icon_share_state_ink_even_when_artwork_supplies_its_own_color(bool vector) => FoundationTests.Sta(() =>
     {
         const int dpi = 120;
         int Scale(int value) => RibbonLayoutEngine.Scale(value, dpi);
@@ -20,8 +20,9 @@ public sealed class Office2010BackstageTests
         using var artwork = new Bitmap(16, 16);
         using (var imageGraphics = Graphics.FromImage(artwork))
             imageGraphics.FillRectangle(Brushes.Crimson, 4, 4, 8, 8);
-        using var item = new RibbonBackstagePageItem();
-        var context = new RibbonPaintContext(graphics, new(Point.Empty, row.Size), theme, Control.DefaultFont, dpi);
+        using var item = new RibbonBackstagePageItem { Text = "Page" };
+        using var font = new Font("Segoe UI", 14, FontStyle.Bold);
+        var context = new RibbonPaintContext(graphics, new(Point.Empty, row.Size), theme, font, dpi);
         int iconLeft = Scale(metrics.IconInset), iconSize = Scale(metrics.IconSize);
         int iconTop = (row.Height - iconSize) / 2;
 
@@ -29,14 +30,30 @@ public sealed class Office2010BackstageTests
         var background = row.GetPixel(iconLeft + 1, iconTop + 1);
         if (vector) item.Icon = new FixedColorIcon();
         else item.Image = artwork;
-        painter.DrawBackstageEntry(context, item, true);
-        Assert.Equal(Color.White.ToArgb(), row.GetPixel(iconLeft + iconSize / 2, row.Height / 2).ToArgb());
+        AssertRowInk(context with { Hot = true }, selected: false, theme.BackstageNavigationInk);
+        AssertRowInk(context with { Hot = true, Pressed = true }, selected: false, Color.Gainsboro);
+        AssertRowInk(context with { Hot = true, Pressed = true }, selected: true, Color.Gainsboro);
+        AssertRowInk(context, selected: true, Color.White);
         Assert.Equal(background, row.GetPixel(iconLeft + 1, iconTop + 1));
 
-        painter.DrawBackstageEntry(context, item, false);
-        Assert.Equal(theme.BackstageNavigationInk.ToArgb(), row.GetPixel(iconLeft + iconSize / 2, row.Height / 2).ToArgb());
+        AssertRowInk(context, selected: false, theme.BackstageNavigationInk);
+        item.Enabled = false;
+        AssertRowInk(context with { Pressed = true }, selected: false, theme.DisabledColor);
+        item.Enabled = true;
         painter.DrawBackstageEntry(context with { Theme = theme with { BackstageMonochromeIcons = false } }, item, true);
         Assert.Equal(Color.Crimson.ToArgb(), row.GetPixel(iconLeft + iconSize / 2, row.Height / 2).ToArgb());
+
+        void AssertRowInk(RibbonPaintContext state, bool selected, Color ink)
+        {
+            painter.DrawBackstageEntry(state, item, selected);
+            int expected = ink.ToArgb();
+            Assert.Equal(expected, row.GetPixel(iconLeft + iconSize / 2, row.Height / 2).ToArgb());
+            Assert.Contains(
+                from y in Enumerable.Range(6, row.Height - 12)
+                from x in Enumerable.Range(Scale(metrics.TextOffset), Scale(70))
+                select row.GetPixel(x, y).ToArgb(),
+                pixel => pixel == expected);
+        }
     });
 
     private sealed class FixedColorIcon : IRibbonIcon
