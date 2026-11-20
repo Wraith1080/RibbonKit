@@ -1,8 +1,8 @@
 # Native Backstage page content motion
 
 Status, **2026-11-20: full Solid-pane preparation now precedes native travel.
-Zoom-loaded before/after captures and focused checks pass; live review remains
-in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).**
+Zoom-loaded before/after captures and focused checks pass; current live acceptance
+is in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).**
 The earlier Solid-mode exposed-area correction was accepted on 2026-11-01.
 
 The user's subsequent TextBox/RichTextBox flicker report is addressed by the
@@ -407,6 +407,7 @@ strip; that trial was reverted. Preserve its captures as an investigation limit.
   and ten closes; **424/424/426 samples show zero detected left-strip frames**.
   These are the `zoom-package-*` records, with native editor retention checked.
 
-The captured strip is corrected in these sampled scopes. Continuous playback,
-other hardware/DPI/material combinations and the user's final live review remain
-separate; Office 2007 stays paused at the existing review boundary.
+The captured strip is corrected in these sampled scopes. Other hardware/DPI/
+material combinations remain outside this evidence. Continuous playback and
+the user's live review are separate from the sampled counts; current acceptance
+belongs in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).

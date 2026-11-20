@@ -1,15 +1,22 @@
-# Review the native Office 2010 Aero frame
+# Review the native Office 2007 Blue design
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-20**. The F8 solid-frame follow-up was verified on
-`codex/Ribbonkit-Winform` over `91965fa` (`F8 Aero Start`). Preserve authored Backstage
+Updated **2026-11-20**. The current checkout is `codex/Ribbonkit-Winform` at
+`ed382ff` (`Fix backstage black bars`). Preserve authored Backstage
 settings and other Form/resource edits. Recheck
 `git status --short`, live branch and HEAD; preserve user commits and edits. Do not
 commit, stage, push, publish or change branches unless requested.
 
 ## Current state and scope
+
+Review the documentation-only
+[Office 2007 Blue contract and slice order](OFFICE2007-BLUE-PLAN.md).
+G1 uses the existing WPF theme as a read-only reference. No runtime/API or
+sample implementation is authorized by this proposal; stop for the user's
+design review. The [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger)
+owns the preceding family review. Preserve the delivered context below.
 
 The user selected **normal Office 2010 Blue** and supplied eight WPF references,
 including Add Message hover, then explicitly confirmed rounded corners for the
@@ -181,7 +188,12 @@ records before edits. Reuse the
 [architecture map](THEME-ARCHITECTURE-PLAN.md) and
 [adjustability audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 
-## Current review boundary: F8 Aero-inspired frame experiment
+## Current review boundary: Office 2007 G1 design
+
+The active proposal is [G1](OFFICE2007-BLUE-PLAN.md), covering the opaque palette,
+Orb/menu composition, reusable native gaps and the future shared Aero palette.
+G2-G8 are proposed implementation slices only. Keep the evidence below as
+preserved Office 2010 context; do not rerun its matrices for G1 documentation.
 
 F6 is delivered. Current F5 and F6 review results are in the
 [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger). Read the
@@ -209,9 +221,9 @@ actual VS, physical-input/IME, mixed-monitor or final visual acceptance is claim
 Use the [F7 evidence](OFFICE2010-BLUE-PLAN.md#f7-composed-review-evidence--2026-11-20)
 and the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger) as the
 normal-theme baseline. Designer Sample uses `0.1.0-designer.local20261120T135235944Z`.
-Use the [F8 walkthrough](OFFICE2010-BLUE-PLAN.md#f8-visual-walkthrough) to review
-the neutral solid gradient, Acrylic and restored window edges. The shared frame
-palette and layout are ready for a future Office 2007 palette.
+The [F8 walkthrough](OFFICE2010-BLUE-PLAN.md#f8-visual-walkthrough) retains the
+neutral solid gradient, Acrylic and restored-edge review scope. The shared frame
+palette and layout support the proposed Office 2007 palette.
 Preserve native input, source/draft ownership and the accepted Backstage handoff.
 
 The [repaint-pressure follow-up](BACKSTAGE-PAGE-MOTION.md#ribbon-repaint-pressure-and-motion-preparation)
@@ -221,10 +233,9 @@ frame and File route; see the
 [preference record](M5E-SHOWCASE-PERSISTENCE.md#frame-and-file-surface-preferences).
 The [full Solid-pane preparation](BACKSTAGE-PAGE-MOTION.md#full-solid-pane-preparation-under-zoom)
 records the Zoom-loaded strip reproduction and native first-drawing correction.
-The ledger owns the partial F8 review and the correction's pending live review.
-Keep Office 2007 documentation work paused until the user confirms that review
-passes; its first slice then remains documentation-only and stops for review
-before runtime changes.
+The ledger owns the live result separately from these automated samples.
+Office 2007 G1 is documentation-only and stops for design review before runtime
+changes.
 
 The user revised the remaining sequence on **2026-11-15**:
 
@@ -239,9 +250,10 @@ unless a concrete regression appears. Do not repeat unrelated passed matrices.
 F6 owns the library Options/customization dialogs and draft/button contracts.
 F8 covers the Aero-inspired frame and its host, theme, material and fallback
 contract. Use the existing caption-button glass as part of the frame review.
-No diagnostic tabs, temporary review solution, new family or dark
-variant. Keep native API/print evidence separate from actual VS, physical input,
-continuous motion, desktop material and mixed-monitor acceptance.
+No diagnostic tabs, temporary review solution or dark variant. The new family's
+current work is G1 documentation only. Keep native API/print evidence separate
+from actual VS, physical input, continuous motion, desktop material and
+mixed-monitor acceptance.
 
 ## Preserve delivered contracts
 
