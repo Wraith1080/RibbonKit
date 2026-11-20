@@ -1,6 +1,6 @@
 # Native Office 2010 Blue — normal theme first
 
-**2026-11-15 — F6 Options dialog theming is delivered, pending visual review. Current F5/Backstage acceptance is in the themes ledger. Next after F6 review: F7 composed normal-theme review, then F8 required Aero-inspired frame experiment.**
+**2026-11-20 — F7 composed checks pass in both samples and a public-package consumer. Live normal-theme review is next, followed by the required F8 Aero-inspired frame experiment. Current acceptance is in the themes ledger.**
 The user selected Office 2010 after the Office 2013 review and supplied eight
 WPF references, including an additional ordinary-button hover example. They
 explicitly confirmed rounded corners for this non-flat theme. Deliver the normal
@@ -967,3 +967,99 @@ match the pre-fix captures. Evidence is under `artifacts/options-list-repaint/`.
 The refreshed Designer Sample uses `0.1.0-designer.local20261120T014843042Z`.
 
 Current live review status is in the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
+
+## F7 composed review evidence — 2026-11-20
+
+The composed check completed on the clean F6 baseline `f0cc1c7` at 120 DPI in
+Showcase, Designer Sample and an independent app built with public package
+`0.1.0-designer.local20261120T014843042Z`. The check runs on one window per app,
+using the two authored samples and an independent model. Normal Debug builds
+pass. The composed check reused the existing package.
+
+- All four Classic/Simplified and Compact/Touch combinations survived narrow
+  and wide resizes on the same form and ribbon HWNDs. Each app reported 16
+  transitions starting and settling, including both tab animations and
+  Backstage opening, page changes and closing.
+- A command menu and document gallery opened after resizing. The colored
+  caption survived the Backstage, File and Options handoff and reset to the
+  neutral preset. The split File pane and footer dispatched in order. The
+  independent app connected its footer to the shared modal Options command.
+  Both samples exercised their authored footer action and then their public
+  Customize Ribbon command on the same window.
+- Cancel left a staged QAT change out of the live model. Reopening Backstage
+  restored the same page editor, parent, text and selection. The document
+  gallery reopened with the same source items, artwork and selection, including
+  the Designer Sample's custom presenter.
+- Final logs and direct-print evidence are under `artifacts/office2010-f7/` in
+  `public-final/native`, `showcase-composition` and `designer-composition`.
+  The independent runner is `eng/Test-Office2010Composition.ps1`. Live z-order
+  was checked before assembling the Backstage print, since printing a whole
+  form can layer overlapping child windows differently. Earlier fixture
+  attempts with an oversized group and the Designer theme gallery selection
+  are retained. The new checks reuse the F2–F6 results and the accepted
+  Backstage review.
+
+### F7 gallery popup scroll repaint — 2026-11-20
+
+The Showcase recording showed the Office 2010 theme gallery gradient jumping
+and forming a horizontal seam during scrolling. WinForms moved the painted
+pixels and repainted only the newly exposed strip. The built-in gallery popup
+now repaints its full viewport when native scrollbar or wheel input changes
+the scroll position. The background uses the same viewport coordinates while
+the tiles and headings follow the native scroll position.
+
+Both repaint regressions failed against the prior runtime and passed with the
+fix. All 14 focused gallery checks passed. A separate app using only the public
+package reproduced the gradient shift on the prior package. On
+`0.1.0-designer.local20261120T021720486Z`, its screen captures at 120 DPI showed
+an identical gradient in the gutter after scrollbar and wheel scrolling in both
+directions. Both samples were rebuilt in Debug. The live thumb drag in the
+Showcase remains for review.
+
+### F7 Backstage navigation release repaint — 2026-11-20
+
+The Designer Sample recording showed the pressed navigation row briefly
+reverting to hover before the new page became selected. The WinForms button
+repaints during mouse release before dispatching Click. RibbonKit now holds the
+pressed visual through that paint and clears it after release processing.
+
+All 43 focused Backstage checks passed. A separate app reproduced the release
+paint using the prior package. With `0.1.0-designer.local20261120T023154309Z`, it
+verified 20 alternating Info and Print clicks at 120 DPI with no unselected
+release paint. Capture cancellation cleared the pressed state and both page
+editors retained their handles, parents and text. Both samples rebuilt in
+Debug. Physical click review in the Designer Sample remains open.
+
+### F7 Backstage navigation icon colors — 2026-11-20
+
+Office 2010 Blue now enables the existing monochrome navigation icon setting.
+The shared renderer uses each icon's alpha mask with selected white or the
+rail's normal `#1E1E1E` ink, including for Showcase artwork with its own colors.
+Both new vector and bitmap cases failed on the prior preset. All 31 focused
+checks passed with the updated preset. At 120 DPI, direct captures verified
+Info and Print selection in Showcase and fixed-color artwork in a separate
+app using public package `0.1.0-designer.local20261120T023852144Z`. Both samples
+rebuilt in Debug.
+
+### F7 live walkthrough
+
+1. In **Showcase** and **Designer Sample**, choose **View → Office 2010 Blue**.
+   Try Blue and Red with **Color title bar** on and off. With motion enabled,
+   switch tabs and resize from wide to narrow and back. Try Classic and
+   Simplified with Mouse and Touch spacing. Maximize and restore once.
+2. Open a command dropdown and a gallery, then dismiss each. In the Showcase
+   **View** tab's theme gallery dropdown, drag the scrollbar thumb both ways
+   and use the wheel. The cards should move over a fixed gradient with no seam.
+   Open File in Application Menu mode and try **Save As**. In Backstage mode,
+   switch pages and close using File or a ribbon tab. In Designer Sample,
+   alternate between Info and Print and watch the clicked row on release.
+   Check for a flash at the title/ribbon handoff and confirm that the page
+   keeps its text when reopened.
+3. Right-click the ribbon and choose **Customize the Ribbon**. Hover and click
+   the list and tree, then Cancel a draft change. Reopen File and the gallery
+   to check that the normal surface and prior selection return.
+
+These steps cover visual motion, physical input and native caption behavior
+that the offscreen runs cannot judge. Actual Visual Studio and mixed-monitor
+review remain separate. Once F7 is accepted, continue with
+[F8](#f8-required-aero-inspired-frame-experiment).

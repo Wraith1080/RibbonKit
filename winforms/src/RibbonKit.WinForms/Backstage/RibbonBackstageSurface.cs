@@ -641,7 +641,20 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         protected override void OnMouseEnter(EventArgs e) { _hot = true; Invalidate(); base.OnMouseEnter(e); }
         protected override void OnMouseLeave(EventArgs e) { _hot = false; Invalidate(); base.OnMouseLeave(e); }
         protected override void OnMouseDown(MouseEventArgs e) { _surface.HideKeyTips(); _pressed = e.Button == MouseButtons.Left; Invalidate(); base.OnMouseDown(e); }
-        protected override void OnMouseUp(MouseEventArgs e) { _pressed = false; Invalidate(); base.OnMouseUp(e); }
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            // Button repaints synchronously before dispatching Click. Keep the
+            // pressed visual through that paint so a page click can select its row.
+            try { base.OnMouseUp(e); }
+            finally
+            {
+                if (_pressed)
+                {
+                    _pressed = false;
+                    Invalidate();
+                }
+            }
+        }
         protected override void OnMouseCaptureChanged(EventArgs e) { _pressed = false; Invalidate(); base.OnMouseCaptureChanged(e); }
         protected override void OnPaintBackground(PaintEventArgs e) { if (!_surface.MaterialPaint) base.OnPaintBackground(e); }
         protected override void OnPaint(PaintEventArgs e)

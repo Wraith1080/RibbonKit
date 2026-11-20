@@ -509,6 +509,11 @@ internal static class Program
             return;
         }
         using var form = new DesignerForm();
+        if (args.Length == 2 && args[0] == "--verify-office2010-composed")
+        {
+            Environment.ExitCode = IndependentConsumer.Office2010CompositionChecks.Verify(form, form.Ribbon!, args[1], "Designer Sample");
+            return;
+        }
         if (args.Length == 2 && args[0] == "--verify-office2010-options")
         {
             try { IndependentConsumer.Office2010OptionsChecks.VerifySample(form, form.Ribbon!, args[1], "Designer Sample"); }

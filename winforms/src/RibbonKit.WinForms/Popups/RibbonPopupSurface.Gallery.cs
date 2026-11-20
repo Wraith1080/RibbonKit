@@ -8,6 +8,25 @@ internal sealed partial class RibbonPopupSurface
     private bool _galleryKeyboardPreview;
     private bool _galleryMovingFocus;
     private Point? _galleryLastPointer;
+
+    private bool HandleGalleryScroll(ref Message m)
+    {
+        const int wmHScroll = 0x0114, wmVScroll = 0x0115, wmMouseWheel = 0x020A;
+        if (_galleryLayout is null || m.Msg is not (wmHScroll or wmVScroll or wmMouseWheel))
+            return false;
+
+        Point oldPosition = AutoScrollPosition;
+        base.WndProc(ref m);
+        if (!IsDisposed && AutoScrollPosition != oldPosition)
+        {
+            // ScrollableControl shifts the painted pixels and invalidates only the exposed strip.
+            // Repaint the viewport now so the gradient stays fixed during native thumb tracking.
+            Invalidate();
+            Update();
+        }
+        return true;
+    }
+
     private void PaintGalleryHeadings(Graphics graphics)
     {
         if (_galleryLayout is not { } layout) return;

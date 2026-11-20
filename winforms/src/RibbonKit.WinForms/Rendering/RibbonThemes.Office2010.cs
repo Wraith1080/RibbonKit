@@ -25,7 +25,7 @@ public static partial class RibbonThemes
             WindowCornerPreference = RibbonWindowCornerPreference.Rounded,
             BackstageStyle = RibbonBackstageStyle.Office2010, BackstageFullWidthNavigation = true,
             BackstageNavigationBackgroundFill = new(C(0xE4EDF7), C(0xCBDAEC)), BackstageSelectedForeground = Color.White,
-            BackstageNavigationHover = new(C(0xE8F0F9)), BackstageSelectionIndicatorVisible = false,
+            BackstageNavigationHover = new(C(0xE8F0F9)), BackstageSelectionIndicatorVisible = false, BackstageMonochromeIcons = true,
             BackstageAppearance = new() { NavigationHoverEdgeColor = C(0xF6FAFE), NavigationHoverEdgeWidth = 1 },
             BackstagePageBorderWidth = 0, BackstagePageCornerRadius = 0,
             Accent = C(0x1E5A9C), IdentityAccent = new(), AccentStates = null,

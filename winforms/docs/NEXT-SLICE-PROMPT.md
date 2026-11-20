@@ -1,11 +1,11 @@
-# Continue normal native Office 2010 Blue after F6 review
+# Continue native Office 2010 after the F7 live review
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-15**. Last verified branch is `codex/Ribbonkit-Winform`, HEAD
-`9a70d65` (`2010 F5 Application Button`). The user committed F5; F6 entered
-with a clean worktree and its changes remain uncommitted. Preserve authored Backstage
+Updated **2026-11-20**. Last verified branch is `codex/Ribbonkit-Winform`, HEAD
+`f0cc1c7` (`fix option dialog flickering listbox`). F7 entered with a clean
+worktree and adds verification on top of that commit. Preserve authored Backstage
 settings and other Form/resource edits. Recheck
 `git status --short`, live branch and HEAD; preserve user commits and edits. Do not
 commit, stage, push, publish or change branches unless requested.
@@ -182,9 +182,9 @@ records before edits. Reuse the
 [architecture map](THEME-ARCHITECTURE-PLAN.md) and
 [adjustability audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
 
-## Current review boundary: F6 Options; next F7 composed review
+## Current review boundary: F7 composed review; next F8 Aero frame
 
-F6 is delivered, pending user visual review. Current F5 acceptance is in the
+F6 is delivered. Current F5 and F6 review results are in the
 [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger). Read the
 [F6 implementation/evidence and review steps](OFFICE2010-BLUE-PLAN.md#f6-implementation-and-verification--2026-11-15).
 Preserve the user's final clarification: selected rows keep their accent outline,
@@ -207,11 +207,11 @@ and real secondary group/rename dialogs. Current package is above; evidence is
 under `artifacts/office2010-f6/`. Keep intermediate attempts. No clean full suite,
 actual VS, physical-input/IME, mixed-monitor or final visual acceptance is claimed.
 
-Stop for F6 visual review. Once the user authorizes continuation, do only
-[F7 composed normal-theme review](OFFICE2010-BLUE-PLAN.md#f7-composed-normal-theme-review).
-Reuse passed focused evidence and preserve explicit overrides/reset, native
-controls/input/layout, source/draft identity and the accepted Backstage handoff.
-F8 remains a required separate frame contract/experiment after F7.
+F7 composed automated checks passed in both samples and the independent app
+at 120 DPI. Use the [F7 evidence and live walkthrough](OFFICE2010-BLUE-PLAN.md#f7-composed-review-evidence--2026-11-20)
+for final normal-theme visual review. After acceptance, start with the bounded
+[F8 frame contract](OFFICE2010-BLUE-PLAN.md#f8-required-aero-inspired-frame-experiment).
+Preserve native input, source/draft ownership and the accepted Backstage handoff.
 
 The user revised the remaining sequence on **2026-11-15**:
 

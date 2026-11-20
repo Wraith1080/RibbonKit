@@ -5,6 +5,52 @@ namespace RibbonKit.WinForms.Tests;
 
 public sealed class BackstageSynchronizationTests
 {
+    [Fact]
+    public void Backstage_page_release_keeps_pressed_paint_through_the_native_repaint() => FoundationTests.Sta(() =>
+    {
+        using var host = new Form { ClientSize = new(850, 550) };
+        using var painter = new BackstageEntryRecorder();
+        using var ribbon = new RibbonControl { BuiltInTheme = RibbonBuiltInTheme.Office2010Blue,
+            Renderer = painter, FileMenuMode = RibbonFileMenuMode.Backstage, AnimationLevel = RibbonAnimationLevel.None };
+        ribbon.FileMenu.Visible = true;
+        ribbon.Tabs.Add(new RibbonTab { Text = "Home" });
+        var info = new RibbonBackstagePageItem { Text = "Info" };
+        var print = new RibbonBackstagePageItem { Text = "Print" };
+        ribbon.Backstage.Items.AddRange(info, print);
+        host.Controls.Add(ribbon);
+        host.Show();
+        Application.DoEvents();
+        ribbon.IsBackstageOpen = true;
+        Application.DoEvents();
+        Assert.Same(info, ribbon.Backstage.SelectedPage);
+
+        var surface = ribbon.BackstageSurface!;
+        var entry = surface.Controls.Cast<Control>().SelectMany(c => c.Controls.OfType<Button>()).Single(c => c.Text == print.Text);
+        painter.WatchedItem = print;
+        nint point = entry.Width / 2 | (entry.Height / 2 << 16);
+        const int wmLeftButtonDown = 0x0201, wmLeftButtonUp = 0x0202;
+        SendMessage(entry.Handle, wmLeftButtonDown, 1, point);
+        entry.Update();
+        Assert.Contains((false, true), painter.States);
+        painter.States.Clear();
+
+        // Release just outside the row to exercise Button's synchronous
+        // repaint without depending on the test window's desktop z-order.
+        SendMessage(entry.Handle, wmLeftButtonUp, 0, point | (nint)0xffff);
+        Assert.Same(info, ribbon.Backstage.SelectedPage);
+        Assert.Contains((false, true), painter.States);
+        Assert.DoesNotContain((false, false), painter.States);
+        entry.Update();
+        Assert.Contains((false, false), painter.States);
+
+        SendMessage(entry.Handle, wmLeftButtonDown, 1, point);
+        entry.Capture = false;
+        painter.States.Clear();
+        entry.Update();
+        Assert.Contains((false, false), painter.States);
+        Assert.Same(info, ribbon.Backstage.SelectedPage);
+    });
+
     [Theory] [InlineData(RibbonBuiltInTheme.Office2019Light)] [InlineData(RibbonBuiltInTheme.Office2024Light)]
     public void Real_panes_slide_in_their_theme_caption_bounds_without_reparenting(RibbonBuiltInTheme theme) => FoundationTests.Sta(() =>
     {
@@ -79,4 +125,16 @@ public sealed class BackstageSynchronizationTests
     private static extern bool GetLayeredWindowAttributes(nint window, out uint key, out byte alpha, out uint flags);
     private static nint Hit(Control control, Point screen) => SendMessage(control.Handle, 0x84, 0, (nint)((screen.Y << 16) | (screen.X & 0xffff)));
     [DllImport("user32.dll")] private static extern nint SendMessage(nint window, int message, nint wParam, nint lParam);
+
+    private sealed class BackstageEntryRecorder : RibbonOffice2024Renderer
+    {
+        internal RibbonBackstagePageItem? WatchedItem { get; set; }
+        internal List<(bool Selected, bool Pressed)> States { get; } = [];
+
+        public override void DrawBackstageEntry(RibbonPaintContext context, RibbonItem? item, bool selected)
+        {
+            if (WatchedItem is not null && ReferenceEquals(item, WatchedItem)) States.Add((selected, context.Pressed));
+            base.DrawBackstageEntry(context, item, selected);
+        }
+    }
 }

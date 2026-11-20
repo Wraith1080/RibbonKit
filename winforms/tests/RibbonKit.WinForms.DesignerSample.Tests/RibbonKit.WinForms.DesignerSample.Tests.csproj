@@ -21,6 +21,7 @@
     <Compile Include="../RibbonKit.WinForms.Consumer/Office2010NavigationChecks.cs" Link="Checks/Office2010NavigationChecks.cs" />
     <Compile Include="../RibbonKit.WinForms.Consumer/Office2010ApplicationMenuChecks.cs" Link="Checks/Office2010ApplicationMenuChecks.cs" />
     <Compile Include="../RibbonKit.WinForms.Consumer/Office2010OptionsChecks.cs" Link="Checks/Office2010OptionsChecks.cs" />
+    <Compile Include="../RibbonKit.WinForms.Consumer/Office2010CompositionChecks.cs" Link="Checks/Office2010CompositionChecks.cs" />
     <Compile Include="../RibbonKit.WinForms.DesignerConsumer/Office2019ThemeCheck.cs" Link="Checks/Office2019ThemeCheck.cs" />
     <EmbeddedResource Include="../../samples/RibbonKit.WinForms.DesignerSample/*.resx" Link="Authored/%(Filename)%(Extension)" LogicalName="RibbonKitDesignerConsumer.%(Filename).resources" />
     <EmbeddedResource Update="Fixtures/*.resx" LogicalName="RibbonKitDesignerConsumer.%(Filename).resources" />

@@ -5,6 +5,46 @@ namespace RibbonKit.WinForms.Tests;
 
 public sealed class Office2010BackstageTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Navigation_icons_follow_ink_even_when_artwork_supplies_its_own_color(bool vector) => FoundationTests.Sta(() =>
+    {
+        const int dpi = 120;
+        int Scale(int value) => RibbonLayoutEngine.Scale(value, dpi);
+        var theme = RibbonThemes.Office2010Blue;
+        var metrics = RibbonPresentationResolver.Backstage(theme).ResolveMetrics(theme, RibbonDensity.Compact);
+        using var painter = new RibbonOffice2024Renderer();
+        using var row = new Bitmap(240, 52);
+        using var graphics = Graphics.FromImage(row);
+        using var artwork = new Bitmap(16, 16);
+        using (var imageGraphics = Graphics.FromImage(artwork))
+            imageGraphics.FillRectangle(Brushes.Crimson, 4, 4, 8, 8);
+        using var item = new RibbonBackstagePageItem();
+        var context = new RibbonPaintContext(graphics, new(Point.Empty, row.Size), theme, Control.DefaultFont, dpi);
+        int iconLeft = Scale(metrics.IconInset), iconSize = Scale(metrics.IconSize);
+        int iconTop = (row.Height - iconSize) / 2;
+
+        painter.DrawBackstageEntry(context, item, true);
+        var background = row.GetPixel(iconLeft + 1, iconTop + 1);
+        if (vector) item.Icon = new FixedColorIcon();
+        else item.Image = artwork;
+        painter.DrawBackstageEntry(context, item, true);
+        Assert.Equal(Color.White.ToArgb(), row.GetPixel(iconLeft + iconSize / 2, row.Height / 2).ToArgb());
+        Assert.Equal(background, row.GetPixel(iconLeft + 1, iconTop + 1));
+
+        painter.DrawBackstageEntry(context, item, false);
+        Assert.Equal(theme.BackstageNavigationInk.ToArgb(), row.GetPixel(iconLeft + iconSize / 2, row.Height / 2).ToArgb());
+        painter.DrawBackstageEntry(context with { Theme = theme with { BackstageMonochromeIcons = false } }, item, true);
+        Assert.Equal(Color.Crimson.ToArgb(), row.GetPixel(iconLeft + iconSize / 2, row.Height / 2).ToArgb());
+    });
+
+    private sealed class FixedColorIcon : IRibbonIcon
+    {
+        public void Draw(Graphics graphics, Rectangle bounds, RibbonIconContext context)
+            => graphics.FillRectangle(Brushes.Crimson, Rectangle.Inflate(bounds, -bounds.Width / 4, -bounds.Height / 4));
+    }
+
     [Fact]
     public void Registration_is_a_sibling_with_explicit_below_tab_caption_and_default_roles() => FoundationTests.Sta(() =>
     {
