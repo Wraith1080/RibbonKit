@@ -1,6 +1,6 @@
 # Native Office 2007 Blue appearance contract
 
-**2026-11-21 - G4 normal Blue ribbon implemented; live appearance review pending.**
+**2026-11-21 - G5 Application Menu palette implemented; menu appearance review pending.**
 G1 remains the appearance reference. G2's additive APIs and focused evidence are
 [recorded below](#g2-shared-paint-foundations--2026-11-20). No Office 2007
 runtime preset or sample tile is delivered by G2.
@@ -8,8 +8,9 @@ Current family acceptance belongs in the
 [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
 The [G3 composition record](#g3-application-button-and-menu-composition--2026-11-21) follows G2.
 The [G4 delivery](#g4-normal-blue-preset-and-ribbon--2026-11-21) composes these foundations
-into the preset and both permanent View galleries. Foundation review was waived;
-normal-ribbon review remains the boundary before G5's dedicated menu palette.
+into the preset and both permanent View galleries. The
+[G5 delivery](#g5-application-menu-palette--2026-11-21) adds the dedicated menu palette.
+Current family acceptance and continuation authorization remain in the themes ledger.
 
 ## Reference and boundary
 
@@ -118,7 +119,11 @@ with title/QAT still visible. The Orb stays above the menu frame; the rest of
 the tabs do not. The WPF anchor is the button's top-left plus eight logical
 pixels vertically, not an ordinary below-button dropdown. Native implementation
 must measure this relationship, constrain the popup to the working area and
-retain its origin while panes change. The WPF same-window overlay/reparenting
+retain its origin while panes change. Native caption hosts floor the requested
+frame origin at the caption bottom before calculating Orb/content clearance;
+otherwise the caption exclusion would cut away the menu's top frame. The
+existing above-caption fallback still handles insufficient space below.
+The WPF same-window overlay/reparenting
 technique is not itself a native implementation contract: resolving the current
 popup-HWND versus overlapping Orb layering is a shared-library implementation
 gate before exposing the complete family.
@@ -180,7 +185,7 @@ to supply a 2007 palette.
 | Fills / state chrome | Immutable multi-stop fills, opacity mapping, full-surface coordinates, rims and independent state roles; G2 adds exact repeated-offset stops through an opt-in factory. | The existing constructor still requires strictly increasing offsets. G4 opts into hard transitions explicitly. |
 | Ribbon / tabs / QAT | Connected filled tabs, body joins, reduction, density/DPI snapshots, public renderer hooks and three QAT placements; G2 adds optional framed group panels and label bands. | G4 composes the 2007 roles; existing themes retain their separators and captions. |
 | File | Shared File command/routes and rectangular paint; G3 adds theme-owned shape, explicit override/Reset, sphere/glyph/focus hooks, overlap reservations and circular input. | G4 supplies the family palette/default and preserves an explicit rectangular override and saved File route. |
-| Application Menu | Native two-pane model, state/frame roles, footer/scrolling/nested popups/custom content; G3 adds native Orb/caption cutouts, measured origin and top-band content clearance. | Apply the 2007 band/frame palette in G5. Native font/DPI clearances are not a claim of WPF pixel parity. |
+| Application Menu | Native two-pane model, state/frame roles, footer/scrolling/nested popups/custom content; G3 adds native Orb/caption cutouts, measured origin and top-band content clearance. G5 supplies the blue band/frame/footer palette. | Menu appearance review is pending. Native font/DPI clearances are not a claim of WPF pixel parity. |
 | Other surfaces | Shared menu/gallery/tip/editor and Options appearance pipelines; real native editors and dialog drafts. | Compose and review their own 2007 roles, especially creased fills and primary/secondary button feedback. |
 | Aero | Theme-owned palette/edge width and native frame/material owner; restored/maximized transitions. | A separately reviewed 2007 palette using that owner. Reflection/grain and a different material/tab split remain deferred. |
 | Consumers / designer | Permanent View galleries in both samples, persistence and independent package-only verification. | G4 appends identity 4 without renumbering existing values and updates serialization, inert preview and both galleries. No diagnostic tabs. |
@@ -197,8 +202,8 @@ this document does not introduce runtime APIs.
 | G1 - this document | Palette, Orb/menu behavior, support gaps and sequence recorded. The subsequent user request authorizes G2 shared foundations only. |
 | G2 - shared paint foundations | **Implemented.** Exact hard transitions and opt-in group-panel/label-band decoration. Focused painter/sampler, clip, DPI and old-default compatibility evidence below; no layout-engine replacement. |
 | G3 - application button and menu composition | **Implemented.** Shared shape/override, Orb geometry/glyph, caption hit testing, QAT reservation and native Orb/menu cutouts/anchor. Independent keyboard/UIA/native-content evidence below; no family tile yet. |
-| G4 - normal Blue preset and ribbon | **Implemented.** Family identity, opaque palette, connected tabs, groups, rectangular override and Orb states; exposed in both permanent View galleries. Normal-ribbon appearance review is pending before downstream surface work. |
-| G5 - Application Menu palette | Apply frame/top/footer bands and gold/split feedback on the G3 composition. Review opening, pane switching, nested menus, resizing and native content. |
+| G4 - normal Blue preset and ribbon | **Implemented.** Family identity, opaque palette, connected tabs, groups, rectangular override and Orb states; exposed in both permanent View galleries. Current review and continuation authorization are in the themes ledger. |
+| G5 - Application Menu palette | **Implemented.** Frame/top/footer bands and gold/split feedback on the G3 composition. Live menu appearance review is pending; focused opening, pane switching, nested menus, resize/close and native-content evidence is below. |
 | G6 - Options and companion surfaces | Apply Options/customization, editor, gallery, menu and tip roles through existing pipelines. Check drafts, validation, Apply/OK/Cancel/Reset and ownership. |
 | G7 - composed normal-theme review | Refresh the existing Designer Sample in place and verify both samples plus a consumer without sample resources. Human review covers Classic/Simplified, density, state feedback, File routes and resize/maximize/restore. |
 | G8 - separate Aero palette and review | After normal acceptance, supply the 2007 palette and edge width to the shared frame. Review restored edges, edge resizing, maximize/restore, Solid/material choices and Backstage with background load. |
@@ -565,3 +570,121 @@ palette are not delivered here; those surfaces currently use shared fallback
 roles. No Aero/material is enabled by theme selection. Actual Visual Studio
 designer, physical input/IME, mixed-monitor DPI and material-pixel acceptance
 remain separate. No desktop capture, full matrix or unrelated WPF work ran.
+
+## G5 Application Menu palette — 2026-11-21
+
+Implemented from the user's clean `245fa9a` (`G4 2007 Theme`) on
+`codex/Ribbonkit-Winform`. The themes ledger owns the user's G4 review and G5
+continuation authorization. All edits remain within `winforms/`; no commit,
+staging, branch change, WPF build, diagnostic tab or desktop capture.
+
+The preset now composes the G1 menu palette through shared appearance settings:
+flat `#BED3EC` side band, exact creased `.44` blue top band, exact `.47`/`.96`
+footer valley, white inner rim, `#9BAFCA` outer ink, pale navigation and distinct
+default/active panes, `#9F9F9F` inner frame, blue headings, gray navigation separators and independent blue
+creased resting footer buttons. Gold/orange feedback stays independent of
+identity-accent recoloring. An open split primary has an approximately 32%
+gold wash (82/255 alpha), its arrow retains full gold, and pressing one half
+retains that half's deeper feedback. Native scrolling and soft popup shadow
+continue through the existing shared owners.
+
+Four additive public settings/context members are documented in XML and
+`PublicAPI.Unshipped.txt`:
+
+| Addition | Contract |
+| --- | --- |
+| `ApplicationMenuAppearance.TopBandBackground` | Null retains SurroundBackground. Paint spans the complete band above the measured inner frame, even with a partial repaint clip. No new fixed-height geometry or target reservation. |
+| `ApplicationMenuAppearance.OuterBorderColor` | Empty follows PopupBorder; Transparent hides ink. Applies only to the root two-pane menu, preserving ordinary/nested popups and root File custom-content overrides. Existing renderer width/radius hooks win. |
+| `ApplicationMenuAppearance.FooterIdleBorderColor` | Empty follows PopupBorder. Supplies idle/disabled ink before state chrome; explicit FooterBorderColor remains authoritative for every state. This permits blue resting rims and gold active rims without changing old precedence. |
+| `RibbonPaintContext.IsApplicationMenu` | Default false. Actual root menu surface, native frame and layered frame contexts carry true; the layered cache includes the role. Renderer hooks keep the original Theme and existing paint/geometry owners. |
+
+G3's measured Orb/caption/native/layered exclusions and placement remain intact.
+No File routing or window/material preference is changed by this palette. Root
+File custom-content overrides retain their ordinary popup path; native controls
+inside two-pane menu pages retain their real parent/handle and validation path.
+
+Focused evidence under `winforms/artifacts/office2007-g5/`:
+
+| Evidence | Observed result and scope |
+| --- | --- |
+| `focused.log`, `focused-final.log`, `focused-separators.log`, `focused-summary.json` | **199 distinct passes, zero remaining failures/skips**, actual xUnit discovery/execution in the retained in-process runner. G5's 13 cases cover exact stops/ink, both painters at 96/120/144/192 DPI, complete-band sampling under clips, root-only border roles, Empty/Transparent/null resets, footer state/explicit-ink precedence and old-family frame compatibility. Affected Application Menu content/surfaces/actions/joins, native window creation, frame geometry, G3 and G4 regressions also pass. The first four failures were a new fixture omitting its default-pane flag; correcting that fixture and adding footer samples passes all four. No paint tolerance or approval was changed. |
+| `debug-server-separators.log`, `release-build-separators.log`, `showcase-build-separators.log`, `designer-host-separators.log` | Normal Debug runtime/designer server, Showcase and dedicated Designer check host; normal Release runtime/protocol/tests/runner compile with zero warnings/errors. Additive public API checks pass. The net472 designer client is unchanged and its existing Debug output is reused. |
+| `public-delivery/current/evidence/result.log` | Independent **package-only** consumer with no Showcase resources/helpers passes eight native scopes at actual 120 DPI: Classic/Simplified × Compact/Touch × Orb/rectangular. Real surface/native/layered hooks carry the root role; pane origins remain stable, large panes retain native scrolling, and resizing followed by closing releases state. Actual split/footer actions invoke once, disabled inheritance holds, nested Escape closes deepest first, native validation vetoes pane switching, and page editor HWND/parent/text/selection survive pane changes. |
+| `public-delivery/comparison.json` | **32 byte-exact G4/current old-family Application Menu/frame paint pairs**: four earlier families × both public painters × four DPI values. G4 package `0.1.0-designer.local20261120T190545758Z` is retained. Its compiled consumer excludes new APIs through a baseline-only compilation symbol; current checks use the new public contract. |
+| `showcase-delivery/`, `designer-delivery/` | Both actual authored sample paths pass eight native scopes each using the existing Office 2007 tile and File models. Default/active pane prints and split-state atlases are retained. Inspected independent default menu/split states and sample menu prints; these are generated offscreen evidence, not desktop capture or live appearance acceptance. |
+| `designer-refresh-separators.log` | Existing Designer Sample refreshed **in place**, normal Debug, package `0.1.0-designer.local20261120T225131490Z`; authored Forms/UserControls/resources preserved. Check dispatch remains under the dedicated test host. |
+
+The initial consumer compilation caught use of an internal enabled-state helper;
+the final portable source uses only public Enabled/action behavior and verifies
+inherited disabling by the absence of command execution. Retain the earlier
+failed compile logs. The known old checked-hover popup assertion from G3 is
+outside this selected scope and remains unchanged; no full-suite result is
+claimed. The previously recorded VSTest socket restriction was not retried.
+
+From `winforms/`, normal configurations and default output folders:
+
+```powershell
+dotnet build tests/RibbonKit.WinForms.Tests/RibbonKit.WinForms.Tests.csproj -c Release -m:1 -p:NuGetAudit=false
+dotnet artifacts/office2007-g2/direct-runner/bin/Release/net10.0-windows/DirectRunner.dll 'Office2007ApplicationMenuTests,ApplicationMenuTests,ApplicationMenuContentTests,ApplicationMenuJoinTests,FrameGeometryTests'
+./eng/Test-Office2007ApplicationMenu.ps1 -BaselinePackageVersion '0.1.0-designer.local20261120T190545758Z' -Configuration Debug
+./eng/Test-DesignerSample.ps1 -Configuration Debug -Check --verify-office2007-menu
+```
+
+Select **View > Themes > Office 2007 Blue** and open the existing Application Menu
+File route for live review. A saved Backstage route still opens Backstage; shape
+does not choose routing. **Stop at G5 menu appearance review before G6**
+Options/customization/companion palettes. G8 Aero remains separate. Actual VS,
+physical input/IME, mixed-monitor DPI, desktop material pixels and visible motion
+acceptance remain separate. Accepted Backstage black-bar/performance fixes were
+not re-investigated.
+
+## G5 caption clearance correction — 2026-11-21
+
+The user reported that the menu looks good but supplied a screenshot showing
+its top beneath the caption. The native code anchored the popup at the Orb's
+top plus MenuOffset while excluding the **whole caption** from both native and
+layered paint. With a normal on-screen caption, that requested origin sits
+inside the excluded band, removing the top border and upper portion of its fill.
+Earlier consumer hosts at `(-16000,-16000)` were work-area-clamped away from
+their captions; their successful printed menu images did not verify this overlap.
+
+The shared composition now floors a below-opening menu's requested Y at the
+caption bottom **before** computing content clearance and the work-area fallback.
+The Orb still overlaps the frame; its real input and cutout remain. Where the
+Orb determines top clearance, moving the origin lowers the frame and shrinks
+the top band by the same amount, retaining measured command/header/footer screen
+positions. Explicit lower offsets and ordinary hosts retain their requested
+placement; the existing above-caption/pinned-height path remains. No new API,
+window, renderer, layout engine or reparenting was added. MenuOffset's XML and
+README contract now state that caption clearance is authoritative.
+
+Evidence under `winforms/artifacts/office2007-g5-caption/`:
+
+- Six new `ApplicationMenuCaptionPlacementTests` cases cover Compact/Touch at
+  96/120/144/192 DPI, before/after frame pixels through the shared exclusion and
+  painter, actual measured target/footer screen positions, lower offsets, plain
+  hosts, working-area/above-caption fallback, and hidden native window/hosted
+  surface Regions. The old origin loses the far-side top pixel; the corrected
+  origin preserves the exact menu-border ink while retaining the Orb cutout.
+  Generated frame-only PNGs in `paint/` are regression evidence, not desktop captures.
+- `focused.log` records **62 passes / 1 known old failure / 63 cases** with actual
+  in-process xUnit execution. The existing 18-point checked-hover popup assertion
+  still reports expected `-1644826`, actual `-3878685`, exactly the retained G3
+  baseline reproduction. Its paint/test/tolerance was not changed. Latest focused
+  placement results and build output are in `placement-final.log` and
+  `release-build-final.log`; this is not a full-suite result.
+- Normal Debug runtime/designer server, Showcase and the dedicated Designer
+  test host compile cleanly. The persistent Designer Sample is refreshed in place
+  (`designer-refresh.log`, package `0.1.0-designer.local20261120T230046568Z`).
+- `public-final/`, `showcase/` and `designer/` retain the focused package/sample
+  reruns: each passes eight native scopes at 120 DPI. The independent consumer
+  also passes actions, nested Escape, validation/editor retention and 32 byte-exact
+  old-family frame/menu comparisons. Two initial offscreen consumer attempts
+  found no visible popup; the activation-diagnostic replay and final uninstrumented
+  rerun pass, with earlier failure logs retained and no assertions weakened.
+  These offscreen scopes check regression safety; the six geometry/Region cases
+  specifically reproduce the on-screen caption relationship.
+
+Current user review and final evidence remain in the themes ledger. No desktop
+capture or computer-use tool was used, and accepted Backstage fixes were not
+reopened. G5 remains at follow-up live appearance review before G6.

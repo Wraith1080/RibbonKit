@@ -24,7 +24,7 @@ public sealed record RibbonApplicationButtonAppearanceSettings
     public int LeftInset { get; init; } = 6;
     /// <summary>Gets trailing clearance reserved for tabs, title and Quick Access in logical pixels, 0..1024. The larger of this value and visible shadow clearance is used.</summary>
     public int RightGap { get; init; } = 6;
-    /// <summary>Gets the Application Menu origin relative to the Orb's top-left, in logical pixels, each -1024..1024. Working-area clamps remain authoritative.</summary>
+    /// <summary>Gets the requested Application Menu origin relative to the Orb's top-left, in logical pixels, each -1024..1024. Caption clearance and working-area clamps remain authoritative; the frame starts below the caption or uses the existing above-caption fallback.</summary>
     public Point MenuOffset { get; init; } = new(0, 8);
     /// <summary>Gets minimum Application Menu top-band height in logical pixels, 0..1024. Measured Orb/caption exclusion adds clearance so no menu target or native editor sits under the cutout.</summary>
     public int MenuTopBandHeight { get; init; } = 18;

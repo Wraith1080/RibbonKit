@@ -11,6 +11,7 @@ internal sealed class RibbonPopupWindow : ToolStripDropDown
     internal RibbonPopupMotion? OpeningMotion { get; private set; }
     private bool _galleryAppearanceActive;
     internal RibbonApplicationMenuComposition ApplicationComposition;
+    internal bool IsApplicationMenu;
     internal void PrepareOpening(Control surface)
     {
         SettleMotion(); OpeningMotion = ApplicationComposition.IsEmpty ? RibbonPopupMotion.Prepare(ribbon, this, surface) : null;
@@ -34,7 +35,7 @@ internal sealed class RibbonPopupWindow : ToolStripDropDown
         // AutoClose changes native topmost state and creates the HWND. Configure
         // its class shadow first, avoiding a second HWND and native setup pass.
         DropShadowEnabled = false; CausesValidation = false;
-        Renderer = new PopupFrameRenderer(ribbon);
+        Renderer = new PopupFrameRenderer(ribbon, this);
         AutoClose = false;
     }
     protected override CreateParams CreateParams
@@ -103,11 +104,11 @@ internal sealed class RibbonPopupWindow : ToolStripDropDown
             activationChanged();
     }
 
-    private sealed class PopupFrameRenderer(RibbonControl ribbon) : ToolStripRenderer
+    private sealed class PopupFrameRenderer(RibbonControl ribbon, RibbonPopupWindow window) : ToolStripRenderer
     {
         protected override void OnRenderToolStripBackground(ToolStripRenderEventArgs e) =>
-            ribbon.Painter.DrawSurface(new(e.Graphics, e.ToolStrip.ClientRectangle, ribbon.Theme, ribbon.Font, ribbon.DeviceDpi) { Density = ribbon.Density }, true);
+            ribbon.Painter.DrawSurface(new(e.Graphics, e.ToolStrip.ClientRectangle, ribbon.Theme, ribbon.Font, ribbon.DeviceDpi) { Density = ribbon.Density, IsApplicationMenu = window.IsApplicationMenu }, true);
         protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e) =>
-            ribbon.Painter.DrawPopupFrame(new(e.Graphics, e.ToolStrip.ClientRectangle, ribbon.Theme, ribbon.Font, ribbon.DeviceDpi) { Density = ribbon.Density });
+            ribbon.Painter.DrawPopupFrame(new(e.Graphics, e.ToolStrip.ClientRectangle, ribbon.Theme, ribbon.Font, ribbon.DeviceDpi) { Density = ribbon.Density, IsApplicationMenu = window.IsApplicationMenu });
     }
 }

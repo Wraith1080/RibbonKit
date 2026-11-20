@@ -2,7 +2,7 @@ namespace RibbonKit.WinForms;
 
 public static partial class RibbonThemes
 {
-    /// <summary>Gets normal opaque Office 2007 Blue: valley surfaces, exact creased gold states, framed groups and an Orb. File routing, window material and explicit application-button shape remain host choices. Dedicated Application Menu, Options and Aero palettes are separate.</summary>
+    /// <summary>Gets normal opaque Office 2007 Blue: valley surfaces, exact creased gold states, framed groups, an Orb and a blue framed Application Menu. File routing, window material and explicit application-button shape remain host choices. Dedicated Options and Aero palettes are separate.</summary>
     public static RibbonTheme Office2007Blue { get; } = CreateOffice2007Blue();
 
     private static RibbonTheme CreateOffice2007Blue()
@@ -74,6 +74,24 @@ public static partial class RibbonThemes
                 GlyphColor = C(0x15428B), ShadowColor = Color.FromArgb(128, C(0x2E4257)), ShadowBlur = 2
             },
             FileButtonAppearance = new() { SquareBottomCorners = true, DisabledForeground = C(0xBECBD9) },
+            ApplicationMenuFooterCornerRadius = 3,
+            ApplicationMenuContent = new() { SeparatorColor = C(0xC5C5C5) },
+            ApplicationMenuAppearance = new()
+            {
+                OuterBorderColor = C(0x9BAFCA), SurroundBackground = new(C(0xBED3EC)),
+                TopBandBackground = Ramp(0xD7E5F7, 0xB7CBE6, (.44, 0xD5E2F3), (.44, 0xC6D7EE)),
+                FooterSurfaceBackground = Ramp(0xBDD3EF, 0xC9EEFF, (.47, 0xBFD5F1), (.47, 0xB1CAEA), (.96, 0xCFE0F6)),
+                SurroundRimColor = Color.White, SurroundRimWidth = 1, SurroundRimInset = 1,
+                NavigationBackground = new(C(0xFAFAFA)), DefaultPaneBackground = new(C(0xE9EAEE)), ActivePaneBackground = new(C(0xFAFAFA)),
+                InnerFrameCornerRadius = 2, InnerFrameBorderWidth = 1, InnerFrameBorderColor = C(0x9F9F9F),
+                NavigationDividerColor = C(0x9F9F9F), NavigationDividerWidth = 1,
+                DefaultHeaderBackground = new(Color.Transparent), ActiveHeaderBackground = new(C(0xDDE7EE)), HeaderRuleColor = C(0xC5C5C5),
+                RowCornerRadius = 3, RowBorderWidth = 1, RowStateChrome = goldChrome, OpenBackground = hover,
+                SelectedPrimaryBackground = RibbonFillColors.Map(hover, color => Color.FromArgb(82, color)),
+                SplitDividerWidth = 2, SplitDividerColor = C(0xC1A877), SplitDividerHighlightColor = Color.FromArgb(204, C(0xFFEDC2)), SplitDividerHighlightWidth = 1,
+                FooterBackground = Ramp(0xF4F9FE, 0xE8F2FD, (.45, 0xE2EDFB), (.45, 0xD3E4F8)),
+                FooterIdleBorderColor = C(0x7793B9), FooterBorderWidth = 1, FooterStateChrome = goldChrome
+            },
             CornerRadius = 3, PopupCornerRadius = 3, FocusCornerRadius = 2, CheckBoxCornerRadius = 2, KeyTipCornerRadius = 2,
             KeyTipBackground = new(C(0xFDFEFF), C(0xDDE9F8)), KeyTipBorder = C(0x8DB2E3),
             EditorAppearance = new() { StateChrome = goldChrome, CornerRadius = 3, ChoiceCornerRadius = 3 },

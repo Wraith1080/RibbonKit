@@ -7,6 +7,8 @@ namespace RibbonKit.WinForms;
 internal readonly record struct RibbonApplicationMenuComposition(Rectangle Orb, Rectangle Caption)
 {
     internal bool IsEmpty => Orb.IsEmpty && Caption.IsEmpty;
+    internal Point BelowCaptionOrigin(Point origin, Rectangle work) => new(origin.X,
+        Math.Clamp(Math.Max(origin.Y, Caption.IsEmpty ? origin.Y : Caption.Bottom), work.Top, Math.Max(work.Top, work.Bottom - 1)));
     internal Region Exclusion(Rectangle canvas)
     {
         var region = new Region(); region.MakeEmpty();

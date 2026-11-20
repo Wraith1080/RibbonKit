@@ -156,6 +156,10 @@ internal sealed class RibbonPopupManager : IDisposable
             int shadow = RibbonApplicationButtonMetrics.ShadowPadding(appearance, _ribbon.DeviceDpi);
             var visual = Rectangle.Inflate(screenAnchor, shadow, shadow);
             applicationComposition = new(visual, _ribbon.HasWindowCaption ? _ribbon.RectangleToScreen(new(0, 0, _ribbon.Width, _ribbon.WindowCaptionHeight)) : Rectangle.Empty);
+            // Keep the full top frame below the caption exclusion. The Orb still
+            // overlaps it; the clearance shrinks by the same amount, retaining
+            // the content's screen position when the Orb determines that clearance.
+            applicationOrigin = applicationComposition.BelowCaptionOrigin(applicationOrigin, applicationWork);
             applicationTopBand = applicationComposition.TopClearance(applicationOrigin.Y, S(appearance.MenuTopBandHeight));
             if (applicationComposition.OpensAbove(applicationOrigin, applicationWork, S(appearance.MenuTopBandHeight), Math.Max(S(96), _ribbon.Font.Height + S(48)), out int aboveBottom))
             {
@@ -183,6 +187,7 @@ internal sealed class RibbonPopupManager : IDisposable
             AccessibleName = (owner is RibbonQuickAccessDropDownReference or RibbonQuickAccessGroupReference ? RibbonQuickAccess.Caption(owner) : owner.Text) + " commands"
         };
         window.ApplicationComposition = applicationComposition;
+        window.IsApplicationMenu = surface.IsApplicationMenu;
         window.Items.Add(host);
         surface.SizeChanged += (_, _) =>
         {
@@ -580,7 +585,7 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
-        var context = new RibbonPaintContext(e.Graphics, ClientRectangle, _ribbon.Theme, Font, DeviceDpi) { Density = _ribbon.Density, BackgroundBounds = ClientRectangle };
+        var context = new RibbonPaintContext(e.Graphics, ClientRectangle, _ribbon.Theme, Font, DeviceDpi) { Density = _ribbon.Density, BackgroundBounds = ClientRectangle, IsApplicationMenu = IsApplicationMenu };
         _ribbon.Painter.DrawSurface(context, true);
         PaintHostedContentFrame(context);
         PaintApplicationMenu(context);

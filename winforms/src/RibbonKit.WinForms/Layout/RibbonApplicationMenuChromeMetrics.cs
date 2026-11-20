@@ -16,7 +16,9 @@ internal readonly record struct RibbonApplicationMenuChromeMetrics(RibbonTheme T
     internal Color Border(bool footer)
     {
         var authored = footer ? Theme.ApplicationMenuAppearance?.FooterBorderColor : Theme.ApplicationMenuAppearance?.RowBorderColor;
-        return authored is { IsEmpty: false } ink ? ink : footer ? Theme.PopupBorder : Color.Transparent;
+        return authored is { IsEmpty: false } ink ? ink : footer
+            ? Theme.ApplicationMenuAppearance is { FooterIdleBorderColor.IsEmpty: false } a ? a.FooterIdleBorderColor : Theme.PopupBorder
+            : Color.Transparent;
     }
     internal int BorderWidth(Rectangle bounds, bool footer)
     {

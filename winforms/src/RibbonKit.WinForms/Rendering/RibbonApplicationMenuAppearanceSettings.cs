@@ -5,12 +5,18 @@ public sealed record RibbonApplicationMenuAppearanceSettings
 {
     /// <summary>Initializes overrides that retain existing Application Menu command paint.</summary>
     public RibbonApplicationMenuAppearanceSettings() { }
+    /// <summary>Gets optional outer popup-frame ink for the root Application Menu. Empty follows PopupBorder; Transparent hides ink. Ordinary/nested popups retain their own border, and renderer width/radius hooks remain authoritative.</summary>
+    public Color OuterBorderColor { get; init; } = Color.Empty;
+    /// <summary>Gets an optional top-band fill between the surface top and the measured inner frame. Null retains SurroundBackground. The gradient spans that complete band under partial repaint; layout, Orb/caption exclusions and native targets remain unchanged.</summary>
+    public RibbonFill? TopBandBackground { get; init; }
     /// <summary>Gets optional row-state outlines and inner rims. Explicit RowBorderColor/RowBorderWidth win; null retains existing row paint.</summary>
     public RibbonStateChromeSettings? RowStateChrome { get; init; }
     /// <summary>Gets optional footer-state outlines and inner rims. Explicit FooterBorderColor/FooterBorderWidth win; null retains existing footer paint.</summary>
     public RibbonStateChromeSettings? FooterStateChrome { get; init; }
     /// <summary>Gets optional idle/disabled footer-button fill. Null follows PopupBackground/Surface. Existing Hover/Pressed/Checked state fills remain independent.</summary>
     public RibbonFill? FooterBackground { get; init; }
+    /// <summary>Gets idle/disabled footer-button outline ink, preceding PopupBorder. Empty retains PopupBorder. FooterStateChrome may replace this ink for active states; explicit FooterBorderColor remains authoritative for every state.</summary>
+    public Color FooterIdleBorderColor { get; init; } = Color.Empty;
     /// <summary>Gets optional open row/arrow fill when not physically hovered or pressed. Null retains Pressed; selected split-primary fill remains independent.</summary>
     public RibbonFill? OpenBackground { get; init; }
     /// <summary>Gets optional default-pane heading fill. Null retains MenuHeadingBackground. Transparent reveals the already painted pane without a separate heading patch.</summary>

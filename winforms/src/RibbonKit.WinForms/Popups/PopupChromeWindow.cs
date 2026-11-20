@@ -16,6 +16,7 @@ internal sealed class PopupChromeWindow : NativeWindow, IDisposable
     private int _dpi;
     private int _radius, _padding;
     private bool _shadowEnabled;
+    private bool _isApplicationMenu;
     private nint _owner;
     private RibbonApplicationMenuComposition _composition;
     private Point _compositionOrigin;
@@ -45,13 +46,14 @@ internal sealed class PopupChromeWindow : NativeWindow, IDisposable
         int padding = RibbonFrameMetrics.PopupPadding(ribbon.Painter, ribbon.Theme, ribbon.DeviceDpi);
         var bounds = Rectangle.Inflate(popup.Bounds, padding, padding);
         var composition = popup is RibbonPopupWindow window ? window.ApplicationComposition : default;
-        if (_size != bounds.Size || _theme != ribbon.Theme || !ReferenceEquals(_renderer, ribbon.Painter) || _dpi != ribbon.DeviceDpi || _radius != radius || _padding != padding || _shadowEnabled != shadow || _composition != composition || !composition.IsEmpty && _compositionOrigin != bounds.Location)
+        bool isApplicationMenu = popup is RibbonPopupWindow { IsApplicationMenu: true };
+        if (_size != bounds.Size || _theme != ribbon.Theme || !ReferenceEquals(_renderer, ribbon.Painter) || _dpi != ribbon.DeviceDpi || _radius != radius || _padding != padding || _shadowEnabled != shadow || _isApplicationMenu != isApplicationMenu || _composition != composition || !composition.IsEmpty && _compositionOrigin != bounds.Location)
         {
             using var bitmap = new Bitmap(bounds.Width, bounds.Height, PixelFormat.Format32bppPArgb);
             using (var graphics = Graphics.FromImage(bitmap))
             {
                 if (!composition.IsEmpty) { using var exclusion = composition.Exclusion(bounds); graphics.ExcludeClip(exclusion); }
-                var context = new RibbonPaintContext(graphics, new(padding, padding, popup.Width, popup.Height), ribbon.Theme, ribbon.Font, ribbon.DeviceDpi) { Density = ribbon.Density };
+                var context = new RibbonPaintContext(graphics, new(padding, padding, popup.Width, popup.Height), ribbon.Theme, ribbon.Font, ribbon.DeviceDpi) { Density = ribbon.Density, IsApplicationMenu = isApplicationMenu };
                 if (shadow) ribbon.Painter.DrawPopupShadow(context);
                 if (radius > 0) ribbon.Painter.DrawPopupFrame(context);
             }
@@ -62,6 +64,7 @@ internal sealed class PopupChromeWindow : NativeWindow, IDisposable
             _dpi = ribbon.DeviceDpi;
             _radius = radius; _padding = padding;
             _shadowEnabled = shadow;
+            _isApplicationMenu = isApplicationMenu;
             _composition = composition; _compositionOrigin = bounds.Location;
         }
         // Share the popup's native owner, rather than owning this from the

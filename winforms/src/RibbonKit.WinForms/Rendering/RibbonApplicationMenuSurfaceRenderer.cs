@@ -12,6 +12,8 @@ internal static class RibbonApplicationMenuSurfaceRenderer
         using (var backing = new SolidBrush(m.DefaultTint)) c.Graphics.FillRectangle(backing, c.Bounds);
         if (c.Theme.ApplicationMenuAppearance?.SurroundBackground is { } surround) Fill(owner, c, surround);
         var frame = RibbonRenderer.ApplicationFrame(c.Bounds, navigation); int popupRadius = owner.GetPopupCornerRadius(c.Theme, c.DeviceDpi);
+        if (c.Theme.ApplicationMenuAppearance?.TopBandBackground is { } topFill)
+            Fill(owner, c with { Bounds = Rectangle.FromLTRB(c.Bounds.Left, c.Bounds.Top, c.Bounds.Right, Math.Clamp(frame.Top, c.Bounds.Top, c.Bounds.Bottom)) }, topFill);
         if (!footer.IsEmpty && c.Theme.ApplicationMenuAppearance?.FooterSurfaceBackground is { } footerFill)
             Fill(owner, c with { Bounds = Rectangle.FromLTRB(c.Bounds.Left, Math.Clamp(frame.Bottom, c.Bounds.Top, c.Bounds.Bottom), c.Bounds.Right, c.Bounds.Bottom) }, footerFill);
         owner.PaintRounded(c with { Bounds = frame }, m.Radius(popupRadius), m.Navigation, m.Border, m.BorderWidth(frame));

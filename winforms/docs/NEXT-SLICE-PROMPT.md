@@ -1,10 +1,10 @@
-# Continue native Office 2007 after G4 ribbon review
+# Continue native Office 2007 after G5 menu review
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
 Updated **2026-11-21**. The current checkout is `codex/Ribbonkit-Winform` at
-`037ac25` (`G3 2007 Theme`), following `df38b3f`, `f239e3e` and `ed382ff`. Preserve authored Backstage
+`245fa9a` (`G4 2007 Theme`), following `037ac25`, `df38b3f`, `f239e3e` and `ed382ff`. Preserve authored Backstage
 settings and other Form/resource edits. Recheck
 `git status --short`, live branch and HEAD; preserve user commits and edits. Do not
 commit, stage, push, publish or change branches unless requested.
@@ -18,12 +18,23 @@ transitions and optional measured group decoration; its implementation and
 focused evidence are in the [G2 record](OFFICE2007-BLUE-PLAN.md#g2-shared-paint-foundations--2026-11-20).
 **G3 application-button/menu composition is implemented and committed.** Read its
 [contract, exact evidence and limits](OFFICE2007-BLUE-PLAN.md#g3-application-button-and-menu-composition--2026-11-21). All 28 G3 cases, independent native/UIA checks and default File paint pairs pass; one affected old checked-hover assertion is reproduced against the retained DLL.
-**G4 normal Blue palette/ribbon is implemented and uncommitted.** Preserve its
+**G4 normal Blue palette/ribbon is implemented and committed.** Preserve its
 runtime preset, additive enum/API entries, designer mapping, both permanent View
 gallery tiles and focused checks. Read the [G4 implementation/evidence/limits](OFFICE2007-BLUE-PLAN.md#g4-normal-blue-preset-and-ribbon--2026-11-21).
-The Designer Sample is refreshed in place in normal Debug. Review the normal
-ribbon through **View > Themes > Office 2007 Blue** before G5's dedicated
-Application Menu palette. G6 Options/companions and G8 Aero remain later work.
+**G5 Application Menu palette is implemented and uncommitted.** Preserve its
+exact band/footer fills, root-only outer-frame ink/context, idle-footer ink,
+additive API baseline and focused public/native checks. Read the
+[G5 delivery and limits](OFFICE2007-BLUE-PLAN.md#g5-application-menu-palette--2026-11-21).
+The user's menu-top/caption observation is corrected by the shared
+[caption-clearance follow-up](OFFICE2007-BLUE-PLAN.md#g5-caption-clearance-correction--2026-11-21):
+floor the below-opening frame origin at the caption bottom before measuring
+Orb/content clearance. Preserve the Orb cutout, stable measured command positions
+and existing above-caption fallback. Follow-up live appearance review is pending.
+The Designer Sample is refreshed in place in normal Debug. Review the Application
+Menu under **View > Themes > Office 2007 Blue**, using the existing CommandMenu
+File route. Shape and saved routing remain independent. The themes ledger owns
+G4 review/continuation and G5's pending menu review. G6 Options/companions and G8
+Aero remain later work.
 No G2/G3 foundation visual-review stop is required. Do not reopen accepted
 Backstage black-bar/performance investigations or restore diagnostic tabs.
 The [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger)

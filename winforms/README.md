@@ -163,8 +163,13 @@ uses the separate blue File ramps. Resetting that override resumes the Orb.
 Both sample View galleries expose the preset. Accent recoloring preserves gold
 feedback and the Orb, while the optional colored caption and rectangular File
 use `IdentityAccent`. Theme selection preserves File routing and native
-material/frame choices. Dedicated Application Menu, Options/companion and Aero
-palettes are later slices; the normal ribbon still needs live appearance review.
+material/frame choices. The two-pane Application Menu also has blue creased
+top/footer bands, independent frame ink, pale panes and dimensional footer buttons.
+The Orb-relative menu offset is a request: native caption clearance keeps the
+complete top frame below the caption while the Orb overlaps it. Measured content
+clearance and the existing working-area/above-caption fallback remain in use.
+Dedicated Options/companion and Aero palettes are later slices; current appearance
+review belongs in the themes ledger.
 See the [G4 contract and evidence](docs/OFFICE2007-BLUE-PLAN.md#g4-normal-blue-preset-and-ribbon--2026-11-21).
 
 `Theme.IdentityAccent` supplies immutable reference ramps and independent
@@ -3124,6 +3129,9 @@ backgrounds, inner frame and headings:
 | `HeaderRuleThickness`, `HeaderRuleColor` | One-device-pixel bottom rule with Border ink at null/Empty. Authored thickness 0..32 logical pixels clamps within the header. Alpha is retained; zero/Transparent hides paint. |
 | `DefaultHeaderBackground`, `ActiveHeaderBackground` | Independent heading fills before MenuHeadingBackground and the selected-pane GalleryHeadingBackground fallback. Transparent reveals the already painted page, including its gradient; null restores fallback. |
 | `FooterSurfaceBackground` | Optional fill for the surface band below the inner panel; null retains SurroundBackground. Footer buttons keep separate fills. |
+| `TopBandBackground` | Optional fill above the measured inner frame. Null retains SurroundBackground; gradients span the full measured band under partial repaint. Existing Orb/caption cutouts, targets and layout remain unchanged. |
+| `OuterBorderColor` | Root Application Menu popup-frame ink; Empty follows PopupBorder and Transparent hides ink. Native and layered frame hooks receive `RibbonPaintContext.IsApplicationMenu = true`; nested/ordinary popups and root File custom-content overrides retain false. Renderer width/radius hooks remain authoritative. |
+| `FooterIdleBorderColor` | Idle/disabled footer-button ink before PopupBorder. Empty restores fallback; FooterStateChrome supplies active-state ink. Explicit FooterBorderColor still wins for every state. |
 | `SurroundRimColor`, `SurroundRimWidth`, `SurroundRimInset` | Optional surrounding inner rim. Empty/Transparent/zero hides it; null width/inset use one device pixel. Logical ranges 0..32 / 0..1024, clamped within the unchanged popup. Outer frame and inner panel borders stay independent. |
 
 Office 2010 authors these roles for a blue reflective surround/footer, pale blue
@@ -3133,6 +3141,13 @@ gold hover wash, while the arrow uses the full hover ramp. Hovering either half
 fills both; pressing still targets the pressed half. Footer hover/pressed fills
 retain the ordinary gold ramps. These settings do not restyle native application
 content or change popup layout, targets, validation or ownership.
+
+Office 2007 composes these roles with exact repeated-offset top/footer/button
+gradients, white rims, a flat blue side band and a roughly 32% gold wash on the
+unhovered open split primary. The pressed half uses the deeper orange ramp.
+Its outer menu border is independent from ordinary popup ink, and resting blue
+footer borders become gold on hover. All additions retain existing defaults.
+See the [G5 evidence and limits](docs/OFFICE2007-BLUE-PLAN.md#g5-application-menu-palette--2026-11-21).
 
 ```csharp
 ribbon.Theme = ribbon.Theme with

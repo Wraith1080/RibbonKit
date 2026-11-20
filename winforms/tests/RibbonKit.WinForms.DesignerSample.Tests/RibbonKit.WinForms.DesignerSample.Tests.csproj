@@ -17,6 +17,7 @@
     <Compile Include="../RibbonKit.WinForms.Consumer/Office2013CompositionChecks.cs" Link="Checks/Office2013CompositionChecks.cs" />
     <Compile Include="../RibbonKit.WinForms.Consumer/Office2010ShellChecks.cs" Link="Checks/Office2010ShellChecks.cs" />
     <Compile Include="../RibbonKit.WinForms.Consumer/Office2007ShellChecks.cs" Link="Checks/Office2007ShellChecks.cs" />
+    <Compile Include="../RibbonKit.WinForms.Consumer/Office2007ApplicationMenuChecks.cs" Link="Checks/Office2007ApplicationMenuChecks.cs" />
     <Compile Include="../RibbonKit.WinForms.Consumer/Office2010BackstageChecks.cs" Link="Checks/Office2010BackstageChecks.cs" />
     <Compile Include="../RibbonKit.WinForms.Consumer/Office2010ReviewChecks.cs" Link="Checks/Office2010ReviewChecks.cs" />
     <Compile Include="../RibbonKit.WinForms.Consumer/Office2010NavigationChecks.cs" Link="Checks/Office2010NavigationChecks.cs" />

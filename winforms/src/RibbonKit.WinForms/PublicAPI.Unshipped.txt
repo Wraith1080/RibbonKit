@@ -1,4 +1,12 @@
 #nullable enable
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.FooterIdleBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.FooterIdleBorderColor.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.OuterBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.OuterBorderColor.init -> void
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.TopBandBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonApplicationMenuAppearanceSettings.TopBandBackground.init -> void
+RibbonKit.WinForms.RibbonPaintContext.IsApplicationMenu.get -> bool
+RibbonKit.WinForms.RibbonPaintContext.IsApplicationMenu.init -> void
 RibbonKit.WinForms.RibbonHeaderAppearanceSettings.ConnectSelectedTabToBody.get -> bool
 RibbonKit.WinForms.RibbonHeaderAppearanceSettings.ConnectSelectedTabToBody.init -> void
 RibbonKit.WinForms.RibbonPaintContext.HeaderBodyConnectionBounds.get -> System.Drawing.Rectangle

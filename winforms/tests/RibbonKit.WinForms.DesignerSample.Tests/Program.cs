@@ -556,6 +556,12 @@ internal static class Program
             catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
             return;
         }
+        if (args.Length == 2 && args[0] == "--verify-office2007-menu")
+        {
+            try { IndependentConsumer.Office2007ApplicationMenuChecks.VerifySample(form, form.Ribbon!, args[1], "Designer Sample"); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
         if (args.Length == 2 && args[0] == "--verify-office2013-composed")
         {
             try { IndependentConsumer.Office2013CompositionChecks.Verify(form, form.Ribbon!, args[1], "Designer Sample"); }
