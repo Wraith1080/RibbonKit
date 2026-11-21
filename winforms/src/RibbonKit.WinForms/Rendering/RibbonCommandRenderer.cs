@@ -26,8 +26,11 @@ internal static class RibbonCommandRenderer
                 var fill = active ? theme.CommandStateFill(part.Hot, expanded || part.Pressed, marked) : new RibbonFill(quickAccess ? theme.Surface : Color.Transparent);
                 if (!active && whole.Theme.CommandAppearance?.SplitCompanionBackground is { } authored) fill = authored;
                 else if (quickAccess) fill = !active && whole.CompositedText && !menu ? new(Color.Transparent)
-                    : RibbonRenderer.QuickAccessFill(whole, fill, menu, pressed: part.Pressed || expanded, marked: marked && !part.Hot);
-                owner.PaintCommandState(whole with { StateChecked = check, StatePressed = primary.Pressed || dropDown.Pressed || open, StateHot = primary.Hot || dropDown.Hot }, fill, quickAccess ? Color.Transparent : whole.Theme.Border);
+                    : RibbonRenderer.QuickAccessFill(whole with { Hot = part.Hot, StateChecked = marked }, fill, menu, pressed: part.Pressed || expanded, marked: marked && !part.Hot);
+                bool perPart = whole.Theme.CommandAppearance?.SplitFillUsesPartBounds == true;
+                var paint = new RibbonCommandAppearanceMetrics(whole.Theme, whole.DeviceDpi, 0, Color.Transparent, RibbonPresentationResolver.CommandChrome).StateBounds(whole.Bounds);
+                owner.PaintCommandState(whole with { StateChecked = check, StatePressed = primary.Pressed || dropDown.Pressed || open, StateHot = primary.Hot || dropDown.Hot,
+                    IsSplitCommandState = perPart, BackgroundBounds = perPart ? Rectangle.Intersect(paint, part.Bounds) : whole.BackgroundBounds }, fill, quickAccess ? Color.Transparent : whole.Theme.Border);
             }
             finally { whole.Graphics.Restore(saved); }
         }

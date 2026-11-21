@@ -606,6 +606,8 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
 {
     /// <summary>Gets whether the context belongs to the root two-pane Application Menu, including its native/layered popup frame. False retains ordinary popup paint. Nested menus and root File custom-content overrides remain ordinary popups.</summary>
     public bool IsApplicationMenu { get; init; }
+    /// <summary>Gets whether this is a passive ScreenTip frame context, including its native and layered edges. False retains ordinary popup paint. Keyboard KeyTips remain independent.</summary>
+    public bool IsScreenTip { get; init; }
     /// <summary>Gets an optional effective File shape for a control override. Null uses the theme default for standalone drawing.</summary>
     public RibbonApplicationButtonShape? ApplicationButtonShape { get; init; }
     /// <summary>Gets a borrowed Orb glyph for shared File drawing. Null retains the shared vector fallback.</summary>
@@ -655,4 +657,5 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     internal bool FileMenuClosing { get; init; }
     internal bool FileMenuPreviewOpen { get; init; }
     internal bool IsHeaderUtilityState { get; init; }
+    internal bool IsSplitCommandState { get; init; }
 }

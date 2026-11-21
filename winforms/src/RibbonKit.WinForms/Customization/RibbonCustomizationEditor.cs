@@ -66,6 +66,7 @@ public sealed class RibbonCustomizationEditor : UserControl
         _tree.AfterSelect += (_, _) => UpdateActions(); _tree.CheckRequested += node => { _tree.SelectedNode = node; ToggleTab(); };
         _tree.KeyDown += (_, e) => { if (e.KeyCode == Keys.Space && Selected?.Data is RibbonCustomizationTab) { ToggleTab(); e.Handled = e.SuppressKeyPress = true; } };
         _search.TextChanged += (_, _) => RefreshAvailable(); _treeSearch.TextChanged += (_, _) => RefreshTree();
+        RibbonOptionsBackground.Bind(this, ribbon);
         UpdateMetrics(); RefreshDraft();
     }
     /// <summary>Gets the owned Ribbon-scoped draft session. Call RefreshDraft after programmatic changes or import.</summary>
@@ -228,6 +229,7 @@ public sealed class RibbonCustomizationEditor : UserControl
         var cancel = new RibbonOptionsButton(_ribbon) { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = ScaleLogical(82), Height = height };
         var footer = new RibbonOptionsFooter(_ribbon) { AutoSize = true, WrapContents = false }; footer.Controls.AddRange([ok, cancel]); footer.Dock = DockStyle.Bottom; footer.Padding = new(gap); dialog.Controls.Add(content); dialog.Controls.Add(footer); dialog.AcceptButton = ok; dialog.CancelButton = cancel;
         ok.Click += (_, _) => { if (!string.IsNullOrWhiteSpace(name.Text)) dialog.DialogResult = DialogResult.OK; else name.Focus(); };
+        RibbonOptionsBackground.Bind(content, _ribbon);
         if (dialog.ShowDialog(FindForm()) != DialogResult.OK) return;
         switch (selected.Data) { case RibbonCustomizationTab t: t.Label = name.Text.Trim(); break; case RibbonCustomizationGroup g: g.Label = name.Text.Trim(); break; case RibbonCustomizationCommand c: c.Label = name.Text.Trim(); c.Size = (RibbonItemSize)size.SelectedItem!; break; }
         RefreshTree(selected.Id);
@@ -235,7 +237,7 @@ public sealed class RibbonCustomizationEditor : UserControl
     private void DrawRow(object? sender, DrawItemEventArgs e)
     {
         if (e.Index < 0 || _available.Items[e.Index] is not RibbonCommandCatalogEntry entry) return;
-        RibbonOptionsRowRenderer.Draw(_rowPainter, new RibbonPaintContext(e.Graphics, e.Bounds, _ribbon.Theme, Font, DeviceDpi) { Hot = _available.HotIndex == e.Index }, entry.Source, entry.Category + " › " + entry.Text, e.State.HasFlag(DrawItemState.Selected)); e.DrawFocusRectangle();
+        RibbonOptionsRowRenderer.Draw(_rowPainter, new RibbonPaintContext(e.Graphics, e.Bounds, _ribbon.Theme, Font, DeviceDpi) { Hot = _available.HotIndex == e.Index, BackgroundBounds = _available.FullBackgroundBounds(e) }, entry.Source, entry.Category + " › " + entry.Text, e.State.HasFlag(DrawItemState.Selected)); e.DrawFocusRectangle();
     }
     private void DrawIcon(Graphics graphics, RibbonElement source, Rectangle bounds)
     { RibbonOptionsRowRenderer.DrawIcon(graphics, source, bounds, DeviceDpi, _ribbon.Theme.Foreground); }

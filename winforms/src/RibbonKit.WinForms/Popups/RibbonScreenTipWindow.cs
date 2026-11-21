@@ -88,7 +88,7 @@ internal sealed class RibbonScreenTipWindow : Form
     }
     protected override void OnPaint(PaintEventArgs e)
     {
-        var context = new RibbonPaintContext(e.Graphics, ClientRectangle, _ribbon.Theme, _ribbon.Font, _ribbon.DeviceDpi) { Density = _ribbon.Density };
+        var context = new RibbonPaintContext(e.Graphics, ClientRectangle, _ribbon.Theme, _ribbon.Font, _ribbon.DeviceDpi) { Density = _ribbon.Density, IsScreenTip = true };
         _ribbon.Painter.DrawPopupFrame(context);
         _ribbon.Painter.DrawScreenTip(context, _title, _description, _layout.Title, _layout.Description);
         _chrome.Update(this, _ribbon, _radius);

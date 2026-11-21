@@ -1,6 +1,6 @@
 # Native Office 2007 Blue appearance contract
 
-**2026-11-21 - G5 Application Menu palette implemented; menu appearance review pending.**
+**2026-11-21 - G6 implementation complete, including hover-only caption rims; G7 has not started.**
 G1 remains the appearance reference. G2's additive APIs and focused evidence are
 [recorded below](#g2-shared-paint-foundations--2026-11-20). No Office 2007
 runtime preset or sample tile is delivered by G2.
@@ -10,6 +10,12 @@ The [G3 composition record](#g3-application-button-and-menu-composition--2026-11
 The [G4 delivery](#g4-normal-blue-preset-and-ribbon--2026-11-21) composes these foundations
 into the preset and both permanent View galleries. The
 [G5 delivery](#g5-application-menu-palette--2026-11-21) adds the dedicated menu palette.
+The [G6 delivery](#g6-options-and-companion-surfaces--2026-11-21) covers customization,
+editor/gallery/menu/tip roles and the requested blue dialog/popup backing.
+Its [gradient and thin-button-outline correction](#g6-gradient-and-button-outline-correction--2026-11-21)
+replaces the initial flat backing with the WPF reference ramp, including native wells.
+The [caption hover-outline completion](#g6-caption-hover-outlines-and-slice-completion--2026-11-21)
+finishes the requested G6 corrections. Live review remains separate from recorded checks.
 Current family acceptance and continuation authorization remain in the themes ledger.
 
 ## Reference and boundary
@@ -75,7 +81,8 @@ the label band tucked inside the bottom rim. Reserve frame space consistently
 through group reduction; do not move item hit targets when a frame appears.
 Panel content and caption clips must derive from the measured group snapshot,
 including collapsed groups. Simplified mode keeps the shared reduction/layout
-policy and needs an explicit compact panel treatment, not a second layout engine.
+policy and uses separators between groups rather than rectangular panels. The
+panel visibility setting remains independent from Classic frames and label bands.
 
 Keep the ribbon flush with its normal host layout. Below-ribbon QAT joins the
 body without a doubled top border. A standard window has no permanently painted
@@ -203,8 +210,8 @@ this document does not introduce runtime APIs.
 | G2 - shared paint foundations | **Implemented.** Exact hard transitions and opt-in group-panel/label-band decoration. Focused painter/sampler, clip, DPI and old-default compatibility evidence below; no layout-engine replacement. |
 | G3 - application button and menu composition | **Implemented.** Shared shape/override, Orb geometry/glyph, caption hit testing, QAT reservation and native Orb/menu cutouts/anchor. Independent keyboard/UIA/native-content evidence below; no family tile yet. |
 | G4 - normal Blue preset and ribbon | **Implemented.** Family identity, opaque palette, connected tabs, groups, rectangular override and Orb states; exposed in both permanent View galleries. Current review and continuation authorization are in the themes ledger. |
-| G5 - Application Menu palette | **Implemented.** Frame/top/footer bands and gold/split feedback on the G3 composition. Live menu appearance review is pending; focused opening, pane switching, nested menus, resize/close and native-content evidence is below. |
-| G6 - Options and companion surfaces | Apply Options/customization, editor, gallery, menu and tip roles through existing pipelines. Check drafts, validation, Apply/OK/Cancel/Reset and ownership. |
+| G5 - Application Menu palette | **Implemented.** Frame/top/footer bands and gold/split feedback on the G3 composition. Current menu review and continuation authorization are in the themes ledger; focused native-content and caption-clearance evidence is below. |
+| G6 - Options and companion surfaces | **Implementation complete.** Options/customization, editor, gallery, menu and tip roles; full-surface valley backgrounds, thin dialog action outlines, split/QAT/overflow feedback, Simplified separators and hover-only caption rims. Focused evidence and known baseline limits below. Current user review belongs in the ledger; G7 has not started. |
 | G7 - composed normal-theme review | Refresh the existing Designer Sample in place and verify both samples plus a consumer without sample resources. Human review covers Classic/Simplified, density, state feedback, File routes and resize/maximize/restore. |
 | G8 - separate Aero palette and review | After normal acceptance, supply the 2007 palette and edge width to the shared frame. Review restored edges, edge resizing, maximize/restore, Solid/material choices and Backstage with background load. |
 
@@ -632,8 +639,8 @@ dotnet artifacts/office2007-g2/direct-runner/bin/Release/net10.0-windows/DirectR
 
 Select **View > Themes > Office 2007 Blue** and open the existing Application Menu
 File route for live review. A saved Backstage route still opens Backstage; shape
-does not choose routing. **Stop at G5 menu appearance review before G6**
-Options/customization/companion palettes. G8 Aero remains separate. Actual VS,
+does not choose routing. The G5 review checkpoint and subsequent G6 authorization
+are recorded in the themes ledger. G8 Aero remains separate. Actual VS,
 physical input/IME, mixed-monitor DPI, desktop material pixels and visible motion
 acceptance remain separate. Accepted Backstage black-bar/performance fixes were
 not re-investigated.
@@ -687,4 +694,277 @@ Evidence under `winforms/artifacts/office2007-g5-caption/`:
 
 Current user review and final evidence remain in the themes ledger. No desktop
 capture or computer-use tool was used, and accepted Backstage fixes were not
-reopened. G5 remains at follow-up live appearance review before G6.
+reopened. The themes ledger owns the follow-up live result and continuation.
+
+## G6 Options and companion surfaces - 2026-11-21
+
+This is the initial G6 delivery record. Its solid body/popup backing, white list
+wells and logical-width button outlines are superseded by the
+[gradient/thin-outline correction below](#g6-gradient-and-button-outline-correction--2026-11-21).
+Keep these earlier evidence paths as historical results, not final acceptance.
+
+G6 composes the existing shared Options/customization, editor, gallery, menu and
+passive tip pipelines in `RibbonThemes.Office2007Blue`. Native layout, density,
+DPI, input, draft sessions, validation, accessible objects and renderer hooks keep
+their existing owners. No sample-only styling or layout engine was added.
+
+The reference remains the read-only WPF Office 2007 tokens and shared Options
+styles, adapted to native controls. The user's background follow-up deliberately
+changes the initial white dialog backing: the **customization body and ordinary
+popup backing now share the Application Menu surround `#BED3EC`**. The Options
+footer shares the exact menu footer gradient, including its repeated `.47` stops.
+This uses existing `BackgroundColor`, `FooterBackground`, `PopupBackground` and
+`MenuAppearance.OverflowBackground` roles. Library secondary group/rename dialogs
+follow the same body color. The navigation rail remains `#F5F4F3`; native field,
+list/tree and gallery-strip wells remain white. ScreenTips retain their separate
+near-white `#FBFDFF` fill and `#8DB2E3` rim. These are explicit opaque fills, not
+unpainted areas or transparency workarounds.
+
+Ordinary dialog actions use `#FBFDFF`, `.48 #E1EDF9`, `.54 #BCD3EA`, `#E9F2FB`,
+with idle rim `#7D9EC0`, gold hover and orange pressed feedback. Primary OK uses
+the creased rectangular-File reference blue (`.45 #3585C6`, `.45 #1F63A6`), rim
+`#17578F`, white text, a 22% white hover wash and a 16% black pressed wash. All
+stops/axis/alpha survive mapping. These explicit primary fills retain reference
+blue when Accent changes; applications can override/reset each role. Gold row,
+tree, navigation and icon-picker selections stay independent from Accent.
+Explicit button/editor/gallery outline widths are one logical pixel; existing
+Options row/frame defaults keep their one-device-pixel policy. Native scrollbar
+skin, nonclient captions and application-owned page styling remain with their
+existing owners.
+
+Four additive public members have XML documentation and eight getter/init entries
+in `PublicAPI.Unshipped.txt`; the shipped baseline is unchanged:
+
+| Member | Contract |
+| --- | --- |
+| `RibbonStateChromeSettings.IdleBorderColor` | Replaces idle fallback where a surface already paints idle chrome. Empty restores fallback; Transparent hides ink. Active-state fallback stays independent; explicit surface ink/width wins. Does not make idle commands active. |
+| `RibbonTipAppearanceSettings.ScreenTipBackground` | Optional opaque fill, including exact gradients. Null restores PopupBackground/Surface. Every stop validates before Theme/BuiltInTheme mutation. |
+| `RibbonTipAppearanceSettings.ScreenTipBorderColor` | Independent frame ink, including alpha. Empty restores PopupBorder; Transparent hides ink. Width/radius hooks retain ownership. |
+| `RibbonPaintContext.IsScreenTip` | Flags both native passive-tip and layered-edge frame/shadow hooks without replacing the theme. Defaults false; ordinary popups, root Application Menu and KeyTips retain their roles. The layered cache includes this scope. |
+
+Focused evidence is under `winforms/artifacts/office2007-g6/`:
+
+| Evidence | Observed result and scope |
+| --- | --- |
+| `focused-background.log` | **232/232 pass, zero failures/skips**, in one final affected run after the background change. Actual xUnit discovery/execution uses the retained in-process runner because the recorded VSTest socket restriction remains; no assertion or tolerance was bypassed. Includes 16 G6 cases, Options shell/list/tree/field/icon-picker/popup contracts, editor/gallery/menu/tip behavior, G5 menu and caption-placement regressions. Direct paint/sampling/clip checks cover 96/120/144/192 DPI and both shared painters. |
+| `public-background-final.log`, `public-background-final/comparison.json` | Package-only independent consumer passes four native Options scopes at actual 120 DPI (Compact/Touch x Classic/Simplified), mode-appropriate customization and QAT pages, actual button/list states, native HWND/parent/text/selection/scroll retention, independent drafts, rejected/successful Apply and Cancel checkpoints. Actual native content backing and ordinary popup pixels are asserted; four-DPI public paint outputs also pass. Secondary group/icon-picker and rename dialogs pass shared-name-frame/blank-name validation and Reset/Cancel. QAT Apply/checkpoint/Reset/Cancel and rejected/accepted OK commit pass. **40 byte-exact G5/current old-family pairs** cover 32 tip/gallery/menu sheets and eight real Options button images. No Showcase resources/helpers are referenced. |
+| `showcase-background-final/result.log`, `designer-background-final/result.log` | Both actual authored sample paths pass four native Options scopes each at 120 DPI, including the blue body, button/list state paint, all mode-appropriate pages, ownership and draft/validation checks. Checks stay in the dedicated Designer Sample test host; no diagnostic tabs or checks were added to the ordinary Designer Sample. |
+| `release-background-build.log`, `debug-background-build-final.log`, `showcase-background-build-final.log`, `designer-background-host-build-final.log` | Normal Release runtime/tests/direct runner and normal Debug runtime/designer server, Showcase and dedicated package-only host build with zero warnings/errors. The unchanged net472 designer-client output is reused; no new client or actual VS review is claimed. |
+| `designer-background-refresh.log` | Existing Designer Sample refreshed in place with **`0.1.0-designer.local20261121T024358170Z`**, normal Debug/default output. Authored Forms/UserControls/resources were preserved. |
+
+The first new button cases exposed an absent disabled-primary fallback stroke;
+authoring the existing `ButtonBorderWidth = 1` preset role fixes it. Initial
+consumer fixtures also used an incorrect control name and assumed both layout
+pages coexist; they now follow the mode-specific public dialog contract. The
+background follow-up's first ordinary-popup fixture placed its opener after a
+reduced 35-command group, so no surface opened; a dedicated small visible test
+tab fixes the fixture. Earlier logs/outputs (`focused.log`, `focused-final.log`,
+`public/`, `public-final/`, `public-background/`) are retained separately. No
+production activation workaround, weakened assertion or relaxed tolerance was
+introduced for these fixture failures.
+
+Reproduction from `winforms/` (normal SDK/configuration/output locations):
+
+```powershell
+# Build the actual xUnit in-process runner, then select the affected classes.
+dotnet build artifacts/office2007-g2/direct-runner/DirectRunner.csproj -c Release -m:1 -p:NuGetAudit=false
+dotnet artifacts/office2007-g2/direct-runner/bin/Release/net10.0-windows/DirectRunner.dll 'Office2007CompanionTests,Office2010OptionsTests,OptionsShellAppearanceTests,OptionsRowAppearanceTests,OptionsTreeAppearanceTests,OptionsFieldAppearanceTests,TipAppearanceTests,ScreenTipTests,Office2007ApplicationMenuTests,ApplicationMenuCaptionPlacementTests,EditorAppearanceTests,GalleryAppearanceTests,MenuAppearanceTests,OptionsPopupTests,OptionsIconPickerAppearanceTests'
+./eng/Test-Office2007Companions.ps1 -BaselinePackageVersion '0.1.0-designer.local20261120T230046568Z' -Configuration Debug
+./eng/Test-DesignerSample.ps1 -Configuration Debug -Check --verify-office2007-companions
+# Showcase also accepts --verify-office2007-companions <fresh-output-directory>.
+```
+
+Generated native prints were inspected for Compact/Classic, Touch/Simplified,
+secondary group controls, companion paint and the ordinary popup backing. This
+is offscreen/native-print evidence, not desktop capture or human acceptance.
+No full-suite, WPF build, actual VS, physical input/IME, mixed-monitor transition,
+continuous visible-motion or desktop-material result is claimed. Existing
+renderer width/radius/shadow policy and app page styles remain independent.
+The known pre-G2 checked-hover popup-color failure remains outside this selected
+scope; it was not rerun or changed. Accepted Backstage black-bar/performance,
+alignment and saved frame/File-route fixes were not reopened.
+
+Current live review belongs only in the themes ledger. **Stop at G6 review before
+G7 composed normal-theme review.** G8's Aero palette remains a separate slice.
+
+## G6 gradient and button-outline correction - 2026-11-21
+
+The user's native/WPF comparison identified a real G6 appearance gap: using the
+Application Menu's **solid frame-band color** did not supply the reference's
+**content gradient**. The reference popup/gallery and Options content brush is
+`0 #DBE6F4`, `.17 #C8D9ED`, `1 #E3F4FF`. The correction uses that complete ramp
+through `PopupBackgroundFill` and `MenuAppearance.OverflowBackground`, covering
+ordinary/nested/context menus, galleries, choice dropdowns and group flyouts.
+The existing measured popup/row background coordinates and actual renderer hooks
+remain in use. The dedicated Application Menu bands/panes keep their own palette.
+
+Two additive immutable Options roles, `BackgroundFill` and `ListBackgroundFill`,
+add four getter/init entries to Unshipped with XML documentation. Null restores
+the matching Color/Surface fallback; assigning BackgroundColor/ListBackgroundColor
+clears only its matching fill. All stops must be opaque, with validation before
+Theme/BuiltInTheme mutation. Existing families leave these roles null. Choose
+native dialog construction settings before opening, as with existing background
+colors. Application pages retain their own styling.
+
+Library-owned body containers sample one content canvas. Native list/tree/icon
+cells and their unused space sample each complete client viewport, including
+buffer-local rows, partial clips and resized/scrolled controls. Paint-only native
+erase/unused-space handling retains HWNDs, selection, draft data, hit targets and
+scrollbars. Mouse, programmatic and keyboard scrolling invalidate the gradient
+well so native pixel copies do not move its colors. List empty-space clipping
+queries visible rows only. The navigation rail stays flat; text editor wells
+and the inline gallery strip remain white. Secondary group/rename bodies and
+icon wells use the same reusable roles. No sample resources or app-page traversal
+is required.
+
+The thick button frame came from the preset's DPI-scaled logical outer stroke
+and primary inner ring. The preset now uses the existing device-pixel default
+outline path and omits that extra idle/primary ring. A primary with authored
+idle outline ink also retains a one-device-pixel disabled outline. Explicit
+ButtonBorderColor/Width, transparent/zero overrides and keyboard focus cues keep
+their authority. The old families' default button paint remains unchanged.
+
+Final evidence under `winforms/artifacts/office2007-g6/`:
+
+| Evidence | Result and boundary |
+| --- | --- |
+| `gradient-input-focused.log` | **275/275 pass**, zero failures/skips, actual xUnit in-process execution. Includes 16 new gradient/thin-outline cases, the original G6 contracts, affected Options/editor/gallery/menu/tip regressions, G2 paint foundations and G5 menu/caption placement. Samples at 96/120/144/192 DPI verify complete-well clipping and buffer coordinates, opacity/atomic validation, Color/null reset semantics, one-device-pixel default rims and explicit wider logical widths. Native cases cover menus, galleries, collapsed groups, both densities/layouts, empty wells, scroll/resize, keyboard End selection/full-well invalidation and handle/parent retention. |
+| `public-gradient-input-final.log`, `public-gradient-input-final/comparison.json` | Independent public-only package consumer passes four native Options scopes at actual 120 DPI, exact body/list/popup gradient pixels, four-DPI public paint, secondary icon/rename dialogs, native ownership and drafts/validation/Apply/OK/Cancel/Reset. **40 byte-exact G5/current old-family image pairs** pass. No Showcase resources/helpers. |
+| `showcase-gradient-input-final/result.log`, `designer-gradient-input-final/result.log` | Both existing sample paths pass four native Options scopes each at 120 DPI, with exact body/list gradient assertions plus prior state, editor and draft contracts. Dedicated Designer test host only; authored ordinary sample startup stays unchanged. |
+| `gradient-input-release.log`, `gradient-input-debug.log`, `gradient-input-showcase-build.log`, `gradient-input-host-build.log` | Normal Release runtime/tests/runner and normal Debug runtime/designer server, Showcase and dedicated package host build cleanly. Unchanged designer-client output is reused. |
+| `gradient-input-designer-refresh.log` | Existing Designer Sample refreshed in place with **`0.1.0-designer.local20261121T034028646Z`**, preserving authored Forms/UserControls/resources and default Debug output. |
+
+The native Options, gallery, popup and button outputs were inspected, including
+unused wells and all button corners in the generated native prints. A generated
+print caught the navigation rail's unused area initially being treated as a list
+well; the shared native fill path now excludes navigation. Initial new fixtures
+also used the wrong Simplified search name and rounded an explicit logical width
+instead of applying its established ceiling rule at 144 DPI; those fixtures were
+corrected without relaxing pixels or tolerances. Earlier `gradient-*` and
+`public-gradient-final/` evidence is retained separately. The final selected run
+is clean; no full suite or VSTest socket success is claimed.
+
+Reproduction uses the G6 commands above, adding `Office2007GradientSurfaceTests`
+and `PaintFoundationTests` to the affected xUnit selection. The existing
+`Test-Office2007Companions.ps1` and `--verify-office2007-companions` sample modes
+now assert gradients as well as the original state/draft contracts.
+
+Native print/message evidence remains separate from live appearance acceptance,
+actual VS, physical input/IME, mixed-monitor DPI and desktop/continuous-motion
+review. Native scrollbars and caption policy are retained; no WPF build, desktop
+capture, layout-engine rewrite or Backstage investigation was performed. Keep G6
+at review before G7; the Aero palette remains G8.
+
+## G6 split, QAT, Simplified groups and overflow correction - 2026-11-21
+
+The user identified two more G6 paint gaps, then added Simplified group separators
+and overflow feedback to the same session. This remains G6, not G7 continuation.
+
+- A vertical split sampled one whole-command ramp under its two clips, so the
+  arrow half showed only the nearly uniform lower portion. Additive
+  `CommandAppearance.SplitFillUsesPartBounds` enables a complete fill ramp per
+  half while keeping the shared perimeter, joined edge, separator, actual bounds
+  and renderer callbacks. It is true for 2007 and false by default. Existing
+  BackgroundBounds carries the part's paint canvas to chrome overrides. Both
+  vertical/horizontal splits and QAT projections reuse the shared painter.
+- Native caption adaptation rewrites Hover/Pressed/Checked and composited QAT
+  feedback also used the caption backdrop recipe. Four optional CommandAppearance
+  QuickAccess hover/pressed/checked/checked-hover fills now precede that adaptation.
+  The 2007 preset authors its gold/orange ramps and opacity 1. Alpha, duplicate
+  stops, direction, null/member reset and QuickAccessBackdropOpacity remain
+  independently adjustable. Ordinary menus and header utilities retain their
+  existing recipes; QAT borders/rims still use shared command appearance.
+- Additive `BodyAppearance.GroupPanel.ShowInSimplified` defaults true to preserve
+  existing compact-panel consumers. Office 2007 sets it false: Classic frames and
+  labels remain, Simplified uses its existing measured separators. Shared hooks
+  retain group-frame context, and opt-in popup dividers use the same separator
+  color/width roles as the ribbon. No layout/reduction/DPI/editor targets change.
+- QAT and Simplified overflow use the gold hover and orange pressed/open fills.
+  Their existing open-state retention, pointer/keyboard routing and popup ownership
+  stay with the control. No diagnostic tabs or sample-only paint were introduced.
+
+The six public members have XML documentation and twelve getter/init entries in
+Unshipped. The shipped API baseline is unchanged. Remaining appearance review
+belongs in the themes ledger; current verification is recorded below.
+
+Final evidence for this follow-up is under `artifacts/office2007-g6/`:
+
+| Evidence | Observed scope/result |
+| --- | --- |
+| `command-feedback-focused-complete.log`, `command-feedback-release-complete.log` | **117/117 pass**, zero skips/failures in the final selected xUnit run; normal Release build is clean. The 19 new cases cover both shared painters, whole/per-part gradient coordinates and clips, caption-derived QAT colors, pressed/checked/checked-hover/overflow states, horizontal QAT split fills, all-stop alpha/direction/reset, menu/header isolation, Classic-frame parity, and native Compact/Touch separators/open-overflow/target retention. Direct paint checks use 96/120/144/192 DPI. Affected geometry, gradient foundations, Simplified/source ownership, QAT and preset regressions also pass. |
+| `public-command-feedback-final/`, `public-command-feedback-final.log` | Public-only package consumer passes native QAT/overflow hover/press and four-DPI split-half/QAT paint, plus prior Options four-scope/native editor/draft/validation/secondary-dialog checks. **40 byte-exact old-family pairs** match the retained G5 package; the 32 painter sheets now also include checked-hover split and QAT states. No Showcase resources/helpers are referenced. |
+| `showcase-command-feedback/result.log`, `designer-command-feedback/result.log` | Both actual authored sample paths pass the new native QAT/overflow feedback checks and public split canvas/paint checks, plus the four native Options scopes each at actual 120 DPI. Generated native prints were inspected; no desktop capture. |
+| `command-feedback-debug-server.log`, `command-feedback-showcase-build-final.log`, `command-feedback-host-build-final.log`, `command-feedback-designer-refresh.log` | Normal Debug runtime/designer server, Showcase and dedicated host are clean. Designer Sample refreshed in place with **`0.1.0-designer.local20261121T041212160Z`**; authored Forms/UserControls/resources retained. Unchanged net472 client output is reused. |
+
+The initial broader run (`command-feedback-focused.log`) selected two existing
+SplitChromeRenderingTests assertions that expect ordinary hover `#E6E6E6` even
+for checked hover. Actual output is `#C4D0E3`; the retained G5/current independent
+frames both produce exactly that ARGB at the checked-hover sample
+(`legacy-split-pixels.json`), and all expanded default image pairs match. Those
+two legacy assertion failures remain recorded separately, without edits to their
+expectations or tolerances. The final 117-case selection does not claim they pass.
+
+Initial new QAT fixtures also used an unattached source reference, correctly
+rendered unavailable; they now use a real shared command owner. The overflow
+probe retains the pressed observation across multiple callbacks and checks the
+open snapshot before queued offscreen deactivation. A public-consumer interaction
+fixture originally left a click affecting its following popup check; the new
+interaction scope now runs last. Earlier attempts/logs remain intact. These are
+verification-fixture corrections, not runtime activation workarounds.
+
+Reproduce with the existing G6 package/sample commands. The affected xUnit class
+selection is `Office2007CommandFeedbackTests,CommandSplitGeometryTests,GradientFoundationTests,PaintFoundationTests,SimplifiedRibbonTests,QuickAccessTests,QuickAccessFrameTests,Office2007ThemeTests`.
+Current evidence is focused xUnit/native-print/message execution, not a full
+suite, actual VS, physical input/IME, mixed-monitor, desktop material or continuous
+motion review. No WPF build, diagnostic tabs or accepted Backstage investigation
+was introduced. Stop for the user's remaining G6 visual review before G7/G8.
+
+## G6 caption hover outlines and slice completion - 2026-11-21
+
+This finishes G6 with the clarified caption-button request: outlines appear on
+hover, with the corresponding pressed rim retained while the pointer is inside.
+Idle and pressed-outside buttons stay borderless. The preset supplies blue
+hover/pressed border inks through existing `CaptionButtonAppearance.StateChrome`
+and independent red Close inks through `CloseStateChrome`. Existing creased fills,
+two-logical-pixel inset, three-pixel radius and one-device-pixel stroke remain.
+No new public member or API baseline entry is required for this palette change.
+
+The shared caption renderer, restore-glyph cutout, native hit testing, capture,
+cancellation and window actions are unchanged. Callers can independently override
+or reset both chrome groups; Transparent still suppresses a state rim. No idle
+outline or new window-frame decoration was added.
+
+Final follow-up evidence under `artifacts/office2007-g6/`:
+
+| Evidence | Observed scope/result |
+| --- | --- |
+| `caption-outline-focused-final.log` | **55/55 pass**, zero failures/skips, actual xUnit in-process execution. Nine new cases cover 96/120/144/192 DPI, all three buttons, hover/press/idle/pressed-outside, opaque/alpha planes, one-device-pixel rims, symmetric corner alpha, exact underlying ramp samples, Transparent overrides, restore underlay, caller clipping and independent resets. Affected caption appearance, Options/caption refinement, command feedback and menu-placement checks also pass. |
+| `public-caption-outline.log`, `public-caption-outline/comparison.json` | Independent public-only package consumer passes native minimize/maximize-or-restore/close hover and pressed paints, cancellation and unchanged HWND/bounds/window state. Prior four-scope Options, native editor/draft/validation, secondary-dialog, popup-gradient and command-feedback checks pass. **40 byte-exact retained-G5/current old-family image pairs** match, without Showcase resources/helpers. |
+| `showcase-caption-outline/result.log`, `designer-caption-outline/result.log` | Both existing sample paths pass native caption state paints and prior command/Options checks, including four Options scopes each at actual 120 DPI. The dedicated Designer test host carries the checks; ordinary sample startup and authored forms stay unchanged. |
+| `caption-outline-release-final.log`, `caption-outline-debug.log`, `caption-outline-showcase-build.log`, `caption-outline-host-build.log` | Normal Release runtime/tests/runner and Debug runtime/designer server, Showcase and dedicated package host build with zero warnings/errors. Unchanged net472 designer-client output is reused. |
+| `caption-outline-designer-refresh.log` | Designer Sample refreshed in place with **`0.1.0-designer.local20261121T044540709Z`**, preserving authored Forms/UserControls/resources and normal Debug output. |
+
+The initial selected run (`caption-outline-focused.log`) also exposed three
+existing `CaptionButtonBackdropTests` failures: two integrated opaque cases
+expect alpha 255 but observe 0, and the integrated material restore case expects
+24 but observes 46. An isolated actual-xUnit host using the retained G5 runtime
+reproduces exactly those three failures, with **5/8 passing**
+(`caption-backdrop-retained-g5.log`, clean build in `caption-baseline-build.log`).
+They remain unresolved baseline assertions; the final 55-case selection does not
+claim they pass. The earlier two checked-hover split assertion limits also remain
+recorded above. No baseline expectations or tolerances were changed.
+
+Four initial new fixture failures compared named Transparent's ARGB against a
+cleared bitmap's different zero-alpha RGB. The fixture now compares the untouched
+bitmap pixel captured before drawing; the clip assertion remains exact. Earlier
+attempts are retained. Native consumer checks send hover/down/cancel messages
+without a button-up action and verify that native window identity/state remains.
+Generated close and maximize hover prints were inspected in the existing samples.
+
+Reproduce with the existing G6 package/sample commands; the caption-focused
+xUnit selection is `Office2007CaptionOutlineTests,CaptionButtonAppearanceTests,OptionsAndCaptionRefinementTests,Office2007CommandFeedbackTests,ApplicationMenuCaptionPlacementTests`.
+VSTest socket restrictions still use the retained actual-xUnit in-process runner;
+no full-suite result is claimed. Native print/message and four-DPI paint evidence
+do not establish actual VS, physical input/IME, mixed-monitor, desktop material
+or continuous-motion acceptance. G6 implementation is complete; stop before G7's
+composed normal-theme review. G8 Aero and accepted Backstage work remain separate.

@@ -661,7 +661,7 @@ public partial class RibbonControl : Control, ISupportInitialize
                 if (LayoutMode == RibbonLayoutMode.Simplified && context.Theme.BodyAppearance?.GroupPanel is { HasOverrides: true })
                     foreach (var panel in RibbonGroupPanelMetrics.CompactFrames(_snapshot))
                         Painter.DrawGroupPanel(context with { Bounds = panel.Bounds, GroupFrameBounds = panel.Bounds, IsSimplifiedGroup = true }, panel.Group, false);
-                foreach (var divider in _snapshot.SimplifiedDividers.Where(_ => context.Theme.BodyAppearance?.GroupPanel is not { HasOverrides: true }))
+                foreach (var divider in _snapshot.SimplifiedDividers.Where(_ => context.Theme.BodyAppearance?.GroupPanel is not { HasOverrides: true, ShowInSimplified: true }))
                 {
                     var bounds = RibbonBodyFrameMetrics.SeparatorBounds(context.Theme, DeviceDpi, divider);
                     if (bounds.Width > 0 && bounds.Height > 0) Painter.DrawGroupSeparator(context with { Bounds = bounds });

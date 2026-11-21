@@ -7,8 +7,10 @@ namespace RibbonKit.WinForms;
 internal static class RibbonPopupFrameRenderer
 {
     internal static void DrawFrame(RibbonRenderer owner, RibbonPaintContext context) =>
-        owner.PaintRounded(context, owner.GetPopupCornerRadius(context.Theme, context.DeviceDpi), context.Theme.PopupFill,
-            context.IsApplicationMenu && context.Theme.ApplicationMenuAppearance is { OuterBorderColor.IsEmpty: false } a ? a.OuterBorderColor : context.Theme.PopupBorder,
+        owner.PaintRounded(context, owner.GetPopupCornerRadius(context.Theme, context.DeviceDpi),
+            context.IsScreenTip ? context.Theme.TipAppearance?.ScreenTipBackground ?? context.Theme.PopupFill : context.Theme.PopupFill,
+            context.IsApplicationMenu && context.Theme.ApplicationMenuAppearance is { OuterBorderColor.IsEmpty: false } a ? a.OuterBorderColor
+                : context.IsScreenTip && context.Theme.TipAppearance is { ScreenTipBorderColor.IsEmpty: false } tip ? tip.ScreenTipBorderColor : context.Theme.PopupBorder,
             RibbonPopupFrameMetrics.PaintedBorder(owner, context.Theme, context.DeviceDpi));
     internal static void DrawShadow(RibbonRenderer owner, RibbonPaintContext context)
     {

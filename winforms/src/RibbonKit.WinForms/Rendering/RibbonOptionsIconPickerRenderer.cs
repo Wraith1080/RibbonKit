@@ -7,7 +7,7 @@ internal static class RibbonOptionsIconPickerRenderer
     internal static void Draw(RoundedPainter painter, RibbonPaintContext c, IRibbonIcon? icon, bool selected, int fallbackRadius)
     {
         var metrics = new RibbonOptionsIconPickerMetrics(c.Theme, c.DeviceDpi, c.Density);
-        using var background = new SolidBrush(RibbonOptionsRenderer.ListBackground(c.Theme)); c.Graphics.FillRectangle(background, c.Bounds);
+        RibbonOptionsBackground.PaintList(painter, c);
         if (selected)
         {
             var paint = metrics.SelectionBounds(c.Bounds);

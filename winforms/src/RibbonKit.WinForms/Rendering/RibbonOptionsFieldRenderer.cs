@@ -4,10 +4,10 @@ namespace RibbonKit.WinForms;
 
 internal static class RibbonOptionsFieldRenderer
 {
-    internal static void DrawFrame(RoundedPainter painter, RibbonPaintContext c, int fallbackRadius)
+    internal static void DrawFrame(RoundedPainter painter, RibbonPaintContext c, int fallbackRadius, RibbonFill? background = null)
     {
         var m = new RibbonOptionsFieldMetrics(c.Theme, c.DeviceDpi);
-        painter.Draw(c.Graphics, c.Bounds, m.Radius(fallbackRadius), new(c.Theme.Surface), m.Border, m.BorderWidth(c.Bounds.Size));
+        painter.Draw(c.Graphics, c.Bounds, m.Radius(fallbackRadius), background ?? new(c.Theme.Surface), m.Border, m.BorderWidth(c.Bounds.Size), fillBounds: c.BackgroundBounds);
     }
     internal static void DrawChoice(RibbonRenderer owner, RibbonPaintContext c, RibbonComboBoxItem model, string text, bool enabled)
     {

@@ -9,6 +9,7 @@ public partial class RibbonRenderer
     public virtual void DrawGroupPanel(RibbonPaintContext context, RibbonGroup group, bool collapsed)
     {
         if (context.Theme.BodyAppearance?.GroupPanel is not { HasOverrides: true } settings) return;
+        if (context.IsSimplifiedGroup && !settings.ShowInSimplified) return;
         var metrics = RibbonGroupPanelMetrics.Resolve(context, collapsed);
         if (metrics.Panel.Width <= 0 || metrics.Panel.Height <= 0) return;
         var saved = context.Graphics.Save();

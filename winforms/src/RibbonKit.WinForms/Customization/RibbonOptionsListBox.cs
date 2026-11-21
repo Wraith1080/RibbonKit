@@ -10,6 +10,11 @@ internal sealed class RibbonOptionsListBox : ListBox
     private bool _navigation, _inside;
     private Point _pointer;
     internal int HotIndex { get; private set; } = -1;
+    internal Rectangle FullBackgroundBounds(DrawItemEventArgs e)
+    {
+        var row = GetItemRectangle(e.Index);
+        return new(new Point(e.Bounds.Left - row.Left, e.Bounds.Top - row.Top), ClientSize);
+    }
     internal void BindTheme(RibbonControl ribbon, bool navigation = false) { _ribbon = ribbon; _navigation = navigation; }
     private bool TracksHot => _ribbon?.Theme.OptionsAppearance is { } a && (_navigation
         ? a.NavigationHoverBackground is not null || a.NavigationStateChrome?.HasOverrides == true
@@ -55,12 +60,28 @@ internal sealed class RibbonOptionsListBox : ListBox
     protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); _inside = false; UpdateHot(); }
     protected override void OnEnabledChanged(EventArgs e) { base.OnEnabledChanged(e); UpdateHot(); }
     protected override void OnHandleDestroyed(EventArgs e) { HotIndex = -1; _inside = false; base.OnHandleDestroyed(e); }
+    protected override void OnResize(EventArgs e) { base.OnResize(e); if (_ribbon?.Theme.OptionsAppearance?.ListBackgroundFill is not null) Invalidate(); }
     protected override void WndProc(ref Message m)
     {
         bool reset = m.Msg is 0x180 or 0x181 or 0x182 or 0x184; // LB_ADD/INSERT/DELETESTRING/RESETCONTENT
         if (reset) { HotIndex = -1; _inside = false; }
+        if (!_navigation && _ribbon is not null && RibbonOptionsBackground.EraseNative(this, _ribbon, ref m)) return;
+        var invalid = RibbonOptionsBackground.BeforeNativePaint(this, m);
         base.WndProc(ref m);
+        if (!_navigation && _ribbon is not null) RibbonOptionsBackground.PaintUnusedNative(this, _ribbon, m, invalid, VisibleRows());
         if (m.Msg is 0x114 or 0x115 or 0x20A or 0x197) UpdateHot(); // scrolling/TopIndex
+        // Native selection/key navigation can scroll via pixel copies too.
+        if (m.Msg is 0x100 or 0x114 or 0x115 or 0x20A or 0x186 or 0x197 or 0x19E && !_navigation && _ribbon?.Theme.OptionsAppearance?.ListBackgroundFill is not null) Invalidate();
+    }
+    private IEnumerable<Rectangle> VisibleRows()
+    {
+        if (Items.Count == 0) yield break;
+        for (int index = TopIndex; index < Items.Count; index++)
+        {
+            var bounds = GetItemRectangle(index);
+            if (bounds.Top >= ClientSize.Height) yield break;
+            yield return bounds;
+        }
     }
     [StructLayout(LayoutKind.Sequential)] private struct RowRect { internal int Left, Top, Right, Bottom; }
     [DllImport("user32.dll")] private static extern bool InvalidateRect(nint window, ref RowRect rectangle, bool erase);

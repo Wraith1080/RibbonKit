@@ -619,7 +619,16 @@ internal sealed partial class RibbonPopupSurface : ScrollableControl
                         var bounds = panel.Bounds; bounds.Offset(AutoScrollPosition);
                         _ribbon.Painter.DrawGroupPanel(context with { Bounds = bounds, GroupFrameBounds = bounds, IsSimplifiedGroup = true }, panel.Group, false);
                     }
-                foreach (var divider in body.SimplifiedDividers.Where(_ => context.Theme.BodyAppearance?.GroupPanel is not { HasOverrides: true })) { var bounds = divider; bounds.Offset(AutoScrollPosition); using var brush = new SolidBrush(_ribbon.Theme.Border); e.Graphics.FillRectangle(brush, bounds); }
+                foreach (var divider in body.SimplifiedDividers.Where(_ => context.Theme.BodyAppearance?.GroupPanel is not { HasOverrides: true, ShowInSimplified: true }))
+                {
+                    var bounds = divider; bounds.Offset(AutoScrollPosition);
+                    if (context.Theme.BodyAppearance?.GroupPanel is { ShowInSimplified: false })
+                    {
+                        bounds = RibbonBodyFrameMetrics.SeparatorBounds(context.Theme, DeviceDpi, bounds);
+                        if (bounds.Width > 0 && bounds.Height > 0) _ribbon.Painter.DrawGroupSeparator(context with { Bounds = bounds });
+                    }
+                    else { using var brush = new SolidBrush(_ribbon.Theme.Border); e.Graphics.FillRectangle(brush, bounds); }
+                }
             }
             finally { e.Graphics.Restore(saved); }
         }

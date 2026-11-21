@@ -40,6 +40,7 @@ internal sealed class RibbonCustomizationGroupDialog : Form
             DialogResult = DialogResult.OK;
         };
         Controls.Add(body); Controls.Add(footer); AcceptButton = ok; CancelButton = cancel;
+        RibbonOptionsBackground.Bind(body, ribbon);
     }
     private sealed class IconPicker : ListView
     {
@@ -98,13 +99,19 @@ internal sealed class RibbonCustomizationGroupDialog : Form
         protected override void WndProc(ref Message m)
         {
             if (m.Msg is 0xF or 0x317 or 0x318) RefreshMetrics(); // Prepare layout before native paint/print, never inside DrawItem.
+            if (_ribbon is not null && RibbonOptionsBackground.EraseNative(this, _ribbon, ref m)) return;
+            var invalid = RibbonOptionsBackground.BeforeNativePaint(this, m);
             base.WndProc(ref m);
+            if (_ribbon is not null) RibbonOptionsBackground.PaintUnusedNative(this, _ribbon, m, invalid,
+                Items.Cast<ListViewItem>().Select(i => Metrics.TileBounds(i.GetBounds(ItemBoundsPortion.Icon), _cellSide)));
+            if (m.Msg is 0x100 or 0x114 or 0x115 or 0x20A or 0x1013 or 0x1014 && _ribbon?.Theme.OptionsAppearance?.ListBackgroundFill is not null) Invalidate();
         }
+        protected override void OnResize(EventArgs e) { base.OnResize(e); if (_ribbon?.Theme.OptionsAppearance?.ListBackgroundFill is not null) Invalidate(); }
         protected override void OnDrawItem(DrawListViewItemEventArgs e)
         {
             var tile = Metrics.TileBounds(e.Item.GetBounds(ItemBoundsPortion.Icon), _cellSide);
             IRibbonIcon? icon = e.Item.Tag is string id ? _artwork.GetValueOrDefault(id) : null;
-            RibbonOptionsIconPickerRenderer.Draw(_painter, new(e.Graphics, tile, _ribbon.Theme, Font, DeviceDpi) { Density = _ribbon.Density }, icon, e.Item.Selected, e.Item.Selected ? RibbonOptionsChrome.Radius(_ribbon, DeviceDpi) : 0);
+            RibbonOptionsIconPickerRenderer.Draw(_painter, new(e.Graphics, tile, _ribbon.Theme, Font, DeviceDpi) { Density = _ribbon.Density, BackgroundBounds = ClientRectangle }, icon, e.Item.Selected, e.Item.Selected ? RibbonOptionsChrome.Radius(_ribbon, DeviceDpi) : 0);
             if (Focused && e.Item.Selected) new DrawListViewItemEventArgs(e.Graphics, e.Item, tile, e.ItemIndex, e.State).DrawFocusRectangle();
         }
         protected override void Dispose(bool disposing) { if (disposing) { LargeImageList = null; _placeholder.Dispose(); _blank.Dispose(); _painter.Dispose(); } base.Dispose(disposing); }

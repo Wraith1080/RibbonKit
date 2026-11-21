@@ -45,7 +45,7 @@ internal sealed class RibbonCustomizationTree : TreeView
         var parts = Geometry(node); var row = new Rectangle(0, node.Bounds.Top, ClientSize.Width, ItemHeight);
         var context = new RibbonPaintContext(e.Graphics, row, _ribbon.Theme, Font, DeviceDpi,
             ReferenceEquals(node, _hot) && _hotCheck, ReferenceEquals(node, _pressed) && _pressedCheck,
-            Focused && node.IsSelected) { Density = _ribbon.Density, StateHot = ReferenceEquals(node, _hotRow) };
+            Focused && node.IsSelected) { Density = _ribbon.Density, StateHot = ReferenceEquals(node, _hotRow), BackgroundBounds = ClientRectangle };
         RibbonOptionsTreeRenderer.Draw(_ribbon.Painter, _painter, context, new(parts.Expand, parts.Check, parts.Icon, parts.Text),
             node.Text, node.IsSelected, node.IsExpanded, node.Nodes.Count > 0, parts.Check.IsEmpty ? null : node.StateImageIndex,
             Enabled, ShowFocusCues, _check, (graphics, bounds) => PaintIcon?.Invoke(graphics, node, bounds));
@@ -64,6 +64,8 @@ internal sealed class RibbonCustomizationTree : TreeView
     }
     protected override void WndProc(ref Message m)
     {
+        if (_ribbon is not null && RibbonOptionsBackground.EraseNative(this, _ribbon, ref m)) return;
+        var invalid = RibbonOptionsBackground.BeforeNativePaint(this, m);
         if (m.Msg is 0x201 or 0x203 && Enabled)
         {
             var point = new Point(unchecked((short)(long)m.LParam), unchecked((short)((long)m.LParam >> 16)));
@@ -80,8 +82,16 @@ internal sealed class RibbonCustomizationTree : TreeView
             }
         }
         base.WndProc(ref m);
+        if (_ribbon is not null) RibbonOptionsBackground.PaintUnusedNative(this, _ribbon, m, invalid, VisibleRows());
         if (m.Msg is 0x114 or 0x115 or 0x20A) UpdateHotRow();
+        if (m.Msg is 0x100 or 0x114 or 0x115 or 0x20A or 0x1102 or 0x110B or 0x1114 && _ribbon?.Theme.OptionsAppearance?.ListBackgroundFill is not null) Invalidate();
     }
+    private IEnumerable<Rectangle> VisibleRows()
+    {
+        for (var node = TopNode; node is not null && node.Bounds.Top < ClientSize.Height; node = node.NextVisibleNode)
+            yield return new(0, node.Bounds.Top, ClientSize.Width, ItemHeight);
+    }
+    protected override void OnResize(EventArgs e) { base.OnResize(e); if (_ribbon?.Theme.OptionsAppearance?.ListBackgroundFill is not null) Invalidate(); }
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e); _pointer = e.Location; _inside = true; UpdateHotRow(); var hit = Hit(e.Location);

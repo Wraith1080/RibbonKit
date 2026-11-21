@@ -5,6 +5,8 @@ public sealed record RibbonGroupPanelAppearanceSettings
 {
     /// <summary>Initializes an empty decoration record.</summary>
     public RibbonGroupPanelAppearanceSettings() { }
+    /// <summary>Gets whether the default renderer paints compact panels in Simplified mode. True retains existing behavior. False leaves measured Simplified runs unframed and restores their separators; Classic panels, label bands, layout and targets remain unchanged.</summary>
+    public bool ShowInSimplified { get; init; } = true;
     /// <summary>Gets the panel fill, including alpha and gradients. Null leaves the body visible.</summary>
     public RibbonFill? Background { get; init; }
     /// <summary>Gets the outer rim ink. Empty/Transparent paints no rim.</summary>

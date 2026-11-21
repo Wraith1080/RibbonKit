@@ -1,326 +1,118 @@
-# Continue native Office 2007 after G5 menu review
+# Continue native Office 2007 after G6 completion
 
 Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
-Updated **2026-11-21**. The current checkout is `codex/Ribbonkit-Winform` at
-`245fa9a` (`G4 2007 Theme`), following `037ac25`, `df38b3f`, `f239e3e` and `ed382ff`. Preserve authored Backstage
-settings and other Form/resource edits. Recheck
-`git status --short`, live branch and HEAD; preserve user commits and edits. Do not
-commit, stage, push, publish or change branches unless requested.
+Updated **2026-11-21**. Last verified checkout: `codex/Ribbonkit-Winform` at
+`04a757e` (`G5 2007 Theme`). G6 implementation is complete and uncommitted. Start with
+`git status --short`, verify the live branch/HEAD, and preserve user edits and
+commits. Do not stage, commit, push, publish or change branches unless requested.
 
-## Current state and scope
+## Current state and next boundary
 
-The user authorized **G2/G3 shared foundations** from the
-[Office 2007 Blue contract and slice order](OFFICE2007-BLUE-PLAN.md).
-G1 uses the existing WPF theme as a read-only reference. G2 adds exact hard
-transitions and optional measured group decoration; its implementation and
-focused evidence are in the [G2 record](OFFICE2007-BLUE-PLAN.md#g2-shared-paint-foundations--2026-11-20).
-**G3 application-button/menu composition is implemented and committed.** Read its
-[contract, exact evidence and limits](OFFICE2007-BLUE-PLAN.md#g3-application-button-and-menu-composition--2026-11-21). All 28 G3 cases, independent native/UIA checks and default File paint pairs pass; one affected old checked-hover assertion is reproduced against the retained DLL.
-**G4 normal Blue palette/ribbon is implemented and committed.** Preserve its
-runtime preset, additive enum/API entries, designer mapping, both permanent View
-gallery tiles and focused checks. Read the [G4 implementation/evidence/limits](OFFICE2007-BLUE-PLAN.md#g4-normal-blue-preset-and-ribbon--2026-11-21).
-**G5 Application Menu palette is implemented and uncommitted.** Preserve its
-exact band/footer fills, root-only outer-frame ink/context, idle-footer ink,
-additive API baseline and focused public/native checks. Read the
-[G5 delivery and limits](OFFICE2007-BLUE-PLAN.md#g5-application-menu-palette--2026-11-21).
-The user's menu-top/caption observation is corrected by the shared
-[caption-clearance follow-up](OFFICE2007-BLUE-PLAN.md#g5-caption-clearance-correction--2026-11-21):
-floor the below-opening frame origin at the caption bottom before measuring
-Orb/content clearance. Preserve the Orb cutout, stable measured command positions
-and existing above-caption fallback. Follow-up live appearance review is pending.
-The Designer Sample is refreshed in place in normal Debug. Review the Application
-Menu under **View > Themes > Office 2007 Blue**, using the existing CommandMenu
-File route. Shape and saved routing remain independent. The themes ledger owns
-G4 review/continuation and G5's pending menu review. G6 Options/companions and G8
-Aero remain later work.
-No G2/G3 foundation visual-review stop is required. Do not reopen accepted
-Backstage black-bar/performance investigations or restore diagnostic tabs.
-The [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger)
-owns the preceding family review. Preserve the delivered context below.
+Read the [current themes review ledger](THEMES-PLAN.md#current-status-and-review-ledger)
+and [Office 2007 contract/slice order](OFFICE2007-BLUE-PLAN.md). The ledger owns
+user acceptance separately from automated, native-print and sampled evidence.
 
-The user selected **normal Office 2010 Blue** and supplied eight WPF references,
-including Add Message hover, then explicitly confirmed rounded corners for the
-non-flat theme. Read the [F1 appearance/API contract](OFFICE2010-BLUE-PLAN.md).
-F1 changed only documentation and unchanged reference copies; F3 now exposes the
-2010 ribbon/File preset. On 2026-11-15 the user added dedicated Application Menu
-and Options theming slices and made the Aero-inspired frame a required later
-stage, after normal-theme review. WPF remains read-only reference.
+- G2 exact hard transitions and measured group panels/label bands are shared
+  library foundations. Preserve immutable copied stop data, the unchanged strict
+  constructor, exact duplicate-offset transitions, all-stop mapping and full-surface
+  sampling/clipping.
+- G3 Orb/menu composition and G4 normal opaque Blue preset are committed. Preserve
+  append-only identity 4, designer mapping, both permanent View gallery tiles,
+  explicit rectangular File overrides, native hit testing and host-owned routing.
+- G5 Application Menu palette and the
+  [caption-clearance correction](OFFICE2007-BLUE-PLAN.md#g5-caption-clearance-correction--2026-11-21)
+  are committed. Floor below-opening frame origin at the caption bottom before
+  measuring Orb/content clearance. Retain the Orb cutout, stable command positions
+  and working-area/above-caption fallback.
+- [G6 Options and companion surfaces](OFFICE2007-BLUE-PLAN.md#g6-options-and-companion-surfaces--2026-11-21)
+  is complete with the corrections below. Preserve independent ordinary/primary action rims,
+  exact blue primary creases and washes, gold selections, white native text wells,
+  scoped ScreenTip fill/rim and additive public API entries. The subsequent
+  [gradient/thin-outline correction](OFFICE2007-BLUE-PLAN.md#g6-gradient-and-button-outline-correction--2026-11-21)
+  replaces the flat backing with the full-height reference valley in ordinary
+  popups, the Options body and native list/tree/icon wells. BackgroundFill and
+  ListBackgroundFill retain Color-setter authority and null resets. Default
+  action outlines are one device pixel; explicit logical widths and focus cues win.
 
-The user then requested moving all Designer Sample checks into tests and deleting
-retired rewrite/consolidation demo files. That cleanup is implemented: normal
-startup contains no verification dispatch or check types; use
-`eng/Test-DesignerSample.ps1 -List` and its `-Check`/`-Output` options. The dedicated
-package-only host links the actual authored sources/resources; no diagnostic tabs
-were restored. Thirty-one retired builders and their UI-only smoke assertions are
-removed, with control regressions retained. Debug/Release and focused relocated
-checks pass. See [scope/evidence/limits](../tests/RibbonKit.WinForms.DesignerSample.Tests/README.md).
-Do not move checks or test-only partial members back into the sample. Existing
-foreground/VS/physical gates and historical fixture limitations remain separate;
-no startup latency gain is claimed. This cleanup was committed before F2.
+The Designer Sample was refreshed **in place**, normal Debug/default output,
+with package `0.1.0-designer.local20261121T044540709Z`; authored Forms/resources
+were preserved. Select **View > Themes > Office 2007 Blue**, then the existing
+Options/customization commands. ScreenTips retain their near-white role and native
+text editor wells stay white; list/tree/icon wells use the reference gradient.
 
-**F2 shared gradient/state-chrome foundations are implemented.** Read the
-[delivered contract and evidence](OFFICE2010-BLUE-PLAN.md#f2-implementation-and-verification--2026-11-14).
-Final focused Release checks pass 85/85, including 22 F2 cases. Independent
-public-package feature/native lifecycle checks pass and all 24 retained
-default/two-stop paint image pairs match byte-for-byte. Normal Debug runtime,
-designer server/net472 client and both samples build with zero warnings/errors.
-F2 was committed by the user at `ec78e11`. Direct paint/offscreen native evidence
-does not establish actual 2010 visual acceptance or actual VS review.
+G6 evidence under `artifacts/office2007-g6/` records 275/275 affected xUnit cases,
+40 byte-exact old-family package image pairs, an independent public-only consumer
+and both actual samples. Use the G6 record for final log paths, commands, native
+background checks and limits; keep earlier attempts. This is focused evidence,
+not a full-suite or physical-input result.
 
-**F3 ribbon/File shell and both View galleries are implemented and committed.**
-Current user review is recorded once in the themes ledger. Read the
-[contract and exact evidence](OFFICE2010-BLUE-PLAN.md#f3-implementation-and-verification--2026-11-14).
-Office2010Blue = 3, immutable IdentityAccent reference ramps and existing
-Filled/connected-header helpers provide blue surfaces/File, gold command states,
-rounded controls and the existing Rounded native request. Both actual sample
-gallery/accent/title/Reset paths, four layout/density scopes, three QAT placements,
-both File routes and native content retention pass offscreen checks. Focused
-Release designer serialization/Undo/Redo/SVG/paint checks and the independent
-public-package consumer pass. Showcase startup persistence and sample isolation
-pass too. The normal Designer Sample still compiles zero test methods; all new
-checks stay under tests. This F3 record predates the F4 Backstage below; no Aero was implemented. File
-uses linear ramps/rims; a separate radial reflection is not claimed.
+**G6 is wrapped up; G7 has not started.** After continuation is authorized,
+G7 is the composed normal-theme check across both existing samples and an
+independent consumer: Classic/Simplified, Compact/Touch, states, native editors,
+File routes and resize/maximize/restore. Reuse passed scopes; add checks only for
+new dependencies or concrete gaps. G8 is a separate palette on the existing
+Aero frame, after normal-theme acceptance; theme selection must not enable Aero
+or overwrite a host's File route/material preference.
 
-F3 review follow-up corrected hover-tab bottom outlines and a solid patch around
-minimize. The reviewed result and authorization to continue are in the ledger.
-Office 2010 sets FilledTabBottomBorderVisible=false for hover/pressed states;
-selected connection/File remain independent. Minimize and TabRow QAT keep the
-full header fill coordinates, with alpha-safe restoration. The user also requested
-general FileButtonMinimumWidth: 1..1024 logical pixels, null=legacy 50 fallback,
-Touch>=44, existing text/narrow clamps. Presets 2010/2013/2019 use 64; 2024 stays
-unchanged. Focused Release scopes pass 28/28 and 65/65; independent package
-`-HeaderOnly` checks pass. See the [bounded correction record](OFFICE2010-BLUE-PLAN.md#f3-header-review-corrections-and-shared-file-minimum--2026-11-14).
-F4 was subsequently authorized and is delivered below.
+## Latest G6 command and Simplified correction
 
-**F4 below-tabs Backstage is implemented; user visual review is pending.** Read
-the [delivery, evidence and review guide](OFFICE2010-BLUE-PLAN.md#f4-implementation-and-verification--2026-11-14).
-Office2010 = 2 has sibling layout/drawing plus measured placement/caption/motion
-registration. The real caption/tab row/QAT stays exposed, File stays open, visual
-tab selection is suspended, and validated tab/File/QAT actions retain native
-ownership. Pale rail, square blue selected row, open-File seam, left divider
-shadow and independent Back/seam/shadow/identity roles are shared public behavior.
-Designer preview is inert and reflects open File/tab paint without runtime state.
-Host Layout ignores the pane's own motion Location updates; otherwise it cancels
-travel. The final correction passes 24/24 affected Release cases.
-Latest selected focused results pass 210 distinct cases (not a full-suite run).
-Independent package/native checks, 12 byte-exact old-theme Backstage paint pairs,
-and both actual sample checks pass. Normal Debug runtime/server/net472 client,
-samples and dedicated host build cleanly. Evidence is under
-`winforms/artifacts/office2010-f4/`; retain earlier failed/repair records too.
-Actual VS/physical/continuous visible motion/corner/material/mixed-monitor gates
-are separate; no Aero or final normal-theme acceptance is claimed.
+Read the [split/QAT/group/overflow record](OFFICE2007-BLUE-PLAN.md#g6-split-qat-simplified-groups-and-overflow-correction--2026-11-21).
+The user added vertical split-arrow gel, gold QAT hover, separator-only Simplified
+groups and gold/orange overflow feedback to G6. These are delivered through six
+additive appearance members, with existing layout, callbacks and input retained.
+Current review belongs in the ledger. That correction's selected run passes 117/117,
+including 19 new cases; two initial legacy checked-hover assertions are recorded
+separately and must not be represented as passing. Read the record for final
+package/sample comparisons and fixture limits; preserve earlier evidence.
 
-**F4 visual review follow-up is delivered; current review is in the ledger.** The user supplied
-eight concrete corrections plus clarification that both the whole card viewport
-border and dimensional custom-card states are wanted. Read the
-[requested-fix checklist and exact limits](OFFICE2010-BLUE-PLAN.md#f4-visual-review-corrections--2026-11-15)
-before proceeding. Caption-button glass is scoped to those buttons; the required
-full frame follows in F8 after F7. Shared role additions retain null/Empty/zero/reset
-and existing public renderer hooks. Sample cards use DrawGalleryTileState while
-their editable artwork remains host-owned. Shared text paint honors the existing
-body viewport clip. Focused Release 155/155 plus two real narrow-body cases pass;
-independent old/current-package checks reproduce 2,526 -> 0 leaked text pixels
-and 0 -> 286 gallery state-border pixels. Both sample review checks pass. Extra
-foreground inline-focus verification fails identically on old package/card sources;
-the foreground popup check loses activation. Preserve those limits and their logs.
+## Final G6 caption correction
 
-The subsequent selected-navigation correction is delivered; current user review
-is recorded in the themes ledger's selected-navigation row.
-Read the [hue/lower-band record](OFFICE2010-BLUE-PLAN.md#selected-navigation-hue-and-lower-band-correction--2026-11-15).
-The old RGB channel transfer visibly shifted Red toward purple; the reference
-ramp also peaked near its bottom. Navigation now preserves accent hue while
-transferring lightness/saturation, and its default ramp lightens smoothly.
-Selected/pressed rows and outlines share that mapping. Public general AdaptFill,
-File/caption recipes and all other reviewed surfaces stay unchanged. Explicit
-roles, strength/zero/Reset, alpha and direction retain precedence. Focused Release
-24/24, old/new public-package measurements and both samples' six Accent choices
-pass; red hue error improves 64.14 -> 0.53 degrees with no lower lightness reversal.
-Native editor handles/parents/text/RTF/selection remain. Do not repeat unrelated
-matrices or infer selected-row visual acceptance from these measurements.
+Read the [caption hover-outline completion](OFFICE2007-BLUE-PLAN.md#g6-caption-hover-outlines-and-slice-completion--2026-11-21).
+The clarified request is hover-only borders: blue for minimize/maximize/restore,
+red for Close, with corresponding pressed rims; idle stays borderless. This uses
+existing StateChrome/CloseStateChrome roles without renderer/input/API changes.
+The latest selected run passes **55/55**, including nine new cases at four DPIs.
+Independent package and both actual samples pass native caption and prior G6
+checks; 40 existing-family image pairs remain exact. Three old caption-backdrop
+assertions fail identically with the retained G5 runtime, separate from the earlier
+two checked-hover split limits. Preserve their logs and the clean selected runs;
+do not claim full-suite success or final live caption acceptance. G7 remains the
+next composed review slice, and G8 Aero remains separate.
 
-B1–D8b, all identified A00–A17 corrections and E2–E4 are implemented. E5 automated
-composed checks are delivered. Current review, evidence pointers and remaining gates live in
-the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger).
+## Preserve accepted work and verification boundaries
 
-Interactive diagnostic/theme-effect/geometry tabs have been retired. The
-permanent Designer Sample now starts with authored **Home/Edit/Gallery/View**.
-Both apps now offer View's theme/accent galleries and Color title bar toggle.
-The three accepted light themes, new Office 2010 shell and Application Reset use public APIs. Six
-accents plus Default update derived fills; colored captions use white title ink.
-The Designer Sample controls are authored fields/collections, not runtime-only
-review tabs. Its SVG constructors now explicitly supply both arguments; actual
-source load/save/resource reload checks protect the reported designer artwork loss.
-`--office2019-light` selects 2019 without review tabs;
-`--office2019-theme-demo` is a selection-only compatibility alias and
-`--menu-geometry-demo` no longer creates tabs. Explicit `--verify-*` fixtures
-and their retained builders are available through the dedicated test host.
-Do not automatically resurrect diagnostic
-tabs or remove regression fixtures. Preserve authored Forms/UserControls,
-resources, project files and normal Debug/Release output locations.
+- Keep the accepted Backstage black-bar fix under Zoom, ribbon repaint performance,
+  backdrop group-title alignment and Showcase frame/File-route persistence. Read
+  [the motion/preparation record](BACKSTAGE-PAGE-MOTION.md#full-solid-pane-preparation-under-zoom)
+  only for a concrete regression. Do not repeat desktop capture or reopen those
+  investigations speculatively.
+- Keep all edits under `winforms/`. Use **one agent**, normal Debug/Release
+  configurations and default output folders. No computer-use tools or WPF builds.
+  WPF tokens/shared templates are read-only design references.
+- Follow repository instructions, the relevant design-index link and bounded
+  subsystem history. Reuse the [architecture map](THEME-ARCHITECTURE-PLAN.md) and
+  [adjustability audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md). Do not replace layout,
+  input, rendering or native editor ownership to implement a palette.
+- New public effects must be additive and independently adjustable, with XML docs,
+  Unshipped baseline entries, null/Empty/alpha/zero/reset and atomic validation.
+  Preserve the shipped baseline and existing renderer hooks.
+- Native HWNDs, parents, values, selection, focus, scrollbars, validation,
+  source/draft identity and popup ownership retain their existing owners.
+  App-authored pages, content, icons, persistence and platform participation remain
+  application-owned. Portable effects belong in the library, without Showcase
+  resources or helpers.
+- Keep diagnostic tabs retired. The ordinary Designer Sample has authored
+  Home/Edit/Gallery/View only and no test code. Use
+  `eng/Test-DesignerSample.ps1 -List` and its dedicated package-only test host;
+  do not move checks back into the sample. Refresh with
+  `eng/Update-DesignerSample.ps1` only when required by changed runtime/package code.
+- Record focused xUnit, package/native print, actual VS, physical input/IME,
+  mixed-monitor DPI, desktop material/continuous motion and live user review
+  separately. Do not rerun unrelated matrices or call sampled evidence acceptance.
 
-The user approved **Office 2013 Light** and square native form corners for
-2019/2013. Read the bounded
-[E1 contract and E2–E5 sequence](OFFICE2013-LIGHT-PLAN.md). Its screenshots are
-WPF visual references, not native acceptance evidence. E2 adds the shared
-SystemDefault/Square/Rounded/SmallRounded policy, theme default and nullable
-RibbonForm override/Reset. Office 2019 uses Square; Office 2024 keeps SystemDefault.
-Office 2013 also uses Square. EffectiveWindowCornerPreference reports the
-resolved request, not native success or physical appearance. See the bounded
-[E2 implementation/evidence](OFFICE2013-LIGHT-PLAN.md#e2-implementation-and-verification--2026-11-13).
-E3 includes live AccentStates, explicit state override/reset aliases and a
-shared FileButtonAppearance helper. The user's accent follow-up keeps 2019/2024
-ordinary hover/press grey while deriving checked toggles, selected galleries and
-checked-hover from Accent. Command text/icons keep their ordinary foreground;
-accent text belongs to active sibling navigation, not ribbon buttons.
-OptionsButtonAccentStates keeps primary OK filled, darkening by 0.10 on hover
-and 0.20 on press with white text. OptionsAppearance exposes independent primary
-darkening, state-fill and foreground overrides. Other buttons stay white with
-light hover/darker pressed washes; pressed borders retain Accent.
-Existing explicit button/state/border overrides win. All three families' sample actions
-and persistence are checked; the persistent Designer Sample used package
-`0.1.0-designer.local20261120T014843042Z` after the F6 listbox repaint fix.
-See [E3 evidence and scope](OFFICE2013-LIGHT-PLAN.md#e3-accent-palette-file-states-and-sample-appearance-controls--2026-11-13).
-E4 adds the #919191 body perimeter, selected-tab top/side outline and visible-tab
-opening through HeaderAppearance.ConnectSelectedTabToBody. Existing body/header
-border settings remain independently adjustable. HeaderBodyConnectionBounds
-carries passive geometry to actual renderer hooks, including transient frames.
-Ordinary connected-header selection now commits on frame zero while content
-continues Fade/SlideDown; this fixes the user's Designer Sample late-border report.
-2024 Underline/pill motion stays on its original path; six existing pill cases pass.
-The intermittent Office 2013 Designer Sample tab-switch flash has a native
-lifecycle correction: stable opaque tab changes retain the live ribbon HWND's
-style and finish native child repaints under the motion cover. Before/after
-traces and focused/package checks pass. Current user review is in the ledger.
-See [E4 evidence and limits](OFFICE2013-LIGHT-PLAN.md#e4-connected-selected-tabbody-outline--2026-11-14).
-E5 adds only public-API verification: both ordinary samples and an independent
-consumer pass native editor/popup/gallery, live-accent Backstage/page and Options
-draft/validation/Apply/Cancel handoffs. Four package layout/density scopes pass;
-each sample separately covers its authored Classic/Compact model at actual 120 DPI.
-No runtime/API change or new package was needed. See
-[E5 evidence and limits](OFFICE2013-LIGHT-PLAN.md#e5-composed-light-familynative-editor-review--2026-11-14).
-The current ledger owns completed user review and the separate native corner,
-physical input, actual VS, desktop material and mixed-monitor limits.
-
-Native `winforms/` projects only. Keep parent WPF runtime, builds, tests and CI
-read-only. Use one agent and no computer-use tools; actual VS review remains
-with the user. Read matching repository instructions, source map and bounded
-records before edits. Reuse the
-[architecture map](THEME-ARCHITECTURE-PLAN.md) and
-[adjustability audit](THEME-EFFECT-ADJUSTABILITY-AUDIT.md).
-
-## Current review boundary: Office 2007 G1 design
-
-The active proposal is [G1](OFFICE2007-BLUE-PLAN.md), covering the opaque palette,
-Orb/menu composition, reusable native gaps and the future shared Aero palette.
-G2-G8 are proposed implementation slices only. Keep the evidence below as
-preserved Office 2010 context; do not rerun its matrices for G1 documentation.
-
-F6 is delivered. Current F5 and F6 review results are in the
-[themes ledger](THEMES-PLAN.md#current-status-and-review-ledger). Read the
-[F6 implementation/evidence and review steps](OFFICE2010-BLUE-PLAN.md#f6-implementation-and-verification--2026-11-15).
-Preserve the user's final clarification: selected rows keep their accent outline,
-but all default Options outlines are thin one-device-pixel lines. Explicit wider
-logical widths still win. Native focus cues and the separate navigation marker
-retain their owners. Ordinary buttons share the Application Menu footer palette;
-primary OK has an accent gradient with darker hover/press and white text.
-Native scrollbar skin remains Windows-owned; wells, frames and rows are themed.
-
-The [listbox repaint follow-up](OFFICE2010-BLUE-PLAN.md#f6-listbox-repaint-follow-up--2026-11-20)
-is in the refreshed package. Hover repaints just the changed rows without erasing.
-Each themed row draws into a buffer before display. Focused native checks and both
-samples pass. See the themes ledger for the live review result.
-
-Latest focused evidence records 161 passes and one unrelated popup-context
-failure reproduced on the retained pre-F6 runtime. Independent public-package
-and both actual sample checks pass at 120 DPI, including Blue/Red, three editors,
-native hover/scroll/selection/ownership, drafts, validation/Apply/OK/Cancel/Reset
-and real secondary group/rename dialogs. Current package is above; evidence is
-under `artifacts/office2010-f6/`. Keep intermediate attempts. No clean full suite,
-actual VS, physical-input/IME, mixed-monitor or final visual acceptance is claimed.
-
-Use the [F7 evidence](OFFICE2010-BLUE-PLAN.md#f7-composed-review-evidence--2026-11-20)
-and the [themes ledger](THEMES-PLAN.md#current-status-and-review-ledger) as the
-normal-theme baseline. Designer Sample uses `0.1.0-designer.local20261120T135235944Z`.
-The [F8 walkthrough](OFFICE2010-BLUE-PLAN.md#f8-visual-walkthrough) retains the
-neutral solid gradient, Acrylic and restored-edge review scope. The shared frame
-palette and layout support the proposed Office 2007 palette.
-Preserve native input, source/draft ownership and the accepted Backstage handoff.
-
-The [repaint-pressure follow-up](BACKSTAGE-PAGE-MOTION.md#ribbon-repaint-pressure-and-motion-preparation)
-records the caption damage/clock correction, backdrop group-title alignment,
-focused checks and desktop samples. Showcase now persists the requested Aero
-frame and File route; see the
-[preference record](M5E-SHOWCASE-PERSISTENCE.md#frame-and-file-surface-preferences).
-The [full Solid-pane preparation](BACKSTAGE-PAGE-MOTION.md#full-solid-pane-preparation-under-zoom)
-records the Zoom-loaded strip reproduction and native first-drawing correction.
-The ledger owns the live result separately from these automated samples.
-Office 2007 G1 is documentation-only and stops for design review before runtime
-changes.
-
-The user revised the remaining sequence on **2026-11-15**:
-
-1. [F5 Application Menu theming](OFFICE2010-BLUE-PLAN.md#f5-application-menu-theming).
-2. [F6 Options dialog theming](OFFICE2010-BLUE-PLAN.md#f6-options-dialog-theming).
-3. [F7 composed normal-theme review](OFFICE2010-BLUE-PLAN.md#f7-composed-normal-theme-review), moved from the former F5.
-4. [F8 required Aero-inspired frame experiment](OFFICE2010-BLUE-PLAN.md#f8-required-aero-inspired-frame-experiment).
-
-Reuse passed F2–F6 and E2–E5 evidence; preserve the recorded Backstage approval
-unless a concrete regression appears. Do not repeat unrelated passed matrices.
-
-F6 owns the library Options/customization dialogs and draft/button contracts.
-F8 covers the Aero-inspired frame and its host, theme, material and fallback
-contract. Use the existing caption-button glass as part of the frame review.
-No diagnostic tabs, temporary review solution or dark variant. The new family's
-current work is G1 documentation only. Keep native API/print evidence separate
-from actual VS, physical input, continuous motion, desktop material and
-mixed-monitor acceptance.
-
-## Preserve delivered contracts
-
-- Keep F3's public preset/enum identity and sample SVG constructors. File's four
-  explicit fills precede IdentityAccent ramps, which precede solid/darkening
-  fallback. FileStrength/CaptionStrength and per-role reference ramps stay
-  independently adjustable. Gold states and ordinary command ink do not follow
-  identity accent. Existing explicit header border ink wins; selected outlines
-  stay independent from FilledHoverBorderColor/FilledPressedBorderColor. Preserve
-  File BorderColor and SquareBottomCorners, normal targets, caption/color Reset
-  and startup preferences. Actual VS and user appearance acceptance are pending.
-- Keep F2's immutable copied/structurally equal stop data, existing RibbonFill
-  constructors/endpoints/deconstruction, nullable direction/reset and all-stop
-  alpha/darkening. Five fill companions keep old Color setter authority and
-  Form.TitleBarColor precedence. Validate every stop in opaque roles atomically.
-  BackgroundBounds carries full-surface coordinates for clipping/restoration;
-  native editor wells stay solid. Opt-in StateChrome retains existing explicit
-  borders, inert empty groups, joined corners and unchanged targets. Public APIs
-  are in Unshipped; preserve the shipped baseline.
-- Keep E2's eligible DWM attribute 33 application, override precedence and Reset,
-  recreation/theme updates, unsupported retention and inert designer/child HWNDs.
-  Never assign Form.Region, remove the native resizable frame or reset DWM
-  attributes during native destruction. API readback is not visual acceptance.
-- Geometry consolidation remains the shared foundation: metrics, snapshots,
-  DPI/rounding, clips, hit targets, content bounds and popup anchors. This work
-  reuses it; do not replace layout engines or reopen the geometry campaign.
-- Keep accepted Backstage registration, whole-pane motion, native control
-  handles/parents/values/selection/focus/validation and popup ownership. Preserve
-  2019's full-height panes, 2024's separate caption, opaque title contrast,
-  temporary/settled glyph parity and normal caption paint before layer retirement.
-  Preserve D8b caption-button contracts and A10 page preference/width negotiation.
-- Retain existing command/split, editor, menu, gallery, tip and dialog drawing
-  boundaries and actual application renderer hooks. Keep gallery source identity,
-  preview/cancel/commit, borrowed artwork, draft Apply/Cancel and inert designer
-  candidate previews. Native text/input remains with its existing owner.
-- Keep the corrected shared square icon-picker cell: artwork size and inset
-  adapt None/artwork together, with native item/selection/hit/scroll ownership.
-- Every newly exposed visual effect must be independently adjustable. Reuse
-  existing colors/fills/radii/spacing first; preserve null/Empty/alpha/zero/hide,
-  independent/group Reset and validation before Theme/BuiltInTheme mutation.
-  No new family selector for a palette name alone, Showcase-only recoloring,
-  broad authoring coordinator or application-content restyling.
-
-Run only checks required by changed dependencies and explicit task gates, using
-normal native outputs. Reuse passed evidence; broaden only for new failures or
-unresolved risk. Keep focused tests, package consumers, direct-print/native API
-checks, continuous visible motion, physical input/IME, actual VS and mixed-DPI
-acceptance distinct. Inspect actual/diff output before changing approvals.
+Previous family context remains in the themes ledger and bounded
+[Office 2010 records](OFFICE2010-BLUE-PLAN.md) /
+[Office 2013 records](OFFICE2013-LIGHT-PLAN.md). Preserve their accepted contracts;
+these are not instructions to repeat their passed matrices for G6/G7.

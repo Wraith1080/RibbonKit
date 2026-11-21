@@ -3,12 +3,17 @@ namespace RibbonKit.WinForms;
 /// <summary>Immutable library Options navigation, divider, button, heading, frame, list/tree and group icon-picker presentation. Native controls, application pages and draft lifetime remain independent.</summary>
 public sealed record RibbonOptionsAppearanceSettings
 {
-    /// <summary>Gets optional opaque library dialog/editor background. Empty follows Surface. Application-owned pages retain their styling.</summary>
-    public Color BackgroundColor { get; init; } = Color.Empty;
+    private Color _backgroundColor = Color.Empty, _listBackgroundColor = Color.Empty;
+    /// <summary>Gets optional opaque library dialog/editor background. Empty follows Surface. Assigning it clears BackgroundFill. Application-owned pages retain their styling.</summary>
+    public Color BackgroundColor { get => _backgroundColor; init { _backgroundColor = value; BackgroundFill = null; } }
+    /// <summary>Gets an optional opaque library dialog/content background fill. Null follows BackgroundColor/Surface. Assigning BackgroundColor clears it. Library containers sample one complete content surface; application pages retain their own styling.</summary>
+    public RibbonFill? BackgroundFill { get; init; }
     /// <summary>Gets optional opaque Options navigation rail background. Empty follows BackstageNavigationBackground without changing Backstage.</summary>
     public Color NavigationBackgroundColor { get; init; } = Color.Empty;
     /// <summary>Gets optional opaque library command-list/tree/icon-picker well background. Empty follows Surface. Native fields and scrollbars remain independent.</summary>
-    public Color ListBackgroundColor { get; init; } = Color.Empty;
+    public Color ListBackgroundColor { get => _listBackgroundColor; init { _listBackgroundColor = value; ListBackgroundFill = null; } }
+    /// <summary>Gets an optional opaque command-list/tree/icon-picker fill. Null follows ListBackgroundColor/Surface. Assigning ListBackgroundColor clears it. Rows and empty space sample the complete native client viewport, independently of scrolling; native text editor wells remain solid.</summary>
+    public RibbonFill? ListBackgroundFill { get; init; }
     /// <summary>Gets optional library field/list caption ink. Empty follows Foreground; main page heading and application labels remain independent.</summary>
     public Color LabelForeground { get; init; } = Color.Empty;
     /// <summary>Gets optional library dialog footer fill. Null retains its parent background; native button bounds/actions remain.</summary>
@@ -157,6 +162,8 @@ public sealed record RibbonOptionsAppearanceSettings
     internal static void Validate(RibbonOptionsAppearanceSettings? a)
     {
         if (a is null) return;
+        foreach (var fill in new[] { a.BackgroundFill, a.ListBackgroundFill })
+            if (fill is { } value && !RibbonFillColors.IsOpaque(value)) throw new ArgumentException("Every Options background fill stop must be opaque.", nameof(a));
         foreach (var color in new[] { a.BackgroundColor, a.NavigationBackgroundColor, a.ListBackgroundColor })
             if (!color.IsEmpty && color.A != 255) throw new ArgumentException("Native Options background colors must be opaque or Empty.", nameof(a));
         foreach (var chrome in new[] { a.StateChrome, a.ButtonIdleStateChrome, a.AccentButtonStateChrome, a.NavigationStateChrome, a.RowStateChrome, a.TreeStateChrome }) RibbonStateChromeSettings.Validate(chrome);

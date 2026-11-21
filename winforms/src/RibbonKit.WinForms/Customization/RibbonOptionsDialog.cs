@@ -40,6 +40,7 @@ public class RibbonOptionsDialog : Form
         _body.Controls.Add(_viewport); _body.Controls.Add(_heading);
         var middle = new Panel { Dock = DockStyle.Fill }; middle.Controls.Add(_body); middle.Controls.Add(_rail);
         Controls.Add(middle); Controls.Add(_footer);
+        RibbonOptionsBackground.Bind(_body, ribbon);
         _viewport.Resize += (_, _) => LayoutPage(); _viewport.Layout += (_, _) => LayoutPage(); UpdateMetrics(false);
     }
     /// <summary>Gets the owned pages. Removing a page detaches it without disposal. A page can belong to only one dialog.</summary>

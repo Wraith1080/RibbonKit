@@ -60,6 +60,7 @@ public sealed partial class RibbonSimplifiedCustomizationEditor : UserControl
         _available.SelectedIndexChanged += (_, _) => UpdateActions(); _current.SelectedIndexChanged += (_, _) => UpdateActions();
         _available.DoubleClick += (_, _) => Add(); _current.DoubleClick += (_, _) => { if (_current.SelectedItem is Row { Header: false }) ShowLabel(); };
         _search.TextChanged += (_, _) => RefreshAvailable(); _currentSearch.TextChanged += (_, _) => RefreshCurrent();
+        RibbonOptionsBackground.Bind(this, ribbon);
         RefreshDraft(); UpdateMetrics();
     }
     /// <summary>Gets the owned draft session, including ordinary structure and Simplified selections. QAT applies independently.</summary>
@@ -192,7 +193,7 @@ public sealed partial class RibbonSimplifiedCustomizationEditor : UserControl
     private void DrawRow(object? sender, DrawItemEventArgs e)
     {
         if (sender is not ListBox list || e.Index < 0 || list.Items[e.Index] is not Row row) return;
-        RibbonOptionsRowRenderer.Draw(_rowPainter, new RibbonPaintContext(e.Graphics, e.Bounds, _ribbon.Theme, row.Header ? _headerFont ?? Font : Font, DeviceDpi) { Hot = list is RibbonOptionsListBox state && state.HotIndex == e.Index }, row.Source, row.Caption, e.State.HasFlag(DrawItemState.Selected), simplified: true, heading: row.Header); e.DrawFocusRectangle();
+        RibbonOptionsRowRenderer.Draw(_rowPainter, new RibbonPaintContext(e.Graphics, e.Bounds, _ribbon.Theme, row.Header ? _headerFont ?? Font : Font, DeviceDpi) { Hot = list is RibbonOptionsListBox state && state.HotIndex == e.Index, BackgroundBounds = list is RibbonOptionsListBox paintList ? paintList.FullBackgroundBounds(e) : default }, row.Source, row.Caption, e.State.HasFlag(DrawItemState.Selected), simplified: true, heading: row.Header); e.DrawFocusRectangle();
     }
     internal Size PageMinimum => new(Math.Max(MinimumSize.Width, RibbonQuickAccessEditorMetrics.Minimum(DeviceDpi, Font.Height, _ribbon.Density).Width), RibbonQuickAccessEditorMetrics.Minimum(DeviceDpi, Font.Height, _ribbon.Density).Height + S(40));
     private void UpdateMetrics()

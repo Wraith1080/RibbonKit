@@ -154,8 +154,8 @@ round Back is hidden by default. Aero is deferred. See the
 
 `RibbonBuiltInTheme.Office2007Blue` (append-only identity 4) or
 `RibbonThemes.Office2007Blue` selects the opaque Blue ribbon: valley caption/body
-fills, a flat blue tab band, connected selected tabs, measured group frames and
-label bands, and gold/orange command feedback with exact repeated-offset creases.
+fills, a flat blue tab band, connected selected tabs, measured Classic group frames
+and label bands, and gold/orange command feedback with exact repeated-offset creases.
 It composes the shared `BodyAppearance.GroupPanel` and
 `ApplicationButtonAppearance` roles. The default is a silver Orb with gold hover
 and amber pressed/open states; an explicit `ApplicationButtonShape.Rectangular`
@@ -168,9 +168,37 @@ top/footer bands, independent frame ink, pale panes and dimensional footer butto
 The Orb-relative menu offset is a request: native caption clearance keeps the
 complete top frame below the caption while the Orb overlaps it. Measured content
 clearance and the existing working-area/above-caption fallback remain in use.
-Dedicated Options/companion and Aero palettes are later slices; current appearance
-review belongs in the themes ledger.
-See the [G4 contract and evidence](docs/OFFICE2007-BLUE-PLAN.md#g4-normal-blue-preset-and-ribbon--2026-11-21).
+Options/customization, list/tree/icon-picker wells and ordinary popups use the
+reference's full-height valley gradient: `#DBE6F4`, `.17 #C8D9ED`, `#E3F4FF`.
+Rows, empty space and child containers sample complete surfaces rather than
+restarting the ramp per item. The Options footer retains its exact creased blue
+band. Native text editor wells stay white. Ordinary actions have blue resting rims and
+gold/orange feedback; primary OK uses an independent creased blue fill, a 22%
+white hover wash and a 16% black pressed wash. These explicit primary fills retain
+their reference blue when Accent changes; callers can override/reset them through
+OptionsAppearance. Gold selections and command feedback remain independent.
+ScreenTips have a separate near-white fill and blue rim. Gallery/menu/editor
+decoration uses the existing shared appearance roles. The Aero palette remains
+a later slice; current appearance review belongs in the themes ledger.
+Default dialog action outlines are one device pixel at every DPI; the primary
+button's extra inner ring is omitted. Authored ButtonBorderWidth still wins in
+logical pixels, and keyboard focus cues retain their existing owner.
+See the [G6 correction and evidence](docs/OFFICE2007-BLUE-PLAN.md#g6-gradient-and-button-outline-correction--2026-11-21).
+
+Office 2007 Simplified mode uses separators between groups. Classic keeps its
+frames and label bands. `BodyAppearance.GroupPanel.ShowInSimplified` controls
+compact panels independently: true retains the general default; false restores
+the measured Simplified separators. Existing GroupSeparatorColor/Width apply;
+the setting changes paint without moving items or hit targets. Vertical split
+halves each sample a complete gel ramp. QAT buttons and overflow hover/press use
+explicit gold/orange fills that survive caption recoloring; the preset sets
+QuickAccessBackdropOpacity to 1, and callers can still adjust it independently.
+
+Caption buttons have thin blue hover rims, with red for Close; pressed states
+retain their corresponding rims and creased fills. Idle buttons stay borderless.
+`CaptionButtonAppearance.StateChrome` and `CloseStateChrome` independently control
+the hover/pressed border inks through the existing appearance contract. Default
+strokes are one device pixel at every DPI.
 
 `Theme.IdentityAccent` supplies immutable reference ramps and independent
 FileStrength/CaptionStrength/NavigationStrength (finite 0..1). Accent updates rebase File fill/border
@@ -267,6 +295,9 @@ including BodyBackground, must be opaque.
 `StateChrome` is also available on FileButtonAppearance, GalleryAppearance (tiles),
 EditorAppearance (choices) and OptionsAppearance (buttons). Hover/pressed/checked/
 checked-hover border inks and inner-rim ink/width/inset are independent of fills.
+`IdleBorderColor` replaces idle fallback ink where a surface already paints idle
+chrome, including Options' ordinary/primary groups. It does not add idle paint to
+otherwise unpainted commands, and active states retain their own fallbacks.
 Existing border overrides win; null/Empty preserves defaults, Transparent hides
 ink and zero hides width. Empty groups add no effect. ChoiceBorderWidth controls
 choice-state outlines separately from editor fields. These are shared foundations;
@@ -2919,6 +2950,8 @@ chrome, including ordinary menu rows and Quick Access command projections:
 | `Inset` | One device pixel inside the unchanged target. Authored 0..1024 logical pixels clamp to available bounds; zero fills the target. |
 | `SplitSeparatorWidth`, `SplitSeparatorInset`, `SplitSeparatorColor` | One device pixel of thickness, end clearance following the command inset, and Border ink. Width/inset accept 0..32 / 0..1024 logical pixels. Zero width or Transparent ink hides the separator; Empty ink follows Border. Existing split orientation/action regions are unchanged. |
 | `SplitCompanionBackground` | Null retains the resting-half recipe while the other half is active, including transparent material QAT companions. Authored alpha/gradients precede material fallback. Hover, press, checked and open states retain their existing fill settings and precedence. |
+| `SplitFillUsesPartBounds` | False retains whole-command sampling. True samples each half's complete painted extent while retaining the shared outer contour, clips, separator and hit targets. The part canvas is supplied through BackgroundBounds in the existing chrome hooks. Applies to vertical/horizontal splits and QAT projections. |
+| `QuickAccessHoverBackground`, `QuickAccessPressedBackground`, `QuickAccessCheckedBackground`, `QuickAccessCheckedHoverBackground` | Optional independent toolbar fills preceding caption/material recoloring. Null restores each existing recipe; alpha and exact stops are retained. Composited fills still multiply QuickAccessBackdropOpacity. Ordinary menus and header utilities keep their own recipes; state border/rim overrides remain independent. |
 
 ```csharp
 ribbon.Theme = ribbon.Theme with
@@ -3292,21 +3325,26 @@ remain on Theme effects 6, which the user declared full. Keep new controls on ta
 until directed otherwise.
 
 `Theme.TipAppearance` accepts immutable `RibbonTipAppearanceSettings` for shared
-ScreenTip title, keyboard-badge outline and Backstage badge placement:
+ScreenTip fill/frame/title, keyboard-badge outline and Backstage badge placement:
 
 | Members | Null defaults and behavior |
 | --- | --- |
+| `ScreenTipBackground`, `ScreenTipBorderColor` | Optional opaque fill, including exact gradient stops, and independent frame ink. Null fill follows PopupBackground/Surface; Empty ink follows PopupBorder. Transparent ink hides the rim. Existing popup width/radius hooks keep ownership. |
 | `ScreenTipTitleBold` | Null/true adds Bold to host styles; false removes Bold and preserves other styles. Shared ScreenTip measurement and actual text painting use the same weight. Foreground and existing width/padding/gap/frame settings remain in use. |
 | `KeyTipInset`, `KeyTipBorderWidth` | Paint inset 0..1024 / outline width 0..32 logical pixels. Null retains zero inset / one-device-pixel outline. Zero stroke hides it; authored alpha follows existing KeyTipBorder. Paint dimensions clamp inside the badge; text/command targets do not move. |
 | `BackstageKeyTipRightClearance` | 0..1024, null 4 logical pixels. Badge placement clamps inside the existing entry target. |
 | `BackstageKeyTipHorizontalClearance`, `BackstageKeyTipVerticalClearance` | Total deductions from the entry's available badge width/height, 0..1024, null 8 / 4 logical pixels. Zero permits the full dimension; consuming a dimension hides the badge. Existing KeyTipHorizontalPadding / KeyTipVerticalPadding retain independent text-sizing and legacy summed fractional-DPI rounding. |
 
 Existing KeyTipBackground/Foreground/Border and Office KeyTipCornerRadius keep
-their roles; neutral badges remain square. Members reset with null;
+their roles; neutral badges remain square. Nullable members reset with null;
 `TipAppearance = null` retains existing colors, corners, padding and unrelated
 gallery settings. Values validate before Theme/BuiltInTheme mutation. Actual
 DrawScreenTip/DrawKeyTip/DrawText overrides remain authoritative. Passive-window
 delay/lifetime, keyboard routing and native page/editor ownership remain shared.
+`RibbonPaintContext.IsScreenTip` identifies both the native passive frame and its
+layered edges in the existing DrawPopupFrame/DrawPopupShadow hooks. False keeps
+ordinary popup roles; KeyTips remain independent. Every ScreenTip fill stop must
+be opaque, with validation before Theme/BuiltInTheme changes.
 
 **Try tips and badges / Tip presentation** are on **Theme effects 7**. Hover over
 the preview commands for ScreenTips, or press Alt/F10 for badges. **Inset Backstage
@@ -3327,6 +3365,7 @@ device pixel at every DPI. Authored wider widths remain logical pixels and win.
 | Members | Behavior |
 | --- | --- |
 | `BackgroundColor`, `NavigationBackgroundColor`, `ListBackgroundColor`, `LabelForeground` | Library shell/editor, rail, list/tree/icon well and field/list caption colors. Background colors must be opaque or Empty; Empty follows the existing Surface/navigation/Foreground roles. Application-owned pages retain their styling. Choose native background/label colors before opening. |
+| `BackgroundFill`, `ListBackgroundFill` | Optional opaque fills preceding the matching BackgroundColor/ListBackgroundColor fallback. Assigning the matching Color clears its fill; null resets only that fill. Every stop must be opaque, with atomic Theme/BuiltInTheme validation. Library body containers share one measured client canvas; list/tree/icon cells and unused space share each native client viewport through scrolling, clipping and resize. Text editor wells, navigation rail, footer and application page styling remain independent. Choose these construction settings before opening. |
 | `FooterBackground` | Independent library footer fill, including gradient/alpha; null retains the parent background. Button corners composite over the footer's actual gradient. |
 | `NavigationHoverBackground`, `RowHoverBackground`, `TreeHoverBackground` | Independent hover fills. Null retains the rail/well; hover never changes native selection, checked state or draft data. |
 | `NavigationStateChrome`, `RowStateChrome`, `TreeStateChrome` and corresponding `Navigation/Row/TreeBorderColor`, `Navigation/Row/TreeBorderWidth` | Independent outline/rim settings. Explicit ink/width wins; Empty ink follows state chrome, then Accent for selected rows or Border for hover. Null width uses one device pixel with nonempty state chrome, otherwise zero; explicit widths are 0..32 logical pixels. Transparent/zero hides the outline. Native focus cues remain separate. Empty state groups are inert. |

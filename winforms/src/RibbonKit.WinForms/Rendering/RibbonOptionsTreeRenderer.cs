@@ -8,9 +8,9 @@ internal static class RibbonOptionsTreeRenderer
     internal static void Draw(RibbonRenderer owner, RoundedPainter painter, RibbonPaintContext c, RibbonOptionsTreeSlots slots, string text, bool selected, bool expanded, bool children, int? state, bool enabled, bool showFocus, RibbonCheckBoxItem check, Action<Graphics, Rectangle>? icon)
     {
         var a = c.Theme.OptionsAppearance; var metrics = new RibbonOptionsTreeMetrics(c.Theme, c.DeviceDpi, c.Density);
-        if (a?.TreeHoverBackground is not null || a?.TreeStateChrome?.HasOverrides == true || a?.TreeBorderWidth is not null || a is { TreeBorderColor.IsEmpty: false } || a is { ListBackgroundColor.IsEmpty: false })
+        if (a?.ListBackgroundFill is not null || a?.TreeHoverBackground is not null || a?.TreeStateChrome?.HasOverrides == true || a?.TreeBorderWidth is not null || a is { TreeBorderColor.IsEmpty: false } || a is { ListBackgroundColor.IsEmpty: false })
         {
-            using var background = new SolidBrush(RibbonOptionsRenderer.ListBackground(c.Theme)); c.Graphics.FillRectangle(background, c.Bounds);
+            RibbonOptionsBackground.PaintList(painter, c);
             if (selected || c.Hot || c.StateHot) RibbonOptionsRenderer.DrawState(painter, c, selected ? a?.TreeSelectedBackground ?? new(c.Theme.Checked.Start) : a?.TreeHoverBackground ?? new(Color.Transparent), metrics.Radius, selected, a?.TreeBorderWidth, a?.TreeBorderColor ?? Color.Empty, a?.TreeStateChrome);
         }
         else if (!selected || a?.TreeSelectedBackground is null && a?.TreeCornerRadius is null)

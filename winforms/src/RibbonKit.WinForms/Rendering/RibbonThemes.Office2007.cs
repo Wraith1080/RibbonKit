@@ -2,7 +2,7 @@ namespace RibbonKit.WinForms;
 
 public static partial class RibbonThemes
 {
-    /// <summary>Gets normal opaque Office 2007 Blue: valley surfaces, exact creased gold states, framed groups, an Orb and a blue framed Application Menu. File routing, window material and explicit application-button shape remain host choices. Dedicated Options and Aero palettes are separate.</summary>
+    /// <summary>Gets normal opaque Office 2007 Blue: valley surfaces, creased gold states, framed groups, an Orb, Application Menu, Options and companion surfaces. File routing, window material and explicit application-button shape remain host choices. The Aero palette is separate.</summary>
     public static RibbonTheme Office2007Blue { get; } = CreateOffice2007Blue();
 
     private static RibbonTheme CreateOffice2007Blue()
@@ -18,6 +18,13 @@ public static partial class RibbonThemes
             InnerBorderColor = Color.FromArgb(170, Color.White), InnerBorderWidth = 1
         };
         var body = Ramp(0xDBE6F4, 0xE3F4FF, (.17, 0xC8D9ED));
+        var menuSurround = C(0xBED3EC);
+        var menuFooter = Ramp(0xBDD3EF, 0xC9EEFF, (.47, 0xBFD5F1), (.47, 0xB1CAEA), (.96, 0xCFE0F6));
+        var selected = Ramp(0xFFF3D2, 0xFFDC8A, (.38, 0xFFDE84), (.38, 0xFFCB43), (.48, 0xFFC739));
+        var primary = Ramp(0x6FB4E4, 0x4C93CD, (.45, 0x3585C6), (.45, 0x1F63A6));
+        var action = Ramp(0xFBFDFF, 0xE9F2FB, (.48, 0xE1EDF9), (.54, 0xBCD3EA));
+        static RibbonFill Wash(RibbonFill fill, Color wash, double opacity) => RibbonFillColors.Map(fill, color => Color.FromArgb(color.A,
+            (int)Math.Round(color.R + (wash.R - color.R) * opacity), (int)Math.Round(color.G + (wash.G - color.G) * opacity), (int)Math.Round(color.B + (wash.B - color.B) * opacity)));
         var orbPressed = Ramp(0xF5D98A, 0xF7D06A, (.18, 0xEFBE4A), (.5, 0xD8931A), (.82, 0xE8A82A));
         return new()
         {
@@ -34,15 +41,18 @@ public static partial class RibbonThemes
             Background = C(0xBFDBFF), TitleBarBackgroundFill = Ramp(0xE4EBF6, 0xE4EFFD, (.14, 0xD5E5FA), (.28, 0xCADEF7)),
             TitleBarForeground = C(0x15428B), ExtendTitleBarColorToHeader = false,
             Surface = Color.White, Foreground = C(0x1E1E1E), SecondaryText = C(0x15428B),
+            PopupBackground = menuSurround,
+            PopupBackgroundFill = body,
             Border = C(0x8DB2E3), PopupBorder = C(0x8DB2E3), EditorBorder = C(0x8DB2E3),
             EditorBackground = Color.White, EditorForeground = C(0x1E1E1E),
             BodyBackground = body, BodyBorder = C(0x8DB2E3), BodyCornerRadius = 0, BodyMargin = Padding.Empty, BodyShadowColor = Color.Transparent,
             QuickAccessBackgroundFill = body,
             BodyAppearance = new()
             {
-                BorderWidth = 1, GroupSeparatorColor = Color.Transparent, QuickAccessSeparatorColor = C(0x8DB2E3),
+                BorderWidth = 1, GroupSeparatorColor = C(0xA8BFD4), QuickAccessSeparatorColor = C(0x8DB2E3),
                 GroupPanel = new()
                 {
+                    ShowInSimplified = false,
                     Background = Ramp(0xDEE8F5, 0xD9E8F6, (.16, 0xC7D8ED)), BorderColor = C(0xA8BFD4),
                     BorderWidth = 1, CornerRadius = 3, Inset = 2,
                     InnerBorderColor = C(0xE4ECF5), InnerBorderWidth = 1,
@@ -61,9 +71,12 @@ public static partial class RibbonThemes
                 UtilityPressedBackground = Ramp(0xB7D2F0, 0xE4F0FD, (.45, 0xA6C6EB), (.45, 0xC3DCF7))
             },
             Hover = hover, Pressed = pressed,
-            Checked = Ramp(0xFFF3D2, 0xFFDC8A, (.38, 0xFFDE84), (.38, 0xFFCB43), (.48, 0xFFC739)),
+            Checked = selected,
             CheckedHover = Ramp(0xFFEEC0, 0xFFD478, (.38, 0xFFD670), (.38, 0xFFC12E), (.48, 0xFFBD26)),
-            CommandAppearance = new() { StateChrome = goldChrome, SplitCompanionBackground = new(Color.Transparent), SplitSeparatorColor = C(0xC1A877) },
+            QuickAccessBackdropOpacity = 1,
+            CommandAppearance = new() { StateChrome = goldChrome, SplitCompanionBackground = new(Color.Transparent), SplitSeparatorColor = C(0xC1A877), SplitFillUsesPartBounds = true,
+                QuickAccessHoverBackground = hover, QuickAccessPressedBackground = pressed, QuickAccessCheckedBackground = selected,
+                QuickAccessCheckedHoverBackground = Ramp(0xFFEEC0, 0xFFD478, (.38, 0xFFD670), (.38, 0xFFC12E), (.48, 0xFFBD26)) },
             ApplicationButtonShape = RibbonApplicationButtonShape.Orb,
             ApplicationButtonAppearance = new()
             {
@@ -78,9 +91,9 @@ public static partial class RibbonThemes
             ApplicationMenuContent = new() { SeparatorColor = C(0xC5C5C5) },
             ApplicationMenuAppearance = new()
             {
-                OuterBorderColor = C(0x9BAFCA), SurroundBackground = new(C(0xBED3EC)),
+                OuterBorderColor = C(0x9BAFCA), SurroundBackground = new(menuSurround),
                 TopBandBackground = Ramp(0xD7E5F7, 0xB7CBE6, (.44, 0xD5E2F3), (.44, 0xC6D7EE)),
-                FooterSurfaceBackground = Ramp(0xBDD3EF, 0xC9EEFF, (.47, 0xBFD5F1), (.47, 0xB1CAEA), (.96, 0xCFE0F6)),
+                FooterSurfaceBackground = menuFooter,
                 SurroundRimColor = Color.White, SurroundRimWidth = 1, SurroundRimInset = 1,
                 NavigationBackground = new(C(0xFAFAFA)), DefaultPaneBackground = new(C(0xE9EAEE)), ActivePaneBackground = new(C(0xFAFAFA)),
                 InnerFrameCornerRadius = 2, InnerFrameBorderWidth = 1, InnerFrameBorderColor = C(0x9F9F9F),
@@ -94,13 +107,34 @@ public static partial class RibbonThemes
             },
             CornerRadius = 3, PopupCornerRadius = 3, FocusCornerRadius = 2, CheckBoxCornerRadius = 2, KeyTipCornerRadius = 2,
             KeyTipBackground = new(C(0xFDFEFF), C(0xDDE9F8)), KeyTipBorder = C(0x8DB2E3),
-            EditorAppearance = new() { StateChrome = goldChrome, CornerRadius = 3, ChoiceCornerRadius = 3 },
-            GalleryAppearance = new() { StateChrome = goldChrome, UtilityStateChrome = goldChrome, TileCornerRadius = 3, StripCornerRadius = 3, UtilityCornerRadius = 2 },
+            TipAppearance = new() { ScreenTipBackground = new(C(0xFBFDFF)), ScreenTipBorderColor = C(0x8DB2E3), KeyTipBorderWidth = 1 },
+            OptionsButtonCornerRadius = 3,
+            OptionsAppearance = new()
+            {
+                BackgroundColor = menuSurround, BackgroundFill = body, NavigationBackgroundColor = C(0xF5F4F3), ListBackgroundColor = Color.White, ListBackgroundFill = body, LabelForeground = C(0x1E1E1E), FooterBackground = menuFooter,
+                NavigationSelectedBackground = selected, NavigationHoverBackground = hover, NavigationCornerRadius = 3, NavigationStateChrome = goldChrome,
+                RowSelectedBackground = selected, RowHoverBackground = hover, RowCornerRadius = 0, RowStateChrome = goldChrome,
+                TreeSelectedBackground = selected, TreeHoverBackground = hover, TreeCornerRadius = 0, TreeStateChrome = goldChrome,
+                FrameCornerRadius = 0, FrameBorderColor = C(0x8DB2E3), DividerColor = C(0x8DB2E3),
+                IconPickerCornerRadius = 3, IconPickerSelectedBackground = selected, IconPickerBorderColor = C(0xC19A4B),
+                ButtonBackground = action, ButtonHoverBackground = hover, ButtonPressedBackground = pressed, StateChrome = goldChrome,
+                ButtonIdleStateChrome = goldChrome with { IdleBorderColor = C(0x7D9EC0), InnerBorderWidth = 0 },
+                ButtonDisabledBackground = Wash(action, Color.White, .6), ButtonDisabledBorderColor = C(0xB8C9DE),
+                AccentButtonBackground = primary, AccentButtonHoverBackground = Wash(primary, Color.White, .22), AccentButtonPressedBackground = Wash(primary, Color.Black, .16), AccentButtonForeground = Color.White,
+                AccentButtonStateChrome = new() { IdleBorderColor = C(0x17578F), HoverBorderColor = C(0x17578F), PressedBorderColor = C(0x17578F) },
+                HeadingBold = false
+            },
+            EditorAppearance = new() { StateChrome = goldChrome, BorderWidth = 1, CornerRadius = 3, ChoiceCornerRadius = 3, ChoiceBorderWidth = 1 },
+            MenuAppearance = new() { HeaderCornerRadius = 0, SeparatorColor = C(0x9EBED9), OverflowBackground = body, OverflowCornerRadius = 3 },
+            GalleryAppearance = new() { StateChrome = goldChrome, UtilityStateChrome = goldChrome, TileCornerRadius = 3, TileBorderWidth = 1, StripCornerRadius = 3,
+                StripBackground = new(Color.White), StripBorderColor = C(0x8DB2E3), StripBorderWidth = 1, UtilityCornerRadius = 2, UtilityBorderWidth = 1 },
             GalleryHeadingBackground = new(C(0xDBE7F3)), GalleryHeadingForeground = C(0x1E1E1E),
             MenuHeadingBackground = new(C(0xDBE7F3)), MenuHeadingForeground = C(0x15428B),
             CaptionButtonAppearance = new()
             {
                 StateInset = 2, CornerRadius = 3,
+                StateChrome = new() { HoverBorderColor = C(0x7B9FCA), PressedBorderColor = C(0x4A6F9E) },
+                CloseStateChrome = new() { HoverBorderColor = C(0xA93342), PressedBorderColor = C(0xB34F5A) },
                 HoverBackground = Ramp(0xEAF3FD, 0xD7E7F9, (.45, 0xCFE2F7), (.45, 0xAFCDEE)),
                 PressedBackground = Ramp(0x9CBDE2, 0xD2E4F8, (.45, 0x8FB3DC), (.45, 0xAECBEB)),
                 CloseHoverBackground = Ramp(0xF58089, 0xE85560, (.45, 0xE9333F), (.45, 0xC60E1B)),

@@ -23,7 +23,17 @@ public sealed record RibbonCommandAppearanceSettings
     public Color SplitSeparatorColor { get; init; } = Color.Empty;
     /// <summary>Gets optional resting-half fill while the other split half is active. Null retains each ordinary/Quick Access recipe, including material transparency. Authored fills retain alpha and precede material fallback. Hover, press and checked fills keep their existing settings.</summary>
     public RibbonFill? SplitCompanionBackground { get; init; }
-    internal bool HasChromeOverrides => StateChrome?.HasOverrides == true || CornerRadius is not null || BorderWidth is not null || !BorderColor.IsEmpty || Inset is not null;
+    /// <summary>Gets whether split state fills sample the complete painted extent of each half. False retains whole-command sampling. The shared outer contour, clips, separator and hit targets stay unchanged; BackgroundBounds identifies the part's fill canvas in chrome hooks.</summary>
+    public bool SplitFillUsesPartBounds { get; init; }
+    /// <summary>Gets optional Quick Access toolbar hover fill, preceding caption/material recoloring. Null retains the existing recipe. Menus keep their own states; composited toolbar fills retain QuickAccessBackdropOpacity.</summary>
+    public RibbonFill? QuickAccessHoverBackground { get; init; }
+    /// <summary>Gets optional Quick Access toolbar pressed/open fill, preceding caption/material recoloring. Null retains the existing recipe.</summary>
+    public RibbonFill? QuickAccessPressedBackground { get; init; }
+    /// <summary>Gets optional Quick Access toolbar checked fill, preceding caption/material recoloring. Null retains the existing recipe.</summary>
+    public RibbonFill? QuickAccessCheckedBackground { get; init; }
+    /// <summary>Gets optional Quick Access toolbar checked-and-hovered fill, preceding caption/material recoloring. Null retains the existing recipe.</summary>
+    public RibbonFill? QuickAccessCheckedHoverBackground { get; init; }
+    internal bool HasChromeOverrides => SplitFillUsesPartBounds || StateChrome?.HasOverrides == true || CornerRadius is not null || BorderWidth is not null || !BorderColor.IsEmpty || Inset is not null;
     internal static void Validate(RibbonCommandAppearanceSettings? settings)
     {
         if (settings is null) return;

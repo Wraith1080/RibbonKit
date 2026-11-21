@@ -63,6 +63,7 @@ public sealed class RibbonQuickAccessCustomizationEditor : UserControl
         _available.DoubleClick += (_, _) => AddSelected(); _current.DoubleClick += (_, _) => RemoveSelected();
         _search.TextChanged += (_, _) => RefreshAvailable();
         _currentSearch.TextChanged += (_, _) => RefreshCurrent();
+        RibbonOptionsBackground.Bind(this, ribbon);
         RefreshDraft(); UpdateMetrics();
     }
 
@@ -168,7 +169,7 @@ public sealed class RibbonQuickAccessCustomizationEditor : UserControl
     {
         if (e.Index < 0 || sender is not ListBox list || list.Items[e.Index] is not Row row) return;
         var text = row.Entry is { } entry ? (ReferenceEquals(list, _available) ? entry.Category + " › " : "") + entry.Text : row.Fallback + " (unavailable)";
-        RibbonOptionsRowRenderer.Draw(_rowPainter, new RibbonPaintContext(e.Graphics, e.Bounds, _ribbon.Theme, Font, DeviceDpi) { Hot = list is RibbonOptionsListBox state && state.HotIndex == e.Index }, row.Entry?.Source, text, e.State.HasFlag(DrawItemState.Selected));
+        RibbonOptionsRowRenderer.Draw(_rowPainter, new RibbonPaintContext(e.Graphics, e.Bounds, _ribbon.Theme, Font, DeviceDpi) { Hot = list is RibbonOptionsListBox state && state.HotIndex == e.Index, BackgroundBounds = list is RibbonOptionsListBox paintList ? paintList.FullBackgroundBounds(e) : default }, row.Entry?.Source, text, e.State.HasFlag(DrawItemState.Selected));
         e.DrawFocusRectangle();
     }
     internal int ScaleLogical(int value) => (int)Math.Ceiling(value * DeviceDpi / 96d);

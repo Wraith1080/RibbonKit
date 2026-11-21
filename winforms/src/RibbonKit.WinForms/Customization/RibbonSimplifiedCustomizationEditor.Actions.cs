@@ -54,6 +54,7 @@ public sealed partial class RibbonSimplifiedCustomizationEditor
         var ok = new RibbonOptionsAccentButton(_ribbon) { Text = "OK", Size = new(S(86), height) }; var cancel = new RibbonOptionsButton(_ribbon) { Text = "Cancel", Size = new(S(86), height), DialogResult = DialogResult.Cancel, CausesValidation = false };
         ok.Click += (_, _) => { if (!string.IsNullOrWhiteSpace(text.Text)) dialog.DialogResult = DialogResult.OK; else text.Focus(); };
         var footer = new RibbonOptionsFooter(_ribbon) { AutoSize = true, WrapContents = false }; footer.Controls.AddRange([ok, cancel]); footer.Dock = DockStyle.Bottom; footer.Padding = new(gap); dialog.Controls.Add(body); dialog.Controls.Add(footer); dialog.AcceptButton = ok; dialog.CancelButton = cancel;
+        RibbonOptionsBackground.Bind(body, _ribbon);
         return dialog.ShowDialog(FindForm()) == DialogResult.OK ? text.Text.Trim() : null;
     }
 }

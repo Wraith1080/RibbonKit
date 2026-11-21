@@ -90,7 +90,8 @@ internal sealed class RibbonOptionsFrame : Panel
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
-        RibbonOptionsFieldRenderer.DrawFrame(_painter, new(e.Graphics, ClientRectangle, _ribbon.Theme, Font, DeviceDpi), RibbonOptionsChrome.Radius(_ribbon, DeviceDpi));
+        var list = Controls.Cast<Control>().FirstOrDefault(c => c is ListBox or TreeView or ListView);
+        RibbonOptionsFieldRenderer.DrawFrame(_painter, new(e.Graphics, ClientRectangle, _ribbon.Theme, Font, DeviceDpi) { BackgroundBounds = list?.Bounds ?? default }, RibbonOptionsChrome.Radius(_ribbon, DeviceDpi), list is null ? null : _ribbon.Theme.OptionsAppearance?.ListBackgroundFill);
     }
     protected override void Dispose(bool disposing) { base.Dispose(disposing); if (disposing) _painter.Dispose(); }
 }

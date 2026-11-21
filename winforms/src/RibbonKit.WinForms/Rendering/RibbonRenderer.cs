@@ -74,7 +74,7 @@ public partial class RibbonRenderer : IDisposable
         try
         {
             context.Graphics.SetClip(context.Bounds, System.Drawing.Drawing2D.CombineMode.Intersect);
-            if (context.Hot || context.Pressed) DrawHeaderUtilityState(context, QuickAccessFill(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, false));
+            if (context.Hot || context.Pressed) DrawHeaderUtilityState(context, QuickAccessFill(context, context.Pressed ? context.Theme.Pressed : context.Theme.Hover, false, useOverrides: false));
             RibbonArrowPainter.DrawVertical(context.Graphics, context.Bounds, context.DeviceDpi, context.Theme.Foreground, !minimized, context.Theme.Chevrons);
         }
         finally { context.Graphics.Restore(state); }
@@ -96,7 +96,7 @@ public partial class RibbonRenderer : IDisposable
         bool check = command is RibbonToggleItem { Checked: true } or RibbonCheckBoxItem { Checked: true } or RibbonRadioButtonItem { Checked: true } or RibbonSplitButtonItem { Checked: true };
         bool open = entry is RibbonQuickAccessComboBoxReference { IsDropDownOpen: true } or RibbonQuickAccessDropDownReference { IsDropDownOpen: true } or RibbonQuickAccessGroupReference { IsDropDownOpen: true };
         if (check || open || context.Hot || context.Pressed)
-            PaintCommandState(context with { StateChecked = check, StatePressed = open }, QuickAccessFill(context, context.Theme.CommandStateFill(context.Hot, open || context.Pressed, check), menu,
+            PaintCommandState(context with { StateChecked = check, StatePressed = open }, QuickAccessFill(context with { StateChecked = check }, context.Theme.CommandStateFill(context.Hot, open || context.Pressed, check), menu,
                 pressed: open || context.Pressed, marked: check && !context.Hot), Color.Transparent);
         DrawQuickAccessContent(context, entry, menu);
         if (command is RibbonCheckBoxItem { CheckState: CheckState.Indeterminate })
@@ -121,10 +121,15 @@ public partial class RibbonRenderer : IDisposable
         if (dropDown.Focused) DrawFocus(dropDown);
 
     }
-    internal static RibbonFill QuickAccessFill(RibbonPaintContext context, RibbonFill fill, bool menu, bool pressed = false, bool marked = false)
+    internal static RibbonFill QuickAccessFill(RibbonPaintContext context, RibbonFill fill, bool menu, bool pressed = false, bool marked = false, bool useOverrides = true)
     {
+        var a = context.Theme.CommandAppearance;
+        var authored = menu || !useOverrides ? null : pressed || context.Pressed ? a?.QuickAccessPressedBackground
+            : marked || context.StateChecked ? context.Hot || context.StateHot ? a?.QuickAccessCheckedHoverBackground : a?.QuickAccessCheckedBackground
+            : context.Hot || context.StateHot ? a?.QuickAccessHoverBackground : null;
+        if (authored is { } explicitFill) fill = explicitFill;
         if (!context.CompositedText || menu) return fill;
-        fill = marked && !pressed && !context.Pressed ? context.Theme.BackdropPressed ?? new(Tint(context.Theme.Accent, 40)) : BackdropStateFill(context, pressed || context.Pressed);
+        if (authored is null) fill = marked && !pressed && !context.Pressed ? context.Theme.BackdropPressed ?? new(Tint(context.Theme.Accent, 40)) : BackdropStateFill(context, pressed || context.Pressed);
         Color Alpha(Color color) => Color.FromArgb((int)Math.Round(color.A * context.Theme.QuickAccessBackdropOpacity), color);
         return RibbonFillColors.Map(fill, Alpha);
     }

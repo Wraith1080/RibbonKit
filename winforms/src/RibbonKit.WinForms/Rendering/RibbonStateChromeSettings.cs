@@ -8,6 +8,8 @@ public sealed record RibbonStateChromeSettings
 {
     /// <summary>Initializes overrides without adding any state decoration.</summary>
     public RibbonStateChromeSettings() { }
+    /// <summary>Gets idle outline ink where a surface already paints idle chrome. Empty retains its existing fallback; Transparent hides ink. Active states keep their own fallback and explicit surface border settings remain authoritative. This does not make otherwise unpainted idle commands active.</summary>
+    public Color IdleBorderColor { get; init; } = Color.Empty;
     /// <summary>Gets hover outline ink. Empty retains the existing outline; Transparent hides it.</summary>
     public Color HoverBorderColor { get; init; } = Color.Empty;
     /// <summary>Gets pressed/open outline ink. Empty retains the existing outline.</summary>
@@ -22,11 +24,11 @@ public sealed record RibbonStateChromeSettings
     public int? InnerBorderWidth { get; init; }
     /// <summary>Gets inner rim inset in logical pixels, 0..1024. Null follows the painted outer stroke; available bounds clamp it.</summary>
     public int? InnerBorderInset { get; init; }
-    internal bool HasOverrides => !HoverBorderColor.IsEmpty || !PressedBorderColor.IsEmpty || !CheckedBorderColor.IsEmpty || !CheckedHoverBorderColor.IsEmpty || InnerBorderColor.A != 0 && InnerBorderWidth is > 0;
+    internal bool HasOverrides => !IdleBorderColor.IsEmpty || !HoverBorderColor.IsEmpty || !PressedBorderColor.IsEmpty || !CheckedBorderColor.IsEmpty || !CheckedHoverBorderColor.IsEmpty || InnerBorderColor.A != 0 && InnerBorderWidth is > 0;
     internal Color Border(RibbonPaintContext c, Color fallback)
     {
         bool hot = c.Hot || c.StateHot;
-        var color = c.Pressed || c.StatePressed ? PressedBorderColor : c.StateChecked ? hot && !CheckedHoverBorderColor.IsEmpty ? CheckedHoverBorderColor : CheckedBorderColor : hot ? HoverBorderColor : Color.Empty;
+        var color = c.Pressed || c.StatePressed ? PressedBorderColor : c.StateChecked ? hot && !CheckedHoverBorderColor.IsEmpty ? CheckedHoverBorderColor : CheckedBorderColor : hot ? HoverBorderColor : IdleBorderColor;
         return color.IsEmpty ? fallback : color;
     }
     internal static void Validate(RibbonStateChromeSettings? value)
@@ -40,7 +42,7 @@ internal static class RibbonStateChromeRenderer
 {
     internal static void Paint(RoundedPainter painter, RibbonPaintContext c, int radius, RibbonFill fill, Color border, int stroke, RibbonStateChromeSettings? settings)
     {
-        painter.Draw(c.Graphics, c.Bounds, radius, fill, border, stroke, c.IsTopEdgeConnected, c.IsBottomEdgeConnected);
+        painter.Draw(c.Graphics, c.Bounds, radius, fill, border, stroke, c.IsTopEdgeConnected, c.IsBottomEdgeConnected, c.IsSplitCommandState ? c.BackgroundBounds : default);
         if (settings?.InnerBorderWidth is not > 0 || settings.InnerBorderColor.A == 0) return;
         int inset = settings.InnerBorderInset is { } logical ? RibbonLayoutEngine.Scale(logical, c.DeviceDpi) : stroke;
         inset = Math.Clamp(inset, 0, Math.Max(0, (Math.Min(c.Bounds.Width, c.Bounds.Height) - 1) / 2));
