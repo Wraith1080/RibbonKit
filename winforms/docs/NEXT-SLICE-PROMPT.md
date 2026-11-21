@@ -4,8 +4,9 @@ Workspace:
 `C:\Users\LENOVO\Claude\Projects\Professional Ribbon Custom Control for WPF`
 
 Updated **2026-11-21**. Last verified checkout: `codex/Ribbonkit-Winform` at
-`091ac85` (`G6 2007 Theme`). G6 is committed. The subsequent framed Backstage
-addition is implemented and uncommitted. Start with
+`8663a3f` (`2007 Backstage Implementation`). G6 and the subsequent framed
+Backstage addition are committed. The stationary-Orb/message-panel follow-up is
+implemented and uncommitted. Start with
 `git status --short`, verify the live branch/HEAD, and preserve user edits and
 commits. Do not stage, commit, push, publish or change branches unless requested.
 
@@ -38,7 +39,7 @@ user acceptance separately from automated, native-print and sampled evidence.
   action outlines are one device pixel; explicit logical widths and focus cues win.
 
 The Designer Sample was refreshed **in place**, normal Debug/default output,
-with package `0.1.0-designer.local20261121T143341530Z`; authored Forms/resources
+with package `0.1.0-designer.local20261121T155405129Z`; authored Forms/resources
 were preserved. Select **View > Themes > Office 2007 Blue**, then the existing
 Options/customization commands. ScreenTips retain their near-white role and native
 text editor wells stay white; list/tree/icon wells use the reference gradient.
@@ -144,6 +145,51 @@ The background native verifier uses the public control's PreProcessMessage route
 the global shortcut filter correctly rejects an unfocused host. Physical Alt/F10,
 actual VS, mixed-monitor and live motion/appearance review remain separate.
 Current user review belongs in the ledger. **G7 remains paused.**
+
+## Stationary Orb and message panel foundation
+
+Read the [stationary-Orb/message-panel follow-up](OFFICE2007-BLUE-PLAN.md#stationary-orb-and-office-2007-message-panel--2026-11-21)
+before further implementation. The supplied clips showed a moving lower Orb
+fragment and overlapping glyphs. A small passive plane now owns the whole Orb
+through opening/closing, at fixed native File bounds/full opacity; original
+File/Back input, measured header hooks, live pages, fade and Solid preparation
+remain. Native paint is ready before handback; cancellation/cleanup releases it.
+Explicit rectangular File and other Backstage styles retain existing behavior.
+
+Office 2007 messages now restart the WPF pale-gold ramp per measured row, with
+amber frame/separators, blue shield/exclamation, white action buttons and themed
+active rims. Additive MessageAppearance adjusts this independently; null retains
+legacy paint, and existing MessageBackground/MessageBorder/padding/height roles
+keep authority. Alpha is composited once; frame clipping, regular title
+measurement/paint, actions and dismissal use shared library paths. There are
+39 additive Unshipped entries, including generated record members; shipped stays
+unchanged. No Showcase resources, new diagnostic tabs or fabricated app content.
+
+That follow-up's focused evidence is **156/156**, including 16 new cases; this is a new
+selection for motion/message dependencies, not a cumulative count with the prior
+184. Use `artifacts/office2007-orb-message/*-delivery` logs/directories.
+Independent package and both actual sample paths pass four native scopes each at
+120 DPI, including message ramps/action/dismissal, and 32 old-family combined
+Backstage/message paint sheets remain byte-exact against the pre-follow-up package.
+Supplied video frame sheets and native message prints are inspected evidence, not a new
+desktop recording or live acceptance. G7 remains paused pending continuation.
+
+## Latest Orb flicker correction
+
+Read the [Orb flicker correction](OFFICE2007-BLUE-PLAN.md#orb-layer-handoff-and-flicker-correction--2026-11-21)
+before continuing. The user subsequently reported flicker during both transitions.
+Native paint was suppressed before the replacement plane had been shown; the
+retained repro fails on None/Mica opening. The plane is now fully published before
+ownership changes, and identical stationary pixels skip repeated native uploads
+and positioning. Renderer/icon callbacks still run, changed pixels update the
+same HWND, and reentrant cancellation cannot leave an orphan plane. No new public
+API or message-panel change. Latest **94/94** focused cases pass, including six
+new handoff/publication/cancellation cases. Use `artifacts/office2007-orb-flicker/`
+for current package/sample evidence and fixture limits. Live flicker acceptance
+remains pending; G7 stays paused.
+Independent package and both actual sample paths pass their four retained native
+scopes plus opening/closing Orb timer checks under hidden owners; all 32 old-family
+Backstage/message paint pairs remain byte-exact against the pre-flicker package.
 
 ## Preserve accepted work and verification boundaries
 

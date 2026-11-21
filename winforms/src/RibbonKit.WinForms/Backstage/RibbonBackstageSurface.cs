@@ -93,6 +93,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         {
             BackgroundBounds = canvas, BackstageHeaderBackgroundBounds = HeaderBackgroundBounds(child, bounds), Density = _ribbon.Density,
             ApplicationButtonShape = _ribbon.EffectiveApplicationButtonShape, ApplicationButtonIcon = _ribbon.ApplicationButtonIcon,
+            SuppressApplicationButton = _ribbon.BackstageOpeningMotion?.OwnsApplicationButton == true,
             CompositedText = MaterialPaint, WindowBackdrop = MaterialPaint
         }, _ribbon.FileMenu, orb);
         if (_fileTip.Length > 0)

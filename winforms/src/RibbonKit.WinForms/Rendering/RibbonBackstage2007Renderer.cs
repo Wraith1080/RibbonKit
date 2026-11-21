@@ -91,7 +91,15 @@ public partial class RibbonRenderer
             if (RibbonPresentationResolver.Backstage(context.Theme).ResolveMetrics(context.Theme, context.Density).BackButtonVisible)
                 DrawBackstageEntry(context with { Bounds = Rectangle.FromLTRB(left, canvas.Top, right, canvas.Bottom), BackgroundBounds = canvas }, null, false);
             if (applicationButtonBounds.Width > 0 && applicationButtonBounds.Height > 0)
-                DrawFileButton(context with { Bounds = applicationButtonBounds, Hot = false, Pressed = false, Focused = false, FileMenuPreviewOpen = true }, fileMenu);
+            {
+                var fileClip = context.Graphics.Save();
+                try
+                {
+                    if (context.SuppressApplicationButton) context.Graphics.SetClip(Rectangle.Empty, CombineMode.Intersect);
+                    DrawFileButton(context with { Bounds = applicationButtonBounds, Hot = false, Pressed = false, Focused = false, FileMenuPreviewOpen = true }, fileMenu);
+                }
+                finally { context.Graphics.Restore(fileClip); }
+            }
             var ink = context.Theme.BackstageAppearance?.Workspace is { HeaderForeground.IsEmpty: false } a ? a.HeaderForeground : Color.White;
             int labelRight = Math.Max(canvas.Left, canvas.Right - S(16));
             DrawText(context with { Bounds = Rectangle.FromLTRB(Math.Min(labelRight, right + S(8)), canvas.Top, labelRight, canvas.Bottom) },

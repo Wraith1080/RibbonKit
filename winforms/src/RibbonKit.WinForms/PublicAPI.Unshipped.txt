@@ -2605,3 +2605,42 @@ RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.JoinColoredCaption.get -> bo
 RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.JoinColoredCaption.init -> void
 RibbonKit.WinForms.RibbonPaintContext.BackstageHeaderBackgroundBounds.get -> System.Drawing.Rectangle
 RibbonKit.WinForms.RibbonPaintContext.BackstageHeaderBackgroundBounds.init -> void
+override RibbonKit.WinForms.RibbonMessageAppearanceSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonMessageAppearanceSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonMessageAppearanceSettings.ToString() -> string!
+RibbonKit.WinForms.RibbonMessageAppearanceSettings
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.<Clone>$() -> RibbonKit.WinForms.RibbonMessageAppearanceSettings!
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.ActionBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.ActionBackground.init -> void
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.ActionBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.ActionBorderWidth.init -> void
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.ActionCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.ActionCornerRadius.init -> void
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.ActionForeground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.ActionForeground.init -> void
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.ActionHoverBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.ActionHoverBackground.init -> void
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.ActionPressedBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.ActionPressedBackground.init -> void
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.ActionStateChrome.get -> RibbonKit.WinForms.RibbonStateChromeSettings?
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.ActionStateChrome.init -> void
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.BackgroundPerRow.get -> bool?
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.BackgroundPerRow.init -> void
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.CloseBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.CloseBorderWidth.init -> void
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.CloseCornerRadius.get -> int?
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.CloseCornerRadius.init -> void
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.CloseStateChrome.get -> RibbonKit.WinForms.RibbonStateChromeSettings?
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.CloseStateChrome.init -> void
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.CornerRadius.get -> int?
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.CornerRadius.init -> void
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.Equals(RibbonKit.WinForms.RibbonMessageAppearanceSettings? other) -> bool
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.RibbonMessageAppearanceSettings() -> void
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.ShowDefaultIconExclamation.get -> bool?
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.ShowDefaultIconExclamation.init -> void
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.TitleBold.get -> bool?
+RibbonKit.WinForms.RibbonMessageAppearanceSettings.TitleBold.init -> void
+RibbonKit.WinForms.RibbonTheme.MessageAppearance.get -> RibbonKit.WinForms.RibbonMessageAppearanceSettings?
+RibbonKit.WinForms.RibbonTheme.MessageAppearance.init -> void
+static RibbonKit.WinForms.RibbonMessageAppearanceSettings.operator !=(RibbonKit.WinForms.RibbonMessageAppearanceSettings? left, RibbonKit.WinForms.RibbonMessageAppearanceSettings? right) -> bool
+static RibbonKit.WinForms.RibbonMessageAppearanceSettings.operator ==(RibbonKit.WinForms.RibbonMessageAppearanceSettings? left, RibbonKit.WinForms.RibbonMessageAppearanceSettings? right) -> bool

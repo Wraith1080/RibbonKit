@@ -8,6 +8,7 @@ public partial class RibbonRenderer
     internal bool DrawApplicationOrb(RibbonPaintContext context, RibbonDropDownItem menu)
     {
         if ((context.ApplicationButtonShape ?? context.Theme.ApplicationButtonShape) != RibbonApplicationButtonShape.Orb) return false;
+        if (context.SuppressApplicationButton) return true;
         var a = context.Theme.ApplicationButtonAppearance ?? RibbonApplicationButtonAppearanceSettings.Default;
         bool enabled = menu.EffectiveEnabled;
         bool open = enabled && (menu.IsDropDownOpen || context.FileMenuPreviewOpen) && !context.FileMenuClosing;

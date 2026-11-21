@@ -80,6 +80,15 @@ public static partial class RibbonThemes
                 UtilityPressedBackground = Ramp(0xB7D2F0, 0xE4F0FD, (.45, 0xA6C6EB), (.45, 0xC3DCF7))
             },
             Hover = hover, Pressed = pressed,
+            MessageBackground = Ramp(0xFFFFE6, 0xFFF2C0, (.45, 0xFFF6C7), (.46, 0xFFEAA0)),
+            MessageBorder = C(0xD69A2D), MessageForeground = C(0x1E1E1E), MessageIconForeground = C(0x1E5A9C),
+            MessageAppearance = new()
+            {
+                BackgroundPerRow = true, CornerRadius = 3, TitleBold = false, ShowDefaultIconExclamation = true,
+                ActionBackground = new(Color.White), ActionCornerRadius = 2,
+                ActionStateChrome = new() { IdleBorderColor = C(0x8DB2E3), HoverBorderColor = C(0xC1A877), PressedBorderColor = C(0xB6A892) },
+                CloseCornerRadius = 3, CloseStateChrome = new() { HoverBorderColor = C(0xA97F2A), PressedBorderColor = C(0xA97F2A) }
+            },
             Checked = selected,
             CheckedHover = Ramp(0xFFEEC0, 0xFFD478, (.38, 0xFFD670), (.38, 0xFFC12E), (.48, 0xFFBD26)),
             QuickAccessBackdropOpacity = 1,

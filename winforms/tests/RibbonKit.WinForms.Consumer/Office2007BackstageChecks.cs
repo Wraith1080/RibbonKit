@@ -46,6 +46,15 @@ internal static class Office2007BackstageChecks
             painter.DrawBackstageEntry(c with { Bounds = new(8, 100, 214, 56), BackgroundBounds = c.Bounds }, selected, true);
             painter.DrawBackstageEntry(c with { Bounds = new(8, 160, 214, 56), BackgroundBounds = c.Bounds, Hot = true }, hot, false);
             painter.DrawBackstageEntry(c with { Bounds = new(8, 218, 214, 9), BackgroundBounds = c.Bounds }, separator, false);
+            var frame = new Rectangle(10, 280, 780, 120);
+            painter.DrawMessageBar(c with { Bounds = frame, IsTopEdgeConnected = true });
+            using var notice = new RibbonMessage { Title = "NOTICE", Text = "Document settings" };
+            for (int row = 0; row < 2; row++)
+                painter.DrawMessage(c with { Bounds = new(10, 280 + row * 60, 780, 60), BackgroundBounds = frame, IsTopEdgeConnected = true }, notice,
+                    new(50, 300 + row * 60, 100, 25), new(160, 300 + row * 60, 250, 25), new(20, 300 + row * 60, 20, 20), row == 0);
+            notice.Action.Text = "Review";
+            painter.DrawMessageAction(c with { Bounds = new(580, 295, 120, 30) }, notice.Action);
+            painter.DrawMessageClose(c with { Bounds = new(730, 295, 24, 24), Hot = true }, true);
             image.Save(Path.Combine(directory, $"default-{family}-{dpi}-{office}.png"));
         }
     }
@@ -69,6 +78,7 @@ internal static class Office2007BackstageChecks
             foreach (var density in new[] { RibbonDensity.Compact, RibbonDensity.Touch }) foreach (var layout in new[] { RibbonLayoutMode.Classic, RibbonLayoutMode.Simplified })
             {
                 ribbon.Density = density; ribbon.LayoutMode = layout; ribbon.Backstage.SelectedPage = page;
+                VerifyMessages(ribbon, probe, directory, $"{name}-{density}-{layout}");
                 ribbon.IsBackstageOpen = true; Application.DoEvents();
                 var surface = All(host).Single(c => c.GetType().Name == "RibbonBackstageSurface");
                 var rows = All(surface).OfType<Button>().ToArray();
@@ -120,6 +130,7 @@ internal static class Office2007BackstageChecks
             nint packed = (nint)((orbPoint.Y << 16) | (orbPoint.X & 0xffff));
             SendMessage(ribbon.Handle, 0x200, 0, packed); SendMessage(ribbon.Handle, 0x201, 1, packed); SendMessage(ribbon.Handle, 0x202, 0, packed);
             Application.DoEvents(); Require(!ribbon.IsBackstageOpen, "The real caption-overlapping Orb remains a working return target");
+            VerifyNativeOrbMotion(host, ribbon, directory);
             File.AppendAllText(Path.Combine(directory, "result.log"), $"PASS: {name}; {scopes} Office2007 Backstage scopes at {ribbon.DeviceDpi} DPI, equal row/separator insets, native accent header/reset, F10 Orb KeyTip paint/toggle/return, pages/editors/validation/reopen/narrow resize and retained File routing.\nLIMIT: native print/message evidence; live appearance, physical input/IME, actual VS, mixed monitors and motion acceptance remain separate.\n");
         }
         finally
@@ -127,6 +138,96 @@ internal static class Office2007BackstageChecks
             ribbon.IsBackstageOpen = false; ribbon.Theme = oldTheme; ribbon.Density = oldDensity; ribbon.LayoutMode = oldLayout;
             ribbon.ApplicationButtonShape = oldShape; ribbon.FileMenuMode = oldRoute; ribbon.Renderer = oldRenderer; host.Bounds = oldBounds;
         }
+    }
+    private static void VerifyNativeOrbMotion(RibbonForm host, RibbonControl ribbon, string directory)
+    {
+        var theme = ribbon.Theme; var level = ribbon.AnimationLevel; var location = host.Location;
+        try
+        {
+            // Inspect native visibility/z-order without activating the host or
+            // capturing the desktop. A long duration leaves deterministic room
+            // for several ordinary timer ticks before the explicit endpoint.
+            host.Location = new(-16000, -16000);
+            Application.DoEvents();
+            ribbon.Theme = theme with { BackstageMotion = (theme.BackstageMotion ?? new()) with { PaneDuration = 4000 } };
+            ribbon.AnimationLevel = RibbonAnimationLevel.Expressive;
+            Application.DoEvents();
+            ribbon.IsBackstageOpen = true;
+            if (!ribbon.IsAnimating)
+            {
+                File.AppendAllText(Path.Combine(directory, "result.log"), "LIMIT: system motion policy disabled native Orb timer checks; no system preference was changed.\n"); return;
+            }
+            foreach (bool closing in new[] { false, true })
+            {
+                if (closing) ribbon.IsBackstageOpen = false;
+                var plane = FindWindowEx(host.Handle, 0, null, "Ribbon motion");
+                Require(plane != 0 && IsNativeShown(plane) && (!IsWindowVisible(host.Handle) || IsWindowVisible(plane)), $"The complete Orb plane is published before native pane motion; closing={closing}, handle={plane}, focus={host.ContainsFocus}, backstage={ribbon.IsBackstageOpen}; {NativeChildTitles(host.Handle)}");
+                Require(GetWindowRect(plane, out var anchor), "Read native Orb plane bounds");
+                var surface = All(host).Single(c => c.GetType().Name == "RibbonBackstageSurface");
+                var clock = System.Diagnostics.Stopwatch.StartNew(); int samples = 0;
+                while (clock.ElapsedMilliseconds < 120)
+                {
+                    Application.DoEvents();
+                    Require(ribbon.IsAnimating && plane == FindWindowEx(host.Handle, 0, null, "Ribbon motion") && IsNativeShown(plane), "One shown Orb HWND survives successive pane ticks");
+                    Require(GetWindowRect(plane, out var current) && anchor.Equals(current), "The native Orb plane stays stationary");
+                    for (nint sibling = GetWindow(plane, 3); sibling != 0; sibling = GetWindow(sibling, 3)) Require(sibling != surface.Handle, "Orb plane stays above the fading native pane");
+                    samples++;
+                }
+                Require(samples > 0, "Native motion frames were observed"); ribbon.AnimationLevel = RibbonAnimationLevel.None; ribbon.AnimationLevel = RibbonAnimationLevel.Expressive;
+                Require(FindWindowEx(host.Handle, 0, null, "Ribbon motion") == 0 && ribbon.IsBackstageOpen == !closing, "Native endpoint releases the plane and preserves File state");
+            }
+            File.AppendAllText(Path.Combine(directory, "result.log"), $"PASS: public native Orb opening/closing timer checks; one HWND with its shown-state flag, stationary bounds above the pane and clean endpoint release; owner-visible={IsWindowVisible(host.Handle)}.\n");
+        }
+        finally { ribbon.AnimationLevel = RibbonAnimationLevel.None; ribbon.IsBackstageOpen = false; ribbon.Theme = theme; ribbon.AnimationLevel = level; host.Location = location; }
+    }
+    [StructLayout(LayoutKind.Sequential)] private readonly record struct NativeBounds(int Left, int Top, int Right, int Bottom);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern nint FindWindowEx(nint parent, nint after, string? className, string? title);
+    [DllImport("user32.dll")] private static extern bool GetWindowRect(nint window, out NativeBounds bounds);
+    [DllImport("user32.dll")] private static extern bool IsWindowVisible(nint window);
+    [DllImport("user32.dll")] private static extern nint GetWindow(nint window, uint command);
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")] private static extern nint GetWindowLongPtr(nint window, int index);
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongW")] private static extern nint GetWindowLong(nint window, int index);
+    private static bool IsNativeShown(nint window) => ((IntPtr.Size == 8 ? GetWindowLongPtr(window, -16) : GetWindowLong(window, -16)).ToInt64() & 0x10000000) != 0;
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(nint window, System.Text.StringBuilder text, int maximum);
+    private static string NativeChildTitles(nint parent)
+    {
+        var names = new List<string>();
+        for (nint child = GetWindow(parent, 5); child != 0; child = GetWindow(child, 2))
+        { var text = new System.Text.StringBuilder(256); GetWindowText(child, text, text.Capacity); names.Add($"{child}:{text}:{IsWindowVisible(child)}"); }
+        return string.Join("; ", names);
+    }
+    private static void VerifyMessages(RibbonControl ribbon, TipProbe probe, string directory, string name)
+    {
+        using var first = new RibbonMessage { Title = "PROTECTED VIEW", Text = "Be careful with files from the Internet." };
+        using var second = new RibbonMessage { Title = "SECURITY NOTICE", Text = "Macros are disabled in this document." };
+        first.Action.Text = "Enable Editing"; second.Action.Text = "Review Settings";
+        int actions = 0, dismissals = 0; first.Action.Click += (_, _) => actions++; first.Dismissed += (_, _) => dismissals++;
+        try
+        {
+            ribbon.MessageBar.Items.AddRange(first, second); Application.DoEvents(); probe.Messages.Clear();
+            using var pixels = Print(ribbon);
+            Require(probe.Messages.TryGetValue(first, out var a) && probe.Messages.TryGetValue(second, out _), "Shared renderer receives both native message rows");
+            var b = probe.Messages[second]; int inset = (int)Math.Round(5 * ribbon.DeviceDpi / 96d);
+            foreach (var bounds in new[] { a, b })
+            {
+                int y = bounds.Height * 3 / 4; var expected = At(ribbon.Theme.MessageBackground, y / (bounds.Height - 1d));
+                Require(pixels.GetPixel(bounds.Left + inset, bounds.Top + y).ToArgb() == expected.ToArgb(), "Each native message restarts the pale-gold reference ramp");
+            }
+            pixels.Save(Path.Combine(directory, name + "-messages.png"));
+            first.Action.PerformClick(); Require(actions == 1 && first.IsOpen, "App-owned message action runs once without implicit dismissal");
+            first.Dismiss(); Application.DoEvents(); Require(dismissals == 1 && second.IsOpen, "Dismissal preserves the other authored row");
+        }
+        finally { ribbon.MessageBar.Items.Remove(first); ribbon.MessageBar.Items.Remove(second); }
+    }
+    private static Color At(RibbonFill fill, double offset)
+    {
+        var points = new List<(double Offset, Color Color)> { (0, fill.Start) };
+        if (fill.IntermediateStops is { } stops) points.AddRange(stops.Select(s => (s.Offset, s.Color)));
+        points.Add((1, fill.End));
+        var lower = points.Last(p => p.Offset <= offset); var upper = points.First(p => p.Offset > offset);
+        double t = (offset - lower.Offset) / (upper.Offset - lower.Offset);
+        int L(int a, int b) => (int)Math.Round(a + (b - a) * t);
+        return Color.FromArgb(L(lower.Color.A, upper.Color.A), L(lower.Color.R, upper.Color.R), L(lower.Color.G, upper.Color.G), L(lower.Color.B, upper.Color.B));
     }
     private static void VerifyAccentAndKeyTips(RibbonForm host, RibbonControl ribbon, Control surface, TipProbe probe, string directory, string name)
     {
@@ -171,6 +272,9 @@ internal static class Office2007BackstageChecks
     {
         internal List<(string Keys, Rectangle Bounds)> Tips = [];
         internal Rectangle HeaderCanvas;
+        internal Dictionary<RibbonMessage, Rectangle> Messages = [];
+        public override void DrawMessage(RibbonPaintContext context, RibbonMessage message, Rectangle title, Rectangle text, Rectangle icon, bool first)
+        { Messages[message] = context.Bounds; base.DrawMessage(context, message, title, text, icon, first); }
         public override void DrawKeyTip(RibbonPaintContext context, string keys) { Tips.Add((keys, context.Bounds)); base.DrawKeyTip(context, keys); }
         public override void DrawBackstageHeader(RibbonPaintContext context, RibbonDropDownItem file, Rectangle bounds)
         { HeaderCanvas = context.BackstageHeaderBackgroundBounds; base.DrawBackstageHeader(context, file, bounds); }

@@ -124,6 +124,7 @@ public partial class RibbonControl : Control, ISupportInitialize
             RibbonGalleryMetrics.Validate(value);
             RibbonBackstageMetrics.Validate(value);
             RibbonTipMetrics.Validate(value);
+            RibbonMessageAppearanceSettings.Validate(value.MessageAppearance);
             RibbonCaptionMetrics.Validate(value);
             RibbonFrameMetrics.Validate(value);
             if ((!value.PopupBackground.IsEmpty && value.PopupBackground.A != 255) ||
@@ -712,10 +713,12 @@ public partial class RibbonControl : Control, ISupportInitialize
                     // Reveal the final header underneath the outgoing fade;
                     // its model stays open until Backstage actually closes.
                     bool closing = _backstageClosing && !BackstageKeepsHeaders;
+                    if (BackstageOpeningMotion?.OwnsApplicationButton == true) e.Graphics.SetClip(Rectangle.Empty, System.Drawing.Drawing2D.CombineMode.Intersect);
                     Painter.DrawFileButton(ctx with
                     {
                         ApplicationButtonShape = EffectiveApplicationButtonShape,
                         ApplicationButtonIcon = ApplicationButtonIcon,
+                        SuppressApplicationButton = BackstageOpeningMotion?.OwnsApplicationButton == true,
                         Hot = ctx.Hot || closing && PointerOverBackstageFile(target),
                         FileMenuClosing = closing,
                         FileMenuPreviewOpen = DesignPreviewBackstage

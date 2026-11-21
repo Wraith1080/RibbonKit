@@ -1,6 +1,6 @@
 # Native Office 2007 Blue appearance contract
 
-**2026-11-21 - G6 complete; Backstage accent/Orb KeyTips and a joined colored standard caption are delivered before G7.**
+**2026-11-21 - G6 complete; the pre-G7 follow-up keeps the Orb stationary through Backstage motion and adds the reference message panel.**
 G1 remains the appearance reference. G2's additive APIs and focused evidence are
 [recorded below](#g2-shared-paint-foundations--2026-11-20). No Office 2007
 runtime preset or sample tile is delivered by G2.
@@ -22,6 +22,10 @@ The [animated-paint correction](#orb-only-return-and-animated-paint-correction--
 supersedes the initial separate return button and fixes the retained header paint.
 The [accent, KeyTip and caption-join follow-up](#backstage-accent-orb-keytips-and-a-joined-standard-caption--2026-11-21)
 extends that implementation without starting G7.
+The [stationary-Orb/message-panel correction](#stationary-orb-and-office-2007-message-panel--2026-11-21)
+addresses the user's subsequent opening/closing clips and WPF message reference.
+The [Orb flicker correction](#orb-layer-handoff-and-flicker-correction--2026-11-21)
+then fixes publication order and repeated native updates during those transitions.
 Current family acceptance and continuation authorization remain in the themes ledger.
 
 ## Reference and boundary
@@ -1194,3 +1198,125 @@ Physical Alt/F10, actual VS, input/IME, mixed-monitor,
 desktop-material/continuous-motion and live appearance acceptance remain separate.
 Accepted Backstage paint/performance work and retired diagnostic tabs remain.
 **G7 remains paused.**
+
+## Stationary Orb and Office 2007 message panel - 2026-11-21
+
+The user supplied opening/closing clips after reporting the lower Orb joining its
+caption fragment at the end of opening. Sampled frames confirm separation during
+close and overlapping glyph fragments during open. Settled alignment was correct;
+the visible assembly/disassembly was a rendering defect. The prior coordinate
+correction kept the moving pane's retained drawing consistent, but its Orb pixels
+still travelled with that pane.
+
+An Office2007 Orb now has one small passive, nonactivating drawing plane during
+opening and closing. It uses the existing File/glyph renderer and measured native
+File bounds, keeps the full Orb at one screen position/full opacity, and leaves
+the pane's accepted live translation, fade and Solid preparation intact. Native
+File and Back targets continue to own input. Travelling/header and original File
+paint callbacks retain their coordinates and hooks with an empty File clip while
+the plane owns the visual; custom File painters are covered. At completion or
+cancellation, native paint is restored before the plane is removed. Cleanup also
+releases the plane/timer when native repaint or a callback throws. Rectangular
+File and other Backstage styles retain their existing presentation. There is no
+new public motion API, page reparenting, full-window repaint per frame or capture.
+
+The additional message panel uses the read-only WPF
+`Tokens.Office2007.xaml` MessageBar roles and `Controls.MessageBar.xaml` reference:
+`#FFFFE6` -> `.45 #FFF6C7` -> `.46 #FFEAA0` -> `#FFF2C0` on **each row**, amber
+`#D69A2D` frame/separators, `#1E1E1E` text and `#1E5A9C` shield/exclamation ink.
+White action buttons have pale-blue idle rims and gold/orange hover/press states;
+Close uses `#A97F2A` active rims. Message-frame radius 3 and action radius 2 are
+independent of the square ribbon body. Title measurement and paint use the same
+regular font. App-authored titles, text, icons, actions and dismissal remain with
+their existing models; the reference's document operations are not injected.
+
+Additive `RibbonTheme.MessageAppearance` / immutable
+`RibbonMessageAppearanceSettings` exposes per-row background repetition, frame
+radius, title weight, default icon detail, action fills/ink/radii/rims and close
+radii/rims. Null members retain existing rendering; existing MessageBackground,
+MessageBorder, content padding, height and body message-border width remain
+authoritative. Row paint samples measured bounds, clips to the shared frame and
+composites alpha once. Explicit zero/Transparent/null reset and atomic validation
+are covered. **39** additive Unshipped entries include the record's generated
+members and theme property; the shipped baseline is unchanged. No layout engine,
+native editor, diagnostic tab or Showcase-only presentation was added.
+
+Evidence is under `artifacts/office2007-orb-message/`:
+
+| Evidence | Result and scope |
+| --- | --- |
+| `focused-delivery.log`, `release-delivery.log` | **156/156 pass**, zero failures/skips; clean normal Release build using the actual-xUnit in-process runner. Six new Orb cases cover full-image/position/alpha stability at sampled opening/closing phases, None/Mica x Subtle/Expressive at the native 120 DPI, custom File-hook clipping and rectangular opt-out. Ten new message cases cover exact per-row reference sampling, independent thin action/close rims and clipping at 96/120/144/192 DPI, one-pass alpha/zero/Transparent, atomic validation/reset, measured bounds and command/dismissal ownership. Existing affected Backstage, native preparation/exposed-strip/page-repaint, File/caption, message/motion, body and preset contracts pass. This selection is separate from the earlier 184-case accent run and is not a full-suite result. |
+| `public-delivery.log`, `public-delivery/comparison.json` | Public-only independent package consumer passes four Compact/Touch x Classic/Simplified scopes at 120 DPI, including message ramp/action/dismissal checks and existing Backstage contracts. **32 byte-exact** old-family combined Backstage/message sheets match retained `0.1.0-designer.local20261121T143341530Z`, using both public renderers at four DPIs. No Showcase resources/helpers or private caption geometry. |
+| `showcase-delivery/result.log`, `designer-delivery/result.log` and `*-messages.png` | Both actual sample paths pass the same four native scopes each at 120 DPI with no failure log. Their message renders, plus the independent consumer's, were inspected. The test host owns transient verification messages; sample-authored content/resources and retired diagnostic tabs are preserved. |
+| `debug-delivery.log`, `showcase-build-delivery.log`, `host-build-delivery.log`, `designer-refresh-delivery.log` | Normal Debug runtime/designer-server and sample/test-host builds are clean. Designer Sample refreshed in place with **`0.1.0-designer.local20261121T153748749Z`**; unchanged net472 client output reused. Final native/package paths use this identity. Earlier `*-final` logs predate the final cleanup guarantee and are retained separately. |
+
+Earlier `repro.log` retains
+one fixture failure: the rectangular-File case omitted AnimationLevel and therefore
+had no motion. Explicit Subtle fixed that fixture; no production policy or
+expectation was relaxed. `release-first.log` retains missing Xunit imports before
+that initial run. The OS thumbnail decoder failed; the two supplied clips were
+instead sampled at 12 fps using the local video decoder. `reference/` contains
+source identities, metadata and inspected frame sheets; these are supplied-video
+evidence, not new desktop captures or post-fix live animation acceptance.
+
+G7 remains paused. The accepted Zoom black-bar/performance correction, frame/File
+route persistence and previous accent/KeyTip/joined-caption work remain in place.
+Physical input/IME, actual VS, mixed monitors, desktop materials and continuous
+live motion/appearance review remain separate from these checks.
+
+## Orb layer handoff and flicker correction - 2026-11-21
+
+The user subsequently reported flicker during opening and closing. Native paint
+could be suppressed while the new Orb plane was still hidden/unpublished: the
+motion owned its window immediately after allocation, then flushed the native
+surface before publishing the replacement. `artifacts/office2007-orb-flicker/repro.log`
+retains two failing opening cases, None and Mica, with native paint reaching that
+gap. The earlier stable-bitmap/position checks did not test publication order.
+
+The plane is now rendered and shown before native paint ownership transfers.
+Identical stationary pixels keep the published native drawing instead of
+uploading and repositioning it every pane tick. File/glyph/icon callbacks still
+run each frame; changed pixels update the same HWND. This is scoped to the Orb
+plane; existing moving/title/group/popup drawing paths retain their presentation.
+Reentrant renderer cancellation during first paint disposes the local drawing
+rather than attaching it to an already-settled motion. Input, shared painters,
+native page/editor ownership, alpha, pane travel/fade and Solid preparation remain.
+There is no new public API or message-panel change.
+
+Latest focused Release evidence is **94/94**, zero failures/skips, in
+`focused-delivery.log` / `release-delivery.log`. Six new cases cover shown-before-
+suppression and native stacking for opening/closing on None/Mica, unchanged-frame
+publication with continued borrowed-icon callbacks and changed-pixel updates, and
+reentrant cancellation without an orphan native window. Existing affected Orb,
+Backstage geometry/Accent/KeyTips/caption, native motion/preparation/exposed-strip,
+Solid/material and File-lifecycle checks pass. This selection is separate from the
+prior 156-case motion/message run and does not establish full-suite success.
+
+The public consumer additionally checks ordinary opening/closing timer ticks by
+native HWND metadata: one shown-state flag, fixed bounds, stacking above the pane
+and clean endpoint release. Hidden process hosts require checking the plane's own
+WS_VISIBLE flag: IsWindowVisible also includes ancestor visibility. The earlier
+`public-delivery/` and `public-timers/` fixture attempts retain that distinction;
+all their native child windows reported false under the hidden owner. No host was
+activated and no system animation preference was changed. The STA tests check
+IsWindowVisible under an offscreen but natively visible owner; package/sample
+metadata checks remain separate from composed desktop pixels.
+
+Designer Sample is refreshed in place with
+**`0.1.0-designer.local20261121T155405129Z`**, preserving authored files and the
+unchanged net472 client. Current package/sample results are recorded below and in
+the existing review ledger. Live flicker/appearance acceptance remains pending.
+No desktop capture, Zoom re-investigation, WPF build or G7 work was performed.
+
+| Final evidence under `artifacts/office2007-orb-flicker/` | Result |
+| --- | --- |
+| `public-ready.log`, `public-ready/comparison.json` | Independent package consumer passes the existing four native scopes at 120 DPI and ordinary opening/closing timer checks. The Orb keeps its shown-state flag, native handle/bounds and stacking until explicit endpoint release. **32 byte-exact** old-family Backstage/message sheets match pre-flicker package `0.1.0-designer.local20261121T153748749Z`. |
+| `showcase-ready/result.log`, `designer-ready/result.log` | Both actual sample paths pass the same four scopes each plus native opening/closing timer checks, with no failure log. Hidden-owner metadata evidence is distinct from visible desktop flicker review. |
+| `debug-delivery.log`, `designer-refresh-delivery.log`, `showcase-build-ready.log`, `host-build-ready.log` | Clean normal Debug runtime/designer-server/sample/test-host builds; the refreshed in-place package identity is `0.1.0-designer.local20261121T155405129Z`. |
+
+The public checks keep the host hidden/offscreen, respect system motion policy and
+settle via the public AnimationLevel property. They neither access private runtime
+members nor activate a window. The native timer paths ran; no policy skip was
+reported. Background KeyTip/validation/ownership and message checks remain in the
+retained sample scopes. The shipped API baseline and prior additive message API
+entries are unchanged by this correction.

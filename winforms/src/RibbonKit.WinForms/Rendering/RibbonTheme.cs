@@ -190,6 +190,8 @@ public sealed record RibbonTheme
     public int? MessageTitleTextGap { get; init; }
     /// <summary>Gets the shared notification background fill.</summary>
     public RibbonFill MessageBackground { get; init; } = new(Color.FromArgb(255, 244, 206));
+    /// <summary>Gets optional immutable message-row, frame and action/close decoration. Null preserves existing message paint, measurement and input ownership.</summary>
+    public RibbonMessageAppearanceSettings? MessageAppearance { get; init; }
     /// <summary>Gets the shared notification text color.</summary>
     public Color MessageForeground { get; init; } = Color.FromArgb(50, 49, 48);
     /// <summary>Gets the notification frame and row-separator color.</summary>
@@ -639,6 +641,7 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     internal bool IsHeaderScrollButton { get; init; }
     internal bool IsCommandState { get; init; }
     internal bool IsApplicationButtonFocus { get; init; }
+    internal bool SuppressApplicationButton { get; init; }
     internal bool StateChecked { get; init; }
     internal bool StateHot { get; init; }
     internal bool StatePressed { get; init; }

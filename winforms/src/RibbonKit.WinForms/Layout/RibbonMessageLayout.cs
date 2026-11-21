@@ -13,7 +13,7 @@ internal static class RibbonMessageLayout
         bool touch = ribbon.Density == RibbonDensity.Touch;
         var padding = ribbon.Theme.MessageContentPadding;
         var chrome = new RibbonChromeMetrics(ribbon.Theme, ribbon.Density);
-        using var bold = new Font(ribbon.Font, ribbon.Font.Style | FontStyle.Bold);
+        using var bold = new Font(ribbon.Font, ribbon.Theme.MessageAppearance?.TitleBold == false ? ribbon.Font.Style : ribbon.Font.Style | FontStyle.Bold);
         int MeasureText(string text, Font font, int maxWidth, bool wrap) => text.Length == 0 ? 0 : TextRenderer.MeasureText(text, font,
             new Size(Math.Max(1, maxWidth), int.MaxValue), TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | (wrap ? TextFormatFlags.WordBreak : TextFormatFlags.SingleLine)).Height;
         foreach (var message in ribbon.MessageBar.Items.Where(m => !m.IsDisposed && m.Visible && m.IsOpen))

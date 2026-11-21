@@ -229,6 +229,23 @@ multi-letter prefixes and collision handling. Completing it returns through
 native page validation. F10, Tab and pointer use dismiss the badges together;
 no duplicate Back control or command declaration is introduced.
 
+During Office 2007 Backstage opening and closing, one passive drawing plane keeps
+the complete Orb stationary and at full opacity. The existing File/glyph painters
+still supply its visual; the native File/Back targets retain input. The plane is
+released after the native drawing is ready at the transition endpoint.
+The plane is fully published before native Orb paint is suppressed. Identical
+stationary frames retain their native drawing; custom renderer/icon callbacks
+still run, and changed pixels update the same window.
+
+Office 2007 messages use a pale-gold gradient on each row, amber frame/separators,
+blue shield/exclamation icons and white action buttons with gold/orange feedback.
+`MessageAppearance` independently adjusts row-background repetition, frame radius,
+title weight, default icon detail, action fills/ink/rims and close rims. Existing
+`MessageBackground`, `MessageBorder` and message content/spacing roles remain
+authoritative. Null restores legacy decoration; alpha, Transparent and zero
+outline widths are supported. The shared measurement, command, dismissal and
+animation paths remain responsible for message behavior.
+
 `BackstageAppearance.Workspace` accepts immutable `RibbonBackstageWorkspaceSettings`
 for header fill/height/ink, localized ReturnText/target width, frame gutter,
 outer/divider and inner strokes, radius, navigation state chrome and extra separator

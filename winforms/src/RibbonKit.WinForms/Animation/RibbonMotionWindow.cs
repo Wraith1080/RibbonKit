@@ -14,6 +14,9 @@ internal sealed class RibbonMotionWindow : NativeWindow, IDisposable
     private RibbonBackdropBuffer? _captionBuffer;
     private readonly ImageAttributes _alpha = new();
     private Rectangle _bounds;
+    private Rectangle _publishedBounds;
+    private byte[]? _publishedPixels, _pendingPixels;
+    internal int PublicationCount { get; private set; }
     private readonly Control? _clipOwner;
     internal RibbonMotionWindow(Control owner, bool clipToOwner = false)
     {
@@ -56,17 +59,46 @@ internal sealed class RibbonMotionWindow : NativeWindow, IDisposable
         _graphics.DrawImageUnscaled(_captionBuffer.Image, Point.Empty);
         Present();
     }
+    internal void RenderBackstageApplicationButton(RibbonControl ribbon, bool closing)
+    {
+        var visual = ribbon.ApplicationButtonBounds;
+        int shadow = Layout.RibbonLayoutEngine.Scale(ribbon.Theme.ApplicationButtonAppearance?.ShadowBlur ?? 0, ribbon.DeviceDpi) + 2;
+        var canvas = Rectangle.Inflate(visual, shadow, shadow);
+        Prepare(ribbon.RectangleToScreen(canvas)); _graphics!.Clear(Color.Transparent);
+        ribbon.Painter.DrawFileButton(new(_graphics, new(visual.Left - canvas.Left, visual.Top - canvas.Top, visual.Width, visual.Height),
+            ribbon.Theme, ribbon.Font, ribbon.DeviceDpi)
+        {
+            ApplicationButtonShape = RibbonApplicationButtonShape.Orb, ApplicationButtonIcon = ribbon.ApplicationButtonIcon,
+            FileMenuPreviewOpen = true, FileMenuClosing = closing,
+            Hot = closing && visual.Contains(ribbon.PointToClient(Control.MousePosition)), Density = ribbon.Density
+        }, ribbon.FileMenu);
+        Present(stationary: true);
+    }
     private void Prepare(Rectangle bounds) { if (_bitmap?.Size != bounds.Size) Allocate(bounds.Size); _bounds = bounds; }
-    private void Present()
+    private void Present(bool stationary = false)
     {
         _graphics!.Flush();
         var bounds = _bounds;
+        if (stationary)
+        {
+            int length = checked(bounds.Width * bounds.Height * 4);
+            if (_pendingPixels?.Length != length) _pendingPixels = new byte[length];
+            var data = _bitmap!.LockBits(new(Point.Empty, bounds.Size), ImageLockMode.ReadOnly, PixelFormat.Format32bppPArgb);
+            try { Marshal.Copy(data.Scan0, _pendingPixels, 0, length); }
+            finally { _bitmap.UnlockBits(data); }
+            // Retain renderer/icon callbacks, but avoid republishing an identical
+            // stationary layer and raising its native window on every pane tick.
+            if (_publishedBounds == bounds && _publishedPixels is not null && _pendingPixels.AsSpan().SequenceEqual(_publishedPixels)) return;
+        }
         // Keep the child bitmap's compositor origin and HWND placement in the
         // same parent-client space. Correct HWND rectangles alone do not catch
         // a screen-space bitmap being composited over sibling controls.
         var size = bounds.Size; var location = _clipOwner?.PointToClient(bounds.Location) ?? bounds.Location; Point source = Point.Empty; var blend = new Blend { Alpha = 255, Format = 1 };
         if (!UpdateLayeredWindow(Handle, 0, ref location, ref size, _dc, ref source, 0, ref blend, 2)) { int error = Marshal.GetLastWin32Error(); throw new Win32Exception(error, "Native drawing plane failed: " + error); }
-        SetWindowPos(Handle, 0, location.X, location.Y, bounds.Width, bounds.Height, 0x0050); // NOACTIVATE | SHOWWINDOW
+        if (!stationary || _publishedBounds != bounds)
+            SetWindowPos(Handle, 0, location.X, location.Y, bounds.Width, bounds.Height, 0x0050); // NOACTIVATE | SHOWWINDOW
+        PublicationCount++;
+        if (stationary) { (_publishedPixels, _pendingPixels) = (_pendingPixels, _publishedPixels); _publishedBounds = bounds; }
     }
     private void Allocate(Size size)
     {
@@ -80,6 +112,7 @@ internal sealed class RibbonMotionWindow : NativeWindow, IDisposable
     private void ReleaseBuffer()
     {
         _captionBuffer?.Dispose(); _captionBuffer = null;
+        _publishedBounds = Rectangle.Empty; _publishedPixels = _pendingPixels = null;
         _graphics?.Dispose(); _graphics = null; _bitmap?.Dispose(); _bitmap = null;
         if (_old != 0) { SelectObject(_dc, _old); _old = 0; } if (_dib != 0) { DeleteObject(_dib); _dib = 0; } if (_dc != 0) { DeleteDC(_dc); _dc = 0; }
     }

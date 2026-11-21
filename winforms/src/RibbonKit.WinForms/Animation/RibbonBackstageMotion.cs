@@ -22,6 +22,12 @@ internal sealed class RibbonBackstageMotion : IDisposable
     private long _start;
     private bool _disposed, _subscribed;
     private RibbonBackstageBackground? _background;
+    private RibbonMotionWindow? _applicationButton;
+    internal bool OwnsApplicationButton => !_disposed && _applicationButton is not null;
+    internal Bitmap? CaptureApplicationButton() => _applicationButton?.CaptureFrame();
+    internal Rectangle ApplicationButtonPlaneBounds => _applicationButton?.Bounds ?? Rectangle.Empty;
+    internal nint ApplicationButtonPlaneHandle => _applicationButton?.Handle ?? 0;
+    internal int ApplicationButtonPublications => _applicationButton?.PublicationCount ?? 0;
     internal bool IsRunning => !_disposed;
     internal bool IsClosing { get; }
     internal Rectangle Bounds { get; }
@@ -69,6 +75,19 @@ internal sealed class RibbonBackstageMotion : IDisposable
         _subscribed = true;
         try
         {
+            if (_ribbon.Theme.BackstageStyle == RibbonBackstageStyle.Office2007 && _ribbon.EffectiveApplicationButtonShape == RibbonApplicationButtonShape.Orb)
+            {
+                // Publish before transferring paint ownership. Native seed/flush
+                // callbacks must never suppress File for a still-hidden plane.
+                var drawing = new RibbonMotionWindow(_form, clipToOwner: true);
+                try
+                {
+                    drawing.RenderBackstageApplicationButton(_ribbon, IsClosing);
+                    if (_disposed) { drawing.Dispose(); return; }
+                    _applicationButton = drawing;
+                }
+                catch { drawing.Dispose(); throw; }
+            }
             if (!IsClosing && !_ribbon.UsesMaterialBackstage)
             {
                 // Alpha remains one while every native child draws at its
@@ -110,6 +129,7 @@ internal sealed class RibbonBackstageMotion : IDisposable
         _surface.RepaintBackdrop(retainPage, publishOpacity: false);
         _ribbon.InvalidateBackstageCaption();
         _surface.PublishMotionOpacity();
+        _applicationButton?.RenderBackstageApplicationButton(_ribbon, IsClosing);
     }
     private void Tick(object? sender, EventArgs e)
     {
@@ -150,13 +170,34 @@ internal sealed class RibbonBackstageMotion : IDisposable
         try { completed?.Invoke(); } // Hide before restoring the closing location.
         finally
         {
-            if (!_surface.IsDisposed)
+            try
             {
-            _surface.MoveForMotion(_origin, clipFrame: false);
-                _surface.RestoreMotionOpacity();
+                if (!_surface.IsDisposed)
+                {
+                    _surface.MoveForMotion(_origin, clipFrame: false);
+                    if (_applicationButton is not null) _surface.Invalidate(_surface.HeaderBounds, true);
+                    _surface.RestoreMotionOpacity();
+                }
+                if (_applicationButton is not null && !_ribbon.IsDisposed)
+                {
+                    _ribbon.Invalidate(_ribbon.ApplicationButtonBounds); _ribbon.Update();
+                }
             }
-            _background?.Dispose(); _background = null;
-            _ribbon.InvalidateBackstageCaption(); _timer.Dispose();
+            finally
+            {
+                try { _background?.Dispose(); }
+                finally
+                {
+                    _background = null;
+                    try { _applicationButton?.Dispose(); }
+                    finally
+                    {
+                        _applicationButton = null;
+                        try { _ribbon.InvalidateBackstageCaption(); }
+                        finally { _timer.Dispose(); }
+                    }
+                }
+            }
         }
     }
 }

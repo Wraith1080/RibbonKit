@@ -22,7 +22,7 @@ public partial class RibbonControl
         for (int i = 0; i < _snapshot.Messages.Count; i++)
         {
             var row = _snapshot.Messages[i];
-            Painter.DrawMessage(context with { Bounds = row.Bounds }, row.Message, row.Title, row.Text, row.Icon, i == 0);
+            Painter.DrawMessage(context with { Bounds = row.Bounds, BackgroundBounds = _snapshot.MessageBounds, IsTopEdgeConnected = MessageTopConnected }, row.Message, row.Title, row.Text, row.Icon, i == 0);
         }
     }
     private void ActivateMessageTarget(RibbonTarget target)
