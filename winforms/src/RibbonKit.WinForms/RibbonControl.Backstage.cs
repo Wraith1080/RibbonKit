@@ -16,6 +16,7 @@ public partial class RibbonControl
     private bool _backstageOpen, _backstageChanging, _backstageRefreshing;
     private bool _backstageClosing;
     private bool _backstagePositioning;
+    internal bool UsesMaterialBackstage => HasWindowBackdrop && Theme.BackstageStyle != RibbonBackstageStyle.Office2007;
     internal bool BackstageKeepsHeaders => RibbonPresentationResolver.Backstage(Theme).Placement == RibbonBackstagePlacement.BelowTabs;
     private bool BackstageHeadersUnselected => BackstageKeepsHeaders && (IsBackstageOpen || DesignPreviewBackstage);
     private bool _backstageContentInitialized, _initializingBackstageContent;
@@ -311,7 +312,8 @@ public partial class RibbonControl
         else if (CloseBackstage(true, animate: false)) item.PerformClick();
     }
     internal bool ProcessBackstageKey(Keys keys) => _backstageSurface?.ProcessSurfaceKey(keys) ?? false;
-    internal bool IsExposedBackstageTarget(RibbonTarget target) => BackstageKeepsHeaders && (target.Kind is TargetKind.Tab or TargetKind.FileMenu or TargetKind.TabBack or TargetKind.TabNext or TargetKind.Minimize
+    internal bool IsExposedBackstageTarget(RibbonTarget target) => Theme.BackstageStyle == RibbonBackstageStyle.Office2007 && target.Kind == TargetKind.FileMenu
+        || BackstageKeepsHeaders && (target.Kind is TargetKind.Tab or TargetKind.FileMenu or TargetKind.TabBack or TargetKind.TabNext or TargetKind.Minimize
         || target.Kind is TargetKind.QuickAccess or TargetKind.QuickAccessOverflow && EffectiveQuickAccessPosition != RibbonQuickAccessPosition.BelowRibbon);
     private bool IsExposedBackstageElement(RibbonElement element) => BackstageKeepsHeaders && Snapshot.Targets.Any(t => ReferenceEquals(t.Element, element) && IsExposedBackstageTarget(t));
     private bool BackstageHeaderHasKeyboardInput(Keys keys) => BackstageKeepsHeaders && ContainsFocus && keys is Keys.Left or Keys.Right or Keys.Up or Keys.Down or Keys.Home or Keys.End or Keys.Enter or Keys.Space or Keys.Tab or (Keys.Tab | Keys.Shift);

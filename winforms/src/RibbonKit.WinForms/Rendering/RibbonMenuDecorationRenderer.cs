@@ -24,6 +24,8 @@ internal static class RibbonMenuDecorationRenderer
         if (context.ApplicationMenuPart != RibbonApplicationMenuPart.None) { RibbonApplicationMenuContentRenderer.DrawSeparator(context); return; }
         bool ordinary = context.ApplicationMenuPart == RibbonApplicationMenuPart.None && !context.IsBackstageMenuSeparator;
         int inset = RibbonLayoutEngine.Scale(context.ApplicationMenuPart == RibbonApplicationMenuPart.None ? RibbonMenuMetrics.For(context.Density, context.Theme).MenuSeparatorHorizontalPadding : 8, context.DeviceDpi);
+        if (context.IsBackstageMenuSeparator && context.Theme.BackstageStyle == RibbonBackstageStyle.Office2007)
+            inset = RibbonLayoutEngine.Scale(context.Theme.BackstageAppearance?.Workspace?.SeparatorInset ?? 0, context.DeviceDpi);
         if (context.Bounds.Width <= 2 * inset || context.Bounds.Height <= 0) return;
         var metrics = new RibbonMenuAppearanceMetrics(context.Theme, context.DeviceDpi, RibbonPresentationResolver.MenuDecoration);
         var bounds = metrics.SeparatorBounds(context.Bounds, inset, ordinary);

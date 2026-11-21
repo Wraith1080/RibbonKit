@@ -7,6 +7,7 @@
     <Compile Include="../../tests/RibbonKit.WinForms.Consumer/Office2007ShellChecks.cs" Link="Diagnostics/Office2007ShellChecks.cs" />
     <Compile Include="../../tests/RibbonKit.WinForms.Consumer/Office2007ApplicationMenuChecks.cs" Link="Diagnostics/Office2007ApplicationMenuChecks.cs" />
     <Compile Include="../../tests/RibbonKit.WinForms.Consumer/Office2007CompanionChecks.cs" Link="Diagnostics/Office2007CompanionChecks.cs" />
+    <Compile Include="../../tests/RibbonKit.WinForms.Consumer/Office2007BackstageChecks.cs" Link="Diagnostics/Office2007BackstageChecks.cs" />
     <Compile Include="../../tests/RibbonKit.WinForms.Consumer/Office2010BackstageChecks.cs" Link="Diagnostics/Office2010BackstageChecks.cs" />
     <Compile Include="../../tests/RibbonKit.WinForms.Consumer/Office2010ReviewChecks.cs" Link="Diagnostics/Office2010ReviewChecks.cs" />
     <Compile Include="../../tests/RibbonKit.WinForms.Consumer/Office2010NavigationChecks.cs" Link="Diagnostics/Office2010NavigationChecks.cs" />

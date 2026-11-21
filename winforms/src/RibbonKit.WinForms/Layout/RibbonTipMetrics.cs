@@ -26,6 +26,14 @@ internal readonly record struct RibbonTipMetrics(RibbonTheme? Theme)
             Math.Min(Math.Max(0, bounds.Height - S(A?.BackstageKeyTipVerticalClearance ?? D.BackstageVerticalAllowance)), desired.Height));
         return new(bounds.Left + Math.Max(0, bounds.Width - S(A?.BackstageKeyTipRightClearance ?? D.BackstageRightClearance) - size.Width), bounds.Top + (bounds.Height - size.Height) / 2, size.Width, size.Height);
     }
+    internal Rectangle BackstageFileBadgeBounds(Rectangle visual, Rectangle header, Size text, int dpi)
+    {
+        var available = Rectangle.Intersect(visual, header);
+        if (available.Width <= 0 || available.Height <= 0) return Rectangle.Empty;
+        var desired = BadgeSize(text, dpi, backstage: true);
+        var size = new Size(Math.Min(available.Width, desired.Width), Math.Min(available.Height, desired.Height));
+        return new(available.Left + (available.Width - size.Width) / 2, available.Bottom - size.Height, size.Width, size.Height);
+    }
     internal bool HasBadgeOverride => Theme?.KeyTipHorizontalPadding is not null || Theme?.KeyTipVerticalPadding is not null;
     internal Size BadgeSize(Size text, int dpi, bool backstage = false)
     {

@@ -2,7 +2,7 @@ namespace RibbonKit.WinForms;
 
 public static partial class RibbonThemes
 {
-    /// <summary>Gets normal opaque Office 2007 Blue: valley surfaces, creased gold states, framed groups, an Orb, Application Menu, Options and companion surfaces. File routing, window material and explicit application-button shape remain host choices. The Aero palette is separate.</summary>
+    /// <summary>Gets normal opaque Office 2007 Blue: valley surfaces, creased gold states, framed groups, an Orb, Application Menu, framed Backstage, Options and companion surfaces. File routing, window material and explicit application-button shape remain host choices. The Aero palette is separate.</summary>
     public static RibbonTheme Office2007Blue { get; } = CreateOffice2007Blue();
 
     private static RibbonTheme CreateOffice2007Blue()
@@ -29,6 +29,15 @@ public static partial class RibbonThemes
         return new()
         {
             Accent = C(0x1E5A9C), AccentStates = null,
+            BackstageStyle = RibbonBackstageStyle.Office2007, BackstageFullWidthNavigation = true,
+            BackstageNavigationBackgroundFill = body, BackstageNavigationHover = hover, BackstageNavigationSelected = selected,
+            BackstageNavigationForeground = C(0x15428B), BackstageSelectedForeground = C(0x15428B), BackstagePressedForeground = C(0x15428B),
+            BackstageSelectionIndicatorVisible = false, BackstagePageBorderWidth = 0, BackstagePageCornerRadius = 0,
+            BackstageAppearance = new()
+            {
+                BackButtonVisible = false, NavigationCornerRadius = 3, CaptionTintEnabled = false,
+                Workspace = new() { BorderColor = C(0x8DB2E3), InnerBorderColor = Color.White, NavigationStateChrome = goldChrome }
+            },
             IdentityAccent = new()
             {
                 FileBackground = Ramp(0x6FB4E4, 0x4C93CD, (.45, 0x3585C6), (.45, 0x1F63A6)),

@@ -13,7 +13,11 @@ public partial class RibbonRenderer
     public virtual int GetBackstagePageCornerRadius(RibbonTheme theme, int deviceDpi) => 0;
     /// <summary>Paints the native Backstage surface and its measured navigation rail.</summary>
     public virtual void DrawBackstageBackground(RibbonPaintContext context, int navigationWidth)
-        => PaintBackstageFrame(context, navigationWidth, content => DrawNeutralBackstageBackground(content, navigationWidth));
+        => PaintBackstageFrame(context, navigationWidth, content =>
+        {
+            if (context.Theme.BackstageStyle == RibbonBackstageStyle.Office2007) BackstageStyleRenderer(context.Theme).DrawBackground(this, content, navigationWidth);
+            else DrawNeutralBackstageBackground(content, navigationWidth);
+        });
     internal void DrawNeutralBackstageBackground(RibbonPaintContext context, int navigationWidth)
     {
         int width = Math.Clamp(navigationWidth, 0, context.Bounds.Width);
@@ -43,6 +47,7 @@ public partial class RibbonRenderer
     /// <summary>Paints a native navigation button using shared state and geometry. A null item denotes the Back button.</summary>
     public virtual void DrawBackstageEntry(RibbonPaintContext context, RibbonItem? item, bool selected)
     {
+        if (item is null && context.Theme.BackstageStyle == RibbonBackstageStyle.Office2007) { DrawWorkspaceReturn(context); return; }
         bool enabled = item?.EffectiveEnabled ?? true;
         if (!enabled) context = context with { Hot = false, Pressed = false, Focused = false };
         int S(int value) => RibbonLayoutEngine.Scale(value, context.DeviceDpi);

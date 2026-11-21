@@ -25,6 +25,7 @@ internal sealed class RibbonBackstageMotion : IDisposable
     internal bool IsRunning => !_disposed;
     internal bool IsClosing { get; }
     internal Rectangle Bounds { get; }
+    internal Point Origin => _origin;
     internal int VisibleWidth => Math.Clamp(_surface.Right - _origin.X, 0, _width);
     internal byte Opacity => _surface.MotionAlpha;
 
@@ -53,7 +54,7 @@ internal sealed class RibbonBackstageMotion : IDisposable
             surface.SetMotionAlpha(alpha);
             // Material owns a separate page layer. Solid must seed its whole
             // native drawing at the unclipped origin before the initial move.
-            if (!closing && ribbon.HasWindowBackdrop) surface.MoveForMotion(new(motion._origin.X - motion._travel, motion._origin.Y));
+            if (!closing && ribbon.UsesMaterialBackstage) surface.MoveForMotion(new(motion._origin.X - motion._travel, motion._origin.Y));
             return motion;
         }
         catch (Win32Exception error) { Trace.WriteLine("Backstage motion skipped: " + error.Message); motion.Cancel(); return null; }
@@ -68,7 +69,7 @@ internal sealed class RibbonBackstageMotion : IDisposable
         _subscribed = true;
         try
         {
-            if (!IsClosing && !_ribbon.HasWindowBackdrop)
+            if (!IsClosing && !_ribbon.UsesMaterialBackstage)
             {
                 // Alpha remains one while every native child draws at its
                 // final, unclipped position. Otherwise the cached pane starts

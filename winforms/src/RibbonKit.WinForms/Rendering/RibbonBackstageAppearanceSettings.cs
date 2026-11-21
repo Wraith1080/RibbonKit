@@ -5,7 +5,9 @@ public sealed record RibbonBackstageAppearanceSettings
 {
     /// <summary>Initializes overrides that retain existing appearance.</summary>
     public RibbonBackstageAppearanceSettings() { }
-    /// <summary>Gets optional Back target visibility. Null follows the family: hidden for Office2010, visible otherwise. Hiding also removes its layout space, keyboard target and KeyTip.</summary>
+    /// <summary>Gets optional shared-frame/header overrides for Office2007 Backstage. Null resets these roles independently; other styles retain their rendering.</summary>
+    public RibbonBackstageWorkspaceSettings? Workspace { get; init; }
+    /// <summary>Gets optional Back target visibility. Null follows the family: hidden for Office2007/Office2010, visible otherwise. Hiding removes its layout space, keyboard target and KeyTip; Office2007 retains its File Orb return.</summary>
     public bool? BackButtonVisible { get; init; }
     /// <summary>Gets top/bottom hover edge ink, including alpha. Empty/Transparent adds no edge; full navigation outlines remain independent.</summary>
     public Color NavigationHoverEdgeColor { get; init; } = Color.Empty;
@@ -56,6 +58,7 @@ public sealed record RibbonBackstageAppearanceSettings
     internal static void Validate(RibbonBackstageAppearanceSettings? settings)
     {
         if (settings is null) return;
+        RibbonBackstageWorkspaceSettings.Validate(settings.Workspace);
         int?[] spacing = [settings.MarkerLeftInset, settings.MarkerWidth, settings.MarkerTopInset, settings.MarkerBottomInset, settings.BackVisualInset];
         if (spacing.Any(value => value is < 0 or > 1024) || settings.NavigationCornerRadius is < 0 or > 64 || settings.NavigationBorderWidth is < 0 or > 32
             || settings.TopSeamHeight is < 0 or > 32 || settings.PageDividerShadowWidth is < 0 or > 64 || settings.NavigationHoverEdgeWidth is < 0 or > 32)

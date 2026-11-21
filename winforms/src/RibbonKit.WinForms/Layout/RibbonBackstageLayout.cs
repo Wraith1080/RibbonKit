@@ -3,6 +3,9 @@ namespace RibbonKit.WinForms.Layout;
 internal sealed record RibbonBackstageLayout(Rectangle Back, Rectangle Navigation, Rectangle Page, int RowHeight, int Inset)
 {
     internal Rectangle Footer { get; init; }
+    internal Rectangle Header { get; init; }
+    internal Rectangle Workspace { get; init; }
+    internal Rectangle NavigationCanvas { get; init; }
     internal bool FooterInline { get; init; }
     internal int SeparatorHeight { get; init; }
     internal int NavigationContentHeight { get; init; }

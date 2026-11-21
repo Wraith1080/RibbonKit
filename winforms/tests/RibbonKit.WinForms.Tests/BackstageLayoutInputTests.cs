@@ -25,11 +25,12 @@ public sealed class BackstageLayoutInputTests
             var input = RibbonBackstageLayoutMeasurement.Measure(font, dpi, ribbon.Backstage, hidden, 37, metrics, shadow: 6);
             var measured = family.Layout.Build(size, input);
             Assert.True(measured.Page.Left > withoutReveal.Page.Left);
-            Assert.Equal(6, measured.Page.Top); Assert.Equal(37 + RibbonLayoutEngine.Scale(20, dpi), measured.Back.Top);
+            Assert.Equal(style == RibbonBackstageStyle.Office2007 ? measured.Header.Bottom + RibbonLayoutEngine.Scale(8, dpi) + 2 : 6, measured.Page.Top);
+            Assert.Equal(style == RibbonBackstageStyle.Office2007 ? 0 : 37 + RibbonLayoutEngine.Scale(20, dpi), measured.Back.Top);
             Assert.False(measured.FooterInline);
             Assert.Equal(measured.Page.Left + 1 + RibbonLayoutEngine.Scale(17, dpi), measured.PageContentBounds(1).Left);
             Assert.Equal(measured.RowHeight + measured.SeparatorHeight +
-                (style != RibbonBackstageStyle.Modern ? RibbonLayoutEngine.Scale(14, dpi) : measured.Inset), measured.Footer.Height);
+                (style is RibbonBackstageStyle.Modern or RibbonBackstageStyle.Office2007 ? measured.Inset : RibbonLayoutEngine.Scale(14, dpi)), measured.Footer.Height);
             var shortSize = new Size(size.Width, measured.Navigation.Top + measured.RowHeight);
             var shortLayout = family.Layout.Build(shortSize, input);
             Assert.True(shortLayout.FooterInline);

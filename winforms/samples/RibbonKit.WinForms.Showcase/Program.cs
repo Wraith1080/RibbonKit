@@ -86,6 +86,12 @@ internal static class Program
             catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
             return;
         }
+        if (args.Length == 2 && args[0] == "--verify-office2007-backstage")
+        {
+            try { IndependentConsumer.Office2007BackstageChecks.VerifySample(form, form.Ribbon!, args[1], "Showcase"); }
+            catch (Exception error) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "failure.log"), error.ToString()); Environment.ExitCode = 1; }
+            return;
+        }
         if (args.Length == 2 && args[0] == "--verify-office2007-companions")
         {
             try { IndependentConsumer.Office2007CompanionChecks.VerifySample(form, form.Ribbon!, args[1], "Showcase"); }

@@ -2561,3 +2561,47 @@ RibbonKit.WinForms.RibbonControl.EffectiveApplicationButtonShape.get -> RibbonKi
 RibbonKit.WinForms.RibbonControl.ApplicationButtonBounds.get -> System.Drawing.Rectangle
 RibbonKit.WinForms.RibbonControl.ApplicationButtonShapeChanged -> System.EventHandler?
 virtual RibbonKit.WinForms.RibbonRenderer.DrawApplicationButtonGlyph(RibbonKit.WinForms.RibbonPaintContext context, bool enabled) -> void
+
+override RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.Equals(object? obj) -> bool
+override RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.GetHashCode() -> int
+override RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.ToString() -> string!
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.Workspace.get -> RibbonKit.WinForms.RibbonBackstageWorkspaceSettings?
+RibbonKit.WinForms.RibbonBackstageAppearanceSettings.Workspace.init -> void
+RibbonKit.WinForms.RibbonBackstageStyle.Office2007 = 3 -> RibbonKit.WinForms.RibbonBackstageStyle
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.<Clone>$() -> RibbonKit.WinForms.RibbonBackstageWorkspaceSettings!
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.BorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.BorderColor.init -> void
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.BorderWidth.get -> int?
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.BorderWidth.init -> void
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.CornerRadius.get -> int?
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.CornerRadius.init -> void
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.Equals(RibbonKit.WinForms.RibbonBackstageWorkspaceSettings? other) -> bool
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.FrameInset.get -> int?
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.FrameInset.init -> void
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.HeaderBackground.get -> RibbonKit.WinForms.RibbonFill?
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.HeaderBackground.init -> void
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.HeaderForeground.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.HeaderForeground.init -> void
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.HeaderHeight.get -> int?
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.HeaderHeight.init -> void
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.InnerBorderColor.get -> System.Drawing.Color
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.InnerBorderColor.init -> void
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.InnerBorderWidth.get -> int?
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.InnerBorderWidth.init -> void
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.NavigationStateChrome.get -> RibbonKit.WinForms.RibbonStateChromeSettings?
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.NavigationStateChrome.init -> void
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.ReturnText.get -> string?
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.ReturnText.init -> void
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.ReturnWidth.get -> int?
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.ReturnWidth.init -> void
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.RibbonBackstageWorkspaceSettings() -> void
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.SeparatorInset.get -> int?
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.SeparatorInset.init -> void
+static RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.operator !=(RibbonKit.WinForms.RibbonBackstageWorkspaceSettings? left, RibbonKit.WinForms.RibbonBackstageWorkspaceSettings? right) -> bool
+static RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.operator ==(RibbonKit.WinForms.RibbonBackstageWorkspaceSettings? left, RibbonKit.WinForms.RibbonBackstageWorkspaceSettings? right) -> bool
+virtual RibbonKit.WinForms.RibbonRenderer.DrawBackstageHeader(RibbonKit.WinForms.RibbonPaintContext context, RibbonKit.WinForms.RibbonDropDownItem! fileMenu, System.Drawing.Rectangle applicationButtonBounds) -> void
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.JoinColoredCaption.get -> bool?
+RibbonKit.WinForms.RibbonBackstageWorkspaceSettings.JoinColoredCaption.init -> void
+RibbonKit.WinForms.RibbonPaintContext.BackstageHeaderBackgroundBounds.get -> System.Drawing.Rectangle
+RibbonKit.WinForms.RibbonPaintContext.BackstageHeaderBackgroundBounds.init -> void

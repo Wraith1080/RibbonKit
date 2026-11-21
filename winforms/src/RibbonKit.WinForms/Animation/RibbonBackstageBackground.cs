@@ -15,7 +15,7 @@ internal sealed class RibbonBackstageBackground : IDisposable
     private RibbonBackstageBackground(Form form, Rectangle bounds, Bitmap image) => (_form, _bounds, _image) = (form, bounds, image);
     internal static RibbonBackstageBackground? Capture(RibbonControl ribbon, Form form)
     {
-        if (!form.ContainsFocus || ribbon.HasWindowBackdrop || ribbon.AnimationLevel == RibbonAnimationLevel.None || ribbon.BackstageMotionPolicy.PaneDuration == 0 || !ribbon.CanAnimatePopupOpening || !ribbon.Motion.SystemEnabled ||
+        if (!form.ContainsFocus || ribbon.UsesMaterialBackstage || ribbon.AnimationLevel == RibbonAnimationLevel.None || ribbon.BackstageMotionPolicy.PaneDuration == 0 || !ribbon.CanAnimatePopupOpening || !ribbon.Motion.SystemEnabled ||
             form.Opacity != 1 || form.TransparencyKey != Color.Empty || form.WindowState == FormWindowState.Minimized) return null;
         var content = form is RibbonForm host ? host.AeroContentBounds : form.ClientRectangle;
         var client = form.RectangleToScreen(content);

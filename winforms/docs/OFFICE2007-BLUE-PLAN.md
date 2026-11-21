@@ -1,6 +1,6 @@
 # Native Office 2007 Blue appearance contract
 
-**2026-11-21 - G6 implementation complete, including hover-only caption rims; G7 has not started.**
+**2026-11-21 - G6 complete; Backstage accent/Orb KeyTips and a joined colored standard caption are delivered before G7.**
 G1 remains the appearance reference. G2's additive APIs and focused evidence are
 [recorded below](#g2-shared-paint-foundations--2026-11-20). No Office 2007
 runtime preset or sample tile is delivered by G2.
@@ -16,6 +16,12 @@ Its [gradient and thin-button-outline correction](#g6-gradient-and-button-outlin
 replaces the initial flat backing with the WPF reference ramp, including native wells.
 The [caption hover-outline completion](#g6-caption-hover-outlines-and-slice-completion--2026-11-21)
 finishes the requested G6 corrections. Live review remains separate from recorded checks.
+The [framed Backstage addition](#framed-backstage-workspace-before-g7--2026-11-21)
+implements the subsequent design proposal while G7 remains paused.
+The [animated-paint correction](#orb-only-return-and-animated-paint-correction--2026-11-21)
+supersedes the initial separate return button and fixes the retained header paint.
+The [accent, KeyTip and caption-join follow-up](#backstage-accent-orb-keytips-and-a-joined-standard-caption--2026-11-21)
+extends that implementation without starting G7.
 Current family acceptance and continuation authorization remain in the themes ledger.
 
 ## Reference and boundary
@@ -212,6 +218,7 @@ this document does not introduce runtime APIs.
 | G4 - normal Blue preset and ribbon | **Implemented.** Family identity, opaque palette, connected tabs, groups, rectangular override and Orb states; exposed in both permanent View galleries. Current review and continuation authorization are in the themes ledger. |
 | G5 - Application Menu palette | **Implemented.** Frame/top/footer bands and gold/split feedback on the G3 composition. Current menu review and continuation authorization are in the themes ledger; focused native-content and caption-clearance evidence is below. |
 | G6 - Options and companion surfaces | **Implementation complete.** Options/customization, editor, gallery, menu and tip roles; full-surface valley backgrounds, thin dialog action outlines, split/QAT/overflow feedback, Simplified separators and hover-only caption rims. Focused evidence and known baseline limits below. Current user review belongs in the ledger; G7 has not started. |
+| Backstage addition before G7 | **Implemented separately.** Creased return header and one framed navigation/page workspace, a single divider, gold navigation and equal 4-pixel top/side row and separator clearance. Existing native pages and File routing remain. Focused evidence below; runtime appearance review is separate. |
 | G7 - composed normal-theme review | Refresh the existing Designer Sample in place and verify both samples plus a consumer without sample resources. Human review covers Classic/Simplified, density, state feedback, File routes and resize/maximize/restore. |
 | G8 - separate Aero palette and review | After normal acceptance, supply the 2007 palette and edge width to the shared frame. Review restored edges, edge resizing, maximize/restore, Solid/material choices and Backstage with background load. |
 
@@ -968,3 +975,222 @@ no full-suite result is claimed. Native print/message and four-DPI paint evidenc
 do not establish actual VS, physical input/IME, mixed-monitor, desktop material
 or continuous-motion acceptance. G6 implementation is complete; stop before G7's
 composed normal-theme review. G8 Aero and accepted Backstage work remain separate.
+
+## Framed Backstage workspace before G7 - 2026-11-21
+
+Entry: clean `codex/Ribbonkit-Winform` at the user's `091ac85` (`G6 2007 Theme`).
+This implements the subsequent native Backstage design proposal and its padding
+revision, separately from G7. The proposed document preview/tasks are illustrative
+application content; the library supplies the reusable shell and keeps existing
+Info/Print controls, data and actions. Current design approval and runtime review
+status belong only in the themes ledger.
+
+### Appearance, geometry and public contract
+
+- Appended `RibbonBackstageStyle.Office2007 = 3` selects the new presentation
+  independently of palette. The Office2007Blue preset selects it when a host's
+  existing route opens Backstage. It does not change FileMenuMode, an explicit
+  rectangular File override or window material/frame preferences.
+- A 48-logical-pixel blue header uses the File reference crease: `#6FB4E4`,
+  `.45 #3585C6`, `.45 #1F63A6`, `#4C93CD`, with white text. The measured File visual
+  continues through the caption/header join using the existing File/glyph painter;
+  it is not reparented. The native return target retains validation, cancellation,
+  keyboard focus and KeyTips. The real upper Orb remains a File return target.
+  Hiding Back removes its target/KeyTip while retaining File paint and lower-File
+  pointer return. Native caption buttons and their hover-only rims are unchanged.
+- One shared blue rim encloses the navigation and white page, with one white inner
+  highlight and one divider. No separately boxed page remains. Frame gutter is
+  **8 logical pixels** on all sides, radius **3**, and default outer/divider and
+  inner strokes are **one device pixel**. Explicit stroke widths remain logical.
+  The divider stops inside the shared highlight. Native page content retains
+  16-pixel padding and the existing renderer's page-border/corner hooks.
+- Navigation samples the full interior valley `#DBE6F4`, `.17 #C8D9ED`, `#E3F4FF`.
+  Gold selected/hover and orange pressed rows reuse the preset ramps and state
+  rims. `BackstageNavigationPadding` defaults to **4 logical pixels** in this
+  presentation and controls both side clearances and the first row's top gap.
+  Separators use the same row bounds with zero extra inset. Footer pinning, short
+  host fallback, native scrolling, font-aware density and DPI negotiation remain
+  in the shared layout algorithm; the new family arranges it inside one measured
+  workspace snapshot. Snapshot values survive model/font disposal.
+- `BackstageAppearance.Workspace` accepts immutable
+  `RibbonBackstageWorkspaceSettings`: independently resettable header fill/height/
+  foreground, localized ReturnText/width, frame gutter, border/divider and inner
+  inks/widths, radius, navigation StateChrome and extra separator inset. Null/Empty,
+  Transparent, zero and explicit logical widths have documented meanings. Header
+  alpha composites once over an opaque navigation-color base, including repeated
+  native parent/child paint. Both gradient axes and exact hard stops survive.
+  Validation is atomic before Theme/BuiltInTheme changes. Other styles ignore
+  workspace roles. The shipped API baseline is unchanged; 39 additive Unshipped
+  entries describe the record, accessor, appended identity and header hook.
+- Virtual `DrawBackstageHeader` receives the measured File bounds and preserves
+  the existing Back-entry, File-button, glyph and text hooks. Neutral and Office
+  public painters share the frame implementation. Designer previews use the same
+  geometry/paint. No sample helper, WPF hosting, diagnostic tab or layout-engine
+  replacement implements the effect.
+- This is an opaque workspace even on a material host. The host's material and
+  stored navigation-opacity preference remain available when another style is
+  selected. It reuses the existing Solid surface path and clocks. Established
+  styles retain their existing material/page ownership. Native page HWNDs,
+  parents, values, focus/validation and model identity survive navigation, close,
+  reopen, resize and presentation changes. No application content is traversed
+  for automatic theming and no document-protection/version feature is fabricated.
+
+### Focused evidence and remaining limits
+
+Final evidence is under `artifacts/office2007-backstage/`:
+
+| Evidence | Observed scope/result |
+| --- | --- |
+| `focused-delivery.log`, `release-delivery.log` | **133/133 pass**, zero failures/skips, actual xUnit in-process execution; clean normal Release build. Seventeen new cases cover 96/120/144/192 DPI, both densities, frame/divider/gradient/crease/separator pixels, exact clips, four-corner alpha symmetry, wider/zero/null/reset/atomic contracts, frozen measurement inputs and tiny/short bounds. Native None/Mica cases retain host preference, opaque workspace, pages/editors/validation and theme switching; hidden-Back File return and existing renderer hooks pass. Existing affected layout/navigation/fill/appearance/page preference/designer/caption/File/preset cases also pass. |
+| `public-delivery.log`, `public-delivery/comparison.json` | Independent public-only package consumer passes four Backstage scopes at actual 120 DPI: Classic/Simplified and Compact/Touch, equal native row/separator insets, front-order/visibility, native page/editor handle/parent/value retention, validation, return/reopen/narrow resize and both File shapes. Real caption-overlap Orb pointer return passes. **32 byte-exact retained-G6/current old-family paint pairs**, both public painters at four DPIs, match. No Showcase resources/helpers. |
+| `showcase-delivery/result.log`, `designer-delivery/result.log` | Both existing sample paths pass the same four Backstage scopes at 120 DPI through the linked public-only verifier. The ordinary Designer Sample stays test-free; its dedicated package test host runs the checks. |
+| `debug-delivery.log`, `showcase-build-delivery.log`, `host-build-delivery.log`, `designer-refresh-delivery.log` | Normal Debug runtime/designer server and sample/host builds are clean. Designer Sample refreshed in place with **`0.1.0-designer.local20261121T083542277Z`**; authored Forms/UserControls/resources remain. The unchanged net472 client output is reused. NuGet audit is disabled for focused local builds/restores; earlier refreshes retain the restricted-path NU1900 warning in their logs. |
+
+Initial enum-wide tests assumed every non-Modern style had the established flat
+families' page origin and 14-pixel footer gap. They now assert the appended framed
+family's measured origin and four-pixel gap explicitly, preserving every old-family
+expectation. Two new separator probes initially sampled the neighboring pixel for
+even-height rows; they now use the existing one-device-pixel center rule. The first
+independent fixture also omitted FileMenu.Visible; it now explicitly enables its
+test declaration. No expected reference pixels or tolerances were relaxed.
+
+Whole-Form DrawToBitmap images in `public-final/` are rejected visual evidence:
+they print hidden sibling pages and reverse covered sibling order. The final
+verifier prints each visible HWND once and composes visible children in native
+Z order with their actual regions. It separately asserts front-order and content
+visibility; no runtime activation/Z-order workaround was added. See
+`REJECTED-NATIVE-PRINTS.txt`; preserve earlier attempts. Corrected native prints
+were inspected for both samples. These are generated native paints, not desktop
+captures. Earlier G6 split/caption baseline assertion limits remain in their own
+records and are not represented as passing here.
+
+Reproduction from `winforms/`, using normal configurations/default outputs:
+
+```powershell
+dotnet build artifacts/office2007-g2/direct-runner/DirectRunner.csproj -c Release -m:1 -p:NuGetAudit=false
+dotnet artifacts/office2007-g2/direct-runner/bin/Release/net10.0-windows/DirectRunner.dll 'Office2007BackstageTests,BackstageLayoutInputTests,BackstageNavigationTests,BackstageAppearanceSettingsTests,BackstageFillSettingsTests,BackstagePagePreferenceTests,BackstageDesignPreviewTests,BackstageCaptionTests,BackstageFilePresentationTests,Office2007ThemeTests'
+./eng/Test-Office2007Backstage.ps1 -BaselinePackageVersion '0.1.0-designer.local20261121T044540709Z' -Configuration Debug
+./eng/Test-DesignerSample.ps1 -Configuration Debug -Check --verify-office2007-backstage
+# Showcase accepts --verify-office2007-backstage <fresh-output-directory>.
+```
+
+VSTest's previously recorded socket restriction still uses the actual-xUnit
+in-process runner. This is focused Backstage evidence, not the G7 composed ribbon
+review or a full suite. Live appearance, actual VS, physical input/IME, mixed
+monitors, continuous motion/material and background-load acceptance remain
+separate. No WPF build, computer-use tool or desktop capture ran. Accepted
+Backstage black-bar/performance/title-alignment and saved frame/File-route fixes
+remain intact; their investigations were not reopened. **G7 remains paused** and
+the separate Aero palette remains G8.
+
+## Orb-only return and animated-paint correction - 2026-11-21
+
+The reported opening corruption persisted until hover caused a repaint. This
+follow-up removes the separate Back button from Office 2007's default layout and
+fixes two independently reproduced retained-paint defects. Current user review
+and the requested interaction change are recorded only in the themes ledger.
+
+- The passive Orb used live screen-to-client conversion while the pane moved.
+  Its local paint bounds therefore shifted inside a drawing Windows was retaining
+  and moving as a unit. Exposed-strip repaint could leave mixed old/new positions.
+  Header paint now compensates for the pane's movement from its settled origin;
+  the same local Orb rectangle is supplied to every paint throughout travel.
+  No full-window repaint on every frame or hover repair is introduced.
+- An opaque Office2007 workspace on a material host used Solid drawing but the
+  host's material preparation decision. It moved before the complete drawing was
+  seeded, and even a nonanimated pane unnecessarily acquired a whole-surface
+  material hold. One internal effective-mode decision now controls surface
+  painting, context flags, initial holds, background preparation and motion.
+  Office2007 follows the existing Solid preparation-before-move path while the
+  host's material preference remains. Established families resolve exactly as
+  before; their accepted preparation and repaint architecture is preserved.
+- The preset and new family's null defaults hide BackButtonVisible. The Orb is
+  the return control, retaining both its real caption segment and the surface
+  segment's existing native pointer/validation handling. No separate Back label,
+  hit target or KeyTip appears by default. Explicit BackButtonVisible=true remains
+  an adjustable opt-in using the existing public API. Static designer previews
+  still draw the File visual when the optional Back target is absent. Header,
+  frame, divider, gold navigation and the equal four-pixel insets remain.
+
+Evidence under `artifacts/office2007-backstage-paint/`:
+
+| Evidence | Result and boundary |
+| --- | --- |
+| `coordinates-repro.log` | Before the coordinate/mode fixes, **16/21 pass and five fail**. None-host Subtle/Expressive probes observe Orb bounds changing from X=6 to X=97 during paint. Mica Subtle/Expressive first paint is at moved X=-148 instead of settled X=0; the nonanimated Mica invariant also detects an unnecessary root layer. `repro.log` retains the earlier three-failure mode-only probe. These are regression evidence, not passing results. |
+| `focused-final.log`, `release-final.log` | **152/152 pass**, zero skips/failures; normal Release runtime/tests/runner build cleanly. Four new forced-animation cases at offscreen native hosts cover None/Mica and Subtle/Expressive, initial full-surface paint at the settled origin with alpha 1, stable Orb coordinates through partial-progress/exposed repaint, Orb-only default and retained native editor identity. Existing layout, navigation, appearance, fill, caption/File, motion/page-motion/repaint and designer-preview scopes pass. The Mica nonanimated case and optional Back/File/text/glyph hooks remain covered. |
+| `public.log`, `public/comparison.json` | Independent public-only package consumer passes four Backstage scopes at actual 120 DPI, checks no visible duplicate Back button, validates through Orb return, retains native pages/editors and routing, and passes **32 byte-exact retained-G6/current old-family image pairs**. |
+| `showcase/result.log`, `designer/result.log` | Both actual sample paths pass the four Backstage scopes with Orb return replacing the earlier Back-button click. Corrected native print inspected without the separate return label; this is not continuous-motion acceptance. |
+| `debug.log`, `showcase-build.log`, `host-build.log`, `designer-refresh.log` | Normal Debug runtime/designer server and sample/test-host builds are clean. Designer Sample refreshed in place with **`0.1.0-designer.local20261121T085524906Z`**; authored Forms/UserControls/resources remain. Unchanged net472 client output reused. |
+
+Reproduce using the previous package/sample commands and the affected xUnit
+selection `Office2007BackstageTests,BackstageLayoutInputTests,BackstageNavigationTests,BackstageAppearanceSettingsTests,BackstageFillSettingsTests,BackstageCaptionTests,BackstageFilePresentationTests,BackstageMotionTests,BackstagePageMotionTests,BackstagePageRepaintTests,BackstageDesignPreviewTests`.
+The actual-xUnit in-process runner remains in use. The new reproductions use
+offscreen windows; final visual artifacts are native prints. No desktop recording,
+Zoom investigation, WPF build, diagnostic tab or new public API was added by this
+correction. Live animation/appearance, actual VS, physical input/IME and mixed
+monitors remain separate. **G7 remains paused.**
+
+## Backstage accent, Orb KeyTips and a joined standard caption - 2026-11-21
+
+The header's fixed preset fill previously blocked the identity recipe. The preset
+now leaves Workspace.HeaderBackground null: the existing effective File reference
+and FileStrength rebase the full creased header onto Theme.Accent. At the default
+accent, the reference blue and repeated .45 stops remain exact. An explicit
+Workspace.HeaderBackground wins, then an explicit File background, then the
+identity recipe/Accent fallback. Null resets and zero FileStrength retain their
+documented authority. Navigation, gold feedback, Orb palette, Options primary
+actions and the neutral caption remain independently authored.
+
+Office2007 Backstage now includes the active File declaration in its existing
+KeyTip resolver, before navigation/footer candidates. Alt/F10 paints the resolved
+badge at the visible foot of the Orb, through the shared DrawKeyTip hook and
+appearance metrics. The real File key is used (normally F); authored multi-letter
+keys, prefix filtering and collisions remain unique. Completing the File KeyTip
+returns through the existing native page validation/close path. F10, Tab and
+pointer dismissal hide it with the navigation badges. No new model, Back button
+or input-owning overlay is introduced. The saved editor value/handle/parent and
+the previous paint-coordinate/opaque-preparation correction remain.
+
+The colored standard caption previously restarted the same blue crease in the
+Backstage header. When their effective vertical reference fills match, one
+gradient now spans the caption and header. Intermediate stop offsets are mapped
+exactly so the caption crease stays at its original pixel height; the final ramp
+extends through the header. There is one crease and no second bright band, while
+the title keeps its dark backing. Caption text, native caption buttons and their
+hover outlines keep their measured positions. Caption tint alpha is preserved.
+
+`Workspace.JoinColoredCaption` is additive: null/true enables this matching-fill
+join; false opts out. Neutral captions, actual Aero frames, explicit Form caption
+colors, explicit workspace header overrides, horizontal fills and top seams keep
+their separate surfaces. A public additive
+`RibbonPaintContext.BackstageHeaderBackgroundBounds` exposes the complete gradient
+canvas, including the caption above the header. Header content still uses its
+existing BackgroundBounds. Native partial paints and custom renderer hooks can
+therefore share the full surface without changing hit targets. Four new getter/
+init entries are in Unshipped; the shipped API baseline is unchanged. No Aero
+preset or frame implementation is added by this follow-up.
+
+Final focused evidence is under `artifacts/office2007-backstage-accent-keytips/`:
+
+| Evidence | Result and scope |
+| --- | --- |
+| `focused-delivery.log`, `release-delivery.log` | **184/184 pass**, zero failures/skips; clean normal Release build. Fifteen new cases cover default/recolored creases, both shared painters at 96/120/144/192 DPI, reset/override/strength contracts, Orb-badge bounds, authored-prefix collisions and validation, joined-caption/header pixels, tint alpha and separate-surface authority. Existing affected Backstage, caption-outline, Options/caption, preset, accent and tip contracts pass. The actual-xUnit in-process runner is used; this is not a full-suite run. |
+| `public-delivery.log`, `public-delivery/comparison.json` | Independent package-only consumer passes four Compact/Touch x Classic/Simplified native scopes at 120 DPI, accent/reset, joined-canvas delivery, F10 badge paint/toggle/validated return and previous native page/editor/reopen/resize/File-route contracts. **32 byte-exact** old-family image pairs match retained G6 `0.1.0-designer.local20261121T044540709Z`. No Showcase resources/helpers or private caption geometry are used. |
+| `showcase-delivery/result.log`, `designer-delivery/result.log` | Both actual sample paths pass the same four native scopes each at 120 DPI; no failure log. The ordinary Designer Sample remains test-free; its separate package test host owns verification. |
+| `debug-delivery.log`, `showcase-build-delivery.log`, `host-build-delivery.log`, `designer-refresh-delivery.log` | Clean normal Debug runtime/designer-server/sample/test-host builds. Designer Sample refreshed in place with **`0.1.0-designer.local20261121T143341530Z`**; authored Forms/UserControls/resources preserved. Unchanged net472 designer client output reused. |
+
+The background native verifier uses public Control.PreProcessMessage for F10 and
+the File key. Its unfocused host correctly fails the existing global shortcut
+filter; the earlier `public-final/` and `public-focus/` attempts retain that fixture
+limit. No window activation or focus-guard bypass was added. Office2007's native
+control preprocessing now handles F10 as well as the existing focused global
+input route. Earlier compile/filter attempts remain separate and are not counted
+as executed passes; `focused-complete.log` predates that final local-route change.
+
+Representative joined-header, Orb-badge and green-accent visible-HWND prints were
+inspected. Surface-only prints deliberately crop the caption and upper Orb; exact
+common-caption/header pixels are covered by the focused native/painter cases.
+Physical Alt/F10, actual VS, input/IME, mixed-monitor,
+desktop-material/continuous-motion and live appearance acceptance remain separate.
+Accepted Backstage paint/performance work and retired diagnostic tabs remain.
+**G7 remains paused.**

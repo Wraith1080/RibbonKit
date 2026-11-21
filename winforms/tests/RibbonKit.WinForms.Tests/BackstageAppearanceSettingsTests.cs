@@ -114,7 +114,7 @@ public sealed class BackstageAppearanceSettingsTests
             var layout = RibbonBackstageLayout.Build(new(S(1500), S(900)), font, dpi, ribbon.Backstage);
             Assert.Equal(Math.Max(S(density == RibbonDensity.Touch ? 52 : 42), font.Height + S(50)), layout.RowHeight);
             Assert.Equal(S(17), layout.SeparatorHeight); Assert.True(layout.Page.Left > before.Page.Left);
-            Assert.Equal(layout.RowHeight + S(17) + (style == RibbonBackstageStyle.Modern ? layout.Inset : S(14)), layout.Footer.Height);
+            Assert.Equal(layout.RowHeight + S(17) + (style is RibbonBackstageStyle.Modern or RibbonBackstageStyle.Office2007 ? layout.Inset : S(14)), layout.Footer.Height);
             var shortLayout = RibbonBackstageLayout.Build(new(S(1500), layout.Navigation.Top + layout.RowHeight), font, dpi, ribbon.Backstage); Assert.True(shortLayout.FooterInline);
             using var image = new Bitmap(S(400), S(90)); using var graphics = Graphics.FromImage(image);
             var bounds = new Rectangle(0, 0, S(390), S(80));

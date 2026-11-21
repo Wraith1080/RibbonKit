@@ -32,7 +32,9 @@ public enum RibbonBackstageStyle
     /// <summary>Office 2019's flat navigation and page treatment.</summary>
     Classic,
     /// <summary>Office 2010's below-tabs panes, leaving the real caption and tab row exposed.</summary>
-    Office2010 = 2
+    Office2010 = 2,
+    /// <summary>Office 2007 inspired creased return header and one framed navigation/page workspace below the native caption.</summary>
+    Office2007 = 3
 }
 
 /// <summary>A solid or linear gradient fill; contains no disposable resources. Start/End remain the endpoints when intermediate stops are supplied.</summary>
@@ -614,6 +616,8 @@ public readonly record struct RibbonPaintContext(Graphics Graphics, Rectangle Bo
     public IRibbonIcon? ApplicationButtonIcon { get; init; }
     /// <summary>Gets optional full surface bounds for a clipped background gradient. Empty uses Bounds. Content/state fills keep their own target coordinates.</summary>
     public Rectangle BackgroundBounds { get; init; }
+    /// <summary>Gets the full device-pixel Backstage header gradient canvas, including a joined colored caption above Bounds when present. Empty uses the measured header. Header content layout continues to use BackgroundBounds; partial paints retain this complete gradient canvas.</summary>
+    public Rectangle BackstageHeaderBackgroundBounds { get; init; }
     /// <summary>Gets the measured device-pixel opening under the visible selected Filled tab. Its top aligns with the body frame; height reports available body depth. Empty means no connection. RibbonControl supplies this value to body and selected-tab hooks; standalone painters may supply it explicitly. It does not alter target bounds.</summary>
     public Rectangle HeaderBodyConnectionBounds { get; init; }
     /// <summary>Gets whether this frame's top edge adjoins the preceding ribbon/QAT surface and uses square top corners.</summary>

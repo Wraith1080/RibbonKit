@@ -200,6 +200,49 @@ retain their corresponding rims and creased fills. Idle buttons stay borderless.
 the hover/pressed border inks through the existing appearance contract. Default
 strokes are one device pixel at every DPI.
 
+Office 2007's explicit Backstage route uses `RibbonBackstageStyle.Office2007`
+(append-only identity 3): a creased blue return header and one inset frame around
+the gradient navigation and white native page area, separated by a single divider.
+Rows and separators have matching top/left/right clearance, defaulting to 4 logical
+pixels through `BackstageNavigationPadding`. The outer frame gutter defaults to 8.
+Options/Exit footer items keep their pinned/scrolling behavior. The
+caption-overlapping Orb closes through existing validation and focus handling;
+Office 2007 has no separate Back button by default. Explicit BackButtonVisible=true
+can opt into the return label/target. Orb paint stays in settled pane coordinates
+through opening/closing, and opaque Backstage uses the Solid preparation path even
+when the host retains a material preference.
+
+The Backstage header follows `Theme.Accent` through the identity File ramp and
+FileStrength; the default accent reproduces the original blue crease exactly.
+Explicit Workspace.HeaderBackground wins, followed by an explicit File background.
+For a matching colored standard caption, one continuous gradient spans caption
+and header while retaining the caption's crease position. This avoids repeating
+the glass band. `Workspace.JoinColoredCaption = false` opts out; neutral captions,
+Aero frames, explicit Form caption colors or workspace header fills, and top seams
+remain independent.
+`RibbonPaintContext.BackstageHeaderBackgroundBounds` gives custom painters the
+complete gradient canvas; header content keeps its existing layout coordinates.
+
+Alt/F10 also shows File's KeyTip on the visible foot of the Orb while Backstage
+is active. It shares the navigation/footer resolver, preserving authored keys,
+multi-letter prefixes and collision handling. Completing it returns through
+native page validation. F10, Tab and pointer use dismiss the badges together;
+no duplicate Back control or command declaration is introduced.
+
+`BackstageAppearance.Workspace` accepts immutable `RibbonBackstageWorkspaceSettings`
+for header fill/height/ink, localized ReturnText/target width, frame gutter,
+outer/divider and inner strokes, radius, navigation state chrome and extra separator
+inset. Null members reset independently. Default frame/divider strokes are one
+device pixel; explicit widths use logical pixels. The virtual `DrawBackstageHeader`
+hook retains the existing Back-entry, File-button, glyph and text hooks and receives
+the measured File visual, including caption overlap. Other Backstage styles ignore
+workspace settings. The workspace stays opaque while retaining the host's material
+preference and navigation-opacity value for other styles. Theme selection preserves
+File routing and explicit rectangular File overrides. Application pages, document
+previews, task commands and their native editors remain application-owned; this
+presentation does not inject the illustrative mockup's document operations.
+See the [Backstage implementation and evidence](docs/OFFICE2007-BLUE-PLAN.md#framed-backstage-workspace-before-g7--2026-11-21).
+
 `Theme.IdentityAccent` supplies immutable reference ramps and independent
 FileStrength/CaptionStrength/NavigationStrength (finite 0..1). Accent updates rebase File fill/border
 colors while preserving ramp positions/depth; gold command states keep their own

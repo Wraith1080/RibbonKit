@@ -1152,6 +1152,7 @@ public partial class RibbonControl : Control, ISupportInitialize
     }
     internal void ExitKeyTips(bool restore)
     {
+        if (IsBackstageOpen && Theme.BackstageStyle == RibbonBackstageStyle.Office2007) _backstageSurface?.HideKeyTipsIfActive();
         _keyTips = false;
         _keyPrefix = "";
         Invalidate();

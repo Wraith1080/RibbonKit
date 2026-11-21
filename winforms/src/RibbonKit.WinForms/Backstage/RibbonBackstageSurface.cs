@@ -27,24 +27,28 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     private int _navigationFontDpi;
     private bool _syncing, _tips, _disposing;
     private string _prefix = "";
+    private string _fileTip = "";
     private RibbonDrawingHold? _motionOpacity;
     private Control? _motionTarget;
     private RibbonBackdropBuffer? _paintBuffer;
     private RibbonBackdropBuffer? _topFrameBuffer;
     private Rectangle _pageFrameBounds;
+    private Rectangle _headerBounds, _navigationCanvas;
     private Size _pageRegionSize;
     private int _pageRegionRadius;
     private bool _movingForMotion;
     internal byte MotionAlpha { get; private set; } = 255;
-    // Material paint keeps its alpha-preserving rail and native page layer even
-    // at full rail opacity; changing the tint must not change redirection owners.
-    private bool MaterialPaint => _ribbon.HasWindowBackdrop;
-    internal bool TransparentNavigation => _ribbon.HasWindowBackdrop && _ribbon.Backstage.NavigationBackgroundOpacity < 1;
+    // Existing material styles retain their rail/page redirection owners at full
+    // opacity. Office2007 is an opaque workspace without changing the host preference.
+    private bool MaterialPaint => _ribbon.UsesMaterialBackstage;
+    internal bool TransparentNavigation => MaterialPaint && _ribbon.Backstage.NavigationBackgroundOpacity < 1;
     internal RibbonTheme PaintTheme
     {
         get
         {
             var theme = _ribbon.Theme;
+            if (_ribbon.TryGetBackstageHeaderJoin(false, out var joined, out _))
+                theme = theme with { BackstageAppearance = (theme.BackstageAppearance ?? new()) with { Workspace = (theme.BackstageAppearance?.Workspace ?? new()) with { HeaderBackground = joined } } };
             // Inset material rows keep generic backdrop defaults when no fill
             // was authored. Do not turn derived accent fills into overrides.
             bool derive = theme.BackstageNavigationUsesAccent && (!MaterialPaint || theme.BackstageFullWidthNavigation);
@@ -62,8 +66,42 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     }
     private Rectangle GradientBounds(Control child, Rectangle bounds)
     {
-        var origin = child.PointToClient(PointToScreen(Point.Empty)); origin.Offset(bounds.Location);
-        return new(origin, Size);
+        var canvas = _navigationCanvas.IsEmpty ? ClientRectangle : _navigationCanvas;
+        var origin = child.PointToClient(PointToScreen(canvas.Location)); origin.Offset(bounds.Location);
+        return new(origin, canvas.Size);
+    }
+    private Rectangle HeaderBackgroundBounds(Control child, Rectangle bounds)
+    {
+        if (!_ribbon.TryGetBackstageHeaderJoin(false, out _, out var canvas)) return Rectangle.Empty;
+        var origin = child.PointToClient(_ribbon.PointToScreen(canvas.Location)); origin.Offset(bounds.Location);
+        if (_ribbon.BackstageOpeningMotion is { } motion) origin.Offset(Left - motion.Origin.X, Top - motion.Origin.Y);
+        return new(origin, canvas.Size);
+    }
+    private void PaintWorkspaceHeader(Graphics graphics, Control child, Rectangle bounds, bool hot = false, bool pressed = false, bool focused = false)
+    {
+        if (_headerBounds.Width <= 0 || _headerBounds.Height <= 0) return;
+        var origin = child.PointToClient(PointToScreen(_headerBounds.Location)); origin.Offset(bounds.Location);
+        var orb = child.RectangleToClient(_ribbon.RectangleToScreen(_ribbon.ApplicationButtonBounds)); orb.Offset(bounds.Location);
+        if (_ribbon.BackstageOpeningMotion is { } motion)
+        {
+            // Retained drawing moves with the pane. Its paint coordinates must
+            // stay relative to the settled origin, including exposed-strip paints.
+            orb.Offset(Left - motion.Origin.X, Top - motion.Origin.Y);
+        }
+        var canvas = new Rectangle(origin, _headerBounds.Size);
+        _ribbon.Painter.DrawBackstageHeader(new(graphics, Rectangle.Intersect(bounds, canvas), PaintTheme, child.Font, DeviceDpi, hot, pressed, focused)
+        {
+            BackgroundBounds = canvas, BackstageHeaderBackgroundBounds = HeaderBackgroundBounds(child, bounds), Density = _ribbon.Density,
+            ApplicationButtonShape = _ribbon.EffectiveApplicationButtonShape, ApplicationButtonIcon = _ribbon.ApplicationButtonIcon,
+            CompositedText = MaterialPaint, WindowBackdrop = MaterialPaint
+        }, _ribbon.FileMenu, orb);
+        if (_fileTip.Length > 0)
+        {
+            var text = TextRenderer.MeasureText(graphics, _fileTip, child.Font, Size.Empty, TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
+            var badge = new RibbonTipMetrics(_ribbon.Theme).BackstageFileBadgeBounds(orb, canvas, text, DeviceDpi);
+            if (badge.Width > 0 && badge.Height > 0)
+                _ribbon.Painter.DrawKeyTip(new(graphics, badge, PaintTheme, child.Font, DeviceDpi) { Density = _ribbon.Density, CompositedText = MaterialPaint, WindowBackdrop = MaterialPaint }, _fileTip);
+        }
     }
     private Rectangle DividerShadowBounds(Control child, Rectangle bounds)
     {
@@ -189,6 +227,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     private void ReleaseMotionOpacity() { _motionOpacity?.Dispose(); _motionOpacity = null; _motionTarget = null; }
     internal Rectangle NavigationBounds => new(0, 0, _pageFrameBounds.Left, ClientSize.Height);
     internal Control PageArea => _pages;
+    internal Rectangle HeaderBounds => _headerBounds;
     internal int CaptionHeight => _ribbon.HasFullHeightBackstage ? _ribbon.WindowCaptionHeight : 0;
     internal RibbonBackstageSurface(RibbonControl ribbon)
     {
@@ -225,8 +264,11 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             _footer.BackColor = _navigation.BackColor;
             _pages.BackColor = _ribbon.Theme.Surface;
             _pageContent.BackColor = _ribbon.Theme.Surface;
+            var returnText = _ribbon.Theme.BackstageStyle == RibbonBackstageStyle.Office2007 ? _ribbon.Theme.BackstageAppearance?.Workspace?.ReturnText ?? "Back to document" : "Back";
+            _back.Text = returnText;
+            _back.AccessibleName = string.IsNullOrEmpty(returnText) ? "Back" : returnText;
             if (_motionOpacity is not null && !ReferenceEquals(_motionTarget, MotionTarget)) ReleaseMotionOpacity();
-            if (Visible && _ribbon.HasWindowBackdrop && _motionOpacity is null) PrepareBackdrop();
+            if (Visible && MaterialPaint && _motionOpacity is null) PrepareBackdrop();
             var items = _ribbon.Backstage.NavigationItems.Where(i => i.Visible && !i.IsDisposed).ToArray();
             foreach (var old in _entries.Keys.Except(items).ToArray()) { _entries[old].Dispose(); _entries.Remove(old); }
             int index = 0;
@@ -318,16 +360,28 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     }
     internal void ToggleKeyTips() { _tips = !_tips; _prefix = ""; if (_tips && _ribbon.BackstageKeepsHeaders) FocusInitial(true); else AssignTips(); }
     internal void HideKeyTips() { _tips = false; _prefix = ""; AssignTips(); }
+    internal void HideKeyTipsIfActive() { if (_tips) HideKeyTips(); }
     private void AssignTips()
     {
         var buttons = NavigationButtons().ToArray();
-        var tips = KeyTipResolver.Resolve(buttons.Select(b => (b.Text, b.Item?.KeyTip ?? "B")));
-        for (int i = 0; i < buttons.Length; i++) { buttons[i].Tip = _tips && tips[i].StartsWith(_prefix, StringComparison.Ordinal) ? tips[i] : ""; buttons[i].Invalidate(); }
+        var tips = ResolveTips(buttons); int offset = HasFileKeyTip ? 1 : 0;
+        _fileTip = _tips && offset == 1 && tips[0].StartsWith(_prefix, StringComparison.Ordinal) ? tips[0] : "";
+        for (int i = 0; i < buttons.Length; i++) { buttons[i].Tip = _tips && tips[i + offset].StartsWith(_prefix, StringComparison.Ordinal) ? tips[i + offset] : ""; buttons[i].Invalidate(); }
+        if (_headerBounds.Width > 0 && _headerBounds.Height > 0) { Invalidate(_headerBounds); _back.Invalidate(); }
+    }
+    private bool HasFileKeyTip => _ribbon.Theme.BackstageStyle == RibbonBackstageStyle.Office2007 && _headerBounds.Width > 0 && _headerBounds.Height > 0
+        && _ribbon.HasFileMenu && _ribbon.FileMenu.EffectiveEnabled;
+    private string[] ResolveTips(EntryButton[] buttons)
+    {
+        IEnumerable<(string Text, string Keys)> candidates = buttons.Select(b => (b.Text, b.Item?.KeyTip ?? "B"));
+        if (HasFileKeyTip) candidates = new[] { (_ribbon.FileMenu.Text, _ribbon.FileMenu.KeyTip) }.Concat(candidates);
+        return KeyTipResolver.Resolve(candidates);
     }
     private IEnumerable<EntryButton> NavigationButtons() => new[] { _back }.Concat(_ribbon.Backstage.NavigationItems.Where(i => _entries.ContainsKey(i)).Select(i => _entries[i]).OfType<EntryButton>()).Where(b => b.Visible && b.Enabled);
     internal bool ProcessSurfaceKey(Keys keys)
     {
         if (!_ribbon.IsBackstageOpen) return false;
+        if (keys == Keys.F10 && _ribbon.Theme.BackstageStyle == RibbonBackstageStyle.Office2007) { ToggleKeyTips(); return true; }
         if (keys == (Keys.Control | Keys.F1)) return true;
         if (keys == Keys.Escape)
         {
@@ -362,9 +416,14 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             char c = key is >= Keys.A and <= Keys.Z ? (char)('A' + key - Keys.A) : (char)('0' + key - Keys.D0);
             string prefix = _prefix + c;
             var buttons = NavigationButtons().ToArray();
-            var tips = KeyTipResolver.Resolve(buttons.Select(b => (b.Text, b.Item?.KeyTip ?? "B")));
+            var tips = ResolveTips(buttons); int offset = HasFileKeyTip ? 1 : 0;
             int match = Array.FindIndex(tips, t => t == prefix);
-            if (match >= 0) { HideKeyTips(); buttons[match].PerformClick(); }
+            if (match >= 0)
+            {
+                HideKeyTips();
+                if (offset == 1 && match == 0) _ribbon.IsBackstageOpen = false;
+                else buttons[match - offset].PerformClick();
+            }
             else { _prefix = tips.Any(t => t.StartsWith(prefix, StringComparison.Ordinal)) ? prefix : ""; AssignTips(); }
             return true;
         }
@@ -402,6 +461,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         try
         {
             var layout = RibbonBackstageLayout.Build(ClientSize, _navigation.Font, DeviceDpi, _ribbon.Backstage, captionHeight: CaptionHeight);
+            _headerBounds = layout.Header; _navigationCanvas = layout.NavigationCanvas;
             _back.Bounds = layout.Back;
             _back.Visible = !layout.Back.IsEmpty;
             _navigation.Bounds = layout.Navigation;
@@ -452,14 +512,19 @@ internal sealed class RibbonBackstageSurface : ContainerControl
     {
         base.OnVisibleChanged(e);
         if (!Visible) { SettlePageMotion(); ReleaseMotionOpacity(); }
-        else if (_ribbon.HasWindowBackdrop && _motionOpacity is null) PrepareBackdrop();
+        else if (MaterialPaint && _motionOpacity is null) PrepareBackdrop();
     }
     protected override void OnHandleDestroyed(EventArgs e) { SettlePageMotion(); ReleaseMotionOpacity(); base.OnHandleDestroyed(e); }
     protected override void OnPaintBackground(PaintEventArgs e) { if (!MaterialPaint) base.OnPaintBackground(e); }
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
-        void Paint(Graphics graphics) => _ribbon.Painter.DrawBackstageBackground(new(graphics, ClientRectangle, PaintTheme, Font, DeviceDpi) { Density = _ribbon.Density, CompositedText = MaterialPaint, WindowBackdrop = _ribbon.HasWindowBackdrop }, _pageFrameBounds.Left);
+        void Paint(Graphics graphics)
+        {
+            _ribbon.Painter.DrawBackstageBackground(new(graphics, ClientRectangle, PaintTheme, Font, DeviceDpi) { Density = _ribbon.Density,
+                BackstageHeaderBackgroundBounds = HeaderBackgroundBounds(this, ClientRectangle), CompositedText = MaterialPaint, WindowBackdrop = MaterialPaint }, _pageFrameBounds.Left);
+            if (!_headerBounds.IsEmpty) PaintWorkspaceHeader(graphics, this, ClientRectangle);
+        }
         if (MaterialPaint)
         {
             // The native page owns its pixels and opacity. Only redirect the
@@ -475,6 +540,15 @@ internal sealed class RibbonBackstageSurface : ContainerControl
             _paintBuffer?.Dispose(); _paintBuffer = null; _topFrameBuffer?.Dispose(); _topFrameBuffer = null;
             Paint(e.Graphics);
         }
+    }
+    protected override void OnMouseUp(MouseEventArgs e)
+    {
+        base.OnMouseUp(e);
+        if (e.Button != MouseButtons.Left || _back.Visible || !_headerBounds.Contains(e.Location)) return;
+        var file = RectangleToClient(_ribbon.RectangleToScreen(_ribbon.ApplicationButtonBounds));
+        bool hit = _ribbon.EffectiveApplicationButtonShape == RibbonApplicationButtonShape.Orb
+            ? RibbonApplicationButtonMetrics.Contains(file, e.Location) : file.Contains(e.Location);
+        if (hit) _ribbon.IsBackstageOpen = false;
     }
     private sealed class NavigationPanel : Panel
     {
@@ -628,7 +702,7 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         protected override void OnPaint(PaintEventArgs e)
         {
             void Paint(Graphics graphics) => _surface._ribbon.Painter.DrawBackstageEntry(new(graphics, ClientRectangle, _surface.PaintTheme, Font, DeviceDpi)
-                { BackgroundBounds = _surface.GradientBounds(this, ClientRectangle), BackstageDividerShadowBounds = _surface.DividerShadowBounds(this, ClientRectangle), Density = _surface._ribbon.Density, CompositedText = _surface.MaterialPaint, WindowBackdrop = _surface._ribbon.HasWindowBackdrop }, _item, false);
+                { BackgroundBounds = _surface.GradientBounds(this, ClientRectangle), BackstageDividerShadowBounds = _surface.DividerShadowBounds(this, ClientRectangle), Density = _surface._ribbon.Density, CompositedText = _surface.MaterialPaint, WindowBackdrop = _surface.MaterialPaint }, _item, false);
             if (_surface.MaterialPaint) (_buffer ??= new()).Paint(e.Graphics, Size, Height, Color.Transparent, Paint, opacity: _surface.MotionAlpha);
             else { _buffer?.Dispose(); _buffer = null; Paint(e.Graphics); }
         }
@@ -682,8 +756,10 @@ internal sealed class RibbonBackstageSurface : ContainerControl
         private void PaintEntry(Graphics graphics, Rectangle bounds)
         {
             var ribbon = _surface._ribbon;
-            var context = new RibbonPaintContext(graphics, bounds, _surface.PaintTheme, Font, DeviceDpi, _hot, _pressed, Focused && ribbon.KeyboardFocusCues) { BackgroundBounds = _surface.GradientBounds(this, bounds), BackstageDividerShadowBounds = _surface.DividerShadowBounds(this, bounds), Density = ribbon.Density, CompositedText = _surface.MaterialPaint, WindowBackdrop = ribbon.HasWindowBackdrop };
-            ribbon.Painter.DrawBackstageEntry(context, Item, ReferenceEquals(Item, ribbon.Backstage.SelectedPage) && Item is not null);
+            var context = new RibbonPaintContext(graphics, bounds, _surface.PaintTheme, Font, DeviceDpi, _hot, _pressed, Focused && ribbon.KeyboardFocusCues) { BackgroundBounds = _surface.GradientBounds(this, bounds), BackstageDividerShadowBounds = _surface.DividerShadowBounds(this, bounds), Density = ribbon.Density, CompositedText = _surface.MaterialPaint, WindowBackdrop = _surface.MaterialPaint };
+            if (Item is null && ribbon.Theme.BackstageStyle == RibbonBackstageStyle.Office2007)
+                _surface.PaintWorkspaceHeader(graphics, this, bounds, _hot, _pressed, Focused && ribbon.KeyboardFocusCues);
+            else ribbon.Painter.DrawBackstageEntry(context, Item, ReferenceEquals(Item, ribbon.Backstage.SelectedPage) && Item is not null);
             if (Tip.Length > 0)
             {
                 var text = TextRenderer.MeasureText(graphics, Tip, Font, Size.Empty, TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);

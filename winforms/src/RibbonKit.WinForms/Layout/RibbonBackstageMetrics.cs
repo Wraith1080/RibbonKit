@@ -5,6 +5,13 @@ internal readonly record struct RibbonBackstageMetrics
     internal RibbonBackstageMetrics(RibbonTheme? theme, RibbonDensity density, RibbonBackstageLayoutDefaults defaults)
     {
         bool touch = density == RibbonDensity.Touch;
+        var workspace = theme?.BackstageAppearance?.Workspace;
+        WorkspaceHeaderHeight = Math.Max(workspace?.HeaderHeight ?? 48, touch ? 44 : 0);
+        WorkspaceReturnWidth = workspace?.ReturnWidth ?? 300;
+        WorkspaceInset = workspace?.FrameInset ?? 8;
+        WorkspaceBorderWidth = workspace?.BorderWidth;
+        WorkspaceInnerBorderWidth = workspace?.InnerBorderWidth;
+        WorkspaceRadius = workspace?.CornerRadius ?? 3;
         BackButtonVisible = theme?.BackstageAppearance?.BackButtonVisible ?? defaults.BackButtonVisible;
         TopSeamHeight = theme?.BackstageAppearance?.TopSeamHeight ?? defaults.TopSeamHeight;
         PageDividerShadowWidth = theme?.BackstageAppearance?.PageDividerShadowWidth ?? defaults.PageDividerShadowWidth;
@@ -27,8 +34,14 @@ internal readonly record struct RibbonBackstageMetrics
         AutoWidthPadding = 2 * NavigationPadding + TextOffset + TrailingPadding + defaults.ScrollbarWidth;
     }
     internal int RowHeight { get; }
-    internal bool BackButtonVisible { get; }
-    internal int TopSeamHeight { get; }
+    internal bool BackButtonVisible { get; init; }
+    internal int WorkspaceHeaderHeight { get; }
+    internal int WorkspaceReturnWidth { get; }
+    internal int WorkspaceInset { get; }
+    internal int? WorkspaceBorderWidth { get; }
+    internal int? WorkspaceInnerBorderWidth { get; }
+    internal int WorkspaceRadius { get; }
+    internal int TopSeamHeight { get; init; }
     internal int PageDividerShadowWidth { get; }
     internal int NavigationPadding { get; }
     internal int BackSize { get; }

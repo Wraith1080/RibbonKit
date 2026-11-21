@@ -86,9 +86,11 @@ public partial class RibbonControl
             graphics.SetClip(bounds, System.Drawing.Drawing2D.CombineMode.Intersect);
             var canvas = new Rectangle(0, 0, WindowHost?.CaptionHostBounds.Width ?? Width, WindowCaptionHeight);
             var fill = WindowHost?.CaptionFill(Theme, composited);
+            bool joined = TryGetBackstageHeaderJoin(composited, out var joinedFill, out var joinedCanvas);
             BackstageCaptionFrame(composited).Paint(graphics, canvas, WindowHost?.AeroFrameSettings is { } frame
                 ? () => WindowHost.PaintAeroFrameBand(new(graphics, bounds, Theme, Font, DeviceDpi) { CompositedText = composited },
                     new(0, 0, canvas.Width, BackdropHeaderHeight), frame)
+                : joined ? () => Painter.PaintFill(new(graphics, canvas, Theme, Font, DeviceDpi) { BackgroundBounds = joinedCanvas }, joinedFill)
                 : fill is { } authored
                 ? () => Painter.PaintFill(new(graphics, canvas, Theme, Font, DeviceDpi), authored) : null);
         }

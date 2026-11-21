@@ -71,12 +71,16 @@ internal static class RibbonPresentationResolver
             PaneEasing: RibbonBackstageEasing.EaseOutCubic, PaneOpacityEasing: RibbonBackstageEasing.SmoothStep,
             TitleEasing: RibbonBackstageEasing.EaseOutCubic, PageEasing: RibbonBackstageEasing.EaseOutCubic, PaneFadeAmount: 1), RibbonBackstagePlacement.BelowTabs);
 
+    private static readonly RibbonBackstagePresentation Office2007 = new(new RibbonBackstage2007Layout(), new RibbonBackstage2007Renderer(),
+        new(TintNeutralSeparateCaption: false, AllowFullHeight: false), Modern.Motion);
+
     // Standalone measurement without an attached ribbon retains Modern defaults.
     internal static RibbonBackstagePresentation Backstage(RibbonTheme? theme) => (theme?.BackstageStyle ?? RibbonBackstageStyle.Modern) switch
     {
         RibbonBackstageStyle.Modern => Modern,
         RibbonBackstageStyle.Classic => Classic,
         RibbonBackstageStyle.Office2010 => Office2010,
+        RibbonBackstageStyle.Office2007 => Office2007,
         _ => throw new ArgumentOutOfRangeException(nameof(theme))
     };
 }
